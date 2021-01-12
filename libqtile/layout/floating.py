@@ -39,6 +39,22 @@ class Floating(Layout):
     """
     Floating layout, which does nothing with windows but handles focus order
     """
+    default_float_rules = [
+        Match(wm_type='utility'),
+        Match(wm_type='notification'),
+        Match(wm_type='toolbar'),
+        Match(wm_type='splash'),
+        Match(wm_type='dialog'),
+        Match(wm_class='file_progress'),
+        Match(wm_class='confirm'),
+        Match(wm_class='dialog'),
+        Match(wm_class='download'),
+        Match(wm_class='error'),
+        Match(wm_class='notification'),
+        Match(wm_class='splash'),
+        Match(wm_class='toolbar'),
+    ]
+
     defaults = [
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused windows."),
@@ -76,28 +92,31 @@ class Floating(Layout):
         self.clients = []
         self.focused = None
         self.group = None
-        self.float_rules = float_rules or []
 
-        warned = False
-        for index, rule in enumerate(self.float_rules):
-            if isinstance(rule, Match):
-                continue
+        if float_rules is None:
+            float_rules = self.default_float_rules
+        else:
+            warned = False
+            for index, rule in enumerate(float_rules):
+                if isinstance(rule, Match):
+                    continue
 
-            if not warned:
-                message = "Non-config.Match objects in float_rules are " \
-                          "deprecated"
-                warnings.warn(message, DeprecationWarning)
-                logger.warning(message)
-                warned = True
+                if not warned:
+                    message = "Non-config.Match objects in float_rules are " \
+                              "deprecated"
+                    warnings.warn(message, DeprecationWarning)
+                    logger.warning(message)
+                    warned = True
 
-            match = Match(
-                title=rule.get("wname"), wm_class=rule.get("wmclass"),
-                role=rule.get("role"), wm_type=rule.get("wm_type"),
-                wm_instance_class=rule.get("wm_instance_class"),
-                net_wm_pid=rule.get("net_wm_pid"))
+                match = Match(
+                    title=rule.get("wname"), wm_class=rule.get("wmclass"),
+                    role=rule.get("role"), wm_type=rule.get("wm_type"),
+                    wm_instance_class=rule.get("wm_instance_class"),
+                    net_wm_pid=rule.get("net_wm_pid"))
 
-            self.float_rules[index] = match
+                float_rules[index] = match
 
+        self.float_rules = float_rules
         self.no_reposition_rules = no_reposition_rules or []
         self.add_defaults(Floating.defaults)
 
