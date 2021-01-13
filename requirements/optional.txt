@@ -1,0 +1,6 @@
+psutil
+jupyter_client
+dbus-python
+setproctitle
+PyGObject
+gobject
