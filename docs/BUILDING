@@ -4,7 +4,7 @@ installed in your distro):
 $ cd ./docs
 $ virtualenv qtile
 $ source qtile/bin/activate
-$ pip install -r requirements.txt
+$ pip install -r requirements/base.txt
 $ make html
 $ deactivate
 

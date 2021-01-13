@@ -54,8 +54,10 @@ Deactivate it with the ``deactivate`` command.
 
 Building the documentation
 ==========================
+   
+Run ``pip install -r requirements/docs.txt`` from the project root.
 
-Go into the ``docs/`` directory and run ``pip install -r requirements.txt``.
+Enter the docs directory with ``cd docs``
 
 Build the documentation with ``make html``.
 
