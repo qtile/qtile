@@ -1,0 +1,4 @@
+-r xcffib.txt
+cairocffi >= 0.9.0
+cffi >= 1.1.0
+setuptools >= 40.5.0

@@ -55,7 +55,9 @@ Deactivate it with the ``deactivate`` command.
 Building the documentation
 ==========================
     
-Go into the ``docs/`` directory and run ``pip install -r requirements.txt``.
+Run ``pip install -r requirements/docs.txt`` from the project root.
+
+Enter the docs directory with ``cd docs``
 
 Build the documentation with ``make html``.
 
@@ -300,8 +302,7 @@ To fix this:
    development version of Qtile (usually in a virtualenv).
 #. Optionally re-install Qtile's dependencies::
 
-    pip install -r requirements.txt
-    pip install -r requirements-dev.txt
+    pip install -r requirements/dev.txt
 
 .. _`installation instructions`: https://pygobject.readthedocs.io/en/latest/getting_started.html
 

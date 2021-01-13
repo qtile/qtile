@@ -18,8 +18,7 @@ echo "Installing xcffib then cairocffi..."
 pip install 'xcffib >= 0.10.1' && pip install --no-cache-dir 'cairocffi >= 0.9.0'
 
 echo "Installing other required packages..."
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
+pip install -r requirements/dev.txt
 
 echo ""
 echo "  * Created virtualenv environment in ./venv."
