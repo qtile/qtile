@@ -18,8 +18,10 @@ jobs:
               run: |
                   sudo apt update
                   sudo apt install libdbus-1-dev libgirepository1.0-dev gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-gudev-1.0 graphviz imagemagick libpulse-dev lm-sensors
-                  pip install tox tox-gh-actions
+                  pip install nox
             - name: analyze
+              env:
+                  NOXENV: "3.9"
               run: |
                   [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
-                  tox -e format,pep8,mypy,docs,packaging
+                  nox -s format lint static docs package

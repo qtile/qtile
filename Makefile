@@ -6,11 +6,11 @@ help: ## Show this help
 
 .PHONY: check
 check: ## Run the test suite
-	TOXENV=py38 tox
+	nox -s test
 
 .PHONY: lint
 lint: ## Check the source code
-	TOXENV=format,pep8 tox
+	nox -s format lint
 
 .PHONY: clean
 clean: ## Clean generated files
