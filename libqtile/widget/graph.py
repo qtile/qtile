@@ -92,7 +92,7 @@ class _Graph(base._Widget):
         return self.bar.height - self.margin_y * 2 - self.border_width * 2
 
     def draw_box(self, x, y, values):
-        step = self.graphwidth / float(self.samples)
+        step = int(self.graphwidth / float(self.samples))
         self.drawer.set_source_rgb(self.graph_color)
         for val in values:
             val = self.val(val)
@@ -100,7 +100,7 @@ class _Graph(base._Widget):
             x += step
 
     def draw_line(self, x, y, values):
-        step = self.graphwidth / float(self.samples - 1)
+        step = int(self.graphwidth / float(self.samples - 1))
         self.drawer.ctx.set_line_join(cairocffi.LINE_JOIN_ROUND)
         self.drawer.set_source_rgb(self.graph_color)
         self.drawer.ctx.set_line_width(self.line_width)
@@ -110,7 +110,7 @@ class _Graph(base._Widget):
         self.drawer.ctx.stroke()
 
     def draw_linefill(self, x, y, values):
-        step = self.graphwidth / float(self.samples - 2)
+        step = int(self.graphwidth / float(self.samples - 2))
         self.drawer.ctx.set_line_join(cairocffi.LINE_JOIN_ROUND)
         self.drawer.set_source_rgb(self.graph_color)
         self.drawer.ctx.set_line_width(self.line_width)
