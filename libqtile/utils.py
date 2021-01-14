@@ -19,6 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import asyncio
 import functools
 import glob
 import importlib
@@ -39,16 +40,6 @@ except ImportError:
     has_dbus = False
 
 from libqtile.log_utils import logger
-
-_can_notify = False
-try:
-    import gi
-    gi.require_version("Notify", "0.7")  # type: ignore
-    from gi.repository import Notify  # type: ignore
-    Notify.init("Qtile")
-    _can_notify = True
-except ImportError as e:
-    logger.warning("Failed to import dependencies for notifications: %s" % e)
 
 
 class QtileError(Exception):
@@ -247,16 +238,45 @@ def send_notification(title, message, urgent=False, timeout=10000, id=None):
     passed when calling this function again to replace that notification. See:
     https://developer.gnome.org/notification-spec/
     """
-    if _can_notify and Notify.get_server_info()[0]:
-        notifier = Notify.Notification.new(title, message)
-        if urgent:
-            notifier.set_urgency(Notify.Urgency.CRITICAL)
-        notifier.set_timeout(timeout)
-        if id is None:
-            id = randint(10, 1000)
-        notifier.set_property('id', id)
-        notifier.show()
-        return id
+    id = randint(10, 1000) if id is None else id
+    urgency = 2 if urgent else 1
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        logger.warning("Eventloop has not started. Cannot send notification.")
+    else:
+        loop.create_task(_notify(title, message, urgency, timeout, id))
+
+    return id
+
+
+async def _notify(title, message, urgency, timeout, id):
+    notification = ["qtile",  # Application name
+                    id,  # id
+                    "",  # icon
+                    title,  # summary
+                    message,  # body
+                    [""],  # actions
+                    {"urgency": Variant("y", urgency)},  # hints
+                    timeout]  # timeout
+
+    bus, msg = await _send_dbus_message(True,
+                                        MessageType.METHOD_CALL,
+                                        "org.freedesktop.Notifications",
+                                        "org.freedesktop.Notifications",
+                                        "/org/freedesktop/Notifications",
+                                        "Notify",
+                                        "susssasa{sv}i",
+                                        notification)
+
+    if msg.message_type == MessageType.ERROR:
+        logger.warning("Unable to send notification. "
+                       "Is a notification server running?")
+
+    # a new bus connection is made each time a notification is sent so
+    # we disconnect when the notification is done
+    bus.disconnect()
 
 
 def guess_terminal(preference=None):
