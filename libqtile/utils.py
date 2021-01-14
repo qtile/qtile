@@ -30,6 +30,10 @@ from collections.abc import Sequence
 from random import randint
 from shutil import which
 
+from dbus_next import Message  # type: ignore
+from dbus_next.aio import MessageBus  # type: ignore
+from dbus_next.constants import BusType, MessageType  # type: ignore
+
 from libqtile.log_utils import logger
 
 _can_notify = False
@@ -310,3 +314,69 @@ def scan_files(dirpath, *names):
         files[name].extend(found)
 
     return files
+
+
+async def _send_dbus_message(session_bus, message_type, destination, interface,
+                             path, member, signature, body):
+    """
+    Private method to send messages to dbus via dbus_next.
+
+    Returns a tuple of the bus object and message response.
+    """
+    if session_bus:
+        bus_type = BusType.SESSION
+    else:
+        bus_type = BusType.SYSTEM
+
+    if isinstance(body, str):
+        body = [body]
+
+    bus = await MessageBus(bus_type=bus_type).connect()
+
+    msg = await bus.call(
+        Message(message_type=message_type,
+                destination=destination,
+                interface=interface,
+                path=path,
+                member=member,
+                signature=signature,
+                body=body))
+
+    return bus, msg
+
+
+async def add_signal_receiver(callback, session_bus=False, signal_name=None,
+                              dbus_interface=None, bus_name=None, path=None):
+    """
+    Helper function which aims to recreate python-dbus's add_signal_receiver
+    method in dbus_next with asyncio calls.
+
+    Returns True if subscription is successful.
+    """
+    match_args = {
+        "type": "signal",
+        "sender": bus_name,
+        "member": signal_name,
+        "path": path,
+        "interface": dbus_interface
+    }
+
+    rule = ",".join("{}='{}'".format(k, v)
+                    for k, v in match_args.items() if v)
+
+    bus, msg = await _send_dbus_message(session_bus,
+                                        MessageType.METHOD_CALL,
+                                        "org.freedesktop.DBus",
+                                        "org.freedesktop.DBus",
+                                        "/org/freedesktop/DBus",
+                                        "AddMatch",
+                                        "s",
+                                        rule)
+
+    # Check if message sent successfully
+    if msg.message_type == MessageType.METHOD_RETURN:
+        bus.add_message_handler(callback)
+        return True
+
+    else:
+        return False
