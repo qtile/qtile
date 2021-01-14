@@ -626,8 +626,7 @@ class Mirror(_Widget):
             self._length = self.length
             self.bar.draw()
         else:
-            self.drawer.ctx.set_source_surface(self.reflects.drawer.surface)
-            self.drawer.ctx.paint()
+            self.reflects.drawer.paint_to(self.drawer)
             self.drawer.draw(offsetx=self.offset, width=self.width)
 
     def button_press(self, x, y, button):

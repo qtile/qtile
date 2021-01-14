@@ -324,6 +324,13 @@ class Drawer:
             self._free_pixmap()
         self._height = height
 
+    def paint_to(self, drawer):
+        # If XCBSurface has been invalidated, we need to draw now to create it
+        if self._surface is None:
+            self.draw()
+        drawer.ctx.set_source_surface(self._surface)
+        drawer.ctx.paint()
+
     def _rounded_rect(self, x, y, width, height, linewidth):
         aspect = 1.0
         corner_radius = height / 10.0
