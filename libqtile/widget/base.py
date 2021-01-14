@@ -445,7 +445,7 @@ class _TextBox(_Widget):
 class InLoopPollText(_TextBox):
     """ A common interface for polling some 'fast' information, munging it, and
     rendering the result in a text box. You probably want to use
-    ThreadedPollText instead.
+    ThreadPoolText instead.
 
     ('fast' here means that this runs /in/ the event loop, so don't block! If
     you want to run something nontrivial, use ThreadedPollWidget.) """
@@ -513,7 +513,7 @@ class ThreadPoolText(_TextBox):
     param: text - Initial text to display.
     """
     defaults = [
-        ("update_interval", None, "Update interval in seconds, if none, the "
+        ("update_interval", 600, "Update interval in seconds, if none, the "
             "widget updates whenever it's done'."),
     ]  # type: List[Tuple[str, Any, str]]
 
