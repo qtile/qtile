@@ -1,0 +1,25 @@
+name: "Analyze: Python 3.9"
+
+on:
+    push:
+    pull_request:
+
+jobs:
+    analyze:
+        runs-on: ubuntu-20.04
+        name: "Static Analysis, Lint, Packaging"
+        steps:
+            - uses: actions/checkout@v2
+            - name: Set up python 3.9
+              uses: actions/setup-python@v2
+              with:
+                  python-version: "3.9"
+            - name: install dependencies
+              run: |
+                  sudo apt update
+                  sudo apt install libdbus-1-dev libgirepository1.0-dev gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-gudev-1.0 graphviz imagemagick libpulse-dev lm-sensors
+                  pip install tox tox-gh-actions
+            - name: analyze
+              run: |
+                  [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
+                  tox -e format,pep8,mypy,docs,packaging

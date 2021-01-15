@@ -1,0 +1,23 @@
+name: "Python 3.9"
+
+on:
+    push:
+    pull_request:
+
+jobs:
+    test:
+        runs-on: ubuntu-20.04
+        name: "Tests"
+        steps:
+            - uses: actions/checkout@v2
+            - name: Set up python 3.9 
+              uses: actions/setup-python@v2
+              with:
+                  python-version: "3.9"
+            - name: install dependencies
+              run: |
+                  sudo apt update
+                  sudo apt install graphviz imagemagick x11-apps xserver-xephyr xterm xvfb libpulse-dev lm-sensors
+                  pip install tox tox-gh-actions
+            - name: test
+              run: tox
