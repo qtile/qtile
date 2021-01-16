@@ -31,6 +31,8 @@ Writing code
 
 To get started writing code for Qtile, check out our guide to :ref:`hacking`.
 
+A more detailed page on creating widgets is available :ref:`here <widget-creation>`.
+
 Submit a pull request
 ---------------------
 
@@ -50,6 +52,8 @@ to our `issue tracker <https://github.com/qtile/qtile/issues>`_ on GitHub.
 
 Feel free to add your contribution (no matter how small) to the appropriate
 place in the CHANGELOG as well!
+
+.. _unit-testing:
 
 Unit testing
 ------------

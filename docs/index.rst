@@ -55,4 +55,13 @@ Miscellaneous
     manual/faq
     manual/license
 
+How To
+======
+
+.. toctree::
+    :caption: Tips & Tricks
+    :maxdepth: 1
+
+    manual/howto/widget
+
 * :ref:`genindex`
