@@ -25,13 +25,13 @@ import functools
 import inspect
 import io
 import logging
-import multiprocessing
 import os
 import subprocess
 import sys
 import tempfile
 import time
 
+import multiprocess
 import pytest
 import xcffib
 import xcffib.testing
@@ -52,6 +52,10 @@ HEIGHT = 600
 SECOND_WIDTH = 640
 SECOND_HEIGHT = 480
 
+# This is safe to force since we only want one start method ever. If we want
+# others, we will want to set the default in __main__ and manage contexts
+# properly.
+multiprocess.set_start_method('spawn', force=True)
 max_sleep = 5.0
 sleep_time = 0.1
 
@@ -297,7 +301,6 @@ class TestManager:
         self.sockfile = sockfile
         self.display = display
         self.log_level = logging.DEBUG if debug_log else logging.INFO
-
         self.proc = None
         self.c = None
         self.testwindows = []
@@ -361,7 +364,7 @@ class TestManager:
 
             if self.proc.is_alive():
                 print("Killing qtile forcefully", file=sys.stderr)
-                # desperate times... this probably messes with multiprocessing...
+                # desperate times... this probably messes with multiprocess...
                 try:
                     os.kill(self.proc.pid, 9)
                     self.proc.join()
