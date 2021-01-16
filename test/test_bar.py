@@ -334,14 +334,15 @@ def test_incompatible_widget(manager_nospawn):
     # Ensure that adding a widget that doesn't support the orientation of the
     # bar raises ConfigError
     m = manager_nospawn.create_manager(IncompatibleWidgetConf)
-    with pytest.raises(libqtile.confreader.ConfigError):
-        m._configure()
-    m.core.finalize()
+    try:
+        with pytest.raises(libqtile.confreader.ConfigError):
+            m._configure()
+    finally:
+        m.core.finalize()
 
 
-def test_basic(manager_nospawn):
-    config = GeomConf
-    config.screens = [
+class BasicConf(GeomConf):
+    screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
@@ -358,7 +359,9 @@ def test_basic(manager_nospawn):
         )
     ]
 
-    manager_nospawn.start(config)
+
+def test_basic(manager_nospawn):
+    manager_nospawn.start(BasicConf)
 
     i = manager_nospawn.c.bar["bottom"].info()
     assert i["widgets"][0]["offset"] == 0
@@ -374,42 +377,43 @@ def test_basic(manager_nospawn):
     libqtile.hook.clear()
 
 
-def test_singlespacer(manager_nospawn):
-    config = GeomConf
-    config.screens = [
+class SingleSpacerConf(GeomConf):
+    screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
                     libqtile.widget.Spacer(libqtile.bar.STRETCH),
                 ],
-                10
-            )
-        )
+                10,
+            ),
+        ),
     ]
 
-    manager_nospawn.start(config)
 
+def test_singlespacer(manager_nospawn):
+    manager_nospawn.start(SingleSpacerConf)
     i = manager_nospawn.c.bar["bottom"].info()
     assert i["widgets"][0]["offset"] == 0
     assert i["widgets"][0]["width"] == 800
     libqtile.hook.clear()
 
 
-def test_nospacer(manager_nospawn):
-    config = GeomConf
-    config.screens = [
+class NoSpacerConf(GeomConf):
+    screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
                     ExampleWidget(),
                     ExampleWidget()
                 ],
-                10
-            )
-        )
+                10,
+            ),
+        ),
     ]
 
-    manager_nospawn.start(config)
+
+def test_nospacer(manager_nospawn):
+    manager_nospawn.start(NoSpacerConf)
 
     i = manager_nospawn.c.bar["bottom"].info()
     assert i["widgets"][0]["offset"] == 0
