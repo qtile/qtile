@@ -1,6 +1,8 @@
 import argparse
+import logging
 import sys
 
+from libqtile.log_utils import init_log
 from libqtile.scripts import cmd_obj, run_cmd, shell, start, top
 
 try:
@@ -28,6 +30,14 @@ def main():
         action='version',
         version=VERSION,
     )
+    parser.add_argument(
+        '-l', '--log-level',
+        default='WARNING',
+        dest='log_level',
+        type=str.upper,
+        choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),
+        help='Set qtile log level'
+    )
 
     subparsers = parser.add_subparsers()
     start.add_subcommand(subparsers)
@@ -43,4 +53,6 @@ def main():
     help_.set_defaults(func=print_help)
 
     options = parser.parse_args()
+    log_level = getattr(logging, options.log_level)
+    init_log(log_level=log_level, log_color=sys.stdout.isatty())
     options.func(options)
