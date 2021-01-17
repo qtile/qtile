@@ -57,10 +57,6 @@ class Memory(base.ThreadPoolText):
         super().__init__("", **config)
         self.add_defaults(Memory.defaults)
 
-    def tick(self):
-        self.update(self.poll())
-        return self.update_interval
-
     def poll(self):
         mem = psutil.virtual_memory()
         swap = psutil.swap_memory()
