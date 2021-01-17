@@ -113,4 +113,4 @@ class CheckUpdates(base.ThreadPoolText):
             self.timeout_add(1, self._refresh_count)
 
         else:
-            self.tick()
+            self.timer_setup()
