@@ -51,7 +51,6 @@ def treetab_config(x):
 
 @treetab_config
 def test_window(manager):
-    pytest.importorskip("tkinter")
     # setup 3 tiled and two floating clients
     manager.test_window("one")
     manager.test_window("two")
