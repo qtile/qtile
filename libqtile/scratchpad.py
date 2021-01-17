@@ -18,8 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import group, hook, utils, window
-from libqtile.log_utils import logger
+from libqtile import group, hook, window
 
 
 class WindowVisibilityToggler:
@@ -127,17 +126,9 @@ class WindowVisibilityToggler:
 
     def unsubscribe(self):
         """unsubscribe all hooks"""
-        if self.on_focus_lost_hide:
-            try:
-                hook.unsubscribe.client_focus(self.on_focus_change)
-            except utils.QtileError as err:
-                logger.exception("Scratchpad failed to unsubscribe on_focus_change"
-                                 ": %s" % err)
-            try:
-                hook.unsubscribe.setgroup(self.on_focus_change)
-            except utils.QtileError as err:
-                logger.exception("Scratchpad failed to unsubscribe on_focus_change"
-                                 ": %s" % err)
+        if self.on_focus_lost_hide and (self.visible or self.shown):
+            hook.unsubscribe.client_focus(self.on_focus_change)
+            hook.unsubscribe.setgroup(self.on_focus_change)
 
     def on_focus_change(self, *args, **kwargs):
         """
