@@ -419,25 +419,18 @@ class TestManager:
         if not success():
             raise AssertionError("Window could not be killed...")
 
-    def test_window(self, name):
-        return self._spawn_script("window.py", self.display, name)
-
-    def test_tkwindow(self, name, wm_type):
-        return self._spawn_script("tkwindow.py", name, wm_type)
+    def test_window(self, name, type="normal"):
+        """
+        Windows created with this method must have their process killed explicitly, no
+        matter what type they are.
+        """
+        return self._spawn_script("window.py", self.display, name, type)
 
     def test_dialog(self, name="dialog"):
-        return self.test_tkwindow(name, "dialog")
+        return self.test_window(name, "dialog")
 
     def test_notification(self, name="notification"):
-        """
-        Simulate a notification window. Note that, for testing purposes, this
-        process must be killed explicitly, unlike actual notifications which
-        are sent to a notification server and then expire after a timeout.
-        """
-        # Don't use a real notification, e.g. notify-send or
-        # zenity --notification, since we want to keep the process on until
-        # explicitly killed
-        return self.test_tkwindow(name, "notification")
+        return self.test_window(name, "notification")
 
     def test_xclock(self):
         path = whereis("xclock")

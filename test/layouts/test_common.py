@@ -124,7 +124,6 @@ each_delegate_layout_config = pytest.mark.parametrize("manager", AllDelegateLayo
 
 @each_layout_config
 def test_window_types(manager):
-    pytest.importorskip("tkinter")
     manager.test_window("one")
 
     # A dialog should take focus and be floating
@@ -140,8 +139,6 @@ def test_window_types(manager):
 
 @each_layout_config
 def test_focus_cycle(manager):
-    pytest.importorskip("tkinter")
-
     manager.test_window("one")
     manager.test_window("two")
     manager.test_dialog("float1")
@@ -299,8 +296,6 @@ def test_remove(manager):
 
 @each_layout_config
 def test_remove_floating(manager):
-    pytest.importorskip("tkinter")
-
     one = manager.test_window("one")
     manager.test_window("two")
     float1 = manager.test_dialog("float1")
@@ -371,8 +366,6 @@ def test_remove_floating(manager):
 
 @each_layout_config
 def test_desktop_notifications(manager):
-    pytest.importorskip("tkinter")
-
     # Unlike normal floating windows such as dialogs, notifications don't steal
     # focus when they spawn, so test them separately
 
