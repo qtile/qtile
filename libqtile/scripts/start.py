@@ -22,13 +22,12 @@
 # Set the locale before any widgets or anything are imported, so any widget
 # whose defaults depend on a reasonable locale sees something reasonable.
 import locale
-import logging
 from os import getenv, makedirs, path
-from sys import exit, stdout
+from sys import exit
 
 import libqtile.backend
 from libqtile import confreader
-from libqtile.log_utils import init_log, logger
+from libqtile.log_utils import logger
 
 
 def rename_process():
@@ -48,8 +47,6 @@ def rename_process():
 
 
 def make_qtile(options):
-    log_level = getattr(logging, options.log_level)
-    init_log(log_level=log_level, log_color=stdout.isatty())
     kore = libqtile.backend.get_core(options.backend)
 
     if not path.isfile(options.configfile):
@@ -119,13 +116,6 @@ def add_subcommand(subparsers):
         default=False,
         dest="no_spawn",
         help='Avoid spawning apps. (Used for restart)'
-    )
-    parser.add_argument(
-        '-l', '--log-level',
-        default='WARNING',
-        dest='log_level',
-        choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),
-        help='Set qtile log level'
     )
     parser.add_argument(
         '--with-state',
