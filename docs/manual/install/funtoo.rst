@@ -20,7 +20,6 @@ Customize
 
 You can customize your installation with the following useflags:
 
-- dbus
 - widget-khal-calendar
 - widget-imap
 - widget-keyboardkbdd
@@ -28,9 +27,6 @@ You can customize your installation with the following useflags:
 - widget-mpd
 - widget-mpris
 - widget-wlan
-
-The dbus useflag is enabled by default. Disable it only if you know what it is
-and know you don't use/need it.
 
 All widget-* useflags are disabled by default because these widgets require
 additional dependencies while not everyone will use them. Enable only widgets
