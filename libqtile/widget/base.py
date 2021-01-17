@@ -29,6 +29,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import asyncio
 import subprocess
 from typing import Any, List, Tuple
 
@@ -202,6 +203,18 @@ class _Widget(CommandObject, configurable.Configurable):
         if not self.configured:
             self.configured = True
             self.qtile.call_soon(self.timer_setup)
+            self.qtile.call_soon(asyncio.create_task, self._config_async())
+
+    async def _config_async(self):
+        """
+            This is called once when the main eventloop has started. this
+            happens after _configure has been run.
+
+            Widgets that need to use asyncio coroutines after this point may
+            wish to initialise the relevant code (e.g. connections to dbus
+            using dbus_next) here.
+        """
+        pass
 
     def finalize(self):
         if hasattr(self, 'layout') and self.layout:

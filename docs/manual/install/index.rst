@@ -77,15 +77,6 @@ You'll also need ``libpangocairo``, which on Ubuntu can be installed via ``sudo
 apt-get install libpangocairo-1.0-0``. Qtile uses this to provide text
 rendering (and binds directly to it via cffi with a small in-tree binding).
 
-dbus/gobject
-------------
-
-Until someone comes along and writes an asyncio-based dbus library, qtile will
-depend on ``python-dbus`` to interact with dbus. This means that if you want
-to use things like notification daemon or mpris widgets, you'll need to
-install python-gobject and python-dbus. Qtile will run fine without these,
-although it will emit a warning that some things won't work.
-
 Qtile
 -----
 
