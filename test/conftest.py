@@ -21,7 +21,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import asyncio
 import functools
 import logging
 import multiprocessing
@@ -277,15 +276,19 @@ class TestManager:
         self.c = None
         self.testwindows = []
 
-    def start(self, config_class):
+    def start(self, config_class, no_spawn=False):
         rpipe, wpipe = multiprocessing.Pipe()
 
         def run_qtile():
             try:
                 kore = Core(display_name=self.display)
                 init_log(self.log_level, log_path=None, log_color=False)
-                q = Qtile(kore, config_class(), socket_path=self.sockfile)
-                asyncio.run(q.loop())
+                Qtile(
+                    kore,
+                    config_class(),
+                    socket_path=self.sockfile,
+                    no_spawn=no_spawn,
+                ).loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
 

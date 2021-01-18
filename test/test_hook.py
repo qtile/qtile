@@ -160,11 +160,16 @@ def test_can_subscribe_to_startup_hooks(manager_nospawn):
     hook.subscribe.startup_complete(inc_startup_complete_calls)
 
     manager.start(config)
-    manager.start_qtile = True
     assert manager.startup_once_calls.value == 1
     assert manager.startup_calls.value == 1
     assert manager.startup_complete_calls.value == 1
-    # TODO Restart and check that startup_once doesn't fire again
+
+    # Restart and check that startup_once doesn't fire again
+    manager.terminate()
+    manager.start(config, no_spawn=True)
+    assert manager.startup_once_calls.value == 1
+    assert manager.startup_calls.value == 2
+    assert manager.startup_complete_calls.value == 2
 
 
 @pytest.mark.usefixtures('hook_fixture')
