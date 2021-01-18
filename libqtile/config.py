@@ -77,8 +77,11 @@ class KeyChord:
     mode:
         A string with vim like mode name if it's set chord not end
         after use one of submapings or Esc key
+    name:
+        A name for the keychord which could be used to find the active keychord.
+        It defaults to mode, if not specified.
     """
-    def __init__(self, modifiers: List[str], key: str, submapings: List[Key], mode: str = ""):
+    def __init__(self, modifiers: List[str], key: str, submapings: List[Key], mode: str = "", name: str = None):
         self.modifiers = modifiers
         self.key = key
 
@@ -87,6 +90,7 @@ class KeyChord:
         submapings.append(Key([], "Escape", lazy.function(noop)))
         self.submapings = submapings
         self.mode = mode
+        self.name = name if name is not None else mode
 
     def __repr__(self):
         return "<KeyChord (%s, %s)>" % (self.modifiers, self.key)

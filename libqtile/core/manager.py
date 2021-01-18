@@ -84,7 +84,7 @@ class Qtile(CommandObject):
         self.dgroups: Optional[DGroups] = None
 
         self.keys_map: Dict[Tuple[int, int], Key] = {}
-        self.current_chord = False
+        self.current_chord = None
         self.numlock_mask, self.valid_mask = self.core.masks
 
         self.current_screen: Optional[Screen] = None
@@ -327,12 +327,14 @@ class Qtile(CommandObject):
     def process_key_event(self, keysym: int, mask: int) -> None:
         key = self.keys_map.get((keysym, mask), None)
         if key is None:
-            logger.info("Ignoring unknown keysym: {keysym}, mask: {mask}".format(keysym=keysym, mask=mask))
+            logger.warning("Ignoring unknown keysym: {keysym}, mask: {mask}".format(keysym=keysym, mask=mask))
             return
 
         if isinstance(key, KeyChord):
             self.grab_chord(key)
         else:
+            if self.current_chord and (self.current_chord.mode == "" or key.key == "Escape"):
+                self.ungrab_chord()
             for cmd in key.commands:
                 if cmd.check(self):
                     status, val = self.server.call(
@@ -340,10 +342,6 @@ class Qtile(CommandObject):
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("KB command error %s: %s" % (cmd.name, val))
-            else:
-                if self.current_chord is True or (self.current_chord and key.key == "Escape"):
-                    self.ungrab_chord()
-                return
 
     def grab_keys(self) -> None:
         """Re-grab all of the keys configured in the key map
@@ -370,21 +368,29 @@ class Qtile(CommandObject):
         self.keys_map.clear()
 
     def grab_chord(self, chord) -> None:
-        self.current_chord = chord.mode if chord.mode != "" else True
+        self.current_chord = chord
         if self.current_chord:
-            hook.fire("enter_chord", self.current_chord)
+            hook.fire("enter_chord", chord.name)
 
         self.ungrab_keys()
         for key in chord.submapings:
             self.grab_key(key)
+        if self.config.block_keyboard_on_active_chord:
+            # Grab the keybarod. When a chord is active, don't send keys to other windows,
+            # until the chord is resolved.
+            self.core.grab_keyboard()
 
     def ungrab_chord(self) -> None:
-        self.current_chord = False
-        hook.fire("leave_chord")
-
+        self.current_chord = None
+        if self.config.block_keyboard_on_active_chord:
+            self.core.ungrab_keyboard()
         self.ungrab_keys()
+
         for key in self.config.keys:
             self.grab_key(key)
+
+        self.core.conn.flush()
+        hook.fire("leave_chord")
 
     def grab_mouse(self) -> None:
         self.core.ungrab_buttons()

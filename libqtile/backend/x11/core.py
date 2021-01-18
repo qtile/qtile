@@ -444,6 +444,22 @@ class Core(base.Core):
 
         return keysym, modmask & self._valid_mask
 
+    def grab_keyboard(self):
+        """Grab the keyboard."""
+        self.conn.conn.core.GrabKeyboard(
+            True,
+            self._root.wid,
+            xcffib.XCB_CURRENT_TIME,
+            xcffib.xproto.GrabMode.Async,
+            xcffib.xproto.GrabMode.Async,
+        )
+
+    def ungrab_keyboard(self):
+        """Ungrab the entire keyboard."""
+        self.conn.conn.core.UngrabKeyboard(
+            xcffib.XCB_CURRENT_TIME,
+        )
+
     def ungrab_keys(self) -> None:
         """Ungrab all of the key events"""
         self.conn.conn.core.UngrabKey(xcffib.xproto.Atom.Any, self._root.wid, xcffib.xproto.ModMask.Any)

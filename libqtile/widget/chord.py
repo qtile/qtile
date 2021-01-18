@@ -46,10 +46,6 @@ class Chord(base._TextBox):
 
     def _setup_hooks(self):
         def hook_enter_chord(chord_name):
-            if chord_name is True:
-                self.text = ""
-                return
-
             self.text = self.name_transform(chord_name)
             if chord_name in self.chords_colors:
                 (self.background, self.foreground) = self.chords_colors.get(chord_name)

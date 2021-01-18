@@ -49,6 +49,7 @@ class Config:
         "extension_defaults",
         "bring_front_click",
         "wmname",
+        "block_keyboard_on_active_chord",
     ]
 
     def __init__(self, file_path=None, kore=None, **settings):

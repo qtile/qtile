@@ -174,6 +174,9 @@ floating_layout = layout.Floating(float_rules=[
 ])
 auto_fullscreen = True
 focus_on_window_activation = "smart"
+# When a chord is active, don't send keys to user appliation, until chord is
+# resolved.
+block_keyboard_on_active_chord = False
 
 # XXX: Gasp! We're lying here. In fact, nobody really uses or cares about this
 # string besides java UI toolkits; you can see several discussions on the

@@ -164,6 +164,10 @@ configuration variables that control specific aspects of Qtile's behavior:
              fontsize=12,
              padding=3)
       - Default settings for bar widgets.
+    * - block_keyboard_on_active_chord
+      - False
+      - If true, blocks the keyboard when a chord is active and prevents sending
+        keys that are not mapped in the current chord to other windows.
     * - wmname
       - "LG3D"
       - Gasp! We're lying here. In fact, nobody really uses or cares

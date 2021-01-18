@@ -71,6 +71,17 @@ The above code will launch xterm when the user presses Mod + z, followed by x.
     still be sent to the currently focussed window. If <escape> has not been
     pressed, the next press of x will launch xterm.
 
+.. note::
+    A chord can be named by specifying the name argument which is used by Chord
+    widget (:class:`libqtile.widget.chord.Chord`) to display currently active
+    chord on the bar.
+
+.. note::
+    When a chord is active, if you press keys that are not currently mapped in
+    the chord, those keys will be sent to the window that is currently in focus.
+    Set block_keyboard_on_active_chord to True in your config, to prevent
+    sending keys to window in focus when a chord is active.
+
 Modes
 -----
 
@@ -97,9 +108,9 @@ then resize windows by just pressing g (to grow the window), s to
 shrink it etc. as many times as needed. To exit the mode, press <escape>.
 
 .. note::
-    If using modes, users may also wish to use the Chord widget
+    If using modes or naming chords, users may also wish to use the Chord widget
     (:class:`libqtile.widget.chord.Chord`) as this will display the name of the
-    currently active mode on the bar.
+    currently active chord on the bar.
 
 Chains
 ------
