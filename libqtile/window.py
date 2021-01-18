@@ -199,22 +199,14 @@ class _Window(CommandObject):
 
     x = property(fset=_geometry_setter("x"), fget=_geometry_getter("x"))
     y = property(fset=_geometry_setter("y"), fget=_geometry_getter("y"))
-
-    @property
-    def width(self):
-        return _geometry_getter("width")(self)
-
-    @width.setter
-    def width(self, value):
-        _geometry_setter("width")(self, value)
-
-    @property
-    def height(self):
-        return _geometry_getter("height")(self)
-
-    @height.setter
-    def height(self, value):
-        _geometry_setter("height")(self, value)
+    width = property(
+        fset=_geometry_setter("width"),
+        fget=_geometry_getter("width"),
+    )
+    height = property(
+        fset=_geometry_setter("height"),
+        fget=_geometry_getter("height"),
+    )
 
     float_x = property(
         fset=_float_setter("x"),
