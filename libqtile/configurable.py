@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import copy
 from typing import Dict
 
 
@@ -30,11 +31,13 @@ class Configurable:
 
     def add_defaults(self, defaults):
         """Add defaults to this object, overwriting any which already exist"""
-        # TODO: Ensure that d[1] is an immutable object? Otherwise an instance
-        #       of this class could modify it also for all the other instances;
-        #       if d[1] is a mutable object, perhaps fail or create a (shallow)
-        #       copy, e.g. list(d[1]) in case of lists
-        self._variable_defaults.update(dict((d[0], d[1]) for d in defaults))
+        # Since we can't check for immutability reliably, shallow copy the
+        # value. If a mutable value were set and it were changed in one place
+        # it would affect all other instances, since this is typically called
+        # on __init__
+        self._variable_defaults.update(
+            (d[0], copy.copy(d[1])) for d in defaults
+        )
 
     def __getattr__(self, name):
         if name == "_variable_defaults":
