@@ -235,6 +235,7 @@ class Qtile(CommandObject):
             async with LoopContext({
                 signal.SIGTERM: self.stop,
                 signal.SIGINT: self.stop,
+                signal.SIGHUP: self.restart,
             }), ipc.Server(
                 self._prepare_socket_path(self.socket_path),
                 self.server.call,
