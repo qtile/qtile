@@ -148,6 +148,8 @@ class _Window(CommandObject):
         self.icons = {}
         window.set_attribute(eventmask=self._window_mask)
 
+        self._old_geometry = None
+
         self._float_info = {
             'x': None,
             'y': None,
@@ -458,20 +460,6 @@ class _Window(CommandObject):
             space around window as int or list of ints [N E S W]
         """
 
-        # TODO: self.x/y/height/width are updated BEFORE
-        # place is called, so there's no way to know if only
-        # the position is changed, so we are sending
-        # the ConfigureNotify every time place is called
-        #
-        # # if position change and size don't
-        # # send a configure notify. See ICCCM 4.2.3
-        # send_notify = False
-        # if (self.x != x or self.y != y) and \
-        #    (self.width == width and self.height == height):
-        #       send_notify = True
-        # #for now, we just:
-        send_notify = True
-
         # Adjust the placement to account for layout margins, if there are any.
         if margin is not None:
             if isinstance(margin, int):
@@ -486,10 +474,32 @@ class _Window(CommandObject):
             self.float_x = x - self.group.screen.x
             self.float_y = y - self.group.screen.y
 
+        # See ICCCM 4.2.3
+        send_notify = False
+        if (
+            self._old_geometry is not None
+            and (
+                self._old_geometry['x'] != x
+                or self._old_geometry['y'] != y
+            )
+            and (
+                self._old_geometry['width'] == width
+                and self._old_geometry['height'] == height
+            )
+        ):
+            send_notify = True
+
         self.x = x
         self.y = y
         self.width = width
         self.height = height
+
+        self._old_geometry = {
+            'x': x,
+            'y': y,
+            'width': width,
+            'height': height,
+        }
 
         kwarg = dict(
             x=x,
