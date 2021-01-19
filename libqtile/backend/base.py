@@ -5,6 +5,10 @@ from libqtile import config
 
 
 class Core(metaclass=ABCMeta):
+    @abstractmethod
+    def finalize(self):
+        """Destructor/Clean up resources"""
+
     @property
     @abstractmethod
     def display_name(self) -> str:

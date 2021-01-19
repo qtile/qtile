@@ -280,6 +280,8 @@ class Qtile(CommandObject):
                         bar.finalize()
         except:  # noqa: E722
             logger.exception('exception during finalize')
+        finally:
+            self.core.finalize()
 
     def _process_fake_screens(self):
         """
