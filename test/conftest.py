@@ -22,6 +22,8 @@
 # SOFTWARE.
 
 import functools
+import inspect
+import io
 import logging
 import multiprocessing
 import os
@@ -29,7 +31,6 @@ import subprocess
 import sys
 import tempfile
 import time
-import traceback
 
 import pytest
 import xcffib
@@ -42,7 +43,7 @@ from libqtile.backend.x11.core import Core
 from libqtile.confreader import Config
 from libqtile.core.manager import Qtile
 from libqtile.lazy import lazy
-from libqtile.log_utils import init_log
+from libqtile.log_utils import init_log, logger
 from libqtile.resources import default_config
 
 # the default sizes for the Xephyr windows
@@ -101,20 +102,6 @@ def can_connect_x11(disp=':0', *, ok=None):
     conn = xcffib.connect(display=disp)
     conn.disconnect()
     return True
-
-
-@Retry(ignore_exceptions=(ipc.IPCError,), return_on_fail=True)
-def can_connect_qtile(socket_path, *, ok=None):
-    if ok is not None and not ok():
-        raise AssertionError()
-
-    ipc_client = ipc.Client(socket_path)
-    ipc_command = command.interface.IPCCommandInterface(ipc_client)
-    client = command.client.InteractiveCommandClient(ipc_command)
-    val = client.status()
-    if val == 'OK':
-        return True
-    return False
 
 
 def whereis(program):
@@ -260,6 +247,44 @@ class Xephyr:
             pass
 
 
+class WriteToQueue(io.StringIO):
+    def __init__(self, queue):
+        self._queue = queue
+
+    def write(self, s):
+        # This will block forever if the queue is full. Luckily, we constantly
+        # empty the queue in the main process until this process dies.
+        self._queue.put(s)
+
+
+def run_qtile(
+    config=None,
+    queue=None,
+    display=None,
+    log_level=None,
+    socket_path=None,
+    no_spawn=None,
+):
+    sys.stdout = WriteToQueue(queue)
+    sys.stderr = WriteToQueue(queue)
+    init_log(log_level, log_path=None, log_color=False)
+    try:
+        if inspect.isclass(config):
+            config = config()
+
+        Qtile(
+            Core(display_name=display),
+            config,
+            socket_path=socket_path,
+            no_spawn=no_spawn,
+        ).loop()
+    except BaseException:
+        logger.exception('Qtile failed to start')
+    finally:
+        queue.close()
+        queue.join_thread()
+
+
 class TestManager:
     """Spawn a Qtile instance
 
@@ -278,34 +303,37 @@ class TestManager:
         self.testwindows = []
 
     def start(self, config_class, no_spawn=False):
-        rpipe, wpipe = multiprocessing.Pipe()
-
-        def run_qtile():
-            try:
-                kore = Core(display_name=self.display)
-                init_log(self.log_level, log_path=None, log_color=False)
-                Qtile(
-                    kore,
-                    config_class(),
-                    socket_path=self.sockfile,
-                    no_spawn=no_spawn,
-                ).loop()
-            except Exception:
-                wpipe.send(traceback.format_exc())
-
-        self.proc = multiprocessing.Process(target=run_qtile)
+        queue = multiprocessing.Queue()
+        self.proc = multiprocessing.Process(
+            target=run_qtile,
+            kwargs=dict(
+                config=config_class,
+                queue=queue,
+                display=self.display,
+                log_level=self.log_level,
+                socket_path=self.sockfile,
+                no_spawn=no_spawn,
+            ),
+        )
         self.proc.start()
 
         # First, wait for socket to appear
-        if can_connect_qtile(self.sockfile, ok=lambda: not rpipe.poll()):
-            ipc_client = ipc.Client(self.sockfile)
-            ipc_command = command.interface.IPCCommandInterface(ipc_client)
-            self.c = command.client.InteractiveCommandClient(ipc_command)
-            return
-        if rpipe.poll(sleep_time):
-            error = rpipe.recv()
-            raise AssertionError("Error launching qtile, traceback:\n%s" % error)
-        raise AssertionError("Error launching qtile")
+        while self.proc.is_alive():
+            try:
+                ipc_client = ipc.Client(self.sockfile)
+                ipc_command = command.interface.IPCCommandInterface(ipc_client)
+                self.c = command.client.InteractiveCommandClient(ipc_command)
+                val = self.c.status()
+                if val == 'OK':
+                    return
+            except (ipc.IPCError, ConnectionResetError, ConnectionRefusedError):
+                pass
+            finally:
+                # empty log queue into this process' logger
+                while not queue.empty():
+                    logger.warning(f'From Qtile subprocess: {queue.get_nowait()}')
+
+        raise AssertionError("Error launching qtile, see logs")
 
     def create_manager(self, config_class):
         """Create a Qtile manager instance in this thread
