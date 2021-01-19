@@ -698,15 +698,15 @@ class Qtile(CommandObject):
         """
         if e.child:
             wid = e.child
+            window = self.windows_map.get(wid)
 
-            if self.config.bring_front_click:
+            if self.config.bring_front_click and (
+                not self.config.bring_front_click_inhibit_tiled or window.floating
+            ):
                 self.conn.conn.core.ConfigureWindow(
-                    wid,
-                    xcffib.xproto.ConfigWindow.StackMode,
-                    [xcffib.xproto.StackMode.Above]
+                    wid, xcffib.xproto.ConfigWindow.StackMode, [xcffib.xproto.StackMode.Above]
                 )
 
-            window = self.windows_map.get(wid)
             try:
                 if window.group.screen is not self.current_screen:
                     self.focus_screen(window.group.screen.index, warp=False)
