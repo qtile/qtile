@@ -146,6 +146,14 @@ class Core(base.Core):
         self._numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(numlock_code), 0)
         self._valid_mask = ~(self._numlock_mask | xcbq.ModMasks["lock"])
 
+    def finalize(self) -> None:
+        self.conn.conn.core.DeletePropertyChecked(
+            self._root.wid,
+            self.conn.atoms["_NET_SUPPORTING_WM_CHECK"],
+        ).check()
+        self.qtile = None
+        self.conn.finalize()
+
     def get_screen_info(self) -> List[Tuple[int, int, int, int]]:
         """Get the screen information for the current connection"""
         # What's going on here is a little funny. What we really want is only
@@ -199,11 +207,6 @@ class Core(base.Core):
 
     def remove_listener(self) -> None:
         """Remove the listener from the given event loop"""
-        self._remove_listener()
-        self.qtile = None
-        self.conn.finalize()
-
-    def _remove_listener(self) -> None:
         if self.fd is not None:
             logger.debug("Removing io watch")
             loop = asyncio.get_running_loop()
@@ -289,7 +292,7 @@ class Core(base.Core):
                             error_string=error_string, error_code=error_code
                         )
                     )
-                    self._remove_listener()
+                    self.remove_listener()
                     self.qtile.stop()
                     return
                 logger.exception("Got an exception in poll loop")

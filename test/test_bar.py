@@ -331,13 +331,12 @@ class IncompatibleWidgetConf(libqtile.confreader.Config):
 
 
 def test_incompatible_widget(manager_nospawn):
-    config = IncompatibleWidgetConf
-
     # Ensure that adding a widget that doesn't support the orientation of the
     # bar raises ConfigError
+    m = manager_nospawn.create_manager(IncompatibleWidgetConf)
     with pytest.raises(libqtile.confreader.ConfigError):
-        m = manager_nospawn.create_manager(config)
         m._configure()
+    m.core.finalize()
 
 
 def test_basic(manager_nospawn):

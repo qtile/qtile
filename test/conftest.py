@@ -229,13 +229,14 @@ class Xephyr:
         if can_connect_x11(self.display, ok=lambda: self.proc.poll() is None):
             return
 
-        # we wern't able to get a display up
+        # we weren't able to get a display up
         if self.proc.poll() is None:
-            raise AssertionError("Unable to conncet to running Xephyr")
+            raise AssertionError("Unable to connect to running Xephyr")
         else:
-            raise AssertionError("Unable to start Xephyr, quit with return code {:d}".format(
-                self.proc.returncode
-            ))
+            raise AssertionError(
+                "Unable to start Xephyr, quit with return code "
+                f"{self.proc.returncode}"
+            )
 
     def stop_xephyr(self):
         """Stop the Xephyr instance"""
@@ -473,7 +474,7 @@ def xvfb():
         yield
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def xephyr(request, xvfb):
     kwargs = getattr(request, "param", {})
 
