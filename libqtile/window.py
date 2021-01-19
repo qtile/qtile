@@ -25,7 +25,7 @@ import traceback
 import xcffib.xproto
 from xcffib.xproto import EventMask, SetMode, StackMode
 
-from libqtile import hook, utils
+from libqtile import configurable, hook, utils
 from libqtile.command.base import CommandError, CommandObject
 from libqtile.log_utils import logger
 
@@ -136,6 +136,121 @@ def _float_setter(attr):
     def setter(self, value):
         self._float_info[attr] = value
     return setter
+
+
+class WindowTransform(configurable.Configurable):
+    """Transform config to transform a window relative to the screen.
+
+    'x', 'y', 'w' and 'h' can either be absolute values or fractional values
+    relative to the screen.
+    'dx', 'dy', 'dw' and 'dh' can either be absolute values or fractional values
+    relative to the window.
+    'px' and 'py' are pivot points in the window.
+
+    With the above values, we can configure a window to be positioned anywhere
+    in the screen, in a relatively easy way.
+
+    For instance, to move the window to the bottom left of the screen, but have
+    a gap of 50 pixels from left and bottom, we can have the following spec.
+
+        x = 0.0, # Left edge of the screen.
+        y = 1.0, # bottom edge of the screen,
+        w = None, # Don't alter the width.
+        h = None, # Don't alter the height.
+        dx = 10, # 10 pixels towards right.
+        dy = -10, # 10 pixels towards top.
+        dw = None, # Don't alter width
+        dh = None, # Don't alter height
+        px = 0.0, # Do the transformation relative to the left edge of window.
+        py = 1.0, # Do the transformation relative to the bottom edge of window.
+
+    Another example, to place the window, in the upper quadrant of the screen,
+    but with a padding of 50px on all sides.
+
+        x = 0.5, # Middle of the screen.
+        y = 0.0, # Top of the screen.
+        w = 0.5, # Half of screen width.
+        h = 0.5, # Half of screen height.
+        dx = 50, # 50 pixels towards right.
+        dy = 50, # 50 pixels towards bottom.
+        dw = -100, # Take 100 pixels from the width.
+        dh = -100, # Take 100 pixels from the height.
+    """
+    defaults = {
+        ('x',  None, 'X position'),
+        ('y',  None, 'Y position'),
+        ('w',  None, 'Width'),
+        ('h',  None, 'Height'),
+        ('dx', 0, 'Delta X to add to the existing X position'),
+        ('dy', 0, 'Delta Y to add to the existing Y position'),
+        ('dw', 0, 'Delta width to add to the existing width'),
+        ('dh', 0, 'Delta height to add to the existing height'),
+        ('px', 0, 'Pivot x in the window'),
+        ('py', 0, 'Pivot y in the window'),
+    }
+
+    def __init__(self, **config):
+        """
+        Initialize config
+        """
+        configurable.Configurable.__init__(self, **config)
+        self.add_defaults(self.defaults)
+
+    def info(self):
+        return dict(
+            x=self.x,
+            y=self.y,
+            w=self.w,
+            h=self.h,
+            dx=self.dx,
+            dy=self.dy,
+            dw=self.dw,
+            dh=self.dh,
+            px=self.px,
+            py=self.py,
+        )
+
+    def get_transform(self, win, scr):
+        """
+        Get the transform values for the given window and screen.
+        """
+        def get_absolute(fraction, val):
+            if type(fraction) is int:
+                return fraction
+            return int(val * fraction)
+
+        w = self.w if self.w is not None else win.width
+        h = self.h if self.h is not None else win.height
+        w = get_absolute(w, scr.dwidth)
+        h = get_absolute(h, scr.dheight)
+
+        dw = get_absolute(self.dw, w)
+        dh = get_absolute(self.dh, h)
+        w += dw
+        h += dh
+
+        x = self.x if self.x is not None else win.float_x
+        y = self.y if self.y is not None else win.float_y
+        x = get_absolute(x, scr.dwidth)
+        y = get_absolute(y, scr.dheight)
+
+        dx = get_absolute(self.dx, w)
+        dy = get_absolute(self.dy, h)
+        x += dx
+        y += dy
+
+        # Calculate the difference in window size.
+        # If user has set x, we ignore the previous width of the window.
+        diff_w = w if self.x is not None else w - win.width
+        # If user has set y, we ignore the previous height of the window.
+        diff_h = h if self.y is not None else h - win.height
+
+        # When user has specified a pivot, we distribute the delta in width
+        # and height according to the user specified pivot.
+        x = scr.dx + x - int(self.px * diff_w)
+        y = scr.dy + y - int(self.py * diff_h)
+
+        return (x, y, w, h)
 
 
 class _Window(CommandObject):
@@ -1338,6 +1453,49 @@ class Window(_Window):
                   above=False, margin=None):
         self.place(x, y, width, height, borderwidth, bordercolor, above,
                    margin)
+
+    def cmd_transform(self, **kwargs):
+        """Transform a window relative to the screen.
+
+        'x', 'y', 'w' and 'h' can either be absolute values or fractional values
+        relative to the screen.
+        'dx', 'dy', 'dw' and 'dh' can either be absolute values or fractional values
+        relative to the window.
+        'px' and 'py' are pivot points in the window.
+
+        With the above values, we can configure a window to be positioned anywhere
+        in the screen, in a relatively easy way.
+
+        For instance, to move the window to the bottom left of the screen, but have
+        a gap of 50 pixels from left and bottom, we can have the following spec.
+
+            x = 0.0, # Left edge of the screen.
+            y = 1.0, # bottom edge of the screen,
+            w = None, # Don't alter the width.
+            h = None, # Don't alter the height.
+            dx = 10, # 10 pixels towards right.
+            dy = -10, # 10 pixels towards top.
+            dw = None, # Don't alter width
+            dh = None, # Don't alter height
+            px = 0.0, # Do the transformation relative to the left edge of window.
+            py = 1.0, # Do the transformation relative to the bottom edge of window.
+
+        Another example, to place the window, in the upper quadrant of the screen,
+        but with a padding of 50px on all sides.
+
+            x = 0.5, # Middle of the screen.
+            y = 0.0, # Top of the screen.
+            w = 0.5, # Half of screen width.
+            h = 0.5, # Half of screen height.
+            dx = 50, # 50 pixels towards right.
+            dy = 50, # 50 pixels towards bottom.
+            dw = -100, # Take 100 pixels from the width.
+            dh = -100, # Take 100 pixels from the height.
+        """
+        x, y, w, h = WindowTransform(**kwargs).get_transform(
+            self, self.group.screen
+        )
+        self.tweak_float(x=x, y=y, w=w, h=h)
 
     def cmd_get_position(self):
         return self.getposition()

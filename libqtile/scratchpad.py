@@ -19,6 +19,7 @@
 # SOFTWARE.
 
 from libqtile import group, hook, window
+from libqtile.config import Match
 
 
 class WindowVisibilityToggler:
@@ -152,10 +153,9 @@ class DropDownToggler(WindowVisibilityToggler):
     """
     def __init__(self, window, scratchpad_name, ddconfig):
         self.name = ddconfig.name
-        self.x = ddconfig.x
-        self.y = ddconfig.y
-        self.width = ddconfig.width
-        self.height = ddconfig.height
+        self.transform = ddconfig.transform
+        # Let's add the window to the scratchpad group.
+        window.togroup(scratchpad_name)
         window.set_opacity(ddconfig.opacity)
         WindowVisibilityToggler.__init__(
             self, scratchpad_name, window, ddconfig.on_focus_lost_hide, ddconfig.warp_pointer
@@ -164,29 +164,35 @@ class DropDownToggler(WindowVisibilityToggler):
     def info(self):
         info = WindowVisibilityToggler.info(self)
         info.update(dict(name=self.name,
-                         x=self.x,
-                         y=self.y,
-                         width=self.width,
-                         height=self.height))
+                         transform=self.transform.info()))
         return info
 
     def show(self):
         """
-        Like WindowVisibilityToggler.show, but before showing the window,
-        its floating x, y, width and height is set.
+        Like WindowVisibilityToggler.show, but also move the window
+        to the specified position for scratchpad.
         """
         if (not self.visible) or (not self.shown):
             # SET GEOMETRY
             win = self.window
-            screen = win.qtile.current_screen
-            # calculate windows floating position and width/height
-            # these may differ for screens, and thus always recalculated.
-            win.x = int(screen.dx + self.x * screen.dwidth)
-            win.y = int(screen.dy + self.y * screen.dheight)
-            win.float_x = win.x
-            win.float_y = win.y
-            win.width = int(screen.dwidth * self.width)
-            win.height = int(screen.dheight * self.height)
+            current_screen = win.qtile.current_screen
+            group_screen = win.group and win.group.screen
+
+            (x, y, w, h) = self.transform.get_transform(
+                win,
+                current_screen)
+            win.float_x = x
+            win.float_y = y
+            if group_screen:
+                # If the scratchpad is already visible in another screen,
+                # we have to offset the scratchpad to the screen where the
+                # scratchpad is currently visible.
+                x = x + group_screen.x
+                y = y + group_screen.y
+            win.x = x
+            win.y = y
+            win.width = w
+            win.height = h
             # Configure the new geometry
             win._reconfigure_floating()
             # Toggle the dropdown
@@ -204,12 +210,14 @@ class ScratchPad(group._Group):
     The ScratchPad, by default, has no label and thus is not shown in
     GroupBox widget.
     """
-    def __init__(self, name='scratchpad', dropdowns=[], label=''):
+    def __init__(self, name='scratchpad', dropdowns=[], label='', single=False):
         group._Group.__init__(self, name, label=label)
         self._dropdownconfig = {dd.name: dd for dd in dropdowns}
         self.dropdowns = {}
+        # Map from dropdown name to a Match object.
         self._spawned = {}
         self._to_hide = []
+        self._single = single
 
     def _check_unsubscribe(self):
         if not self.dropdowns:
@@ -225,12 +233,12 @@ class ScratchPad(group._Group):
         In case of a match the window gets associated to this DropDown object.
         """
         name = ddconfig.name
-        if name not in self._spawned.values():
+        if name not in self._spawned:
             if not self._spawned:
                 hook.subscribe.client_new(self.on_client_new)
-            cmd = self._dropdownconfig[name].command
-            pid = self.qtile.cmd_spawn(cmd)
-            self._spawned[pid] = name
+
+            pid = self.qtile.cmd_spawn(ddconfig.command)
+            self._spawned[name] = ddconfig.match or Match(net_wm_pid=pid)
 
     def on_client_new(self, client, *args, **kwargs):
         """
@@ -238,13 +246,23 @@ class ScratchPad(group._Group):
         This method is subscribed if the given command is spawned
         and unsubscribed immediately if the associated window is detected.
         """
-        client_pid = client.window.get_net_wm_pid()
-        if client_pid in self._spawned:
-            name = self._spawned.pop(client_pid)
+        name = None
+        for n, match in self._spawned.items():
+            if match.compare(client):
+                name = n
+                break
+
+        if name is not None:
+            self._spawned.pop(name)
             if not self._spawned:
                 hook.unsubscribe.client_new(self.on_client_new)
-            self.dropdowns[name] = DropDownToggler(client, self.name,
-                                                   self._dropdownconfig[name])
+            self.dropdowns[name] = DropDownToggler(
+                client, self.name, self._dropdownconfig[name]
+            )
+            if self._single:
+                for n, d in self.dropdowns.items():
+                    if n != name:
+                        d.hide()
             if name in self._to_hide:
                 self.dropdowns[name].hide()
                 self._to_hide.remove(name)
@@ -285,11 +303,22 @@ class ScratchPad(group._Group):
         """
         Toggle visibility of named DropDown.
         """
+        if self._single:
+            for n, d in self.dropdowns.items():
+                if n != name:
+                    d.hide()
         if name in self.dropdowns:
             self.dropdowns[name].toggle()
         else:
             if name in self._dropdownconfig:
                 self._spawn(self._dropdownconfig[name])
+
+    def cmd_hide_all(self):
+        """
+        Hide all scratchpads.
+        """
+        for d in self.dropdowns.values():
+            d.hide()
 
     def cmd_dropdown_reconfigure(self, name, **kwargs):
         """
@@ -324,8 +353,8 @@ class ScratchPad(group._Group):
         """
         state = []
         for name, dd in self.dropdowns.items():
-            pid = dd.window.window.get_net_wm_pid()
-            state.append((name, pid, dd.visible))
+            client_wid = dd.window.window.wid
+            state.append((name, client_wid, dd.visible))
         return state
 
     def restore_state(self, state):
@@ -334,13 +363,13 @@ class ScratchPad(group._Group):
         Qtile restarts.
         """
         orphans = []
-        for name, pid, visible in state:
+        for name, wid, visible in state:
             if name in self._dropdownconfig:
-                self._spawned[pid] = name
+                self._spawned[name] = Match(wid=wid)
                 if not visible:
                     self._to_hide.append(name)
             else:
-                orphans.append(pid)
+                orphans.append(wid)
         if self._spawned:
             hook.subscribe.client_new(self.on_client_new)
         return orphans

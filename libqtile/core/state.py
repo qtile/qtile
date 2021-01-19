@@ -42,8 +42,6 @@ class QtileState:
         for group in qtile.groups:
             if isinstance(group, ScratchPad):
                 self.scratchpads[group.name] = group.get_state()
-                for dd in group.dropdowns.values():
-                    dd.hide()
             else:
                 self.groups.append((group.name, group.layout.name, group.label))
 
@@ -75,8 +73,8 @@ class QtileState:
                 orphans = group.restore_state(self.scratchpads.pop(group.name))
                 self.orphans.extend(orphans)
         for sp_state in self.scratchpads.values():
-            for _, pid, _ in sp_state:
-                self.orphans.append(pid)
+            for _, wid, _ in sp_state:
+                self.orphans.append(wid)
         if self.orphans:
             hook.subscribe.client_new(self.handle_orphan_dropdowns)
 
@@ -86,9 +84,9 @@ class QtileState:
         """
         Remove any windows from now non-existent scratchpad groups.
         """
-        client_pid = client.window.get_net_wm_pid()
-        if client_pid in self.orphans:
-            self.orphans.remove(client_pid)
+        client_wid = client.window.wid
+        if client_wid in self.orphans:
+            self.orphans.remove(client_wid)
             client.group = None
             if not self.orphans:
                 hook.unsubscribe.client_new(self.handle_orphan_dropdowns)
