@@ -380,6 +380,35 @@ class RandR:
             crtc_list.append(crtc_dict)
         return crtc_list
 
+    def find_dpi(self, root):
+        res = self.ext.GetScreenResources(root).reply()
+        width_px = 0
+        height_px = 0
+        width_mm = 0
+        height_mm = 0
+
+        for crtc in res.crtcs:
+            info = self.ext.GetCrtcInfo(crtc, xcffib.CurrentTime).reply()
+            width_px += info.width
+            height_px += info.height
+
+        for output in res.outputs:
+            info = self.ext.GetOutputInfo(output, xcffib.CurrentTime).reply()
+            width_mm += info.mm_width
+            height_mm += info.mm_height
+
+        # It's possible that xrandr isn't present (super old X server, but more
+        # likely in Xephyr, where sometimes we don't load it). In this case, we
+        # won't see any crtcs, so we can't really figure out what the DPI is.
+        # So let's just return the universal default.
+        if width_mm == 0:
+            return 96
+
+        widthDPI = width_px * 25.4 / width_mm
+        heightDPI = height_px * 25.4 / height_mm
+
+        return (widthDPI + heightDPI) / 2.0
+
 
 class XFixes:
     selection_mask = SelectionEventMask.SetSelectionOwner | \
@@ -640,7 +669,8 @@ class Window:
             self.wid, mask, values
         )
 
-    def set_property(self, name, value, type=None, format=None):
+    def set_property(self, name, value, type=None, format=None,
+                     mode=xcffib.xproto.PropMode.Replace):
         """
         Parameters
         ==========
@@ -677,7 +707,7 @@ class Window:
 
         try:
             self.conn.conn.core.ChangePropertyChecked(
-                xcffib.xproto.PropMode.Replace,
+                mode,
                 self.wid,
                 self.conn.atoms[name],
                 self.conn.atoms[type],

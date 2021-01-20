@@ -84,7 +84,7 @@ ALIGNMENTS = {
 class PangoLayout:
     def __init__(self, cairo_t):
         self._cairo_t = cairo_t
-        self._pointer = pangocairo.pango_cairo_create_layout(cairo_t)
+        self._pointer = pangocairo.pango_cairo_create_layout(cairo_t._pointer)
 
         def free(p):
             p = ffi.cast("gpointer", p)
@@ -136,6 +136,8 @@ class PangoLayout:
     def set_width(self, width):
         pango.pango_layout_set_width(self._pointer, width)
 
+    def show(self):
+        pangocairo.pango_cairo_show_layout(self._cairo_t._pointer, self._pointer)
 
 class FontDescription:
     def __init__(self, pointer=None):
@@ -185,3 +187,10 @@ def parse_markup(value, accel_marker=0):
 def markup_escape_text(text):
     ret = gobject.g_markup_escape_text(text.encode('utf-8'), -1)
     return ffi.string(ret).decode()
+
+
+def set_default_dpi(dpi):
+    # Note: this is per-thread. However, we're single threaded, so it's fine.
+    m = pangocairo.pango_cairo_font_map_get_default()
+    pangocairo.pango_cairo_font_map_set_resolution(m, float(dpi))
+    pangocairo.pango_cairo_font_map_set_default(m)

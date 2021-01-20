@@ -36,6 +36,7 @@ import xcffib.xinerama
 import xcffib.xproto
 
 import libqtile
+import pangocffi
 from libqtile import confreader, hook, ipc, utils, window
 from libqtile.backend.x11 import xcbq
 from libqtile.command import interface
@@ -97,6 +98,7 @@ class Qtile(CommandObject):
 
         self.server = IPCCommandServer(self)
         self.config = config
+        self.configure_dpi()
         self.load_config()
 
     def load_config(self):
@@ -265,6 +267,25 @@ class Qtile(CommandObject):
         logger.debug('Stopping qtile')
         if self._stopped_event is not None:
             self._stopped_event.set()
+
+    def configure_dpi(self):
+        # don't set the dpi if it's already been set.
+        resources = self.root.get_property("RESOURCE_MANAGER", type="STRING", unpack=str)
+        if resources:
+            for r in resources.split("\n"):
+                if r.lower().startswith("xft.dpi"):
+                    return
+
+        # For whatever reason, self.conn.default_screen.width_in_millimeters is
+        # basically just wrong most of the time. Instead, we query xrandr and
+        # add up each of the outputs individually.
+        dpi = self.conn.randr.find_dpi(self.root.wid)
+        dpi = dpi * getattr(self.config, "dpi_scale", 1)
+
+        self.root.set_property("RESOURCE_MANAGER", "Xft.dpi: %d\n" % dpi,
+                               type="STRING", format=8,
+                               mode=xcffib.xproto.PropMode.Append)
+        pangocffi.set_default_dpi(dpi)
 
     def finalize(self):
         try:

@@ -24,4 +24,7 @@ pip install -r requirements-dev.txt
 echo ""
 echo "  * Created virtualenv environment in ./venv."
 echo "  * Installed all dependencies into the virtualenv."
+echo "  * Build needed binaries using ./scriptsffibuild. (NOTE you might need to install libpulse-dev)"
 echo "  * You can now activate the $(python3 --version) virtualenv with this command: \`. venv/bin/activate\`"
+echo "  * run tests using pytest test/"
+
