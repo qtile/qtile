@@ -30,12 +30,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import collections
+import enum
 import math
 
 import cairocffi
 import xcffib.xproto
 
 from libqtile import pangocffi, utils
+
+# Drawing Modes:
+# TEST: Go through the motions but do not send anything to X. Good for
+#       non-graphical tests.
+# DIRECT: Draw directly from RecordingSurface to window. Good for anything that
+#       has it's content change between every draw.
+# PM_COPY: Draw to pixmap and copy area to window. Good for pretty much
+#       everything else.
+DrawingMode = enum.Enum('DrawingMode', 'TEST DIRECT PM_COPY')
 
 
 class TextLayout:
@@ -215,12 +225,16 @@ class Drawer:
     surface and pixmap and recreate them when we need them again with the new
     geometry.
     """
-    def __init__(self, qtile, wid, width, height):
+    # Default drawing mode
+    MODE = DrawingMode.PM_COPY
+
+    def __init__(self, qtile, wid, width, height, mode=None):
         self.qtile = qtile
         self.wid, self._width, self._height = wid, width, height
         self._surface = None
         self._pixmap = None
         self._gc = None
+        self.mode = self.MODE if mode is None else mode
 
         self.surface = None
         self.ctx = None
@@ -265,7 +279,7 @@ class Drawer:
     def _create_xcb_surface(self):
         surface = cairocffi.XCBSurface(
             self.qtile.conn.conn,
-            self._pixmap,
+            self.wid if self.mode is DrawingMode.DIRECT else self._pixmap,
             self.find_root_visual(),
             self.width,
             self.height,
@@ -287,6 +301,8 @@ class Drawer:
         self.ctx = self.new_ctx()
 
     def _create_pixmap(self):
+        if self.mode is not DrawingMode.PM_COPY:
+            return None
         pixmap = self.qtile.conn.conn.generate_id()
         self.qtile.conn.conn.core.CreatePixmap(
             self.qtile.conn.default_screen.root_depth,
@@ -370,7 +386,7 @@ class Drawer:
         self.ctx.fill()
         self.ctx.stroke()
 
-    def _paint(self):
+    def _paint(self, offsetx=0, offsety=0, width=0, height=0):
         # Only attempt to run RecordingSurface's operations if it actually has
         # some. self.surface.ink_extents() computes the bounds of the current
         # list of operations. If any of the bounds are not 0.0 then the surface
@@ -378,7 +394,24 @@ class Drawer:
         if any(not math.isclose(0.0, i) for i in self.surface.ink_extents()):
             # Paint RecordingSurface operations to the XCBSurface
             ctx = cairocffi.Context(self._surface)
-            ctx.set_source_surface(self.surface, 0, 0)
+            # If drawing mode is direct, we need to ensure the drawing surface
+            # doesn't escape the widget's drawing area so we clip the context
+            # to the widget exactly before we draw the recordingsurface's
+            # contents.
+            if self.mode is DrawingMode.DIRECT:
+                # clip drawing area to width/height
+                ctx.reset_clip()
+                ctx.new_sub_path()
+                ctx.rectangle(offsetx, offsety, width, height)
+                ctx.close_path()
+                ctx.clip()
+
+                ctx.set_source_surface(self.surface, offsetx, offsety)
+            else:
+                # If we're not drawing direct, the surface will be copied into
+                # the correct position so use 0, 0 for offset
+                ctx.set_source_surface(self.surface, 0, 0)
+
             ctx.paint()
 
             # Clear RecordingSurface of operations
@@ -398,6 +431,10 @@ class Drawer:
         height :
             the Y portion of the canvas to draw at the starting point.
         """
+        # If we're testing, we don't need to actually send the Drawer's
+        # contents to X
+        if self.mode is DrawingMode.TEST:
+            return
         # If this is our first draw, create the gc
         if self._gc is None:
             self._gc = self._create_gc()
@@ -408,18 +445,25 @@ class Drawer:
             self._surface = self._create_xcb_surface()
 
         # paint stored operations(if any) to XCBSurface
-        self._paint()
-
-        # Finally, copy XCBSurface's underlying pixmap to the window.
-        self.qtile.conn.conn.core.CopyArea(
-            self._pixmap,
-            self.wid,
-            self._gc,
-            0, 0,  # srcx, srcy
-            offsetx, offsety,  # dstx, dsty
+        self._paint(
+            offsetx,
+            offsety,
             self.width if width is None else width,
-            self.height if height is None else height
+            self.height if height is None else height,
         )
+
+        # We only need to copy if we're not doing direct drawing
+        if self.mode is DrawingMode.PM_COPY:
+            # Finally, copy XCBSurface's underlying pixmap to the window.
+            self.qtile.conn.conn.core.CopyArea(
+                self._pixmap,
+                self.wid,
+                self._gc,
+                0, 0,  # srcx, srcy
+                offsetx, offsety,  # dstx, dsty
+                self.width if width is None else width,
+                self.height if height is None else height
+            )
 
     def find_root_visual(self):
         for i in self.qtile.conn.default_screen.allowed_depths:

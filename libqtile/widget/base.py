@@ -114,6 +114,7 @@ class _Widget(CommandObject, configurable.Configurable):
     offsety = None
     defaults = [
         ("background", None, "Widget background color"),
+        ("drawing_mode", drawer.DrawingMode.PM_COPY, "Drawing Method"),
         ("mouse_callbacks", {}, "Dict of mouse button press callback functions."),
     ]  # type: List[Tuple[str, Any, str]]
 
@@ -197,7 +198,8 @@ class _Widget(CommandObject, configurable.Configurable):
             qtile,
             self.win.wid,
             self.bar.width,
-            self.bar.height
+            self.bar.height,
+            mode=self.drawing_mode,
         )
         if not self.configured:
             self.configured = True

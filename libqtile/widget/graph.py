@@ -38,6 +38,7 @@ from os import statvfs
 import cairocffi
 import psutil
 
+from libqtile import drawer
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
@@ -67,8 +68,13 @@ class _Graph(base._Widget):
         ("start_pos", "bottom", "Drawer starting position ('bottom'/'top')"),
     ]
 
-    def __init__(self, width=100, **config):
-        base._Widget.__init__(self, width, **config)
+    def __init__(
+        self,
+        width=100,
+        drawing_mode=drawer.DrawingMode.DIRECT,
+        **config
+    ):
+        base._Widget.__init__(self, width, drawing_mode=drawing_mode, **config)
         self.add_defaults(_Graph.defaults)
         self.values = [0] * self.samples
         self.maxvalue = 0
