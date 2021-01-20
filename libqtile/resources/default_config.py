@@ -161,8 +161,6 @@ dgroups_app_rules = []  # type: List
 main = None  # WARNING: this is deprecated and will be removed soon
 follow_mouse_focus = True
 bring_front_click = False
-# Clicks won't alter the stack order of tiled windows.
-bring_front_click_inhibit_tiled = False
 cursor_warp = False
 floating_layout = layout.Floating(float_rules=[
     # Run the utility of `xprop` to see the wm class and name of an X client.

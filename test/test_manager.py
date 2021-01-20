@@ -30,6 +30,7 @@ import logging
 
 import pytest
 import xcffib.xproto
+import xcffib.xtest
 
 import libqtile.bar
 import libqtile.config
@@ -1426,3 +1427,79 @@ def test_strut_handling(manager):
         conn.finalize()
 
     test_initial_state()
+
+
+class BringFrontClickConfig(ManagerConfig):
+    bring_front_click = True
+
+
+class BringFrontClickFloatingOnlyConfig(ManagerConfig):
+    bring_front_click = "floating_only"
+
+
+@pytest.fixture
+def bring_front_click(request):
+    return request.param
+
+
+@pytest.mark.parametrize(
+    "manager, bring_front_click",
+    [
+        (ManagerConfig, False),
+        (BringFrontClickConfig, True),
+        (BringFrontClickFloatingOnlyConfig, "floating_only"),
+    ],
+    indirect=True,
+)
+def test_bring_front_click(manager, bring_front_click):
+    def get_all_windows(conn):
+        root = conn.default_screen.root.wid
+        q = conn.conn.core.QueryTree(root).reply()
+        return list(q.children)
+
+    def fake_click(conn, xtest, x, y):
+        root = conn.default_screen.root.wid
+        xtest.FakeInput(6, 0, xcffib.xproto.Time.CurrentTime, root, x, y, 0)
+        xtest.FakeInput(4, 1, xcffib.xproto.Time.CurrentTime, root, 0, 0, 0)
+        xtest.FakeInput(5, 1, xcffib.xproto.Time.CurrentTime, root, 0, 0, 0)
+        conn.conn.flush()
+
+    conn = xcbq.Connection(manager.display)
+    xtest = conn.conn(xcffib.xtest.key)
+
+    # this is a tiled window.
+    manager.test_window("one")
+
+    manager.test_window("two")
+    manager.c.window.set_position_floating(50, 50)
+    manager.c.window.set_size_floating(50, 50)
+
+    manager.test_window("three")
+    manager.c.window.set_position_floating(150, 50)
+    manager.c.window.set_size_floating(50, 50)
+    manager.c.sync()
+
+    wids = [x["id"] for x in manager.c.windows()]
+
+    wins = get_all_windows(conn)
+    assert wins.index(wids[2]) < wins.index(wids[1]) < wins.index(wids[0])
+
+    # Click on window two
+    fake_click(conn, xtest, 55, 55)
+    manager.c.sync()
+    wins = get_all_windows(conn)
+    if bring_front_click:
+        assert wins.index(wids[2]) < wins.index(wids[0]) < wins.index(wids[1])
+    else:
+        assert wins.index(wids[2]) < wins.index(wids[1]) < wins.index(wids[0])
+
+    # Click on window one
+    fake_click(conn, xtest, 10, 10)
+    manager.c.sync()
+    wins = get_all_windows(conn)
+    if bring_front_click == "floating_only":
+        assert wins.index(wids[2]) < wins.index(wids[0]) < wins.index(wids[1])
+    elif bring_front_click:
+        assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])
+    else:
+        assert wins.index(wids[2]) < wins.index(wids[1]) < wins.index(wids[0])

@@ -112,7 +112,8 @@ configuration variables that control specific aspects of Qtile's behavior:
         fullscreen if you ask them to be.
     * - bring_front_click
       - False
-      - When clicked, should the window be brought to the front or not. (This
+      - When clicked, should the window be brought to the front or not. If this
+        is set to "floating_only", only floating windows will get affected (This
         sets the X Stack Mode to Above.)
     * - cursor_warp
       - False
