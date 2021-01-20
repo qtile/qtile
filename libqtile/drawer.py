@@ -227,6 +227,7 @@ class Drawer:
     """
     # Default drawing mode
     MODE = DrawingMode.PM_COPY
+    FORCE_MODE = False
 
     def __init__(self, qtile, wid, width, height, mode=None):
         self.qtile = qtile
@@ -234,7 +235,7 @@ class Drawer:
         self._surface = None
         self._pixmap = None
         self._gc = None
-        self.mode = self.MODE if mode is None else mode
+        self.mode = self.MODE if mode is None or self.FORCE_MODE else mode
 
         self.surface = None
         self.ctx = None

@@ -37,7 +37,7 @@ import xcffib.testing
 import xcffib.xproto
 
 import libqtile.config
-from libqtile import command, ipc
+from libqtile import command, drawer, ipc
 from libqtile.backend.x11.core import Core
 from libqtile.confreader import Config
 from libqtile.core.manager import Qtile
@@ -461,6 +461,16 @@ class TestManager:
                 assert screens[scrn]["group"] == g["name"]
         assert len(seen) == len(screens), "Not all screens \
         had an attached group."
+
+
+@pytest.fixture(scope="session", autouse=True)
+def drawer_test_mode():
+    oldmode = drawer.Drawer.MODE
+    drawer.Drawer.MODE = drawer.DrawingMode.TEST
+    drawer.Drawer.FORCE_MODE = True
+    yield
+    drawer.Drawer.MODE = oldmode
+    drawer.Drawer.FORCE_MODE = False
 
 
 @pytest.fixture(scope="session")
