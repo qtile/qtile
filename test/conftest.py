@@ -168,7 +168,8 @@ class Xephyr:
                  two_screens=True,
                  width=WIDTH,
                  height=HEIGHT,
-                 xoffset=None):
+                 xoffset=None,
+                 dpi=75):
         self.xinerama = xinerama
         self.randr = randr
         self.two_screens = two_screens
@@ -179,6 +180,7 @@ class Xephyr:
             self.xoffset = width
         else:
             self.xoffset = xoffset
+        self.dpi = str(dpi)
 
         self.proc = None  # Handle to Xephyr instance, subprocess.Popen object
         self.display = None
@@ -215,6 +217,8 @@ class Xephyr:
             "-ac",
             "-screen",
             "{}x{}".format(self.width, self.height),
+            "-dpi",
+            self.dpi,
         ]
         if self.two_screens:
             args.extend(["-origin", "%s,0" % self.xoffset, "-screen",
