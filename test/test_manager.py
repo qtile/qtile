@@ -45,6 +45,7 @@ from libqtile.command.interface import CommandError, CommandException
 from libqtile.config import Match
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
+from test import conftest
 from test.conftest import BareConfig, Retry, no_xinerama
 
 
@@ -1503,3 +1504,61 @@ def test_bring_front_click(manager, bring_front_click):
         assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])
     else:
         assert wins.index(wids[2]) < wins.index(wids[1]) < wins.index(wids[0])
+
+
+class CursorWarpConfig(ManagerConfig):
+    cursor_warp = "floating_only"
+    screens = [
+        libqtile.config.Screen(
+            bottom=libqtile.bar.Bar(
+                [
+                    libqtile.widget.GroupBox(),
+                ],
+                20,
+            ),
+        ),
+        libqtile.config.Screen(
+            bottom=libqtile.bar.Bar(
+                [
+                    libqtile.widget.GroupBox(),
+                ],
+                20,
+            ),
+        ),
+    ]
+
+
+@pytest.mark.parametrize(
+    "manager",
+    [CursorWarpConfig],
+    indirect=True,
+)
+def test_cursor_warp(manager):
+    conn = xcbq.Connection(manager.display)
+    root = conn.default_screen.root.wid
+
+    assert manager.c.screen.info()["index"] == 0
+
+    manager.test_window("one")
+    manager.c.window.set_position_floating(50, 50)
+    manager.c.window.set_size_floating(50, 50)
+
+    manager.c.to_screen(1)
+    assert manager.c.screen.info()["index"] == 1
+
+    p = conn.conn.core.QueryPointer(root).reply()
+    # Here pointer should warp to the second screen as there are no windows
+    # there.
+    assert p.root_x == conftest.WIDTH + conftest.SECOND_WIDTH // 2
+    # Reduce the bar height from the screen height.
+    assert p.root_y == (conftest.SECOND_HEIGHT - 20) // 2
+
+    manager.c.to_screen(0)
+    assert manager.c.window.info()["name"] == "one"
+
+    p = conn.conn.core.QueryPointer(manager.c.window.info()["id"]).reply()
+
+    # Here pointer should warp to the window.
+    assert p.win_x == 25
+    assert p.win_y == 25
+    assert p.same_screen
