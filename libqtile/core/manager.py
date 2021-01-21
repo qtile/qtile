@@ -803,6 +803,13 @@ class Qtile(CommandObject):
                             "Mouse command error %s: %s" % (i.name, val)
                         )
 
+    def warp_to_screen(self):
+        if self.current_screen:
+            scr = self.current_screen
+            self.root.warp_pointer(scr.x + scr.dwidth // 2, scr.y + scr.dheight // 2)
+            self.root.set_input_focus()
+            self.root.set_property("_NET_ACTIVE_WINDOW", self.root.wid)
+
     def focus_screen(self, n, warp=True):
         """Have Qtile move to screen and put focus there"""
         if n >= len(self.screens):
@@ -814,6 +821,8 @@ class Qtile(CommandObject):
             hook.fire("setgroup")
             old.group.layout_all()
             self.current_group.focus(self.current_window, warp)
+            if self.current_window is None and warp:
+                self.warp_to_screen()
 
     def move_to_group(self, group):
         """Create a group if it doesn't exist and move

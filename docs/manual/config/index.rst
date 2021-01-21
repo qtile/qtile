@@ -118,7 +118,9 @@ configuration variables that control specific aspects of Qtile's behavior:
     * - cursor_warp
       - False
       - If true, the cursor follows the focus as directed by the keyboard,
-        warping to the center of the focused window.
+        warping to the center of the focused window. When switching focus between
+        screens, If there are no windows in the screen, the cursor will warp to
+        the center of the screen.
     * - dgroups_key_binder
       - None
       - A function which generates group binding hotkeys. It takes a single
