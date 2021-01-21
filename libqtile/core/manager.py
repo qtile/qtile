@@ -701,7 +701,7 @@ class Qtile(CommandObject):
             window = self.windows_map.get(wid)
 
             if self.config.bring_front_click and (
-                self.config.bring_front_click != "floating_only" or window.floating
+                self.config.bring_front_click != "floating_only" or getattr(window, "floating", False)
             ):
                 self.conn.conn.core.ConfigureWindow(
                     wid, xcffib.xproto.ConfigWindow.StackMode, [xcffib.xproto.StackMode.Above]
