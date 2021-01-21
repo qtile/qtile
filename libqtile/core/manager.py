@@ -276,13 +276,15 @@ class Qtile(CommandObject):
                 if r.lower().startswith("xft.dpi"):
                     return
 
-        # For whatever reason, self.conn.default_screen.width_in_millimeters is
-        # basically just wrong most of the time. Instead, we query xrandr and
-        # add up each of the outputs individually.
-        dpi = self.conn.randr.find_dpi(self.root.wid)
-        dpi = dpi * getattr(self.config, "dpi_scale", 1)
+        dpi = os.environ.get("QTILE_DPI", None)
+        if dpi is None:
+            # For whatever reason, self.conn.default_screen.width_in_millimeters is
+            # basically just wrong most of the time. Instead, we query xrandr and
+            # add up each of the outputs individually.
+            dpi = self.conn.randr.find_dpi(self.root.wid)
+            dpi = dpi * getattr(self.config, "dpi_scale", 1)
 
-        self.root.set_property("RESOURCE_MANAGER", "Xft.dpi: %d\n" % dpi,
+        self.root.set_property("RESOURCE_MANAGER", "Xft.dpi: %d\n" % float(dpi),
                                type="STRING", format=8,
                                mode=xcffib.xproto.PropMode.Append)
         pangocffi.set_default_dpi(dpi)
