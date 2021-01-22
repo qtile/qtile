@@ -25,12 +25,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
-
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
+from test.conftest import with_config
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
@@ -53,11 +51,7 @@ class TileConfig(Config):
     follow_mouse_focus = False
 
 
-def tile_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [TileConfig], indirect=True)(x))
-
-
-@tile_config
+@with_config(TileConfig, xinerama=False)
 def test_tile_updown(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -69,7 +63,7 @@ def test_tile_updown(manager):
     assert manager.c.layout.info()["clients"] == ["three", "two", "one"]
 
 
-@tile_config
+@with_config(TileConfig, xinerama=False)
 def test_tile_nextprev(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -93,7 +87,7 @@ def test_tile_nextprev(manager):
     assert manager.c.groups()["a"]["focus"] == "one"
 
 
-@tile_config
+@with_config(TileConfig, xinerama=False)
 def test_tile_master_and_slave(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -107,7 +101,7 @@ def test_tile_master_and_slave(manager):
     assert manager.c.layout.info()["slave"] == ["one"]
 
 
-@tile_config
+@with_config(TileConfig, xinerama=False)
 def test_tile_remove(manager):
     one = manager.test_window("one")
     manager.test_window("two")
@@ -120,7 +114,7 @@ def test_tile_remove(manager):
     assert manager.c.layout.info()["master"] == ["two"]
 
 
-@tile_config
+@with_config(TileConfig, xinerama=False)
 def test_tile_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
     manager.test_window("one")

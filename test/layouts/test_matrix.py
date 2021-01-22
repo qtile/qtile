@@ -25,12 +25,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
-
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
+from test.conftest import with_config
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
@@ -51,11 +49,7 @@ class MatrixConfig(Config):
     screens = []
 
 
-def matrix_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MatrixConfig], indirect=True)(x))
-
-
-@matrix_config
+@with_config(MatrixConfig, xinerama=False)
 def test_matrix_simple(manager):
     manager.test_window("one")
     assert manager.c.layout.info()["rows"] == [["one"]]
@@ -65,7 +59,7 @@ def test_matrix_simple(manager):
     assert manager.c.layout.info()["rows"] == [["one", "two"], ["three"]]
 
 
-@matrix_config
+@with_config(MatrixConfig, xinerama=False)
 def test_matrix_navigation(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -90,7 +84,7 @@ def test_matrix_navigation(manager):
     assert manager.c.layout.info()["current_window"] == (0, 1)
 
 
-@matrix_config
+@with_config(MatrixConfig, xinerama=False)
 def test_matrix_add_remove_columns(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -103,7 +97,7 @@ def test_matrix_add_remove_columns(manager):
     assert manager.c.layout.info()["rows"] == [["one", "two"], ["three", "four"], ["five"]]
 
 
-@matrix_config
+@with_config(MatrixConfig, xinerama=False)
 def test_matrix_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
     manager.test_window("one")
@@ -123,11 +117,11 @@ def test_matrix_window_focus_cycle(manager):
     assert_focus_path(manager, 'float1', 'float2', 'one', 'two', 'three')
 
 
-@matrix_config
+@with_config(MatrixConfig, xinerama=False)
 def test_matrix_next_no_clients(manager):
     manager.c.layout.next()
 
 
-@matrix_config
+@with_config(MatrixConfig, xinerama=False)
 def test_matrix_previous_no_clients(manager):
     manager.c.layout.previous()

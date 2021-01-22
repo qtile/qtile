@@ -19,14 +19,10 @@
 # SOFTWARE.
 
 
-import pytest
-
 from libqtile.backend.x11 import xcbq
 from libqtile.popup import Popup
-from test.conftest import BareConfig
 
 
-@pytest.mark.parametrize("manager", [BareConfig], indirect=True)
 def test_popup_focus(manager):
     manager.test_xeyes()
     manager.windows_map = {}

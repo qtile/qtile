@@ -25,12 +25,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
-
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
+from test.conftest import with_config
 from test.layouts.layout_utils import (
     assert_dimensions,
     assert_focus_path,
@@ -52,11 +50,7 @@ class ZoomyConfig(Config):
     screens = []
 
 
-def zoomy_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [ZoomyConfig], indirect=True)(x))
-
-
-@zoomy_config
+@with_config(ZoomyConfig, xinerama=False)
 def test_zoomy_one(manager):
     manager.test_window('one')
     assert_dimensions(manager, 0, 0, 600, 600)
@@ -68,7 +62,7 @@ def test_zoomy_one(manager):
     # TODO(pc) find a way to check size of inactive windows
 
 
-@zoomy_config
+@with_config(ZoomyConfig, xinerama=False)
 def test_zoomy_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
     manager.test_window("one")

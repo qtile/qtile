@@ -1,9 +1,6 @@
-import pytest
-
 from libqtile.backend.x11 import xcbq
 from libqtile.bar import Bar
 from libqtile.widget import TextBox, WidgetBox
-from test.conftest import BareConfig
 
 
 def no_op(*args, **kwargs):
@@ -17,10 +14,6 @@ class FakeWindow:
     window = _NestedWindow()
 
 
-widget_config = pytest.mark.parametrize("manager", [BareConfig], indirect=True)
-
-
-@widget_config
 def test_widgetbox_widget(manager):
     manager.conn = xcbq.Connection(manager.display)
 

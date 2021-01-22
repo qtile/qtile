@@ -302,15 +302,17 @@ class TestManager:
         self.display = display
         self.log_level = logging.DEBUG if debug_log else logging.INFO
         self.proc = None
+        self.config = None
         self.c = None
         self.testwindows = []
 
     def start(self, config_class, no_spawn=False):
-        queue = multiprocessing.Queue()
-        self.proc = multiprocessing.Process(
+        self.config = config_class
+        queue = multiprocess.Queue()
+        self.proc = multiprocess.Process(
             target=run_qtile,
             kwargs=dict(
-                config=config_class,
+                config=self.config,
                 queue=queue,
                 display=self.display,
                 log_level=self.log_level,
@@ -519,33 +521,50 @@ def xephyr(request, xvfb):
 
 
 @pytest.fixture(scope="function")
-def manager(request, xephyr):
-    config = getattr(request, "param", BareConfig)
-
-    for attr in dir(default_config):
-        if not hasattr(config, attr):
-            setattr(config, attr, getattr(default_config, attr))
-
-    with tempfile.NamedTemporaryFile() as f:
-        sockfile = f.name
+def manager_nospawn(request, xephyr):
+    with tempfile.NamedTemporaryFile() as socket_file:
+        socket_path = socket_file.name
         try:
-            manager = TestManager(sockfile, xephyr.display, request.config.getoption("--debuglog"))
-            manager.start(config)
-
+            manager = TestManager(
+                socket_path,
+                xephyr.display,
+                request.config.getoption("--debuglog"),
+            )
             yield manager
         finally:
             manager.terminate()
 
 
 @pytest.fixture(scope="function")
-def manager_nospawn(request, xephyr):
-    with tempfile.NamedTemporaryFile() as f:
-        sockfile = f.name
-        try:
-            manager = TestManager(sockfile, xephyr.display, request.config.getoption("--debuglog"))
-            yield manager
-        finally:
-            manager.terminate()
+def manager(request, manager_nospawn):
+    config = getattr(request, "param", BareConfig)
+
+    for attr in dir(default_config):
+        if not hasattr(config, attr):
+            setattr(config, attr, getattr(default_config, attr))
+
+    manager_nospawn.start(config)
+    yield manager_nospawn
 
 
-no_xinerama = pytest.mark.parametrize("xephyr", [{"xinerama": False}], indirect=True)
+def with_xinerama(*values):
+    return pytest.mark.parametrize(
+        "xephyr",
+        [{"xinerama": value} for value in values],
+        indirect=True,
+    )
+
+
+def with_config(*conf, xinerama=None):
+    if xinerama is not None and isinstance(xinerama, bool):
+        xinerama = (xinerama,)
+
+    def wrapper(f):
+        if xinerama is not None:
+            f = with_xinerama(*xinerama)
+        return pytest.mark.parametrize(
+            "manager",
+            [*conf],
+            indirect=True,
+        )(f)
+    return wrapper

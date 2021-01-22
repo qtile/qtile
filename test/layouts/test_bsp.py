@@ -17,12 +17,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
-
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
+from test.conftest import with_config
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
@@ -44,13 +42,10 @@ class BspConfig(Config):
     follow_mouse_focus = False
 
 
-def bsp_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [BspConfig], indirect=True)(x))
-
 # This currently only tests the window focus cycle
 
 
-@bsp_config
+@with_config(BspConfig, xinerama=False)
 def test_bsp_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
     manager.test_window("one")

@@ -20,13 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
-
 from libqtile import config, ipc, resources
 from libqtile.command.interface import IPCCommandInterface
 from libqtile.confreader import Config
 from libqtile.layout import Max
 from libqtile.sh import QSh
+from test.conftest import with_config
 
 
 class ShConfig(Config):
@@ -45,10 +44,7 @@ class ShConfig(Config):
     ]
 
 
-sh_config = pytest.mark.parametrize("manager", [ShConfig], indirect=True)
-
-
-@sh_config
+@with_config(ShConfig)
 def test_columnize(manager):
     client = ipc.Client(manager.sockfile)
     command = IPCCommandInterface(client)
@@ -63,7 +59,7 @@ def test_columnize(manager):
     assert v == 'one    two  \nthree  four \nfive '
 
 
-@sh_config
+@with_config(ShConfig)
 def test_ls(manager):
     client = ipc.Client(manager.sockfile)
     command = IPCCommandInterface(client)
@@ -76,7 +72,7 @@ def test_ls(manager):
     assert sh.do_ls("screen") == "layout/  window/  bar/   "
 
 
-@sh_config
+@with_config(ShConfig)
 def test_do_cd(manager):
     client = ipc.Client(manager.sockfile)
     command = IPCCommandInterface(client)
@@ -88,7 +84,7 @@ def test_do_cd(manager):
     assert sh.do_cd("0/wibble") == 'No such path.'
 
 
-@sh_config
+@with_config(ShConfig)
 def test_call(manager):
     client = ipc.Client(manager.sockfile)
     command = IPCCommandInterface(client)
@@ -105,7 +101,7 @@ def test_call(manager):
     assert v.startswith("Command exception")
 
 
-@sh_config
+@with_config(ShConfig)
 def test_complete(manager):
     client = ipc.Client(manager.sockfile)
     command = IPCCommandInterface(client)
@@ -123,7 +119,7 @@ def test_complete(manager):
     assert sh._complete("cd layout/", "layout/g") == ["layout/group/"]
 
 
-@sh_config
+@with_config(ShConfig)
 def test_help(manager):
     client = ipc.Client(manager.sockfile)
     command = IPCCommandInterface(client)

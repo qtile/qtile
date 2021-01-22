@@ -45,8 +45,14 @@ from libqtile.command.interface import CommandError, CommandException
 from libqtile.config import Match
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
-from test import conftest
-from test.conftest import BareConfig, Retry, no_xinerama
+from test.conftest import (
+    SECOND_HEIGHT,
+    SECOND_WIDTH,
+    WIDTH,
+    BareConfig,
+    Retry,
+    with_config,
+)
 
 
 class ManagerConfig(Config):
@@ -93,10 +99,7 @@ class ManagerConfig(Config):
     follow_mouse_focus = True
 
 
-manager_config = pytest.mark.parametrize("manager", [ManagerConfig], indirect=True)
-
-
-@manager_config
+@with_config(ManagerConfig)
 def test_screen_dim(manager):
     manager.test_xclock()
     assert manager.c.screen.info()["index"] == 0
@@ -122,7 +125,7 @@ def test_screen_dim(manager):
 
 
 @pytest.mark.parametrize("xephyr", [{"xoffset": 0}], indirect=True)
-@manager_config
+@with_config(ManagerConfig)
 def test_clone_dim(manager):
     manager.test_xclock()
     assert manager.c.screen.info()["index"] == 0
@@ -134,7 +137,7 @@ def test_clone_dim(manager):
     assert len(manager.c.screens()) == 1
 
 
-@manager_config
+@with_config(ManagerConfig)
 def test_to_screen(manager):
     assert manager.c.screen.info()["index"] == 0
     manager.c.to_screen(1)
@@ -158,7 +161,7 @@ def test_to_screen(manager):
     assert manager.c.window.info()["name"] == "one"
 
 
-@manager_config
+@with_config(ManagerConfig)
 def test_togroup(manager):
     manager.test_window("one")
     with pytest.raises(CommandError):
@@ -182,7 +185,7 @@ def test_togroup(manager):
     assert manager.c.groups()["c"]["focus"] == "one"
 
 
-@manager_config
+@with_config(ManagerConfig)
 def test_resize(manager):
     manager.c.screen[0].resize(x=10, y=10, w=100, h=100)
 
@@ -196,21 +199,19 @@ def test_resize(manager):
     assert d['x'] == d['y'] == 10
 
 
-@no_xinerama
+@with_config(BareConfig, xinerama=False)
 def test_minimal(manager):
     assert manager.c.status() == "OK"
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_events(manager):
     assert manager.c.status() == "OK"
 
 
 # FIXME: failing test disabled. For some reason we don't seem
 # to have a keymap in Xnest or Xephyr 99% of the time.
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_keypress(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -225,8 +226,7 @@ class TooFewGroupsConfig(ManagerConfig):
     groups = []
 
 
-@pytest.mark.parametrize("manager", [TooFewGroupsConfig], indirect=True)
-@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
+@with_config(TooFewGroupsConfig, xinerama=(True, False))
 def test_too_few_groups(manager):
     assert manager.c.groups()
     assert len(manager.c.groups()) == len(manager.c.screens())
@@ -273,11 +273,7 @@ class _ChordsConfig(Config):
     auto_fullscreen = True
 
 
-chords_config = pytest.mark.parametrize("manager", [_ChordsConfig], indirect=True)
-
-
-@chords_config
-@no_xinerama
+@with_config(_ChordsConfig, xinerama=False)
 def test_immediate_chord(manager):
     manager.test_window("three")
     manager.test_window("two")
@@ -304,8 +300,7 @@ def test_immediate_chord(manager):
     assert manager.c.groups()["a"]["focus"] == "two"
 
 
-@chords_config
-@no_xinerama
+@with_config(_ChordsConfig, xinerama=False)
 def test_mode_chord(manager):
     manager.test_window("three")
     manager.test_window("two")
@@ -336,15 +331,13 @@ def test_mode_chord(manager):
     assert manager.c.groups()["a"]["focus"] == "one"
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_spawn(manager):
     # Spawn something with a pid greater than init's
     assert int(manager.c.spawn("true")) > 1
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_spawn_list(manager):
     # Spawn something with a pid greater than init's
     assert int(manager.c.spawn(["echo", "true"])) > 1
@@ -357,8 +350,7 @@ def assert_window_died(client, window_info):
     assert wid not in set([x['id'] for x in client.windows()])
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_kill_window(manager):
     manager.test_window("one")
     window_info = manager.c.window.info()
@@ -366,8 +358,7 @@ def test_kill_window(manager):
     assert_window_died(manager.c, window_info)
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_kill_other(manager):
     manager.c.group.setlayout("tile")
     one = manager.test_window("one")
@@ -389,8 +380,7 @@ def test_kill_other(manager):
     manager.kill_window(two)
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_kill_via_message(manager):
     manager.test_window("one")
     window_info = manager.c.window.info()
@@ -405,8 +395,7 @@ def test_kill_via_message(manager):
     assert_window_died(manager.c, window_info)
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_change_state_via_message(manager):
     manager.test_window("one")
     window_info = manager.c.window.info()
@@ -431,16 +420,14 @@ def test_change_state_via_message(manager):
     conn.finalize()
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_regression_groupswitch(manager):
     manager.c.group["c"].toscreen()
     manager.c.group["d"].toscreen()
     assert manager.c.groups()["c"]["screen"] is None
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_next_layout(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -453,16 +440,14 @@ def test_next_layout(manager):
     assert len(manager.c.layout.info()["stacks"]) == 1
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_setlayout(manager):
     assert not manager.c.layout.info()["name"] == "max"
     manager.c.group.setlayout("max")
     assert manager.c.layout.info()["name"] == "max"
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_to_layout_index(manager):
     manager.c.to_layout_index(-1)
     assert manager.c.layout.info()["name"] == "max"
@@ -474,8 +459,7 @@ def test_to_layout_index(manager):
     assert manager.c.layout.info()["name"] == "tile"
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_adddelgroup(manager):
     manager.test_window("one")
     manager.c.addgroup("dummygroup")
@@ -498,8 +482,7 @@ def test_adddelgroup(manager):
     assert manager.c.groups()["testgroup2"]['layout'] == 'max'
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_delgroup(manager):
     manager.test_window("one")
     for i in ['a', 'd', 'c']:
@@ -508,8 +491,7 @@ def test_delgroup(manager):
         manager.c.delgroup('b')
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_nextprevgroup(manager):
     start = manager.c.group.info()["name"]
     ret = manager.c.screen.next_group()
@@ -519,8 +501,7 @@ def test_nextprevgroup(manager):
     assert manager.c.group.info()["name"] == start
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_toggle_group(manager):
     manager.c.group["a"].toscreen()
     manager.c.group["b"].toscreen()
@@ -532,21 +513,19 @@ def test_toggle_group(manager):
     assert manager.c.group.info()["name"] == "c"
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_inspect_xeyes(manager):
     manager.test_xeyes()
     assert manager.c.window.inspect()
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_inspect_xclock(manager):
     manager.test_xclock()
     assert manager.c.window.inspect()["wm_class"]
 
 
-@manager_config
+@with_config(ManagerConfig, xinerama=False)
 def test_static(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -564,16 +543,14 @@ def test_static(manager):
     assert (info["x"], info["y"], info["width"], info["height"]) == (10, 10, 10, 10)
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_match(manager):
     manager.test_xeyes()
     assert manager.c.window.info()['name'] == 'xeyes'
     assert not manager.c.window.info()['name'] == 'nonexistent'
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_default_float(manager):
     # change to 2 col stack
     manager.c.next_layout()
@@ -624,8 +601,7 @@ def test_default_float(manager):
         conn.finalize()
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_last_float_size(manager):
     """
     When you re-float something it would be preferable to have it use the previous float size
@@ -660,8 +636,7 @@ def test_last_float_size(manager):
     assert manager.c.window.info()['height'] == 90
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_float_max_min_combo(manager):
     # change to 2 col stack
     manager.c.next_layout()
@@ -704,8 +679,7 @@ def test_float_max_min_combo(manager):
     assert manager.c.window.info()['y'] == 0
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_toggle_fullscreen(manager):
     # change to 2 col stack
     manager.c.next_layout()
@@ -740,8 +714,7 @@ def test_toggle_fullscreen(manager):
     assert manager.c.window.info()['y'] == 0
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_toggle_max(manager):
     # change to 2 col stack
     manager.c.next_layout()
@@ -774,8 +747,7 @@ def test_toggle_max(manager):
     assert manager.c.window.info()['y'] == 0
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_toggle_min(manager):
     # change to 2 col stack
     manager.c.next_layout()
@@ -810,8 +782,7 @@ def test_toggle_min(manager):
     assert manager.c.window.info()['y'] == 0
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_toggle_floating(manager):
     manager.test_xeyes()
     assert manager.c.window.info()['floating'] is False
@@ -827,8 +798,7 @@ def test_toggle_floating(manager):
     assert manager.c.window.info()['floating'] is True
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_floating_focus(manager):
     # change to 2 col stack
     manager.c.next_layout()
@@ -876,8 +846,7 @@ def test_floating_focus(manager):
     assert [x['current'] for x in manager.c.layout.info()['stacks']] == [0, 0]
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_move_floating(manager):
     manager.test_xeyes()
     # manager.test_window("one")
@@ -921,14 +890,12 @@ def test_move_floating(manager):
     assert manager.c.window.info()['y'] == 20
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_screens(manager):
     assert len(manager.c.screens())
 
 
-@manager_config
-@no_xinerama
+@with_config(ManagerConfig, xinerama=False)
 def test_focus_stays_on_layout_switch(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -946,20 +913,17 @@ def test_focus_stays_on_layout_switch(manager):
     assert manager.c.window.info()['name'] == 'one'
 
 
-@pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
-@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
+@with_config(BareConfig, ManagerConfig, xinerama=(True, False))
 def test_xeyes(manager):
     manager.test_xeyes()
 
 
-@pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
-@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
+@with_config(BareConfig, ManagerConfig, xinerama=(True, False))
 def test_xcalc(manager):
     manager.test_xcalc()
 
 
-@pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
-@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
+@with_config(BareConfig, ManagerConfig, xinerama=(True, False))
 def test_xcalc_kill_window(manager):
     manager.test_xcalc()
     window_info = manager.c.window.info()
@@ -967,8 +931,7 @@ def test_xcalc_kill_window(manager):
     assert_window_died(manager.c, window_info)
 
 
-@pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
-@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
+@with_config(BareConfig, ManagerConfig, xinerama=(True, False))
 def test_map_request(manager):
     manager.test_window("one")
     info = manager.c.groups()["a"]
@@ -981,8 +944,7 @@ def test_map_request(manager):
     assert info["focus"] == "two"
 
 
-@pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
-@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
+@with_config(BareConfig, ManagerConfig, xinerama=(True, False))
 def test_unmap(manager):
     one = manager.test_window("one")
     two = manager.test_window("two")
@@ -1008,8 +970,7 @@ def test_unmap(manager):
     assert info["focus"] is None
 
 
-@pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
-@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
+@with_config(BareConfig, ManagerConfig, xinerama=(True, False))
 def test_setgroup(manager):
     manager.test_window("one")
     manager.c.group["b"].toscreen()
@@ -1030,8 +991,7 @@ def test_setgroup(manager):
     assert manager.c.group.info()["name"] == "b"
 
 
-@pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
-@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
+@with_config(BareConfig, ManagerConfig, xinerama=(True, False))
 def test_unmap_noscreen(manager):
     manager.test_window("one")
     pid = manager.test_window("two")
@@ -1122,10 +1082,7 @@ class ClientNewStaticConfig(_Config):
         libqtile.hook.subscribe.client_new(client_new)
 
 
-clientnew_config = pytest.mark.parametrize("manager", [ClientNewStaticConfig], indirect=True)
-
-
-@clientnew_config
+@with_config(ClientNewStaticConfig)
 def test_clientnew_config(manager):
     a = manager.test_window("one")
     manager.kill_window(a)
@@ -1139,10 +1096,7 @@ class ToGroupConfig(_Config):
         libqtile.hook.subscribe.client_new(client_new)
 
 
-togroup_config = pytest.mark.parametrize("manager", [ToGroupConfig], indirect=True)
-
-
-@togroup_config
+@with_config(ToGroupConfig)
 def test_togroup_config(manager):
     manager.c.group["d"].toscreen()
     manager.c.group["a"].toscreen()
@@ -1151,13 +1105,13 @@ def test_togroup_config(manager):
     manager.kill_window(a)
 
 
-@manager_config
+@with_config(ManagerConfig)
 def test_color_pixel(manager):
     (success, e) = manager.c.eval("self.conn.color_pixel(\"ffffff\")")
     assert success, e
 
 
-@manager_config
+@with_config(ManagerConfig)
 def test_change_loglevel(manager):
     assert manager.c.loglevel() == logging.INFO
     assert manager.c.loglevelname() == 'INFO'
@@ -1178,7 +1132,7 @@ def test_change_loglevel(manager):
     assert manager.c.loglevelname() == 'CRITICAL'
 
 
-@manager_config
+@with_config(ManagerConfig)
 def test_user_position(manager):
     w = None
     conn = xcbq.Connection(manager.display)
@@ -1223,7 +1177,7 @@ def wait_for_focus_events(conn):
     return got_take_focus, got_focus_in
 
 
-@manager_config
+@with_config(ManagerConfig)
 def test_only_one_focus(manager):
     w = None
     conn = xcbq.Connection(manager.display)
@@ -1265,7 +1219,7 @@ def test_only_one_focus(manager):
         conn.finalize()
 
 
-@manager_config
+@with_config(ManagerConfig)
 def test_only_wm_protocols_focus(manager):
     w = None
     conn = xcbq.Connection(manager.display)
@@ -1306,7 +1260,7 @@ def test_only_wm_protocols_focus(manager):
         conn.finalize()
 
 
-@manager_config
+@with_config(ManagerConfig)
 def test_only_input_hint_focus(manager):
     w = None
     conn = xcbq.Connection(manager.display)
@@ -1337,7 +1291,7 @@ def test_only_input_hint_focus(manager):
         conn.finalize()
 
 
-@manager_config
+@with_config(ManagerConfig)
 def test_no_focus(manager):
     w = None
     conn = xcbq.Connection(manager.display)
@@ -1365,7 +1319,7 @@ def test_no_focus(manager):
         conn.finalize()
 
 
-@manager_config
+@with_config(ManagerConfig)
 def test_hints_setting_unsetting(manager):
     w = None
     conn = xcbq.Connection(manager.display)
@@ -1412,7 +1366,7 @@ def test_hints_setting_unsetting(manager):
         conn.finalize()
 
 
-@manager_config
+@with_config(ManagerConfig)
 def test_strut_handling(manager):
     w = None
     conn = xcbq.Connection(manager.display)
@@ -1456,6 +1410,10 @@ def test_strut_handling(manager):
     test_initial_state()
 
 
+class NoBringFrontClickConfig(ManagerConfig):
+    bring_front_click = False
+
+
 class BringFrontClickConfig(ManagerConfig):
     bring_front_click = True
 
@@ -1464,21 +1422,12 @@ class BringFrontClickFloatingOnlyConfig(ManagerConfig):
     bring_front_click = "floating_only"
 
 
-@pytest.fixture
-def bring_front_click(request):
-    return request.param
-
-
-@pytest.mark.parametrize(
-    "manager, bring_front_click",
-    [
-        (ManagerConfig, False),
-        (BringFrontClickConfig, True),
-        (BringFrontClickFloatingOnlyConfig, "floating_only"),
-    ],
-    indirect=True,
+@with_config(
+    NoBringFrontClickConfig,
+    BringFrontClickConfig,
+    BringFrontClickFloatingOnlyConfig,
 )
-def test_bring_front_click(manager, bring_front_click):
+def test_bring_front_click(manager):
     def get_all_windows(conn):
         root = conn.default_screen.root.wid
         q = conn.conn.core.QueryTree(root).reply()
@@ -1519,7 +1468,7 @@ def test_bring_front_click(manager, bring_front_click):
     fake_click(conn, xtest, 55, 55)
     manager.c.sync()
     wins = get_all_windows(conn)
-    if bring_front_click:
+    if manager.config.bring_front_click:
         assert wins.index(wids[0]) < wins.index(wids[2]) < wins.index(wids[1])
     else:
         assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])
@@ -1528,9 +1477,10 @@ def test_bring_front_click(manager, bring_front_click):
     fake_click(conn, xtest, 10, 10)
     manager.c.sync()
     wins = get_all_windows(conn)
-    if bring_front_click == "floating_only":
+
+    if manager.config.bring_front_click == "floating_only":
         assert wins.index(wids[0]) < wins.index(wids[2]) < wins.index(wids[1])
-    elif bring_front_click:
+    elif manager.config.bring_front_click:
         assert wins.index(wids[2]) < wins.index(wids[1]) < wins.index(wids[0])
     else:
         assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])
@@ -1579,9 +1529,9 @@ def test_cursor_warp(manager):
     p = conn.conn.core.QueryPointer(root).reply()
     # Here pointer should warp to the second screen as there are no windows
     # there.
-    assert p.root_x == conftest.WIDTH + conftest.SECOND_WIDTH // 2
+    assert p.root_x == WIDTH + SECOND_WIDTH // 2
     # Reduce the bar height from the screen height.
-    assert p.root_y == (conftest.SECOND_HEIGHT - 20) // 2
+    assert p.root_y == (SECOND_HEIGHT - 20) // 2
 
     manager.c.to_screen(0)
     assert manager.c.window.info()["name"] == "one"

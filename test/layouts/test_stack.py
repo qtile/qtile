@@ -25,12 +25,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
-
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
+from test.conftest import with_config
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
@@ -53,10 +51,6 @@ class StackConfig(Config):
     follow_mouse_focus = False
 
 
-def stack_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [StackConfig], indirect=True)(x))
-
-
 def _stacks(manager):
     stacks = []
     for i in manager.c.layout.info()["stacks"]:
@@ -66,7 +60,7 @@ def _stacks(manager):
     return stacks
 
 
-@stack_config
+@with_config(StackConfig, xinerama=False)
 def test_stack_commands(manager):
     assert manager.c.layout.info()["current_stack"] == 0
     manager.test_window("one")
@@ -93,12 +87,12 @@ def test_stack_commands(manager):
     assert _stacks(manager) == [[], ["one", "three", "two"]]
 
 
-@stack_config
+@with_config(StackConfig, xinerama=False)
 def test_stack_cmd_down(manager):
     manager.c.layout.down()
 
 
-@stack_config
+@with_config(StackConfig, xinerama=False)
 def test_stack_addremove(manager):
     one = manager.test_window("one")
     manager.c.layout.next()
@@ -118,7 +112,7 @@ def test_stack_addremove(manager):
     assert manager.c.layout.info()["current_stack"] == 1
 
 
-@stack_config
+@with_config(StackConfig, xinerama=False)
 def test_stack_rotation(manager):
     manager.c.layout.delete()
     manager.test_window("one")
@@ -134,7 +128,7 @@ def test_stack_rotation(manager):
     assert _stacks(manager) == [["one", "three", "two"]]
 
 
-@stack_config
+@with_config(StackConfig, xinerama=False)
 def test_stack_nextprev(manager):
     manager.c.layout.add()
     one = manager.test_window("one")
@@ -172,7 +166,7 @@ def test_stack_nextprev(manager):
     assert manager.c.groups()["a"]["focus"] is None
 
 
-@stack_config
+@with_config(StackConfig, xinerama=False)
 def test_stack_window_removal(manager):
     manager.c.layout.next()
     manager.test_window("one")
@@ -181,7 +175,7 @@ def test_stack_window_removal(manager):
     manager.kill_window(two)
 
 
-@stack_config
+@with_config(StackConfig, xinerama=False)
 def test_stack_split(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -193,7 +187,7 @@ def test_stack_split(manager):
     assert stacks[1]["split"]
 
 
-@stack_config
+@with_config(StackConfig, xinerama=False)
 def test_stack_shuffle(manager):
     manager.c.next_layout()
     manager.test_window("one")
@@ -212,7 +206,7 @@ def test_stack_shuffle(manager):
         assert stack["clients"][stack["current"]] == "three"
 
 
-@stack_config
+@with_config(StackConfig, xinerama=False)
 def test_stack_client_to(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -226,13 +220,13 @@ def test_stack_client_to(manager):
     assert manager.c.layout.info()["stacks"][0]["clients"] == ["two", "one"]
 
 
-@stack_config
+@with_config(StackConfig, xinerama=False)
 def test_stack_info(manager):
     manager.test_window("one")
     assert manager.c.layout.info()["stacks"]
 
 
-@stack_config
+@with_config(StackConfig, xinerama=False)
 def test_stack_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
     manager.test_window("one")

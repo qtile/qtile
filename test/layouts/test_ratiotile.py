@@ -27,12 +27,10 @@
 
 from time import sleep
 
-import pytest
-
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
+from test.conftest import with_config
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
@@ -55,11 +53,7 @@ class RatioTileConfig(Config):
     follow_mouse_focus = False
 
 
-def ratiotile_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [RatioTileConfig], indirect=True)(x))
-
-
-@ratiotile_config
+@with_config(RatioTileConfig, xinerama=False)
 def test_ratiotile_add_windows(manager):
     for i in range(12):
         manager.test_window(str(i))
@@ -125,7 +119,7 @@ def test_ratiotile_add_windows(manager):
             assert False
 
 
-@ratiotile_config
+@with_config(RatioTileConfig, xinerama=False)
 def test_ratiotile_add_windows_golden_ratio(manager):
     manager.c.next_layout()
     for i in range(12):
@@ -168,7 +162,7 @@ def test_ratiotile_add_windows_golden_ratio(manager):
                 (532, 450, 266, 150)]
 
 
-@ratiotile_config
+@with_config(RatioTileConfig, xinerama=False)
 def test_ratiotile_basic(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -195,7 +189,7 @@ def test_ratiotile_basic(manager):
     assert manager.c.window.info()['name'] == 'one'
 
 
-@ratiotile_config
+@with_config(RatioTileConfig, xinerama=False)
 def test_ratiotile_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
     manager.test_window("one")

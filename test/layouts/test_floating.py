@@ -18,12 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
-
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
+from test.conftest import with_config
 from test.layouts.layout_utils import assert_focused
 
 
@@ -42,11 +40,7 @@ class FloatingConfig(Config):
     follow_mouse_focus = False
 
 
-def floating_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [FloatingConfig], indirect=True)(x))
-
-
-@floating_config
+@with_config(FloatingConfig, xinerama=False)
 def test_float_next_prev_window(manager):
     # spawn three windows
     manager.test_window("one")

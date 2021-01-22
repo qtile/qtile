@@ -32,6 +32,7 @@ from libqtile.command.base import CommandObject
 from libqtile.command.interface import CommandError
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
+from test.conftest import with_config
 
 
 class CallConfig(Config):
@@ -68,10 +69,7 @@ class CallConfig(Config):
     auto_fullscreen = True
 
 
-call_config = pytest.mark.parametrize("manager", [CallConfig], indirect=True)
-
-
-@call_config
+@with_config(CallConfig)
 def test_layout_filter(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -157,17 +155,14 @@ class ServerConfig(Config):
     ]
 
 
-server_config = pytest.mark.parametrize("manager", [ServerConfig], indirect=True)
-
-
-@server_config
+@with_config(ServerConfig)
 def test_cmd_commands(manager):
     assert manager.c.commands()
     assert manager.c.layout.commands()
     assert manager.c.screen.bar["bottom"].commands()
 
 
-@server_config
+@with_config(ServerConfig)
 def test_call_unknown(manager):
     with pytest.raises(libqtile.command.client.SelectError, match="Not valid child or command"):
         manager.c.nonexistent
@@ -177,7 +172,7 @@ def test_call_unknown(manager):
         manager.c.layout.nonexistent
 
 
-@server_config
+@with_config(ServerConfig)
 def test_items_qtile(manager):
     v = manager.c.items("group")
     assert v[0]
@@ -197,7 +192,7 @@ def test_items_qtile(manager):
     assert manager.c.items("screen") == (True, [0, 1])
 
 
-@server_config
+@with_config(ServerConfig)
 def test_select_qtile(manager):
     assert manager.c.layout.info()["group"] == "a"
     assert len(manager.c.layout.info()["stacks"]) == 1
@@ -226,7 +221,7 @@ def test_select_qtile(manager):
         manager.c.screen[22]
 
 
-@server_config
+@with_config(ServerConfig)
 def test_items_group(manager):
     group = manager.c.group
 
@@ -238,7 +233,7 @@ def test_items_group(manager):
     assert group.items("screen") == (True, None)
 
 
-@server_config
+@with_config(ServerConfig)
 def test_select_group(manager):
     group = manager.c.group
 
@@ -262,7 +257,7 @@ def test_select_group(manager):
         group.screen[0]
 
 
-@server_config
+@with_config(ServerConfig)
 def test_items_screen(manager):
     s = manager.c.screen
     assert s.items("layout") == (True, [0, 1, 2])
@@ -274,7 +269,7 @@ def test_items_screen(manager):
     assert s.items("bar") == (False, ["bottom"])
 
 
-@server_config
+@with_config(ServerConfig)
 def test_select_screen(manager):
     screen = manager.c.screen
     assert screen.layout.info()["group"] == "a"
@@ -297,12 +292,12 @@ def test_select_screen(manager):
     assert screen.bar["bottom"].info()["position"] == "bottom"
 
 
-@server_config
+@with_config(ServerConfig)
 def test_items_bar(manager):
     assert manager.c.bar["bottom"].items("screen") == (True, None)
 
 
-@server_config
+@with_config(ServerConfig)
 def test_select_bar(manager):
     assert manager.c.screen[1].bar["bottom"].screen.info()["index"] == 1
     b = manager.c.bar
@@ -311,13 +306,13 @@ def test_select_bar(manager):
         b.screen.info()
 
 
-@server_config
+@with_config(ServerConfig)
 def test_items_layout(manager):
     assert manager.c.layout.items("screen") == (True, None)
     assert manager.c.layout.items("group") == (True, None)
 
 
-@server_config
+@with_config(ServerConfig)
 def test_select_layout(manager):
     layout = manager.c.layout
 
@@ -330,7 +325,7 @@ def test_select_layout(manager):
         layout.group["a"]
 
 
-@server_config
+@with_config(ServerConfig)
 def test_items_window(manager):
     manager.test_window("test")
     window = manager.c.window
@@ -341,7 +336,7 @@ def test_items_window(manager):
     assert window.items("screen") == (True, None)
 
 
-@server_config
+@with_config(ServerConfig)
 def test_select_window(manager):
     manager.test_window("test")
     window = manager.c.window
@@ -359,12 +354,12 @@ def test_select_window(manager):
         window.screen[0]
 
 
-@server_config
+@with_config(ServerConfig)
 def test_items_widget(manager):
     assert manager.c.widget["one"].items("bar") == (True, None)
 
 
-@server_config
+@with_config(ServerConfig)
 def test_select_widget(manager):
     widget = manager.c.widget["one"]
     assert widget.bar.info()["position"] == "bottom"

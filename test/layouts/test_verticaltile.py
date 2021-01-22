@@ -25,12 +25,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
-
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
+from test.conftest import with_config
 from test.layouts.layout_utils import (
     assert_dimensions,
     assert_focus_path,
@@ -55,11 +53,7 @@ class VerticalTileConfig(Config):
     screens = []
 
 
-def verticaltile_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [VerticalTileConfig], indirect=True)(x))
-
-
-@verticaltile_config
+@with_config(VerticalTileConfig, xinerama=False)
 def test_verticaltile_simple(manager):
     manager.test_window("one")
     assert_dimensions(manager, 0, 0, 800, 600)
@@ -69,7 +63,7 @@ def test_verticaltile_simple(manager):
     assert_dimensions(manager, 0, 400, 798, 198)
 
 
-@verticaltile_config
+@with_config(VerticalTileConfig, xinerama=False)
 def test_verticaltile_maximize(manager):
     manager.test_window("one")
     assert_dimensions(manager, 0, 0, 800, 600)
@@ -80,7 +74,7 @@ def test_verticaltile_maximize(manager):
     assert_dimensions(manager, 0, 150, 798, 448)
 
 
-@verticaltile_config
+@with_config(VerticalTileConfig, xinerama=False)
 def test_verticaltile_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
     manager.test_window("one")

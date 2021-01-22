@@ -32,6 +32,7 @@ import libqtile.config
 import libqtile.confreader
 import libqtile.layout
 import libqtile.widget
+from test.conftest import with_config
 
 
 class GBConfig(libqtile.confreader.Config):
@@ -81,9 +82,6 @@ class GBConfig(libqtile.confreader.Config):
     ]
 
 
-gb_config = pytest.mark.parametrize("manager", [GBConfig], indirect=True)
-
-
 def test_completion():
     c = libqtile.widget.prompt.CommandCompleter(None, True)
     c.reset()
@@ -125,14 +123,14 @@ def test_completion():
     c.reset()
 
 
-@gb_config
+@with_config(GBConfig)
 def test_draw(manager):
     manager.test_window("one")
     b = manager.c.bar["bottom"].info()
     assert b["widgets"][0]["name"] == "groupbox"
 
 
-@gb_config
+@with_config(GBConfig)
 def test_prompt(manager):
     assert manager.c.widget["prompt"].info()["width"] == 0
     manager.c.spawncmd(":")
@@ -144,12 +142,12 @@ def test_prompt(manager):
     manager.c.widget["prompt"].fake_keypress("Tab")
 
 
-@gb_config
+@with_config(GBConfig)
 def test_event(manager):
     manager.c.group["bb"].toscreen()
 
 
-@gb_config
+@with_config(GBConfig)
 def test_textbox(manager):
     assert "text" in manager.c.list_widgets()
     s = "some text"
@@ -162,7 +160,7 @@ def test_textbox(manager):
     manager.c.widget["text"].set_font(fontsize=12)
 
 
-@gb_config
+@with_config(GBConfig)
 def test_textbox_errors(manager):
     manager.c.widget["text"].update(None)
     manager.c.widget["text"].update("".join(chr(i) for i in range(255)))
@@ -170,7 +168,7 @@ def test_textbox_errors(manager):
     manager.c.widget["text"].update("\ua000")
 
 
-@gb_config
+@with_config(GBConfig)
 def test_groupbox_button_press(manager):
     manager.c.group["ccc"].toscreen()
     assert manager.c.groups()["a"]["screen"] is None
@@ -178,7 +176,7 @@ def test_groupbox_button_press(manager):
     assert manager.c.groups()["a"]["screen"] == 0
 
 
-class GeomConf(libqtile.confreader.Config):
+class GeomConfig(libqtile.confreader.Config):
     auto_fullscreen = False
     keys = []
     mouse = []
@@ -200,9 +198,6 @@ class GeomConf(libqtile.confreader.Config):
     ]
 
 
-geom_config = pytest.mark.parametrize("manager", [GeomConf], indirect=True)
-
-
 class DBarH(libqtile.bar.Bar):
     def __init__(self, widgets, size):
         libqtile.bar.Bar.__init__(self, widgets, size)
@@ -220,7 +215,7 @@ class DWidget:
         self.length, self.length_type = length, length_type
 
 
-@geom_config
+@with_config(GeomConfig)
 def test_geometry(manager):
     manager.test_xeyes()
     g = manager.c.screens()[0]["gaps"]
@@ -240,7 +235,7 @@ def test_geometry(manager):
     assert manager.c.window[wid].inspect()
 
 
-@geom_config
+@with_config(GeomConfig)
 def test_resize(manager):
     def wd(dwidget_list):
         return [i.length for i in dwidget_list]
@@ -311,7 +306,7 @@ class ExampleWidget(libqtile.widget.base._Widget):
         pass
 
 
-class IncompatibleWidgetConf(libqtile.confreader.Config):
+class IncompatibleWidgetConfig(libqtile.confreader.Config):
     keys = []
     mouse = []
     groups = [libqtile.config.Group("a")]
@@ -324,7 +319,7 @@ class IncompatibleWidgetConf(libqtile.confreader.Config):
                     # This widget doesn't support vertical orientation
                     ExampleWidget(),
                 ],
-                10
+                10,
             ),
         )
     ]
@@ -333,7 +328,7 @@ class IncompatibleWidgetConf(libqtile.confreader.Config):
 def test_incompatible_widget(manager_nospawn):
     # Ensure that adding a widget that doesn't support the orientation of the
     # bar raises ConfigError
-    m = manager_nospawn.create_manager(IncompatibleWidgetConf)
+    m = manager_nospawn.create_manager(IncompatibleWidgetConfig)
     try:
         with pytest.raises(libqtile.confreader.ConfigError):
             m._configure()
@@ -341,7 +336,7 @@ def test_incompatible_widget(manager_nospawn):
         m.core.finalize()
 
 
-class BasicConf(GeomConf):
+class BasicConfig(GeomConfig):
     screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
@@ -352,18 +347,17 @@ class BasicConf(GeomConf):
                     libqtile.widget.Spacer(libqtile.bar.STRETCH),
                     ExampleWidget(),
                     libqtile.widget.Spacer(libqtile.bar.STRETCH),
-                    ExampleWidget()
+                    ExampleWidget(),
                 ],
-                10
+                10,
             )
         )
     ]
 
 
-def test_basic(manager_nospawn):
-    manager_nospawn.start(BasicConf)
-
-    i = manager_nospawn.c.bar["bottom"].info()
+@with_config(BasicConfig)
+def test_basic(manager):
+    i = manager.c.bar["bottom"].info()
     assert i["widgets"][0]["offset"] == 0
     assert i["widgets"][1]["offset"] == 10
     assert i["widgets"][1]["width"] == 252
@@ -374,10 +368,9 @@ def test_basic(manager_nospawn):
     assert i["widgets"][5]["offset"] == 538
     assert i["widgets"][5]["width"] == 252
     assert i["widgets"][6]["offset"] == 790
-    libqtile.hook.clear()
 
 
-class SingleSpacerConf(GeomConf):
+class SingleSpacerConfig(GeomConfig):
     screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
@@ -390,21 +383,20 @@ class SingleSpacerConf(GeomConf):
     ]
 
 
-def test_singlespacer(manager_nospawn):
-    manager_nospawn.start(SingleSpacerConf)
-    i = manager_nospawn.c.bar["bottom"].info()
+@with_config(SingleSpacerConfig)
+def test_singlespacer(manager):
+    i = manager.c.bar["bottom"].info()
     assert i["widgets"][0]["offset"] == 0
     assert i["widgets"][0]["width"] == 800
-    libqtile.hook.clear()
 
 
-class NoSpacerConf(GeomConf):
+class NoSpacerConfig(GeomConfig):
     screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
                     ExampleWidget(),
-                    ExampleWidget()
+                    ExampleWidget(),
                 ],
                 10,
             ),
@@ -412,10 +404,8 @@ class NoSpacerConf(GeomConf):
     ]
 
 
-def test_nospacer(manager_nospawn):
-    manager_nospawn.start(NoSpacerConf)
-
-    i = manager_nospawn.c.bar["bottom"].info()
+@with_config(NoSpacerConfig)
+def test_nospacer(manager):
+    i = manager.c.bar["bottom"].info()
     assert i["widgets"][0]["offset"] == 0
     assert i["widgets"][1]["offset"] == 10
-    libqtile.hook.clear()

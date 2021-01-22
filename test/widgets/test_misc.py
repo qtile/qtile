@@ -21,12 +21,10 @@
 
 # Widget specific tests
 
-import pytest
-
 from libqtile.bar import Bar
 from libqtile.config import Screen
 from libqtile.widget import TextBox, ThermalSensor
-from test.conftest import BareConfig
+from test.conftest import BareConfig, with_config
 
 
 class ColorChanger(TextBox):
@@ -41,14 +39,11 @@ class ColorChanger(TextBox):
         self.text = text
 
 
-class WidgetTestConf(BareConfig):
+class WidgetConfig(BareConfig):
     screens = [Screen(bottom=Bar([ColorChanger(name="colorchanger")], 20))]
 
 
-widget_conf = pytest.mark.parametrize("manager", [WidgetTestConf], indirect=True)
-
-
-@widget_conf
+@with_config(WidgetConfig)
 def test_textbox_color_change(manager):
     manager.c.widget["colorchanger"].update('f')
     assert manager.c.widget["colorchanger"].info()["foreground"] == "0000ff"

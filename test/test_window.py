@@ -1,12 +1,6 @@
-import pytest
-
 from libqtile.backend.x11 import xcbq
-from test.conftest import BareConfig
-
-bare_config = pytest.mark.parametrize("manager", [BareConfig], indirect=True)
 
 
-@bare_config
 def test_margin(manager):
     manager.test_window('one')
 
@@ -32,7 +26,6 @@ def test_margin(manager):
     assert manager.c.window.info()['height'] == 50
 
 
-@bare_config
 def test_no_size_hint(manager):
     manager.test_window('one')
     manager.c.window.enable_floating()
@@ -48,7 +41,6 @@ def test_no_size_hint(manager):
     assert manager.c.window.info()['height'] == 200
 
 
-@bare_config
 def test_min_size_hint(manager):
     w = None
     conn = xcbq.Connection(manager.display)
@@ -84,7 +76,6 @@ def test_min_size_hint(manager):
         conn.finalize()
 
 
-@bare_config
 def test_min_size_hint_no_flag(manager):
     w = None
     conn = xcbq.Connection(manager.display)
@@ -119,7 +110,6 @@ def test_min_size_hint_no_flag(manager):
         conn.finalize()
 
 
-@bare_config
 def test_max_size_hint(manager):
     w = None
     conn = xcbq.Connection(manager.display)
@@ -155,7 +145,6 @@ def test_max_size_hint(manager):
         conn.finalize()
 
 
-@bare_config
 def test_max_size_hint_no_flag(manager):
     w = None
     conn = xcbq.Connection(manager.display)
@@ -190,7 +179,6 @@ def test_max_size_hint_no_flag(manager):
         conn.finalize()
 
 
-@bare_config
 def test_both_size_hints(manager):
     w = None
     conn = xcbq.Connection(manager.display)

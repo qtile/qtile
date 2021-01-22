@@ -18,8 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
-
+from test.conftest import with_config
 from test.layouts import layout_configs
 from test.layouts.layout_utils import (
     assert_dimensions_fit,
@@ -27,24 +26,13 @@ from test.layouts.layout_utils import (
     assert_focused,
 )
 
-each_layout_config = pytest.mark.parametrize(
-    "manager",
-    layout_configs.all_layouts_config.values(),
-    indirect=True,
+each_layout_config = with_config(*layout_configs.all_layouts_config.values())
+all_layouts_config = with_config(layout_configs.AllLayouts)
+each_layout_config_events = with_config(
+    *layout_configs.all_layouts_config_events.values(),
 )
-all_layouts_config = pytest.mark.parametrize(
-    "manager", [layout_configs.AllLayouts],
-    indirect=True,
-)
-each_layout_config_events = pytest.mark.parametrize(
-    "manager",
-    layout_configs.all_layouts_config_events.values(),
-    indirect=True,
-)
-each_delegate_layout_config = pytest.mark.parametrize(
-    "manager",
-    layout_configs.all_delegate_layouts_config.values(),
-    indirect=True,
+each_delegate_layout_config = with_config(
+    *layout_configs.all_delegate_layouts_config.values(),
 )
 
 

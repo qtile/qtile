@@ -25,12 +25,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
-
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
+from test.conftest import with_config
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
@@ -51,11 +49,7 @@ class MaxConfig(Config):
     screens = []
 
 
-def max_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MaxConfig], indirect=True)(x))
-
-
-@max_config
+@with_config(MaxConfig, xinerama=False)
 def test_max_simple(manager):
     manager.test_window("one")
     assert manager.c.layout.info()["clients"] == ["one"]
@@ -63,7 +57,7 @@ def test_max_simple(manager):
     assert manager.c.layout.info()["clients"] == ["one", "two"]
 
 
-@max_config
+@with_config(MaxConfig, xinerama=False)
 def test_max_updown(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -75,7 +69,7 @@ def test_max_updown(manager):
     assert manager.c.groups()["a"]["focus"] == "three"
 
 
-@max_config
+@with_config(MaxConfig, xinerama=False)
 def test_max_remove(manager):
     manager.test_window("one")
     two = manager.test_window("two")
@@ -84,7 +78,7 @@ def test_max_remove(manager):
     assert manager.c.layout.info()["clients"] == ["one"]
 
 
-@max_config
+@with_config(MaxConfig, xinerama=False)
 def test_max_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
     manager.test_window("one")

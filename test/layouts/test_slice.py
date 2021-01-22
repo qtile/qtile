@@ -25,13 +25,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
-
 import libqtile.config
 from libqtile import layout
 from libqtile.config import Match
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
+from test.conftest import with_config
 from test.layouts.layout_utils import (
     assert_dimensions,
     assert_focus_path,
@@ -62,11 +60,7 @@ class SliceConfig(Config):
     follow_mouse_focus = False
 
 
-def slice_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [SliceConfig], indirect=True)(x))
-
-
-@slice_config
+@with_config(SliceConfig, xinerama=False)
 def test_no_slice(manager):
     manager.test_window('one')
     assert_dimensions(manager, 200, 0, 600, 600)
@@ -74,7 +68,7 @@ def test_no_slice(manager):
     assert_dimensions(manager, 200, 0, 600, 600)
 
 
-@slice_config
+@with_config(SliceConfig, xinerama=False)
 def test_slice_first(manager):
     manager.test_window('slice')
     assert_dimensions(manager, 0, 0, 200, 600)
@@ -82,7 +76,7 @@ def test_slice_first(manager):
     assert_dimensions(manager, 200, 0, 600, 600)
 
 
-@slice_config
+@with_config(SliceConfig, xinerama=False)
 def test_slice_last(manager):
     manager.test_window('one')
     assert_dimensions(manager, 200, 0, 600, 600)
@@ -90,7 +84,7 @@ def test_slice_last(manager):
     assert_dimensions(manager, 0, 0, 200, 600)
 
 
-@slice_config
+@with_config(SliceConfig, xinerama=False)
 def test_slice_focus(manager):
     manager.test_window('one')
     assert_focused(manager, 'one')
@@ -109,7 +103,7 @@ def test_slice_focus(manager):
     assert_focus_path(manager, 'three', 'one', 'slice')
 
 
-@slice_config
+@with_config(SliceConfig, xinerama=False)
 def test_all_slices(manager):
     manager.test_window('slice')  # left
     assert_dimensions(manager, 0, 0, 200, 600)
@@ -130,7 +124,7 @@ def test_all_slices(manager):
     assert_dimensions(manager, 0, 0, 800, 400)
 
 
-@slice_config
+@with_config(SliceConfig, xinerama=False)
 def test_command_propagation(manager):
     manager.test_window('slice')
     manager.test_window('one')

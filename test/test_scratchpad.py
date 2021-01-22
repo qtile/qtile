@@ -18,17 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
-
 import libqtile.config
 import libqtile.layout
 import libqtile.widget
 from libqtile.confreader import Config
-from test.conftest import Retry, no_xinerama
+from test.conftest import Retry, with_config
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
-class ScratchPadBaseConfic(Config):
+class ScratchPadBaseConfig(Config):
     auto_fullscreen = True
     screens = []
     groups = [
@@ -47,11 +45,6 @@ class ScratchPadBaseConfic(Config):
     mouse = []
 
 
-# scratchpad_config = lambda x:
-def scratchpad_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [ScratchPadBaseConfic], indirect=True)(x))
-
-
 @Retry(ignore_exceptions=(KeyError,))
 def is_spawned(manager, name):
     manager.c.group["SCRATCHPAD"].dropdown_info(name)['window']
@@ -65,7 +58,7 @@ def is_killed(manager, name):
     raise ValueError('not yet killed')
 
 
-@scratchpad_config
+@with_config(ScratchPadBaseConfig, xinerama=False)
 def test_toggling(manager):
     # adjust command for current display
     manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s sh' % manager.display)
@@ -94,7 +87,7 @@ def test_toggling(manager):
     assert manager.c.group["SCRATCHPAD"].info()['windows'] == []
 
 
-@scratchpad_config
+@with_config(ScratchPadBaseConfig, xinerama=False)
 def test_focus_cycle(manager):
     # adjust command for current display
     manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s sh' % manager.display)
@@ -122,7 +115,7 @@ def test_focus_cycle(manager):
     assert_focus_path(manager, 'one', 'two', 'dd-a', 'dd-b')
 
 
-@scratchpad_config
+@with_config(ScratchPadBaseConfig, xinerama=False)
 def test_focus_lost_hide(manager):
     # adjust command for current display
     manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-c', command='xterm -T dd-c -display %s sh' % manager.display)
@@ -175,7 +168,7 @@ def test_focus_lost_hide(manager):
     assert sorted(manager.c.group["SCRATCHPAD"].info()['windows']) == ['dd-c', 'dd-d']
 
 
-@scratchpad_config
+@with_config(ScratchPadBaseConfig, xinerama=False)
 def test_kill(manager):
     # adjust command for current display
     manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s sh' % manager.display)
@@ -199,7 +192,7 @@ def test_kill(manager):
     assert 'window' not in manager.c.group["SCRATCHPAD"].dropdown_info('dd-a')
 
 
-@scratchpad_config
+@with_config(ScratchPadBaseConfig, xinerama=False)
 def test_floating_toggle(manager):
     # adjust command for current display
     manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s sh' % manager.display)
@@ -227,7 +220,7 @@ def test_floating_toggle(manager):
     assert sorted(manager.c.group["a"].info()['windows']) == ['dd-a', 'dd-a', 'one']
 
 
-@scratchpad_config
+@with_config(ScratchPadBaseConfig, xinerama=False)
 def test_stepping_between_groups_should_skip_scratchpads(manager):
     # we are on a group
     manager.c.screen.next_group()

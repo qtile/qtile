@@ -21,13 +21,12 @@
 import os
 import subprocess
 
-import pytest
-
 import libqtile.bar
 import libqtile.config
 import libqtile.layout
 import libqtile.widget
 from libqtile.confreader import Config
+from test.conftest import with_config
 
 
 class ServerConfig(Config):
@@ -65,9 +64,6 @@ class ServerConfig(Config):
     ]
 
 
-server_config = pytest.mark.parametrize("manager", [ServerConfig], indirect=True)
-
-
 def run_qtile_cmd(args):
     cmd = os.path.join(os.path.dirname(__file__), '..', 'bin', 'qtile')
     argv = [cmd, "cmd-obj"]
@@ -77,7 +73,7 @@ def run_qtile_cmd(args):
     return eval(output.decode())  # as returned by pprint.pprint
 
 
-@server_config
+@with_config(ServerConfig)
 def test_qtile_cmd(manager):
 
     manager.test_window("foo")

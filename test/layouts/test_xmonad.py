@@ -18,12 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
-
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
+from test.conftest import with_config
 from test.layouts.layout_utils import (
     assert_dimensions,
     assert_focus_path,
@@ -46,10 +44,6 @@ class MonadTallConfig(Config):
     follow_mouse_focus = False
 
 
-def monadtall_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadTallConfig], indirect=True)(x))
-
-
 class MonadTallMarginsConfig(Config):
     auto_fullscreen = True
     groups = [
@@ -63,10 +57,6 @@ class MonadTallMarginsConfig(Config):
     mouse = []
     screens = []
     follow_mouse_focus = False
-
-
-def monadtallmargins_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadTallMarginsConfig], indirect=True)(x))
 
 
 class MonadWideConfig(Config):
@@ -84,10 +74,6 @@ class MonadWideConfig(Config):
     follow_mouse_focus = False
 
 
-def monadwide_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadWideConfig], indirect=True)(x))
-
-
 class MonadWideMarginsConfig(Config):
     auto_fullscreen = True
     groups = [
@@ -103,11 +89,7 @@ class MonadWideMarginsConfig(Config):
     follow_mouse_focus = False
 
 
-def monadwidemargins_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadWideMarginsConfig], indirect=True)(x))
-
-
-@monadtall_config
+@with_config(MonadTallConfig, xinerama=False)
 def test_tall_add_clients(manager):
     manager.test_window('one')
     manager.test_window('two')
@@ -129,7 +111,7 @@ def test_tall_add_clients(manager):
     assert_focused(manager, 'four')
 
 
-@monadwide_config
+@with_config(MonadWideConfig, xinerama=False)
 def test_wide_add_clients(manager):
     manager.test_window('one')
     manager.test_window('two')
@@ -151,7 +133,7 @@ def test_wide_add_clients(manager):
     assert_focused(manager, 'four')
 
 
-@monadtallmargins_config
+@with_config(MonadTallMarginsConfig, xinerama=False)
 def test_tall_margins(manager):
     manager.test_window('one')
     assert_dimensions(manager, 4, 4, 788, 588)
@@ -165,7 +147,7 @@ def test_tall_margins(manager):
     assert_dimensions(manager, 4, 4, 392, 588)
 
 
-@monadwidemargins_config
+@with_config(MonadWideMarginsConfig, xinerama=False)
 def test_wide_margins(manager):
     manager.test_window('one')
     assert_dimensions(manager, 4, 4, 788, 588)
@@ -179,7 +161,7 @@ def test_wide_margins(manager):
     assert_dimensions(manager, 4, 4, 788, 292)
 
 
-@monadtall_config
+@with_config(MonadTallConfig, xinerama=False)
 def test_tall_growmain_solosecondary(manager):
     manager.test_window('one')
     assert_dimensions(manager, 0, 0, 796, 596)
@@ -206,7 +188,7 @@ def test_tall_growmain_solosecondary(manager):
     assert_dimensions(manager, 0, 0, 196, 596)
 
 
-@monadwide_config
+@with_config(MonadWideConfig, xinerama=False)
 def test_wide_growmain_solosecondary(manager):
     manager.test_window('one')
     assert_dimensions(manager, 0, 0, 796, 596)
@@ -233,7 +215,7 @@ def test_wide_growmain_solosecondary(manager):
     assert_dimensions(manager, 0, 0, 796, 146)
 
 
-@monadtall_config
+@with_config(MonadTallConfig, xinerama=False)
 def test_tall_growmain_multiplesecondary(manager):
     manager.test_window('one')
     assert_dimensions(manager, 0, 0, 796, 596)
@@ -262,7 +244,7 @@ def test_tall_growmain_multiplesecondary(manager):
     assert_dimensions(manager, 0, 0, 196, 596)
 
 
-@monadwide_config
+@with_config(MonadWideConfig, xinerama=False)
 def test_wide_growmain_multiplesecondary(manager):
     manager.test_window('one')
     assert_dimensions(manager, 0, 0, 796, 596)
@@ -291,7 +273,7 @@ def test_wide_growmain_multiplesecondary(manager):
     assert_dimensions(manager, 0, 0, 796, 146)
 
 
-@monadtall_config
+@with_config(MonadTallConfig, xinerama=False)
 def test_tall_growsecondary_solosecondary(manager):
     manager.test_window('one')
     assert_dimensions(manager, 0, 0, 796, 596)
@@ -317,7 +299,7 @@ def test_tall_growsecondary_solosecondary(manager):
     assert_dimensions(manager, 600, 0, 196, 596)
 
 
-@monadwide_config
+@with_config(MonadWideConfig, xinerama=False)
 def test_wide_growsecondary_solosecondary(manager):
     manager.test_window('one')
     assert_dimensions(manager, 0, 0, 796, 596)
@@ -343,7 +325,7 @@ def test_wide_growsecondary_solosecondary(manager):
     assert_dimensions(manager, 0, 450, 796, 146)
 
 
-@monadtall_config
+@with_config(MonadTallConfig, xinerama=False)
 def test_tall_growsecondary_multiplesecondary(manager):
     manager.test_window('one')
     assert_dimensions(manager, 0, 0, 796, 596)
@@ -371,7 +353,7 @@ def test_tall_growsecondary_multiplesecondary(manager):
     assert_dimensions(manager, 400, 0, 396, 85)
 
 
-@monadwide_config
+@with_config(MonadWideConfig, xinerama=False)
 def test_wide_growsecondary_multiplesecondary(manager):
     manager.test_window('one')
     assert_dimensions(manager, 0, 0, 796, 596)
@@ -399,7 +381,7 @@ def test_wide_growsecondary_multiplesecondary(manager):
     assert_dimensions(manager, 0, 300, 85, 296)
 
 
-@monadtall_config
+@with_config(MonadTallConfig, xinerama=False)
 def test_tall_flip(manager):
     manager.test_window('one')
     manager.test_window('two')
@@ -434,7 +416,7 @@ def test_tall_flip(manager):
     assert_dimensions(manager, 0, 300, 396, 296)
 
 
-@monadwide_config
+@with_config(MonadWideConfig, xinerama=False)
 def test_wide_flip(manager):
     manager.test_window('one')
     manager.test_window('two')
@@ -469,7 +451,7 @@ def test_wide_flip(manager):
     assert_dimensions(manager, 400, 0, 396, 296)
 
 
-@monadtall_config
+@with_config(MonadTallConfig, xinerama=False)
 def test_tall_shuffle(manager):
     manager.test_window('one')
     manager.test_window('two')
@@ -492,7 +474,7 @@ def test_tall_shuffle(manager):
     assert manager.c.layout.info()['secondary'] == ['one', 'two', 'three']
 
 
-@monadwide_config
+@with_config(MonadWideConfig, xinerama=False)
 def test_wide_shuffle(manager):
     manager.test_window('one')
     manager.test_window('two')
@@ -515,7 +497,7 @@ def test_wide_shuffle(manager):
     assert manager.c.layout.info()['secondary'] == ['one', 'two', 'three']
 
 
-@monadtall_config
+@with_config(MonadTallConfig, xinerama=False)
 def test_tall_swap(manager):
     manager.test_window('one')
     manager.test_window('two')
@@ -557,7 +539,7 @@ def test_tall_swap(manager):
     assert manager.c.layout.info()['secondary'] == ['three', 'two', 'one']
 
 
-@monadwide_config
+@with_config(MonadWideConfig, xinerama=False)
 def test_wide_swap(manager):
     manager.test_window('one')
     manager.test_window('two')
@@ -599,7 +581,7 @@ def test_wide_swap(manager):
     assert manager.c.layout.info()['secondary'] == ['three', 'two', 'one']
 
 
-@monadtall_config
+@with_config(MonadTallConfig, xinerama=False)
 def test_tall_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
     manager.test_window("one")
@@ -620,7 +602,7 @@ def test_tall_window_focus_cycle(manager):
     assert_focus_path(manager, 'float1', 'float2', 'one', 'two', 'three')
 
 
-@monadwide_config
+@with_config(MonadWideConfig, xinerama=False)
 def test_wide_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
     manager.test_window("one")
