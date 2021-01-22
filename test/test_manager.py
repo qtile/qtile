@@ -1470,10 +1470,12 @@ def test_bring_front_click(manager, bring_front_click):
 
     # this is a tiled window.
     manager.test_window("one")
+    manager.c.sync()
 
     manager.test_window("two")
     manager.c.window.set_position_floating(50, 50)
     manager.c.window.set_size_floating(50, 50)
+    manager.c.sync()
 
     manager.test_window("three")
     manager.c.window.set_position_floating(150, 50)
@@ -1481,29 +1483,31 @@ def test_bring_front_click(manager, bring_front_click):
     manager.c.sync()
 
     wids = [x["id"] for x in manager.c.windows()]
+    names = [x["name"] for x in manager.c.windows()]
 
+    assert names == ["one", "two", "three"]
     wins = get_all_windows(conn)
-    assert wins.index(wids[2]) < wins.index(wids[1]) < wins.index(wids[0])
+    assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])
 
     # Click on window two
     fake_click(conn, xtest, 55, 55)
     manager.c.sync()
     wins = get_all_windows(conn)
     if bring_front_click:
-        assert wins.index(wids[2]) < wins.index(wids[0]) < wins.index(wids[1])
+        assert wins.index(wids[0]) < wins.index(wids[2]) < wins.index(wids[1])
     else:
-        assert wins.index(wids[2]) < wins.index(wids[1]) < wins.index(wids[0])
+        assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])
 
     # Click on window one
     fake_click(conn, xtest, 10, 10)
     manager.c.sync()
     wins = get_all_windows(conn)
     if bring_front_click == "floating_only":
-        assert wins.index(wids[2]) < wins.index(wids[0]) < wins.index(wids[1])
+        assert wins.index(wids[0]) < wins.index(wids[2]) < wins.index(wids[1])
     elif bring_front_click:
-        assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])
-    else:
         assert wins.index(wids[2]) < wins.index(wids[1]) < wins.index(wids[0])
+    else:
+        assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])
 
 
 class CursorWarpConfig(ManagerConfig):
