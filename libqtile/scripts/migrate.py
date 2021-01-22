@@ -95,9 +95,11 @@ def do_migrate(args):
         m(args.config).execute(interactive=args.interactive, write=True)
 
 
-def add_subcommand(subparsers):
+def add_subcommand(subparsers, parents):
     parser = subparsers.add_parser(
-        "migrate", help="Migrate a configuration file to the current API"
+        "migrate",
+        parents=parents,
+        help="Migrate a configuration file to the current API"
     )
     parser.add_argument(
         "-c",

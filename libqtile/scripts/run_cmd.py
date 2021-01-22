@@ -57,8 +57,12 @@ def run_cmd(opts) -> None:
     proc.wait()
 
 
-def add_subcommand(subparsers):
-    parser = subparsers.add_parser("run-cmd", help="A wrapper around the command graph")
+def add_subcommand(subparsers, parents):
+    parser = subparsers.add_parser(
+        "run-cmd",
+        parents=parents,
+        help="A wrapper around the command graph"
+    )
     parser.add_argument(
         '-s',
         '--socket',
