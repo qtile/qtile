@@ -33,11 +33,13 @@ manager_config_highdpi = pytest.mark.parametrize("manager_highdpi", [ManagerConf
 
 @manager_config_highdpi
 def test_high_dpi_window_size(manager_highdpi):
+    manager = manager_highdpi
     manager_highdpi.test_xclock()
-    assert manager_highdpi.c.screen.info()["width"] == 2876
-    assert manager_highdpi.c.screen.info()["height"] == 1200
-    assert manager_highdpi.c.window.info()["width"] == 164 * 2
-    assert manager_highdpi.c.window.info()["height"] == 164 * 2
+
+    assert manager.c.screen.info()["width"] == 2876
+    assert manager.c.screen.info()["height"] == 1200
+    assert manager.c.window.info()["width"] == 164 * 2
+    assert manager.c.window.info()["height"] == 164 * 2
 
 
 @pytest.fixture(scope="function")

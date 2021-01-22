@@ -42,7 +42,7 @@ class TextLayout:
     def __init__(self, drawer, text, colour, font_family, font_size,
                  font_shadow, wrap=True, markup=False):
         self.drawer, self.colour = drawer, colour
-        layout = pangocffi.PangoLayout(drawer.ctx)
+        layout = pangocffi.PangoLayout(drawer.ctx, drawer._dpi)
         layout.set_alignment(pangocffi.ALIGN_CENTER)
         if not wrap:  # pango wraps by default
             layout.set_ellipsize(pangocffi.ELLIPSIZE_END)
@@ -221,6 +221,7 @@ class Drawer:
         self._surface = None
         self._pixmap = None
         self._gc = None
+        self._dpi = int(qtile.root.get_property("RESOURCE_MANAGER", type="STRING", unpack=str).split(": ")[1])
 
         self.surface = None
         self.ctx = None

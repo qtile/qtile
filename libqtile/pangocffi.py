@@ -57,18 +57,6 @@ pango = ffi.dlopen('libpango-1.0.so.0')
 pangocairo = ffi.dlopen('libpangocairo-1.0.so.0')
 
 
-def patch_cairo_context(cairo_t):
-    def create_layout():
-        return PangoLayout(cairo_t._pointer)
-    cairo_t.create_layout = create_layout
-
-    def show_layout(layout):
-        pangocairo.pango_cairo_show_layout(cairo_t._pointer, layout._pointer)
-    cairo_t.show_layout = show_layout
-
-    return cairo_t
-
-
 ALIGN_CENTER = pango.PANGO_ALIGN_CENTER
 ELLIPSIZE_END = pango.PANGO_ELLIPSIZE_END
 units_from_double = pango.pango_units_from_double
@@ -82,7 +70,8 @@ ALIGNMENTS = {
 
 
 class PangoLayout:
-    def __init__(self, cairo_t):
+    def __init__(self, cairo_t, dpi=None):
+        set_default_dpi(dpi)
         self._cairo_t = cairo_t
         self._pointer = pangocairo.pango_cairo_create_layout(cairo_t._pointer)
 
@@ -139,6 +128,7 @@ class PangoLayout:
     def show(self):
         pangocairo.pango_cairo_show_layout(self._cairo_t._pointer, self._pointer)
 
+
 class FontDescription:
     def __init__(self, pointer=None):
         if pointer is None:
@@ -190,7 +180,9 @@ def markup_escape_text(text):
 
 
 def set_default_dpi(dpi):
-    # Note: this is per-thread. However, we're single threaded, so it's fine.
+    if dpi is None:
+        return
+
     m = pangocairo.pango_cairo_font_map_get_default()
     pangocairo.pango_cairo_font_map_set_resolution(m, float(dpi))
     pangocairo.pango_cairo_font_map_set_default(m)
