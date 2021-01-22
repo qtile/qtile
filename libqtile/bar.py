@@ -335,7 +335,7 @@ class Bar(Gap, configurable.Configurable):
 
     def handle_MotionNotify(self, e):  # noqa: N802
         widget = self.get_widget_in_position(e)
-        if widget and widget is not self.cursor_in:
+        if widget and self.cursor_in and widget is not self.cursor_in:
             self.cursor_in.mouse_leave(
                 e.event_x - self.cursor_in.offsetx,
                 e.event_y - self.cursor_in.offsety,
