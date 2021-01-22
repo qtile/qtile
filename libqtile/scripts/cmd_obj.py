@@ -187,7 +187,7 @@ def cmd_obj(args) -> None:
         sys.exit(1)
 
 
-def add_subcommand(subparsers):
+def add_subcommand(subparsers, parents):
     epilog = textwrap.dedent('''\
     Examples:
      qtile cmd-obj
@@ -196,7 +196,8 @@ def add_subcommand(subparsers):
      qtile cmd-obj -o cmd -f prev_layout -a 3 # prev_layout on group 3
      qtile cmd-obj -o group 3 -f focus_back''')
     description = 'qtile.command functionality exposed to the shell.'
-    parser = subparsers.add_parser("cmd-obj", help=description, epilog=epilog,
+    parser = subparsers.add_parser("cmd-obj", help=description,
+                                   parents=parents, epilog=epilog,
                                    formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--object', '-o', dest='obj_spec', nargs='+',
                         help='Specify path to object (space separated).  '

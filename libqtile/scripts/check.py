@@ -128,8 +128,12 @@ def check_config(args):
     print("config file can be loaded by qtile")
 
 
-def add_subcommand(subparsers):
-    parser = subparsers.add_parser("check", help="Check a configuration file for errors")
+def add_subcommand(subparsers, parents):
+    parser = subparsers.add_parser(
+        "check",
+        parents=parents,
+        help="Check a configuration file for errors"
+    )
     parser.add_argument(
         "-c", "--config",
         action="store",

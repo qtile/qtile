@@ -175,9 +175,10 @@ def top(opts):
         raw_stats(c, limit=lines, force_start=force_start)
 
 
-def add_subcommand(subparsers):
-    parser = subparsers.add_parser("top", help="resource usage information")
-    parser.add_argument('-l', '--lines', type=int, dest="lines", default=10,
+def add_subcommand(subparsers, parents):
+    parser = subparsers.add_parser("top", parents=parents,
+                                   help="resource usage information")
+    parser.add_argument('-L', '--lines', type=int, dest="lines", default=10,
                         help='Number of lines.')
     parser.add_argument('-r', '--raw', dest="raw", action="store_true",
                         default=False, help='Output raw without curses')

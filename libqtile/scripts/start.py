@@ -93,8 +93,12 @@ def start(options):
     logger.info('Exiting...')
 
 
-def add_subcommand(subparsers):
-    parser = subparsers.add_parser("start", help="Start the window manager")
+def add_subcommand(subparsers, parents):
+    parser = subparsers.add_parser(
+        "start",
+        parents=parents,
+        help="Start the window manager"
+    )
     parser.add_argument(
         "-c", "--config",
         action="store",
