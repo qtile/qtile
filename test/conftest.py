@@ -475,6 +475,11 @@ def xvfb():
 
 
 @pytest.fixture(scope="session")
+def display(xvfb):
+    return os.environ["DISPLAY"]
+
+
+@pytest.fixture(scope="session")
 def xephyr(request, xvfb):
     kwargs = getattr(request, "param", {})
 

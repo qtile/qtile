@@ -1,8 +1,8 @@
 from libqtile.backend.x11 import core
 
 
-def test_keys(manager_nospawn):
-    xc = core.Core(manager_nospawn.display)
+def test_keys(display):
+    xc = core.Core(display)
     try:
         assert "a" in xc.get_keys()
         assert "shift" in xc.get_modifiers()
