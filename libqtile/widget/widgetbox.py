@@ -24,7 +24,7 @@ from libqtile import bar
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
-BoxedWidget = namedtuple("Widget", ["widget", "draw"])
+BoxedWidget = namedtuple("BoxedWidget", ["widget", "draw"])
 
 
 def _no_draw(*args, **kwargs):
