@@ -924,6 +924,10 @@ class Connection:
                 xcffib.xproto.Time.CurrentTime,
             )
 
+    def query_win_stack(self):
+        q = self.conn.core.QueryTree(self.default_screen.root.wid).reply()
+        return list(q.children)
+
     @functools.lru_cache()
     def color_pixel(self, name):
         pixel = self.screens[0].default_colormap.alloc_color(name).pixel

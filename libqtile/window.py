@@ -432,6 +432,9 @@ class _Window(CommandObject):
             eventmask=self._window_mask
         )
 
+    def bring_to_front(self):
+        self.qtile.bring_to_front(self)
+
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None):
         """
@@ -490,7 +493,7 @@ class _Window(CommandObject):
             height=height,
         )
         if above:
-            kwarg['stackmode'] = StackMode.Above
+            self.bring_to_front()
 
         self.window.configure(**kwarg)
         self.paint_borders(bordercolor, borderwidth)
@@ -1371,7 +1374,7 @@ class Window(_Window):
 
     def cmd_bring_to_front(self):
         if self.floating:
-            self.window.configure(stackmode=StackMode.Above)
+            self.qtile.bring_to_front(self)
         else:
             self._reconfigure_floating()  # atomatically above
 

@@ -410,7 +410,9 @@ class Qtile(CommandObject):
         This is needed for third party tasklists and drag and drop of tabs in
         chrome
         """
+        stack = self.conn.query_win_stack()
         windows = [wid for wid, c in self.windows_map.items() if c.group]
+        windows.sort(key=lambda wid: stack.index(wid))
         self.core.update_client_list(windows)
 
     def add_group(self, name, layout=None, layouts=None, label=None):
@@ -700,13 +702,6 @@ class Qtile(CommandObject):
             wid = e.child
             window = self.windows_map.get(wid)
 
-            if self.config.bring_front_click and (
-                self.config.bring_front_click != "floating_only" or getattr(window, "floating", False)
-            ):
-                self.conn.conn.core.ConfigureWindow(
-                    wid, xcffib.xproto.ConfigWindow.StackMode, [xcffib.xproto.StackMode.Above]
-                )
-
             try:
                 if window.group.screen is not self.current_screen:
                     self.focus_screen(window.group.screen.index, warp=False)
@@ -717,6 +712,13 @@ class Qtile(CommandObject):
                 screen = self.find_screen(e.root_x, e.root_y)
                 if screen:
                     self.focus_screen(screen.index, warp=False)
+
+            # XXX Focusing window should bring it to the top.
+            # Ideally we should not need this.
+            if self.config.bring_front_click and (
+                self.config.bring_front_click != "floating_only" or getattr(window, "floating", False)
+            ):
+                self.bring_to_front(window)
 
         else:
             # clicked on root window
@@ -802,6 +804,37 @@ class Qtile(CommandObject):
                         logger.error(
                             "Mouse command error %s: %s" % (i.name, val)
                         )
+
+    def _get_top_window(self, win):
+        # Optionally we can a take window, in relation to which, we would like
+        # to get the top window. For instance, if window has _NET_WM_STATE_ABOVE
+        # we could include other windows with _NET_WM_STATE_ABOVE as well.
+        # This function is pretty basic, right now.
+        #
+        # But this could be enhanced, so that we also include other criteria,
+        # while selecting the top window such as EWMH tags, the tile/floating
+        # state of the window etc.
+        stack = self.conn.query_win_stack()
+        indexed = [(stack.index(w.window.wid), w) for w in self.current_group.windows]
+        indexed.sort(
+            key=lambda x: x[0],
+            reverse=True,
+        )
+        if indexed:
+            return indexed[0][1]
+        # Update _NET_CLIENT_LIST_STACKING
+
+    def bring_to_front(self, win):
+        """Bring the window to the front of the screen."""
+        if win is not None:
+            top_win = self._get_top_window(win)
+            if top_win is not None:
+                self.conn.conn.core.ConfigureWindow(
+                    win.window.wid,
+                    xcffib.xproto.ConfigWindow.StackMode | xcffib.xproto.ConfigWindow.Sibling,
+                    [top_win.window.wid, xcffib.xproto.StackMode.Above]
+                )
+            self.update_client_list()
 
     def warp_to_screen(self):
         if self.current_screen:
