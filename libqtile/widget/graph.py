@@ -192,7 +192,12 @@ class _Graph(base._Widget):
 
 
 class CPUGraph(_Graph):
-    """Display CPU usage graph"""
+    """Display CPU usage graph.
+
+    Widget requirements: psutil_.
+
+    .. _psutil: https://pypi.org/project/psutil/
+    """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("core", "all", "Which core to show (all/0/1/2/...)"),
@@ -240,7 +245,12 @@ class CPUGraph(_Graph):
 
 
 class MemoryGraph(_Graph):
-    """Displays a memory usage graph"""
+    """Displays a memory usage graph.
+
+    Widget requirements: psutil_.
+
+    .. _psutil: https://pypi.org/project/psutil/
+    """
     orientations = base.ORIENTATION_HORIZONTAL
     fixed_upper_bound = True
 
@@ -269,7 +279,12 @@ class MemoryGraph(_Graph):
 
 
 class SwapGraph(_Graph):
-    """Display a swap info graph"""
+    """Display a swap info graph.
+
+    Widget requirements: psutil_.
+
+    .. _psutil: https://pypi.org/project/psutil/
+    """
     orientations = base.ORIENTATION_HORIZONTAL
     fixed_upper_bound = True
 
@@ -300,7 +315,11 @@ class SwapGraph(_Graph):
 
 
 class NetGraph(_Graph):
-    """Display a network usage graph"""
+    """Display a network usage graph.
+
+    Widget requirements: psutil_.
+
+    .. _psutil: https://pypi.org/project/psutil/"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         (
