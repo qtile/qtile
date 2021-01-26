@@ -24,6 +24,13 @@ from libqtile.widget import base
 
 
 class CPU(base.ThreadPoolText):
+    """
+    A simple widget to display CPU load and frequency.
+
+    Widget requirements: psutil_.
+
+    .. _psutil: https://pypi.org/project/psutil/
+    """
     orientations = base.ORIENTATION_HORIZONTAL
 
     defaults = [
