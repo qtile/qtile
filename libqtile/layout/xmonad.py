@@ -150,7 +150,7 @@ class MonadTall(_SimpleLayoutBase):
         ("border_width", 2, "Border width."),
         ("single_border_width", None, "Border width for single window"),
         ("single_margin", None, "Margin size for single window"),
-        ("name", "xmonadtall", "Name of this layout."),
+        ("name", "monadtall", "Name of this layout."),
         ("margin", 0, "Margin of the layout"),
         ("ratio", .5,
             "The percent of the screen-space the master pane should occupy "
@@ -849,6 +849,10 @@ class MonadWide(MonadTall):
 
     _up = 0
     _down = 1
+
+    def __init__(self, **config):
+        config.setdefault("name", "monadwide")
+        super().__init__(**config)
 
     def _get_relative_size_from_absolute(self, absolute_size):
         return absolute_size / self.screen_rect.width
