@@ -987,7 +987,9 @@ class Window(_Window):
             self.hide()
         else:
             width = max(self.width, self.hints.get('min_width', 0))
+            width = min(width, self.hints.get('max_width', 0)) or width
             height = max(self.height, self.hints.get('min_height', 0))
+            height = min(height, self.hints.get('max_height', 0)) or height
 
             if self.hints['base_width'] and self.hints['width_inc']:
                 width_adjustment = (width - self.hints['base_width']) % self.hints['width_inc']
