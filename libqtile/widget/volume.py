@@ -46,6 +46,10 @@ re_vol = re.compile(r'\[(\d?\d?\d?)%\]')
 class Volume(base._TextBox):
     """Widget that display and change volume
 
+    By default, this widget uses ``amixer`` to get and set the volume so users
+    will need to make sure this is installed. Alternatively, users may set the
+    relevant parameters for the widget to use a different application.
+
     If theme_path is set it draw widget as icons.
     """
     orientations = base.ORIENTATION_HORIZONTAL
