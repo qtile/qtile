@@ -227,6 +227,17 @@ class _Window(CommandObject):
     def has_focus(self):
         return self == self.qtile.current_window
 
+    def has_fixed_size(self):
+        try:
+            if ('PMinSize' in self.hints['flags'] and
+                    'PMaxSize' in self.hints['flags'] and
+                    0 < self.hints["min_width"] == self.hints["max_width"] and
+                    0 < self.hints["min_height"] == self.hints["max_height"]):
+                return True
+        except KeyError:
+            pass
+        return False
+
     def has_user_set_position(self):
         try:
             if 'USPosition' in self.hints['flags'] or 'PPosition' in self.hints['flags']:

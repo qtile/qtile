@@ -570,8 +570,8 @@ class Match:
         matches against the _NET_WM_PID atom (only int allowed for this
         rule)
     func:
-        matches against the given function, which receives the client as only
-        argument
+        delegate the match to the given function, which receives the tested
+        client as argument and must return True if it matches, False otherwise
     """
     def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
                  wm_instance_class=None, net_wm_pid=None,
