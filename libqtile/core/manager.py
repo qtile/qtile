@@ -545,8 +545,9 @@ class Qtile(CommandObject):
 
                 if w.get_wm_type() == "dock" or c.strut:
                     c.cmd_static(self.current_screen.index)
-                else:
-                    hook.fire("client_new", c)
+                    return
+
+                hook.fire("client_new", c)
 
                 # Window may be defunct because
                 # it's been declared static in hook.
