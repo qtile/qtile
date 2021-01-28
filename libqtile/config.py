@@ -28,9 +28,9 @@
 import os.path
 import sys
 import warnings
-from typing import List, Optional
+from typing import Callable, List, Optional
 
-from libqtile import configurable, hook, utils
+from libqtile import configurable, hook, utils, window
 from libqtile.bar import BarType
 from libqtile.command.base import CommandObject
 from libqtile.lazy import lazy
@@ -569,9 +569,13 @@ class Match:
     net_wm_pid:
         matches against the _NET_WM_PID atom (only int allowed for this
         rule)
+    func:
+        matches against the given function, which receives the client as only
+        argument
     """
     def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
-                 wm_instance_class=None, net_wm_pid=None):
+                 wm_instance_class=None, net_wm_pid=None,
+                 func: Callable[[window.Window], bool] = None):
         self._rules = {}
 
         if title is not None:
@@ -591,6 +595,8 @@ class Match:
                 error = 'Invalid rule for net_wm_pid: "%s" only int allowed' % \
                         str(net_wm_pid)
                 raise utils.QtileError(error)
+        if func is not None:
+            self._rules["func"] = func
 
     @staticmethod
     def _get_property_predicate(name, value):
@@ -620,6 +626,8 @@ class Match:
                 value = wm_class[0]
             elif property_name == 'role':
                 value = client.window.get_wm_window_role()
+            elif property_name == 'func':
+                return rule_value(client)
             else:
                 value = getattr(client.window, 'get_' + property_name)()
 
