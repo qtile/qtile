@@ -64,7 +64,11 @@ class ManagerConfig(Config):
         libqtile.layout.max.Max()
     ]
     floating_layout = libqtile.layout.floating.Floating(
-        float_rules=[Match(wm_class='xclock')])
+        float_rules=[
+            *libqtile.layout.floating.Floating.default_float_rules,
+            Match(wm_class='xclock')
+        ]
+    )
     keys = [
         libqtile.config.Key(
             ["control"],
@@ -596,6 +600,28 @@ def test_default_float(manager):
     assert manager.c.window.info()['x'] == 10
     assert manager.c.window.info()['y'] == 20
     assert manager.c.window.info()['floating'] is True
+
+    w = None
+    conn = xcbq.Connection(manager.display)
+
+    def size_hints():
+        nonlocal w
+        w = conn.create_window(5, 5, 10, 10)
+
+        # set the size hints
+        hints = [0] * 18
+        hints[0] = xcbq.NormalHintsFlags["PMinSize"] | xcbq.NormalHintsFlags["PMaxSize"]
+        hints[5] = hints[6] = hints[7] = hints[8] = 10
+        w.set_property("WM_NORMAL_HINTS", hints, type="WM_SIZE_HINTS", format=32)
+        w.map()
+        conn.conn.flush()
+
+    try:
+        manager.create_window(size_hints)
+        assert manager.c.window.info()['floating'] is True
+    finally:
+        w.kill_client()
+        conn.finalize()
 
 
 @manager_config

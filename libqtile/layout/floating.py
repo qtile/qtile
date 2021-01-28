@@ -53,6 +53,7 @@ class Floating(Layout):
         Match(wm_class='notification'),
         Match(wm_class='splash'),
         Match(wm_class='toolbar'),
+        Match(func=lambda c: c.has_fixed_size())
     ]
 
     defaults = [
