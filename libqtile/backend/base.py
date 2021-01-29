@@ -2,12 +2,17 @@ import typing
 from abc import ABCMeta, abstractmethod
 
 from libqtile import config
+from libqtile.drawer import DrawerBackend
 
 
 class Core(metaclass=ABCMeta):
     @abstractmethod
     def finalize(self):
         """Destructor/Clean up resources"""
+
+    @abstractmethod
+    def get_drawer_backend(self, wid, *args, **kwargs) -> DrawerBackend:
+        pass
 
     @property
     @abstractmethod
@@ -41,3 +46,7 @@ class Core(metaclass=ABCMeta):
     @abstractmethod
     def ungrab_pointer(self) -> None:
         """Release grabbed pointer events"""
+
+    @abstractmethod
+    def update_net_desktops(self, groups, index: int) -> None:
+        pass

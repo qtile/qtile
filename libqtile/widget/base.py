@@ -195,8 +195,9 @@ class _Widget(CommandObject, configurable.Configurable):
         self.qtile = qtile
         self.bar = bar
         self.drawer = drawer.Drawer(
-            qtile,
-            self.win.wid,
+            qtile.core.get_drawer_backend(
+                self.win.wid,
+            ),
             self.bar.width,
             self.bar.height
         )

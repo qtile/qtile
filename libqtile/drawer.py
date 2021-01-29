@@ -31,9 +31,9 @@
 # SOFTWARE.
 import collections
 import math
+from abc import ABCMeta, abstractmethod
 
 import cairocffi
-import xcffib.xproto
 
 from libqtile import pangocffi, utils
 
@@ -203,6 +203,40 @@ class TextFrame:
         return self.layout.width + self.pad_left + self.pad_right
 
 
+class DrawerBackend(metaclass=ABCMeta):
+    def __init__(self, connection, wid):
+        self.connection = connection
+        self.wid = wid
+
+    def finalize(self):
+        pass
+
+    @abstractmethod
+    def create_buffer(self, width, height):
+        pass
+
+    def free_buffer(self, buf):
+        pass
+
+    @abstractmethod
+    def create_surface(self, width, height, drawable=None):
+        pass
+
+    def free_surface(self, surface):
+        surface.finish()
+
+    @abstractmethod
+    def copy_area(
+        self,
+        source,
+        width,
+        height,
+        destination_offset_x=0,
+        destination_offset_y=0,
+    ):
+        pass
+
+
 class Drawer:
     """ A helper class for drawing and text layout.
 
@@ -215,13 +249,13 @@ class Drawer:
     surface and pixmap and recreate them when we need them again with the new
     geometry.
     """
-    def __init__(self, qtile, wid, width, height):
-        self.qtile = qtile
-        self.wid, self._width, self._height = wid, width, height
-        self._surface = None
-        self._pixmap = None
-        self._gc = None
+    def __init__(self, backend, width, height):
+        self.backend = backend
+        self._width = width
+        self._height = height
 
+        self._buffer_surface = None
+        self._buffer = None
         self.surface = None
         self.ctx = None
 
@@ -231,51 +265,36 @@ class Drawer:
     def finalize(self):
         self.surface.finish()
         self.surface = None
-        self._free_xcb_surface()
-        self._free_pixmap()
-        self._free_gc()
         self.ctx = None
+        self._free_buffer()
+        # backend is passed in on creation, but it's lifetime exactly matches
+        # the Drawer so just finalize here.
+        self.backend.finalize()
 
     @property
     def pixmap(self):
-        if self._pixmap is None:
+        if self._buffer is None:
             # draw here since the only use case of this function is in the
             # systray widget which expects a filled pixmap.
             self.draw()
-        return self._pixmap
+        return self._buffer
 
-    def _create_gc(self):
-        gc = self.qtile.conn.conn.generate_id()
-        self.qtile.conn.conn.core.CreateGC(
-            gc,
-            self.wid,
-            xcffib.xproto.GC.Foreground | xcffib.xproto.GC.Background,
-            [
-                self.qtile.conn.default_screen.black_pixel,
-                self.qtile.conn.default_screen.white_pixel,
-            ],
-        )
-        return gc
-
-    def _free_gc(self):
-        if self._gc is not None:
-            self.qtile.conn.conn.core.FreeGC(self._gc)
-            self._gc = None
-
-    def _create_xcb_surface(self):
-        surface = cairocffi.XCBSurface(
-            self.qtile.conn.conn,
-            self._pixmap,
-            self.find_root_visual(),
+    def _create_buffer(self):
+        self._buffer = self.backend.create_buffer(self.width, self.height)
+        self._buffer_surface = self.backend.create_surface(
             self.width,
             self.height,
+            drawable=self._buffer,
         )
-        return surface
 
-    def _free_xcb_surface(self):
-        if self._surface is not None:
-            self._surface.finish()
-            self._surface = None
+    def _free_buffer(self):
+        if self._buffer is None:
+            return
+
+        self.backend.free_surface(self._buffer_surface)
+        self.backend.free_buffer(self._buffer)
+        self._buffer_surface = None
+        self._buffer = None
 
     def _reset_surface(self):
         if self.surface is not None:
@@ -286,22 +305,6 @@ class Drawer:
         )
         self.ctx = self.new_ctx()
 
-    def _create_pixmap(self):
-        pixmap = self.qtile.conn.conn.generate_id()
-        self.qtile.conn.conn.core.CreatePixmap(
-            self.qtile.conn.default_screen.root_depth,
-            pixmap,
-            self.wid,
-            self.width,
-            self.height,
-        )
-        return pixmap
-
-    def _free_pixmap(self):
-        if self._pixmap is not None:
-            self.qtile.conn.conn.core.FreePixmap(self._pixmap)
-            self._pixmap = None
-
     @property
     def width(self):
         return self._width
@@ -309,8 +312,7 @@ class Drawer:
     @width.setter
     def width(self, width):
         if width > self._width:
-            self._free_xcb_surface()
-            self._free_pixmap()
+            self._free_buffer()
         self._width = width
 
     @property
@@ -320,15 +322,14 @@ class Drawer:
     @height.setter
     def height(self, height):
         if height > self._height:
-            self._free_xcb_surface()
-            self._free_pixmap()
+            self._free_buffer()
         self._height = height
 
     def paint_to(self, drawer):
         # If XCBSurface has been invalidated, we need to draw now to create it
-        if self._surface is None:
+        if self._buffer_surface is None:
             self.draw()
-        drawer.ctx.set_source_surface(self._surface)
+        drawer.ctx.set_source_surface(self._buffer_surface)
         drawer.ctx.paint()
 
     def _rounded_rect(self, x, y, width, height, linewidth):
@@ -371,18 +372,21 @@ class Drawer:
         self.ctx.stroke()
 
     def _paint(self):
-        # Only attempt to run RecordingSurface's operations if it actually has
-        # some. self.surface.ink_extents() computes the bounds of the current
-        # list of operations. If any of the bounds are not 0.0 then the surface
-        # has operations and we should paint them.
-        if any(not math.isclose(0.0, i) for i in self.surface.ink_extents()):
-            # Paint RecordingSurface operations to the XCBSurface
-            ctx = cairocffi.Context(self._surface)
-            ctx.set_source_surface(self.surface, 0, 0)
-            ctx.paint()
+        # Paint RecordingSurface operations to the buffer
+        ctx = cairocffi.Context(self._buffer_surface)
+        ctx.set_source_surface(self.surface, 0, 0)
+        ctx.paint()
 
-            # Clear RecordingSurface of operations
-            self._reset_surface()
+        # Clear RecordingSurface of operations
+        self._reset_surface()
+
+    def surface_has_pending(self):
+        # self.surface.ink_extents() computes the bounds of the current list of
+        # operations. If any of the bounds are not 0.0 then the surface has ops
+        return any(
+            not math.isclose(0.0, i)
+            for i in self.surface.ink_extents()
+        )
 
     def draw(self, offsetx=0, offsety=0, width=None, height=None):
         """
@@ -398,34 +402,22 @@ class Drawer:
         height :
             the Y portion of the canvas to draw at the starting point.
         """
-        # If this is our first draw, create the gc
-        if self._gc is None:
-            self._gc = self._create_gc()
+        # If the Drawer has been resized/invalidated, recreate the buffer
+        if self._buffer is None:
+            self._create_buffer()
 
-        # If the Drawer has been resized/invalidated we need to recreate these
-        if self._surface is None:
-            self._pixmap = self._create_pixmap()
-            self._surface = self._create_xcb_surface()
+        # paint stored operations(if any) to the buffer
+        if self.surface_has_pending():
+            self._paint()
 
-        # paint stored operations(if any) to XCBSurface
-        self._paint()
-
-        # Finally, copy XCBSurface's underlying pixmap to the window.
-        self.qtile.conn.conn.core.CopyArea(
-            self._pixmap,
-            self.wid,
-            self._gc,
-            0, 0,  # srcx, srcy
-            offsetx, offsety,  # dstx, dsty
+        # Finally, copy the buffer to the window.
+        self.backend.copy_area(
+            self._buffer,
             self.width if width is None else width,
-            self.height if height is None else height
+            self.height if height is None else height,
+            destination_offset_x=offsetx,
+            destination_offset_y=offsety,
         )
-
-    def find_root_visual(self):
-        for i in self.qtile.conn.default_screen.allowed_depths:
-            for v in i.visuals:
-                if v.visual_id == self.qtile.conn.default_screen.root_visual:
-                    return v
 
     def new_ctx(self):
         return pangocffi.patch_cairo_context(cairocffi.Context(self.surface))

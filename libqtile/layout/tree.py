@@ -718,8 +718,9 @@ class TreeTab(Layout):
     def _create_drawer(self, screen_rect):
         if self._drawer is None:
             self._drawer = drawer.Drawer(
-                self.group.qtile,
-                self._panel.window.wid,
+                self.group.qtile.core.get_drawer_backend(
+                    self._panel.window.wid,
+                ),
                 self.panel_width,
                 screen_rect.height
             )

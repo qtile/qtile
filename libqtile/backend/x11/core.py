@@ -30,6 +30,7 @@ import xcffib.xproto
 from libqtile import config, hook, utils, window
 from libqtile.backend import base
 from libqtile.backend.x11 import xcbq
+from libqtile.backend.x11.drawer import X11DrawerBackend
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 
@@ -160,6 +161,9 @@ class Core(base.Core):
         ).check()
         self.qtile = None
         self.conn.finalize()
+
+    def get_drawer_backend(self, wid, *args, **kwargs):
+        return X11DrawerBackend(self.conn, wid, *args, **kwargs)
 
     def get_screen_info(self) -> List[Tuple[int, int, int, int]]:
         """Get the screen information for the current connection"""

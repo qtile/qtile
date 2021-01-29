@@ -216,8 +216,9 @@ class Bar(Gap, configurable.Configurable):
             )
 
             self.drawer = drawer.Drawer(
-                self.qtile,
-                self.window.window.wid,
+                self.qtile.core.get_drawer_backend(
+                    self.window.window.wid,
+                ),
                 self.width,
                 self.height
             )

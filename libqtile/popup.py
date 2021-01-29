@@ -55,7 +55,11 @@ class Popup(configurable.Configurable):
         self.qtile.windows_map[self.win.window.wid] = self.win
         self.win.opacity = self.opacity
         self.drawer = drawer.Drawer(
-            self.qtile, self.win.window.wid, width, height,
+            self.qtile.core.get_drawer_backend(
+                self.win.window.wid,
+            ),
+            width,
+            height,
         )
         self.layout = self.drawer.textlayout(
             text='',
