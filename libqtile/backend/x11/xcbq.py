@@ -38,7 +38,7 @@ import functools
 import operator
 import typing
 from collections import OrderedDict
-from itertools import chain, repeat
+from itertools import chain, islice, repeat
 
 import cairocffi
 import cairocffi.pixbuf
@@ -528,20 +528,24 @@ class Window:
         if wm_normal_hints:
             atom_list = wm_normal_hints.value.to_atoms()
             flags = {k for k, v in NormalHintsFlags.items() if atom_list[0] & v}
-            return {
+            hints = {
                 "flags": flags,
-                "min_width": atom_list[1 + 4],
-                "min_height": atom_list[2 + 4],
-                "max_width": atom_list[3 + 4],
-                "max_height": atom_list[4 + 4],
-                "width_inc": atom_list[5 + 4],
-                "height_inc": atom_list[6 + 4],
-                "min_aspect": atom_list[7 + 4],
-                "max_aspect": atom_list[8 + 4],
-                "base_width": atom_list[9 + 4],
-                "base_height": atom_list[9 + 4],
-                "win_gravity": atom_list[9 + 4],
+                "min_width": atom_list[5],
+                "min_height": atom_list[6],
+                "max_width": atom_list[7],
+                "max_height": atom_list[8],
+                "width_inc": atom_list[9],
+                "height_inc": atom_list[10],
+                "min_aspect": (atom_list[11], atom_list[12]),
+                "max_aspect": (atom_list[13], atom_list[14])
             }
+
+            # WM_SIZE_HINTS is potentially extensible (append to the end only)
+            iterator = islice(hints, 15, None)
+            hints["base_width"] = next(iterator, hints["min_width"])
+            hints["base_height"] = next(iterator, hints["min_height"])
+            hints["win_gravity"] = next(iterator, 1)
+            return hints
 
     def get_wm_protocols(self):
         wm_protocols = self.get_property("WM_PROTOCOLS", "ATOM", unpack=int)
