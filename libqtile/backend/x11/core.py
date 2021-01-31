@@ -29,7 +29,7 @@ import xcffib.render
 import xcffib.xproto
 
 from libqtile import config, hook, utils, window
-from libqtile.backend import base
+from libqtile.backend.base import core
 from libqtile.backend.x11 import xcbq
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
@@ -55,7 +55,7 @@ class ExistingWMException(Exception):
     pass
 
 
-class Core(base.Core):
+class Core(core.Core):
     def __init__(self, display_name: str = None) -> None:
         """Setup the X11 core backend
 
