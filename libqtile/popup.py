@@ -21,7 +21,8 @@
 
 from xcffib.xproto import StackMode
 
-from libqtile import configurable, drawer, pangocffi, window
+from libqtile import configurable, drawer, pangocffi
+from libqtile.backend.x11 import xcbq
 
 
 class Popup(configurable.Configurable):
@@ -51,7 +52,7 @@ class Popup(configurable.Configurable):
 
         win = qtile.conn.create_window(x, y, width, height)
         win.set_property("QTILE_INTERNAL", 1)
-        self.win = window.Internal(win, qtile)
+        self.win = xcbq.Internal(win, qtile)
         self.qtile.windows_map[self.win.window.wid] = self.win
         self.win.opacity = self.opacity
         self.drawer = drawer.Drawer(

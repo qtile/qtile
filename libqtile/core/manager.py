@@ -36,7 +36,8 @@ import xcffib.xinerama
 import xcffib.xproto
 
 import libqtile
-from libqtile import confreader, hook, ipc, utils, window
+from libqtile import confreader, hook, ipc, utils
+from libqtile.backend import base
 from libqtile.backend.x11 import xcbq
 from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandException, CommandObject
@@ -77,7 +78,7 @@ class Qtile(CommandObject):
         self.mouse_map: Dict[int, List[Click]] = {}
         self.mouse_position = (0, 0)
 
-        self.windows_map: Dict[int, window._Window] = {}
+        self.windows_map: Dict[int, xcbq.Window] = {}
         self.widgets_map: Dict[str, _Widget] = {}
         self.groups_map: Dict[str, _Group] = {}
         self.groups: List[_Group] = []
@@ -501,7 +502,7 @@ class Qtile(CommandObject):
     def remove_strut(self, strut):
         self.add_strut([-i for i in strut])
 
-    def map_window(self, window: xcbq.Window) -> None:
+    def map_window(self, window) -> None:
         c = self.manage(window)
         if c and (not c.group or not c.group.screen):
             return
@@ -512,7 +513,7 @@ class Qtile(CommandObject):
         if c and getattr(c, "group", None):
             try:
                 c.window.unmap()
-                c.state = window.WithdrawnState
+                c.state = xcbq.WithdrawnState
             except xcffib.xproto.WindowError:
                 # This means that the window has probably been destroyed,
                 # but we haven't yet seen the DestroyNotify (it is likely
@@ -533,13 +534,13 @@ class Qtile(CommandObject):
         if w.wid not in self.windows_map:
             if internal:
                 try:
-                    c = window.Internal(w, self)
+                    c = self.core.Internal(w, self)
                 except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
                     return
                 self.windows_map[w.wid] = c
             else:
                 try:
-                    c = window.Window(w, self)
+                    c = self.core.Window(w, self)
                 except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
                     return
 
@@ -586,7 +587,7 @@ class Qtile(CommandObject):
         def get_interesting_pid(win):
             # We don't need to kill Internal or Static windows, they're qtile
             # managed and don't have any state.
-            if not isinstance(win, window.Window):
+            if not isinstance(win, base.Window):
                 return None
             try:
                 return win.window.get_net_wm_pid()
@@ -1250,14 +1251,14 @@ class Qtile(CommandObject):
         """Return info for each client window"""
         return [
             i.info() for i in self.windows_map.values()
-            if not isinstance(i, window.Internal)
+            if not isinstance(i, base.Internal)
         ]
 
     def cmd_internal_windows(self):
         """Return info for each internal window (bars, for example)"""
         return [
             i.info() for i in self.windows_map.values()
-            if isinstance(i, window.Internal)
+            if isinstance(i, base.Internal)
         ]
 
     def cmd_qtile_info(self):

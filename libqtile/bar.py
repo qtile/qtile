@@ -20,7 +20,7 @@
 
 from typing import Union
 
-from libqtile import configurable, drawer, window
+from libqtile import configurable, drawer
 from libqtile.command.base import CommandObject
 
 
@@ -205,7 +205,7 @@ class Bar(Gap, configurable.Configurable):
                 i._configure(qtile, self)
 
         else:
-            self.window = window.Internal.create(
+            self.window = qtile.core.Internal.create(
                 self.qtile,
                 self.x, self.y, self.width, self.height,
                 self.opacity

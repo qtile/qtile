@@ -34,20 +34,20 @@ from xcffib.xproto import (
     SetMode,
 )
 
-from libqtile import bar, window
+from libqtile import bar
 from libqtile.backend.x11 import xcbq
 from libqtile.widget import base
 
 XEMBED_PROTOCOL_VERSION = 0
 
 
-class Icon(window._Window):
+class Icon(xcbq._Window):
     _window_mask = EventMask.StructureNotify | \
         EventMask.PropertyChange | \
         EventMask.Exposure
 
     def __init__(self, win, qtile, systray):
-        window._Window.__init__(self, win, qtile)
+        xcbq._Window.__init__(self, win, qtile)
         self.systray = systray
         self.update_size()
 
@@ -92,7 +92,7 @@ class Icon(window._Window):
     handle_UnmapNotify = handle_DestroyNotify  # noqa: N815
 
 
-class Systray(window._Window, base._Widget):
+class Systray(xcbq._Window, base._Widget):
     """A widget that manages system tray"""
 
     _window_mask = EventMask.StructureNotify | \
@@ -119,7 +119,7 @@ class Systray(window._Window, base._Widget):
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
         win = qtile.conn.create_window(-1, -1, 1, 1)
-        window._Window.__init__(self, xcbq.Window(qtile.conn, win.wid), qtile)
+        xcbq._Window.__init__(self, xcbq.XWindow(qtile.conn, win.wid), qtile)
         qtile.windows_map[win.wid] = self
 
         # Even when we have multiple "Screen"s, we are setting up as the system
@@ -161,7 +161,7 @@ class Systray(window._Window, base._Widget):
         parent = self.bar.window.window
 
         if opcode == atoms['_NET_SYSTEM_TRAY_OPCODE'] and message == 0:
-            w = xcbq.Window(self.qtile.conn, wid)
+            w = xcbq.XWindow(self.qtile.conn, wid)
             icon = Icon(w, self.qtile, self)
             self.icons[wid] = icon
             self.qtile.windows_map[wid] = icon

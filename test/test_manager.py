@@ -38,7 +38,6 @@ import libqtile.confreader
 import libqtile.hook
 import libqtile.layout
 import libqtile.widget
-import libqtile.window
 from libqtile.backend.x11 import xcbq
 from libqtile.command.client import SelectError
 from libqtile.command.interface import CommandError, CommandException
@@ -412,7 +411,7 @@ def test_change_state_via_message(manager):
     window_info = manager.c.window.info()
     conn = xcbq.Connection(manager.display)
 
-    data = xcffib.xproto.ClientMessageData.synthetic([libqtile.window.IconicState, 0, 0, 0, 0], "IIIII")
+    data = xcffib.xproto.ClientMessageData.synthetic([xcbq.IconicState, 0, 0, 0, 0], "IIIII")
     ev = xcffib.xproto.ClientMessageEvent.synthetic(
         32, window_info["id"], conn.atoms['WM_CHANGE_STATE'], data
     )
@@ -420,7 +419,7 @@ def test_change_state_via_message(manager):
     conn.xsync()
     assert manager.c.window.info()["minimized"]
 
-    data = xcffib.xproto.ClientMessageData.synthetic([libqtile.window.NormalState, 0, 0, 0, 0], "IIIII")
+    data = xcffib.xproto.ClientMessageData.synthetic([xcbq.NormalState, 0, 0, 0, 0], "IIIII")
     ev = xcffib.xproto.ClientMessageEvent.synthetic(
         32, window_info["id"], conn.atoms['WM_CHANGE_STATE'], data
     )

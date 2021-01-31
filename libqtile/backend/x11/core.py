@@ -28,8 +28,8 @@ import xcffib
 import xcffib.render
 import xcffib.xproto
 
-from libqtile import config, hook, utils, window
-from libqtile.backend.base import core
+from libqtile import config, hook, utils
+from libqtile.backend import base
 from libqtile.backend.x11 import xcbq
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
@@ -55,7 +55,11 @@ class ExistingWMException(Exception):
     pass
 
 
-class Core(core.Core):
+class Core(base.Core):
+    Window = xcbq.Window  # type: ignore
+    Internal = xcbq.Internal  # type: ignore
+    Static = xcbq.Static  # type: ignore
+
     def __init__(self, display_name: str = None) -> None:
         """Setup the X11 core backend
 
@@ -82,7 +86,7 @@ class Core(core.Core):
         if len(supporting_wm_wid) > 0:
             supporting_wm_wid = supporting_wm_wid[0]
 
-            supporting_wm = xcbq.Window(self.conn, supporting_wm_wid)
+            supporting_wm = xcbq.XWindow(self.conn, supporting_wm_wid)
             existing_wmname = supporting_wm.get_property("_NET_WM_NAME", "UTF8_STRING", unpack=str)
             if existing_wmname:
                 logger.error("not starting; existing window manager {}".format(existing_wmname))
@@ -224,7 +228,7 @@ class Core(core.Core):
 
             if attrs and attrs.map_state == xcffib.xproto.MapState.Unmapped:
                 continue
-            if state and state[0] == window.WithdrawnState:
+            if state and state[0] == xcbq.WithdrawnState:
                 item.unmap()
                 continue
             self.qtile.manage(item)
@@ -593,7 +597,7 @@ class Core(core.Core):
             args["width"] = max(event.width, 0)
         if event.value_mask & cw.BorderWidth:
             args["borderwidth"] = max(event.border_width, 0)
-        w = xcbq.Window(self.conn, event.window)
+        w = xcbq.XWindow(self.conn, event.window)
         w.configure(**args)
 
     def handle_MappingNotify(self, event):  # noqa: N802
@@ -606,8 +610,8 @@ class Core(core.Core):
     def handle_MapRequest(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
-        window = xcbq.Window(self.conn, event.window)
-        self.qtile.map_window(window)
+        win = xcbq.XWindow(self.conn, event.window)
+        self.qtile.map_window(win)
 
     def handle_DestroyNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None

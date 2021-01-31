@@ -16,7 +16,7 @@ def xdisplay(request):
 def test_new_window(xdisplay):
     conn = xcbq.Connection(xdisplay)
     win = conn.create_window(1, 2, 640, 480)
-    assert isinstance(win, xcbq.Window)
+    assert isinstance(win, xcbq.XWindow)
     geom = win.get_geometry()
     assert geom.x == 1
     assert geom.y == 2

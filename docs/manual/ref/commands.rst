@@ -23,4 +23,4 @@ those given here.
 .. qtile_class:: libqtile.config.Screen
    :noindex:
 
-.. qtile_class:: libqtile.window.Window
+.. qtile_class:: libqtile.backend.x11.xcbq.Window

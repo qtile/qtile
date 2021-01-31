@@ -2,9 +2,14 @@ import typing
 from abc import ABCMeta, abstractmethod
 
 from libqtile import config
+from libqtile.backend.base import window
 
 
 class Core(metaclass=ABCMeta):
+    Window = window.Window
+    Internal = window.Internal
+    Static = window.Static
+
     @property
     @abstractmethod
     def display_name(self) -> str:

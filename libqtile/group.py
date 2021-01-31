@@ -31,7 +31,8 @@ import contextlib
 import xcffib
 import xcffib.xproto
 
-from libqtile import hook, utils, window
+from libqtile import hook, utils
+from libqtile.backend.x11 import xcbq
 from libqtile.command.base import CommandObject
 from libqtile.log_utils import logger
 
@@ -254,12 +255,12 @@ class _Group(CommandObject):
         try:
             if 'fullscreen' in win.window.get_net_wm_state() and \
                     self.qtile.config.auto_fullscreen:
-                win._float_state = window.FULLSCREEN
+                win._float_state = xcbq.FULLSCREEN
             elif self.floating_layout.match(win):
                 # !!! tell it to float, can't set floating
                 # because it's too early
                 # so just set the flag underneath
-                win._float_state = window.FLOATING
+                win._float_state = xcbq.FLOATING
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             pass  # doesn't matter
         if win.floating:
