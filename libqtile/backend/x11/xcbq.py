@@ -434,14 +434,6 @@ class NetWmState:
         return
 
 
-def _add_net_wm_state(cls):
-    for name in net_wm_states:
-        lower_name = name.lstrip('_').lower()
-        setattr(cls, lower_name, NetWmState(name))
-    return cls
-
-
-@_add_net_wm_state
 class Window:
     def __init__(self, conn, wid):
         self.conn = conn
