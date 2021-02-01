@@ -75,13 +75,13 @@ class WindowName(base._TextBox):
                 state = 'V '
 
         if w and (w.name or w.window.get_wm_class()[0]):
-            var = {}
-            var["state"] = state
-            var["name"] = w.name 
-            var["class"] = w.window.get_wm_class()[0]
-            unescaped = self.format.format(**var)
-            text = self.truncate(unescaped, self.max_chars)
+        	var = {}
+        	var["state"] = state
+        	var["name"] = w.name 
+        	var["class"] = w.window.get_wm_class()[0]
+        	unescaped = self.format.format(**var)
+        	text = self.truncate(unescaped, self.max_chars)
         else:
-            text = self.empty_group_string
+        	text = self.empty_group_string
         self.text = pangocffi.markup_escape_text(text)
         self.bar.draw()
