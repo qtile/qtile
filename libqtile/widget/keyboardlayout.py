@@ -60,6 +60,8 @@ class KeyboardLayout(base.InLoopPollText):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(KeyboardLayout.defaults)
 
+        self.keyboard = self.configured_keyboards[0]
+
         self.add_callbacks({'Button1': self.next_keyboard})
 
     def next_keyboard(self):
