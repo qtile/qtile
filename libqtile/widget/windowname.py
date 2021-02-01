@@ -35,6 +35,7 @@ class WindowName(base._TextBox):
         ('show_state', True, 'show window status before window name'),
         ('for_current_screen', False, 'instead of this bars screen use currently active screen'),
         ('empty_group_string', ' ', 'string to display when no windows are focused on current group'),
+        ('use_class', False, 'instead of window name use window class'),
     ]
 
     def __init__(self, width=bar.STRETCH, **config):
@@ -65,6 +66,9 @@ class WindowName(base._TextBox):
                 state = '_ '
             elif w.floating:
                 state = 'V '
-        unescaped = "%s%s" % (state, w.name if w and w.name else self.empty_group_string)
+        if self.use_class:
+            unescaped = "%s%s" % (state, w.window.get_wm_class()[0] if w and w.window else self.empty_group_string)
+        else:
+            unescaped = "%s%s" % (state, w.name if w and w.name else self.empty_group_string)
         self.text = pangocffi.markup_escape_text(unescaped)
         self.bar.draw()
