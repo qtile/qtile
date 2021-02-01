@@ -39,8 +39,8 @@ class KeyboardLayout(base.InLoopPollText):
     and bind function "next_keyboard" to specific keys in order to change layouts.
 
     For example:
-        Key([mod], "space", lazy.widget["keyboardlayout"].next_keyboard(), desc="Next keyboard layout."),
 
+        Key([mod], "space", lazy.widget["keyboardlayout"].next_keyboard(), desc="Next keyboard layout."),
 
     It requires setxkbmap to be available in the system.
     """
