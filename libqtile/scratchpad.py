@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 from libqtile import group, hook
-from libqtile.backend.x11 import xcbq
+from libqtile.backend.base.window import FloatStates
 
 
 class WindowVisibilityToggler:
@@ -99,7 +99,7 @@ class WindowVisibilityToggler:
             win = self.window
             # always set the floating state before changing group
             # to avoid disturbance of tiling layout
-            win._float_state = xcbq.TOP
+            win._float_state = FloatStates.TOP
             # add to group and bring it to front.
             win.togroup()
             win.cmd_bring_to_front()
