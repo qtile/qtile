@@ -32,9 +32,10 @@ class WindowName(base._TextBox):
     """Displays the name of the window that currently has focus"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('show_state', True, 'show window status before window name'),
         ('for_current_screen', False, 'instead of this bars screen use currently active screen'),
         ('empty_group_string', ' ', 'string to display when no windows are focused on current group'),
+        ('max_chars', 0, 'max chars before truncating with ellipsis'),
+        ('format', '{state}{name}', 'format of the text'),
     ]
 
     def __init__(self, width=bar.STRETCH, **config):
@@ -52,19 +53,32 @@ class WindowName(base._TextBox):
             if self.for_current_screen:
                 self.update()
 
+    def truncate(self, text):
+        if self.max_chars == 0:
+            return text
+
+        return (text[:self.max_chars - 3].rstrip() + "...") if len(text) > self.max_chars else text
+
     def update(self, *args):
         if self.for_current_screen:
             w = self.qtile.current_screen.group.current_window
         else:
             w = self.bar.screen.group.current_window
         state = ''
-        if self.show_state and w is not None:
+        if w and (w.name or w.window_get_wm_class()[0]):
             if w.maximized:
                 state = '[] '
             elif w.minimized:
                 state = '_ '
             elif w.floating:
                 state = 'V '
-        unescaped = "%s%s" % (state, w.name if w and w.name else self.empty_group_string)
+            var = {}
+            var["state"] = state
+            var["name"] = w.name
+            var["class"] = w.window.get_wm_class()[0]
+            text = self.format.format(**var)
+            unescaped = self.truncate(text)
+        else:
+            unescaped = self.empty_group_string
         self.text = pangocffi.markup_escape_text(unescaped)
         self.bar.draw()
