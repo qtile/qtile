@@ -986,10 +986,16 @@ class Window(_Window):
         if new_float_state == MINIMIZED:
             self.hide()
         else:
-            width = max(self.width, self.hints.get('min_width', 0))
-            width = min(width, self.hints.get('max_width', 0)) or width
-            height = max(self.height, self.hints.get('min_height', 0))
-            height = min(height, self.hints.get('max_height', 0)) or height
+            width = self.width
+            height = self.height
+
+            flags = self.hints.get("flags", {})
+            if "PMinSize" in flags:
+                width = max(self.width, self.hints.get('min_width', 0))
+                height = max(self.height, self.hints.get('min_height', 0))
+            if "PMaxSize" in flags:
+                width = min(width, self.hints.get('max_width', 0)) or width
+                height = min(height, self.hints.get('max_height', 0)) or height
 
             if self.hints['base_width'] and self.hints['width_inc']:
                 width_adjustment = (width - self.hints['base_width']) % self.hints['width_inc']
