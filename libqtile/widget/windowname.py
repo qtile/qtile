@@ -64,9 +64,7 @@ class WindowName(base._TextBox):
             w = self.qtile.current_screen.group.current_window
         else:
             w = self.bar.screen.group.current_window
-
         state = ''
-
         if w and (w.name or w.window_get_wm_class()[0]):
             if w.maximized:
                 state = '[] '
@@ -74,7 +72,6 @@ class WindowName(base._TextBox):
                 state = '_ '
             elif w.floating:
                 state = 'V '
-
             var = {}
             var["state"] = state
             var["name"] = w.name
