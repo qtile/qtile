@@ -36,7 +36,7 @@ class WindowName(base._TextBox):
         ('for_current_screen', False, 'instead of this bars screen use currently active screen'),
         ('empty_group_string', ' ', 'string to display when no windows are focused on current group'),
         ('max_chars', 0, 'max chars before truncating with ellipsis'),
-        ('format', '{state}{class}:{name}', 'format of the text'),
+        ('format', '{state}{name}', 'format of the text'),
     ]
 
     def __init__(self, width=bar.STRETCH, **config):
@@ -54,11 +54,11 @@ class WindowName(base._TextBox):
             if self.for_current_screen:
                 self.update()
 
-    def truncate(self, text, char_limit):
-        if char_limit == 0:
+    def truncate(self, text):
+        if self.max_chars == 0:
             return text
 
-        return (text[:char_limit - 3].rstrip() + "...") if len(text) > char_limit else text
+        return (text[:self.max_chars - 3].rstrip() + "...") if len(text) > self.max_chars else text
     
     def update(self, *args):
         if self.for_current_screen:
@@ -80,7 +80,7 @@ class WindowName(base._TextBox):
         	var["name"] = w.name 
         	var["class"] = w.window.get_wm_class()[0]
         	unescaped = self.format.format(**var)
-        	text = self.truncate(unescaped, self.max_chars)
+        	text = self.truncate(unescaped)
         else:
         	text = self.empty_group_string
         self.text = pangocffi.markup_escape_text(text)
