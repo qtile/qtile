@@ -679,6 +679,28 @@ def test_default_float(manager):
         w.kill_client()
         conn.finalize()
 
+    w = None
+    conn = xcbq.Connection(manager.display)
+
+    def size_hints():
+        nonlocal w
+        w = conn.create_window(5, 5, 10, 10)
+
+        # set the aspect hints
+        hints = [0] * 18
+        hints[0] = xcbq.NormalHintsFlags["PAspect"]
+        hints[11] = hints[12] = hints[13] = hints[14] = 1
+        w.set_property("WM_NORMAL_HINTS", hints, type="WM_SIZE_HINTS", format=32)
+        w.map()
+        conn.conn.flush()
+
+    try:
+        manager.create_window(size_hints)
+        assert manager.c.window.info()['floating'] is True
+    finally:
+        w.kill_client()
+        conn.finalize()
+
 
 @manager_config
 @no_xinerama
