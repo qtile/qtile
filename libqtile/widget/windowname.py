@@ -59,7 +59,7 @@ class WindowName(base._TextBox):
             return text
 
         return (text[:self.max_chars - 3].rstrip() + "...") if len(text) > self.max_chars else text
-    
+
     def update(self, *args):
         if self.for_current_screen:
             w = self.qtile.current_screen.group.current_window
