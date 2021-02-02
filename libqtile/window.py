@@ -227,6 +227,15 @@ class _Window(CommandObject):
     def has_focus(self):
         return self == self.qtile.current_window
 
+    def has_fixed_ratio(self):
+        try:
+            if ('PAspect' in self.hints['flags'] and
+                    self.hints["min_aspect"] == self.hints["max_aspect"]):
+                return True
+        except KeyError:
+            pass
+        return False
+
     def has_fixed_size(self):
         try:
             if ('PMinSize' in self.hints['flags'] and
@@ -279,6 +288,8 @@ class _Window(CommandObject):
             self.hints['input'] = h['input']
 
         if getattr(self, 'group', None):
+            if self.group.floating_layout.match(self):
+                self.floating = True
             self.group.layout_all()
 
         return
