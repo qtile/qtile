@@ -32,7 +32,6 @@ class WindowName(base._TextBox):
     """Displays the name of the window that currently has focus"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('show_state', True, 'show window status before window name'),
         ('for_current_screen', False, 'instead of this bars screen use currently active screen'),
         ('empty_group_string', ' ', 'string to display when no windows are focused on current group'),
         ('max_chars', 0, 'max chars before truncating with ellipsis'),
@@ -65,15 +64,17 @@ class WindowName(base._TextBox):
             w = self.qtile.current_screen.group.current_window
         else:
             w = self.bar.screen.group.current_window
+
         state = ''
-        if self.show_state and w is not None:
+
+        if w and (w.name or w.window_get_wm_class()[0]):
             if w.maximized:
                 state = '[] '
             elif w.minimized:
                 state = '_ '
             elif w.floating:
                 state = 'V '
-        if w and (w.name or w.window_get_wm_class()[0]):
+
             var = {}
             var["state"] = state
             var["name"] = w.name
