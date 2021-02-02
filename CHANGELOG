@@ -52,6 +52,7 @@ Qtile X.X.X, released XXXX-XX-XX:
         - Columns layout has new `margin_on_single` option to specify margin
           size when there is only one window (default -1: use `margin` option).
         - new format attribute for WindowName widget
+        - new max_chars attribute for WindowName widget
     !!! warning !!!
         - When (re)starting, Qtile passes its state to the new process in a
           file now, where previously it passed state directly as a string. This
