@@ -168,7 +168,7 @@ class _Widget(CommandObject, configurable.Configurable):
 
     @property
     def win(self):
-        return self.bar.window.window
+        return self.bar.window
 
     # Do not start the name with "test", or nosetests will try to test it
     # directly (prepend an underscore instead)

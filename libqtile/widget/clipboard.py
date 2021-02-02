@@ -64,9 +64,9 @@ class Clipboard(base._TextBox):
             return False
 
         if owner_id in self.qtile.windows_map:
-            owner = self.qtile.windows_map[owner_id].window
+            owner = self.qtile.windows_map[owner_id]
         else:
-            owner = xcbq.XWindow(self.qtile.conn, owner_id)
+            owner = xcbq.Window(self.qtile.conn, owner_id)
 
         owner_class = owner.get_wm_class()
         if owner_class:

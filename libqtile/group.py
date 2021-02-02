@@ -253,7 +253,7 @@ class _Group(CommandObject):
         self.windows.add(win)
         win.group = self
         try:
-            if 'fullscreen' in win.window.get_net_wm_state() and \
+            if 'fullscreen' in win.get_net_wm_state() and \
                     self.qtile.config.auto_fullscreen:
                 win._float_state = FloatStates.FULLSCREEN
             elif self.floating_layout.match(win):
@@ -332,7 +332,7 @@ class _Group(CommandObject):
         if name == "screen":
             return (True, None)
         if name == "window":
-            return (True, [i.window.wid for i in self.windows])
+            return (True, [i.wid for i in self.windows])
         raise RuntimeError("Invalid item: {}".format(name))
 
     def _select(self, name, sel):
@@ -346,7 +346,7 @@ class _Group(CommandObject):
             if sel is None:
                 return self.current_window
             for i in self.windows:
-                if i.window.wid == sel:
+                if i.wid == sel:
                     return i
         raise RuntimeError("Invalid selection: {}".format(name))
 

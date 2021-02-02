@@ -46,8 +46,9 @@ class Icon(xcbq._Window):
         EventMask.PropertyChange | \
         EventMask.Exposure
 
-    def __init__(self, win, qtile, systray):
-        xcbq._Window.__init__(self, win, qtile)
+    def __init__(self, conn, wid, qtile, systray):
+        xcbq._Window.__init__(self, conn, wid)
+        self.qtile = qtile
         self.systray = systray
         self.update_size()
 
@@ -76,7 +77,7 @@ class Icon(xcbq._Window):
     def handle_PropertyNotify(self, e):  # noqa: N802
         name = self.qtile.conn.atoms.get_name(e.atom)
         if name == "_XEMBED_INFO":
-            info = self.window.get_property('_XEMBED_INFO', unpack=int)
+            info = self.get_property('_XEMBED_INFO', unpack=int)
             if info and info[1]:
                 self.systray.bar.draw()
 
@@ -118,9 +119,9 @@ class Systray(xcbq._Window, base._Widget):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
-        win = qtile.conn.create_window(-1, -1, 1, 1)
-        xcbq._Window.__init__(self, xcbq.XWindow(qtile.conn, win.wid), qtile)
-        qtile.windows_map[win.wid] = self
+        xcbq._Window.__init__(self, qtile.conn, qtile.conn.create_wid(-1, -1, 1, 1))
+        xcbq._Window._configure(self, qtile)
+        qtile.windows_map[self.wid] = self
 
         # Even when we have multiple "Screen"s, we are setting up as the system
         # tray on a particular X display, that is the screen we need to
@@ -131,14 +132,14 @@ class Systray(xcbq._Window, base._Widget):
         atoms = qtile.conn.atoms
 
         qtile.conn.conn.core.SetSelectionOwner(
-            win.wid,
+            self.wid,
             atoms['_NET_SYSTEM_TRAY_S{:d}'.format(self.screen)],
             xcffib.CurrentTime
         )
         data = [
             xcffib.CurrentTime,
             atoms['_NET_SYSTEM_TRAY_S{:d}'.format(self.screen)],
-            win.wid, 0, 0
+            self.wid, 0, 0
         ]
         union = ClientMessageData.synthetic(data, "I" * 5)
         event = ClientMessageEvent.synthetic(
@@ -157,12 +158,12 @@ class Systray(xcbq._Window, base._Widget):
         message = data[1]
         wid = data[2]
 
-        conn = self.qtile.conn.conn
-        parent = self.bar.window.window
+        conn = self.conn.conn
+        parent = self.bar.window
 
         if opcode == atoms['_NET_SYSTEM_TRAY_OPCODE'] and message == 0:
-            w = xcbq.XWindow(self.qtile.conn, wid)
-            icon = Icon(w, self.qtile, self)
+            wid = self.qtile.conn.create_wid(-1, -1, 1, 1)
+            icon = Icon(self.qtile.conn, wid, self.qtile, self)
             self.icons[wid] = icon
             self.qtile.windows_map[wid] = icon
 
@@ -170,7 +171,7 @@ class Systray(xcbq._Window, base._Widget):
             conn.core.ReparentWindow(wid, parent.wid, 0, 0)
             conn.flush()
 
-            info = icon.window.get_property('_XEMBED_INFO', unpack=int)
+            info = icon.get_property('_XEMBED_INFO', unpack=int)
 
             if not info:
                 self.bar.draw()
@@ -186,7 +187,7 @@ class Systray(xcbq._Window, base._Widget):
         self.drawer.clear(self.background or self.bar.background)
         self.drawer.draw(offsetx=self.offset, width=self.length)
         for pos, icon in enumerate(self.icons.values()):
-            icon.window.set_attribute(backpixmap=self.drawer.pixmap)
+            icon.set_attribute(backpixmap=self.drawer.pixmap)
             icon.place(
                 self.offset + xoffset,
                 self.bar.height // 2 - self.icon_size // 2,
@@ -200,17 +201,17 @@ class Systray(xcbq._Window, base._Widget):
                     self.qtile.conn.atoms["_XEMBED_EMBEDDED_NOTIFY"],
                     xcffib.xproto.Time.CurrentTime,
                     0,
-                    self.bar.window.window.wid,
+                    self.bar.window.wid,
                     XEMBED_PROTOCOL_VERSION
                 ]
                 u = xcffib.xproto.ClientMessageData.synthetic(data, "I" * 5)
                 event = xcffib.xproto.ClientMessageEvent.synthetic(
                     format=32,
-                    window=icon.window.wid,
+                    window=icon.wid,
                     type=self.qtile.conn.atoms["_XEMBED"],
                     data=u
                 )
-                self.window.send_event(event)
+                self.send_event(event)
 
             xoffset += icon.width + self.padding
 

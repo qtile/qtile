@@ -213,7 +213,7 @@ class Bar(Gap, configurable.Configurable):
 
             self.drawer = drawer.Drawer(
                 self.qtile,
-                self.window.window.wid,
+                self.window.wid,
                 self.width,
                 self.height
             )
@@ -225,7 +225,7 @@ class Bar(Gap, configurable.Configurable):
             self.window.handle_EnterNotify = self.handle_EnterNotify
             self.window.handle_LeaveNotify = self.handle_LeaveNotify
             self.window.handle_MotionNotify = self.handle_MotionNotify
-            qtile.windows_map[self.window.window.wid] = self.window
+            qtile.windows_map[self.window.wid] = self.window
             self.window.unhide()
 
             for idx, i in enumerate(self.widgets):
@@ -354,7 +354,7 @@ class Bar(Gap, configurable.Configurable):
         """
         self.window.handle_KeyPress = widget.handle_KeyPress
         self.saved_focus = self.qtile.current_window
-        self.window.window.set_input_focus()
+        self.window.set_input_focus()
 
     def widget_ungrab_keyboard(self):
         """
@@ -390,7 +390,7 @@ class Bar(Gap, configurable.Configurable):
             height=self.height,
             position=self.position,
             widgets=[i.info() for i in self.widgets],
-            window=self.window.window.wid
+            window=self.window.wid
         )
 
     def is_show(self):

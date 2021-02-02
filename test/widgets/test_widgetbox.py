@@ -11,10 +11,7 @@ def no_op(*args, **kwargs):
 
 
 class FakeWindow:
-    class _NestedWindow:
-        wid = 10
-
-    window = _NestedWindow()
+    wid = 10
 
 
 widget_config = pytest.mark.parametrize("manager", [BareConfig], indirect=True)

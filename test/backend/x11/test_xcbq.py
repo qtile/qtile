@@ -5,6 +5,7 @@ import xcffib
 import xcffib.testing
 
 from libqtile.backend.x11 import xcbq
+from test.conftest import create_window
 
 
 @pytest.fixture(scope='function', autouse=True)
@@ -15,14 +16,13 @@ def xdisplay(request):
 
 def test_new_window(xdisplay):
     conn = xcbq.Connection(xdisplay)
-    win = conn.create_window(1, 2, 640, 480)
-    assert isinstance(win, xcbq.XWindow)
+    win = create_window(conn, 1, 2, 640, 480)
     geom = win.get_geometry()
     assert geom.x == 1
     assert geom.y == 2
     assert geom.width == 640
     assert geom.height == 480
-    win.kill_client()
+    win.kill()
     with pytest.raises(xcffib.ConnectionException):
         win.get_geometry()
 

@@ -1,7 +1,6 @@
 import typing
 from abc import ABCMeta, abstractmethod
 
-from libqtile import config
 from libqtile.backend.base import window
 
 
@@ -24,11 +23,11 @@ class Core(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def grab_key(self, key: config.Key) -> typing.Tuple[int, int]:
+    def grab_key(self, key) -> typing.Tuple[int, int]:
         """Configure the backend to grab the key event"""
 
     @abstractmethod
-    def ungrab_key(self, key: config.Key) -> typing.Tuple[int, int]:
+    def ungrab_key(self, key) -> typing.Tuple[int, int]:
         """Release the given key event"""
 
     @abstractmethod
@@ -36,7 +35,7 @@ class Core(metaclass=ABCMeta):
         """Release the grabbed key events"""
 
     @abstractmethod
-    def grab_button(self, mouse: config.Mouse) -> None:
+    def grab_button(self, mouse) -> None:
         """Configure the backend to grab the mouse event"""
 
     @abstractmethod

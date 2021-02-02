@@ -30,7 +30,8 @@ import sys
 import warnings
 from typing import Callable, List, Optional
 
-from libqtile import configurable, hook, utils, window
+from libqtile import configurable, hook, utils
+from libqtile.backend.base import window
 from libqtile.bar import BarType
 from libqtile.command.base import CommandObject
 from libqtile.lazy import lazy
@@ -379,7 +380,7 @@ class Screen(CommandObject):
         if name == "layout":
             return (True, list(range(len(self.group.layouts))))
         elif name == "window":
-            return (True, [i.window.wid for i in self.group.windows])
+            return (True, [i.wid for i in self.group.windows])
         elif name == "bar":
             return (False, [x.position for x in self.gaps])
 
@@ -394,7 +395,7 @@ class Screen(CommandObject):
                 return self.group.current_window
             else:
                 for i in self.group.windows:
-                    if i.window.wid == sel:
+                    if i.wid == sel:
                         return i
         elif name == "bar":
             return getattr(self, sel)
@@ -620,16 +621,16 @@ class Match:
             if property_name == 'title':
                 value = client.name
             elif property_name == "wm_instance_class":
-                wm_class = client.window.get_wm_class()
+                wm_class = client.get_wm_class()
                 if not wm_class:
                     return False
                 value = wm_class[0]
             elif property_name == 'role':
-                value = client.window.get_wm_window_role()
+                value = client.get_wm_window_role()
             elif property_name == 'func':
                 return rule_value(client)
             else:
-                value = getattr(client.window, 'get_' + property_name)()
+                value = getattr(client, 'get_' + property_name)()
 
             # Some of the window.get_...() functions can return None
             if value is None:

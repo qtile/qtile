@@ -45,7 +45,7 @@ from libqtile.config import Match
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
 from test import conftest
-from test.conftest import BareConfig, Retry, no_xinerama
+from test.conftest import BareConfig, Retry, create_window, no_xinerama
 
 
 class ManagerConfig(Config):
@@ -605,21 +605,21 @@ def test_default_float(manager):
 
     def size_hints():
         nonlocal w
-        w = conn.create_window(5, 5, 10, 10)
+        w = create_window(conn, 5, 5, 10, 10)
 
         # set the size hints
         hints = [0] * 18
         hints[0] = xcbq.NormalHintsFlags["PMinSize"] | xcbq.NormalHintsFlags["PMaxSize"]
         hints[5] = hints[6] = hints[7] = hints[8] = 10
         w.set_property("WM_NORMAL_HINTS", hints, type="WM_SIZE_HINTS", format=32)
-        w.map()
+        w.unhide()
         conn.conn.flush()
 
     try:
         manager.create_window(size_hints)
         assert manager.c.window.info()['floating'] is True
     finally:
-        w.kill_client()
+        w.kill()
         conn.finalize()
 
 
@@ -1184,14 +1184,14 @@ def test_user_position(manager):
 
     def user_position_window():
         nonlocal w
-        w = conn.create_window(5, 5, 10, 10)
+        w = create_window(conn, 5, 5, 10, 10)
         # manager config automatically floats xclock
         w.set_property("WM_CLASS", "xclock", type="STRING", format=8)
         # set the user specified position flag
         hints = [0] * 18
         hints[0] = xcbq.NormalHintsFlags["USPosition"]
         w.set_property("WM_NORMAL_HINTS", hints, type="WM_SIZE_HINTS", format=32)
-        w.map()
+        w.unhide()
         conn.conn.flush()
     try:
         manager.create_window(user_position_window)
@@ -1201,7 +1201,7 @@ def test_user_position(manager):
         assert manager.c.window.info()['width'] == 10
         assert manager.c.window.info()['height'] == 10
     finally:
-        w.kill_client()
+        w.kill()
         conn.finalize()
 
 
@@ -1229,7 +1229,7 @@ def test_only_one_focus(manager):
 
     def both_wm_take_focus_and_input_hint():
         nonlocal w
-        w = conn.create_window(5, 5, 10, 10)
+        w = create_window(conn, 5, 5, 10, 10)
         w.set_attribute(eventmask=xcffib.xproto.EventMask.FocusChange)
         # manager config automatically floats xclock
         w.set_property("WM_CLASS", "xclock", type="STRING", format=8)
@@ -1251,7 +1251,7 @@ def test_only_one_focus(manager):
             [conn.atoms["WM_TAKE_FOCUS"]],
         ).check()
 
-        w.map()
+        w.unhide()
         conn.conn.flush()
     try:
         manager.create_window(both_wm_take_focus_and_input_hint)
@@ -1260,7 +1260,7 @@ def test_only_one_focus(manager):
         assert not got_take_focus
         assert got_focus_in
     finally:
-        w.kill_client()
+        w.kill()
         conn.finalize()
 
 
@@ -1271,7 +1271,7 @@ def test_only_wm_protocols_focus(manager):
 
     def only_wm_protocols_focus():
         nonlocal w
-        w = conn.create_window(5, 5, 10, 10)
+        w = create_window(conn, 5, 5, 10, 10)
         w.set_attribute(eventmask=xcffib.xproto.EventMask.FocusChange)
         # manager config automatically floats xclock
         w.set_property("WM_CLASS", "xclock", type="STRING", format=8)
@@ -1292,7 +1292,7 @@ def test_only_wm_protocols_focus(manager):
             [conn.atoms["WM_TAKE_FOCUS"]],
         ).check()
 
-        w.map()
+        w.unhide()
         conn.conn.flush()
     try:
         manager.create_window(only_wm_protocols_focus)
@@ -1301,7 +1301,7 @@ def test_only_wm_protocols_focus(manager):
         assert got_take_focus
         assert not got_focus_in
     finally:
-        w.kill_client()
+        w.kill()
         conn.finalize()
 
 
@@ -1312,7 +1312,7 @@ def test_only_input_hint_focus(manager):
 
     def only_input_hint():
         nonlocal w
-        w = conn.create_window(5, 5, 10, 10)
+        w = create_window(conn, 5, 5, 10, 10)
         w.set_attribute(eventmask=xcffib.xproto.EventMask.FocusChange)
         # manager config automatically floats xclock
         w.set_property("WM_CLASS", "xclock", type="STRING", format=8)
@@ -1323,7 +1323,7 @@ def test_only_input_hint_focus(manager):
         hints[1] = 1  # set hints to 1, i.e. we want them
         w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
 
-        w.map()
+        w.unhide()
         conn.conn.flush()
     try:
         manager.create_window(only_input_hint)
@@ -1332,7 +1332,7 @@ def test_only_input_hint_focus(manager):
         assert not got_take_focus
         assert got_focus_in
     finally:
-        w.kill_client()
+        w.kill()
         conn.finalize()
 
 
@@ -1343,7 +1343,7 @@ def test_no_focus(manager):
 
     def no_focus():
         nonlocal w
-        w = conn.create_window(5, 5, 10, 10)
+        w = create_window(conn, 5, 5, 10, 10)
         w.set_attribute(eventmask=xcffib.xproto.EventMask.FocusChange)
         # manager config automatically floats xclock
         w.set_property("WM_CLASS", "xclock", type="STRING", format=8)
@@ -1351,7 +1351,7 @@ def test_no_focus(manager):
         hints = [0] * 14
         hints[0] = xcbq.HintsFlags["InputHint"]
         w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
-        w.map()
+        w.unhide()
         conn.conn.flush()
     try:
         manager.create_window(no_focus)
@@ -1360,7 +1360,7 @@ def test_no_focus(manager):
         assert not got_take_focus
         assert not got_focus_in
     finally:
-        w.kill_client()
+        w.kill()
         conn.finalize()
 
 
@@ -1371,8 +1371,8 @@ def test_hints_setting_unsetting(manager):
 
     def no_input_hint():
         nonlocal w
-        w = conn.create_window(5, 5, 10, 10)
-        w.map()
+        w = create_window(conn, 5, 5, 10, 10)
+        w.unhide()
         conn.conn.flush()
 
     try:
@@ -1407,7 +1407,7 @@ def test_hints_setting_unsetting(manager):
         assert manager.c.window.hints()['input']
 
     finally:
-        w.kill_client()
+        w.kill()
         conn.finalize()
 
 
@@ -1418,9 +1418,9 @@ def test_strut_handling(manager):
 
     def has_struts():
         nonlocal w
-        w = conn.create_window(0, 0, 10, 10)
+        w = create_window(conn, 5, 5, 10, 10)
         w.set_property("_NET_WM_STRUT", [0, 0, 0, 10])
-        w.map()
+        w.unhide()
         conn.conn.flush()
 
     def test_initial_state():
@@ -1449,7 +1449,7 @@ def test_strut_handling(manager):
         assert bar["y"] == 570
 
     finally:
-        w.kill_client()
+        w.kill()
         conn.finalize()
 
     test_initial_state()

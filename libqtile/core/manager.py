@@ -78,7 +78,7 @@ class Qtile(CommandObject):
         self.mouse_map: Dict[int, List[Click]] = {}
         self.mouse_position = (0, 0)
 
-        self.windows_map: Dict[int, xcbq.Window] = {}
+        self.windows_map: Dict[int, base.Window] = {}
         self.widgets_map: Dict[str, _Widget] = {}
         self.groups_map: Dict[str, _Group] = {}
         self.groups: List[_Group] = []
@@ -506,13 +506,13 @@ class Qtile(CommandObject):
         c = self.manage(window)
         if c and (not c.group or not c.group.screen):
             return
-        window.map()
+        window.unhide()
 
     def unmap_window(self, window_id) -> None:
         c = self.windows_map.get(window_id)
         if c and getattr(c, "group", None):
             try:
-                c.window.unmap()
+                c.hide()
                 c.state = xcbq.WithdrawnState
             except xcffib.xproto.WindowError:
                 # This means that the window has probably been destroyed,
@@ -524,43 +524,39 @@ class Qtile(CommandObject):
 
     def manage(self, w):
         try:
-            attrs = w.get_attributes()
-            internal = w.get_property("QTILE_INTERNAL")
-        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
-            return
-        if attrs and attrs.override_redirect:
+            if w.should_not_be_managed():
+                return
+            internal = w.is_internal()
+        except utils.QtileError:
             return
 
         if w.wid not in self.windows_map:
+            try:
+                w._configure(self)
+            except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
+                return
             if internal:
-                try:
-                    c = self.core.Internal(w, self)
-                except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
-                    return
-                self.windows_map[w.wid] = c
+                w = w.to_internal()
+                self.windows_map[w.wid] = w
             else:
-                try:
-                    c = self.core.Window(w, self)
-                except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
+
+                if w.get_wm_type() == "dock" or w.strut:
+                    w.cmd_static(self.current_screen.index)
                     return
 
-                if w.get_wm_type() == "dock" or c.strut:
-                    c.cmd_static(self.current_screen.index)
-                    return
-
-                hook.fire("client_new", c)
+                hook.fire("client_new", w)
 
                 # Window may be defunct because
                 # it's been declared static in hook.
-                if c.defunct:
+                if w.defunct:
                     return
-                self.windows_map[w.wid] = c
+                self.windows_map[w.wid] = w
                 # Window may have been bound to a group in the hook.
-                if not c.group:
-                    self.current_screen.group.add(c, focus=c.can_steal_focus())
+                if not w.group:
+                    self.current_screen.group.add(w, focus=w.can_steal_focus())
                 self.update_client_list()
-                hook.fire("client_managed", c)
-            return c
+                hook.fire("client_managed", w)
+            return w
         else:
             return self.windows_map[w.wid]
 
@@ -590,7 +586,7 @@ class Qtile(CommandObject):
             if not isinstance(win, base.Window):
                 return None
             try:
-                return win.window.get_net_wm_pid()
+                return win.get_net_wm_pid()
             except Exception:
                 logger.exception("Got an exception in getting the window pid")
                 return None
@@ -874,11 +870,11 @@ class Qtile(CommandObject):
                 return utils.lget(self.screens, sel)
 
     def list_wids(self):
-        return [i.window.wid for i in self.windows_map.values()]
+        return [i.wid for i in self.windows_map.values()]
 
     def client_from_wid(self, wid):
         for i in self.windows_map.values():
-            if i.window.wid == wid:
+            if i.wid == wid:
                 return i
         return None
 

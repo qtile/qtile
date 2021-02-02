@@ -38,6 +38,7 @@ import xcffib.xproto
 
 import libqtile.config
 from libqtile import command, ipc
+from libqtile.backend.x11 import xcbq
 from libqtile.backend.x11.core import Core
 from libqtile.confreader import Config
 from libqtile.core.manager import Qtile
@@ -512,3 +513,15 @@ def manager_nospawn(request, xephyr):
 
 
 no_xinerama = pytest.mark.parametrize("xephyr", [{"xinerama": False}], indirect=True)
+
+
+def create_window(conn, x, y, width, height):
+    """Creates an xcbq._Window instance using a given connection"""
+    w = xcbq._Window(conn, conn.create_wid(x, y, width, height))
+
+    class Q:
+        def __init__(self, conn):
+            self.conn = conn
+
+    w._configure(Q(conn))
+    return w

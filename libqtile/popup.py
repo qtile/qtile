@@ -50,13 +50,12 @@ class Popup(configurable.Configurable):
         self.add_defaults(Popup.defaults)
         self.qtile = qtile
 
-        win = qtile.conn.create_window(x, y, width, height)
-        win.set_property("QTILE_INTERNAL", 1)
-        self.win = xcbq.Internal(win, qtile)
-        self.qtile.windows_map[self.win.window.wid] = self.win
-        self.win.opacity = self.opacity
+        self.win = xcbq.Internal.create(
+            qtile, x, y, width, height, self.opacity
+        )
+        self.qtile.windows_map[self.win.wid] = self.win
         self.drawer = drawer.Drawer(
-            self.qtile, self.win.window.wid, width, height,
+            self.qtile, self.win.wid, width, height,
         )
         self.layout = self.drawer.textlayout(
             text='',
@@ -130,7 +129,7 @@ class Popup(configurable.Configurable):
             self.layout.colour = value
 
     def set_border(self, color):
-        self.win.window.paint_borders(color)
+        self.win.paint_borders(color)
 
     def clear(self):
         self.drawer.clear(self.background)
@@ -152,7 +151,7 @@ class Popup(configurable.Configurable):
 
     def unhide(self):
         self.win.unhide()
-        self.win.window.configure(stackmode=StackMode.Above)
+        self.win.configure(stackmode=StackMode.Above)
 
     def draw_image(self, image, x, y):
         """

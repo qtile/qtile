@@ -221,7 +221,7 @@ class Floating(Layout):
             client.y = screen_rect.y + client.y
         if not client.has_user_set_position() or not self.on_screen(client, screen_rect):
             # client has not been properly placed before or it is off screen
-            transient_for = client.window.get_wm_transient_for()
+            transient_for = client.get_wm_transient_for()
             win = client.group.qtile.windows_map.get(transient_for)
             if win is not None:
                 # if transient for a window, place in the center of the window
@@ -263,7 +263,7 @@ class Floating(Layout):
 
         # 'sun-awt-X11-XWindowPeer' is a dropdown used in Java application,
         # don't reposition it anywhere, let Java app to control it
-        cls = client.window.get_wm_class() or ''
+        cls = client.get_wm_class() or ''
         is_java_dropdown = 'sun-awt-X11-XWindowPeer' in cls
         if is_java_dropdown:
             client.paint_borders(bc, bw)

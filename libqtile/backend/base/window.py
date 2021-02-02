@@ -1,4 +1,4 @@
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 
 
 class FloatStates:
@@ -11,7 +11,17 @@ class FloatStates:
 
 
 class Window(metaclass=ABCMeta):
-    pass
+    def __init__(self):
+        self.group = None
+        self.state = None
+
+    @abstractmethod
+    def hide(self):
+        pass
+
+    @abstractmethod
+    def has_fixed_size(self):
+        pass
 
 
 class Internal(metaclass=ABCMeta):

@@ -109,7 +109,7 @@ class WindowVisibilityToggler:
             # add hooks to determine if focus get lost
             if self.on_focus_lost_hide:
                 if self.warp_pointer:
-                    win.window.warp_pointer(win.width // 2, win.height // 2)
+                    win.warp_pointer(win.width // 2, win.height // 2)
                 hook.subscribe.client_focus(self.on_focus_change)
                 hook.subscribe.setgroup(self.on_focus_change)
 
@@ -239,7 +239,7 @@ class ScratchPad(group._Group):
         This method is subscribed if the given command is spawned
         and unsubscribed immediately if the associated window is detected.
         """
-        client_pid = client.window.get_net_wm_pid()
+        client_pid = client.get_net_wm_pid()
         if client_pid in self._spawned:
             name = self._spawned.pop(client_pid)
             if not self._spawned:
@@ -325,7 +325,7 @@ class ScratchPad(group._Group):
         """
         state = []
         for name, dd in self.dropdowns.items():
-            pid = dd.window.window.get_net_wm_pid()
+            pid = dd.window.get_net_wm_pid()
             state.append((name, pid, dd.visible))
         return state
 
