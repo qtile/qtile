@@ -42,6 +42,8 @@ Qtile X.X.X, released XXXX-XX-XX:
           libqtile.command.*
         - libqtile.widget.base.ThreadedPollText has been removed; out of tree
           widgets can use ThreadPoolText in the same package instead.
+        - the YahooWeather widget was removed since Yahoo retired their free
+          tier of the weather API
     * features
         - new WidgetBox widget
         - new restart and shutdown hooks
@@ -51,6 +53,7 @@ Qtile X.X.X, released XXXX-XX-XX:
         - switch to Github Actions for CI
         - Columns layout has new `margin_on_single` option to specify margin
           size when there is only one window (default -1: use `margin` option).
+        - new OpenWeather widget to replace YahooWeather
     !!! warning !!!
         - When (re)starting, Qtile passes its state to the new process in a
           file now, where previously it passed state directly as a string. This

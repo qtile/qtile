@@ -88,7 +88,6 @@ widgets = {
     "WindowName": "windowname",
     "WindowTabs": "windowtabs",
     "Wlan": "wlan",
-    "YahooWeather": "yahoo_weather"
 }
 
 __all__, __dir__, __getattr__ = lazify_imports(widgets, __package__,
