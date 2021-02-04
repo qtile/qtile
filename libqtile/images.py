@@ -20,7 +20,7 @@
 
 import io
 import os
-from collections import OrderedDict, namedtuple
+from collections import namedtuple
 
 import cairocffi
 import cairocffi.pixbuf
@@ -316,7 +316,7 @@ class Loader:
         self.directories = list(directories)
 
     def __call__(self, *names):
-        d = OrderedDict()
+        d = {}
         seen = set()
         set_names = set()
         for n in names:
