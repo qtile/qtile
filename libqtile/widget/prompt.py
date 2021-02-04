@@ -36,7 +36,7 @@ import glob
 import os
 import pickle
 import string
-from collections import OrderedDict, deque
+from collections import deque
 from typing import List, Optional, Tuple
 
 from libqtile import bar, hook, pangocffi, utils, xkeysyms
@@ -746,10 +746,10 @@ class Prompt(base._TextBox):
         return deque(_LastUpdatedOrderedDict.fromkeys(dq))
 
 
-class _LastUpdatedOrderedDict(OrderedDict):
+class _LastUpdatedOrderedDict(dict):
     """Store items in the order the keys were last added."""
 
     def __setitem__(self, key, value):
         if key in self:
             del self[key]
-        OrderedDict.__setitem__(self, key, value)
+        super().__setitem__(key, value)
