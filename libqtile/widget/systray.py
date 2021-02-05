@@ -74,7 +74,7 @@ class Icon(window._Window):
         return False
 
     def handle_PropertyNotify(self, e):  # noqa: N802
-        name = self.qtile.conn.atoms.get_name(e.atom)
+        name = self.qtile.core.conn.atoms.get_name(e.atom)
         if name == "_XEMBED_INFO":
             info = self.window.get_property('_XEMBED_INFO', unpack=int)
             if info and info[1]:
@@ -118,8 +118,8 @@ class Systray(window._Window, base._Widget):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
-        win = qtile.conn.create_window(-1, -1, 1, 1)
-        window._Window.__init__(self, xcbq.Window(qtile.conn, win.wid), qtile)
+        win = qtile.core.conn.create_window(-1, -1, 1, 1)
+        window._Window.__init__(self, xcbq.Window(qtile.core.conn, win.wid), qtile)
         qtile.windows_map[win.wid] = self
 
         # Even when we have multiple "Screen"s, we are setting up as the system
@@ -128,9 +128,9 @@ class Systray(window._Window, base._Widget):
         if qtile.current_screen:
             self.screen = qtile.current_screen.index
         self.bar = bar
-        atoms = qtile.conn.atoms
+        atoms = qtile.core.conn.atoms
 
-        qtile.conn.conn.core.SetSelectionOwner(
+        qtile.core.conn.conn.core.SetSelectionOwner(
             win.wid,
             atoms['_NET_SYSTEM_TRAY_S{:d}'.format(self.screen)],
             xcffib.CurrentTime
@@ -150,18 +150,18 @@ class Systray(window._Window, base._Widget):
         qtile.root.send_event(event, mask=EventMask.StructureNotify)
 
     def handle_ClientMessage(self, event):  # noqa: N802
-        atoms = self.qtile.conn.atoms
+        atoms = self.qtile.core.conn.atoms
 
         opcode = event.type
         data = event.data.data32
         message = data[1]
         wid = data[2]
 
-        conn = self.qtile.conn.conn
+        conn = self.qtile.core.conn.conn
         parent = self.bar.window.window
 
         if opcode == atoms['_NET_SYSTEM_TRAY_OPCODE'] and message == 0:
-            w = xcbq.Window(self.qtile.conn, wid)
+            w = xcbq.Window(self.qtile.core.conn, wid)
             icon = Icon(w, self.qtile, self)
             self.icons[wid] = icon
             self.qtile.windows_map[wid] = icon
@@ -197,7 +197,7 @@ class Systray(window._Window, base._Widget):
             if icon.hidden:
                 icon.unhide()
                 data = [
-                    self.qtile.conn.atoms["_XEMBED_EMBEDDED_NOTIFY"],
+                    self.qtile.core.conn.atoms["_XEMBED_EMBEDDED_NOTIFY"],
                     xcffib.xproto.Time.CurrentTime,
                     0,
                     self.bar.window.window.wid,
@@ -207,7 +207,7 @@ class Systray(window._Window, base._Widget):
                 event = xcffib.xproto.ClientMessageEvent.synthetic(
                     format=32,
                     window=icon.window.wid,
-                    type=self.qtile.conn.atoms["_XEMBED"],
+                    type=self.qtile.core.conn.atoms["_XEMBED"],
                     data=u
                 )
                 self.window.send_event(event)
@@ -216,8 +216,8 @@ class Systray(window._Window, base._Widget):
 
     def finalize(self):
         base._Widget.finalize(self)
-        atoms = self.qtile.conn.atoms
-        self.qtile.conn.conn.core.SetSelectionOwner(
+        atoms = self.qtile.core.conn.atoms
+        self.qtile.core.conn.conn.core.SetSelectionOwner(
             0,
             atoms['_NET_SYSTEM_TRAY_S{:d}'.format(self.screen)],
             xcffib.CurrentTime,

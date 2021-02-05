@@ -41,3 +41,10 @@ class Core(metaclass=ABCMeta):
     @abstractmethod
     def ungrab_pointer(self) -> None:
         """Release grabbed pointer events"""
+
+    @abstractmethod
+    def fixup_focus(self) -> None:
+        """Focus the most relevant window(used when no focus present)."""
+
+    def flush(self) -> None:
+        """Flush connection(if necessary)"""

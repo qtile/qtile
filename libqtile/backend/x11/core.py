@@ -197,6 +197,15 @@ class Core(base.Core):
     def masks(self) -> Tuple[int, int]:
         return self._numlock_mask, self._valid_mask
 
+    def flush(self):
+        super().flush()
+        self.conn.conn.flush()
+
+    def _setup_connection(self):
+        self.conn.flush()
+        self.conn.xsync()
+        self._xpoll()
+
     def setup_listener(
         self, qtile: "Qtile"
     ) -> None:
@@ -204,11 +213,10 @@ class Core(base.Core):
 
         :param qtile:
             The qtile instance to dispatch events to.
-        :param eventloop:
-            The eventloop to use to listen to the file descriptor.
         """
-        logger.debug("Adding io watch")
         self.qtile = qtile
+        self._setup_connection()
+        logger.debug("Adding io watch")
         self.fd = self.conn.conn.get_file_descriptor()
         asyncio.get_running_loop().add_reader(self.fd, self._xpoll)
 
@@ -632,3 +640,6 @@ class Core(base.Core):
         if self._painter is None:
             self._painter = xcbq.Painter(self._display_name)
         return self._painter
+
+    def fixup_focus(self) -> None:
+        self.conn.fixup_focus()

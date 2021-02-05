@@ -156,10 +156,6 @@ class Qtile(CommandObject):
         self._process_screens()
         self.current_screen = self.screens[0]
 
-        self.conn.flush()
-        self.conn.xsync()
-        self.core._xpoll()
-
         # Map and Grab keys
         for key in self.config.keys:
             self.grab_key(key)
@@ -215,6 +211,9 @@ class Qtile(CommandObject):
 
     @property
     def conn(self):
+        logger.warning(
+            'Qtile.conn is deprecated. Please use Qtile.core.conn instead.',
+        )
         return self.core.conn
 
     @property
@@ -578,7 +577,7 @@ class Qtile(CommandObject):
             del self.windows_map[win]
             self.update_client_list()
         if self.current_window is None:
-            self.conn.fixup_focus()
+            self.core.fixup_focus()
 
     def graceful_shutdown(self):
         """
@@ -708,7 +707,7 @@ class Qtile(CommandObject):
             if self.config.bring_front_click and (
                 self.config.bring_front_click != "floating_only" or getattr(window, "floating", False)
             ):
-                self.conn.conn.core.ConfigureWindow(
+                self.core.conn.conn.core.ConfigureWindow(
                     wid, xcffib.xproto.ConfigWindow.StackMode, [xcffib.xproto.StackMode.Above]
                 )
 
@@ -729,8 +728,11 @@ class Qtile(CommandObject):
             if screen:
                 self.focus_screen(screen.index, warp=False)
 
-        self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
-        self.conn.conn.flush()
+        self.core.conn.conn.core.AllowEvents(
+            xcffib.xproto.Allow.ReplayPointer,
+            e.time,
+        )
+        self.core.flush()
 
     def process_button_click(self, button_code, state, x, y, event) -> None:
         self.mouse_position = (x, y)
@@ -890,21 +892,21 @@ class Qtile(CommandObject):
         event queue to the server after func is called. """
         def f():
             func(*args)
-            self.conn.flush()
+            self.core.flush()
         return self._eventloop.call_soon(f)
 
     def call_soon_threadsafe(self, func, *args):
         """ Another event loop proxy, see `call_soon`. """
         def f():
             func(*args)
-            self.conn.flush()
+            self.core.flush()
         return self._eventloop.call_soon_threadsafe(f)
 
     def call_later(self, delay, func, *args):
         """ Another event loop proxy, see `call_soon`. """
         def f():
             func(*args)
-            self.conn.flush()
+            self.core.flush()
         return self._eventloop.call_later(delay, f)
 
     def run_in_executor(self, func, *args):
@@ -1104,7 +1106,7 @@ class Qtile(CommandObject):
             pass
 
         d = DummyEv()
-        d.detail = self.conn.keysym_to_keycode(keysym)[0]
+        d.detail = self.core.conn.keysym_to_keycode(keysym)[0]
         d.state = modmasks
         self.core.handle_KeyPress(d)
 
@@ -1226,7 +1228,7 @@ class Qtile(CommandObject):
 
     def cmd_sync(self):
         """Sync the X display. Should only be used for development"""
-        self.conn.flush()
+        self.core.flush()
 
     def cmd_to_screen(self, n):
         """Warp focus to screen n, where n is a 0-based screen number

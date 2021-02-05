@@ -61,6 +61,7 @@ Qtile 0.17.0, released 2021-02-13:
         - mouse_callbacks no longer receives the qtile object as an argument
           (they receive no arguments); import it via `from libqtile import
           qtile` instead.
+        - Qtile.conn has been removed. Please use Qtile.core.conn instead.
     * features
         - new WidgetBox widget
         - new restart and shutdown hooks

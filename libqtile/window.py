@@ -359,7 +359,7 @@ class _Window(CommandObject):
     def kill(self):
         if "WM_DELETE_WINDOW" in self.window.get_wm_protocols():
             data = [
-                self.qtile.conn.atoms["WM_DELETE_WINDOW"],
+                self.qtile.core.conn.atoms["WM_DELETE_WINDOW"],
                 xcffib.xproto.Time.CurrentTime,
                 0,
                 0,
@@ -371,14 +371,14 @@ class _Window(CommandObject):
             e = xcffib.xproto.ClientMessageEvent.synthetic(
                 format=32,
                 window=self.window.wid,
-                type=self.qtile.conn.atoms["WM_PROTOCOLS"],
+                type=self.qtile.core.conn.atoms["WM_PROTOCOLS"],
                 data=u
             )
 
             self.window.send_event(e)
         else:
             self.window.kill_client()
-        self.qtile.conn.flush()
+        self.qtile.core.conn.flush()
 
     def hide(self):
         # We don't want to get the UnmapNotify for this unmap
@@ -523,7 +523,7 @@ class _Window(CommandObject):
         # does the window want us to ask it about focus?
         if "WM_TAKE_FOCUS" in self.window.get_wm_protocols():
             data = [
-                self.qtile.conn.atoms["WM_TAKE_FOCUS"],
+                self.qtile.core.conn.atoms["WM_TAKE_FOCUS"],
                 # The timestamp here must be a valid timestamp, not CurrentTime.
                 #
                 # see https://tronche.com/gui/x/icccm/sec-4.html#s-4.1.7
@@ -542,7 +542,7 @@ class _Window(CommandObject):
             e = xcffib.xproto.ClientMessageEvent.synthetic(
                 format=32,
                 window=self.window.wid,
-                type=self.qtile.conn.atoms["WM_PROTOCOLS"],
+                type=self.qtile.core.conn.atoms["WM_PROTOCOLS"],
                 data=u
             )
 
@@ -565,7 +565,7 @@ class _Window(CommandObject):
         if self.urgent:
             self.urgent = False
 
-            atom = self.qtile.conn.atoms["_NET_WM_STATE_DEMANDS_ATTENTION"]
+            atom = self.qtile.core.conn.atoms["_NET_WM_STATE_DEMANDS_ATTENTION"]
             state = list(self.window.get_property('_NET_WM_STATE', 'ATOM', unpack=int))
 
             if atom in state:
@@ -658,7 +658,7 @@ class Internal(_Window):
 
     @classmethod
     def create(cls, qtile, x, y, width, height, opacity=1.0):
-        win = qtile.conn.create_window(x, y, width, height)
+        win = qtile.core.conn.create_window(x, y, width, height)
         win.set_property("QTILE_INTERNAL", 1)
         i = Internal(win, qtile)
         i.place(x, y, width, height, 0, None)
@@ -669,7 +669,7 @@ class Internal(_Window):
         return "Internal(%r, %s)" % (self.name, self.window.wid)
 
     def kill(self):
-        self.qtile.conn.conn.core.DestroyWindow(self.window.wid)
+        self.qtile.core.conn.conn.core.DestroyWindow(self.window.wid)
 
     def cmd_kill(self):
         self.kill()
@@ -736,7 +736,7 @@ class Static(_Window):
         self.strut = strut
 
     def handle_PropertyNotify(self, e):  # noqa: N802
-        name = self.qtile.conn.atoms.get_name(e.atom)
+        name = self.qtile.core.conn.atoms.get_name(e.atom)
         if name in ("_NET_WM_STRUT_PARTIAL", "_NET_WM_STRUT"):
             self.update_strut()
 
@@ -773,7 +773,7 @@ class Window(_Window):
                 self.hide()
 
         # add window to the save-set, so it gets mapped when qtile dies
-        qtile.conn.conn.core.ChangeSaveSet(SetMode.Insert, self.window.wid)
+        qtile.core.conn.conn.core.ChangeSaveSet(SetMode.Insert, self.window.wid)
         self.update_wm_net_icon()
 
     @property
@@ -829,7 +829,7 @@ class Window(_Window):
 
     @fullscreen.setter
     def fullscreen(self, do_full):
-        atom = set([self.qtile.conn.atoms["_NET_WM_STATE_FULLSCREEN"]])
+        atom = set([self.qtile.core.conn.atoms["_NET_WM_STATE_FULLSCREEN"]])
         prev_state = set(self.window.get_property('_NET_WM_STATE', 'ATOM', unpack=int))
 
         def set_state(old_state, new_state):
@@ -1125,7 +1125,7 @@ class Window(_Window):
         hook.fire("net_wm_icon_change", self)
 
     def handle_ClientMessage(self, event):  # noqa: N802
-        atoms = self.qtile.conn.atoms
+        atoms = self.qtile.core.conn.atoms
 
         opcode = event.type
         data = event.data
@@ -1187,7 +1187,7 @@ class Window(_Window):
             logger.info("Unhandled client message: %s", atoms.get_name(opcode))
 
     def handle_PropertyNotify(self, e):  # noqa: N802
-        name = self.qtile.conn.atoms.get_name(e.atom)
+        name = self.qtile.core.conn.atoms.get_name(e.atom)
         logger.debug("PropertyNotifyEvent: %s", name)
         if name == "WM_TRANSIENT_FOR":
             pass

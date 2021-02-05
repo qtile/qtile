@@ -1153,7 +1153,7 @@ def test_togroup_config(manager):
 
 @manager_config
 def test_color_pixel(manager):
-    (success, e) = manager.c.eval("self.conn.color_pixel(\"ffffff\")")
+    (success, e) = manager.c.eval("self.core.conn.color_pixel(\"ffffff\")")
     assert success, e
 
 

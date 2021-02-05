@@ -49,7 +49,7 @@ class Popup(configurable.Configurable):
         self.add_defaults(Popup.defaults)
         self.qtile = qtile
 
-        win = qtile.conn.create_window(x, y, width, height)
+        win = qtile.core.conn.create_window(x, y, width, height)
         win.set_property("QTILE_INTERNAL", 1)
         self.win = window.Internal(win, qtile)
         self.qtile.windows_map[self.win.window.wid] = self.win
