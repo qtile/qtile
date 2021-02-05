@@ -170,18 +170,6 @@ class Subscribe:
         """
         return self._subscribe("group_window_add", func)
 
-    def window_name_change(self, func):
-        """Called whenever a windows name changes
-
-        Deprecated: use client_name_updated
-        **Arguments**
-
-        None
-        """
-        msg = 'window_name_change is deprecated, use client_name_updated instead'
-        logger.warning(msg, DeprecationWarning)
-        return self._subscribe("window_name_change", func)
-
     def client_new(self, func):
         """Called before Qtile starts managing a new client
 
@@ -401,9 +389,3 @@ def fire(event, *args, **kwargs):
                 i(*args, **kwargs)
         except:  # noqa: E722
             logger.exception("Error in hook %s", event)
-
-
-@subscribe.client_name_updated
-def _fire_window_name_change(window):
-    "This should eventually be removed"
-    fire("window_name_change")

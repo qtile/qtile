@@ -44,6 +44,8 @@ Qtile X.X.X, released XXXX-XX-XX:
           widgets can use ThreadPoolText in the same package instead.
         - the YahooWeather widget was removed since Yahoo retired their free
           tier of the weather API
+        - Deprecated hook `window_name_change` got removed, use
+          `client_name_updated` instead.
     * features
         - new WidgetBox widget
         - new restart and shutdown hooks
