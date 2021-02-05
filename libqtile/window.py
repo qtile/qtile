@@ -265,22 +265,6 @@ class _Window(CommandObject):
             return
 
         if normh:
-            normh['min_width'] = max(0, normh.get('min_width', 0))
-            normh['min_height'] = max(0, normh.get('min_height', 0))
-            if not normh['base_width'] and \
-                    normh['min_width'] and \
-                    normh['width_inc']:
-                # seems xcffib does ignore base width :(
-                normh['base_width'] = (
-                    normh['min_width'] % normh['width_inc']
-                )
-            if not normh['base_height'] and \
-                    normh['min_height'] and \
-                    normh['height_inc']:
-                # seems xcffib does ignore base height :(
-                normh['base_height'] = (
-                    normh['min_height'] % normh['height_inc']
-                )
             self.hints.update(normh)
 
         if h and 'UrgencyHint' in h['flags']:
