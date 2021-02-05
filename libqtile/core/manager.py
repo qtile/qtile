@@ -210,13 +210,6 @@ class Qtile(CommandObject):
         return self.core._root
 
     @property
-    def conn(self):
-        logger.warning(
-            'Qtile.conn is deprecated. Please use Qtile.core.conn instead.',
-        )
-        return self.core.conn
-
-    @property
     def selection(self):
         return self.core._selection
 
