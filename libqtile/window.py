@@ -264,25 +264,6 @@ class _Window(CommandObject):
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             return
 
-        # FIXME
-        # h values
-        # {
-        #    'icon_pixmap': 4194337,
-        #    'icon_window': 0,
-        #    'icon_mask': 4194340,
-        #    'icon_y': 0,
-        #    'input': 1,
-        #    'icon_x': 0,
-        #    'window_group': 4194305
-        #    'initial_state': 1,
-        #    'flags': set(['StateHint',
-        #                  'IconMaskHint',
-        #                  'WindowGroupHint',
-        #                  'InputHint',
-        #                  'UrgencyHint',
-        #                  'IconPixmapHint']),
-        # }
-
         if normh:
             normh['min_width'] = max(0, normh.get('min_width', 0))
             normh['min_height'] = max(0, normh.get('min_height', 0))
