@@ -1387,9 +1387,9 @@ class Window(_Window):
         return (window.edges[0] <= x <= window.edges[2] and
                 window.edges[1] <= y <= window.edges[3])
 
-    def cmd_set_position(self, dx, dy):
+    def cmd_set_position(self, x, y):
         if self.floating:
-            self.tweak_float(dx, dy)
+            self.tweak_float(x, y)
             return
         for window in self.group.windows:
             if window == self or window.floating:
