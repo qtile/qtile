@@ -27,32 +27,6 @@ def test_new_window(xdisplay):
         win.get_geometry()
 
 
-def test_net_wm_states(xdisplay):
-    conn = xcbq.Connection(xdisplay)
-    win = conn.create_window(1, 1, 640, 480)
-    assert isinstance(win, xcbq.Window)
-
-    def attr_name(x):
-        return x.lstrip('_').lower()
-
-    names = [attr_name(x) for x in xcbq.net_wm_states]
-
-    for name in names:
-        val = getattr(win, name)
-        assert val is False
-        setattr(win, name, True)
-        val = getattr(win, name)
-        assert val is True
-
-    for name in names:
-        assert getattr(win, name) is True
-
-    for name in names:
-        setattr(win, name, False)
-        val = getattr(win, name)
-        assert val is False
-
-
 def test_masks():
     cfgmasks = xcbq.ConfigureMasks
     d = {'x': 1, 'y': 2, 'width': 640, 'height': 480}
