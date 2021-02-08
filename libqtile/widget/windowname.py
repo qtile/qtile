@@ -65,7 +65,7 @@ class WindowName(base._TextBox):
         else:
             w = self.bar.screen.group.current_window
         state = ''
-        if w and (w.name or w.window_get_wm_class()[0]):
+        if w:
             if w.maximized:
                 state = '[] '
             elif w.minimized:
@@ -75,7 +75,7 @@ class WindowName(base._TextBox):
             var = {}
             var["state"] = state
             var["name"] = w.name
-            var["class"] = w.window.get_wm_class()[0]
+            var["class"] = w.window.get_wm_class()[0] if len(w.window.get_wm_class()) > 0 else ""
             text = self.format.format(**var)
             unescaped = self.truncate(text)
         else:
