@@ -82,21 +82,15 @@ class CheckUpdates(base.ThreadPoolText):
         num_updates = len(updates.splitlines()) - self.subtr
 
         if num_updates == 0:
+            self.layout.colour = self.colour_no_updates
             return self.no_update_string
         num_updates = str(num_updates)
 
         if self.restart_indicator and os.path.exists('/var/run/reboot-required'):
             num_updates += self.restart_indicator
 
-        self._set_colour(num_updates)
+        self.layout.colour = self.colour_have_updates
         return self.display_format.format(**{"updates": num_updates})
-
-    def _set_colour(self, num_updates):
-        # type: (str) -> None
-        if not num_updates.startswith("0"):
-            self.layout.colour = self.colour_have_updates
-        else:
-            self.layout.colour = self.colour_no_updates
 
     def poll(self):
         # type: () -> str
