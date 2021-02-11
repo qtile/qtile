@@ -132,7 +132,7 @@ capture and let you use your personal keyboard shortcuts again.
 
 You can close the Xephyr window by enabling the capture of keyboard shortcuts
 and hit Mod4+Control+Q. Mod4 (or Mod) is usually the Super key (or Windows key).
-You can also close the Xephyr window by running ``qtile-cmd -o cmd -f shutdown``
+You can also close the Xephyr window by running ``qtile cmd-obj -o cmd -f shutdown``
 in a terminal (from inside the Xephyr window of course).
 
 You don't need to run the Xephyr script in order to run the tests

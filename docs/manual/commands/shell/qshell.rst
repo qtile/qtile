@@ -1,8 +1,8 @@
 .. _qshell:
 
-======
-qshell
-======
+===========
+qtile shell
+===========
 
 The Qtile command shell is a command-line shell interface that provides access
 to the full complement of Qtile command functions. The shell features command
@@ -72,27 +72,9 @@ API:
     Commands for this object
     ========================
     add           commands      current       delete        doc
-    down          get info      items         next          previous
+    down          get_info      items         next          previous
     rotate        shuffle_down  shuffle_up    toggle_split  up
 
     layout[1]> help previous
     previous()
     Focus previous stack.
-
-Reference
-=========
-
-Qsh
----
-
-.. autoclass:: libqtile.sh.QSh
-
-   .. automethod:: libqtile.sh.QSh.do_cd
-
-   .. automethod:: libqtile.sh.QSh.do_exit
-
-   .. automethod:: libqtile.sh.QSh.do_ls
-
-   .. automethod:: libqtile.sh.QSh.do_pwd
-
-   .. automethod:: libqtile.sh.QSh.do_help
