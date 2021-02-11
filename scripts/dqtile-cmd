@@ -3,7 +3,7 @@
 usage() {
     echo "$(tput bold)dqtile-cmd$(tput sgr0)
 
-    A Rofi/dmenu interface to qtile-cmd. Accepts all arguments of qtile-cmd (see below).
+    A Rofi/dmenu interface to qtile cmd-obj. Accepts all arguments of qtile cmd-obj (see below).
 
     "
 

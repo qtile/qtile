@@ -54,7 +54,7 @@ XEPHYR_PID=$!
       sleep 1
       nested xterm -e "${PYTHON}" "${PROJECT_DIR}/docs/screenshots/take_all.py" "$@"
       kill $TAIL_PID
-      nested xterm -e qtile-cmd -o cmd -f shutdown
+      nested xterm -e qtile cmd-obj -o cmd -f shutdown
     ;;
   esac
 

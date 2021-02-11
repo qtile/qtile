@@ -1517,7 +1517,7 @@ class Qtile(CommandObject):
     def cmd_tracemalloc_toggle(self):
         """Toggle tracemalloc status
 
-        Running tracemalloc is required for qtile-top
+        Running tracemalloc is required for `qtile top`
         """
         import tracemalloc
 

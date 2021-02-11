@@ -10,7 +10,7 @@ different places:
 
 * Commands can be :ref:`bound to keys <config-keys>` in the Qtile
   configuration file.
-* Commands can be :ref:`called through qshell <qshell>`, the
+* Commands can be :ref:`called through qtile shell <qshell>`, the
   Qtile shell.
 * The qsh can also be hooked into a Jupyter kernel :ref:`called iqshell
   <iqshell>`.
@@ -18,7 +18,7 @@ different places:
   interact with Qtile from Python.
 
 If the explanation below seems a bit complex, please take a moment to explore
-the API using the ``qshell`` command shell. Command lists and detailed
+the API using the ``qtile shell`` command shell. Command lists and detailed
 documentation can be accessed from its built-in help command.
 
 

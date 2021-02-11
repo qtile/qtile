@@ -10,4 +10,4 @@ The Windows must have NET_WM_PID.
 .. code-block:: bash
 
     # run xterm floating on group "test-group"
-    qtile-run -g test-group -f xterm
+    qtile run-cmd -g test-group -f xterm

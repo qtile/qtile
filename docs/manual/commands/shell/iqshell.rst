@@ -4,10 +4,10 @@
 iqshell
 =======
 
-In addition to the standard ``qshell`` shell interface, we provide a kernel
-capable of running through Jupyter that hooks into the qshell client.  The
-command structure and syntax is the same as qshell, so it is recommended you
-read that for more information about that.
+In addition to the standard ``qtile shell`` shell interface, we provide a
+kernel capable of running through Jupyter that hooks into the qshell client.
+The command structure and syntax is the same as qshell, so it is recommended
+you read that for more information about that.
 
 Dependencies
 ============
@@ -55,8 +55,8 @@ directly when starting a Jupyter frontend, for example:
 
 The ``iqshell`` script will launch a Jupyter terminal console with the qshell kernel.
 
-iqshell vs qshell
-=================
+iqshell vs qtile shell
+======================
 
 One of the main drawbacks of running through a Jupyter kernel is the frontend
 has no way to query the current node of the kernel, and as such, there is no
@@ -69,4 +69,4 @@ the Jupyter notebook.
 
 The Jupyter kernel also enables more advanced help, text completion, and
 introspection capabilities (however, these are currently not implemented at a
-level much beyond what is available in the standard qshell).
+level much beyond what is available in the standard qtile shell).
