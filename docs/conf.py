@@ -114,7 +114,7 @@ release = version
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build', 'man']
+exclude_patterns = ['_build']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
@@ -265,12 +265,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    ('man/qtile', 'qtile', u'Qtile Documentation',
-     [u'Tycho Andersen'], 1),
-    ('man/qshell', 'qshell', u'Qtile Documentation',
-     [u'Tycho Andersen'], 1),
-]
+#man_pages = []
 
 # If true, show URL addresses after external links.
 #man_show_urls = False
