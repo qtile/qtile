@@ -77,6 +77,7 @@ Qtile 0.17.0, released 2021-02-13:
               - validates that qtile can import the config file (e.g. that
                 syntax is correct, ends in a .py extension, etc.)
               - validates Key and Mouse mod/keysym arguments are ok.
+        - Columns layout now enables column swapping by using swap_column_left and swap_column_right
     !!! warning !!!
         - When (re)starting, Qtile passes its state to the new process in a
           file now, where previously it passed state directly as a string. This
