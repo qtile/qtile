@@ -104,6 +104,8 @@ class Columns(Layout):
         Key([mod, "control"], "k", lazy.layout.grow_up()),
         Key([mod, "control"], "h", lazy.layout.grow_left()),
         Key([mod, "control"], "l", lazy.layout.grow_right()),
+        Key([mod, "shift", "control"], "h", lazy.layout.swap_column_left()),
+        Key([mod, "shift", "control"], "l", lazy.layout.swap_column_right()),
         Key([mod], "Return", lazy.layout.toggle_split()),
         Key([mod], "n", lazy.layout.normalize()),
     """
@@ -479,3 +481,18 @@ class Columns(Layout):
                 col.heights[client] = 100
             col.width = 100
         self.group.layout_all()
+
+    def swap_column(self, src, dst):
+        self.columns[src], self.columns[dst] = self.columns[dst], self.columns[src]
+        self.current = dst
+        self.group.layout_all()
+
+    def cmd_swap_column_left(self):
+        src = self.current
+        dst = src - 1 if src > 0 else len(self.columns) - 1
+        self.swap_column(src, dst)
+
+    def cmd_swap_column_right(self):
+        src = self.current
+        dst = src + 1 if src < len(self.columns) - 1 else 0
+        self.swap_column(src, dst)
