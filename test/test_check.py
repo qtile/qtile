@@ -18,10 +18,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import os
+import platform
 import shutil
 import subprocess
 import tempfile
 import textwrap
+
+import pytest
+
+
+def is_cpython():
+    # https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
+    return platform.python_implementation() == "CPython"
+
+
+def have_mypy():
+    return shutil.which("mypy") is not None
+
+
+pytestmark = pytest.mark.skipif(not is_cpython() or not have_mypy(), reason="needs mypy")
 
 
 def run_qtile_check(config):
