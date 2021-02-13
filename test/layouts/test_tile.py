@@ -44,7 +44,8 @@ class TileConfig(Config):
     ]
     layouts = [
         layout.Tile(),
-        layout.Tile(master_length=2)
+        layout.Tile(master_length=2),
+        layout.Tile(add_on_top=False)
     ]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
@@ -138,3 +139,25 @@ def test_tile_window_focus_cycle(manager):
 
     # assert window focus cycle, according to order in layout
     assert_focus_path(manager, 'two', 'one', 'float1', 'float2', 'three')
+
+
+@tile_config
+def test_tile_add_on_top(manager):
+    manager.c.next_layout()
+    manager.c.next_layout()
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
+
+    # test first example
+    assert manager.c.layout.info()["master"] == ["one"]
+    assert manager.c.layout.info()["slave"] == ["two", "three"]
+
+    manager.c.layout.previous()
+
+    # test second exemple
+    assert_focused(manager, "two")
+    manager.test_window("four")
+    assert manager.c.layout.info()["clients"] == ['one', 'two', 'four', 'three']
+    assert manager.c.layout.info()["slave"] == ["two", "four", "three"]
+    assert_focus_path(manager, 'three', 'one', 'two', 'four')

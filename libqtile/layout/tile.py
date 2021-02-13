@@ -120,7 +120,7 @@ class Tile(_SimpleLayoutBase):
         c = _SimpleLayoutBase.clone(self, group)
         return c
 
-    def add(self, client, offset_to_current=0):
+    def add(self, client, offset_to_current=1):
         if self.add_after_last:
             self.clients.append(client)
         elif self.add_on_top:
