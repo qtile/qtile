@@ -1,4 +1,4 @@
-Qtile X.X.X, released XXXX-XX-XX:
+Qtile 0.17.0, released 2021-02-13:
     !!! Python version breakage !!!
         - Python 3.5 and 3.6 are no longer supported
     !!! Config breakage !!!
