@@ -77,7 +77,7 @@ Group functions
     * - ``lazy.group["group_name"].toscreen()``
       - Move to the group called ``group_name``.
         Takes an optional ``toggle`` parameter (defaults to True).
-        If this group is already on the screen, then the group is toggled 
+        If this group is already on the screen, then the group is toggled
         with last used
     * - ``lazy.layout.increase_ratio()``
       - Increase the space for master window at the expense of slave windows
@@ -116,3 +116,16 @@ ScratchPad DropDown functions
     * - ``lazy.group["group_name"].dropdown_toggle("name")``
       - Toggles the visibility of the specified DropDown window.
         On first use, the configured process is spawned.
+
+User-defined functions
+----------------------
+
+.. list-table::
+    :widths: 20 80
+    :header-rows: 1
+
+    * - function
+      - description
+    * - ``lazy.function(func, *args, **kwargs)``
+      - Calls ``func(qtile, *args, **kwargs)``. NB. the ``qtile`` object is
+        automatically passed as the first argument.
