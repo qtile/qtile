@@ -41,7 +41,7 @@ class GmailChecker(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base._ThreadPoolText.__init__(self, "", **config)
+        base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(GmailChecker.defaults)
 
     def poll(self):
