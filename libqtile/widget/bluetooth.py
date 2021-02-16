@@ -18,12 +18,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import dbus
+from dbus_next.constants import MessageType
 
 from libqtile.log_utils import logger
+from libqtile.utils import _send_dbus_message, add_signal_receiver
 from libqtile.widget import base
 
-class Bluetooth(base.InLoopPollText):
+
+class Bluetooth(base._TextBox):
     """
     Displays bluetooth status or connected device.
 
@@ -38,32 +40,105 @@ class Bluetooth(base.InLoopPollText):
     ]
 
     def __init__(self, **config):
-        base.InLoopPollText.__init__(self, **config)
+        base._TextBox.__init__(self, '', **config)
         self.add_defaults(Bluetooth.defaults)
 
-        bus = dbus.SystemBus()
-        # set up interface into adapter properties
-        adapter = bus.get_object('org.bluez', '/org/bluez/hci0')
-        adapter_interface = dbus.Interface(adapter, 'org.bluez.Adapter1')
-        self._adapter = dbus.Interface(adapter_interface, 'org.freedesktop.DBus.Properties')
-        # set up interface into device properties
-        device = bus.get_object('org.bluez', '/org/bluez/hci0/' + config['hci'])
-        device_interface = dbus.Interface(device, 'org.bluez.Device1')
-        self._device = dbus.Interface(device_interface, 'org.freedesktop.DBus.Properties')
+        self.hci = config['hci']
 
-    def poll(self):
-        try:
-            powered = self._adapter.Get('org.bluez.Adapter1', 'Powered')
-            if powered == 0:
-                status = 'off'
+    async def _config_async(self):
+        # get initial device name
+        _, device_msg = await _send_dbus_message(session_bus=False,
+                                                 message_type=MessageType.METHOD_CALL,
+                                                 destination='org.bluez',
+                                                 interface='org.freedesktop.DBus.Properties',
+                                                 path='/org/bluez/hci0/' + self.hci,
+                                                 member='Get',
+                                                 signature='ss',
+                                                 body=['org.bluez.Device1', 'Name'])
+        if device_msg.message_type == MessageType.METHOD_RETURN:
+            self.device = device_msg.body[0].value if device_msg.body else ''
+        else:
+            logger.warning('Failed to get bluetooth device name.')
+            self.device = ''
+
+        # get initial connection status
+        _, connect_msg = await _send_dbus_message(session_bus=False,
+                                                  message_type=MessageType.METHOD_CALL,
+                                                  destination='org.bluez',
+                                                  interface='org.freedesktop.DBus.Properties',
+                                                  path='/org/bluez/hci0/' + self.hci,
+                                                  member='Get',
+                                                  signature='ss',
+                                                  body=['org.bluez.Device1', 'Connected'])
+        if connect_msg.message_type == MessageType.METHOD_RETURN:
+            self.connected = connect_msg.body[0].value if connect_msg.body else False
+        else:
+            logger.warning('Failed to get bluetooth connection status.')
+            self.connected = False
+
+        # get initial power status
+        _, power_msg = await _send_dbus_message(session_bus=False,
+                                                message_type=MessageType.METHOD_CALL,
+                                                destination='org.bluez',
+                                                interface='org.freedesktop.DBus.Properties',
+                                                path='/org/bluez/hci0',
+                                                member='Get',
+                                                signature='ss',
+                                                body=['org.bluez.Adapter1', 'Powered'])
+        if power_msg.message_type == MessageType.METHOD_RETURN:
+            self.powered = power_msg.body[0].value if power_msg.body else False
+        else:
+            logger.warning('Failed to get bluetooth power status.')
+            self.powered = False
+
+        self.update_text()
+
+        # add callbacks for adapter and device
+        subscribed_adapter = await add_signal_receiver(self._signal_received_adapter,
+                                                       session_bus=False,
+                                                       signal_name='PropertiesChanged',
+                                                       path='/org/bluez/hci0',
+                                                       dbus_interface='org.freedesktop.DBus.Properties')
+        if not subscribed_adapter:
+            logger.warning('Could not subscribe to bluez adapter.')
+
+        subscribed_device = await add_signal_receiver(self._signal_received_device,
+                                                      session_bus=False,
+                                                      signal_name='PropertiesChanged',
+                                                      path='/org/bluez/hci0/' + self.hci,
+                                                      dbus_interface='org.freedesktop.DBus.Properties')
+        if not subscribed_device:
+            logger.warning('Could not subscribe to bluez device.')
+
+    def _signal_received_adapter(self, message):
+        if message.message_type == MessageType.SIGNAL:
+            interface_name, changed_properties, invalidated_properties = message.body
+            powered = changed_properties.get('Powered', None)
+            if powered is not None:
+                self.powered = powered.value
+                self.update_text()
+
+    def _signal_received_device(self, message):
+        logger.warning(message.body)
+        if message.message_type == MessageType.SIGNAL:
+            interface_name, changed_properties, invalidated_properties = message.body
+            connected = changed_properties.get('Connected', None)
+            if connected is not None:
+                self.connected = connected.value
+                self.update_text()
+
+            device = changed_properties.get('Name', None)
+            if device is not None:
+                self.device = device.value
+                self.update_text()
+
+    def update_text(self):
+        if not self.powered:
+            self.text = 'off'
+        else:
+            if not self.connected:
+                self.text = 'on'
             else:
-                connected = self._device.Get('org.bluez.Device1', 'Connected')
-                if connected == 0:
-                    status = 'on'
-                else:
-                    status = self._device.Get('org.bluez.Device1', 'Name')
+                self.text = self.device
 
-            return self.format.format(status=status)
-
-        except EnvironmentError:
-            logger.error('%s: Make sure your hci0 device has the correct address.', self.__class__.__name__)
+        self.bar.draw()
