@@ -119,7 +119,6 @@ class Bluetooth(base._TextBox):
                 self.update_text()
 
     def _signal_received_device(self, message):
-        logger.warning(message.body)
         if message.message_type == MessageType.SIGNAL:
             interface_name, changed_properties, invalidated_properties = message.body
             connected = changed_properties.get('Connected', None)
