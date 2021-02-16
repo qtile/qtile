@@ -29,6 +29,7 @@ widgets = {
     "Battery": "battery",
     "BatteryIcon": "battery",
     "BitcoinTicker": "bitcoin_ticker",
+    "Bluetooth": "bluetooth",
     "CPU": "cpu",
     "CPUGraph": "graph",
     "Canto": "canto",
