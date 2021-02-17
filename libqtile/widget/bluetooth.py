@@ -69,26 +69,6 @@ class Bluetooth(base._TextBox):
 
         self.update_text()
 
-<<<<<<< HEAD
-=======
-        # add receiver routines for adapter and device
-        subscribed_adapter = await add_signal_receiver(self._signal_received_adapter,
-                                                       session_bus=False,
-                                                       signal_name='PropertiesChanged',
-                                                       path=BLUEZ_PATH,
-                                                       dbus_interface=BLUEZ_PROPERTIES)
-        if not subscribed_adapter:
-            logger.warning('Could not subscribe to bluez adapter.')
-
-        subscribed_device = await add_signal_receiver(self._signal_received_device,
-                                                      session_bus=False,
-                                                      signal_name='PropertiesChanged',
-                                                      path=BLUEZ_PATH + self.hci,
-                                                      dbus_interface=BLUEZ_PROPERTIES)
-        if not subscribed_device:
-            logger.warning('Could not subscribe to bluez device.')
-
->>>>>>> b7cf4e7e (Use high-level instead of low-level API calls; clean up code)
     async def _init_adapter(self):
         # set up interface to adapter properties using high-level api
         bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
