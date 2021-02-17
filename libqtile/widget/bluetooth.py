@@ -29,7 +29,6 @@ BLUEZ_ADAPTER = 'org.bluez.Adapter1'
 BLUEZ_DEVICE = 'org.bluez.Device1'
 BLUEZ_PROPERTIES = 'org.freedesktop.DBus.Properties'
 
-
 class Bluetooth(base._TextBox):
     """
     Displays bluetooth status or connected device.
