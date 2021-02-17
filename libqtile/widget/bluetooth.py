@@ -80,21 +80,21 @@ class Bluetooth(base._TextBox):
         bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
         introspect = await bus.introspect(BLUEZ, BLUEZ_PATH)
         obj = bus.get_proxy_object(BLUEZ, BLUEZ_PATH, introspect)
-        iface = obj.get_interface(BLUEZ_PROPERTIES)
+        iface = obj.get_interface(BLUEZ_ADAPTER)
 
-        powered = await iface.call_get(BLUEZ_ADAPTER, 'Powered')
-        return powered.value
+        powered = await iface.get_powered()
+        return powered
 
     async def _init_device(self):
         # set up interface to device properties using high-level api
         bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
         introspect = await bus.introspect(BLUEZ, BLUEZ_PATH + self.hci)
         obj = bus.get_proxy_object(BLUEZ, BLUEZ_PATH + self.hci, introspect)
-        iface = obj.get_interface(BLUEZ_PROPERTIES)
+        iface = obj.get_interface(BLUEZ_DEVICE)
 
-        connected = await iface.call_get(BLUEZ_DEVICE, 'Connected')
-        name = await iface.call_get(BLUEZ_DEVICE, 'Name')
-        return connected.value, name.value
+        connected = await iface.get_connected()
+        name = await iface.get_name()
+        return connected, name
 
     def _signal_received_adapter(self, message):
         if message.message_type == MessageType.SIGNAL:
