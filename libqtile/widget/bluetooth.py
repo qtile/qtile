@@ -18,12 +18,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from dbus_next.constants import MessageType
+from dbus_next.aio import MessageBus
+from dbus_next.constants import MessageType, BusType
 
 from libqtile.log_utils import logger
-from libqtile.utils import _send_dbus_message, add_signal_receiver
+from libqtile.utils import add_signal_receiver
 from libqtile.widget import base
 
+BLUEZ = 'org.bluez'
+BLUEZ_PATH = '/org/bluez/hci0'
+BLUEZ_ADAPTER = 'org.bluez.Adapter1'
+BLUEZ_DEVICE = 'org.bluez.Device1'
+BLUEZ_PROPERTIES = 'org.freedesktop.DBus.Properties'
 
 class Bluetooth(base._TextBox):
     """
@@ -36,7 +42,7 @@ class Bluetooth(base._TextBox):
     defaults = [
         ('update_interval', 1, 'The update interval.'),
         ('format', '{status}', 'Display format'),
-        ('hci', 'dev_XX_XX_XX_XX_XX_XX', 'hci0 device address, can be found with d-feet or similar dbus explorer.')
+        ('hci', '/dev_XX_XX_XX_XX_XX_XX', 'hci0 device path, can be found with d-feet or similar dbus explorer.')
     ]
 
     def __init__(self, **config):
@@ -46,69 +52,49 @@ class Bluetooth(base._TextBox):
         self.hci = config['hci']
 
     async def _config_async(self):
-        # get initial device name
-        _, device_msg = await _send_dbus_message(session_bus=False,
-                                                 message_type=MessageType.METHOD_CALL,
-                                                 destination='org.bluez',
-                                                 interface='org.freedesktop.DBus.Properties',
-                                                 path='/org/bluez/hci0/' + self.hci,
-                                                 member='Get',
-                                                 signature='ss',
-                                                 body=['org.bluez.Device1', 'Name'])
-        if device_msg.message_type == MessageType.METHOD_RETURN:
-            self.device = device_msg.body[0].value if device_msg.body else ''
-        else:
-            logger.warning('Failed to get bluetooth device name.')
-            self.device = ''
-
-        # get initial connection status
-        _, connect_msg = await _send_dbus_message(session_bus=False,
-                                                  message_type=MessageType.METHOD_CALL,
-                                                  destination='org.bluez',
-                                                  interface='org.freedesktop.DBus.Properties',
-                                                  path='/org/bluez/hci0/' + self.hci,
-                                                  member='Get',
-                                                  signature='ss',
-                                                  body=['org.bluez.Device1', 'Connected'])
-        if connect_msg.message_type == MessageType.METHOD_RETURN:
-            self.connected = connect_msg.body[0].value if connect_msg.body else False
-        else:
-            logger.warning('Failed to get bluetooth connection status.')
-            self.connected = False
-
-        # get initial power status
-        _, power_msg = await _send_dbus_message(session_bus=False,
-                                                message_type=MessageType.METHOD_CALL,
-                                                destination='org.bluez',
-                                                interface='org.freedesktop.DBus.Properties',
-                                                path='/org/bluez/hci0',
-                                                member='Get',
-                                                signature='ss',
-                                                body=['org.bluez.Adapter1', 'Powered'])
-        if power_msg.message_type == MessageType.METHOD_RETURN:
-            self.powered = power_msg.body[0].value if power_msg.body else False
-        else:
-            logger.warning('Failed to get bluetooth power status.')
-            self.powered = False
+        # set initial values
+        self.powered = await self._init_adapter()
+        self.connected, self.device = await self._init_device()
 
         self.update_text()
 
-        # add callbacks for adapter and device
+        # add receiver routines for adapter and device
         subscribed_adapter = await add_signal_receiver(self._signal_received_adapter,
                                                        session_bus=False,
                                                        signal_name='PropertiesChanged',
-                                                       path='/org/bluez/hci0',
-                                                       dbus_interface='org.freedesktop.DBus.Properties')
+                                                       path=BLUEZ_PATH,
+                                                       dbus_interface=BLUEZ_PROPERTIES)
         if not subscribed_adapter:
             logger.warning('Could not subscribe to bluez adapter.')
 
         subscribed_device = await add_signal_receiver(self._signal_received_device,
                                                       session_bus=False,
                                                       signal_name='PropertiesChanged',
-                                                      path='/org/bluez/hci0/' + self.hci,
-                                                      dbus_interface='org.freedesktop.DBus.Properties')
+                                                      path=BLUEZ_PATH + self.hci,
+                                                      dbus_interface=BLUEZ_PROPERTIES)
         if not subscribed_device:
             logger.warning('Could not subscribe to bluez device.')
+
+    async def _init_adapter(self):
+        # set up interface to adapter properties using high-level api
+        bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
+        introspect = await bus.introspect(BLUEZ, BLUEZ_PATH)
+        obj = bus.get_proxy_object(BLUEZ, BLUEZ_PATH, introspect)
+        iface = obj.get_interface(BLUEZ_PROPERTIES)
+
+        powered = await iface.call_get(BLUEZ_ADAPTER, 'Powered')
+        return powered.value
+
+    async def _init_device(self):
+        # set up interface to device properties using high-level api
+        bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
+        introspect = await bus.introspect(BLUEZ, BLUEZ_PATH + self.hci)
+        obj = bus.get_proxy_object(BLUEZ, BLUEZ_PATH + self.hci, introspect)
+        iface = obj.get_interface(BLUEZ_PROPERTIES)
+
+        connected = await iface.call_get(BLUEZ_DEVICE, 'Connected')
+        name = await iface.call_get(BLUEZ_DEVICE, 'Name')
+        return connected.value, name.value
 
     def _signal_received_adapter(self, message):
         if message.message_type == MessageType.SIGNAL:
