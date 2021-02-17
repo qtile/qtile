@@ -54,7 +54,7 @@ class Memory(base.ThreadPoolText):
         ("measure_mem", "M", "Measurement for Memory (G, M, B)"),
         ("measure_swap", "M", "Measurement for Swap (G, M, B)"),
     ]
-    
+
     measures = {"G": 1024 * 1024 * 1024,
                 "M": 1024 * 1024,
                 "B": 1024}
