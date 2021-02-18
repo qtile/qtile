@@ -58,31 +58,17 @@ class Bluetooth(base._TextBox):
 
         self.update_text()
 
-        # add receiver routines for adapter and device
-        subscribed_adapter = await add_signal_receiver(self._signal_received_adapter,
-                                                       session_bus=False,
-                                                       signal_name='PropertiesChanged',
-                                                       path=BLUEZ_PATH,
-                                                       dbus_interface=BLUEZ_PROPERTIES)
-        if not subscribed_adapter:
-            logger.warning('Could not subscribe to bluez adapter.')
-
-        subscribed_device = await add_signal_receiver(self._signal_received_device,
-                                                      session_bus=False,
-                                                      signal_name='PropertiesChanged',
-                                                      path=BLUEZ_PATH + self.hci,
-                                                      dbus_interface=BLUEZ_PROPERTIES)
-        if not subscribed_device:
-            logger.warning('Could not subscribe to bluez device.')
-
     async def _init_adapter(self):
         # set up interface to adapter properties using high-level api
         bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
         introspect = await bus.introspect(BLUEZ, BLUEZ_PATH)
         obj = bus.get_proxy_object(BLUEZ, BLUEZ_PATH, introspect)
         iface = obj.get_interface(BLUEZ_ADAPTER)
+        props = obj.get_interface(BLUEZ_PROPERTIES)
 
         powered = await iface.get_powered()
+        # subscribe receiver to property changed
+        props.on_properties_changed(self._signal_received_adapter)
         return powered
 
     async def _init_device(self):
@@ -91,31 +77,30 @@ class Bluetooth(base._TextBox):
         introspect = await bus.introspect(BLUEZ, BLUEZ_PATH + self.hci)
         obj = bus.get_proxy_object(BLUEZ, BLUEZ_PATH + self.hci, introspect)
         iface = obj.get_interface(BLUEZ_DEVICE)
+        props = obj.get_interface(BLUEZ_PROPERTIES)
 
         connected = await iface.get_connected()
         name = await iface.get_name()
+        # subscribe receiver to property changed
+        props.on_properties_changed(self._signal_received_device)
         return connected, name
 
-    def _signal_received_adapter(self, message):
-        if message.message_type == MessageType.SIGNAL:
-            interface_name, changed_properties, invalidated_properties = message.body
-            powered = changed_properties.get('Powered', None)
-            if powered is not None:
-                self.powered = powered.value
-                self.update_text()
+    def _signal_received_adapter(self, interface_name, changed_properties, invalidated_properties):
+        powered = changed_properties.get('Powered', None)
+        if powered is not None:
+            self.powered = powered.value
+            self.update_text()
 
-    def _signal_received_device(self, message):
-        if message.message_type == MessageType.SIGNAL:
-            interface_name, changed_properties, invalidated_properties = message.body
-            connected = changed_properties.get('Connected', None)
-            if connected is not None:
-                self.connected = connected.value
-                self.update_text()
+    def _signal_received_device(self, interface_name, changed_properties, invalidated_properties):
+        connected = changed_properties.get('Connected', None)
+        if connected is not None:
+            self.connected = connected.value
+            self.update_text()
 
-            device = changed_properties.get('Name', None)
-            if device is not None:
-                self.device = device.value
-                self.update_text()
+        device = changed_properties.get('Name', None)
+        if device is not None:
+            self.device = device.value
+            self.update_text()
 
     def update_text(self):
         if not self.powered:
