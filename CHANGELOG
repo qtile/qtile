@@ -6,6 +6,7 @@ Qtile 0.x.x, released xxxx-xx-xx:
           dbus calls within asyncio's eventloop.
         - widget.BatteryIcon no longer has a fallback text mode; use
           widget.Battery instead
+        - MonadX layout key new_at_current is deprecated, use new_client_position.
     !!! deprecation warning !!!
         - 'main' config functions, deprecated in 0.16.1, will no longer be executed.
     * features
