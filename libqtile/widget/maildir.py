@@ -36,8 +36,15 @@ class Maildir(base.ThreadPoolText):
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("maildir_path", "~/Mail", "path to the Maildir folder"),
-        ("sub_folders", [], 'The subfolders to scan (e.g. [{"path": "INBOX", '
-            '"label": "Home mail"}, {"path": "spam", "label": "Home junk"}]'),
+        (
+            "sub_folders",
+            [
+                {"path": "INBOX", "label": "Home mail"},
+                {"path": "spam", "label": "Home junk"}
+            ],
+            'List of subfolders to scan. Each subfolder is a dict of `path` '
+            'and `label`.'
+        ),
         ("separator", " ", "the string to put between the subfolder strings."),
         ("total", False, "Whether or not to sum subfolders into a grand \
             total. The first label will be used."),
