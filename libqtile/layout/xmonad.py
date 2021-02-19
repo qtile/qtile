@@ -167,8 +167,12 @@ class MonadTall(_SimpleLayoutBase):
             "(one of ``MonadTall._left`` or ``MonadTall._right``)"),
         ("change_ratio", .05, "Resize ratio"),
         ("change_size", 20, "Resize change in pixels"),
-        ("new_at_current", False,
-            "Place new windows at the position of the active window."),
+        ("new_client_position", "after_current",
+            "Place new windows : "
+            " after_current - after the active window."
+            " before_current - before the active window,"
+            " top - at the top of the stack,"
+            " bottom - at the bottom of the stack,"),
     ]
 
     def __init__(self, **config):
@@ -203,7 +207,7 @@ class MonadTall(_SimpleLayoutBase):
 
     def add(self, client):
         "Add client to layout"
-        self.clients.add(client, 0 if self.new_at_current else 1)
+        self.clients.add(client, client_position=self.new_client_position)
         self.do_normalize = True
 
     def remove(self, client):

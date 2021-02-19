@@ -293,19 +293,32 @@ class _ClientList:
             return self[idx - 1]
         return None
 
-    def add(self, client, offset_to_current=0):
+    def add(self, client, offset_to_current=0, client_position=None):
         """
         Insert the given client into collection at position of the current.
 
         Use parameter 'offset_to_current' to specify where the client shall be
         inserted. Defaults to zero, which means at position of current client.
         Positive values are after the client.
+
+        Use parameter 'client_position' to insert the given client at 4 specific
+        positions : top, bottom, after_current, before_current.
         """
-        pos = max(0, self._current_idx + offset_to_current)
-        if pos < len(self.clients):
-            self.clients.insert(pos, client)
+        if client_position is not None:
+            if client_position == "after_current":
+                return self.add(client, offset_to_current=1)
+            elif client_position == "before_current":
+                return self.add(client, offset_to_current=0)
+            elif client_position == "top":
+                self.append_head(client)
+            else:  # ie client_position == "bottom"
+                self.append(client)
         else:
-            self.clients.append(client)
+            pos = max(0, self._current_idx + offset_to_current)
+            if pos < len(self.clients):
+                self.clients.insert(pos, client)
+            else:
+                self.clients.append(client)
         self.current_client = client
 
     def append_head(self, client):
