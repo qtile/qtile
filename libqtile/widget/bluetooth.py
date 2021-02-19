@@ -19,10 +19,8 @@
 # SOFTWARE.
 
 from dbus_next.aio import MessageBus
-from dbus_next.constants import MessageType, BusType
+from dbus_next.constants import BusType
 
-from libqtile.log_utils import logger
-from libqtile.utils import add_signal_receiver
 from libqtile.widget import base
 
 BLUEZ = 'org.bluez'
@@ -30,6 +28,7 @@ BLUEZ_PATH = '/org/bluez/hci0'
 BLUEZ_ADAPTER = 'org.bluez.Adapter1'
 BLUEZ_DEVICE = 'org.bluez.Device1'
 BLUEZ_PROPERTIES = 'org.freedesktop.DBus.Properties'
+
 
 class Bluetooth(base._TextBox):
     """
@@ -40,16 +39,12 @@ class Bluetooth(base._TextBox):
 
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('update_interval', 1, 'The update interval.'),
-        ('format', '{status}', 'Display format'),
         ('hci', '/dev_XX_XX_XX_XX_XX_XX', 'hci0 device path, can be found with d-feet or similar dbus explorer.')
     ]
 
     def __init__(self, **config):
         base._TextBox.__init__(self, '', **config)
         self.add_defaults(Bluetooth.defaults)
-
-        self.hci = config['hci']
 
     async def _config_async(self):
         # set initial values
