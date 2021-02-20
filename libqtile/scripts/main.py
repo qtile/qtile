@@ -28,7 +28,7 @@ def main():
         description='A full-featured, pure-Python tiling window manager.',
     )
     main_parser.add_argument(
-        '--version',
+        '-v', '--version',
         action='version',
         version=VERSION,
     )
