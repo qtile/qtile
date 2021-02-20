@@ -111,11 +111,12 @@ def check_config(args):
     # need to do all the checking in a tempdir because we need to write stuff
     # for stubtest
     with tempfile.TemporaryDirectory() as tempdir:
-        tmp_path = path.join(tempdir, "config.py")
-        shutil.copy(args.configfile, tmp_path)
+        shutil.copytree(path.dirname(args.configfile), tempdir, dirs_exist_ok=True)
+        tmp_path = path.join(tempdir, path.basename(args.configfile))
 
         # are the top level config variables the right type?
-        type_check_config_vars(tempdir, "config")
+        module_name = path.splitext(path.basename(args.configfile))[0]
+        type_check_config_vars(tempdir, module_name)
 
         # are arguments passed to qtile APIs correct?
         type_check_config_args(tmp_path)
