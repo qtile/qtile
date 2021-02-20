@@ -53,14 +53,17 @@ class Image(base._Widget, base.MarginMixin):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
+        self.img = None
 
         if not self.filename:
-            raise ValueError("Filename not set!")
+            logger.warning("Image filename not set!")
+            return
 
         self.filename = os.path.expanduser(self.filename)
 
         if not os.path.exists(self.filename):
-            raise ValueError("File does not exist: {}".format(self.filename))
+            logger.warning("Image does not exist: {}".format(self.filename))
+            return
 
         img = Img.from_path(self.filename)
         self.img = img
@@ -75,6 +78,9 @@ class Image(base._Widget, base.MarginMixin):
             img.resize(width=new_width)
 
     def draw(self):
+        if self.img is None:
+            return
+
         self.drawer.clear(self.background or self.bar.background)
         self.drawer.ctx.save()
         self.drawer.ctx.translate(self.margin_x, self.margin_y)
@@ -88,6 +94,9 @@ class Image(base._Widget, base.MarginMixin):
             self.drawer.draw(offsety=self.offset, height=self.width)
 
     def calculate_length(self):
+        if self.img is None:
+            return 0
+
         if self.bar.horizontal:
             return self.img.width + (self.margin_x * 2)
         else:
