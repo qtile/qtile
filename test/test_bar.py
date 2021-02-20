@@ -311,6 +311,16 @@ class ExampleWidget(libqtile.widget.base._Widget):
         pass
 
 
+class BrokenWidget(libqtile.widget.base._Widget):
+
+    def __init__(self, exception_class, **config):
+        libqtile.widget.base._Widget.__init__(self, 10, **config)
+        self.exception_class = exception_class
+
+    def _configure(self, qtile, bar):
+        raise self.exception_class
+
+
 class IncompatibleWidgetConf(libqtile.confreader.Config):
     keys = []
     mouse = []
@@ -415,3 +425,38 @@ def test_nospacer(manager_nospawn):
     assert i["widgets"][0]["offset"] == 0
     assert i["widgets"][1]["offset"] == 10
     libqtile.hook.clear()
+
+
+def test_configure_broken_widgets(manager_nospawn):
+    config = GeomConf
+
+    widget_list = [
+        BrokenWidget(ValueError),
+        BrokenWidget(IndexError),
+        BrokenWidget(IndentationError),
+        BrokenWidget(TypeError),
+        BrokenWidget(NameError),
+        BrokenWidget(ImportError),
+        libqtile.widget.Spacer(libqtile.bar.STRETCH),
+    ]
+
+    config.screens = [
+        libqtile.config.Screen(
+            bottom=libqtile.bar.Bar(
+                widget_list,
+                10
+            )
+        )
+    ]
+
+    manager_nospawn.start(config)
+
+    i = manager_nospawn.c.bar["bottom"].info()
+
+    # Check that we have same number of widgets
+    assert len(i["widgets"]) == len(widget_list)
+
+    # Check each broken widget is replaced
+    for index, widget in enumerate(widget_list):
+        if isinstance(widget, BrokenWidget):
+            assert i["widgets"][index]["name"] == "configerrorwidget"

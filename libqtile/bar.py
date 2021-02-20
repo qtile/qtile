@@ -22,6 +22,7 @@ from typing import Union
 
 from libqtile import configurable, drawer, window
 from libqtile.command.base import CommandObject
+from libqtile.log_utils import logger
 
 
 class Gap(CommandObject):
@@ -201,8 +202,11 @@ class Bar(Gap, configurable.Configurable):
 
         if self.window:
             self.window.place(self.x, self.y, self.width, self.height, 0, None)
+            self.crashed_widgets = []
             for i in self.widgets:
-                i._configure(qtile, self)
+                self._configure_widget(i)
+
+            self._remove_crashed_widgets()
 
         else:
             self.window = window.Internal.create(
@@ -228,14 +232,43 @@ class Bar(Gap, configurable.Configurable):
             qtile.windows_map[self.window.window.wid] = self.window
             self.window.unhide()
 
+            self.crashed_widgets = []
             for idx, i in enumerate(self.widgets):
                 if i.configured:
                     i = i.create_mirror()
                     self.widgets[idx] = i
-                qtile.register_widget(i)
-                i._configure(qtile, self)
+                success = self._configure_widget(i)
+                if success:
+                    qtile.register_widget(i)
+
+            self._remove_crashed_widgets()
 
         self._resize(self.length, self.widgets)
+
+    def _configure_widget(self, widget):
+        configured = True
+        try:
+            widget._configure(self.qtile, self)
+        except Exception as e:
+            logger.error(
+                "{} widget crashed during _configure with "
+                "error: {}".format(widget.__class__.__name__, repr(e))
+            )
+            self.crashed_widgets.append(widget)
+            configured = False
+
+        return configured
+
+    def _remove_crashed_widgets(self):
+        if self.crashed_widgets:
+            from libqtile.widget.config_error import ConfigErrorWidget
+
+        for i in self.crashed_widgets:
+            index = self.widgets.index(i)
+            crash = ConfigErrorWidget(widget=i)
+            crash._configure(self.qtile, self)
+            self.widgets.insert(index, crash)
+            self.widgets.remove(i)
 
     def finalize(self):
         self.drawer.finalize()
