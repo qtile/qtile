@@ -63,10 +63,11 @@ def test_check_default_config():
 
 
 def check_literal_config(config):
-    with tempfile.NamedTemporaryFile(suffix=".py") as temp:
-        temp.write(textwrap.dedent(config).encode('utf-8'))
-        temp.flush()
-        return run_qtile_check(temp.name)
+    with tempfile.TemporaryDirectory() as tempdir:
+        with tempfile.NamedTemporaryFile(dir=tempdir, suffix=".py") as temp:
+            temp.write(textwrap.dedent(config).encode('utf-8'))
+            temp.flush()
+            return run_qtile_check(temp.name)
 
 
 def test_check_bad_syntax():
@@ -102,3 +103,13 @@ def test_extra_vars_are_ok():
     assert check_literal_config("""
         this_is_an_extra_config_var = "yes it is"
     """)
+
+
+def test_extra_files_are_ok():
+    with tempfile.TemporaryDirectory() as tempdir:
+        config_file = os.path.join(tempdir, "config.py")
+        with open(config_file, "w") as config:
+            config.write("from bar import foo\n")
+        with open(os.path.join(tempdir, "bar.py"), "w") as config:
+            config.write("foo = 42")
+        assert run_qtile_check(config_file)
