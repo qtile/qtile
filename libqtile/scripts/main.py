@@ -23,11 +23,8 @@ def main():
         help='Set qtile log level'
     )
 
-    # TODO: remove the parents=[parent_parser], line when we remove the
-    # backward compatibility hack below
     main_parser = argparse.ArgumentParser(
         prog='qtile',
-        parents=[parent_parser],
         description='A full-featured, pure-Python tiling window manager.',
     )
     main_parser.add_argument(
@@ -52,15 +49,9 @@ def main():
     help_.set_defaults(func=print_help)
 
     options = main_parser.parse_args()
-    log_level = getattr(logging, options.log_level)
-    init_log(log_level=log_level, log_color=sys.stdout.isatty())
-
-    # backward compat hack: `qtile` with no args (or non-subcommand args)
-    # should default to `qtile start`. it seems impolite for commands to do
-    # nothing when run with no args, so let's warn about this being deprecated.
     try:
+        log_level = getattr(logging, options.log_level)
+        init_log(log_level=log_level, log_color=sys.stdout.isatty())
         options.func(options)
     except AttributeError:
-        print("please move to `qtile start` as your qtile invocation, "
-              "instead of just `qtile`; this default will be removed Soon(TM)")
-        start.start(options)
+        main_parser.print_usage()

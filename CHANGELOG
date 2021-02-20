@@ -1,5 +1,6 @@
 Qtile 0.x.x, released xxxx-xx-xx:
-    * !!! Dependency update !!!
+    !!! Config breakage !!!
+        - The `qtile` entry point doesn't run `qtile start` by default anymore
         - New optional dependency for dbus related features: dbus-next.
           Replaces previous reliance on dbus/Glib and allows qtile to use async
           dbus calls within asyncio's eventloop.
