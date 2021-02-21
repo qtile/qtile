@@ -32,7 +32,7 @@ from random import randint
 from shutil import which
 
 try:
-    from dbus_next import Message  # type: ignore
+    from dbus_next import Message, Variant  # type: ignore
     from dbus_next.aio import MessageBus  # type: ignore
     from dbus_next.constants import BusType, MessageType  # type: ignore
     has_dbus = True
@@ -238,6 +238,12 @@ def send_notification(title, message, urgent=False, timeout=10000, id=None):
     passed when calling this function again to replace that notification. See:
     https://developer.gnome.org/notification-spec/
     """
+    if not has_dbus:
+        logger.warning(
+            "dbus-next is not installed. Unable to send notifications."
+        )
+        return -1
+
     id = randint(10, 1000) if id is None else id
     urgency = 2 if urgent else 1
 
