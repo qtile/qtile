@@ -34,7 +34,7 @@ class DF(base.ThreadPoolText):
         ('warn_color', 'ff0000', 'Warning color'),
         ('warn_space', 2, 'Warning space in scale defined by the ``measure`` option.'),
         ('visible_on_warn', True, 'Only display if warning'),
-        ('measure', "G", "Measurement (G, M, B)"),
+        ('measure', "G", "Measurement (G, M, K)"),
         ('format', '{p} ({uf}{m}|{r:.0f}%)',
             'String format (p: partition, s: size, '
             'f: free space, uf: user free space, m: measure, r: ratio (uf/s))'),
@@ -43,7 +43,7 @@ class DF(base.ThreadPoolText):
 
     measures = {"G": 1024 * 1024 * 1024,
                 "M": 1024 * 1024,
-                "B": 1024}
+                "K": 1024}
 
     def __init__(self, **config):
         base.ThreadPoolText.__init__(self, "", **config)
