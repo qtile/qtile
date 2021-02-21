@@ -73,17 +73,17 @@ class Wallpaper(base._TextBox):
             logger.exception("I/O error(%s): %s", e.errno, e.strerror)
 
     def set_wallpaper(self):
-        if self.random_selection:
-            self.index = random.randint(0, len(self.images) - 1)
-        else:
-            self.index += 1
-            self.index %= len(self.images)
         if len(self.images) == 0:
             if self.wallpaper is None:
                 self.text = "empty"
                 return
             else:
                 self.images.append(self.wallpaper)
+        if self.random_selection:
+            self.index = random.randint(0, len(self.images) - 1)
+        else:
+            self.index += 1
+            self.index %= len(self.images)
         cur_image = self.images[self.index]
         if self.label is None:
             self.text = os.path.basename(cur_image)
