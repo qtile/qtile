@@ -51,13 +51,13 @@ class Memory(base.ThreadPoolText):
     defaults = [
         ("format", "{MemUsed: .0f}{mm}/{MemTotal: .0f}{mm}", "Formatting for field names."),
         ("update_interval", 1.0, "Update interval for the Memory"),
-        ("measure_mem", "M", "Measurement for Memory (G, M, B)"),
-        ("measure_swap", "M", "Measurement for Swap (G, M, B)"),
+        ("measure_mem", "M", "Measurement for Memory (G, M, K)"),
+        ("measure_swap", "M", "Measurement for Swap (G, M, K)"),
     ]
 
     measures = {"G": 1024 * 1024 * 1024,
                 "M": 1024 * 1024,
-                "B": 1024}
+                "K": 1024}
 
     def __init__(self, **config):
         super().__init__("", **config)
