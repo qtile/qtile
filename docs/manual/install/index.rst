@@ -77,6 +77,18 @@ You'll also need ``libpangocairo``, which on Ubuntu can be installed via ``sudo
 apt-get install libpangocairo-1.0-0``. Qtile uses this to provide text
 rendering (and binds directly to it via cffi with a small in-tree binding).
 
+dbus-next
+---------
+
+Qtile uses ``dbus-next`` to interact with dbus. Qtile will run without this
+packagee but certain functionality will be lost (e.g. notifications).
+
+You can install dbus-next from PyPi:
+
+.. code-block:: bash
+
+    pip install dbus-next
+
 Qtile
 -----
 
