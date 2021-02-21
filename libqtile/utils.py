@@ -30,9 +30,13 @@ from collections.abc import Sequence
 from random import randint
 from shutil import which
 
-from dbus_next import Message  # type: ignore
-from dbus_next.aio import MessageBus  # type: ignore
-from dbus_next.constants import BusType, MessageType  # type: ignore
+try:
+    from dbus_next import Message  # type: ignore
+    from dbus_next.aio import MessageBus  # type: ignore
+    from dbus_next.constants import BusType, MessageType  # type: ignore
+    has_dbus = True
+except ImportError:
+    has_dbus = False
 
 from libqtile.log_utils import logger
 
@@ -353,6 +357,13 @@ async def add_signal_receiver(callback, session_bus=False, signal_name=None,
 
     Returns True if subscription is successful.
     """
+    if not has_dbus:
+        logger.warning(
+            "dbus-next is not installed. "
+            "Unable to subscribe to signals"
+        )
+        return False
+
     match_args = {
         "type": "signal",
         "sender": bus_name,
