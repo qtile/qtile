@@ -1,4 +1,7 @@
 Qtile 0.x.x, released xxxx-xx-xx:
+    !!! Config breakage !!!
+        - 'B' has been corrected to 'K' in both memory and diskfree widgets.
+        
     * features
         - added measure_mem and measure_swap attributes to memory widget to allow user to choose measurement units.
         - memory widget can now be displayed with decimal values
