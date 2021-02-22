@@ -82,7 +82,7 @@ def test_widget_init_config(manager_nospawn, widget_class, kwargs):
         assert getattr(widget, k) == v
 
     # Test configuration
-    config = MinimalConf
+    config = MinimalConf()
     config.screens = [
         libqtile.config.Screen(
             top=libqtile.bar.Bar([widget], 10)
