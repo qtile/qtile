@@ -41,7 +41,6 @@ class Wttr(GenPollUrl):
 
     orientation = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('json', False, "Don't set ``True``"),
         (
             'format', '3',
             'Display text format. Choose presets in range 1-4 (Ex. ``"1"``) '
@@ -66,7 +65,7 @@ class Wttr(GenPollUrl):
     ]
 
     def __init__(self, **config):
-        GenPollUrl.__init__(self, **config)
+        GenPollUrl.__init__(self, json=False, **config)
         self.add_defaults(Wttr.defaults)
         self.url = self._get_url()
 
