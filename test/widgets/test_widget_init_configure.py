@@ -34,7 +34,8 @@ extras = [
 
 # To skip a test entirely, list the widget class here
 no_test = [
-    widgets.Mirror  # Mirror requires a reflection object
+    widgets.Mirror,  # Mirror requires a reflection object
+    widgets.PulseVolume
 ]
 
 ################################################################################
@@ -96,7 +97,6 @@ def test_widget_init_config(manager_nospawn, widget_class, kwargs):
     # Check widget is registered by checking names of widgets in bar
     allowed_names = [
         widget.name,
-        "importerrorwidget",  # Allow widgets to be replaced on import error
         "<no name>"  # systray is called "<no name>" as it subclasses _Window
     ]
     assert i["widgets"][0]["name"] in allowed_names
