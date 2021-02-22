@@ -100,11 +100,7 @@ class WidgetBox(base._Widget):
         self._widgets = widgets
         self.add_callbacks({"Button1": self.cmd_toggle})
 
-        if self.close_button_location not in ["left", "right"]:
-            val = self.close_button_location
-            msg = "Invalid value for 'close_button_location': {}".format(val)
-            logger.warning(msg)
-            self.close_button_location = "left"
+        self.cmd_set_location(self.close_button_location)
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
@@ -188,3 +184,21 @@ class WidgetBox(base._Widget):
         self.toggle_widgets()
         self.set_box_label()
         self.bar.draw()
+
+    def cmd_set_location(self, location):
+        """Set location of toggle button"""
+        location = location.lower()
+        if location not in ["left", "right"]:
+            msg = "Invalid location value: {}".format(location)
+            logger.warning(msg)
+            location = "left"
+
+        self.close_button_location = location
+
+    def cmd_info(self):
+        return {
+            "name": self.name,
+            "open": self.box_is_open,
+            "location": self.close_button_location,
+            "widgets": len(self.widgets)
+        }
