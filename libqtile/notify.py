@@ -3,6 +3,7 @@
 # Copyright (c) 2011 Mounier Florian
 # Copyright (c) 2013 Mickael FALCK
 # Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2020 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,36 +23,33 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-    If dbus is available, this module implements a
-    org.freedesktop.Notifications service.
-"""
-from libqtile.log_utils import logger
+from typing import Any
 
 try:
-    import dbus
-    from dbus import service
-    from dbus.mainloop.glib import DBusGMainLoop
-    DBusGMainLoop(set_as_default=True)
+    from dbus_next.aio import MessageBus  # type: ignore
+    from dbus_next.service import ServiceInterface  # type: ignore
+    from dbus_next.service import method  # type: ignore
+    from dbus_next.service import signal  # type: ignore
     has_dbus = True
 except ImportError:
     has_dbus = False
 
+from libqtile.log_utils import logger
+
 BUS_NAME = 'org.freedesktop.Notifications'
 SERVICE_PATH = '/org/freedesktop/Notifications'
 
+notifier: Any = None
+
 if has_dbus:
-    class NotificationService(service.Object):
+    class NotificationService(ServiceInterface):
         def __init__(self, manager):
-            bus = dbus.SessionBus()
-            bus.request_name(BUS_NAME)
-            bus_name = service.BusName(BUS_NAME, bus=bus)
-            service.Object.__init__(self, bus_name, SERVICE_PATH)
+            super().__init__(BUS_NAME)
             self.manager = manager
             self._capabilities = {'body'}
 
-        @service.method(BUS_NAME, in_signature='', out_signature='as')
-        def GetCapabilities(self):  # noqa: N802
+        @method()
+        def GetCapabilities(self) -> 'as':  # type:ignore  # noqa: N802, F722
             return list(self._capabilities)
 
         def register_capabilities(self, capabilities):
@@ -60,76 +58,93 @@ if has_dbus:
             elif isinstance(capabilities, (tuple, list, set)):
                 self._capabilities.update(set(capabilities))
 
-        @service.method(BUS_NAME, in_signature='susssasa{sv}i', out_signature='u')
-        def Notify(self, app_name, replaces_id, app_icon, summary,  # noqa: N802
-                   body, actions, hints, timeout):
+        @method()
+        def Notify(self,  # noqa: N802, F722
+                   app_name: 's', replaces_id: 'u',  # type:ignore  # noqa: F821
+                   app_icon: 's', summary: 's',  # type:ignore  # noqa: F821
+                   body: 's', actions: 'as',  # type:ignore  # noqa: F821
+                   hints: 'a{sv}', timeout: 'i') -> 'u':  # type:ignore  # noqa: F821
             notif = Notification(
                 summary, body, timeout, hints, app_name, replaces_id, app_icon, actions
             )
             return self.manager.add(notif)
 
-        @service.method(BUS_NAME, in_signature='u', out_signature='')
-        def CloseNotification(self, id):  # noqa: N802
+        @method()
+        def CloseNotification(self, id: 'u'):  # type:ignore  # noqa: N802, F821
             pass
 
-        @service.signal(BUS_NAME, signature='uu')
+        @signal()
         def NotificationClosed(self, id_in, reason_in):  # noqa: N802
             pass
 
-        @service.method(BUS_NAME, in_signature='', out_signature='ssss')
-        def GetServerInformation(self):  # noqa: N802
+        @method()
+        def GetServerInformation(self) -> 'ssss':  # type:ignore  # noqa: N802, F821
             return ("qtile-notify-daemon", "qtile", "1.0", "1")
 
+    class Notification:
+        def __init__(self, summary, body='', timeout=-1, hints=None, app_name='',
+                     replaces_id=None, app_icon=None, actions=None):
+            self.summary = summary
+            self.body = body
+            self.timeout = timeout
+            self.hints = hints or {}
+            self.app_name = app_name
+            self.replaces_id = replaces_id
+            self.app_icon = app_icon
+            self.actions = actions
 
-class Notification:
-    def __init__(self, summary, body='', timeout=-1, hints=None, app_name='',
-                 replaces_id=None, app_icon=None, actions=None):
-        self.summary = summary
-        self.body = body
-        self.timeout = timeout
-        self.hints = hints or {}
-        self.app_name = app_name
-        self.replaces_id = replaces_id
-        self.app_icon = app_icon
-        self.actions = actions
+    class NotificationManager:
+        def __init__(self):
+            self.notifications = []
+            self.callbacks = []
+            self._service = None
 
+        async def service(self):
+            if self._service is None:
+                try:
+                    bus = await MessageBus().connect()
+                    self._service = NotificationService(self)
+                    bus.export(SERVICE_PATH, self._service)
+                    await bus.request_name(BUS_NAME)
+                except Exception:
+                    logger.exception('Dbus connection failed')
+                    self._service = None
+            return self._service
 
-class NotificationManager:
-    def __init__(self):
-        self.notifications = []
-        self.callbacks = []
-        self._service = None
+        async def register(self, callback, capabilities=None):
+            service = await self.service()
+            if not service:
+                logger.warning(
+                    'Registering %s without any dbus connection existing',
+                    callback.__name__,
+                )
+            self.callbacks.append(callback)
+            if capabilities:
+                self._service.register_capabilities(capabilities)
 
-    @property
-    def service(self):
-        if has_dbus and self._service is None:
-            try:
-                self._service = NotificationService(self)
-            except Exception:
-                logger.exception('Dbus connection failed')
-                self._service = None
-        return self._service
+        def add(self, notif):
+            self.notifications.append(notif)
+            notif.id = len(self.notifications)
+            for callback in self.callbacks:
+                callback(notif)
+            return len(self.notifications)
 
-    def register(self, callback, capabilities=None):
-        if not self.service:
+        def show(self, *args, **kwargs):
+            notif = Notification(*args, **kwargs)
+            return (notif, self.add(notif))
+
+    notifier = NotificationManager()
+
+else:
+
+    class FakeManager:
+        def __init__(self):
             logger.warning(
-                'Registering %s without any dbus connection existing',
-                callback.__name__,
+                "dbus-next is not installed. "
+                "Notification service and widget are unavailable."
             )
-        self.callbacks.append(callback)
-        if capabilities:
-            self._service.register_capabilities(capabilities)
 
-    def add(self, notif):
-        self.notifications.append(notif)
-        notif.id = len(self.notifications)
-        for callback in self.callbacks:
-            callback(notif)
-        return len(self.notifications)
+        async def register(self, *args, **kwargs):
+            pass
 
-    def show(self, *args, **kwargs):
-        notif = Notification(*args, **kwargs)
-        return (notif, self.add(notif))
-
-
-notifier = NotificationManager()
+    notifier = FakeManager()

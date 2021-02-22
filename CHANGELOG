@@ -1,3 +1,12 @@
+Qtile 0.x.x, released xxxx-xx-xx:
+    * !!! Dependency update !!!
+        - New optional dependency for dbus related features: dbus-next.
+          Replaces previous reliance on dbus/Glib and allows qtile to use async
+          dbus calls within asyncio's eventloop.
+    * features
+        - added measure_mem and measure_swap attributes to memory widget to allow user to choose measurement units.
+        - memory widget can now be displayed with decimal values
+
 Qtile 0.17.0, released 2021-02-13:
     !!! Python version breakage !!!
         - Python 3.5 and 3.6 are no longer supported
@@ -49,6 +58,9 @@ Qtile 0.17.0, released 2021-02-13:
         - show_state attribute from WindowName widget has been removed. Use format attribute instead.
                 show_state = True  -> format = '{state}{name}'
                 show_state = False -> format = '{name}'
+        - mouse_callbacks no longer receives the qtile object as an argument
+          (they receive no arguments); import it via `from libqtile import
+          qtile` instead.
     * features
         - new WidgetBox widget
         - new restart and shutdown hooks

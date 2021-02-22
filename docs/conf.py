@@ -33,8 +33,6 @@ MOCK_MODULES = [
     'cffi',
     'dateutil',
     'dateutil.parser',
-    'dbus',
-    'dbus.mainloop.glib',
     'iwlib',
     'keyring',
     'mpd',

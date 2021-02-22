@@ -19,6 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import asyncio
 import functools
 import glob
 import importlib
@@ -30,17 +31,15 @@ from collections.abc import Sequence
 from random import randint
 from shutil import which
 
-from libqtile.log_utils import logger
-
-_can_notify = False
 try:
-    import gi
-    gi.require_version("Notify", "0.7")  # type: ignore
-    from gi.repository import Notify  # type: ignore
-    Notify.init("Qtile")
-    _can_notify = True
-except ImportError as e:
-    logger.warning("Failed to import dependencies for notifications: %s" % e)
+    from dbus_next import Message, Variant  # type: ignore
+    from dbus_next.aio import MessageBus  # type: ignore
+    from dbus_next.constants import BusType, MessageType  # type: ignore
+    has_dbus = True
+except ImportError:
+    has_dbus = False
+
+from libqtile.log_utils import logger
 
 
 class QtileError(Exception):
@@ -239,16 +238,51 @@ def send_notification(title, message, urgent=False, timeout=10000, id=None):
     passed when calling this function again to replace that notification. See:
     https://developer.gnome.org/notification-spec/
     """
-    if _can_notify and Notify.get_server_info()[0]:
-        notifier = Notify.Notification.new(title, message)
-        if urgent:
-            notifier.set_urgency(Notify.Urgency.CRITICAL)
-        notifier.set_timeout(timeout)
-        if id is None:
-            id = randint(10, 1000)
-        notifier.set_property('id', id)
-        notifier.show()
-        return id
+    if not has_dbus:
+        logger.warning(
+            "dbus-next is not installed. Unable to send notifications."
+        )
+        return -1
+
+    id = randint(10, 1000) if id is None else id
+    urgency = 2 if urgent else 1
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        logger.warning("Eventloop has not started. Cannot send notification.")
+    else:
+        loop.create_task(_notify(title, message, urgency, timeout, id))
+
+    return id
+
+
+async def _notify(title, message, urgency, timeout, id):
+    notification = ["qtile",  # Application name
+                    id,  # id
+                    "",  # icon
+                    title,  # summary
+                    message,  # body
+                    [""],  # actions
+                    {"urgency": Variant("y", urgency)},  # hints
+                    timeout]  # timeout
+
+    bus, msg = await _send_dbus_message(True,
+                                        MessageType.METHOD_CALL,
+                                        "org.freedesktop.Notifications",
+                                        "org.freedesktop.Notifications",
+                                        "/org/freedesktop/Notifications",
+                                        "Notify",
+                                        "susssasa{sv}i",
+                                        notification)
+
+    if msg.message_type == MessageType.ERROR:
+        logger.warning("Unable to send notification. "
+                       "Is a notification server running?")
+
+    # a new bus connection is made each time a notification is sent so
+    # we disconnect when the notification is done
+    bus.disconnect()
 
 
 def guess_terminal(preference=None):
@@ -310,3 +344,76 @@ def scan_files(dirpath, *names):
         files[name].extend(found)
 
     return files
+
+
+async def _send_dbus_message(session_bus, message_type, destination, interface,
+                             path, member, signature, body):
+    """
+    Private method to send messages to dbus via dbus_next.
+
+    Returns a tuple of the bus object and message response.
+    """
+    if session_bus:
+        bus_type = BusType.SESSION
+    else:
+        bus_type = BusType.SYSTEM
+
+    if isinstance(body, str):
+        body = [body]
+
+    bus = await MessageBus(bus_type=bus_type).connect()
+
+    msg = await bus.call(
+        Message(message_type=message_type,
+                destination=destination,
+                interface=interface,
+                path=path,
+                member=member,
+                signature=signature,
+                body=body))
+
+    return bus, msg
+
+
+async def add_signal_receiver(callback, session_bus=False, signal_name=None,
+                              dbus_interface=None, bus_name=None, path=None):
+    """
+    Helper function which aims to recreate python-dbus's add_signal_receiver
+    method in dbus_next with asyncio calls.
+
+    Returns True if subscription is successful.
+    """
+    if not has_dbus:
+        logger.warning(
+            "dbus-next is not installed. "
+            "Unable to subscribe to signals"
+        )
+        return False
+
+    match_args = {
+        "type": "signal",
+        "sender": bus_name,
+        "member": signal_name,
+        "path": path,
+        "interface": dbus_interface
+    }
+
+    rule = ",".join("{}='{}'".format(k, v)
+                    for k, v in match_args.items() if v)
+
+    bus, msg = await _send_dbus_message(session_bus,
+                                        MessageType.METHOD_CALL,
+                                        "org.freedesktop.DBus",
+                                        "org.freedesktop.DBus",
+                                        "/org/freedesktop/DBus",
+                                        "AddMatch",
+                                        "s",
+                                        rule)
+
+    # Check if message sent successfully
+    if msg.message_type == MessageType.METHOD_RETURN:
+        bus.add_message_handler(callback)
+        return True
+
+    else:
+        return False

@@ -311,6 +311,16 @@ class ExampleWidget(libqtile.widget.base._Widget):
         pass
 
 
+class BrokenWidget(libqtile.widget.base._Widget):
+
+    def __init__(self, exception_class, **config):
+        libqtile.widget.base._Widget.__init__(self, 10, **config)
+        self.exception_class = exception_class
+
+    def _configure(self, qtile, bar):
+        raise self.exception_class
+
+
 class IncompatibleWidgetConf(libqtile.confreader.Config):
     keys = []
     mouse = []
@@ -334,14 +344,15 @@ def test_incompatible_widget(manager_nospawn):
     # Ensure that adding a widget that doesn't support the orientation of the
     # bar raises ConfigError
     m = manager_nospawn.create_manager(IncompatibleWidgetConf)
-    with pytest.raises(libqtile.confreader.ConfigError):
-        m._configure()
-    m.core.finalize()
+    try:
+        with pytest.raises(libqtile.confreader.ConfigError):
+            m._configure()
+    finally:
+        m.core.finalize()
 
 
-def test_basic(manager_nospawn):
-    config = GeomConf
-    config.screens = [
+class BasicConf(GeomConf):
+    screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
@@ -358,7 +369,9 @@ def test_basic(manager_nospawn):
         )
     ]
 
-    manager_nospawn.start(config)
+
+def test_basic(manager_nospawn):
+    manager_nospawn.start(BasicConf)
 
     i = manager_nospawn.c.bar["bottom"].info()
     assert i["widgets"][0]["offset"] == 0
@@ -374,36 +387,67 @@ def test_basic(manager_nospawn):
     libqtile.hook.clear()
 
 
-def test_singlespacer(manager_nospawn):
-    config = GeomConf
-    config.screens = [
+class SingleSpacerConf(GeomConf):
+    screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
                     libqtile.widget.Spacer(libqtile.bar.STRETCH),
                 ],
-                10
-            )
-        )
+                10,
+            ),
+        ),
     ]
 
-    manager_nospawn.start(config)
 
+def test_singlespacer(manager_nospawn):
+    manager_nospawn.start(SingleSpacerConf)
     i = manager_nospawn.c.bar["bottom"].info()
     assert i["widgets"][0]["offset"] == 0
     assert i["widgets"][0]["width"] == 800
     libqtile.hook.clear()
 
 
-def test_nospacer(manager_nospawn):
-    config = GeomConf
-    config.screens = [
+class NoSpacerConf(GeomConf):
+    screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
                     ExampleWidget(),
                     ExampleWidget()
                 ],
+                10,
+            ),
+        ),
+    ]
+
+
+def test_nospacer(manager_nospawn):
+    manager_nospawn.start(NoSpacerConf)
+
+    i = manager_nospawn.c.bar["bottom"].info()
+    assert i["widgets"][0]["offset"] == 0
+    assert i["widgets"][1]["offset"] == 10
+    libqtile.hook.clear()
+
+
+def test_configure_broken_widgets(manager_nospawn):
+    config = GeomConf
+
+    widget_list = [
+        BrokenWidget(ValueError),
+        BrokenWidget(IndexError),
+        BrokenWidget(IndentationError),
+        BrokenWidget(TypeError),
+        BrokenWidget(NameError),
+        BrokenWidget(ImportError),
+        libqtile.widget.Spacer(libqtile.bar.STRETCH),
+    ]
+
+    config.screens = [
+        libqtile.config.Screen(
+            bottom=libqtile.bar.Bar(
+                widget_list,
                 10
             )
         )
@@ -412,6 +456,11 @@ def test_nospacer(manager_nospawn):
     manager_nospawn.start(config)
 
     i = manager_nospawn.c.bar["bottom"].info()
-    assert i["widgets"][0]["offset"] == 0
-    assert i["widgets"][1]["offset"] == 10
-    libqtile.hook.clear()
+
+    # Check that we have same number of widgets
+    assert len(i["widgets"]) == len(widget_list)
+
+    # Check each broken widget is replaced
+    for index, widget in enumerate(widget_list):
+        if isinstance(widget, BrokenWidget):
+            assert i["widgets"][index]["name"] == "configerrorwidget"
