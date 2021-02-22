@@ -62,6 +62,12 @@ class Wttr(GenPollUrl):
             "``'m'`` - metric, ``'M'`` - show wind speed in m/s, "
             "``'s'`` - imperial"
         ),
+        (
+            'update_interval', 600,
+            'Update interval in seconds. Recommendation: if you want to '
+            'display multiple locations alternately, maybe set a smaller '
+            'interval, Ex. 30.'
+        )
     ]
 
     def __init__(self, **config):
