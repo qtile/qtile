@@ -23,7 +23,6 @@ from dbus_next.constants import BusType  # type: ignore
 
 from libqtile.widget import base
 
-
 BLUEZ = 'org.bluez'
 BLUEZ_PATH = '/org/bluez/hci0'
 BLUEZ_ADAPTER = 'org.bluez.Adapter1'
