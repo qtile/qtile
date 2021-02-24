@@ -36,6 +36,7 @@ from typing import Any, List, Tuple
 from libqtile import bar, configurable, confreader, drawer
 from libqtile.command.base import CommandError, CommandObject
 from libqtile.log_utils import logger
+from libqtile.popup import Popup
 
 
 # Each widget class must define which bar orientation(s) it supports by setting
@@ -611,6 +612,96 @@ class MarginMixin(configurable.Configurable):
 
     margin_x = configurable.ExtraFallback('margin_x', 'margin')
     margin_y = configurable.ExtraFallback('margin_y', 'margin')
+
+
+class TooltipMixin:
+    """Mixin that provides a tooltip for widgets.
+
+    To use it, subclass and add this to __init__:
+
+        base.TooltipMixin.__init__(self)
+        self.add_defaults(base.TooltipMixin.defaults)
+
+    Widgets should set `self.tooltip_text` to change display text.
+    """
+
+    defaults = [
+        ("tooltip_delay", 1, "Time in seconds before tooltip displayed"),
+        ("tooltip_background", "#000000", "Background colour for tooltip"),
+        ("tooltip_color", "#ffffff", "Font colur for tooltop"),
+        ("tooltip_font", "sans", "Font colour for tooltop"),
+        ("tooltip_fontsize", 12, "Font size for tooltop"),
+        (
+            "tooltip_padding",
+            4,
+            "int for all sides or list for [top/bottom, left/right]"
+        )
+    ]  # type: List[Tuple[str, Any, str]]
+
+    def __init__(self):
+        self._tooltip = None
+        self._tooltip_timer = None
+        self.tooltip_text = ""
+        self.mouse_enter = self._start_tooltip
+        self.mouse_leave = self._stop_tooltip
+        self._tooltip_padding = None
+
+    def _show_tooltip(self, x, y):
+
+        if self._tooltip_padding is None:
+            if isinstance(self.tooltip_padding, int):
+                self._tooltip_padding = [self.tooltip_padding] * 2
+
+            elif not(isinstance(self.tooltip_padding, list) and
+                     len(self.tooltip_padding) >= 2):
+                logger.warning("Invalid tooltip padding. Defaulting to [4, 4]")
+                self._tooltip_padding = [4, 4]
+
+        self._tooltip = Popup(
+                            self.qtile,
+                            font=self.tooltip_font,
+                            font_size=self.tooltip_fontsize,
+                            foreground=self.tooltip_color,
+                            background=self.tooltip_background,
+                            vertical_padding=self._tooltip_padding[0],
+                            horizontal_padding=self._tooltip_padding[1],
+                            wrap=False
+                            )
+
+        self._tooltip.text = self.tooltip_text
+        self._tooltip.height = (self._tooltip.layout.height +
+                                (2 * self._tooltip.vertical_padding))
+        self._tooltip.width = (self._tooltip.layout.width +
+                               (2 * self._tooltip.horizontal_padding))
+        self._tooltip.x = min(self.offsetx + x,
+                              (self.bar.width - self._tooltip.width))
+        self._tooltip.y = self.bar.height
+
+        self._tooltip.clear()
+        self._tooltip.place()
+        self._tooltip.draw_text()
+        self._tooltip.unhide()
+        self._tooltip.draw()
+
+    def _start_tooltip(self, x, y):
+        if not self.configured or not self.tooltip_text:
+            return
+
+        if not self._tooltip_timer and not self._tooltip:
+            self._tooltip_timer = self.timeout_add(self.tooltip_delay,
+                                                   self._show_tooltip,
+                                                   (x, y))
+
+    def _stop_tooltip(self, x, y):
+        if self._tooltip_timer and not self._tooltip:
+            self._tooltip_timer.cancel()
+            return
+
+        else:
+            self._tooltip.hide()
+            self._tooltip.kill()
+            self._tooltip = None
+            self._tooltip_timer = None
 
 
 class Mirror(_Widget):
