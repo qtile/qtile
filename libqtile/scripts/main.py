@@ -55,3 +55,7 @@ def main():
         options.func(options)
     except AttributeError:
         main_parser.print_usage()
+        print("")
+        print("Did you mean:")
+        print(" ".join(sys.argv + ['start']))
+        sys.exit(1)
