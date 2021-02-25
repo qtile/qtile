@@ -119,3 +119,21 @@ def test_threaded_poll_text():
     """)
 
     check_migrate(orig, expected)
+
+
+def test_pacman():
+    orig = textwrap.dedent("""
+        from libqtile import bar
+        from libqtile.widget import Pacman
+
+        bar.Bar([Pacman()])
+    """)
+
+    expected = textwrap.dedent("""
+        from libqtile import bar
+        from libqtile.widget import CheckUpdates
+
+        bar.Bar([CheckUpdates()])
+    """)
+
+    check_migrate(orig, expected)

@@ -59,10 +59,19 @@ def threaded_poll_text_rename(config):
     )
 
 
+def pacman_to_checkupdates(config):
+    return (
+        bowler.Query(config)
+        .select_class("Pacman")
+        .rename("CheckUpdates")
+    )
+
+
 MIGRATIONS = [
     client_name_updated,
     tile_master_windows_rename,
     threaded_poll_text_rename,
+    pacman_to_checkupdates,
 ]
 
 
