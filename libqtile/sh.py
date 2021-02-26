@@ -57,7 +57,6 @@ class QSh:
         self._current_node = graph.CommandGraphRoot()  # type: graph.CommandGraphNode
         self._completekey = completekey
         self._builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
-        self._termwidth = terminal_width()
 
     def complete(self, arg, state) -> Optional[str]:
         buf = readline.get_line_buffer()
@@ -96,15 +95,14 @@ class QSh:
     def prompt(self) -> str:
         return "{} > ".format(format_selectors(self._current_node.selectors))
 
-    def columnize(self, lst, update_termwidth=True) -> str:
-        if update_termwidth:
-            self.termwidth = terminal_width()
+    def columnize(self, lst) -> str:
+        termwidth = terminal_width()
 
         ret = []
         if lst:
             lst = list(map(str, lst))
             mx = max(map(len, lst))
-            cols = self.termwidth // (mx + 2) or 1
+            cols = termwidth // (mx + 2) or 1
             # We want `(n-1) * cols + 1 <= len(lst) <= n * cols` to return `n`
             # If we subtract 1, then do `// cols`, we get `n - 1`, so we can then add 1
             rows = (len(lst) - 1) // cols + 1
