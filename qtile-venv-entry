@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# Add the following...
+# [Desktop Entry]
+# Name=Qtile(venv)
+# Comment=Qtile Session Within Venv
+# Exec=/home/kovas/qtile/qtile-venv-entry
+# Type=Application
+# Keywords=wm;tiling
+# ... to ...
+# /usr/share/xsessions/qtile-venv.desktop
+
+
 source ~/.bashrc
 source ~/.xinitrc
 source ~/.virtualenvs/qtile/bin/activate
