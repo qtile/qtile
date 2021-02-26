@@ -110,12 +110,6 @@ class Tile(_SimpleLayoutBase):
                 self.clients.remove(client)
                 self.clients.append_head(client)
 
-    def shift(self, idx1, idx2):
-        if self.clients:
-            self.clients[idx1], self.clients[idx2] = \
-                self.clients[idx2], self.clients[idx1]
-            self.group.layout_all(True)
-
     def clone(self, group):
         c = _SimpleLayoutBase.clone(self, group)
         return c
