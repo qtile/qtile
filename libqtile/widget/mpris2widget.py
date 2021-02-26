@@ -91,7 +91,7 @@ class Mpris2(base._TextBox):
 
         self.update(*message.body)
 
-    def update(self, interface_name, changed_properties, invalidated_properties):
+    def update(self, interface_name, changed_properties, _invalidated_properties):
         """http://specifications.freedesktop.org/mpris-spec/latest/Track_List_Interface.html#Mapping:Metadata_Map"""
         if not self.configured:
             return True
