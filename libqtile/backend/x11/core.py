@@ -77,7 +77,6 @@ class Core(base.Core):
 
         self.conn = xcbq.Connection(display_name)
         self._display_name = display_name
-        self._fd = None  # type: Optional[int]
 
         # Because we only do Xinerama multi-screening,
         # we can assume that the first
