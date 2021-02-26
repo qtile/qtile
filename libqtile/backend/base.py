@@ -15,11 +15,11 @@ class Core(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def grab_key(self, key: config.Key) -> typing.Tuple[int, int]:
+    def grab_key(self, key: typing.Union[config.Key, config.KeyChord]) -> typing.Tuple[int, int]:
         """Configure the backend to grab the key event"""
 
     @abstractmethod
-    def ungrab_key(self, key: config.Key) -> typing.Tuple[int, int]:
+    def ungrab_key(self, key: typing.Union[config.Key, config.KeyChord]) -> typing.Tuple[int, int]:
         """Release the given key event"""
 
     @abstractmethod
