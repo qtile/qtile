@@ -474,7 +474,7 @@ class Drawer:
         return max(widths), max(heights)
 
     # Old text layout functions, to be deprecated.
-    def set_font(self, fontface, size, antialias=True):
+    def set_font(self, fontface, size):
         self.ctx.select_font_face(fontface)
         self.ctx.set_font_size(size)
         fo = self.ctx.get_font_options()

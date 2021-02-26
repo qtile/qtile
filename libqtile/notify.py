@@ -70,11 +70,11 @@ if has_dbus:
             return self.manager.add(notif)
 
         @method()
-        def CloseNotification(self, id: 'u'):  # type:ignore  # noqa: N802, F821
+        def CloseNotification(self, _id: 'u'):  # type:ignore  # noqa: N802, F821
             pass
 
         @signal()
-        def NotificationClosed(self, id_in, reason_in):  # noqa: N802
+        def NotificationClosed(self, _id_in, _reason_in):  # noqa: N802
             pass
 
         @method()

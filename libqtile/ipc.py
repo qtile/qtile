@@ -211,7 +211,7 @@ class Server:
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type, exc_value, tb) -> None:
+    async def __aexit__(self, _exc_type, _exc_value, _tb) -> None:
         """Close and shutdown the server"""
         await self.close()
 

@@ -184,7 +184,7 @@ class Xephyr:
 
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, _exc_type, _exc_val, _exc_tb):
         self.stop_xephyr()
 
     def start_xephyr(self):
@@ -506,12 +506,12 @@ def xvfb():
 
 
 @pytest.fixture(scope="session")
-def display(xvfb):
+def display(xvfb):  # noqa: F841
     return os.environ["DISPLAY"]
 
 
 @pytest.fixture(scope="session")
-def xephyr(request, xvfb):
+def xephyr(request, xvfb):  # noqa: F841
     kwargs = getattr(request, "param", {})
 
     with Xephyr(**kwargs) as x:
