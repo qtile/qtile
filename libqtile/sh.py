@@ -57,7 +57,6 @@ class QSh:
         self._current_node = graph.CommandGraphRoot()  # type: graph.CommandGraphNode
         self._completekey = completekey
         self._builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
-        self._termwidth = terminal_width()
 
     def complete(self, arg, state) -> Optional[str]:
         buf = readline.get_line_buffer()
