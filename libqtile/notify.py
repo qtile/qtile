@@ -79,7 +79,7 @@ if has_dbus:
 
         @method()
         def GetServerInformation(self) -> 'ssss':  # type:ignore  # noqa: N802, F821
-            return ("qtile-notify-daemon", "qtile", "1.0", "1")
+            return ["qtile-notify-daemon", "qtile", "1.0", "1"]
 
     class Notification:
         def __init__(self, summary, body='', timeout=-1, hints=None, app_name='',
