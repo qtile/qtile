@@ -1164,14 +1164,18 @@ class Window(_Window):
                     logger.info("Focusing window")
                     self.qtile.current_screen.set_group(self.group)
                     self.group.focus(self)
-                elif focus_behavior == "smart" and self.group.screen:
+                elif focus_behavior == "smart":
+                    if not self.group.screen:
+                        logger.info("Ignoring focus request")
+                        return
                     if self.group.screen == self.qtile.current_screen:
                         logger.info("Focusing window")
                         self.qtile.current_screen.set_group(self.group)
                         self.group.focus(self)
-                    else:
-                        logger.info("Ignoring focus request")
-                elif focus_behavior == "urgent" or (focus_behavior == "smart" and not self.group.screen):
+                    else:  # self.group.screen != self.qtile.current_screen:
+                        logger.info("Setting urgent flag for window")
+                        self.urgent = True
+                elif focus_behavior == "urgent":
                     logger.info("Setting urgent flag for window")
                     self.urgent = True
                 elif focus_behavior == "never":
