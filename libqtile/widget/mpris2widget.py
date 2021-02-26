@@ -71,7 +71,6 @@ class Mpris2(base._TextBox):
         self.scroll_timer = None
         self.scroll_counter = None
         self.count = 0
-        self.connect_count = 0
 
     async def _config_async(self):
         subscribe = await add_signal_receiver(
