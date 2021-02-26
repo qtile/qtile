@@ -346,7 +346,7 @@ class Qtile(CommandObject):
                         logger.error("KB command error %s: %s" % (cmd.name, val))
             else:
                 if self.current_chord is True or (self.current_chord and key.key == "Escape"):
-                    self.ungrab_chord()
+                    self.cmd_ungrab_chord()
                 return
 
     def grab_keys(self) -> None:
@@ -382,7 +382,7 @@ class Qtile(CommandObject):
         for key in chord.submapings:
             self.grab_key(key)
 
-    def ungrab_chord(self) -> None:
+    def cmd_ungrab_chord(self) -> None:
         self.current_chord = False
         hook.fire("leave_chord")
 
