@@ -21,7 +21,15 @@
 
 import asyncio
 import os
-from typing import TYPE_CHECKING, Callable, Iterator, List, Optional, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import xcffib
 import xcffib.render
@@ -402,7 +410,7 @@ class Core(base.Core):
         self._root.set_property("_NET_DESKTOP_NAMES", "\0".join(i.name for i in groups))
         self._root.set_property("_NET_CURRENT_DESKTOP", index)
 
-    def lookup_key(self, key: config.Key) -> Tuple[int, int]:
+    def lookup_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
         """Find the keysym and the modifier mask for the given key"""
         try:
             keysym = xcbq.get_keysym(key.key)
@@ -412,7 +420,7 @@ class Core(base.Core):
 
         return keysym, modmask
 
-    def grab_key(self, key: config.Key) -> Tuple[int, int]:
+    def grab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
         """Map the key to receive events on it"""
         keysym, modmask = self.lookup_key(key)
         codes = self.conn.keysym_to_keycode(keysym)
@@ -436,7 +444,7 @@ class Core(base.Core):
                 )
         return keysym, modmask & self._valid_mask
 
-    def ungrab_key(self, key: config.Key) -> Tuple[int, int]:
+    def ungrab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
         """Ungrab the key corresponding to the given keysym and modifier mask"""
         keysym, modmask = self.lookup_key(key)
         codes = self.conn.keysym_to_keycode(keysym)

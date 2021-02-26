@@ -30,7 +30,7 @@ import subprocess
 import tempfile
 import time
 import warnings
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import xcffib
 import xcffib.xinerama
@@ -84,8 +84,8 @@ class Qtile(CommandObject):
         self.groups: List[_Group] = []
         self.dgroups: Optional[DGroups] = None
 
-        self.keys_map: Dict[Tuple[int, int], Key] = {}
-        self.chord_stack = []
+        self.keys_map: Dict[Tuple[int, int], Union[Key, KeyChord]] = {}
+        self.chord_stack: List[KeyChord] = []
         self.numlock_mask, self.valid_mask = self.core.masks
 
         self.current_screen: Optional[Screen] = None
@@ -379,12 +379,12 @@ class Qtile(CommandObject):
         for key in self.keys_map.values():
             self.grab_key(key)
 
-    def grab_key(self, key: Key) -> None:
+    def grab_key(self, key: Union[Key, KeyChord]) -> None:
         """Grab the given key event"""
         keysym, mask_key = self.core.grab_key(key)
         self.keys_map[(keysym, mask_key)] = key
 
-    def ungrab_key(self, key: Key) -> None:
+    def ungrab_key(self, key: Union[Key, KeyChord]) -> None:
         """Ungrab a given key event"""
         keysym, mask_key = self.core.ungrab_key(key)
         self.keys_map.pop((keysym, mask_key))
