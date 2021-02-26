@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Add the following...
 # [Desktop Entry]
 # Name=Qtile(venv)
@@ -9,7 +8,6 @@
 # Keywords=wm;tiling
 # ... to ...
 # /usr/share/xsessions/qtile-venv.desktop
-
 
 source ~/.bashrc
 source ~/.xinitrc
