@@ -65,7 +65,6 @@ class _OpenWeatherResponseParser:
     def __init__(self, response, dateformat, timeformat):
         self.dateformat = dateformat
         self.timeformat = timeformat
-        self._response = response
         self.data = self._parse(response)
         self._remap(self.data)
         if int(self.data['cod']) != 200:
