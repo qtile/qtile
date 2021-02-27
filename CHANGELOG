@@ -4,6 +4,8 @@ Qtile 0.x.x, released xxxx-xx-xx:
         - New optional dependency for dbus related features: dbus-next.
           Replaces previous reliance on dbus/Glib and allows qtile to use async
           dbus calls within asyncio's eventloop.
+        - widget.BatteryIcon no longer has a fallback text mode; use
+          widget.Battery instead
     * features
         - added measure_mem and measure_swap attributes to memory widget to allow user to choose measurement units.
         - memory widget can now be displayed with decimal values

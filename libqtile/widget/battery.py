@@ -423,7 +423,7 @@ def default_icon_path() -> str:
     return str(dir_path.resolve())
 
 
-class BatteryIcon(base._TextBox):
+class BatteryIcon(base._Widget):
     """Battery life indicator widget."""
 
     orientations = base.ORIENTATION_HORIZONTAL
@@ -452,13 +452,12 @@ class BatteryIcon(base._TextBox):
                           DeprecationWarning)
             config["update_interval"] = config.pop("update_delay")
 
-        base._TextBox.__init__(self, "BAT", bar.CALCULATED, **config)
-
+        base._Widget.__init__(self, length=bar.CALCULATED, **config)
         self.add_defaults(self.defaults)
 
-        if self.theme_path:
-            self.length_type = bar.STATIC
-            self.length = 0
+        self.length_type = bar.STATIC
+        self.length = 0
+        self.image_padding = 0
         self.surfaces = {}  # type: Dict[str, Img]
         self.current_icon = 'battery-missing'
 
@@ -478,16 +477,17 @@ class BatteryIcon(base._TextBox):
         self.timeout_add(self.update_interval, self.timer_setup)
 
     def _configure(self, qtile, bar) -> None:
-        base._TextBox._configure(self, qtile, bar)
+        base._Widget._configure(self, qtile, bar)
         self.setup_images()
+        self.image_padding = (self.bar.height - self.bar.height / 5) / 2
 
     def setup_images(self) -> None:
         d_imgs = images.Loader(self.theme_path)(*self.icon_names)
-        new_height = self.bar.height - self.actual_padding
+        new_height = self.bar.height - self.image_padding
         for key, img in d_imgs.items():
             img.resize(height=new_height)
             if img.width > self.length:
-                self.length = int(img.width + self.actual_padding * 2)
+                self.length = int(img.width + self.image_padding * 2)
             self.surfaces[key] = img.pattern
 
     def update(self) -> None:
@@ -498,14 +498,10 @@ class BatteryIcon(base._TextBox):
             self.draw()
 
     def draw(self) -> None:
-        if self.theme_path:
-            self.drawer.clear(self.background or self.bar.background)
-            self.drawer.ctx.set_source(self.surfaces[self.current_icon])
-            self.drawer.ctx.paint()
-            self.drawer.draw(offsetx=self.offset, width=self.length)
-        else:
-            self.text = self.current_icon[8:]
-            base._TextBox.draw(self)
+        self.drawer.clear(self.background or self.bar.background)
+        self.drawer.ctx.set_source(self.surfaces[self.current_icon])
+        self.drawer.ctx.paint()
+        self.drawer.draw(offsetx=self.offset, width=self.length)
 
     @staticmethod
     def _get_icon_key(status: BatteryStatus) -> str:
