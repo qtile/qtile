@@ -423,7 +423,12 @@ class _TextBox(_Widget):
         else:
             return 0
 
+    def can_draw(self):
+        return self.layout is not None and not self.layout.finalized()
+
     def draw(self):
+        if not self.can_draw():
+            return
         # if the bar hasn't placed us yet
         if self.offsetx is None:
             return
