@@ -43,10 +43,6 @@ class TextBox(base._TextBox):
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, text=text, width=width, **config)
 
-    def update(self, text):
-        self.text = text
-        self.bar.draw()
-
     def cmd_update(self, text):
         """Update the text in a TextBox widget"""
         self.update(text)
