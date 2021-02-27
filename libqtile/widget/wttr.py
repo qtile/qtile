@@ -28,15 +28,21 @@ class Wttr(GenPollUrl):
         - %s    Sunset !,
         - %d    Dusk !. (!times are shown in the local timezone)
 
-    Specify multiple locations separated with ',': ``Minsk, Reykjavik``. Cities
-    will change randomly every update.
-
     Add the character ``~`` at the beginning to get weather for some special
     location: ``~Vostok Station`` or ``~Eiffel Tower``.
 
     Also can use IP-addresses (direct) or domain names (prefixed with @) to
     specify a location:
     ``@github.com``, ``123.456.678.123``
+
+    Specify multiple locations as dictionary ::
+
+        location={
+            'Minsk': 'Minsk',
+            '64.127146,-21.873472': 'Reykjavik',
+        }
+
+    Cities will change randomly every update.
     """
 
     orientation = base.ORIENTATION_HORIZONTAL
@@ -55,8 +61,8 @@ class Wttr(GenPollUrl):
         ),
         (
             'location', None,
-            'City name or names of several cities separated by ``,``. This '
-            'name will show if using ``%l`` in custom format.'
+            'Dictionary. Key is a city or place name, or GPS coordinates. '
+            'Value is a display name.'
         ),
         (
             'units', 'm',
@@ -67,7 +73,7 @@ class Wttr(GenPollUrl):
             'update_interval', 600,
             'Update interval in seconds. Recommendation: if you want to '
             'display multiple locations alternately, maybe set a smaller '
-            'interval, Ex. 30.'
+            'interval, ex. ``30``.'
         )
     ]
 
@@ -84,11 +90,13 @@ class Wttr(GenPollUrl):
             'format': self.format,
             'lang': self.lang,
         }
-        location = ":".join(
-            quote(loc.strip()) for loc in self.location.split(",")
+        location = ':'.join(
+            quote(loc) for loc in self.location
         )
         url = f'https://wttr.in/{location}?{self.units}&{urlencode(params)}'
         return url
 
     def parse(self, response):
-        return response.strip()
+        for coord in self.location:
+            response = response.strip().replace(coord, self.location[coord])
+        return response
