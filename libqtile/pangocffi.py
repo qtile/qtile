@@ -96,6 +96,9 @@ class PangoLayout:
         self._pointer = None
         self._cairo_t = None
 
+    def finalized(self):
+        return self._pointer is None
+
     def set_font_description(self, desc):
         # save a pointer so it doesn't get GC'd out from under us
         self._desc = desc
