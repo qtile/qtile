@@ -88,14 +88,14 @@ class KeyChord:
         current chord/mode).
     """
     def __init__(self, modifiers: List[str], key: str,
-                 submapings: List[Union[Key, KeyChord]], mode: str = ""):
+                 submappings: List[Union[Key, KeyChord]], mode: str = ""):
         self.modifiers = modifiers
         self.key = key
 
         def noop(qtile):
             pass
-        submapings.append(Key([], "Escape", lazy.function(noop)))
-        self.submapings = submapings
+        submappings.append(Key([], "Escape", lazy.function(noop)))
+        self.submappings = submappings
         self.mode = mode
 
     def __repr__(self):
