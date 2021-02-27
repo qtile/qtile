@@ -454,6 +454,20 @@ class _TextBox(_Widget):
         d['text'] = self.formatted_text
         return d
 
+    def update(self, text):
+        if self.text == text:
+            return
+
+        old_width = self.layout.width
+        self.text = text
+
+        # If our width hasn't changed, we just draw ourselves. Otherwise,
+        # we draw the whole bar.
+        if self.layout.width == old_width:
+            self.draw()
+        else:
+            self.bar.draw()
+
 
 class InLoopPollText(_TextBox):
     """ A common interface for polling some 'fast' information, munging it, and
@@ -502,17 +516,6 @@ class InLoopPollText(_TextBox):
         text = self.poll()
         self.update(text)
 
-    def update(self, text):
-        old_width = self.layout.width
-        if self.text != text:
-            self.text = text
-            # If our width hasn't changed, we just draw ourselves. Otherwise,
-            # we draw the whole bar.
-            if self.layout.width == old_width:
-                self.draw()
-            else:
-                self.bar.draw()
-
 
 class ThreadPoolText(_TextBox):
     """ A common interface for wrapping blocking events which when triggered
@@ -558,18 +561,6 @@ class ThreadPoolText(_TextBox):
 
         future = self.qtile.run_in_executor(self.poll)
         future.add_done_callback(on_done)
-
-    def update(self, text):
-        old_width = self.layout.width
-        if self.text == text:
-            return
-
-        self.text = text
-
-        if self.layout.width == old_width:
-            self.draw()
-        else:
-            self.bar.draw()
 
     def poll(self):
         pass
