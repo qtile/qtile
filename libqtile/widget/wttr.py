@@ -47,6 +47,7 @@ class Wttr(GenPollUrl):
             'or build your own custom output format, use the special '
             '%-notation. See https://github.com/chubin/wttr.in#one-line-output'
         ),
+        ('json', False, 'Is Json?'),
         (
             'lang', 'en',
             'Display text language. List of supported languages '
@@ -71,7 +72,7 @@ class Wttr(GenPollUrl):
     ]
 
     def __init__(self, **config):
-        GenPollUrl.__init__(self, json=False, **config)
+        GenPollUrl.__init__(self, **config)
         self.add_defaults(Wttr.defaults)
         self.url = self._get_url()
 
