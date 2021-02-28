@@ -44,7 +44,6 @@ widgets = {
     "CurrentLayoutIcon": "currentlayout",
     "CurrentScreen": "currentscreen",
     "DF": "df",
-    "DebugInfo": "debuginfo",
     "GenPollText": "generic_poll_text",
     "GenPollUrl": "generic_poll_text",
     "GmailChecker": "gmail_checker",
