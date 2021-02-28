@@ -20,32 +20,106 @@
 
 import pytest
 
-from test.layouts import layout_configs
+import libqtile.config
+import libqtile.hook
+from libqtile import layout
+from libqtile.confreader import Config
 from test.layouts.layout_utils import (
     assert_dimensions_fit,
     assert_focus_path_unordered,
     assert_focused,
 )
 
-each_layout_config = pytest.mark.parametrize(
-    "manager",
-    layout_configs.all_layouts_config.values(),
-    indirect=True,
-)
-all_layouts_config = pytest.mark.parametrize(
-    "manager", [layout_configs.AllLayouts],
-    indirect=True,
-)
-each_layout_config_events = pytest.mark.parametrize(
-    "manager",
-    layout_configs.all_layouts_config_events.values(),
-    indirect=True,
-)
-each_delegate_layout_config = pytest.mark.parametrize(
-    "manager",
-    layout_configs.all_delegate_layouts_config.values(),
-    indirect=True,
-)
+
+class AllLayoutsConfig(Config):
+    """
+    Ensure that all layouts behave consistently in some common scenarios.
+    """
+    groups = [
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b"),
+        libqtile.config.Group("c"),
+        libqtile.config.Group("d"),
+    ]
+    follow_mouse_focus = False
+    floating_layout = libqtile.resources.default_config.floating_layout
+    screens = []
+
+    @staticmethod
+    def iter_layouts():
+        # Retrieve the layouts dynamically (i.e. do not hard-code a list) to
+        # prevent forgetting to add new future layouts
+        for layout_name in dir(layout):
+            layout_cls = getattr(layout, layout_name)
+            try:
+                test = issubclass(layout_cls, layout.base.Layout)
+            except TypeError:
+                pass
+            else:
+                # Explicitly exclude the Slice layout, since it depends on
+                # other layouts (tested here) and has its own specific tests
+                if test and layout_name != 'Slice':
+                    yield layout_name, layout_cls
+
+    @classmethod
+    def generate(cls):
+        """
+        Generate a configuration for each layout currently in the repo.
+        Each configuration has only the tested layout (i.e. 1 item) in the
+        'layouts' variable.
+        """
+        return [type(layout_name, (cls, ), {'layouts': [layout_cls()]})
+                for layout_name, layout_cls in cls.iter_layouts()]
+
+
+class AllDelegateLayoutsConfig(AllLayoutsConfig):
+
+    @classmethod
+    def generate(cls):
+        """
+        Generate a Slice configuration for each layout currently in the repo.
+        Each layout is made a delegate/fallback layout of the Slice layout.
+        Each configuration has only the tested layout (i.e. 1 item) in the
+        'layouts' variable.
+        """
+        return [
+            type(layout_name, (cls, ), {
+                'layouts': [
+                    layout.slice.Slice(
+                        wname='nevermatch', fallback=layout_cls())]})
+            for layout_name, layout_cls in cls.iter_layouts()]
+
+
+class AllLayouts(AllLayoutsConfig):
+    """
+    Like AllLayoutsConfig, but all the layouts in the repo are installed
+    together in the 'layouts' variable.
+    """
+    layouts = [layout_cls() for layout_name, layout_cls
+               in AllLayoutsConfig.iter_layouts()]
+
+
+class AllLayoutsConfigEvents(AllLayoutsConfig):
+    """
+    Extends AllLayoutsConfig to test events.
+    """
+    def main(self, c):
+        # TODO: Test more events
+
+        c.test_data = {
+            'focus_change': 0,
+        }
+
+        def handle_focus_change():
+            c.test_data['focus_change'] += 1
+
+        libqtile.hook.subscribe.focus_change(handle_focus_change)
+
+
+each_layout_config = pytest.mark.parametrize("manager", AllLayoutsConfig.generate(), indirect=True)
+all_layouts_config = pytest.mark.parametrize("manager", [AllLayouts], indirect=True)
+each_layout_config_events = pytest.mark.parametrize("manager", AllLayoutsConfigEvents.generate(), indirect=True)
+each_delegate_layout_config = pytest.mark.parametrize("manager", AllDelegateLayoutsConfig.generate(), indirect=True)
 
 
 @each_layout_config
