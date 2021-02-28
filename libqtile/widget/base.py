@@ -341,7 +341,8 @@ class _TextBox(_Widget):
             "font shadow color, default is None(no shadow)"
         ),
         ("markup", True, "Whether or not to use pango markup"),
-        ("fmt", "{}", "How to format the text")
+        ("fmt", "{}", "How to format the text"),
+        ('max_chars', 0, 'Maximum number of characters to display in widget.'),
     ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -462,8 +463,12 @@ class _TextBox(_Widget):
     def update(self, text):
         if self.text == text:
             return
+        if text is None:
+            text = ""
 
         old_width = self.layout.width
+        if len(text) > self.max_chars > 0:
+            text = text[:self.max_chars] + "…"
         self.text = text
 
         # If our width hasn't changed, we just draw ourselves. Otherwise,
