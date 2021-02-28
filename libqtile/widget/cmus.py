@@ -36,7 +36,6 @@ class Cmus(base.ThreadPoolText):
     defaults = [
         ('play_color', '00ff00', 'Text colour when playing.'),
         ('noplay_color', 'cecece', 'Text colour when not playing.'),
-        ('max_chars', 0, 'Maximum number of characters to display in widget.'),
         ('update_interval', 0.5, 'Update Time in seconds.')
     ]
 
@@ -103,20 +102,6 @@ class Cmus(base.ThreadPoolText):
             if now_playing:
                 now_playing = "♫ {0}".format(now_playing)
         return now_playing
-
-    def update(self, text):
-        """Update the text box."""
-        old_width = self.layout.width
-        if not self.status:
-            return
-        if len(text) > self.max_chars > 0:
-            text = text[:self.max_chars] + "…"
-        self.text = text
-
-        if self.layout.width == old_width:
-            self.draw()
-        else:
-            self.bar.draw()
 
     def play(self):
         """Play music if stopped, else toggle pause."""
