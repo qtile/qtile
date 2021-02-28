@@ -23,13 +23,14 @@
 
 import asyncio
 import logging
+from multiprocessing import Value
 
 import pytest
-from multiprocess import Value
 
 import libqtile.log_utils
 import libqtile.utils
 from libqtile import hook
+from libqtile.resources import default_config
 from test.conftest import BareConfig
 
 # TODO: more tests required.
@@ -134,41 +135,41 @@ def test_can_unsubscribe_from_hook():
     assert test.val == 3
 
 
-class SubscribeStartupHooksConfig(BareConfig):
-    def __init__(self):
-        super().__init__()
-        self.startup_once_calls = Value('i', 0)
-        self.startup_calls = Value('i', 0)
-        self.startup_complete_calls = Value('i', 0)
-
-    def main(self, *args, **kwargs):
-        def inc_startup_once_calls():
-            self.startup_once_calls.value += 1
-
-        def inc_startup_calls():
-            self.startup_calls.value += 1
-
-        def inc_startup_complete_calls():
-            self.startup_complete_calls.value += 1
-
-        hook.subscribe.startup_once(inc_startup_once_calls)
-        hook.subscribe.startup(inc_startup_calls)
-        hook.subscribe.startup_complete(inc_startup_complete_calls)
-
-
 def test_can_subscribe_to_startup_hooks(manager_nospawn):
+    config = BareConfig
+    for attr in dir(default_config):
+        if not hasattr(config, attr):
+            setattr(config, attr, getattr(default_config, attr))
     manager = manager_nospawn
-    config = SubscribeStartupHooksConfig()
+
+    manager.startup_once_calls = Value('i', 0)
+    manager.startup_calls = Value('i', 0)
+    manager.startup_complete_calls = Value('i', 0)
+
+    def inc_startup_once_calls():
+        manager.startup_once_calls.value += 1
+
+    def inc_startup_calls():
+        manager.startup_calls.value += 1
+
+    def inc_startup_complete_calls():
+        manager.startup_complete_calls.value += 1
+
+    hook.subscribe.startup_once(inc_startup_once_calls)
+    hook.subscribe.startup(inc_startup_calls)
+    hook.subscribe.startup_complete(inc_startup_complete_calls)
+
     manager.start(config)
-    assert config.startup_once_calls.value == 1
-    assert config.startup_calls.value == 1
-    assert config.startup_complete_calls.value == 1
+    assert manager.startup_once_calls.value == 1
+    assert manager.startup_calls.value == 1
+    assert manager.startup_complete_calls.value == 1
+
     # Restart and check that startup_once doesn't fire again
     manager.terminate()
     manager.start(config, no_spawn=True)
-    assert config.startup_once_calls.value == 1
-    assert config.startup_calls.value == 2
-    assert config.startup_complete_calls.value == 2
+    assert manager.startup_once_calls.value == 1
+    assert manager.startup_calls.value == 2
+    assert manager.startup_complete_calls.value == 2
 
 
 @pytest.mark.usefixtures('hook_fixture')
