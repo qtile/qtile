@@ -59,7 +59,7 @@ class WindowCount(base._TextBox):
         except AttributeError:
             self._count = 0
 
-        self.update()
+        self.update(self.text_format.format(num=self._count))
 
     def _win_killed(self, window):
         try:
@@ -70,7 +70,7 @@ class WindowCount(base._TextBox):
         if self._count and getattr(window, "group", None):
             self._count -= 1
 
-        self.update()
+        self.update(self.text_format.format(num=self._count))
 
     def calculate_length(self):
         if self.text and (self._count or self.show_zero):
@@ -80,10 +80,6 @@ class WindowCount(base._TextBox):
             ) + self.actual_padding * 2
         else:
             return 0
-
-    def update(self):
-        self.text = self.text_format.format(num=self._count)
-        self.bar.draw()
 
     def cmd_get(self):
         """Retrieve the current text."""
