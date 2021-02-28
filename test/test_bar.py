@@ -428,7 +428,7 @@ def test_nospacer(manager_nospawn):
 
 
 def test_configure_broken_widgets(manager_nospawn):
-    config = GeomConf()
+    config = GeomConf
 
     widget_list = [
         BrokenWidget(ValueError),
