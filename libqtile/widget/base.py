@@ -424,13 +424,13 @@ class _TextBox(_Widget):
             return 0
 
     def can_draw(self):
-        return self.layout is not None and not self.layout.finalized()
+        can_draw = self.layout is not None \
+                and not self.layout.finalized() \
+                and self.offsetx is not None  # if the bar hasn't placed us yet
+        return can_draw
 
     def draw(self):
         if not self.can_draw():
-            return
-        # if the bar hasn't placed us yet
-        if self.offsetx is None:
             return
         self.drawer.clear(self.background or self.bar.background)
         self.layout.draw(
