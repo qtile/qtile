@@ -16,6 +16,11 @@ Qtile 0.x.x, released xxxx-xx-xx:
           reconfiguring qtile's screens in response to randr events. This
           removes the need to restart qtile when adding/removing external
           monitors.
+        - improved key chord / sequence functionality. Leaving a chord with `mode`
+          set brings you to a named mode you activated before, see #2264.
+          A new command, `lazy.ungrab_all_chords`, was introduced to return to the root bindings.
+          The `enter_chord` hook is now always called with a string argument.
+          The third argument to `KeyChord` was renamed from `submaping` to `submapping` (typo fix).
     * bugfixes
         - fix KeyboardLayout widget (xkb-switch is new dependency)
 

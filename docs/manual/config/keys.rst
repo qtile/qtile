@@ -118,8 +118,33 @@ Chords can also be chained to make even longer sequences.
         ])
     ]
 
-Modes can also be added to chains if required.
+Modes can also be added to chains if required. The following example
+demonstrates the behaviour when using the ``mode`` argument in chains:
 
+::
+
+    from libqtile.config import Key, KeyChord
+
+    keys = [
+        KeyChord([mod], "z", [
+            KeyChord([], "y", [
+                KeyChord([], "x", [
+                    Key([], "c", lazy.spawn("xterm"))
+                ], mode="inner")
+            ])
+        ], mode="outer")
+    ]
+
+After pressing Mod+z y x c, the "inner" mode will remain active. When pressing
+<escape>, the "inner" mode is exited. Since the mode in between does not have
+``mode`` set, it is also left. Arriving at the "outer" mode (which has this
+argument set) stops the "leave" action and "outer" now becomes the active mode.
+
+.. note::
+    If you want to bind a custom key to leave the current mode (e.g. Control +
+    G in addition to ``<escape>``), you can specify ``lazy.ungrab_chord()``
+    as the key action. To leave all modes and return to the root bindings, use
+    ``lazy.ungrab_all_chords()``.
 
 Modifiers
 =========
