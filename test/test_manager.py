@@ -260,7 +260,17 @@ class _ChordsConfig(Config):
                 "j",
                 lazy.layout.down(),
             )
-        ], "test")
+        ], "test"),
+        libqtile.config.KeyChord(["control"], "d", [
+            libqtile.config.KeyChord([], "a", [
+                libqtile.config.KeyChord([], "1", [
+                    libqtile.config.Key([], "u", lazy.ungrab_chord()),
+                    libqtile.config.Key([], "v", lazy.ungrab_all_chords()),
+                    libqtile.config.Key([], "j", lazy.layout.down()),
+                ], "inner_named"),
+            ]),
+            libqtile.config.Key([], "z", lazy.layout.down()),
+        ], "nesting_test"),
     ]
     mouse = []
     screens = [libqtile.config.Screen(
@@ -287,7 +297,7 @@ def test_immediate_chord(manager):
     # use normal bind to shift focus up
     manager.c.simulate_keypress([], "k")
     assert manager.c.groups()["a"]["focus"] == "two"
-    # enter into key chord and "k" bindin no longer working
+    # enter into key chord and "k" binding no longer working
     manager.c.simulate_keypress(["control"], "a")
     manager.c.simulate_keypress([], "k")
     assert manager.c.groups()["a"]["focus"] == "two"
@@ -315,7 +325,7 @@ def test_mode_chord(manager):
     # use normal bind to shift focus up
     manager.c.simulate_keypress([], "k")
     assert manager.c.groups()["a"]["focus"] == "two"
-    # enter into key chord and "k" bindin no longer working
+    # enter into key chord and "k" binding no longer working
     manager.c.simulate_keypress(["control"], "b")
     manager.c.simulate_keypress([], "k")
     assert manager.c.groups()["a"]["focus"] == "two"
@@ -334,6 +344,50 @@ def test_mode_chord(manager):
     # only way to exit mode chord is by hit "Escape"
     manager.c.simulate_keypress([], "Escape")
     manager.c.simulate_keypress([], "j")
+    assert manager.c.groups()["a"]["focus"] == "one"
+
+
+@chords_config
+@no_xinerama
+def test_chord_stack(manager):
+    manager.test_window("two")
+    manager.test_window("one")
+    assert manager.c.groups()["a"]["focus"] == "one"
+    manager.c.simulate_keypress(["control"], "d")  # ["nesting_test"]
+    # "z" should work, "k" shouldn't:
+    manager.c.simulate_keypress([], "z")
+    assert manager.c.groups()["a"]["focus"] == "two"
+    manager.c.simulate_keypress([], "z")
+    assert manager.c.groups()["a"]["focus"] == "one"
+    manager.c.simulate_keypress([], "k")
+    assert manager.c.groups()["a"]["focus"] == "one"
+    # enter ["nesting_test", "", "inner_named"]:
+    manager.c.simulate_keypress([], "a")
+    manager.c.simulate_keypress([], "1")
+    # "j" should work:
+    manager.c.simulate_keypress([], "j")
+    assert manager.c.groups()["a"]["focus"] == "two"
+    manager.c.simulate_keypress([], "j")
+    assert manager.c.groups()["a"]["focus"] == "one"
+    # leave "inner_named" ~> ["nesting_test"]:
+    manager.c.simulate_keypress([], "u")
+    manager.c.simulate_keypress([], "z")
+    assert manager.c.groups()["a"]["focus"] == "two"
+    manager.c.simulate_keypress([], "z")
+    assert manager.c.groups()["a"]["focus"] == "one"
+    manager.c.simulate_keypress([], "k")
+    assert manager.c.groups()["a"]["focus"] == "one"
+    # enter ["nesting_test", "", "inner_named"]:
+    manager.c.simulate_keypress([], "a")
+    manager.c.simulate_keypress([], "1")
+    # leave all: ~> []
+    manager.c.simulate_keypress([], "v")
+    # "k" should work, "z" shouldn't:
+    manager.c.simulate_keypress([], "k")
+    assert manager.c.groups()["a"]["focus"] == "two"
+    manager.c.simulate_keypress([], "k")
+    assert manager.c.groups()["a"]["focus"] == "one"
+    manager.c.simulate_keypress([], "z")
     assert manager.c.groups()["a"]["focus"] == "one"
 
 
