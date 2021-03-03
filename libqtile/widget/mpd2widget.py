@@ -31,9 +31,9 @@ keys = {
 
 # To display mpd state
 play_states = {
-    'play': '\u25b6',
-    'pause': '\u23F8',
-    'stop': '\u25a0'
+    'play': '\u23f5',
+    'pause': '\u23f8',
+    'stop': '\u23f9',
 }
 
 
