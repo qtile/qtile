@@ -474,6 +474,167 @@ class _TextBox(_Widget):
             self.bar.draw()
 
 
+class _ScrollText(_TextBox):
+    """A text widget which can scroll the text if needed"""
+
+    defaults = [
+        ("scroll_interval", 0.04, "Duration of a scroll tick in seconds."),
+        ("scroll_downtime", 2, "Downtime before and after scroll in seconds."),
+        ("scroll_step", 1, "Number of pixels to scroll at each tick."),
+        ("scrolls_forever", True, "Wether to scroll forever."),
+        (
+            "max_width",
+            200,
+            "The maximum width for the widget. "
+            "When the text does not fit in it, it will scroll.",
+        ),
+        (
+            "has_fixed_width",
+            False,
+            "Wether to resize the widget when the text fits in. "
+            "If set to True, the widget width will always be max_width.",
+        ),
+    ]
+
+    def __init__(self, text=" ", **config):
+        _TextBox.__init__(self, text, **config)
+        self.add_defaults(_ScrollText.defaults)
+
+        self.scroll_index = 0
+        self._is_scrolling = False
+        self._text_changed = True
+        self._content_width = None
+
+        self.timeout_handles = []
+
+    @property
+    def text(self):
+        return self._text
+
+    @text.setter
+    def text(self, value):
+        _TextBox.text.fset(self, value)
+        self._text_changed = True
+
+    @property
+    def is_scrolling(self):
+        return self._is_scrolling
+
+    @property
+    def usable_width(self):
+        return self.max_width - 2 * self.actual_padding
+
+    @property
+    def content_width(self):
+        self.check_changed_text()
+        return self._content_width
+
+    @property
+    def is_scrollable(self):
+        return self.usable_width < self.content_width
+
+    @property
+    def can_still_scroll(self):
+        return self.scroll_index + self.usable_width < self.content_width
+
+    def check_changed_text(self):
+        if self._text_changed:
+            self._text_changed = False
+            self._content_width = self.calculate_content_width()
+            self.init_layout()
+
+    def calculate_content_width(self):
+        sizelayout = self.drawer.textlayout(
+            self.text,
+            "#ffffff",
+            self.font,
+            self.fontsize,
+            None,
+            markup=self.markup,
+        )
+        return sizelayout.width
+
+    def _configure(self, qtile, bar):
+        _TextBox._configure(self, qtile, bar)
+        self.init_layout()
+
+    def draw(self, same_layout=False):
+        self.check_changed_text()
+        offset = self.offsetx
+        padding = int(min(self.actual_padding, self.width / 2))
+        # if the bar hasn't placed us yet
+        if offset is None:
+            return
+        # clear layout if needed (in case we have been moved)
+        if not same_layout:
+            self.drawer.clear(self.background or self.bar.background)
+            self.layout.draw(
+                padding,
+                int(self.bar.height / 2.0 - self.layout.height / 2.0) + 1,
+            )
+        # clear left padding if needed
+        if not same_layout:
+            self.drawer.draw(offsetx=offset, width=padding)
+        # drawing text with scroll offset
+        if self.usable_width > 0:
+            self.drawer.draw(
+                offsetx=offset + padding,
+                width=self.width - 2 * padding,
+                srcx=padding + self.scroll_index,
+            )
+        # clear right padding if needed
+        if not same_layout:
+            self.drawer.draw(offsetx=offset + self.width - padding, width=padding)
+
+    def init_layout(self):
+        """Prepare the layout for a new scrolling."""
+
+        if self.is_scrollable or self.has_fixed_width:
+            self.length_type = bar.STATIC
+            self.length = self.max_width
+        else:
+            self.length_type = bar.CALCULATED
+
+    def restart_scrolling(self):
+        self.pause_scrolling()
+        self.scroll_index = 0
+        self.bar.draw()
+        self.cancellable_timeout_add(self.scroll_downtime, self.resume_scrolling)
+
+    def resume_scrolling(self):
+        if self.is_scrolling or not self.is_scrollable:
+            return
+        self._is_scrolling = True
+        if self.can_still_scroll:
+            self._scroll_tick()
+        else:
+            self.restart_scrolling()
+
+    def pause_scrolling(self):
+        self._is_scrolling = False
+        self.cancel_timeouts()
+
+    def _scroll_tick(self):
+        self.scroll_index += self.scroll_step
+        self.draw(same_layout=True)
+
+        if self.can_still_scroll:
+            self.cancellable_timeout_add(self.scroll_interval, self._scroll_tick)
+        else:
+            self.pause_scrolling()
+            if self.scrolls_forever:
+                self.cancellable_timeout_add(self.scroll_downtime, self.restart_scrolling)
+
+    def cancellable_timeout_add(self, seconds, method, method_args=()):
+        self.timeout_handles.append(
+            _Widget.timeout_add(self, seconds, method, method_args)
+        )
+
+    def cancel_timeouts(self):
+        while self.timeout_handles != []:
+            self.timeout_handles.pop().cancel()
+
+
 class InLoopPollText(_TextBox):
     """ A common interface for polling some 'fast' information, munging it, and
     rendering the result in a text box. You probably want to use
