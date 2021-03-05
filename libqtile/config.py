@@ -611,7 +611,7 @@ class Match:
         else:
             def predicate(other):
                 # match as an "include"-match
-                match = getattr(other, 'match', lambda v: other in v)
+                match = getattr(other, 'match', lambda v: v in other)
                 return match(value)
             return predicate
 
