@@ -52,6 +52,7 @@ class Key:
     desc:
         description to be added to the key binding
     """
+
     def __init__(self, modifiers: List[str], key: str, *commands, desc: str = ""):
         self.modifiers = modifiers
         self.key = key
@@ -78,12 +79,16 @@ class KeyChord:
         A string with vim like mode name if it's set chord not end
         after use one of submapings or Esc key
     """
-    def __init__(self, modifiers: List[str], key: str, submapings: List[Key], mode: str = ""):
+
+    def __init__(
+        self, modifiers: List[str], key: str, submapings: List[Key], mode: str = ""
+    ):
         self.modifiers = modifiers
         self.key = key
 
         def noop(qtile):
             pass
+
         submapings.append(Key([], "Escape", lazy.function(noop)))
         self.submapings = submapings
         self.mode = mode
@@ -98,7 +103,7 @@ class Mouse:
         self.modifiers = modifiers
         self.button = button
         self.commands = commands
-        self.button_code = int(self.button.replace('Button', ''))
+        self.button_code = int(self.button.replace("Button", ""))
         for k, v in kwargs.items():
             setattr(self, k, v)
 
@@ -112,6 +117,7 @@ class Drag(Mouse):
     It focuses clicked window by default.  If you want to prevent it pass,
     `focus=None` as an argument
     """
+
     def __init__(self, *args, start=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.start = start
@@ -126,6 +132,7 @@ class Click(Mouse):
     It focuses clicked window by default.  If you want to prevent it, pass
     `focus=None` as an argument
     """
+
     def __repr__(self):
         return "<Click (%s, %s)>" % (self.modifiers, self.button)
 
@@ -137,10 +144,10 @@ class EzConfig:
     """
 
     modifier_keys = {
-        'M': 'mod4',
-        'A': 'mod1',
-        'S': 'shift',
-        'C': 'control',
+        "M": "mod4",
+        "A": "mod1",
+        "S": "shift",
+        "C": "control",
     }
 
     def parse(self, spec):
@@ -153,28 +160,28 @@ class EzConfig:
         mods = []
         keys = []
 
-        for key in spec.split('-'):
+        for key in spec.split("-"):
             if not key:
                 break
             if key in self.modifier_keys:
                 if keys:
-                    msg = 'Modifiers must always come before key/btn: %s'
+                    msg = "Modifiers must always come before key/btn: %s"
                     raise utils.QtileError(msg % spec)
                 mods.append(self.modifier_keys[key])
                 continue
             if len(key) == 1:
                 keys.append(key)
                 continue
-            if len(key) > 3 and key[0] == '<' and key[-1] == '>':
+            if len(key) > 3 and key[0] == "<" and key[-1] == ">":
                 keys.append(key[1:-1])
                 continue
 
         if not keys:
-            msg = 'Invalid key/btn specifier: %s'
+            msg = "Invalid key/btn specifier: %s"
             raise utils.QtileError(msg % spec)
 
         if len(keys) > 1:
-            msg = 'Key chains are not supported: %s' % spec
+            msg = "Key chains are not supported: %s" % spec
             raise utils.QtileError(msg)
 
         return mods, keys[0]
@@ -189,19 +196,18 @@ class EzKey(EzConfig, Key):
 class EzClick(EzConfig, Click):
     def __init__(self, btndef, *commands, **kwargs):
         modkeys, button = self.parse(btndef)
-        button = 'Button%s' % button
+        button = "Button%s" % button
         super().__init__(modkeys, button, *commands, **kwargs)
 
 
 class EzDrag(EzConfig, Drag):
     def __init__(self, btndef, *commands, **kwargs):
         modkeys, button = self.parse(btndef)
-        button = 'Button%s' % button
+        button = "Button%s" % button
         super().__init__(modkeys, button, *commands, **kwargs)
 
 
 class ScreenRect:
-
     def __init__(self, x, y, width, height):
         self.x = x
         self.y = y
@@ -209,10 +215,12 @@ class ScreenRect:
         self.height = height
 
     def __repr__(self):
-        return '<%s %d,%d %d,%d>' % (
+        return "<%s %d,%d %d,%d>" % (
             self.__class__.__name__,
-            self.x, self.y,
-            self.width, self.height
+            self.x,
+            self.y,
+            self.width,
+            self.height,
         )
 
     def hsplit(self, columnwidth):
@@ -221,9 +229,8 @@ class ScreenRect:
         return (
             self.__class__(self.x, self.y, columnwidth, self.height),
             self.__class__(
-                self.x + columnwidth, self.y,
-                self.width - columnwidth, self.height
-            )
+                self.x + columnwidth, self.y, self.width - columnwidth, self.height
+            ),
         )
 
     def vsplit(self, rowheight):
@@ -232,9 +239,8 @@ class ScreenRect:
         return (
             self.__class__(self.x, self.y, self.width, rowheight),
             self.__class__(
-                self.x, self.y + rowheight,
-                self.width, self.height - rowheight
-            )
+                self.x, self.y + rowheight, self.width, self.height - rowheight
+            ),
         )
 
 
@@ -254,11 +260,20 @@ class Screen(CommandObject):
     resized to fill it. If the mode is 'stretch', the image is stretched to fit all of
     it into the screen.
     """
-    def __init__(self, top: Optional[BarType] = None, bottom: Optional[BarType] = None,
-                 left: Optional[BarType] = None, right: Optional[BarType] = None,
-                 wallpaper: Optional[str] = None, wallpaper_mode: Optional[str] = None,
-                 x: Optional[int] = None, y: Optional[int] = None, width: Optional[int] = None,
-                 height: Optional[int] = None):
+
+    def __init__(
+        self,
+        top: Optional[BarType] = None,
+        bottom: Optional[BarType] = None,
+        left: Optional[BarType] = None,
+        right: Optional[BarType] = None,
+        wallpaper: Optional[str] = None,
+        wallpaper_mode: Optional[str] = None,
+        x: Optional[int] = None,
+        y: Optional[int] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+    ):
         self.group = None
         self.previous_group = None
 
@@ -365,9 +380,9 @@ class Screen(CommandObject):
 
         hook.fire("setgroup")
         hook.fire("focus_change")
-        hook.fire("layout_change",
-                  self.group.layouts[self.group.current_layout],
-                  self.group)
+        hook.fire(
+            "layout_change", self.group.layouts[self.group.current_layout], self.group
+        )
 
     def toggle_group(self, group=None):
         """Switch to the selected group or to the previously active one"""
@@ -417,11 +432,7 @@ class Screen(CommandObject):
     def cmd_info(self):
         """Returns a dictionary of info for this screen."""
         return dict(
-            index=self.index,
-            width=self.width,
-            height=self.height,
-            x=self.x,
-            y=self.y
+            index=self.index, width=self.width, height=self.height, x=self.x, y=self.y
         )
 
     def cmd_resize(self, x=None, y=None, w=None, h=None):
@@ -489,10 +500,22 @@ class Group:
         Use this to define a display name other than name of the group.
         If set to None, the display name is set to the name.
     """
-    def __init__(self, name, matches=None, exclusive=False,
-                 spawn=None, layout=None, layouts=None, persist=True, init=True,
-                 layout_opts=None, screen_affinity=None, position=sys.maxsize,
-                 label=None):
+
+    def __init__(
+        self,
+        name,
+        matches=None,
+        exclusive=False,
+        spawn=None,
+        layout=None,
+        layouts=None,
+        persist=True,
+        init=True,
+        layout_opts=None,
+        screen_affinity=None,
+        position=sys.maxsize,
+        label=None,
+    ):
         self.name = name
         self.label = label
         self.exclusive = exclusive
@@ -510,9 +533,19 @@ class Group:
     def __repr__(self):
         attrs = utils.describe_attributes(
             self,
-            ['exclusive', 'spawn', 'layout', 'layouts', 'persist', 'init',
-             'matches', 'layout_opts', 'screen_affinity'])
-        return '<config.Group %r (%s)>' % (self.name, attrs)
+            [
+                "exclusive",
+                "spawn",
+                "layout",
+                "layouts",
+                "persist",
+                "init",
+                "matches",
+                "layout_opts",
+                "screen_affinity",
+            ],
+        )
+        return "<config.Group %r (%s)>" % (self.name, attrs)
 
 
 class ScratchPad(Group):
@@ -534,14 +567,24 @@ class ScratchPad(Group):
         The display name of the ScratchPad group. Defaults to the empty string
         such that the group is hidden in ``GroupList`` widget.
     """
-    def __init__(self, name, dropdowns=None, position=sys.maxsize, label=''):
-        Group.__init__(self, name, layout='floating', layouts=['floating'],
-                       init=False, position=position, label=label)
+
+    def __init__(self, name, dropdowns=None, position=sys.maxsize, label=""):
+        Group.__init__(
+            self,
+            name,
+            layout="floating",
+            layouts=["floating"],
+            init=False,
+            position=position,
+            label=label,
+        )
         self.dropdowns = dropdowns if dropdowns is not None else []
 
     def __repr__(self):
-        return '<config.ScratchPad %r (%s)>' % (
-            self.name, ', '.join(dd.name for dd in self.dropdowns))
+        return "<config.ScratchPad %r (%s)>" % (
+            self.name,
+            ", ".join(dd.name for dd in self.dropdowns),
+        )
 
 
 class Match:
@@ -573,9 +616,17 @@ class Match:
         delegate the match to the given function, which receives the tested
         client as argument and must return True if it matches, False otherwise
     """
-    def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
-                 wm_instance_class=None, net_wm_pid=None,
-                 func: Callable[[window.Window], bool] = None):
+
+    def __init__(
+        self,
+        title=None,
+        wm_class=None,
+        role=None,
+        wm_type=None,
+        wm_instance_class=None,
+        net_wm_pid=None,
+        func: Callable[[window.Window], bool] = None,
+    ):
         self._rules = {}
 
         if title is not None:
@@ -592,44 +643,49 @@ class Match:
             try:
                 self._rules["net_wm_pid"] = int(net_wm_pid)
             except ValueError:
-                error = 'Invalid rule for net_wm_pid: "%s" only int allowed' % \
-                        str(net_wm_pid)
+                error = 'Invalid rule for net_wm_pid: "%s" only int allowed' % str(
+                    net_wm_pid
+                )
                 raise utils.QtileError(error)
         if func is not None:
             self._rules["func"] = func
 
     @staticmethod
     def _get_property_predicate(name, value):
-        if name == 'net_wm_pid':
+        if name == "net_wm_pid":
             return lambda other: other == value
-        elif name == 'wm_class':
+        elif name == "wm_class":
+
             def predicate(other):
                 # match as an "include"-match on any of the received classes
-                match = getattr(other, 'match', lambda v: v in other)
+                match = getattr(other, "match", lambda v: v in other)
                 return value and any(match(v) for v in value)
+
             return predicate
         else:
+
             def predicate(other):
                 # match as an "include"-match
-                match = getattr(other, 'match', lambda v: other in v)
+                match = getattr(other, "match", lambda v: v in other)
                 return match(value)
+
             return predicate
 
     def compare(self, client):
         for property_name, rule_value in self._rules.items():
-            if property_name == 'title':
+            if property_name == "title":
                 value = client.name
             elif property_name == "wm_instance_class":
                 wm_class = client.window.get_wm_class()
                 if not wm_class:
                     return False
                 value = wm_class[0]
-            elif property_name == 'role':
+            elif property_name == "role":
                 value = client.window.get_wm_window_role()
-            elif property_name == 'func':
+            elif property_name == "func":
                 return rule_value(client)
             else:
-                value = getattr(client.window, 'get_' + property_name)()
+                value = getattr(client.window, "get_" + property_name)()
 
             # Some of the window.get_...() functions can return None
             if value is None:
@@ -648,7 +704,7 @@ class Match:
                 callback(c)
 
     def __repr__(self):
-        return '<Match %s>' % self._rules
+        return "<Match %s>" % self._rules
 
 
 class Rule:
@@ -668,8 +724,10 @@ class Rule:
     break_on_match :
         Should we stop applying rules if this rule is matched?
     """
-    def __init__(self, match, group=None, float=False, intrusive=False,
-                 break_on_match=True):
+
+    def __init__(
+        self, match, group=None, float=False, intrusive=False, break_on_match=True
+    ):
         if isinstance(match, Match):
             self.matchlist = [match]
         else:
@@ -683,8 +741,10 @@ class Rule:
         return any(w.match(m) for m in self.matchlist)
 
     def __repr__(self):
-        actions = utils.describe_attributes(self, ['group', 'float', 'intrusive', 'break_on_match'])
-        return '<Rule match=%r actions=(%s)>' % (self.matchlist, actions)
+        actions = utils.describe_attributes(
+            self, ["group", "float", "intrusive", "break_on_match"]
+        )
+        return "<Rule match=%r actions=(%s)>" % (self.matchlist, actions)
 
 
 class DropDown(configurable.Configurable):
@@ -693,47 +753,36 @@ class DropDown(configurable.Configurable):
     That window can be shown and hidden using a configurable keystroke
     or any other scripted trigger.
     """
+
     defaults = (
         (
-            'x',
+            "x",
             0.1,
-            'X position of window as fraction of current screen width. '
-            '0 is the left most position.'
+            "X position of window as fraction of current screen width. "
+            "0 is the left most position.",
         ),
         (
-            'y',
+            "y",
             0.0,
-            'Y position of window as fraction of current screen height. '
-            '0 is the top most position. To show the window at bottom, '
-            'you have to configure a value < 1 and an appropriate height.'
+            "Y position of window as fraction of current screen height. "
+            "0 is the top most position. To show the window at bottom, "
+            "you have to configure a value < 1 and an appropriate height.",
         ),
+        ("width", 0.8, "Width of window as fraction of current screen width"),
+        ("height", 0.35, "Height of window as fraction of current screen."),
+        ("opacity", 0.9, "Opacity of window as fraction. Zero is opaque."),
         (
-            'width',
-            0.8,
-            'Width of window as fraction of current screen width'
-        ),
-        (
-            'height',
-            0.35,
-            'Height of window as fraction of current screen.'
-        ),
-        (
-            'opacity',
-            0.9,
-            'Opacity of window as fraction. Zero is opaque.'
-        ),
-        (
-            'on_focus_lost_hide',
+            "on_focus_lost_hide",
             True,
-            'Shall the window be hidden if focus is lost? If so, the DropDown '
-            'is hidden if window focus or the group is changed.'
+            "Shall the window be hidden if focus is lost? If so, the DropDown "
+            "is hidden if window focus or the group is changed.",
         ),
         (
-            'warp_pointer',
+            "warp_pointer",
             True,
-            'Shall pointer warp to center of window on activation? '
-            'This has only effect if any of the on_focus_lost_xxx '
-            'configurations is True'
+            "Shall pointer warp to center of window on activation? "
+            "This has only effect if any of the on_focus_lost_xxx "
+            "configurations is True",
         ),
     )
 
@@ -756,12 +805,14 @@ class DropDown(configurable.Configurable):
         self.add_defaults(self.defaults)
 
     def info(self):
-        return dict(name=self.name,
-                    command=self.command,
-                    x=self.x,
-                    y=self.y,
-                    width=self.width,
-                    height=self.height,
-                    opacity=self.opacity,
-                    on_focus_lost_hide=self.on_focus_lost_hide,
-                    warp_pointer=self.warp_pointer,)
+        return dict(
+            name=self.name,
+            command=self.command,
+            x=self.x,
+            y=self.y,
+            width=self.width,
+            height=self.height,
+            opacity=self.opacity,
+            on_focus_lost_hide=self.on_focus_lost_hide,
+            warp_pointer=self.warp_pointer,
+        )
