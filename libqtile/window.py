@@ -1230,10 +1230,6 @@ class Window(_Window):
             # are set when the property is emitted
             # self.update_state()
             self.update_state()
-        elif name == "_NET_WM_USER_TIME":
-            if not self.qtile.config.follow_mouse_focus and \
-                    self.group.current_window != self:
-                self.group.focus(self, False)
         else:
             logger.info("Unknown window property: %s", name)
         return False
