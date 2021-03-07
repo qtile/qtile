@@ -47,6 +47,7 @@ from libqtile.confreader import Config
 from libqtile.lazy import lazy
 from test import conftest
 from test.conftest import BareConfig, Retry, no_xinerama
+from test.layouts.layout_utils import assert_focused
 
 
 class ManagerConfig(Config):
@@ -1592,3 +1593,45 @@ def test_cursor_warp(manager):
     assert p.win_x == 25
     assert p.win_y == 25
     assert p.same_screen
+
+
+def test_switch_groups_cursor_warp(manager_nospawn):
+    config = ManagerConfig
+    config.cursor_warp = True
+    config.layouts = [libqtile.layout.Stack(num_stacks=2), libqtile.layout.Max()]
+    config.groups = [libqtile.config.Group("a"), libqtile.config.Group("b", layout="max")]
+
+    manager_nospawn.start(config)
+
+    manager_nospawn.test_window("one")
+    manager_nospawn.test_window("two")
+    manager_nospawn.c.layout.previous()
+
+    assert_focused(manager_nospawn, "one")
+    assert manager_nospawn.c.group.info()["name"] == "a"
+    assert manager_nospawn.c.layout.info()["name"] == "stack"
+
+    manager_nospawn.c.group["b"].toscreen()
+
+    manager_nospawn.test_window("three")
+
+    assert_focused(manager_nospawn, "three")
+    assert manager_nospawn.c.group.info()["name"] == "b"
+    assert manager_nospawn.c.layout.info()["name"] == "max"
+
+    # do a fast switch to trigger races in focus behavior; unfortunately we
+    # need the window in layout 'b' to map quite slowly (e.g. like firefox or
+    # something), which it does not here most of the time.
+    manager_nospawn.c.group["a"].toscreen()
+    manager_nospawn.c.group["b"].toscreen()
+    manager_nospawn.c.group["a"].toscreen()
+
+    # make sure the right things are still focused
+    assert_focused(manager_nospawn, "one")
+    assert manager_nospawn.c.group.info()["name"] == "a"
+    assert manager_nospawn.c.layout.info()["name"] == "stack"
+
+    manager_nospawn.c.group["b"].toscreen()
+    assert_focused(manager_nospawn, "three")
+    assert manager_nospawn.c.group.info()["name"] == "b"
+    assert manager_nospawn.c.layout.info()["name"] == "max"
