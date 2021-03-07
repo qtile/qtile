@@ -25,10 +25,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import contextlib
 import os.path
 import sys
 import warnings
 from typing import Callable, List, Optional
+
+import xcffib.xproto
 
 from libqtile import configurable, hook, utils, window
 from libqtile.bar import BarType
@@ -356,12 +359,17 @@ class Screen(CommandObject):
             old_group = self.group
             self.group = new_group
 
-            # display clients of the new group and then hide from old group
-            # to remove the screen flickering
-            new_group._set_screen(self)
+            if old_group is None:
+                ctx = contextlib.nullcontext()
+            else:
+                ctx = old_group.disable_mask(xcffib.xproto.EventMask.EnterWindow)
+            with ctx:
+                # display clients of the new group and then hide from old group
+                # to remove the screen flickering
+                new_group._set_screen(self)
 
-            if old_group is not None:
-                old_group._set_screen(None)
+                if old_group is not None:
+                    old_group._set_screen(None)
 
         hook.fire("setgroup")
         hook.fire("focus_change")
