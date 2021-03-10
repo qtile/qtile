@@ -35,8 +35,7 @@ extras = [
 # To skip a test entirely, list the widget class here
 no_test = [
     widgets.Mirror,  # Mirror requires a reflection object
-    widgets.PulseVolume,
-    widgets.KeyboardLayout,  # requires xkb-switch to be installed
+    widgets.PulseVolume
 ]
 
 ################################################################################
