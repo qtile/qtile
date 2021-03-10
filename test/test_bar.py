@@ -460,3 +460,39 @@ def test_configure_broken_widgets(manager_nospawn):
     for index, widget in enumerate(widget_list):
         if isinstance(widget, BrokenWidget):
             assert i["widgets"][index]["name"] == "configerrorwidget"
+
+
+def test_bar_hide_show_with_margin(manager_nospawn):
+    """ Check :
+            - the height of a horizontal bar with its margins,
+            - the ordinate of a unique window.
+        after 3 successive actions :
+            - creation
+            - hidding the bar
+            - unhidding the bar
+    """
+    config = GeomConf
+
+    config.screens = [
+        libqtile.config.Screen(
+            top=libqtile.bar.Bar(
+                [],
+                12,
+                margin=[5, 5, 5, 5]
+            )
+        )
+    ]
+
+    manager_nospawn.start(config)
+    manager_nospawn.test_window("w")
+
+    assert manager_nospawn.c.bar["top"].info().get("size") == 22
+    assert manager_nospawn.c.windows()[0]["y"] == 22
+
+    manager_nospawn.c.hide_show_bar("top")
+    assert manager_nospawn.c.bar["top"].info().get("size") == 0
+    assert manager_nospawn.c.windows()[0]["y"] == 0
+
+    manager_nospawn.c.hide_show_bar("top")
+    assert manager_nospawn.c.bar["top"].info().get("size") == 22
+    assert manager_nospawn.c.windows()[0]["y"] == 22
