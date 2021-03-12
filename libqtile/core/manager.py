@@ -24,6 +24,7 @@ import logging
 import os
 import pickle
 import shlex
+import shutil
 import signal
 import subprocess
 import tempfile
@@ -1138,14 +1139,19 @@ class Qtile(CommandObject):
 
             spawn(["xterm", "-T", "Temporary terminal"])
         """
-        if shell:
-            if not isinstance(cmd, str):
-                cmd = subprocess.list2cmdline(cmd)
-            args = ["/bin/sh", "-c", cmd]
-        elif isinstance(cmd, str):
+        if isinstance(cmd, str):
             args = shlex.split(cmd)
         else:
             args = list(cmd)
+            cmd = subprocess.list2cmdline(args)
+
+        to_lookup = args[0]
+        if shell:
+            args = ["/bin/sh", "-c", cmd]
+
+        if shutil.which(to_lookup) is None:
+            logger.error("couldn't find `{}`".format(to_lookup))
+            return -1
 
         r, w = os.pipe()
         pid = os.fork()
@@ -1197,8 +1203,9 @@ class Qtile(CommandObject):
 
                 try:
                     os.execvp(args[0], args)
-                except OSError as e:
-                    logger.error("failed spawn: \"{0}\"\n{1}".format(cmd, e))
+                except OSError:
+                    # can't log here since we forked :(
+                    pass
 
                 os._exit(1)
             else:
