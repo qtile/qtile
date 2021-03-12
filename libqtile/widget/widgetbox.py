@@ -22,7 +22,7 @@ from collections import namedtuple
 
 from libqtile import bar
 from libqtile.log_utils import logger
-from libqtile.widget import base
+from libqtile.widget import Systray, base
 
 BoxedWidget = namedtuple("BoxedWidget", ["widget", "draw"])
 
@@ -152,6 +152,14 @@ class WidgetBox(base._Widget):
                 self.bar.widgets.remove(item.widget)
                 # Override drawer.drawer with a no-op
                 item.widget.drawer.draw = _no_draw
+
+                # Systray widget needs some additional steps to hide as the icons
+                # are separate _Window instances.
+                # Systray unhides icons when it draws so we only need to hide them.
+                if isinstance(item.widget, Systray):
+                    for icon in item.widget.icons.values():
+                        icon.hide()
+
             except ValueError:
                 continue
 
