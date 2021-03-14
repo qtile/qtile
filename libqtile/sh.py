@@ -201,6 +201,9 @@ class QSh:
 
             cd ../layout
         """
+        if arg is None:
+            self._current_node = graph.CommandGraphRoot()
+            return '/'
         next_node = self._find_path(arg)
         if next_node is not None:
             self._current_node = next_node

@@ -86,6 +86,7 @@ def test_do_cd(manager):
     assert sh.do_cd("..") == '/'
     assert sh.do_cd("layout") == 'layout'
     assert sh.do_cd("0/wibble") == 'No such path.'
+    assert sh.do_cd(None) == '/'
 
 
 @sh_config
