@@ -779,28 +779,6 @@ class Connection:
             if i in self._extmap:
                 setattr(self, i, self._extmap[i](self))
 
-        self.pseudoscreens = []
-        if "xinerama" in extensions:
-            for i, s in enumerate(self.xinerama.query_screens()):
-                scr = PseudoScreen(
-                    self,
-                    s.x_org,
-                    s.y_org,
-                    s.width,
-                    s.height,
-                )
-                self.pseudoscreens.append(scr)
-        elif "randr" in extensions:
-            for i in self.randr.query_crtcs(self.screens[0].root.wid):
-                scr = PseudoScreen(
-                    self,
-                    i["x"],
-                    i["y"],
-                    i["width"],
-                    i["height"],
-                )
-                self.pseudoscreens.append(scr)
-
         self.atoms = AtomCache(self)
 
         self.code_to_syms = {}
@@ -809,6 +787,31 @@ class Connection:
 
         self.modmap = None
         self.refresh_modmap()
+
+    @property
+    def pseudoscreens(self):
+        pseudoscreens = []
+        if hasattr(self, "xinerama"):
+            for i, s in enumerate(self.xinerama.query_screens()):
+                scr = PseudoScreen(
+                    self,
+                    s.x_org,
+                    s.y_org,
+                    s.width,
+                    s.height,
+                )
+                pseudoscreens.append(scr)
+        elif hasattr(self, "randr"):
+            for i in self.randr.query_crtcs(self.screens[0].root.wid):
+                scr = PseudoScreen(
+                    self,
+                    i["x"],
+                    i["y"],
+                    i["width"],
+                    i["height"],
+                )
+                pseudoscreens.append(scr)
+        return pseudoscreens
 
     def finalize(self):
         self.cursors.finalize()

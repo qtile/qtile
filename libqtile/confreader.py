@@ -58,6 +58,7 @@ class Config:
         ("widget_defaults", "Dict[str, Any]"),
         ("extension_defaults", "Dict[str, Any]"),
         ("bring_front_click", "bool"),
+        ("reconfigure_screens", "bool"),
         ("wmname", "str"),
     ]
 
