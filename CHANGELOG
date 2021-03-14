@@ -11,6 +11,11 @@ Qtile 0.x.x, released xxxx-xx-xx:
         - memory widget can now be displayed with decimal values
         - new "qtile migrate" command, which will attempt to upgrade previous
           configs to the current version in the case of qtile API breaks.
+        - A new `reconfigure_screens` config setting. When `True` (default) it
+          hooks `Qtile.reconfigure_screens` to the `screen_change` hook,
+          reconfiguring qtile's screens in response to randr events. This
+          removes the need to restart qtile when adding/removing external
+          monitors.
     * bugfixes
         - fix KeyboardLayout widget (xkb-switch is new dependency)
 

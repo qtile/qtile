@@ -295,21 +295,10 @@ class Subscribe:
     def screen_change(self, func):
         """Called when a screen is added or screen configuration is changed (via xrandr)
 
-        Common usage is simply to call ``qtile.cmd_restart()`` on each event
-        (to restart qtile when there is a new monitor):
-
         **Arguments**
 
             * ``xproto.randr.ScreenChangeNotify`` event
 
-        Examples
-        --------
-
-        ::
-
-            @libqtile.hook.subscribe.screen_change
-            def restart_on_randr(ev):
-                libqtile.qtile.cmd_restart()
         """
         return self._subscribe("screen_change", func)
 

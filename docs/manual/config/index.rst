@@ -164,6 +164,10 @@ configuration variables that control specific aspects of Qtile's behavior:
              fontsize=12,
              padding=3)
       - Default settings for bar widgets.
+    * - reconfigure_screens
+      - True
+      - Controls whether or not to automatically reconfigure screens when there
+        are changes in randr output configuration.
     * - wmname
       - "LG3D"
       - Gasp! We're lying here. In fact, nobody really uses or cares

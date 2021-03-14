@@ -196,6 +196,9 @@ class Qtile(CommandObject):
         self.update_net_desktops()
         hook.subscribe.setgroup(self.update_net_desktops)
 
+        if self.config.reconfigure_screens:
+            hook.subscribe.screen_change(self.cmd_reconfigure_screens)
+
         hook.fire("startup_complete")
 
     def _prepare_socket_path(
@@ -300,6 +303,7 @@ class Qtile(CommandObject):
             self.screens.append(s)
 
     def _process_screens(self) -> None:
+        self.screens = []
         if hasattr(self.config, 'fake_screens'):
             self._process_fake_screens()
             return
@@ -325,6 +329,23 @@ class Qtile(CommandObject):
 
             scr._configure(self, i, x, y, w, h, grp)
             self.screens.append(scr)
+
+    def cmd_reconfigure_screens(self, ev=None):
+        """
+        This can be used to set up screens again during run time. Intended usage is to
+        be called when the screen_change hook is fired, responding to changes in
+        physical monitor setup by configuring qtile.screens accordingly. The ev kwarg is
+        ignored; it is here in case this function is hooked directly to screen_change.
+        """
+        logger.info("Reconfiguring screens.")
+        self._process_screens()
+
+        for group in self.groups:
+            if group.screen:
+                if group.screen in self.screens:
+                    group.layout_all()
+                else:
+                    group.hide()
 
     def paint_screen(self, screen, image_path, mode=None):
         self.core.painter.paint(screen, image_path, mode)
