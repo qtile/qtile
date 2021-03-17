@@ -10,6 +10,10 @@ sensors_mapping = {
 }
 
 
+def _all_sensors_names_correct(sensors):
+    return all(map(lambda x: x in sensors_mapping, sensors))
+
+
 class NvidiaSensors(base.ThreadPoolText):
     """Displays temperature, fan speed and performance level Nvidia GPU."""
 
@@ -48,17 +52,27 @@ class NvidiaSensors(base.ThreadPoolText):
             ).strip().replace(' ', '').split('\n')
         )
 
+    def _parse_format_string(self):
+        return {sensor for sensor in re.findall('{(.+?)}', self.format)}
+
     def poll(self):
-        sensors = [sensor for sensor in re.findall('{(.+?)}', self.format)]
+        sensors = self._parse_format_string()
+        if not _all_sensors_names_correct(sensors):
+            return 'Wrong sensor name'
         bus_id = f'-i {self.gpu_bus_id}' if self.gpu_bus_id else ''
         command = 'nvidia-smi {} --query-gpu={} --format=csv,noheader'.format(
             bus_id, ",".join(sensors_mapping[sensor] for sensor in sensors)
         )
-        sensors_data = [
-            dict(zip(sensors, gpu))
-            for gpu in self._get_sensors_data(command)
-        ]
-        for gpu in sensors_data:
-            if gpu.get('temp') and int(gpu['temp']) > self.threshold:
-                self.foreground = self.foreground_alert
-        return ' - '.join([self.format.format(**gpu) for gpu in sensors_data])
+        try:
+            sensors_data = [
+                dict(zip(sensors, gpu))
+                for gpu in self._get_sensors_data(command)
+            ]
+            for gpu in sensors_data:
+                if gpu.get('temp') and int(gpu['temp']) > self.threshold:
+                    self.foreground = self.foreground_alert
+            return ' - '.join(
+                [self.format.format(**gpu) for gpu in sensors_data]
+            )
+        except Exception:
+            return None
