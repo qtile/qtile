@@ -1036,19 +1036,42 @@ class Qtile(CommandObject):
                 return "".join([format % tuple(self.expandlist(row, n)) for row in self.rows])
 
         result = FormatTable()
-        result.add(["KeySym", "Mod", "Command", "Desc"])
+        result.add(["Mode", "KeySym", "Mod", "Command", "Desc"])
         result.add([])
         rows = []
+
+        def walk_binding(ks: Union[int, str], kmm: Union[int, List[str]], k: Union[Key, KeyChord],
+                         mode: str) -> None:
+            nonlocal rows
+            if not (isinstance(ks, (int, str)) and isinstance(kmm, (int, list))):
+                return
+            name = (", ".join(xcbq.rkeysyms.get(ks, ("<unknown>", )))
+                    if isinstance(ks, int) else ks)
+            modifiers = (", ".join(xcbq.translate_modifiers(kmm))
+                         if isinstance(kmm, int) else ", ".join(kmm))
+            if isinstance(k, Key):
+                if not k.commands:
+                    return
+                allargs = ", ".join(
+                    [value.__name__ if callable(value) else repr(value)
+                     for value in k.commands[0].args] +
+                    ["%s = %s" % (keyword, repr(value)) for keyword, value in k.commands[0].kwargs.items()]
+                )
+                rows.append((mode, name, modifiers,
+                             "{:s}({:s})".format(k.commands[0].name, allargs), k.desc))
+                return
+            if isinstance(k, KeyChord):
+                new_mode_s = k.mode if k.mode else "<unnamed>"
+                new_mode = (k.mode if mode == "<root>" else
+                            "{}>{}".format(mode, k.mode if k.mode else "_"))
+                rows.append((mode, name, modifiers, "", "Enter {:s} mode".format(new_mode_s)))
+                for s in k.submappings:
+                    walk_binding(s.key, s.modifiers, s, new_mode)
+                return
+            raise TypeError("Unexpected type: {}".format(type(k)))
+
         for (ks, kmm), k in self.keys_map.items():
-            if not k.commands:
-                continue
-            name = ", ".join(xcbq.rkeysyms.get(ks, ("<unknown>", )))
-            modifiers = ", ".join(xcbq.translate_modifiers(kmm))
-            allargs = ", ".join(
-                [repr(value) for value in k.commands[0].args] +
-                ["%s = %s" % (keyword, repr(value)) for keyword, value in k.commands[0].kwargs.items()]
-            )
-            rows.append((name, str(modifiers), "{0:s}({1:s})".format(k.commands[0].name, allargs), k.desc))
+            walk_binding(ks, kmm, k, "<root>")
         rows.sort()
         for row in rows:
             result.add(row)
