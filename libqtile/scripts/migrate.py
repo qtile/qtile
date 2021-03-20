@@ -89,12 +89,39 @@ def hook_main_function(config):
     )
 
 
+# Deprecated new_at_current key replaced by new_client_position.
+# In the node, we want to change the key name
+# and adapts its value depending of the previous value :
+#   new_at_current=True => new_client_position=before_current
+#   new_at_current<>True => new_client_position=after_current
+def update_node_nac(node, capture, filename):
+    key = capture.get("k")
+    key.value = "new_client_position"
+    val = capture.get("v")
+    if val.value == "True":
+        val.value = "'before_current'"
+    else:
+        val.value = "'after_current'"
+
+
+def new_at_current_to_new_client_position(config):
+    old_pattern = """
+        argument< k="new_at_current" "=" v=any >
+    """
+    return (
+        bowler.Query(config)
+        .select(old_pattern)
+        .modify(update_node_nac)
+    )
+
+
 MIGRATIONS = [
     client_name_updated,
     tile_master_windows_rename,
     threaded_poll_text_rename,
     pacman_to_checkupdates,
     hook_main_function,
+    new_at_current_to_new_client_position,
 ]
 
 
