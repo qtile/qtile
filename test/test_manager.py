@@ -1169,43 +1169,6 @@ class _Config(Config):
     auto_fullscreen = True
 
 
-class ClientNewStaticConfig(_Config):
-    @staticmethod
-    def main(c):
-        def client_new(c):
-            c.cmd_static(0)
-        libqtile.hook.subscribe.client_new(client_new)
-
-
-clientnew_config = pytest.mark.parametrize("manager", [ClientNewStaticConfig], indirect=True)
-
-
-@clientnew_config
-def test_clientnew_config(manager):
-    a = manager.test_window("one")
-    manager.kill_window(a)
-
-
-class ToGroupConfig(_Config):
-    @staticmethod
-    def main(c):
-        def client_new(c):
-            c.togroup("d")
-        libqtile.hook.subscribe.client_new(client_new)
-
-
-togroup_config = pytest.mark.parametrize("manager", [ToGroupConfig], indirect=True)
-
-
-@togroup_config
-def test_togroup_config(manager):
-    manager.c.group["d"].toscreen()
-    manager.c.group["a"].toscreen()
-    a = manager.test_window("one")
-    assert len(manager.c.group["d"].info()["windows"]) == 1
-    manager.kill_window(a)
-
-
 @manager_config
 def test_color_pixel(manager):
     (success, e) = manager.c.eval("self.conn.color_pixel(\"ffffff\")")

@@ -29,7 +29,6 @@ import signal
 import subprocess
 import tempfile
 import time
-import warnings
 from typing import Dict, List, Optional, Tuple, Union
 
 import xcffib
@@ -112,9 +111,6 @@ class Qtile(CommandObject):
             widgets.insert(0, TextBox('Config Err!'))
 
         self.core.wmname = getattr(self.config, "wmname", "qtile")
-        if self.config.main:
-            warnings.warn("Defining a main function is deprecated, use libqtile.qtile", DeprecationWarning)
-            self.config.main(self)
 
         self.dgroups = DGroups(self, self.config.groups, self.config.dgroups_key_binder)
 
