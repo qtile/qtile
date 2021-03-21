@@ -37,9 +37,6 @@ class Max(_SimpleLayoutBase):
         super().__init__(**config)
         self.add_defaults(Max.defaults)
 
-    def clone(self, group):
-        return super().clone(group)
-
     def add(self, client):
         return super().add(client, 1)
 
