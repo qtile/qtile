@@ -434,7 +434,7 @@ class Drawer:
         return pangocffi.patch_cairo_context(cairocffi.Context(self.surface))
 
     def set_source_rgb(self, colour):
-        if type(colour) == list:
+        if type(colour) is list:
             if len(colour) == 0:
                 # defaults to black
                 self.ctx.set_source_rgba(*utils.rgb("#000000"))
