@@ -25,6 +25,7 @@
 import curses
 import linecache
 import os
+import sys
 import time
 
 from libqtile import ipc
@@ -165,11 +166,11 @@ def top(opts):
         print("tracemalloc not started on qtile, start by setting "
               "PYTHONTRACEMALLOC=1 before starting qtile")
         print("or force start tracemalloc now, but you'll lose early traces")
-        exit(1)
+        sys.exit(1)
     except TraceCantStart:
         print("Can't start tracemalloc on qtile, check the logs")
     except KeyboardInterrupt:
-        exit(-1)
+        sys.exit(-1)
     except curses.error:
         print("Terminal too small for curses interface.")
         raw_stats(c, limit=lines, force_start=force_start)
