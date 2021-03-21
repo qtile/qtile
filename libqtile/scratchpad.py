@@ -258,7 +258,7 @@ class ScratchPad(group._Group):
         If the associated window is killed, reset internal state.
         """
         name = None
-        for name, dd in self.dropdowns.items():
+        for name, dd in self.dropdowns.copy().items():
             if dd.window is client:
                 dd.unsubscribe()
                 del self.dropdowns[name]
@@ -273,7 +273,7 @@ class ScratchPad(group._Group):
         will spawn a new process.
         """
         name = None
-        for name, dd in self.dropdowns.items():
+        for name, dd in self.dropdowns.copy().items():
             if not dd.window.floating:
                 if dd.window.group is not self:
                     dd.unsubscribe()
