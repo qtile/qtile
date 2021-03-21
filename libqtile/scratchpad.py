@@ -309,7 +309,7 @@ class ScratchPad(group._Group):
         If name is None, a list of all dropdown names is returned.
         """
         if name is None:
-            return {'dropdowns': [ddname for ddname in self._dropdownconfig]}
+            return {'dropdowns': list(self._dropdownconfig)}
         elif name in self.dropdowns:
             return self.dropdowns[name].info()
         elif name in self._dropdownconfig:
