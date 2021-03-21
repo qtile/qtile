@@ -903,10 +903,8 @@ class Connection:
         return self.conn.get_setup()
 
     def extensions(self):
-        return set(
-            i.name.to_string().lower()
-            for i in self.conn.core.ListExtensions().reply().names
-        )
+        return {i.name.to_string().lower()
+            for i in self.conn.core.ListExtensions().reply().names}
 
     def fixup_focus(self):
         """
