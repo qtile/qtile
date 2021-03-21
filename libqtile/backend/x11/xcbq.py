@@ -264,7 +264,7 @@ class AtomCache:
         self.reverse = {}
 
         # We can change the pre-loads not to wait for a return
-        for name in WindowTypes.keys():
+        for name in WindowTypes:
             self.insert(name=name)
 
         for i in dir(xcffib.xproto.Atom):
