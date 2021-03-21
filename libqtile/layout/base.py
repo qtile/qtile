@@ -240,7 +240,7 @@ class _ClientList:
 
     @current_index.setter
     def current_index(self, x):
-        if len(self):
+        if self:
             self._current_idx = abs(x % len(self))
         else:
             self._current_idx = 0
