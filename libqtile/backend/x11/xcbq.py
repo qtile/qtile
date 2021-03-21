@@ -553,7 +553,7 @@ class Window:
         if r:
             s = self._property_string(r)
             return tuple(s.strip("\0").split("\0"))
-        return tuple()
+        return ()
 
     def get_wm_window_role(self):
         r = self.get_property("WM_WINDOW_ROLE", "STRING")
