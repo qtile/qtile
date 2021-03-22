@@ -141,6 +141,7 @@ disable=print-statement,
         deprecated-sys-function,
         exception-escape,
         comprehension-escape,
+        not-callable,  # TEMP: has false-positives currently. Re-enable later.
         protected-access,  # we need this a lot, so it will stay here!
         # all messages disabled above were suggested by
         # `pylint --generate-rcfile`

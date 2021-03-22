@@ -93,13 +93,14 @@ class WidgetBox(base._Widget):
         ),
     ]
 
-    def __init__(self, widgets=list(), **config):
+    def __init__(self, widgets: list = None, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(WidgetBox.defaults)
         self.box_is_open = False
-        self._widgets = widgets
+        self._widgets = widgets if widgets is not None else []
         self.add_callbacks({"Button1": self.cmd_toggle})
 
+        self.close_button_location: str
         if self.close_button_location not in ["left", "right"]:
             val = self.close_button_location
             msg = "Invalid value for 'close_button_location': {}".format(val)

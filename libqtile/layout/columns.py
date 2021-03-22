@@ -16,6 +16,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from libqtile.layout.base import Layout, _ClientList
+from libqtile.log_utils import logger
 
 
 class _Column(_ClientList):
@@ -179,6 +180,9 @@ class Columns(Layout):
         return c
 
     def remove_column(self, col):
+        if len(self.columns) == 1:
+            logger.warning("Trying to remove all columns.")
+            return
         idx = self.columns.index(col)
         del self.columns[idx]
         if idx <= self.current:
@@ -281,7 +285,8 @@ class Columns(Layout):
     def focus_next(self, win):
         """Returns the next client after 'win' in layout,
            or None if there is no such client"""
-        # First: try to get next window in column of win
+        # First: try to get next window in column of win (self.columns is non-empty)
+        # pylint: disable=undefined-loop-variable
         for idx, col in enumerate(self.columns):
             if win in col:
                 nxt = col.focus_next(win)
@@ -296,7 +301,8 @@ class Columns(Layout):
     def focus_previous(self, win):
         """Returns the client previous to 'win' in layout.
            or None if there is no such client"""
-        # First: try to focus previous client in column
+        # First: try to focus previous client in column (self.columns is non-empty)
+        # pylint: disable=undefined-loop-variable
         for idx, col in enumerate(self.columns):
             if win in col:
                 prev = col.focus_previous(win)
