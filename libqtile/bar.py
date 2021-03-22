@@ -400,7 +400,7 @@ class Bar(Gap, configurable.Configurable):
 
     def draw(self):
         if not self.widgets:
-            return
+            return  # calling self._actual_draw in this case would cause a NameError.
         if self.queued_draws == 0:
             self.qtile.call_soon(self._actual_draw)
         self.queued_draws += 1
@@ -410,7 +410,8 @@ class Bar(Gap, configurable.Configurable):
         self._resize(self.length, self.widgets)
         for i in self.widgets:
             i.draw()
-        end = i.offset + i.length
+        end = i.offset + i.length  # pylint: disable=undefined-loop-variable
+        # we verified that self.widgets is not empty in self.draw(), see above.
         if end < self.length:
             if self.horizontal:
                 self.drawer.draw(offsetx=end, width=self.length - end)

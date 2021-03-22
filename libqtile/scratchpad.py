@@ -18,7 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import group, hook, window
+from typing import Dict, List
+
+from libqtile import config, group, hook, window
 
 
 class WindowVisibilityToggler:
@@ -204,12 +206,12 @@ class ScratchPad(group._Group):
     The ScratchPad, by default, has no label and thus is not shown in
     GroupBox widget.
     """
-    def __init__(self, name='scratchpad', dropdowns=[], label=''):
+    def __init__(self, name='scratchpad', dropdowns: List[config.DropDown] = None, label=''):
         group._Group.__init__(self, name, label=label)
-        self._dropdownconfig = {dd.name: dd for dd in dropdowns}
-        self.dropdowns = {}
-        self._spawned = {}
-        self._to_hide = []
+        self._dropdownconfig = {dd.name: dd for dd in dropdowns} if dropdowns is not None else {}
+        self.dropdowns: Dict[str, DropDownToggler] = {}
+        self._spawned: Dict[int, str] = {}
+        self._to_hide: List[str] = []
 
     def _check_unsubscribe(self):
         if not self.dropdowns:

@@ -31,10 +31,9 @@ import time
 from libqtile import ipc
 from libqtile.command import client, interface
 
-""" These imports are here because they are not supported in pypy
-having them at the top of the file causes problems when running any
-of the other scripts.
-"""
+# These imports are here because they are not supported in pypy.
+# having them at the top of the file causes problems when running any
+# of the other scripts.
 try:
     import tracemalloc
     from tracemalloc import Snapshot

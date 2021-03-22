@@ -724,11 +724,11 @@ class Prompt(base._TextBox):
         try:
             obj = self.qtile.select([(object_name, selector)])
         except SelectError:
-            logger.warn("cannot select a object")
+            logger.warning("cannot select a object")
             return
         cmd = obj.command(cmd_name)
         if not cmd:
-            logger.warn("command not found")
+            logger.warning("command not found")
             return
 
         def f(args):

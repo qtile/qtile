@@ -192,7 +192,7 @@ class Server:
 
             req, is_json = _IPC.unpack(data)
         except IPCError:
-            logger.warn("Invalid data received, closing connection")
+            logger.warning("Invalid data received, closing connection")
         else:
             rep = self.handler(req)
 
