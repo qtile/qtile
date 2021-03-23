@@ -143,6 +143,7 @@ disable=print-statement,
         comprehension-escape,
         not-callable,  # TEMP: has false-positives currently. Re-enable later.
         protected-access,  # we need this a lot, so it will stay here!
+        c-extension-no-member,  # this is probably staying here, too.
         # all messages disabled above were suggested by
         # `pylint --generate-rcfile`
         # maybe some of them can be re-enabled later, but only after we have
@@ -162,7 +163,6 @@ disable=print-statement,
         broad-except,
         bare-except,
         assignment-from-no-return,
-        c-extension-no-member,
         redefined-outer-name,
         unused-argument,
         unused-variable,
@@ -183,6 +183,9 @@ disable=print-statement,
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once). See also the "--disable" option for examples.
 # enable=c-extension-no-member
+# Time to play Whac-A-Mole:
+enable=consider-using-sys-exit,
+       useless-super-delegation,
 
 
 [REPORTS]
