@@ -24,6 +24,9 @@ Qtile 0.x.x, released xxxx-xx-xx:
           A new command, `lazy.ungrab_all_chords`, was introduced to return to the root bindings.
           The `enter_chord` hook is now always called with a string argument.
           The third argument to `KeyChord` was renamed from `submaping` to `submapping` (typo fix).
+        - added new argument for CheckUpdates widget: `custom_command_modify` which allows user to modify the
+          the line count of the output of `custom_command` with a lambda function (i.e. `lambda x: x-3`).
+          Argument defaults to `lambda x: x` and is overridden by `distro` argument's internal lambda.
 
 Qtile 0.17.0, released 2021-02-13:
     !!! Python version breakage !!!
