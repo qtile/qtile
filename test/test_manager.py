@@ -1448,17 +1448,33 @@ def test_hints_setting_unsetting(manager):
 
 @manager_config
 def test_strut_handling(manager):
-    w = None
+    w = []
     conn = xcbq.Connection(manager.display)
 
     def has_struts():
         nonlocal w
-        w = conn.create_window(0, 0, 10, 10)
-        w.set_property("_NET_WM_STRUT", [0, 0, 0, 10])
-        w.map()
+        w.append(conn.create_window(0, 0, 10, 10))
+        w[-1].set_property("_NET_WM_STRUT_PARTIAL", [0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 800])
+        w[-1].map()
+        conn.conn.flush()
+
+    def with_gaps_left():
+        nonlocal w
+        w.append(conn.create_window(800, 0, 10, 10))
+        w[-1].set_property("_NET_WM_STRUT_PARTIAL", [820, 0, 0, 0, 0, 480, 0, 0, 0, 0, 0, 0])
+        w[-1].map()
+        conn.conn.flush()
+
+    def with_gaps_bottom():
+        nonlocal w
+        w.append(conn.create_window(800, 0, 10, 10))
+        w[-1].set_property("_NET_WM_STRUT_PARTIAL", [0, 0, 0, 130, 0, 0, 0, 0, 0, 0, 800, 1440])
+        w[-1].map()
         conn.conn.flush()
 
     def test_initial_state():
+        while manager.c.screen.info()["index"] != 0:
+            manager.c.next_screen()
         assert manager.c.window.info()['width'] == 798
         assert manager.c.window.info()['height'] == 578
         assert manager.c.window.info()['x'] == 0
@@ -1467,13 +1483,22 @@ def test_strut_handling(manager):
         bar = manager.c.window[bar_id].info()
         assert bar["height"] == 20
         assert bar["y"] == 580
+        manager.c.next_screen()
+        assert manager.c.window.info()['width'] == 638
+        assert manager.c.window.info()['height'] == 478
+        assert manager.c.window.info()['x'] == 800
+        assert manager.c.window.info()['y'] == 0
 
+    manager.test_xcalc()
+    manager.c.next_screen()
     manager.test_xcalc()
     test_initial_state()
 
     try:
+        while manager.c.screen.info()["index"] != 0:
+            manager.c.next_screen()
         manager.create_window(has_struts)
-        manager.c.window.static(0, None, None, None, None)
+        manager.c.window.static(None, None, None, None, None)
         assert manager.c.window.info()['width'] == 798
         assert manager.c.window.info()['height'] == 568
         assert manager.c.window.info()['x'] == 0
@@ -1483,8 +1508,18 @@ def test_strut_handling(manager):
         assert bar["height"] == 20
         assert bar["y"] == 570
 
+        manager.c.next_screen()
+        manager.create_window(with_gaps_bottom)
+        manager.c.window.static(None, None, None, None, None)
+        manager.create_window(with_gaps_left)
+        manager.c.window.static(None, None, None, None, None)
+        assert manager.c.window.info()['width'] == 618
+        assert manager.c.window.info()['height'] == 468
+        assert manager.c.window.info()['x'] == 820
+        assert manager.c.window.info()['y'] == 0
     finally:
-        w.kill_client()
+        for window in w:
+            window.kill_client()
         conn.finalize()
 
     test_initial_state()

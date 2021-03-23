@@ -523,25 +523,24 @@ class Qtile(CommandObject):
     def current_window(self):
         return self.current_screen.group.current_window
 
-    def add_strut(self, strut):
+    def reserve_space(self, reserved_space, screen):
         from libqtile.bar import Bar, Gap
 
         for i, pos in enumerate(["left", "right", "top", "bottom"]):
-            if strut[i]:
-                bar = getattr(self.current_screen, pos)
+            if reserved_space[i]:
+                bar = getattr(screen, pos)
                 if isinstance(bar, Bar):
-                    bar.adjust_for_strut(strut[i])
+                    bar.adjust_for_strut(reserved_space[i])
                 elif isinstance(bar, Gap):
-                    bar.size += strut[i]
+                    bar.size += reserved_space[i]
                     if bar.size <= 0:
-                        setattr(self.current_screen, pos, None)
+                        setattr(screen, pos, None)
                 else:
-                    setattr(self.current_screen, pos, Gap(strut[i]))
+                    setattr(screen, pos, Gap(reserved_space[i]))
+        screen.resize()
 
-        self.current_screen.resize()
-
-    def remove_strut(self, strut):
-        self.add_strut([-i for i in strut])
+    def free_reserved_space(self, reserved_space, screen):
+        self.reserve_space([-i for i in reserved_space], screen)
 
     def map_window(self, window: xcbq.Window) -> None:
         c = self.manage(window)
@@ -585,7 +584,7 @@ class Qtile(CommandObject):
                 except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
                     return
 
-                if w.get_wm_type() == "dock" or c.strut:
+                if w.get_wm_type() == "dock" or c.reserved_space:
                     c.cmd_static(self.current_screen.index)
                     return
 
@@ -609,8 +608,8 @@ class Qtile(CommandObject):
         c = self.windows_map.get(win)
         if c:
             hook.fire("client_killed", c)
-            if c.strut:
-                self.remove_strut(c.strut)
+            if isinstance(c, window.Static):
+                self.free_reserved_space(c.reserved_space, c.screen)
             if getattr(c, "group", None):
                 c.group.remove(c)
             del self.windows_map[win]
