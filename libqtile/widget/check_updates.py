@@ -31,6 +31,7 @@ class CheckUpdates(base.ThreadPoolText):
     defaults = [
         ("distro", "Arch", "Name of your distribution"),
         ("custom_command", None, "Custom shell command for checking updates (counts the lines of the output)"),
+        ("custom_command_modify", (lambda x: x), "Lambda function to modify line count from custom_command"),
         ("update_interval", 60, "Update interval in seconds."),
         ('execute', None, 'Command to execute on click'),
         ("display_format", "Updates: {updates}", "Display format if updates available"),
@@ -56,15 +57,20 @@ class CheckUpdates(base.ThreadPoolText):
                          "Mandriva": ("urpmq --auto-select", 0)
                          }
 
-        # Check if distro name is valid.
-        try:
-            self.cmd = self.cmd_dict[self.distro][0].split()
-            self.subtr = self.cmd_dict[self.distro][1]
-        except KeyError:
-            distros = sorted(self.cmd_dict.keys())
-            logger.error(self.distro + ' is not a valid distro name. ' +
-                         'Use one of the list: ' + str(distros) + '.')
-            self.cmd = None
+        if self.custom_command:
+            # Use custom_command
+            self.cmd = self.custom_command
+
+        else:
+            # Check if distro name is valid.
+            try:
+                self.cmd = self.cmd_dict[self.distro][0]
+                self.custom_command_modify = (lambda x: x - self.cmd_dict[self.distro][1])
+            except KeyError:
+                distros = sorted(self.cmd_dict.keys())
+                logger.error(self.distro + ' is not a valid distro name. ' +
+                             'Use one of the list: ' + str(distros) + '.')
+                self.cmd = None
 
         if self.execute:
             self.add_callbacks({'Button1': self.do_execute})
@@ -72,14 +78,10 @@ class CheckUpdates(base.ThreadPoolText):
     def _check_updates(self):
         # type: () -> str
         try:
-            if self.custom_command is None:
-                updates = self.call_process(self.cmd)
-            else:
-                updates = self.call_process(self.custom_command, shell=True)
-                self.subtr = 0
+            updates = self.call_process(self.cmd, shell=True)
         except CalledProcessError:
             updates = ""
-        num_updates = len(updates.splitlines()) - self.subtr
+        num_updates = self.custom_command_modify(len(updates.splitlines()))
 
         if num_updates == 0:
             self.layout.colour = self.colour_no_updates
