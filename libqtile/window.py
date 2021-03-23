@@ -173,7 +173,7 @@ class _Window(CommandObject):
         self.borderwidth = 0
         self.bordercolor = None
         self.name = "<no name>"
-        self.strut = None
+        self.reserved_space = None
         self.state = NormalState
         self._float_state = NOT_FLOATING
         self._demands_attention = False
@@ -727,17 +727,45 @@ class Static(_Window):
             "_NET_WM_STRUT_PARTIAL",
             unpack=int
         )
-        strut = strut or self.window.get_property(
-            "_NET_WM_STRUT",
-            unpack=int
-        )
         if strut:
-            self.qtile.add_strut(strut)
-        self.strut = strut
+            x_screen_dimensions = self.qtile.root.get_geometry()
+            if strut[0]:    # left
+                x = strut[0]
+                y = (strut[4] + strut[5]) / 2 or (strut[6] + strut[7]) / 2
+            elif strut[1]:  # right
+                x = x_screen_dimensions.width - strut[1]
+                y = (strut[4] + strut[5]) / 2 or (strut[6] + strut[7]) / 2
+            elif strut[2]:  # top
+                x = (strut[8] + strut[9]) / 2 or (strut[10] + strut[11]) / 2
+                y = strut[2]
+            else:           # bottom
+                x = (strut[8] + strut[9]) / 2 or (strut[10] + strut[11]) / 2
+                y = x_screen_dimensions.height - strut[3]
+            self.screen = self.qtile.find_screen(x, y)
+
+            if self.screen is None:
+                logger.error("No screen at target")
+                return
+            elif None in [self.screen.x, self.screen.y, self.screen.height, self.screen.width]:
+                logger.error("Missing screen information")
+                return
+
+            empty_space = [
+                self.screen.x,
+                x_screen_dimensions.width - self.screen.x - self.screen.width,
+                self.screen.y,
+                x_screen_dimensions.height - self.screen.y - self.screen.height
+            ]
+            self.reserved_space = [strut[i] - empty if strut[i] else 0 for i, empty in enumerate(empty_space)]
+
+            self.qtile.reserve_space(self.reserved_space, self.screen)
+
+        else:
+            self.reserved_space = None
 
     def handle_PropertyNotify(self, e):  # noqa: N802
         name = self.qtile.conn.atoms.get_name(e.atom)
-        if name in ("_NET_WM_STRUT_PARTIAL", "_NET_WM_STRUT"):
+        if name == "_NET_WM_STRUT_PARTIAL":
             self.update_strut()
 
     def __repr__(self):

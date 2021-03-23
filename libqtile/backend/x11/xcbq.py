@@ -201,7 +201,6 @@ SUPPORTED_ATOMS = [
     '_NET_WM_DESKTOP',
     '_NET_WM_WINDOW_TYPE',
     '_NET_WM_STATE',
-    '_NET_WM_STRUT',
     '_NET_WM_STRUT_PARTIAL',
     '_NET_WM_PID',
 ]
