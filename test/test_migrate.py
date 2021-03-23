@@ -6,6 +6,7 @@ import tempfile
 import textwrap
 
 from libqtile.scripts.migrate import BACKUP_SUFFIX
+from test.test_check import have_mypy, run_qtile_check
 
 
 def run_qtile_migrate(config):
@@ -46,8 +47,9 @@ def check_migrate(orig, expected):
             f.write(orig.encode('utf-8'))
 
         run_qtile_migrate(config_path)
+        if have_mypy():
+            assert run_qtile_check(config_path)
 
-        config_path = os.path.join(tempdir, "config.py")
         assert expected == read_file(config_path)
         assert orig == read_file(config_path+BACKUP_SUFFIX)
 
