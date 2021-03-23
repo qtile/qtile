@@ -170,7 +170,7 @@ def top(opts):
     except TraceCantStart:
         print("Can't start tracemalloc on qtile, check the logs")
     except KeyboardInterrupt:
-        sys.exit(-1)
+        sys.exit(1)
     except curses.error:
         print("Terminal too small for curses interface.")
         raw_stats(c, limit=lines, force_start=force_start)
