@@ -19,6 +19,7 @@ graft libqtile/resources
 graft resources
 graft test
 recursive-include libqtile *.typed
+recursive-include libqtile *.h
 
 prune bin
 prune docs

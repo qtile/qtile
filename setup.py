@@ -85,6 +85,8 @@ def get_cffi_modules():
             cffi_modules.append(
                 'libqtile/widget/pulseaudio_ffi.py:pulseaudio_ffi'
             )
+        # TODO: Add a try-call-except for this?
+        cffi_modules.append('libqtile/widget/keyboard_helper_ffi.py:ffibuilder')
     return cffi_modules
 
 
