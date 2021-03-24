@@ -21,6 +21,7 @@ Qtile 0.x.x, released xxxx-xx-xx:
           A new command, `lazy.ungrab_all_chords`, was introduced to return to the root bindings.
           The `enter_chord` hook is now always called with a string argument.
           The third argument to `KeyChord` was renamed from `submaping` to `submapping` (typo fix).
+        - Add `xkb-switch` as optional dependency to KeyboardLayout widget for improved functionality.
 
 Qtile 0.17.0, released 2021-02-13:
     !!! Python version breakage !!!
