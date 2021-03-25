@@ -25,8 +25,16 @@
 import re
 from subprocess import CalledProcessError
 
+from libqtile import qtile
 from libqtile.log_utils import logger
 from libqtile.widget import base
+from libqtile.widget.keyboard_helper import (
+    connect_to_display,
+    get_configured_layouts,
+    get_group_index,
+    set_group_index,
+    set_listen_to_events,
+)
 
 kb_layout_regex = re.compile(r'layout:\s+(?P<layout>\w+)')
 kb_variant_regex = re.compile(r'variant:\s+(?P<variant>\w+)')
@@ -59,10 +67,29 @@ class KeyboardLayout(base.InLoopPollText):
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(KeyboardLayout.defaults)
+        connect_to_display(qtile.core.display_name.encode())
+        set_listen_to_events()  # TODO: has no effect
 
         self.keyboard = self.configured_keyboards[0]
 
         self.add_callbacks({'Button1': self.next_keyboard})
+
+    @staticmethod
+    def num_configured_keyboards() -> int:
+        """Return the number of configured layouts.
+
+        This is equivalent to "count the ',' in `setxkbmap -query` and add 1".
+        """
+        # This defines how we actually work:
+        # Some users prefer `setxkbmap layout1`, later `setxkbmap layout2`.
+        # Others prefers `setxkbmap layout1,layout2` once and then to toggle dynamically.
+        # If this returns 1, we do setxkbmap, otherwise we use set_group_index.
+        # See `use_groups` below.
+        return len(get_configured_layouts())
+
+    @property
+    def use_groups(self) -> bool:
+        return self.num_configured_keyboards() > 1
 
     def next_keyboard(self):
         """Set the next layout in the list of configured keyboard layouts as
@@ -73,13 +100,17 @@ class KeyboardLayout(base.InLoopPollText):
         """
 
         current_keyboard = self.keyboard
-        if current_keyboard in self.configured_keyboards:
-            # iterate the list circularly
-            next_keyboard = self.configured_keyboards[
-                (self.configured_keyboards.index(current_keyboard) + 1) %
-                len(self.configured_keyboards)]
+        if self.use_groups:
+            layouts = ['%s %s' % x if x.variant else x.layout for x in get_configured_layouts()]
+            next_keyboard = layouts[(layouts.index(current_keyboard) + 1) % len(layouts)]
         else:
-            next_keyboard = self.configured_keyboards[0]
+            if current_keyboard in self.configured_keyboards:
+                # iterate the list circularly
+                next_keyboard = self.configured_keyboards[
+                    (self.configured_keyboards.index(current_keyboard) + 1) %
+                    len(self.configured_keyboards)]
+            else:
+                next_keyboard = self.configured_keyboards[0]
 
         self.keyboard = next_keyboard
 
@@ -108,6 +139,9 @@ class KeyboardLayout(base.InLoopPollText):
 
         Examples: "us", "us dvorak".  In case of error returns "unknown".
         """
+        if self.use_groups:
+            layout = get_configured_layouts()[get_group_index()]
+            return '%s %s' % layout if layout.variant else layout.layout
         try:
             command = 'setxkbmap -verbose 10 -query'
             setxkbmap_output = self.call_process(command.split(' '))
@@ -121,6 +155,14 @@ class KeyboardLayout(base.InLoopPollText):
 
     @keyboard.setter
     def keyboard(self, keyboard):
+        if self.use_groups:
+            kbspec = tuple(keyboard.split(' ')) if ' ' in keyboard else (keyboard, '')
+            layouts = get_configured_layouts()
+            if kbspec in layouts:
+                set_group_index(layouts.index(kbspec))
+            else:
+                logger.error('Unable to set keyboard: %r is not in %r', kbspec, layouts)
+            return
         command = ['setxkbmap']
         command.extend(keyboard.split(" "))
         if self.option:
