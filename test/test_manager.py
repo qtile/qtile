@@ -86,6 +86,7 @@ class ManagerConfig(Config):
     screens = [libqtile.config.Screen(
         bottom=libqtile.bar.Bar(
             [
+                libqtile.widget.Prompt(),
                 libqtile.widget.GroupBox(),
             ],
             20
@@ -1204,6 +1205,21 @@ def test_togroup_config(manager):
     a = manager.test_window("one")
     assert len(manager.c.group["d"].info()["windows"]) == 1
     manager.kill_window(a)
+
+
+@manager_config
+def test_labelgroup(manager):
+    manager.c.group["a"].toscreen()
+    assert manager.c.group["a"].info()["label"] == "a"
+
+    manager.c.labelgroup()
+    manager.c.widget["prompt"].fake_keypress("b")
+    manager.c.widget["prompt"].fake_keypress("Return")
+    assert manager.c.group["a"].info()["label"] == "b"
+
+    manager.c.labelgroup()
+    manager.c.widget["prompt"].fake_keypress("Return")
+    assert manager.c.group["a"].info()["label"] == "a"
 
 
 @manager_config
