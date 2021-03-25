@@ -1439,6 +1439,25 @@ class Qtile(CommandObject):
 
         mb.start_input(prompt, f, "group", strict_completer=True)
 
+    def cmd_labelgroup(self, prompt="label", widget="prompt"):
+        """Launch prompt widget to label the current group
+
+        Parameters
+        ==========
+        prompt :
+            Text with which to prompt user (default: "label")
+        widget :
+            Name of the prompt widget (default: "prompt")
+        """
+        def f(name):
+            self.current_group.cmd_set_label(name or None)
+
+        try:
+            mb = self.widgets_map[widget]
+            mb.start_input(prompt, f, allow_empty_input=True)
+        except KeyError:
+            logger.error("No widget named '{0:s}' present.".format(widget))
+
     def cmd_spawncmd(self, prompt="spawn", widget="prompt",
                      command="%s", complete="cmd", shell=True):
         """Spawn a command using a prompt widget, with tab-completion.
