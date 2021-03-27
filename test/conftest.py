@@ -61,6 +61,41 @@ def pytest_addoption(parser):
     )
 
 
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """Make timeouts appear as such in the logs.
+
+    The pytest-timeout plug-in messes with the durations that are reported for tests.
+    Fix that by marking the report such that we can print `TIMEOUT` instead of
+    `FAILED (incorrect duration)`. See
+    https://github.com/pytest-dev/pytest/blob/38d8deb74d95077ebf189440ca047e14f8197da1/src/_pytest/runner.py#L366
+    """
+    r = yield
+    if not hasattr(r, 'get_result'):
+        return
+    report = r.get_result()
+    timed_out = False
+    if hasattr(call.excinfo, 'value'):
+        msg = getattr(call.excinfo.value, 'msg', None)
+        if isinstance(msg, str) and msg.startswith('Timeout >'):
+            timed_out = True
+    report.timed_out = timed_out
+
+
+def pytest_report_teststatus(report, **kwargs):
+    """Report test run duration, adapted from
+    https://github.com/pytest-dev/pytest/blob/38d8deb74d95077ebf189440ca047e14f8197da1/src/_pytest/runner.py#L202
+    """
+    d = report.duration
+    if report.passed:  # category, shortletter, verbose-word
+        return 'passed', 'P', 'PASSED (%.3f)' % d
+    if report.timed_out:
+        return 'failed', 'T', 'TIMEOUT'
+    if report.failed:
+        return 'failed', 'F', 'FAILED (%.3f)' % d
+    return None
+
+
 class Retry:
     def __init__(self, fail_msg='retry failed!', ignore_exceptions=(),
                  dt=sleep_time, tmax=max_sleep, return_on_fail=False):
