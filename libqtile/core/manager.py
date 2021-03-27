@@ -1474,7 +1474,7 @@ class Qtile(CommandObject):
                     logger.info('No command entered.')
                     return
                 try:
-                    result = eval(u'c.{0:s}'.format(cmd))
+                    result = eval(u'c.{0:s}'.format(cmd))  # pylint: disable=eval-used
                 except (CommandError, CommandException, AttributeError) as err:
                     logger.error(err)
                     result = None

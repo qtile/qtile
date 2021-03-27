@@ -189,9 +189,10 @@ class CommandObject(metaclass=abc.ABCMeta):
         """
         try:
             try:
-                return True, str(eval(code))
+                # The method announces the powers of eval, so we definitely need it:
+                return True, str(eval(code))  # pylint: disable=eval-used
             except SyntaxError:
-                exec(code)
+                exec(code)  # pylint: disable=exec-used
                 return True, None
         except Exception:
             error = traceback.format_exc().strip().split("\n")[-1]
