@@ -1023,17 +1023,17 @@ class Qtile(CommandObject):
                 format_string = " ".join("%-{0:d}s".format(max_col_size + 2) for max_col_size in self.max_col_size)
                 return format_string + "\n", len(self.max_col_size)
 
-            def expandlist(self, list, n):
-                if not list:
+            def expandlist(self, row, n):
+                if not row:
                     return ["-" * max_col_size for max_col_size in self.max_col_size]
-                n -= len(list)
+                n -= len(row)
                 if n > 0:
-                    list += [""] * n
-                return list
+                    row += [""] * n
+                return row
 
             def __str__(self):
-                format, n = self.getformat()
-                return "".join([format % tuple(self.expandlist(row, n)) for row in self.rows])
+                fmt, n = self.getformat()
+                return "".join([fmt % tuple(self.expandlist(row, n)) for row in self.rows])
 
         result = FormatTable()
         result.add(["KeySym", "Mod", "Command", "Desc"])

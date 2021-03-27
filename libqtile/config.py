@@ -683,8 +683,9 @@ class Rule:
     break_on_match :
         Should we stop applying rules if this rule is matched?
     """
-    def __init__(self, match, group=None, float=False, intrusive=False,
-                 break_on_match=True):
+    def __init__(self, match, group=None, float=False,  # pylint: disable=redefined-builtin
+                 intrusive=False, break_on_match=True):
+        # builtin float is redefined. We accept this for compatibility reasons.
         if isinstance(match, Match):
             self.matchlist = [match]
         else:

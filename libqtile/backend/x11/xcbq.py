@@ -52,7 +52,7 @@ from xcffib.xproto import CW, EventMask, WindowClass
 from libqtile import xkeysyms
 from libqtile.backend.x11.xcursors import Cursors
 from libqtile.log_utils import logger
-from libqtile.utils import hex
+from libqtile.utils import color_hex
 
 keysyms = xkeysyms.keysyms
 
@@ -342,7 +342,7 @@ class Colormap:
             def x8to16(i):
                 return 0xffff * (i & 0xff) // 0xff
 
-            color = hex(color)
+            color = color_hex(color)
             r = x8to16(int(color[-6] + color[-5], 16))
             g = x8to16(int(color[-4] + color[-3], 16))
             b = x8to16(int(color[-2] + color[-1], 16))
@@ -635,7 +635,10 @@ class Window:
             self.wid, mask, values
         )
 
-    def set_property(self, name, value, type=None, format=None):
+    def set_property(self, name, value,
+                     type=None, format=None):  # pylint: disable=redefined-builtin
+        # builtins type and format are redefined. As they are only arguments to a method
+        # which is used regularly, we maintain compatibility here.
         """
         Parameters
         ==========
@@ -685,7 +688,8 @@ class Window:
                 'X error in SetProperty (wid=%r, prop=%r), ignoring',
                 self.wid, name)
 
-    def get_property(self, prop, type=None, unpack=None):
+    def get_property(self, prop, type=None, unpack=None):  # pylint: disable=redefined-builtin
+        # builtin type is redefined. We allow this here to be consistent with self.set_property.
         """Return the contents of a property as a GetPropertyReply
 
         If unpack is specified, a tuple of values is returned.  The type to

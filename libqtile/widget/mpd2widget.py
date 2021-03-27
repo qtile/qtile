@@ -8,7 +8,9 @@ from collections import defaultdict
 from html import escape
 from socket import error as socket_error
 
-from mpd import CommandError, ConnectionError, MPDClient
+# builtin ConnectionError is redefined. Since it is rarely used, we accept that here.
+from mpd import ConnectionError  # pylint: disable=redefined-builtin
+from mpd import CommandError, MPDClient
 
 from libqtile import utils
 from libqtile.log_utils import logger
@@ -194,7 +196,7 @@ class Mpd2(base.ThreadPoolText):
         self.client.timeout = self.timeout
         self.client.idletimeout = self.idletimeout
         if self.color_progress:
-            self.color_progress = utils.hex(self.color_progress)
+            self.color_progress = utils.color_hex(self.color_progress)
 
         # remap self.keys as mouse_buttons for new button_press functionality.
         # so we don't break existing configurations.

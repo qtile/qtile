@@ -78,7 +78,7 @@ class Notify(base._TextBox):
         urgency = notif.hints.get('urgency', 1)
         if urgency != 1:
             self.text = '<span color="%s">%s</span>' % (
-                utils.hex(
+                utils.color_hex(
                     self.foreground_urgent if urgency == 2
                     else self.foreground_low
                 ),

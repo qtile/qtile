@@ -154,9 +154,9 @@ class Stack(Layout):
         iterator = iter(self.stacks)
         for i in iterator:
             if client in i:
-                next = i.focus_next(client)
-                if next:
-                    return next
+                n = i.focus_next(client)
+                if n:
+                    return n
                 break
         else:
             return
@@ -169,9 +169,9 @@ class Stack(Layout):
         iterator = iter(reversed(self.stacks))
         for i in iterator:
             if client in i:
-                next = i.focus_previous(client)
-                if next:
-                    return next
+                n = i.focus_previous(client)
+                if n:
+                    return n
                 break
         else:
             return
@@ -327,11 +327,11 @@ class Stack(Layout):
         """
         if not self.current_stack:
             return
-        next = n % len(self.stacks)
+        next_index = n % len(self.stacks)
         win = self.current_stack.cw
         self.current_stack.remove(win)
-        self.stacks[next].add(win)
-        self.stacks[next].focus(win)
+        self.stacks[next_index].add(win)
+        self.stacks[next_index].focus(win)
         self.group.layout_all()
 
     def cmd_info(self):

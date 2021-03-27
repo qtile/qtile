@@ -101,7 +101,7 @@ def rgb(x):
     raise ValueError("Invalid RGB specifier.")
 
 
-def hex(x):
+def color_hex(x):
     r, g, b, _ = rgb(x)
     return '#%02x%02x%02x' % (int(r * 255), int(g * 255), int(b * 255))
 
@@ -184,7 +184,7 @@ def lazify_imports(registry, package, fallback=None):
     return __all__, __dir__, __getattr__
 
 
-def send_notification(title, message, urgent=False, timeout=10000, id=None):
+def send_notification(title, message, urgent=False, timeout=10000, message_id=None):
     """
     Send a notification.
 
@@ -199,7 +199,7 @@ def send_notification(title, message, urgent=False, timeout=10000, id=None):
         )
         return -1
 
-    id = randint(10, 1000) if id is None else id
+    message_id = randint(10, 1000) if message_id is None else message_id
     urgency = 2 if urgent else 1
 
     try:
@@ -207,14 +207,14 @@ def send_notification(title, message, urgent=False, timeout=10000, id=None):
     except RuntimeError:
         logger.warning("Eventloop has not started. Cannot send notification.")
     else:
-        loop.create_task(_notify(title, message, urgency, timeout, id))
+        loop.create_task(_notify(title, message, urgency, timeout, message_id))
 
-    return id
+    return message_id
 
 
-async def _notify(title, message, urgency, timeout, id):
+async def _notify(title, message, urgency, timeout, message_id):
     notification = ["qtile",  # Application name
-                    id,  # id
+                    message_id,  # id
                     "",  # icon
                     title,  # summary
                     message,  # body

@@ -41,7 +41,7 @@ class WindowList(Dmenu):
         Dmenu._configure(self, qtile)
 
     def list_windows(self):
-        id = 0
+        idx = 0
         self.item_to_win = {}
 
         if self.all_groups:
@@ -52,9 +52,9 @@ class WindowList(Dmenu):
         for win in windows:
             if win.group and not isinstance(win.group, ScratchPad):
                 item = self.item_format.format(
-                    group=win.group.label or win.group.name, id=id, window=win.name)
+                    group=win.group.label or win.group.name, id=idx, window=win.name)
                 self.item_to_win[item] = win
-                id += 1
+                idx += 1
 
     def run(self):
         self.list_windows()

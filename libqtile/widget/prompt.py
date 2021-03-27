@@ -487,7 +487,7 @@ class Prompt(base._TextBox):
             self.timeout_add(self.cursorblink, self._blink)
 
     def _highlight_text(self, text) -> str:
-        color = utils.hex(self.cursor_color)
+        color = utils.color_hex(self.cursor_color)
         text = '<span foreground="{0}">{1}</span>'.format(color, text)
         if self.show_cursor:
             text = '<u>{}</u>'.format(text)

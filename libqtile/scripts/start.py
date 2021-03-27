@@ -22,8 +22,8 @@
 # Set the locale before any widgets or anything are imported, so any widget
 # whose defaults depend on a reasonable locale sees something reasonable.
 import locale
+import sys
 from os import getenv, makedirs, path
-from sys import exit
 
 import libqtile.backend
 from libqtile import confreader
@@ -89,7 +89,7 @@ def start(options):
         q.loop()
     except Exception:
         logger.exception('Qtile crashed')
-        exit(1)
+        sys.exit(1)
     logger.info('Exiting...')
 
 
