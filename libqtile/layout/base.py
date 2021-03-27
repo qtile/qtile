@@ -88,19 +88,15 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
 
     def show(self, screen_rect):
         """Called when layout is being shown"""
-        pass
 
     def hide(self):
         """Called when layout is being hidden"""
-        pass
 
     def focus(self, client):
         """Called whenever the focus changes"""
-        pass
 
     def blur(self):
         """Called whenever focus is gone from this layout"""
-        pass
 
     def info(self):
         """Returns a dictionary of layout information"""
@@ -121,7 +117,6 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         the window to its internal datastructures, without mapping or
         configuring.
         """
-        pass
 
     @abstractmethod
     def remove(self, client):
@@ -133,7 +128,6 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
 
         Returns the "next" window that should gain focus or None.
         """
-        pass
 
     @abstractmethod
     def configure(self, client, screen_rect):
@@ -145,7 +139,6 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
               `.place()` method.
             - Call either `.hide()` or `.unhide()` on the window.
         """
-        pass
 
     @abstractmethod
     def focus_first(self):
@@ -155,7 +148,6 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
             - Return the first client in Layout, if any.
             - Not focus the client itself, this is done by caller.
         """
-        pass
 
     @abstractmethod
     def focus_last(self):
@@ -165,7 +157,6 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
             - Return the last client in Layout, if any.
             - Not focus the client itself, this is done by caller.
         """
-        pass
 
     @abstractmethod
     def focus_next(self, win):
@@ -185,7 +176,6 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         win:
             The currently focused client.
         """
-        pass
 
     @abstractmethod
     def focus_previous(self, win):
@@ -205,7 +195,6 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         win:
             The currently focused client.
         """
-        pass
 
     @abstractmethod
     def cmd_next(self):

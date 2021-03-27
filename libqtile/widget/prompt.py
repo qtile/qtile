@@ -64,7 +64,6 @@ class AbstractCompleter(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def complete(self, txt: str) -> str:
         """Perform the requested completion on the given text"""
-        pass  # pragma: no cover
 
 
 class NullCompleter(AbstractCompleter):

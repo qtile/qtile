@@ -189,7 +189,6 @@ class _Widget(CommandObject, configurable.Configurable):
     def timer_setup(self):
         """ This is called exactly once, after the widget has been configured
         and timers are available to be set up. """
-        pass
 
     def _configure(self, qtile, bar):
         self.qtile = qtile
@@ -214,7 +213,6 @@ class _Widget(CommandObject, configurable.Configurable):
             wish to initialise the relevant code (e.g. connections to dbus
             using dbus_next) here.
         """
-        pass
 
     def finalize(self):
         if hasattr(self, 'layout') and self.layout:
