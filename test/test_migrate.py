@@ -73,15 +73,15 @@ def test_window_name_change():
 
 def test_libqtile_command_graph():
     orig = textwrap.dedent("""
-        from libqtile.command_graph import CommandObject
+        from libqtile.command_graph import CommandGraphRoot
 
-        o = CommandObject()
+        o = CommandGraphRoot()
     """)
 
     expected = textwrap.dedent("""
-        from libqtile.command.graph import CommandObject
+        from libqtile.command.graph import CommandGraphRoot
 
-        o = CommandObject()
+        o = CommandGraphRoot()
     """)
 
     check_migrate(orig, expected)
@@ -105,14 +105,14 @@ def test_tile_master_windows():
 
 def test_threaded_poll_text():
     orig = textwrap.dedent("""
-        from libqtile.widget import ThreadedPollText
+        from libqtile.widget.base import ThreadedPollText
 
         class MyWidget(ThreadedPollText):
             pass
     """)
 
     expected = textwrap.dedent("""
-        from libqtile.widget import ThreadPoolText
+        from libqtile.widget.base import ThreadPoolText
 
         class MyWidget(ThreadPoolText):
             pass
@@ -126,14 +126,14 @@ def test_pacman():
         from libqtile import bar
         from libqtile.widget import Pacman
 
-        bar.Bar([Pacman()])
+        bar.Bar([Pacman()], 30)
     """)
 
     expected = textwrap.dedent("""
         from libqtile import bar
         from libqtile.widget import CheckUpdates
 
-        bar.Bar([CheckUpdates()])
+        bar.Bar([CheckUpdates()], 30)
     """)
 
     check_migrate(orig, expected)
