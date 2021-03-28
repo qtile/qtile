@@ -16,6 +16,7 @@
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+import filecmp
 import os
 import os.path
 import shutil
@@ -98,10 +99,15 @@ def do_migrate(args):
         print("install it and try again")
         sys.exit(1)
 
-    shutil.copyfile(args.config, args.config+BACKUP_SUFFIX)
+    backup = args.config + BACKUP_SUFFIX
+    shutil.copyfile(args.config, backup)
 
     for m in MIGRATIONS:
         m(args.config).execute(interactive=args.interactive, write=True)
+
+    if filecmp.cmp(args.config, backup, shallow=False):
+        print("Config unchanged.")
+        os.remove(backup)
 
 
 def add_subcommand(subparsers, parents):

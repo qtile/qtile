@@ -27,12 +27,13 @@ def test_migrate_default_config_noop():
         default_config = os.path.join(os.path.dirname(__file__), '..', 'libqtile', 'resources', 'default_config.py')
         config_path = os.path.join(temp, "config.py")
         shutil.copyfile(default_config, config_path)
+
+        before = hash_file(config_path)
         run_qtile_migrate(config_path)
+        after = hash_file(config_path)
 
-        original = hash_file(config_path)
-        migrated = hash_file(config_path+BACKUP_SUFFIX)
-
-        assert original == migrated
+        assert before == after
+        assert not os.path.exists(config_path + BACKUP_SUFFIX)
 
 
 def read_file(p):
