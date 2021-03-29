@@ -60,6 +60,7 @@ class QtileState:
         for (group, layout, label) in self.groups:
             try:
                 qtile.groups_map[group].layout = layout
+                qtile.groups_map[group].label = label
             except KeyError:
                 qtile.add_group(group, layout, label=label)
 
