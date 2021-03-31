@@ -43,8 +43,8 @@ Getting involved
 .. toctree::
     :maxdepth: 1
 
-    manual/contributing
     manual/hacking
+    manual/contributing
 
 Miscellaneous
 =============
