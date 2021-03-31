@@ -62,5 +62,6 @@ Tips & Tricks
     :maxdepth: 1
 
     manual/howto/widget
+    manual/howto/git
 
 * :ref:`genindex`

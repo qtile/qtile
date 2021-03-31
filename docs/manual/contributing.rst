@@ -40,6 +40,10 @@ A more detailed page on creating widgets is available :ref:`here <widget-creatio
     Use a separate **git branch** to make rebasing easy. Ideally, you would
     ``git checkout -b <my_feature_branch_name>`` before starting your work.
 
+    See also: :ref:`using git <using-git>`.
+
+.. _submitting-a-pr:
+
 Submit a pull request
 ---------------------
 
@@ -113,6 +117,8 @@ Qtile session.
 For any Qtile-specific question on testing, feel free to ask on our `issue
 tracker <https://github.com/qtile/qtile/issues>`_ or on IRC (#qtile on
 irc.oftc.net).
+
+.. _running-tests-locally:
 
 Running tests locally
 ---------------------
