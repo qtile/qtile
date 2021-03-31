@@ -25,13 +25,20 @@ has two qualities:
 
 Ensure to include any appropriate log entries from
 ``~/.local/share/qtile/qtile.log`` and/or ``~/.xsession-errors``!
+Sometimes, an ``xtrace`` is requested. If that is the case, refer to
+:ref:`capturing an xtrace <capturing-an-xtrace>`.
+
 
 Writing code
 ============
 
 To get started writing code for Qtile, check out our guide to :ref:`hacking`.
-
 A more detailed page on creating widgets is available :ref:`here <widget-creation>`.
+
+.. important::
+
+    Use a separate **git branch** to make rebasing easy. Ideally, you would
+    ``git checkout -b <my_feature_branch_name>`` before starting your work.
 
 Submit a pull request
 ---------------------
@@ -48,7 +55,39 @@ to our `issue tracker <https://github.com/qtile/qtile/issues>`_ on GitHub.
 
     * **Code** that conforms to PEP8.
     * **Unit tests** that pass locally and in our CI environment (More below).
+      *Please add unit tests* to ensure that your code works and stays working!
     * **Documentation** updates on an as needed basis.
+    * A ``qtile migrate`` **migration** is required for config-breaking changes.
+      See `migrate.py <https://github.com/qtile/qtile/blob/libqtile/scripts/migrate.py>`_
+      for examples and consult the `bowler documentation <https://pybowler.io>`_
+      for detailed help and documentation.
+    * **Code** that does not include *unrelated changes*. Examples for this are
+      formatting changes, replacing quotes or whitespace in other parts of the
+      code or "fixing" linter warnings popping up in your editor on existing
+      code. *Do not include anything like the above!*
+    * **Widgets** don't need to catch their own exceptions, or introduce their
+      own polling infrastructure. The code in ``libqtile.widget.base.*`` does
+      all of this. Your widget should generally only include whatever
+      parsing/rendering code is necessary, any other changes should go at the
+      framework level. Make sure to double-check that you are not
+      re-implementing parts of ``libqtile.widget.base``.
+    * **Commit messages** are more important that Github PR notes, since this is
+      what people see when they are spelunking via ``git blame``. Please include
+      all relevant detail in the actual git commit message (things like exact
+      stack traces, copy/pastes of discussion in IRC/mailing lists, links to
+      specifications or other API docs are all good). If your PR fixes a Github
+      issue, it might also be wise to link to it with ``#1234`` in the commit
+      message.
+    * PRs with **multiple commits** should not introduce code in one patch to
+      then change it in a later patch. Please do a patch-by-patch review of your
+      PR, and make sure each commit passes CI and makes logical sense on its
+      own. In other words: *do* introduce your feature in one commit and maybe
+      add the tests and documentation in a seperate commit. *Don't* push commits
+      that partially implement a feature and are basically broken.
+
+.. note:: Others might ban *force-pushes*, we allow them and prefer them over
+   incomplete commits or commits that have a bad and meaningless commit
+   description.
 
 Feel free to add your contribution (no matter how small) to the appropriate
 place in the CHANGELOG as well!

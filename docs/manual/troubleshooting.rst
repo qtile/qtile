@@ -33,6 +33,8 @@ traceback of an error to the log. By sticking these amongst your changes you
 can look more closely at the effects of any changes you made to Qtile's
 internals.
 
+.. _capturing-an-xtrace:
+
 Capturing an ``xtrace``
 =======================
 
