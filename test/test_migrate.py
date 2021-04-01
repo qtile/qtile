@@ -5,6 +5,8 @@ import subprocess
 import tempfile
 import textwrap
 
+import pytest
+
 from libqtile.scripts.migrate import BACKUP_SUFFIX
 from test.test_check import have_mypy, run_qtile_check
 
@@ -140,3 +142,28 @@ def test_pacman():
     """)
 
     check_migrate(orig, expected)
+
+
+def test_main():
+    orig = textwrap.dedent("""
+        def main(qtile):
+            qtile.do_something()
+    """)
+
+    expected = textwrap.dedent("""
+        from libqtile import hook, qtile
+        @hook.subscribe.startup
+        def main():
+            qtile.do_something()
+    """)
+
+    check_migrate(orig, expected)
+
+    noop = textwrap.dedent("""
+        from libqtile.hook import subscribe
+        @subscribe.startup
+        def main():
+            pass
+    """)
+    with pytest.raises(FileNotFoundError):
+        check_migrate(noop, noop)
