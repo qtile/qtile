@@ -27,16 +27,18 @@ Installing From Source
 First, you need to install all of Qtile's dependencies (although some are
 optional/not needed depending on your Python version, as noted below).
 
-All of Qtile's supported versions of python can be found in the yml files Here_.
+We aim to always support the last three versions of CPython, the reference
+Python interpreter. We usually support the latest stable version of PyPy_ as
+well. You can check the versions and interpreters we currently run our test
+suite against in our `tox configuration file`_.
+
 There are not many differences between versions aside from python features you
 may or may not be able to use in your config. PyPy should be faster at runtime
 than any corresponding CPython version under most circumstances, especially for
 bits of python code that are run many times. CPython should start up faster than
 PyPy and has better compatibility for external libraries.
 
-For more information on PyPY, see PyPy_.
-
-.. _Here: https://github.com/qtile/qtile/tree/master/.github/workflows
+.. _`tox configuration file`: https://github.com/qtile/qtile/blob/master/tox.ini
 .. _PyPy: https://www.pypy.org/
 
 
