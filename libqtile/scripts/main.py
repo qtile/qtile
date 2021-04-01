@@ -59,3 +59,7 @@ def main():
         print("Did you mean:")
         print(" ".join(sys.argv + ['start']))
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
