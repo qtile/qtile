@@ -189,3 +189,19 @@ def test_new_at_current_to_new_client_position():
     """)
 
     check_migrate(orig, expected)
+
+
+def test_textbox_padding():
+    orig = textwrap.dedent("""
+        from libqtile import bar, widget
+
+        bar.Bar([widget.TextBox("Testing Widget", padding=10)])
+    """)
+
+    expected = textwrap.dedent("""
+        from libqtile import bar, widget
+
+        bar.Bar([widget.TextBox("Testing Widget", padding_x=10)])
+    """)
+
+    check_migrate(orig, expected)

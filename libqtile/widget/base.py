@@ -78,6 +78,47 @@ ORIENTATION_VERTICAL = _Orientations(2, 'vertical only')
 ORIENTATION_BOTH = _Orientations(3, 'horizontal and vertical')
 
 
+# these two classes below look SUSPICIOUSLY similar
+
+
+class PaddingMixin(configurable.Configurable):
+    """Mixin that provides padding(_x|_y|)
+
+    To use it, subclass and add this to __init__:
+
+        self.add_defaults(base.PaddingMixin.defaults)
+    """
+
+    defaults = [
+        ("padding", 3, "Padding inside the box"),
+        ("padding_x", None, "X Padding. Overrides 'padding' if set"),
+        ("padding_y", None, "Y Padding. Overrides 'padding' if set"),
+    ]  # type: List[Tuple[str, Any, str]]
+
+    padding_x = configurable.ExtraFallback('padding_x', 'padding')
+    padding_y = configurable.ExtraFallback('padding_y', 'padding')
+    _padding_x = None
+    _padding_y = None
+
+
+class MarginMixin(configurable.Configurable):
+    """Mixin that provides margin(_x|_y|)
+
+    To use it, subclass and add this to __init__:
+
+        self.add_defaults(base.MarginMixin.defaults)
+    """
+
+    defaults = [
+        ("margin", 3, "Margin inside the box"),
+        ("margin_x", None, "X Margin. Overrides 'margin' if set"),
+        ("margin_y", None, "Y Margin. Overrides 'margin' if set"),
+    ]  # type: List[Tuple[str, Any, str]]
+
+    margin_x = configurable.ExtraFallback('margin_x', 'margin')
+    margin_y = configurable.ExtraFallback('margin_y', 'margin')
+
+
 class _Widget(CommandObject, configurable.Configurable):
     """Base Widget class
 
@@ -325,7 +366,7 @@ class _Widget(CommandObject, configurable.Configurable):
 UNSPECIFIED = bar.Obj("UNSPECIFIED")
 
 
-class _TextBox(_Widget):
+class _TextBox(_Widget, PaddingMixin):
     """
         Base class for widgets that are just boxes containing text.
     """
@@ -333,7 +374,6 @@ class _TextBox(_Widget):
     defaults = [
         ("font", "sans", "Default font"),
         ("fontsize", None, "Font size. Calculated if None."),
-        ("padding", None, "Padding. Calculated if None."),
         ("foreground", "ffffff", "Foreground colour"),
         (
             "fontshadow",
@@ -350,6 +390,7 @@ class _TextBox(_Widget):
         _Widget.__init__(self, width, **config)
         self._text = text
         self.add_defaults(_TextBox.defaults)
+        self.add_defaults(PaddingMixin.defaults)
 
     @property
     def text(self):
@@ -397,10 +438,17 @@ class _TextBox(_Widget):
 
     @property
     def actual_padding(self):
-        if self.padding is None:
+        if self.padding_x is None:
             return self.fontsize / 2
         else:
-            return self.padding
+            return self.padding_x
+
+    @property
+    def vertical_padding(self):
+        if self.padding_y is None:
+            return int(self.bar.height / 2.0 - self.layout.height / 2.0) + 1
+        else:
+            return self.padding_y
 
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
@@ -436,7 +484,7 @@ class _TextBox(_Widget):
         self.drawer.clear(self.background or self.bar.background)
         self.layout.draw(
             self.actual_padding or 0,
-            int(self.bar.height / 2.0 - self.layout.height / 2.0) + 1
+            self.vertical_padding,
         )
         self.drawer.draw(offsetx=self.offsetx, width=self.width)
 
@@ -574,44 +622,6 @@ class ThreadPoolText(_TextBox):
 
     def poll(self):
         pass
-
-# these two classes below look SUSPICIOUSLY similar
-
-
-class PaddingMixin(configurable.Configurable):
-    """Mixin that provides padding(_x|_y|)
-
-    To use it, subclass and add this to __init__:
-
-        self.add_defaults(base.PaddingMixin.defaults)
-    """
-
-    defaults = [
-        ("padding", 3, "Padding inside the box"),
-        ("padding_x", None, "X Padding. Overrides 'padding' if set"),
-        ("padding_y", None, "Y Padding. Overrides 'padding' if set"),
-    ]  # type: List[Tuple[str, Any, str]]
-
-    padding_x = configurable.ExtraFallback('padding_x', 'padding')
-    padding_y = configurable.ExtraFallback('padding_y', 'padding')
-
-
-class MarginMixin(configurable.Configurable):
-    """Mixin that provides margin(_x|_y|)
-
-    To use it, subclass and add this to __init__:
-
-        self.add_defaults(base.MarginMixin.defaults)
-    """
-
-    defaults = [
-        ("margin", 3, "Margin inside the box"),
-        ("margin_x", None, "X Margin. Overrides 'margin' if set"),
-        ("margin_y", None, "Y Margin. Overrides 'margin' if set"),
-    ]  # type: List[Tuple[str, Any, str]]
-
-    margin_x = configurable.ExtraFallback('margin_x', 'margin')
-    margin_y = configurable.ExtraFallback('margin_y', 'margin')
 
 
 class Mirror(_Widget):

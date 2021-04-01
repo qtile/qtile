@@ -17,10 +17,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 import filecmp
+import inspect
 import os
 import os.path
 import shutil
 import sys
+
+import libqtile.widget
+from libqtile.widget.base import _TextBox
 
 BACKUP_SUFFIX = ".migrate.bak"
 
@@ -115,6 +119,54 @@ def new_at_current_to_new_client_position(config):
     )
 
 
+def textbox_widget_padding():
+    """
+    Adding padding mixin to _TextBox means configs need to
+    be updated. "padding" should just impact left/right padding
+    so needs to be replaced with "padding_x" to allow vertical
+    padding to be adjusted independently.
+    """
+    def update_padding(ln, cap, fn):
+        for c in cap.get("class_arguments"):
+            for leaf in c.leaves():
+                if leaf.value == "padding":
+                    leaf.value = "padding_x"
+
+    migrations = []
+
+    textwidgets = [getattr(libqtile.widget, w) for w in libqtile.widget.__all__]
+    textwidgets = [widget.__name__ for widget in textwidgets if inspect.isclass(widget) and issubclass(widget, _TextBox)]
+
+    for widget in textwidgets:
+
+        # Custom selector to match widget.WidgetName and WidgetName instances
+        selector = r"""
+            class_call=power<
+                class_name='{widget}'
+                trailer< '(' class_arguments=any* ')' >
+            >
+            |
+            class_call=power<
+                'widget'
+                trailer< '.' '{widget}' >*
+                trailer< '(' class_arguments=any* ')' >
+                any* 
+            >
+        """.format(widget=widget)
+
+
+        def f(config, selector=selector, widget=widget):
+            return (
+                bowler.Query(config)
+                .select(selector)
+                .is_call()
+                .modify(update_padding)
+            )
+        migrations.append(f)
+
+    return migrations
+
+
 MIGRATIONS = [
     client_name_updated,
     tile_master_windows_rename,
@@ -140,6 +192,8 @@ for (fro, to) in MODULE_RENAMES:
             .rename(to)
         )
     MIGRATIONS.append(f)
+
+MIGRATIONS.extend(textbox_widget_padding())
 
 
 def do_migrate(args):
