@@ -32,10 +32,10 @@ Python interpreter. We usually support the latest stable version of PyPy_ as
 well. You can check the versions and interpreters we currently run our test
 suite against in our `tox configuration file`_.
 
-There are not many differences between versions aside from python features you
+There are not many differences between versions aside from Python features you
 may or may not be able to use in your config. PyPy should be faster at runtime
 than any corresponding CPython version under most circumstances, especially for
-bits of python code that are run many times. CPython should start up faster than
+bits of Python code that are run many times. CPython should start up faster than
 PyPy and has better compatibility for external libraries.
 
 .. _`tox configuration file`: https://github.com/qtile/qtile/blob/master/tox.ini

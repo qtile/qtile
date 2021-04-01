@@ -76,7 +76,7 @@ Configuration variables
 =======================
 
 A Qtile configuration consists of a file with a bunch of variables in it, which
-qtile imports and then runs as a python file to derive its final configuration.
+qtile imports and then runs as a Python file to derive its final configuration.
 The documentation below describes the most common configuration variables; more
 advanced configuration can be found in the `qtile-examples
 <https://github.com/qtile/qtile-examples>`_ repository, which includes a number
