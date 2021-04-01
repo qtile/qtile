@@ -73,8 +73,8 @@ class Qtile(CommandObject):
         self._state = state
         self.socket_path = socket_path
 
-        self._drag: Optional[Drag] = None
-        self.mouse_map: Dict[int, List[Click]] = {}
+        self._drag: Optional[Tuple] = None
+        self.mouse_map: Dict[int, List[Union[Click, Drag]]] = {}
         self.mouse_position = (0, 0)
 
         self.windows_map: Dict[int, window._Window] = {}

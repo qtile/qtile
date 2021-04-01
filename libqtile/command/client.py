@@ -27,6 +27,8 @@ that interacts with qtile objects, it should favor using the command graph
 clients to do this interaction.
 """
 
+from __future__ import annotations
+
 from typing import Any, List, Optional, Union
 
 from libqtile.command.base import SelectError
@@ -64,10 +66,7 @@ class CommandClient:
         if command is None:
             command = IPCCommandInterface(Client(find_sockfile()))
         self._command = command
-        if current_node is None:
-            self._current_node = CommandGraphRoot()  # type: GraphType
-        else:
-            self._current_node = current_node
+        self._current_node = current_node if current_node is not None else CommandGraphRoot()
 
     def __call__(self, *args, **kwargs) -> Any:
         """When the client has navigated to a command, execute it"""
@@ -76,7 +75,7 @@ class CommandClient:
 
         return self._command.execute(self._current_node, args, kwargs)
 
-    def navigate(self, name: str, selector: Optional[str]) -> "CommandClient":
+    def navigate(self, name: str, selector: Optional[str]) -> CommandClient:
         """Resolve the given object in the command graph
 
         Parameters
@@ -104,7 +103,7 @@ class CommandClient:
         next_node = self._current_node.navigate(name, selector)
         return self.__class__(self._command, current_node=next_node)
 
-    def call(self, name: str) -> "CommandClient":
+    def call(self, name: str) -> CommandClient:
         """Resolve the call into the command graph
 
         Parameters
@@ -135,12 +134,12 @@ class CommandClient:
         return self._current_node.children
 
     @property
-    def root(self) -> "CommandClient":
+    def root(self) -> CommandClient:
         """Get the root of the command graph"""
         return self.__class__(self._command)
 
     @property
-    def parent(self) -> "CommandClient":
+    def parent(self) -> CommandClient:
         """Get the parent of the current client"""
         if self._current_node.parent is None:
             raise SelectError("", "", self._current_node.selectors)
@@ -171,10 +170,7 @@ class InteractiveCommandClient:
         if command is None:
             command = IPCCommandInterface(Client(find_sockfile()))
         self._command = command
-        if current_node is None:
-            self._current_node = CommandGraphRoot()  # type: GraphType
-        else:
-            self._current_node = current_node
+        self._current_node = current_node if current_node is not None else CommandGraphRoot()
 
     def __call__(self, *args, **kwargs) -> Any:
         """When the client has navigated to a command, execute it"""
@@ -183,7 +179,7 @@ class InteractiveCommandClient:
 
         return self._command.execute(self._current_node, args, kwargs)
 
-    def __getattr__(self, name: str) -> "InteractiveCommandClient":
+    def __getattr__(self, name: str) -> InteractiveCommandClient:
         """Get the child element of the currently selected object
 
         Resolve the element specified by the given name, either the child
@@ -216,7 +212,7 @@ class InteractiveCommandClient:
         next_node = self._current_node.navigate(name, None)
         return self.__class__(self._command, current_node=next_node)
 
-    def __getitem__(self, name: Union[str, int]) -> "InteractiveCommandClient":
+    def __getitem__(self, name: Union[str, int]) -> InteractiveCommandClient:
         """Get the selected element of the currently selected object
 
         From the current command graph object, select the instance with the

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from libqtile.widget._pulse_audio import (  # type: ignore # otherwise mypy complains
+from libqtile.widget._pulse_audio import (
     ffi,
     lib,
 )
