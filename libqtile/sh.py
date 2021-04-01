@@ -23,7 +23,6 @@
 
 import fcntl
 import inspect
-import pprint
 import re
 import readline
 import struct
@@ -344,7 +343,4 @@ class QSh:
                 continue
 
             val = self.process_line(line)
-            if isinstance(val, str):
-                print(val)
-            elif val:
-                pprint.pprint(val)
+            print(val)

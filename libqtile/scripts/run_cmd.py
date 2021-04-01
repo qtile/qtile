@@ -43,13 +43,11 @@ def run_cmd(opts) -> None:
     rule_args = {"float": opts.float, "intrusive": opts.intrusive,
                  "group": opts.group, "break_on_match": not opts.dont_break}
 
-    cmd = root.navigate("add_rule", None)
-    assert isinstance(cmd, graph.CommandGraphCall)
+    cmd = root.call("add_rule")
     _, rule_id = client.send((root.selectors, cmd.name, (match_args, rule_args), {}))
 
-    def remove_rule():
-        cmd = root.navigate("remove_rule", None)
-        assert isinstance(cmd, graph.CommandGraphCall)
+    def remove_rule() -> None:
+        cmd = root.call("remove_rule")
         client.send((root.selectors, cmd.name, (rule_id,), {}))
 
     atexit.register(remove_rule)

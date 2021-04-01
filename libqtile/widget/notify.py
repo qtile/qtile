@@ -30,7 +30,7 @@
 from os import path
 
 from libqtile import bar, pangocffi, utils
-from libqtile.notify import notifier  # type: ignore
+from libqtile.notify import notifier
 from libqtile.widget import base
 
 

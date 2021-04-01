@@ -22,6 +22,8 @@
 The objects in the command graph and command resolution on the objects
 """
 
+from __future__ import annotations
+
 import abc
 import inspect
 import traceback
@@ -58,7 +60,7 @@ class CommandObject(metaclass=abc.ABCMeta):
     (c.f. docstring for `.items()` and `.select()`).
     """
 
-    def select(self, selectors: List[SelectorType]) -> "CommandObject":
+    def select(self, selectors: List[SelectorType]) -> CommandObject:
         """Return a selected object
 
         Recursively finds an object specified by a list of `(name, selector)`
@@ -84,7 +86,7 @@ class CommandObject(metaclass=abc.ABCMeta):
                 raise SelectError("", name, selectors)
         return obj
 
-    def items(self, name: str) -> Tuple[bool, List[str]]:
+    def items(self, name: str) -> Tuple[bool, Optional[List[str]]]:
         """Build a list of contained items for the given item class
 
         Returns a tuple `(root, items)` for the specified item class, where:
@@ -99,11 +101,11 @@ class CommandObject(metaclass=abc.ABCMeta):
         if ret is None:
             # Not finding information for a particular item class is OK here;
             # we don't expect layouts to have a window, etc.
-            return False, []
+            return False, None
         return ret
 
     @abc.abstractmethod
-    def _items(self, name) -> Tuple[bool, List[str]]:
+    def _items(self, name) -> Optional[Tuple[bool, List[str]]]:
         """Generate the items for a given
 
         Same return as `.items()`. Return `None` if name is not a valid item
@@ -111,7 +113,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def _select(self, name: str, sel: Optional[Union[str, int]]) -> "CommandObject":
+    def _select(self, name: str, sel: Optional[Union[str, int]]) -> CommandObject:
         """Select the given item of the given item class
 
         This method is called with the following guarantees:
@@ -151,7 +153,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         """
         return self.commands
 
-    def cmd_items(self, name) -> Tuple[bool, List[str]]:
+    def cmd_items(self, name) -> Tuple[bool, Optional[List[str]]]:
         """Returns a list of contained items for the specified name
 
         Used by __qsh__ to allow navigation of the object graph.
