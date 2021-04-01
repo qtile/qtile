@@ -31,12 +31,10 @@ import sys
 import textwrap
 from typing import List
 
+from libqtile.command.base import CommandError, CommandException
 from libqtile.command.client import InteractiveCommandClient
-from libqtile.command.interface import (
-    CommandError,
-    CommandException,
-    IPCCommandInterface,
-)
+from libqtile.command.graph import CommandGraphRoot
+from libqtile.command.interface import IPCCommandInterface
 from libqtile.ipc import Client, find_sockfile
 
 
@@ -158,8 +156,8 @@ def run_function(client: InteractiveCommandClient, funcname: str, args: List[str
 
 def print_base_objects() -> None:
     """Prints access objects of Client, use cmd for commands."""
-    actions = ["-o cmd", "-o window", "-o layout", "-o group", "-o bar",
-               "-o screen"]
+    root = CommandGraphRoot()
+    actions = ["-o cmd"] + [f"-o {key}" for key in root.children]
     print("Specify an object on which to execute command")
     print("\n".join(actions))
 
