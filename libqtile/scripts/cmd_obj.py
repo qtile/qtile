@@ -177,7 +177,7 @@ def cmd_obj(args) -> None:
         if args.function == "help":
             print_commands("-o " + " ".join(args.obj_spec), obj)
         elif args.info:
-            print(get_formated_info(obj, args.function, args=True, short=False))
+            print(args.function + get_formated_info(obj, args.function, args=True, short=False))
         else:
             ret = run_function(obj, args.function, args.args)
             if ret is not None:
