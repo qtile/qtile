@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from libqtile.widget._pulse_audio import (
-    ffi,
-    lib,
-)
+from libqtile.widget._pulse_audio import ffi, lib
 from libqtile.widget.volume import Volume
 
 log = logging.getLogger(__name__)
