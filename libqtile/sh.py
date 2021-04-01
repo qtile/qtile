@@ -23,12 +23,13 @@
 
 import fcntl
 import inspect
+import pprint
 import re
 import readline
 import struct
 import sys
 import termios
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from libqtile.command import graph
 from libqtile.command.interface import (
@@ -295,7 +296,7 @@ class QSh:
     do_quit = do_exit
     do_q = do_exit
 
-    def process_line(self, line: str) -> str:
+    def process_line(self, line: str) -> Any:
         builtin_match = re.fullmatch(r"(?P<cmd>\w+)(?:\s+(?P<arg>\S+))?", line)
         if builtin_match:
             cmd = builtin_match.group("cmd")
@@ -343,4 +344,7 @@ class QSh:
                 continue
 
             val = self.process_line(line)
-            print(val)
+            if isinstance(val, str):
+                print(val)
+            elif val:
+                pprint.pprint(val)
