@@ -86,11 +86,13 @@ class CommandClient:
         """
         if name not in self.children:
             raise SelectError("Not valid child", name, self._current_node.selectors)
-        if selector is not None:
-            if self._command.has_item(self._current_node, name, selector):
+
+        normalized_selector = _normalize_item(name, selector) if selector is not None else None
+        if normalized_selector is not None:
+            if not self._command.has_item(self._current_node, name, normalized_selector):
                 raise SelectError("Item not available in object", name, self._current_node.selectors)
 
-        next_node = self._current_node.navigate(name, selector)
+        next_node = self._current_node.navigate(name, normalized_selector)
         return self.__class__(self._command, current_node=next_node)
 
     def call(self, name: str, *args, **kwargs) -> Any:
@@ -244,13 +246,17 @@ class InteractiveCommandClient:
         next_node = self._current_node.parent.navigate(self._current_node.object_type, name)
         return self.__class__(self._command, current_node=next_node)
 
-    def normalize_item(self, item: Union[str, int]) -> Union[str, int]:
+    def normalize_item(self, item: str) -> Union[str, int]:
         "Normalize the item according to Qtile._items()."
         object_type = self._current_node.object_type \
             if isinstance(self._current_node, CommandGraphObject) else None
-        if object_type in ["group", "widget", "bar"]:
-            return str(item)
-        elif object_type in ["layout", "window", "screen"]:
-            return int(item)
-        else:
-            return item
+        return _normalize_item(object_type, item)
+
+
+def _normalize_item(object_type: Optional[str], item: str) -> Union[str, int]:
+    if object_type in ["group", "widget", "bar"]:
+        return str(item)
+    elif object_type in ["layout", "window", "screen"]:
+        return int(item)
+    else:
+        return item

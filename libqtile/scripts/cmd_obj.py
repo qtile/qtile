@@ -26,19 +26,20 @@
 """
 
 import argparse
+import itertools
 import pprint
 import sys
 import textwrap
 from typing import List
 
-from libqtile.command.base import CommandError, CommandException
-from libqtile.command.client import InteractiveCommandClient
+from libqtile.command.base import CommandError, CommandException, SelectError
+from libqtile.command.client import CommandClient
 from libqtile.command.graph import CommandGraphRoot
 from libqtile.command.interface import IPCCommandInterface
 from libqtile.ipc import Client, find_sockfile
 
 
-def get_formated_info(obj: InteractiveCommandClient, cmd: str, args=True, short=True) -> str:
+def get_formated_info(obj: CommandClient, cmd: str, args=True, short=True) -> str:
     """Get documentation for command/function and format it.
 
     Returns:
@@ -51,104 +52,95 @@ def get_formated_info(obj: InteractiveCommandClient, cmd: str, args=True, short=
     line, the summary is constructed from doc[1] line.
     """
 
-    if hasattr(obj, "doc"):
-        doc = obj.doc(cmd).splitlines()
-    else:
-        doc = None
+    doc = obj.call("doc")(cmd).splitlines()
 
-    if doc is not None:
-        tdoc = doc[0]
-        doc_args = tdoc[tdoc.find("(") + 1:tdoc.find(")")].strip()
+    tdoc = doc[0]
+    doc_args = tdoc[tdoc.find("("):tdoc.find(")") + 1].strip()
 
-        short_description = doc[1] if len(doc) > 1 else ""
+    short_description = doc[1] if len(doc) > 1 else ""
 
-        if doc_args:  # return formatted args
-            doc_args = "({})".format(doc_args)
-    else:
+    if not args:
         doc_args = ""
-        short_description = ""
-
-    if args is False:
-        doc_args = ""
-    elif args and short:
-        doc_args = "*" if len(doc_args) > 1 else " "
+    elif short:
+        doc_args = " " if doc_args == "()" else "*"
 
     return (doc_args + " " + short_description).rstrip()
 
 
-def print_commands(prefix: str, obj: InteractiveCommandClient) -> None:
+def print_commands(prefix: str, obj: CommandClient) -> None:
     """Print available commands for given object."""
     prefix += " -f "
+
+    cmds = obj.call("commands")()
+
     output = []
-    max_cmd = 0  # max len of cmd for formatting
-
-    try:
-        cmds = obj.commands()
-    except AttributeError:
-        print("error: Sorry no commands in ", prefix)
-        sys.exit(1)
-    except CommandError:
-        print("error: Sorry no such object ", prefix)
-        sys.exit(1)
-
     for cmd in cmds:
         doc_args = get_formated_info(obj, cmd)
 
         pcmd = prefix + cmd
-        max_cmd = max(len(pcmd), max_cmd)
         output.append([pcmd, doc_args])
 
+    max_cmd = max(len(pcmd) for pcmd, _ in output)
+
     # Print formatted output
-    formating = "{:<%d}\t{}" % (max_cmd + 1)
+    formatting = "{:<%d}\t{}" % (max_cmd + 1)
     for line in output:
-        print(formating.format(line[0], line[1]))
+        print(formatting.format(line[0], line[1]))
 
 
-def get_object(client: InteractiveCommandClient, argv: List[str]) -> InteractiveCommandClient:
+def get_object(client: CommandClient, argv: List[str]) -> CommandClient:
     """
     Constructs a path to object and returns given object (if it exists).
     """
     if argv[0] == "cmd":
         argv = argv[1:]
 
-    # Generate full obj specification
-    for arg in argv:
-        try:
-            # check if it is an item
-            client = client[client.normalize_item(arg)]
+    # flag noting if we have consumed arg1 as the selector, eg screen[0]
+    parsed_next = False
+
+    for arg0, arg1 in itertools.zip_longest(argv, argv[1:]):
+        # previous argument was an item, skip here
+        if parsed_next:
+            parsed_next = False
             continue
-        except KeyError:
+
+        # check if it is an item
+        try:
+            client = client.navigate(arg0, arg1)
+            parsed_next = True
+            continue
+        except SelectError:
             pass
 
+        # check if it is an attr
         try:
-            # check if it is an attr
-            client = getattr(client, arg)
+            client = client.navigate(arg0, None)
             continue
-        except AttributeError:
+        except SelectError:
             pass
 
-        print("Specified object does not exist " + " ".join(argv))
+        print("Specified object does not exist: " + " ".join(argv))
         sys.exit(1)
 
     return client
 
 
-def run_function(client: InteractiveCommandClient, funcname: str, args: List[str]) -> str:
+def run_function(client: CommandClient, funcname: str, args: List[str]) -> str:
     "Run command with specified args on given object."
     try:
-        func = getattr(client, funcname)
-    except AttributeError:
+        func = client.call(funcname)
+    except SelectError:
         print("error: Sorry no function ", funcname)
         sys.exit(1)
 
     try:
         ret = func(*args)
-    except CommandError:
-        print("error: Sorry command '{}' cannot be found".format(funcname))
+    except CommandError as e:
+        print("error: Command '{}' returned error: {}".format(funcname, str(e)))
         sys.exit(1)
-    except CommandException:
-        print("error: Sorry cannot run function '{}' with arguments {}"
-              .format(funcname, args))
+    except CommandException as e:
+        print("error: Sorry cannot run function '{}' with arguments {}: {}"
+              .format(funcname, args, str(e)))
         sys.exit(1)
 
     return ret
@@ -169,7 +161,7 @@ def cmd_obj(args) -> None:
         sock_file = args.socket or find_sockfile()
         ipc_client = Client(sock_file)
         cmd_object = IPCCommandInterface(ipc_client)
-        cmd_client = InteractiveCommandClient(cmd_object)
+        cmd_client = CommandClient(cmd_object)
         obj = get_object(cmd_client, args.obj_spec)
 
         if args.function == "help":
