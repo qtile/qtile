@@ -28,8 +28,7 @@ from typing import Any
 try:
     from dbus_next.aio import MessageBus  # type: ignore
     from dbus_next.service import ServiceInterface  # type: ignore
-    from dbus_next.service import method
-    from dbus_next.service import signal
+    from dbus_next.service import method, signal
     has_dbus = True
 except ImportError:
     has_dbus = False
