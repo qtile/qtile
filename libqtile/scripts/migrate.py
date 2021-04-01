@@ -68,11 +68,33 @@ def pacman_to_checkupdates(config):
     )
 
 
+def hook_main_function(config):
+    def modify_main(node, capture, filename):
+        main = capture.get("function_def")
+        if main.prev_sibling:
+            for leaf in main.prev_sibling.leaves():
+                if "startup" == leaf.value:
+                    return
+        args = capture.get("function_arguments")
+        if args:
+            args[0].remove()
+            main.prefix += "from libqtile import hook, qtile\n"
+            main.prefix += "@hook.subscribe.startup\n"
+
+    return (
+        bowler.Query(config)
+        .select_function("main")
+        .is_def()
+        .modify(modify_main)
+    )
+
+
 MIGRATIONS = [
     client_name_updated,
     tile_master_windows_rename,
     threaded_poll_text_rename,
     pacman_to_checkupdates,
+    hook_main_function,
 ]
 
 
