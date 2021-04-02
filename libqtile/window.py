@@ -26,7 +26,7 @@ import xcffib.xproto
 from xcffib.xproto import EventMask, SetMode, StackMode
 
 from libqtile import hook, utils
-from libqtile.command.base import CommandError, CommandObject
+from libqtile.command.base import CommandError, CommandObject, ItemT
 from libqtile.log_utils import logger
 
 # ICCM Constants
@@ -576,7 +576,7 @@ class _Window(CommandObject):
         hook.fire("client_focus", self)
         return True
 
-    def _items(self, name):
+    def _items(self, name: str) -> ItemT:
         return None
 
     def _select(self, name, sel):
@@ -1234,13 +1234,14 @@ class Window(_Window):
             logger.info("Unknown window property: %s", name)
         return False
 
-    def _items(self, name):
+    def _items(self, name: str) -> ItemT:
         if name == "group":
-            return (True, None)
+            return True, []
         elif name == "layout":
-            return (True, list(range(len(self.group.layouts))))
-        elif name == "screen":
-            return (True, None)
+            return True, list(range(len(self.group.layouts)))
+        elif name == "screen" and self.group.screen is not None:
+            return True, []
+        return None
 
     def _select(self, name, sel):
         if name == "group":

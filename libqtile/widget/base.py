@@ -34,7 +34,7 @@ import subprocess
 from typing import Any, List, Tuple
 
 from libqtile import bar, configurable, confreader, drawer
-from libqtile.command.base import CommandError, CommandObject
+from libqtile.command.base import CommandError, CommandObject, ItemT
 from libqtile.log_utils import logger
 
 
@@ -257,9 +257,10 @@ class _Widget(CommandObject, configurable.Configurable):
             raise CommandError("No such widget: %s" % name)
         return w
 
-    def _items(self, name):
+    def _items(self, name: str) -> ItemT:
         if name == "bar":
-            return (True, None)
+            return True, []
+        return None
 
     def _select(self, name, sel):
         if name == "bar":

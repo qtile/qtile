@@ -21,10 +21,10 @@
 
 import copy
 from abc import ABCMeta, abstractmethod
-from typing import Any, List, Tuple  # noqa: F401
+from typing import Any, List, Tuple
 
 from libqtile import configurable
-from libqtile.command.base import CommandObject
+from libqtile.command.base import CommandObject, ItemT
 
 
 class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
@@ -74,11 +74,12 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         c.group = group
         return c
 
-    def _items(self, name):
-        if name == "screen":
-            return (True, None)
+    def _items(self, name: str) -> ItemT:
+        if name == "screen" and self.group.screen is not None:
+            return True, []
         elif name == "group":
-            return (True, None)
+            return True, []
+        return None
 
     def _select(self, name, sel):
         if name == "screen":
