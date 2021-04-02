@@ -21,7 +21,7 @@
 from typing import Union
 
 from libqtile import configurable, drawer, window
-from libqtile.command.base import CommandObject
+from libqtile.command.base import CommandObject, ItemT
 from libqtile.log_utils import logger
 
 
@@ -99,9 +99,10 @@ class Gap(CommandObject):
     def geometry(self):
         return (self.x, self.y, self.width, self.height)
 
-    def _items(self, name):
-        if name == "screen":
-            return (True, None)
+    def _items(self, name: str) -> ItemT:
+        if name == "screen" and self.screen is not None:
+            return True, []
+        return None
 
     def _select(self, name, sel):
         if name == "screen":

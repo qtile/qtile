@@ -34,14 +34,17 @@ import contextlib
 import os.path
 import sys
 import warnings
-from typing import Callable, List, Optional, Union
+from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
 import xcffib.xproto
 
 from libqtile import configurable, hook, utils, window
 from libqtile.bar import BarType
-from libqtile.command.base import CommandObject
+from libqtile.command.base import CommandObject, ItemT
 from libqtile.lazy import lazy
+
+if TYPE_CHECKING:
+    from libqtile.group import _Group
 
 
 class Key:
@@ -269,8 +272,8 @@ class Screen(CommandObject):
                  wallpaper: Optional[str] = None, wallpaper_mode: Optional[str] = None,
                  x: Optional[int] = None, y: Optional[int] = None, width: Optional[int] = None,
                  height: Optional[int] = None):
-        self.group = None
-        self.previous_group = None
+        self.group: Optional[_Group] = None
+        self.previous_group: Optional[_Group] = None
 
         self.top = top
         self.bottom = bottom
@@ -390,13 +393,14 @@ class Screen(CommandObject):
             group = self.previous_group
         self.set_group(group)
 
-    def _items(self, name):
-        if name == "layout":
-            return (True, list(range(len(self.group.layouts))))
-        elif name == "window":
-            return (True, [i.window.wid for i in self.group.windows])
+    def _items(self, name: str) -> ItemT:
+        if name == "layout" and self.group is not None:
+            return True, list(range(len(self.group.layouts)))
+        elif name == "window" and self.group is not None:
+            return True, [i.window.wid for i in self.group.windows]
         elif name == "bar":
-            return (False, [x.position for x in self.gaps])
+            return False, [x.position for x in self.gaps]
+        return None
 
     def _select(self, name, sel):
         if name == "layout":
