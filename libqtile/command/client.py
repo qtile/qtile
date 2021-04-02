@@ -46,7 +46,7 @@ from libqtile.ipc import Client, find_sockfile
 class CommandClient:
     """The object that resolves the commands"""
 
-    def __init__(self, command: CommandInterface = None, *, current_node: GraphType = None) -> None:
+    def __init__(self, command: CommandInterface = None, *, current_node: Optional[CommandGraphNode] = None) -> None:
         """A client that resolves calls through the command object interface
 
         Exposes a similar API to the command graph, but performs resolution of
@@ -68,13 +68,6 @@ class CommandClient:
         self._command = command
         self._current_node = current_node if current_node is not None else CommandGraphRoot()
 
-    def __call__(self, *args, **kwargs) -> Any:
-        """When the client has navigated to a command, execute it"""
-        if not isinstance(self._current_node, CommandGraphCall):
-            raise SelectError("Invalid call", "", self._current_node.selectors)
-
-        return self._command.execute(self._current_node, args, kwargs)
-
     def navigate(self, name: str, selector: Optional[str]) -> CommandClient:
         """Resolve the given object in the command graph
 
@@ -91,9 +84,6 @@ class CommandClient:
         CommandClient
             The client with the given command graph object resolved.
         """
-        if not isinstance(self._current_node, CommandGraphNode):
-            raise SelectError("Invalid navigation", "", self._current_node.selectors)
-
         if name not in self.children:
             raise SelectError("Not valid child", name, self._current_node.selectors)
         if selector is not None:
@@ -103,35 +93,39 @@ class CommandClient:
         next_node = self._current_node.navigate(name, selector)
         return self.__class__(self._command, current_node=next_node)
 
-    def call(self, name: str) -> CommandClient:
-        """Resolve the call into the command graph
+    def call(self, name: str, *args, **kwargs) -> Any:
+        """Resolve and invoke the call into the command graph
 
         Parameters
         ----------
         name : str
             The name of the command to resolve in the command graph.
+        args :
+            The arguments to pass into the call invocation.
+        kwargs :
+            The keyword arguments to pass into the call invocation.
 
         Returns
         -------
-        CommandClient
-            The client with the command resolved.
+        The output returned from the function call.
         """
-        if not isinstance(self._current_node, CommandGraphNode):
-            raise SelectError("Invalid navigation", "", self._current_node.selectors)
-
-        command_call = self._current_node.call("commands")
-        commands = self._command.execute(command_call, (), {})
-        if name not in commands:
+        if name not in self.commands:
             raise SelectError("Not valid child or command", name, self._current_node.selectors)
-        next_node = self._current_node.call(name)
-        return self.__class__(self._command, current_node=next_node)
+
+        call = self._current_node.call(name)
+
+        return self._command.execute(call, args, kwargs)
 
     @property
     def children(self) -> List[str]:
         """Get the children of the current location in the command graph"""
-        if isinstance(self._current_node, CommandGraphCall):
-            raise SelectError("No children of command graph call", "", self._current_node.selectors)
         return self._current_node.children
+
+    @property
+    def commands(self) -> List[str]:
+        """Get the commands available on the current object"""
+        command_call = self._current_node.call("commands")
+        return self._command.execute(command_call, (), {})
 
     @property
     def root(self) -> CommandClient:
