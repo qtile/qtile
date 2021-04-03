@@ -52,7 +52,7 @@ def get_formated_info(obj: CommandClient, cmd: str, args=True, short=True) -> st
     line, the summary is constructed from doc[1] line.
     """
 
-    doc = obj.call("doc")(cmd).splitlines()
+    doc = obj.call("doc", cmd).splitlines()
 
     tdoc = doc[0]
     doc_args = tdoc[tdoc.find("("):tdoc.find(")") + 1].strip()
@@ -71,7 +71,7 @@ def print_commands(prefix: str, obj: CommandClient) -> None:
     """Print available commands for given object."""
     prefix += " -f "
 
-    cmds = obj.call("commands")()
+    cmds = obj.call("commands")
 
     output = []
     for cmd in cmds:
@@ -128,13 +128,10 @@ def get_object(client: CommandClient, argv: List[str]) -> CommandClient:
 def run_function(client: CommandClient, funcname: str, args: List[str]) -> str:
     "Run command with specified args on given object."
     try:
-        func = client.call(funcname)
+        ret = client.call(funcname, *args)
     except SelectError:
         print("error: Sorry no function ", funcname)
         sys.exit(1)
-
-    try:
-        ret = func(*args)
     except CommandError as e:
         print("error: Command '{}' returned error: {}".format(funcname, str(e)))
         sys.exit(1)
