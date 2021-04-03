@@ -29,7 +29,7 @@ clients to do this interaction.
 
 from __future__ import annotations
 
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from libqtile.command.base import SelectError
 from libqtile.command.graph import (
@@ -39,7 +39,11 @@ from libqtile.command.graph import (
     CommandGraphRoot,
     GraphType,
 )
-from libqtile.command.interface import CommandInterface, IPCCommandInterface
+from libqtile.command.interface import (
+    CommandInterface,
+    IPCCommandInterface,
+    SelectorType,
+)
 from libqtile.ipc import Client, find_sockfile
 
 
@@ -124,10 +128,19 @@ class CommandClient:
         return self._current_node.children
 
     @property
+    def selectors(self) -> List[SelectorType]:
+        return self._current_node.selectors
+
+    @property
     def commands(self) -> List[str]:
         """Get the commands available on the current object"""
         command_call = self._current_node.call("commands")
         return self._command.execute(command_call, (), {})
+
+    def items(self, name: str) -> Tuple[bool, List[Union[str, int]]]:
+        """Get the available items"""
+        items_call = self._current_node.call("items")
+        return self._command.execute(items_call, (name,), {})
 
     @property
     def root(self) -> CommandClient:
