@@ -195,13 +195,15 @@ def test_textbox_padding():
     orig = textwrap.dedent("""
         from libqtile import bar, widget
 
-        bar.Bar([widget.TextBox("Testing Widget", padding=10)])
+        bar.Bar([widget.TextBox("Testing Widget", padding=10),
+                 widget.Sep(padding=10)], 30)
     """)
 
     expected = textwrap.dedent("""
         from libqtile import bar, widget
 
-        bar.Bar([widget.TextBox("Testing Widget", padding_x=10)])
+        bar.Bar([widget.TextBox("Testing Widget", padding_x=10),
+                 widget.Sep(padding=10)], 30)
     """)
 
     check_migrate(orig, expected)

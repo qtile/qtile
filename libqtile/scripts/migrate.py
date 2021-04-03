@@ -135,7 +135,8 @@ def textbox_widget_padding():
     migrations = []
 
     textwidgets = [getattr(libqtile.widget, w) for w in libqtile.widget.__all__]
-    textwidgets = [widget.__name__ for widget in textwidgets if inspect.isclass(widget) and issubclass(widget, _TextBox)]
+    textwidgets = [widget.__name__ for widget in textwidgets if (inspect.isclass(widget)
+                                                                 and issubclass(widget, _TextBox))]
 
     for widget in textwidgets:
 
@@ -150,10 +151,9 @@ def textbox_widget_padding():
                 'widget'
                 trailer< '.' '{widget}' >*
                 trailer< '(' class_arguments=any* ')' >
-                any* 
+                any*
             >
         """.format(widget=widget)
-
 
         def f(config, selector=selector, widget=widget):
             return (
