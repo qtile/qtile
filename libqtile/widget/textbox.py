@@ -36,7 +36,6 @@ class TextBox(base._TextBox):
         ("font", "sans", "Text font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("fontshadow", None, "font shadow color, default is None(no shadow)"),
-        ("padding", None, "Padding left and right. Calculated if None."),
         ("foreground", "#ffffff", "Foreground colour."),
     ]  # type: List[Tuple[str, Any, str]]
 

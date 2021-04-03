@@ -57,7 +57,6 @@ class Volume(base._TextBox):
         ("cardid", None, "Card Id"),
         ("device", "default", "Device Name"),
         ("channel", "Master", "Channel"),
-        ("padding", 3, "Padding left and right. Calculated if None."),
         ("update_interval", 0.2, "Update time in seconds."),
         ("theme_path", None, "Path of the icons"),
         ("emoji", False, "Use emoji to display volume states, only if ``theme_path`` is not set."

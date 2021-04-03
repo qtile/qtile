@@ -37,7 +37,7 @@ from libqtile import bar, hook
 from libqtile.widget import base
 
 
-class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
+class _GroupBase(base._TextBox, base.MarginMixin):
     defaults = [
         ("borderwidth", 3, "Current group border width"),
         ("center_aligned", True, "center-aligned group box"),
@@ -46,7 +46,6 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
     def __init__(self, **config):
         base._TextBox.__init__(self, width=bar.CALCULATED, **config)
         self.add_defaults(_GroupBase.defaults)
-        self.add_defaults(base.PaddingMixin.defaults)
         self.add_defaults(base.MarginMixin.defaults)
 
     def box_width(self, groups):

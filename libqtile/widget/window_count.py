@@ -31,7 +31,6 @@ class WindowCount(base._TextBox):
         ("font", "sans", "Text font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("fontshadow", None, "font shadow color, default is None(no shadow)"),
-        ("padding", None, "Padding left and right. Calculated if None."),
         ("foreground", "#ffffff", "Foreground colour."),
         ("text_format", "{num}", "Format for message"),
         ("show_zero", False, "Show window count when no windows")
