@@ -20,58 +20,58 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
+from pathlib import Path
 
 import pytest
 
 from libqtile import config, confreader, utils
 
-tests_dir = os.path.dirname(os.path.realpath(__file__))
+configs_dir = Path(__file__).resolve().parent / "configs"
+
+
+def load_config(name):
+    f = confreader.Config(configs_dir / name)
+    f.load()
+    return f
 
 
 def test_validate():
-    f = confreader.Config(os.path.join(tests_dir, "configs", "basic.py"))
-    f.load()
+    # bad key
+    f = load_config("basic.py")
     f.keys[0].key = "nonexistent"
     with pytest.raises(confreader.ConfigError):
         f.validate()
 
-    f.keys[0].key = "x"
-    f = confreader.Config(os.path.join(tests_dir, "configs", "basic.py"))
-    f.load()
+    # bad modifier
+    f = load_config("basic.py")
     f.keys[0].modifiers = ["nonexistent"]
     with pytest.raises(confreader.ConfigError):
         f.validate()
-    f.keys[0].modifiers = ["shift"]
-
-
-def test_syntaxerr():
-    f = confreader.Config(os.path.join(tests_dir, "configs", "syntaxerr.py"))
-    with pytest.raises(confreader.ConfigError):
-        f.load()
 
 
 def test_basic():
-    f = confreader.Config(os.path.join(tests_dir, "configs", "basic.py"))
-    f.load()
+    f = load_config("basic.py")
     assert f.keys
 
 
-def test_falls_back():
-    f = confreader.Config(os.path.join(tests_dir, "configs", "basic.py"))
-    f.load()
+def test_syntaxerr():
+    with pytest.raises(confreader.ConfigError):
+        load_config("syntaxerr.py")
 
+
+def test_falls_back():
+    f = load_config("basic.py")
     # We just care that it has a default, we don't actually care what the
     # default is; don't assert anything at all about the default in case
     # someone changes it down the road.
     assert hasattr(f, "follow_mouse_focus")
 
 
+def cmd(x):
+    return None
+
+
 def test_ezkey():
-
-    def cmd(x):
-        return None
-
     key = config.EzKey('M-A-S-a', cmd, cmd)
     modkey, altkey = (config.EzConfig.modifier_keys[i] for i in 'MA')
     assert key.modifiers == [modkey, altkey, 'shift']
@@ -97,10 +97,6 @@ def test_ezkey():
 
 
 def test_ezclick_ezdrag():
-
-    def cmd(x):
-        return None
-
     btn = config.EzClick('M-1', cmd)
     assert btn.button == 'Button1'
     assert btn.modifiers == [config.EzClick.modifier_keys['M']]
