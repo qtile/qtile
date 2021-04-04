@@ -55,7 +55,7 @@ def test_basic():
 
 
 def test_syntaxerr():
-    with pytest.raises(confreader.ConfigError):
+    with pytest.raises(SyntaxError):
         load_config("syntaxerr.py")
 
 
