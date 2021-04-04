@@ -22,8 +22,9 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import os
+import importlib
 import sys
+from pathlib import Path
 
 from libqtile.backend.x11 import core
 
@@ -89,17 +90,15 @@ class Config:
         if not self.file_path:
             return
 
-        name = os.path.splitext(os.path.basename(self.file_path))[0]
-
-        # Make sure we'll import the latest version of the config
-        try:
-            del sys.modules[name]
-        except KeyError:
-            pass
+        path = Path(self.file_path)
+        name = path.stem
+        sys.path.insert(0, path.parent.as_posix())
 
         try:
-            sys.path.insert(0, os.path.dirname(self.file_path))
-            config = __import__(name)  # noqa: F811
+            if name in sys.modules:
+                config = importlib.reload(sys.modules[name])
+            else:
+                config = importlib.import_module(name)
         except Exception:
             import traceback
 
