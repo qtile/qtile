@@ -53,7 +53,6 @@ class Config:
         ("layouts", "List[Layout]"),
         ("floating_layout", "Layout"),
         ("screens", "List[Screen]"),
-        ("main", "Any"),
         ("auto_fullscreen", "bool"),
         ("widget_defaults", "Dict[str, Any]"),
         ("extension_defaults", "Dict[str, Any]"),
