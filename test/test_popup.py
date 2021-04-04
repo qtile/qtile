@@ -33,6 +33,7 @@ def test_popup_focus(manager):
 
     # we have to add .conn so that Popup thinks this is libqtile.qtile
     manager.conn = xcbq.Connection(manager.display)
+    manager.current_screen = None
 
     try:
         popup = Popup(manager)

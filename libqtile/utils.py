@@ -194,9 +194,8 @@ def send_notification(title, message, urgent=False, timeout=10000, id=None):
     https://developer.gnome.org/notification-spec/
     """
     if not has_dbus:
-        logger.warning(
-            "dbus-next is not installed. Unable to send notifications."
-        )
+        from libqtile.popup import send_popup
+        send_popup(f"<b>{title}</b>\n{message}", timeout=timeout)
         return -1
 
     id = randint(10, 1000) if id is None else id

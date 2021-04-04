@@ -19,9 +19,13 @@
 # SOFTWARE.
 
 
+import asyncio
+
 from xcffib.xproto import StackMode
 
+import libqtile
 from libqtile import configurable, drawer, pangocffi, window
+from libqtile.log_utils import logger
 
 
 class Popup(configurable.Configurable):
@@ -29,25 +33,29 @@ class Popup(configurable.Configurable):
     This class can be used to create popup windows that display images and/or text.
     """
     defaults = [
-        ('opacity', 1.0, 'Opacity of notifications.'),
+        ('opacity', 1.0, 'Opacity of window.'),
         ('foreground', '#ffffff', 'Colour of text.'),
         ('background', '#111111', 'Background colour.'),
-        ('border', '#111111', 'Border colour.'),
-        ('border_width', 0, 'Line width of drawn borders.'),
+        ('border', '#ffffff', 'Border colour.'),
+        ('border_width', 1, 'Line width of drawn borders.'),
         ('corner_radius', None, 'Corner radius for round corners, or None.'),
         ('font', 'sans', 'Font used in notifications.'),
         ('font_size', 14, 'Size of font.'),
         ('fontshadow', None, 'Colour for text shadows, or None for no shadows.'),
-        ('horizontal_padding', 0, 'Padding at sides of text.'),
-        ('vertical_padding', 0, 'Padding at top and bottom of text.'),
+        ('horizontal_padding', 4, 'Padding at sides of text.'),
+        ('vertical_padding', 4, 'Padding at top and bottom of text.'),
         ('text_alignment', 'left', 'Text alignment: left, center or right.'),
         ('wrap', True, 'Whether to wrap text.'),
     ]
 
     def __init__(self, qtile, x=50, y=50, width=256, height=64, **config):
-        configurable.Configurable.__init__(self, **config)
+        configurable.Configurable.__init__(self, x=x, y=y, width=width, height=height, **config)
         self.add_defaults(Popup.defaults)
         self.qtile = qtile
+
+        if qtile.current_screen:
+            self.x += qtile.current_screen.x
+            self.y += qtile.current_screen.y
 
         win = qtile.conn.create_window(x, y, width, height)
         win.set_property("QTILE_INTERNAL", 1)
@@ -77,8 +85,6 @@ class Popup(configurable.Configurable):
         self.win.handle_KeyPress = self._handle_KeyPress
         self.win.handle_ButtonPress = self._handle_ButtonPress
 
-        self.x = self.win.x
-        self.y = self.win.y
         if not self.border_width:
             self.border = None
 
@@ -166,3 +172,23 @@ class Popup(configurable.Configurable):
 
     def kill(self):
         self.win.kill()
+
+
+def send_popup(message, timeout=10000, **config):
+    """Create a transient popup window to display some text."""
+    popup = Popup(libqtile.qtile, **config)
+    popup.win.handle_ButtonPress = lambda ev: popup.kill()
+    popup.clear()
+    popup.text = message
+    popup.draw_text()
+    popup.place()
+    popup.unhide()
+    popup.draw()
+
+    if timeout:
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            logger.debug("No running event loop: no timeout added to popup.")
+            return
+        loop.call_later(timeout / 1000, popup.kill)

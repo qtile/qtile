@@ -36,7 +36,7 @@ import xcffib.xinerama
 import xcffib.xproto
 
 import libqtile
-from libqtile import confreader, hook, ipc, utils, window
+from libqtile import hook, ipc, utils, window
 from libqtile.backend.x11 import xcbq
 from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandException, CommandObject
@@ -103,12 +103,9 @@ class Qtile(CommandObject):
         try:
             self.config.load()
             self.config.validate()
-        except Exception as e:
-            logger.exception('Error while reading config file (%s)', e)
-            self.config = confreader.Config()
-            from libqtile.widget import TextBox
-            widgets = self.config.screens[0].bottom.widgets
-            widgets.insert(0, TextBox('Config Err!'))
+        except Exception as error:
+            logger.exception('Error while reading config file (%s)', error)
+            send_notification("Configuration error", str(error.__context__))
 
         self.core.wmname = getattr(self.config, "wmname", "qtile")
 
