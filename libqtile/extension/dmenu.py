@@ -133,9 +133,6 @@ class DmenuRun(Dmenu):
         Dmenu.__init__(self, **config)
         self.add_defaults(DmenuRun.defaults)
 
-    def _configure(self, qtile):
-        Dmenu._configure(self, qtile)
-
 
 class J4DmenuDesktop(Dmenu):
     """

@@ -76,9 +76,6 @@ class RunCommand(_Extension):
         _Extension.__init__(self, **config)
         self.add_defaults(RunCommand.defaults)
 
-    def _configure(self, qtile):
-        _Extension._configure(self, qtile)
-
     def run(self):
         """
         An extension can inherit this class, define configured_command and use
