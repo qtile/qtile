@@ -55,9 +55,6 @@ class CommandSet(Dmenu):
         Dmenu.__init__(self, **config)
         self.add_defaults(CommandSet.defaults)
 
-    def _configure(self, qtile):
-        Dmenu._configure(self, qtile)
-
     def run(self):
         if not self.commands:
             return
