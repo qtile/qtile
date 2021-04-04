@@ -93,18 +93,10 @@ class Config:
         name = path.stem
         sys.path.insert(0, path.parent.as_posix())
 
-        try:
-            if name in sys.modules:
-                config = importlib.reload(sys.modules[name])
-            else:
-                config = importlib.import_module(name)
-        except Exception:
-            import traceback
-
-            from libqtile.log_utils import logger
-            logger.exception('Could not import config file %r', self.file_path)
-            tb = traceback.format_exc()
-            raise ConfigError(tb)
+        if name in sys.modules:
+            config = importlib.reload(sys.modules[name])
+        else:
+            config = importlib.import_module(name)
 
         self.update(**vars(config))
 
