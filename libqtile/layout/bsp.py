@@ -148,7 +148,6 @@ class Bsp(Layout):
         Key([mod], "Return", lazy.layout.toggle_split()),
     """
     defaults = [
-        ("name", "bsp", "Name of this layout."),
         ("border_focus", "#881111", "Border colour for the focused window."),
         ("border_normal", "#220000", "Border colour for un-focused windows."),
         ("border_width", 2, "Border width."),

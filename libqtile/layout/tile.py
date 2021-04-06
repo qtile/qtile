@@ -48,7 +48,6 @@ class Tile(_SimpleLayoutBase):
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused windows."),
         ("border_width", 1, "Border width."),
-        ("name", "tile", "Name of this layout."),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])"),
         ("ratio", 0.618,
             "Width-percentage of screen size reserved for master windows."),

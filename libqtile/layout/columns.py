@@ -111,7 +111,6 @@ class Columns(Layout):
         Key([mod], "n", lazy.layout.normalize()),
     """
     defaults = [
-        ("name", "columns", "Name of this layout."),
         ("border_focus", "#881111", "Border colour for the focused window."),
         ("border_normal", "#220000", "Border colour for un-focused windows."),
         ("border_focus_stack", "#881111",

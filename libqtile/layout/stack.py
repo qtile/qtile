@@ -58,7 +58,6 @@ class Stack(Layout):
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused windows."),
         ("border_width", 1, "Border width."),
-        ("name", "stack", "Name of this layout."),
         ("autosplit", False, "Auto split all new stacks."),
         ("num_stacks", 2, "Number of stacks."),
         ("fair", False, "Add new windows to the stacks in a round robin way."),

@@ -88,7 +88,6 @@ class VerticalTile(_SimpleLayoutBase):
         ('border_normal', '#FFFFFF', 'Border color for un-focused windows.'),
         ('border_width', 1, 'Border width.'),
         ('margin', 0, 'Border margin (int or list of ints [N E S W]).'),
-        ('name', 'verticaltile', 'Name of this layout.'),
     ]
 
     ratio = 0.75
