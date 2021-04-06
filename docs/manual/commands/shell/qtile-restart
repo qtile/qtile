@@ -1,0 +1,10 @@
+.. _qtile-restart:
+
+===========
+qtile restart
+===========
+
+This will restart qtile. 
+
+This is an alias to ``qtile cmd-obj -o cmd -f restart``.
+Check ``qtile cmd-obj --help`` or ``qtile restart --help`` for more information.
