@@ -28,7 +28,9 @@ this_dir = os.path.dirname(__file__)
 base_dir = os.path.abspath(os.path.join(this_dir, ".."))
 sys.path.insert(0, base_dir)
 
-from libqtile.scripts.main import main
+# import lifecycle early so no atexit handlers are lost on restart
+import libqtile.core.lifecycle  # noqa: F401, E402
+from libqtile.scripts.main import main  # noqa: E402
 
 if __name__ == '__main__':
     main()

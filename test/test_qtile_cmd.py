@@ -19,6 +19,7 @@
 # SOFTWARE.
 
 import os
+import re
 import subprocess
 
 import pytest
@@ -28,11 +29,23 @@ import libqtile.config
 import libqtile.layout
 import libqtile.widget
 from libqtile.confreader import Config
+from libqtile.lazy import lazy
 
 
 class ServerConfig(Config):
     auto_fullscreen = True
-    keys = []
+    keys = [
+        libqtile.config.Key(['mod4'], 'Return', lazy.spawn('xterm')),
+        libqtile.config.Key(['mod4'], 't', lazy.spawn('xterm'),
+                            desc='dummy description'),
+        libqtile.config.Key([], 'y', desc='noop'),
+        libqtile.config.KeyChord(['mod4'], 'q', [
+            libqtile.config.KeyChord([], 'q', [
+                libqtile.config.Key([], 'a', lazy.togroup('a')),
+            ]),  # unnamed
+            libqtile.config.Key([], 'b', lazy.togroup('b')),
+        ], mode='named')
+    ]
     mouse = []
     groups = [
         libqtile.config.Group("a"),
@@ -109,3 +122,32 @@ def test_qtile_cmd(manager):
     assert bar['width'] == 800
     assert bar['size'] == 20
     assert bar['position'] == 'bottom'
+
+
+@server_config
+def test_display_kb(manager):
+    from pprint import pprint
+    cmd = '-s {} -o cmd -f display_kb'.format(manager.sockfile)
+    table = run_qtile_cmd(cmd)
+    print(table)
+    pprint(table)
+    assert table.count('\n') >= 2
+    assert re.match(r"(?m)^Mode\s{3,}KeySym\s{3,}Mod\s{3,}Command\s{3,}Desc\s*$",
+                    table)
+    assert re.search(r"(?m)^<root>\s{3,}Return\s{3,}mod4\s{3,}spawn\('xterm'\)\s*$",
+                     table)
+    assert re.search(r"(?m)^<root>\s{3,}t\s{3,}mod4\s{3,}spawn\('xterm'\)\s{3,}dummy description\s*$",
+                     table)
+    assert re.search(r"(?m)^<root>\s{3,}q\s{3,}mod4\s{13,}Enter named mode\s*$",
+                     table)
+    assert re.search(r"(?m)^named\s{3,}Escape\s{9,}function\(noop\)\s*$",
+                     table)
+    assert re.search(r"(?m)^named\s{3,}q\s{13,}Enter <unnamed> mode\s*$",
+                     table)
+    assert re.search(r"(?m)^named\s{3,}b\s{9,}togroup\('b'\)\s*$",
+                     table)
+    assert re.search(r"(?m)^named>_\s{3,}Escape\s{9,}function\(noop\)\s*$",
+                     table)
+    assert re.search(r"(?m)^named>_\s{3,}a\s{9,}togroup\('a'\)\s*$",
+                     table)
+    assert re.search(r"(?m)^<root>\s{3,}y\s{9,}\s*$", table) is None

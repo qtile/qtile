@@ -25,7 +25,7 @@ On ArchLinux, the X11 requirements are installed with:
 .. code-block:: bash
 
     sudo pacman -S xorg-xrandr xorg-xcalc xorg-xeyes xorg-xclock
-    
+
 To build the documentation, you will also need to install `graphviz <https://www.graphviz.org/download/>`_.
 On ArchLinux, you can install it with ``sudo pacman -S graphviz``.
 
@@ -55,10 +55,6 @@ Deactivate it with the ``deactivate`` command.
 Building the documentation
 ==========================
 
-Activate your virtualenv, and install the ``graphviz`` Python package:
-
-    pip install graphviz
-    
 Go into the ``docs/`` directory and run ``pip install -r requirements.txt``.
 
 Build the documentation with ``make html``.
@@ -136,7 +132,7 @@ capture and let you use your personal keyboard shortcuts again.
 
 You can close the Xephyr window by enabling the capture of keyboard shortcuts
 and hit Mod4+Control+Q. Mod4 (or Mod) is usually the Super key (or Windows key).
-You can also close the Xephyr window by running ``qtile-cmd -o cmd -f shutdown``
+You can also close the Xephyr window by running ``qtile cmd-obj -o cmd -f shutdown``
 in a terminal (from inside the Xephyr window of course).
 
 You don't need to run the Xephyr script in order to run the tests
@@ -193,7 +189,7 @@ Next, add a Configuration using a Python template with these fields:
 Then, in a terminal, run:
 
     Xephyr +extension RANDR -screen 1920x1040 :1 -ac &
-    
+
 Note that we used the same display, ``:1``, in both the terminal command
 and the PyCharm configuration environment variables.
 Feel free to change the screen size to fit your own screen.
@@ -206,10 +202,10 @@ Once you finished debugging, you can close the Xephyr window with ``kill PID``
 Debugging in VSCode
 ===================
 
-Make sure to have all the requirements installed and your development 
+Make sure to have all the requirements installed and your development
 environment setup.
 
-Open the root of the repo in VSCode.  If you have created it, VSCode should 
+Open the root of the repo in VSCode.  If you have created it, VSCode should
 detect the ``venv`` virtualenv, if not, select it.
 
 Create a launch.json file with the following lines.
@@ -235,9 +231,9 @@ Create a launch.json file with the following lines.
 Then, in a terminal, run:
 
     Xephyr +extension RANDR -screen 1920x1040 :1 -ac &
-    
+
 Note that we used the same display, ``:1``, in both the terminal command
-and the VSCode configuration environment variables.  Then ``debug`` usually 
+and the VSCode configuration environment variables.  Then ``debug`` usually
 in VSCode. Feel free to change the screen size to fit your own screen.
 
 Resources
@@ -283,32 +279,6 @@ the packaging of ``cairocffi`` might be broken for your distribution.
 Try to contact the persons responsible for ``cairocffi``'s packaging
 on your distribution, or to install it from the sources with ``xcffib``
 available.
-
-DBus/GObject errors
--------------------
-
-When running the Xephyr script (``./scripts/xephyr``), you might see a line in
-the output like the following or similar::
-
-    libqtile manager.py:setup_python_dbus():L310  importing dbus/gobject failed, dbus will not work.
-
-If it happens, it might be because you are missing some dependencies on your
-system and/or in your Qtile virtualenv.
-
-To fix this:
-
-1. Follow the `installation instructions`_ of ``PyGObject``.
-   There are methods for several Linux distributions: pick yours.
-#. There are instructions for system-wide installation and virtualenv
-   installation: pick the relevant one, depending on how you installed the
-   development version of Qtile (usually in a virtualenv).
-#. Optionally re-install Qtile's dependencies::
-
-    pip install -r requirements.txt
-    pip install -r requirements-dev.txt
-
-.. _`installation instructions`: https://pygobject.readthedocs.io/en/latest/getting_started.html
-
 
 Fonts errors
 ------------

@@ -29,12 +29,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import asyncio
 import subprocess
-import threading
 from typing import Any, List, Tuple
 
 from libqtile import bar, configurable, confreader, drawer
-from libqtile.command_object import CommandError, CommandObject
+from libqtile.command.base import CommandError, CommandObject, ItemT
 from libqtile.log_utils import logger
 
 
@@ -203,6 +203,18 @@ class _Widget(CommandObject, configurable.Configurable):
         if not self.configured:
             self.configured = True
             self.qtile.call_soon(self.timer_setup)
+            self.qtile.call_soon(asyncio.create_task, self._config_async())
+
+    async def _config_async(self):
+        """
+            This is called once when the main eventloop has started. this
+            happens after _configure has been run.
+
+            Widgets that need to use asyncio coroutines after this point may
+            wish to initialise the relevant code (e.g. connections to dbus
+            using dbus_next) here.
+        """
+        pass
 
     def finalize(self):
         if hasattr(self, 'layout') and self.layout:
@@ -245,9 +257,10 @@ class _Widget(CommandObject, configurable.Configurable):
             raise CommandError("No such widget: %s" % name)
         return w
 
-    def _items(self, name):
+    def _items(self, name: str) -> ItemT:
         if name == "bar":
-            return (True, None)
+            return True, []
+        return None
 
     def _select(self, name, sel):
         if name == "bar":
@@ -329,7 +342,8 @@ class _TextBox(_Widget):
             "font shadow color, default is None(no shadow)"
         ),
         ("markup", True, "Whether or not to use pango markup"),
-        ("fmt", "{}", "How to format the text")
+        ("fmt", "{}", "How to format the text"),
+        ('max_chars', 0, 'Maximum number of characters to display in widget.'),
     ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -411,9 +425,14 @@ class _TextBox(_Widget):
         else:
             return 0
 
+    def can_draw(self):
+        can_draw = self.layout is not None \
+                and not self.layout.finalized() \
+                and self.offsetx is not None  # if the bar hasn't placed us yet
+        return can_draw
+
     def draw(self):
-        # if the bar hasn't placed us yet
-        if self.offsetx is None:
+        if not self.can_draw():
             return
         self.drawer.clear(self.background or self.bar.background)
         self.layout.draw(
@@ -442,11 +461,29 @@ class _TextBox(_Widget):
         d['text'] = self.formatted_text
         return d
 
+    def update(self, text):
+        if self.text == text:
+            return
+        if text is None:
+            text = ""
+
+        old_width = self.layout.width
+        if len(text) > self.max_chars > 0:
+            text = text[:self.max_chars] + "…"
+        self.text = text
+
+        # If our width hasn't changed, we just draw ourselves. Otherwise,
+        # we draw the whole bar.
+        if self.layout.width == old_width:
+            self.draw()
+        else:
+            self.bar.draw()
+
 
 class InLoopPollText(_TextBox):
     """ A common interface for polling some 'fast' information, munging it, and
     rendering the result in a text box. You probably want to use
-    ThreadedPollText instead.
+    ThreadPoolText instead.
 
     ('fast' here means that this runs /in/ the event loop, so don't block! If
     you want to run something nontrivial, use ThreadedPollWidget.) """
@@ -490,38 +527,10 @@ class InLoopPollText(_TextBox):
         text = self.poll()
         self.update(text)
 
-    def update(self, text):
-        old_width = self.layout.width
-        if self.text != text:
-            self.text = text
-            # If our width hasn't changed, we just draw ourselves. Otherwise,
-            # we draw the whole bar.
-            if self.layout.width == old_width:
-                self.draw()
-            else:
-                self.bar.draw()
-
-
-class ThreadedPollText(InLoopPollText):
-    """ A common interface for polling some REST URL, munging the data, and
-    rendering the result in a text box. """
-    def tick(self):
-        def worker():
-            try:
-                text = self.poll()
-                if self.qtile is not None:
-                    self.qtile.call_soon_threadsafe(self.update, text)
-            except:  # noqa: E722
-                logger.exception("problem polling to update widget %s", self.name)
-        # TODO: There are nice asyncio constructs for this sort of thing, I
-        # think...
-        threading.Thread(target=worker).start()
-
 
 class ThreadPoolText(_TextBox):
     """ A common interface for wrapping blocking events which when triggered
-    will update a textbox.  This is an alternative to the ThreadedPollText
-    class which differs by being push based rather than pull.
+    will update a textbox.
 
     The poll method is intended to wrap a blocking function which may take
     quite a while to return anything.  It will be executed as a future and
@@ -531,7 +540,7 @@ class ThreadPoolText(_TextBox):
     param: text - Initial text to display.
     """
     defaults = [
-        ("update_interval", None, "Update interval in seconds, if none, the "
+        ("update_interval", 600, "Update interval in seconds, if none, the "
             "widget updates whenever it's done'."),
     ]  # type: List[Tuple[str, Any, str]]
 
@@ -563,18 +572,6 @@ class ThreadPoolText(_TextBox):
 
         future = self.qtile.run_in_executor(self.poll)
         future.add_done_callback(on_done)
-
-    def update(self, text):
-        old_width = self.layout.width
-        if self.text == text:
-            return
-
-        self.text = text
-
-        if self.layout.width == old_width:
-            self.draw()
-        else:
-            self.bar.draw()
 
     def poll(self):
         pass
@@ -644,8 +641,7 @@ class Mirror(_Widget):
             self._length = self.length
             self.bar.draw()
         else:
-            self.drawer.ctx.set_source_surface(self.reflects.drawer.surface)
-            self.drawer.ctx.paint()
+            self.reflects.drawer.paint_to(self.drawer)
             self.drawer.draw(offsetx=self.offset, width=self.width)
 
     def button_press(self, x, y, button):

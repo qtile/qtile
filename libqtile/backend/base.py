@@ -5,25 +5,21 @@ from libqtile import config
 
 
 class Core(metaclass=ABCMeta):
+    @abstractmethod
+    def finalize(self):
+        """Destructor/Clean up resources"""
+
     @property
     @abstractmethod
     def display_name(self) -> str:
         pass
 
     @abstractmethod
-    def get_keys(self) -> typing.List[str]:
-        pass
-
-    @abstractmethod
-    def get_modifiers(self) -> typing.List[str]:
-        pass
-
-    @abstractmethod
-    def grab_key(self, key: config.Key) -> typing.Tuple[int, int]:
+    def grab_key(self, key: typing.Union[config.Key, config.KeyChord]) -> typing.Tuple[int, int]:
         """Configure the backend to grab the key event"""
 
     @abstractmethod
-    def ungrab_key(self, key: config.Key) -> typing.Tuple[int, int]:
+    def ungrab_key(self, key: typing.Union[config.Key, config.KeyChord]) -> typing.Tuple[int, int]:
         """Release the given key event"""
 
     @abstractmethod

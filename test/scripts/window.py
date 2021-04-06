@@ -22,6 +22,9 @@
 """
     This program is carefully crafted to exercise a number of corner-cases in
     Qtile.
+
+    Usage:
+        window.py DISPLAY WINDOW_NAME [WINDOW_TYPE]
 """
 import sys
 import time
@@ -68,6 +71,16 @@ conn.core.ChangeProperty(xcffib.xproto.PropMode.Replace,
                          window, wm_protocols,
                          xcffib.xproto.Atom.ATOM, 32, 1,
                          [wm_delete_window])
+
+if len(sys.argv) > 3:
+    wm_type_atom = "_NET_WM_WINDOW_TYPE"
+    wm_type_atom = conn.core.InternAtom(0, len(wm_type_atom), wm_type_atom).reply().atom
+    wm_type = "_NET_WM_WINDOW_TYPE_" + sys.argv[3].upper()
+    wm_type = conn.core.InternAtom(0, len(wm_type), wm_type).reply().atom
+    conn.core.ChangeProperty(xcffib.xproto.PropMode.Replace,
+                             window, wm_type_atom,
+                             xcffib.xproto.Atom.ATOM, 32, 1,
+                             [wm_type])
 
 conn.core.ConfigureWindow(window,
                           xcffib.xproto.ConfigWindow.X | xcffib.xproto.ConfigWindow.Y |

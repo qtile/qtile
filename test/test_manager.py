@@ -30,6 +30,7 @@ import logging
 
 import pytest
 import xcffib.xproto
+import xcffib.xtest
 
 import libqtile.bar
 import libqtile.config
@@ -37,13 +38,16 @@ import libqtile.confreader
 import libqtile.hook
 import libqtile.layout
 import libqtile.widget
+import libqtile.window
 from libqtile.backend.x11 import xcbq
-from libqtile.command_client import SelectError
-from libqtile.command_interface import CommandError, CommandException
+from libqtile.command.client import SelectError
+from libqtile.command.interface import CommandError, CommandException
 from libqtile.config import Match
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
+from test import conftest
 from test.conftest import BareConfig, Retry, no_xinerama
+from test.layouts.layout_utils import assert_focused
 
 
 class ManagerConfig(Config):
@@ -61,7 +65,11 @@ class ManagerConfig(Config):
         libqtile.layout.max.Max()
     ]
     floating_layout = libqtile.layout.floating.Floating(
-        float_rules=[Match(wm_class='xclock')])
+        float_rules=[
+            *libqtile.layout.floating.Floating.default_float_rules,
+            Match(wm_class='xclock')
+        ]
+    )
     keys = [
         libqtile.config.Key(
             ["control"],
@@ -78,6 +86,7 @@ class ManagerConfig(Config):
     screens = [libqtile.config.Screen(
         bottom=libqtile.bar.Bar(
             [
+                libqtile.widget.Prompt(),
                 libqtile.widget.GroupBox(),
             ],
             20
@@ -257,6 +266,17 @@ def test_keypress(manager):
     assert manager.c.groups()["a"]["focus"] == "one"
 
 
+class TooFewGroupsConfig(ManagerConfig):
+    groups = []
+
+
+@pytest.mark.parametrize("manager", [TooFewGroupsConfig], indirect=True)
+@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
+def test_too_few_groups(manager):
+    assert manager.c.groups()
+    assert len(manager.c.groups()) == len(manager.c.screens())
+
+
 class _ChordsConfig(Config):
     groups = [
         libqtile.config.Group("a")
@@ -284,7 +304,17 @@ class _ChordsConfig(Config):
                 "j",
                 lazy.layout.down(),
             )
-        ], "test")
+        ], "test"),
+        libqtile.config.KeyChord(["control"], "d", [
+            libqtile.config.KeyChord([], "a", [
+                libqtile.config.KeyChord([], "1", [
+                    libqtile.config.Key([], "u", lazy.ungrab_chord()),
+                    libqtile.config.Key([], "v", lazy.ungrab_all_chords()),
+                    libqtile.config.Key([], "j", lazy.layout.down()),
+                ], "inner_named"),
+            ]),
+            libqtile.config.Key([], "z", lazy.layout.down()),
+        ], "nesting_test"),
     ]
     mouse = []
     screens = [libqtile.config.Screen(
@@ -311,7 +341,7 @@ def test_immediate_chord(manager):
     # use normal bind to shift focus up
     manager.c.simulate_keypress([], "k")
     assert manager.c.groups()["a"]["focus"] == "two"
-    # enter into key chord and "k" bindin no longer working
+    # enter into key chord and "k" binding no longer working
     manager.c.simulate_keypress(["control"], "a")
     manager.c.simulate_keypress([], "k")
     assert manager.c.groups()["a"]["focus"] == "two"
@@ -339,7 +369,7 @@ def test_mode_chord(manager):
     # use normal bind to shift focus up
     manager.c.simulate_keypress([], "k")
     assert manager.c.groups()["a"]["focus"] == "two"
-    # enter into key chord and "k" bindin no longer working
+    # enter into key chord and "k" binding no longer working
     manager.c.simulate_keypress(["control"], "b")
     manager.c.simulate_keypress([], "k")
     assert manager.c.groups()["a"]["focus"] == "two"
@@ -358,6 +388,50 @@ def test_mode_chord(manager):
     # only way to exit mode chord is by hit "Escape"
     manager.c.simulate_keypress([], "Escape")
     manager.c.simulate_keypress([], "j")
+    assert manager.c.groups()["a"]["focus"] == "one"
+
+
+@chords_config
+@no_xinerama
+def test_chord_stack(manager):
+    manager.test_window("two")
+    manager.test_window("one")
+    assert manager.c.groups()["a"]["focus"] == "one"
+    manager.c.simulate_keypress(["control"], "d")  # ["nesting_test"]
+    # "z" should work, "k" shouldn't:
+    manager.c.simulate_keypress([], "z")
+    assert manager.c.groups()["a"]["focus"] == "two"
+    manager.c.simulate_keypress([], "z")
+    assert manager.c.groups()["a"]["focus"] == "one"
+    manager.c.simulate_keypress([], "k")
+    assert manager.c.groups()["a"]["focus"] == "one"
+    # enter ["nesting_test", "", "inner_named"]:
+    manager.c.simulate_keypress([], "a")
+    manager.c.simulate_keypress([], "1")
+    # "j" should work:
+    manager.c.simulate_keypress([], "j")
+    assert manager.c.groups()["a"]["focus"] == "two"
+    manager.c.simulate_keypress([], "j")
+    assert manager.c.groups()["a"]["focus"] == "one"
+    # leave "inner_named" ~> ["nesting_test"]:
+    manager.c.simulate_keypress([], "u")
+    manager.c.simulate_keypress([], "z")
+    assert manager.c.groups()["a"]["focus"] == "two"
+    manager.c.simulate_keypress([], "z")
+    assert manager.c.groups()["a"]["focus"] == "one"
+    manager.c.simulate_keypress([], "k")
+    assert manager.c.groups()["a"]["focus"] == "one"
+    # enter ["nesting_test", "", "inner_named"]:
+    manager.c.simulate_keypress([], "a")
+    manager.c.simulate_keypress([], "1")
+    # leave all: ~> []
+    manager.c.simulate_keypress([], "v")
+    # "k" should work, "z" shouldn't:
+    manager.c.simulate_keypress([], "k")
+    assert manager.c.groups()["a"]["focus"] == "two"
+    manager.c.simulate_keypress([], "k")
+    assert manager.c.groups()["a"]["focus"] == "one"
+    manager.c.simulate_keypress([], "z")
     assert manager.c.groups()["a"]["focus"] == "one"
 
 
@@ -428,6 +502,32 @@ def test_kill_via_message(manager):
     conn.xsync()
     conn.finalize()
     assert_window_died(manager.c, window_info)
+
+
+@manager_config
+@no_xinerama
+def test_change_state_via_message(manager):
+    manager.test_window("one")
+    window_info = manager.c.window.info()
+    conn = xcbq.Connection(manager.display)
+
+    data = xcffib.xproto.ClientMessageData.synthetic([libqtile.window.IconicState, 0, 0, 0, 0], "IIIII")
+    ev = xcffib.xproto.ClientMessageEvent.synthetic(
+        32, window_info["id"], conn.atoms['WM_CHANGE_STATE'], data
+    )
+    conn.default_screen.root.send_event(ev, mask=xcffib.xproto.EventMask.SubstructureRedirect)
+    conn.xsync()
+    assert manager.c.window.info()["minimized"]
+
+    data = xcffib.xproto.ClientMessageData.synthetic([libqtile.window.NormalState, 0, 0, 0, 0], "IIIII")
+    ev = xcffib.xproto.ClientMessageEvent.synthetic(
+        32, window_info["id"], conn.atoms['WM_CHANGE_STATE'], data
+    )
+    conn.default_screen.root.send_event(ev, mask=xcffib.xproto.EventMask.SubstructureRedirect)
+    conn.xsync()
+    assert not manager.c.window.info()["minimized"]
+
+    conn.finalize()
 
 
 @manager_config
@@ -546,11 +646,21 @@ def test_inspect_xclock(manager):
 
 
 @manager_config
-@no_xinerama
 def test_static(manager):
-    manager.test_xeyes()
     manager.test_window("one")
-    manager.c.window[manager.c.window.info()["id"]].static(0, 0, 0, 100, 100)
+    manager.test_window("two")
+    manager.c.window[manager.c.window.info()["id"]].static(
+        screen=0, x=10, y=10, width=10, height=10,
+    )
+    info = manager.c.window.info()
+    assert info["name"] == "one"
+    manager.c.window.kill()
+    assert_window_died(manager.c, info)
+    with pytest.raises(CommandError):
+        manager.c.window.info()
+    info = manager.c.windows()[0]
+    assert info["name"] == "two"
+    assert (info["x"], info["y"], info["width"], info["height"]) == (10, 10, 10, 10)
 
 
 @manager_config
@@ -589,6 +699,28 @@ def test_default_float(manager):
     assert manager.c.window.info()['x'] == 10
     assert manager.c.window.info()['y'] == 20
     assert manager.c.window.info()['floating'] is True
+
+    w = None
+    conn = xcbq.Connection(manager.display)
+
+    def size_hints():
+        nonlocal w
+        w = conn.create_window(5, 5, 10, 10)
+
+        # set the size hints
+        hints = [0] * 18
+        hints[0] = xcbq.NormalHintsFlags["PMinSize"] | xcbq.NormalHintsFlags["PMaxSize"]
+        hints[5] = hints[6] = hints[7] = hints[8] = 10
+        w.set_property("WM_NORMAL_HINTS", hints, type="WM_SIZE_HINTS", format=32)
+        w.map()
+        conn.conn.flush()
+
+    try:
+        manager.create_window(size_hints)
+        assert manager.c.window.info()['floating'] is True
+    finally:
+        w.kill_client()
+        conn.finalize()
 
 
 @manager_config
@@ -1081,41 +1213,19 @@ class _Config(Config):
     auto_fullscreen = True
 
 
-class ClientNewStaticConfig(_Config):
-    @staticmethod
-    def main(c):
-        def client_new(c):
-            c.cmd_static(0)
-        libqtile.hook.subscribe.client_new(client_new)
-
-
-clientnew_config = pytest.mark.parametrize("manager", [ClientNewStaticConfig], indirect=True)
-
-
-@clientnew_config
-def test_clientnew_config(manager):
-    a = manager.test_window("one")
-    manager.kill_window(a)
-
-
-class ToGroupConfig(_Config):
-    @staticmethod
-    def main(c):
-        def client_new(c):
-            c.togroup("d")
-        libqtile.hook.subscribe.client_new(client_new)
-
-
-togroup_config = pytest.mark.parametrize("manager", [ToGroupConfig], indirect=True)
-
-
-@togroup_config
-def test_togroup_config(manager):
-    manager.c.group["d"].toscreen()
+@manager_config
+def test_labelgroup(manager):
     manager.c.group["a"].toscreen()
-    a = manager.test_window("one")
-    assert len(manager.c.group["d"].info()["windows"]) == 1
-    manager.kill_window(a)
+    assert manager.c.group["a"].info()["label"] == "a"
+
+    manager.c.labelgroup()
+    manager.c.widget["prompt"].fake_keypress("b")
+    manager.c.widget["prompt"].fake_keypress("Return")
+    assert manager.c.group["a"].info()["label"] == "b"
+
+    manager.c.labelgroup()
+    manager.c.widget["prompt"].fake_keypress("Return")
+    assert manager.c.group["a"].info()["label"] == "a"
 
 
 @manager_config
@@ -1421,3 +1531,183 @@ def test_strut_handling(manager):
         conn.finalize()
 
     test_initial_state()
+
+
+class BringFrontClickConfig(ManagerConfig):
+    bring_front_click = True
+
+
+class BringFrontClickFloatingOnlyConfig(ManagerConfig):
+    bring_front_click = "floating_only"
+
+
+@pytest.fixture
+def bring_front_click(request):
+    return request.param
+
+
+@pytest.mark.parametrize(
+    "manager, bring_front_click",
+    [
+        (ManagerConfig, False),
+        (BringFrontClickConfig, True),
+        (BringFrontClickFloatingOnlyConfig, "floating_only"),
+    ],
+    indirect=True,
+)
+def test_bring_front_click(manager, bring_front_click):
+    def get_all_windows(conn):
+        root = conn.default_screen.root.wid
+        q = conn.conn.core.QueryTree(root).reply()
+        return list(q.children)
+
+    def fake_click(conn, xtest, x, y):
+        root = conn.default_screen.root.wid
+        xtest.FakeInput(6, 0, xcffib.xproto.Time.CurrentTime, root, x, y, 0)
+        xtest.FakeInput(4, 1, xcffib.xproto.Time.CurrentTime, root, 0, 0, 0)
+        xtest.FakeInput(5, 1, xcffib.xproto.Time.CurrentTime, root, 0, 0, 0)
+        conn.conn.flush()
+
+    conn = xcbq.Connection(manager.display)
+    xtest = conn.conn(xcffib.xtest.key)
+
+    # this is a tiled window.
+    manager.test_window("one")
+    manager.c.sync()
+
+    manager.test_window("two")
+    manager.c.window.set_position_floating(50, 50)
+    manager.c.window.set_size_floating(50, 50)
+    manager.c.sync()
+
+    manager.test_window("three")
+    manager.c.window.set_position_floating(150, 50)
+    manager.c.window.set_size_floating(50, 50)
+    manager.c.sync()
+
+    wids = [x["id"] for x in manager.c.windows()]
+    names = [x["name"] for x in manager.c.windows()]
+
+    assert names == ["one", "two", "three"]
+    wins = get_all_windows(conn)
+    assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])
+
+    # Click on window two
+    fake_click(conn, xtest, 55, 55)
+    manager.c.sync()
+    wins = get_all_windows(conn)
+    if bring_front_click:
+        assert wins.index(wids[0]) < wins.index(wids[2]) < wins.index(wids[1])
+    else:
+        assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])
+
+    # Click on window one
+    fake_click(conn, xtest, 10, 10)
+    manager.c.sync()
+    wins = get_all_windows(conn)
+    if bring_front_click == "floating_only":
+        assert wins.index(wids[0]) < wins.index(wids[2]) < wins.index(wids[1])
+    elif bring_front_click:
+        assert wins.index(wids[2]) < wins.index(wids[1]) < wins.index(wids[0])
+    else:
+        assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])
+
+
+class CursorWarpConfig(ManagerConfig):
+    cursor_warp = "floating_only"
+    screens = [
+        libqtile.config.Screen(
+            bottom=libqtile.bar.Bar(
+                [
+                    libqtile.widget.GroupBox(),
+                ],
+                20,
+            ),
+        ),
+        libqtile.config.Screen(
+            bottom=libqtile.bar.Bar(
+                [
+                    libqtile.widget.GroupBox(),
+                ],
+                20,
+            ),
+        ),
+    ]
+
+
+@pytest.mark.parametrize(
+    "manager",
+    [CursorWarpConfig],
+    indirect=True,
+)
+def test_cursor_warp(manager):
+    conn = xcbq.Connection(manager.display)
+    root = conn.default_screen.root.wid
+
+    assert manager.c.screen.info()["index"] == 0
+
+    manager.test_window("one")
+    manager.c.window.set_position_floating(50, 50)
+    manager.c.window.set_size_floating(50, 50)
+
+    manager.c.to_screen(1)
+    assert manager.c.screen.info()["index"] == 1
+
+    p = conn.conn.core.QueryPointer(root).reply()
+    # Here pointer should warp to the second screen as there are no windows
+    # there.
+    assert p.root_x == conftest.WIDTH + conftest.SECOND_WIDTH // 2
+    # Reduce the bar height from the screen height.
+    assert p.root_y == (conftest.SECOND_HEIGHT - 20) // 2
+
+    manager.c.to_screen(0)
+    assert manager.c.window.info()["name"] == "one"
+
+    p = conn.conn.core.QueryPointer(manager.c.window.info()["id"]).reply()
+
+    # Here pointer should warp to the window.
+    assert p.win_x == 25
+    assert p.win_y == 25
+    assert p.same_screen
+
+
+def test_switch_groups_cursor_warp(manager_nospawn):
+    config = ManagerConfig
+    config.cursor_warp = True
+    config.layouts = [libqtile.layout.Stack(num_stacks=2), libqtile.layout.Max()]
+    config.groups = [libqtile.config.Group("a"), libqtile.config.Group("b", layout="max")]
+
+    manager_nospawn.start(config)
+
+    manager_nospawn.test_window("one")
+    manager_nospawn.test_window("two")
+    manager_nospawn.c.layout.previous()
+
+    assert_focused(manager_nospawn, "one")
+    assert manager_nospawn.c.group.info()["name"] == "a"
+    assert manager_nospawn.c.layout.info()["name"] == "stack"
+
+    manager_nospawn.c.group["b"].toscreen()
+
+    manager_nospawn.test_window("three")
+
+    assert_focused(manager_nospawn, "three")
+    assert manager_nospawn.c.group.info()["name"] == "b"
+    assert manager_nospawn.c.layout.info()["name"] == "max"
+
+    # do a fast switch to trigger races in focus behavior; unfortunately we
+    # need the window in layout 'b' to map quite slowly (e.g. like firefox or
+    # something), which it does not here most of the time.
+    manager_nospawn.c.group["a"].toscreen()
+    manager_nospawn.c.group["b"].toscreen()
+    manager_nospawn.c.group["a"].toscreen()
+
+    # make sure the right things are still focused
+    assert_focused(manager_nospawn, "one")
+    assert manager_nospawn.c.group.info()["name"] == "a"
+    assert manager_nospawn.c.layout.info()["name"] == "stack"
+
+    manager_nospawn.c.group["b"].toscreen()
+    assert_focused(manager_nospawn, "three")
+    assert manager_nospawn.c.group.info()["name"] == "b"
+    assert manager_nospawn.c.layout.info()["name"] == "max"

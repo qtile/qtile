@@ -25,40 +25,49 @@
 import os
 import sys
 
+from libqtile.backend.x11 import core
+
 
 class ConfigError(Exception):
     pass
 
 
+config_pyi_header = """
+from typing import Any, Dict, List, Literal
+from libqtile.config import Group, Key, Mouse, Rule, Screen
+from libqtile.layout.base import Layout
+
+"""
+
+
 class Config:
     settings_keys = [
-        "keys",
-        "mouse",
-        "groups",
-        "dgroups_key_binder",
-        "dgroups_app_rules",
-        "follow_mouse_focus",
-        "focus_on_window_activation",
-        "cursor_warp",
-        "layouts",
-        "floating_layout",
-        "screens",
-        "main",
-        "auto_fullscreen",
-        "widget_defaults",
-        "extension_defaults",
-        "bring_front_click",
-        "wmname",
+        ("keys", "List[Key]"),
+        ("mouse", "List[Mouse]"),
+        ("groups", "List[Group]"),
+        ("dgroups_key_binder", "Any"),
+        ("dgroups_app_rules", "List[Rule]"),
+        ("follow_mouse_focus", "bool"),
+        ("focus_on_window_activation", 'Literal["focus", "smart", "urgent", "never"]'),
+        ("cursor_warp", "bool"),
+        ("layouts", "List[Layout]"),
+        ("floating_layout", "Layout"),
+        ("screens", "List[Screen]"),
+        ("auto_fullscreen", "bool"),
+        ("widget_defaults", "Dict[str, Any]"),
+        ("extension_defaults", "Dict[str, Any]"),
+        ("bring_front_click", "bool"),
+        ("reconfigure_screens", "bool"),
+        ("wmname", "str"),
     ]
 
-    def __init__(self, file_path=None, kore=None, **settings):
+    def __init__(self, file_path=None, **settings):
         """Create a Config() object from settings
 
         Only attributes found in Config.settings_keys will be added to object.
         config attribute precedence is 1.) **settings 2.) self 3.) default_config
         """
         self.file_path = file_path
-        self.kore = kore
         self.update(**settings)
 
     def update(self, *, fake_screens=None, **settings):
@@ -68,7 +77,7 @@ class Config:
             self.fake_screens = fake_screens
 
         default = vars(default_config)
-        for key in self.settings_keys:
+        for (key, _) in self.settings_keys:
             try:
                 value = settings[key]
             except KeyError:
@@ -99,15 +108,13 @@ class Config:
             raise ConfigError(tb)
 
         self.update(**vars(config))
-        if self.kore:
-            self.validate()
 
     def validate(self) -> None:
         """
             Validate the configuration against the core.
         """
-        valid_keys = self.kore.get_keys()
-        valid_mods = self.kore.get_modifiers()
+        valid_keys = core.get_keys()
+        valid_mods = core.get_modifiers()
         # we explicitly do not want to set self.keys and self.mouse above,
         # because they are dynamically resolved from the default_config. so we
         # need to ignore the errors here about missing attributes.

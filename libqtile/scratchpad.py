@@ -18,8 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import group, hook, utils, window
-from libqtile.log_utils import logger
+from typing import Dict, List
+
+from libqtile import config, group, hook, window
 
 
 class WindowVisibilityToggler:
@@ -127,17 +128,9 @@ class WindowVisibilityToggler:
 
     def unsubscribe(self):
         """unsubscribe all hooks"""
-        if self.on_focus_lost_hide:
-            try:
-                hook.unsubscribe.client_focus(self.on_focus_change)
-            except utils.QtileError as err:
-                logger.exception("Scratchpad failed to unsubscribe on_focus_change"
-                                 ": %s" % err)
-            try:
-                hook.unsubscribe.setgroup(self.on_focus_change)
-            except utils.QtileError as err:
-                logger.exception("Scratchpad failed to unsubscribe on_focus_change"
-                                 ": %s" % err)
+        if self.on_focus_lost_hide and (self.visible or self.shown):
+            hook.unsubscribe.client_focus(self.on_focus_change)
+            hook.unsubscribe.setgroup(self.on_focus_change)
 
     def on_focus_change(self, *args, **kwargs):
         """
@@ -213,12 +206,12 @@ class ScratchPad(group._Group):
     The ScratchPad, by default, has no label and thus is not shown in
     GroupBox widget.
     """
-    def __init__(self, name='scratchpad', dropdowns=[], label=''):
+    def __init__(self, name='scratchpad', dropdowns: List[config.DropDown] = None, label=''):
         group._Group.__init__(self, name, label=label)
-        self._dropdownconfig = {dd.name: dd for dd in dropdowns}
-        self.dropdowns = {}
-        self._spawned = {}
-        self._to_hide = []
+        self._dropdownconfig = {dd.name: dd for dd in dropdowns} if dropdowns is not None else {}
+        self.dropdowns: Dict[str, DropDownToggler] = {}
+        self._spawned: Dict[int, str] = {}
+        self._to_hide: List[str] = []
 
     def _check_unsubscribe(self):
         if not self.dropdowns:

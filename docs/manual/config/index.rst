@@ -76,7 +76,7 @@ Configuration variables
 =======================
 
 A Qtile configuration consists of a file with a bunch of variables in it, which
-qtile imports and then runs as a python file to derive its final configuration.
+qtile imports and then runs as a Python file to derive its final configuration.
 The documentation below describes the most common configuration variables; more
 advanced configuration can be found in the `qtile-examples
 <https://github.com/qtile/qtile-examples>`_ repository, which includes a number
@@ -112,12 +112,15 @@ configuration variables that control specific aspects of Qtile's behavior:
         fullscreen if you ask them to be.
     * - bring_front_click
       - False
-      - When clicked, should the window be brought to the front or not. (This
+      - When clicked, should the window be brought to the front or not. If this
+        is set to "floating_only", only floating windows will get affected (This
         sets the X Stack Mode to Above.)
     * - cursor_warp
       - False
       - If true, the cursor follows the focus as directed by the keyboard,
-        warping to the center of the focused window.
+        warping to the center of the focused window. When switching focus between
+        screens, If there are no windows in the screen, the cursor will warp to
+        the center of the screen.
     * - dgroups_key_binder
       - None
       - A function which generates group binding hotkeys. It takes a single
@@ -161,6 +164,10 @@ configuration variables that control specific aspects of Qtile's behavior:
              fontsize=12,
              padding=3)
       - Default settings for bar widgets.
+    * - reconfigure_screens
+      - True
+      - Controls whether or not to automatically reconfigure screens when there
+        are changes in randr output configuration.
     * - wmname
       - "LG3D"
       - Gasp! We're lying here. In fact, nobody really uses or cares

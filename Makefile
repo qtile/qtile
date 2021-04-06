@@ -10,21 +10,11 @@ check: ## Run the test suite
 
 .PHONY: lint
 lint: ## Check the source code
-	TOXENV=format,pep8 tox
+	TOXENV=format,pep8,vulture,mypy tox
 
 .PHONY: clean
 clean: ## Clean generated files
 	-rm -rf dist qtile.egg-info docs/_build build/ .tox/ .mypy_cache/ .pytest_cache/ .eggs/
-
-# This is a little ugly: we want to be able to have users just run
-# 'python setup.py install' to install qtile, but we would also like to install
-# the man pages. I can't figure out a way to have the 'build' target invoke the
-# 'build_sphinx' target as well, so we commit the man pages, since they are
-# used in the 'install' target.
-.PHONY: man
-man: ## Generate Sphinx documentation
-	python3 setup.py build_sphinx -b man
-	cp build/sphinx/man/* resources/
 
 .PHONY: run-ffibuild
 run-ffibuild: ## Build FFI modules

@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import asyncio
 import logging
 from multiprocessing import Value
 
@@ -64,6 +65,52 @@ def test_hook_calls_subscriber():
     hook.subscribe.group_window_add(test)
     hook.fire("group_window_add", 8)
     assert test.val == 8
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_hook_calls_subscriber_async():
+    val = 0
+
+    async def co(new_val):
+        nonlocal val
+        val = new_val
+
+    hook.subscribe.group_window_add(co)
+    hook.fire("group_window_add", 8)
+
+    assert val == 8
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_hook_calls_subscriber_async_co():
+    val = 0
+
+    async def co(new_val):
+        nonlocal val
+        val = new_val
+
+    hook.subscribe.group_window_add(co(8))
+    hook.fire("group_window_add")
+
+    assert val == 8
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_hook_calls_subscriber_async_in_existing_loop():
+
+    async def t():
+        val = 0
+
+        async def co(new_val):
+            nonlocal val
+            val = new_val
+
+        hook.subscribe.group_window_add(co(8))
+        hook.fire("group_window_add")
+        await asyncio.sleep(0)
+        assert val == 8
+
+    asyncio.run(t())
 
 
 @pytest.mark.usefixtures("hook_fixture")
@@ -113,11 +160,16 @@ def test_can_subscribe_to_startup_hooks(manager_nospawn):
     hook.subscribe.startup_complete(inc_startup_complete_calls)
 
     manager.start(config)
-    manager.start_qtile = True
     assert manager.startup_once_calls.value == 1
     assert manager.startup_calls.value == 1
     assert manager.startup_complete_calls.value == 1
-    # TODO Restart and check that startup_once doesn't fire again
+
+    # Restart and check that startup_once doesn't fire again
+    manager.terminate()
+    manager.start(config, no_spawn=True)
+    assert manager.startup_once_calls.value == 1
+    assert manager.startup_calls.value == 2
+    assert manager.startup_complete_calls.value == 2
 
 
 @pytest.mark.usefixtures('hook_fixture')

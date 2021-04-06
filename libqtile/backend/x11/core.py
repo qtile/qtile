@@ -21,8 +21,15 @@
 
 import asyncio
 import os
-from collections import OrderedDict
-from typing import TYPE_CHECKING, Callable, Iterator, List, Optional, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import xcffib
 import xcffib.render
@@ -51,11 +58,19 @@ _IGNORED_EVENTS = {
 }
 
 
+def get_keys() -> List[str]:
+    return list(xcbq.keysyms.keys())
+
+
+def get_modifiers() -> List[str]:
+    return list(xcbq.ModMasks.keys())
+
+
 class ExistingWMException(Exception):
     pass
 
 
-class XCore(base.Core):
+class Core(base.Core):
     def __init__(self, display_name: str = None) -> None:
         """Setup the X11 core backend
 
@@ -70,7 +85,6 @@ class XCore(base.Core):
 
         self.conn = xcbq.Connection(display_name)
         self._display_name = display_name
-        self._fd = None  # type: Optional[int]
 
         # Because we only do Xinerama multi-screening,
         # we can assume that the first
@@ -146,6 +160,14 @@ class XCore(base.Core):
         self._numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(numlock_code), 0)
         self._valid_mask = ~(self._numlock_mask | xcbq.ModMasks["lock"])
 
+    def finalize(self) -> None:
+        self.conn.conn.core.DeletePropertyChecked(
+            self._root.wid,
+            self.conn.atoms["_NET_SUPPORTING_WM_CHECK"],
+        ).check()
+        self.qtile = None
+        self.conn.finalize()
+
     def get_screen_info(self) -> List[Tuple[int, int, int, int]]:
         """Get the screen information for the current connection"""
         # What's going on here is a little funny. What we really want is only
@@ -155,7 +177,7 @@ class XCore(base.Core):
         # important, because it indicates what people have chosen via xrandr
         # --primary or whatever. So we need to alias screens that should be
         # aliased, but preserve order as well. See #383.
-        xywh = OrderedDict()  # type: Dict[Tuple[int, int], Tuple[int, int]]
+        xywh = {}  # type: Dict[Tuple[int, int], Tuple[int, int]]
         for screen in self.conn.pseudoscreens:
             pos = (screen.x, screen.y)
             width, height = xywh.get(pos, (0, 0))
@@ -183,7 +205,7 @@ class XCore(base.Core):
         return self._numlock_mask, self._valid_mask
 
     def setup_listener(
-        self, qtile: "Qtile", eventloop: asyncio.AbstractEventLoop
+        self, qtile: "Qtile"
     ) -> None:
         """Setup a listener for the given qtile instance
 
@@ -195,18 +217,13 @@ class XCore(base.Core):
         logger.debug("Adding io watch")
         self.qtile = qtile
         self.fd = self.conn.conn.get_file_descriptor()
-        eventloop.add_reader(self.fd, self._xpoll)
+        asyncio.get_running_loop().add_reader(self.fd, self._xpoll)
 
     def remove_listener(self) -> None:
         """Remove the listener from the given event loop"""
-        self._remove_listener()
-        self.qtile = None
-        self.conn.finalize()
-
-    def _remove_listener(self) -> None:
         if self.fd is not None:
             logger.debug("Removing io watch")
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             loop.remove_reader(self.fd)
             self.fd = None
 
@@ -289,7 +306,7 @@ class XCore(base.Core):
                             error_string=error_string, error_code=error_code
                         )
                     )
-                    self._remove_listener()
+                    self.remove_listener()
                     self.qtile.stop()
                     return
                 logger.exception("Got an exception in poll loop")
@@ -377,12 +394,6 @@ class XCore(base.Core):
         """The name of the connected display"""
         return self._display_name
 
-    def get_keys(self) -> List[str]:
-        return list(xcbq.keysyms.keys())
-
-    def get_modifiers(self) -> List[str]:
-        return list(xcbq.ModMasks.keys())
-
     def update_client_list(self, windows) -> None:
         """Set the current clients to the given list of windows"""
         self._root.set_property("_NET_CLIENT_LIST", windows)
@@ -399,7 +410,7 @@ class XCore(base.Core):
         self._root.set_property("_NET_DESKTOP_NAMES", "\0".join(i.name for i in groups))
         self._root.set_property("_NET_CURRENT_DESKTOP", index)
 
-    def lookup_key(self, key: config.Key) -> Tuple[int, int]:
+    def lookup_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
         """Find the keysym and the modifier mask for the given key"""
         try:
             keysym = xcbq.get_keysym(key.key)
@@ -409,7 +420,7 @@ class XCore(base.Core):
 
         return keysym, modmask
 
-    def grab_key(self, key: config.Key) -> Tuple[int, int]:
+    def grab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
         """Map the key to receive events on it"""
         keysym, modmask = self.lookup_key(key)
         codes = self.conn.keysym_to_keycode(keysym)
@@ -433,7 +444,7 @@ class XCore(base.Core):
                 )
         return keysym, modmask & self._valid_mask
 
-    def ungrab_key(self, key: config.Key) -> Tuple[int, int]:
+    def ungrab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
         """Ungrab the key corresponding to the given keysym and modifier mask"""
         keysym, modmask = self.lookup_key(key)
         codes = self.conn.keysym_to_keycode(keysym)

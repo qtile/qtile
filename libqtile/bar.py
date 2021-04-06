@@ -21,7 +21,8 @@
 from typing import Union
 
 from libqtile import configurable, drawer, window
-from libqtile.command_object import CommandObject
+from libqtile.command.base import CommandObject, ItemT
+from libqtile.log_utils import logger
 
 
 class Gap(CommandObject):
@@ -98,9 +99,10 @@ class Gap(CommandObject):
     def geometry(self):
         return (self.x, self.y, self.width, self.height)
 
-    def _items(self, name):
-        if name == "screen":
-            return (True, None)
+    def _items(self, name: str) -> ItemT:
+        if name == "screen" and self.screen is not None:
+            return True, []
+        return None
 
     def _select(self, name, sel):
         if name == "screen":
@@ -163,6 +165,7 @@ class Bar(Gap, configurable.Configurable):
         self.saved_focus = None
         self.cursor_in = None
         self.window = None
+        self.size_calculated = 0
 
         self.queued_draws = 0
 
@@ -201,8 +204,11 @@ class Bar(Gap, configurable.Configurable):
 
         if self.window:
             self.window.place(self.x, self.y, self.width, self.height, 0, None)
+            self.crashed_widgets = []
             for i in self.widgets:
-                i._configure(qtile, self)
+                self._configure_widget(i)
+
+            self._remove_crashed_widgets()
 
         else:
             self.window = window.Internal.create(
@@ -228,14 +234,43 @@ class Bar(Gap, configurable.Configurable):
             qtile.windows_map[self.window.window.wid] = self.window
             self.window.unhide()
 
+            self.crashed_widgets = []
             for idx, i in enumerate(self.widgets):
                 if i.configured:
                     i = i.create_mirror()
                     self.widgets[idx] = i
-                qtile.register_widget(i)
-                i._configure(qtile, self)
+                success = self._configure_widget(i)
+                if success:
+                    qtile.register_widget(i)
+
+            self._remove_crashed_widgets()
 
         self._resize(self.length, self.widgets)
+
+    def _configure_widget(self, widget):
+        configured = True
+        try:
+            widget._configure(self.qtile, self)
+        except Exception as e:
+            logger.error(
+                "{} widget crashed during _configure with "
+                "error: {}".format(widget.__class__.__name__, repr(e))
+            )
+            self.crashed_widgets.append(widget)
+            configured = False
+
+        return configured
+
+    def _remove_crashed_widgets(self):
+        if self.crashed_widgets:
+            from libqtile.widget.config_error import ConfigErrorWidget
+
+        for i in self.crashed_widgets:
+            index = self.widgets.index(i)
+            crash = ConfigErrorWidget(widget=i)
+            crash._configure(self.qtile, self)
+            self.widgets.insert(index, crash)
+            self.widgets.remove(i)
 
     def finalize(self):
         self.drawer.finalize()
@@ -335,7 +370,7 @@ class Bar(Gap, configurable.Configurable):
 
     def handle_MotionNotify(self, e):  # noqa: N802
         widget = self.get_widget_in_position(e)
-        if widget and widget is not self.cursor_in:
+        if widget and self.cursor_in and widget is not self.cursor_in:
             self.cursor_in.mouse_leave(
                 e.event_x - self.cursor_in.offsetx,
                 e.event_y - self.cursor_in.offsety,
@@ -365,6 +400,8 @@ class Bar(Gap, configurable.Configurable):
             self.saved_focus.window.set_input_focus()
 
     def draw(self):
+        if not self.widgets:
+            return  # calling self._actual_draw in this case would cause a NameError.
         if self.queued_draws == 0:
             self.qtile.call_soon(self._actual_draw)
         self.queued_draws += 1
@@ -374,13 +411,13 @@ class Bar(Gap, configurable.Configurable):
         self._resize(self.length, self.widgets)
         for i in self.widgets:
             i.draw()
-        if self.widgets:
-            end = i.offset + i.length
-            if end < self.length:
-                if self.horizontal:
-                    self.drawer.draw(offsetx=end, width=self.length - end)
-                else:
-                    self.drawer.draw(offsety=end, height=self.length - end)
+        end = i.offset + i.length  # pylint: disable=undefined-loop-variable
+        # we verified that self.widgets is not empty in self.draw(), see above.
+        if end < self.length:
+            if self.horizontal:
+                self.drawer.draw(offsetx=end, width=self.length - end)
+            else:
+                self.drawer.draw(offsety=end, height=self.length - end)
 
     def info(self):
         return dict(
@@ -399,9 +436,10 @@ class Bar(Gap, configurable.Configurable):
     def show(self, is_show=True):
         if is_show != self.is_show():
             if is_show:
-                self.size = self.initial_size
+                self.size = self.size_calculated
                 self.window.unhide()
             else:
+                self.size_calculated = self.size
                 self.size = 0
                 self.window.hide()
             self.screen.group.layout_all()

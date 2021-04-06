@@ -27,8 +27,20 @@ Installing From Source
 First, you need to install all of Qtile's dependencies (although some are
 optional/not needed depending on your Python version, as noted below).
 
-Note that Python 3 versions 3.5 and newer are currently supported and tested,
-including corresponding PyPy3 versions.
+We aim to always support the last three versions of CPython, the reference
+Python interpreter. We usually support the latest stable version of PyPy_ as
+well. You can check the versions and interpreters we currently run our test
+suite against in our `tox configuration file`_.
+
+There are not many differences between versions aside from Python features you
+may or may not be able to use in your config. PyPy should be faster at runtime
+than any corresponding CPython version under most circumstances, especially for
+bits of Python code that are run many times. CPython should start up faster than
+PyPy and has better compatibility for external libraries.
+
+.. _`tox configuration file`: https://github.com/qtile/qtile/blob/master/tox.ini
+.. _PyPy: https://www.pypy.org/
+
 
 xcffib
 ------
@@ -67,14 +79,17 @@ You'll also need ``libpangocairo``, which on Ubuntu can be installed via ``sudo
 apt-get install libpangocairo-1.0-0``. Qtile uses this to provide text
 rendering (and binds directly to it via cffi with a small in-tree binding).
 
-dbus/gobject
-------------
+dbus-next
+---------
 
-Until someone comes along and writes an asyncio-based dbus library, qtile will
-depend on ``python-dbus`` to interact with dbus. This means that if you want
-to use things like notification daemon or mpris widgets, you'll need to
-install python-gobject and python-dbus. Qtile will run fine without these,
-although it will emit a warning that some things won't work.
+Qtile uses ``dbus-next`` to interact with dbus. Qtile will run without this
+packagee but certain functionality will be lost (e.g. notifications).
+
+You can install dbus-next from PyPi:
+
+.. code-block:: bash
+
+    pip install dbus-next
 
 Qtile
 -----

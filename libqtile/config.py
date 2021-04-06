@@ -24,16 +24,27 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+#
+#
+# required for lazy type annotations
+# can be removed when python 3.7...3.9 support is dropped (see PEP 563)
+from __future__ import annotations
 
+import contextlib
 import os.path
 import sys
 import warnings
-from typing import List, Optional
+from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
-from libqtile import configurable, hook, utils
+import xcffib.xproto
+
+from libqtile import configurable, hook, utils, window
 from libqtile.bar import BarType
-from libqtile.command_object import CommandObject
+from libqtile.command.base import CommandObject, ItemT
 from libqtile.lazy import lazy
+
+if TYPE_CHECKING:
+    from libqtile.group import _Group
 
 
 class Key:
@@ -73,19 +84,21 @@ class KeyChord:
     key:
         A key specification, e.g. "a", "Tab", "Return", "space".
     submappings:
-        A list of Key declarations to bind in this chord
+        A list of Key or KeyChord declarations to bind in this chord.
     mode:
-        A string with vim like mode name if it's set chord not end
-        after use one of submapings or Esc key
+        A string with vim like mode name. If it's set, the chord mode will
+        not be left after a keystroke (except for Esc which always leaves the
+        current chord/mode).
     """
-    def __init__(self, modifiers: List[str], key: str, submapings: List[Key], mode: str = ""):
+    def __init__(self, modifiers: List[str], key: str,
+                 submappings: List[Union[Key, KeyChord]], mode: str = ""):
         self.modifiers = modifiers
         self.key = key
 
         def noop(qtile):
             pass
-        submapings.append(Key([], "Escape", lazy.function(noop)))
-        self.submapings = submapings
+        submappings.append(Key([], "Escape", lazy.function(noop)))
+        self.submappings = submappings
         self.mode = mode
 
     def __repr__(self):
@@ -259,8 +272,8 @@ class Screen(CommandObject):
                  wallpaper: Optional[str] = None, wallpaper_mode: Optional[str] = None,
                  x: Optional[int] = None, y: Optional[int] = None, width: Optional[int] = None,
                  height: Optional[int] = None):
-        self.group = None
-        self.previous_group = None
+        self.group: Optional[_Group] = None
+        self.previous_group: Optional[_Group] = None
 
         self.top = top
         self.bottom = bottom
@@ -356,12 +369,17 @@ class Screen(CommandObject):
             old_group = self.group
             self.group = new_group
 
-            # display clients of the new group and then hide from old group
-            # to remove the screen flickering
-            new_group._set_screen(self)
+            if old_group is None:
+                ctx = contextlib.nullcontext()
+            else:
+                ctx = old_group.disable_mask(xcffib.xproto.EventMask.EnterWindow)
+            with ctx:
+                # display clients of the new group and then hide from old group
+                # to remove the screen flickering
+                new_group._set_screen(self)
 
-            if old_group is not None:
-                old_group._set_screen(None)
+                if old_group is not None:
+                    old_group._set_screen(None)
 
         hook.fire("setgroup")
         hook.fire("focus_change")
@@ -375,13 +393,14 @@ class Screen(CommandObject):
             group = self.previous_group
         self.set_group(group)
 
-    def _items(self, name):
-        if name == "layout":
-            return (True, list(range(len(self.group.layouts))))
-        elif name == "window":
-            return (True, [i.window.wid for i in self.group.windows])
+    def _items(self, name: str) -> ItemT:
+        if name == "layout" and self.group is not None:
+            return True, list(range(len(self.group.layouts)))
+        elif name == "window" and self.group is not None:
+            return True, [i.window.wid for i in self.group.windows]
         elif name == "bar":
-            return (False, [x.position for x in self.gaps])
+            return False, [x.position for x in self.gaps]
+        return None
 
     def _select(self, name, sel):
         if name == "layout":
@@ -569,9 +588,13 @@ class Match:
     net_wm_pid:
         matches against the _NET_WM_PID atom (only int allowed for this
         rule)
+    func:
+        delegate the match to the given function, which receives the tested
+        client as argument and must return True if it matches, False otherwise
     """
     def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
-                 wm_instance_class=None, net_wm_pid=None):
+                 wm_instance_class=None, net_wm_pid=None,
+                 func: Callable[[window.Window], bool] = None):
         self._rules = {}
 
         if title is not None:
@@ -591,6 +614,8 @@ class Match:
                 error = 'Invalid rule for net_wm_pid: "%s" only int allowed' % \
                         str(net_wm_pid)
                 raise utils.QtileError(error)
+        if func is not None:
+            self._rules["func"] = func
 
     @staticmethod
     def _get_property_predicate(name, value):
@@ -599,13 +624,13 @@ class Match:
         elif name == 'wm_class':
             def predicate(other):
                 # match as an "include"-match on any of the received classes
-                match = getattr(other, 'match', lambda v: other in v)
+                match = getattr(other, 'match', lambda v: v in other)
                 return value and any(match(v) for v in value)
             return predicate
         else:
             def predicate(other):
                 # match as an "include"-match
-                match = getattr(other, 'match', lambda v: other in v)
+                match = getattr(other, 'match', lambda v: v in other)
                 return match(value)
             return predicate
 
@@ -620,6 +645,8 @@ class Match:
                 value = wm_class[0]
             elif property_name == 'role':
                 value = client.window.get_wm_window_role()
+            elif property_name == 'func':
+                return rule_value(client)
             else:
                 value = getattr(client.window, 'get_' + property_name)()
 

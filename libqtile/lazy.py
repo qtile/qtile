@@ -20,13 +20,13 @@
 
 from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
-from libqtile.command_client import InteractiveCommandClient
-from libqtile.command_graph import (
+from libqtile.command.client import InteractiveCommandClient
+from libqtile.command.graph import (
     CommandGraphCall,
     CommandGraphNode,
     SelectorType,
 )
-from libqtile.command_interface import CommandInterface
+from libqtile.command.interface import CommandInterface
 
 
 class LazyCall:
@@ -46,7 +46,7 @@ class LazyCall:
         self._args = args
         self._kwargs = kwargs
 
-        self._layouts = set()  # type: Set[str]
+        self._layouts: Set[str] = set()
         self._when_floating = True
 
     @property

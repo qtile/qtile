@@ -50,6 +50,63 @@ def monadtall_config(x):
     return no_xinerama(pytest.mark.parametrize("manager", [MonadTallConfig], indirect=True)(x))
 
 
+class MonadTallNCPBeforeCurrentConfig(Config):
+    auto_fullscreen = True
+    groups = [
+        libqtile.config.Group("a")
+    ]
+    layouts = [
+        layout.MonadTall(new_client_position='before_current')
+    ]
+    floating_layout = libqtile.resources.default_config.floating_layout
+    keys = []
+    mouse = []
+    screens = []
+    follow_mouse_focus = False
+
+
+def monadtallncpbeforecurrent_config(x):
+    return no_xinerama(pytest.mark.parametrize("manager", [MonadTallNCPBeforeCurrentConfig], indirect=True)(x))
+
+
+class MonadTallNCPAfterCurrentConfig(Config):
+    auto_fullscreen = True
+    groups = [
+        libqtile.config.Group("a")
+    ]
+    layouts = [
+        layout.MonadTall(new_client_position="after_current")
+    ]
+    floating_layout = libqtile.resources.default_config.floating_layout
+    keys = []
+    mouse = []
+    screens = []
+    follow_mouse_focus = False
+
+
+def monadtallncpaftercurrent_config(x):
+    return no_xinerama(pytest.mark.parametrize("manager", [MonadTallNCPAfterCurrentConfig], indirect=True)(x))
+
+
+class MonadTallNewCLientPositionBottomConfig(Config):
+    auto_fullscreen = True
+    groups = [
+        libqtile.config.Group("a")
+    ]
+    layouts = [
+        layout.MonadTall(new_client_position="bottom")
+    ]
+    floating_layout = libqtile.resources.default_config.floating_layout
+    keys = []
+    mouse = []
+    screens = []
+    follow_mouse_focus = False
+
+
+def monadtallnewclientpositionbottom_config(x):
+    return no_xinerama(pytest.mark.parametrize("manager", [MonadTallNewCLientPositionBottomConfig], indirect=True)(x))
+
+
 class MonadTallMarginsConfig(Config):
     auto_fullscreen = True
     groups = [
@@ -86,6 +143,25 @@ class MonadWideConfig(Config):
 
 def monadwide_config(x):
     return no_xinerama(pytest.mark.parametrize("manager", [MonadWideConfig], indirect=True)(x))
+
+
+class MonadWideNewClientPositionTopConfig(Config):
+    auto_fullscreen = True
+    groups = [
+        libqtile.config.Group("a")
+    ]
+    layouts = [
+        layout.MonadWide(new_client_position="top")
+    ]
+    floating_layout = libqtile.resources.default_config.floating_layout
+    keys = []
+    mouse = []
+    screens = []
+    follow_mouse_focus = False
+
+
+def monadwidenewclientpositiontop_config(x):
+    return no_xinerama(pytest.mark.parametrize("manager", [MonadWideNewClientPositionTopConfig], indirect=True)(x))
 
 
 class MonadWideMarginsConfig(Config):
@@ -129,6 +205,47 @@ def test_tall_add_clients(manager):
     assert_focused(manager, 'four')
 
 
+@monadtallncpbeforecurrent_config
+def test_tall_add_clients_before_current(manager):
+    """ Test add client with new_client_position = before_current. """
+    manager.test_window('one')
+    manager.test_window('two')
+    manager.test_window('three')
+    assert manager.c.layout.info()["main"] == 'three'
+    assert manager.c.layout.info()["secondary"] == ['two', 'one']
+    manager.c.layout.next()
+    assert_focused(manager, 'two')
+    manager.test_window('four')
+    assert manager.c.layout.info()["main"] == 'three'
+    assert manager.c.layout.info()["secondary"] == ['four', 'two', 'one']
+    assert_focused(manager, 'four')
+
+
+@monadtallncpaftercurrent_config
+def test_tall_add_clients_after_current(manager):
+    manager.test_window('one')
+    manager.test_window('two')
+    manager.test_window('three')
+    manager.c.layout.previous()
+    assert_focused(manager, 'two')
+    manager.test_window('four')
+    assert manager.c.layout.info()["main"] == 'one'
+    assert manager.c.layout.info()["secondary"] == ['two', 'four', 'three']
+    assert_focused(manager, 'four')
+
+
+@monadtallnewclientpositionbottom_config
+def test_tall_add_clients_at_bottom(manager):
+    manager.test_window('one')
+    manager.test_window('two')
+    manager.test_window('three')
+    manager.c.layout.previous()
+    assert_focused(manager, 'two')
+    manager.test_window('four')
+    assert manager.c.layout.info()["main"] == 'one'
+    assert manager.c.layout.info()["secondary"] == ['two', 'three', 'four']
+
+
 @monadwide_config
 def test_wide_add_clients(manager):
     manager.test_window('one')
@@ -148,6 +265,28 @@ def test_wide_add_clients(manager):
     manager.test_window('four')
     assert manager.c.layout.info()["main"] == 'one'
     assert manager.c.layout.info()["secondary"] == ['two', 'four', 'three']
+    assert_focused(manager, 'four')
+
+
+@monadwidenewclientpositiontop_config
+def test_wide_add_clients_new_client_postion_top(manager):
+    manager.test_window('one')
+    manager.test_window('two')
+    assert manager.c.layout.info()["main"] == 'two'
+    assert manager.c.layout.info()["secondary"] == ['one']
+    assert_focused(manager, 'two')
+
+    manager.test_window('three')
+    assert manager.c.layout.info()["main"] == 'three'
+    assert manager.c.layout.info()["secondary"] == ['two', 'one']
+    assert_focused(manager, 'three')
+
+    manager.c.layout.next()
+    assert_focused(manager, 'two')
+
+    manager.test_window('four')
+    assert manager.c.layout.info()["main"] == 'four'
+    assert manager.c.layout.info()["secondary"] == ['three', 'two', 'one']
     assert_focused(manager, 'four')
 
 

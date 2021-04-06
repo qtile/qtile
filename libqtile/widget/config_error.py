@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# Copyright (c) 2017 Dario Giovannetti
+# Copyright (c) 2021 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,21 +17,17 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-"""
-This script allows creating customized windows using the Tk toolkit.
-"""
-import sys
-import tkinter
+
+from libqtile.widget.base import _TextBox
 
 
-class Window:
-    def __init__(self, title, wm_type):
-        self.win = tkinter.Tk()
-        self.win.title(title)
-        self.win.call("wm", "attributes", ".", "-type", wm_type)
+class ConfigErrorWidget(_TextBox):
+    def __init__(self, **config):
+        _TextBox.__init__(self, **config)
+        self.class_name = self.widget.__class__.__name__
+        self.text = "Widget crashed: {} (click to hide)".format(self.class_name)
+        self.add_callbacks({"Button1": self._hide})
 
-
-if __name__ == '__main__':
-    title, wm_type = sys.argv[1:]
-    Window(title, wm_type)
-    tkinter.mainloop()
+    def _hide(self):
+        self.text = ""
+        self.bar.draw()

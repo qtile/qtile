@@ -68,7 +68,7 @@ So that Qtile starts automatically on login.
     Type=Application
     Encoding=UTF-8
     Name=Qtile
-    Exec=qtile
+    Exec=qtile start
     NoDisplay=true
     X-GNOME-WMName=Qtile
     X-GNOME-Autostart-Phase=WindowManager

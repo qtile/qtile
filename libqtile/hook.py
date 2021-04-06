@@ -30,6 +30,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import asyncio
+import contextlib
 from typing import Dict, Set
 
 from libqtile import utils
@@ -168,18 +170,6 @@ class Subscribe:
         """
         return self._subscribe("group_window_add", func)
 
-    def window_name_change(self, func):
-        """Called whenever a windows name changes
-
-        Deprecated: use client_name_updated
-        **Arguments**
-
-        None
-        """
-        msg = 'window_name_change is deprecated, use client_name_updated instead'
-        logger.warning(msg, DeprecationWarning)
-        return self._subscribe("window_name_change", func)
-
     def client_new(self, func):
         """Called before Qtile starts managing a new client
 
@@ -305,21 +295,10 @@ class Subscribe:
     def screen_change(self, func):
         """Called when a screen is added or screen configuration is changed (via xrandr)
 
-        Common usage is simply to call ``qtile.cmd_restart()`` on each event
-        (to restart qtile when there is a new monitor):
-
         **Arguments**
 
             * ``xproto.randr.ScreenChangeNotify`` event
 
-        Examples
-        --------
-
-        ::
-
-            @libqtile.hook.subscribe.screen_change
-            def restart_on_randr(ev):
-                libqtile.qtile.cmd_restart()
         """
         return self._subscribe("screen_change", func)
 
@@ -373,6 +352,17 @@ class Unsubscribe(Subscribe):
 unsubscribe = Unsubscribe()
 
 
+def _fire_async_event(co):
+    loop = None
+    with contextlib.suppress(RuntimeError):
+        loop = asyncio.get_running_loop()
+
+    if loop is None:
+        asyncio.run(co)
+    else:
+        asyncio.ensure_future(co)
+
+
 def fire(event, *args, **kwargs):
     if event not in subscribe.hooks:
         raise utils.QtileError("Unknown event: %s" % event)
@@ -380,12 +370,11 @@ def fire(event, *args, **kwargs):
         logger.debug("Internal event: %s(%s, %s)", event, args, kwargs)
     for i in subscriptions.get(event, []):
         try:
-            i(*args, **kwargs)
+            if asyncio.iscoroutinefunction(i):
+                _fire_async_event(i(*args, **kwargs))
+            elif asyncio.iscoroutine(i):
+                _fire_async_event(i)
+            else:
+                i(*args, **kwargs)
         except:  # noqa: E722
             logger.exception("Error in hook %s", event)
-
-
-@subscribe.client_name_updated
-def _fire_window_name_change(window):
-    "This should eventually be removed"
-    fire("window_name_change")

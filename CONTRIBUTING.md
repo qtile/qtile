@@ -39,9 +39,11 @@ to our [issue tracker](https://github.com/qtile/qtile/issues) on GitHub.
 Pull requests are not considered complete until they include all of the
 following:
 
-1. Code: Should conform PEP8 and should pass `make lint`.
-2. Unit tests: Should pass CI
-3. Documentation: Should get updated if it needed
+1. Code: conforms to PEP8 and passes `make lint`.
+2. Unit tests: CI tests pass. Adding new tests to verify that your code works is recommended.
+   See [our website](http://docs.qtile.org/en/latest/manual/contributing.html#running-tests-locally)
+   on how to run the tests locally.
+3. Documentation: Should get updated if it needed.
 
 **Feel free to add your contribution (no matter how small) to the appropriate
 place in the CHANGELOG as well!**

@@ -37,8 +37,7 @@
 import functools
 import operator
 import typing
-from collections import OrderedDict
-from itertools import chain, repeat
+from itertools import chain, islice, repeat
 
 import cairocffi
 import cairocffi.pixbuf
@@ -72,16 +71,16 @@ def rdict(d):
 rkeysyms = rdict(xkeysyms.keysyms)
 
 # Keyboard modifiers bitmask values from X Protocol
-ModMasks = OrderedDict((
-    ("shift", 1 << 0),
-    ("lock", 1 << 1),
-    ("control", 1 << 2),
-    ("mod1", 1 << 3),
-    ("mod2", 1 << 4),
-    ("mod3", 1 << 5),
-    ("mod4", 1 << 6),
-    ("mod5", 1 << 7),
-))
+ModMasks = {
+    "shift": 1 << 0,
+    "lock": 1 << 1,
+    "control": 1 << 2,
+    "mod1": 1 << 3,
+    "mod2": 1 << 4,
+    "mod3": 1 << 5,
+    "mod4": 1 << 6,
+    "mod5": 1 << 7,
+}
 
 AllButtonsMask = 0b11111 << 8
 ButtonMotionMask = 1 << 13
@@ -434,14 +433,6 @@ class NetWmState:
         return
 
 
-def _add_net_wm_state(cls):
-    for name in net_wm_states:
-        lower_name = name.lstrip('_').lower()
-        setattr(cls, lower_name, NetWmState(name))
-    return cls
-
-
-@_add_net_wm_state
 class Window:
     def __init__(self, conn, wid):
         self.conn = conn
@@ -528,20 +519,24 @@ class Window:
         if wm_normal_hints:
             atom_list = wm_normal_hints.value.to_atoms()
             flags = {k for k, v in NormalHintsFlags.items() if atom_list[0] & v}
-            return {
+            hints = {
                 "flags": flags,
-                "min_width": atom_list[1 + 4],
-                "min_height": atom_list[2 + 4],
-                "max_width": atom_list[3 + 4],
-                "max_height": atom_list[4 + 4],
-                "width_inc": atom_list[5 + 4],
-                "height_inc": atom_list[6 + 4],
-                "min_aspect": atom_list[7 + 4],
-                "max_aspect": atom_list[8 + 4],
-                "base_width": atom_list[9 + 4],
-                "base_height": atom_list[9 + 4],
-                "win_gravity": atom_list[9 + 4],
+                "min_width": atom_list[5],
+                "min_height": atom_list[6],
+                "max_width": atom_list[7],
+                "max_height": atom_list[8],
+                "width_inc": atom_list[9],
+                "height_inc": atom_list[10],
+                "min_aspect": (atom_list[11], atom_list[12]),
+                "max_aspect": (atom_list[13], atom_list[14])
             }
+
+            # WM_SIZE_HINTS is potentially extensible (append to the end only)
+            iterator = islice(hints, 15, None)
+            hints["base_width"] = next(iterator, hints["min_width"])
+            hints["base_height"] = next(iterator, hints["min_height"])
+            hints["win_gravity"] = next(iterator, 1)
+            return hints
 
     def get_wm_protocols(self):
         wm_protocols = self.get_property("WM_PROTOCOLS", "ATOM", unpack=int)
@@ -784,28 +779,6 @@ class Connection:
             if i in self._extmap:
                 setattr(self, i, self._extmap[i](self))
 
-        self.pseudoscreens = []
-        if "xinerama" in extensions:
-            for i, s in enumerate(self.xinerama.query_screens()):
-                scr = PseudoScreen(
-                    self,
-                    s.x_org,
-                    s.y_org,
-                    s.width,
-                    s.height,
-                )
-                self.pseudoscreens.append(scr)
-        elif "randr" in extensions:
-            for i in self.randr.query_crtcs(self.screens[0].root.wid):
-                scr = PseudoScreen(
-                    self,
-                    i["x"],
-                    i["y"],
-                    i["width"],
-                    i["height"],
-                )
-                self.pseudoscreens.append(scr)
-
         self.atoms = AtomCache(self)
 
         self.code_to_syms = {}
@@ -814,6 +787,31 @@ class Connection:
 
         self.modmap = None
         self.refresh_modmap()
+
+    @property
+    def pseudoscreens(self):
+        pseudoscreens = []
+        if hasattr(self, "xinerama"):
+            for i, s in enumerate(self.xinerama.query_screens()):
+                scr = PseudoScreen(
+                    self,
+                    s.x_org,
+                    s.y_org,
+                    s.width,
+                    s.height,
+                )
+                pseudoscreens.append(scr)
+        elif hasattr(self, "randr"):
+            for i in self.randr.query_crtcs(self.screens[0].root.wid):
+                scr = PseudoScreen(
+                    self,
+                    i["x"],
+                    i["y"],
+                    i["width"],
+                    i["height"],
+                )
+                pseudoscreens.append(scr)
+        return pseudoscreens
 
     def finalize(self):
         self.cursors.finalize()

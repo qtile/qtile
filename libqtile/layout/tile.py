@@ -49,7 +49,7 @@ class Tile(_SimpleLayoutBase):
         ("border_normal", "#000000", "Border colour for un-focused windows."),
         ("border_width", 1, "Border width."),
         ("name", "tile", "Name of this layout."),
-        ("margin", 0, "Margin of the layout"),
+        ("margin", 0, "Margin of the layout (int or list of ints [N E S W])"),
         ("ratio", 0.618,
             "Width-percentage of screen size reserved for master windows."),
         ("master_length", 1,
@@ -110,17 +110,11 @@ class Tile(_SimpleLayoutBase):
                 self.clients.remove(client)
                 self.clients.append_head(client)
 
-    def shift(self, idx1, idx2):
-        if self.clients:
-            self.clients[idx1], self.clients[idx2] = \
-                self.clients[idx2], self.clients[idx1]
-            self.group.layout_all(True)
-
     def clone(self, group):
         c = _SimpleLayoutBase.clone(self, group)
         return c
 
-    def add(self, client, offset_to_current=0):
+    def add(self, client, offset_to_current=1):
         if self.add_after_last:
             self.clients.append(client)
         elif self.add_on_top:

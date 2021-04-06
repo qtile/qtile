@@ -35,6 +35,13 @@ kb_variant_regex = re.compile(r'variant:\s+(?P<variant>\w+)')
 class KeyboardLayout(base.InLoopPollText):
     """Widget for changing and displaying the current keyboard layout
 
+    To use this widget effectively you need to specify keyboard layouts you want to use (using "configured_keyboards")
+    and bind function "next_keyboard" to specific keys in order to change layouts.
+
+    For example:
+
+        Key([mod], "space", lazy.widget["keyboardlayout"].next_keyboard(), desc="Next keyboard layout."),
+
     It requires setxkbmap to be available in the system.
     """
     orientations = base.ORIENTATION_HORIZONTAL
@@ -52,6 +59,8 @@ class KeyboardLayout(base.InLoopPollText):
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(KeyboardLayout.defaults)
+
+        self.keyboard = self.configured_keyboards[0]
 
         self.add_callbacks({'Button1': self.next_keyboard})
 

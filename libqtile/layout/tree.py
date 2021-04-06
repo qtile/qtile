@@ -405,9 +405,6 @@ class TreeTab(Layout):
         c._tree = Root(self.sections)
         return c
 
-    def _get_window(self):
-        return self._focused
-
     def focus(self, win):
         self._focused = win
 

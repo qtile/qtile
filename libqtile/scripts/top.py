@@ -25,14 +25,15 @@
 import curses
 import linecache
 import os
+import sys
 import time
 
-from libqtile import command_client, command_interface, ipc
+from libqtile import ipc
+from libqtile.command import client, interface
 
-""" These imports are here because they are not supported in pypy
-having them at the top of the file causes problems when running any
-of the other scripts.
-"""
+# These imports are here because they are not supported in pypy.
+# having them at the top of the file causes problems when running any
+# of the other scripts.
 try:
     import tracemalloc
     from tracemalloc import Snapshot
@@ -49,11 +50,11 @@ class TraceCantStart(Exception):
     pass
 
 
-def get_trace(client, force_start):
-    (started, path) = client.tracemalloc_dump()
+def get_trace(c, force_start):
+    (started, path) = c.tracemalloc_dump()
     if force_start and not started:
-        client.tracemalloc_toggle()
-        (started, path) = client.tracemalloc_dump()
+        c.tracemalloc_toggle()
+        (started, path) = c.tracemalloc_dump()
         if not started:
             raise TraceCantStart
     elif not started:
@@ -69,7 +70,7 @@ def filter_snapshot(snapshot):
     ))
 
 
-def get_stats(scr, client, group_by='lineno', limit=10, seconds=1.5,
+def get_stats(scr, c, group_by='lineno', limit=10, seconds=1.5,
               force_start=False):
     (max_y, max_x) = scr.getmaxyx()
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
@@ -78,7 +79,7 @@ def get_stats(scr, client, group_by='lineno', limit=10, seconds=1.5,
         scr.addstr(1, 0, '{0:<3s} {1:<40s} {2:<30s} {3:<16s}'.format('#', 'Line', 'Memory', ' ' * (max_x - 71)),
                    curses.A_BOLD | curses.A_REVERSE)
 
-        snapshot = get_trace(client, force_start)
+        snapshot = get_trace(c, force_start)
         snapshot = filter_snapshot(snapshot)
         top_stats = snapshot.statistics(group_by)
         cnt = 1
@@ -114,8 +115,8 @@ def get_stats(scr, client, group_by='lineno', limit=10, seconds=1.5,
         scr.erase()
 
 
-def raw_stats(client, group_by='lineno', limit=10, force_start=False):
-    snapshot = get_trace(client, force_start)
+def raw_stats(c, group_by='lineno', limit=10, force_start=False):
+    snapshot = get_trace(c, force_start)
     snapshot = filter_snapshot(snapshot)
     top_stats = snapshot.statistics(group_by)
 
@@ -148,30 +149,36 @@ def top(opts):
         socket = ipc.find_sockfile()
     else:
         socket = opts.socket
-    client = ipc.Client(socket)
-    client = command_interface.IPCCommandInterface(client)
-    client = command_client.InteractiveCommandClient(client)
+    c = client.InteractiveCommandClient(
+        interface.IPCCommandInterface(
+            ipc.Client(socket),
+        ),
+    )
 
     try:
         if not opts.raw:
-            curses.wrapper(get_stats, client, limit=lines, seconds=seconds,
+            curses.wrapper(get_stats, c, limit=lines, seconds=seconds,
                            force_start=force_start)
         else:
-            raw_stats(client, limit=lines, force_start=force_start)
+            raw_stats(c, limit=lines, force_start=force_start)
     except TraceNotStarted:
         print("tracemalloc not started on qtile, start by setting "
               "PYTHONTRACEMALLOC=1 before starting qtile")
         print("or force start tracemalloc now, but you'll lose early traces")
-        exit(1)
+        sys.exit(1)
     except TraceCantStart:
         print("Can't start tracemalloc on qtile, check the logs")
     except KeyboardInterrupt:
-        exit(-1)
+        sys.exit(1)
+    except curses.error:
+        print("Terminal too small for curses interface.")
+        raw_stats(c, limit=lines, force_start=force_start)
 
 
-def add_subcommand(subparsers):
-    parser = subparsers.add_parser("top", help="resource usage information")
-    parser.add_argument('-l', '--lines', type=int, dest="lines", default=10,
+def add_subcommand(subparsers, parents):
+    parser = subparsers.add_parser("top", parents=parents,
+                                   help="resource usage information")
+    parser.add_argument('-L', '--lines', type=int, dest="lines", default=10,
                         help='Number of lines.')
     parser.add_argument('-r', '--raw', dest="raw", action="store_true",
                         default=False, help='Output raw without curses')

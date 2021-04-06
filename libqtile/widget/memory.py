@@ -25,7 +25,7 @@ from libqtile.widget import base
 __all__ = ["Memory"]
 
 
-class Memory(base.ThreadedPollText):
+class Memory(base.ThreadPoolText):
     """Displays memory/swap usage
 
     MemUsed: Returns memory in use
@@ -49,32 +49,38 @@ class Memory(base.ThreadedPollText):
 
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("format", "{MemUsed}M/{MemTotal}M", "Formatting for field names."),
+        ("format", "{MemUsed: .0f}{mm}/{MemTotal: .0f}{mm}", "Formatting for field names."),
         ("update_interval", 1.0, "Update interval for the Memory"),
+        ("measure_mem", "M", "Measurement for Memory (G, M, B)"),
+        ("measure_swap", "M", "Measurement for Swap (G, M, B)"),
     ]
 
-    def __init__(self, **config):
-        super().__init__(**config)
-        self.add_defaults(Memory.defaults)
+    measures = {"G": 1024 * 1024 * 1024,
+                "M": 1024 * 1024,
+                "B": 1024}
 
-    def tick(self):
-        self.update(self.poll())
-        return self.update_interval
+    def __init__(self, **config):
+        super().__init__("", **config)
+        self.add_defaults(Memory.defaults)
+        self.calc_mem = self.measures[self.measure_mem]
+        self.calc_swap = self.measures[self.measure_swap]
 
     def poll(self):
         mem = psutil.virtual_memory()
         swap = psutil.swap_memory()
         val = {}
-        val["MemUsed"] = mem.used // 1024 // 1024
-        val["MemTotal"] = mem.total // 1024 // 1024
-        val["MemFree"] = mem.free // 1024 // 1024
+        val["MemUsed"] = mem.used / self.calc_mem
+        val["MemTotal"] = mem.total / self.calc_mem
+        val["MemFree"] = mem.free / self.calc_mem
         val["MemPercent"] = mem.percent
-        val["Buffers"] = mem.buffers // 1024 // 1024
-        val["Active"] = mem.active // 1024 // 1024
-        val["Inactive"] = mem.inactive // 1024 // 1024
-        val["Shmem"] = mem.shared // 1024 // 1024
-        val["SwapTotal"] = swap.total // 1024 // 1024
-        val["SwapFree"] = swap.free // 1024 // 1024
-        val["SwapUsed"] = swap.used // 1024 // 1024
+        val["Buffers"] = mem.buffers / self.calc_mem
+        val["Active"] = mem.active / self.calc_mem
+        val["Inactive"] = mem.inactive / self.calc_mem
+        val["Shmem"] = mem.shared / self.calc_mem
+        val["SwapTotal"] = swap.total / self.calc_swap
+        val["SwapFree"] = swap.free / self.calc_swap
+        val["SwapUsed"] = swap.used / self.calc_swap
         val["SwapPercent"] = swap.percent
+        val["mm"] = self.measure_mem
+        val["ms"] = self.measure_swap
         return self.format.format(**val)

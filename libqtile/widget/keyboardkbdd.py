@@ -18,17 +18,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# type: ignore
 
 import re
 
-import dbus
-from dbus.mainloop.glib import DBusGMainLoop
+from dbus_next.constants import MessageType
 
 from libqtile.log_utils import logger
+from libqtile.utils import add_signal_receiver
 from libqtile.widget import base
 
 
-class KeyboardKbdd(base.ThreadedPollText):
+class KeyboardKbdd(base.ThreadPoolText):
     """Widget for changing keyboard layouts per window, using kbdd
 
     kbdd should be installed and running, you can get it from:
@@ -47,14 +48,13 @@ class KeyboardKbdd(base.ThreadedPollText):
     ]
 
     def __init__(self, **config):
-        base.ThreadedPollText.__init__(self, **config)
+        base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(KeyboardKbdd.defaults)
         self.keyboard = self.configured_keyboards[0]
         self.is_kbdd_running = self._check_kbdd()
         if not self.is_kbdd_running:
             logger.error('Please check if kbdd is running')
             self.keyboard = "N/A"
-        self._dbus_init()
 
     def _check_kbdd(self):
         running_list = self.call_process(["ps", "axw"])
@@ -63,12 +63,20 @@ class KeyboardKbdd(base.ThreadedPollText):
             return True
         return False
 
-    def _dbus_init(self):
-        dbus_loop = DBusGMainLoop()
-        bus = dbus.SessionBus(mainloop=dbus_loop)
-        bus.add_signal_receiver(self._layout_changed,
-                                dbus_interface='ru.gentoo.kbdd',
-                                signal_name='layoutChanged')
+    async def _config_async(self):
+        subscribed = await add_signal_receiver(self._signal_received,
+                                               session_bus=True,
+                                               signal_name="layoutChanged",
+                                               dbus_interface="ru.gentoo.kbdd")
+
+        if not subscribed:
+            logger.warning("Could not subscribe to kbdd signal.")
+
+    def _signal_received(self, message):
+        if message.message_type != MessageType.SIGNAL:
+            return
+
+        self._layout_changed(*message.body)
 
     def _layout_changed(self, layout_changed):
         """

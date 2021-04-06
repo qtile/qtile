@@ -29,10 +29,10 @@ import readline
 import struct
 import sys
 import termios
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
-from libqtile import command_graph
-from libqtile.command_interface import (
+from libqtile.command.client import CommandClient
+from libqtile.command.interface import (
     CommandError,
     CommandException,
     CommandInterface,
@@ -43,7 +43,7 @@ from libqtile.command_interface import (
 def terminal_width():
     width = None
     try:
-        cr = struct.unpack('hh', fcntl.ioctl(0, termios.TIOCGWINSZ, '1234'))
+        cr = struct.unpack("hh", fcntl.ioctl(0, termios.TIOCGWINSZ, "1234"))
         width = int(cr[1])
     except (IOError, ImportError):
         pass
@@ -52,12 +52,11 @@ def terminal_width():
 
 class QSh:
     """Qtile shell instance"""
+
     def __init__(self, client: CommandInterface, completekey="tab") -> None:
-        self._client = client
-        self._current_node = command_graph.CommandGraphRoot()  # type: command_graph.CommandGraphNode
+        self._command_client = CommandClient(client)
         self._completekey = completekey
         self._builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
-        self._termwidth = terminal_width()
 
     def complete(self, arg, state) -> Optional[str]:
         buf = readline.get_line_buffer()
@@ -68,33 +67,30 @@ class QSh:
 
     def _complete(self, buf, arg) -> List[str]:
         if not re.search(r" |\(", buf) or buf.startswith("help "):
-            options = self._builtins + self._commands
+            options = self._builtins + self._command_client.commands
             lst = [i for i in options if i.startswith(arg)]
             return lst
         elif buf.startswith("cd ") or buf.startswith("ls "):
-            last_slash = arg.rfind("/") + 1
-            path, last = arg[:last_slash], arg[last_slash:]
-            node = self._find_path(path)
+            path, sep, last = arg.rpartition("/")
+            node, rest_path = self._find_path(path)
+
             if node is None:
                 return []
-            options = [str(i) for i in self._ls(node)]
-            lst = []
-            if path and not path.endswith("/"):
-                path += "/"
-            for i in options:
-                if i.startswith(last):
-                    lst.append(path + i)
 
-            if len(lst) == 1:
+            children, items = self._ls(node, rest_path)
+            options = children + items
+            completions = [path + sep + i for i in options if i.startswith(last)]
+
+            if len(completions) == 1:
                 # add a slash to continue completing the next part of the path
-                return [lst[0] + "/"]
+                return [completions[0] + "/"]
 
-            return lst
+            return completions
         return []
 
     @property
     def prompt(self) -> str:
-        return "{} > ".format(format_selectors(self._current_node.selectors))
+        return "{} > ".format(format_selectors(self._command_client.selectors))
 
     def columnize(self, lst, update_termwidth=True) -> str:
         if update_termwidth:
@@ -116,83 +112,70 @@ class QSh:
                 ret.append("  ".join(sl))
         return "\n".join(ret)
 
-    @property
-    def _commands(self) -> List[str]:
-        try:
-            commands_cmd = self._current_node.call("commands")
-            return self._client.execute(commands_cmd, (), {})
-        except CommandError:
-            return []
-
-    def _inspect(self, obj: command_graph.CommandGraphNode) -> Tuple[Optional[List[str]], Optional[List[str]]]:
-        """Returns an (attrs, keys) tuple"""
-        if isinstance(obj, command_graph.CommandGraphObject) and obj.selector is None:
-            items_call = obj.parent.call("items")
-            allow_root, items = self._client.execute(items_call, (obj.object_type,), {})
-            attrs = obj.children if allow_root else None
-            return attrs, items
+    def _ls(self, client: CommandClient, object_type: Optional[str]) -> Tuple[List[str], List[str]]:
+        if object_type is not None:
+            allow_root, items = client.items(object_type)
+            str_items = [str(i) for i in items]
+            if allow_root:
+                children = client.navigate(object_type, None).children
+            else:
+                children = []
+            return children, str_items
         else:
-            return obj.children, None
+            return client.children, []
 
-    def _ls(self, obj: command_graph.CommandGraphNode) -> List[str]:
-        attrs, itms = self._inspect(obj)
-        all_items = []  # type: List[str]
-        if attrs:
-            all_items.extend(attrs)
-        if itms:
-            all_items.extend(itms)
-        return all_items
-
-    def _find_path(self, path: str) -> Optional[command_graph.CommandGraphNode]:
+    def _find_path(self, path: str) -> Tuple[Optional[CommandClient], Optional[str]]:
         """Find an object relative to the current node
 
         Finds and returns the command graph node that is defined relative to
         the current node.
         """
-        root = command_graph.CommandGraphRoot() if path.startswith("/") else self._current_node
+        root = self._command_client.root if path.startswith("/") else self._command_client
         parts = [i for i in path.split("/") if i]
         return self._find_node(root, *parts)
 
-    def _find_node(self,
-                   src: command_graph.CommandGraphNode,
-                   *paths: str) -> Optional[command_graph.CommandGraphNode]:
+    def _find_node(
+        self, src: CommandClient, *paths: str
+    ) -> Tuple[Optional[CommandClient], Optional[str]]:
         """Find an object in the command graph
 
         Return the object in the command graph at the specified path relative
         to the given node.
         """
         if len(paths) == 0:
-            return src
+            return src, None
 
         path, *next_path = paths
 
-        next_node = None
         if path == "..":
-            next_node = src.parent or src
-        else:
-            attrs, items = self._inspect(src)
-            for transformation in [str, int]:
-                try:
-                    transformed_path = transformation(path)
-                except ValueError:
-                    continue
+            return self._find_node(src.parent or src, *next_path)
 
-                if attrs is not None and transformed_path in attrs:
-                    nav_node = src.navigate(transformed_path, None)
-                    next_node = nav_node
-                    break
-                elif items is not None and transformed_path in items:
-                    assert isinstance(src, command_graph.CommandGraphObject)
-                    nav_node = src.parent.navigate(src.object_type, transformed_path)
-                    next_node = nav_node
-                    break
+        if path not in src.children:
+            return None, None
 
-        if next_node:
-            return self._find_node(next_node, *next_path)
-        else:
-            return None
+        if len(next_path) == 0:
+            return src, path
 
-    def do_cd(self, arg) -> str:
+        item, *maybe_next_path = next_path
+        allow_root, items = src.items(path)
+
+        for transformation in [str, int]:
+            try:
+                transformed_item = transformation(item)
+            except ValueError:
+                continue
+
+            if transformed_item in items:
+                next_node = src.navigate(path, transformed_item)
+                return self._find_node(next_node, *maybe_next_path)
+
+        if not allow_root:
+            return None, None
+
+        next_node = src.navigate(path, None)
+        return self._find_node(next_node, *next_path)
+
+    def do_cd(self, arg: Optional[str]) -> str:
         """Change to another path.
 
         Examples
@@ -202,14 +185,25 @@ class QSh:
 
             cd ../layout
         """
-        next_node = self._find_path(arg)
-        if next_node is not None:
-            self._current_node = next_node
-            return format_selectors(self._current_node.selectors) or '/'
-        else:
+        if arg is None:
+            self._command_client = self._command_client.root
+            return "/"
+
+        next_node, rest_path = self._find_path(arg)
+        if next_node is None:
             return "No such path."
 
-    def do_ls(self, arg: str) -> str:
+        if rest_path is None:
+            self._command_client = next_node
+        else:
+            allow_root, _ = next_node.items(rest_path)
+            if not allow_root:
+                return "Item required for {}".format(rest_path)
+            self._command_client = next_node.navigate(rest_path, None)
+
+        return format_selectors(self._command_client.selectors) or "/"
+
+    def do_ls(self, arg: Optional[str]) -> str:
         """List contained items on a node.
 
         Examples
@@ -219,14 +213,24 @@ class QSh:
                 > ls ../layout
         """
         if arg:
-            node = self._find_path(arg)
+            node, rest_path = self._find_path(arg)
             if not node:
                 return "No such path."
+            base_path = arg.rstrip("/") + "/"
         else:
-            node = self._current_node
+            node = self._command_client
+            rest_path = None
+            base_path = ""
 
-        ls = self._ls(node)
-        formatted_ls = ["{}/".format(i) for i in ls]
+        assert node is not None
+
+        objects, items = self._ls(node, rest_path)
+
+        formatted_ls = [
+            "{}{}/".format(base_path, i) for i in objects
+        ] + [
+            "{}[{}]/".format(base_path[:-1], i) for i in items
+        ]
         return self.columnize(formatted_ls)
 
     def do_pwd(self, arg) -> str:
@@ -244,9 +248,9 @@ class QSh:
             bar['top']> pwd
             bar['top']
         """
-        return format_selectors(self._current_node.selectors) or '/'
+        return format_selectors(self._command_client.selectors) or "/"
 
-    def do_help(self, arg) -> str:
+    def do_help(self, arg: Optional[str]) -> str:
         """Give help on commands and builtins
 
         When invoked without arguments, provides an overview of all commands.
@@ -267,18 +271,19 @@ class QSh:
                 "========",
                 self.columnize(self._builtins),
             ]
-            cmds = self._commands
+            cmds = self._command_client.commands
             if cmds:
-                lst.extend([
-                    "",
-                    "Commands for this object",
-                    "========================",
-                    self.columnize(cmds),
-                ])
+                lst.extend(
+                    [
+                        "",
+                        "Commands for this object",
+                        "========================",
+                        self.columnize(cmds),
+                    ]
+                )
             return "\n".join(lst)
-        elif arg in self._commands:
-            call = self._current_node.call("doc")
-            return self._client.execute(call, (arg,), {})
+        elif arg in self._command_client.commands:
+            return self._command_client.call("doc", arg)
         elif arg in self._builtins:
             c = getattr(self, "do_" + arg)
             ret = inspect.getdoc(c)
@@ -294,8 +299,8 @@ class QSh:
     do_quit = do_exit
     do_q = do_exit
 
-    def process_line(self, line: str) -> str:
-        builtin_match = re.fullmatch(r"(?P<cmd>\w+)(?:\s+(?P<arg>\S+))?", line)
+    def process_line(self, line: str) -> Any:
+        builtin_match = re.fullmatch(r"(?P<cmd>\w+)(?:\s+(?P<arg>\S*))?", line)
         if builtin_match:
             cmd = builtin_match.group("cmd")
             args = builtin_match.group("arg")
@@ -315,15 +320,13 @@ class QSh:
             else:
                 cmd_args = ()
 
-            if not self._client.has_command(self._current_node, cmd):
+            if cmd not in self._command_client.commands:
                 return "Command does not exist: {}".format(cmd)
 
-            cmd_call = self._current_node.call(cmd)
-
             try:
-                return self._client.execute(cmd_call, cmd_args, {})
+                return self._command_client.call(cmd, *cmd_args)
             except CommandException as e:
-                return "Command exception: {}\n".format(e)
+                return "Caught command exception (is the command invoked incorrectly?): {}\n".format(e)
 
         return "Invalid command: {}".format(line)
 
@@ -341,7 +344,10 @@ class QSh:
             if not line:
                 continue
 
-            val = self.process_line(line)
+            try:
+                val = self.process_line(line)
+            except CommandError as e:
+                val = "Caught command error (is the current path still valid?): {}\n".format(e)
             if isinstance(val, str):
                 print(val)
             elif val:

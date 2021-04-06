@@ -32,7 +32,8 @@ from docutils.statemachine import ViewList
 from jinja2 import Template
 from sphinx.util.nodes import nested_parse_with_titles
 
-from libqtile import command_object, configurable, widget
+from libqtile import command, configurable, widget
+from libqtile.utils import import_class
 
 qtile_module_template = Template('''
 .. qtile_class:: {{ module }}.{{ class_name }}
@@ -77,16 +78,6 @@ qtile_hooks_template = Template('''
 ''')
 
 
-# Adapted from sphinxcontrib-httpdomain
-def import_object(module_name, expr):
-    mod = __import__(module_name)
-    mod = functools.reduce(getattr, module_name.split('.')[1:], mod)
-    globals = builtins
-    if not isinstance(globals, dict):
-        globals = globals.__dict__
-    return eval(expr, globals, mod.__dict__)
-
-
 class SimpleDirectiveMixin:
     has_content = True
     required_arguments = 1
@@ -114,7 +105,7 @@ class QtileClass(SimpleDirectiveMixin, Directive):
     def make_rst(self):
         module, class_name = self.arguments[0].rsplit('.', 1)
         arguments = self.arguments[1:]
-        obj = import_object(module, class_name)
+        obj = import_class(module, class_name)
         is_configurable = ':no-config:' not in arguments
         is_commandable = ':no-commands:' not in arguments
         arguments = [i for i in arguments if i not in (':no-config:', ':no-commands:')]
@@ -142,7 +133,7 @@ class QtileClass(SimpleDirectiveMixin, Directive):
             'obj': obj,
             'defaults': defaults,
             'configurable': is_configurable and issubclass(obj, configurable.Configurable),
-            'commandable': is_commandable and issubclass(obj, command_object.CommandObject),
+            'commandable': is_commandable and issubclass(obj, command.base.CommandObject),
             'is_widget': issubclass(obj, widget.base._Widget),
             'extra_arguments': arguments,
         }
@@ -159,7 +150,7 @@ class QtileClass(SimpleDirectiveMixin, Directive):
 class QtileHooks(SimpleDirectiveMixin, Directive):
     def make_rst(self):
         module, class_name = self.arguments[0].rsplit('.', 1)
-        obj = import_object(module, class_name)
+        obj = import_class(module, class_name)
         for method in sorted(obj.hooks):
             rst = qtile_hooks_template.render(method=method)
             for line in rst.splitlines():
@@ -177,11 +168,11 @@ class QtileModule(SimpleDirectiveMixin, Directive):
 
         BaseClass = None
         if ':baseclass:' in self.arguments:
-            BaseClass = import_object(*self.arguments[
+            BaseClass = import_class(*self.arguments[
                 self.arguments.index(':baseclass:') + 1].rsplit('.', 1))
 
         for item in dir(module):
-            obj = import_object(self.arguments[0], item)
+            obj = import_class(self.arguments[0], item)
             if not inspect.isclass(obj) or (BaseClass and
                 not issubclass(obj, BaseClass)):
                 continue

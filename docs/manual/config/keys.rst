@@ -45,6 +45,107 @@ The :class:`EzKey` modifier keys (i.e. ``MASC``) can be overwritten through the
        'C': 'control',
     }
 
+KeyChords
+=========
+
+Qtile also allows sequences of keys to trigger callbacks. In Qtile, these
+sequences are known as chords and are defined with
+:class:`libqtile.config.KeyChord`. Chords are added to the ``keys`` section of
+the config file.
+
+::
+
+    from libqtile.config import Key, KeyChord
+
+    keys = [
+        KeyChord([mod], "z", [
+            Key([], "x", lazy.spawn("xterm"))
+        ])
+    ]
+
+The above code will launch xterm when the user presses Mod + z, followed by x.
+
+.. warning::
+    Users should note that key chords are aborted by pressing <escape>. In the
+    above example, if the user presses Mod + z, any following key presses will
+    still be sent to the currently focussed window. If <escape> has not been
+    pressed, the next press of x will launch xterm.
+
+Modes
+-----
+
+Chords can optionally specify a "mode". When this is done, the mode will remain
+active until the user presses <escape>. This can be useful for configuring a
+subset of commands for a particular situations (i.e. similar to vim modes).
+
+::
+
+    from libqtile.config import Key, KeyChord
+
+    keys = [
+        KeyChord([mod], "z", [
+            Key([], "g", lazy.layout.grow()),
+            Key([], "s", lazy.layout.shrink()),
+            Key([], "n", lazy.layout.normalize()),
+            Key([], "m", lazy.layout.maximize())],
+            mode="Windows"
+        )
+    ]
+
+In the above example, pressing Mod + z triggers the "Windows" mode. Users can
+then resize windows by just pressing g (to grow the window), s to
+shrink it etc. as many times as needed. To exit the mode, press <escape>.
+
+.. note::
+    If using modes, users may also wish to use the Chord widget
+    (:class:`libqtile.widget.chord.Chord`) as this will display the name of the
+    currently active mode on the bar.
+
+Chains
+------
+
+Chords can also be chained to make even longer sequences.
+
+::
+
+    from libqtile.config import Key, KeyChord
+
+    keys = [
+        KeyChord([mod], "z", [
+            KeyChord([], "x", [
+                Key([], "c", lazy.spawn("xterm"))
+            ])
+        ])
+    ]
+
+Modes can also be added to chains if required. The following example
+demonstrates the behaviour when using the ``mode`` argument in chains:
+
+::
+
+    from libqtile.config import Key, KeyChord
+
+    keys = [
+        KeyChord([mod], "z", [
+            KeyChord([], "y", [
+                KeyChord([], "x", [
+                    Key([], "c", lazy.spawn("xterm"))
+                ], mode="inner")
+            ])
+        ], mode="outer")
+    ]
+
+After pressing Mod+z y x c, the "inner" mode will remain active. When pressing
+<escape>, the "inner" mode is exited. Since the mode in between does not have
+``mode`` set, it is also left. Arriving at the "outer" mode (which has this
+argument set) stops the "leave" action and "outer" now becomes the active mode.
+
+.. note::
+    If you want to bind a custom key to leave the current mode (e.g. Control +
+    G in addition to ``<escape>``), you can specify ``lazy.ungrab_chord()``
+    as the key action. To leave all modes and return to the root bindings, use
+    ``lazy.ungrab_all_chords()``.
+
 Modifiers
 =========
 
@@ -96,6 +197,9 @@ Reference
 =========
 
 .. qtile_class:: libqtile.config.Key
+   :no-commands:
+
+.. qtile_class:: libqtile.config.KeyChord
    :no-commands:
 
 .. qtile_class:: libqtile.config.EzConfig

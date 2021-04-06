@@ -50,4 +50,4 @@ And to start Qtile itself `.xinitrc` should be fixed:
     #
     #   source ~/.xsession
 
-    exec qtile
+    exec qtile start

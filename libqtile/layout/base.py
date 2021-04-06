@@ -21,10 +21,10 @@
 
 import copy
 from abc import ABCMeta, abstractmethod
-from typing import Any, List, Tuple  # noqa: F401
+from typing import Any, List, Tuple
 
 from libqtile import configurable
-from libqtile.command_object import CommandObject
+from libqtile.command.base import CommandObject, ItemT
 
 
 class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
@@ -74,11 +74,12 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         c.group = group
         return c
 
-    def _items(self, name):
-        if name == "screen":
-            return (True, None)
+    def _items(self, name: str) -> ItemT:
+        if name == "screen" and self.group.screen is not None:
+            return True, []
         elif name == "group":
-            return (True, None)
+            return True, []
+        return None
 
     def _select(self, name, sel):
         if name == "screen":
@@ -216,156 +217,6 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         pass
 
 
-class SingleWindow(Layout):
-    """Base for layouts with single visible window"""
-
-    def __init__(self, **config):
-        Layout.__init__(self, **config)
-
-    @abstractmethod
-    def _get_window(self):
-        """Should return either visible window or None"""
-        pass
-
-    def configure(self, win, screen_rect):
-        if win is self._get_window():
-            win.place(
-                screen_rect.x, screen_rect.y,
-                screen_rect.width, screen_rect.height,
-                0,
-                None,
-            )
-            win.unhide()
-        else:
-            win.hide()
-
-
-class Delegate(Layout):
-    """Base for all delegation layouts"""
-
-    def __init__(self, **config):
-        self.layouts = {}
-        Layout.__init__(self, **config)
-
-    def clone(self, group):
-        c = Layout.clone(self, group)
-        c.layouts = {}
-        return c
-
-    @abstractmethod
-    def _get_layouts(self):
-        """Returns all children layouts"""
-        pass
-
-    @abstractmethod
-    def _get_active_layout(self):
-        """Returns layout to which delegate commands to"""
-        pass
-
-    def delegate_layout(self, windows, mapping):
-        """Delegates layouting actual windows
-
-        Parameters
-        ===========
-        windows:
-            windows to layout
-        mapping:
-            mapping from layout to ScreenRect for each layout
-        """
-        grouped = {}
-        for w in windows:
-            lay = self.layouts[w]
-            if lay in grouped:
-                grouped[lay].append(w)
-            else:
-                grouped[lay] = [w]
-        for lay, wins in grouped.items():
-            lay.layout(wins, mapping[lay])
-
-    def remove(self, win):
-        lay = self.layouts.pop(win)
-        focus = lay.remove(win)
-        if not focus:
-            layouts = self._get_layouts()
-            idx = layouts.index(lay)
-            while idx < len(layouts) - 1 and not focus:
-                idx += 1
-                focus = layouts[idx].focus_first()
-        return focus
-
-    @abstractmethod
-    def show(self, screen_rect):
-        """Tells the layout to show itself on the given ScreenRect"""
-        pass
-
-    def hide(self):
-        for lay in self._get_layouts():
-            lay.hide()
-
-    def focus(self, win):
-        self.layouts[win].focus(win)
-
-    def blur(self):
-        for lay in self._get_layouts():
-            lay.blur()
-
-    def focus_first(self):
-        layouts = self._get_layouts()
-        for lay in layouts:
-            win = lay.focus_first()
-            if win:
-                return win
-
-    def focus_last(self):
-        layouts = self._get_layouts()
-        for lay in reversed(layouts):
-            win = lay.focus_last()
-            if win:
-                return win
-
-    def focus_next(self, win):
-        layouts = self._get_layouts()
-        cur = self.layouts[win]
-        focus = cur.focus_next(win)
-        if not focus:
-            idx = layouts.index(cur)
-            while idx < len(layouts) - 1 and not focus:
-                idx += 1
-                focus = layouts[idx].focus_first()
-        return focus
-
-    def focus_previous(self, win):
-        layouts = self._get_layouts()
-        cur = self.layouts[win]
-        focus = cur.focus_previous(win)
-        if not focus:
-            idx = layouts.index(cur)
-            while idx > 0 and not focus:
-                idx -= 1
-                focus = layouts[idx].focus_last()
-        return focus
-
-    def __getattr__(self, name):
-        """Delegate unimplemented command calls to active layout.
-
-        For ``cmd_``-methods that don't exist on the Delegate subclass, this
-        looks for an implementation on the active layout.
-        """
-        if name.startswith('cmd_'):
-            return getattr(self._get_active_layout(), name)
-        return super().__getattr__(name)
-
-    @property
-    def commands(self):
-        return self._get_active_layout().commands
-
-    def info(self):
-        d = Layout.info(self)
-        for layout in self._get_layouts():
-            d[layout.name] = layout.info()
-        return d
-
-
 class _ClientList:
     """
     ClientList maintains a list of clients and a current client.
@@ -443,19 +294,32 @@ class _ClientList:
             return self[idx - 1]
         return None
 
-    def add(self, client, offset_to_current=0):
+    def add(self, client, offset_to_current=0, client_position=None):
         """
         Insert the given client into collection at position of the current.
 
         Use parameter 'offset_to_current' to specify where the client shall be
         inserted. Defaults to zero, which means at position of current client.
         Positive values are after the client.
+
+        Use parameter 'client_position' to insert the given client at 4 specific
+        positions : top, bottom, after_current, before_current.
         """
-        pos = max(0, self._current_idx + offset_to_current)
-        if pos < len(self.clients):
-            self.clients.insert(pos, client)
+        if client_position is not None:
+            if client_position == "after_current":
+                return self.add(client, offset_to_current=1)
+            elif client_position == "before_current":
+                return self.add(client, offset_to_current=0)
+            elif client_position == "top":
+                self.append_head(client)
+            else:  # ie client_position == "bottom"
+                self.append(client)
         else:
-            self.clients.append(client)
+            pos = max(0, self._current_idx + offset_to_current)
+            if pos < len(self.clients):
+                self.clients.insert(pos, client)
+            else:
+                self.clients.append(client)
         self.current_client = client
 
     def append_head(self, client):

@@ -32,8 +32,9 @@ class WindowName(base._TextBox):
     """Displays the name of the window that currently has focus"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('show_state', True, 'show window status before window name'),
-        ('for_current_screen', False, 'instead of this bars screen use currently active screen')
+        ('for_current_screen', False, 'instead of this bars screen use currently active screen'),
+        ('empty_group_string', ' ', 'string to display when no windows are focused on current group'),
+        ('format', '{state}{name}', 'format of the text'),
     ]
 
     def __init__(self, width=bar.STRETCH, **config):
@@ -42,28 +43,33 @@ class WindowName(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        hook.subscribe.client_name_updated(self.update)
-        hook.subscribe.focus_change(self.update)
-        hook.subscribe.float_change(self.update)
+        hook.subscribe.client_name_updated(self.hook_response)
+        hook.subscribe.focus_change(self.hook_response)
+        hook.subscribe.float_change(self.hook_response)
 
         @hook.subscribe.current_screen_change
         def on_screen_changed():
             if self.for_current_screen:
-                self.update()
+                self.hook_response()
 
-    def update(self, *args):
+    def hook_response(self, *args):
         if self.for_current_screen:
             w = self.qtile.current_screen.group.current_window
         else:
             w = self.bar.screen.group.current_window
         state = ''
-        if self.show_state and w is not None:
+        if w:
             if w.maximized:
                 state = '[] '
             elif w.minimized:
                 state = '_ '
             elif w.floating:
                 state = 'V '
-        unescaped = "%s%s" % (state, w.name if w and w.name else " ")
-        self.text = pangocffi.markup_escape_text(unescaped)
-        self.bar.draw()
+            var = {}
+            var["state"] = state
+            var["name"] = w.name
+            var["class"] = w.window.get_wm_class()[0] if len(w.window.get_wm_class()) > 0 else ""
+            unescaped = self.format.format(**var)
+        else:
+            unescaped = self.empty_group_string
+        self.update(pangocffi.markup_escape_text(unescaped))

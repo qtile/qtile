@@ -1,8 +1,36 @@
-Qtile X.X.X, released XXXX-XX-XX:
+Qtile 0.x.x, released xxxx-xx-xx:
+    !!! Config breakage !!!
+        - The `qtile` entry point doesn't run `qtile start` by default anymore
+        - New optional dependency for dbus related features: dbus-next.
+          Replaces previous reliance on dbus/Glib and allows qtile to use async
+          dbus calls within asyncio's eventloop.
+        - widget.BatteryIcon no longer has a fallback text mode; use
+          widget.Battery instead
+        - MonadX layout key new_at_current is deprecated, use new_client_position.
+    !!! deprecation warning !!!
+        - 'main' config functions, deprecated in 0.16.1, will no longer be executed.
+    * features
+        - added measure_mem and measure_swap attributes to memory widget to allow user to choose measurement units.
+        - memory widget can now be displayed with decimal values
+        - new "qtile migrate" command, which will attempt to upgrade previous
+          configs to the current version in the case of qtile API breaks.
+        - A new `reconfigure_screens` config setting. When `True` (default) it
+          hooks `Qtile.reconfigure_screens` to the `screen_change` hook,
+          reconfiguring qtile's screens in response to randr events. This
+          removes the need to restart qtile when adding/removing external
+          monitors.
+        - improved key chord / sequence functionality. Leaving a chord with `mode`
+          set brings you to a named mode you activated before, see #2264.
+          A new command, `lazy.ungrab_all_chords`, was introduced to return to the root bindings.
+          The `enter_chord` hook is now always called with a string argument.
+          The third argument to `KeyChord` was renamed from `submaping` to `submapping` (typo fix).
+
+Qtile 0.17.0, released 2021-02-13:
     !!! Python version breakage !!!
         - Python 3.5 and 3.6 are no longer supported
     !!! Config breakage !!!
         - Pacman widget has been removed. Use CheckUpdates instead.
+        - Mpris widget has been removed. Use Mpris2 instead.
         - property "masterWindows" of Tile layout renamed to master_length
         - Match objects now only allow one string argument for their wm
           name/class/etc. properties. to update your config, do e.g.
@@ -36,6 +64,21 @@ Qtile X.X.X, released XXXX-XX-XX:
           forseeable future, but will be eventually deprecated. qtile prints a
           warning when run in this configuration.
         - Qtile.cmd_focus_by_click is no longer an available command.
+        - Qtile.cmd_get_info is no longer an available command.
+        - libqtile.command_* has been deprecated, it has been moved to
+          libqtile.command.*
+        - libqtile.widget.base.ThreadedPollText has been removed; out of tree
+          widgets can use ThreadPoolText in the same package instead.
+        - the YahooWeather widget was removed since Yahoo retired their free
+          tier of the weather API
+        - Deprecated hook `window_name_change` got removed, use
+          `client_name_updated` instead.
+        - show_state attribute from WindowName widget has been removed. Use format attribute instead.
+                show_state = True  -> format = '{state}{name}'
+                show_state = False -> format = '{name}'
+        - mouse_callbacks no longer receives the qtile object as an argument
+          (they receive no arguments); import it via `from libqtile import
+          qtile` instead.
     * features
         - new WidgetBox widget
         - new restart and shutdown hooks
@@ -43,6 +86,20 @@ Qtile X.X.X, released XXXX-XX-XX:
           AND-semantics, allowing for more complex and specific rules
         - Python 3.9 support
         - switch to Github Actions for CI
+        - Columns layout has new `margin_on_single` option to specify margin
+          size when there is only one window (default -1: use `margin` option).
+        - new OpenWeather widget to replace YahooWeather
+        - new format attribute for WindowName widget
+        - new max_chars attribute for WindowName widget
+        - libqtile now exports type information
+        - add a new `qtile check` subcommand, which will check qtile configs
+          for various things:
+              - validates configs against the newly exported type information
+                if mypy is present in the environment
+              - validates that qtile can import the config file (e.g. that
+                syntax is correct, ends in a .py extension, etc.)
+              - validates Key and Mouse mod/keysym arguments are ok.
+        - Columns layout now enables column swapping by using swap_column_left and swap_column_right
     !!! warning !!!
         - When (re)starting, Qtile passes its state to the new process in a
           file now, where previously it passed state directly as a string. This

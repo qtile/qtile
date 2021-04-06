@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.utils import make_module_getattr
+from libqtile.utils import lazify_imports
 from libqtile.widget.import_error import make_error
 
 widgets = {
@@ -29,6 +29,7 @@ widgets = {
     "Battery": "battery",
     "BatteryIcon": "battery",
     "BitcoinTicker": "bitcoin_ticker",
+    "Bluetooth": "bluetooth",
     "CPU": "cpu",
     "CPUGraph": "graph",
     "Canto": "canto",
@@ -43,7 +44,6 @@ widgets = {
     "CurrentLayoutIcon": "currentlayout",
     "CurrentScreen": "currentscreen",
     "DF": "df",
-    "DebugInfo": "debuginfo",
     "GenPollText": "generic_poll_text",
     "GenPollUrl": "generic_poll_text",
     "GmailChecker": "gmail_checker",
@@ -63,11 +63,12 @@ widgets = {
     "Mirror": "base",
     "Moc": "moc",
     "Mpd2": "mpd2widget",
-    "Mpris": "mpriswidget",
     "Mpris2": "mpris2widget",
     "Net": "net",
     "NetGraph": "graph",
     "Notify": "notify",
+    "NvidiaSensors": "nvidia_sensors",
+    "OpenWeather": "open_weather",
     "Pomodoro": "pomodoro",
     "Prompt": "prompt",
     "PulseVolume": "pulse_volume",
@@ -88,8 +89,8 @@ widgets = {
     "WindowName": "windowname",
     "WindowTabs": "windowtabs",
     "Wlan": "wlan",
-    "YahooWeather": "yahoo_weather"
+    "Wttr": "wttr",
 }
 
-__all__ = tuple(widgets.keys())
-__getattr__ = make_module_getattr(widgets, __package__, fallback=make_error)
+__all__, __dir__, __getattr__ = lazify_imports(widgets, __package__,
+                                               fallback=make_error)

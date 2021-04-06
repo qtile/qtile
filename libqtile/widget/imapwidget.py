@@ -28,7 +28,7 @@ from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
-class ImapWidget(base.ThreadedPollText):
+class ImapWidget(base.ThreadPoolText):
     """Email IMAP widget
 
     This widget will scan one of your imap email boxes and report the number of
@@ -73,7 +73,7 @@ class ImapWidget(base.ThreadedPollText):
     ]
 
     def __init__(self, **config):
-        base.ThreadedPollText.__init__(self, **config)
+        base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(ImapWidget.defaults)
         password = keyring.get_password('imapwidget', self.user)
         if password is not None:

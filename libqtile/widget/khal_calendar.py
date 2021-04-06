@@ -48,7 +48,7 @@ from libqtile import utils
 from libqtile.widget import base
 
 
-class KhalCalendar(base.ThreadedPollText):
+class KhalCalendar(base.ThreadPoolText):
     """Khal calendar widget
 
     This widget will display the next appointment on your Khal calendar in the
@@ -72,7 +72,7 @@ class KhalCalendar(base.ThreadedPollText):
     ]
 
     def __init__(self, **config):
-        base.ThreadedPollText.__init__(self, **config)
+        base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(KhalCalendar.defaults)
         self.text = 'Calendar not initialized.'
         self.default_foreground = self.foreground
@@ -80,48 +80,41 @@ class KhalCalendar(base.ThreadedPollText):
     def poll(self):
         # get today and tomorrow
         now = datetime.datetime.now()
-        tomorrow = now + datetime.timedelta(days=1)
         # get reminder time in datetime format
         remtime = datetime.timedelta(minutes=self.remindertime)
 
         # parse khal output for the next seven days
         # and get the next event
-        args = ['khal', 'agenda', '--days', str(self.lookahead)]
+        args = ['khal', 'list', 'now', str(self.lookahead)+'d']
         cal = subprocess.Popen(args, stdout=subprocess.PIPE)
         output = cal.communicate()[0].decode('utf-8')
-        output = output.split('\n')
-        if len(output) < 2:
-            return 'No appointments scheduled'
-        date = 'unknown'
-        endtime = None
-        for i in range(len(output)):  # pylint: disable=consider-using-enumerate
-            if output[i].strip() == '':
-                continue
-            try:
-                starttime = dateutil.parser.parse(date + ' ' + output[i][:5],
-                                                  ignoretz=True)
-                endtime = dateutil.parser.parse(date + ' ' + output[i][6:11],
-                                                ignoretz=True)
-            except ValueError:
-                try:
-                    if output[i] == 'Today:':
-                        date = str(now.month) + '/' + str(now.day) + '/' + \
-                            str(now.year)
-                    elif output[i] == 'Tomorrow:':
-                        date = str(tomorrow.month) + '/' + str(tomorrow.day) + \
-                            '/' + str(tomorrow.year)
-                    else:
-                        dateutil.parser.parse(output[i])
-                        date = output[i]
-                        continue
-                except ValueError:
-                    pass  # no date.
-            if endtime is not None and endtime > now:
-                data = date.replace(':', '') + ' ' + output[i]
-                break
-            else:
-                data = 'No appointments in next ' + \
+        if output == 'No events\n':
+            return 'No appointments in next ' + \
                     str(self.lookahead) + ' days'
+        output = output.split('\n')
+
+        date = 'unknown'
+        starttime = None
+        endtime = None
+
+        # output[0] = 'Friday, 15/04/1976'
+        outputsplitted = output[0].split(' ')
+        date = outputsplitted[1]
+
+        # output[1] = '[ ][12:00-13:00] dentist'
+        try:
+            output_nb = output[1].strip(' ')
+            starttime = dateutil.parser.parse(date + ' ' + output_nb[:5],
+                                              ignoretz=True)
+            endtime = dateutil.parser.parse(date + ' ' + output_nb[6:11],
+                                            ignoretz=True)
+        except ValueError:
+            # all day event output contains no start nor end time.
+            starttime = dateutil.parser.parse(date + ' 00:00',
+                                              ignoretz=True)
+            endtime = starttime + datetime.timedelta(hours=23, minutes=59)
+
+        data = output[0].replace(',', '') + ' ' + output[1]
 
         # get rid of any garbage in appointment added by khal
         data = ''.join(filter(lambda x: x in string.printable, data))

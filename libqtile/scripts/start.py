@@ -22,13 +22,12 @@
 # Set the locale before any widgets or anything are imported, so any widget
 # whose defaults depend on a reasonable locale sees something reasonable.
 import locale
-import logging
 from os import getenv, makedirs, path
-from sys import exit, stdout
+from sys import exit
 
+import libqtile.backend
 from libqtile import confreader
-from libqtile.backend.x11 import xcore
-from libqtile.log_utils import init_log, logger
+from libqtile.log_utils import logger
 
 
 def rename_process():
@@ -48,9 +47,7 @@ def rename_process():
 
 
 def make_qtile(options):
-    log_level = getattr(logging, options.log_level)
-    init_log(log_level=log_level, log_color=stdout.isatty())
-    kore = xcore.XCore()
+    kore = libqtile.backend.get_core(options.backend)
 
     if not path.isfile(options.configfile):
         try:
@@ -66,23 +63,23 @@ def make_qtile(options):
             logger.exception('Failed to copy default_config.py to %s: (%s)',
                              options.configfile, e)
 
-    config = confreader.Config(options.configfile, kore=kore)
+    config = confreader.Config(options.configfile)
 
     # XXX: the import is here because we need to call init_log
     # before start importing stuff
-    from libqtile.core import session_manager
-    return session_manager.SessionManager(
+    from libqtile.core.manager import Qtile
+    return Qtile(
         kore,
         config,
-        fname=options.socket,
         no_spawn=options.no_spawn,
         state=options.state,
+        socket_path=options.socket,
     )
 
 
 def start(options):
     try:
-        locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())  # type: ignore
+        locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
     except locale.Error:
         pass
 
@@ -96,8 +93,12 @@ def start(options):
     logger.info('Exiting...')
 
 
-def add_subcommand(subparsers):
-    parser = subparsers.add_parser("start", help="Start the window manager")
+def add_subcommand(subparsers, parents):
+    parser = subparsers.add_parser(
+        "start",
+        parents=parents,
+        help="Start the window manager"
+    )
     parser.add_argument(
         "-c", "--config",
         action="store",
@@ -121,16 +122,16 @@ def add_subcommand(subparsers):
         help='Avoid spawning apps. (Used for restart)'
     )
     parser.add_argument(
-        '-l', '--log-level',
-        default='WARNING',
-        dest='log_level',
-        choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),
-        help='Set qtile log level'
-    )
-    parser.add_argument(
         '--with-state',
         default=None,
         dest='state',
         help='Pickled QtileState object (typically used only internally)',
+    )
+    parser.add_argument(
+        '-b', '--backend',
+        default='x11',
+        dest='backend',
+        choices=libqtile.backend.CORES,
+        help='Use specified backend. Currently only x11 is implemented.',
     )
     parser.set_defaults(func=start)

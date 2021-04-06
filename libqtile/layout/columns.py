@@ -16,6 +16,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from libqtile.layout.base import Layout, _ClientList
+from libqtile.log_utils import logger
 
 
 class _Column(_ClientList):
@@ -104,6 +105,8 @@ class Columns(Layout):
         Key([mod, "control"], "k", lazy.layout.grow_up()),
         Key([mod, "control"], "h", lazy.layout.grow_left()),
         Key([mod, "control"], "l", lazy.layout.grow_right()),
+        Key([mod, "shift", "control"], "h", lazy.layout.swap_column_left()),
+        Key([mod, "shift", "control"], "l", lazy.layout.swap_column_right()),
         Key([mod], "Return", lazy.layout.toggle_split()),
         Key([mod], "n", lazy.layout.normalize()),
     """
@@ -117,7 +120,8 @@ class Columns(Layout):
          "Border colour for un-focused windows in stacked columns."),
         ("border_width", 2, "Border width."),
         ("border_on_single", False, "Draw a border when there is one only window."),
-        ("margin", 0, "Margin of the layout."),
+        ("margin", 0, "Margin of the layout (int or list of ints [N E S W])."),
+        ("margin_on_single", -1, "Margin when only one window. `-1` means use `margin`."),
         ("split", True, "New columns presentation mode."),
         ("num_columns", 2, "Preferred number of columns."),
         ("grow_amount", 10, "Amount by which to grow a window/column."),
@@ -176,6 +180,9 @@ class Columns(Layout):
         return c
 
     def remove_column(self, col):
+        if len(self.columns) == 1:
+            logger.warning("Trying to remove all columns.")
+            return
         idx = self.columns.index(col)
         del self.columns[idx]
         if idx <= self.current:
@@ -224,10 +231,13 @@ class Columns(Layout):
             color = self.border_focus if col.split else self.border_focus_stack
         else:
             color = self.border_normal if col.split else self.border_normal_stack
-        if not self.border_on_single and len(self.columns) == 1 and (len(col) == 1 or not col.split):
-            border = 0
-        else:
-            border = self.border_width
+        border = self.border_width
+        margin_size = self.margin
+        if len(self.columns) == 1 and (len(col) == 1 or not col.split):
+            if not self.border_on_single:
+                border = 0
+            if self.margin_on_single > -1:
+                margin_size = self.margin_on_single
         width = int(
             0.5 + col.width * screen_rect.width * 0.01 / len(self.columns))
         x = screen_rect.x + int(0.5 + pos * screen_rect.width * 0.01 / len(self.columns))
@@ -247,7 +257,7 @@ class Columns(Layout):
                 height - 2 * border,
                 border,
                 color,
-                margin=self.margin)
+                margin=margin_size)
             client.unhide()
         elif client == col.cw:
             client.place(
@@ -257,7 +267,7 @@ class Columns(Layout):
                 screen_rect.height - 2 * border,
                 border,
                 color,
-                margin=self.margin)
+                margin=margin_size)
             client.unhide()
         else:
             client.hide()
@@ -275,7 +285,8 @@ class Columns(Layout):
     def focus_next(self, win):
         """Returns the next client after 'win' in layout,
            or None if there is no such client"""
-        # First: try to get next window in column of win
+        # First: try to get next window in column of win (self.columns is non-empty)
+        # pylint: disable=undefined-loop-variable
         for idx, col in enumerate(self.columns):
             if win in col:
                 nxt = col.focus_next(win)
@@ -290,7 +301,8 @@ class Columns(Layout):
     def focus_previous(self, win):
         """Returns the client previous to 'win' in layout.
            or None if there is no such client"""
-        # First: try to focus previous client in column
+        # First: try to focus previous client in column (self.columns is non-empty)
+        # pylint: disable=undefined-loop-variable
         for idx, col in enumerate(self.columns):
             if win in col:
                 prev = col.focus_previous(win)
@@ -475,3 +487,18 @@ class Columns(Layout):
                 col.heights[client] = 100
             col.width = 100
         self.group.layout_all()
+
+    def swap_column(self, src, dst):
+        self.columns[src], self.columns[dst] = self.columns[dst], self.columns[src]
+        self.current = dst
+        self.group.layout_all()
+
+    def cmd_swap_column_left(self):
+        src = self.current
+        dst = src - 1 if src > 0 else len(self.columns) - 1
+        self.swap_column(src, dst)
+
+    def cmd_swap_column_right(self):
+        src = self.current
+        dst = src + 1 if src < len(self.columns) - 1 else 0
+        self.swap_column(src, dst)

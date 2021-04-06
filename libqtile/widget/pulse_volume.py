@@ -94,7 +94,7 @@ class PulseVolume(Volume):
             # done
             self.connected = False
             self._subscribed = False
-            log.error('Connection to pulseaudio has been terminated')
+            log.warning('Connection to pulseaudio has been terminated')
         elif state == lib.PA_CONTEXT_UNCONNECTED:
             self.connected = False
             self._subscribed = False
@@ -155,7 +155,7 @@ class PulseVolume(Volume):
     def on_sink_update(self, event_type, sink_index):
         self.timeout_add(0.1, self.get_sinks)
 
-    def wait_for_operation(self, op, unref=True):
+    def wait_for_operation(self, op):
         state = lib.pa_operation_get_state(op)
         while state == lib.PA_OPERATION_RUNNING:
             lib.pa_mainloop_iterate(self.loop, 0, ffi.NULL)

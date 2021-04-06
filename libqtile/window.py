@@ -26,7 +26,7 @@ import xcffib.xproto
 from xcffib.xproto import EventMask, SetMode, StackMode
 
 from libqtile import hook, utils
-from libqtile.command_object import CommandError, CommandObject
+from libqtile.command.base import CommandError, CommandObject, ItemT
 from libqtile.log_utils import logger
 
 # ICCM Constants
@@ -197,22 +197,14 @@ class _Window(CommandObject):
 
     x = property(fset=_geometry_setter("x"), fget=_geometry_getter("x"))
     y = property(fset=_geometry_setter("y"), fget=_geometry_getter("y"))
-
-    @property
-    def width(self):
-        return _geometry_getter("width")(self)
-
-    @width.setter
-    def width(self, value):
-        _geometry_setter("width")(self, value)
-
-    @property
-    def height(self):
-        return _geometry_getter("height")(self)
-
-    @height.setter
-    def height(self, value):
-        _geometry_setter("height")(self, value)
+    width = property(
+        fset=_geometry_setter("width"),
+        fget=_geometry_getter("width"),
+    )
+    height = property(
+        fset=_geometry_setter("height"),
+        fget=_geometry_getter("height"),
+    )
 
     float_x = property(
         fset=_float_setter("x"),
@@ -234,6 +226,17 @@ class _Window(CommandObject):
     @property
     def has_focus(self):
         return self == self.qtile.current_window
+
+    def has_fixed_size(self):
+        try:
+            if ('PMinSize' in self.hints['flags'] and
+                    'PMaxSize' in self.hints['flags'] and
+                    0 < self.hints["min_width"] == self.hints["max_width"] and
+                    0 < self.hints["min_height"] == self.hints["max_height"]):
+                return True
+        except KeyError:
+            pass
+        return False
 
     def has_user_set_position(self):
         try:
@@ -261,42 +264,7 @@ class _Window(CommandObject):
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             return
 
-        # FIXME
-        # h values
-        # {
-        #    'icon_pixmap': 4194337,
-        #    'icon_window': 0,
-        #    'icon_mask': 4194340,
-        #    'icon_y': 0,
-        #    'input': 1,
-        #    'icon_x': 0,
-        #    'window_group': 4194305
-        #    'initial_state': 1,
-        #    'flags': set(['StateHint',
-        #                  'IconMaskHint',
-        #                  'WindowGroupHint',
-        #                  'InputHint',
-        #                  'UrgencyHint',
-        #                  'IconPixmapHint']),
-        # }
-
         if normh:
-            normh['min_width'] = max(0, normh.get('min_width', 0))
-            normh['min_height'] = max(0, normh.get('min_height', 0))
-            if not normh['base_width'] and \
-                    normh['min_width'] and \
-                    normh['width_inc']:
-                # seems xcffib does ignore base width :(
-                normh['base_width'] = (
-                    normh['min_width'] % normh['width_inc']
-                )
-            if not normh['base_height'] and \
-                    normh['min_height'] and \
-                    normh['height_inc']:
-                # seems xcffib does ignore base height :(
-                normh['base_height'] = (
-                    normh['min_height'] % normh['height_inc']
-                )
             self.hints.update(normh)
 
         if h and 'UrgencyHint' in h['flags']:
@@ -416,6 +384,7 @@ class _Window(CommandObject):
         # We don't want to get the UnmapNotify for this unmap
         with self.disable_mask(xcffib.xproto.EventMask.StructureNotify):
             self.window.unmap()
+        self.state = IconicState
         self.hidden = True
 
     def unhide(self):
@@ -441,7 +410,20 @@ class _Window(CommandObject):
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None):
-        """Places the window at the specified location with the given size.
+        """
+        Places the window at the specified location with the given size.
+
+        Parameters
+        ==========
+        x : int
+        y : int
+        width : int
+        height : int
+        borderwidth : int
+        bordercolor : string
+        above : bool, optional
+        margin : int or list, optional
+            space around window as int or list of ints [N E S W]
         """
 
         # TODO: self.x/y/height/width are updated BEFORE
@@ -460,10 +442,12 @@ class _Window(CommandObject):
 
         # Adjust the placement to account for layout margins, if there are any.
         if margin is not None:
-            x += margin
-            y += margin
-            width -= margin * 2
-            height -= margin * 2
+            if isinstance(margin, int):
+                margin = [margin] * 4
+            x += margin[3]
+            y += margin[0]
+            width -= margin[1] + margin[3]
+            height -= margin[0] + margin[2]
 
         # save x and y float offset
         if self.group is not None and self.group.screen is not None:
@@ -592,7 +576,7 @@ class _Window(CommandObject):
         hook.fire("client_focus", self)
         return True
 
-    def _items(self, name):
+    def _items(self, name: str) -> ItemT:
         return None
 
     def _select(self, name, sel):
@@ -707,13 +691,14 @@ class Static(_Window):
         self.conf_y = y
         self.conf_width = width
         self.conf_height = height
-        self.x = x or 0
-        self.y = y or 0
+        x = x or 0
+        y = y or 0
+        self.x = x + screen.x
+        self.y = y + screen.y
         self.width = width or 0
         self.height = height or 0
         self.screen = screen
-        if None not in (x, y, width, height):
-            self.place(x, y, width, height, 0, 0)
+        self.place(self.x, self.y, self.width, self.height, 0, 0)
         self.update_strut()
 
     def handle_ConfigureRequest(self, e):  # noqa: N802
@@ -915,7 +900,7 @@ class Window(_Window):
     def toggle_minimize(self):
         self.minimized = not self.minimized
 
-    def cmd_static(self, screen, x=None, y=None, width=None, height=None):
+    def cmd_static(self, screen=None, x=None, y=None, width=None, height=None):
         """Makes this window a static window, attached to a Screen
 
         If any of the arguments are left unspecified, the values given by the
@@ -924,7 +909,10 @@ class Window(_Window):
         anything.
         """
         self.defunct = True
-        screen = self.qtile.screens[screen]
+        if screen is None:
+            screen = self.qtile.current_screen
+        else:
+            screen = self.qtile.screens[screen]
         if self.group:
             self.group.remove(self)
         s = Static(self.window, self.qtile, screen, x, y, width, height)
@@ -972,11 +960,18 @@ class Window(_Window):
 
     def _reconfigure_floating(self, new_float_state=FLOATING):
         if new_float_state == MINIMIZED:
-            self.state = IconicState
             self.hide()
         else:
-            width = max(self.width, self.hints.get('min_width', 0))
-            height = max(self.height, self.hints.get('min_height', 0))
+            width = self.width
+            height = self.height
+
+            flags = self.hints.get("flags", {})
+            if "PMinSize" in flags:
+                width = max(self.width, self.hints.get('min_width', 0))
+                height = max(self.height, self.hints.get('min_height', 0))
+            if "PMaxSize" in flags:
+                width = min(width, self.hints.get('max_width', 0)) or width
+                height = min(height, self.hints.get('max_height', 0)) or height
 
             if self.hints['base_width'] and self.hints['width_inc']:
                 width_adjustment = (width - self.hints['base_width']) % self.hints['width_inc']
@@ -1169,11 +1164,18 @@ class Window(_Window):
                     logger.info("Focusing window")
                     self.qtile.current_screen.set_group(self.group)
                     self.group.focus(self)
-                elif focus_behavior == "smart" and self.group.screen and self.group.screen == self.qtile.current_screen:
-                    logger.info("Focusing window")
-                    self.qtile.current_screen.set_group(self.group)
-                    self.group.focus(self)
-                elif focus_behavior == "urgent" or (focus_behavior == "smart" and not self.group.screen):
+                elif focus_behavior == "smart":
+                    if not self.group.screen:
+                        logger.info("Ignoring focus request")
+                        return
+                    if self.group.screen == self.qtile.current_screen:
+                        logger.info("Focusing window")
+                        self.qtile.current_screen.set_group(self.group)
+                        self.group.focus(self)
+                    else:  # self.group.screen != self.qtile.current_screen:
+                        logger.info("Setting urgent flag for window")
+                        self.urgent = True
+                elif focus_behavior == "urgent":
                     logger.info("Setting urgent flag for window")
                     self.urgent = True
                 elif focus_behavior == "never":
@@ -1182,6 +1184,14 @@ class Window(_Window):
                     logger.warning("Invalid value for focus_on_window_activation: {}".format(focus_behavior))
         elif atoms["_NET_CLOSE_WINDOW"] == opcode:
             self.kill()
+        elif atoms["WM_CHANGE_STATE"] == opcode:
+            state = data.data32[0]
+            if state == NormalState:
+                self.minimized = False
+            elif state == IconicState:
+                self.minimized = True
+        else:
+            logger.info("Unhandled client message: %s", atoms.get_name(opcode))
 
     def handle_PropertyNotify(self, e):  # noqa: N802
         name = self.qtile.conn.atoms.get_name(e.atom)
@@ -1220,21 +1230,18 @@ class Window(_Window):
             # are set when the property is emitted
             # self.update_state()
             self.update_state()
-        elif name == "_NET_WM_USER_TIME":
-            if not self.qtile.config.follow_mouse_focus and \
-                    self.group.current_window != self:
-                self.group.focus(self, False)
         else:
             logger.info("Unknown window property: %s", name)
         return False
 
-    def _items(self, name):
+    def _items(self, name: str) -> ItemT:
         if name == "group":
-            return (True, None)
+            return True, []
         elif name == "layout":
-            return (True, list(range(len(self.group.layouts))))
-        elif name == "screen":
-            return (True, None)
+            return True, list(range(len(self.group.layouts)))
+        elif name == "screen" and self.group.screen is not None:
+            return True, []
+        return None
 
     def _select(self, name, sel):
         if name == "group":
@@ -1315,6 +1322,11 @@ class Window(_Window):
         """Set window dimensions to w and h"""
         self.tweak_float(w=w, h=h)
 
+    def cmd_place(self, x, y, width, height, borderwidth, bordercolor,
+                  above=False, margin=None):
+        self.place(x, y, width, height, borderwidth, bordercolor, above,
+                   margin)
+
     def cmd_get_position(self):
         return self.getposition()
 
@@ -1379,9 +1391,9 @@ class Window(_Window):
         return (window.edges[0] <= x <= window.edges[2] and
                 window.edges[1] <= y <= window.edges[3])
 
-    def cmd_set_position(self, dx, dy):
+    def cmd_set_position(self, x, y):
         if self.floating:
-            self.tweak_float(dx, dy)
+            self.tweak_float(x, y)
             return
         for window in self.group.windows:
             if window == self or window.floating:

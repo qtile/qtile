@@ -32,7 +32,7 @@ import xcffib
 import xcffib.xproto
 
 from libqtile import hook, utils, window
-from libqtile.command_object import CommandObject
+from libqtile.command.base import CommandObject, ItemT
 from libqtile.log_utils import logger
 
 
@@ -325,14 +325,14 @@ class _Group(CommandObject):
                     i.focus(win)
         self.layout_all()
 
-    def _items(self, name):
+    def _items(self, name) -> ItemT:
         if name == "layout":
-            return (True, list(range(len(self.layouts))))
-        if name == "screen":
-            return (True, None)
+            return True, list(range(len(self.layouts)))
+        if name == "screen" and self.screen is not None:
+            return True, []
         if name == "window":
-            return (True, [i.window.wid for i in self.windows])
-        raise RuntimeError("Invalid item: {}".format(name))
+            return self.current_window is not None, [i.window.wid for i in self.windows]
+        return None
 
     def _select(self, name, sel):
         if name == "layout":

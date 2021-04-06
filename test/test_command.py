@@ -28,8 +28,8 @@ import libqtile.config
 import libqtile.confreader
 import libqtile.layout
 import libqtile.widget
-from libqtile.command_interface import CommandError
-from libqtile.command_object import CommandObject
+from libqtile.command.base import CommandObject
+from libqtile.command.interface import CommandError
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
 
@@ -169,11 +169,11 @@ def test_cmd_commands(manager):
 
 @server_config
 def test_call_unknown(manager):
-    with pytest.raises(libqtile.command_client.SelectError, match="Not valid child or command"):
+    with pytest.raises(libqtile.command.client.SelectError, match="Not valid child or command"):
         manager.c.nonexistent
 
     manager.c.layout
-    with pytest.raises(libqtile.command_client.SelectError, match="Not valid child or command"):
+    with pytest.raises(libqtile.command.client.SelectError, match="Not valid child or command"):
         manager.c.layout.nonexistent
 
 
@@ -202,12 +202,12 @@ def test_select_qtile(manager):
     assert manager.c.layout.info()["group"] == "a"
     assert len(manager.c.layout.info()["stacks"]) == 1
     assert len(manager.c.layout[2].info()["stacks"]) == 3
-    with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
+    with pytest.raises(libqtile.command.client.SelectError, match="Item not available in object"):
         manager.c.layout[99]
 
     assert manager.c.group.info()["name"] == "a"
     assert manager.c.group["c"].info()["name"] == "c"
-    with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
+    with pytest.raises(libqtile.command.client.SelectError, match="Item not available in object"):
         manager.c.group["nonexistent"]
 
     assert manager.c.widget["one"].info()["name"] == "one"
@@ -222,7 +222,7 @@ def test_select_qtile(manager):
 
     assert manager.c.screen.info()["index"] == 0
     assert manager.c.screen[1].info()["index"] == 1
-    with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
+    with pytest.raises(libqtile.command.client.SelectError, match="Item not available in object"):
         manager.c.screen[22]
 
 
@@ -235,7 +235,7 @@ def test_items_group(manager):
 
     assert group.items("window") == (True, [wid])
     assert group.items("layout") == (True, [0, 1, 2])
-    assert group.items("screen") == (True, None)
+    assert group.items("screen") == (True, [])
 
 
 @server_config
@@ -253,12 +253,12 @@ def test_select_group(manager):
 
     assert group.window.info()["id"] == wid
     assert group.window[wid].info()["id"] == wid
-    with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
+    with pytest.raises(libqtile.command.client.SelectError, match="Item not available in object"):
         group.window["foo"]
 
     assert group.screen.info()["index"] == 0
     assert group["b"].screen.info()["index"] == 1
-    with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
+    with pytest.raises(libqtile.command.client.SelectError, match="Item not available in object"):
         group.screen[0]
 
 
@@ -291,7 +291,7 @@ def test_select_screen(manager):
 
     with pytest.raises(CommandError, match="No object"):
         screen.bar.info()
-    with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
+    with pytest.raises(libqtile.command.client.SelectError, match="Item not available in object"):
         screen.bar["top"]
 
     assert screen.bar["bottom"].info()["position"] == "bottom"
@@ -299,7 +299,7 @@ def test_select_screen(manager):
 
 @server_config
 def test_items_bar(manager):
-    assert manager.c.bar["bottom"].items("screen") == (True, None)
+    assert manager.c.bar["bottom"].items("screen") == (True, [])
 
 
 @server_config
@@ -313,8 +313,8 @@ def test_select_bar(manager):
 
 @server_config
 def test_items_layout(manager):
-    assert manager.c.layout.items("screen") == (True, None)
-    assert manager.c.layout.items("group") == (True, None)
+    assert manager.c.layout.items("screen") == (True, [])
+    assert manager.c.layout.items("group") == (True, [])
 
 
 @server_config
@@ -322,11 +322,11 @@ def test_select_layout(manager):
     layout = manager.c.layout
 
     assert layout.screen.info()["index"] == 0
-    with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
+    with pytest.raises(libqtile.command.client.SelectError, match="Item not available in object"):
         layout.screen[0]
 
     assert layout.group.info()["name"] == "a"
-    with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
+    with pytest.raises(libqtile.command.client.SelectError, match="Item not available in object"):
         layout.group["a"]
 
 
@@ -336,9 +336,9 @@ def test_items_window(manager):
     window = manager.c.window
     window.info()["id"]
 
-    assert window.items("group") == (True, None)
+    assert window.items("group") == (True, [])
     assert window.items("layout") == (True, [0, 1, 2])
-    assert window.items("screen") == (True, None)
+    assert window.items("screen") == (True, [])
 
 
 @server_config
@@ -348,25 +348,25 @@ def test_select_window(manager):
     window.info()["id"]
 
     assert window.group.info()["name"] == "a"
-    with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
+    with pytest.raises(libqtile.command.client.SelectError, match="Item not available in object"):
         window.group["a"]
 
     assert len(window.layout.info()["stacks"]) == 1
     assert len(window.layout[1].info()["stacks"]) == 2
 
     assert window.screen.info()["index"] == 0
-    with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
+    with pytest.raises(libqtile.command.client.SelectError, match="Item not available in object"):
         window.screen[0]
 
 
 @server_config
 def test_items_widget(manager):
-    assert manager.c.widget["one"].items("bar") == (True, None)
+    assert manager.c.widget["one"].items("bar") == (True, [])
 
 
 @server_config
 def test_select_widget(manager):
     widget = manager.c.widget["one"]
     assert widget.bar.info()["position"] == "bottom"
-    with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
+    with pytest.raises(libqtile.command.client.SelectError, match="Item not available in object"):
         widget.bar["bottom"]

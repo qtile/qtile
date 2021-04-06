@@ -19,28 +19,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import functools
+import asyncio
 import glob
 import importlib
 import os
 import traceback
-import warnings
 from collections import defaultdict
 from collections.abc import Sequence
 from random import randint
 from shutil import which
 
-from libqtile.log_utils import logger
-
-_can_notify = False
 try:
-    import gi
-    gi.require_version("Notify", "0.7")  # type: ignore
-    from gi.repository import Notify  # type: ignore
-    Notify.init("Qtile")
-    _can_notify = True
-except ImportError as e:
-    logger.warning("Failed to import dependencies for notifications: %s" % e)
+    from dbus_next import Message, Variant  # type: ignore
+    from dbus_next.aio import MessageBus  # type: ignore
+    from dbus_next.constants import BusType, MessageType  # type: ignore
+    has_dbus = True
+except ImportError:
+    has_dbus = False
+
+from libqtile.log_utils import logger
 
 
 class QtileError(Exception):
@@ -118,49 +115,6 @@ def scrub_to_utf8(text):
         return text.decode("utf-8", "ignore")
 
 
-# WARNINGS
-class UnixCommandNotFound(Warning):
-    pass
-
-
-class UnixCommandRuntimeError(Warning):
-    pass
-
-
-def catch_exception_and_warn(warning=Warning, return_on_exception=None,
-                             excepts=Exception):
-    """
-    .. function:: warn_on_exception(func, [warning_class, return_on_failure,
-            excepts])
-        attempts to call func. catches exception or exception tuple and issues
-        a warning instead. returns value of return_on_failure when the
-        specified exception is raised.
-
-        :param func: a callable to be wrapped
-        :param warning: the warning class to issue if an exception is
-            raised
-        :param return_on_exception: the default return value of the function
-            if an exception is raised
-        :param excepts: an exception class (or tuple of exception classes) to
-            catch during the execution of func
-        :type excepts: Exception or tuple of Exception classes
-        :type warning: Warning
-        :rtype: a callable
-    """
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            return_value = return_on_exception
-            try:
-                return_value = func(*args, **kwargs)
-            except excepts as err:
-                logger.warning(str(err))
-                warnings.warn(str(err), warning)
-            return return_value
-        return wrapper
-    return decorator
-
-
 def get_cache_dir():
     """
     Returns the cache directory and create if it doesn't exists
@@ -210,19 +164,24 @@ def import_class(module_path, class_name, fallback=None):
         raise
 
 
-def make_module_getattr(registry, package, fallback=None):
+def lazify_imports(registry, package, fallback=None):
     """Leverage PEP 562 to make imports lazy in an __init__.py
 
     The registry must be a dictionary with the items to import as keys and the
     modules they belong to as a value.
     """
+    __all__ = tuple(registry.keys())
+
+    def __dir__():
+        return __all__
+
     def __getattr__(name):
         if name not in registry:
             raise AttributeError
         module_path = "{}.{}".format(package, registry[name])
         return import_class(module_path, name, fallback=fallback)
 
-    return __getattr__
+    return __all__, __dir__, __getattr__
 
 
 def send_notification(title, message, urgent=False, timeout=10000, id=None):
@@ -234,16 +193,51 @@ def send_notification(title, message, urgent=False, timeout=10000, id=None):
     passed when calling this function again to replace that notification. See:
     https://developer.gnome.org/notification-spec/
     """
-    if _can_notify and Notify.get_server_info()[0]:
-        notifier = Notify.Notification.new(title, message)
-        if urgent:
-            notifier.set_urgency(Notify.Urgency.CRITICAL)
-        notifier.set_timeout(timeout)
-        if id is None:
-            id = randint(10, 1000)
-        notifier.set_property('id', id)
-        notifier.show()
-        return id
+    if not has_dbus:
+        logger.warning(
+            "dbus-next is not installed. Unable to send notifications."
+        )
+        return -1
+
+    id = randint(10, 1000) if id is None else id
+    urgency = 2 if urgent else 1
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        logger.warning("Eventloop has not started. Cannot send notification.")
+    else:
+        loop.create_task(_notify(title, message, urgency, timeout, id))
+
+    return id
+
+
+async def _notify(title, message, urgency, timeout, id):
+    notification = ["qtile",  # Application name
+                    id,  # id
+                    "",  # icon
+                    title,  # summary
+                    message,  # body
+                    [""],  # actions
+                    {"urgency": Variant("y", urgency)},  # hints
+                    timeout]  # timeout
+
+    bus, msg = await _send_dbus_message(True,
+                                        MessageType.METHOD_CALL,
+                                        "org.freedesktop.Notifications",
+                                        "org.freedesktop.Notifications",
+                                        "/org/freedesktop/Notifications",
+                                        "Notify",
+                                        "susssasa{sv}i",
+                                        notification)
+
+    if msg.message_type == MessageType.ERROR:
+        logger.warning("Unable to send notification. "
+                       "Is a notification server running?")
+
+    # a new bus connection is made each time a notification is sent so
+    # we disconnect when the notification is done
+    bus.disconnect()
 
 
 def guess_terminal(preference=None):
@@ -305,3 +299,76 @@ def scan_files(dirpath, *names):
         files[name].extend(found)
 
     return files
+
+
+async def _send_dbus_message(session_bus, message_type, destination, interface,
+                             path, member, signature, body):
+    """
+    Private method to send messages to dbus via dbus_next.
+
+    Returns a tuple of the bus object and message response.
+    """
+    if session_bus:
+        bus_type = BusType.SESSION
+    else:
+        bus_type = BusType.SYSTEM
+
+    if isinstance(body, str):
+        body = [body]
+
+    bus = await MessageBus(bus_type=bus_type).connect()
+
+    msg = await bus.call(
+        Message(message_type=message_type,
+                destination=destination,
+                interface=interface,
+                path=path,
+                member=member,
+                signature=signature,
+                body=body))
+
+    return bus, msg
+
+
+async def add_signal_receiver(callback, session_bus=False, signal_name=None,
+                              dbus_interface=None, bus_name=None, path=None):
+    """
+    Helper function which aims to recreate python-dbus's add_signal_receiver
+    method in dbus_next with asyncio calls.
+
+    Returns True if subscription is successful.
+    """
+    if not has_dbus:
+        logger.warning(
+            "dbus-next is not installed. "
+            "Unable to subscribe to signals"
+        )
+        return False
+
+    match_args = {
+        "type": "signal",
+        "sender": bus_name,
+        "member": signal_name,
+        "path": path,
+        "interface": dbus_interface
+    }
+
+    rule = ",".join("{}='{}'".format(k, v)
+                    for k, v in match_args.items() if v)
+
+    bus, msg = await _send_dbus_message(session_bus,
+                                        MessageType.METHOD_CALL,
+                                        "org.freedesktop.DBus",
+                                        "org.freedesktop.DBus",
+                                        "/org/freedesktop/DBus",
+                                        "AddMatch",
+                                        "s",
+                                        rule)
+
+    # Check if message sent successfully
+    if msg.message_type == MessageType.METHOD_RETURN:
+        bus.add_message_handler(callback)
+        return True
+
+    else:
+        return False

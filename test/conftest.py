@@ -37,10 +37,10 @@ import xcffib.testing
 import xcffib.xproto
 
 import libqtile.config
-from libqtile import command_client, command_interface, ipc
-from libqtile.backend.x11 import xcore
+from libqtile import command, ipc
+from libqtile.backend.x11.core import Core
 from libqtile.confreader import Config
-from libqtile.core.session_manager import SessionManager
+from libqtile.core.manager import Qtile
 from libqtile.lazy import lazy
 from libqtile.log_utils import init_log
 from libqtile.resources import default_config
@@ -109,8 +109,8 @@ def can_connect_qtile(socket_path, *, ok=None):
         raise AssertionError()
 
     ipc_client = ipc.Client(socket_path)
-    ipc_command = command_interface.IPCCommandInterface(ipc_client)
-    client = command_client.InteractiveCommandClient(ipc_command)
+    ipc_command = command.interface.IPCCommandInterface(ipc_client)
+    client = command.client.InteractiveCommandClient(ipc_command)
     val = client.status()
     if val == 'OK':
         return True
@@ -193,7 +193,7 @@ class Xephyr:
 
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, _exc_type, _exc_val, _exc_tb):
         self.stop_xephyr()
 
     def start_xephyr(self):
@@ -229,13 +229,14 @@ class Xephyr:
         if can_connect_x11(self.display, ok=lambda: self.proc.poll() is None):
             return
 
-        # we wern't able to get a display up
+        # we weren't able to get a display up
         if self.proc.poll() is None:
-            raise AssertionError("Unable to conncet to running Xephyr")
+            raise AssertionError("Unable to connect to running Xephyr")
         else:
-            raise AssertionError("Unable to start Xephyr, quit with return code {:d}".format(
-                self.proc.returncode
-            ))
+            raise AssertionError(
+                "Unable to start Xephyr, quit with return code "
+                f"{self.proc.returncode}"
+            )
 
     def stop_xephyr(self):
         """Stop the Xephyr instance"""
@@ -276,15 +277,19 @@ class TestManager:
         self.c = None
         self.testwindows = []
 
-    def start(self, config_class):
+    def start(self, config_class, no_spawn=False):
         rpipe, wpipe = multiprocessing.Pipe()
 
         def run_qtile():
             try:
-                kore = xcore.XCore(display_name=self.display)
+                kore = Core(display_name=self.display)
                 init_log(self.log_level, log_path=None, log_color=False)
-                q = SessionManager(kore, config_class(), fname=self.sockfile)
-                q.loop()
+                Qtile(
+                    kore,
+                    config_class(),
+                    socket_path=self.sockfile,
+                    no_spawn=no_spawn,
+                ).loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
 
@@ -294,8 +299,8 @@ class TestManager:
         # First, wait for socket to appear
         if can_connect_qtile(self.sockfile, ok=lambda: not rpipe.poll()):
             ipc_client = ipc.Client(self.sockfile)
-            ipc_command = command_interface.IPCCommandInterface(ipc_client)
-            self.c = command_client.InteractiveCommandClient(ipc_command)
+            ipc_command = command.interface.IPCCommandInterface(ipc_client)
+            self.c = command.client.InteractiveCommandClient(ipc_command)
             return
         if rpipe.poll(sleep_time):
             error = rpipe.recv()
@@ -310,13 +315,13 @@ class TestManager:
         will likely block the thread.
         """
         init_log(self.log_level, log_path=None, log_color=False)
-        kore = xcore.XCore(display_name=self.display)
+        kore = Core(display_name=self.display)
         config = config_class()
         for attr in dir(default_config):
             if not hasattr(config, attr):
                 setattr(config, attr, getattr(default_config, attr))
 
-        return SessionManager(kore, config, fname=self.sockfile)
+        return Qtile(kore, config, socket_path=self.sockfile)
 
     def terminate(self):
         if self.proc is None:
@@ -418,25 +423,18 @@ class TestManager:
         if not success():
             raise AssertionError("Window could not be killed...")
 
-    def test_window(self, name):
-        return self._spawn_script("window.py", self.display, name)
-
-    def test_tkwindow(self, name, wm_type):
-        return self._spawn_script("tkwindow.py", name, wm_type)
+    def test_window(self, name, type="normal"):
+        """
+        Windows created with this method must have their process killed explicitly, no
+        matter what type they are.
+        """
+        return self._spawn_script("window.py", self.display, name, type)
 
     def test_dialog(self, name="dialog"):
-        return self.test_tkwindow(name, "dialog")
+        return self.test_window(name, "dialog")
 
     def test_notification(self, name="notification"):
-        """
-        Simulate a notification window. Note that, for testing purposes, this
-        process must be killed explicitly, unlike actual notifications which
-        are sent to a notification server and then expire after a timeout.
-        """
-        # Don't use a real notification, e.g. notify-send or
-        # zenity --notification, since we want to keep the process on until
-        # explicitly killed
-        return self.test_tkwindow(name, "notification")
+        return self.test_window(name, "notification")
 
     def test_xclock(self):
         path = whereis("xclock")
@@ -476,8 +474,13 @@ def xvfb():
         yield
 
 
-@pytest.fixture(scope="function")
-def xephyr(request, xvfb):
+@pytest.fixture(scope="session")
+def display(xvfb):  # noqa: F841
+    return os.environ["DISPLAY"]
+
+
+@pytest.fixture(scope="session")
+def xephyr(request, xvfb):  # noqa: F841
     kwargs = getattr(request, "param", {})
 
     with Xephyr(**kwargs) as x:

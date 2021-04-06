@@ -20,6 +20,7 @@
 
 import pytest
 
+import libqtile
 import libqtile.config
 import libqtile.hook
 from libqtile import layout
@@ -103,17 +104,19 @@ class AllLayoutsConfigEvents(AllLayoutsConfig):
     """
     Extends AllLayoutsConfig to test events.
     """
-    def main(self, c):
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
         # TODO: Test more events
 
-        c.test_data = {
-            'focus_change': 0,
-        }
+        @libqtile.hook.subscribe.startup
+        def _():
+            libqtile.qtile.test_data = {
+                'focus_change': 0,
+            }
 
-        def handle_focus_change():
-            c.test_data['focus_change'] += 1
-
-        libqtile.hook.subscribe.focus_change(handle_focus_change)
+        @libqtile.hook.subscribe.focus_change
+        def _():
+            libqtile.qtile.test_data['focus_change'] += 1
 
 
 each_layout_config = pytest.mark.parametrize("manager", AllLayoutsConfig.generate(), indirect=True)
@@ -124,7 +127,6 @@ each_delegate_layout_config = pytest.mark.parametrize("manager", AllDelegateLayo
 
 @each_layout_config
 def test_window_types(manager):
-    pytest.importorskip("tkinter")
     manager.test_window("one")
 
     # A dialog should take focus and be floating
@@ -140,8 +142,6 @@ def test_window_types(manager):
 
 @each_layout_config
 def test_focus_cycle(manager):
-    pytest.importorskip("tkinter")
-
     manager.test_window("one")
     manager.test_window("two")
     manager.test_dialog("float1")
@@ -202,38 +202,37 @@ def test_focus_change_event(manager):
     # In short, this test prevents layouts from influencing each other in
     # unexpected ways.
 
-    # TODO: Why does it start with 2?
-    assert manager.c.get_test_data()['focus_change'] == 2
+    assert manager.c.get_test_data()['focus_change'] == 0
 
     # Spawning a window must fire only 1 focus_change event
     one = manager.test_window("one")
-    assert manager.c.get_test_data()['focus_change'] == 3
+    assert manager.c.get_test_data()['focus_change'] == 1
     two = manager.test_window("two")
-    assert manager.c.get_test_data()['focus_change'] == 4
+    assert manager.c.get_test_data()['focus_change'] == 2
     three = manager.test_window("three")
-    assert manager.c.get_test_data()['focus_change'] == 5
+    assert manager.c.get_test_data()['focus_change'] == 3
 
     # Switching window must fire only 1 focus_change event
     assert_focused(manager, "three")
     manager.c.group.focus_by_name("one")
-    assert manager.c.get_test_data()['focus_change'] == 6
+    assert manager.c.get_test_data()['focus_change'] == 4
     assert_focused(manager, "one")
 
     # Focusing the current window must fire another focus_change event
     manager.c.group.focus_by_name("one")
-    assert manager.c.get_test_data()['focus_change'] == 7
+    assert manager.c.get_test_data()['focus_change'] == 5
 
     # Toggling a window floating should not fire focus_change events
     manager.c.window.toggle_floating()
-    assert manager.c.get_test_data()['focus_change'] == 7
+    assert manager.c.get_test_data()['focus_change'] == 5
     manager.c.window.toggle_floating()
-    assert manager.c.get_test_data()['focus_change'] == 7
+    assert manager.c.get_test_data()['focus_change'] == 5
 
     # Removing the focused window must fire only 1 focus_change event
     assert_focused(manager, "one")
     assert manager.c.group.info()['focus_history'] == ["two", "three", "one"]
     manager.kill_window(one)
-    assert manager.c.get_test_data()['focus_change'] == 8
+    assert manager.c.get_test_data()['focus_change'] == 6
 
     # The position where 'one' was after it was floated and unfloated
     # above depends on the layout, so we can't predict here what window gets
@@ -241,17 +240,17 @@ def test_focus_change_event(manager):
     # continue testing
     manager.c.group.focus_by_name("three")
     assert manager.c.group.info()['focus_history'] == ["two", "three"]
-    assert manager.c.get_test_data()['focus_change'] == 9
+    assert manager.c.get_test_data()['focus_change'] == 7
 
     # Removing a non-focused window must not fire focus_change events
     manager.kill_window(two)
-    assert manager.c.get_test_data()['focus_change'] == 9
+    assert manager.c.get_test_data()['focus_change'] == 7
     assert_focused(manager, "three")
 
     # Removing the last window must still generate 1 focus_change event
     manager.kill_window(three)
     assert manager.c.layout.info()['clients'] == []
-    assert manager.c.get_test_data()['focus_change'] == 10
+    assert manager.c.get_test_data()['focus_change'] == 8
 
 
 @each_layout_config
@@ -299,8 +298,6 @@ def test_remove(manager):
 
 @each_layout_config
 def test_remove_floating(manager):
-    pytest.importorskip("tkinter")
-
     one = manager.test_window("one")
     manager.test_window("two")
     float1 = manager.test_dialog("float1")
@@ -371,8 +368,6 @@ def test_remove_floating(manager):
 
 @each_layout_config
 def test_desktop_notifications(manager):
-    pytest.importorskip("tkinter")
-
     # Unlike normal floating windows such as dialogs, notifications don't steal
     # focus when they spawn, so test them separately
 

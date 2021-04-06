@@ -23,7 +23,7 @@ import os
 from libqtile.widget import base
 
 
-class DF(base.ThreadedPollText):
+class DF(base.ThreadPoolText):
     """Disk Free Widget
 
     By default the widget only displays if the space is less than warn_space.
@@ -46,7 +46,7 @@ class DF(base.ThreadedPollText):
                 "B": 1024}
 
     def __init__(self, **config):
-        base.ThreadedPollText.__init__(self, **config)
+        base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(DF.defaults)
         self.user_free = 0
         self.calc = self.measures[self.measure]
@@ -57,7 +57,7 @@ class DF(base.ThreadedPollText):
         else:
             self.layout.colour = self.foreground
 
-        base.ThreadedPollText.draw(self)
+        base.ThreadPoolText.draw(self)
 
     def poll(self):
         statvfs = os.statvfs(self.partition)

@@ -36,14 +36,14 @@ import glob
 import os
 import pickle
 import string
-from collections import OrderedDict, deque
+from collections import deque
 from typing import List, Optional, Tuple
 
 from libqtile import bar, hook, pangocffi, utils, xkeysyms
 from libqtile.backend.x11 import xcbq
-from libqtile.command_client import InteractiveCommandClient
-from libqtile.command_interface import CommandError, QtileCommandInterface
-from libqtile.command_object import CommandObject, SelectError
+from libqtile.command.base import CommandObject, SelectError
+from libqtile.command.client import InteractiveCommandClient
+from libqtile.command.interface import CommandError, QtileCommandInterface
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
@@ -425,8 +425,8 @@ class Prompt(base._TextBox):
 
         hook.subscribe.client_focus(f)
 
-    def start_input(self, prompt, callback,
-                    complete=None, strict_completer=False) -> None:
+    def start_input(self, prompt, callback, complete=None,
+                    strict_completer=False, allow_empty_input=False) -> None:
         """Run the prompt
 
         Displays a prompt and starts to take one line of keyboard input from
@@ -450,6 +450,8 @@ class Prompt(base._TextBox):
         strict_completer :
             When True the return value wil be the exact completer result where
             available.
+        allow_empty_input :
+            When True, an empty value will still call the callback function
         """
 
         if self.cursor and self.cursorblink and not self.active:
@@ -464,6 +466,7 @@ class Prompt(base._TextBox):
         self.callback = callback
         self.completer = self.completers[complete](self.qtile)
         self.strict_completer = strict_completer
+        self.allow_empty_input = allow_empty_input
         self._update()
         self.bar.widget_grab_keyboard(self)
         if self.record_history:
@@ -571,7 +574,7 @@ class Prompt(base._TextBox):
             self.user_input = self.actual_value or self.user_input
             del self.actual_value
         self._history_to_input()
-        if self.user_input:
+        if self.user_input or self.allow_empty_input:
             # If history record is activated, also save command in history
             if self.record_history:
                 # ensure no dups in history
@@ -724,11 +727,11 @@ class Prompt(base._TextBox):
         try:
             obj = self.qtile.select([(object_name, selector)])
         except SelectError:
-            logger.warn("cannot select a object")
+            logger.warning("cannot select a object")
             return
         cmd = obj.command(cmd_name)
         if not cmd:
-            logger.warn("command not found")
+            logger.warning("command not found")
             return
 
         def f(args):
@@ -746,10 +749,10 @@ class Prompt(base._TextBox):
         return deque(_LastUpdatedOrderedDict.fromkeys(dq))
 
 
-class _LastUpdatedOrderedDict(OrderedDict):
+class _LastUpdatedOrderedDict(dict):
     """Store items in the order the keys were last added."""
 
     def __setitem__(self, key, value):
         if key in self:
             del self[key]
-        OrderedDict.__setitem__(self, key, value)
+        super().__setitem__(key, value)

@@ -18,7 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import command_interface, ipc, sh
+from libqtile import ipc, sh
+from libqtile.command import interface
 
 
 def qshell(args) -> None:
@@ -27,31 +28,25 @@ def qshell(args) -> None:
     else:
         socket = args.socket
     client = ipc.Client(socket, is_json=args.is_json)
-    cmd_object = command_interface.IPCCommandInterface(client)
+    cmd_object = interface.IPCCommandInterface(client)
     qsh = sh.QSh(cmd_object)
-    if args.pyfile is None:
-        if args.command is not None:
-            qsh.process_line(args.command)
-        else:
-            qsh.loop()
+    if args.command is not None:
+        qsh.process_line(args.command)
     else:
-        print(qsh.process_line("run_external({})".format(args.pyfile)))
+        qsh.loop()
 
 
-def add_subcommand(subparsers):
-    parser = subparsers.add_parser("shell", help="shell-like interface to qtile")
+def add_subcommand(subparsers, parents):
+    parser = subparsers.add_parser(
+        "shell",
+        parents=parents,
+        help="shell-like interface to qtile"
+    )
     parser.add_argument(
         "-s", "--socket",
         action="store", type=str,
         default=None,
         help='Use specified socket to connect to qtile.'
-    )
-    parser.add_argument(
-        "-r", "--run",
-        action="store", type=str,
-        default=None,
-        dest="pyfile",
-        help='The full path to python file with the \"main\" function to call.'
     )
     parser.add_argument(
         "-c", "--command",
