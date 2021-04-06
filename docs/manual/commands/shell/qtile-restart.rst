@@ -1,8 +1,8 @@
 .. _qtile-restart:
 
-===========
+=============
 qtile restart
-===========
+=============
 
 This will restart qtile. 
 
