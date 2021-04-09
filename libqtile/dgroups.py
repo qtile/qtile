@@ -26,6 +26,7 @@
 # SOFTWARE.
 
 import collections
+import functools
 
 import libqtile.hook
 from libqtile.command import lazy
@@ -69,29 +70,40 @@ def simple_key_binder(mod, keynames=None):
 
 class DGroups:
     """Dynamic Groups"""
-    def __init__(self, qtile, dgroups, key_binder=None, delay=1):
+    def __init__(self, qtile):
         self.qtile = qtile
-
-        self.groups = dgroups
         self.groups_map = {}
-
         self.rules = []
         self.rules_map = {}
         self.last_rule_id = 0
+        self.key_binder = None
+        self.keys = []
+        self.timeout = {}
+        self.delay = 1
 
-        for rule in getattr(qtile.config, 'dgroups_app_rules', []):
+        libqtile.hook.subscribe.addgroup(self._addgroup)
+        libqtile.hook.subscribe.client_new(self._add)
+        libqtile.hook.subscribe.client_killed(self._del)
+
+    def _configure(self, config):
+        self.groups = []
+        for group in config.groups:
+            self.groups.append(self.groups_map.pop(group.name), group)
+
+        self.groups_map = {}
+
+        for rule in config.dgroups_app_rules:
             self.add_rule(rule)
 
-        self.keys = []
-
-        self.key_binder = key_binder
-
-        self._setup_hooks()
         self._setup_groups()
 
-        self.delay = delay
+        if self.key_binder:
+            libqtile.hook.unsubscribe.setgroup(self.key_binder)
+            libqtile.hook.unsubscribe.changegroup(self.key_binder)
+            self.key_binder = None
 
-        self.timeout = {}
+        if config.dgroups_key_binder:
+            self.key_binder = functools.partial(config.dgroups_key_binder, self)
 
     def add_rule(self, rule, last=True):
         rule_id = self.last_rule_id
@@ -130,18 +142,6 @@ class DGroups:
                 for spawn in spawns:
                     pid = self.qtile.cmd_spawn(spawn)
                     self.add_rule(Rule(Match(net_wm_pid=pid), group.name))
-
-    def _setup_hooks(self):
-        libqtile.hook.subscribe.addgroup(self._addgroup)
-        libqtile.hook.subscribe.client_new(self._add)
-        libqtile.hook.subscribe.client_killed(self._del)
-        if self.key_binder:
-            libqtile.hook.subscribe.setgroup(
-                lambda: self.key_binder(self)
-            )
-            libqtile.hook.subscribe.changegroup(
-                lambda: self.key_binder(self)
-            )
 
     def _addgroup(self, group_name):
         if group_name not in self.groups_map:

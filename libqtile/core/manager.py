@@ -81,7 +81,7 @@ class Qtile(CommandObject):
         self.widgets_map: Dict[str, _Widget] = {}
         self.groups_map: Dict[str, _Group] = {}
         self.groups: List[_Group] = []
-        self.dgroups: Optional[DGroups] = None
+        self.dgroups = DGroups(self)
 
         self.keys_map: Dict[Tuple[int, int], Union[Key, KeyChord]] = {}
         self.chord_stack: List[KeyChord] = []
@@ -97,9 +97,9 @@ class Qtile(CommandObject):
 
         self.server = IPCCommandServer(self)
         self.config = config
-        self.load_config()
+        self.cmd_load_config()
 
-    def load_config(self):
+    def cmd_load_config(self):
         try:
             self.config.load()
             self.config.validate()
@@ -109,15 +109,13 @@ class Qtile(CommandObject):
 
         self.core.wmname = getattr(self.config, "wmname", "qtile")
 
-        self.dgroups = DGroups(self, self.config.groups, self.config.dgroups_key_binder)
-
-        if self.config.widget_defaults:
-            _Widget.global_defaults = self.config.widget_defaults
-        if self.config.extension_defaults:
-            _Extension.global_defaults = self.config.extension_defaults
+        _Widget.global_defaults = getattr(self.config, "widget_defaults", {})
+        _Extension.global_defaults = getattr(self.config, "extension_defaults", {})
 
         for installed_extension in _Extension.installed_extensions:
             installed_extension._configure(self)
+
+        self.dgroups._configure(config)
 
         for i in self.groups:
             self.groups_map[i.name] = i
