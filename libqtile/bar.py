@@ -251,6 +251,7 @@ class Bar(Gap, configurable.Configurable):
         configured = True
         try:
             widget._configure(self.qtile, self)
+            widget.configured = True
         except Exception as e:
             logger.error(
                 "{} widget crashed during _configure with "

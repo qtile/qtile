@@ -201,7 +201,6 @@ class _Widget(CommandObject, configurable.Configurable):
             self.bar.height
         )
         if not self.configured:
-            self.configured = True
             self.qtile.call_soon(self.timer_setup)
             self.qtile.call_soon(asyncio.create_task, self._config_async())
 
