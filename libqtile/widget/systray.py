@@ -118,6 +118,10 @@ class Systray(window._Window, base._Widget):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
+
+        if self.configured:
+            return
+
         win = qtile.conn.create_window(-1, -1, 1, 1)
         window._Window.__init__(self, xcbq.Window(qtile.conn, win.wid), qtile)
         qtile.windows_map[win.wid] = self
