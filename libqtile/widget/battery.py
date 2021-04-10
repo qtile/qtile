@@ -478,6 +478,7 @@ class BatteryIcon(base._Widget):
 
     def _configure(self, qtile, bar) -> None:
         base._Widget._configure(self, qtile, bar)
+        self.image_padding = 0
         self.setup_images()
         self.image_padding = (self.bar.height - self.bar.height / 5) / 2
 
