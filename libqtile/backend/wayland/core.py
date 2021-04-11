@@ -37,9 +37,11 @@ from wlroots.wlr_types import (
     Surface,
     XCursorManager,
     input_device,
+    pointer,
     seat,
     xdg_shell,
 )
+from wlroots.wlr_types.cursor import WarpMode
 from xkbcommon import xkb
 
 from libqtile.backend import base
@@ -92,6 +94,16 @@ class Core(base.Core):
         self.cursor_manager = XCursorManager(24)
         self._on_request_cursor_listener = Listener(self._on_request_cursor)
         self.seat.request_set_cursor_event.add(self._on_request_cursor_listener)
+        self._on_cursor_axis_listener = Listener(self._on_cursor_axis)
+        self._on_cursor_frame_listener = Listener(self._on_cursor_frame)
+        self._on_cursor_button_listener = Listener(self._on_cursor_button)
+        self._on_cursor_motion_listener = Listener(self._on_cursor_motion)
+        self._on_cursor_motion_absolute_listener = Listener(self._on_cursor_motion_absolute)
+        self.cursor.axis_event.add(self._on_cursor_axis_listener)
+        self.cursor.frame_event.add(self._on_cursor_frame_listener)
+        self.cursor.button_event.add(self._on_cursor_button_listener)
+        self.cursor.motion_event.add(self._on_cursor_motion_listener)
+        self.cursor.motion_absolute_event.add(self._on_cursor_motion_absolute_listener)
 
         # set up shell
         self.windows: List[window.Window] = []
@@ -181,6 +193,34 @@ class Core(base.Core):
 
         logger.info("Managing new top-level window")
         self.windows.append(window.Window(self, surface))
+
+    def _on_cursor_axis(self, _listener, event: pointer.PointerEventAxis):
+        logger.debug("Signal: cursor axis")
+        self.seat.pointer_notify_axis(
+            event.time_msec, event.orientation, event.delta, event.delta_discrete, event.source,
+        )
+
+    def _on_cursor_frame(self, _listener, _data):
+        logger.debug("Signal: cursor frame")
+        self.seat.pointer_notify_frame()
+
+    def _on_cursor_button(self, _listener, event: pointer.PointerEventButton):
+        logger.debug("Signal: cursor button")
+        self.seat.pointer_notify_button(
+            event.time_msec, event.button, event.button_state
+        )
+
+    def _on_cursor_motion(self, _listener, event: pointer.PointerEventMotion):
+        logger.debug("Signal: cursor motion")
+        self.cursor.move(event.delta_x, event.delta_y, input_device=event.device)
+        self.qtile.process_button_motion(self.cursor.x, self.cursor.y)
+
+    def _on_cursor_motion_absolute(self, _listener, event: pointer.PointerMotionAbsolute):
+        logger.debug("Signal: cursor motion_absolute")
+        self.cursor.warp(
+            WarpMode.AbsoluteClosest, event.x, event.y, input_device=event.device,
+        )
+        self.qtile.process_button_motion(self.cursor.x, self.cursor.y)
 
     def _add_new_pointer(self, device: input_device.InputDevice):
         logger.info("Adding new pointer")
