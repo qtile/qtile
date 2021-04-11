@@ -63,3 +63,6 @@ class Core(metaclass=ABCMeta):
     @abstractmethod
     def ungrab_pointer(self) -> None:
         """Release grabbed pointer events"""
+
+    def scan(self) -> None:
+        """Scan for clients if required."""
