@@ -27,6 +27,10 @@ class Core(metaclass=ABCMeta):
         """Set the current desktops of the window manager"""
 
     @abstractmethod
+    def get_screen_info(self) -> List[Tuple[int, int, int, int]]:
+        """Get the screen information"""
+
+    @abstractmethod
     def grab_key(self, key: typing.Union[config.Key, config.KeyChord]) -> typing.Tuple[int, int]:
         """Configure the backend to grab the key event"""
 

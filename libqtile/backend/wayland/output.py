@@ -89,3 +89,8 @@ class Output:
         matrix = Matrix.project_box(box, inverse, 0, wlr_output.transform_matrix)
         self.renderer.render_texture_with_matrix(texture, matrix, 1)
         surface.send_frame_done(now)
+
+    def get_geometry(self)
+        x, y = self.output_layout.output_coords(self.wlr_output)
+        width, height = self.wlr_output.effective_resolution()
+        return x, y, width, height

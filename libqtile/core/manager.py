@@ -294,7 +294,14 @@ class Qtile(CommandObject):
             screen_info = [(s.x, s.y, s.width, s.height) for s in self.config.fake_screens]
             config = self.config.fake_screens
         else:
-            screen_info = self.core.get_screen_info()
+            # Alias screens with the same x and y coordinates, taking largest
+            xywh = {}  # type: Dict[Tuple[int, int], Tuple[int, int]]
+            for sx, sy, sw, sh in self.core.get_screen_info():
+                pos = (sx, sy)
+                width, height = xywh.get(pos, (0, 0))
+                xywh[pos] = (max(width, sw), max(height, sh))
+
+            screen_info = [(x, y, w, h) for (x, y), (w, h) in xywh.items()]
             config = self.config.screens
 
         for i, (x, y, w, h) in enumerate(screen_info):

@@ -233,6 +233,10 @@ class Core(base.Core):
             self.desktops -= 1
         self.current_desktop = index
 
+    def get_screen_info(self) -> List[Tuple[int, int, int, int]]:
+        """Get the screen information"""
+        return [screen.get_geometry() for screen in self.outputs]
+
     def grab_key(self, key: typing.Union[config.Key, config.KeyChord]) -> typing.Tuple[int, int]:
         """Configure the backend to grab the key event"""
 

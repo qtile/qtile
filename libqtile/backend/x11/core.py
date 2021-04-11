@@ -169,27 +169,16 @@ class Core(base.Core):
         self.conn.finalize()
 
     def get_screen_info(self) -> List[Tuple[int, int, int, int]]:
-        """Get the screen information for the current connection"""
-        # What's going on here is a little funny. What we really want is only
-        # screens that don't overlap here; overlapping screens should see the
-        # same parts of the root window (i.e. for people doing xrandr
-        # --same-as). However, the order that X gives us pseudo screens in is
-        # important, because it indicates what people have chosen via xrandr
-        # --primary or whatever. So we need to alias screens that should be
-        # aliased, but preserve order as well. See #383.
-        xywh = {}  # type: Dict[Tuple[int, int], Tuple[int, int]]
-        for screen in self.conn.pseudoscreens:
-            pos = (screen.x, screen.y)
-            width, height = xywh.get(pos, (0, 0))
-            xywh[pos] = (max(width, screen.width), max(height, screen.height))
+        info = [(s.x, s.y, s.width, s.height) for s in self.conn.pseudoscreens]
 
-        if len(xywh) == 0:
-            xywh[(0, 0)] = (
+        if not info:
+            info.append((
+                0, 0,
                 self.conn.default_screen.width_in_pixels,
                 self.conn.default_screen.height_in_pixels,
-            )
+            ))
 
-        return [(x, y, w, h) for (x, y), (w, h) in xywh.items()]
+        return info
 
     @property
     def wmname(self):
