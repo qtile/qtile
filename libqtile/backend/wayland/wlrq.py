@@ -21,8 +21,8 @@
 from __future__ import annotations
 
 import functools
-import typing
 import operator
+import typing
 
 from wlroots.wlr_types.keyboard import KeyboardModifier
 
@@ -40,6 +40,12 @@ ModMasks = {
     "mod3": KeyboardModifier.MOD3,
     "mod4": KeyboardModifier.LOGO,
     "mod5": KeyboardModifier.MOD5,
+}
+
+buttons = {
+    "button1": 0x110,
+    "button2": 0x111,
+    "button3": 0x112,
 }
 
 

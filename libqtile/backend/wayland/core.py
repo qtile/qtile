@@ -73,6 +73,7 @@ class Core(base.Core):
         # set up inputs
         self.keyboards: List[keyboard.Keyboard] = []
         self.grabbed_keys: List[Tuple[int, int]] = []
+        self.grabbed_buttons: List[Tuple[int, int]] = []
         self.device_manager = DataDeviceManager(self.display)
         self.seat = seat.Seat(self.display, "seat0")
         self._on_request_set_selection_listener = Listener(self._on_request_set_selection)
@@ -271,9 +272,14 @@ class Core(base.Core):
 
     def grab_button(self, mouse: config.Mouse) -> None:
         """Configure the backend to grab the mouse event"""
+        keysym = wlrq.buttons.get(mouse.button)
+        assert keysym is not None
+        mask_key = wlrq.translate_masks(mouse.modifiers)
+        self.grabbed_buttons.append((keysym, mask_key))
 
     def ungrab_buttons(self) -> None:
         """Release the grabbed button events"""
+        self.grabbed_buttons.clear()
 
     def grab_pointer(self) -> None:
         """Configure the backend to grab mouse events"""
