@@ -189,8 +189,8 @@ class Qtile(CommandObject):
             for screen in self.screens:
                 screen.group.layout_all()
         self._state = None
-        self.update_net_desktops()
-        hook.subscribe.setgroup(self.update_net_desktops)
+        self.update_desktops()
+        hook.subscribe.setgroup(self.update_desktops)
 
         if self.config.reconfigure_screens:
             hook.subscribe.screen_change(self.cmd_reconfigure_screens)
@@ -427,7 +427,7 @@ class Qtile(CommandObject):
         for mouse in self.config.mouse:
             self.core.grab_button(mouse)
 
-    def update_net_desktops(self) -> None:
+    def update_desktops(self) -> None:
         try:
             index = self.groups.index(self.current_group)
         # TODO: we should really only except ValueError here, AttributeError is
@@ -438,7 +438,7 @@ class Qtile(CommandObject):
         except (ValueError, AttributeError):
             index = 0
 
-        self.core.update_net_desktops(self.groups, index)
+        self.core.update_desktops(self.groups, index)
 
     def update_client_list(self) -> None:
         """Updates the client stack list
@@ -459,7 +459,7 @@ class Qtile(CommandObject):
             self.groups_map[name] = g
             hook.fire("addgroup", name)
             hook.fire("changegroup")
-            self.update_net_desktops()
+            self.update_desktops()
 
             return True
         return False
@@ -487,7 +487,7 @@ class Qtile(CommandObject):
             del(self.groups_map[name])
             hook.fire("delgroup", name)
             hook.fire("changegroup")
-            self.update_net_desktops()
+            self.update_desktops()
 
     def register_widget(self, w):
         """Register a bar widget

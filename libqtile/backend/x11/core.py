@@ -400,7 +400,7 @@ class Core(base.Core):
         # TODO: check stack order
         self._root.set_property("_NET_CLIENT_LIST_STACKING", windows)
 
-    def update_net_desktops(self, groups, index: int) -> None:
+    def update_desktops(self, groups, index: int) -> None:
         """Set the current desktops of the window manager
 
         The list of desktops is given by the list of groups, with the current
