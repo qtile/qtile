@@ -48,6 +48,9 @@ class Core(base.Core):
     def __init__(self):
         """Setup the Wayland core backend"""
         self.qtile = None
+        self.desktops = 1
+        self.current_desktop = 0
+
         self.display = Display()
         self.event_loop = self.display.get_event_loop()
         self.backend = Backend(self.display)
@@ -216,6 +219,19 @@ class Core(base.Core):
     def _poll(self) -> None:
         self.display.flush_clients()
         self.event_loop.dispatch(-1)
+
+    def update_desktops(self, groups, index: int) -> None:
+        """Set the current desktops of the window manager
+
+        The list of desktops is given by the list of groups, with the current
+        desktop given by the index
+        """
+        new_count = len(groups)
+        while new_count > self.desktops:
+            self.desktops += 1
+        while new_count < self.desktops:
+            self.desktops -= 1
+        self.current_desktop = index
 
     def grab_key(self, key: typing.Union[config.Key, config.KeyChord]) -> typing.Tuple[int, int]:
         """Configure the backend to grab the key event"""

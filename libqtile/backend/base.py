@@ -23,6 +23,10 @@ class Core(metaclass=ABCMeta):
         """Setup a listener for the given qtile instance"""
 
     @abstractmethod
+    def update_desktops(self, groups, index: int) -> None:
+        """Set the current desktops of the window manager"""
+
+    @abstractmethod
     def grab_key(self, key: typing.Union[config.Key, config.KeyChord]) -> typing.Tuple[int, int]:
         """Configure the backend to grab the key event"""
 
