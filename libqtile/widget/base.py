@@ -357,6 +357,8 @@ class _TextBox(_Widget):
 
     @text.setter
     def text(self, value):
+        if len(value) > self.max_chars > 0:
+            value = value[:self.max_chars] + "…"
         self._text = value
         if self.layout:
             self.layout.text = self.formatted_text
@@ -467,8 +469,6 @@ class _TextBox(_Widget):
             text = ""
 
         old_width = self.layout.width
-        if len(text) > self.max_chars > 0:
-            text = text[:self.max_chars] + "…"
         self.text = text
 
         # If our width hasn't changed, we just draw ourselves. Otherwise,
