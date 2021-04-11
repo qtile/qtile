@@ -24,7 +24,7 @@ import typing
 
 from pywayland.server import Listener
 from wlroots import ffi, lib
-from wlroots.wlr_types.keyboard import KeyboardModifier, KeyState
+from wlroots.wlr_types.keyboard import KeyState
 from xkbcommon import xkb
 
 from libqtile.log_utils import logger
@@ -50,9 +50,11 @@ def _get_keysyms(xkb_state, keycode):
 class Keyboard:
     def __init__(self, core: Core, device: InputDevice):
         self.core = core
+        self.qtile = core.qtile
         self.device = device
         self.seat = core.seat
         self.keyboard = device.keyboard
+        self.grabbed_keys = core.grabbed_keys
 
         xkb_context = xkb.Context()
         self.keyboard.set_keymap(xkb_context.keymap_new_from_names())
@@ -83,14 +85,17 @@ class Keyboard:
 
     def _on_key(self, _listener, event: KeyboardKeyEvent):
         logger.debug("Signal: keyboard key")
-        # TODO: handle key combinations for calling key bindings
-        if event.state == KeyState.KEY_PRESSED:
-            if self.keyboard.modifier == KeyboardModifier.ALT:
-                # translate libinput keycode -> xkbcommon
-                keycode = event.keycode + 8
-                for keysym in _get_keysyms(self.keyboard._ptr.xkb_state, keycode):
-                    if keysym == xkb.keysym_from_name("Escape"):
-                        self.core.display.terminate()
-                        return
+        handled = False
 
-        self.seat.keyboard_notify_key(event)
+        if event.state == KeyState.KEY_PRESSED:
+            # translate libinput keycode -> xkbcommon
+            keycode = event.keycode + 8
+            keysyms = _get_keysyms(self.keyboard._ptr.xkb_state, keycode)
+            mods = self.keyboard.modifier
+            for keysym in keysyms:
+                if (keysym, mods) in self.grabbed_keys:
+                    self.qtile.process_key_event(keysyms, mods)
+                    handled = True
+
+        if not handled:
+            self.seat.keyboard_notify_key(event)
