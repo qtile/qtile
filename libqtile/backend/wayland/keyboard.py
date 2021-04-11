@@ -18,12 +18,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
+import typing
+
 from pywayland.server import Listener
 from wlroots import ffi, lib
 from wlroots.wlr_types.keyboard import KeyboardModifier, KeyState
 from xkbcommon import xkb
 
 from libqtile.log_utils import logger
+
+if typing.TYPE_CHECKING:
+    from wlroots.wlr_types import InputDevice
+    from wlroots.wlr_types.keyboard import KeyboardKeyEvent
+
+    from libqtile.backend.wayland.core import Core
 
 
 def _get_keysyms(xkb_state, keycode):
@@ -38,7 +48,7 @@ def _get_keysyms(xkb_state, keycode):
 
 
 class Keyboard:
-    def __init__(self, core, device):
+    def __init__(self, core: Core, device: InputDevice):
         self.core = core
         self.device = device
         self.seat = core.seat
@@ -63,15 +73,15 @@ class Keyboard:
         if self.core.keyboards and self.core.seat.keyboard._ptr == self.keyboard._ptr:
             self.seat.set_keyboard(self.core.keyboards[-1].device)
 
-    def _on_destroy(self, _listener, data):
+    def _on_destroy(self, _listener, _data):
         logger.debug("Signal: keyboard destroy")
         self.finalize()
 
-    def _on_modifier(self, _listener, event):
+    def _on_modifier(self, _listener, _data):
         logger.debug("Signal: keyboard modifier")
         self.seat.keyboard_notify_modifiers(self.keyboard.modifiers)
 
-    def _on_key(self, _listener, event):
+    def _on_key(self, _listener, event: KeyboardKeyEvent):
         logger.debug("Signal: keyboard key")
         # TODO: handle key combinations for calling key bindings
         if event.state == KeyState.KEY_PRESSED:

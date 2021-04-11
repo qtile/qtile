@@ -1,7 +1,13 @@
+from __future__ import annotations
+
 import typing
 from abc import ABCMeta, abstractmethod
 
-from libqtile import config
+if typing.TYPE_CHECKING:
+    from typing import List, Tuple, Union
+
+    from libqtile import config
+    from libqtile.core.manager import Qtile
 
 
 class Core(metaclass=ABCMeta):
@@ -15,7 +21,7 @@ class Core(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def setup_listener(self, qtile: "Qtile") -> None:
+    def setup_listener(self, qtile: Qtile) -> None:
         """Setup a listener for the given qtile instance"""
 
     @abstractmethod
@@ -31,11 +37,11 @@ class Core(metaclass=ABCMeta):
         """Get the screen information"""
 
     @abstractmethod
-    def grab_key(self, key: typing.Union[config.Key, config.KeyChord]) -> typing.Tuple[int, int]:
+    def grab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
         """Configure the backend to grab the key event"""
 
     @abstractmethod
-    def ungrab_key(self, key: typing.Union[config.Key, config.KeyChord]) -> typing.Tuple[int, int]:
+    def ungrab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
         """Release the given key event"""
 
     @abstractmethod

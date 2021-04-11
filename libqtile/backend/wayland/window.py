@@ -18,13 +18,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
+import typing
+
 from pywayland.server import Listener
 
 from libqtile.log_utils import logger
 
+if typing.TYPE_CHECKING:
+    from wlroots.wlr_types import xdg_shell
+
+    from libqtile.backend.wayland.core import Core
+
 
 class Window:
-    def __init__(self, core, surface):
+    def __init__(self, core: Core, surface: xdg_shell.XdgSurface):
         self.core = core
         self.surface = surface
         self.mapped = False
@@ -60,6 +69,6 @@ class Window:
         logger.debug("Signal: window destroy")
         self.finalize()
 
-    def _on_request_fullscreen(self, _listener, data):
+    def _on_request_fullscreen(self, _listener, data: xdg_shell.XdgTopLevelSetFullscreenEvent):
         logger.debug("Signal: window request_fullscreen")
         # TODO
