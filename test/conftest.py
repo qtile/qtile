@@ -35,6 +35,7 @@ import pytest
 import xcffib
 import xcffib.testing
 import xcffib.xproto
+from _pytest.runner import runtestprotocol
 
 import libqtile.config
 from libqtile import command, ipc
@@ -86,14 +87,38 @@ def pytest_report_teststatus(report, **kwargs):
     """Report test run duration, adapted from
     https://github.com/pytest-dev/pytest/blob/38d8deb74d95077ebf189440ca047e14f8197da1/src/_pytest/runner.py#L202
     """
-    d = report.duration
+    if report.skipped:
+        return 'skipped', 'S', 'SKIPPED'
+    timings = getattr(report, 'timings', None)
+    d = ('%s=%s' % ('+'.join('%.3f' % t if t > 1e-3 else '0' for t in timings),
+                    '%.3f' % sum(timings) if sum(timings) > 1e-3 else '0')
+         if timings else '%.3f' % getattr(report, 'duration', 0.0))
     if report.passed:  # category, shortletter, verbose-word
-        return 'passed', 'P', 'PASSED (%.3f)' % d
-    if report.timed_out:
-        return 'failed', 'T', 'TIMEOUT'
+        return 'passed', 'P', 'PASSED (%s)' % d
+    if getattr(report, 'timed_out', False):
+        return 'failed', 'T', 'TIMEOUT (%s)' % d
     if report.failed:
-        return 'failed', 'F', 'FAILED (%.3f)' % d
+        return 'failed', 'F', 'FAILED (%s)' % d
     return None
+
+
+def pytest_runtest_protocol(item, nextitem) -> bool:
+    """Report test run duration, adapted from
+    https://github.com/pytest-dev/pytest/blob/9653a0e9f47ad2ae5135a974db52ddeb5bfcf5d9/src/_pytest/runner.py#L110
+    """
+    ihook = item.ihook
+    ihook.pytest_runtest_logstart(nodeid=item.nodeid, location=item.location)
+    reports = runtestprotocol(item, log=False, nextitem=nextitem)
+    if reports:
+        timings = []
+        for report in reports:
+            timings.append(getattr(report, 'duration', 0.0))
+            if any([report.failed, report.skipped, getattr(report, 'timed_out', False)]):
+                break
+        report.timings = timings
+        ihook.pytest_runtest_logreport(report=report)
+    ihook.pytest_runtest_logfinish(nodeid=item.nodeid, location=item.location)
+    return True
 
 
 class Retry:
