@@ -18,6 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
+import typing
+
 from pywayland.server import Listener
 from wlroots.util.clock import Timespec
 from wlroots.wlr_types import Box, Matrix
@@ -25,9 +29,16 @@ from wlroots.wlr_types import Output as wlrOutput
 
 from libqtile.log_utils import logger
 
+if typing.TYPE_CHECKING:
+    from typing import Tuple
+
+    from wlroots.wlr_types import Surface
+
+    from libqtile.backend.wayland.core import Core
+
 
 class Output:
-    def __init__(self, core, wlr_output):
+    def __init__(self, core: Core, wlr_output: wlrOutput):
         self.core = core
         self.renderer = core.renderer
         self.wlr_output = wlr_output
@@ -42,12 +53,12 @@ class Output:
         self._on_destroy_listener.remove()
         self._on_frame_listener.remove()
 
-    def _on_destroy(self, _listener, data):
+    def _on_destroy(self, _listener, _data):
         logger.debug("Signal: output destroy")
         self.finalize()
         self.core.outputs.remove(self)
 
-    def _on_frame(self, _listener, data):
+    def _on_frame(self, _listener, _data):
         now = Timespec.get_monotonic_time()
         wlr_output = self.wlr_output
 
@@ -67,7 +78,7 @@ class Output:
         self.renderer.end()
         wlr_output.commit()
 
-    def _render_surface(self, surface, sx, sy, data) -> None:
+    def _render_surface(self, surface: Surface, sx: int, sy: int, data) -> None:
         window, now = data
 
         texture = surface.get_texture()
@@ -90,7 +101,7 @@ class Output:
         self.renderer.render_texture_with_matrix(texture, matrix, 1)
         surface.send_frame_done(now)
 
-    def get_geometry(self)
+    def get_geometry(self) -> Tuple[int, int, int, int]:
         x, y = self.output_layout.output_coords(self.wlr_output)
         width, height = self.wlr_output.effective_resolution()
-        return x, y, width, height
+        return int(x), int(y), width, height

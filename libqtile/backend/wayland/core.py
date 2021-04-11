@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import asyncio
 import os
 import typing
@@ -32,24 +34,32 @@ from wlroots.wlr_types import (
     Cursor,
     DataDeviceManager,
     OutputLayout,
-    Seat,
+    Surface,
     XCursorManager,
+    input_device,
+    seat,
     xdg_shell,
 )
-from wlroots.wlr_types.input_device import InputDeviceType
 
-from libqtile import config
 from libqtile.backend import base
 from libqtile.backend.wayland import keyboard, output, window
 from libqtile.log_utils import logger
+
+if typing.TYPE_CHECKING:
+    from typing import List, Optional, Tuple, Union
+
+    from wlroots.wlr_types import Output as wlrOutput
+
+    from libqtile import config, group
+    from libqtile.core.manager import Qtile
 
 
 class Core(base.Core):
     def __init__(self):
         """Setup the Wayland core backend"""
-        self.qtile = None
-        self.desktops = 1
-        self.current_desktop = 0
+        self.qtile: Optional[Qtile] = None
+        self.desktops: int = 1
+        self.current_desktop: int = 0
 
         self.display = Display()
         self.event_loop = self.display.get_event_loop()
@@ -60,9 +70,9 @@ class Core(base.Core):
         self.fd = None
 
         # set up inputs
-        self.keyboards = []
+        self.keyboards: List[keyboard.Keyboard] = []
         self.device_manager = DataDeviceManager(self.display)
-        self.seat = Seat(self.display, "seat0")
+        self.seat = seat.Seat(self.display, "seat0")
         self._on_request_set_selection_listener = Listener(self._on_request_set_selection)
         self._on_new_input_listener = Listener(self._on_new_input)
         self.seat.request_set_selection_event.add(self._on_request_set_selection_listener)
@@ -70,7 +80,7 @@ class Core(base.Core):
 
         # set up outputs
         self.output_layout = OutputLayout()
-        self.outputs = []
+        self.outputs: List[output.Output] = []
         self._on_new_output_listener = Listener(self._on_new_output)
         self.backend.new_output_event.add(self._on_new_output_listener)
 
@@ -81,7 +91,7 @@ class Core(base.Core):
         self.seat.request_set_cursor_event.add(self._on_request_cursor_listener)
 
         # set up shell
-        self.windows = []
+        self.windows: List[window.Window] = []
         self.xdg_shell = xdg_shell.XdgShell(self.display)
         self._on_new_xdg_surface_listener = Listener(self._on_new_xdg_surface)
         self.xdg_shell.new_surface_event.add(self._on_new_xdg_surface_listener)
@@ -117,15 +127,15 @@ class Core(base.Core):
     def display_name(self) -> str:
         return self.socket.decode()
 
-    def _on_request_set_selection(self, _listener, event):
+    def _on_request_set_selection(self, _listener, event: seat.RequestSetSelectionEvent):
         self.seat.set_selection(event._ptr.source, event.serial)
         logger.debug("Signal: seat request_set_selection")
 
-    def _on_new_input(self, _listener, device):
+    def _on_new_input(self, _listener, device: input_device.InputDevice):
         logger.debug("Signal: backend new_input_event")
-        if device.device_type == InputDeviceType.POINTER:
+        if device.device_type == input_device.InputDeviceType.POINTER:
             self._add_new_pointer(device)
-        elif device.device_type == InputDeviceType.KEYBOARD:
+        elif device.device_type == input_device.InputDeviceType.KEYBOARD:
             self._add_new_keyboard(device)
 
         capabilities = WlSeat.capability.pointer
@@ -137,7 +147,7 @@ class Core(base.Core):
 
         self.seat.set_capabilities(capabilities)
 
-    def _on_new_output(self, _listener, wlr_output):
+    def _on_new_output(self, _listener, wlr_output: wlrOutput):
         logger.debug("Signal: backend new_output_event")
         if wlr_output.modes != []:
             mode = wlr_output.preferred_mode()
@@ -154,29 +164,31 @@ class Core(base.Core):
         self.outputs.append(output.Output(self, wlr_output))
         self.output_layout.add_auto(wlr_output)
 
-    def _on_request_cursor(self, _listener, event):
+    def _on_request_cursor(self, _listener, event: seat.PointerRequestSetCursorEvent):
         logger.debug("Signal: seat request_set_cursor_event")
         # if self._seat.pointer_state.focused_surface == event.seat_client:  # needs updating pywlroots first
         self.cursor.set_surface(event.surface, event.hotspot)
 
-    def _on_new_xdg_surface(self, _listener, surface):
+    def _on_new_xdg_surface(self, _listener, surface: xdg_shell.XdgSurface):
         logger.debug("Signal: xdg_shell new_surface_event")
+        assert self.qtile is not None
+
         if surface.role != xdg_shell.XdgSurfaceRole.TOPLEVEL:
             return
 
         logger.info("Managing new top-level window")
         self.windows.append(window.Window(self, surface))
 
-    def _add_new_pointer(self, device):
+    def _add_new_pointer(self, device: input_device.InputDevice):
         logger.info("Adding new pointer")
         self.cursor.attach_input_device(device)
 
-    def _add_new_keyboard(self, device):
+    def _add_new_keyboard(self, device: input_device.InputDevice):
         logger.info("Adding new keyboard")
         self.keyboards.append(keyboard.Keyboard(self, device))
         self.seat.set_keyboard(device)
 
-    def focus_window(self, win, surface=None):
+    def focus_window(self, win: window.Window, surface: Surface = None):
         if surface is None:
             surface = win.surface.surface
 
@@ -201,7 +213,7 @@ class Core(base.Core):
         self.seat.keyboard_notify_enter(surface, self.seat.keyboard)
         logger.debug("Focussed new window")
 
-    def setup_listener(self, qtile: "Qtile") -> None:
+    def setup_listener(self, qtile: Qtile) -> None:
         """Setup a listener for the given qtile instance"""
         logger.debug("Adding io watch")
         self.qtile = qtile
@@ -220,7 +232,7 @@ class Core(base.Core):
         self.display.flush_clients()
         self.event_loop.dispatch(-1)
 
-    def update_desktops(self, groups, index: int) -> None:
+    def update_desktops(self, groups: List[group._Group], index: int) -> None:
         """Set the current desktops of the window manager
 
         The list of desktops is given by the list of groups, with the current
@@ -237,10 +249,10 @@ class Core(base.Core):
         """Get the screen information"""
         return [screen.get_geometry() for screen in self.outputs]
 
-    def grab_key(self, key: typing.Union[config.Key, config.KeyChord]) -> typing.Tuple[int, int]:
+    def grab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
         """Configure the backend to grab the key event"""
 
-    def ungrab_key(self, key: typing.Union[config.Key, config.KeyChord]) -> typing.Tuple[int, int]:
+    def ungrab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
         """Release the given key event"""
 
     def ungrab_keys(self) -> None:
