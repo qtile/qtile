@@ -40,9 +40,10 @@ from wlroots.wlr_types import (
     seat,
     xdg_shell,
 )
+from xkbcommon import xkb
 
 from libqtile.backend import base
-from libqtile.backend.wayland import keyboard, output, window
+from libqtile.backend.wayland import keyboard, output, window, wlrq
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -71,6 +72,7 @@ class Core(base.Core):
 
         # set up inputs
         self.keyboards: List[keyboard.Keyboard] = []
+        self.grabbed_keys: List[Tuple[int, int]] = []
         self.device_manager = DataDeviceManager(self.display)
         self.seat = seat.Seat(self.display, "seat0")
         self._on_request_set_selection_listener = Listener(self._on_request_set_selection)
@@ -251,12 +253,21 @@ class Core(base.Core):
 
     def grab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
         """Configure the backend to grab the key event"""
+        keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
+        mask_key = wlrq.translate_masks(key.modifiers)
+        self.grabbed_keys.append((keysym, mask_key))
+        return keysym, mask_key
 
     def ungrab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
         """Release the given key event"""
+        keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
+        mask_key = wlrq.translate_masks(key.modifiers)
+        self.grabbed_keys.remove((keysym, mask_key))
+        return keysym, mask_key
 
     def ungrab_keys(self) -> None:
         """Release the grabbed key events"""
+        self.grabbed_keys.clear()
 
     def grab_button(self, mouse: config.Mouse) -> None:
         """Configure the backend to grab the mouse event"""
