@@ -110,7 +110,8 @@ class Qtile(CommandObject):
             widgets = self.config.screens[0].bottom.widgets
             widgets.insert(0, TextBox('Config Err!'))
 
-        self.core.wmname = getattr(self.config, "wmname", "qtile")
+        if hasattr(self.core, "wmname"):
+            self.core.wmname = getattr(self.config, "wmname", "qtile")
 
         self.dgroups = DGroups(self, self.config.groups, self.config.dgroups_key_binder)
 
