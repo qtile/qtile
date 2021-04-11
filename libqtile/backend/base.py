@@ -15,6 +15,14 @@ class Core(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def setup_listener(self, qtile: "Qtile") -> None:
+        """Setup a listener for the given qtile instance"""
+
+    @abstractmethod
+    def remove_listener(self) -> None:
+        """Setup a listener for the given qtile instance"""
+
+    @abstractmethod
     def grab_key(self, key: typing.Union[config.Key, config.KeyChord]) -> typing.Tuple[int, int]:
         """Configure the backend to grab the key event"""
 

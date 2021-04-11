@@ -18,9 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import asyncio
 import os
 import typing
 
+from pywayland import lib
 from pywayland.protocol.wayland import WlSeat
 from pywayland.server import Display, Listener
 from wlroots.backend import Backend
@@ -45,11 +47,14 @@ from libqtile.log_utils import logger
 class Core(base.Core):
     def __init__(self):
         """Setup the Wayland core backend"""
+        self.qtile = None
         self.display = Display()
+        self.event_loop = self.display.get_event_loop()
         self.backend = Backend(self.display)
         self.renderer = Renderer(self.backend, self.display)
         self.compositor = Compositor(self.display, self.renderer)
         self.socket = self.display.add_socket()
+        self.fd = None
 
         # set up inputs
         self.keyboards = []
@@ -80,11 +85,8 @@ class Core(base.Core):
 
         # start
         os.environ["WAYLAND_DISPLAY"] = self.socket.decode()
-        logger.info("Starting with WAYLAND_DISPLAY=" + self.socket.decode())
+        logger.info("Starting core with WAYLAND_DISPLAY=" + self.socket.decode())
         self.backend.start()
-
-        self.display.run()
-        self.finalize()
 
     def finalize(self):
         self._on_new_xdg_surface_listener.remove()
@@ -195,6 +197,25 @@ class Core(base.Core):
         win.surface.set_activated(True)
         self.seat.keyboard_notify_enter(surface, self.seat.keyboard)
         logger.debug("Focussed new window")
+
+    def setup_listener(self, qtile: "Qtile") -> None:
+        """Setup a listener for the given qtile instance"""
+        logger.debug("Adding io watch")
+        self.qtile = qtile
+        self.fd = lib.wl_event_loop_get_fd(self.event_loop._ptr)
+        asyncio.get_running_loop().add_reader(self.fd, self._poll)
+
+    def remove_listener(self) -> None:
+        """Remove the listener from the given event loop"""
+        if self.fd is not None:
+            logger.debug("Removing io watch")
+            loop = asyncio.get_running_loop()
+            loop.remove_reader(self.fd)
+            self.fd = None
+
+    def _poll(self) -> None:
+        self.display.flush_clients()
+        self.event_loop.dispatch(-1)
 
     def grab_key(self, key: typing.Union[config.Key, config.KeyChord]) -> typing.Tuple[int, int]:
         """Configure the backend to grab the key event"""
