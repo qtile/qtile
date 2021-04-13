@@ -43,6 +43,19 @@ def read_file(p):
         return f.read()
 
 
+def test_extra_files_are_ok():
+    with tempfile.TemporaryDirectory() as tempdir:
+        config_file = os.path.join(tempdir, "config.py")
+        with open(config_file, "w") as config:
+            config.write("from .bar import CommandGraphRoot\n")
+        bar_py = os.path.join(tempdir, "bar.py")
+        with open(bar_py, "w") as config:
+            config.write("from libqtile.command_graph import CommandGraphRoot\n")
+        run_qtile_migrate(config_file)
+        assert os.path.exists(bar_py + BACKUP_SUFFIX)
+        assert read_file(bar_py) == "from libqtile.command.graph import CommandGraphRoot\n"
+
+
 def check_migrate(orig, expected):
     with tempfile.TemporaryDirectory() as tempdir:
         config_path = os.path.join(tempdir, "config.py")

@@ -21,6 +21,7 @@ import os
 import os.path
 import shutil
 import sys
+from glob import glob
 
 BACKUP_SUFFIX = ".migrate.bak"
 
@@ -30,45 +31,45 @@ except ImportError:
     pass
 
 
-def rename_hook(config, fro, to):
+def rename_hook(query, fro, to):
     # could match on dotted_name< 'hook' '.' 'subscribe' '.' '{name}' >
     # but the replacement gets more complicated...
     selector = "'{name}'".format(name=fro)
-    q = bowler.Query(config).select_pattern(selector)
+    q = query.select_pattern(selector)
     q.current.kwargs["name"] = fro
     return q.rename(to)
 
 
-def client_name_updated(config):
+def client_name_updated(query):
     """ Rename window_name_change -> client_name_updated"""
-    return rename_hook(config, "window_name_change", "client_name_updated")
+    return rename_hook(query, "window_name_change", "client_name_updated")
 
 
-def tile_master_windows_rename(config):
+def tile_master_windows_rename(query):
     return (
-        bowler.Query(config)
+        query
         .select_function("Tile")
         .modify_argument("masterWindows", "master_length")
     )
 
 
-def threaded_poll_text_rename(config):
+def threaded_poll_text_rename(query):
     return (
-        bowler.Query(config)
+        query
         .select_class("ThreadedPollText")
         .rename("ThreadPoolText")
     )
 
 
-def pacman_to_checkupdates(config):
+def pacman_to_checkupdates(query):
     return (
-        bowler.Query(config)
+        query
         .select_class("Pacman")
         .rename("CheckUpdates")
     )
 
 
-def hook_main_function(config):
+def hook_main_function(query):
     def modify_main(node, capture, filename):
         main = capture.get("function_def")
         if main.prev_sibling:
@@ -82,7 +83,7 @@ def hook_main_function(config):
             main.prefix += "@hook.subscribe.startup\n"
 
     return (
-        bowler.Query(config)
+        query
         .select_function("main")
         .is_def()
         .modify(modify_main)
@@ -104,12 +105,12 @@ def update_node_nac(node, capture, filename):
         val.value = "'after_current'"
 
 
-def new_at_current_to_new_client_position(config):
+def new_at_current_to_new_client_position(query):
     old_pattern = """
         argument< k="new_at_current" "=" v=any >
     """
     return (
-        bowler.Query(config)
+        query
         .select(old_pattern)
         .modify(update_node_nac)
     )
@@ -133,13 +134,19 @@ MODULE_RENAMES = [
 ]
 
 for (fro, to) in MODULE_RENAMES:
-    def f(config, fro=fro, to=to):
+    def f(query, fro=fro, to=to):
         return (
-            bowler.Query(config)
+            query
             .select_module(fro)
             .rename(to)
         )
     MIGRATIONS.append(f)
+
+
+def file_and_backup(config_dir):
+    for py in glob(os.path.join(config_dir, "*.py")):
+        backup = py + BACKUP_SUFFIX
+        yield py, backup
 
 
 def do_migrate(args):
@@ -148,15 +155,25 @@ def do_migrate(args):
         print("install it and try again")
         sys.exit(1)
 
-    backup = args.config + BACKUP_SUFFIX
-    shutil.copyfile(args.config, backup)
+    config_dir = os.path.dirname(args.config)
+    for py, backup in file_and_backup(config_dir):
+        shutil.copyfile(py, backup)
 
     for m in MIGRATIONS:
-        m(args.config).execute(interactive=args.interactive, write=True)
+        q = bowler.Query(config_dir)
+        m(q).execute(interactive=args.interactive, write=True)
 
-    if filecmp.cmp(args.config, backup, shallow=False):
+    changed = False
+    for py, backup in file_and_backup(config_dir):
+        backup = py + BACKUP_SUFFIX
+        if not filecmp.cmp(py, backup, shallow=False):
+            changed = True
+            break
+
+    if not changed:
         print("Config unchanged.")
-        os.remove(backup)
+        for _, backup in file_and_backup(config_dir):
+            os.remove(backup)
 
 
 def add_subcommand(subparsers, parents):
@@ -172,7 +189,7 @@ def add_subcommand(subparsers, parents):
         default=os.path.expanduser(
             os.path.join(os.getenv("XDG_CONFIG_HOME", "~/.config"), "qtile", "config.py")
         ),
-        help="Use the specified configuration file",
+        help="Use the specified configuration file (migrates every .py file in this directory)",
     )
     parser.add_argument(
         "--interactive",
