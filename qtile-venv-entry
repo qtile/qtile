@@ -12,4 +12,4 @@
 source ~/.bashrc
 source ~/.xinitrc
 source ~/.virtualenvs/qtile/bin/activate
-python ~/qtile/bin/qtile $*
+python ~/qtile/bin/qtile start
