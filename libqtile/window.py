@@ -1212,7 +1212,7 @@ class Window(_Window):
                     logger.warning("Invalid value for focus_on_window_activation: {}".format(focus_behavior))
         elif atoms["_NET_CLOSE_WINDOW"] == opcode:
             self.kill()
-        elif atoms["WM_CHANGE_STATE"] == opcode:
+        elif atoms["WM_CHANGE_STATE"] == opcode and self.qtile.config.respect_minimize_requests:
             state = data.data32[0]
             if state == NormalState:
                 self.minimized = False

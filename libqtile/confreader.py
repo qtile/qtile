@@ -60,6 +60,7 @@ class Config:
         ("bring_front_click", "bool"),
         ("reconfigure_screens", "bool"),
         ("wmname", "str"),
+        ("respect_minimize_requests", "bool"),
     ]
 
     def __init__(self, file_path=None, **settings):
