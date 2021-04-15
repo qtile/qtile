@@ -59,3 +59,8 @@ def test_padding_and_width(manager_nospawn, minimal_conf_noscreen):
 
     w = topbar.info()["widgets"][0]
     assert w["width"] == 12
+
+
+def test_deprecated_config():
+    sep = widget.Sep(height_percent=80)
+    assert sep.size_percent == 80
