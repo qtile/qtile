@@ -2,6 +2,11 @@ import os
 
 import pytest
 
+import libqtile.bar
+import libqtile.config
+import libqtile.confreader
+import libqtile.layout
+
 
 @pytest.fixture(scope='function')
 def fake_bar():
@@ -51,3 +56,21 @@ def fake_qtile():
                 loop.close()
 
     return FakeQtile()
+
+
+# Fixture that defines a minimal configurations for testing widgets.
+# When used in a test, the function needs to receive a list of screens
+# (including bar and widgets) as an argument. This config can then be
+# passed to the manager to start.
+@pytest.fixture(scope='function')
+def minimal_conf_noscreen():
+    class MinimalConf(libqtile.confreader.Config):
+        auto_fullscreen = False
+        keys = []
+        mouse = []
+        groups = [libqtile.config.Group("a")]
+        layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
+        floating_layout = libqtile.resources.default_config.floating_layout
+        screens = []
+
+    return MinimalConf

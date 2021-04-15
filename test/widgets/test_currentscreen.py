@@ -30,20 +30,10 @@ ACTIVE = "#FF0000"
 INACTIVE = "#00FF00"
 
 
-class MinimalConf(libqtile.confreader.Config):
-    auto_fullscreen = False
-    keys = []
-    mouse = []
-    groups = [libqtile.config.Group("a")]
-    layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
-    floating_layout = libqtile.resources.default_config.floating_layout
-    screens = []
-
-
-def test_change_screen(manager_nospawn):
+def test_change_screen(manager_nospawn, minimal_conf_noscreen):
     cswidget = widget.CurrentScreen(active_color=ACTIVE, inactive_color=INACTIVE)
 
-    config = MinimalConf
+    config = minimal_conf_noscreen
     config.screens = [
         libqtile.config.Screen(
             top=libqtile.bar.Bar([cswidget], 10)

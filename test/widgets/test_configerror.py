@@ -38,20 +38,10 @@ class BadWidget(_Widget):
         pass
 
 
-class MinimalConf(libqtile.confreader.Config):
-    auto_fullscreen = False
-    keys = []
-    mouse = []
-    groups = [libqtile.config.Group("a")]
-    layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
-    floating_layout = libqtile.resources.default_config.floating_layout
-    screens = []
-
-
-def test_configerrorwidget(manager_nospawn):
+def test_configerrorwidget(manager_nospawn, minimal_conf_noscreen):
     widget = BadWidget(length=10)
 
-    config = MinimalConf
+    config = minimal_conf_noscreen
     config.screens = [
         libqtile.config.Screen(
             top=libqtile.bar.Bar([widget], 10)

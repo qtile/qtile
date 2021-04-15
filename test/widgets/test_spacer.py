@@ -28,17 +28,6 @@ import libqtile.confreader
 import libqtile.layout
 from libqtile import widget
 
-
-class MinimalConf(libqtile.confreader.Config):
-    auto_fullscreen = False
-    keys = []
-    mouse = []
-    groups = [libqtile.config.Group("a")]
-    layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
-    floating_layout = libqtile.resources.default_config.floating_layout
-    screens = []
-
-
 space = widget.Spacer()
 
 parameters = [
@@ -48,8 +37,8 @@ parameters = [
 
 
 @pytest.mark.parametrize("screen,location,attribute", parameters)
-def test_stretch(manager_nospawn, screen, location, attribute):
-    config = MinimalConf
+def test_stretch(manager_nospawn, minimal_conf_noscreen, screen, location, attribute):
+    config = minimal_conf_noscreen
     config.screens = [screen]
 
     manager_nospawn.start(config)
@@ -67,8 +56,8 @@ parameters = [
 
 
 @pytest.mark.parametrize("screen,location,attribute", parameters)
-def test_fixed_size(manager_nospawn, screen, location, attribute):
-    config = MinimalConf
+def test_fixed_size(manager_nospawn, minimal_conf_noscreen, screen, location, attribute):
+    config = minimal_conf_noscreen
     config.screens = [screen]
 
     manager_nospawn.start(config)
