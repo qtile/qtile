@@ -62,4 +62,3 @@ class _CrashMe(base._TextBox):
             1 / 0
         elif button == 3:
             self.text = '<span>\xC3GError'
-            self.bar.draw()
