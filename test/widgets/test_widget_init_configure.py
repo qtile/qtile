@@ -85,18 +85,8 @@ def no_op(*args, **kwargs):
     pass
 
 
-class MinimalConf(libqtile.confreader.Config):
-    auto_fullscreen = False
-    keys = []
-    mouse = []
-    groups = [libqtile.config.Group("a")]
-    layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
-    floating_layout = libqtile.resources.default_config.floating_layout
-    screens = []
-
-
 @pytest.mark.parametrize("widget_class,kwargs", parameters)
-def test_widget_init_config(manager_nospawn, widget_class, kwargs):
+def test_widget_init_config(manager_nospawn, minimal_conf_noscreen, widget_class, kwargs):
     widget = widget_class(**kwargs)
     widget.draw = no_op
 
@@ -105,7 +95,7 @@ def test_widget_init_config(manager_nospawn, widget_class, kwargs):
         assert getattr(widget, k) == v
 
     # Test configuration
-    config = MinimalConf
+    config = minimal_conf_noscreen
     config.screens = [
         libqtile.config.Screen(
             top=libqtile.bar.Bar([widget], 10)

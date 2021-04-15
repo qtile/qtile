@@ -30,22 +30,12 @@ from libqtile import widget
 from libqtile.ipc import IPCError
 
 
-class MinimalConf(libqtile.confreader.Config):
-    auto_fullscreen = False
-    keys = []
-    mouse = []
-    groups = [libqtile.config.Group("a")]
-    layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
-    floating_layout = libqtile.resources.default_config.floating_layout
-    screens = []
-
-
-def test_trigger_and_cancel(manager_nospawn):
+def test_trigger_and_cancel(manager_nospawn, minimal_conf_noscreen):
 
     # Set a long interval to allow for unanticipated delays in testing environment
     qewidget = widget.QuickExit(timer_interval=100)
 
-    config = MinimalConf
+    config = minimal_conf_noscreen
     config.screens = [
         libqtile.config.Screen(
             top=libqtile.bar.Bar([qewidget], 10)
@@ -70,12 +60,12 @@ def test_trigger_and_cancel(manager_nospawn):
     assert w["text"] == "[ shutdown ]"
 
 
-def test_exit(manager_nospawn):
+def test_exit(manager_nospawn, minimal_conf_noscreen):
 
     # Set a short interval and start so widget exits immediately
     qewidget = widget.QuickExit(timer_interval=0.001, countdown_start=1)
 
-    config = MinimalConf
+    config = minimal_conf_noscreen
     config.screens = [
         libqtile.config.Screen(
             top=libqtile.bar.Bar([qewidget], 10)

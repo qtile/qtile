@@ -28,17 +28,6 @@ import libqtile.confreader
 import libqtile.layout
 from libqtile import widget
 
-
-class MinimalConf(libqtile.confreader.Config):
-    auto_fullscreen = False
-    keys = []
-    mouse = []
-    groups = [libqtile.config.Group("a")]
-    layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
-    floating_layout = libqtile.resources.default_config.floating_layout
-    screens = []
-
-
 sep = widget.Sep()
 
 parameters = [
@@ -48,8 +37,8 @@ parameters = [
 
 
 @pytest.mark.parametrize("screen,location,attribute", parameters)
-def test_orientations(manager_nospawn, screen, location, attribute):
-    config = MinimalConf
+def test_orientations(manager_nospawn, minimal_conf_noscreen, screen, location, attribute):
+    config = minimal_conf_noscreen
     config.screens = [screen]
 
     manager_nospawn.start(config)
@@ -59,10 +48,10 @@ def test_orientations(manager_nospawn, screen, location, attribute):
     assert w[attribute] == 3
 
 
-def test_padding_and_width(manager_nospawn):
+def test_padding_and_width(manager_nospawn, minimal_conf_noscreen):
     sep = widget.Sep(padding=5, linewidth=7)
 
-    config = MinimalConf
+    config = minimal_conf_noscreen
     config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([sep], 10))]
 
     manager_nospawn.start(config)
