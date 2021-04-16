@@ -189,10 +189,6 @@ class Core(base.Core):
         self._wmname = wmname
         self._supporting_wm_check_window.set_property("_NET_WM_NAME", wmname)
 
-    @property
-    def masks(self) -> Tuple[int, int]:
-        return self._numlock_mask, self._valid_mask
-
     def setup_listener(
         self, qtile: "Qtile"
     ) -> None:
@@ -465,12 +461,9 @@ class Core(base.Core):
         """Ungrab the focus for pointer events"""
         self.conn.conn.core.UngrabPointer(xcffib.xproto.Atom._None)
 
-    def grab_button(self, mouse: config.Mouse) -> None:
+    def grab_button(self, mouse: config.Mouse) -> int:
         """Grab the given mouse button for events"""
-        try:
-            modmask = xcbq.translate_masks(mouse.modifiers)
-        except xcbq.XCBQError as err:
-            raise utils.QtileError(err)
+        modmask = xcbq.translate_masks(mouse.modifiers)
 
         if isinstance(mouse, config.Click) and mouse.focus:
             # Make a freezing grab on mouse button to gain focus
@@ -495,6 +488,8 @@ class Core(base.Core):
                 mouse.button_code,
                 modmask | amask,
             )
+
+        return modmask & self._valid_mask
 
     def ungrab_buttons(self) -> None:
         """Un-grab all mouse events"""
@@ -572,7 +567,9 @@ class Core(base.Core):
         assert self.qtile is not None
 
         button_code = event.detail
-        self.qtile.process_button_release(button_code)
+        state = event.state | self._numlock_mask
+        state &= self._valid_mask & ~xcbq.AllButtonsMask
+        self.qtile.process_button_release(button_code, state)
 
     def handle_MotionNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
@@ -628,3 +625,17 @@ class Core(base.Core):
         if self._painter is None:
             self._painter = xcbq.Painter(self._display_name)
         return self._painter
+
+    def simulate_keypress(self, modifiers, key):
+        """Simulates a keypress on the focused window."""
+        # FIXME: This needs to be done with sendevent, once we have that fixed.
+        modmasks = xcbq.translate_masks(modifiers)
+        keysym = xcbq.keysyms.get(key)
+
+        class DummyEv:
+            pass
+
+        d = DummyEv()
+        d.detail = self.conn.keysym_to_keycode(keysym)[0]
+        d.state = modmasks
+        self.handle_KeyPress(d)

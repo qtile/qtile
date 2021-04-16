@@ -49,7 +49,7 @@ class Core(metaclass=ABCMeta):
         """Release the grabbed key events"""
 
     @abstractmethod
-    def grab_button(self, mouse: config.Mouse) -> None:
+    def grab_button(self, mouse: config.Mouse) -> int:
         """Configure the backend to grab the mouse event"""
 
     @abstractmethod
