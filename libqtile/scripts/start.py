@@ -132,6 +132,6 @@ def add_subcommand(subparsers, parents):
         default='x11',
         dest='backend',
         choices=libqtile.backend.CORES,
-        help='Use specified backend. Currently only x11 is implemented.',
+        help='Use specified backend. Wayland backend is currently for development only.',
     )
     parser.set_defaults(func=start)
