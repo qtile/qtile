@@ -74,7 +74,7 @@ class Qtile(CommandObject):
         self.socket_path = socket_path
 
         self._drag: Optional[Tuple] = None
-        self.mouse_map: Dict[int, List[Union[Click, Drag]]] = {}
+        self.mouse_map: Dict[Tuple[int, int], List[Union[Click, Drag]]] = {}
         self.mouse_position = (0, 0)
 
         self.windows_map: Dict[int, window._Window] = {}
@@ -85,7 +85,6 @@ class Qtile(CommandObject):
 
         self.keys_map: Dict[Tuple[int, int], Union[Key, KeyChord]] = {}
         self.chord_stack: List[KeyChord] = []
-        self.numlock_mask, self.valid_mask = self.core.masks
 
         self.current_screen: Optional[Screen] = None
         self.screens: List[Screen] = []
@@ -162,12 +161,8 @@ class Qtile(CommandObject):
         for key in self.config.keys:
             self.grab_key(key)
 
-        for i in self.config.mouse:
-            if self.mouse_map.get(i.button_code) is None:
-                self.mouse_map[i.button_code] = []
-            self.mouse_map[i.button_code].append(i)
-
-        self.grab_mouse()
+        for button in self.config.mouse:
+            self.grab_button(button)
 
         # no_spawn is set when we are restarting; we only want to run the
         # startup hook once.
@@ -430,10 +425,17 @@ class Qtile(CommandObject):
         for key in self.config.keys:
             self.grab_key(key)
 
-    def grab_mouse(self) -> None:
-        self.core.ungrab_buttons()
-        for mouse in self.config.mouse:
-            self.core.grab_button(mouse)
+    def grab_button(self, button: Union[Click, Drag]) -> None:
+        """Grab the given mouse button event"""
+        try:
+            modmask = self.core.grab_button(button)
+        except utils.QtileError:
+            logger.warning(f"Unknown modifier(s): {button.modifiers}")
+            return
+        key = (button.button_code, modmask)
+        if key not in self.mouse_map:
+            self.mouse_map[key] = []
+        self.mouse_map[key].append(button)
 
     def update_desktops(self) -> None:
         try:
@@ -771,16 +773,9 @@ class Qtile(CommandObject):
         self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
         self.conn.conn.flush()
 
-    def process_button_click(self, button_code, state, x, y, event) -> None:
+    def process_button_click(self, button_code, modmask, x, y, event) -> None:
         self.mouse_position = (x, y)
-        for m in self.mouse_map.get(button_code, []):
-            try:
-                modmask = xcbq.translate_masks(m.modifiers)
-            except xcbq.XCBQError as e:
-                raise utils.QtileError(e)
-            if not m or modmask & self.valid_mask != state & self.valid_mask:
-                logger.debug("Ignoring unknown button: %s" % button_code)
-                continue
+        for m in self.mouse_map.get((button_code, modmask), []):
             if isinstance(m, Click):
                 for i in m.commands:
                     if i.check(self):
@@ -813,8 +808,8 @@ class Qtile(CommandObject):
                 self._drag = (x, y, val[0], val[1], m.commands)
                 self.core.grab_pointer()
 
-    def process_button_release(self, button_code):
-        k = self.mouse_map.get(button_code)
+    def process_button_release(self, button_code, modmask):
+        k = self.mouse_map.get((button_code, modmask))
         for m in k:
             if not m:
                 logger.info(
@@ -1149,20 +1144,13 @@ class Qtile(CommandObject):
         ========
             simulate_keypress(["control", "mod2"], "k")
         """
-        # FIXME: This needs to be done with sendevent, once we have that fixed.
-        try:
-            modmasks = xcbq.translate_masks(modifiers)
-            keysym = xcbq.keysyms.get(key)
-        except xcbq.XCBQError as e:
-            raise CommandError(str(e))
-
-        class DummyEv:
-            pass
-
-        d = DummyEv()
-        d.detail = self.conn.keysym_to_keycode(keysym)[0]
-        d.state = modmasks
-        self.core.handle_KeyPress(d)
+        if hasattr(self.core, 'simulate_keypress'):
+            try:
+                self.core.simulate_keypress(modifiers, key)
+            except utils.QtileError as e:
+                raise CommandError(str(e))
+        else:
+            raise CommandError("Backend does not support simulating keypresses")
 
     def cmd_validate_config(self):
         try:

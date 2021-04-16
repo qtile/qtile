@@ -310,12 +310,13 @@ class Core(base.Core):
         """Release the grabbed key events"""
         self.grabbed_keys.clear()
 
-    def grab_button(self, mouse: config.Mouse) -> None:
+    def grab_button(self, mouse: config.Mouse) -> int:
         """Configure the backend to grab the mouse event"""
-        keysym = wlrq.buttons.get(mouse.button)
+        keysym = wlrq.buttons.get(mouse.button.lower())
         assert keysym is not None
         mask_key = wlrq.translate_masks(mouse.modifiers)
         self.grabbed_buttons.append((keysym, mask_key))
+        return mask_key
 
     def ungrab_buttons(self) -> None:
         """Release the grabbed button events"""
