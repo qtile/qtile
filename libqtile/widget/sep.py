@@ -23,7 +23,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
@@ -41,14 +40,7 @@ class Sep(base._Widget):
         ),
     ]
 
-    def __init__(self, height_percent=None, **config):
-        # 'height_percent' was replaced by 'size_percent' since the widget can
-        # be installed in vertical bars
-        if height_percent is not None:
-            logger.warning('height_percent kwarg or positional argument is '
-                           'deprecated. Please use size_percent.')
-            config["size_percent"] = height_percent
-
+    def __init__(self, **config):
         length = config.get("padding", 2) * 2 + config.get("linewidth", 1)
         base._Widget.__init__(self, length, **config)
         self.add_defaults(Sep.defaults)
