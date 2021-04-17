@@ -21,7 +21,8 @@
 
 from xcffib.xproto import StackMode
 
-from libqtile import configurable, drawer, pangocffi, window
+from libqtile import configurable, drawer, pangocffi
+from libqtile.backend.x11 import window
 
 
 class Popup(configurable.Configurable):

@@ -37,7 +37,7 @@
 import functools
 import operator
 import typing
-from itertools import chain, islice, repeat
+from itertools import chain, repeat
 
 import cairocffi
 import cairocffi.pixbuf
@@ -50,7 +50,7 @@ from xcffib.xfixes import SelectionEventMask
 from xcffib.xproto import CW, EventMask, WindowClass
 
 from libqtile import xkeysyms
-from libqtile.backend import base
+from libqtile.backend.x11 import window
 from libqtile.backend.x11.xcursors import Cursors
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError, hex
@@ -308,7 +308,7 @@ class Screen(_Wrapper):
     def __init__(self, conn, screen):
         _Wrapper.__init__(self, screen)
         self.default_colormap = Colormap(conn, screen.default_colormap)
-        self.root = Window(conn, self.root)
+        self.root = window.XWindow(conn, self.root)
 
 
 class PseudoScreen:
@@ -433,332 +433,6 @@ class NetWmState:
         return
 
 
-class Window(base.Window):
-    def __init__(self, conn, wid):
-        self.conn = conn
-        self.wid = wid
-
-    def _property_string(self, r):
-        """Extract a string from a window property reply message"""
-        return r.value.to_string()
-
-    def _property_utf8(self, r):
-        return r.value.to_utf8()
-
-    def send_event(self, synthevent, mask=EventMask.NoEvent):
-        self.conn.conn.core.SendEvent(False, self.wid, mask, synthevent.pack())
-
-    def kill_client(self):
-        self.conn.conn.core.KillClient(self.wid)
-
-    def set_input_focus(self):
-        self.conn.conn.core.SetInputFocus(
-            xcffib.xproto.InputFocus.PointerRoot,
-            self.wid,
-            xcffib.xproto.Time.CurrentTime
-        )
-
-    def warp_pointer(self, x, y):
-        """Warps the pointer to the location `x`, `y` on the window"""
-        self.conn.conn.core.WarpPointer(
-            0, self.wid,  # src_window, dst_window
-            0, 0,         # src_x, src_y
-            0, 0,         # src_width, src_height
-            x, y          # dest_x, dest_y
-        )
-
-    def get_name(self):
-        """Tries to retrieve a canonical window name.
-
-        We test the following properties in order of preference:
-            - _NET_WM_VISIBLE_NAME
-            - _NET_WM_NAME
-            - WM_NAME.
-        """
-        r = self.get_property("_NET_WM_VISIBLE_NAME", "UTF8_STRING")
-        if r:
-            return self._property_utf8(r)
-
-        r = self.get_property("_NET_WM_NAME", "UTF8_STRING")
-        if r:
-            return self._property_utf8(r)
-
-        r = self.get_property(xcffib.xproto.Atom.WM_NAME, "UTF8_STRING")
-        if r:
-            return self._property_utf8(r)
-
-        r = self.get_property(
-            xcffib.xproto.Atom.WM_NAME,
-            xcffib.xproto.GetPropertyType.Any
-        )
-        if r:
-            return self._property_string(r)
-
-    def get_wm_hints(self):
-        wm_hints = self.get_property("WM_HINTS", xcffib.xproto.GetPropertyType.Any)
-        if wm_hints:
-            atoms_list = wm_hints.value.to_atoms()
-            flags = {k for k, v in HintsFlags.items() if atoms_list[0] & v}
-            return {
-                "flags": flags,
-                "input": atoms_list[1] if "InputHint" in flags else None,
-                "initial_state": atoms_list[2] if "StateHing" in flags else None,
-                "icon_pixmap": atoms_list[3] if "IconPixmapHint" in flags else None,
-                "icon_window": atoms_list[4] if "IconWindowHint" in flags else None,
-                "icon_x": atoms_list[5] if "IconPositionHint" in flags else None,
-                "icon_y": atoms_list[6] if "IconPositionHint" in flags else None,
-                "icon_mask": atoms_list[7] if "IconMaskHint" in flags else None,
-                "window_group": atoms_list[8] if 'WindowGroupHint' in flags else None,
-            }
-
-    def get_wm_normal_hints(self):
-        wm_normal_hints = self.get_property(
-            "WM_NORMAL_HINTS",
-            xcffib.xproto.GetPropertyType.Any
-        )
-        if wm_normal_hints:
-            atom_list = wm_normal_hints.value.to_atoms()
-            flags = {k for k, v in NormalHintsFlags.items() if atom_list[0] & v}
-            hints = {
-                "flags": flags,
-                "min_width": atom_list[5],
-                "min_height": atom_list[6],
-                "max_width": atom_list[7],
-                "max_height": atom_list[8],
-                "width_inc": atom_list[9],
-                "height_inc": atom_list[10],
-                "min_aspect": (atom_list[11], atom_list[12]),
-                "max_aspect": (atom_list[13], atom_list[14])
-            }
-
-            # WM_SIZE_HINTS is potentially extensible (append to the end only)
-            iterator = islice(hints, 15, None)
-            hints["base_width"] = next(iterator, hints["min_width"])
-            hints["base_height"] = next(iterator, hints["min_height"])
-            hints["win_gravity"] = next(iterator, 1)
-            return hints
-
-    def get_wm_protocols(self):
-        wm_protocols = self.get_property("WM_PROTOCOLS", "ATOM", unpack=int)
-        if wm_protocols is not None:
-            return {self.conn.atoms.get_name(wm_protocol) for wm_protocol in wm_protocols}
-        return set()
-
-    def get_wm_state(self):
-        return self.get_property("WM_STATE", xcffib.xproto.GetPropertyType.Any, unpack=int)
-
-    def get_wm_class(self):
-        """Return an (instance, class) tuple if WM_CLASS exists, or None"""
-        r = self.get_property("WM_CLASS", "STRING")
-        if r:
-            s = self._property_string(r)
-            return tuple(s.strip("\0").split("\0"))
-        return tuple()
-
-    def get_wm_window_role(self):
-        r = self.get_property("WM_WINDOW_ROLE", "STRING")
-        if r:
-            return self._property_string(r)
-
-    def get_wm_transient_for(self):
-        r = self.get_property("WM_TRANSIENT_FOR", "WINDOW", unpack=int)
-
-        if r:
-            return r[0]
-
-    def get_wm_icon_name(self):
-        r = self.get_property("_NET_WM_ICON_NAME", "UTF8_STRING")
-        if r:
-            return self._property_utf8(r)
-
-        r = self.get_property("WM_ICON_NAME", "STRING")
-        if r:
-            return self._property_utf8(r)
-
-    def get_wm_client_machine(self):
-        r = self.get_property("WM_CLIENT_MACHINE", "STRING")
-        if r:
-            return self._property_utf8(r)
-
-    def get_geometry(self):
-        q = self.conn.conn.core.GetGeometry(self.wid)
-        return q.reply()
-
-    def get_wm_desktop(self):
-        r = self.get_property("_NET_WM_DESKTOP", "CARDINAL", unpack=int)
-
-        if r:
-            return r[0]
-
-    def get_wm_type(self):
-        """
-        http://standards.freedesktop.org/wm-spec/wm-spec-latest.html#id2551529
-        """
-        r = self.get_property('_NET_WM_WINDOW_TYPE', "ATOM", unpack=int)
-        if r:
-            name = self.conn.atoms.get_name(r[0])
-            return WindowTypes.get(name, name)
-
-    def get_net_wm_state(self):
-        r = self.get_property('_NET_WM_STATE', "ATOM", unpack=int)
-        if r:
-            names = [self.conn.atoms.get_name(p) for p in r]
-            return [WindowStates.get(n, n) for n in names]
-        return []
-
-    def get_net_wm_pid(self):
-        r = self.get_property("_NET_WM_PID", unpack=int)
-        if r:
-            return r[0]
-
-    def configure(self, **kwargs):
-        """
-        Arguments can be: x, y, width, height, border, sibling, stackmode
-        """
-        mask, values = ConfigureMasks(**kwargs)
-        # older versions of xcb pack everything into unsigned ints "=I"
-        # since 1.12, uses switches to pack things sensibly
-        if float(".".join(xcffib.__xcb_proto_version__.split(".")[0: 2])) < 1.12:
-            values = [i & 0xffffffff for i in values]
-        return self.conn.conn.core.ConfigureWindow(self.wid, mask, values)
-
-    def set_attribute(self, **kwargs):
-        mask, values = AttributeMasks(**kwargs)
-        self.conn.conn.core.ChangeWindowAttributesChecked(
-            self.wid, mask, values
-        )
-
-    def set_cursor(self, name):
-        cursor_id = self.conn.cursors[name]
-        mask, values = AttributeMasks(cursor=cursor_id)
-        self.conn.conn.core.ChangeWindowAttributesChecked(
-            self.wid, mask, values
-        )
-
-    def set_property(self, name, value, type=None, format=None):
-        """
-        Parameters
-        ==========
-        name : String Atom name
-        type : String Atom name
-        format : 8, 16, 32
-        """
-        if name in PropertyMap:
-            if type or format:
-                raise ValueError(
-                    "Over-riding default type or format for property."
-                )
-            type, format = PropertyMap[name]
-        else:
-            if None in (type, format):
-                raise ValueError(
-                    "Must specify type and format for unknown property."
-                )
-
-        try:
-            if isinstance(value, str):
-                # xcffib will pack the bytes, but we should encode them properly
-                value = value.encode()
-            else:
-                # if this runs without error, the value is already a list, don't wrap it
-                next(iter(value))
-        except StopIteration:
-            # The value was an iterable, just empty
-            value = []
-        except TypeError:
-            # the value wasn't an iterable and wasn't a string, so let's
-            # wrap it.
-            value = [value]
-
-        try:
-            self.conn.conn.core.ChangePropertyChecked(
-                xcffib.xproto.PropMode.Replace,
-                self.wid,
-                self.conn.atoms[name],
-                self.conn.atoms[type],
-                format,  # Format - 8, 16, 32
-                len(value),
-                value
-            ).check()
-        except xcffib.xproto.WindowError:
-            logger.debug(
-                'X error in SetProperty (wid=%r, prop=%r), ignoring',
-                self.wid, name)
-
-    def get_property(self, prop, type=None, unpack=None):
-        """Return the contents of a property as a GetPropertyReply
-
-        If unpack is specified, a tuple of values is returned.  The type to
-        unpack, either `str` or `int` must be specified.
-        """
-        if type is None:
-            if prop not in PropertyMap:
-                raise ValueError(
-                    "Must specify type for unknown property."
-                )
-            else:
-                type, _ = PropertyMap[prop]
-
-        try:
-            r = self.conn.conn.core.GetProperty(
-                False, self.wid,
-                self.conn.atoms[prop]
-                if isinstance(prop, str)
-                else prop,
-                self.conn.atoms[type]
-                if isinstance(type, str)
-                else type,
-                0, (2 ** 32) - 1
-            ).reply()
-        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
-            logger.debug(
-                'X error in GetProperty (wid=%r, prop=%r), ignoring',
-                self.wid, prop)
-            if unpack:
-                return []
-            return None
-
-        if not r.value_len:
-            if unpack:
-                return []
-            return None
-        elif unpack:
-            # Should we allow more options for unpacking?
-            if unpack is int:
-                return r.value.to_atoms()
-            elif unpack is str:
-                return r.value.to_string()
-        else:
-            return r
-
-    def list_properties(self):
-        r = self.conn.conn.core.ListProperties(self.wid).reply()
-        return [self.conn.atoms.get_name(i) for i in r.atoms]
-
-    def map(self):
-        self.conn.conn.core.MapWindow(self.wid)
-
-    def unmap(self):
-        self.conn.conn.core.UnmapWindowUnchecked(self.wid)
-
-    def get_attributes(self):
-        return self.conn.conn.core.GetWindowAttributes(self.wid).reply()
-
-    def query_tree(self):
-        q = self.conn.conn.core.QueryTree(self.wid).reply()
-        root = None
-        parent = None
-        if q.root:
-            root = Window(self.conn, q.root)
-        if q.parent:
-            parent = Window(self.conn, q.parent)
-        return root, parent, [Window(self.conn, i) for i in q.children]
-
-    def paint_borders(self, color):
-        if color:
-            self.set_attribute(borderpixel=self.conn.color_pixel(color))
-
-
 class Connection:
     _extmap = {
         "xinerama": Xinerama,
@@ -880,7 +554,7 @@ class Connection:
                 EventMask.StructureNotify | EventMask.Exposure
             ]
         )
-        return Window(self, wid)
+        return window.XWindow(self, wid)
 
     def disconnect(self):
         try:
@@ -1016,7 +690,7 @@ class Painter:
         )
         self.conn.core.ChangeWindowAttributes(
             self.default_screen.root.wid,
-            xcffib.xproto.CW.BackPixmap, [root_pixmap]
+            CW.BackPixmap, [root_pixmap]
         )
         self.conn.core.ClearArea(
             0, self.default_screen.root.wid, 0, 0,

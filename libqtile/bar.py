@@ -20,7 +20,8 @@
 
 from typing import Union
 
-from libqtile import configurable, drawer, window
+from libqtile import configurable, drawer
+from libqtile.backend.x11 import window
 from libqtile.command.base import CommandObject, ItemT
 from libqtile.log_utils import logger
 
