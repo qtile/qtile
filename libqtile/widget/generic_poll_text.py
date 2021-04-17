@@ -51,10 +51,15 @@ class GenPollUrl(base.ThreadPoolText):
         base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(GenPollUrl.defaults)
 
-    def fetch(self, url, data=None, headers=None, is_json=True, is_xml=False):
-        if headers is None:
-            headers = {}
-        req = Request(url, data, headers)
+        self.headers["User-agent"] = self.user_agent
+        if self.json:
+            self.headers['Content-Type'] = 'application/json'
+
+        if self.data and not isinstance(self.data, str):
+            self.data = json.dumps(self.data).encode()
+
+    def fetch(self):
+        req = Request(self.url, self.data, self.headers)
         res = urlopen(req)
         charset = res.headers.get_content_charset()
 
@@ -62,10 +67,10 @@ class GenPollUrl(base.ThreadPoolText):
         if charset:
             body = body.decode(charset)
 
-        if is_json:
+        if self.json:
             body = json.loads(body)
 
-        if is_xml:
+        if self.xml:
             body = xmlparse(body)
         return body
 
@@ -73,16 +78,7 @@ class GenPollUrl(base.ThreadPoolText):
         if not self.parse or not self.url:
             return "Invalid config"
 
-        data = self.data
-        headers = {"User-agent": self.user_agent}
-        if self.json:
-            headers['Content-Type'] = 'application/json'
-
-        if data and not isinstance(data, str):
-            data = json.dumps(data).encode()
-
-        headers.update(self.headers)
-        body = self.fetch(self.url, data, headers, self.json, self.xml)
+        body = self.fetch()
 
         try:
             text = self.parse(body)
