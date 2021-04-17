@@ -33,7 +33,6 @@ from __future__ import annotations
 import contextlib
 import os.path
 import sys
-import warnings
 from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
 import xcffib.xproto
@@ -463,13 +462,6 @@ class Screen(CommandObject):
         """Switch to the selected group or to the previously active one"""
         group = self.qtile.groups_map.get(group_name)
         self.toggle_group(group)
-
-    def cmd_togglegroup(self, groupName=None):  # noqa
-        """Switch to the selected group or to the previously active one
-
-        Deprecated: use toggle_group()"""
-        warnings.warn("togglegroup is deprecated, use toggle_group", DeprecationWarning)
-        self.cmd_toggle_group(groupName)
 
 
 class Group:
