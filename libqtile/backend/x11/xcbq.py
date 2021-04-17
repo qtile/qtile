@@ -50,6 +50,7 @@ from xcffib.xfixes import SelectionEventMask
 from xcffib.xproto import CW, EventMask, WindowClass
 
 from libqtile import xkeysyms
+from libqtile.backend import base
 from libqtile.backend.x11.xcursors import Cursors
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError, hex
@@ -432,7 +433,7 @@ class NetWmState:
         return
 
 
-class Window:
+class Window(base.Window):
     def __init__(self, conn, wid):
         self.conn = conn
         self.wid = wid
