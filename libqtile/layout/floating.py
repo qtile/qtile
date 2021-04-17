@@ -28,11 +28,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import warnings
+from typing import List, Optional
 
 from libqtile.config import Match
 from libqtile.layout.base import Layout
-from libqtile.log_utils import logger
+from libqtile.window import Window
 
 
 class Floating(Layout):
@@ -65,7 +65,7 @@ class Floating(Layout):
         ("fullscreen_border_width", 0, "Border width for fullscreen."),
     ]
 
-    def __init__(self, float_rules=None, no_reposition_rules=None, **config):
+    def __init__(self, float_rules: Optional[List[Match]] = None, no_reposition_rules=None, **config):
         """
         If you have certain apps that you always want to float you can provide
         ``float_rules`` to do so. ``float_rules`` are a list of
@@ -95,32 +95,12 @@ class Floating(Layout):
         correct location on the screen.
         """
         Layout.__init__(self, **config)
-        self.clients = []
+        self.clients: List[Window] = []
         self.focused = None
         self.group = None
 
         if float_rules is None:
             float_rules = self.default_float_rules
-        else:
-            warned = False
-            for index, rule in enumerate(float_rules):
-                if isinstance(rule, Match):
-                    continue
-
-                if not warned:
-                    message = "Non-config.Match objects in float_rules are " \
-                              "deprecated"
-                    warnings.warn(message, DeprecationWarning)
-                    logger.warning(message)
-                    warned = True
-
-                match = Match(
-                    title=rule.get("wname"), wm_class=rule.get("wmclass"),
-                    role=rule.get("role"), wm_type=rule.get("wm_type"),
-                    wm_instance_class=rule.get("wm_instance_class"),
-                    net_wm_pid=rule.get("net_wm_pid"))
-
-                float_rules[index] = match
 
         self.float_rules = float_rules
         self.no_reposition_rules = no_reposition_rules or []
