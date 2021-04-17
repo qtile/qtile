@@ -24,6 +24,7 @@ import typing
 
 from pywayland.server import Listener
 
+from libqtile.backend import base
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -32,7 +33,7 @@ if typing.TYPE_CHECKING:
     from libqtile.backend.wayland.core import Core
 
 
-class Window:
+class Window(base.Window):
     def __init__(self, core: Core, surface: xdg_shell.XdgSurface):
         self.core = core
         self.surface = surface

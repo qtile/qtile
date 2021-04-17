@@ -26,6 +26,8 @@ import xcffib.xproto
 from xcffib.xproto import EventMask, SetMode, StackMode
 
 from libqtile import hook, utils
+from libqtile.backend import base
+from libqtile.backend.base import FloatStates
 from libqtile.command.base import CommandError, CommandObject, ItemT
 from libqtile.log_utils import logger
 
@@ -80,14 +82,6 @@ BitmapNoMemory = 3
 XCSUCCESS = 0
 XCNOMEM = 1
 XCNOENT = 2
-
-# float states
-NOT_FLOATING = 1  # not floating
-FLOATING = 2
-MAXIMIZED = 3
-FULLSCREEN = 4
-TOP = 5
-MINIMIZED = 6
 
 _NET_WM_STATE_REMOVE = 0
 _NET_WM_STATE_ADD = 1
@@ -175,7 +169,7 @@ class _Window(CommandObject):
         self.name = "<no name>"
         self.reserved_space = None
         self.state = NormalState
-        self._float_state = NOT_FLOATING
+        self._float_state = FloatStates.NOT_FLOATING
         self._demands_attention = False
 
         self.hints = {
@@ -330,11 +324,11 @@ class _Window(CommandObject):
             height=self.height,
             group=group,
             id=self.window.wid,
-            floating=self._float_state != NOT_FLOATING,
+            floating=self._float_state != FloatStates.NOT_FLOATING,
             float_info=self._float_info,
-            maximized=self._float_state == MAXIMIZED,
-            minimized=self._float_state == MINIMIZED,
-            fullscreen=self._float_state == FULLSCREEN
+            maximized=self._float_state == FloatStates.MAXIMIZED,
+            minimized=self._float_state == FloatStates.MINIMIZED,
+            fullscreen=self._float_state == FloatStates.FULLSCREEN
         )
 
     @property
@@ -654,7 +648,7 @@ class _Window(CommandObject):
         )
 
 
-class Internal(_Window):
+class Internal(base.Internal, _Window):
     """An internal window, that should not be managed by qtile"""
     _window_mask = EventMask.StructureNotify | \
         EventMask.PropertyChange | \
@@ -686,7 +680,7 @@ class Internal(_Window):
         self.kill()
 
 
-class Static(_Window):
+class Static(base.Static, _Window):
     """An internal window, that should not be managed by qtile"""
     _window_mask = EventMask.StructureNotify | \
         EventMask.PropertyChange | \
@@ -783,7 +777,7 @@ class Static(_Window):
         return "Static(%r)" % self.name
 
 
-class Window(_Window):
+class Window(base.Window, _Window):
     _window_mask = EventMask.StructureNotify | \
         EventMask.PropertyChange | \
         EventMask.EnterWindow | \
@@ -837,11 +831,11 @@ class Window(_Window):
 
     @property
     def floating(self):
-        return self._float_state != NOT_FLOATING
+        return self._float_state != FloatStates.NOT_FLOATING
 
     @floating.setter
     def floating(self, do_float):
-        if do_float and self._float_state == NOT_FLOATING:
+        if do_float and self._float_state == FloatStates.NOT_FLOATING:
             if self.group and self.group.screen:
                 screen = self.group.screen
                 self._enablefloating(
@@ -849,13 +843,13 @@ class Window(_Window):
                 )
             else:
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
-                self._float_state = FLOATING
-        elif (not do_float) and self._float_state != NOT_FLOATING:
-            if self._float_state == FLOATING:
+                self._float_state = FloatStates.FLOATING
+        elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
+            if self._float_state == FloatStates.FLOATING:
                 # store last size
                 self.float_width = self.width
                 self.float_height = self.height
-            self._float_state = NOT_FLOATING
+            self._float_state = FloatStates.NOT_FLOATING
             self.group.mark_floating(self, False)
             hook.fire('float_change')
 
@@ -864,7 +858,7 @@ class Window(_Window):
 
     @property
     def fullscreen(self):
-        return self._float_state == FULLSCREEN
+        return self._float_state == FloatStates.FULLSCREEN
 
     @fullscreen.setter
     def fullscreen(self, do_full):
@@ -884,12 +878,12 @@ class Window(_Window):
                 screen.y,
                 screen.width,
                 screen.height,
-                new_float_state=FULLSCREEN
+                new_float_state=FloatStates.FULLSCREEN
             )
             set_state(prev_state, prev_state | atom)
             return
 
-        if self._float_state == FULLSCREEN:
+        if self._float_state == FloatStates.FULLSCREEN:
             # The order of calling set_state() and then
             # setting self.floating = False is important
             set_state(prev_state, prev_state - atom)
@@ -901,7 +895,7 @@ class Window(_Window):
 
     @property
     def maximized(self):
-        return self._float_state == MAXIMIZED
+        return self._float_state == FloatStates.MAXIMIZED
 
     @maximized.setter
     def maximized(self, do_maximize):
@@ -914,26 +908,26 @@ class Window(_Window):
                 screen.dy,
                 screen.dwidth,
                 screen.dheight,
-                new_float_state=MAXIMIZED
+                new_float_state=FloatStates.MAXIMIZED
             )
         else:
-            if self._float_state == MAXIMIZED:
+            if self._float_state == FloatStates.MAXIMIZED:
                 self.floating = False
 
-    def toggle_maximize(self, state=MAXIMIZED):
+    def toggle_maximize(self, state=FloatStates.MAXIMIZED):
         self.maximized = not self.maximized
 
     @property
     def minimized(self):
-        return self._float_state == MINIMIZED
+        return self._float_state == FloatStates.MINIMIZED
 
     @minimized.setter
     def minimized(self, do_minimize):
         if do_minimize:
-            if self._float_state != MINIMIZED:
-                self._enablefloating(new_float_state=MINIMIZED)
+            if self._float_state != FloatStates.MINIMIZED:
+                self._enablefloating(new_float_state=FloatStates.MINIMIZED)
         else:
-            if self._float_state == MINIMIZED:
+            if self._float_state == FloatStates.MINIMIZED:
                 self.floating = False
 
     def toggle_minimize(self):
@@ -997,8 +991,8 @@ class Window(_Window):
     def getposition(self):
         return (self.x, self.y)
 
-    def _reconfigure_floating(self, new_float_state=FLOATING):
-        if new_float_state == MINIMIZED:
+    def _reconfigure_floating(self, new_float_state=FloatStates.FLOATING):
+        if new_float_state == FloatStates.MINIMIZED:
             self.hide()
         else:
             width = self.width
@@ -1022,13 +1016,13 @@ class Window(_Window):
             if self.hints['base_width'] and self.hints['width_inc']:
                 width_adjustment = (width - self.hints['base_width']) % self.hints['width_inc']
                 width -= width_adjustment
-                if new_float_state == FULLSCREEN:
+                if new_float_state == FloatStates.FULLSCREEN:
                     self.x += int(width_adjustment / 2)
 
             if self.hints['base_height'] and self.hints['height_inc']:
                 height_adjustment = (height - self.hints['base_height']) % self.hints['height_inc']
                 height -= height_adjustment
-                if new_float_state == FULLSCREEN:
+                if new_float_state == FloatStates.FULLSCREEN:
                     self.y += int(height_adjustment / 2)
 
             self.place(
@@ -1045,8 +1039,8 @@ class Window(_Window):
             hook.fire('float_change')
 
     def _enablefloating(self, x=None, y=None, w=None, h=None,
-                        new_float_state=FLOATING):
-        if new_float_state != MINIMIZED:
+                        new_float_state=FloatStates.FLOATING):
+        if new_float_state != FloatStates.MINIMIZED:
             self.x = x
             self.y = y
             self.width = w

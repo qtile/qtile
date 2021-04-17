@@ -20,7 +20,8 @@
 
 from typing import Dict, List
 
-from libqtile import config, group, hook, window
+from libqtile import config, group, hook
+from libqtile.backend.base import FloatStates
 
 
 class WindowVisibilityToggler:
@@ -100,7 +101,7 @@ class WindowVisibilityToggler:
             win = self.window
             # always set the floating state before changing group
             # to avoid disturbance of tiling layout
-            win._float_state = window.TOP
+            win._float_state = FloatStates.TOP
             # add to group and bring it to front.
             win.togroup()
             win.cmd_bring_to_front()
