@@ -481,37 +481,38 @@ class Group:
 
     Parameters
     ==========
-    name : string
+    name: string
         the name of this group
-    matches : default ``None``
+    matches: default ``None``
         list of ``Match`` objects whose  windows will be assigned to this group
-    exclusive : boolean
+    exclusive: boolean
         when other apps are started in this group, should we allow them here or not?
-    spawn : string or list of strings
+    spawn: string or list of strings
         this will be ``exec()`` d when the group is created, you can pass
         either a program name or a list of programs to ``exec()``
-    layout : string
+    layout: string
         the name of default layout for this group (e.g. 'max' or 'stack').
         This is the name specified for a particular layout in config.py
         or if not defined it defaults in general the class name in all lower case.
-    layouts : list
+    layouts: list
         the group layouts list overriding global layouts.
         Use this to define a separate list of layouts for this particular group.
-    persist : boolean
+    persist: boolean
         should this group stay alive with no member windows?
-    init : boolean
+    init: boolean
         is this group alive when qtile starts?
-    position : int
+    position  int
         group position
-    label : string
+    label: string
         the display name of the group.
         Use this to define a display name other than name of the group.
         If set to None, the display name is set to the name.
     """
-    def __init__(self, name, matches=None, exclusive=False,
-                 spawn=None, layout=None, layouts=None, persist=True, init=True,
+    def __init__(self, name: str, matches: List[Match] = None, exclusive=False,
+                 spawn: Union[str, List[str]] = None, layout: str = None,
+                 layouts: List = None, persist=True, init=True,
                  layout_opts=None, screen_affinity=None, position=sys.maxsize,
-                 label=None):
+                 label: Optional[str] = None):
         self.name = name
         self.label = label
         self.exclusive = exclusive
