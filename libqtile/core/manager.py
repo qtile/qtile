@@ -36,8 +36,8 @@ import xcffib.xinerama
 import xcffib.xproto
 
 import libqtile
-from libqtile import confreader, hook, ipc, utils, window
-from libqtile.backend.x11 import xcbq
+from libqtile import confreader, hook, ipc, utils
+from libqtile.backend.x11 import window, xcbq
 from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandException, CommandObject
 from libqtile.command.client import InteractiveCommandClient
@@ -546,7 +546,7 @@ class Qtile(CommandObject):
     def free_reserved_space(self, reserved_space, screen):
         self.reserve_space([-i for i in reserved_space], screen)
 
-    def map_window(self, window: xcbq.Window) -> None:
+    def map_window(self, window: window.XWindow) -> None:
         c = self.manage(window)
         if c and (not c.group or not c.group.screen):
             return

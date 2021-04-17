@@ -38,7 +38,8 @@ from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
 import xcffib.xproto
 
-from libqtile import configurable, hook, utils, window
+from libqtile import configurable, hook, utils
+from libqtile.backend.x11 import window
 from libqtile.bar import BarType
 from libqtile.command.base import CommandObject, ItemT
 from libqtile.lazy import lazy

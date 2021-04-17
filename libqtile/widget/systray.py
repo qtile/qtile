@@ -34,8 +34,8 @@ from xcffib.xproto import (
     SetMode,
 )
 
-from libqtile import bar, window
-from libqtile.backend.x11 import xcbq
+from libqtile import bar
+from libqtile.backend.x11 import window
 from libqtile.widget import base
 
 XEMBED_PROTOCOL_VERSION = 0
@@ -123,7 +123,7 @@ class Systray(window._Window, base._Widget):
             return
 
         win = qtile.conn.create_window(-1, -1, 1, 1)
-        window._Window.__init__(self, xcbq.Window(qtile.conn, win.wid), qtile)
+        window._Window.__init__(self, window.XWindow(qtile.conn, win.wid), qtile)
         qtile.windows_map[win.wid] = self
 
         # Even when we have multiple "Screen"s, we are setting up as the system
@@ -165,7 +165,7 @@ class Systray(window._Window, base._Widget):
         parent = self.bar.window.window
 
         if opcode == atoms['_NET_SYSTEM_TRAY_OPCODE'] and message == 0:
-            w = xcbq.Window(self.qtile.conn, wid)
+            w = window.XWindow(self.qtile.conn, wid)
             icon = Icon(w, self.qtile, self)
             self.icons[wid] = icon
             self.qtile.windows_map[wid] = icon
