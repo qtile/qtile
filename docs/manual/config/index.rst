@@ -178,6 +178,10 @@ configuration variables that control specific aspects of Qtile's behavior:
         we're a working one by default. We choose LG3D to maximize irony:
         it is a 3D non-reparenting WM written in java that happens to be
         on java's whitelist.
+    * - auto_minimize
+      - True
+      - If things like steam games want to auto-minimize themselves when losing
+        focus, should we respect this or not?
 
 
 Testing your configuration
