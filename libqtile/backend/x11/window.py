@@ -446,11 +446,12 @@ class _Window(CommandObject):
     _window_mask = 0  # override in child class
 
     def __init__(self, window, qtile):
+        base.Window.__init__(self)
         self.window, self.qtile = window, qtile
         self.hidden = True
-        self.group = None
         self.icons = {}
         window.set_attribute(eventmask=self._window_mask)
+        self._group = None
 
         self._float_info = {
             'x': None,
@@ -474,10 +475,7 @@ class _Window(CommandObject):
             self._width = None
             self._height = None
 
-        self.borderwidth = 0
         self.bordercolor = None
-        self.name = "<no name>"
-        self.reserved_space = None
         self.state = NormalState
         self._float_state = FloatStates.NOT_FLOATING
         self._demands_attention = False
@@ -530,6 +528,10 @@ class _Window(CommandObject):
     @property
     def wid(self):
         return self.window.wid
+
+    @property
+    def group(self):
+        return self._group
 
     @property
     def has_focus(self):
@@ -820,6 +822,7 @@ class _Window(CommandObject):
 
         self.window.send_event(event, mask=EventMask.StructureNotify)
 
+    @property
     def can_steal_focus(self):
         return self.window.get_wm_type() != 'notification'
 
@@ -1101,7 +1104,6 @@ class Window(_Window, base.Window):
 
     def __init__(self, window, qtile):
         _Window.__init__(self, window, qtile)
-        self._group = None
         self.update_name()
         # add to group by position according to _NET_WM_DESKTOP property
         group = None

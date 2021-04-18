@@ -50,8 +50,8 @@ def _get_keysyms(xkb_state, keycode):
 class Keyboard:
     def __init__(self, core: Core, device: InputDevice):
         self.core = core
-        self.qtile = core.qtile
         self.device = device
+        self.qtile = core.qtile
         self.seat = core.seat
         self.keyboard = device.keyboard
         self.grabbed_keys = core.grabbed_keys
@@ -86,6 +86,11 @@ class Keyboard:
     def _on_key(self, _listener, event: KeyboardKeyEvent):
         logger.debug("Signal: keyboard key")
         handled = False
+
+        if self.qtile is None:
+            # shushes mypy
+            self.qtile = self.core.qtile
+            assert self.qtile is not None
 
         if event.state == KeyState.KEY_PRESSED:
             # translate libinput keycode -> xkbcommon
