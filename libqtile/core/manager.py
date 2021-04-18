@@ -203,10 +203,6 @@ class Qtile(CommandObject):
         return socket_path
 
     @property
-    def root(self):
-        return self.core._root
-
-    @property
     def conn(self):
         return self.core.conn
 

@@ -147,11 +147,11 @@ class Systray(window._Window, base._Widget):
         union = ClientMessageData.synthetic(data, "I" * 5)
         event = ClientMessageEvent.synthetic(
             format=32,
-            window=qtile.root.wid,
+            window=qtile.core._root.wid,
             type=atoms['MANAGER'],
             data=union
         )
-        qtile.root.send_event(event, mask=EventMask.StructureNotify)
+        qtile.core._root.send_event(event, mask=EventMask.StructureNotify)
 
     def handle_ClientMessage(self, event):  # noqa: N802
         atoms = self.qtile.conn.atoms
