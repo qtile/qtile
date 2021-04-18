@@ -31,8 +31,9 @@ def test_popup_focus(manager):
     manager.test_xeyes()
     manager.windows_map = {}
 
-    # we have to add .conn so that Popup thinks this is libqtile.qtile
-    manager.conn = xcbq.Connection(manager.display)
+    # ugly hack: we have to add .core.conn so that Popup thinks this is libqtile.qtile
+    manager.core = manager
+    manager.core.conn = xcbq.Connection(manager.display)
 
     try:
         popup = Popup(manager)

@@ -594,7 +594,7 @@ class Prompt(base._TextBox):
     def _alert(self):
         # Fire an alert (audible or visual), if bell style is not None.
         if self.bell_style == "audible":
-            self.qtile.conn.conn.core.Bell(0)
+            self.qtile.core.conn.conn.core.Bell(0)
         elif self.bell_style == "visual":
             self.background = self.visual_bell_color
             self.timeout_add(self.visual_bell_time, self._stop_visual_alert)
@@ -667,7 +667,7 @@ class Prompt(base._TextBox):
         mask = xcbq.ModMasks["shift"] | xcbq.ModMasks["lock"]
         state = 1 if e.state & mask else 0
 
-        keysym = self.qtile.conn.code_to_syms[e.detail][state]
+        keysym = self.qtile.core.conn.code_to_syms[e.detail][state]
 
         handle_key = self._get_keyhandler(keysym)
 
@@ -681,7 +681,7 @@ class Prompt(base._TextBox):
             pass
         d = Dummy()
         keysym = xcbq.keysyms[key]
-        d.detail = self.qtile.conn.keysym_to_keycode(keysym)[0]
+        d.detail = self.qtile.core.conn.keysym_to_keycode(keysym)[0]
         d.state = 0
         self.handle_KeyPress(d)
 
