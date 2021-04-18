@@ -547,11 +547,11 @@ class Qtile(CommandObject):
     def free_reserved_space(self, reserved_space, screen):
         self.reserve_space([-i for i in reserved_space], screen)
 
-    def map_window(self, window: base.WindowType) -> None:
-        c = self.manage(window)
+    def map_window(self, win: base.WindowType) -> None:
+        c = self.manage(win)
         if c and (not c.group or not c.group.screen):
             return
-        window.map()
+        win.window.map()
 
     def unmap_window(self, window_id) -> None:
         c = self.windows_map.get(window_id)
@@ -567,47 +567,26 @@ class Qtile(CommandObject):
                 pass
         self.unmanage(window_id)
 
-    def manage(self, w):
-        try:
-            attrs = w.get_attributes()
-            internal = w.get_property("QTILE_INTERNAL")
-        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
+    def manage(self, win: base.WindowType):
+        if isinstance(win, base.Internal):
+            self.windows_map[win.wid] = win
+
+        if win.wid in self.windows_map:
+            return self.windows_map[win.wid]
+
+        hook.fire("client_new", win)
+
+        # Window may be defunct because
+        # it's been declared static in hook.
+        if win.defunct:
             return
-        if attrs and attrs.override_redirect:
-            return
-
-        if w.wid not in self.windows_map:
-            if internal:
-                try:
-                    c = window.Internal(w, self)
-                except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
-                    return
-                self.windows_map[w.wid] = c
-            else:
-                try:
-                    c = window.Window(w, self)
-                except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
-                    return
-
-                if w.get_wm_type() == "dock" or c.reserved_space:
-                    c.cmd_static(self.current_screen.index)
-                    return
-
-                hook.fire("client_new", c)
-
-                # Window may be defunct because
-                # it's been declared static in hook.
-                if c.defunct:
-                    return
-                self.windows_map[w.wid] = c
-                # Window may have been bound to a group in the hook.
-                if not c.group:
-                    self.current_screen.group.add(c, focus=c.can_steal_focus())
-                self.update_client_list()
-                hook.fire("client_managed", c)
-            return c
-        else:
-            return self.windows_map[w.wid]
+        self.windows_map[win.wid] = win
+        # Window may have been bound to a group in the hook.
+        if not win.group:
+            self.current_screen.group.add(win, focus=win.can_steal_focus())
+        self.update_client_list()
+        hook.fire("client_managed", win)
+        return win
 
     def unmanage(self, win):
         c = self.windows_map.get(win)
