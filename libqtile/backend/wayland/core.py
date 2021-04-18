@@ -197,7 +197,7 @@ class Core(base.Core):
             if wid not in wids:
                 break
             wid += 1
-        win = window.Window(self, surface, wid)
+        win = window.Window(self, self.qtile, surface, wid)
         logger.info(f"Managing new top-level window with window ID: {wid}")
         self.windows.append(win)
         self.qtile.manage(win)

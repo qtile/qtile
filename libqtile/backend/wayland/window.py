@@ -31,12 +31,14 @@ if typing.TYPE_CHECKING:
     from wlroots.wlr_types import xdg_shell
 
     from libqtile.backend.wayland.core import Core
+    from libqtile.core.manager import Qtile
 
 
 class Window(base.Window):
-    def __init__(self, core: Core, surface: xdg_shell.XdgSurface, wid: int):
+    def __init__(self, core: Core, qtile: Qtile, surface: xdg_shell.XdgSurface, wid: int):
         base.Window.__init__(self)
         self.core = core
+        self.qtile = qtile
         self.surface = surface
         self._wid = wid
         self._group = 0
@@ -44,6 +46,8 @@ class Window(base.Window):
         self.mapped = False
         self.x = 10
         self.y = 10
+        self.borderwidth = 0
+        self.bordercolor = None
 
         self._on_map_listener = Listener(self._on_map)
         self._on_unmap_listener = Listener(self._on_unmap)
@@ -64,6 +68,14 @@ class Window(base.Window):
     @property
     def wid(self):
         return self._wid
+
+    @property
+    def width(self):
+        return self.surface.surface.current.width
+
+    @property
+    def height(self):
+        return self.surface.surface.current.height
 
     @property
     def group(self):
@@ -91,11 +103,40 @@ class Window(base.Window):
         # TODO
 
     def hide(self):
-        self.surface.unmap_event.emit()
+        if self.mapped:
+            self.surface.unmap_event.emit()
 
     def unhide(self):
-        self.surface.map_event.emit()
+        if not self.mapped:
+            self.surface.map_event.emit()
 
     @property
     def floating(self):
         return self._floating
+
+    def focus(self, warp):
+        self.core.focus_window(self)
+        if warp:
+            self.core.warp_pointer(self.x + self.width, self.y + self.height)
+
+    def place(self, x, y, width, height, borderwidth, bordercolor,
+              above=False, margin=None):
+
+        # Adjust the placement to account for layout margins, if there are any.
+        if margin is not None:
+            if isinstance(margin, int):
+                margin = [margin] * 4
+            x += margin[3]
+            y += margin[0]
+            width -= margin[1] + margin[3]
+            height -= margin[0] + margin[2]
+
+        self.x = x
+        self.y = y
+        self.surface.set_size(width, height)
+        self.borderwidth = borderwidth
+        self.bordercolor = bordercolor
+
+        if above:
+            self.core.windows.remove(self)
+            self.core.windows.insert(0, self)
