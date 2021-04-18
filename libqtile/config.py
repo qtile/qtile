@@ -36,8 +36,6 @@ import sys
 import warnings
 from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
-import xcffib.xproto
-
 from libqtile import configurable, hook, utils
 from libqtile.backend.x11 import window
 from libqtile.bar import BarType
@@ -373,7 +371,7 @@ class Screen(CommandObject):
             if old_group is None:
                 ctx = contextlib.nullcontext()
             else:
-                ctx = old_group.disable_mask(xcffib.xproto.EventMask.EnterWindow)
+                ctx = self.qtile.core.masked()
             with ctx:
                 # display clients of the new group and then hide from old group
                 # to remove the screen flickering

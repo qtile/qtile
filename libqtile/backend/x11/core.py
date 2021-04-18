@@ -20,6 +20,7 @@
 # SOFTWARE.
 
 import asyncio
+import contextlib
 import os
 from typing import (
     TYPE_CHECKING,
@@ -35,6 +36,7 @@ from typing import (
 import xcffib
 import xcffib.render
 import xcffib.xproto
+from xcffib.xproto import EventMask
 
 from libqtile import config, hook, utils
 from libqtile.backend import base
@@ -103,11 +105,11 @@ class Core(base.Core):
 
         self._root.set_attribute(
             eventmask=(
-                xcffib.xproto.EventMask.StructureNotify
-                | xcffib.xproto.EventMask.SubstructureNotify
-                | xcffib.xproto.EventMask.SubstructureRedirect
-                | xcffib.xproto.EventMask.EnterWindow
-                | xcffib.xproto.EventMask.LeaveWindow
+                EventMask.StructureNotify
+                | EventMask.SubstructureNotify
+                | EventMask.SubstructureRedirect
+                | EventMask.EnterWindow
+                | EventMask.LeaveWindow
             )
         )
 
@@ -131,7 +133,7 @@ class Core(base.Core):
         }
         self._selection_window = self.conn.create_window(-1, -1, 1, 1)
         self._selection_window.set_attribute(
-            eventmask=xcffib.xproto.EventMask.PropertyChange
+            eventmask=EventMask.PropertyChange
         )
         if hasattr(self.conn, "xfixes"):
             self.conn.xfixes.select_selection_input(self._selection_window, "PRIMARY")  # type: ignore
@@ -378,7 +380,7 @@ class Core(base.Core):
         try:
             conn = xcbq.Connection(self._display_name)
             conn.default_screen.root.set_attribute(
-                eventmask=xcffib.xproto.EventMask.PropertyChange
+                eventmask=EventMask.PropertyChange
             )
             conn.conn.core.ChangePropertyChecked(
                 xcffib.xproto.PropMode.Append,
@@ -501,9 +503,9 @@ class Core(base.Core):
         else:
             grabmode = xcffib.xproto.GrabMode.Async
 
-        eventmask = xcffib.xproto.EventMask.ButtonPress
+        eventmask = EventMask.ButtonPress
         if isinstance(mouse, config.Drag):
-            eventmask |= xcffib.xproto.EventMask.ButtonRelease
+            eventmask |= EventMask.ButtonRelease
 
         for amask in self._auto_modmasks():
             self.conn.conn.core.GrabButton(
@@ -531,6 +533,14 @@ class Core(base.Core):
         if self._numlock_mask:
             yield self._numlock_mask
             yield self._numlock_mask | xcbq.ModMasks["lock"]
+
+    @contextlib.contextmanager
+    def masked(self):
+        for i in self.qtile.windows_map.values():
+            i._disable_mask(EventMask.EnterWindow | EventMask.FocusChange | EventMask.LeaveWindow)
+        yield
+        for i in self.qtile.windows_map.values():
+            i._reset_mask()
 
     def handle_SelectionNotify(self, event) -> None:  # noqa: N802
         if not getattr(event, "owner", None):

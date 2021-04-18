@@ -200,6 +200,7 @@ class Core(base.Core):
         win = window.Window(self, surface, wid)
         logger.info(f"Managing new top-level window with window ID: {wid}")
         self.windows.append(win)
+        self.qtile.manage(win)
 
     def _on_cursor_axis(self, _listener, event: pointer.PointerEventAxis):
         logger.debug("Signal: cursor axis")

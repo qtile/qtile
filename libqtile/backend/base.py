@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import enum
 import typing
 from abc import ABCMeta, abstractmethod
@@ -74,6 +75,11 @@ class Core(metaclass=ABCMeta):
 
     def update_client_list(self, windows_map: Dict[int, WindowType]) -> None:
         """Update the list of windows being managed"""
+
+    @contextlib.contextmanager
+    def masked(self):
+        """A context manager to suppress window events while operating on many windows."""
+        yield
 
 
 @enum.unique
