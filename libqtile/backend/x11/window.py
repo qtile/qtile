@@ -533,10 +533,6 @@ class _Window(CommandObject):
     def group(self):
         return self._group
 
-    @property
-    def has_focus(self):
-        return self == self.qtile.current_window
-
     def has_fixed_ratio(self):
         try:
             if ('PAspect' in self.hints['flags'] and

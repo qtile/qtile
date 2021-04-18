@@ -136,6 +136,19 @@ class Window(metaclass=ABCMeta):
         """Match window against given attributes."""
         return False
 
+    @abstractmethod
+    def focus(self, warp: bool):
+        """Focus this window and optional warp the pointer to it."""
+
+    @property
+    def has_focus(self):
+        return self == self.qtile.current_window
+
+    @abstractmethod
+    def place(self, x, y, width, height, borderwidth, bordercolor,
+              above=False, margin=None):
+        """Place the window in the given position."""
+
 
 class Internal(Window, metaclass=ABCMeta):
     pass
