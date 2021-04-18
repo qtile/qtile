@@ -26,11 +26,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import contextlib
-
-import xcffib
-import xcffib.xproto
-
 from libqtile import hook, utils
 from libqtile.backend.base import FloatStates
 from libqtile.command.base import CommandObject, ItemT
@@ -148,7 +143,7 @@ class _Group(CommandObject):
         to it.
         """
         if self.screen and self.windows:
-            with self.disable_mask(xcffib.xproto.EventMask.EnterWindow):
+            with self.qtile.core.masked():
                 normal = [x for x in self.windows if not x.floating]
                 floating = [
                     x for x in self.windows
@@ -184,20 +179,10 @@ class _Group(CommandObject):
 
     def hide(self):
         self.screen = None
-        with self.disable_mask(xcffib.xproto.EventMask.EnterWindow |
-                               xcffib.xproto.EventMask.FocusChange |
-                               xcffib.xproto.EventMask.LeaveWindow):
+        with self.qtile.core.masked():
             for i in self.windows:
                 i.hide()
             self.layout.hide()
-
-    @contextlib.contextmanager
-    def disable_mask(self, mask):
-        for i in self.windows:
-            i._disable_mask(mask)
-        yield
-        for i in self.windows:
-            i._reset_mask()
 
     def focus(self, win, warp=True, force=False):
         """Focus the given window
