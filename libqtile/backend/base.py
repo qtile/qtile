@@ -5,7 +5,7 @@ import typing
 from abc import ABCMeta, abstractmethod
 
 if typing.TYPE_CHECKING:
-    from typing import List, Tuple, Union
+    from typing import Dict, List, Tuple, Union
 
     from libqtile import config
     from libqtile.core.manager import Qtile
@@ -70,6 +70,9 @@ class Core(metaclass=ABCMeta):
 
     def warp_pointer(self, x: int, y: int) -> None:
         """Warp the pointer to the given coordinates relative."""
+
+    def update_client_list(self, windows_map: Dict[int, WindowType]) -> None:
+        """Update the list of windows being managed"""
 
 
 @enum.unique

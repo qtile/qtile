@@ -440,15 +440,6 @@ class Qtile(CommandObject):
 
         self.core.update_desktops(self.groups, index)
 
-    def update_client_list(self) -> None:
-        """Updates the client stack list
-
-        This is needed for third party tasklists and drag and drop of tabs in
-        chrome
-        """
-        windows = [wid for wid, c in self.windows_map.items() if c.group]
-        self.core.update_client_list(windows)
-
     def add_group(self, name, layout=None, layouts=None, label=None):
         if name not in self.groups_map.keys():
             g = _Group(name, layout, label=label)
@@ -573,7 +564,7 @@ class Qtile(CommandObject):
         # Window may have been bound to a group in the hook.
         if not win.group:
             self.current_screen.group.add(win, focus=win.can_steal_focus())
-        self.update_client_list()
+        self.core.update_client_list(self.windows_map)
         hook.fire("client_managed", win)
         return win
 
@@ -586,9 +577,7 @@ class Qtile(CommandObject):
             if getattr(c, "group", None):
                 c.group.remove(c)
             del self.windows_map[win]
-            self.update_client_list()
-        if self.current_window is None:
-            self.core.conn.fixup_focus()
+            self.core.update_client_list(self.windows_map)
 
     def graceful_shutdown(self):
         """
