@@ -891,7 +891,7 @@ class _Window(CommandObject):
                 state.remove(atom)
                 self.window.set_property('_NET_WM_STATE', state)
 
-        self.qtile.root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
+        self.qtile.core._root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
         hook.fire("client_focus", self)
         return True
 
@@ -1047,7 +1047,7 @@ class Static(_Window, base.Static):
             unpack=int
         )
         if strut:
-            x_screen_dimensions = self.qtile.root.get_geometry()
+            x_screen_dimensions = self.qtile.core._root.get_geometry()
             if strut[0]:    # left
                 x = strut[0]
                 y = (strut[4] + strut[5]) / 2 or (strut[6] + strut[7]) / 2

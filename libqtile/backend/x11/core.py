@@ -251,9 +251,9 @@ class Core(base.Core):
             self.qtile.manage(win)
 
     def warp_pointer(self, x, y):
-        self.root.warp_pointer(x, y)
-        self.root.set_input_focus()
-        self.root.set_property("_NET_ACTIVE_WINDOW", self.root.wid)
+        self._root.warp_pointer(x, y)
+        self._root.set_input_focus()
+        self._root.set_property("_NET_ACTIVE_WINDOW", self._root.wid)
 
     def convert_selection(self, selection_atom, _type="UTF8_STRING") -> None:
         type_atom = self.conn.atoms[_type]
