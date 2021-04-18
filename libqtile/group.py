@@ -252,17 +252,10 @@ class _Group(CommandObject):
         hook.fire("group_window_add", self, win)
         self.windows.add(win)
         win.group = self
-        try:
-            if 'fullscreen' in win.window.get_net_wm_state() and \
-                    self.qtile.config.auto_fullscreen:
-                win._float_state = FloatStates.FULLSCREEN
-            elif self.floating_layout.match(win):
-                # !!! tell it to float, can't set floating
-                # because it's too early
-                # so just set the flag underneath
-                win._float_state = FloatStates.FLOATING
-        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
-            pass  # doesn't matter
+        if self.qtile.config.auto_fullscreen and win.wants_to_fullscreen:
+            win._float_state = FloatStates.FULLSCREEN
+        elif self.floating_layout.match(win):
+            win._float_state = FloatStates.FLOATING
         if win.floating:
             self.floating_layout.add(win)
         else:

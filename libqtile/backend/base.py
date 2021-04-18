@@ -116,6 +116,20 @@ class Window(metaclass=ABCMeta):
         """Is it OK for this window to steal focus?"""
         return True
 
+    @property
+    def floating(self) -> bool:
+        """Whether this window should be floating."""
+        return False
+
+    @property
+    def wants_to_fullscreen(self):
+        """Does this window want to be fullscreen?"""
+        return False
+
+    def match(self, match: config.Match) -> bool:
+        """Match window against given attributes."""
+        return False
+
 
 class Internal(Window, metaclass=ABCMeta):
     pass
