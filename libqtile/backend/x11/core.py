@@ -178,6 +178,9 @@ class Core(base.Core):
                 self.conn.default_screen.height_in_pixels,
             ))
 
+        if self.qtile:
+            self._xpoll()
+
         return info
 
     @property
