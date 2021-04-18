@@ -334,3 +334,7 @@ class Core(base.Core):
 
     def ungrab_pointer(self) -> None:
         """Release grabbed pointer events"""
+
+    def warp_pointer(self, x, y) -> None:
+        """Warp the pointer to the coordinates in relative to the output layout"""
+        self.cursor.warp(WarpMode.LayoutClosest, x, y)

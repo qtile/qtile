@@ -111,7 +111,7 @@ class WindowVisibilityToggler:
             # add hooks to determine if focus get lost
             if self.on_focus_lost_hide:
                 if self.warp_pointer:
-                    win.window.warp_pointer(win.width // 2, win.height // 2)
+                    win.qtile.core.warp_pointer(win.x + win.width // 2, win.y + win.height // 2)
                 hook.subscribe.client_focus(self.on_focus_change)
                 hook.subscribe.setgroup(self.on_focus_change)
 

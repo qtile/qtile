@@ -68,6 +68,9 @@ class Core(metaclass=ABCMeta):
     def scan(self) -> None:
         """Scan for clients if required."""
 
+    def warp_pointer(self, x: int, y: int) -> None:
+        """Warp the pointer to the given coordinates relative."""
+
 
 @enum.unique
 class FloatStates(enum.Enum):
