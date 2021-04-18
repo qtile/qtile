@@ -191,8 +191,15 @@ class Core(base.Core):
         if surface.role != xdg_shell.XdgSurfaceRole.TOPLEVEL:
             return
 
-        logger.info("Managing new top-level window")
-        self.windows.append(window.Window(self, surface))
+        wid = 0
+        wids = [win.wid for win in self.windows]
+        while True:
+            if wid not in wids:
+                break
+            wid += 1
+        win = window.Window(self, surface, wid)
+        logger.info(f"Managing new top-level window with window ID: {wid}")
+        self.windows.append(win)
 
     def _on_cursor_axis(self, _listener, event: pointer.PointerEventAxis):
         logger.debug("Signal: cursor axis")

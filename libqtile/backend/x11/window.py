@@ -116,7 +116,7 @@ def _float_setter(attr):
     return setter
 
 
-class XWindow(base.Window):
+class XWindow:
     def __init__(self, conn, wid):
         self.conn = conn
         self.wid = wid
@@ -526,6 +526,10 @@ class _Window(CommandObject):
         fset=_float_setter("height"),
         fget=_float_getter("height")
     )
+
+    @property
+    def wid(self):
+        return self.window.wid
 
     @property
     def has_focus(self):
@@ -958,7 +962,7 @@ class _Window(CommandObject):
         )
 
 
-class Internal(base.Internal, _Window):
+class Internal(_Window, base.Internal):
     """An internal window, that should not be managed by qtile"""
     _window_mask = EventMask.StructureNotify | \
         EventMask.PropertyChange | \
@@ -990,7 +994,7 @@ class Internal(base.Internal, _Window):
         self.kill()
 
 
-class Static(base.Static, _Window):
+class Static(_Window, base.Static):
     """An internal window, that should not be managed by qtile"""
     _window_mask = EventMask.StructureNotify | \
         EventMask.PropertyChange | \
@@ -1087,7 +1091,7 @@ class Static(base.Static, _Window):
         return "Static(%r)" % self.name
 
 
-class Window(base.Window, _Window):
+class Window(_Window, base.Window):
     _window_mask = EventMask.StructureNotify | \
         EventMask.PropertyChange | \
         EventMask.EnterWindow | \

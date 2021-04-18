@@ -911,11 +911,11 @@ class Qtile(CommandObject):
                 return utils.lget(self.screens, sel)
 
     def list_wids(self):
-        return [i.window.wid for i in self.windows_map.values()]
+        return [i.wid for i in self.windows_map.values()]
 
     def client_from_wid(self, wid):
         for i in self.windows_map.values():
-            if i.window.wid == wid:
+            if i.wid == wid:
                 return i
         return None
 

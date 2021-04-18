@@ -34,9 +34,10 @@ if typing.TYPE_CHECKING:
 
 
 class Window(base.Window):
-    def __init__(self, core: Core, surface: xdg_shell.XdgSurface):
+    def __init__(self, core: Core, surface: xdg_shell.XdgSurface, wid: int):
         self.core = core
         self.surface = surface
+        self._wid = wid
         self.mapped = False
         self.x = 10
         self.y = 10
@@ -56,6 +57,10 @@ class Window(base.Window):
         self._on_destroy_listener.remove()
         self._on_request_fullscreen_listener.remove()
         self.core.windows.remove(self)
+
+    @property
+    def wid(self):
+        return self._wid
 
     def _on_map(self, _listener, data):
         logger.debug("Signal: window map")

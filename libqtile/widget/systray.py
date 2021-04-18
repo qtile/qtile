@@ -204,13 +204,13 @@ class Systray(window._Window, base._Widget):
                     self.qtile.conn.atoms["_XEMBED_EMBEDDED_NOTIFY"],
                     xcffib.xproto.Time.CurrentTime,
                     0,
-                    self.bar.window.window.wid,
+                    self.bar.window.wid,
                     XEMBED_PROTOCOL_VERSION
                 ]
                 u = xcffib.xproto.ClientMessageData.synthetic(data, "I" * 5)
                 event = xcffib.xproto.ClientMessageEvent.synthetic(
                     format=32,
-                    window=icon.window.wid,
+                    window=icon.wid,
                     type=self.qtile.conn.atoms["_XEMBED"],
                     data=u
                 )

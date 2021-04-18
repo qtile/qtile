@@ -468,7 +468,7 @@ class TreeTab(Layout):
         self._create_drawer(screen_rect)
         self._panel.handle_Expose = self._handle_Expose
         self._panel.handle_ButtonPress = self._handle_ButtonPress
-        self.group.qtile.windows_map[self._panel.window.wid] = self._panel
+        self.group.qtile.windows_map[self._panel.wid] = self._panel
         hook.subscribe.client_name_updated(self.draw_panel)
         hook.subscribe.focus_change(self.draw_panel)
 
@@ -719,7 +719,7 @@ class TreeTab(Layout):
         if self._drawer is None:
             self._drawer = drawer.Drawer(
                 self.group.qtile,
-                self._panel.window.wid,
+                self._panel.wid,
                 self.panel_width,
                 screen_rect.height
             )
