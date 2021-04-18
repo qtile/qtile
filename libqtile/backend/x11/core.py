@@ -221,15 +221,31 @@ class Core(base.Core):
             try:
                 attrs = item.get_attributes()
                 state = item.get_wm_state()
+                internal = item.get_property("QTILE_INTERNAL")
             except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
                 continue
 
-            if attrs and attrs.map_state == xcffib.xproto.MapState.Unmapped:
+            if attrs and attrs.map_state == xcffib.xproto.MapState.Unmapped or attrs.override_redirect:
                 continue
             if state and state[0] == window.WithdrawnState:
                 item.unmap()
                 continue
-            self.qtile.manage(item)
+
+            win = self.qtile.windows_map.get(item.wid)
+            if win:
+                win.unhide()
+                return
+
+            if internal:
+                win = window.Internal(item, self.qtile)
+            else:
+                win = window.Window(item, self.qtile)
+
+            if item.get_wm_type() == "dock" or win.reserved_space:
+                win.cmd_static(self.qtile.current_screen.index)
+                continue
+
+            self.qtile.manage(win)
 
     def convert_selection(self, selection_atom, _type="UTF8_STRING") -> None:
         type_atom = self.conn.atoms[_type]
@@ -603,7 +619,32 @@ class Core(base.Core):
     def handle_MapRequest(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
-        self.qtile.map_window(window.XWindow(self.conn, event.window))
+        xwin = window.XWindow(self.conn, event.window)
+        try:
+            attrs = xwin.get_attributes()
+            internal = xwin.get_property("QTILE_INTERNAL")
+        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
+            return
+
+        if attrs and attrs.override_redirect:
+            return
+
+        win = self.qtile.windows_map.get(xwin.wid)
+        if win:
+            if win.group is self.qtile.current_group:
+                win.unhide()
+            return
+
+        if internal:
+            win = window.Internal(xwin, self.qtile)
+        else:
+            win = window.Window(xwin, self.qtile)
+
+        if xwin.get_wm_type() == "dock" or win.reserved_space:
+            win.cmd_static(self.qtile.current_screen.index)
+            return
+
+        self.qtile.map_window(win)
 
     def handle_DestroyNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
