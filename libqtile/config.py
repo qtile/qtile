@@ -398,7 +398,7 @@ class Screen(CommandObject):
         if name == "layout" and self.group is not None:
             return True, list(range(len(self.group.layouts)))
         elif name == "window" and self.group is not None:
-            return True, [i.window.wid for i in self.group.windows]
+            return True, [i.wid for i in self.group.windows]
         elif name == "bar":
             return False, [x.position for x in self.gaps]
         return None
@@ -414,7 +414,7 @@ class Screen(CommandObject):
                 return self.group.current_window
             else:
                 for i in self.group.windows:
-                    if i.window.wid == sel:
+                    if i.wid == sel:
                         return i
         elif name == "bar":
             return getattr(self, sel)

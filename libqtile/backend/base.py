@@ -80,7 +80,10 @@ class FloatStates(enum.Enum):
 
 
 class Window(metaclass=ABCMeta):
-    pass
+    @property
+    @abstractmethod
+    def wid(self) -> int:
+        """The unique window ID"""
 
 
 class Internal(metaclass=ABCMeta):

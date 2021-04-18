@@ -332,7 +332,7 @@ class _Group(CommandObject):
         if name == "screen" and self.screen is not None:
             return True, []
         if name == "window":
-            return self.current_window is not None, [i.window.wid for i in self.windows]
+            return self.current_window is not None, [i.wid for i in self.windows]
         return None
 
     def _select(self, name, sel):
@@ -346,7 +346,7 @@ class _Group(CommandObject):
             if sel is None:
                 return self.current_window
             for i in self.windows:
-                if i.window.wid == sel:
+                if i.wid == sel:
                     return i
         raise RuntimeError("Invalid selection: {}".format(name))
 

@@ -305,7 +305,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             self.bar.draw()
 
     def remove_icon_cache(self, window):
-        wid = window.window.wid
+        wid = window.wid
         if wid in self._icons_cache:
             self._icons_cache.pop(wid)
 
@@ -384,7 +384,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if not window.icons:
             return None
 
-        cache = self._icons_cache.get(window.window.wid)
+        cache = self._icons_cache.get(window.wid)
         if cache:
             return cache
 
@@ -412,7 +412,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             width /= sp
             scaler.scale(sp, sp)
         surface.set_matrix(scaler)
-        self._icons_cache[window.window.wid] = surface
+        self._icons_cache[window.wid] = surface
         return surface
 
     def draw_icon(self, surface, offset):
