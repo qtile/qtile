@@ -821,9 +821,7 @@ class Qtile(CommandObject):
     def warp_to_screen(self):
         if self.current_screen:
             scr = self.current_screen
-            self.root.warp_pointer(scr.x + scr.dwidth // 2, scr.y + scr.dheight // 2)
-            self.root.set_input_focus()
-            self.root.set_property("_NET_ACTIVE_WINDOW", self.root.wid)
+            self.core.warp_pointer(scr.x + scr.dwidth // 2, scr.y + scr.dheight // 2)
 
     def focus_screen(self, n, warp=True):
         """Have Qtile move to screen and put focus there"""
