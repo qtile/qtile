@@ -285,32 +285,22 @@ class Qtile(CommandObject):
             hook.clear()
             self.core.finalize()
 
-    def _process_fake_screens(self):
-        """
-        Since Xephyr and Xnest don't really support offset screens, we'll fake
-        it here for testing, (or if you want to partition a physical monitor
-        into separate screens)
-        """
-        for i, s in enumerate(self.config.fake_screens):
-            # should have x,y, width and height set
-            s._configure(self, i, s.x, s.y, s.width, s.height, self.groups[i])
-            if not self.current_screen:
-                self.current_screen = s
-            self.screens.append(s)
-
     def _process_screens(self) -> None:
+        current_groups = [screen.group for screen in self.screens if screen.group]
         self.screens = []
-        if hasattr(self.config, 'fake_screens'):
-            self._process_fake_screens()
-            return
 
-        screen_info = self.core.get_screen_info()
+        if hasattr(self.config, 'fake_screens'):
+            screen_info = [(s.x, s.y, s.width, s.height) for s in self.config.fake_screens]
+            config = self.config.fake_screens
+        else:
+            screen_info = self.core.get_screen_info()
+            config = self.config.screens
 
         for i, (x, y, w, h) in enumerate(screen_info):
-            if i + 1 > len(self.config.screens):
+            if i + 1 > len(config):
                 scr = Screen()
             else:
-                scr = self.config.screens[i]
+                scr = config[i]
 
             if not self.current_screen:
                 self.current_screen = scr
@@ -318,10 +308,14 @@ class Qtile(CommandObject):
             if len(self.groups) < i + 1:
                 name = f"autogen_{i + 1}"
                 self.add_group(name)
-                grp = self.groups[i]
                 logger.warning(f"Too few groups in config. Added group: {name}")
+
+            if i < len(current_groups):
+                grp = current_groups[i]
             else:
-                grp = self.groups[i]
+                for grp in self.groups:
+                    if not grp.screen:
+                        break
 
             scr._configure(self, i, x, y, w, h, grp)
             self.screens.append(scr)
