@@ -35,9 +35,11 @@ if typing.TYPE_CHECKING:
 
 class Window(base.Window):
     def __init__(self, core: Core, surface: xdg_shell.XdgSurface, wid: int):
+        base.Window.__init__(self)
         self.core = core
         self.surface = surface
         self._wid = wid
+        self._group = 0
         self.mapped = False
         self.x = 10
         self.y = 10
@@ -61,6 +63,14 @@ class Window(base.Window):
     @property
     def wid(self):
         return self._wid
+
+    @property
+    def group(self):
+        return self._group
+
+    @group.setter
+    def group(self, index):
+        self._group = index
 
     def _on_map(self, _listener, data):
         logger.debug("Signal: window map")

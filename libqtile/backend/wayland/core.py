@@ -218,11 +218,13 @@ class Core(base.Core):
         )
 
     def _on_cursor_motion(self, _listener, event: pointer.PointerEventMotion):
+        assert self.qtile is not None
         logger.debug("Signal: cursor motion")
         self.cursor.move(event.delta_x, event.delta_y, input_device=event.device)
         self.qtile.process_button_motion(self.cursor.x, self.cursor.y)
 
-    def _on_cursor_motion_absolute(self, _listener, event: pointer.PointerMotionAbsolute):
+    def _on_cursor_motion_absolute(self, _listener, event: pointer.PointerEventMotionAbsolute):
+        assert self.qtile is not None
         logger.debug("Signal: cursor motion_absolute")
         self.cursor.warp(
             WarpMode.AbsoluteClosest, event.x, event.y, input_device=event.device,

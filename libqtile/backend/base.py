@@ -9,6 +9,7 @@ if typing.TYPE_CHECKING:
 
     from libqtile import config
     from libqtile.core.manager import Qtile
+    from libqtile.group import _Group
 
 
 class Core(metaclass=ABCMeta):
@@ -86,10 +87,21 @@ class FloatStates(enum.Enum):
 
 
 class Window(metaclass=ABCMeta):
+    def __init__(self):
+        self.borderwidth: int = 0
+        self.name: str = "<no name>"
+        self.reserved_space: List = None
+        self.defunct: bool = False
+
     @property
     @abstractmethod
     def wid(self) -> int:
         """The unique window ID"""
+
+    @property
+    @abstractmethod
+    def group(self) -> _Group:
+        """The group to which this window belongs."""
 
     @abstractmethod
     def hide(self) -> None:
@@ -99,12 +111,17 @@ class Window(metaclass=ABCMeta):
     def unhide(self) -> None:
         """Unhide the window"""
 
+    @property
+    def can_steal_focus(self):
+        """Is it OK for this window to steal focus?"""
+        return True
 
-class Internal(metaclass=ABCMeta):
+
+class Internal(Window, metaclass=ABCMeta):
     pass
 
 
-class Static(metaclass=ABCMeta):
+class Static(Window, metaclass=ABCMeta):
     pass
 
 

@@ -24,6 +24,7 @@ import os
 from typing import (
     TYPE_CHECKING,
     Callable,
+    Dict,
     Iterator,
     List,
     Optional,
@@ -42,8 +43,6 @@ from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 
 if TYPE_CHECKING:
-    from typing import Dict
-
     from libqtile.core.manager import Qtile
 
 _IGNORED_EVENTS = {
@@ -244,9 +243,10 @@ class Core(base.Core):
             else:
                 win = window.Window(item, self.qtile)
 
-            if item.get_wm_type() == "dock" or win.reserved_space:
-                win.cmd_static(self.qtile.current_screen.index)
-                continue
+                if item.get_wm_type() == "dock" or win.reserved_space:
+                    assert self.qtile.current_screen is not None
+                    win.cmd_static(self.qtile.current_screen.index)
+                    continue
 
             self.qtile.manage(win)
 
@@ -653,9 +653,10 @@ class Core(base.Core):
         else:
             win = window.Window(xwin, self.qtile)
 
-        if xwin.get_wm_type() == "dock" or win.reserved_space:
-            win.cmd_static(self.qtile.current_screen.index)
-            return
+            if xwin.get_wm_type() == "dock" or win.reserved_space:
+                assert self.qtile.current_screen is not None
+                win.cmd_static(self.qtile.current_screen.index)
+                return
 
         self.qtile.map_window(win)
 
