@@ -663,12 +663,28 @@ class Core(base.Core):
         assert self.qtile is not None
 
         self.qtile.unmanage(event.window)
+        if self.qtile.current_window is None:
+            self.conn.fixup_focus()
 
     def handle_UnmapNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
         if event.event != self._root.wid:
-            self.qtile.unmap_window(event.window)
+            win = self.qtile.windows_map.get(event.window)
+            if win and getattr(win, "group", None):
+                try:
+                    win.hide()
+                    assert isinstance(win, window._Window)
+                    win.state = window.WithdrawnState
+                except xcffib.xproto.WindowError:
+                    # This means that the window has probably been destroyed,
+                    # but we haven't yet seen the DestroyNotify (it is likely
+                    # next in the queue). So, we just let these errors pass
+                    # since the window is dead.
+                    pass
+            self.qtile.unmanage(event.window)
+            if self.qtile.current_window is None:
+                self.conn.fixup_focus()
 
     def handle_ScreenChangeNotify(self, event) -> None:  # noqa: N802
         hook.fire("screen_change", event)

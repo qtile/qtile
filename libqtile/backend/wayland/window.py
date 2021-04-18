@@ -78,3 +78,9 @@ class Window(base.Window):
     def _on_request_fullscreen(self, _listener, data: xdg_shell.XdgTopLevelSetFullscreenEvent):
         logger.debug("Signal: window request_fullscreen")
         # TODO
+
+    def hide(self):
+        self.surface.unmap_event.emit()
+
+    def unhide(self):
+        self.surface.map_event.emit()
