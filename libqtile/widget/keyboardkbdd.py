@@ -91,7 +91,7 @@ class KeyboardKbdd(base.ThreadPoolText):
             try:
                 self.layout.colour = self.colours[index]
             except IndexError:
-                self._setColour(index - 1)
+                self._set_colour(index - 1)
         else:
             logger.error('variable "colours" should be a list, to set a\
                             colour for all layouts, use "foreground".')
