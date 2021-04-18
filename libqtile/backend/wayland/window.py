@@ -40,6 +40,7 @@ class Window(base.Window):
         self.surface = surface
         self._wid = wid
         self._group = 0
+        self._floating = False
         self.mapped = False
         self.x = 10
         self.y = 10
@@ -94,3 +95,7 @@ class Window(base.Window):
 
     def unhide(self):
         self.surface.map_event.emit()
+
+    @property
+    def floating(self):
+        return self._floating

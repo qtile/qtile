@@ -1169,6 +1169,14 @@ class Window(_Window, base.Window):
             self.group.mark_floating(self, False)
             hook.fire('float_change')
 
+    @property
+    def wants_to_fullscreen(self):
+        try:
+            return 'fullscreen' in self.window.get_net_wm_state()
+        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
+            pass
+        return False
+
     def toggle_floating(self):
         self.floating = not self.floating
 
