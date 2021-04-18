@@ -330,7 +330,8 @@ class Qtile(CommandObject):
                     group.hide()
 
     def paint_screen(self, screen, image_path, mode=None):
-        self.core.painter.paint(screen, image_path, mode)
+        if hasattr(self.core, "painter"):
+            self.core.painter.paint(screen, image_path, mode)
 
     def process_key_event(self, keysym: int, mask: int) -> None:
         key = self.keys_map.get((keysym, mask), None)
