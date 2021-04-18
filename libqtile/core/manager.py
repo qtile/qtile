@@ -38,7 +38,6 @@ import xcffib.xproto
 import libqtile
 from libqtile import confreader, hook, ipc, utils
 from libqtile.backend import base
-from libqtile.backend.x11 import window
 from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandException, CommandObject
 from libqtile.command.client import InteractiveCommandClient
@@ -531,21 +530,7 @@ class Qtile(CommandObject):
         c = self.manage(win)
         if c and (not c.group or not c.group.screen):
             return
-        win.window.map()
-
-    def unmap_window(self, window_id) -> None:
-        c = self.windows_map.get(window_id)
-        if c and getattr(c, "group", None):
-            try:
-                c.window.unmap()
-                c.state = window.WithdrawnState
-            except xcffib.xproto.WindowError:
-                # This means that the window has probably been destroyed,
-                # but we haven't yet seen the DestroyNotify (it is likely
-                # next in the queue). So, we just let these errors pass
-                # since the window is dead.
-                pass
-        self.unmanage(window_id)
+        win.unhide()
 
     def manage(self, win: base.WindowType):
         if isinstance(win, base.Internal):

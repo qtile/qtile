@@ -91,6 +91,14 @@ class Window(metaclass=ABCMeta):
     def wid(self) -> int:
         """The unique window ID"""
 
+    @abstractmethod
+    def hide(self) -> None:
+        """Hide the window"""
+
+    @abstractmethod
+    def unhide(self) -> None:
+        """Unhide the window"""
+
 
 class Internal(metaclass=ABCMeta):
     pass
