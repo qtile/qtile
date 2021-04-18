@@ -92,3 +92,6 @@ class Internal(metaclass=ABCMeta):
 
 class Static(metaclass=ABCMeta):
     pass
+
+
+WindowType = typing.Union[Window, Internal, Static]

@@ -37,7 +37,8 @@ import xcffib.xproto
 
 import libqtile
 from libqtile import confreader, hook, ipc, utils
-from libqtile.backend.x11 import window, xcbq
+from libqtile.backend import base
+from libqtile.backend.x11 import window
 from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandException, CommandObject
 from libqtile.command.client import InteractiveCommandClient
@@ -77,7 +78,7 @@ class Qtile(CommandObject):
         self.mouse_map: Dict[Tuple[int, int], List[Union[Click, Drag]]] = {}
         self.mouse_position = (0, 0)
 
-        self.windows_map: Dict[int, window._Window] = {}
+        self.windows_map: Dict[int, base.WindowType] = {}
         self.widgets_map: Dict[str, _Widget] = {}
         self.groups_map: Dict[str, _Group] = {}
         self.groups: List[_Group] = []
@@ -546,7 +547,7 @@ class Qtile(CommandObject):
     def free_reserved_space(self, reserved_space, screen):
         self.reserve_space([-i for i in reserved_space], screen)
 
-    def map_window(self, window: window.XWindow) -> None:
+    def map_window(self, window: base.WindowType) -> None:
         c = self.manage(window)
         if c and (not c.group or not c.group.screen):
             return
@@ -612,7 +613,7 @@ class Qtile(CommandObject):
         c = self.windows_map.get(win)
         if c:
             hook.fire("client_killed", c)
-            if isinstance(c, window.Static):
+            if isinstance(c, base.Static):
                 self.free_reserved_space(c.reserved_space, c.screen)
             if getattr(c, "group", None):
                 c.group.remove(c)
@@ -631,7 +632,7 @@ class Qtile(CommandObject):
         def get_interesting_pid(win):
             # We don't need to kill Internal or Static windows, they're qtile
             # managed and don't have any state.
-            if not isinstance(win, window.Window):
+            if not isinstance(win, base.Window):
                 return None
             try:
                 return win.window.get_net_wm_pid()
@@ -1304,14 +1305,14 @@ class Qtile(CommandObject):
         """Return info for each client window"""
         return [
             i.info() for i in self.windows_map.values()
-            if not isinstance(i, window.Internal)
+            if not isinstance(i, base.Internal)
         ]
 
     def cmd_internal_windows(self):
         """Return info for each internal window (bars, for example)"""
         return [
             i.info() for i in self.windows_map.values()
-            if isinstance(i, window.Internal)
+            if isinstance(i, base.Internal)
         ]
 
     def cmd_qtile_info(self):
