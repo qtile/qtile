@@ -403,11 +403,16 @@ class Core(base.Core):
         """The name of the connected display"""
         return self._display_name
 
-    def update_client_list(self, windows) -> None:
-        """Set the current clients to the given list of windows"""
-        self._root.set_property("_NET_CLIENT_LIST", windows)
+    def update_client_list(self, windows_map: Dict[int, base.WindowType]) -> None:
+        """Updates the client stack list
+
+        This is needed for third party tasklists and drag and drop of tabs in
+        chrome
+        """
+        wids = [wid for wid, c in windows_map.items() if c.group]
+        self._root.set_property("_NET_CLIENT_LIST", wids)
         # TODO: check stack order
-        self._root.set_property("_NET_CLIENT_LIST_STACKING", windows)
+        self._root.set_property("_NET_CLIENT_LIST_STACKING", wids)
 
     def update_desktops(self, groups, index: int) -> None:
         """Set the current desktops of the window manager
