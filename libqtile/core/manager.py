@@ -1029,15 +1029,9 @@ class Qtile(CommandObject):
         result.add([])
         rows = []
 
-        def walk_binding(ks: Union[int, str], kmm: Union[int, List[str]], k: Union[Key, KeyChord],
-                         mode: str) -> None:
+        def walk_binding(k: Union[Key, KeyChord], mode: str) -> None:
             nonlocal rows
-            if not (isinstance(ks, (int, str)) and isinstance(kmm, (int, list))):
-                return
-            name = (", ".join(xcbq.rkeysyms.get(ks, ("<unknown>", )))
-                    if isinstance(ks, int) else ks)
-            modifiers = (", ".join(xcbq.translate_modifiers(kmm))
-                         if isinstance(kmm, int) else ", ".join(kmm))
+            modifiers, name = ", ".join(k.modifiers), k.key
             if isinstance(k, Key):
                 if not k.commands:
                     return
@@ -1055,12 +1049,12 @@ class Qtile(CommandObject):
                             "{}>{}".format(mode, k.mode if k.mode else "_"))
                 rows.append((mode, name, modifiers, "", "Enter {:s} mode".format(new_mode_s)))
                 for s in k.submappings:
-                    walk_binding(s.key, s.modifiers, s, new_mode)
+                    walk_binding(s, new_mode)
                 return
             raise TypeError("Unexpected type: {}".format(type(k)))
 
-        for (ks, kmm), k in self.keys_map.items():
-            walk_binding(ks, kmm, k, "<root>")
+        for k in self.config.keys:
+            walk_binding(k, "<root>")
         rows.sort()
         for row in rows:
             result.add(row)
