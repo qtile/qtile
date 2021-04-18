@@ -154,10 +154,6 @@ class Qtile(CommandObject):
         self._process_screens()
         self.current_screen = self.screens[0]
 
-        self.conn.flush()
-        self.conn.xsync()
-        self.core._xpoll()
-
         # Map and Grab keys
         for key in self.config.keys:
             self.grab_key(key)
