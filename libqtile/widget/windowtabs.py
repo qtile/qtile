@@ -55,9 +55,7 @@ class WindowTabs(base._TextBox):
         names = []
         for w in self.bar.screen.group.windows:
             state = ''
-            if w is None:
-                pass
-            elif w.maximized:
+            if w.maximized:
                 state = '[] '
             elif w.minimized:
                 state = '_ '
