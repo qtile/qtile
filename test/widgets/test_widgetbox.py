@@ -1,3 +1,4 @@
+import libqtile.config
 from libqtile.bar import Bar
 from libqtile.widget import TextBox, WidgetBox
 
@@ -65,3 +66,41 @@ def test_widgetbox_widget(fake_qtile):
 
     # Now widgetbox is on the right
     assert fakebar.widgets == [tb_one, tb_two, widget_box]
+
+
+def test_widgetbox_mirror(manager_nospawn, minimal_conf_noscreen):
+    config = minimal_conf_noscreen
+    tbox = TextBox(text="Text Box")
+    config.screens = [
+        libqtile.config.Screen(
+            top=libqtile.bar.Bar([tbox, WidgetBox([tbox])], 10)
+        )
+    ]
+
+    manager_nospawn.start(config)
+
+    manager_nospawn.c.widget["widgetbox"].toggle()
+    topbar = manager_nospawn.c.bar["top"]
+    widgets = [w["name"] for w in topbar.info()["widgets"]]
+    assert widgets == ["textbox", "widgetbox", "mirror"]
+
+
+def test_widgetbox_mouse_click(manager_nospawn, minimal_conf_noscreen):
+    config = minimal_conf_noscreen
+    tbox = TextBox(text="Text Box")
+    config.screens = [
+        libqtile.config.Screen(
+            top=libqtile.bar.Bar([WidgetBox([tbox])], 10)
+        )
+    ]
+
+    manager_nospawn.start(config)
+
+    topbar = manager_nospawn.c.bar["top"]
+    assert len(topbar.info()["widgets"]) == 1
+
+    topbar.fake_button_press(0, "top", 0, 0, button=1)
+    assert len(topbar.info()["widgets"]) == 2
+
+    topbar.fake_button_press(0, "top", 0, 0, button=1)
+    assert len(topbar.info()["widgets"]) == 1
