@@ -23,8 +23,11 @@ from __future__ import annotations
 import typing
 
 from pywayland.server import Listener
+from wlroots.util.edges import Edges
 
+from libqtile import hook
 from libqtile.backend import base
+from libqtile.backend.base import FloatStates
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -32,6 +35,9 @@ if typing.TYPE_CHECKING:
 
     from libqtile.backend.wayland.core import Core
     from libqtile.core.manager import Qtile
+
+EDGES_TILED = Edges.TOP | Edges.BOTTOM | Edges.LEFT | Edges.RIGHT
+EDGES_FLOAT = Edges.NONE
 
 
 class Window(base.Window):
@@ -42,12 +48,13 @@ class Window(base.Window):
         self.surface = surface
         self._wid = wid
         self._group = 0
-        self._floating = False
         self.mapped = False
         self.x = 10
         self.y = 10
         self.borderwidth = 0
         self.bordercolor = None
+        self._float_state = FloatStates.NOT_FLOATING
+        self.surface.set_tiled(EDGES_TILED)
 
         self._on_map_listener = Listener(self._on_map)
         self._on_unmap_listener = Listener(self._on_unmap)
@@ -111,7 +118,23 @@ class Window(base.Window):
 
     @property
     def floating(self):
-        return self._floating
+        return self._float_state != FloatStates.NOT_FLOATING
+
+    @floating.setter
+    def floating(self, do_float: bool):
+        changed = False
+        if do_float and self._float_state == FloatStates.NOT_FLOATING:
+            self._float_state = FloatStates.FLOATING
+            changed = True
+        elif not do_float and self._float_state != FloatStates.NOT_FLOATING:
+            self._float_state = FloatStates.NOT_FLOATING
+            changed = True
+
+        if changed:
+            self.surface.set_tiled(EDGES_FLOAT if do_float else EDGES_TILED)
+            if self.group:
+                self.group.mark_floating(self, do_float)
+            hook.fire('float_change')
 
     def focus(self, warp):
         self.core.focus_window(self)
