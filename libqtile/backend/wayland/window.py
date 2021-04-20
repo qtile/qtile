@@ -63,7 +63,6 @@ class Window(base.Window):
         self._on_unmap_listener.remove()
         self._on_destroy_listener.remove()
         self._on_request_fullscreen_listener.remove()
-        self.core.windows.remove(self)
 
     @property
     def wid(self):
@@ -138,5 +137,5 @@ class Window(base.Window):
         self.bordercolor = bordercolor
 
         if above:
-            self.core.windows.remove(self)
-            self.core.windows.insert(0, self)
+            # TODO when general z-axis control is implemented
+            pass

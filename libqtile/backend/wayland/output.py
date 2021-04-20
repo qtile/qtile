@@ -27,13 +27,15 @@ from wlroots.util.clock import Timespec
 from wlroots.wlr_types import Box, Matrix
 from wlroots.wlr_types import Output as wlrOutput
 
+from libqtile import hook
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Tuple
+    from typing import Set, Tuple
 
     from wlroots.wlr_types import Surface
 
+    from libqtile.backend.base import WindowType
     from libqtile.backend.wayland.core import Core
 
 
@@ -48,6 +50,12 @@ class Output:
         self._on_frame_listener = Listener(self._on_frame)
         wlr_output.destroy_event.add(self._on_destroy_listener)
         wlr_output.frame_event.add(self._on_frame_listener)
+
+        self._mapped_windows: Set[WindowType] = set()
+        hook.subscribe.setgroup(self._get_windows)
+        hook.subscribe.group_window_add(self._get_windows)
+        hook.subscribe.client_killed(self._get_windows)
+        hook.subscribe.client_managed(self._get_windows)
 
     def finalize(self):
         self._on_destroy_listener.remove()
@@ -66,13 +74,11 @@ class Output:
             logger.error("Could not attach renderer")
             return
 
-        width, height = wlr_output.effective_resolution()
-        self.renderer.begin(width, height)
+        self.renderer.begin(*wlr_output.effective_resolution())
         self.renderer.clear([0, 0, 0, 1])
 
-        for window in self.core.windows:
-            if window.mapped:
-                window.surface.for_each_surface(self._render_surface, (window, now))
+        for window in self._mapped_windows:
+            window.surface.for_each_surface(self._render_surface, (window, now))
 
         wlr_output.render_software_cursors()
         self.renderer.end()
@@ -105,3 +111,11 @@ class Output:
         x, y = self.output_layout.output_coords(self.wlr_output)
         width, height = self.wlr_output.effective_resolution()
         return int(x), int(y), width, height
+
+    def _get_windows(self, *args):
+        """Get the set of mapped windows for rendering."""
+        mapped = set()
+        for win in self.core.qtile.windows_map.values():
+            if win.mapped:
+                mapped.add(win)
+        self._mapped_windows = mapped

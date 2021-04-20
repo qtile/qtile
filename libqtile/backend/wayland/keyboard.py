@@ -99,7 +99,7 @@ class Keyboard:
             mods = self.keyboard.modifier
             for keysym in keysyms:
                 if (keysym, mods) in self.grabbed_keys:
-                    self.qtile.process_key_event(keysyms, mods)
+                    self.qtile.process_key_event(keysym, mods)
                     handled = True
 
         if not handled:
