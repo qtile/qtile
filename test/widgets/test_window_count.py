@@ -2,16 +2,15 @@ import libqtile
 from libqtile.widget import WindowCount
 
 
-def test_window_count(manager_nospawn):
-    class WindowCountConf(libqtile.confreader.Config):
-        groups = [libqtile.config.Group("a"), libqtile.config.Group("b")]
-        screens = [
+def test_window_count(manager_nospawn, minimal_conf_noscreen):
+    config = minimal_conf_noscreen
+    config.screens = [
             libqtile.config.Screen(
                 top=libqtile.bar.Bar([WindowCount()], 10)
             )
         ]
 
-    manager_nospawn.start(WindowCountConf)
+    manager_nospawn.start(config)
 
     # No windows opened
     assert int(manager_nospawn.c.widget["windowcount"].get()) == 0
@@ -36,3 +35,19 @@ def test_window_count(manager_nospawn):
     manager_nospawn.kill_window(one)
     manager_nospawn.kill_window(two)
     assert int(manager_nospawn.c.widget["windowcount"].get()) == 0
+
+
+def test_attribute_errors():
+    def no_op(*args, **kwargs):
+        pass
+
+    wc = WindowCount()
+    wc.update = no_op
+
+    wc._count = 1
+    wc._wincount()
+    assert wc._count == 0
+
+    wc._count = 1
+    wc._win_killed(None)
+    assert wc._count == 0
