@@ -106,7 +106,6 @@ class Core(base.Core):
         self.cursor.motion_absolute_event.add(self._on_cursor_motion_absolute_listener)
 
         # set up shell
-        self.windows: List[window.Window] = []
         self.xdg_shell = xdg_shell.XdgShell(self.display)
         self._on_new_xdg_surface_listener = Listener(self._on_new_xdg_surface)
         self.xdg_shell.new_surface_event.add(self._on_new_xdg_surface_listener)
@@ -123,8 +122,6 @@ class Core(base.Core):
         self._on_new_input_listener.remove()
         self._on_request_set_selection_listener.remove()
 
-        for win in self.windows:
-            win.finalize()
         for kb in self.keyboards:
             kb.finalize()
         for out in self.outputs:
@@ -192,14 +189,13 @@ class Core(base.Core):
             return
 
         wid = 0
-        wids = [win.wid for win in self.windows]
+        wids = self.qtile.windows_map.keys()
         while True:
             if wid not in wids:
                 break
             wid += 1
         win = window.Window(self, self.qtile, surface, wid)
         logger.info(f"Managing new top-level window with window ID: {wid}")
-        self.windows.append(win)
         self.qtile.manage(win)
 
     def _on_cursor_axis(self, _listener, event: pointer.PointerEventAxis):
@@ -254,13 +250,6 @@ class Core(base.Core):
             previous_xdg_surface = xdg_shell.XdgSurface.from_surface(previous_surface)
             previous_xdg_surface.set_activated(False)
 
-        # roll the given surface to the front of the list, copy and modify the
-        # list, then save back to prevent any race conditions on list
-        # modification
-        windows = self.windows[:]
-        windows.remove(win)
-        windows.append(win)
-        self.win = windows
         # activate the new surface
         win.surface.set_activated(True)
         self.seat.keyboard_notify_enter(surface, self.seat.keyboard)
