@@ -33,7 +33,7 @@ from libqtile.backend.base import FloatStates
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Dict, Optional, Tuple
+    from typing import Dict, List, Optional, Tuple, Union
 
     from wlroots.wlr_types import xdg_shell
 
@@ -45,7 +45,7 @@ EDGES_FLOAT = Edges.NONE
 
 
 @functools.lru_cache()
-def _rgb(color) -> ffi.CData:
+def _rgb(color: Union[str, List, Tuple]) -> ffi.CData:
     """Helper to create and cache float[4] arrays for border painting"""
     if isinstance(color, ffi.CData):
         return color
