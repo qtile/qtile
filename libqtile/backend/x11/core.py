@@ -595,7 +595,6 @@ class Core(base.Core):
     def handle_ButtonPress(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
-        self.mouse_position = (event.event_x, event.event_y)
         button_code = event.detail
         state = event.state
         state |= self._numlock_mask
@@ -604,7 +603,6 @@ class Core(base.Core):
             button_code, state, event.event_x, event.event_y, event
         )
         self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, event.time)
-        self.conn.conn.flush()
 
     def handle_ButtonRelease(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
