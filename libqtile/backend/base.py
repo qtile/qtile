@@ -175,6 +175,10 @@ class Window(CommandObject, metaclass=ABCMeta):
     def cmd_focus(self, warp: typing.Optional[bool] = None) -> None:
         """Focuses the window."""
 
+    @abstractmethod
+    def cmd_info(self) -> Dict:
+        """Return a dictionary of info."""
+
 
 class Internal(Window, metaclass=ABCMeta):
     pass

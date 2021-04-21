@@ -31,6 +31,8 @@ from libqtile.backend.base import FloatStates
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
+    from typing import Dict
+
     from wlroots.wlr_types import xdg_shell
 
     from libqtile.backend.wayland.core import Core
@@ -175,6 +177,22 @@ class Window(base.Window):
         if warp is None:
             warp = self.qtile.config.cursor_warp
         self.focus(warp=warp)
+
+    def cmd_info(self) -> Dict:
+        """Return a dictionary of info."""
+        return dict(
+            name=self.name,
+            x=self.x,
+            y=self.y,
+            width=self.width,
+            height=self.height,
+            group=self.group.name if self.group else None,
+            id=self.wid,
+            floating=self._float_state != FloatStates.NOT_FLOATING,
+            maximized=self._float_state == FloatStates.MAXIMIZED,
+            minimized=self._float_state == FloatStates.MINIMIZED,
+            fullscreen=self._float_state == FloatStates.FULLSCREEN
+        )
 
 
 class Internal(Window, base.Internal):
