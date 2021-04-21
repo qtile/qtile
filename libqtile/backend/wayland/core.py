@@ -401,3 +401,10 @@ class Core(base.Core):
             self._poll()
             if not self.qtile.windows_map:
                 break
+
+    def change_vt(self, vt: int) -> bool:
+        """Change virtual terminal to that specified"""
+        success = self.backend.get_session().change_vt(vt)
+        if not success:
+            logger.warning(f"Could not change VT to: {vt}")
+        return success

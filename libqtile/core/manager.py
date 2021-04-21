@@ -1472,3 +1472,9 @@ class Qtile(CommandObject):
     def cmd_run_extension(self, extension):
         """Run extensions"""
         extension.run()
+
+    def cmd_change_vt(self, vt: int) -> bool:
+        """Run extensions"""
+        if hasattr(self.core, "change_vt"):
+            return self.core.change_vt(vt)
+        raise CommandError("Backend does not support changing VT.")
