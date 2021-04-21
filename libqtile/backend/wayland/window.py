@@ -100,6 +100,8 @@ class Window(base.Window):
     def _on_unmap(self, _listener, data):
         logger.debug("Signal: window unmap")
         self.mapped = False
+        if self.surface.surface == self.core.seat.keyboard_state.focused_surface:
+            self.core.seat.keyboard_clear_focus()
 
     def _on_destroy(self, _listener, data):
         logger.debug("Signal: window destroy")
