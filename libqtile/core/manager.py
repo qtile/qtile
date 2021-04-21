@@ -30,10 +30,6 @@ import subprocess
 import tempfile
 from typing import Dict, List, Optional, Tuple, Union
 
-import xcffib
-import xcffib.xinerama
-import xcffib.xproto
-
 import libqtile
 from libqtile import confreader, hook, ipc, utils
 from libqtile.backend import base
@@ -632,45 +628,6 @@ class Qtile(CommandObject):
                 closest_screen = s
         return closest_screen
 
-    def _focus_by_click(self, e):
-        """Bring a window to the front
-
-        Parameters
-        ==========
-        e : xcb event
-            Click event used to determine window to focus
-        """
-        if e.child:
-            wid = e.child
-            window = self.windows_map.get(wid)
-
-            if self.config.bring_front_click and (
-                self.config.bring_front_click != "floating_only" or getattr(window, "floating", False)
-            ):
-                self.core.conn.conn.core.ConfigureWindow(
-                    wid, xcffib.xproto.ConfigWindow.StackMode, [xcffib.xproto.StackMode.Above]
-                )
-
-            try:
-                if window.group.screen is not self.current_screen:
-                    self.focus_screen(window.group.screen.index, warp=False)
-                self.current_group.focus(window, False)
-                window.focus(False)
-            except AttributeError:
-                # probably clicked an internal window
-                screen = self.find_screen(e.root_x, e.root_y)
-                if screen:
-                    self.focus_screen(screen.index, warp=False)
-
-        else:
-            # clicked on root window
-            screen = self.find_screen(e.root_x, e.root_y)
-            if screen:
-                self.focus_screen(screen.index, warp=False)
-
-        self.core.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
-        self.core.conn.conn.flush()
-
     def process_button_click(self, button_code, modmask, x, y, event) -> None:
         self.mouse_position = (x, y)
         for m in self.mouse_map.get((button_code, modmask), []):
@@ -678,11 +635,11 @@ class Qtile(CommandObject):
                 for i in m.commands:
                     if i.check(self):
                         if m.focus == "before":
-                            self._focus_by_click(event)
+                            self.core.focus_by_click(event)
                         status, val = self.server.call(
                             (i.selectors, i.name, i.args, i.kwargs))
                         if m.focus == "after":
-                            self._focus_by_click(event)
+                            self.core.focus_by_click(event)
                         if status in (interface.ERROR, interface.EXCEPTION):
                             logger.error(
                                 "Mouse command error %s: %s" % (i.name, val)
@@ -691,7 +648,7 @@ class Qtile(CommandObject):
                 if m.start:
                     i = m.start
                     if m.focus == "before":
-                        self._focus_by_click(event)
+                        self.core.focus_by_click(event)
                     status, val = self.server.call(
                         (i.selectors, i.name, i.args, i.kwargs))
                     if status in (interface.ERROR, interface.EXCEPTION):
@@ -702,13 +659,12 @@ class Qtile(CommandObject):
                 else:
                     val = (0, 0)
                 if m.focus == "after":
-                    self._focus_by_click(event)
+                    self.core.focus_by_click(event)
                 self._drag = (x, y, val[0], val[1], m.commands)
                 self.core.grab_pointer()
 
     def process_button_release(self, button_code, modmask):
-        k = self.mouse_map.get((button_code, modmask))
-        for m in k:
+        for m in self.mouse_map.get((button_code, modmask), []):
             if not m:
                 logger.info(
                     "Ignoring unknown button release: %s" % button_code

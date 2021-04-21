@@ -43,10 +43,12 @@ ModMasks = {
 }
 
 buttons = {
-    "button1": 0x110,
-    "button2": 0x111,
-    "button3": 0x112,
+    1: 0x110,
+    2: 0x111,
+    3: 0x112,
 }
+
+buttons_inv = {v: k for k, v in buttons.items()}
 
 
 def translate_masks(modifiers: typing.List[str]) -> int:

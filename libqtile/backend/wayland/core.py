@@ -210,10 +210,18 @@ class Core(base.Core):
         self.seat.pointer_notify_frame()
 
     def _on_cursor_button(self, _listener, event: pointer.PointerEventButton):
+        assert self.qtile is not None
         logger.debug("Signal: cursor button")
         self.seat.pointer_notify_button(
             event.time_msec, event.button, event.button_state
         )
+
+        state = self.seat.keyboard.modifier
+        button = wlrq.buttons_inv.get(event.button)
+        if event.button_state == input_device.ButtonState.PRESSED:
+            self.qtile.process_button_click(button, state, self.cursor.x, self.cursor.y, event)
+        else:
+            self.qtile.process_button_release(button, state)
 
     def _on_cursor_motion(self, _listener, event: pointer.PointerEventMotion):
         assert self.qtile is not None
@@ -238,24 +246,6 @@ class Core(base.Core):
         self.keyboards.append(keyboard.Keyboard(self, device))
         self.seat.set_keyboard(device)
 
-    def focus_window(self, win: window.Window, surface: Surface = None):
-        if surface is None:
-            surface = win.surface.surface
-
-        previous_surface = self.seat.keyboard_state.focused_surface
-        if previous_surface == surface:
-            return
-
-        if previous_surface is not None:
-            # Deactivate the previously focused surface
-            previous_xdg_surface = xdg_shell.XdgSurface.from_surface(previous_surface)
-            previous_xdg_surface.set_activated(False)
-
-        # activate the new surface
-        win.surface.set_activated(True)
-        self.seat.keyboard_notify_enter(surface, self.seat.keyboard)
-        logger.debug("Focussed new window")
-
     def setup_listener(self, qtile: Qtile) -> None:
         """Setup a listener for the given qtile instance"""
         logger.debug("Adding io watch")
@@ -274,6 +264,48 @@ class Core(base.Core):
     def _poll(self) -> None:
         self.display.flush_clients()
         self.event_loop.dispatch(-1)
+
+    def focus_window(self, win: window.Window, surface: Surface = None):
+        if surface is None:
+            surface = win.surface.surface
+
+        previous_surface = self.seat.keyboard_state.focused_surface
+        if previous_surface == surface:
+            return
+
+        if previous_surface is not None:
+            # Deactivate the previously focused surface
+            previous_xdg_surface = xdg_shell.XdgSurface.from_surface(previous_surface)
+            previous_xdg_surface.set_activated(False)
+
+        # activate the new surface
+        win.surface.set_activated(True)
+        self.seat.keyboard_notify_enter(surface, self.seat.keyboard)
+        logger.debug("Focussed new window")
+
+    def focus_by_click(self, event) -> None:
+        found = self._under_pointer()
+        if found:
+            self.focus_window(*found)
+
+    def _under_pointer(self) -> Optional[Tuple[window.WindowType, Optional[Surface]]]:
+        assert self.qtile is not None
+
+        cx = self.cursor.x
+        cy = self.cursor.y
+
+        for win in self.qtile.windows_map.values():
+            assert isinstance(win, window.Window)  # mypy is dumb and needs this
+            if win.mapped:
+                surface, sx, sy = win.surface.surface_at(cx - win.x, cy - win.y)
+                if surface:
+                    return win, surface
+                if win.borderwidth:
+                    bw = win.borderwidth
+                    if win.x - bw <= cx and win.y - bw <= cy:
+                        if cx <= win.x + win.width + bw and cy <= win.y + win.height + bw:
+                            return win, None
+        return None
 
     def update_desktops(self, groups: List[group._Group], index: int) -> None:
         """Set the current desktops of the window manager
@@ -312,7 +344,7 @@ class Core(base.Core):
 
     def grab_button(self, mouse: config.Mouse) -> int:
         """Configure the backend to grab the mouse event"""
-        keysym = wlrq.buttons.get(mouse.button.lower())
+        keysym = wlrq.buttons.get(mouse.button_code)
         assert keysym is not None
         mask_key = wlrq.translate_masks(mouse.modifiers)
         self.grabbed_buttons.append((keysym, mask_key))
