@@ -40,7 +40,6 @@ from libqtile import configurable, hook, utils
 from libqtile.backend.x11 import window
 from libqtile.bar import BarType
 from libqtile.command.base import CommandObject, ItemT
-from libqtile.lazy import lazy
 
 if TYPE_CHECKING:
     from libqtile.group import _Group
@@ -94,9 +93,7 @@ class KeyChord:
         self.modifiers = modifiers
         self.key = key
 
-        def noop(qtile):
-            pass
-        submappings.append(Key([], "Escape", lazy.function(noop)))
+        submappings.append(Key([], "Escape"))
         self.submappings = submappings
         self.mode = mode
 
