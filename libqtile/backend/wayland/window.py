@@ -170,6 +170,12 @@ class Window(base.Window):
             # TODO when general z-axis control is implemented
             pass
 
+    def cmd_focus(self, warp=None):
+        """Focuses the window."""
+        if warp is None:
+            warp = self.qtile.config.cursor_warp
+        self.focus(warp=warp)
+
 
 class Internal(Window, base.Internal):
     pass
