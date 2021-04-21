@@ -166,3 +166,14 @@ class Window(base.Window):
         if above:
             # TODO when general z-axis control is implemented
             pass
+
+
+class Internal(Window, base.Internal):
+    pass
+
+
+class Static(Window, base.Static):
+    pass
+
+
+WindowType = typing.Union[Window, Internal, Static]

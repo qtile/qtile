@@ -38,7 +38,7 @@ from typing import (
 import xcffib
 import xcffib.render
 import xcffib.xproto
-from xcffib.xproto import EventMask
+from xcffib.xproto import EventMask, StackMode
 
 from libqtile import config, hook, utils
 from libqtile.backend import base
@@ -721,6 +721,48 @@ class Core(base.Core):
         d.detail = self.conn.keysym_to_keycode(keysym)[0]
         d.state = modmasks
         self.handle_KeyPress(d)
+
+    def focus_by_click(self, e):
+        """Bring a window to the front
+
+        Parameters
+        ==========
+        e : xcb event
+            Click event used to determine window to focus
+        """
+        qtile = self.qtile
+        assert qtile is not None
+
+        if e.child:
+            wid = e.child
+            window = self.qtile.windows_map.get(wid)
+
+            if qtile.config.bring_front_click and (
+                qtile.config.bring_front_click != "floating_only" or getattr(window, "floating", False)
+            ):
+                self.conn.conn.core.ConfigureWindow(
+                    wid, xcffib.xproto.ConfigWindow.StackMode, [StackMode.Above]
+                )
+
+            try:
+                if window.group.screen is not qtile.current_screen:
+                    qtile.focus_screen(window.group.screen.index, warp=False)
+                qtile.current_group.focus(window, False)
+                window.focus(False)
+            except AttributeError:
+                # probably clicked an internal window
+                screen = qtile.find_screen(e.root_x, e.root_y)
+                if screen:
+                    qtile.focus_screen(screen.index, warp=False)
+
+        else:
+            # clicked on root window
+            screen = qtile.find_screen(e.root_x, e.root_y)
+            if screen:
+                qtile.focus_screen(screen.index, warp=False)
+
+        self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
+        self.conn.conn.flush()
 
     def graceful_shutdown(self):
         """Try to close windows gracefully before exiting"""
