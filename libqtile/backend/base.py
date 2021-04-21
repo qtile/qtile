@@ -117,6 +117,10 @@ class Window(metaclass=ABCMeta):
     def unhide(self) -> None:
         """Unhide the window"""
 
+    @abstractmethod
+    def kill(self) -> None:
+        """Kill the window"""
+
     @property
     def can_steal_focus(self):
         """Is it OK for this window to steal focus?"""
