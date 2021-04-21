@@ -384,6 +384,9 @@ class Core(base.Core):
         """Warp the pointer to the coordinates in relative to the output layout"""
         self.cursor.warp(WarpMode.LayoutClosest, x, y)
 
+    def flush(self) -> None:
+        self._poll()
+
     def graceful_shutdown(self):
         """Try to close windows gracefully before exiting"""
         assert self.qtile is not None
