@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import time
 import typing
 
 from pywayland import lib
@@ -330,3 +331,18 @@ class Core(base.Core):
     def warp_pointer(self, x, y) -> None:
         """Warp the pointer to the coordinates in relative to the output layout"""
         self.cursor.warp(WarpMode.LayoutClosest, x, y)
+
+    def graceful_shutdown(self):
+        """Try to close windows gracefully before exiting"""
+        assert self.qtile is not None
+
+        for win in self.qtile.windows_map.values():
+            win.kill()
+
+        # give everyone a little time to exit and write their state. but don't
+        # sleep forever (1s).
+        end = time.time() + 1
+        while time.time() < end:
+            self._poll()
+            if not self.qtile.windows_map:
+                break
