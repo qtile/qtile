@@ -771,7 +771,7 @@ class Qtile(CommandObject):
             except xcbq.XCBQError as e:
                 raise utils.QtileError(e)
             if not m or modmask & self.valid_mask != state & self.valid_mask:
-                logger.info("Ignoring unknown button: %s" % button_code)
+                logger.debug("Ignoring unknown button: %s" % button_code)
                 continue
             if isinstance(m, Click):
                 for i in m.commands:
