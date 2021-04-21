@@ -631,15 +631,14 @@ class Qtile(CommandObject):
     def process_button_click(self, button_code, modmask, x, y, event) -> None:
         self.mouse_position = (x, y)
         for m in self.mouse_map.get((button_code, modmask), []):
+            if m.focus == "before":
+                self.core.focus_by_click(event)
+
             if isinstance(m, Click):
                 for i in m.commands:
                     if i.check(self):
-                        if m.focus == "before":
-                            self.core.focus_by_click(event)
                         status, val = self.server.call(
                             (i.selectors, i.name, i.args, i.kwargs))
-                        if m.focus == "after":
-                            self.core.focus_by_click(event)
                         if status in (interface.ERROR, interface.EXCEPTION):
                             logger.error(
                                 "Mouse command error %s: %s" % (i.name, val)
@@ -647,8 +646,6 @@ class Qtile(CommandObject):
             elif isinstance(m, Drag):
                 if m.start:
                     i = m.start
-                    if m.focus == "before":
-                        self.core.focus_by_click(event)
                     status, val = self.server.call(
                         (i.selectors, i.name, i.args, i.kwargs))
                     if status in (interface.ERROR, interface.EXCEPTION):
@@ -658,10 +655,11 @@ class Qtile(CommandObject):
                         continue
                 else:
                     val = (0, 0)
-                if m.focus == "after":
-                    self.core.focus_by_click(event)
                 self._drag = (x, y, val[0], val[1], m.commands)
                 self.core.grab_pointer()
+
+            if m.focus == "after":
+                self.core.focus_by_click(event)
 
     def process_button_release(self, button_code, modmask):
         for m in self.mouse_map.get((button_code, modmask), []):
