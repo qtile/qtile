@@ -102,6 +102,7 @@ class Window(base.Window):
 
     def _on_destroy(self, _listener, data):
         logger.debug("Signal: window destroy")
+        self.qtile.unmanage(self.wid)
         self.finalize()
 
     def _on_request_fullscreen(self, _listener, data: xdg_shell.XdgTopLevelSetFullscreenEvent):
@@ -115,6 +116,9 @@ class Window(base.Window):
     def unhide(self):
         if not self.mapped:
             self.surface.map_event.emit()
+
+    def kill(self):
+        self.surface.send_close()
 
     @property
     def floating(self):
