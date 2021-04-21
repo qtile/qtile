@@ -227,7 +227,7 @@ class Core(base.Core):
         assert self.qtile is not None
         logger.debug("Signal: cursor motion")
         self.cursor.move(event.delta_x, event.delta_y, input_device=event.device)
-        self.qtile.process_button_motion(self.cursor.x, self.cursor.y)
+        self._process_cursor_motion(event.time_msec)
 
     def _on_cursor_motion_absolute(self, _listener, event: pointer.PointerEventMotionAbsolute):
         assert self.qtile is not None
@@ -235,7 +235,26 @@ class Core(base.Core):
         self.cursor.warp(
             WarpMode.AbsoluteClosest, event.x, event.y, input_device=event.device,
         )
+        self._process_cursor_motion(event.time_msec)
+
+    def _process_cursor_motion(self, time):
         self.qtile.process_button_motion(self.cursor.x, self.cursor.y)
+        found = self._under_pointer()
+        if found:
+            win, surface, sx, sy = found
+            focus_changed = self.seat.pointer_state.focused_surface != surface
+            self.seat.pointer_notify_enter(surface, sx, sy)
+            if focus_changed:
+                if self.qtile.config.follow_mouse_focus:
+                    self.focus_window(win, surface)
+            else:
+                # The enter event contains coordinates, so we only need to
+                # notify on motion if the focus did not change
+                self.seat.pointer_notify_motion(time, sx, sy)
+
+        else:
+            self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+            self.seat.pointer_clear_focus()
 
     def _add_new_pointer(self, device: input_device.InputDevice):
         logger.info("Adding new pointer")
@@ -286,9 +305,10 @@ class Core(base.Core):
     def focus_by_click(self, event) -> None:
         found = self._under_pointer()
         if found:
-            self.focus_window(*found)
+            win, surface, _, _ = found
+            self.focus_window(win, surface)
 
-    def _under_pointer(self) -> Optional[Tuple[window.WindowType, Optional[Surface]]]:
+    def _under_pointer(self):
         assert self.qtile is not None
 
         cx = self.cursor.x
@@ -299,12 +319,12 @@ class Core(base.Core):
             if win.mapped:
                 surface, sx, sy = win.surface.surface_at(cx - win.x, cy - win.y)
                 if surface:
-                    return win, surface
+                    return win, surface, sx, sy
                 if win.borderwidth:
                     bw = win.borderwidth
                     if win.x - bw <= cx and win.y - bw <= cy:
                         if cx <= win.x + win.width + bw and cy <= win.y + win.height + bw:
-                            return win, None
+                            return win, win.surface.surface, 0, 0
         return None
 
     def update_desktops(self, groups: List[group._Group], index: int) -> None:
