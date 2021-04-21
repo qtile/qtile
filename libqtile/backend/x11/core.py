@@ -603,6 +603,8 @@ class Core(base.Core):
         self.qtile.process_button_click(
             button_code, state, event.event_x, event.event_y, event
         )
+        self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, event.time)
+        self.conn.conn.flush()
 
     def handle_ButtonRelease(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
@@ -760,9 +762,6 @@ class Core(base.Core):
             screen = qtile.find_screen(e.root_x, e.root_y)
             if screen:
                 qtile.focus_screen(screen.index, warp=False)
-
-        self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
-        self.flush()
 
     def flush(self):
         self.conn.flush()
