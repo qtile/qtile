@@ -776,21 +776,21 @@ class Qtile(CommandObject):
         event queue to the server after func is called. """
         def f():
             func(*args)
-            self.core.conn.flush()
+            self.core.flush()
         return self._eventloop.call_soon(f)
 
     def call_soon_threadsafe(self, func, *args):
         """ Another event loop proxy, see `call_soon`. """
         def f():
             func(*args)
-            self.core.conn.flush()
+            self.core.flush()
         return self._eventloop.call_soon_threadsafe(f)
 
     def call_later(self, delay, func, *args):
         """ Another event loop proxy, see `call_soon`. """
         def f():
             func(*args)
-            self.core.conn.flush()
+            self.core.flush()
         return self._eventloop.call_later(delay, f)
 
     def run_in_executor(self, func, *args):
@@ -1127,8 +1127,11 @@ class Qtile(CommandObject):
         return "OK"
 
     def cmd_sync(self):
-        """Sync the X display. Should only be used for development"""
-        self.core.conn.flush()
+        """
+        Sync the event queue (with the X server, or flush the wayland event queue.
+        Should only be used for development.
+        """
+        self.core.flush()
 
     def cmd_to_screen(self, n):
         """Warp focus to screen n, where n is a 0-based screen number

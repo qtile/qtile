@@ -323,7 +323,7 @@ class Core(base.Core):
                     self.qtile.stop()
                     return
                 logger.exception("Got an exception in poll loop")
-        self.conn.flush()
+        self.flush()
 
     def _get_target_chain(self, event_type: str, event) -> List[Callable]:
         """Returns a chain of targets that can handle this event
@@ -762,7 +762,10 @@ class Core(base.Core):
                 qtile.focus_screen(screen.index, warp=False)
 
         self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
-        self.conn.conn.flush()
+        self.flush()
+
+    def flush(self):
+        self.conn.flush()
 
     def graceful_shutdown(self):
         """Try to close windows gracefully before exiting"""

@@ -85,6 +85,9 @@ class Core(metaclass=ABCMeta):
         """A context manager to suppress window events while operating on many windows."""
         yield
 
+    def flush(self) -> None:
+        """If needed, flush the backend's event queue."""
+
     def graceful_shutdown(self):
         """Try to close windows gracefully before exiting"""
 

@@ -70,6 +70,7 @@ class Window(base.Window):
         self._on_unmap_listener.remove()
         self._on_destroy_listener.remove()
         self._on_request_fullscreen_listener.remove()
+        self.core.flush()
 
     @property
     def wid(self):
