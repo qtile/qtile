@@ -81,6 +81,9 @@ class Core(metaclass=ABCMeta):
         """A context manager to suppress window events while operating on many windows."""
         yield
 
+    def graceful_shutdown(self):
+        """Try to close windows gracefully before exiting"""
+
 
 @enum.unique
 class FloatStates(enum.Enum):

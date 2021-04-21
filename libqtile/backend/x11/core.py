@@ -22,6 +22,8 @@
 import asyncio
 import contextlib
 import os
+import signal
+import time
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -719,3 +721,43 @@ class Core(base.Core):
         d.detail = self.conn.keysym_to_keycode(keysym)[0]
         d.state = modmasks
         self.handle_KeyPress(d)
+
+    def graceful_shutdown(self):
+        """Try to close windows gracefully before exiting"""
+
+        def get_interesting_pid(win):
+            # We don't need to kill Internal or Static windows, they're qtile
+            # managed and don't have any state.
+            if not isinstance(win, base.Window):
+                return None
+            try:
+                return win.window.get_net_wm_pid()
+            except Exception:
+                logger.exception("Got an exception in getting the window pid")
+                return None
+        pids = map(get_interesting_pid, self.qtile.windows_map.values())
+        pids = list(filter(lambda x: x is not None, pids))
+
+        # Give the windows a chance to shut down nicely.
+        for pid in pids:
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except OSError:
+                # might have died recently
+                pass
+
+        def still_alive(pid):
+            # most pids will not be children, so we can't use wait()
+            try:
+                os.kill(pid, 0)
+                return True
+            except OSError:
+                return False
+
+        # give everyone a little time to exit and write their state. but don't
+        # sleep forever (1s).
+        for i in range(10):
+            pids = list(filter(still_alive, pids))
+            if len(pids) == 0:
+                break
+            time.sleep(0.1)
