@@ -894,12 +894,6 @@ class _Window(CommandObject):
         hook.fire("client_focus", self)
         return True
 
-    def _items(self, name: str) -> ItemT:
-        return None
-
-    def _select(self, name, sel):
-        return None
-
     def cmd_focus(self, warp=None):
         """Focuses the window."""
         if warp is None:

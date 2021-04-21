@@ -5,6 +5,8 @@ import enum
 import typing
 from abc import ABCMeta, abstractmethod
 
+from libqtile.command.base import CommandObject, ItemT
+
 if typing.TYPE_CHECKING:
     from typing import Dict, List, Tuple, Union
 
@@ -102,7 +104,7 @@ class FloatStates(enum.Enum):
     MINIMIZED = 6
 
 
-class Window(metaclass=ABCMeta):
+class Window(CommandObject, metaclass=ABCMeta):
     def __init__(self):
         self.borderwidth: int = 0
         self.name: str = "<no name>"
@@ -162,6 +164,16 @@ class Window(metaclass=ABCMeta):
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None):
         """Place the window in the given position."""
+
+    def _items(self, name: str) -> ItemT:
+        return None
+
+    def _select(self, name, sel):
+        return None
+
+    @abstractmethod
+    def cmd_focus(self, warp: typing.Optional[bool] = None) -> None:
+        """Focuses the window."""
 
 
 class Internal(Window, metaclass=ABCMeta):
