@@ -46,7 +46,6 @@ from libqtile.core.state import QtileState
 from libqtile.dgroups import DGroups
 from libqtile.extension.base import _Extension
 from libqtile.group import _Group
-from libqtile.lazy import lazy
 from libqtile.log_utils import logger
 from libqtile.scratchpad import ScratchPad
 from libqtile.utils import get_cache_dir, send_notification
@@ -128,10 +127,7 @@ class Qtile(CommandObject):
                 self.groups.append(sp)
                 self.groups_map[sp.name] = sp
 
-        # It fixes problems with focus when clicking windows of some specific clients like xterm
-        def noop(qtile):
-            pass
-        self.config.mouse += (Click([], "Button1", lazy.function(noop), focus="after"),)
+        self.config.mouse += (Click([], "Button1", focus="after"),)
 
     def dump_state(self, buf):
         try:
