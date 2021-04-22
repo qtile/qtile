@@ -281,7 +281,8 @@ class Core(base.Core):
             self.fd = None
 
     def _poll(self) -> None:
-        self.display.flush_clients()
+        if not self.display.destroyed:
+            self.display.flush_clients()
         self.event_loop.dispatch(-1)
 
     def focus_window(self, win: window.Window, surface: Surface = None):
