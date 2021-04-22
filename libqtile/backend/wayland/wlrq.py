@@ -24,7 +24,11 @@ import functools
 import operator
 import typing
 
+import cairocffi
+from wlroots.wlr_types import Texture
 from wlroots.wlr_types.keyboard import KeyboardModifier
+
+from libqtile.log_utils import logger
 
 
 class WlrQError(Exception):
@@ -50,6 +54,9 @@ buttons = {
 
 buttons_inv = {v: k for k, v in buttons.items()}
 
+# from drm_fourcc.h
+DRM_FORMAT_ARGB8888 = 875713089
+
 
 def translate_masks(modifiers: typing.List[str]) -> int:
     """
@@ -66,3 +73,56 @@ def translate_masks(modifiers: typing.List[str]) -> int:
         return functools.reduce(operator.or_, masks)
     else:
         return 0
+
+
+class Painter:
+    def __init__(self, core):
+        self.core = core
+
+    def paint(self, screen, image_path, mode=None):
+        try:
+            with open(image_path, 'rb') as f:
+                image, _ = cairocffi.pixbuf.decode_to_image_surface(f.read())
+        except IOError as e:
+            logger.error('Wallpaper: %s' % e)
+            return
+
+        surface = cairocffi.ImageSurface(
+            cairocffi.FORMAT_ARGB32, screen.width, screen.height
+        )
+        with cairocffi.Context(surface) as context:
+            context.translate(screen.x, screen.y)
+            if mode == 'fill':
+                context.rectangle(0, 0, screen.width, screen.height)
+                context.clip()
+                image_w = image.get_width()
+                image_h = image.get_height()
+                width_ratio = screen.width / image_w
+                if width_ratio * image_h >= screen.height:
+                    context.scale(width_ratio)
+                else:
+                    height_ratio = screen.height / image_h
+                    context.translate(
+                        - (image_w * height_ratio - screen.width) // 2, 0
+                    )
+                    context.scale(height_ratio)
+            elif mode == 'stretch':
+                context.scale(
+                    sx=screen.width / image.get_width(),
+                    sy=screen.height / image.get_height(),
+                )
+            context.set_source_surface(image)
+            context.paint()
+
+            stride = surface.format_stride_for_width(cairocffi.FORMAT_ARGB32, screen.width)
+            surface.flush()
+            texture = Texture.from_pixels(
+                self.core.renderer,
+                DRM_FORMAT_ARGB8888,
+                stride,
+                screen.width,
+                screen.height,
+                cairocffi.cairo.cairo_image_surface_get_data(surface._pointer)
+            )
+            # TODO: how to map screens to outputs?
+            self.core.outputs[0].wallpaper = texture

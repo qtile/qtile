@@ -409,3 +409,7 @@ class Core(base.Core):
         if not success:
             logger.warning(f"Could not change VT to: {vt}")
         return success
+
+    @property
+    def painter(self):
+        return wlrq.Painter(self)
