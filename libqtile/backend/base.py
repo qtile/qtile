@@ -104,7 +104,7 @@ class FloatStates(enum.Enum):
     MINIMIZED = 6
 
 
-class Window(CommandObject, metaclass=ABCMeta):
+class _Window(CommandObject, metaclass=ABCMeta):
     def __init__(self):
         self.borderwidth: int = 0
         self.name: str = "<no name>"
@@ -113,13 +113,13 @@ class Window(CommandObject, metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def wid(self) -> int:
-        """The unique window ID"""
+    def group(self) -> _Group:
+        """The group to which this window belongs."""
 
     @property
     @abstractmethod
-    def group(self) -> _Group:
-        """The group to which this window belongs."""
+    def wid(self) -> int:
+        """The unique window ID"""
 
     @abstractmethod
     def hide(self) -> None:
@@ -141,6 +141,19 @@ class Window(CommandObject, metaclass=ABCMeta):
         """Is it OK for this window to steal focus?"""
         return True
 
+    @abstractmethod
+    def place(self, x, y, width, height, borderwidth, bordercolor,
+              above=False, margin=None):
+        """Place the window in the given position."""
+
+    def _items(self, name: str) -> ItemT:
+        return None
+
+    def _select(self, name, sel):
+        return None
+
+
+class Window(_Window, metaclass=ABCMeta):
     @property
     def floating(self) -> bool:
         """Whether this window is floating."""
@@ -179,17 +192,6 @@ class Window(CommandObject, metaclass=ABCMeta):
 
     def is_transient_for(self) -> Optional["WindowType"]:
         """What window is this window a transient windor for?"""
-        return None
-
-    @abstractmethod
-    def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, margin=None):
-        """Place the window in the given position."""
-
-    def _items(self, name: str) -> ItemT:
-        return None
-
-    def _select(self, name, sel):
         return None
 
     @abstractmethod
@@ -262,11 +264,11 @@ class Window(CommandObject, metaclass=ABCMeta):
         """Bring the window to the front"""
 
 
-class Internal(Window, metaclass=ABCMeta):
+class Internal(_Window, metaclass=ABCMeta):
     pass
 
 
-class Static(Window, metaclass=ABCMeta):
+class Static(_Window, metaclass=ABCMeta):
     pass
 
 

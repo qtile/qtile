@@ -12,7 +12,7 @@ from libqtile import hook, utils
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
 from libqtile.backend.x11 import xcbq
-from libqtile.command.base import CommandError, CommandObject, ItemT
+from libqtile.command.base import CommandError, ItemT
 from libqtile.log_utils import logger
 
 # ICCM Constants
@@ -442,7 +442,7 @@ class XWindow:
             self.set_attribute(borderpixel=self.conn.color_pixel(color))
 
 
-class _Window(CommandObject):
+class _Window:
     _window_mask = 0  # override in child class
 
     def __init__(self, window, qtile):
