@@ -291,10 +291,9 @@ class Core(base.Core):
                 if event_type.endswith("Event"):
                     event_type = event_type[:-5]
 
-                logger.debug(event_type)
-
-                for target in self._get_target_chain(event_type, event):
-                    logger.debug("Handling: {event_type}".format(event_type=event_type))
+                targets = self._get_target_chain(event_type, event)
+                logger.debug(f"X11 event: {event_type} (targets: {len(targets)})")
+                for target in targets:
                     ret = target(event)
                     if not ret:
                         break
@@ -368,9 +367,6 @@ class Core(base.Core):
 
         if hasattr(self, handler):
             chain.append(getattr(self, handler))
-
-        if not chain:
-            logger.info("Unhandled event: {event_type}".format(event_type=event_type))
         return chain
 
     def get_valid_timestamp(self):
@@ -452,11 +448,7 @@ class Core(base.Core):
 
         for code in codes:
             if code == 0:
-                logger.warning(
-                    "Keysym could not be mapped: {keysym}, mask: {modmask}".format(
-                        keysym=hex(keysym), modmask=modmask
-                    )
-                )
+                logger.warning(f"Can't grab {key} (unknown keysym: {hex(keysym)})")
                 continue
             for amask in self._auto_modmasks():
                 self.conn.conn.core.GrabKey(
@@ -594,7 +586,7 @@ class Core(base.Core):
             try:
                 self.qtile.groups[index].cmd_toscreen()
             except IndexError:
-                logger.info("Invalid Desktop Index: %s" % index)
+                logger.debug("Invalid desktop index: %s" % index)
 
     def handle_KeyPress(self, event) -> None:  # noqa: N802
         assert self.qtile is not None

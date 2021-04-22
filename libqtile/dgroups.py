@@ -150,7 +150,7 @@ class DGroups:
 
     def _add(self, client):
         if client in self.timeout:
-            logger.info('Remove dgroup source')
+            logger.debug('Remove dgroup source')
             self.timeout.pop(client).cancel()
 
         # ignore static windows
@@ -249,8 +249,7 @@ class DGroups:
                 self.sort_groups()
             del self.timeout[client]
 
-        # Wait the delay until really delete the group
-        logger.info('Add dgroup timer with delay {}s'.format(self.delay))
+        logger.debug(f'Deleting {group} in {self.delay}s')
         self.timeout[client] = self.qtile.call_later(
             self.delay, delete_client
         )

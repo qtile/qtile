@@ -643,7 +643,6 @@ class _Window:
 
         state = self.window.get_net_wm_state()
 
-        logger.debug('_NET_WM_STATE: %s', state)
         for s in triggered:
             setattr(self, s, (s in state))
 
@@ -1618,33 +1617,33 @@ class Window(_Window, base.Window):
         elif atoms["_NET_ACTIVE_WINDOW"] == opcode:
             source = data.data32[0]
             if source == 2:  # XCB_EWMH_CLIENT_SOURCE_TYPE_NORMAL
-                logger.info("Focusing window by pager")
+                logger.debug("Focusing window by pager")
                 self.qtile.current_screen.set_group(self.group)
                 self.group.focus(self)
             else:  # XCB_EWMH_CLIENT_SOURCE_TYPE_OTHER
                 focus_behavior = self.qtile.config.focus_on_window_activation
                 if focus_behavior == "focus":
-                    logger.info("Focusing window")
+                    logger.debug("Focusing window")
                     self.qtile.current_screen.set_group(self.group)
                     self.group.focus(self)
                 elif focus_behavior == "smart":
                     if not self.group.screen:
-                        logger.info("Ignoring focus request")
+                        logger.debug("Ignoring focus request")
                         return
                     if self.group.screen == self.qtile.current_screen:
-                        logger.info("Focusing window")
+                        logger.debug("Focusing window")
                         self.qtile.current_screen.set_group(self.group)
                         self.group.focus(self)
                     else:  # self.group.screen != self.qtile.current_screen:
-                        logger.info("Setting urgent flag for window")
+                        logger.debug("Setting urgent flag for window")
                         self.urgent = True
                 elif focus_behavior == "urgent":
-                    logger.info("Setting urgent flag for window")
+                    logger.debug("Setting urgent flag for window")
                     self.urgent = True
                 elif focus_behavior == "never":
-                    logger.info("Ignoring focus request")
+                    logger.debug("Ignoring focus request")
                 else:
-                    logger.warning("Invalid value for focus_on_window_activation: {}".format(focus_behavior))
+                    logger.debug("Invalid value for focus_on_window_activation: {}".format(focus_behavior))
         elif atoms["_NET_CLOSE_WINDOW"] == opcode:
             self.kill()
         elif atoms["WM_CHANGE_STATE"] == opcode:
@@ -1654,11 +1653,10 @@ class Window(_Window, base.Window):
             elif state == IconicState and self.qtile.config.auto_minimize:
                 self.minimized = True
         else:
-            logger.info("Unhandled client message: %s", atoms.get_name(opcode))
+            logger.debug("Unhandled client message: %s", atoms.get_name(opcode))
 
     def handle_PropertyNotify(self, e):  # noqa: N802
         name = self.qtile.core.conn.atoms.get_name(e.atom)
-        logger.debug("PropertyNotifyEvent: %s", name)
         if name == "WM_TRANSIENT_FOR":
             pass
         elif name == "WM_HINTS":
@@ -1694,7 +1692,7 @@ class Window(_Window, base.Window):
             # self.update_state()
             self.update_state()
         else:
-            logger.info("Unknown window property: %s", name)
+            logger.debug("Unknown window property: %s", name)
         return False
 
     def _items(self, name: str) -> ItemT:
