@@ -143,11 +143,21 @@ class Window(CommandObject, metaclass=ABCMeta):
 
     @property
     def floating(self) -> bool:
-        """Whether this window should be floating."""
+        """Whether this window is floating."""
         return False
 
     @property
-    def wants_to_fullscreen(self):
+    def maximized(self) -> bool:
+        """Whether this window is maximized."""
+        return False
+
+    @property
+    def fullscreen(self) -> bool:
+        """Whether this window is fullscreened."""
+        return False
+
+    @property
+    def wants_to_fullscreen(self) -> bool:
         """Does this window want to be fullscreen?"""
         return False
 
