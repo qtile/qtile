@@ -22,9 +22,9 @@ from __future__ import annotations
 
 import typing
 
+from pywayland.protocol.wayland import WlKeyboard
 from pywayland.server import Listener
 from wlroots import ffi, lib
-from wlroots.wlr_types.keyboard import KeyState
 from xkbcommon import xkb
 
 from libqtile.log_utils import logger
@@ -34,6 +34,9 @@ if typing.TYPE_CHECKING:
     from wlroots.wlr_types.keyboard import KeyboardKeyEvent
 
     from libqtile.backend.wayland.core import Core
+
+KEY_PRESSED = WlKeyboard.key_state.pressed
+KEY_RELEASED = WlKeyboard.key_state.released
 
 
 def _get_keysyms(xkb_state, keycode):
@@ -92,7 +95,7 @@ class Keyboard:
             self.qtile = self.core.qtile
             assert self.qtile is not None
 
-        if event.state == KeyState.KEY_PRESSED:
+        if event.state == KEY_PRESSED:
             # translate libinput keycode -> xkbcommon
             keycode = event.keycode + 8
             keysyms = _get_keysyms(self.keyboard._ptr.xkb_state, keycode)
