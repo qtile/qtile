@@ -51,12 +51,17 @@ class Window(base.Window):
         self._wid = wid
         self._group = 0
         self.mapped = False
-        self.x = 10
-        self.y = 10
+        self.x = 0
+        self.y = 0
         self.borderwidth = 0
         self.bordercolor = None
-        self._float_state = FloatStates.NOT_FLOATING
+
         self.surface.set_tiled(EDGES_TILED)
+        self._float_state = FloatStates.NOT_FLOATING
+        self.float_x = self.x
+        self.float_y = self.y
+        self.float_width = self.width
+        self.float_height = self.height
 
         self._on_map_listener = Listener(self._on_map)
         self._on_unmap_listener = Listener(self._on_unmap)
@@ -110,9 +115,10 @@ class Window(base.Window):
         self.qtile.unmanage(self.wid)
         self.finalize()
 
-    def _on_request_fullscreen(self, _listener, data: xdg_shell.XdgTopLevelSetFullscreenEvent):
+    def _on_request_fullscreen(self, _listener, event: xdg_shell.XdgTopLevelSetFullscreenEvent):
         logger.debug("Signal: window request_fullscreen")
-        # TODO
+        if self.qtile.config.auto_fullscreen:
+            self.fullscreen = event.fullscreen
 
     def hide(self):
         if self.mapped:
@@ -134,20 +140,82 @@ class Window(base.Window):
         return self._float_state != FloatStates.NOT_FLOATING
 
     @floating.setter
-    def floating(self, do_float: bool):
-        changed = False
+    def floating(self, do_float):
         if do_float and self._float_state == FloatStates.NOT_FLOATING:
-            self._float_state = FloatStates.FLOATING
-            changed = True
-        elif not do_float and self._float_state != FloatStates.NOT_FLOATING:
+            if self.group and self.group.screen:
+                screen = self.group.screen
+                self._enablefloating(
+                    screen.x + self.float_x,
+                    screen.y + self.float_y,
+                    self.float_width,
+                    self.float_height
+                )
+            else:
+                # if we are setting floating early, e.g. from a hook, we don't have a screen yet
+                self._float_state = FloatStates.FLOATING
+        elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
+            if self._float_state == FloatStates.FLOATING:
+                # store last size
+                self.float_width = self.width
+                self.float_height = self.height
             self._float_state = FloatStates.NOT_FLOATING
-            changed = True
-
-        if changed:
-            self.surface.set_tiled(EDGES_FLOAT if do_float else EDGES_TILED)
-            if self.group:
-                self.group.mark_floating(self, do_float)
+            self.group.mark_floating(self, False)
             hook.fire('float_change')
+
+    @property
+    def fullscreen(self):
+        return self._float_state == FloatStates.FULLSCREEN
+
+    @fullscreen.setter
+    def fullscreen(self, do_full):
+        if do_full:
+            screen = self.group.screen or \
+                self.qtile.find_closest_screen(self.x, self.y)
+            self._enablefloating(
+                screen.x,
+                screen.y,
+                screen.width,
+                screen.height,
+                new_float_state=FloatStates.FULLSCREEN
+            )
+            return
+
+        if self._float_state == FloatStates.FULLSCREEN:
+            self.floating = False
+
+    @property
+    def maximized(self):
+        return self._float_state == FloatStates.MAXIMIZED
+
+    @maximized.setter
+    def maximized(self, do_maximize):
+        if do_maximize:
+            screen = self.group.screen or \
+                self.qtile.find_closest_screen(self.x, self.y)
+
+            self._enablefloating(
+                screen.dx,
+                screen.dy,
+                screen.dwidth,
+                screen.dheight,
+                new_float_state=FloatStates.MAXIMIZED
+            )
+        else:
+            if self._float_state == FloatStates.MAXIMIZED:
+                self.floating = False
+
+    @property
+    def minimized(self):
+        return self._float_state == FloatStates.MINIMIZED
+
+    @minimized.setter
+    def minimized(self, do_minimize):
+        if do_minimize:
+            if self._float_state != FloatStates.MINIMIZED:
+                self._enablefloating(new_float_state=FloatStates.MINIMIZED)
+        else:
+            if self._float_state == FloatStates.MINIMIZED:
+                self.floating = False
 
     def focus(self, warp):
         self.core.focus_window(self)
@@ -175,6 +243,56 @@ class Window(base.Window):
         if above:
             # TODO when general z-axis control is implemented
             pass
+
+    def _tweak_float(self, x=None, y=None, dx=0, dy=0, w=None, h=None, dw=0, dh=0):
+        if x is None:
+            x = self.x
+        x += dx
+
+        if y is None:
+            y = self.y
+        y += dy
+
+        if w is None:
+            w = self.width
+        w += dw
+
+        if h is None:
+            h = self.height
+        h += dh
+
+        if h < 0:
+            h = 0
+        if w < 0:
+            w = 0
+
+        screen = self.qtile.find_closest_screen(
+            self.x + self.width // 2, self.y + self.height // 2
+        )
+        if self.group and screen is not None and screen != self.group.screen:
+            self.group.remove(self, force=True)
+            screen.group.add(self, force=True)
+            self.qtile.focus_screen(screen.index)
+
+        self._reconfigure_floating(x, y, w, h)
+
+    def _enablefloating(self, x=None, y=None, w=None, h=None,
+                        new_float_state=FloatStates.FLOATING):
+        self._reconfigure_floating(x, y, w, h, new_float_state)
+
+    def _reconfigure_floating(self, x, y, w, h, new_float_state=FloatStates.FLOATING):
+        if new_float_state == FloatStates.MINIMIZED:
+            self.hide()
+        else:
+            # TODO: Can we get min/max size, resizing increments etc and respect them?
+            self.place(
+                x, y, w, h, self.borderwidth, self.bordercolor, above=True,
+            )
+        if self._float_state != new_float_state:
+            self._float_state = new_float_state
+            if self.group:  # may be not, if it's called from hook
+                self.group.mark_floating(self, True)
+            hook.fire('float_change')
 
     def cmd_focus(self, warp=None):
         """Focuses the window."""
