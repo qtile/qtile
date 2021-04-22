@@ -31,7 +31,7 @@ from libqtile.backend.base import FloatStates
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Dict
+    from typing import Dict, Optional, Tuple
 
     from wlroots.wlr_types import xdg_shell
 
@@ -124,6 +124,10 @@ class Window(base.Window):
 
     def kill(self):
         self.surface.send_close()
+
+    def get_wm_class(self) -> Optional[str]:
+        # TODO
+        return None
 
     @property
     def floating(self):

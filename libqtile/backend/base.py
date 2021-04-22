@@ -8,7 +8,7 @@ from abc import ABCMeta, abstractmethod
 from libqtile.command.base import CommandObject, ItemT
 
 if typing.TYPE_CHECKING:
-    from typing import Dict, List, Tuple, Union
+    from typing import Dict, List, Optional, Tuple, Union
 
     from libqtile import config
     from libqtile.core.manager import Qtile
@@ -133,6 +133,9 @@ class Window(CommandObject, metaclass=ABCMeta):
     def kill(self) -> None:
         """Kill the window"""
 
+    def get_wm_class(self) -> Optional[str]:
+        """Return the class of the window"""
+
     @property
     def can_steal_focus(self):
         """Is it OK for this window to steal focus?"""
@@ -160,6 +163,14 @@ class Window(CommandObject, metaclass=ABCMeta):
     def has_focus(self):
         return self == self.qtile.current_window
 
+    def has_user_set_position(self) -> bool:
+        """Whether this window has user-defined geometry"""
+        return False
+
+    def is_transient_for(self) -> Optional["WindowType"]:
+        """What window is this window a transient windor for?"""
+        return None
+
     @abstractmethod
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None):
@@ -172,7 +183,7 @@ class Window(CommandObject, metaclass=ABCMeta):
         return None
 
     @abstractmethod
-    def cmd_focus(self, warp: typing.Optional[bool] = None) -> None:
+    def cmd_focus(self, warp: Optional[bool] = None) -> None:
         """Focuses the window."""
 
     @abstractmethod

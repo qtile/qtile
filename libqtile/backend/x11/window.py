@@ -568,6 +568,13 @@ class _Window(CommandObject):
             return
         hook.fire('client_name_updated', self)
 
+    def get_wm_class(self):
+        return self.window.get_wm_class()
+
+    def is_transient_for(self):
+        """What window is this window a transient windor for?"""
+        return self.window.get_wm_transient_for()
+
     def update_hints(self):
         """Update the local copy of the window's WM_HINTS
 
