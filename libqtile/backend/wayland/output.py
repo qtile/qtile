@@ -45,6 +45,8 @@ class Output:
         self.renderer = core.renderer
         self.wlr_output = wlr_output
         self.output_layout = self.core.output_layout
+        self.wallpaper = None
+        self.transform_matrix = wlr_output.transform_matrix
 
         self._on_destroy_listener = Listener(self._on_destroy)
         self._on_frame_listener = Listener(self._on_frame)
@@ -76,6 +78,9 @@ class Output:
 
         self.renderer.begin(*wlr_output.effective_resolution())
         self.renderer.clear([0, 0, 0, 1])
+
+        if self.wallpaper:
+            self.renderer.render_texture(self.wallpaper, self.transform_matrix, 0, 0, 1)
 
         for window in self._mapped_windows:
             window.surface.for_each_surface(self._render_surface, (window, now))
