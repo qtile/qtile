@@ -200,6 +200,67 @@ class Window(CommandObject, metaclass=ABCMeta):
     def cmd_info(self) -> Dict:
         """Return a dictionary of info."""
 
+    @abstractmethod
+    def cmd_get_position(self) -> Tuple[int, int]:
+        """Get the (x, y) of the window"""
+
+    @abstractmethod
+    def cmd_get_size(self) -> Tuple[int, int]:
+        """Get the (width, height) of the window"""
+
+    @abstractmethod
+    def cmd_move_floating(self, dx: int, dy: int) -> None:
+        """Move window by dx and dy"""
+
+    @abstractmethod
+    def cmd_resize_floating(self, dw: int, dh: int) -> None:
+        """Add dw and dh to size of window"""
+
+    @abstractmethod
+    def cmd_set_position_floating(self, x: int, y: int) -> None:
+        """Move window to x and y"""
+
+    @abstractmethod
+    def cmd_set_size_floating(self, w: int, h: int) -> None:
+        """Set window dimensions to w and h"""
+
+    @abstractmethod
+    def cmd_place(self, x, y, width, height, borderwidth, bordercolor,
+                  above=False, margin=None) -> None:
+        """Place the window with the given position and geometry."""
+
+    @abstractmethod
+    def cmd_toggle_floating(self) -> None:
+        """Toggle the floating state of the window."""
+
+    @abstractmethod
+    def cmd_enable_floating(self) -> None:
+        """Float the window."""
+
+    @abstractmethod
+    def cmd_disable_floating(self) -> None:
+        """Tile the window."""
+
+    @abstractmethod
+    def cmd_toggle_maximize(self) -> None:
+        """Toggle the fullscreen state of the window."""
+
+    @abstractmethod
+    def cmd_toggle_fullscreen(self) -> None:
+        """Toggle the fullscreen state of the window."""
+
+    @abstractmethod
+    def cmd_enable_fullscreen(self) -> None:
+        """Fullscreen the window"""
+
+    @abstractmethod
+    def cmd_disable_fullscreen(self) -> None:
+        """Un-fullscreen the window"""
+
+    @abstractmethod
+    def cmd_bring_to_front(self) -> None:
+        """Bring the window to the front"""
+
 
 class Internal(Window, metaclass=ABCMeta):
     pass

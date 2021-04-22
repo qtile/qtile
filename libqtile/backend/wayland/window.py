@@ -316,6 +316,54 @@ class Window(base.Window):
             fullscreen=self._float_state == FloatStates.FULLSCREEN
         )
 
+    def cmd_move_floating(self, dx: int, dy: int) -> None:
+        self._tweak_float(dx=dx, dy=dy)
+
+    def cmd_resize_floating(self, dw: int, dh: int) -> None:
+        self._tweak_float(dw=dw, dh=dh)
+
+    def cmd_set_position_floating(self, x: int, y: int) -> None:
+        self._tweak_float(x=x, y=y)
+
+    def cmd_set_size_floating(self, w: int, h: int) -> None:
+        self._tweak_float(w=w, h=h)
+
+    def cmd_place(self, x, y, width, height, borderwidth, bordercolor,
+                  above=False, margin=None):
+        self.place(x, y, width, height, borderwidth, bordercolor, above,
+                   margin)
+
+    def cmd_get_position(self) -> Tuple[int, int]:
+        return self.x, self.y
+
+    def cmd_get_size(self) -> Tuple[int, int]:
+        return self.width, self.height
+
+    def cmd_toggle_floating(self) -> None:
+        self.floating = not self.floating
+
+    def cmd_enable_floating(self):
+        self.floating = True
+
+    def cmd_disable_floating(self):
+        self.floating = False
+
+    def cmd_toggle_maximize(self) -> None:
+        self.maximized = not self.maximized
+
+    def cmd_toggle_fullscreen(self) -> None:
+        self.fullscreen = not self.fullscreen
+
+    def cmd_enable_fullscreen(self) -> None:
+        self.fullscreen = True
+
+    def cmd_disable_fullscreen(self) -> None:
+        self.fullscreen = False
+
+    def cmd_bring_to_front(self) -> None:
+        # TODO
+        pass
+
 
 class Internal(Window, base.Internal):
     pass
