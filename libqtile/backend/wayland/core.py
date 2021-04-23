@@ -45,6 +45,7 @@ from wlroots.wlr_types import (
 from wlroots.wlr_types.cursor import WarpMode
 from xkbcommon import xkb
 
+from libqtile import hook
 from libqtile.backend import base
 from libqtile.backend.wayland import keyboard, output, window, wlrq
 from libqtile.log_utils import logger
@@ -245,7 +246,12 @@ class Core(base.Core):
             focus_changed = self.seat.pointer_state.focused_surface != surface
             self.seat.pointer_notify_enter(surface, sx, sy)
             if focus_changed:
+                hook.fire("client_mouse_enter", win)
                 if self.qtile.config.follow_mouse_focus:
+                    if win.group.current_window != self:
+                        win.group.focus(win, False)
+                    if win.group.screen and self.qtile.current_screen != win.group.screen:
+                        self.qtile.focus_screen(win.group.screen.index, False)
                     self.focus_window(win, surface)
             else:
                 # The enter event contains coordinates, so we only need to
