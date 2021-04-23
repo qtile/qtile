@@ -47,6 +47,7 @@ class Output:
         self.output_layout = self.core.output_layout
         self.wallpaper = None
         self.transform_matrix = wlr_output.transform_matrix
+        self.x, self.y = self.output_layout.output_coords(wlr_output)
 
         self._on_destroy_listener = Listener(self._on_destroy)
         self._on_frame_listener = Listener(self._on_frame)
@@ -83,33 +84,64 @@ class Output:
             self.renderer.render_texture(self.wallpaper, self.transform_matrix, 0, 0, 1)
 
         for window in self._mapped_windows:
-            window.surface.for_each_surface(self._render_surface, (window, now))
+            rdata = (
+                now,
+                window,
+                self.x + window.x,
+                self.y + window.y,
+                window.opacity,
+                wlr_output.scale,
+            )
+            window.surface.for_each_surface(self._render_surface, rdata)
 
         wlr_output.render_software_cursors()
         self.renderer.end()
         wlr_output.commit()
 
-    def _render_surface(self, surface: Surface, sx: int, sy: int, data) -> None:
-        window, now = data
+    def _render_surface(self, surface: Surface, sx: int, sy: int, rdata: Tuple) -> None:
+        now, window, wx, wy, opacity, scale = rdata
 
         texture = surface.get_texture()
         if texture is None:
             return
 
-        wlr_output = self.wlr_output
-        ox, oy = self.output_layout.output_coords(wlr_output)  # every time?
-        ox += window.x + sx
-        oy += window.y + sy
+        x = (wx + sx) * scale
+        y = (wy + sy) * scale
+        width = surface.current.width * scale
+        height = surface.current.height * scale
+        transform_matrix = self.wlr_output.transform_matrix
+
+        if surface == window.surface.surface and window.borderwidth:
+            bw = window.borderwidth * scale
+            bc = window.bordercolor
+            border = Box(
+                int(x),
+                int(y),
+                int(width + bw * 2),
+                int(bw),
+            )
+            x += bw
+            y += bw
+            self.renderer.render_rect(border, bc, transform_matrix)  # Top border
+            border.y = int(y + height)
+            self.renderer.render_rect(border, bc, transform_matrix)  # Bottom border
+            border.y = int(y - bw)
+            border.width = int(bw)
+            border.height = int(height + bw * 2)
+            self.renderer.render_rect(border, bc, transform_matrix)  # Left border
+            border.x = int(x + width)
+            self.renderer.render_rect(border, bc, transform_matrix)  # Right border
+
         box = Box(
-            int(ox * wlr_output.scale),
-            int(oy * wlr_output.scale),
-            int(surface.current.width * wlr_output.scale),
-            int(surface.current.height * wlr_output.scale),
+            int(x),
+            int(y),
+            int(width),
+            int(height),
         )
 
         inverse = wlrOutput.transform_invert(surface.current.transform)
-        matrix = Matrix.project_box(box, inverse, 0, wlr_output.transform_matrix)
-        self.renderer.render_texture_with_matrix(texture, matrix, window.opacity)
+        matrix = Matrix.project_box(box, inverse, 0, transform_matrix)
+        self.renderer.render_texture_with_matrix(texture, matrix, opacity)
         surface.send_frame_done(now)
 
     def get_geometry(self) -> Tuple[int, int, int, int]:

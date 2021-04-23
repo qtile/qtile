@@ -20,12 +20,14 @@
 
 from __future__ import annotations
 
+import functools
 import typing
 
 from pywayland.server import Listener
+from wlroots import ffi
 from wlroots.util.edges import Edges
 
-from libqtile import hook
+from libqtile import hook, utils
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
 from libqtile.log_utils import logger
@@ -42,6 +44,14 @@ EDGES_TILED = Edges.TOP | Edges.BOTTOM | Edges.LEFT | Edges.RIGHT
 EDGES_FLOAT = Edges.NONE
 
 
+@functools.lru_cache()
+def _rgb(color) -> ffi.CData:
+    """Helper to create and cache float[4] arrays for border painting"""
+    if isinstance(color, ffi.CData):
+        return color
+    return ffi.new("float[4]", utils.rgb(color))
+
+
 class Window(base.Window):
     def __init__(self, core: Core, qtile: Qtile, surface: xdg_shell.XdgSurface, wid: int):
         base.Window.__init__(self)
@@ -53,8 +63,8 @@ class Window(base.Window):
         self.mapped = False
         self.x = 0
         self.y = 0
-        self.borderwidth = 0
-        self.bordercolor = None
+        self.borderwidth: int = 0
+        self.bordercolor: ffi.CData = _rgb((0, 0, 0, 1))
         self.opacity: float = 1.0
 
         self.surface.set_tiled(EDGES_TILED)
@@ -135,6 +145,10 @@ class Window(base.Window):
     def get_wm_class(self) -> Optional[str]:
         # TODO
         return None
+
+    def paint_borders(self, color, width) -> None:
+        self.bordercolor = _rgb(color)
+        self.borderwidth = width
 
     @property
     def floating(self):
@@ -238,8 +252,7 @@ class Window(base.Window):
         self.x = x
         self.y = y
         self.surface.set_size(width, height)
-        self.borderwidth = borderwidth
-        self.bordercolor = bordercolor
+        self.paint_borders(bordercolor, borderwidth)
 
         if above:
             # TODO when general z-axis control is implemented

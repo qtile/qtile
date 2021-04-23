@@ -194,6 +194,9 @@ class Window(_Window, metaclass=ABCMeta):
         """What window is this window a transient windor for?"""
         return None
 
+    def paint_borders(self, color, width) -> None:
+        """Paint the window borders with the given color and width"""
+
     @abstractmethod
     def cmd_focus(self, warp: Optional[bool] = None) -> None:
         """Focuses the window."""
