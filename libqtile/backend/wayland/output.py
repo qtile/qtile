@@ -109,7 +109,7 @@ class Output:
 
         inverse = wlrOutput.transform_invert(surface.current.transform)
         matrix = Matrix.project_box(box, inverse, 0, wlr_output.transform_matrix)
-        self.renderer.render_texture_with_matrix(texture, matrix, 1)
+        self.renderer.render_texture_with_matrix(texture, matrix, window.opacity)
         surface.send_frame_done(now)
 
     def get_geometry(self) -> Tuple[int, int, int, int]:

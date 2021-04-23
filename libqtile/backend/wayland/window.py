@@ -55,6 +55,7 @@ class Window(base.Window):
         self.y = 0
         self.borderwidth = 0
         self.bordercolor = None
+        self.opacity: float = 1.0
 
         self.surface.set_tiled(EDGES_TILED)
         self._float_state = FloatStates.NOT_FLOATING
