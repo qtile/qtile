@@ -263,6 +263,30 @@ class Window(_Window, metaclass=ABCMeta):
     def cmd_bring_to_front(self) -> None:
         """Bring the window to the front"""
 
+    def cmd_opacity(self, opacity):
+        """Set the window's opacity"""
+        if opacity < .1:
+            self.opacity = .1
+        elif opacity > 1:
+            self.opacity = 1
+        else:
+            self.opacity = opacity
+
+    def cmd_down_opacity(self):
+        """Decrease the window's opacity"""
+        if self.opacity > .2:
+            # don't go completely clear
+            self.opacity -= .1
+        else:
+            self.opacity = .1
+
+    def cmd_up_opacity(self):
+        """Increase the window's opacity"""
+        if self.opacity < .9:
+            self.opacity += .1
+        else:
+            self.opacity = 1
+
 
 class Internal(_Window, metaclass=ABCMeta):
     pass

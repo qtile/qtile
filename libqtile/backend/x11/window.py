@@ -1727,27 +1727,6 @@ class Window(_Window, base.Window):
     def cmd_match(self, *args, **kwargs):
         return self.match(*args, **kwargs)
 
-    def cmd_opacity(self, opacity):
-        if opacity < .1:
-            self.opacity = .1
-        elif opacity > 1:
-            self.opacity = 1
-        else:
-            self.opacity = opacity
-
-    def cmd_down_opacity(self):
-        if self.opacity > .2:
-            # don't go completely clear
-            self.opacity -= .1
-        else:
-            self.opacity = .1
-
-    def cmd_up_opacity(self):
-        if self.opacity < .9:
-            self.opacity += .1
-        else:
-            self.opacity = 1
-
     def _is_in_window(self, x, y, window):
         return (window.edges[0] <= x <= window.edges[2] and
                 window.edges[1] <= y <= window.edges[3])
