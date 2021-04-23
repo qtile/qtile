@@ -75,7 +75,7 @@ class Keyboard:
         self._on_key_listener.remove()
         self._on_destroy_listener.remove()
         self.core.keyboards.remove(self)
-        if self.core.keyboards and self.core.seat.keyboard._ptr == self.keyboard._ptr:
+        if self.core.keyboards and self.core.seat.keyboard._ptr == ffi.NULL:
             self.seat.set_keyboard(self.core.keyboards[-1].device)
 
     def _on_destroy(self, _listener, _data):

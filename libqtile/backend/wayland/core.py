@@ -34,15 +34,22 @@ from wlroots.wlr_types import (
     Compositor,
     Cursor,
     DataDeviceManager,
+    GammaControlManagerV1,
     OutputLayout,
+    ScreencopyManagerV1,
     Surface,
     XCursorManager,
+    XdgOutputManagerV1,
     input_device,
     pointer,
     seat,
     xdg_shell,
 )
 from wlroots.wlr_types.cursor import WarpMode
+from wlroots.wlr_types.virtual_keyboard_v1 import (
+    VirtualKeyboardManagerV1,
+    VirtualKeyboardV1,
+)
 from xkbcommon import xkb
 
 from libqtile import hook
@@ -112,6 +119,16 @@ class Core(base.Core):
         self._on_new_xdg_surface_listener = Listener(self._on_new_xdg_surface)
         self.xdg_shell.new_surface_event.add(self._on_new_xdg_surface_listener)
 
+        # Add support for additional protocols
+        XdgOutputManagerV1(self.display, self.output_layout)
+        ScreencopyManagerV1(self.display)
+        GammaControlManagerV1(self.display)
+        self._virtual_keyboard_manager_v1 = VirtualKeyboardManagerV1(self.display)
+        self._on_new_virtual_keyboard_listener = Listener(self._on_new_virtual_keyboard)
+        self._virtual_keyboard_manager_v1.new_virtual_keyboard_event.add(
+            self._on_new_virtual_keyboard_listener
+        )
+
         # start
         os.environ["WAYLAND_DISPLAY"] = self.socket.decode()
         logger.info("Starting core with WAYLAND_DISPLAY=" + self.socket.decode())
@@ -123,6 +140,7 @@ class Core(base.Core):
         self._on_new_output_listener.remove()
         self._on_new_input_listener.remove()
         self._on_request_set_selection_listener.remove()
+        self._on_new_virtual_keyboard_listener.remove()
 
         for kb in self.keyboards:
             kb.finalize()
@@ -237,6 +255,9 @@ class Core(base.Core):
             WarpMode.AbsoluteClosest, event.x, event.y, input_device=event.device,
         )
         self._process_cursor_motion(event.time_msec)
+
+    def _on_new_virtual_keyboard(self, _listener, virtual_keyboard: VirtualKeyboardV1):
+        self._add_new_keyboard(virtual_keyboard.input_device)
 
     def _process_cursor_motion(self, time):
         self.qtile.process_button_motion(self.cursor.x, self.cursor.y)
