@@ -290,6 +290,10 @@ class Window(_Window, metaclass=ABCMeta):
         else:
             self.opacity = 1
 
+    @abstractmethod
+    def cmd_kill(self) -> None:
+        """Kill the window. Try to be polite."""
+
 
 class Internal(_Window, metaclass=ABCMeta):
     pass
