@@ -378,6 +378,9 @@ class Window(base.Window):
         # TODO
         pass
 
+    def cmd_kill(self) -> None:
+        self.kill()
+
 
 class Internal(Window, base.Internal):
     pass
