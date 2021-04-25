@@ -111,3 +111,34 @@ Stable versions of Qtile can be installed from PyPI:
 As long as the necessary libraries are in place, this can be done at any point,
 however, it is recommended that you first install xcffib to ensure the
 cairo-xcb bindings are built (see above).
+
+Wayland
+-------
+
+Qtile can also be run as a Wayland compositor rather than an X11 window
+manager. This does not require an X server or ``xcffib`` to be installed.
+Instead Qtile uses pywlroots_, a Python binding around the wlroots_ library,
+both of which must be installed with the latest release. Be aware that some
+distributions package outdated versions of wlroots. pywlroots_ can be installed
+using ``pip install`` as above.
+
+Any Wayland-specific configuration is not intended to be stable at this time.
+
+Qtile can then be run either from a TTY, or within an existing X11 session
+where it will run inside a nested window:
+
+.. code-block:: bash
+
+    qtile start -b wayland
+
+.. important::
+
+    The Wayland backend is in early stages of development and is expected to be
+    unstable. Some features may be missing\* and there may be slight differences
+    between its behaviour and that of the X11 backend until it reaches feature
+    parity with the X11 backend.
+
+    \*Notably window Z positioning, and the status bar
+
+.. _pywlroots: https://github.com/flacjacket/pywlroots
+.. _wlroots: https://github.com/swaywm/wlroots
