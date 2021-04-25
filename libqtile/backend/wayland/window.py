@@ -26,6 +26,11 @@ import typing
 from pywayland.server import Listener
 from wlroots import ffi
 from wlroots.util.edges import Edges
+from wlroots.wlr_types.layer_shell_v1 import LayerSurfaceV1
+from wlroots.wlr_types.xdg_shell import (
+    XdgSurface,
+    XdgTopLevelSetFullscreenEvent,
+)
 
 from libqtile import hook, utils
 from libqtile.backend import base
@@ -34,8 +39,6 @@ from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
     from typing import Dict, List, Optional, Tuple, Union
-
-    from wlroots.wlr_types import xdg_shell
 
     from libqtile.backend.wayland.core import Core
     from libqtile.core.manager import Qtile
@@ -52,8 +55,12 @@ def _rgb(color: Union[str, List, Tuple]) -> ffi.CData:
     return ffi.new("float[4]", utils.rgb(color))
 
 
+# Window manages XdgSurfaces, Static manages XdgSurfaces and LayerSurfaceV1s
+SurfaceType = typing.Union[XdgSurface, LayerSurfaceV1]
+
+
 class Window(base.Window):
-    def __init__(self, core: Core, qtile: Qtile, surface: xdg_shell.XdgSurface, wid: int):
+    def __init__(self, core: Core, qtile: Qtile, surface: SurfaceType, wid: int):
         base.Window.__init__(self)
         self.core = core
         self.qtile = qtile
@@ -63,11 +70,11 @@ class Window(base.Window):
         self.mapped = False
         self.x = 0
         self.y = 0
-        self.borderwidth: int = 0
         self.bordercolor: ffi.CData = _rgb((0, 0, 0, 1))
         self.opacity: float = 1.0
 
-        self.surface.set_tiled(EDGES_TILED)
+        assert isinstance(surface, XdgSurface)
+        surface.set_tiled(EDGES_TILED)
         self._float_state = FloatStates.NOT_FLOATING
         self.float_x = self.x
         self.float_y = self.y
@@ -118,15 +125,17 @@ class Window(base.Window):
     def _on_unmap(self, _listener, data):
         logger.debug("Signal: window unmap")
         self.mapped = False
-        if self.surface.surface == self.core.seat.keyboard_state.focused_surface:
-            self.core.seat.keyboard_clear_focus()
+        seat = self.core.seat
+        if not seat.destroyed:
+            if self.surface.surface == seat.keyboard_state.focused_surface:
+                seat.keyboard_clear_focus()
 
     def _on_destroy(self, _listener, data):
         logger.debug("Signal: window destroy")
         self.qtile.unmanage(self.wid)
         self.finalize()
 
-    def _on_request_fullscreen(self, _listener, event: xdg_shell.XdgTopLevelSetFullscreenEvent):
+    def _on_request_fullscreen(self, _listener, event: XdgTopLevelSetFullscreenEvent):
         logger.debug("Signal: window request_fullscreen")
         if self.qtile.config.auto_fullscreen:
             self.fullscreen = event.fullscreen
@@ -147,7 +156,8 @@ class Window(base.Window):
         return None
 
     def paint_borders(self, color, width) -> None:
-        self.bordercolor = _rgb(color)
+        if color:
+            self.border_color = _rgb(color)
         self.borderwidth = width
 
     @property
@@ -387,7 +397,87 @@ class Internal(Window, base.Internal):
 
 
 class Static(Window, base.Static):
-    pass
+    """
+    Static windows represent both regular windows made static by the user and layer
+    surfaces created as part of the wlr layer shell protocol.
+    """
+    def __init__(
+        self,
+        core: Core,
+        qtile: Qtile,
+        surface: SurfaceType,
+        wid: int,
+    ):
+        base.Static.__init__(self)
+        self.core = core
+        self.qtile = qtile
+        self._group = 0
+        self.surface = surface
+        self._wid = wid
+        self.screen = None
+        self.mapped = False
+        self.x = 0
+        self.y = 0
+        self.borderwidth: int = 0
+        self.bordercolor: ffi.CData = _rgb((0, 0, 0, 1))
+        self.opacity: float = 1.0
+        self._float_state = FloatStates.FLOATING
+        self.defunct = True
+        self.is_layer = False
+
+        self._on_map_listener = Listener(self._on_map)
+        self._on_unmap_listener = Listener(self._on_unmap)
+        self._on_destroy_listener = Listener(self._on_destroy)
+        surface.map_event.add(self._on_map_listener)
+        surface.unmap_event.add(self._on_unmap_listener)
+        surface.destroy_event.add(self._on_destroy_listener)
+
+        if isinstance(surface, LayerSurfaceV1):
+            self.is_layer = True
+            if surface.output is None:
+                surface.output = core.output_layout.output_at(core.cursor.x, core.cursor.y)
+            self.output = self.core.output_from_wlr_output(surface.output)
+            self.output.layers[surface.client_pending.layer].append(self)
+            self.output.organise_layers()
+
+    def finalize(self):
+        self._on_map_listener.remove()
+        self._on_unmap_listener.remove()
+        self._on_destroy_listener.remove()
+        if self.is_layer:
+            self.output.organise_layers()
+
+    def _on_map(self, _listener, data):
+        logger.debug("Signal: window map")
+        self.mapped = True
+        if self.is_layer:
+            self.output.organise_layers()
+
+    def _on_unmap(self, _listener, data):
+        logger.debug("Signal: window unmap")
+        self.mapped = False
+        if self.surface.surface == self.core.seat.keyboard_state.focused_surface:
+            self.core.seat.keyboard_clear_focus()
+        if self.is_layer:
+            self.output.organise_layers()
+
+    def _on_destroy(self, _listener, data):
+        logger.debug("Signal: window destroy")
+        self.qtile.unmanage(self.wid)
+        self.finalize()
+
+    def kill(self):
+        if self.is_layer:
+            self.surface.close()
+        else:
+            self.surface.send_close()
+
+    def place(self, x, y, width, height, borderwidth, bordercolor,
+              above=False, margin=None):
+        self.x = x
+        self.y = y
+        self.surface.configure(width, height)
+        self.paint_borders(bordercolor, borderwidth)
 
 
 WindowType = typing.Union[Window, Internal, Static]
