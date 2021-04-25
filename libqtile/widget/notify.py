@@ -75,7 +75,7 @@ class Notify(base._TextBox):
 
     def set_notif_text(self, notif):
         self.text = pangocffi.markup_escape_text(notif.summary)
-        urgency = notif.hints.get('urgency', 1)
+        urgency = getattr(notif.hints.get('urgency'), "value", 1)
         if urgency != 1:
             self.text = '<span color="%s">%s</span>' % (
                 utils.hex(
