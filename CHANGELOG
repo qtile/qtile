@@ -7,6 +7,7 @@ Qtile 0.x.x, released xxxx-xx-xx:
         - widget.BatteryIcon no longer has a fallback text mode; use
           widget.Battery instead
         - MonadX layout key new_at_current is deprecated, use new_client_position.
+        - `libqtile.window` has been moved to `libqtile.backend.x11.window`; a migration has been added for this.
     !!! deprecation warning !!!
         - 'main' config functions, deprecated in 0.16.1, will no longer be executed.
     * features
