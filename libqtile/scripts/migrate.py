@@ -130,7 +130,8 @@ MODULE_RENAMES = [
     ("libqtile.command_graph", "libqtile.command.graph"),
     ("libqtile.command_client", "libqtile.command.client"),
     ("libqtile.command_interface", "libqtile.command.interface"),
-    ("libqtile.command_object", "libqtile.command.object"),
+    ("libqtile.command_object", "libqtile.command.base"),
+    ("libqtile.window", "libqtile.backend.x11.window"),
 ]
 
 for (fro, to) in MODULE_RENAMES:
