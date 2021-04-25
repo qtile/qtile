@@ -995,7 +995,7 @@ class Internal(_Window, base.Internal):
 
 
 class Static(_Window, base.Static):
-    """An internal window, that should not be managed by qtile"""
+    """An static window, belonging to a screen rather than a group"""
     _window_mask = EventMask.StructureNotify | \
         EventMask.PropertyChange | \
         EventMask.EnterWindow | \

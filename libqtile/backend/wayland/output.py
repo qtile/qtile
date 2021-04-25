@@ -26,12 +26,18 @@ from pywayland.server import Listener
 from wlroots.util.clock import Timespec
 from wlroots.wlr_types import Box, Matrix
 from wlroots.wlr_types import Output as wlrOutput
+from wlroots.wlr_types.layer_shell_v1 import (
+    LayerShellV1Layer,
+    LayerSurfaceV1,
+    LayerSurfaceV1Anchor,
+)
 
 from libqtile import hook
+from libqtile.backend.wayland.window import Static, Window
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Set, Tuple
+    from typing import List, Set, Tuple
 
     from wlroots.wlr_types import Surface
 
@@ -59,6 +65,9 @@ class Output:
         hook.subscribe.group_window_add(self._get_windows)
         hook.subscribe.client_killed(self._get_windows)
         hook.subscribe.client_managed(self._get_windows)
+
+        # The layers enum indexes into this list to get a list of surfaces
+        self.layers: List[List[Static]] = [[]] * len(LayerShellV1Layer)
 
     def finalize(self):
         self._on_destroy_listener.remove()
@@ -146,9 +155,58 @@ class Output:
         return int(x), int(y), width, height
 
     def _get_windows(self, *args):
-        """Get the set of mapped windows for rendering."""
-        mapped = set()
+        """Get the set of mapped windows for rendering and order them."""
+        mapped = []
+        mapped.extend([i for i in self.layers[LayerShellV1Layer.BACKGROUND] if i.mapped])
+        mapped.extend([i for i in self.layers[LayerShellV1Layer.BOTTOM] if i.mapped])
+
         for win in self.core.qtile.windows_map.values():
-            if win.mapped:
-                mapped.add(win)
+            if win.mapped and isinstance(win, Window):
+                mapped.append(win)
+
+        mapped.extend([i for i in self.layers[LayerShellV1Layer.TOP] if i.mapped])
+        mapped.extend([i for i in self.layers[LayerShellV1Layer.OVERLAY] if i.mapped])
         self._mapped_windows = mapped
+
+    def organise_layers(self) -> None:
+        """Organise the positioning of layer shell surfaces."""
+        logger.info("Output: organising layers")
+        ow, oh = self.wlr_output.effective_resolution()
+
+        for layer in self.layers:
+            for win in layer:
+                assert isinstance(win.surface, LayerSurfaceV1)
+                state = win.surface.current
+                margin = state.margin
+                ww = state.desired_width
+                wh = state.desired_height
+
+                # Horizontal axis
+                if (state.anchor & LayerSurfaceV1Anchor.HORIZONTAL) and ww == 0:
+                    x = margin.left
+                    ww = ow - margin.left - margin.right
+                elif (state.anchor & LayerSurfaceV1Anchor.LEFT):
+                    x = margin.left
+                elif (state.anchor & LayerSurfaceV1Anchor.RIGHT):
+                    x = ow - ww - margin.right
+                else:
+                    x = int(ow / 2 - ww / 2)
+
+                # Vertical axis
+                if (state.anchor & LayerSurfaceV1Anchor.VERTICAL) and wh == 0:
+                    y = margin.top
+                    wh = oh - margin.top - margin.bottom
+                elif (state.anchor & LayerSurfaceV1Anchor.TOP):
+                    y = margin.top
+                elif (state.anchor & LayerSurfaceV1Anchor.BOTTOM):
+                    y = oh - wh - margin.bottom
+                else:
+                    y = int(oh / 2 - wh / 2)
+
+                if ww <= 0 or wh <= 0:
+                    win.kill()
+                    continue
+
+                win.place(x, y, ww, wh, 0, None)
+
+        self._get_windows()

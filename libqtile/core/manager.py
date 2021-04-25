@@ -547,7 +547,7 @@ class Qtile(CommandObject):
         c = self.windows_map.get(win)
         if c:
             hook.fire("client_killed", c)
-            if isinstance(c, base.Static):
+            if isinstance(c, base.Static) and c.reserved_space:
                 self.free_reserved_space(c.reserved_space, c.screen)
             if getattr(c, "group", None):
                 c.group.remove(c)
