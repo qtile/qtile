@@ -39,20 +39,22 @@ from wlroots.wlr_types import (
     XCursorManager,
     XdgOutputManagerV1,
     input_device,
+    layer_shell_v1,
     pointer,
     seat,
-    xdg_shell,
 )
 from wlroots.wlr_types.cursor import WarpMode
 from wlroots.wlr_types.virtual_keyboard_v1 import (
     VirtualKeyboardManagerV1,
     VirtualKeyboardV1,
 )
+from wlroots.wlr_types.xdg_shell import XdgShell, XdgSurface, XdgSurfaceRole
 from xkbcommon import xkb
 
 from libqtile import hook
 from libqtile.backend import base
-from libqtile.backend.wayland import keyboard, output, window, wlrq
+from libqtile.backend.wayland import keyboard, window, wlrq
+from libqtile.backend.wayland.output import Output
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -91,7 +93,7 @@ class Core(base.Core):
 
         # set up outputs
         self.output_layout = OutputLayout()
-        self.outputs: List[output.Output] = []
+        self.outputs: List[Output] = []
         self._on_new_output_listener = Listener(self._on_new_output)
         self.backend.new_output_event.add(self._on_new_output_listener)
 
@@ -112,9 +114,12 @@ class Core(base.Core):
         self.cursor.motion_absolute_event.add(self._on_cursor_motion_absolute_listener)
 
         # set up shell
-        self.xdg_shell = xdg_shell.XdgShell(self.display)
+        self.xdg_shell = XdgShell(self.display)
         self._on_new_xdg_surface_listener = Listener(self._on_new_xdg_surface)
         self.xdg_shell.new_surface_event.add(self._on_new_xdg_surface_listener)
+        self.layer_shell = layer_shell_v1.LayerShellV1(self.display)
+        self._on_new_layer_surface_listener = Listener(self._on_new_layer_surface)
+        self.layer_shell.new_surface_event.add(self._on_new_layer_surface_listener)
 
         # Add support for additional protocols
         XdgOutputManagerV1(self.display, self.output_layout)
@@ -138,6 +143,7 @@ class Core(base.Core):
         self._on_new_input_listener.remove()
         self._on_request_set_selection_listener.remove()
         self._on_new_virtual_keyboard_listener.remove()
+        self._on_new_layer_surface_listener.remove()
 
         for kb in self.keyboards:
             kb.finalize()
@@ -187,7 +193,7 @@ class Core(base.Core):
             wlr_output.enable()
             wlr_output.commit()
 
-        self.outputs.append(output.Output(self, wlr_output))
+        self.outputs.append(Output(self, wlr_output))
         self.output_layout.add_auto(wlr_output)
 
     def _on_request_cursor(self, _listener, event: seat.PointerRequestSetCursorEvent):
@@ -195,19 +201,14 @@ class Core(base.Core):
         # if self._seat.pointer_state.focused_surface == event.seat_client:  # needs updating pywlroots first
         self.cursor.set_surface(event.surface, event.hotspot)
 
-    def _on_new_xdg_surface(self, _listener, surface: xdg_shell.XdgSurface):
+    def _on_new_xdg_surface(self, _listener, surface: XdgSurface):
         logger.debug("Signal: xdg_shell new_surface_event")
         assert self.qtile is not None
 
-        if surface.role != xdg_shell.XdgSurfaceRole.TOPLEVEL:
+        if surface.role != XdgSurfaceRole.TOPLEVEL:
             return
 
-        wid = 0
-        wids = self.qtile.windows_map.keys()
-        while True:
-            if wid not in wids:
-                break
-            wid += 1
+        wid = max(self.qtile.windows_map.keys(), default=0) + 1
         win = window.Window(self, self.qtile, surface, wid)
         logger.info(f"Managing new top-level window with window ID: {wid}")
         self.qtile.manage(win)
@@ -253,6 +254,15 @@ class Core(base.Core):
     def _on_new_virtual_keyboard(self, _listener, virtual_keyboard: VirtualKeyboardV1):
         self._add_new_keyboard(virtual_keyboard.input_device)
 
+    def _on_new_layer_surface(self, _listener, layer_surface: layer_shell_v1.LayerSurfaceV1):
+        logger.debug("Signal: layer_shell new_surface_event")
+        assert self.qtile is not None
+
+        wid = max(self.qtile.windows_map.keys(), default=0) + 1
+        win = window.Static(self, self.qtile, layer_surface, wid)
+        logger.info(f"Managing new layer_shell window with window ID: {wid}")
+        self.qtile.manage(win)
+
     def _process_cursor_motion(self, time):
         self.qtile.process_button_motion(self.cursor.x, self.cursor.y)
         found = self._under_pointer()
@@ -263,7 +273,7 @@ class Core(base.Core):
             if focus_changed:
                 hook.fire("client_mouse_enter", win)
                 if self.qtile.config.follow_mouse_focus:
-                    if win.group.current_window != self:
+                    if win.group.current_window != win:
                         win.group.focus(win, False)
                     if win.group.screen and self.qtile.current_screen != win.group.screen:
                         self.qtile.focus_screen(win.group.screen.index, False)
@@ -306,23 +316,34 @@ class Core(base.Core):
             self.display.flush_clients()
         self.event_loop.dispatch(-1)
 
-    def focus_window(self, win: window.Window, surface: Surface = None):
-        if surface is None:
+    def focus_window(self, win: window.WindowType, surface: Surface = None):
+        if self.seat.destroyed:
+            return
+
+        if surface is None and win is not None:
             surface = win.surface.surface
 
         previous_surface = self.seat.keyboard_state.focused_surface
         if previous_surface == surface:
             return
+        self.seat.keyboard_clear_focus()
 
         if previous_surface is not None and previous_surface.is_xdg_surface:
             # Deactivate the previously focused surface
-            previous_xdg_surface = xdg_shell.XdgSurface.from_surface(previous_surface)
+            previous_xdg_surface = XdgSurface.from_surface(previous_surface)
             previous_xdg_surface.set_activated(False)
 
-        # activate the new surface
-        win.surface.set_activated(True)
+        if not win:
+            return
+
+        if isinstance(win.surface, layer_shell_v1.LayerSurfaceV1):
+            if not win.mapped or not win.surface.current.keyboard_interactive:
+                return
+
+        logger.debug("Focussing new window")
+        if surface.is_xdg_surface and isinstance(win.surface, XdgSurface):
+            win.surface.set_activated(True)
         self.seat.keyboard_notify_enter(surface, self.seat.keyboard)
-        logger.debug("Focussed new window")
 
     def focus_by_click(self, event) -> None:
         found = self._under_pointer()
@@ -434,3 +455,12 @@ class Core(base.Core):
     @property
     def painter(self):
         return wlrq.Painter(self)
+
+    def output_from_wlr_output(self, wlr_output: wlrOutput) -> Output:
+        matched = []
+        for output in self.outputs:
+            if output.wlr_output == wlr_output:
+                matched.append(output)
+
+        assert len(matched) == 1
+        return matched[0]
