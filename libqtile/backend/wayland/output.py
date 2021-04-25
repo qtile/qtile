@@ -73,30 +73,26 @@ class Output:
         now = Timespec.get_monotonic_time()
         wlr_output = self.wlr_output
 
-        if not wlr_output.attach_render():
-            logger.error("Could not attach renderer")
-            return
+        with wlr_output:
+            self.renderer.begin(*wlr_output.effective_resolution())
+            self.renderer.clear([0, 0, 0, 1])
 
-        self.renderer.begin(*wlr_output.effective_resolution())
-        self.renderer.clear([0, 0, 0, 1])
+            if self.wallpaper:
+                self.renderer.render_texture(self.wallpaper, self.transform_matrix, 0, 0, 1)
 
-        if self.wallpaper:
-            self.renderer.render_texture(self.wallpaper, self.transform_matrix, 0, 0, 1)
+            for window in self._mapped_windows:
+                rdata = (
+                    now,
+                    window,
+                    self.x + window.x,
+                    self.y + window.y,
+                    window.opacity,
+                    wlr_output.scale,
+                )
+                window.surface.for_each_surface(self._render_surface, rdata)
 
-        for window in self._mapped_windows:
-            rdata = (
-                now,
-                window,
-                self.x + window.x,
-                self.y + window.y,
-                window.opacity,
-                wlr_output.scale,
-            )
-            window.surface.for_each_surface(self._render_surface, rdata)
-
-        wlr_output.render_software_cursors()
-        self.renderer.end()
-        wlr_output.commit()
+            wlr_output.render_software_cursors()
+            self.renderer.end()
 
     def _render_surface(self, surface: Surface, sx: int, sy: int, rdata: Tuple) -> None:
         now, window, wx, wy, opacity, scale = rdata
