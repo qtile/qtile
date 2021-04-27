@@ -68,7 +68,7 @@ def minimal_conf_noscreen():
         auto_fullscreen = False
         keys = []
         mouse = []
-        groups = [libqtile.config.Group("a")]
+        groups = [libqtile.config.Group("a"), libqtile.config.Group("b")]
         layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
         floating_layout = libqtile.resources.default_config.floating_layout
         screens = []

@@ -186,11 +186,6 @@ class WidgetBox(base._Widget):
 
         self.drawer.draw(offsetx=self.offsetx, width=self.width)
 
-    def button_press(self, x, y, button):
-        name = "Button{}".format(button)
-        if name in self.mouse_callbacks:
-            self.mouse_callbacks[name]()
-
     def cmd_toggle(self):
         """Toggle box state"""
         self.box_is_open = not self.box_is_open
