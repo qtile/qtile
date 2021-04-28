@@ -23,10 +23,10 @@ from __future__ import annotations
 import typing
 
 from pywayland.protocol.wayland import WlKeyboard
-from pywayland.server import Listener
 from wlroots import ffi, lib
 from xkbcommon import xkb
 
+from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -50,7 +50,7 @@ def _get_keysyms(xkb_state, keycode):
     return syms
 
 
-class Keyboard:
+class Keyboard(HasListeners):
     def __init__(self, core: Core, device: InputDevice):
         self.core = core
         self.device = device
@@ -63,17 +63,12 @@ class Keyboard:
         self.keyboard.set_keymap(xkb_context.keymap_new_from_names())
         self.keyboard.set_repeat_info(25, 600)
 
-        self._on_modifier_listener = Listener(self._on_modifier)
-        self._on_key_listener = Listener(self._on_key)
-        self._on_destroy_listener = Listener(self._on_destroy)
-        self.keyboard.modifiers_event.add(self._on_modifier_listener)
-        self.keyboard.key_event.add(self._on_key_listener)
-        self.keyboard.destroy_event.add(self._on_destroy_listener)
+        self.add_listener(self.keyboard.modifiers_event, self._on_modifier)
+        self.add_listener(self.keyboard.key_event, self._on_key)
+        self.add_listener(self.keyboard.destroy_event, self._on_destroy)
 
     def finalize(self):
-        self._on_modifier_listener.remove()
-        self._on_key_listener.remove()
-        self._on_destroy_listener.remove()
+        self.finalize_listeners()
         self.core.keyboards.remove(self)
         if self.core.keyboards and self.core.seat.keyboard._ptr == ffi.NULL:
             self.seat.set_keyboard(self.core.keyboards[-1].device)
