@@ -28,7 +28,7 @@ import typing
 import wlroots.helper as wlroots_helper
 from pywayland import lib
 from pywayland.protocol.wayland import WlSeat
-from pywayland.server import Display, Listener
+from pywayland.server import Display
 from wlroots.wlr_types import (
     Cursor,
     DataDeviceManager,
@@ -66,7 +66,7 @@ if typing.TYPE_CHECKING:
     from libqtile.core.manager import Qtile
 
 
-class Core(base.Core):
+class Core(base.Core, wlrq.HasListeners):
     def __init__(self):
         """Setup the Wayland core backend"""
         self.qtile: Optional[Qtile] = None
@@ -86,49 +86,38 @@ class Core(base.Core):
         self.grabbed_buttons: List[Tuple[int, int]] = []
         self.device_manager = DataDeviceManager(self.display)
         self.seat = seat.Seat(self.display, "seat0")
-        self._on_request_set_selection_listener = Listener(self._on_request_set_selection)
-        self._on_new_input_listener = Listener(self._on_new_input)
-        self.seat.request_set_selection_event.add(self._on_request_set_selection_listener)
-        self.backend.new_input_event.add(self._on_new_input_listener)
+        self.add_listener(self.seat.request_set_selection_event, self._on_request_set_selection)
+        self.add_listener(self.backend.new_input_event, self._on_new_input)
 
         # set up outputs
         self.output_layout = OutputLayout()
         self.outputs: List[Output] = []
-        self._on_new_output_listener = Listener(self._on_new_output)
-        self.backend.new_output_event.add(self._on_new_output_listener)
+        self.add_listener(self.backend.new_output_event, self._on_new_output)
 
         # set up cursor
         self.cursor = Cursor(self.output_layout)
         self.cursor_manager = XCursorManager(24)
-        self._on_request_cursor_listener = Listener(self._on_request_cursor)
-        self.seat.request_set_cursor_event.add(self._on_request_cursor_listener)
-        self._on_cursor_axis_listener = Listener(self._on_cursor_axis)
-        self._on_cursor_frame_listener = Listener(self._on_cursor_frame)
-        self._on_cursor_button_listener = Listener(self._on_cursor_button)
-        self._on_cursor_motion_listener = Listener(self._on_cursor_motion)
-        self._on_cursor_motion_absolute_listener = Listener(self._on_cursor_motion_absolute)
-        self.cursor.axis_event.add(self._on_cursor_axis_listener)
-        self.cursor.frame_event.add(self._on_cursor_frame_listener)
-        self.cursor.button_event.add(self._on_cursor_button_listener)
-        self.cursor.motion_event.add(self._on_cursor_motion_listener)
-        self.cursor.motion_absolute_event.add(self._on_cursor_motion_absolute_listener)
+        self.add_listener(self.seat.request_set_cursor_event, self._on_request_cursor)
+        self.add_listener(self.cursor.axis_event, self._on_cursor_axis)
+        self.add_listener(self.cursor.frame_event, self._on_cursor_frame)
+        self.add_listener(self.cursor.button_event, self._on_cursor_button)
+        self.add_listener(self.cursor.motion_event, self._on_cursor_motion)
+        self.add_listener(self.cursor.motion_absolute_event, self._on_cursor_motion_absolute)
 
         # set up shell
         self.xdg_shell = XdgShell(self.display)
-        self._on_new_xdg_surface_listener = Listener(self._on_new_xdg_surface)
-        self.xdg_shell.new_surface_event.add(self._on_new_xdg_surface_listener)
+        self.add_listener(self.xdg_shell.new_surface_event, self._on_new_xdg_surface)
         self.layer_shell = layer_shell_v1.LayerShellV1(self.display)
-        self._on_new_layer_surface_listener = Listener(self._on_new_layer_surface)
-        self.layer_shell.new_surface_event.add(self._on_new_layer_surface_listener)
+        self.add_listener(self.layer_shell.new_surface_event, self._on_new_layer_surface)
 
         # Add support for additional protocols
         XdgOutputManagerV1(self.display, self.output_layout)
         ScreencopyManagerV1(self.display)
         GammaControlManagerV1(self.display)
         self._virtual_keyboard_manager_v1 = VirtualKeyboardManagerV1(self.display)
-        self._on_new_virtual_keyboard_listener = Listener(self._on_new_virtual_keyboard)
-        self._virtual_keyboard_manager_v1.new_virtual_keyboard_event.add(
-            self._on_new_virtual_keyboard_listener
+        self.add_listener(
+            self._virtual_keyboard_manager_v1.new_virtual_keyboard_event,
+            self._on_new_virtual_keyboard
         )
 
         # start
@@ -137,19 +126,12 @@ class Core(base.Core):
         self.backend.start()
 
     def finalize(self):
-        self._on_new_xdg_surface_listener.remove()
-        self._on_request_cursor_listener.remove()
-        self._on_new_output_listener.remove()
-        self._on_new_input_listener.remove()
-        self._on_request_set_selection_listener.remove()
-        self._on_new_virtual_keyboard_listener.remove()
-        self._on_new_layer_surface_listener.remove()
-
         for kb in self.keyboards:
             kb.finalize()
         for out in self.outputs:
             out.finalize()
 
+        self.finalize_listeners()
         self.cursor_manager.destroy()
         self.cursor.destroy()
         self.output_layout.destroy()

@@ -23,7 +23,6 @@ from __future__ import annotations
 import functools
 import typing
 
-from pywayland.server import Listener
 from wlroots import ffi
 from wlroots.util.edges import Edges
 from wlroots.wlr_types.layer_shell_v1 import LayerSurfaceV1
@@ -35,6 +34,7 @@ from wlroots.wlr_types.xdg_shell import (
 from libqtile import hook, utils
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
+from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -59,7 +59,7 @@ def _rgb(color: Union[str, List, Tuple]) -> ffi.CData:
 SurfaceType = typing.Union[XdgSurface, LayerSurfaceV1]
 
 
-class Window(base.Window):
+class Window(base.Window, HasListeners):
     def __init__(self, core: Core, qtile: Qtile, surface: SurfaceType, wid: int):
         base.Window.__init__(self)
         self.core = core
@@ -81,20 +81,13 @@ class Window(base.Window):
         self.float_width = self.width
         self.float_height = self.height
 
-        self._on_map_listener = Listener(self._on_map)
-        self._on_unmap_listener = Listener(self._on_unmap)
-        self._on_destroy_listener = Listener(self._on_destroy)
-        self._on_request_fullscreen_listener = Listener(self._on_request_fullscreen)
-        surface.map_event.add(self._on_map_listener)
-        surface.unmap_event.add(self._on_unmap_listener)
-        surface.destroy_event.add(self._on_destroy_listener)
-        surface.toplevel.request_fullscreen_event.add(self._on_request_fullscreen_listener)
+        self.add_listener(surface.map_event, self._on_map)
+        self.add_listener(surface.unmap_event, self._on_unmap)
+        self.add_listener(surface.destroy_event, self._on_destroy)
+        self.add_listener(surface.toplevel.request_fullscreen_event, self._on_request_fullscreen)
 
     def finalize(self):
-        self._on_map_listener.remove()
-        self._on_unmap_listener.remove()
-        self._on_destroy_listener.remove()
-        self._on_request_fullscreen_listener.remove()
+        self.finalize_listeners()
         self.core.flush()
 
     @property
@@ -425,12 +418,9 @@ class Static(Window, base.Static):
         self.defunct = True
         self.is_layer = False
 
-        self._on_map_listener = Listener(self._on_map)
-        self._on_unmap_listener = Listener(self._on_unmap)
-        self._on_destroy_listener = Listener(self._on_destroy)
-        surface.map_event.add(self._on_map_listener)
-        surface.unmap_event.add(self._on_unmap_listener)
-        surface.destroy_event.add(self._on_destroy_listener)
+        self.add_listener(surface.map_event, self._on_map)
+        self.add_listener(surface.unmap_event, self._on_unmap)
+        self.add_listener(surface.destroy_event, self._on_destroy)
 
         if isinstance(surface, LayerSurfaceV1):
             self.is_layer = True
@@ -441,9 +431,7 @@ class Static(Window, base.Static):
             self.output.organise_layers()
 
     def finalize(self):
-        self._on_map_listener.remove()
-        self._on_unmap_listener.remove()
-        self._on_destroy_listener.remove()
+        self.finalize_listeners()
         if self.is_layer:
             self.output.organise_layers()
 

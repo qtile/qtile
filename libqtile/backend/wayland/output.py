@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import typing
 
-from pywayland.server import Listener
 from wlroots.util.clock import Timespec
 from wlroots.wlr_types import Box, Matrix
 from wlroots.wlr_types import Output as wlrOutput
@@ -34,6 +33,7 @@ from wlroots.wlr_types.layer_shell_v1 import (
 
 from libqtile import hook
 from libqtile.backend.wayland.window import Static, Window
+from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -45,7 +45,7 @@ if typing.TYPE_CHECKING:
     from libqtile.backend.wayland.core import Core
 
 
-class Output:
+class Output(HasListeners):
     def __init__(self, core: Core, wlr_output: wlrOutput):
         self.core = core
         self.renderer = core.renderer
@@ -55,10 +55,8 @@ class Output:
         self.transform_matrix = wlr_output.transform_matrix
         self.x, self.y = self.output_layout.output_coords(wlr_output)
 
-        self._on_destroy_listener = Listener(self._on_destroy)
-        self._on_frame_listener = Listener(self._on_frame)
-        wlr_output.destroy_event.add(self._on_destroy_listener)
-        wlr_output.frame_event.add(self._on_frame_listener)
+        self.add_listener(wlr_output.destroy_event, self._on_destroy)
+        self.add_listener(wlr_output.frame_event, self._on_frame)
 
         self._mapped_windows: Set[WindowType] = set()
         hook.subscribe.setgroup(self._get_windows)
@@ -70,8 +68,7 @@ class Output:
         self.layers: List[List[Static]] = [[]] * len(LayerShellV1Layer)
 
     def finalize(self):
-        self._on_destroy_listener.remove()
-        self._on_frame_listener.remove()
+        self.finalize_listeners()
 
     def _on_destroy(self, _listener, _data):
         logger.debug("Signal: output destroy")
