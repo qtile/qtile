@@ -25,6 +25,7 @@ import functools
 import logging
 import multiprocessing
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -115,15 +116,6 @@ def can_connect_qtile(socket_path, *, ok=None):
     if val == 'OK':
         return True
     return False
-
-
-def whereis(program):
-    """Search PATH for executable"""
-    for path in os.environ.get('PATH', '').split(':'):
-        if os.path.exists(os.path.join(path, program)) and \
-           not os.path.isdir(os.path.join(path, program)):
-            return os.path.join(path, program)
-    return None
 
 
 class BareConfig(Config):
@@ -437,15 +429,15 @@ class TestManager:
         return self.test_window(name, "notification")
 
     def test_xclock(self):
-        path = whereis("xclock")
+        path = shutil.which("xclock")
         return self._spawn_window(path)
 
     def test_xeyes(self):
-        path = whereis("xeyes")
+        path = shutil.which("xeyes")
         return self._spawn_window(path)
 
     def test_xcalc(self):
-        path = whereis("xcalc")
+        path = shutil.which("xcalc")
         return self._spawn_window(path)
 
     def groupconsistency(self):
