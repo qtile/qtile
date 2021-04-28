@@ -22,13 +22,19 @@ from __future__ import annotations
 
 import functools
 import operator
-import typing
+from typing import TYPE_CHECKING
 
 import cairocffi
+from pywayland.server import Listener
 from wlroots.wlr_types import Texture
 from wlroots.wlr_types.keyboard import KeyboardModifier
 
 from libqtile.log_utils import logger
+
+if TYPE_CHECKING:
+    from typing import Callable, List
+
+    from pywayland.server import Signal
 
 
 class WlrQError(Exception):
@@ -58,7 +64,7 @@ buttons_inv = {v: k for k, v in buttons.items()}
 DRM_FORMAT_ARGB8888 = 875713089
 
 
-def translate_masks(modifiers: typing.List[str]) -> int:
+def translate_masks(modifiers: List[str]) -> int:
     """
     Translate a modifier mask specified as a list of strings into an or-ed
     bit representation.
@@ -126,3 +132,22 @@ class Painter:
             )
             # TODO: how to map screens to outputs?
             self.core.outputs[0].wallpaper = texture
+
+
+class HasListeners:
+    """
+    Classes can subclass this to get some convenience handlers around
+    `pywayland.server.Listener`.
+
+    This guarantees that all listeners that set up and then removed in reverse order.
+    """
+    def add_listener(self, event: Signal, callback: Callable):
+        if not hasattr(self, "_listeners"):
+            self._listeners = []
+        listener = Listener(callback)
+        event.add(listener)
+        self._listeners.append(listener)
+
+    def finalize_listeners(self):
+        for listener in reversed(self._listeners):
+            listener.remove()
