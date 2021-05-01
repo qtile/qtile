@@ -25,13 +25,11 @@ import os
 import time
 import typing
 
+import wlroots.helper as wlroots_helper
 from pywayland import lib
 from pywayland.protocol.wayland import WlSeat
 from pywayland.server import Display, Listener
-from wlroots.backend import Backend
-from wlroots.renderer import Renderer
 from wlroots.wlr_types import (
-    Compositor,
     Cursor,
     DataDeviceManager,
     GammaControlManagerV1,
@@ -75,9 +73,8 @@ class Core(base.Core):
 
         self.display = Display()
         self.event_loop = self.display.get_event_loop()
-        self.backend = Backend(self.display)
-        self.renderer = Renderer(self.backend, self.display)
-        self.compositor = Compositor(self.display, self.renderer)
+        self.compositor, self.backend = wlroots_helper.build_compositor(self.display)
+        self.renderer = self.backend.renderer
         self.socket = self.display.add_socket()
         self.fd = None
 
