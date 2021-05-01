@@ -125,8 +125,12 @@ def get_object(client: CommandClient, argv: List[str]) -> CommandClient:
     return client
 
 
-def run_function(client: CommandClient, funcname: str, args: List[str]) -> str:
+def run_function(client: CommandClient, funcname: str, args: List[str, int]) -> str:
     "Run command with specified args on given object."
+    for i, arg in enumerate(args):
+        if arg.lstrip("-").isdigit():
+            args[i] = int(arg)
+
     try:
         ret = client.call(funcname, *args)
     except SelectError:
