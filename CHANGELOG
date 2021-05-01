@@ -10,6 +10,8 @@ Qtile 0.x.x, released xxxx-xx-xx:
         - `libqtile.window` has been moved to `libqtile.backend.x11.window`; a migration has been added for this.
     !!! deprecation warning !!!
         - 'main' config functions, deprecated in 0.16.1, will no longer be executed.
+    !!! Notice for packagers - new dependencies !!!
+        - Tests now require the 'dbus-next' python module plus 'dbus-launch' and 'notify-send' applications
     * features
         - added measure_mem and measure_swap attributes to memory widget to allow user to choose measurement units.
         - memory widget can now be displayed with decimal values
