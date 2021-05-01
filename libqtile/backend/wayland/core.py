@@ -42,6 +42,7 @@ from wlroots.wlr_types import (
     layer_shell_v1,
     pointer,
     seat,
+    xdg_decoration_v1,
 )
 from wlroots.wlr_types.cursor import WarpMode
 from wlroots.wlr_types.virtual_keyboard_v1 import (
@@ -118,6 +119,11 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(
             self._virtual_keyboard_manager_v1.new_virtual_keyboard_event,
             self._on_new_virtual_keyboard
+        )
+        xdg_decoration_manager_v1 = xdg_decoration_v1.XdgDecorationManagerV1.create(self.display)
+        self.add_listener(
+            xdg_decoration_manager_v1.new_toplevel_decoration_event,
+            self._on_new_toplevel_decoration,
         )
 
         # start
@@ -244,6 +250,12 @@ class Core(base.Core, wlrq.HasListeners):
         win = window.Static(self, self.qtile, layer_surface, wid)
         logger.info(f"Managing new layer_shell window with window ID: {wid}")
         self.qtile.manage(win)
+
+    def _on_new_toplevel_decoration(
+        self, _listener, decoration: xdg_decoration_v1.XdgToplevelDecorationV1
+    ):
+        logger.debug("Signal: xdg_decoration new_top_level_decoration")
+        decoration.set_mode(xdg_decoration_v1.XdgToplevelDecorationV1Mode.SERVER_SIDE)
 
     def _process_cursor_motion(self, time):
         self.qtile.process_button_motion(self.cursor.x, self.cursor.y)
