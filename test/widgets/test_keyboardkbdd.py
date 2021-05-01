@@ -26,6 +26,7 @@
 # This test file covers the remaining widget code
 
 import sys
+from importlib import reload
 from types import ModuleType
 
 import pytest
@@ -35,6 +36,10 @@ from libqtile.bar import Bar
 
 def no_op(*args, **kwargs):
     pass
+
+
+async def mock_signal_receiver(*args, **kwargs):
+    return True
 
 
 class Mockconstants(ModuleType):
@@ -63,10 +68,12 @@ class MockMessage:
 def patched_widget(monkeypatch):
     monkeypatch.setitem(sys.modules, "dbus_next.constants", Mockconstants("dbus_next.constants"))
     from libqtile.widget import keyboardkbdd
+    reload(keyboardkbdd)
 
     # The next line shouldn't be necessary but I got occasional failures without it when testing locally
     monkeypatch.setattr("libqtile.widget.keyboardkbdd.MessageType", Mockconstants.MessageType)
     monkeypatch.setattr("libqtile.widget.keyboardkbdd.KeyboardKbdd.call_process", MockSpawn.call_process)
+    monkeypatch.setattr("libqtile.widget.keyboardkbdd.add_signal_receiver", mock_signal_receiver)
     return keyboardkbdd
 
 
