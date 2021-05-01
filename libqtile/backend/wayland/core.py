@@ -314,7 +314,7 @@ class Core(base.Core):
         if previous_surface == surface:
             return
 
-        if previous_surface is not None:
+        if previous_surface is not None and previous_surface.is_xdg_surface:
             # Deactivate the previously focused surface
             previous_xdg_surface = xdg_shell.XdgSurface.from_surface(previous_surface)
             previous_xdg_surface.set_activated(False)
