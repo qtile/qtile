@@ -31,7 +31,8 @@ jobs:
                 sudo apt install --no-install-recommends \
                   libdbus-1-dev libgirepository1.0-dev gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-gudev-1.0 graphviz \
                   imagemagick libpulse-dev lm-sensors git xserver-xephyr xterm xvfb x11-apps ninja-build libegl1-mesa-dev \
-                  libgles2-mesa-dev libgbm-dev libinput-dev libxkbcommon-dev libpixman-1-dev libpciaccess-dev
+                  libgles2-mesa-dev libgbm-dev libinput-dev libxkbcommon-dev libpixman-1-dev libpciaccess-dev \
+                  dbus-x11 libnotify-bin
                 sudo pip -q install tox tox-gh-actions meson
             - name: Build wayland
               run: |
