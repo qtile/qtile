@@ -33,6 +33,10 @@ def no_op(*args, **kwargs):
     pass
 
 
+async def mock_signal_receiver(*args, **kwargs):
+    return True
+
+
 def fake_timer(interval, func, *args, **kwargs):
     class TimerObj:
         def cancel(self):
@@ -110,6 +114,7 @@ def patched_module(monkeypatch):
     # This may only be needed if dbus_next is installed on testing system so helpful for
     # local tests.
     reload(mpris2widget)
+    monkeypatch.setattr("libqtile.widget.mpris2widget.add_signal_receiver", mock_signal_receiver)
     return mpris2widget
 
 
