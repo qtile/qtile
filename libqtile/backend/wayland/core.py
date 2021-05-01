@@ -188,10 +188,7 @@ class Core(base.Core):
                 return
             wlr_output.set_mode(mode)
             wlr_output.enable()
-
-            if not wlr_output.commit():
-                logger.error("New output cannot be committed")
-                return
+            wlr_output.commit()
 
         self.outputs.append(output.Output(self, wlr_output))
         self.output_layout.add_auto(wlr_output)
