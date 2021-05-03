@@ -55,18 +55,14 @@ class Icon(window._Window):
         icon_size = self.systray.icon_size
         self.update_hints()
 
-        try:
-            width = self.hints["min_width"]
-            height = self.hints["min_height"]
-        except KeyError:
-            width = icon_size
-            height = icon_size
+        width = self.hints.get("min_width", icon_size)
+        height = self.hints.get("min_height", icon_size)
+
+        width = max(width, icon_size)
+        height = max(height, icon_size)
 
         if height > icon_size:
             width = width * icon_size // height
-            height = icon_size
-        if height <= 0:
-            width = icon_size
             height = icon_size
 
         self.width = width
