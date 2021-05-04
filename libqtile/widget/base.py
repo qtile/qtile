@@ -615,6 +615,29 @@ class MarginMixin(configurable.Configurable):
 
 
 class Mirror(_Widget):
+    """
+    A widget for showing the same widget content in more than one place, for
+    instance, on bars across multiple screens.
+
+    You don't need to use it directly; instead, just instantiate your widget
+    once and hand it in to multiple bars. For instance::
+
+        cpu = widget.CPUGraph()
+        clock = widget.Clock()
+
+        screens = [
+            Screen(top=bar.Bar([widget.GroupBox(), cpu, clock])),
+            Screen(top=bar.Bar([widget.GroupBox(), cpu, clock])),
+        ]
+
+    Widgets can be passed to more than one bar, so that there don't need to be
+    any duplicates executing the same code all the time, and they'll always be
+    visually identical.
+
+    This works for all widgets that use `drawers` (and nothing else) to display
+    their contents. Currently, this is all widgets except for `Systray`.
+    """
+
     def __init__(self, reflection):
         _Widget.__init__(self, reflection.length)
         reflection.draw = self.hook(reflection.draw)
