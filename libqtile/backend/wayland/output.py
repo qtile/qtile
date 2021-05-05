@@ -23,8 +23,10 @@ from __future__ import annotations
 import typing
 
 from wlroots.util.clock import Timespec
+from wlroots.util.region import PixmanRegion32
 from wlroots.wlr_types import Box, Matrix
 from wlroots.wlr_types import Output as wlrOutput
+from wlroots.wlr_types import OutputDamage
 from wlroots.wlr_types.layer_shell_v1 import (
     LayerShellV1Layer,
     LayerSurfaceV1,
@@ -41,8 +43,8 @@ if typing.TYPE_CHECKING:
 
     from wlroots.wlr_types import Surface
 
-    from libqtile.backend.base import WindowType
     from libqtile.backend.wayland.core import Core
+    from libqtile.backend.wayland.window import WindowType
 
 
 class Output(HasListeners):
@@ -51,12 +53,13 @@ class Output(HasListeners):
         self.renderer = core.renderer
         self.wlr_output = wlr_output
         self.output_layout = self.core.output_layout
+        self.damage: OutputDamage = OutputDamage(wlr_output)
         self.wallpaper = None
         self.transform_matrix = wlr_output.transform_matrix
         self.x, self.y = self.output_layout.output_coords(wlr_output)
 
         self.add_listener(wlr_output.destroy_event, self._on_destroy)
-        self.add_listener(wlr_output.frame_event, self._on_frame)
+        self.add_listener(self.damage.frame_event, self._on_frame)
 
         self._mapped_windows: Set[WindowType] = set()
         hook.subscribe.setgroup(self._get_windows)
@@ -68,37 +71,50 @@ class Output(HasListeners):
         self.layers: List[List[Static]] = [[]] * len(LayerShellV1Layer)
 
     def finalize(self):
+        self.core.outputs.remove(self)
         self.finalize_listeners()
+        self.damage.destroy()
 
     def _on_destroy(self, _listener, _data):
         logger.debug("Signal: output destroy")
         self.finalize()
-        self.core.outputs.remove(self)
 
     def _on_frame(self, _listener, _data):
-        now = Timespec.get_monotonic_time()
         wlr_output = self.wlr_output
 
-        with wlr_output:
-            self.renderer.begin(*wlr_output.effective_resolution())
-            self.renderer.clear([0, 0, 0, 1])
+        with PixmanRegion32() as damage:
+            if not self.damage.attach_render(damage):
+                # no new frame needed
+                wlr_output.rollback()
+                return
 
-            if self.wallpaper:
-                self.renderer.render_texture(self.wallpaper, self.transform_matrix, 0, 0, 1)
+            with wlr_output:
+                if not damage.not_empty():
+                    # No damage, only buffer swap needed
+                    return
 
-            for window in self._mapped_windows:
-                rdata = (
-                    now,
-                    window,
-                    self.x + window.x,
-                    self.y + window.y,
-                    window.opacity,
-                    wlr_output.scale,
-                )
-                window.surface.for_each_surface(self._render_surface, rdata)
+                now = Timespec.get_monotonic_time()
+                renderer = self.renderer
+                renderer.begin(*wlr_output.effective_resolution())
 
-            wlr_output.render_software_cursors()
-            self.renderer.end()
+                if self.wallpaper:
+                    renderer.render_texture(self.wallpaper, self.transform_matrix, 0, 0, 1)
+                else:
+                    renderer.clear([0, 0, 0, 1])
+
+                for window in self._mapped_windows:
+                    rdata = (
+                        now,
+                        window,
+                        self.x + window.x,
+                        self.y + window.y,
+                        window.opacity,
+                        wlr_output.scale,
+                    )
+                    window.surface.for_each_surface(self._render_surface, rdata)
+
+                wlr_output.render_software_cursors(damage=damage)
+                renderer.end()
 
     def _render_surface(self, surface: Surface, sx: int, sy: int, rdata: Tuple) -> None:
         now, window, wx, wy, opacity, scale = rdata
@@ -111,7 +127,7 @@ class Output(HasListeners):
         y = (wy + sy) * scale
         width = surface.current.width * scale
         height = surface.current.height * scale
-        transform_matrix = self.wlr_output.transform_matrix
+        transform_matrix = self.transform_matrix
 
         if surface == window.surface.surface and window.borderwidth:
             bw = window.borderwidth * scale
@@ -207,3 +223,18 @@ class Output(HasListeners):
                 win.place(x, y, ww, wh, 0, None)
 
         self._get_windows()
+
+    def contains(self, win: WindowType) -> bool:
+        """Returns whether the given window is visible on this output."""
+        if win.x + win.width < self.x:
+            return False
+        if win.y + win.height < self.y:
+            return False
+
+        ow, oh = self.wlr_output.effective_resolution()
+        if self.x + ow < win.x:
+            return False
+        if self.y + oh < win.y:
+            return False
+
+        return True

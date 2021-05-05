@@ -85,10 +85,10 @@ class Window(base.Window, HasListeners):
         self.add_listener(surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
         self.add_listener(surface.toplevel.request_fullscreen_event, self._on_request_fullscreen)
+        self.add_listener(surface.surface.commit_event, self._on_commit)
 
     def finalize(self):
         self.finalize_listeners()
-        self.core.flush()
 
     @property
     def wid(self):
@@ -118,6 +118,7 @@ class Window(base.Window, HasListeners):
     def _on_unmap(self, _listener, data):
         logger.debug("Signal: window unmap")
         self.mapped = False
+        self.damage()
         seat = self.core.seat
         if not seat.destroyed:
             if self.surface.surface == seat.keyboard_state.focused_surface:
@@ -132,6 +133,15 @@ class Window(base.Window, HasListeners):
         logger.debug("Signal: window request_fullscreen")
         if self.qtile.config.auto_fullscreen:
             self.fullscreen = event.fullscreen
+
+    def _on_commit(self, _listener, data):
+        logger.debug("Signal: window commit")
+        self.damage()
+
+    def damage(self) -> None:
+        for output in self.core.outputs:
+            if output.contains(self):
+                output.damage.add_whole()
 
     def hide(self):
         if self.mapped:
@@ -254,12 +264,14 @@ class Window(base.Window, HasListeners):
 
         self.x = x
         self.y = y
-        self.surface.set_size(width, height)
+        self.surface.set_size(int(width), int(height))
         self.paint_borders(bordercolor, borderwidth)
 
         if above:
             # TODO when general z-axis control is implemented
             pass
+
+        self.damage()
 
     def _tweak_float(self, x=None, y=None, dx=0, dy=0, w=None, h=None, dw=0, dh=0):
         if x is None:
@@ -421,23 +433,20 @@ class Static(Window, base.Static):
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
+        self.add_listener(surface.surface.commit_event, self._on_commit)
 
         if isinstance(surface, LayerSurfaceV1):
             self.is_layer = True
             if surface.output is None:
                 surface.output = core.output_layout.output_at(core.cursor.x, core.cursor.y)
-            self.output = self.core.output_from_wlr_output(surface.output)
+            self.output = core.output_from_wlr_output(surface.output)
             self.output.layers[surface.client_pending.layer].append(self)
-            self.output.organise_layers()
-
-    def finalize(self):
-        self.finalize_listeners()
-        if self.is_layer:
             self.output.organise_layers()
 
     def _on_map(self, _listener, data):
         logger.debug("Signal: window map")
         self.mapped = True
+        self.damage()
         if self.is_layer:
             self.output.organise_layers()
 
@@ -448,11 +457,7 @@ class Static(Window, base.Static):
             self.core.seat.keyboard_clear_focus()
         if self.is_layer:
             self.output.organise_layers()
-
-    def _on_destroy(self, _listener, data):
-        logger.debug("Signal: window destroy")
-        self.qtile.unmanage(self.wid)
-        self.finalize()
+        self.damage()
 
     def kill(self):
         if self.is_layer:
@@ -460,12 +465,21 @@ class Static(Window, base.Static):
         else:
             self.surface.send_close()
 
+    def damage(self) -> None:
+        if self.is_layer:
+            self.output.damage.add_whole()
+        else:
+            for output in self.core.outputs:
+                if output.contains(self):
+                    output.damage.add_whole()
+
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None):
         self.x = x
         self.y = y
         self.surface.configure(width, height)
         self.paint_borders(bordercolor, borderwidth)
+        self.damage()
 
 
 WindowType = typing.Union[Window, Internal, Static]
