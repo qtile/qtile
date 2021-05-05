@@ -52,10 +52,10 @@ ModMasks = {
     "mod5": KeyboardModifier.MOD5,
 }
 
+# from linux/input-event-codes.h
 buttons = {
-    1: 0x110,
-    2: 0x111,
-    3: 0x112,
+    1 + i: 0x110 + i
+    for i in range(8)
 }
 
 buttons_inv = {v: k for k, v in buttons.items()}
