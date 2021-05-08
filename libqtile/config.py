@@ -110,6 +110,7 @@ class Mouse:
         self.button_code = int(self.button.replace('Button', ''))
         for k, v in kwargs.items():
             setattr(self, k, v)
+        self.modmask: int = 0
 
 
 class Drag(Mouse):
