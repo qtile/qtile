@@ -68,7 +68,7 @@ class Qtile(CommandObject):
         self.socket_path = socket_path
 
         self._drag: Optional[Tuple] = None
-        self.mouse_map: Dict[Tuple[int, int], List[Union[Click, Drag]]] = {}
+        self.mouse_map: Dict[int, List[Union[Click, Drag]]] = {}
         self.mouse_position = (0, 0)
 
         self.windows_map: Dict[int, base.WindowType] = {}
@@ -408,14 +408,13 @@ class Qtile(CommandObject):
     def grab_button(self, button: Union[Click, Drag]) -> None:
         """Grab the given mouse button event"""
         try:
-            modmask = self.core.grab_button(button)
+            button.modmask = self.core.grab_button(button)
         except utils.QtileError:
             logger.warning(f"Unknown modifier(s): {button.modifiers}")
             return
-        key = (button.button_code, modmask)
-        if key not in self.mouse_map:
-            self.mouse_map[key] = []
-        self.mouse_map[key].append(button)
+        if button.button_code not in self.mouse_map:
+            self.mouse_map[button.button_code] = []
+        self.mouse_map[button.button_code].append(button)
 
     def update_desktops(self) -> None:
         try:
@@ -626,7 +625,10 @@ class Qtile(CommandObject):
 
     def process_button_click(self, button_code, modmask, x, y, event) -> None:
         self.mouse_position = (x, y)
-        for m in self.mouse_map.get((button_code, modmask), []):
+        for m in self.mouse_map.get(button_code, []):
+            if not m.modmask == modmask:
+                continue
+
             if m.focus == "before":
                 self.core.focus_by_click(event)
 
@@ -658,15 +660,11 @@ class Qtile(CommandObject):
                 self.core.focus_by_click(event)
 
     def process_button_release(self, button_code, modmask):
-        for m in self.mouse_map.get((button_code, modmask), []):
-            if not m:
-                logger.info(
-                    "Ignoring unknown button release: %s" % button_code
-                )
-                continue
+        for m in self.mouse_map.get(button_code, []):
             if isinstance(m, Drag):
                 self._drag = None
                 self.core.ungrab_pointer()
+                return
 
     def process_button_motion(self, x, y):
         self.mouse_position = (x, y)
