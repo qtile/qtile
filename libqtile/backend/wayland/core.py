@@ -308,7 +308,8 @@ class Core(base.Core, wlrq.HasListeners):
     def _poll(self) -> None:
         if not self.display.destroyed:
             self.display.flush_clients()
-        self.event_loop.dispatch(-1)
+            self.event_loop.dispatch(0)
+            self.display.flush_clients()
 
     def focus_window(self, win: window.WindowType, surface: Surface = None):
         if self.seat.destroyed:
