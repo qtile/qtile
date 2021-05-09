@@ -73,7 +73,6 @@ class Output(HasListeners):
     def finalize(self):
         self.core.outputs.remove(self)
         self.finalize_listeners()
-        self.damage.destroy()
 
     def _on_destroy(self, _listener, _data):
         logger.debug("Signal: output destroy")
@@ -100,14 +99,14 @@ class Output(HasListeners):
                 if self.wallpaper:
                     renderer.render_texture(self.wallpaper, self.transform_matrix, 0, 0, 1)
                 else:
-                    renderer.clear([0, 0, 0, 1])
+                    renderer.clear([1, 0, 1, 1])
 
                 for window in self._mapped_windows:
                     rdata = (
                         now,
                         window,
-                        self.x + window.x,
-                        self.y + window.y,
+                        window.x - self.x,  # layout coordinates -> output coordinates
+                        window.y - self.y,
                         window.opacity,
                         wlr_output.scale,
                     )
@@ -117,12 +116,11 @@ class Output(HasListeners):
                 renderer.end()
 
     def _render_surface(self, surface: Surface, sx: int, sy: int, rdata: Tuple) -> None:
-        now, window, wx, wy, opacity, scale = rdata
-
         texture = surface.get_texture()
         if texture is None:
             return
 
+        now, window, wx, wy, opacity, scale = rdata
         x = (wx + sx) * scale
         y = (wy + sy) * scale
         width = surface.current.width * scale
@@ -163,9 +161,8 @@ class Output(HasListeners):
         surface.send_frame_done(now)
 
     def get_geometry(self) -> Tuple[int, int, int, int]:
-        x, y = self.output_layout.output_coords(self.wlr_output)
         width, height = self.wlr_output.effective_resolution()
-        return int(x), int(y), width, height
+        return int(self.x), int(self.y), width, height
 
     def _get_windows(self, *args):
         """Get the set of mapped windows for rendering and order them."""

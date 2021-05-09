@@ -97,7 +97,6 @@ class Painter:
             cairocffi.FORMAT_ARGB32, screen.width, screen.height
         )
         with cairocffi.Context(surface) as context:
-            context.translate(screen.x, screen.y)
             if mode == 'fill':
                 context.rectangle(0, 0, screen.width, screen.height)
                 context.clip()
@@ -130,8 +129,7 @@ class Painter:
                 screen.height,
                 cairocffi.cairo.cairo_image_surface_get_data(surface._pointer)
             )
-            # TODO: how to map screens to outputs?
-            self.core.outputs[0].wallpaper = texture
+            self.core.outputs[screen.index].wallpaper = texture
 
 
 class HasListeners:

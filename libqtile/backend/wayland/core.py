@@ -45,6 +45,11 @@ from wlroots.wlr_types import (
     xdg_decoration_v1,
 )
 from wlroots.wlr_types.cursor import WarpMode
+from wlroots.wlr_types.output_management_v1 import (
+    OutputConfigurationHeadV1,
+    OutputConfigurationV1,
+    OutputManagerV1,
+)
 from wlroots.wlr_types.virtual_keyboard_v1 import (
     VirtualKeyboardManagerV1,
     VirtualKeyboardV1,
@@ -91,9 +96,13 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(self.backend.new_input_event, self._on_new_input)
 
         # set up outputs
-        self.output_layout = OutputLayout()
         self.outputs: List[Output] = []
         self.add_listener(self.backend.new_output_event, self._on_new_output)
+        self.output_layout = OutputLayout()
+        self.add_listener(self.output_layout.change_event, self._on_output_layout_change)
+        self.output_manager = OutputManagerV1(self.display)
+        self.add_listener(self.output_manager.apply_event, self._on_output_manager_apply)
+        self.add_listener(self.output_manager.test_event, self._on_output_manager_test)
 
         # set up cursor
         self.cursor = Cursor(self.output_layout)
@@ -184,6 +193,28 @@ class Core(base.Core, wlrq.HasListeners):
         self.outputs.append(Output(self, wlr_output))
         self.output_layout.add_auto(wlr_output)
 
+    def _on_output_layout_change(self, _listener, _data):
+        logger.debug("Signal: output_layout change_event")
+        config = OutputConfigurationV1()
+
+        for output in self.outputs:
+            box = self.output_layout.get_box(output.wlr_output)
+            head = OutputConfigurationHeadV1.create(config, output.wlr_output)
+            head.state.x = output.x = box.x
+            head.state.y = output.y = box.y
+            head.state.enabled = output.wlr_output.enabled
+            head.state.mode = output.wlr_output.current_mode
+
+        self.output_manager.set_configuration(config)
+
+    def _on_output_manager_apply(self, _listener, config: OutputConfigurationV1):
+        logger.debug("Signal: output_manager apply_event")
+        self._output_manager_reconfigure(config, True)
+
+    def _on_output_manager_test(self, _listener, config: OutputConfigurationV1):
+        logger.debug("Signal: output_manager test_event")
+        self._output_manager_reconfigure(config, False)
+
     def _on_request_cursor(self, _listener, event: seat.PointerRequestSetCursorEvent):
         logger.debug("Signal: seat request_set_cursor_event")
         # if self._seat.pointer_state.focused_surface == event.seat_client:  # needs updating pywlroots first
@@ -251,6 +282,52 @@ class Core(base.Core, wlrq.HasListeners):
     ):
         logger.debug("Signal: xdg_decoration new_top_level_decoration")
         decoration.set_mode(xdg_decoration_v1.XdgToplevelDecorationV1Mode.SERVER_SIDE)
+
+    def _output_manager_reconfigure(
+        self, config: OutputConfigurationV1, apply: bool
+    ) -> None:
+        """
+        See if an output configuration would be accepted by the backend, and apply it if
+        desired.
+        """
+        ok = True
+
+        for head in config.heads:
+            state = head.state
+            wlr_output = state.output
+
+            if state.enabled:
+                wlr_output.enable()
+                if state.mode:
+                    wlr_output.set_mode(state.mode)
+                else:
+                    wlr_output.set_custom_mode(
+                        state.custom_mode.width,
+                        state.custom_mode.height,
+                        state.custom_mode.refresh,
+                    )
+
+                self.output_layout.move(wlr_output, state.x, state.y)
+                wlr_output.set_transform(state.transform)
+                wlr_output.set_scale(state.scale)
+            else:
+                wlr_output.enable(enable=False)
+
+            ok = wlr_output.test()
+            if not ok:
+                break
+
+        for head in config.heads:
+            if ok and apply:
+                head.state.output.commit()
+            else:
+                head.state.output.rollback()
+
+        if ok:
+            config.send_succeeded()
+        else:
+            config.send_failed()
+        config.destroy()
 
     def _process_cursor_motion(self, time):
         self.qtile.process_button_motion(self.cursor.x, self.cursor.y)
