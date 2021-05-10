@@ -1,5 +1,6 @@
 import json
 from typing import Any, List, Tuple
+from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from libqtile.log_utils import logger
@@ -78,7 +79,10 @@ class GenPollUrl(base.ThreadPoolText):
         if not self.parse or not self.url:
             return "Invalid config"
 
-        body = self.fetch()
+        try:
+            body = self.fetch()
+        except URLError:
+            return "No network"
 
         try:
             text = self.parse(body)
