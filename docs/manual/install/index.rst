@@ -83,7 +83,7 @@ dbus-next
 ---------
 
 Qtile uses ``dbus-next`` to interact with dbus. Qtile will run without this
-packagee but certain functionality will be lost (e.g. notifications).
+package but certain functionality will be lost (e.g. notifications).
 
 You can install dbus-next from PyPi:
 
