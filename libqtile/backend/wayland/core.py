@@ -202,18 +202,15 @@ class Core(base.Core, wlrq.HasListeners):
         self.qtile.manage(win)
 
     def _on_cursor_axis(self, _listener, event: pointer.PointerEventAxis):
-        logger.debug("Signal: cursor axis")
         self.seat.pointer_notify_axis(
             event.time_msec, event.orientation, event.delta, event.delta_discrete, event.source,
         )
 
     def _on_cursor_frame(self, _listener, _data):
-        logger.debug("Signal: cursor frame")
         self.seat.pointer_notify_frame()
 
     def _on_cursor_button(self, _listener, event: pointer.PointerEventButton):
         assert self.qtile is not None
-        logger.debug("Signal: cursor button")
         self.seat.pointer_notify_button(
             event.time_msec, event.button, event.button_state
         )
@@ -227,13 +224,11 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_cursor_motion(self, _listener, event: pointer.PointerEventMotion):
         assert self.qtile is not None
-        logger.debug("Signal: cursor motion")
         self.cursor.move(event.delta_x, event.delta_y, input_device=event.device)
         self._process_cursor_motion(event.time_msec)
 
     def _on_cursor_motion_absolute(self, _listener, event: pointer.PointerEventMotionAbsolute):
         assert self.qtile is not None
-        logger.debug("Signal: cursor motion_absolute")
         self.cursor.warp(
             WarpMode.AbsoluteClosest, event.x, event.y, input_device=event.device,
         )
