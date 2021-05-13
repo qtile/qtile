@@ -52,6 +52,7 @@ class Output(HasListeners):
         self.core = core
         self.renderer = core.renderer
         self.wlr_output = wlr_output
+        wlr_output.data = self
         self.output_layout = self.core.output_layout
         self.damage: OutputDamage = OutputDamage(wlr_output)
         self.wallpaper = None

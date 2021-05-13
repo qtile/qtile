@@ -25,8 +25,10 @@ import typing
 
 from wlroots import ffi
 from wlroots.util.edges import Edges
+from wlroots.wlr_types import Box
 from wlroots.wlr_types.layer_shell_v1 import LayerSurfaceV1
 from wlroots.wlr_types.xdg_shell import (
+    XdgPopup,
     XdgSurface,
     XdgTopLevelSetFullscreenEvent,
 )
@@ -41,6 +43,7 @@ if typing.TYPE_CHECKING:
     from typing import Dict, List, Optional, Tuple, Union
 
     from libqtile.backend.wayland.core import Core
+    from libqtile.backend.wayland.output import Output
     from libqtile.core.manager import Qtile
 
 EDGES_TILED = Edges.TOP | Edges.BOTTOM | Edges.LEFT | Edges.RIGHT
@@ -65,6 +68,7 @@ class Window(base.Window, HasListeners):
         self.core = core
         self.qtile = qtile
         self.surface = surface
+        self.popups: List[XdgPopupWindow] = []
         self._wid = wid
         self._group = 0
         self.mapped = False
@@ -84,6 +88,7 @@ class Window(base.Window, HasListeners):
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
+        self.add_listener(surface.new_popup_event, self._on_new_popup)
         self.add_listener(surface.toplevel.request_fullscreen_event, self._on_request_fullscreen)
         self.add_listener(surface.surface.commit_event, self._on_commit)
 
@@ -110,12 +115,12 @@ class Window(base.Window, HasListeners):
     def group(self, index):
         self._group = index
 
-    def _on_map(self, _listener, data):
+    def _on_map(self, _listener, _data):
         logger.debug("Signal: window map")
         self.mapped = True
         self.core.focus_window(self)
 
-    def _on_unmap(self, _listener, data):
+    def _on_unmap(self, _listener, _data):
         logger.debug("Signal: window unmap")
         self.mapped = False
         self.damage()
@@ -124,18 +129,21 @@ class Window(base.Window, HasListeners):
             if self.surface.surface == seat.keyboard_state.focused_surface:
                 seat.keyboard_clear_focus()
 
-    def _on_destroy(self, _listener, data):
+    def _on_destroy(self, _listener, _data):
         logger.debug("Signal: window destroy")
         self.qtile.unmanage(self.wid)
         self.finalize()
+
+    def _on_new_popup(self, _listener, xdg_popup: XdgPopup):
+        logger.debug("Signal: window new_popup")
+        self.popups.append(XdgPopupWindow(self, xdg_popup))
 
     def _on_request_fullscreen(self, _listener, event: XdgTopLevelSetFullscreenEvent):
         logger.debug("Signal: window request_fullscreen")
         if self.qtile.config.auto_fullscreen:
             self.fullscreen = event.fullscreen
 
-    def _on_commit(self, _listener, data):
-        logger.debug("Signal: window commit")
+    def _on_commit(self, _listener, _data):
         self.damage()
 
     def damage(self) -> None:
@@ -483,3 +491,60 @@ class Static(Window, base.Static):
 
 
 WindowType = typing.Union[Window, Internal, Static]
+
+
+class XdgPopupWindow(HasListeners):
+    """
+    This represents a single `struct wlr_xdg_popup` object and is owned by a single
+    parent window (of `Union[WindowType, XdgPopupWindow]`). wlroots does most of the
+    work for us, but we need to listen to certain events so that we know when to render
+    frames and we need to unconstrain the popups so they are completely visible.
+    """
+    def __init__(self, parent: Union[WindowType, XdgPopupWindow], xdg_popup: XdgPopup):
+        self.parent = parent
+        self.xdg_popup = xdg_popup
+        self.core: Core = parent.core
+        self.popups: List[XdgPopupWindow] = []
+
+        # Keep on output
+        if isinstance(parent, XdgPopupWindow):
+            # This is a nested XdgPopup
+            self.output: Output = parent.output
+            self.output_box: Box = parent.output_box
+        else:
+            # Parent is an XdgSurface; This is a first-level XdgPopup
+            box = xdg_popup.base.get_geometry()
+            lx, ly = self.core.output_layout.closest_point(parent.x + box.x, parent.y + box.y)
+            wlr_output = self.core.output_layout.output_at(lx, ly)
+            self.output = wlr_output.data
+            box = Box(*self.output.get_geometry())
+            box.x = round(box.x - lx)
+            box.y = round(box.y - ly)
+            self.output_box = box
+        xdg_popup.unconstrain_from_box(self.output_box)
+
+        self.add_listener(xdg_popup.base.map_event, self._on_map)
+        self.add_listener(xdg_popup.base.unmap_event, self._on_unmap)
+        self.add_listener(xdg_popup.base.destroy_event, self._on_destroy)
+        self.add_listener(xdg_popup.base.new_popup_event, self._on_new_popup)
+        self.add_listener(xdg_popup.base.surface.commit_event, self._on_commit)
+
+    def _on_map(self, _listener, _data):
+        logger.debug("Signal: popup map")
+        self.output.damage.add_whole()
+
+    def _on_unmap(self, _listener, _data):
+        logger.debug("Signal: popup unmap")
+        self.output.damage.add_whole()
+
+    def _on_destroy(self, _listener, _data):
+        logger.debug("Signal: popup destroy")
+        self.finalize_listeners()
+        self.output.damage.add_whole()
+
+    def _on_new_popup(self, _listener, xdg_popup: XdgPopup):
+        logger.debug("Signal: popup new_popup")
+        self.popups.append(XdgPopupWindow(self, xdg_popup))
+
+    def _on_commit(self, _listener, _data):
+        self.output.damage.add_whole()
