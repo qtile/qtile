@@ -143,6 +143,7 @@ class MonadTall(_SimpleLayoutBase):
     _left = 0
     _right = 1
     _med_ratio = 0.5
+    _reset_ratio = 0.5
 
     defaults = [
         ("border_focus", "#ff0000", "Border colour for the focused window."),
@@ -181,6 +182,8 @@ class MonadTall(_SimpleLayoutBase):
             self.single_border_width = self.border_width
         if self.single_margin is None:
             self.single_margin = self.margin
+        if self.ratio != 0.5:
+            self._reset_ratio = self.ratio
         self.relative_sizes = []
         self.screen_rect = None
 
@@ -227,7 +230,7 @@ class MonadTall(_SimpleLayoutBase):
 
     def cmd_reset(self, redraw=True):
         "Reset Layout."
-        self.ratio = self._med_ratio
+        self.ratio = self._reset_ratio = 0.5
         if self.align == self._right:
             self.align = self._left
         self.cmd_normalize(redraw)
