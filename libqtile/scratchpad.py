@@ -241,7 +241,7 @@ class ScratchPad(group._Group):
         This method is subscribed if the given command is spawned
         and unsubscribed immediately if the associated window is detected.
         """
-        client_pid = client.window.get_net_wm_pid()
+        client_pid = client.get_pid()
         if client_pid in self._spawned:
             name = self._spawned.pop(client_pid)
             if not self._spawned:
@@ -327,7 +327,7 @@ class ScratchPad(group._Group):
         """
         state = []
         for name, dd in self.dropdowns.items():
-            pid = dd.window.window.get_net_wm_pid()
+            pid = dd.window.get_pid()
             state.append((name, pid, dd.visible))
         return state
 

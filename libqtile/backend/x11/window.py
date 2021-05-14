@@ -731,6 +731,9 @@ class _Window:
             eventmask=self._window_mask
         )
 
+    def get_pid(self):
+        return self.window.get_net_wm_pid()
+
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None):
         """
