@@ -493,8 +493,11 @@ class Static(Window, base.Static):
               above=False, margin=None):
         self.x = x
         self.y = y
-        self.surface.configure(width, height)
-        self.paint_borders(bordercolor, borderwidth)
+        if self.is_layer:
+            self.surface.configure(width, height)
+        else:
+            self.surface.set_size(int(width), int(height))
+            self.paint_borders(bordercolor, borderwidth)
         self.damage()
 
 
