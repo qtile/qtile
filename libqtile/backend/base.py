@@ -194,6 +194,10 @@ class Window(_Window, metaclass=ABCMeta):
         """What window is this window a transient windor for?"""
         return None
 
+    @abstractmethod
+    def get_pid(self) -> int:
+        """Return the PID that owns the window."""
+
     def paint_borders(self, color, width) -> None:
         """Paint the window borders with the given color and width"""
 

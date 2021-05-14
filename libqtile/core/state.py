@@ -87,7 +87,7 @@ class QtileState:
         """
         Remove any windows from now non-existent scratchpad groups.
         """
-        client_pid = client.window.get_net_wm_pid()
+        client_pid = client.get_pid()
         if client_pid in self.orphans:
             self.orphans.remove(client_pid)
             client.group = None

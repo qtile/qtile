@@ -23,6 +23,7 @@ from __future__ import annotations
 import functools
 import typing
 
+import pywayland
 from wlroots import ffi
 from wlroots.util.edges import Edges
 from wlroots.wlr_types import Box
@@ -161,6 +162,13 @@ class Window(base.Window, HasListeners):
 
     def kill(self):
         self.surface.send_close()
+
+    def get_pid(self) -> int:
+        pid = pywayland.ffi.new("pid_t *")
+        pywayland.lib.wl_client_get_credentials(
+            self.surface._ptr.client.client, pid, ffi.NULL, ffi.NULL
+        )
+        return pid[0]
 
     def get_wm_class(self) -> Optional[str]:
         # TODO
