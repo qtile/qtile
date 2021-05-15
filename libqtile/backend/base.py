@@ -5,17 +5,20 @@ import enum
 import typing
 from abc import ABCMeta, abstractmethod
 
-from libqtile.command.base import CommandObject, ItemT
+from libqtile.command.base import CommandObject
 
 if typing.TYPE_CHECKING:
-    from typing import Dict, List, Optional, Tuple, Union
+    from typing import Any, Dict, List, Optional, Tuple, Union
 
     from libqtile import config
+    from libqtile.command.base import ItemT
     from libqtile.core.manager import Qtile
     from libqtile.group import _Group
 
 
 class Core(metaclass=ABCMeta):
+    painter: Any
+
     @abstractmethod
     def finalize(self):
         """Destructor/Clean up resources"""
@@ -115,7 +118,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
     def __init__(self):
         self.borderwidth: int = 0
         self.name: str = "<no name>"
-        self.reserved_space: List = None
+        self.reserved_space: Optional[Tuple[int, int, int, int]] = None
         self.defunct: bool = False
 
     @property
@@ -148,6 +151,11 @@ class _Window(CommandObject, metaclass=ABCMeta):
         """Is it OK for this window to steal focus?"""
         return True
 
+    @property
+    def urgent(self):
+        """Whether this window urgently wants focus"""
+        return False
+
     @abstractmethod
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None, respect_hints=False):
@@ -158,6 +166,10 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
     def _select(self, name, sel):
         return None
+
+    def info(self) -> Dict[str, Any]:
+        """Return information on this window."""
+        return {}
 
 
 class Window(_Window, metaclass=ABCMeta):
@@ -320,6 +332,7 @@ class Internal(_Window, metaclass=ABCMeta):
 
 
 class Static(_Window, metaclass=ABCMeta):
+    screen: config.Screen
     pass
 
 

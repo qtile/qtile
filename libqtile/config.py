@@ -264,13 +264,14 @@ class Screen(CommandObject):
     resized to fill it. If the mode is 'stretch', the image is stretched to fit all of
     it into the screen.
     """
+    group: _Group
+    previous_group: _Group
+
     def __init__(self, top: Optional[BarType] = None, bottom: Optional[BarType] = None,
                  left: Optional[BarType] = None, right: Optional[BarType] = None,
                  wallpaper: Optional[str] = None, wallpaper_mode: Optional[str] = None,
                  x: Optional[int] = None, y: Optional[int] = None, width: Optional[int] = None,
                  height: Optional[int] = None):
-        self.group: Optional[_Group] = None
-        self.previous_group: Optional[_Group] = None
 
         self.top = top
         self.bottom = bottom
@@ -282,10 +283,10 @@ class Screen(CommandObject):
         self.index = None
         # x position of upper left corner can be > 0
         # if one screen is "right" of the other
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
+        self.x = x if x is not None else 0
+        self.y = y if y is not None else 0
+        self.width = width if width is not None else 0
+        self.height = height if height is not None else 0
 
     def _configure(self, qtile, index, x, y, width, height, group):
         self.qtile = qtile
@@ -345,7 +346,7 @@ class Screen(CommandObject):
         if new_group.screen == self:
             return
 
-        if save_prev:
+        if save_prev and hasattr(self, "group"):
             self.previous_group = self.group
 
         if new_group.screen:
@@ -363,13 +364,13 @@ class Screen(CommandObject):
             s1.group = g2
             g2._set_screen(s1)
         else:
-            old_group = self.group
-            self.group = new_group
-
-            if old_group is None:
-                ctx = contextlib.nullcontext()
-            else:
+            if hasattr(self, "group"):
+                old_group = self.group
                 ctx = self.qtile.core.masked()
+            else:
+                old_group = None
+                ctx = contextlib.nullcontext()
+            self.group = new_group
             with ctx:
                 # display clients of the new group and then hide from old group
                 # to remove the screen flickering
@@ -386,7 +387,7 @@ class Screen(CommandObject):
 
     def toggle_group(self, group=None):
         """Switch to the selected group or to the previously active one"""
-        if group in (self.group, None):
+        if group in (self.group, None) and hasattr(self, "previous_group"):
             group = self.previous_group
         self.set_group(group)
 

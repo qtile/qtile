@@ -1109,7 +1109,9 @@ class Static(_Window, base.Static):
                 self.screen.y,
                 x_screen_dimensions.height - self.screen.y - self.screen.height
             ]
-            self.reserved_space = [strut[i] - empty if strut[i] else 0 for i, empty in enumerate(empty_space)]
+            self.reserved_space = tuple(
+                strut[i] - empty if strut[i] else 0 for i, empty in enumerate(empty_space)
+            )
 
             self.qtile.reserve_space(self.reserved_space, self.screen)
 

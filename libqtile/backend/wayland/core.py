@@ -248,7 +248,7 @@ class Core(base.Core, wlrq.HasListeners):
         )
 
         state = self.seat.keyboard.modifier
-        button = wlrq.buttons_inv.get(event.button)
+        button = wlrq.buttons_inv[event.button]
         if event.button_state == input_device.ButtonState.PRESSED:
             self.qtile.process_button_click(button, state, self.cursor.x, self.cursor.y, event)
         else:

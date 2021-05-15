@@ -70,7 +70,7 @@ class CommandObject(metaclass=abc.ABCMeta):
 
         Raises SelectError if the object does not exist.
         """
-        obj = self
+        obj: CommandObject = self
         for name, selector in selectors:
             root, items = obj.items(name)
             # if non-root object and no selector given
@@ -83,9 +83,10 @@ class CommandObject(metaclass=abc.ABCMeta):
             if items is not None and selector and selector not in items:
                 raise SelectError("", name, selectors)
 
-            obj = obj._select(name, selector)
-            if obj is None:
+            maybe_obj = obj._select(name, selector)
+            if maybe_obj is None:
                 raise SelectError("", name, selectors)
+            obj = maybe_obj
         return obj
 
     def items(self, name: str) -> Tuple[bool, Optional[List[Union[str, int]]]]:
@@ -115,7 +116,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def _select(self, name: str, sel: Optional[Union[str, int]]) -> CommandObject:
+    def _select(self, name: str, sel: Optional[Union[str, int]]) -> Optional[CommandObject]:
         """Select the given item of the given item class
 
         This method is called with the following guarantees:

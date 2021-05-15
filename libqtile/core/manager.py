@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import asyncio
 import io
 import logging
@@ -28,13 +30,18 @@ import shutil
 import signal
 import subprocess
 import tempfile
-from typing import Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 import libqtile
 from libqtile import confreader, hook, ipc, utils
 from libqtile.backend import base
 from libqtile.command import interface
-from libqtile.command.base import CommandError, CommandException, CommandObject
+from libqtile.command.base import (
+    CommandError,
+    CommandException,
+    CommandObject,
+    ItemT,
+)
 from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import IPCCommandServer, QtileCommandInterface
 from libqtile.config import Click, Drag, Key, KeyChord, Match, Rule
@@ -51,18 +58,32 @@ from libqtile.scratchpad import ScratchPad
 from libqtile.utils import get_cache_dir, send_notification
 from libqtile.widget.base import _Widget
 
+if TYPE_CHECKING:
+    from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
+    from typing_extensions import Literal
+
+    from libqtile.layout.base import Layout
+
 
 class Qtile(CommandObject):
     """This object is the `root` of the command graph"""
+
+    # These are assigned values in _configure
+    current_screen: Screen
+    dgroups: DGroups
+    _eventloop: asyncio.AbstractEventLoop
+
     def __init__(
         self,
-        kore,
-        config,
-        no_spawn=False,
-        state=None,
+        kore: base.Core,
+        config,  # mypy doesn't like the config's dynamic attributes
+        no_spawn: bool = False,
+        state: Optional[str] = None,
         socket_path: Optional[str] = None,
     ):
         self.core = kore
+        self.config = config
         self.no_spawn = no_spawn
         self._state = state
         self.socket_path = socket_path
@@ -74,24 +95,20 @@ class Qtile(CommandObject):
         self.widgets_map: Dict[str, _Widget] = {}
         self.groups_map: Dict[str, _Group] = {}
         self.groups: List[_Group] = []
-        self.dgroups: Optional[DGroups] = None
 
         self.keys_map: Dict[Tuple[int, int], Union[Key, KeyChord]] = {}
         self.chord_stack: List[KeyChord] = []
 
-        self.current_screen: Optional[Screen] = None
         self.screens: List[Screen] = []
 
         libqtile.init(self)
 
-        self._eventloop: Optional[asyncio.AbstractEventLoop] = None
         self._stopped_event: Optional[asyncio.Event] = None
 
         self.server = IPCCommandServer(self)
-        self.config = config
         self.load_config()
 
-    def load_config(self):
+    def load_config(self) -> None:
         try:
             self.config.load()
             self.config.validate()
@@ -99,11 +116,11 @@ class Qtile(CommandObject):
             logger.exception('Error while reading config file (%s)', e)
             self.config = confreader.Config()
             from libqtile.widget import TextBox
-            widgets = self.config.screens[0].bottom.widgets
+            widgets = self.config.screens[0].bottom.widgets  # type: ignore
             widgets.insert(0, TextBox('Config Err!'))
 
         if hasattr(self.core, "wmname"):
-            self.core.wmname = getattr(self.config, "wmname", "qtile")
+            self.core.wmname = getattr(self.config, "wmname", "qtile")  # type: ignore
 
         self.dgroups = DGroups(self, self.config.groups, self.config.dgroups_key_binder)
 
@@ -128,13 +145,13 @@ class Qtile(CommandObject):
 
         self.config.mouse += (Click([], "Button1", focus="after"),)
 
-    def dump_state(self, buf):
+    def dump_state(self, buf) -> None:
         try:
             pickle.dump(QtileState(self), buf, protocol=0)
         except:  # noqa: E722
             logger.exception('Unable to pickle qtile state')
 
-    def _configure(self):
+    def _configure(self) -> None:
         """
         This is the part of init that needs to happen after the event loop is
         fully set up. asyncio is required to listen and respond to backend
@@ -217,13 +234,13 @@ class Qtile(CommandObject):
             self.finalize()
             self.core.remove_listener()
 
-    def stop(self):
+    def stop(self) -> None:
         hook.fire("shutdown")
         lifecycle.behavior = lifecycle.behavior.TERMINATE
         self.core.graceful_shutdown()
         self._stop()
 
-    def restart(self):
+    def restart(self) -> None:
         hook.fire("restart")
         lifecycle.behavior = lifecycle.behavior.RESTART
         state_file = os.path.join(tempfile.gettempdir(), 'qtile-state')
@@ -232,12 +249,12 @@ class Qtile(CommandObject):
         lifecycle.state_file = state_file
         self._stop()
 
-    def _stop(self):
+    def _stop(self) -> None:
         logger.debug('Stopping qtile')
         if self._stopped_event is not None:
             self._stopped_event.set()
 
-    def finalize(self):
+    def finalize(self) -> None:
         try:
             for widget in self.widgets_map.values():
                 widget.finalize()
@@ -279,7 +296,7 @@ class Qtile(CommandObject):
             else:
                 scr = config[i]
 
-            if not self.current_screen:
+            if not hasattr(self, "current_screen"):
                 self.current_screen = scr
 
             if len(self.groups) < i + 1:
@@ -299,7 +316,7 @@ class Qtile(CommandObject):
 
         self.screens = screens
 
-    def cmd_reconfigure_screens(self, ev=None):
+    def cmd_reconfigure_screens(self, ev: Any = None) -> None:
         """
         This can be used to set up screens again during run time. Intended usage is to
         be called when the screen_change hook is fired, responding to changes in
@@ -316,9 +333,10 @@ class Qtile(CommandObject):
                 else:
                     group.hide()
 
-    def paint_screen(self, screen, image_path, mode=None):
-        if hasattr(self.core, "painter"):
-            self.core.painter.paint(screen, image_path, mode)
+    def paint_screen(
+        self, screen: Screen, image_path: str, mode: Optional[str] = None
+    ) -> None:
+        self.core.painter.paint(screen, image_path, mode)
 
     def process_key_event(self, keysym: int, mask: int) -> None:
         key = self.keys_map.get((keysym, mask), None)
@@ -364,10 +382,10 @@ class Qtile(CommandObject):
         self.core.ungrab_keys()
         self.keys_map.clear()
 
-    def grab_chord(self, chord) -> None:
+    def grab_chord(self, chord: KeyChord) -> None:
         self.chord_stack.append(chord)
         if self.chord_stack:
-            hook.fire("enter_chord", self.chord_stack[-1].mode)
+            hook.fire("enter_chord", chord.mode)
 
         self.ungrab_keys()
         for key in chord.submappings:
@@ -426,7 +444,13 @@ class Qtile(CommandObject):
 
         self.core.update_desktops(self.groups, index)
 
-    def add_group(self, name, layout=None, layouts=None, label=None):
+    def add_group(
+        self,
+        name: str,
+        layout: Optional[str] = None,
+        layouts: Optional[List[Layout]] = None,
+        label: Optional[str] = None,
+    ) -> bool:
         if name not in self.groups_map.keys():
             g = _Group(name, layout, label=label)
             self.groups.append(g)
@@ -441,13 +465,13 @@ class Qtile(CommandObject):
             return True
         return False
 
-    def delete_group(self, name):
+    def delete_group(self, name: str) -> None:
         # one group per screen is needed
         if len(self.groups) == len(self.screens):
             raise ValueError("Can't delete all groups.")
         if name in self.groups_map.keys():
             group = self.groups_map[name]
-            if group.screen and group.screen.previous_group:
+            if group.screen and hasattr(group.screen, "previous_group"):
                 target = group.screen.previous_group
             else:
                 target = group.get_previous_group()
@@ -466,7 +490,7 @@ class Qtile(CommandObject):
             hook.fire("changegroup")
             self.update_desktops()
 
-    def register_widget(self, w):
+    def register_widget(self, w: _Widget) -> None:
         """Register a bar widget
 
         If a widget with the same name already exists, this will silently
@@ -483,18 +507,25 @@ class Qtile(CommandObject):
             self.widgets_map[w.name] = w
 
     @property
-    def current_layout(self):
+    def current_layout(self) -> Layout:
         return self.current_group.layout
 
     @property
-    def current_group(self):
+    def current_group(self) -> _Group:
         return self.current_screen.group
 
     @property
-    def current_window(self):
+    def current_window(self) -> Optional[base.Window]:
         return self.current_screen.group.current_window
 
-    def reserve_space(self, reserved_space, screen):
+    def reserve_space(
+        self,
+        reserved_space: Tuple[int, int, int, int],  # [left, right, top, bottom]
+        screen: Screen,
+    ) -> None:
+        """
+        Reserve some space at the edge(s) of a screen.
+        """
         from libqtile.bar import Bar, Gap
 
         for i, pos in enumerate(["left", "right", "top", "bottom"]):
@@ -510,21 +541,29 @@ class Qtile(CommandObject):
                     setattr(screen, pos, Gap(reserved_space[i]))
         screen.resize()
 
-    def free_reserved_space(self, reserved_space, screen):
-        self.reserve_space([-i for i in reserved_space], screen)
+    def free_reserved_space(
+        self,
+        reserved_space: Tuple[int, int, int, int],  # [left, right, top, bottom]
+        screen: Screen,
+    ):
+        """
+        Free up space that has previously been reserved at the edge(s) of a screen.
+        """
+        # mypy can't work out that the new tuple is also length 4 (see mypy #7509)
+        self.reserve_space(tuple(-i for i in reserved_space), screen)  # type: ignore
 
     def map_window(self, win: base.WindowType) -> None:
-        c = self.manage(win)
-        if c and (not c.group or not c.group.screen):
+        self.manage(win)
+        if not win.group or not win.group.screen:
             return
         win.unhide()
 
-    def manage(self, win: base.WindowType):
+    def manage(self, win: base.WindowType) -> None:
         if isinstance(win, base.Internal):
             self.windows_map[win.wid] = win
 
         if win.wid in self.windows_map:
-            return self.windows_map[win.wid]
+            return
 
         hook.fire("client_new", win)
 
@@ -538,20 +577,19 @@ class Qtile(CommandObject):
             self.current_screen.group.add(win, focus=win.can_steal_focus)
         self.core.update_client_list(self.windows_map)
         hook.fire("client_managed", win)
-        return win
 
-    def unmanage(self, win):
-        c = self.windows_map.get(win)
+    def unmanage(self, wid: int) -> None:
+        c = self.windows_map.get(wid)
         if c:
             hook.fire("client_killed", c)
             if isinstance(c, base.Static) and c.reserved_space:
                 self.free_reserved_space(c.reserved_space, c.screen)
             if getattr(c, "group", None):
                 c.group.remove(c)
-            del self.windows_map[win]
+            del self.windows_map[wid]
             self.core.update_client_list(self.windows_map)
 
-    def find_screen(self, x, y):
+    def find_screen(self, x: int, y: int) -> Optional[Screen]:
         """Find a screen based on the x and y offset"""
         result = []
         for i in self.screens:
@@ -562,7 +600,7 @@ class Qtile(CommandObject):
             return result[0]
         return None
 
-    def find_closest_screen(self, x, y):
+    def find_closest_screen(self, x: int, y: int) -> Screen:
         """
         If find_screen returns None, then this basically extends a
         screen vertically and horizontally and see if x,y lies in the
@@ -590,7 +628,9 @@ class Qtile(CommandObject):
             return y_match[0]
         return self._find_closest_closest(x, y, x_match + y_match)
 
-    def _find_closest_closest(self, x, y, candidate_screens):
+    def _find_closest_closest(
+        self, x: int, y: int, candidate_screens: List[Screen]
+    ) -> Screen:
         """
         if find_closest_screen can't determine one, we've got multiple
         screens, so figure out who is closer.  We'll calculate using
@@ -600,8 +640,7 @@ class Qtile(CommandObject):
         screens (shouldn't happen but we don't do anything about it
         here other than returning None)
         """
-        closest_distance = None
-        closest_screen = None
+        closest_distance: Optional[float] = None  # because mypy only considers first value
         if not candidate_screens:
             # try all screens
             candidate_screens = self.screens
@@ -611,6 +650,7 @@ class Qtile(CommandObject):
             s for s in candidate_screens
             if x < s.x + s.width and y < s.y + s.height
         ]
+        closest_screen = candidate_screens[0]
         for s in candidate_screens:
             middle_x = s.x + s.width / 2
             middle_y = s.y + s.height / 2
@@ -620,7 +660,9 @@ class Qtile(CommandObject):
                 closest_screen = s
         return closest_screen
 
-    def process_button_click(self, button_code, modmask, x, y, event) -> None:
+    def process_button_click(
+        self, button_code: int, modmask: int, x: int, y: int, event: Any,
+    ) -> None:
         for m in self.mouse_map.get(button_code, []):
             if not m.modmask == modmask:
                 continue
@@ -655,14 +697,14 @@ class Qtile(CommandObject):
             if m.focus == "after":
                 self.core.focus_by_click(event)
 
-    def process_button_release(self, button_code, modmask):
+    def process_button_release(self, button_code: int, modmask: int) -> None:
         for m in self.mouse_map.get(button_code, []):
             if isinstance(m, Drag):
                 self._drag = None
                 self.core.ungrab_pointer()
                 return
 
-    def process_button_motion(self, x, y):
+    def process_button_motion(self, x: int, y: int) -> None:
         if self._drag is None:
             return
         ox, oy, rx, ry, cmd = self._drag
@@ -682,12 +724,12 @@ class Qtile(CommandObject):
                             "Mouse command error %s: %s" % (i.name, val)
                         )
 
-    def warp_to_screen(self):
+    def warp_to_screen(self) -> None:
         if self.current_screen:
             scr = self.current_screen
             self.core.warp_pointer(scr.x + scr.dwidth // 2, scr.y + scr.dheight // 2)
 
-    def focus_screen(self, n, warp=True):
+    def focus_screen(self, n: int, warp: bool = True) -> None:
         """Have Qtile move to screen and put focus there"""
         if n >= len(self.screens):
             return
@@ -701,14 +743,14 @@ class Qtile(CommandObject):
             if self.current_window is None and warp:
                 self.warp_to_screen()
 
-    def move_to_group(self, group):
+    def move_to_group(self, group: str) -> None:
         """Create a group if it doesn't exist and move
         the current window there"""
         if self.current_window and group:
             self.add_group(group)
             self.current_window.togroup(group)
 
-    def _items(self, name):
+    def _items(self, name: str) -> ItemT:
         if name == "group":
             return True, list(self.groups_map.keys())
         elif name == "layout":
@@ -721,97 +763,99 @@ class Qtile(CommandObject):
             return True, list(self.windows_map.keys())
         elif name == "screen":
             return True, list(range(len(self.screens)))
+        return None
 
-    def _select(self, name, sel):
+    def _select(self, name: str, sel: Optional[Union[str, int]]) -> Optional[CommandObject]:
         if name == "group":
             if sel is None:
                 return self.current_group
             else:
-                return self.groups_map.get(sel)
+                return self.groups_map.get(sel)  # type: ignore
         elif name == "layout":
             if sel is None:
                 return self.current_group.layout
             else:
                 return utils.lget(self.current_group.layouts, sel)
         elif name == "widget":
-            return self.widgets_map.get(sel)
+            return self.widgets_map.get(sel)  # type: ignore
         elif name == "bar":
-            return getattr(self.current_screen, sel)
+            return getattr(self.current_screen, sel)  # type: ignore
         elif name == "window":
             if sel is None:
                 return self.current_window
             else:
-                return self.windows_map.get(sel)
+                return self.windows_map.get(sel)  # type: ignore
         elif name == "screen":
             if sel is None:
                 return self.current_screen
             else:
                 return utils.lget(self.screens, sel)
+        return None
 
-    def call_soon(self, func, *args):
-        """ A wrapper for the event loop's call_soon which also flushes the X
-        event queue to the server after func is called. """
+    def call_soon(self, func: Callable, *args) -> asyncio.Handle:
+        """ A wrapper for the event loop's call_soon which also flushes the core's
+        event queue after func is called. """
         def f():
             func(*args)
             self.core.flush()
         return self._eventloop.call_soon(f)
 
-    def call_soon_threadsafe(self, func, *args):
+    def call_soon_threadsafe(self, func: Callable, *args) -> asyncio.Handle:
         """ Another event loop proxy, see `call_soon`. """
         def f():
             func(*args)
             self.core.flush()
         return self._eventloop.call_soon_threadsafe(f)
 
-    def call_later(self, delay, func, *args):
+    def call_later(self, delay, func: Callable, *args) -> asyncio.TimerHandle:
         """ Another event loop proxy, see `call_soon`. """
         def f():
             func(*args)
             self.core.flush()
         return self._eventloop.call_later(delay, f)
 
-    def run_in_executor(self, func, *args):
+    def run_in_executor(self, func: Callable, *args):
         """ A wrapper for running a function in the event loop's default
         executor. """
         return self._eventloop.run_in_executor(None, func, *args)
 
-    def cmd_debug(self):
+    def cmd_debug(self) -> None:
         """Set log level to DEBUG"""
         logger.setLevel(logging.DEBUG)
         logger.debug('Switching to DEBUG threshold')
 
-    def cmd_info(self):
+    def cmd_info(self) -> None:
         """Set log level to INFO"""
         logger.setLevel(logging.INFO)
         logger.info('Switching to INFO threshold')
 
-    def cmd_warning(self):
+    def cmd_warning(self) -> None:
         """Set log level to WARNING"""
         logger.setLevel(logging.WARNING)
         logger.warning('Switching to WARNING threshold')
 
-    def cmd_error(self):
+    def cmd_error(self) -> None:
         """Set log level to ERROR"""
         logger.setLevel(logging.ERROR)
         logger.error('Switching to ERROR threshold')
 
-    def cmd_critical(self):
+    def cmd_critical(self) -> None:
         """Set log level to CRITICAL"""
         logger.setLevel(logging.CRITICAL)
         logger.critical('Switching to CRITICAL threshold')
 
-    def cmd_loglevel(self):
+    def cmd_loglevel(self) -> int:
         return logger.level
 
-    def cmd_loglevelname(self):
+    def cmd_loglevelname(self) -> str:
         return logging.getLevelName(logger.level)
 
-    def cmd_pause(self):
+    def cmd_pause(self) -> None:
         """Drops into pdb"""
         import pdb
         pdb.set_trace()
 
-    def cmd_groups(self):
+    def cmd_groups(self) -> Dict[str, Dict[str, Any]]:
         """Return a dictionary containing information for all groups
 
         Examples
@@ -821,7 +865,7 @@ class Qtile(CommandObject):
         """
         return {i.name: i.info() for i in self.groups}
 
-    def cmd_display_kb(self, *args):
+    def cmd_display_kb(self, *args) -> str:
         """Display table of key bindings"""
         class FormatTable:
             def __init__(self):
@@ -889,55 +933,57 @@ class Qtile(CommandObject):
             result.add(row)
         return str(result)
 
-    def cmd_list_widgets(self):
+    def cmd_list_widgets(self) -> List[str]:
         """List of all addressible widget names"""
         return list(self.widgets_map.keys())
 
-    def cmd_to_layout_index(self, index, group=None):
+    def cmd_to_layout_index(
+        self, index: str, name: Optional[str] = None
+    ) -> None:
         """Switch to the layout with the given index in self.layouts.
 
         Parameters
         ==========
         index :
             Index of the layout in the list of layouts.
-        group :
+        name :
             Group name. If not specified, the current group is assumed.
         """
-        if group:
-            group = self.groups_map.get(group)
+        if name is not None:
+            group = self.groups_map[name]
         else:
             group = self.current_group
         group.use_layout(index)
 
-    def cmd_next_layout(self, group=None):
+    def cmd_next_layout(self, name: Optional[str] = None) -> None:
         """Switch to the next layout.
 
         Parameters
         ==========
-        group :
+        name :
             Group name. If not specified, the current group is assumed
         """
-        if group:
-            group = self.groups_map.get(group)
+        if name is not None:
+            group = self.groups_map[name]
         else:
             group = self.current_group
         group.use_next_layout()
 
-    def cmd_prev_layout(self, group=None):
+    def cmd_prev_layout(self, name: Optional[str] = None) -> None:
         """Switch to the previous layout.
 
         Parameters
         ==========
-        group :
+        name :
             Group name. If not specified, the current group is assumed
         """
-        if group:
-            group = self.groups_map.get(group)
+        if name is not None:
+            group = self.groups_map[name]
         else:
             group = self.current_group
         group.use_previous_layout()
 
-    def cmd_screens(self):
+    def cmd_screens(self) -> List[Dict[str, Any]]:
         """Return a list of dictionaries providing information on all screens"""
         lst = [dict(
             index=i.index,
@@ -955,7 +1001,7 @@ class Qtile(CommandObject):
         ) for i in self.screens]
         return lst
 
-    def cmd_simulate_keypress(self, modifiers, key):
+    def cmd_simulate_keypress(self, modifiers, key) -> None:
         """Simulates a keypress on the focused window.
 
         Parameters
@@ -975,7 +1021,7 @@ class Qtile(CommandObject):
         except utils.QtileError as e:
             raise CommandError(str(e))
 
-    def cmd_validate_config(self):
+    def cmd_validate_config(self) -> None:
         try:
             self.config.load()
         except Exception as error:
@@ -983,7 +1029,7 @@ class Qtile(CommandObject):
         else:
             send_notification("Configuration check", "No error found!")
 
-    def cmd_restart(self):
+    def cmd_restart(self) -> None:
         """Restart qtile"""
         try:
             self.config.load()
@@ -993,7 +1039,7 @@ class Qtile(CommandObject):
             return
         self.restart()
 
-    def cmd_spawn(self, cmd, shell=False):
+    def cmd_spawn(self, cmd: Union[str, List[str]], shell: bool = False) -> int:
         """Run cmd, in a shell or not (default).
 
         cmd may be a string or a list (similar to subprocess.Popen).
@@ -1089,22 +1135,21 @@ class Qtile(CommandObject):
             os.waitpid(pid, 0)
 
             # 1024 bytes should be enough for any pid. :)
-            pid = os.read(r, 1024)
+            pid = int(os.read(r, 1024))
             os.close(r)
-            return int(pid)
+            return pid
 
-    def cmd_status(self):
+    def cmd_status(self) -> Literal["OK"]:
         """Return "OK" if Qtile is running"""
         return "OK"
 
-    def cmd_sync(self):
+    def cmd_sync(self) -> None:
         """
-        Sync the event queue (with the X server, or flush the wayland event queue.
-        Should only be used for development.
+        Sync the backend's event queue. Should only be used for development.
         """
         self.core.flush()
 
-    def cmd_to_screen(self, n):
+    def cmd_to_screen(self, n: int) -> None:
         """Warp focus to screen n, where n is a 0-based screen number
 
         Examples
@@ -1112,49 +1157,49 @@ class Qtile(CommandObject):
 
             to_screen(0)
         """
-        return self.focus_screen(n)
+        self.focus_screen(n)
 
-    def cmd_next_screen(self):
+    def cmd_next_screen(self) -> None:
         """Move to next screen"""
-        return self.focus_screen(
+        self.focus_screen(
             (self.screens.index(self.current_screen) + 1) % len(self.screens)
         )
 
-    def cmd_prev_screen(self):
+    def cmd_prev_screen(self) -> None:
         """Move to the previous screen"""
-        return self.focus_screen(
+        self.focus_screen(
             (self.screens.index(self.current_screen) - 1) % len(self.screens)
         )
 
-    def cmd_windows(self):
+    def cmd_windows(self) -> List[Dict[str, Any]]:
         """Return info for each client window"""
         return [
             i.info() for i in self.windows_map.values()
             if not isinstance(i, base.Internal)
         ]
 
-    def cmd_internal_windows(self):
+    def cmd_internal_windows(self) -> List[Dict[str, Any]]:
         """Return info for each internal window (bars, for example)"""
         return [
             i.info() for i in self.windows_map.values()
             if isinstance(i, base.Internal)
         ]
 
-    def cmd_qtile_info(self):
+    def cmd_qtile_info(self) -> Dict:
         """Returns a dictionary of info on the Qtile instance"""
         return {}
 
-    def cmd_shutdown(self):
+    def cmd_shutdown(self) -> None:
         """Quit Qtile"""
         self.stop()
 
-    def cmd_switch_groups(self, groupa, groupb):
-        """Switch position of groupa to groupb"""
-        if groupa not in self.groups_map or groupb not in self.groups_map:
+    def cmd_switch_groups(self, namea: str, nameb: str) -> None:
+        """Switch position of two groups by name"""
+        if namea not in self.groups_map or nameb not in self.groups_map:
             return
 
-        indexa = self.groups.index(self.groups_map[groupa])
-        indexb = self.groups.index(self.groups_map[groupb])
+        indexa = self.groups.index(self.groups_map[namea])
+        indexb = self.groups.index(self.groups_map[nameb])
 
         self.groups[indexa], self.groups[indexb] = \
             self.groups[indexb], self.groups[indexa]
@@ -1165,14 +1210,14 @@ class Qtile(CommandObject):
             for w in group.windows:
                 w.group = group
 
-    def find_window(self, wid):
+    def find_window(self, wid: int) -> None:
         window = self.windows_map.get(wid)
         if window:
             if not window.group.screen:
                 self.current_screen.set_group(window.group)
             window.group.focus(window, False)
 
-    def cmd_findwindow(self, prompt="window", widget="prompt"):
+    def cmd_findwindow(self, prompt: str = "window", widget: str = "prompt") -> None:
         """Launch prompt widget to find a window of the given name
 
         Parameters
@@ -1194,7 +1239,7 @@ class Qtile(CommandObject):
             strict_completer=True
         )
 
-    def cmd_next_urgent(self):
+    def cmd_next_urgent(self) -> None:
         """Focus next window with urgent hint"""
         try:
             nxt = [w for w in self.windows_map.values() if w.urgent][0]
@@ -1203,7 +1248,7 @@ class Qtile(CommandObject):
         except IndexError:
             pass  # no window had urgent set
 
-    def cmd_togroup(self, prompt="group", widget="prompt"):
+    def cmd_togroup(self, prompt: str = "group", widget: str = "prompt") -> None:
         """Launch prompt widget to move current window to a given group
 
         Parameters
@@ -1224,7 +1269,7 @@ class Qtile(CommandObject):
 
         mb.start_input(prompt, self.move_to_group, "group", strict_completer=True)
 
-    def cmd_switchgroup(self, prompt="group", widget="prompt"):
+    def cmd_switchgroup(self, prompt: str = "group", widget: str = "prompt") -> None:
         """Launch prompt widget to switch to a given group to the current screen
 
         Parameters
@@ -1248,7 +1293,7 @@ class Qtile(CommandObject):
 
         mb.start_input(prompt, f, "group", strict_completer=True)
 
-    def cmd_labelgroup(self, prompt="label", widget="prompt"):
+    def cmd_labelgroup(self, prompt: str = "label", widget: str = "prompt") -> None:
         """Launch prompt widget to label the current group
 
         Parameters
@@ -1267,8 +1312,14 @@ class Qtile(CommandObject):
         except KeyError:
             logger.error("No widget named '{0:s}' present.".format(widget))
 
-    def cmd_spawncmd(self, prompt="spawn", widget="prompt",
-                     command="%s", complete="cmd", shell=True):
+    def cmd_spawncmd(
+        self,
+        prompt: str = "spawn",
+        widget: str = "prompt",
+        command: str = "%s",
+        complete: str = "cmd",
+        shell: bool = True,
+    ) -> None:
         """Spawn a command using a prompt widget, with tab-completion.
 
         Parameters
@@ -1291,8 +1342,12 @@ class Qtile(CommandObject):
         except KeyError:
             logger.error("No widget named '{0:s}' present.".format(widget))
 
-    def cmd_qtilecmd(self, prompt="command",
-                     widget="prompt", messenger="xmessage") -> None:
+    def cmd_qtilecmd(
+        self,
+        prompt: str = "command",
+        widget: str = "prompt",
+        messenger: str = "xmessage",
+    ) -> None:
         """Execute a Qtile command using the client syntax
 
         Tab completion aids navigation of the command tree
@@ -1338,15 +1393,26 @@ class Qtile(CommandObject):
             return
         mb.start_input(prompt, f, "qshell")
 
-    def cmd_addgroup(self, group, label=None, layout=None, layouts=None):
+    def cmd_addgroup(
+        self,
+        group: str,
+        label: Optional[str] = None,
+        layout: Optional[str] = None,
+        layouts: Optional[List[Layout]] = None,
+    ) -> bool:
         """Add a group with the given name"""
         return self.add_group(name=group, layout=layout, layouts=layouts, label=label)
 
-    def cmd_delgroup(self, group):
+    def cmd_delgroup(self, group: str) -> None:
         """Delete a group with the given name"""
-        return self.delete_group(group)
+        self.delete_group(group)
 
-    def cmd_add_rule(self, match_args, rule_args, min_priorty=False):
+    def cmd_add_rule(
+        self,
+        match_args: Dict[str, Any],
+        rule_args: Dict[str, Any],
+        min_priorty: bool = False,
+    ):
         """Add a dgroup rule, returns rule_id needed to remove it
 
         Parameters
@@ -1366,11 +1432,14 @@ class Qtile(CommandObject):
         rule = Rule([match], **rule_args)
         return self.dgroups.add_rule(rule, min_priorty)
 
-    def cmd_remove_rule(self, rule_id):
+    def cmd_remove_rule(self, rule_id: int) -> None:
         """Remove a dgroup rule by rule_id"""
         self.dgroups.remove_rule(rule_id)
 
-    def cmd_hide_show_bar(self, position="all"):
+    def cmd_hide_show_bar(
+        self,
+        position: Literal["top", "bottom", "left", "right", "all"] = "all",
+    ) -> None:
         """Toggle visibility of a given bar
 
         Parameters
@@ -1401,7 +1470,7 @@ class Qtile(CommandObject):
         else:
             logger.error("Invalid position value:{0:s}".format(position))
 
-    def cmd_get_state(self):
+    def cmd_get_state(self) -> str:
         """Get pickled state for restarting qtile"""
         buf = io.BytesIO()
         self.dump_state(buf)
@@ -1410,7 +1479,7 @@ class Qtile(CommandObject):
         logger.debug(''.join(state.split('\n')))
         return state
 
-    def cmd_tracemalloc_toggle(self):
+    def cmd_tracemalloc_toggle(self) -> None:
         """Toggle tracemalloc status
 
         Running tracemalloc is required for `qtile top`
@@ -1422,25 +1491,25 @@ class Qtile(CommandObject):
         else:
             tracemalloc.stop()
 
-    def cmd_tracemalloc_dump(self):
+    def cmd_tracemalloc_dump(self) -> Tuple[bool, str]:
         """Dump tracemalloc snapshot"""
         import tracemalloc
 
         if not tracemalloc.is_tracing():
-            return [False, "Trace not started"]
+            return False, "Trace not started"
         cache_directory = get_cache_dir()
         malloc_dump = os.path.join(cache_directory, "qtile_tracemalloc.dump")
         tracemalloc.take_snapshot().dump(malloc_dump)
-        return [True, malloc_dump]
+        return True, malloc_dump
 
-    def cmd_get_test_data(self):
+    def cmd_get_test_data(self) -> Any:
         """
         Returns any content arbitrarily set in the self.test_data attribute.
         Useful in tests.
         """
-        return self.test_data
+        return self.test_data  # type: ignore
 
-    def cmd_run_extension(self, extension):
+    def cmd_run_extension(self, extension: _Extension) -> None:
         """Run extensions"""
         extension.run()
 

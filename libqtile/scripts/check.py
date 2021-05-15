@@ -38,7 +38,7 @@ def type_check_config_vars(tempdir, config_name):
     # write a .pyi file to tempdir:
     f = open(path.join(tempdir, config_name+".pyi"), "w")
     f.write(confreader.config_pyi_header)
-    for (name, type_) in confreader.Config.settings_keys:
+    for name, type_ in confreader.Config.__annotations__.items():
         f.write(name)
         f.write(": ")
         f.write(type_)

@@ -480,7 +480,6 @@ class Static(Window, base.Static):
         self._group = 0
         self.surface = surface
         self._wid = wid
-        self.screen = None
         self._mapped: bool = False
         self.x = 0
         self.y = 0
