@@ -803,3 +803,10 @@ class Core(base.Core):
             if len(pids) == 0:
                 break
             time.sleep(0.1)
+
+    def get_mouse_position(self) -> Tuple[int, int]:
+        """
+        Get mouse coordinates.
+        """
+        reply = self.conn.conn.core.QueryPointer(self._root.wid).reply()
+        return reply.root_x, reply.root_y
