@@ -191,10 +191,6 @@ class Qtile(CommandObject):
 
         return socket_path
 
-    @property
-    def selection(self):
-        return self.core._selection
-
     def loop(self) -> None:
         asyncio.run(self.async_loop())
 
