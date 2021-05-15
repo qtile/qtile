@@ -720,7 +720,7 @@ class Qtile(CommandObject):
         elif name == "bar":
             return False, [x.position for x in self.current_screen.gaps]
         elif name == "window":
-            return True, self.list_wids()
+            return True, list(self.windows_map.keys())
         elif name == "screen":
             return True, list(range(len(self.screens)))
 
@@ -743,21 +743,12 @@ class Qtile(CommandObject):
             if sel is None:
                 return self.current_window
             else:
-                return self.client_from_wid(sel)
+                return self.windows_map.get(sel)
         elif name == "screen":
             if sel is None:
                 return self.current_screen
             else:
                 return utils.lget(self.screens, sel)
-
-    def list_wids(self):
-        return [i.wid for i in self.windows_map.values()]
-
-    def client_from_wid(self, wid):
-        for i in self.windows_map.values():
-            if i.wid == wid:
-                return i
-        return None
 
     def call_soon(self, func, *args):
         """ A wrapper for the event loop's call_soon which also flushes the X
