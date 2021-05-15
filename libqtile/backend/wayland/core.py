@@ -78,6 +78,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.qtile: Optional[Qtile] = None
         self.desktops: int = 1
         self.current_desktop: int = 0
+        self.mapped_windows: List[window.WindowType] = []  # Ascending in Z
 
         self.display = Display()
         self.event_loop = self.display.get_event_loop()
@@ -424,17 +425,15 @@ class Core(base.Core, wlrq.HasListeners):
         cx = self.cursor.x
         cy = self.cursor.y
 
-        for win in self.qtile.windows_map.values():
-            assert isinstance(win, window.Window)  # mypy is dumb and needs this
-            if win.mapped:
-                surface, sx, sy = win.surface.surface_at(cx - win.x, cy - win.y)
-                if surface:
-                    return win, surface, sx, sy
-                if win.borderwidth:
-                    bw = win.borderwidth
-                    if win.x - bw <= cx and win.y - bw <= cy:
-                        if cx <= win.x + win.width + bw and cy <= win.y + win.height + bw:
-                            return win, win.surface.surface, 0, 0
+        for win in reversed(self.mapped_windows):
+            surface, sx, sy = win.surface.surface_at(cx - win.x, cy - win.y)
+            if surface:
+                return win, surface, sx, sy
+            if win.borderwidth:
+                bw = win.borderwidth
+                if win.x - bw <= cx and win.y - bw <= cy:
+                    if cx <= win.x + win.width + bw and cy <= win.y + win.height + bw:
+                        return win, win.surface.surface, 0, 0
         return None
 
     def update_desktops(self, groups: List[group._Group], index: int) -> None:
