@@ -69,7 +69,6 @@ class Qtile(CommandObject):
 
         self._drag: Optional[Tuple] = None
         self.mouse_map: Dict[int, List[Union[Click, Drag]]] = {}
-        self.mouse_position = (0, 0)
 
         self.windows_map: Dict[int, base.WindowType] = {}
         self.widgets_map: Dict[str, _Widget] = {}
@@ -624,7 +623,6 @@ class Qtile(CommandObject):
         return closest_screen
 
     def process_button_click(self, button_code, modmask, x, y, event) -> None:
-        self.mouse_position = (x, y)
         for m in self.mouse_map.get(button_code, []):
             if not m.modmask == modmask:
                 continue
@@ -667,8 +665,6 @@ class Qtile(CommandObject):
                 return
 
     def process_button_motion(self, x, y):
-        self.mouse_position = (x, y)
-
         if self._drag is None:
             return
         ox, oy, rx, ry, cmd = self._drag
@@ -835,9 +831,6 @@ class Qtile(CommandObject):
             groups()
         """
         return {i.name: i.info() for i in self.groups}
-
-    def get_mouse_position(self):
-        return self.mouse_position
 
     def cmd_display_kb(self, *args):
         """Display table of key bindings"""

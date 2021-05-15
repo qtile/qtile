@@ -1735,10 +1735,10 @@ class Window(_Window, base.Window):
         if self.floating:
             self.tweak_float(x, y)
             return
+        curx, cury = self.qtile.core.get_mouse_position()
         for window in self.group.windows:
             if window == self or window.floating:
                 continue
-            curx, cury = self.qtile.get_mouse_position()
             if self._is_in_window(curx, cury, window):
                 clients = self.group.layout.clients
                 index1 = clients.index(self)
