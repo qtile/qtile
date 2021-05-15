@@ -267,7 +267,7 @@ class Window(base.Window, HasListeners):
             self.core.warp_pointer(self.x + self.width, self.y + self.height)
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, margin=None):
+              above=False, margin=None, respect_hints=False):
 
         # Adjust the placement to account for layout margins, if there are any.
         if margin is not None:
@@ -277,6 +277,8 @@ class Window(base.Window, HasListeners):
             y += margin[0]
             width -= margin[1] + margin[3]
             height -= margin[0] + margin[2]
+
+        # TODO: Can we get min/max size, resizing increments etc and respect them?
 
         self.x = x
         self.y = y
@@ -329,9 +331,9 @@ class Window(base.Window, HasListeners):
         if new_float_state == FloatStates.MINIMIZED:
             self.hide()
         else:
-            # TODO: Can we get min/max size, resizing increments etc and respect them?
             self.place(
-                x, y, w, h, self.borderwidth, self.bordercolor, above=True,
+                x, y, w, h,
+                self.borderwidth, self.bordercolor, above=True, respect_hints=True
             )
         if self._float_state != new_float_state:
             self._float_state = new_float_state
@@ -490,7 +492,7 @@ class Static(Window, base.Static):
                     output.damage.add_whole()
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, margin=None):
+              above=False, margin=None, respect_hints=False):
         self.x = x
         self.y = y
         if self.is_layer:

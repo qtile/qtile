@@ -143,7 +143,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
     @abstractmethod
     def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, margin=None):
+              above=False, margin=None, respect_hints=False):
         """Place the window in the given position."""
 
     def _items(self, name: str) -> ItemT:

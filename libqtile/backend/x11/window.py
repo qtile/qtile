@@ -736,7 +736,7 @@ class _Window:
         return self.window.get_net_wm_pid()
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, margin=None):
+              above=False, margin=None, respect_hints=False):
         """
         Places the window at the specified location with the given size.
 
@@ -751,6 +751,9 @@ class _Window:
         above : bool, optional
         margin : int or list, optional
             space around window as int or list of ints [N E S W]
+        above : bool, optional
+            If True, the geometry will be adjusted to respect hints provided by the
+            client.
         """
 
         # TODO: self.x/y/height/width are updated BEFORE
@@ -775,6 +778,35 @@ class _Window:
             y += margin[0]
             width -= margin[1] + margin[3]
             height -= margin[0] + margin[2]
+
+        # Optionally adjust geometry to respect client hints
+        if respect_hints:
+            flags = self.hints.get("flags", {})
+            if "PMinSize" in flags:
+                width = max(width, self.hints.get('min_width', 0))
+                height = max(height, self.hints.get('min_height', 0))
+            if "PMaxSize" in flags:
+                width = min(width, self.hints.get('max_width', 0)) or width
+                height = min(height, self.hints.get('max_height', 0)) or height
+            if "PAspect" in flags:
+                min_aspect = self.hints["min_aspect"]
+                max_aspect = self.hints["max_aspect"]
+                if width / height < min_aspect[0] / min_aspect[1]:
+                    height = width * min_aspect[1] // min_aspect[0]
+                elif width / height > max_aspect[0] / max_aspect[1]:
+                    height = width * max_aspect[1] // max_aspect[0]
+
+            if self.hints['base_width'] and self.hints['width_inc']:
+                width_adjustment = (width - self.hints['base_width']) % self.hints['width_inc']
+                width -= width_adjustment
+                if self.fullscreen:
+                    x += int(width_adjustment / 2)
+
+            if self.hints['base_height'] and self.hints['height_inc']:
+                height_adjustment = (height - self.hints['base_height']) % self.hints['height_inc']
+                height -= height_adjustment
+                if self.fullscreen:
+                    y += int(height_adjustment / 2)
 
         # save x and y float offset
         if self.group is not None and self.group.screen is not None:
@@ -1319,42 +1351,13 @@ class Window(_Window, base.Window):
         if new_float_state == FloatStates.MINIMIZED:
             self.hide()
         else:
-            width = self.width
-            height = self.height
-
-            flags = self.hints.get("flags", {})
-            if "PMinSize" in flags:
-                width = max(self.width, self.hints.get('min_width', 0))
-                height = max(self.height, self.hints.get('min_height', 0))
-            if "PMaxSize" in flags:
-                width = min(width, self.hints.get('max_width', 0)) or width
-                height = min(height, self.hints.get('max_height', 0)) or height
-            if "PAspect" in flags:
-                min_aspect = self.hints["min_aspect"]
-                max_aspect = self.hints["max_aspect"]
-                if width / height < min_aspect[0] / min_aspect[1]:
-                    height = width * min_aspect[1] // min_aspect[0]
-                elif width / height > max_aspect[0] / max_aspect[1]:
-                    height = width * max_aspect[1] // max_aspect[0]
-
-            if self.hints['base_width'] and self.hints['width_inc']:
-                width_adjustment = (width - self.hints['base_width']) % self.hints['width_inc']
-                width -= width_adjustment
-                if new_float_state == FloatStates.FULLSCREEN:
-                    self.x += int(width_adjustment / 2)
-
-            if self.hints['base_height'] and self.hints['height_inc']:
-                height_adjustment = (height - self.hints['base_height']) % self.hints['height_inc']
-                height -= height_adjustment
-                if new_float_state == FloatStates.FULLSCREEN:
-                    self.y += int(height_adjustment / 2)
-
             self.place(
                 self.x, self.y,
-                width, height,
+                self.width, self.height,
                 self.borderwidth,
                 self.bordercolor,
                 above=True,
+                respect_hints=True,
             )
         if self._float_state != new_float_state:
             self._float_state = new_float_state
