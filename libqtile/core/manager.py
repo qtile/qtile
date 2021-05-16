@@ -970,13 +970,10 @@ class Qtile(CommandObject):
         ========
             simulate_keypress(["control", "mod2"], "k")
         """
-        if hasattr(self.core, 'simulate_keypress'):
-            try:
-                self.core.simulate_keypress(modifiers, key)
-            except utils.QtileError as e:
-                raise CommandError(str(e))
-        else:
-            raise CommandError("Backend does not support simulating keypresses")
+        try:
+            self.core.simulate_keypress(modifiers, key)
+        except utils.QtileError as e:
+            raise CommandError(str(e))
 
     def cmd_validate_config(self):
         try:
@@ -1448,7 +1445,5 @@ class Qtile(CommandObject):
         extension.run()
 
     def cmd_change_vt(self, vt: int) -> bool:
-        """Run extensions"""
-        if hasattr(self.core, "change_vt"):
-            return self.core.change_vt(vt)
-        raise CommandError("Backend does not support changing VT.")
+        """Change virtual terminal, returning success."""
+        return self.core.change_vt(vt)
