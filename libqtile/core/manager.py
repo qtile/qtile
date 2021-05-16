@@ -261,7 +261,7 @@ class Qtile(CommandObject):
 
     def _process_screens(self) -> None:
         current_groups = [screen.group for screen in self.screens if screen.group]
-        self.screens = []
+        screens = []
 
         if hasattr(self.config, 'fake_screens'):
             screen_info = [(s.x, s.y, s.width, s.height) for s in self.config.fake_screens]
@@ -299,7 +299,9 @@ class Qtile(CommandObject):
                         break
 
             scr._configure(self, i, x, y, w, h, grp)
-            self.screens.append(scr)
+            screens.append(scr)
+
+        self.screens = screens
 
     def cmd_reconfigure_screens(self, ev=None):
         """
