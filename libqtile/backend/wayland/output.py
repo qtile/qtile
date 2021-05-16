@@ -33,7 +33,7 @@ from wlroots.wlr_types.layer_shell_v1 import (
     LayerSurfaceV1Anchor,
 )
 
-from libqtile.backend.wayland.window import Static
+from libqtile.backend.wayland.window import Internal, Static
 from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
@@ -102,15 +102,24 @@ class Output(HasListeners):
                     + self.layers[LayerShellV1Layer.OVERLAY]
 
                 for window in mapped:
-                    rdata = (
-                        now,
-                        window,
-                        window.x - self.x,  # layout coordinates -> output coordinates
-                        window.y - self.y,
-                        window.opacity,
-                        wlr_output.scale,
-                    )
-                    window.surface.for_each_surface(self._render_surface, rdata)
+                    if isinstance(window, Internal):
+                        renderer.render_texture(
+                            window.texture,
+                            self.transform_matrix,
+                            window.x - self.x,  # layout coordinates -> output coordinates
+                            window.y - self.y,
+                            window.opacity,
+                        )
+                    else:
+                        rdata = (
+                            now,
+                            window,
+                            window.x - self.x,  # layout coordinates -> output coordinates
+                            window.y - self.y,
+                            window.opacity,
+                            wlr_output.scale,
+                        )
+                        window.surface.for_each_surface(self._render_surface, rdata)
 
                 wlr_output.render_software_cursors(damage=damage)
                 renderer.end()
