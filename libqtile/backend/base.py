@@ -36,8 +36,7 @@ class Core(metaclass=ABCMeta):
     def remove_listener(self) -> None:
         """Setup a listener for the given qtile instance"""
 
-    @abstractmethod
-    def update_desktops(self, groups, index: int) -> None:
+    def update_desktops(self, groups: List[_Group], index: int) -> None:
         """Set the current desktops of the window manager"""
 
     @abstractmethod

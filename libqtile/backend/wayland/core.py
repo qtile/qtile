@@ -68,7 +68,7 @@ if typing.TYPE_CHECKING:
 
     from wlroots.wlr_types import Output as wlrOutput
 
-    from libqtile import config, group
+    from libqtile import config
     from libqtile.core.manager import Qtile
 
 
@@ -435,19 +435,6 @@ class Core(base.Core, wlrq.HasListeners):
                     if cx <= win.x + win.width + bw and cy <= win.y + win.height + bw:
                         return win, win.surface.surface, 0, 0
         return None
-
-    def update_desktops(self, groups: List[group._Group], index: int) -> None:
-        """Set the current desktops of the window manager
-
-        The list of desktops is given by the list of groups, with the current
-        desktop given by the index
-        """
-        new_count = len(groups)
-        while new_count > self.desktops:
-            self.desktops += 1
-        while new_count < self.desktops:
-            self.desktops -= 1
-        self.current_desktop = index
 
     def get_screen_info(self) -> List[Tuple[int, int, int, int]]:
         """Get the screen information"""
