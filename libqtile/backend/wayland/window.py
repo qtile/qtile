@@ -38,6 +38,7 @@ from libqtile import hook, utils
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
 from libqtile.backend.wayland.wlrq import HasListeners
+from libqtile.command.base import CommandError
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -188,6 +189,32 @@ class Window(base.Window, HasListeners):
     def get_wm_class(self) -> Optional[str]:
         # TODO
         return None
+
+    def togroup(self, group_name=None, *, switch_group=False):
+        """Move window to a specified group
+
+        Also switch to that group if switch_group is True.
+        """
+        if group_name is None:
+            group = self.qtile.current_group
+        else:
+            group = self.qtile.groups_map.get(group_name)
+            if group is None:
+                raise CommandError("No such group: %s" % group_name)
+
+        if self.group is not group:
+            self.hide()
+            if self.group:
+                if self.group.screen:
+                    # for floats remove window offset
+                    self.x -= self.group.screen.x
+                self.group.remove(self)
+
+            if group.screen and self.x < group.screen.x:
+                self.x += group.screen.x
+            group.add(self)
+            if switch_group:
+                group.cmd_toscreen(toggle=False)
 
     def paint_borders(self, color, width) -> None:
         if color:
