@@ -93,6 +93,13 @@ class Core(metaclass=ABCMeta):
     def graceful_shutdown(self):
         """Try to close windows gracefully before exiting"""
 
+    def simulate_keypress(self, modifiers: List[str], key: str) -> None:
+        """Simulate a keypress with given modifiers"""
+
+    def change_vt(self, vt: int) -> bool:
+        """Change virtual terminal, returning success."""
+        return False
+
 
 @enum.unique
 class FloatStates(enum.Enum):
