@@ -189,6 +189,15 @@ class Window(_Window, metaclass=ABCMeta):
     def focus(self, warp: bool):
         """Focus this window and optional warp the pointer to it."""
 
+    @abstractmethod
+    def togroup(
+        self, group_name: Optional[str] = None, *, switch_group: bool = False
+    ) -> None:
+        """Move window to a specified group
+
+        Also switch to that group if switch_group is True.
+        """
+
     @property
     def has_focus(self):
         return self == self.qtile.current_window
