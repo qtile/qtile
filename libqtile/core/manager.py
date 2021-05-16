@@ -69,7 +69,6 @@ class Qtile(CommandObject):
 
         self._drag: Optional[Tuple] = None
         self.mouse_map: Dict[int, List[Union[Click, Drag]]] = {}
-        self.mouse_position = (0, 0)
 
         self.windows_map: Dict[int, base.WindowType] = {}
         self.widgets_map: Dict[str, _Widget] = {}
@@ -624,7 +623,6 @@ class Qtile(CommandObject):
         return closest_screen
 
     def process_button_click(self, button_code, modmask, x, y, event) -> None:
-        self.mouse_position = (x, y)
         for m in self.mouse_map.get(button_code, []):
             if not m.modmask == modmask:
                 continue
@@ -667,8 +665,6 @@ class Qtile(CommandObject):
                 return
 
     def process_button_motion(self, x, y):
-        self.mouse_position = (x, y)
-
         if self._drag is None:
             return
         ox, oy, rx, ry, cmd = self._drag
@@ -724,7 +720,7 @@ class Qtile(CommandObject):
         elif name == "bar":
             return False, [x.position for x in self.current_screen.gaps]
         elif name == "window":
-            return True, self.list_wids()
+            return True, list(self.windows_map.keys())
         elif name == "screen":
             return True, list(range(len(self.screens)))
 
@@ -747,21 +743,12 @@ class Qtile(CommandObject):
             if sel is None:
                 return self.current_window
             else:
-                return self.client_from_wid(sel)
+                return self.windows_map.get(sel)
         elif name == "screen":
             if sel is None:
                 return self.current_screen
             else:
                 return utils.lget(self.screens, sel)
-
-    def list_wids(self):
-        return [i.wid for i in self.windows_map.values()]
-
-    def client_from_wid(self, wid):
-        for i in self.windows_map.values():
-            if i.wid == wid:
-                return i
-        return None
 
     def call_soon(self, func, *args):
         """ A wrapper for the event loop's call_soon which also flushes the X
@@ -835,9 +822,6 @@ class Qtile(CommandObject):
             groups()
         """
         return {i.name: i.info() for i in self.groups}
-
-    def get_mouse_position(self):
-        return self.mouse_position
 
     def cmd_display_kb(self, *args):
         """Display table of key bindings"""
