@@ -23,10 +23,11 @@ from __future__ import annotations
 import functools
 import typing
 
+import cairocffi
 import pywayland
 from wlroots import ffi
 from wlroots.util.edges import Edges
-from wlroots.wlr_types import Box
+from wlroots.wlr_types import Box, Texture
 from wlroots.wlr_types.layer_shell_v1 import LayerSurfaceV1
 from wlroots.wlr_types.xdg_shell import (
     XdgPopup,
@@ -37,7 +38,7 @@ from wlroots.wlr_types.xdg_shell import (
 from libqtile import hook, utils
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
-from libqtile.backend.wayland.wlrq import HasListeners
+from libqtile.backend.wayland.wlrq import DRM_FORMAT_ARGB8888, HasListeners
 from libqtile.command.base import CommandError
 from libqtile.log_utils import logger
 
@@ -459,7 +460,89 @@ class Window(base.Window, HasListeners):
 
 
 class Internal(Window, base.Internal):
-    pass
+    """
+    Internal windows are simply textures controlled by the compositor.
+    """
+    def __init__(self, qtile: Qtile, x: int, y: int, width: int, height: int):
+        self.qtile = qtile
+        self.core: Core = qtile.core
+        self._mapped: bool = False
+        self._wid: int = self.core.new_wid()
+        self.x: int = x
+        self.y: int = y
+        self.opacity: float = 1.0
+        self.width: int = width
+        self.height: int = height
+        self._group = 0
+
+        # Initialise surface to all black
+        self.image_surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, width, height)
+        with cairocffi.Context(self.image_surface) as context:
+            context.set_source_rgba(*utils.rgb("#000000"))
+            context.paint()
+
+        stride = self.image_surface.format_stride_for_width(cairocffi.FORMAT_ARGB32, width)
+        self.texture = Texture.from_pixels(
+            self.core.renderer,
+            DRM_FORMAT_ARGB8888,
+            stride,
+            width,
+            height,
+            cairocffi.cairo.cairo_image_surface_get_data(self.image_surface._pointer),
+        )
+
+        qtile.manage(self)
+        self.unhide()
+
+    @classmethod
+    def create(cls, qtile, x, y, width, height, opacity=1.0):
+        i = Internal(qtile, x, y, width, height)
+        i.opacity = opacity
+        return i
+
+    def finalize(self):
+        self.hide()
+
+    @property
+    def width(self) -> int:
+        return self._width
+
+    @width.setter
+    def width(self, value: int) -> None:
+        self._width = value
+
+    @property
+    def height(self) -> int:
+        return self._height
+
+    @height.setter
+    def height(self, value: int) -> None:
+        self._height = value
+
+    def hide(self) -> None:
+        self.mapped = False
+
+    def unhide(self) -> None:
+        self.mapped = True
+
+    def kill(self) -> None:
+        self.hide()
+        self.qtile.call_soon(self.qtile.unmanage, self)
+
+    def focus(self, warp: bool) -> None:
+        if warp:
+            self.core.warp_pointer(self.x + self.width, self.y + self.height)
+
+    def place(self, x, y, width, height, borderwidth, bordercolor,
+              above=False, margin=None, respect_hints=False):
+        if above:
+            self.core.mapped_windows.remove(self)
+            self.core.mapped_windows.append(self)
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.damage()
 
 
 class Static(Window, base.Static):

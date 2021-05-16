@@ -228,7 +228,7 @@ class Core(base.Core, wlrq.HasListeners):
         if surface.role != XdgSurfaceRole.TOPLEVEL:
             return
 
-        wid = max(self.qtile.windows_map.keys(), default=0) + 1
+        wid = self.new_wid()
         win = window.Window(self, self.qtile, surface, wid)
         logger.info(f"Managing new top-level window with window ID: {wid}")
         self.qtile.manage(win)
@@ -273,7 +273,7 @@ class Core(base.Core, wlrq.HasListeners):
         logger.debug("Signal: layer_shell new_surface_event")
         assert self.qtile is not None
 
-        wid = max(self.qtile.windows_map.keys(), default=0) + 1
+        wid = self.new_wid()
         win = window.Static(self, self.qtile, layer_surface, wid)
         logger.info(f"Managing new layer_shell window with window ID: {wid}")
         self.qtile.manage(win)
@@ -384,6 +384,11 @@ class Core(base.Core, wlrq.HasListeners):
             self.event_loop.dispatch(0)
             self.display.flush_clients()
 
+    def new_wid(self) -> int:
+        """Get a new unique window ID"""
+        assert self.qtile is not None
+        return max(self.qtile.windows_map.keys(), default=0) + 1
+
     def focus_window(self, win: window.WindowType, surface: Surface = None):
         if self.seat.destroyed:
             return
@@ -426,6 +431,8 @@ class Core(base.Core, wlrq.HasListeners):
         cy = self.cursor.y
 
         for win in reversed(self.mapped_windows):
+            if isinstance(win, window.Internal):
+                return None
             surface, sx, sy = win.surface.surface_at(cx - win.x, cy - win.y)
             if surface:
                 return win, surface, sx, sy
