@@ -89,6 +89,10 @@ class Core(metaclass=ABCMeta):
         """A context manager to suppress window events while operating on many windows."""
         yield
 
+    def create_internal(self, x: int, y: int, width: int, height: int) -> Internal:
+        """Create an internal window controlled by Qtile."""
+        raise NotImplementedError  # Only error when called, not when instantiating class
+
     def flush(self) -> None:
         """If needed, flush the backend's event queue."""
 
