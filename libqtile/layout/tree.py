@@ -30,7 +30,6 @@
 # SOFTWARE.
 
 from libqtile import drawer, hook
-from libqtile.backend.x11 import window
 from libqtile.layout.base import Layout
 
 to_superscript = dict(zip(map(ord, u'0123456789'), map(ord, u'⁰¹²³⁴⁵⁶⁷⁸⁹')))
@@ -458,8 +457,7 @@ class TreeTab(Layout):
         self.draw_panel()
 
     def _create_panel(self, screen_rect):
-        self._panel = window.Internal.create(
-            self.group.qtile,
+        self._panel = self.group.qtile.core.create_internal(
             screen_rect.x,
             screen_rect.y,
             self.panel_width,
@@ -468,7 +466,6 @@ class TreeTab(Layout):
         self._create_drawer(screen_rect)
         self._panel.handle_Expose = self._handle_Expose
         self._panel.handle_ButtonPress = self._handle_ButtonPress
-        self.group.qtile.windows_map[self._panel.wid] = self._panel
         hook.subscribe.client_name_updated(self.draw_panel)
         hook.subscribe.focus_change(self.draw_panel)
 

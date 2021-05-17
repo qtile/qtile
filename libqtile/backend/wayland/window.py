@@ -463,9 +463,11 @@ class Internal(Window, base.Internal):
     """
     Internal windows are simply textures controlled by the compositor.
     """
-    def __init__(self, qtile: Qtile, x: int, y: int, width: int, height: int):
+    def __init__(
+        self, core: Core, qtile: Qtile, x: int, y: int, width: int, height: int
+    ):
+        self.core = core
         self.qtile = qtile
-        self.core: Core = qtile.core
         self._mapped: bool = False
         self._wid: int = self.core.new_wid()
         self.x: int = x
@@ -490,15 +492,6 @@ class Internal(Window, base.Internal):
             height,
             cairocffi.cairo.cairo_image_surface_get_data(self.image_surface._pointer),
         )
-
-        qtile.manage(self)
-        self.unhide()
-
-    @classmethod
-    def create(cls, qtile, x, y, width, height, opacity=1.0):
-        i = Internal(qtile, x, y, width, height)
-        i.opacity = opacity
-        return i
 
     def finalize(self):
         self.hide()

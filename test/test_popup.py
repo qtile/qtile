@@ -19,32 +19,39 @@
 # SOFTWARE.
 
 
+import textwrap
+
 import pytest
 
-from libqtile.backend.x11 import xcbq
-from libqtile.popup import Popup
+from libqtile.backend.x11.xcbq import Connection
 from test.conftest import BareConfig
 
 
 @pytest.mark.parametrize("manager", [BareConfig], indirect=True)
 def test_popup_focus(manager):
     manager.test_xeyes()
-    manager.windows_map = {}
+    conn = Connection(manager.display)
+    _, _, windows = conn.default_screen.root.query_tree()
+    start_wins = len(windows)
 
-    # ugly hack: we have to add .core.conn so that Popup thinks this is libqtile.qtile
-    manager.core = manager
-    manager.core.conn = xcbq.Connection(manager.display)
-
-    try:
-        popup = Popup(manager)
-        popup.width = manager.c.screen.info()["width"]
-        popup.height = manager.c.screen.info()["height"]
+    success, msg = manager.c.eval(textwrap.dedent("""
+        from libqtile.popup import Popup
+        popup = Popup(self,
+            x=0,
+            y=0,
+            width=self.current_screen.width,
+            height=self.current_screen.height,
+        )
         popup.place()
         popup.unhide()
-        assert manager.c.group.info()['focus'] == 'xeyes'
-        assert manager.c.group.info()['windows'] == ['xeyes']
-        assert len(manager.c.windows()) == 1
-        popup.hide()
-    finally:
-        popup.kill()
-        manager.conn.finalize()
+    """))
+    assert success, msg
+
+    _, _, windows = conn.default_screen.root.query_tree()
+    end_wins = len(windows)
+    conn.finalize()
+    assert end_wins == start_wins + 1
+
+    assert manager.c.group.info()['focus'] == 'xeyes'
+    assert manager.c.group.info()['windows'] == ['xeyes']
+    assert len(manager.c.windows()) == 1

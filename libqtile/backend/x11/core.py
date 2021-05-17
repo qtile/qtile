@@ -544,6 +544,15 @@ class Core(base.Core):
         for i in self.qtile.windows_map.values():
             i._reset_mask()
 
+    def create_internal(self, x: int, y: int, width: int, height: int) -> base.Internal:
+        assert self.qtile is not None
+
+        win = self.conn.create_window(x, y, width, height)
+        internal = window.Internal(win, self.qtile)
+        internal.place(x, y, width, height, 0, None)
+        self.qtile.manage(internal)
+        return internal
+
     def handle_SelectionNotify(self, event) -> None:  # noqa: N802
         if not getattr(event, "owner", None):
             return

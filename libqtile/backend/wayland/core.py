@@ -490,6 +490,12 @@ class Core(base.Core, wlrq.HasListeners):
     def flush(self) -> None:
         self._poll()
 
+    def create_internal(self, x: int, y: int, width: int, height: int) -> base.Internal:
+        assert self.qtile is not None
+        internal = window.Internal(self, self.qtile, x, y, width, height)
+        self.qtile.manage(internal)
+        return internal
+
     def graceful_shutdown(self):
         """Try to close windows gracefully before exiting"""
         assert self.qtile is not None

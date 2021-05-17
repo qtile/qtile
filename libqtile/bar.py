@@ -21,7 +21,6 @@
 from typing import Union
 
 from libqtile import configurable, drawer
-from libqtile.backend.x11 import window
 from libqtile.command.base import CommandObject, ItemT
 from libqtile.log_utils import logger
 
@@ -212,11 +211,10 @@ class Bar(Gap, configurable.Configurable):
             self._remove_crashed_widgets()
 
         else:
-            self.window = window.Internal.create(
-                self.qtile,
+            self.window = self.qtile.core.create_internal(
                 self.x, self.y, self.width, self.height,
-                self.opacity
             )
+            self.window.opacity = self.opacity
 
             self.drawer = drawer.Drawer(
                 self.qtile,
@@ -232,7 +230,6 @@ class Bar(Gap, configurable.Configurable):
             self.window.handle_EnterNotify = self.handle_EnterNotify
             self.window.handle_LeaveNotify = self.handle_LeaveNotify
             self.window.handle_MotionNotify = self.handle_MotionNotify
-            qtile.windows_map[self.window.wid] = self.window
             self.window.unhide()
 
             self.crashed_widgets = []
