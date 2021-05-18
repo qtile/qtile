@@ -196,7 +196,7 @@ class _Widget(CommandObject, configurable.Configurable):
         self.bar = bar
         self.drawer = drawer.Drawer(
             qtile,
-            self.win.wid,
+            self.win,
             self.bar.width,
             self.bar.height
         )

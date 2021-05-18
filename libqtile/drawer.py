@@ -29,13 +29,21 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
+from __future__ import annotations
+
 import collections
 import math
+from typing import TYPE_CHECKING
 
 import cairocffi
 import xcffib.xproto
 
 from libqtile import pangocffi, utils
+
+if TYPE_CHECKING:
+    from libqtile.backend.base import Internal
+    from libqtile.core.manager import Qtile
 
 
 class TextLayout:
@@ -218,9 +226,11 @@ class Drawer:
     surface and pixmap and recreate them when we need them again with the new
     geometry.
     """
-    def __init__(self, qtile, wid, width, height):
+    def __init__(self, qtile: Qtile, win: Internal, width: int, height: int):
         self.qtile = qtile
-        self.wid, self._width, self._height = wid, width, height
+        self._win = win
+        self._width = width
+        self._height = height
         self._surface = None
         self._pixmap = None
         self._gc = None
@@ -251,7 +261,7 @@ class Drawer:
         gc = self.qtile.core.conn.conn.generate_id()
         self.qtile.core.conn.conn.core.CreateGC(
             gc,
-            self.wid,
+            self._win.wid,
             xcffib.xproto.GC.Foreground | xcffib.xproto.GC.Background,
             [
                 self.qtile.core.conn.default_screen.black_pixel,
@@ -294,7 +304,7 @@ class Drawer:
         self.qtile.core.conn.conn.core.CreatePixmap(
             self.qtile.core.conn.default_screen.root_depth,
             pixmap,
-            self.wid,
+            self._win.wid,
             self.width,
             self.height,
         )
@@ -416,7 +426,7 @@ class Drawer:
         # Finally, copy XCBSurface's underlying pixmap to the window.
         self.qtile.core.conn.conn.core.CopyArea(
             self._pixmap,
-            self.wid,
+            self._win.wid,
             self._gc,
             0, 0,  # srcx, srcy
             offsetx, offsety,  # dstx, dsty
