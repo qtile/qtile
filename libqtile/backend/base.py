@@ -2,9 +2,13 @@ from __future__ import annotations
 
 import contextlib
 import enum
+import math
 import typing
 from abc import ABCMeta, abstractmethod
 
+import cairocffi
+
+from libqtile import drawer, pangocffi, utils
 from libqtile.command.base import CommandObject
 
 if typing.TYPE_CHECKING:
@@ -331,7 +335,8 @@ class Window(_Window, metaclass=ABCMeta):
 
 
 class Internal(_Window, metaclass=ABCMeta):
-    pass
+    def create_drawer(self, width: int, height: int) -> Drawer:
+        """Create a Drawer that draws to this window."""
 
 
 class Static(_Window, metaclass=ABCMeta):
@@ -340,3 +345,207 @@ class Static(_Window, metaclass=ABCMeta):
 
 
 WindowType = typing.Union[Window, Internal, Static]
+
+
+class Drawer:
+    """A helper class for drawing to Internal windows.
+
+    We stage drawing operations locally in memory using a cairo RecordingSurface before
+    finally drawing all operations to a backend-specific target.
+    """
+    def __init__(self, qtile: Qtile, win: Internal, width: int, height: int):
+        self.qtile = qtile
+        self._win = win
+        self._width = width
+        self._height = height
+
+        self.surface: cairocffi.RecordingSurface
+        self.ctx: cairocffi.Context
+        self._reset_surface()
+
+        self.clear((0, 0, 1))
+
+    def finalize(self):
+        """Destructor/Clean up resources"""
+        self.surface = None
+        self.ctx = None
+
+    @property
+    def width(self) -> int:
+        return self._width
+
+    @width.setter
+    def width(self, width: int):
+        self._width = width
+
+    @property
+    def height(self) -> int:
+        return self._height
+
+    @height.setter
+    def height(self, height: int):
+        self._height = height
+
+    def _reset_surface(self):
+        """This creates a fresh surface and cairo context."""
+        self.surface = cairocffi.RecordingSurface(
+            cairocffi.CONTENT_COLOR_ALPHA,
+            None,
+        )
+        self.ctx = self.new_ctx()
+
+    def paint_to(self, drawer: Drawer) -> None:
+        """Paint to another Drawer instance"""
+
+    def _rounded_rect(self, x, y, width, height, linewidth):
+        aspect = 1.0
+        corner_radius = height / 10.0
+        radius = corner_radius / aspect
+        degrees = math.pi / 180.0
+
+        self.ctx.new_sub_path()
+
+        delta = radius + linewidth / 2
+        self.ctx.arc(x + width - delta, y + delta, radius,
+                     -90 * degrees, 0 * degrees)
+        self.ctx.arc(x + width - delta, y + height - delta,
+                     radius, 0 * degrees, 90 * degrees)
+        self.ctx.arc(x + delta, y + height - delta, radius,
+                     90 * degrees, 180 * degrees)
+        self.ctx.arc(x + delta, y + delta, radius,
+                     180 * degrees, 270 * degrees)
+        self.ctx.close_path()
+
+    def rounded_rectangle(self, x: int, y: int, width: int, height: int, linewidth: int):
+        self._rounded_rect(x, y, width, height, linewidth)
+        self.ctx.set_line_width(linewidth)
+        self.ctx.stroke()
+
+    def rounded_fillrect(self, x: int, y: int, width: int, height: int, linewidth: int):
+        self._rounded_rect(x, y, width, height, linewidth)
+        self.ctx.fill()
+
+    def rectangle(self, x: int, y: int, width: int, height: int, linewidth: int = 2):
+        self.ctx.set_line_width(linewidth)
+        self.ctx.rectangle(x, y, width, height)
+        self.ctx.stroke()
+
+    def fillrect(self, x: int, y: int, width: int, height: int, linewidth: int = 2):
+        self.ctx.set_line_width(linewidth)
+        self.ctx.rectangle(x, y, width, height)
+        self.ctx.fill()
+        self.ctx.stroke()
+
+    def draw(
+        self,
+        offsetx: int = 0,
+        offsety: int = 0,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+    ):
+        """
+        This draws our cached operations to the Internal window.
+
+        Parameters
+        ==========
+
+        offsetx :
+            the X offset to start drawing at.
+        offsety :
+            the Y offset to start drawing at.
+        width :
+            the X portion of the canvas to draw at the starting point.
+        height :
+            the Y portion of the canvas to draw at the starting point.
+        """
+
+    def new_ctx(self):
+        return pangocffi.patch_cairo_context(cairocffi.Context(self.surface))
+
+    def set_source_rgb(self, colour):
+        if type(colour) == list:
+            if len(colour) == 0:
+                # defaults to black
+                self.ctx.set_source_rgba(*utils.rgb("#000000"))
+            elif len(colour) == 1:
+                self.ctx.set_source_rgba(*utils.rgb(colour[0]))
+            else:
+                linear = cairocffi.LinearGradient(0.0, 0.0, 0.0, self.height)
+                step_size = 1.0 / (len(colour) - 1)
+                step = 0.0
+                for c in colour:
+                    rgb_col = utils.rgb(c)
+                    if len(rgb_col) < 4:
+                        rgb_col[3] = 1
+                    linear.add_color_stop_rgba(step, *rgb_col)
+                    step += step_size
+                self.ctx.set_source(linear)
+        else:
+            self.ctx.set_source_rgba(*utils.rgb(colour))
+
+    def clear(self, colour):
+        self.set_source_rgb(colour)
+        self.ctx.rectangle(0, 0, self.width, self.height)
+        self.ctx.fill()
+        self.ctx.stroke()
+
+    def textlayout(
+        self, text, colour, font_family, font_size, font_shadow, markup=False, **kw
+    ):
+        """Get a text layout"""
+        textlayout = drawer.TextLayout(
+            self, text, colour, font_family, font_size, font_shadow, markup=markup, **kw
+        )
+        return textlayout
+
+    def max_layout_size(self, texts, font_family, font_size):
+        sizelayout = self.textlayout("", "ffffff", font_family, font_size, None)
+        widths, heights = [], []
+        for i in texts:
+            sizelayout.text = i
+            widths.append(sizelayout.width)
+            heights.append(sizelayout.height)
+        return max(widths), max(heights)
+
+    def text_extents(self, text):
+        return self.ctx.text_extents(utils.scrub_to_utf8(text))
+
+    def font_extents(self):
+        return self.ctx.font_extents()
+
+    def fit_fontsize(self, heightlimit):
+        """Try to find a maximum font size that fits any strings within the height"""
+        self.ctx.set_font_size(heightlimit)
+        asc, desc, height, _, _ = self.font_extents()
+        self.ctx.set_font_size(
+            int(heightlimit * heightlimit / height))
+        return self.font_extents()
+
+    def fit_text(self, strings, heightlimit):
+        """Try to find a maximum font size that fits all strings within the height"""
+        self.ctx.set_font_size(heightlimit)
+        _, _, _, maxheight, _, _ = self.ctx.text_extents("".join(strings))
+        if not maxheight:
+            return 0, 0
+        self.ctx.set_font_size(
+            int(heightlimit * heightlimit / maxheight))
+        maxwidth, maxheight = 0, 0
+        for i in strings:
+            _, _, x, y, _, _ = self.ctx.text_extents(i)
+            maxwidth = max(maxwidth, x)
+            maxheight = max(maxheight, y)
+        return maxwidth, maxheight
+
+    def draw_vbar(self, color, x, y1, y2, linewidth=1):
+        self.set_source_rgb(color)
+        self.ctx.move_to(x, y1)
+        self.ctx.line_to(x, y2)
+        self.ctx.set_line_width(linewidth)
+        self.ctx.stroke()
+
+    def draw_hbar(self, color, x1, x2, y, linewidth=1):
+        self.set_source_rgb(color)
+        self.ctx.move_to(x1, y)
+        self.ctx.line_to(x2, y)
+        self.ctx.set_line_width(linewidth)
+        self.ctx.stroke()

@@ -68,20 +68,14 @@ class FakeKeyring(ModuleType):
             return None
 
 
-class FakeWindow:
-    class _NestedWindow:
-        wid = 10
-    window = _NestedWindow()
-
-
-def test_imapwidget(fake_qtile, monkeypatch):
+def test_imapwidget(fake_qtile, monkeypatch, fake_window):
     monkeypatch.setitem(sys.modules, "imaplib", FakeIMAP("imaplib"))
     monkeypatch.setitem(sys.modules, "keyring", FakeKeyring("keyring"))
     from libqtile.widget import imapwidget
 
     imap = imapwidget.ImapWidget(user="qtile")
     fakebar = Bar([imap], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -90,7 +84,7 @@ def test_imapwidget(fake_qtile, monkeypatch):
     assert text == "INBOX: 2"
 
 
-def test_imapwidget_keyring_error(fake_qtile, monkeypatch):
+def test_imapwidget_keyring_error(fake_qtile, monkeypatch, fake_window):
     monkeypatch.setitem(sys.modules, "imaplib", FakeIMAP("imaplib"))
     monkeypatch.setitem(sys.modules, "keyring", FakeKeyring("keyring"))
     from libqtile.widget import imapwidget
@@ -98,7 +92,7 @@ def test_imapwidget_keyring_error(fake_qtile, monkeypatch):
 
     imap = imapwidget.ImapWidget(user="qtile")
     fakebar = Bar([imap], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -112,7 +106,7 @@ def test_imapwidget_keyring_error(fake_qtile, monkeypatch):
 # The widget will then fail when it looks up this attribute and then
 # fail again when it tries to return self.text.
 # TO DO: Fix widget's handling of this scenario.
-def test_imapwidget_password_none(fake_qtile, monkeypatch):
+def test_imapwidget_password_none(fake_qtile, monkeypatch, fake_window):
     monkeypatch.setitem(sys.modules, "imaplib", FakeIMAP("imaplib"))
     monkeypatch.setitem(sys.modules, "keyring", FakeKeyring("keyring"))
     from libqtile.widget import imapwidget
@@ -121,7 +115,7 @@ def test_imapwidget_password_none(fake_qtile, monkeypatch):
 
     imap = imapwidget.ImapWidget(user="qtile")
     fakebar = Bar([imap], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op

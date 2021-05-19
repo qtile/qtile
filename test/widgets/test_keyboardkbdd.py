@@ -59,12 +59,6 @@ class MockMessage:
         self.body = [body]
 
 
-class FakeWindow:
-    class _NestedWindow:
-        wid = 10
-    window = _NestedWindow()
-
-
 @pytest.fixture
 def patched_widget(monkeypatch):
     monkeypatch.setitem(sys.modules, "dbus_next.constants", Mockconstants("dbus_next.constants"))
@@ -76,11 +70,11 @@ def patched_widget(monkeypatch):
     return keyboardkbdd
 
 
-def test_keyboardkbdd_process_running(fake_qtile, patched_widget):
+def test_keyboardkbdd_process_running(fake_qtile, patched_widget, fake_window):
     MockSpawn.call_count = 1
     kbd = patched_widget.KeyboardKbdd(configured_keyboards=["gb", "us"])
     fakebar = Bar([kbd], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -99,11 +93,11 @@ def test_keyboardkbdd_process_running(fake_qtile, patched_widget):
     assert kbd.keyboard == "us"
 
 
-def test_keyboardkbdd_process_not_running(fake_qtile, patched_widget):
+def test_keyboardkbdd_process_not_running(fake_qtile, patched_widget, fake_window):
     MockSpawn.call_count = 0
     kbd = patched_widget.KeyboardKbdd(configured_keyboards=["gb", "us"])
     fakebar = Bar([kbd], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -119,14 +113,14 @@ def test_keyboardkbdd_process_not_running(fake_qtile, patched_widget):
 
 # Custom colours are not set until a signal is received
 # TO DO: This should be fixed so the colour is set on __init__
-def test_keyboard_kbdd_colours(fake_qtile, patched_widget):
+def test_keyboard_kbdd_colours(fake_qtile, patched_widget, fake_window):
     MockSpawn.call_count = 1
     kbd = patched_widget.KeyboardKbdd(
         configured_keyboards=["gb", "us"],
         colours=["#ff0000", "#00ff00"]
     )
     fakebar = Bar([kbd], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op

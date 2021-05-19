@@ -124,12 +124,6 @@ def no_op(*args, **kwargs):
     pass
 
 
-class FakeWindow:
-    class _NestedWindow:
-        wid = 10
-    window = _NestedWindow()
-
-
 @pytest.fixture
 def patched_cmus(monkeypatch):
     MockCmusRemoteProcess.reset()
@@ -139,10 +133,10 @@ def patched_cmus(monkeypatch):
     return cmus
 
 
-def test_cmus(fake_qtile, patched_cmus):
+def test_cmus(fake_qtile, patched_cmus, fake_window):
     widget = patched_cmus.Cmus()
     fakebar = Bar([widget], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -157,13 +151,13 @@ def test_cmus(fake_qtile, patched_cmus):
     assert widget.layout.colour == widget.noplay_color
 
 
-def test_cmus_play_stopped(fake_qtile, patched_cmus):
+def test_cmus_play_stopped(fake_qtile, patched_cmus, fake_window):
     widget = patched_cmus.Cmus()
 
     # Set track to a stopped item
     MockCmusRemoteProcess.index = 2
     fakebar = Bar([widget], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -213,11 +207,11 @@ def test_cmus_buttons(minimal_conf_noscreen, manager_nospawn, patched_cmus):
     assert cmuswidget.info()["text"] == "♫ Sweet Caroline"
 
 
-def test_cmus_error_handling(fake_qtile, patched_cmus):
+def test_cmus_error_handling(fake_qtile, patched_cmus, fake_window):
     widget = patched_cmus.Cmus()
     MockCmusRemoteProcess.is_error = True
     fakebar = Bar([widget], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op

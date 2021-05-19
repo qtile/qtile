@@ -33,12 +33,6 @@ def no_op(*args, **kwargs):
     pass
 
 
-class FakeWindow:
-    class _NestedWindow:
-        wid = 10
-    window = _NestedWindow()
-
-
 # Net widget only needs bytes_recv/sent attributes
 # Widget displays increase since last poll therefore
 # we need to increment value each time this is called.
@@ -68,7 +62,7 @@ class MockPsutil(ModuleType):
 # Patch the widget with our mock psutil module.
 # Wrap widget so tests can pass keyword arguments.
 @pytest.fixture
-def patch_net(fake_qtile, monkeypatch):
+def patch_net(fake_qtile, monkeypatch, fake_window):
     def build_widget(**kwargs):
         monkeypatch.setitem(sys.modules, "psutil", MockPsutil("psutil"))
         from libqtile.widget import net
@@ -77,7 +71,7 @@ def patch_net(fake_qtile, monkeypatch):
         reload(net)
         widget = net.Net(**kwargs)
         fakebar = Bar([widget], 24)
-        fakebar.window = FakeWindow()
+        fakebar.window = fake_window
         fakebar.width = 10
         fakebar.height = 10
         fakebar.draw = no_op

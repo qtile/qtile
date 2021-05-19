@@ -93,20 +93,14 @@ def no_op(*args, **kwargs):
     pass
 
 
-class FakeWindow:
-    class _NestedWindow:
-        wid = 10
-    window = _NestedWindow()
-
-
 @pytest.fixture
-def patched_moc(fake_qtile, monkeypatch):
+def patched_moc(fake_qtile, monkeypatch, fake_window):
     widget = moc.Moc()
     MockMocpProcess.reset()
     monkeypatch.setattr(widget, "call_process", MockMocpProcess.run)
     monkeypatch.setattr("libqtile.widget.moc.subprocess.Popen", MockMocpProcess.run)
     fakebar = Bar([widget], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op

@@ -51,19 +51,13 @@ class FakeIMAP(ModuleType):
             )
 
 
-class FakeWindow:
-    class _NestedWindow:
-        wid = 10
-    window = _NestedWindow()
-
-
-def test_gmail_checker_valid_response(fake_qtile, monkeypatch):
+def test_gmail_checker_valid_response(fake_qtile, monkeypatch, fake_window):
     monkeypatch.setitem(sys.modules, "imaplib", FakeIMAP("imaplib"))
     reload(gmail_checker)
 
     gmc = gmail_checker.GmailChecker(username="qtile", password="test")
     fakebar = Bar([gmc], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -72,13 +66,13 @@ def test_gmail_checker_valid_response(fake_qtile, monkeypatch):
     assert text == "inbox[10],unseen[2]"
 
 
-def test_gmail_checker_invalid_response(fake_qtile, monkeypatch):
+def test_gmail_checker_invalid_response(fake_qtile, monkeypatch, fake_window):
     monkeypatch.setitem(sys.modules, "imaplib", FakeIMAP("imaplib"))
     reload(gmail_checker)
 
     gmc = gmail_checker.GmailChecker()
     fakebar = Bar([gmc], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -89,7 +83,7 @@ def test_gmail_checker_invalid_response(fake_qtile, monkeypatch):
 
 # This test is only required because the widget is written
 # inefficiently. display_fmt should use keys instead of indices.
-def test_gmail_checker_only_unseen(fake_qtile, monkeypatch):
+def test_gmail_checker_only_unseen(fake_qtile, monkeypatch, fake_window):
     monkeypatch.setitem(sys.modules, "imaplib", FakeIMAP("imaplib"))
     reload(gmail_checker)
 
@@ -100,7 +94,7 @@ def test_gmail_checker_only_unseen(fake_qtile, monkeypatch):
         password="test"
     )
     fakebar = Bar([gmc], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op

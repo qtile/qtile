@@ -7,14 +7,7 @@ def no_op(*args, **kwargs):
     pass
 
 
-class FakeWindow:
-    class _NestedWindow:
-        wid = 10
-
-    window = _NestedWindow()
-
-
-def test_widgetbox_widget(fake_qtile):
+def test_widgetbox_widget(fake_qtile, fake_window):
 
     tb_one = TextBox(name="tb_one", text="TB ONE")
     tb_two = TextBox(name="tb_two", text="TB TWO")
@@ -26,7 +19,7 @@ def test_widgetbox_widget(fake_qtile):
 
     # Create a bar and set attributes needed to run widget
     fakebar = Bar([widget_box], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op

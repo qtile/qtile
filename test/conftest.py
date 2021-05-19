@@ -39,6 +39,7 @@ import xcffib.xproto
 
 import libqtile.config
 from libqtile import command, ipc
+from libqtile.backend import base
 from libqtile.backend.x11.core import Core
 from libqtile.confreader import Config
 from libqtile.core.manager import Qtile
@@ -510,3 +511,19 @@ def manager_nospawn(request, xephyr):
 
 
 no_xinerama = pytest.mark.parametrize("xephyr", [{"xinerama": False}], indirect=True)
+
+
+@pytest.fixture(scope="function")
+def fake_window():
+    """
+    A fake window that can provide a fake drawer to test widgets.
+    """
+    class FakeWindow:
+        class _NestedWindow:
+            wid = 10
+        window = _NestedWindow()
+
+        def create_drawer(self, width, height):
+            return base.Drawer(None, self, width, height)
+
+    return FakeWindow()

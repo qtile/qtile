@@ -12,6 +12,7 @@ from libqtile import hook, utils
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
 from libqtile.backend.x11 import xcbq
+from libqtile.backend.x11.drawer import Drawer
 from libqtile.command.base import CommandError, ItemT
 from libqtile.log_utils import logger
 
@@ -1015,6 +1016,10 @@ class Internal(_Window, base.Internal):
 
     def __repr__(self):
         return "Internal(%r, %s)" % (self.name, self.window.wid)
+
+    def create_drawer(self, width: int, height: int) -> base.Drawer:
+        """Create a Drawer that draws to this window."""
+        return Drawer(self.qtile, self, width, height)
 
     def kill(self):
         self.qtile.core.conn.conn.core.DestroyWindow(self.window.wid)
