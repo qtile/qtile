@@ -54,12 +54,6 @@ class FakePsutil(ModuleType):
             self.percent = 0.0
 
 
-class FakeWindow:
-    class _NestedWindow:
-        wid = 10
-    window = _NestedWindow()
-
-
 @pytest.fixture()
 def patched_memory(monkeypatch, ):
     monkeypatch.setitem(sys.modules, "psutil", FakePsutil("psutil"))

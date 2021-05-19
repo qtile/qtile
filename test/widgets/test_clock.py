@@ -35,12 +35,6 @@ def no_op(*args, **kwargs):
     pass
 
 
-class FakeWindow:
-    class _NestedWindow:
-        wid = 10
-    window = _NestedWindow()
-
-
 # Mock Datetime object that returns a set datetime and also
 # has a simplified timezone method to check functionality of
 # the widget.
@@ -71,12 +65,12 @@ def patched_clock(monkeypatch):
     monkeypatch.setattr("libqtile.widget.clock.datetime", MockDatetime)
 
 
-def test_clock(fake_qtile, monkeypatch):
+def test_clock(fake_qtile, monkeypatch, fake_window):
     """ test clock output with default settings """
     monkeypatch.setattr("libqtile.widget.clock.datetime", MockDatetime)
     clk1 = clock.Clock()
     fakebar = Bar([clk1], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -86,7 +80,7 @@ def test_clock(fake_qtile, monkeypatch):
 
 
 @pytest.mark.usefixtures("patched_clock")
-def test_clock_invalid_timezone(fake_qtile, monkeypatch):
+def test_clock_invalid_timezone(fake_qtile, monkeypatch, fake_window):
     """ test clock widget with invalid timezone (and no pytz or dateutil modules) """
     class FakeDateutilTZ:
         @classmethod
@@ -111,7 +105,7 @@ def test_clock_invalid_timezone(fake_qtile, monkeypatch):
     clk2 = clock.Clock(timezone="1")
 
     fakebar = Bar([clk2], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -123,7 +117,7 @@ def test_clock_invalid_timezone(fake_qtile, monkeypatch):
 
 
 @pytest.mark.usefixtures("patched_clock")
-def test_clock_datetime_timezone(fake_qtile, monkeypatch):
+def test_clock_datetime_timezone(fake_qtile, monkeypatch, fake_window):
     """ test clock with datetime timezone """
     class FakeDateutilTZ:
         class TZ:
@@ -143,7 +137,7 @@ def test_clock_datetime_timezone(fake_qtile, monkeypatch):
     clk3 = clock.Clock(timezone=1)
 
     fakebar = Bar([clk3], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -155,7 +149,7 @@ def test_clock_datetime_timezone(fake_qtile, monkeypatch):
 
 
 @pytest.mark.usefixtures("patched_clock")
-def test_clock_pytz_timezone(fake_qtile, monkeypatch):
+def test_clock_pytz_timezone(fake_qtile, monkeypatch, fake_window):
     """ test clock with pytz timezone """
     class FakeDateutilTZ:
         class TZ:
@@ -185,7 +179,7 @@ def test_clock_pytz_timezone(fake_qtile, monkeypatch):
     clk4 = clock.Clock(timezone="1")
 
     fakebar = Bar([clk4], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -198,7 +192,7 @@ def test_clock_pytz_timezone(fake_qtile, monkeypatch):
 
 
 @pytest.mark.usefixtures("patched_clock")
-def test_clock_dateutil_timezone(fake_qtile, monkeypatch):
+def test_clock_dateutil_timezone(fake_qtile, monkeypatch, fake_window):
     """ test clock with dateutil timezone """
     class FakeDateutilTZ:
         class TZ:
@@ -224,7 +218,7 @@ def test_clock_dateutil_timezone(fake_qtile, monkeypatch):
     clk5 = clock.Clock(timezone="1")
 
     fakebar = Bar([clk5], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op

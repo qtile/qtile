@@ -33,7 +33,7 @@ import asyncio
 import subprocess
 from typing import Any, List, Tuple
 
-from libqtile import bar, configurable, confreader, drawer
+from libqtile import bar, configurable, confreader
 from libqtile.command.base import CommandError, CommandObject, ItemT
 from libqtile.log_utils import logger
 
@@ -167,10 +167,6 @@ class _Widget(CommandObject, configurable.Configurable):
             return self.offsetx
         return self.offsety
 
-    @property
-    def win(self):
-        return self.bar.window.window
-
     # Do not start the name with "test", or nosetests will try to test it
     # directly (prepend an underscore instead)
     def _test_orientation_compatibility(self, horizontal):
@@ -194,12 +190,7 @@ class _Widget(CommandObject, configurable.Configurable):
     def _configure(self, qtile, bar):
         self.qtile = qtile
         self.bar = bar
-        self.drawer = drawer.Drawer(
-            qtile,
-            self.win,
-            self.bar.width,
-            self.bar.height
-        )
+        self.drawer = bar.window.create_drawer(self.bar.width, self.bar.height)
         if not self.configured:
             self.qtile.call_soon(self.timer_setup)
             self.qtile.call_soon(asyncio.create_task, self._config_async())

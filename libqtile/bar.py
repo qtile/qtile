@@ -20,7 +20,7 @@
 
 from typing import Union
 
-from libqtile import configurable, drawer
+from libqtile import configurable
 from libqtile.command.base import CommandObject, ItemT
 from libqtile.log_utils import logger
 
@@ -216,12 +216,7 @@ class Bar(Gap, configurable.Configurable):
             )
             self.window.opacity = self.opacity
 
-            self.drawer = drawer.Drawer(
-                self.qtile,
-                self.window,
-                self.width,
-                self.height
-            )
+            self.drawer = self.window.create_drawer(self.width, self.height)
             self.drawer.clear(self.background)
 
             self.window.handle_Expose = self.handle_Expose

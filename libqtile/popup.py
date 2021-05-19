@@ -21,7 +21,7 @@
 
 from xcffib.xproto import StackMode
 
-from libqtile import configurable, drawer, pangocffi
+from libqtile import configurable, pangocffi
 
 
 class Popup(configurable.Configurable):
@@ -51,9 +51,7 @@ class Popup(configurable.Configurable):
 
         self.win = qtile.core.create_internal(x, y, width, height)
         self.win.opacity = self.opacity
-        self.drawer = drawer.Drawer(
-            self.qtile, self.win, width, height,
-        )
+        self.drawer = self.win.create_drawer(width, height)
         self.layout = self.drawer.textlayout(
             text='',
             colour=self.foreground,

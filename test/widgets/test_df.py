@@ -56,12 +56,6 @@ class FakeOS(ModuleType):
             return 10000000
 
 
-class FakeWindow:
-    class _NestedWindow:
-        wid = 10
-    window = _NestedWindow()
-
-
 # Patches os.stavfs gives these values for df widget:
 #  unit: G
 #  size = 228
@@ -75,11 +69,11 @@ def patched_df(monkeypatch):
 
 
 @pytest.mark.usefixtures("patched_df")
-def test_df_no_warning(fake_qtile):
+def test_df_no_warning(fake_qtile, fake_window):
     ''' Test no text when free space over threshold '''
     df1 = df.DF()
     fakebar = Bar([df1], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -92,11 +86,11 @@ def test_df_no_warning(fake_qtile):
 
 
 @pytest.mark.usefixtures("patched_df")
-def test_df_always_visible(fake_qtile):
+def test_df_always_visible(fake_qtile, fake_window):
     ''' Test text is always displayed '''
     df2 = df.DF(visible_on_warn=False)
     fakebar = Bar([df2], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -111,14 +105,14 @@ def test_df_always_visible(fake_qtile):
 
 
 @pytest.mark.usefixtures("patched_df")
-def test_df_warn_space(fake_qtile):
+def test_df_warn_space(fake_qtile, fake_window):
     '''
         Test text is visible and colour changes when space
         below threshold
     '''
     df3 = df.DF(warn_space=40)
     fakebar = Bar([df3], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op

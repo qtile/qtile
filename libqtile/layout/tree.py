@@ -29,7 +29,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import drawer, hook
+from libqtile import hook
 from libqtile.layout.base import Layout
 
 to_superscript = dict(zip(map(ord, u'0123456789'), map(ord, u'⁰¹²³⁴⁵⁶⁷⁸⁹')))
@@ -714,11 +714,9 @@ class TreeTab(Layout):
 
     def _create_drawer(self, screen_rect):
         if self._drawer is None:
-            self._drawer = drawer.Drawer(
-                self.group.qtile,
-                self._panel,
+            self._drawer = self._panel.create_drawer(
                 self.panel_width,
-                screen_rect.height
+                screen_rect.height,
             )
         self._drawer.clear(self.bg_color)
         self._layout = self._drawer.textlayout(

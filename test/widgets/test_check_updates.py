@@ -7,12 +7,6 @@ def no_op(*args, **kwargs):
     pass
 
 
-class FakeWindow:
-    class _NestedWindow:
-        wid = 10
-    window = _NestedWindow()
-
-
 wrong_distro = "Barch"
 good_distro = "Arch"
 cmd_0_line = "export toto"   # quick "monkeypatch" simulating 0 output, ie 0 update
@@ -28,14 +22,14 @@ def test_unknown_distro():
     assert text == "N/A"
 
 
-def test_update_available(fake_qtile):
+def test_update_available(fake_qtile, fake_window):
     """ test output with update (check number of updates and color) """
     cu2 = CheckUpdates(distro=good_distro,
                        custom_command=cmd_1_line,
                        colour_have_updates="#123456"
                        )
     fakebar = Bar([cu2], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -45,11 +39,11 @@ def test_update_available(fake_qtile):
     assert cu2.layout.colour == cu2.colour_have_updates
 
 
-def test_no_update_available_without_no_update_string(fake_qtile):
+def test_no_update_available_without_no_update_string(fake_qtile, fake_window):
     """ test output with no update (without dedicated string nor color) """
     cu3 = CheckUpdates(distro=good_distro, custom_command=cmd_0_line)
     fakebar = Bar([cu3], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -58,7 +52,9 @@ def test_no_update_available_without_no_update_string(fake_qtile):
     assert text == ""
 
 
-def test_no_update_available_with_no_update_string_and_color_no_updates(fake_qtile):
+def test_no_update_available_with_no_update_string_and_color_no_updates(
+    fake_qtile, fake_window
+):
     """ test output with no update (with dedicated string and color) """
     cu4 = CheckUpdates(distro=good_distro,
                        custom_command=cmd_0_line,
@@ -66,7 +62,7 @@ def test_no_update_available_with_no_update_string_and_color_no_updates(fake_qti
                        colour_no_updates="#654321"
                        )
     fakebar = Bar([cu4], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -76,7 +72,7 @@ def test_no_update_available_with_no_update_string_and_color_no_updates(fake_qti
     assert cu4.layout.colour == cu4.colour_no_updates
 
 
-def test_update_available_with_restart_indicator(monkeypatch, fake_qtile):
+def test_update_available_with_restart_indicator(monkeypatch, fake_qtile, fake_window):
     """ test output with no indicator where restart needed """
     cu5 = CheckUpdates(distro=good_distro,
                        custom_command=cmd_1_line,
@@ -84,7 +80,7 @@ def test_update_available_with_restart_indicator(monkeypatch, fake_qtile):
                        )
     monkeypatch.setattr("os.path.exists", lambda x: True)
     fakebar = Bar([cu5], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -153,14 +149,14 @@ def test_update_available_with_execute(manager_nospawn, minimal_conf_noscreen, m
     assert result == nus
 
 
-def test_update_process_error(fake_qtile):
+def test_update_process_error(fake_qtile, fake_window):
     """ test output where update check gives error"""
     cu7 = CheckUpdates(distro=good_distro,
                        custom_command=cmd_error,
                        no_update_string="ERROR",
                        )
     fakebar = Bar([cu7], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
@@ -169,7 +165,7 @@ def test_update_process_error(fake_qtile):
     assert text == "ERROR"
 
 
-def test_line_truncations(fake_qtile, monkeypatch):
+def test_line_truncations(fake_qtile, monkeypatch, fake_window):
     """ test update count is reduced"""
 
     # Mock output to return 5 lines of text
@@ -181,7 +177,7 @@ def test_line_truncations(fake_qtile, monkeypatch):
 
     monkeypatch.setattr(cu8, "call_process", mock_process)
     fakebar = Bar([cu8], 24)
-    fakebar.window = FakeWindow()
+    fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
