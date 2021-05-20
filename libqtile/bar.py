@@ -214,6 +214,7 @@ class Bar(Gap, configurable.Configurable):
                 self._configure_widget(i)
 
             self._remove_crashed_widgets()
+            self.draw()
 
         else:
             self.window = self.qtile.core.create_internal(

@@ -481,25 +481,28 @@ class Internal(Window, base.Internal):
         self.width: int = width
         self.height: int = height
         self._group = 0
+        self._reset_surface()
 
-        # Initialise surface to all black
-        self.image_surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, width, height)
+    def finalize(self):
+        self.hide()
+
+    def _reset_surface(self) -> None:
+        self.image_surface = cairocffi.ImageSurface(
+            cairocffi.FORMAT_ARGB32, self.width, self.height
+        )
         with cairocffi.Context(self.image_surface) as context:
+            # Initialise surface to all black
             context.set_source_rgba(*utils.rgb("#000000"))
             context.paint()
 
         self.texture = Texture.from_pixels(
             self.core.renderer,
             DRM_FORMAT_ARGB8888,
-            self.image_surface.format_stride_for_width(cairocffi.FORMAT_ARGB32, width),
-            width,
-            height,
+            self.image_surface.format_stride_for_width(cairocffi.FORMAT_ARGB32, self.width),
+            self.width,
+            self.height,
             cairocffi.cairo.cairo_image_surface_get_data(self.image_surface._pointer),
         )
-
-    def finalize(self):
-        self.hide()
-        self.image_surface.finish()
 
     def create_drawer(self, width: int, height: int) -> Drawer:
         """Create a Drawer that draws to this window."""
@@ -544,6 +547,7 @@ class Internal(Window, base.Internal):
         self.y = y
         self.width = width
         self.height = height
+        self._reset_surface()
         self.damage()
 
 
