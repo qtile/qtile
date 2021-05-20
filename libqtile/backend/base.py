@@ -18,6 +18,7 @@ if typing.TYPE_CHECKING:
     from libqtile.command.base import ItemT
     from libqtile.core.manager import Qtile
     from libqtile.group import _Group
+    from libqtile.utils import ColorType
 
 
 class Core(metaclass=ABCMeta):
@@ -481,7 +482,7 @@ class Drawer:
     def new_ctx(self):
         return pangocffi.patch_cairo_context(cairocffi.Context(self.surface))
 
-    def set_source_rgb(self, colour):
+    def set_source_rgb(self, colour: ColorType):
         if type(colour) == list:
             if len(colour) == 0:
                 # defaults to black

@@ -49,13 +49,14 @@ if typing.TYPE_CHECKING:
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.output import Output
     from libqtile.core.manager import Qtile
+    from libqtile.utils import ColorType
 
 EDGES_TILED = Edges.TOP | Edges.BOTTOM | Edges.LEFT | Edges.RIGHT
 EDGES_FLOAT = Edges.NONE
 
 
 @functools.lru_cache()
-def _rgb(color: Union[str, List, Tuple]) -> ffi.CData:
+def _rgb(color: ColorType) -> ffi.CData:
     """Helper to create and cache float[4] arrays for border painting"""
     if isinstance(color, ffi.CData):
         return color
@@ -218,7 +219,7 @@ class Window(base.Window, HasListeners):
             if switch_group:
                 group.cmd_toscreen(toggle=False)
 
-    def paint_borders(self, color, width) -> None:
+    def paint_borders(self, color: ColorType, width) -> None:
         if color:
             self.bordercolor = _rgb(color)
         self.borderwidth = width
