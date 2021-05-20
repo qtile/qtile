@@ -335,6 +335,8 @@ class Core(base.Core, wlrq.HasListeners):
         found = self._under_pointer()
         if found:
             win, surface, sx, sy = found
+            if isinstance(win, window.Internal):
+                return
             focus_changed = self.seat.pointer_state.focused_surface != surface
             self.seat.pointer_notify_enter(surface, sx, sy)
             if focus_changed:
@@ -422,7 +424,8 @@ class Core(base.Core, wlrq.HasListeners):
         found = self._under_pointer()
         if found:
             win, surface, _, _ = found
-            self.focus_window(win, surface)
+            if not isinstance(win, window.Internal):
+                self.focus_window(win, surface)
 
     def _under_pointer(self):
         assert self.qtile is not None
@@ -432,15 +435,17 @@ class Core(base.Core, wlrq.HasListeners):
 
         for win in reversed(self.mapped_windows):
             if isinstance(win, window.Internal):
-                return None
-            surface, sx, sy = win.surface.surface_at(cx - win.x, cy - win.y)
-            if surface:
-                return win, surface, sx, sy
-            if win.borderwidth:
-                bw = win.borderwidth
-                if win.x - bw <= cx and win.y - bw <= cy:
-                    if cx <= win.x + win.width + bw and cy <= win.y + win.height + bw:
-                        return win, win.surface.surface, 0, 0
+                if win.x <= cx <= win.x + win.width and win.y <= cy <= win.y + win.height:
+                    return win, None, 0, 0
+            else:
+                surface, sx, sy = win.surface.surface_at(cx - win.x, cy - win.y)
+                if surface:
+                    return win, surface, sx, sy
+                if win.borderwidth:
+                    bw = win.borderwidth
+                    if win.x - bw <= cx and win.y - bw <= cy:
+                        if cx <= win.x + win.width + bw and cy <= win.y + win.height + bw:
+                            return win, win.surface.surface, 0, 0
         return None
 
     def get_screen_info(self) -> List[Tuple[int, int, int, int]]:
