@@ -1027,6 +1027,24 @@ class Internal(_Window, base.Internal):
     def cmd_kill(self):
         self.kill()
 
+    def handle_Expose(self, e):  # noqa: N802
+        self.process_window_expose()
+
+    def handle_ButtonPress(self, e):  # noqa: N802
+        self.process_button_click(e.event_x, e.event_y, e.detail)
+
+    def handle_ButtonRelease(self, e):  # noqa: N802
+        self.process_button_release(e.event_x, e.event_y, e.detail)
+
+    def handle_EnterNotify(self, e):  # noqa: N802
+        self.process_pointer_enter(e.event_x, e.event_y)
+
+    def handle_LeaveNotify(self, e):  # noqa: N802
+        self.process_pointer_leave(e.event_x, e.event_y)
+
+    def handle_MotionNotify(self, e):  # noqa: N802
+        self.process_pointer_motion(e.event_x, e.event_y)
+
 
 class Static(_Window, base.Static):
     """An static window, belonging to a screen rather than a group"""

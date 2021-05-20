@@ -86,6 +86,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.renderer = self.backend.renderer
         self.socket = self.display.add_socket()
         self.fd = None
+        self._hovered_internal: Optional[window.Internal] = None
 
         # set up inputs
         self.keyboards: List[keyboard.Keyboard] = []
@@ -237,6 +238,11 @@ class Core(base.Core, wlrq.HasListeners):
         self.seat.pointer_notify_axis(
             event.time_msec, event.orientation, event.delta, event.delta_discrete, event.source,
         )
+        if self._hovered_internal:
+            button = 5 if 0 < event.delta else 4
+            self._hovered_internal.process_button_click(
+                self.cursor.x, self.cursor.y, button,
+            )
 
     def _on_cursor_frame(self, _listener, _data):
         self.seat.pointer_notify_frame()
@@ -251,8 +257,18 @@ class Core(base.Core, wlrq.HasListeners):
         button = wlrq.buttons_inv[event.button]
         if event.button_state == input_device.ButtonState.PRESSED:
             self.qtile.process_button_click(button, state, self.cursor.x, self.cursor.y, event)
+
+            if self._hovered_internal:
+                self._hovered_internal.process_button_click(
+                    self.cursor.x, self.cursor.y, button
+                )
         else:
             self.qtile.process_button_release(button, state)
+
+            if self._hovered_internal:
+                self._hovered_internal.process_button_release(
+                    self.cursor.x, self.cursor.y, button
+                )
 
     def _on_cursor_motion(self, _listener, event: pointer.PointerEventMotion):
         assert self.qtile is not None
@@ -333,10 +349,17 @@ class Core(base.Core, wlrq.HasListeners):
     def _process_cursor_motion(self, time):
         self.qtile.process_button_motion(self.cursor.x, self.cursor.y)
         found = self._under_pointer()
+
         if found:
             win, surface, sx, sy = found
             if isinstance(win, window.Internal):
+                if self._hovered_internal:
+                    win.process_pointer_motion(self.cursor.x, self.cursor.y)
+                else:
+                    win.process_pointer_enter(self.cursor.x, self.cursor.y)
+                    self._hovered_internal = win
                 return
+
             focus_changed = self.seat.pointer_state.focused_surface != surface
             self.seat.pointer_notify_enter(surface, sx, sy)
             if focus_changed:
@@ -352,9 +375,15 @@ class Core(base.Core, wlrq.HasListeners):
                 # notify on motion if the focus did not change
                 self.seat.pointer_notify_motion(time, sx, sy)
 
+            if self._hovered_internal:
+                self._hovered_internal = None
+
         else:
             self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
             self.seat.pointer_clear_focus()
+            if self._hovered_internal:
+                self._hovered_internal.process_pointer_leave(self.cursor.x, self.cursor.y)
+                self._hovered_internal = None
 
     def _add_new_pointer(self, device: input_device.InputDevice):
         logger.info("Adding new pointer")

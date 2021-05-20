@@ -18,11 +18,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Union
+from __future__ import annotations
+
+import typing
 
 from libqtile import configurable
 from libqtile.command.base import CommandObject, ItemT
 from libqtile.log_utils import logger
+
+if typing.TYPE_CHECKING:
+    from libqtile.widget.base import _Widget
 
 
 class Gap(CommandObject):
@@ -219,12 +224,12 @@ class Bar(Gap, configurable.Configurable):
             self.drawer = self.window.create_drawer(self.width, self.height)
             self.drawer.clear(self.background)
 
-            self.window.handle_Expose = self.handle_Expose
-            self.window.handle_ButtonPress = self.handle_ButtonPress
-            self.window.handle_ButtonRelease = self.handle_ButtonRelease
-            self.window.handle_EnterNotify = self.handle_EnterNotify
-            self.window.handle_LeaveNotify = self.handle_LeaveNotify
-            self.window.handle_MotionNotify = self.handle_MotionNotify
+            self.window.process_window_expose = self.draw
+            self.window.process_button_click = self.process_button_click
+            self.window.process_button_release = self.process_button_release
+            self.window.process_pointer_enter = self.process_pointer_enter
+            self.window.process_pointer_leave = self.process_pointer_leave
+            self.window.process_pointer_motion = self.process_pointer_motion
             self.window.unhide()
 
             self.crashed_widgets = []
@@ -314,64 +319,62 @@ class Bar(Gap, configurable.Configurable):
                 i.offsety = offset
                 offset += i.length
 
-    def handle_Expose(self, e):  # noqa: N802
-        self.draw()
-
-    def get_widget_in_position(self, e):
+    def get_widget_in_position(self, x: int, y: int) -> typing.Optional[_Widget]:
         if self.horizontal:
             for i in self.widgets:
-                if e.event_x < i.offsetx + i.length:
+                if x < i.offsetx + i.length:
                     return i
         else:
             for i in self.widgets:
-                if e.event_y < i.offsety + i.length:
+                if y < i.offsety + i.length:
                     return i
+        return None
 
-    def handle_ButtonPress(self, e):  # noqa: N802
-        widget = self.get_widget_in_position(e)
+    def process_button_click(self, x: int, y: int, button: int) -> None:
+        widget = self.get_widget_in_position(x, y)
         if widget:
             widget.button_press(
-                e.event_x - widget.offsetx,
-                e.event_y - widget.offsety,
-                e.detail
+                x - widget.offsetx,
+                y - widget.offsety,
+                button,
             )
 
-    def handle_ButtonRelease(self, e):  # noqa: N802
-        widget = self.get_widget_in_position(e)
+    def process_button_release(self, x: int, y: int, button: int) -> None:
+        widget = self.get_widget_in_position(x, y)
         if widget:
             widget.button_release(
-                e.event_x - widget.offsetx,
-                e.event_y - widget.offsety,
-                e.detail
+                x - widget.offsetx,
+                y - widget.offsety,
+                button,
             )
 
-    def handle_EnterNotify(self, e):  # noqa: N802
-        widget = self.get_widget_in_position(e)
+    def process_pointer_enter(self, x: int, y: int) -> None:
+        widget = self.get_widget_in_position(x, y)
         if widget:
             widget.mouse_enter(
-                e.event_x - widget.offsetx,
-                e.event_y - widget.offsety,
+                x - widget.offsetx,
+                y - widget.offsety,
             )
         self.cursor_in = widget
 
-    def handle_LeaveNotify(self, e):  # noqa: N802
+    def process_pointer_leave(self, x: int, y: int) -> None:
         if self.cursor_in:
             self.cursor_in.mouse_leave(
-                e.event_x - self.cursor_in.offsetx,
-                e.event_y - self.cursor_in.offsety,
+                x - self.cursor_in.offsetx,
+                y - self.cursor_in.offsety,
             )
             self.cursor_in = None
 
-    def handle_MotionNotify(self, e):  # noqa: N802
-        widget = self.get_widget_in_position(e)
+    def process_pointer_motion(self, x: int, y: int) -> None:
+        widget = self.get_widget_in_position(x, y)
         if widget and self.cursor_in and widget is not self.cursor_in:
             self.cursor_in.mouse_leave(
-                e.event_x - self.cursor_in.offsetx,
-                e.event_y - self.cursor_in.offsety,
+                x - self.cursor_in.offsetx,
+                y - self.cursor_in.offsety,
             )
             widget.mouse_enter(
-                e.event_x - widget.offsetx,
-                e.event_y - widget.offsety,
+                x - widget.offsetx,
+                y - widget.offsety,
             )
         self.cursor_in = widget
 
@@ -460,13 +463,7 @@ class Bar(Gap, configurable.Configurable):
             :screen The integer screen offset
             :position One of "top", "bottom", "left", or "right"
         """
-        class _Fake:
-            pass
-        fake = _Fake()
-        fake.event_x = x
-        fake.event_y = y
-        fake.detail = button
-        self.handle_ButtonPress(fake)
+        self.process_button_click(x, y, button)
 
 
-BarType = Union[Bar, Gap]
+BarType = typing.Union[Bar, Gap]

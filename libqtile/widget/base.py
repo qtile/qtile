@@ -111,8 +111,8 @@ class _Widget(CommandObject, configurable.Configurable):
     to the passed dictionary.
     """
     orientations = ORIENTATION_BOTH
-    offsetx = None
-    offsety = None
+    offsetx: int = 0
+    offsety: int = 0
     defaults = [
         ("background", None, "Widget background color"),
         ("mouse_callbacks", {}, "Dict of mouse button press callback functions."),
