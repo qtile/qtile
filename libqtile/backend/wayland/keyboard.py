@@ -70,7 +70,7 @@ class Keyboard(HasListeners):
     def finalize(self):
         self.finalize_listeners()
         self.core.keyboards.remove(self)
-        if self.core.keyboards and self.core.seat.keyboard._ptr == ffi.NULL:
+        if self.core.keyboards and self.core.seat.keyboard.destroyed:
             self.seat.set_keyboard(self.core.keyboards[-1].device)
 
     def _on_destroy(self, _listener, _data):
