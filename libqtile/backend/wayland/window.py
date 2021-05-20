@@ -38,6 +38,7 @@ from wlroots.wlr_types.xdg_shell import (
 from libqtile import hook, utils
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
+from libqtile.backend.wayland.drawer import Drawer
 from libqtile.backend.wayland.wlrq import DRM_FORMAT_ARGB8888, HasListeners
 from libqtile.command.base import CommandError
 from libqtile.log_utils import logger
@@ -463,6 +464,9 @@ class Internal(Window, base.Internal):
     """
     Internal windows are simply textures controlled by the compositor.
     """
+    image_surface: cairocffi.ImageSurface
+    texture: Texture
+
     def __init__(
         self, core: Core, qtile: Qtile, x: int, y: int, width: int, height: int
     ):
@@ -483,11 +487,10 @@ class Internal(Window, base.Internal):
             context.set_source_rgba(*utils.rgb("#000000"))
             context.paint()
 
-        stride = self.image_surface.format_stride_for_width(cairocffi.FORMAT_ARGB32, width)
         self.texture = Texture.from_pixels(
             self.core.renderer,
             DRM_FORMAT_ARGB8888,
-            stride,
+            self.image_surface.format_stride_for_width(cairocffi.FORMAT_ARGB32, width),
             width,
             height,
             cairocffi.cairo.cairo_image_surface_get_data(self.image_surface._pointer),
@@ -495,6 +498,11 @@ class Internal(Window, base.Internal):
 
     def finalize(self):
         self.hide()
+        self.image_surface.finish()
+
+    def create_drawer(self, width: int, height: int) -> Drawer:
+        """Create a Drawer that draws to this window."""
+        return Drawer(self.qtile, self, width, height)
 
     @property
     def width(self) -> int:

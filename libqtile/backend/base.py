@@ -335,6 +335,7 @@ class Window(_Window, metaclass=ABCMeta):
 
 
 class Internal(_Window, metaclass=ABCMeta):
+    @abstractmethod
     def create_drawer(self, width: int, height: int) -> Drawer:
         """Create a Drawer that draws to this window."""
 
