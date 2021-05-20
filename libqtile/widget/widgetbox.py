@@ -179,6 +179,7 @@ class WidgetBox(base._Widget):
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
+        self.draw_decorations()
 
         self.layout.draw(0,
                          int(self.bar.height / 2.0 -

@@ -139,6 +139,7 @@ class AGroupBox(_GroupBase):
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
+        self.draw_decorations()
         e = next(
             i for i in self.qtile.groups
             if i.name == self.bar.screen.group.name
@@ -332,6 +333,7 @@ class GroupBox(_GroupBase):
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
+        self.draw_decorations()
 
         offset = self.margin_x
         for i, g in enumerate(self.groups):

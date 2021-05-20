@@ -437,6 +437,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
+        self.draw_decorations()
         offset = self.margin_x
 
         self._box_end_positions = []

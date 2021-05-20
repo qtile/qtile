@@ -116,6 +116,7 @@ class _Widget(CommandObject, configurable.Configurable):
     defaults = [
         ("background", None, "Widget background color"),
         ("mouse_callbacks", {}, "Dict of mouse button press callback functions."),
+        ("decorations", [], "Decorations for widgets")
     ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, length, **config):
@@ -269,6 +270,15 @@ class _Widget(CommandObject, configurable.Configurable):
             changed. If it has, you must call bar.draw instead.
         """
         raise NotImplementedError
+
+    def draw_decorations(self):
+        """
+            Method that draws decorations underneath widget. This should be
+            called in a widget's `draw` method immediately after painting the
+            background but before the widget's contents.
+        """
+        for decoration in self.decorations:
+            decoration.draw(self)
 
     def calculate_length(self):
         """
@@ -427,6 +437,8 @@ class _TextBox(_Widget):
         if not self.can_draw():
             return
         self.drawer.clear(self.background or self.bar.background)
+        self.draw_decorations()
+
         self.layout.draw(
             self.actual_padding or 0,
             int(self.bar.height / 2.0 - self.layout.height / 2.0) + 1

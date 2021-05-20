@@ -144,6 +144,7 @@ class CurrentLayoutIcon(base._TextBox):
                 ))
             else:
                 self.drawer.clear(self.background or self.bar.background)
+                self.draw_decorations()
                 self.drawer.ctx.set_source(surface)
                 self.drawer.ctx.paint()
                 self.drawer.draw(offsetx=self.offset, width=self.length)

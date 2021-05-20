@@ -184,6 +184,7 @@ class Systray(window._Window, base._Widget):
     def draw(self):
         xoffset = self.padding
         self.drawer.clear(self.background or self.bar.background)
+        self.draw_decorations()
         self.drawer.draw(offsetx=self.offset, width=self.length)
         for pos, icon in enumerate(self.icons.values()):
             icon.window.set_attribute(backpixmap=self.drawer.pixmap)

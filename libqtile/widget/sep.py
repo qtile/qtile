@@ -56,6 +56,7 @@ class Sep(base._Widget):
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
+        self.draw_decorations()
         if self.bar.horizontal:
             margin_top = (self.bar.height / float(100) * (100 - self.size_percent)) / 2.0
             self.drawer.draw_vbar(

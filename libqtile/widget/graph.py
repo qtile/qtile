@@ -148,6 +148,7 @@ class _Graph(base._Widget):
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
+        self.draw_decorations()
         if self.border_width:
             self.drawer.set_source_rgb(self.border_color)
             self.drawer.ctx.set_line_width(self.border_width)

@@ -358,6 +358,20 @@ from top to bottom.
     setting a completely transparent bar will result in the contents of the widget (text etc.)
     also being transparent.
 
+Decorations
+-----------
+
+If you want your widget to be able to display decorations and your widget has its own ``draw``
+method (i.e. it's not using the ``draw`` method from an inherited class) then you need to include
+the following line after the background (see above):
+
+.. code:: python
+
+    self.draw_decorations()
+
+The rest of your widget should then be drawn after that point (so the contents is drawn above the
+decoration).
+
 Updating the widget
 ===================
 

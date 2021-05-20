@@ -196,6 +196,7 @@ class LaunchBar(base._Widget):
     def draw(self):
         """ Draw the icons in the widget. """
         self.drawer.clear(self.background or self.bar.background)
+        self.draw_decorations()
         xoffset = 0
         for i in sorted(self.progs.keys()):
             self.icons_offsets[i] = xoffset + self.padding

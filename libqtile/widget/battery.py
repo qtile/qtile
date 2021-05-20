@@ -500,6 +500,7 @@ class BatteryIcon(base._Widget):
 
     def draw(self) -> None:
         self.drawer.clear(self.background or self.bar.background)
+        self.draw_decorations()
         self.drawer.ctx.set_source(self.surfaces[self.current_icon])
         self.drawer.ctx.paint()
         self.drawer.draw(offsetx=self.offset, width=self.length)
