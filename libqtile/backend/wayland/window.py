@@ -325,6 +325,11 @@ class Window(base.Window, HasListeners):
 
         # TODO: Can we get min/max size, resizing increments etc and respect them?
 
+        # save x and y float offset
+        if self.group is not None and self.group.screen is not None:
+            self.float_x = x - self.group.screen.x
+            self.float_y = y - self.group.screen.y
+
         self.x = x
         self.y = y
         self.surface.set_size(int(width), int(height))
