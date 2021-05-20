@@ -339,6 +339,24 @@ class Internal(_Window, metaclass=ABCMeta):
     def create_drawer(self, width: int, height: int) -> Drawer:
         """Create a Drawer that draws to this window."""
 
+    def process_window_expose(self) -> None:
+        """Respond to the window being exposed. Required by X11 backend."""
+
+    def process_button_click(self, x: int, y: int, button: int) -> None:
+        """Handle a pointer button click."""
+
+    def process_button_release(self, x: int, y: int, button: int) -> None:
+        """Handle a pointer button release."""
+
+    def process_pointer_enter(self, x: int, y: int) -> None:
+        """Handle the pointer entering the window."""
+
+    def process_pointer_leave(self, x: int, y: int) -> None:
+        """Handle the pointer leaving the window."""
+
+    def process_pointer_motion(self, x: int, y: int) -> None:
+        """Handle pointer motion within the window."""
+
 
 class Static(_Window, metaclass=ABCMeta):
     screen: config.Screen

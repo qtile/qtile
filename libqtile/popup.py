@@ -68,23 +68,16 @@ class Popup(configurable.Configurable):
         if self.corner_radius:
             self.win.window.round_corners(width, height, self.corner_radius, self.border_width)
 
-        self.win.handle_Expose = self._handle_Expose
-        self.win.handle_KeyPress = self._handle_KeyPress
-        self.win.handle_ButtonPress = self._handle_ButtonPress
+        self.win.process_window_expose = self.draw
+        self.win.process_button_click = self.process_button_click
 
         self.x = self.win.x
         self.y = self.win.y
         if not self.border_width:
             self.border = None
 
-    def _handle_Expose(self, e):  # noqa: N802
-        pass
-
-    def _handle_KeyPress(self, event):  # noqa: N802
-        pass
-
-    def _handle_ButtonPress(self, event):  # noqa: N802
-        if event.detail == 1:
+    def process_button_click(self, x, y, button) -> None:
+        if button == 1:
             self.hide()
 
     @property
