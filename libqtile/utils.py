@@ -28,6 +28,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from random import randint
 from shutil import which
+from typing import Tuple, Union
 
 try:
     from dbus_next import Message, Variant  # type: ignore
@@ -63,6 +64,9 @@ def shuffle_down(lst):
         c = lst[0]
         lst.remove(c)
         lst.append(c)
+
+
+ColorType = Union[str, Tuple[int, int, int], Tuple[int, int, int, float]]
 
 
 def rgb(x):
