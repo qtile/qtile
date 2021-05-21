@@ -39,12 +39,16 @@ from wlroots.wlr_types import (
     XCursorManager,
     XdgOutputManagerV1,
     input_device,
-    layer_shell_v1,
     pointer,
     seat,
     xdg_decoration_v1,
 )
 from wlroots.wlr_types.cursor import WarpMode
+from wlroots.wlr_types.layer_shell_v1 import (
+    LayerShellV1,
+    LayerShellV1Layer,
+    LayerSurfaceV1,
+)
 from wlroots.wlr_types.output_management_v1 import (
     OutputConfigurationHeadV1,
     OutputConfigurationV1,
@@ -78,7 +82,6 @@ class Core(base.Core, wlrq.HasListeners):
         self.qtile: Optional[Qtile] = None
         self.desktops: int = 1
         self.current_desktop: int = 0
-        self.mapped_windows: List[window.WindowType] = []  # Ascending in Z
 
         self.display = Display()
         self.event_loop = self.display.get_event_loop()
@@ -87,6 +90,12 @@ class Core(base.Core, wlrq.HasListeners):
         self.socket = self.display.add_socket()
         self.fd = None
         self._hovered_internal: Optional[window.Internal] = None
+
+        # mapped_windows contains just regular windows
+        self.mapped_windows: List[window.WindowType] = []  # Ascending in Z
+        # stacked_windows also contains layer_shell windows from the current output
+        self.stacked_windows: List[window.WindowType] = []  # Ascending in Z
+        self._current_output: Optional[Output] = None
 
         # set up inputs
         self.keyboards: List[keyboard.Keyboard] = []
@@ -119,7 +128,7 @@ class Core(base.Core, wlrq.HasListeners):
         # set up shell
         self.xdg_shell = XdgShell(self.display)
         self.add_listener(self.xdg_shell.new_surface_event, self._on_new_xdg_surface)
-        self.layer_shell = layer_shell_v1.LayerShellV1(self.display)
+        self.layer_shell = LayerShellV1(self.display)
         self.add_listener(self.layer_shell.new_surface_event, self._on_new_layer_surface)
 
         # Add support for additional protocols
@@ -194,6 +203,9 @@ class Core(base.Core, wlrq.HasListeners):
 
         self.outputs.append(Output(self, wlr_output))
         self.output_layout.add_auto(wlr_output)
+
+        if not self._current_output:
+            self._current_output = self.outputs[0]
 
     def _on_output_layout_change(self, _listener, _data):
         logger.debug("Signal: output_layout change_event")
@@ -285,7 +297,7 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_new_virtual_keyboard(self, _listener, virtual_keyboard: VirtualKeyboardV1):
         self._add_new_keyboard(virtual_keyboard.input_device)
 
-    def _on_new_layer_surface(self, _listener, layer_surface: layer_shell_v1.LayerSurfaceV1):
+    def _on_new_layer_surface(self, _listener, layer_surface: LayerSurfaceV1):
         logger.debug("Signal: layer_shell new_surface_event")
         assert self.qtile is not None
 
@@ -348,6 +360,15 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _process_cursor_motion(self, time):
         self.qtile.process_button_motion(self.cursor.x, self.cursor.y)
+
+        if len(self.outputs) > 1:
+            current_output = self.output_layout.output_at(
+                self.cursor.x, self.cursor.y
+            ).data
+            if self._current_output is not current_output:
+                self._current_output = current_output
+                self.stack_windows()
+
         found = self._under_pointer()
 
         if found:
@@ -364,12 +385,17 @@ class Core(base.Core, wlrq.HasListeners):
             self.seat.pointer_notify_enter(surface, sx, sy)
             if focus_changed:
                 hook.fire("client_mouse_enter", win)
+
                 if self.qtile.config.follow_mouse_focus:
-                    if win.group.current_window != win:
-                        win.group.focus(win, False)
-                    if win.group.screen and self.qtile.current_screen != win.group.screen:
-                        self.qtile.focus_screen(win.group.screen.index, False)
+                    if isinstance(win, window.Static):
+                        self.qtile.focus_screen(win.screen.index, False)
+                    else:
+                        if win.group.current_window != win:
+                            win.group.focus(win, False)
+                        if win.group.screen and self.qtile.current_screen != win.group.screen:
+                            self.qtile.focus_screen(win.group.screen.index, False)
                     self.focus_window(win, surface)
+
             else:
                 # The enter event contains coordinates, so we only need to
                 # notify on motion if the focus did not change
@@ -430,7 +456,6 @@ class Core(base.Core, wlrq.HasListeners):
         previous_surface = self.seat.keyboard_state.focused_surface
         if previous_surface == surface:
             return
-        self.seat.keyboard_clear_focus()
 
         if previous_surface is not None and previous_surface.is_xdg_surface:
             # Deactivate the previously focused surface
@@ -438,9 +463,10 @@ class Core(base.Core, wlrq.HasListeners):
             previous_xdg_surface.set_activated(False)
 
         if not win:
+            self.seat.keyboard_clear_focus()
             return
 
-        if isinstance(win.surface, layer_shell_v1.LayerSurfaceV1):
+        if isinstance(win.surface, LayerSurfaceV1):
             if not win.mapped or not win.surface.current.keyboard_interactive:
                 return
 
@@ -479,7 +505,7 @@ class Core(base.Core, wlrq.HasListeners):
         cx = self.cursor.x
         cy = self.cursor.y
 
-        for win in reversed(self.mapped_windows):
+        for win in reversed(self.stacked_windows):
             if isinstance(win, window.Internal):
                 if win.x <= cx <= win.x + win.width and win.y <= cy <= win.y + win.height:
                     return win, None, 0, 0
@@ -493,6 +519,17 @@ class Core(base.Core, wlrq.HasListeners):
                         if cx <= win.x + win.width + bw and cy <= win.y + win.height + bw:
                             return win, win.surface.surface, 0, 0
         return None
+
+    def stack_windows(self) -> None:
+        """Put all windows of all types in a Z-ordered list."""
+        if self._current_output:
+            layers = self._current_output.layers
+            self.stacked_windows = layers[LayerShellV1Layer.BACKGROUND] + \
+                layers[LayerShellV1Layer.BOTTOM]  # type: ignore
+            self.stacked_windows += self.mapped_windows
+            self.stacked_windows += layers[LayerShellV1Layer.TOP] + layers[LayerShellV1Layer.OVERLAY]
+        else:
+            self.stacked_windows = self.mapped_windows
 
     def get_screen_info(self) -> List[Tuple[int, int, int, int]]:
         """Get the screen information"""
