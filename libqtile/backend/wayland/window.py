@@ -79,6 +79,8 @@ class Window(base.Window, HasListeners):
         self._mapped: bool = False
         self.x = 0
         self.y = 0
+        self._width: int = surface.surface.current.width
+        self._height: int = surface.surface.current.height
         self.bordercolor: ffi.CData = _rgb((0, 0, 0, 1))
         self.opacity: float = 1.0
 
@@ -105,12 +107,20 @@ class Window(base.Window, HasListeners):
         return self._wid
 
     @property
-    def width(self):
-        return self.surface.surface.current.width
+    def width(self) -> int:
+        return self._width
+
+    @width.setter
+    def width(self, width: int) -> None:
+        self._width = width
 
     @property
-    def height(self):
-        return self.surface.surface.current.height
+    def height(self) -> int:
+        return self._height
+
+    @height.setter
+    def height(self, height: int) -> None:
+        self._height = height
 
     @property
     def group(self):
@@ -334,6 +344,8 @@ class Window(base.Window, HasListeners):
         self.x = x
         self.y = y
         self.surface.set_size(int(width), int(height))
+        self.width = int(width)
+        self.height = int(height)
         self.paint_borders(bordercolor, borderwidth)
 
         if above:
