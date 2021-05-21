@@ -612,6 +612,7 @@ class Static(Window, base.Static):
             if surface.output is None:
                 surface.output = core.output_layout.output_at(core.cursor.x, core.cursor.y)
             self.output = core.output_from_wlr_output(surface.output)
+            self.screen = self.output.screen
             self.mapped = True
 
     @property
@@ -624,21 +625,26 @@ class Static(Window, base.Static):
     def mapped(self, mapped: bool) -> None:
         self._mapped = mapped
 
-        tracker: List  # mypy complains as the signatures of the two possibilities differ
-        if self.is_layer:
-            tracker = self.output.layers[self.surface.client_pending.layer]  # type: ignore
-        else:
-            tracker = self.core.mapped_windows
+        if isinstance(self.surface, LayerSurfaceV1):
+            layer = self.output.layers[self.surface.client_pending.layer]
+            if mapped:
+                if self not in layer:
+                    layer.append(self)
+            else:
+                if self in layer:
+                    layer.remove(self)
 
-        if mapped:
-            if self not in tracker:
-                tracker.append(self)
-        else:
-            if self in tracker:
-                tracker.remove(self)
-
-        if self.is_layer:
+                if self.reserved_space:
+                    self.qtile.free_reserved_space(self.reserved_space, self.screen)
             self.output.organise_layers()
+
+        else:
+            if mapped:
+                if self not in self.core.mapped_windows:
+                    self.core.mapped_windows.append(self)
+            else:
+                if self in self.core.mapped_windows:
+                    self.core.mapped_windows.remove(self)
 
         self.core.stack_windows()
 

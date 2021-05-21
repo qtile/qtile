@@ -44,6 +44,7 @@ if typing.TYPE_CHECKING:
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.window import WindowType
+    from libqtile.config import Screen
 
 
 class Output(HasListeners):
@@ -67,6 +68,16 @@ class Output(HasListeners):
     def finalize(self):
         self.core.outputs.remove(self)
         self.finalize_listeners()
+
+    @property
+    def screen(self) -> Screen:
+        assert self.core.qtile is not None
+        x, y, w, h = self.get_geometry()
+        for screen in self.core.qtile.screens:
+            if screen.x == x and screen.y == y:
+                if screen.width == w and screen.height == h:
+                    return screen
+        return self.core.qtile.current_screen
 
     def _on_destroy(self, _listener, _data):
         logger.debug("Signal: output destroy")
@@ -211,6 +222,40 @@ class Output(HasListeners):
                 if ww <= 0 or wh <= 0:
                     win.kill()
                     continue
+
+                if 0 < state.exclusive_zone:
+                    # Reserve space if:
+                    #    - layer is anchored to an edge and both perpendicular edges, or
+                    #    - layer is anchored to a single edge only.
+                    space = [0, 0, 0, 0]
+
+                    if state.anchor & LayerSurfaceV1Anchor.HORIZONTAL:
+                        if state.anchor & LayerSurfaceV1Anchor.TOP:
+                            space[2] = state.exclusive_zone
+                        elif state.anchor & LayerSurfaceV1Anchor.BOTTOM:
+                            space[3] = state.exclusive_zone
+                    elif state.anchor & LayerSurfaceV1Anchor.VERTICAL:
+                        if state.anchor & LayerSurfaceV1Anchor.LEFT:
+                            space[0] = state.exclusive_zone
+                        elif state.anchor & LayerSurfaceV1Anchor.RIGHT:
+                            space[1] = state.exclusive_zone
+                    else:
+                        # Single edge only
+                        if state.anchor == LayerSurfaceV1Anchor.TOP:
+                            space[2] = state.exclusive_zone
+                        elif state.anchor == LayerSurfaceV1Anchor.BOTTOM:
+                            space[3] = state.exclusive_zone
+                        if state.anchor == LayerSurfaceV1Anchor.LEFT:
+                            space[0] = state.exclusive_zone
+                        elif state.anchor == LayerSurfaceV1Anchor.RIGHT:
+                            space[1] = state.exclusive_zone
+
+                    to_reserve: Tuple[int, int, int, int] = tuple(space)  # type: ignore
+                    if win.reserved_space != to_reserve:
+                        # Don't reserve more space if it's already been reserved
+                        assert self.core.qtile is not None
+                        self.core.qtile.reserve_space(to_reserve, self.screen)
+                        win.reserved_space = to_reserve
 
                 win.place(x, y, ww, wh, 0, None)
 
