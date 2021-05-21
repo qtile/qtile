@@ -134,6 +134,7 @@ class Window(base.Window, HasListeners):
         else:
             if self in self.core.mapped_windows:
                 self.core.mapped_windows.remove(self)
+        self.core.stack_windows()
 
     def _on_map(self, _listener, _data):
         logger.debug("Signal: window map")
@@ -338,6 +339,7 @@ class Window(base.Window, HasListeners):
         if above:
             self.core.mapped_windows.remove(self)
             self.core.mapped_windows.append(self)
+            self.core.stack_windows()
 
         self.damage()
 
@@ -461,6 +463,7 @@ class Window(base.Window, HasListeners):
         if self.mapped:
             self.core.mapped_windows.remove(self)
             self.core.mapped_windows.append(self)
+            self.core.stack_windows()
 
     def cmd_kill(self) -> None:
         self.kill()
@@ -548,6 +551,8 @@ class Internal(Window, base.Internal):
         if above:
             self.core.mapped_windows.remove(self)
             self.core.mapped_windows.append(self)
+            self.core.stack_windows()
+
         self.x = x
         self.y = y
         self.width = width
@@ -583,6 +588,7 @@ class Static(Window, base.Static):
         self._float_state = FloatStates.FLOATING
         self.defunct = True
         self.is_layer = False
+        self.screen = qtile.current_screen
 
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
@@ -621,6 +627,8 @@ class Static(Window, base.Static):
 
         if self.is_layer:
             self.output.organise_layers()
+
+        self.core.stack_windows()
 
     def _on_map(self, _listener, data):
         logger.debug("Signal: window map")

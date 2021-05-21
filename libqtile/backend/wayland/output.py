@@ -214,6 +214,8 @@ class Output(HasListeners):
 
                 win.place(x, y, ww, wh, 0, None)
 
+        self.core.stack_windows()
+
     def contains(self, win: WindowType) -> bool:
         """Returns whether the given window is visible on this output."""
         if win.x + win.width < self.x:
