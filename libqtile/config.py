@@ -266,6 +266,7 @@ class Screen(CommandObject):
     """
     group: _Group
     previous_group: _Group
+    index: int
 
     def __init__(self, top: Optional[BarType] = None, bottom: Optional[BarType] = None,
                  left: Optional[BarType] = None, right: Optional[BarType] = None,
@@ -280,7 +281,6 @@ class Screen(CommandObject):
         self.wallpaper = wallpaper
         self.wallpaper_mode = wallpaper_mode
         self.qtile = None
-        self.index = None
         # x position of upper left corner can be > 0
         # if one screen is "right" of the other
         self.x = x if x is not None else 0

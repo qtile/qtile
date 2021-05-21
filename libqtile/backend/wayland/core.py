@@ -450,11 +450,28 @@ class Core(base.Core, wlrq.HasListeners):
         self.seat.keyboard_notify_enter(surface, self.seat.keyboard)
 
     def focus_by_click(self, event) -> None:
+        assert self.qtile is not None
         found = self._under_pointer()
+
         if found:
             win, surface, _, _ = found
+
+            if self.qtile.config.bring_front_click:
+                if self.qtile.config.bring_front_click != "floating_only" or not win.floating:
+                    win.cmd_bring_to_front()
+
             if not isinstance(win, window.Internal):
-                self.focus_window(win, surface)
+                if isinstance(win, window.Window):
+                    if win.group.screen is not self.qtile.current_screen:
+                        self.qtile.focus_screen(win.group.screen.index, warp=False)
+                    self.qtile.current_group.focus(win, False)
+
+                self.focus_window(win, surface=surface)
+
+        else:
+            screen = self.qtile.find_screen(self.cursor.x, self.cursor.y)
+            if screen:
+                self.qtile.focus_screen(screen.index, warp=False)
 
     def _under_pointer(self):
         assert self.qtile is not None
