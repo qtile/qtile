@@ -306,6 +306,15 @@ class Window(_Window, metaclass=ABCMeta):
     def cmd_bring_to_front(self) -> None:
         """Bring the window to the front"""
 
+    def cmd_togroup(
+        self, group_name: Optional[str] = None, *, switch_group: bool = False
+    ) -> None:
+        """Move window to a specified group
+
+        Also switch to that group if switch_group is True.
+        """
+        self.togroup(group_name, switch_group=switch_group)
+
     def cmd_opacity(self, opacity):
         """Set the window's opacity"""
         if opacity < .1:
