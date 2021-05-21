@@ -38,16 +38,8 @@ if typing.TYPE_CHECKING:
 KEY_PRESSED = WlKeyboard.key_state.pressed
 KEY_RELEASED = WlKeyboard.key_state.released
 
-
-def _get_keysyms(xkb_state, keycode):
-    syms_out = ffi.new("const xkb_keysym_t **")
-    nsyms = lib.xkb_state_key_get_syms(xkb_state, keycode, syms_out)
-    if nsyms > 0:
-        assert syms_out[0] != ffi.NULL
-
-    syms = [syms_out[0][i] for i in range(nsyms)]
-    logger.debug(f"Got {nsyms} syms: {syms}")
-    return syms
+# Keep this around instead of creating it on every key
+xkb_keysym = ffi.new("const xkb_keysym_t **")
 
 
 class Keyboard(HasListeners):
@@ -83,7 +75,6 @@ class Keyboard(HasListeners):
 
     def _on_key(self, _listener, event: KeyboardKeyEvent):
         logger.debug("Signal: keyboard key")
-        handled = False
 
         if self.qtile is None:
             # shushes mypy
@@ -93,12 +84,15 @@ class Keyboard(HasListeners):
         if event.state == KEY_PRESSED:
             # translate libinput keycode -> xkbcommon
             keycode = event.keycode + 8
-            keysyms = _get_keysyms(self.keyboard._ptr.xkb_state, keycode)
+            layout_index = lib.xkb_state_key_get_layout(self.keyboard._ptr.xkb_state, keycode)
+            nsyms = lib.xkb_keymap_key_get_syms_by_level(
+                self.keyboard._ptr.keymap, keycode, layout_index, 0, xkb_keysym,
+            )
+            keysyms = [xkb_keysym[0][i] for i in range(nsyms)]
             mods = self.keyboard.modifier
             for keysym in keysyms:
                 if (keysym, mods) in self.grabbed_keys:
                     self.qtile.process_key_event(keysym, mods)
-                    handled = True
+                    return
 
-        if not handled:
-            self.seat.keyboard_notify_key(event)
+        self.seat.keyboard_notify_key(event)
