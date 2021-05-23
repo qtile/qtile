@@ -654,6 +654,7 @@ class Static(Window, base.Static):
         self.damage()
         if self.is_layer:
             self.output.organise_layers()
+            self.core.focus_window(self, self.surface.surface)
 
     def _on_unmap(self, _listener, data):
         logger.debug("Signal: window unmap")
