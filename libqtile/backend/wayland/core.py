@@ -517,12 +517,13 @@ class Core(base.Core, wlrq.HasListeners):
                 if win.x <= cx <= win.x + win.width and win.y <= cy <= win.y + win.height:
                     return win, None, 0, 0
             else:
-                surface, sx, sy = win.surface.surface_at(cx - win.x, cy - win.y)
+                bw = win.borderwidth
+                surface, sx, sy = win.surface.surface_at(cx - win.x - bw, cy - win.y - bw)
                 if surface:
                     return win, surface, sx, sy
-                if win.borderwidth:
-                    bw = win.borderwidth
-                    if win.x - bw <= cx and win.y - bw <= cy:
+                if bw:
+                    if win.x <= cx and win.y <= cy:
+                        bw *= 2
                         if cx <= win.x + win.width + bw and cy <= win.y + win.height + bw:
                             return win, win.surface.surface, 0, 0
         return None
