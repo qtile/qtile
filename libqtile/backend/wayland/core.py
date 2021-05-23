@@ -474,7 +474,7 @@ class Core(base.Core, wlrq.HasListeners):
             return
 
         if isinstance(win.surface, LayerSurfaceV1):
-            if not win.mapped or not win.surface.current.keyboard_interactive:
+            if not win.surface.current.keyboard_interactive:
                 return
 
         logger.debug("Focussing new window")
