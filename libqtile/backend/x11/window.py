@@ -708,7 +708,6 @@ class _Window:
         # We don't want to get the UnmapNotify for this unmap
         with self.disable_mask(EventMask.StructureNotify):
             self.window.unmap()
-        self.state = IconicState
         self.hidden = True
 
     def unhide(self):
@@ -1314,6 +1313,7 @@ class Window(_Window, base.Window):
 
     def _reconfigure_floating(self, new_float_state=FloatStates.FLOATING):
         if new_float_state == FloatStates.MINIMIZED:
+            self.state = IconicState
             self.hide()
         else:
             width = self.width
