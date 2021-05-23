@@ -162,6 +162,9 @@ class Window(base.Window, HasListeners):
 
     def _on_destroy(self, _listener, _data):
         logger.debug("Signal: window destroy")
+        if self.mapped:
+            logger.warning("Window destroyed before unmap event.")
+            self.mapped = False
         self.qtile.unmanage(self.wid)
         self.finalize()
 
