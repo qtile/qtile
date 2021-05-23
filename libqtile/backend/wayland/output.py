@@ -147,26 +147,31 @@ class Output(HasListeners):
         height = surface.current.height * scale
         transform_matrix = self.transform_matrix
 
-        if surface == window.surface.surface and window.borderwidth:
+        if window.borderwidth:
             bw = window.borderwidth * scale
-            bc = window.bordercolor
-            border = Box(
-                int(x),
-                int(y),
-                int(width + bw * 2),
-                int(bw),
-            )
-            x += bw
-            y += bw
-            self.renderer.render_rect(border, bc, transform_matrix)  # Top border
-            border.y = int(y + height)
-            self.renderer.render_rect(border, bc, transform_matrix)  # Bottom border
-            border.y = int(y - bw)
-            border.width = int(bw)
-            border.height = int(height + bw * 2)
-            self.renderer.render_rect(border, bc, transform_matrix)  # Left border
-            border.x = int(x + width)
-            self.renderer.render_rect(border, bc, transform_matrix)  # Right border
+
+            if surface == window.surface.surface:
+                bc = window.bordercolor
+                border = Box(
+                    int(x),
+                    int(y),
+                    int(width + bw * 2),
+                    int(bw),
+                )
+                x += bw
+                y += bw
+                self.renderer.render_rect(border, bc, transform_matrix)  # Top border
+                border.y = int(y + height)
+                self.renderer.render_rect(border, bc, transform_matrix)  # Bottom border
+                border.y = int(y - bw)
+                border.width = int(bw)
+                border.height = int(height + bw * 2)
+                self.renderer.render_rect(border, bc, transform_matrix)  # Left border
+                border.x = int(x + width)
+                self.renderer.render_rect(border, bc, transform_matrix)  # Right border
+            else:
+                x += bw
+                y += bw
 
         box = Box(
             int(x),
