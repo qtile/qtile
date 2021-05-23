@@ -54,6 +54,10 @@ from wlroots.wlr_types.output_management_v1 import (
     OutputConfigurationV1,
     OutputManagerV1,
 )
+from wlroots.wlr_types.server_decoration import (
+    ServerDecorationManager,
+    ServerDecorationManagerMode,
+)
 from wlroots.wlr_types.virtual_keyboard_v1 import (
     VirtualKeyboardManagerV1,
     VirtualKeyboardV1,
@@ -145,6 +149,9 @@ class Core(base.Core, wlrq.HasListeners):
             xdg_decoration_manager_v1.new_toplevel_decoration_event,
             self._on_new_toplevel_decoration,
         )
+        # wlr_server_decoration will be removed in a future version of wlroots
+        server_decoration_manager = ServerDecorationManager.create(self.display)
+        server_decoration_manager.set_default_mode(ServerDecorationManagerMode.SERVER)
 
         # start
         os.environ["WAYLAND_DISPLAY"] = self.socket.decode()
