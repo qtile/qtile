@@ -496,7 +496,7 @@ class Core(base.Core, wlrq.HasListeners):
 
             if not isinstance(win, window.Internal):
                 if isinstance(win, window.Window):
-                    if win.group.screen is not self.qtile.current_screen:
+                    if win.group and win.group.screen is not self.qtile.current_screen:
                         self.qtile.focus_screen(win.group.screen.index, warp=False)
                     self.qtile.current_group.focus(win, False)
 

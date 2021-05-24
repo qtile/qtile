@@ -49,6 +49,7 @@ if typing.TYPE_CHECKING:
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.output import Output
     from libqtile.core.manager import Qtile
+    from libqtile.group import _Group
     from libqtile.utils import ColorType
 
 EDGES_TILED = Edges.TOP | Edges.BOTTOM | Edges.LEFT | Edges.RIGHT
@@ -73,9 +74,9 @@ class Window(base.Window, HasListeners):
         self.core = core
         self.qtile = qtile
         self.surface = surface
+        self._group: Optional[_Group] = None
         self.popups: List[XdgPopupWindow] = []
         self._wid = wid
-        self._group = 0
         self._mapped: bool = False
         self.x = 0
         self.y = 0
@@ -123,12 +124,12 @@ class Window(base.Window, HasListeners):
         self._height = height
 
     @property
-    def group(self):
+    def group(self) -> Optional[_Group]:
         return self._group
 
     @group.setter
-    def group(self, index):
-        self._group = index
+    def group(self, group: Optional[_Group]) -> None:
+        self._group = group
 
     @property
     def mapped(self) -> bool:
@@ -496,6 +497,7 @@ class Internal(Window, base.Internal):
     ):
         self.core = core
         self.qtile = qtile
+        self._group: Optional[_Group] = None
         self._mapped: bool = False
         self._wid: int = self.core.new_wid()
         self.x: int = x
@@ -503,7 +505,6 @@ class Internal(Window, base.Internal):
         self.opacity: float = 1.0
         self.width: int = width
         self.height: int = height
-        self._group = 0
         self._reset_surface()
 
     def finalize(self):
@@ -591,7 +592,7 @@ class Static(Window, base.Static):
         base.Static.__init__(self)
         self.core = core
         self.qtile = qtile
-        self._group = 0
+        self._group: Optional[_Group] = None
         self.surface = surface
         self._wid = wid
         self._mapped: bool = False

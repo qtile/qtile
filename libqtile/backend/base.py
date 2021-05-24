@@ -131,7 +131,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def group(self) -> _Group:
+    def group(self) -> Optional[_Group]:
         """The group to which this window belongs."""
 
     @property
