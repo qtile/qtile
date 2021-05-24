@@ -584,7 +584,7 @@ class Qtile(CommandObject):
             hook.fire("client_killed", c)
             if isinstance(c, base.Static) and c.reserved_space:
                 self.free_reserved_space(c.reserved_space, c.screen)
-            if getattr(c, "group", None):
+            if c.group:
                 c.group.remove(c)
             del self.windows_map[wid]
             self.core.update_client_list(self.windows_map)
@@ -1212,7 +1212,7 @@ class Qtile(CommandObject):
 
     def find_window(self, wid: int) -> None:
         window = self.windows_map.get(wid)
-        if window:
+        if window and window.group:
             if not window.group.screen:
                 self.current_screen.set_group(window.group)
             window.group.focus(window, False)
@@ -1243,8 +1243,12 @@ class Qtile(CommandObject):
         """Focus next window with urgent hint"""
         try:
             nxt = [w for w in self.windows_map.values() if w.urgent][0]
-            nxt.group.cmd_toscreen()
-            nxt.group.focus(nxt)
+            if nxt.group:
+                nxt.group.cmd_toscreen()
+                nxt.group.focus(nxt)
+            else:
+                self.current_screen.group.add(nxt)
+                self.current_screen.group.focus(nxt)
         except IndexError:
             pass  # no window had urgent set
 
