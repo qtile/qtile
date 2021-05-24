@@ -122,23 +122,24 @@ both of which must be installed with the latest release. Be aware that some
 distributions package outdated versions of wlroots. pywlroots_ can be installed
 using ``pip install`` as above.
 
-Any Wayland-specific configuration is not intended to be stable at this time.
-
-Qtile can then be run either from a TTY, or within an existing X11 session
-where it will run inside a nested window:
+Qtile can then be run either from a TTY, or within an existing X11 or Wayland
+session where it will run inside a nested window:
 
 .. code-block:: bash
 
     qtile start -b wayland
 
-.. important::
+If you want your config file to work with different backends but want some
+options set differently per backend, something like this may be useful:
 
-    The Wayland backend is in early stages of development and is expected to be
-    unstable. Some features may be missing\* and there may be slight differences
-    between its behaviour and that of the X11 backend until it reaches feature
-    parity with the X11 backend.
+.. code-block:: python
 
-    \*Notably window Z positioning, and the status bar
+   from libqtile import qtile
+
+   if qtile.core.name == "x11":
+       term = "urxvt"
+   elif qtile.core.name == "wayland":
+       term = "foot"
 
 .. _pywlroots: https://github.com/flacjacket/pywlroots
 .. _wlroots: https://github.com/swaywm/wlroots
