@@ -163,6 +163,10 @@ class Core(base.Core):
         self._numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(numlock_code), 0)
         self._valid_mask = ~(self._numlock_mask | xcbq.ModMasks["lock"])
 
+    @property
+    def name(self):
+        return "x11"
+
     def finalize(self) -> None:
         self.conn.conn.core.DeletePropertyChecked(
             self._root.wid,
