@@ -694,6 +694,12 @@ class Static(Window, base.Static):
             self.paint_borders(bordercolor, borderwidth)
         self.damage()
 
+    def cmd_bring_to_front(self) -> None:
+        if self.mapped and isinstance(self.surface, XdgSurface):
+            self.core.mapped_windows.remove(self)
+            self.core.mapped_windows.append(self)
+            self.core.stack_windows()
+
 
 WindowType = typing.Union[Window, Internal, Static]
 
