@@ -251,6 +251,7 @@ class Core(base.Core, wlrq.HasListeners):
         wid = self.new_wid()
         win = window.Window(self, self.qtile, surface, wid)
         logger.info(f"Managing new top-level window with window ID: {wid}")
+        self._poll()  # Give the window the chance to map itself before focussing it
         self.qtile.manage(win)
 
     def _on_cursor_axis(self, _listener, event: pointer.PointerEventAxis):
