@@ -24,6 +24,12 @@ if typing.TYPE_CHECKING:
 class Core(metaclass=ABCMeta):
     painter: Any
 
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """The name of the backend"""
+        pass
+
     @abstractmethod
     def finalize(self):
         """Destructor/Clean up resources"""

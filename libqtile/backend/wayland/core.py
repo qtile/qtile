@@ -158,6 +158,10 @@ class Core(base.Core, wlrq.HasListeners):
         logger.info("Starting core with WAYLAND_DISPLAY=" + self.socket.decode())
         self.backend.start()
 
+    @property
+    def name(self):
+        return "wayland"
+
     def finalize(self):
         for kb in self.keyboards:
             kb.finalize()
