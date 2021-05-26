@@ -236,8 +236,8 @@ class XWindow:
         r = self.get_property("WM_CLASS", "STRING")
         if r:
             s = self._property_string(r)
-            return tuple(s.strip("\0").split("\0"))
-        return tuple()
+            return list(s.strip("\0").split("\0"))
+        return []
 
     def get_wm_window_role(self):
         r = self.get_property("WM_WINDOW_ROLE", "STRING")
@@ -534,7 +534,7 @@ class _Window:
     def group(self):
         return self._group
 
-    def has_fixed_ratio(self):
+    def has_fixed_ratio(self) -> bool:
         try:
             if ('PAspect' in self.hints['flags'] and
                     self.hints["min_aspect"] == self.hints["max_aspect"]):
@@ -543,7 +543,7 @@ class _Window:
             pass
         return False
 
-    def has_fixed_size(self):
+    def has_fixed_size(self) -> bool:
         try:
             if ('PMinSize' in self.hints['flags'] and
                     'PMaxSize' in self.hints['flags'] and

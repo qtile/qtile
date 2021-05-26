@@ -86,6 +86,7 @@ class Window(base.Window, HasListeners):
         self.opacity: float = 1.0
 
         assert isinstance(surface, XdgSurface)
+        self._app_id: str = surface.toplevel.app_id
         surface.set_tiled(EDGES_TILED)
         self._float_state = FloatStates.NOT_FLOATING
         self.float_x = self.x
@@ -98,6 +99,8 @@ class Window(base.Window, HasListeners):
         self.add_listener(surface.destroy_event, self._on_destroy)
         self.add_listener(surface.new_popup_event, self._on_new_popup)
         self.add_listener(surface.toplevel.request_fullscreen_event, self._on_request_fullscreen)
+        self.add_listener(surface.toplevel.set_title_event, self._on_set_title)
+        self.add_listener(surface.toplevel.set_app_id_event, self._on_set_app_id)
         self.add_listener(surface.surface.commit_event, self._on_commit)
 
     def finalize(self):
@@ -149,8 +152,9 @@ class Window(base.Window, HasListeners):
 
     def _on_map(self, _listener, _data):
         logger.debug("Signal: window map")
-        self.mapped = True
-        self.core.focus_window(self)
+        if self.group.screen:
+            self.mapped = True
+            self.core.focus_window(self)
 
     def _on_unmap(self, _listener, _data):
         logger.debug("Signal: window unmap")
@@ -178,6 +182,14 @@ class Window(base.Window, HasListeners):
         if self.qtile.config.auto_fullscreen:
             self.fullscreen = event.fullscreen
 
+    def _on_set_title(self, _listener, _data):
+        logger.debug("Signal: window set_title")
+        self.name = self.surface.toplevel.title
+
+    def _on_set_app_id(self, _listener, _data):
+        logger.debug("Signal: window set_app_id")
+        self._app_id = self.surface.toplevel.app_id
+
     def _on_commit(self, _listener, _data):
         self.damage()
 
@@ -204,9 +216,8 @@ class Window(base.Window, HasListeners):
         )
         return pid[0]
 
-    def get_wm_class(self) -> Optional[str]:
-        # TODO
-        return None
+    def get_wm_class(self) -> Optional[List]:
+        return [self._app_id]
 
     def togroup(self, group_name=None, *, switch_group=False):
         """Move window to a specified group

@@ -36,8 +36,9 @@ import sys
 import warnings
 from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
+import libqtile
 from libqtile import configurable, hook, utils
-from libqtile.backend.x11 import window
+from libqtile.backend import base
 from libqtile.bar import BarType
 from libqtile.command.base import CommandObject, ItemT
 
@@ -563,7 +564,7 @@ class ScratchPad(Group):
 
 
 class Match:
-    """Match for dynamic groups
+    """Match for dynamic groups or auto-floating windows.
 
     It can match by title, wm_class, role, wm_type, wm_instance_class or
     net_wm_pid.
@@ -575,35 +576,31 @@ class Match:
     Parameters
     ==========
     title:
-        matches against the title (WM_NAME)
+        matches against the WM_NAME atom (X11) or title (Wayland)
     wm_class:
-        matches against the second string in WM_CLASS atom
+        matches against the second string in WM_CLASS atom (X11) or app ID (Wayland)
     role:
-        matches against the WM_ROLE atom
+        matches against the WM_ROLE atom (X11 only)
     wm_type:
-        matches against the WM_TYPE atom
+        matches against the WM_TYPE atom (X11 only)
     wm_instance_class:
-        matches against the first string in WM_CLASS atom
+        matches against the first string in WM_CLASS atom (X11) or app ID (Wayland)
     net_wm_pid:
-        matches against the _NET_WM_PID atom (only int allowed for this
-        rule)
+        matches against the _NET_WM_PID atom (X11) or PID (Wayland) -
+        (only int allowed for this rule)
     func:
         delegate the match to the given function, which receives the tested
         client as argument and must return True if it matches, False otherwise
     """
     def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
                  wm_instance_class=None, net_wm_pid=None,
-                 func: Callable[[window.Window], bool] = None):
+                 func: Callable[[base.WindowType], bool] = None):
         self._rules = {}
 
         if title is not None:
             self._rules["title"] = title
         if wm_class is not None:
             self._rules["wm_class"] = wm_class
-        if role is not None:
-            self._rules["role"] = role
-        if wm_type is not None:
-            self._rules["wm_type"] = wm_type
         if wm_instance_class is not None:
             self._rules["wm_instance_class"] = wm_instance_class
         if net_wm_pid is not None:
@@ -615,6 +612,13 @@ class Match:
                 raise utils.QtileError(error)
         if func is not None:
             self._rules["func"] = func
+
+        if libqtile.qtile is None or libqtile.qtile.core.name == "x11":  # X11-only rules
+            # qtile is None when the default config is loaded during startup
+            if role is not None:
+                self._rules["role"] = role
+            if wm_type is not None:
+                self._rules["wm_type"] = wm_type
 
     @staticmethod
     def _get_property_predicate(name, value):
@@ -637,17 +641,22 @@ class Match:
         for property_name, rule_value in self._rules.items():
             if property_name == 'title':
                 value = client.name
-            elif property_name == "wm_instance_class":
-                wm_class = client.window.get_wm_class()
+            elif "class" in property_name:
+                wm_class = client.get_wm_class()
                 if not wm_class:
                     return False
-                value = wm_class[0]
+                if property_name == "wm_instance_class":
+                    value = wm_class[0]
+                else:
+                    value = wm_class
             elif property_name == 'role':
                 value = client.window.get_wm_window_role()
             elif property_name == 'func':
                 return rule_value(client)
+            elif property_name == 'net_wm_pid':
+                value = client.get_pid()
             else:
-                value = getattr(client.window, 'get_' + property_name)()
+                value = client.window.get_wm_type()
 
             # Some of the window.get_...() functions can return None
             if value is None:
@@ -657,6 +666,8 @@ class Match:
             if not match(rule_value):
                 return False
 
+        if not self._rules:
+            return False
         return True
 
     def map(self, callback, clients):
