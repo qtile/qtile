@@ -68,7 +68,8 @@ class WindowName(base._TextBox):
             var = {}
             var["state"] = state
             var["name"] = w.name
-            var["class"] = w.window.get_wm_class()[0] if len(w.window.get_wm_class()) > 0 else ""
+            wm_class = w.get_wm_class()
+            var["class"] = wm_class[0] if wm_class else ""
             unescaped = self.format.format(**var)
         else:
             unescaped = self.empty_group_string

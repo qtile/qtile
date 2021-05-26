@@ -157,13 +157,21 @@ class _Window(CommandObject, metaclass=ABCMeta):
     def kill(self) -> None:
         """Kill the window"""
 
-    def get_wm_class(self) -> Optional[str]:
-        """Return the class of the window"""
+    def get_wm_class(self) -> Optional[List]:
+        """Return the class(es) of the window"""
 
     @property
     def can_steal_focus(self):
         """Is it OK for this window to steal focus?"""
         return True
+
+    def has_fixed_ratio(self) -> bool:
+        """Does this window want a fixed aspect ratio?"""
+        return False
+
+    def has_fixed_size(self) -> bool:
+        """Does this window want a fixed size?"""
+        return False
 
     @property
     def urgent(self):
@@ -208,8 +216,8 @@ class Window(_Window, metaclass=ABCMeta):
         return False
 
     def match(self, match: config.Match) -> bool:
-        """Match window against given attributes."""
-        return False
+        """Compare this window against a Match instance."""
+        return match.compare(self)
 
     @abstractmethod
     def focus(self, warp: bool) -> None:

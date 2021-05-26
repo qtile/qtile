@@ -209,7 +209,7 @@ class DGroups:
                     self.groups_map[current_group].exclusive and \
                     not intrusive:
 
-                wm_class = client.window.get_wm_class()
+                wm_class = client.get_wm_class()
 
                 if wm_class:
                     if len(wm_class) > 1:
