@@ -46,6 +46,8 @@ from libqtile.log_utils import logger
 if typing.TYPE_CHECKING:
     from typing import Dict, List, Optional, Tuple, Union
 
+    from wlroots.wlr_types.surface import SubSurface as WlrSubSurface
+
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.output import Output
     from libqtile.core.manager import Qtile
@@ -76,6 +78,7 @@ class Window(base.Window, HasListeners):
         self.surface = surface
         self._group: Optional[_Group] = None
         self.popups: List[XdgPopupWindow] = []
+        self.subsurfaces: List[SubSurface] = []
         self._wid = wid
         self._mapped: bool = False
         self.x = 0
@@ -102,9 +105,12 @@ class Window(base.Window, HasListeners):
         self.add_listener(surface.toplevel.set_title_event, self._on_set_title)
         self.add_listener(surface.toplevel.set_app_id_event, self._on_set_app_id)
         self.add_listener(surface.surface.commit_event, self._on_commit)
+        self.add_listener(surface.surface.new_subsurface_event, self._on_new_subsurface)
 
     def finalize(self):
         self.finalize_listeners()
+        for subsurface in self.subsurfaces:
+            subsurface.finalize()
 
     @property
     def wid(self):
@@ -192,6 +198,9 @@ class Window(base.Window, HasListeners):
 
     def _on_commit(self, _listener, _data):
         self.damage()
+
+    def _on_new_subsurface(self, _listener, subsurface: WlrSubSurface):
+        self.subsurfaces.append(SubSurface(self, subsurface))
 
     def damage(self) -> None:
         for output in self.core.outputs:
@@ -604,6 +613,7 @@ class Static(Window, base.Static):
         self.qtile = qtile
         self._group: Optional[_Group] = None
         self.surface = surface
+        self.subsurfaces: List[SubSurface] = []
         self._wid = wid
         self._mapped: bool = False
         self.x = 0
@@ -771,3 +781,33 @@ class XdgPopupWindow(HasListeners):
 
     def _on_commit(self, _listener, _data):
         self.output.damage.add_whole()
+
+
+class SubSurface(HasListeners):
+    """
+    This represents a single `struct wlr_subsurface` object and is owned by a single
+    parent window (of `Union[WindowType, SubSurface]`). We only need to track them so
+    that we can listen to their commit events and render accordingly.
+    """
+    def __init__(self, parent: Union[WindowType, SubSurface], subsurface: WlrSubSurface):
+        self.parent = parent
+        self.subsurfaces: List[SubSurface] = []
+
+        self.add_listener(subsurface.destroy_event, self._on_destroy)
+        self.add_listener(subsurface.surface.commit_event, parent._on_commit)
+        self.add_listener(subsurface.surface.new_subsurface_event, self._on_new_subsurface)
+
+    def finalize(self):
+        self.finalize_listeners()
+        for subsurface in self.subsurfaces:
+            subsurface.finalize()
+        self.parent.subsurfaces.remove(self)
+
+    def _on_destroy(self, _listener, _data):
+        self.finalize()
+
+    def _on_commit(self, _listener, _data):
+        self.parent._on_commit(None, None)
+
+    def _on_new_subsurface(self, _listener, subsurface: WlrSubSurface):
+        self.subsurfaces.append(SubSurface(self, subsurface))
