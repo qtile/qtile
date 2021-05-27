@@ -42,6 +42,7 @@ else:
 
 os.environ["QTILE_XEPHYR"] = "2"
 os.environ["WLR_X11_OUTPUTS"] = str(outputs)
+os.environ["WLR_WL_OUTPUTS"] = str(outputs)
 
 proc = subprocess.Popen(cmd)
 
