@@ -321,10 +321,16 @@ class Window(base.Window, HasListeners):
             if self._float_state == FloatStates.MINIMIZED:
                 self.floating = False
 
-    def focus(self, warp):
+    def focus(self, warp: bool) -> None:
         self.core.focus_window(self)
-        if warp:
-            self.core.warp_pointer(self.x + self.width, self.y + self.height)
+
+        if warp and self.qtile.config.cursor_warp:
+            self.core.warp_pointer(
+                self.x + self.width // 2,
+                self.y + self.height // 2,
+            )
+
+        hook.fire("client_focus", self)
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None, respect_hints=False):
@@ -557,10 +563,6 @@ class Internal(Window, base.Internal):
     def kill(self) -> None:
         self.hide()
         self.qtile.call_soon(self.qtile.unmanage, self)
-
-    def focus(self, warp: bool) -> None:
-        if warp:
-            self.core.warp_pointer(self.x + self.width, self.y + self.height)
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None, respect_hints=False):

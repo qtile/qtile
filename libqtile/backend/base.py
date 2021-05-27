@@ -212,7 +212,7 @@ class Window(_Window, metaclass=ABCMeta):
         return False
 
     @abstractmethod
-    def focus(self, warp: bool):
+    def focus(self, warp: bool) -> None:
         """Focus this window and optional warp the pointer to it."""
 
     @abstractmethod
