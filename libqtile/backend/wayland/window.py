@@ -506,7 +506,6 @@ class Internal(Window, base.Internal):
     """
     Internal windows are simply textures controlled by the compositor.
     """
-    image_surface: cairocffi.ImageSurface
     texture: Texture
 
     def __init__(
@@ -522,27 +521,24 @@ class Internal(Window, base.Internal):
         self.opacity: float = 1.0
         self.width: int = width
         self.height: int = height
-        self._reset_surface()
+        self._reset_texture()
 
     def finalize(self):
         self.hide()
 
-    def _reset_surface(self) -> None:
-        self.image_surface = cairocffi.ImageSurface(
-            cairocffi.FORMAT_ARGB32, self.width, self.height
-        )
-        with cairocffi.Context(self.image_surface) as context:
-            # Initialise surface to all black
+    def _reset_texture(self):
+        clear = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, self.width, self.height)
+        with cairocffi.Context(clear) as context:
             context.set_source_rgba(*utils.rgb("#000000"))
             context.paint()
 
         self.texture = Texture.from_pixels(
             self.core.renderer,
             DRM_FORMAT_ARGB8888,
-            self.image_surface.format_stride_for_width(cairocffi.FORMAT_ARGB32, self.width),
+            cairocffi.ImageSurface.format_stride_for_width(cairocffi.FORMAT_ARGB32, self.width),
             self.width,
             self.height,
-            cairocffi.cairo.cairo_image_surface_get_data(self.image_surface._pointer),
+            cairocffi.cairo.cairo_image_surface_get_data(clear._pointer),
         )
 
     def create_drawer(self, width: int, height: int) -> Drawer:
@@ -586,7 +582,7 @@ class Internal(Window, base.Internal):
         self.y = y
         self.width = width
         self.height = height
-        self._reset_surface()
+        self._reset_texture()
         self.damage()
 
 
