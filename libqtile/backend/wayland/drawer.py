@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 import cairocffi
 
+from libqtile import utils
 from libqtile.backend import base
 
 if TYPE_CHECKING:
@@ -15,14 +16,25 @@ if TYPE_CHECKING:
 
 
 class Drawer(base.Drawer):
-    """A helper class for drawing and text layout."""
+    """
+    A helper class for drawing and text layout.
+
+    1. We stage drawing operations locally in memory using a cairo RecordingSurface.
+    2. Then apply these operations to our ImageSurface self._source
+    3. Then copy the pixels onto the wlr_texture self._target
+    """
     def __init__(self, qtile: Qtile, win: Internal, width: int, height: int):
         base.Drawer.__init__(self, qtile, win, width, height)
-        self._target = win.image_surface
-        self._texture = win.texture
-        self._stride = self._target.format_stride_for_width(
+
+        self._target = win.texture
+        self._stride = cairocffi.ImageSurface.format_stride_for_width(
             cairocffi.FORMAT_ARGB32, self.width
         )
+        self._source = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, width, height)
+        with cairocffi.Context(self._source) as context:
+            # Initialise surface to all black
+            context.set_source_rgba(*utils.rgb("#000000"))
+            context.paint()
 
         for output in qtile.core.outputs:  # type: ignore
             if output.contains(win):
@@ -30,7 +42,7 @@ class Drawer(base.Drawer):
         self._output = output
 
     def paint_to(self, drawer):
-        drawer.ctx.set_source_surface(self._target)
+        drawer.ctx.set_source_surface(self._source)
         drawer.ctx.paint()
 
     def draw(
@@ -61,18 +73,16 @@ class Drawer(base.Drawer):
             height = self._win.height - offsety  # type: ignore
 
         # Paint RecordingSurface operations our window's ImageSurface
-        with cairocffi.Context(self._target) as context:
-            context.set_source_surface(self.surface, offsetx, offsety)
+        with cairocffi.Context(self._source) as context:
+            context.set_source_surface(self.surface)
             context.paint()
 
         # Copy drawn ImageSurface data into rendered wlr_texture
-        self._texture.write_pixels(
+        self._target.write_pixels(
             self._stride,
-            width,
-            height,
-            cairocffi.cairo.cairo_image_surface_get_data(self._target._pointer),
-            src_x=offsetx,
-            src_y=offsety,
+            width,  # type: ignore
+            height,  # type: ignore
+            cairocffi.cairo.cairo_image_surface_get_data(self._source._pointer),
             dst_x=offsetx,
             dst_y=offsety,
         )
