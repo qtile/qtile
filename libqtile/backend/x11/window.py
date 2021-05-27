@@ -913,10 +913,10 @@ class _Window:
         # about this.
         return False
 
-    def focus(self, warp):
+    def focus(self, warp: bool) -> None:
         did_focus = self._do_focus()
         if not did_focus:
-            return False
+            return
 
         # now, do all the other WM stuff since the focus actually changed
         if warp and self.qtile.config.cursor_warp:
@@ -934,7 +934,6 @@ class _Window:
 
         self.qtile.core._root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
         hook.fire("client_focus", self)
-        return True
 
     def cmd_focus(self, warp=None):
         """Focuses the window."""
