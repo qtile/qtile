@@ -231,6 +231,7 @@ class Core(base.Core, wlrq.HasListeners):
             head.state.mode = output.wlr_output.current_mode
 
         self.output_manager.set_configuration(config)
+        self.outputs.sort(key=lambda o: (o.x, o.y))
 
     def _on_output_manager_apply(self, _listener, config: OutputConfigurationV1):
         logger.debug("Signal: output_manager apply_event")
