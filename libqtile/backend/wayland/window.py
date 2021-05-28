@@ -672,7 +672,11 @@ class Static(Window, base.Static):
         logger.debug("Signal: window unmap")
         self.mapped = False
         if self.surface.surface == self.core.seat.keyboard_state.focused_surface:
-            self.core.seat.keyboard_clear_focus()
+            group = self.qtile.current_screen.group
+            if group.current_window:
+                group.focus(group.current_window, warp=self.qtile.config.cursor_warp)
+            else:
+                self.core.seat.keyboard_clear_focus()
         if self.is_layer:
             self.output.organise_layers()
         self.damage()
