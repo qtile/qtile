@@ -141,13 +141,13 @@ class Window(base.Window, HasListeners):
     @mapped.setter
     def mapped(self, mapped: bool) -> None:
         """We keep track of which windows are mapped to we know which to render"""
+        if mapped == self._mapped:
+            return
         self._mapped = mapped
         if mapped:
-            if self not in self.core.mapped_windows:
-                self.core.mapped_windows.append(self)
+            self.core.mapped_windows.append(self)
         else:
-            if self in self.core.mapped_windows:
-                self.core.mapped_windows.remove(self)
+            self.core.mapped_windows.remove(self)
         self.core.stack_windows()
 
     def _on_map(self, _listener, _data):
@@ -283,6 +283,7 @@ class Window(base.Window, HasListeners):
 
     @fullscreen.setter
     def fullscreen(self, do_full):
+        self.surface.set_fullscreen(do_full)
         if do_full:
             screen = self.group.screen or \
                 self.qtile.find_closest_screen(self.x, self.y)
@@ -369,7 +370,7 @@ class Window(base.Window, HasListeners):
         self.height = int(height)
         self.paint_borders(bordercolor, borderwidth)
 
-        if above:
+        if above and self._mapped:
             self.core.mapped_windows.remove(self)
             self.core.mapped_windows.append(self)
             self.core.stack_windows()
@@ -636,16 +637,16 @@ class Static(Window, base.Static):
 
     @mapped.setter
     def mapped(self, mapped: bool) -> None:
+        if mapped == self._mapped:
+            return
         self._mapped = mapped
 
         if isinstance(self.surface, LayerSurfaceV1):
             layer = self.output.layers[self.surface.client_pending.layer]
             if mapped:
-                if self not in layer:
-                    layer.append(self)
+                layer.append(self)
             else:
-                if self in layer:
-                    layer.remove(self)
+                layer.remove(self)
 
                 if self.reserved_space:
                     self.qtile.free_reserved_space(self.reserved_space, self.screen)
@@ -653,11 +654,9 @@ class Static(Window, base.Static):
 
         else:
             if mapped:
-                if self not in self.core.mapped_windows:
-                    self.core.mapped_windows.append(self)
+                self.core.mapped_windows.append(self)
             else:
-                if self in self.core.mapped_windows:
-                    self.core.mapped_windows.remove(self)
+                self.core.mapped_windows.remove(self)
 
         self.core.stack_windows()
 
