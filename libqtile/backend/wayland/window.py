@@ -202,6 +202,14 @@ class Window(base.Window, HasListeners):
     def _on_new_subsurface(self, _listener, subsurface: WlrSubSurface):
         self.subsurfaces.append(SubSurface(self, subsurface))
 
+    def has_fixed_size(self) -> bool:
+        assert isinstance(self.surface, XdgSurface)
+        state = self.surface.toplevel._ptr.current
+        return (
+            0 < state.min_width == state.max_width and
+            0 < state.min_height == state.max_height
+        )
+
     def damage(self) -> None:
         for output in self.core.outputs:
             if output.contains(self):
@@ -690,6 +698,9 @@ class Static(Window, base.Static):
         if self.is_layer:
             self.output.organise_layers()
         self.damage()
+
+    def has_fixed_size(self) -> bool:
+        return False
 
     def kill(self):
         if self.is_layer:
