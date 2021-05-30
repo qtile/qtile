@@ -176,7 +176,7 @@ def test_line_truncations(fake_qtile, monkeypatch):
     def mock_process(*args, **kwargs):
         return "1\n2\n3\n4\n5\n"
 
-    # Fedora is set up to remove 3 from line count
+    # Fedora is set up to remove 1 from line count
     cu8 = CheckUpdates(distro="Fedora")
 
     monkeypatch.setattr(cu8, "call_process", mock_process)
@@ -188,5 +188,5 @@ def test_line_truncations(fake_qtile, monkeypatch):
     cu8._configure(fake_qtile, fakebar)
     text = cu8.poll()
 
-    # Should have 2 updates
-    assert text == "Updates: 2"
+    # Should have 4 updates
+    assert text == "Updates: 4"
