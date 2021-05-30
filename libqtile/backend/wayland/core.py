@@ -397,17 +397,18 @@ class Core(base.Core, wlrq.HasListeners):
             focus_changed = self.seat.pointer_state.focused_surface != surface
             self.seat.pointer_notify_enter(surface, sx, sy)
             if focus_changed:
-                hook.fire("client_mouse_enter", win)
+                if win is not self.qtile.current_window:
+                    hook.fire("client_mouse_enter", win)
 
-                if self.qtile.config.follow_mouse_focus:
-                    if isinstance(win, window.Static):
-                        self.qtile.focus_screen(win.screen.index, False)
-                    else:
-                        if win.group.current_window != win:
-                            win.group.focus(win, False)
-                        if win.group.screen and self.qtile.current_screen != win.group.screen:
-                            self.qtile.focus_screen(win.group.screen.index, False)
-                    self.focus_window(win, surface)
+                    if self.qtile.config.follow_mouse_focus:
+                        if isinstance(win, window.Static):
+                            self.qtile.focus_screen(win.screen.index, False)
+                        else:
+                            if win.group.current_window != win:
+                                win.group.focus(win, False)
+                            if win.group.screen and self.qtile.current_screen != win.group.screen:
+                                self.qtile.focus_screen(win.group.screen.index, False)
+                        self.focus_window(win, surface)
 
             else:
                 # The enter event contains coordinates, so we only need to
