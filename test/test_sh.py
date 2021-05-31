@@ -68,12 +68,13 @@ def test_ls(manager):
     client = ipc.Client(manager.sockfile)
     command = IPCCommandInterface(client)
     sh = QSh(command)
+    assert sh.do_ls(None) == "bar/     group/   layout/  screen/  widget/  window/"
     assert sh.do_ls("") == "bar/     group/   layout/  screen/  widget/  window/"
-    assert sh.do_ls("layout") == "group/   window/  screen/  0/     "
+    assert sh.do_ls("layout") == "layout/group/   layout/window/  layout/screen/  layout[0]/    "
 
     assert sh.do_cd("layout") == "layout"
-    assert sh.do_ls("") == "group/   window/  screen/  0/     "
-    assert sh.do_ls("screen") == "layout/  window/  bar/   "
+    assert sh.do_ls(None) == "group/   window/  screen/"
+    assert sh.do_ls("screen") == "screen/layout/  screen/window/  screen/bar/   "
 
 
 @sh_config
@@ -82,10 +83,11 @@ def test_do_cd(manager):
     command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh.do_cd("layout") == 'layout'
-    assert sh.do_cd("0") == 'layout[0]'
+    assert sh.do_cd("../layout/0") == 'layout[0]'
     assert sh.do_cd("..") == '/'
     assert sh.do_cd("layout") == 'layout'
-    assert sh.do_cd("0/wibble") == 'No such path.'
+    assert sh.do_cd("../layout0/wibble") == 'No such path.'
+    assert sh.do_cd(None) == '/'
 
 
 @sh_config
@@ -102,7 +104,7 @@ def test_call(manager):
     assert v == "Invalid command: status((("
 
     v = sh.process_line("status(1)")
-    assert v.startswith("Command exception")
+    assert v.startswith("Caught command exception")
 
 
 @sh_config
@@ -112,6 +114,7 @@ def test_complete(manager):
     sh = QSh(command)
     assert sh._complete("c", "c") == [
         "cd",
+        "change_vt",
         "commands",
         "critical",
     ]

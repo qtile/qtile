@@ -36,8 +36,12 @@ def qshell(args) -> None:
         qsh.loop()
 
 
-def add_subcommand(subparsers):
-    parser = subparsers.add_parser("shell", help="shell-like interface to qtile")
+def add_subcommand(subparsers, parents):
+    parser = subparsers.add_parser(
+        "shell",
+        parents=parents,
+        help="shell-like interface to qtile"
+    )
     parser.add_argument(
         "-s", "--socket",
         action="store", type=str,

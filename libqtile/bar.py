@@ -20,8 +20,9 @@
 
 from typing import Union
 
-from libqtile import configurable, drawer, window
-from libqtile.command.base import CommandObject
+from libqtile import configurable, drawer
+from libqtile.backend.x11 import window
+from libqtile.command.base import CommandObject, ItemT
 from libqtile.log_utils import logger
 
 
@@ -99,9 +100,10 @@ class Gap(CommandObject):
     def geometry(self):
         return (self.x, self.y, self.width, self.height)
 
-    def _items(self, name):
-        if name == "screen":
-            return (True, None)
+    def _items(self, name: str) -> ItemT:
+        if name == "screen" and self.screen is not None:
+            return True, []
+        return None
 
     def _select(self, name, sel):
         if name == "screen":
@@ -164,6 +166,7 @@ class Bar(Gap, configurable.Configurable):
         self.saved_focus = None
         self.cursor_in = None
         self.window = None
+        self.size_calculated = 0
 
         self.queued_draws = 0
 
@@ -217,7 +220,7 @@ class Bar(Gap, configurable.Configurable):
 
             self.drawer = drawer.Drawer(
                 self.qtile,
-                self.window.window.wid,
+                self.window.wid,
                 self.width,
                 self.height
             )
@@ -229,7 +232,7 @@ class Bar(Gap, configurable.Configurable):
             self.window.handle_EnterNotify = self.handle_EnterNotify
             self.window.handle_LeaveNotify = self.handle_LeaveNotify
             self.window.handle_MotionNotify = self.handle_MotionNotify
-            qtile.windows_map[self.window.window.wid] = self.window
+            qtile.windows_map[self.window.wid] = self.window
             self.window.unhide()
 
             self.crashed_widgets = []
@@ -249,6 +252,7 @@ class Bar(Gap, configurable.Configurable):
         configured = True
         try:
             widget._configure(self.qtile, self)
+            widget.configured = True
         except Exception as e:
             logger.error(
                 "{} widget crashed during _configure with "
@@ -398,6 +402,8 @@ class Bar(Gap, configurable.Configurable):
             self.saved_focus.window.set_input_focus()
 
     def draw(self):
+        if not self.widgets:
+            return  # calling self._actual_draw in this case would cause a NameError.
         if self.queued_draws == 0:
             self.qtile.call_soon(self._actual_draw)
         self.queued_draws += 1
@@ -407,13 +413,13 @@ class Bar(Gap, configurable.Configurable):
         self._resize(self.length, self.widgets)
         for i in self.widgets:
             i.draw()
-        if self.widgets:
-            end = i.offset + i.length
-            if end < self.length:
-                if self.horizontal:
-                    self.drawer.draw(offsetx=end, width=self.length - end)
-                else:
-                    self.drawer.draw(offsety=end, height=self.length - end)
+        end = i.offset + i.length  # pylint: disable=undefined-loop-variable
+        # we verified that self.widgets is not empty in self.draw(), see above.
+        if end < self.length:
+            if self.horizontal:
+                self.drawer.draw(offsetx=end, width=self.length - end)
+            else:
+                self.drawer.draw(offsety=end, height=self.length - end)
 
     def info(self):
         return dict(
@@ -423,7 +429,7 @@ class Bar(Gap, configurable.Configurable):
             height=self.height,
             position=self.position,
             widgets=[i.info() for i in self.widgets],
-            window=self.window.window.wid
+            window=self.window.wid
         )
 
     def is_show(self):
@@ -432,9 +438,10 @@ class Bar(Gap, configurable.Configurable):
     def show(self, is_show=True):
         if is_show != self.is_show():
             if is_show:
-                self.size = self.initial_size
+                self.size = self.size_calculated
                 self.window.unhide()
             else:
+                self.size_calculated = self.size
                 self.size = 0
                 self.window.hide()
             self.screen.group.layout_all()

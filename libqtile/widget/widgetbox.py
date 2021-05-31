@@ -22,7 +22,7 @@ from collections import namedtuple
 
 from libqtile import bar
 from libqtile.log_utils import logger
-from libqtile.widget import base
+from libqtile.widget import Systray, base
 
 BoxedWidget = namedtuple("BoxedWidget", ["widget", "draw"])
 
@@ -93,13 +93,14 @@ class WidgetBox(base._Widget):
         ),
     ]
 
-    def __init__(self, widgets=list(), **config):
+    def __init__(self, widgets: list = None, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(WidgetBox.defaults)
         self.box_is_open = False
-        self._widgets = widgets
+        self._widgets = widgets if widgets is not None else []
         self.add_callbacks({"Button1": self.cmd_toggle})
 
+        self.close_button_location: str
         if self.close_button_location not in ["left", "right"]:
             val = self.close_button_location
             msg = "Invalid value for 'close_button_location': {}".format(val)
@@ -152,6 +153,14 @@ class WidgetBox(base._Widget):
                 self.bar.widgets.remove(item.widget)
                 # Override drawer.drawer with a no-op
                 item.widget.drawer.draw = _no_draw
+
+                # Systray widget needs some additional steps to hide as the icons
+                # are separate _Window instances.
+                # Systray unhides icons when it draws so we only need to hide them.
+                if isinstance(item.widget, Systray):
+                    for icon in item.widget.icons.values():
+                        icon.hide()
+
             except ValueError:
                 continue
 
@@ -176,11 +185,6 @@ class WidgetBox(base._Widget):
                              self.layout.height / 2.0) + 1)
 
         self.drawer.draw(offsetx=self.offsetx, width=self.width)
-
-    def button_press(self, x, y, button):
-        name = "Button{}".format(button)
-        if name in self.mouse_callbacks:
-            self.mouse_callbacks[name]()
 
     def cmd_toggle(self):
         """Toggle box state"""

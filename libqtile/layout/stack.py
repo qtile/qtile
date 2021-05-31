@@ -58,7 +58,6 @@ class Stack(Layout):
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused windows."),
         ("border_width", 1, "Border width."),
-        ("name", "stack", "Name of this layout."),
         ("autosplit", False, "Auto split all new stacks."),
         ("num_stacks", 2, "Number of stacks."),
         ("fair", False, "Add new windows to the stacks in a round robin way."),
@@ -68,6 +67,9 @@ class Stack(Layout):
     def __init__(self, **config):
         Layout.__init__(self, **config)
         self.add_defaults(Stack.defaults)
+        if self.num_stacks <= 0:
+            # Catch stupid mistakes early and generate a useful message
+            raise ValueError('num_stacks must be at least 1')
         self.stacks = [_WinStack(autosplit=self.autosplit)
                        for i in range(self.num_stacks)]
 
@@ -99,10 +101,9 @@ class Stack(Layout):
         for i in lst[offset + 1:]:
             if i:
                 return i
-        else:
-            for i in lst[:offset]:
-                if i:
-                    return i
+        for i in lst[:offset]:
+            if i:
+                return i
 
     def delete_current_stack(self):
         if len(self.stacks) > 1:
@@ -206,6 +207,8 @@ class Stack(Layout):
                 return n.cw
 
     def configure(self, client, screen_rect):
+        # pylint: disable=undefined-loop-variable
+        # We made sure that self.stacks is not empty, so s is defined.
         for i, s in enumerate(self.stacks):
             if client in s:
                 break

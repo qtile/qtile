@@ -149,8 +149,9 @@ class QtileCommandInterface(CommandInterface):
         """
         obj = self._command_object.select(call.selectors)
 
-        cmd = obj.command(call.name)
-        if not cmd:
+        try:
+            cmd = obj.command(call.name)
+        except SelectError:
             return "No such command."
 
         logger.debug("Command: %s(%s, %s)", call.name, args, kwargs)

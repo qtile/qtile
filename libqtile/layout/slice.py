@@ -106,7 +106,6 @@ class Slice(Layout):
     defaults = [
         ("width", 256, "Slice width."),
         ("side", "left", "Position of the slice (left, right, top, bottom)."),
-        ("name", "slice", "Name of this layout."),
         ("match", None, "Match-object describing which window(s) to move to the slice."),
         ("fallback", Max(), "Layout to be used for the non-slice area."),
     ]

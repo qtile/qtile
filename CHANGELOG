@@ -1,11 +1,37 @@
 Qtile 0.x.x, released xxxx-xx-xx:
-    * !!! Dependency update !!!
+    !!! Config breakage !!!
+        - The `qtile` entry point doesn't run `qtile start` by default anymore
         - New optional dependency for dbus related features: dbus-next.
           Replaces previous reliance on dbus/Glib and allows qtile to use async
           dbus calls within asyncio's eventloop.
+        - widget.BatteryIcon no longer has a fallback text mode; use
+          widget.Battery instead
+        - MonadX layout key new_at_current is deprecated, use new_client_position.
+        - `libqtile.window` has been moved to `libqtile.backend.x11.window`; a migration has been added for this.
+    !!! deprecation warning !!!
+        - 'main' config functions, deprecated in 0.16.1, will no longer be executed.
     * features
         - added measure_mem and measure_swap attributes to memory widget to allow user to choose measurement units.
         - memory widget can now be displayed with decimal values
+        - new "qtile migrate" command, which will attempt to upgrade previous
+          configs to the current version in the case of qtile API breaks.
+        - A new `reconfigure_screens` config setting. When `True` (default) it
+          hooks `Qtile.reconfigure_screens` to the `screen_change` hook,
+          reconfiguring qtile's screens in response to randr events. This
+          removes the need to restart qtile when adding/removing external
+          monitors.
+        - improved key chord / sequence functionality. Leaving a chord with `mode`
+          set brings you to a named mode you activated before, see #2264.
+          A new command, `lazy.ungrab_all_chords`, was introduced to return to the root bindings.
+          The `enter_chord` hook is now always called with a string argument.
+          The third argument to `KeyChord` was renamed from `submaping` to `submapping` (typo fix).
+        - added new argument for CheckUpdates widget: `custom_command_modify` which allows user to modify the
+          the line count of the output of `custom_command` with a lambda function (i.e. `lambda x: x-3`).
+          Argument defaults to `lambda x: x` and is overridden by `distro` argument's internal lambda.
+        - A Wayland backend has been added which can be used with `qtile start -b wayland`. It is undergoing heavy development
+          and bugs are to be expected, but if you find any bugs or conspicuously missing features that are not listed on our
+          to do list at https://github.com/qtile/qtile/discussions/2409 please do let us know. The backend requires pywlroots
+          and its dependencies python-xkbcommon, pywayland and wlroots 0.13.0.
 
 Qtile 0.17.0, released 2021-02-13:
     !!! Python version breakage !!!
@@ -81,6 +107,7 @@ Qtile 0.17.0, released 2021-02-13:
               - validates that qtile can import the config file (e.g. that
                 syntax is correct, ends in a .py extension, etc.)
               - validates Key and Mouse mod/keysym arguments are ok.
+        - Columns layout now enables column swapping by using swap_column_left and swap_column_right
     !!! warning !!!
         - When (re)starting, Qtile passes its state to the new process in a
           file now, where previously it passed state directly as a string. This

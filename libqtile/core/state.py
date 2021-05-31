@@ -60,6 +60,7 @@ class QtileState:
         for (group, layout, label) in self.groups:
             try:
                 qtile.groups_map[group].layout = layout
+                qtile.groups_map[group].label = label
             except KeyError:
                 qtile.add_group(group, layout, label=label)
 
@@ -86,7 +87,7 @@ class QtileState:
         """
         Remove any windows from now non-existent scratchpad groups.
         """
-        client_pid = client.window.get_net_wm_pid()
+        client_pid = client.get_pid()
         if client_pid in self.orphans:
             self.orphans.remove(client_pid)
             client.group = None

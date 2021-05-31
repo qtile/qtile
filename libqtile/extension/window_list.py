@@ -37,9 +37,6 @@ class WindowList(Dmenu):
         Dmenu.__init__(self, **config)
         self.add_defaults(WindowList.defaults)
 
-    def _configure(self, qtile):
-        Dmenu._configure(self, qtile)
-
     def list_windows(self):
         id = 0
         self.item_to_win = {}

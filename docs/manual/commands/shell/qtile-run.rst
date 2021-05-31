@@ -1,6 +1,6 @@
-=========
-qtile-run
-=========
+=============
+qtile run-cmd
+=============
 
 Run a command applying rules to the new windows, ie, you can start a window in
 a specific group, make it floating, intrusive, etc.

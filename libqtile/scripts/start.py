@@ -79,7 +79,7 @@ def make_qtile(options):
 
 def start(options):
     try:
-        locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())  # type: ignore
+        locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
     except locale.Error:
         pass
 
@@ -93,8 +93,12 @@ def start(options):
     logger.info('Exiting...')
 
 
-def add_subcommand(subparsers):
-    parser = subparsers.add_parser("start", help="Start the window manager")
+def add_subcommand(subparsers, parents):
+    parser = subparsers.add_parser(
+        "start",
+        parents=parents,
+        help="Start the window manager"
+    )
     parser.add_argument(
         "-c", "--config",
         action="store",
@@ -128,6 +132,6 @@ def add_subcommand(subparsers):
         default='x11',
         dest='backend',
         choices=libqtile.backend.CORES,
-        help='Use specified backend. Currently only x11 is implemented.',
+        help='Use specified backend. Wayland backend is currently for development only.',
     )
     parser.set_defaults(func=start)

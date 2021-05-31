@@ -31,6 +31,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import itertools
 import operator
 import time
 from os import statvfs
@@ -91,34 +92,46 @@ class _Graph(base._Widget):
     def graphheight(self):
         return self.bar.height - self.margin_y * 2 - self.border_width * 2
 
+    def step(self):
+        return self.graphwidth / float(self.samples)
+
+    def _for_each_step(self, values):
+        for index, val in enumerate(itertools.islice(
+            values,
+            max(int(-(self.graphwidth / self.step()) + len(values)), 0),
+            len(values),
+        )):
+            yield index, val
+
+    def _prepare_context(self):
+        self.drawer.ctx.set_line_join(cairocffi.LINE_JOIN_ROUND)
+        if self.graph_color is not None:
+            self.drawer.set_source_rgb(self.graph_color)
+        self.drawer.ctx.set_line_width(self.line_width)
+
     def draw_box(self, x, y, values):
-        step = int(self.graphwidth / float(self.samples))
-        self.drawer.set_source_rgb(self.graph_color)
-        for val in values:
+        self._prepare_context()
+        for _, val in self._for_each_step(values):
             val = self.val(val)
-            self.drawer.fillrect(x, y - val, step, val)
-            x += step
+            self.drawer.ctx.rectangle(x, y - val, self.step(), val)
+            x += self.step()
+        self.drawer.ctx.fill()
+        self.drawer.ctx.stroke()
 
     def draw_line(self, x, y, values):
-        step = int(self.graphwidth / float(self.samples - 1))
-        self.drawer.ctx.set_line_join(cairocffi.LINE_JOIN_ROUND)
-        self.drawer.set_source_rgb(self.graph_color)
-        self.drawer.ctx.set_line_width(self.line_width)
-        for val in values:
+        self._prepare_context()
+        for _, val in self._for_each_step(values):
             self.drawer.ctx.line_to(x, y - self.val(val))
-            x += step
+            x += self.step()
         self.drawer.ctx.stroke()
 
     def draw_linefill(self, x, y, values):
-        step = int(self.graphwidth / float(self.samples - 2))
-        self.drawer.ctx.set_line_join(cairocffi.LINE_JOIN_ROUND)
-        self.drawer.set_source_rgb(self.graph_color)
-        self.drawer.ctx.set_line_width(self.line_width)
-        for index, val in enumerate(values):
-            self.drawer.ctx.line_to(x + index * step, y - self.val(val))
+        self._prepare_context()
+        for index, val in self._for_each_step(values):
+            self.drawer.ctx.line_to(x + index * self.step(), y - self.val(val))
         self.drawer.ctx.stroke_preserve()
         self.drawer.ctx.line_to(
-            x + (len(values) - 1) * step,
+            x + (len(values) - 1) * self.step(),
             y - 1 + self.line_width / 2.0
         )
         self.drawer.ctx.line_to(x, y - 1 + self.line_width / 2.0)

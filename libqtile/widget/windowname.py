@@ -34,7 +34,6 @@ class WindowName(base._TextBox):
     defaults = [
         ('for_current_screen', False, 'instead of this bars screen use currently active screen'),
         ('empty_group_string', ' ', 'string to display when no windows are focused on current group'),
-        ('max_chars', 0, 'max chars before truncating with ellipsis'),
         ('format', '{state}{name}', 'format of the text'),
     ]
 
@@ -44,22 +43,16 @@ class WindowName(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        hook.subscribe.client_name_updated(self.update)
-        hook.subscribe.focus_change(self.update)
-        hook.subscribe.float_change(self.update)
+        hook.subscribe.client_name_updated(self.hook_response)
+        hook.subscribe.focus_change(self.hook_response)
+        hook.subscribe.float_change(self.hook_response)
 
         @hook.subscribe.current_screen_change
         def on_screen_changed():
             if self.for_current_screen:
-                self.update()
+                self.hook_response()
 
-    def truncate(self, text):
-        if self.max_chars == 0:
-            return text
-
-        return (text[:self.max_chars - 3].rstrip() + "...") if len(text) > self.max_chars else text
-
-    def update(self, *args):
+    def hook_response(self, *args):
         if self.for_current_screen:
             w = self.qtile.current_screen.group.current_window
         else:
@@ -76,9 +69,7 @@ class WindowName(base._TextBox):
             var["state"] = state
             var["name"] = w.name
             var["class"] = w.window.get_wm_class()[0] if len(w.window.get_wm_class()) > 0 else ""
-            text = self.format.format(**var)
-            unescaped = self.truncate(text)
+            unescaped = self.format.format(**var)
         else:
             unescaped = self.empty_group_string
-        self.text = pangocffi.markup_escape_text(unescaped)
-        self.bar.draw()
+        self.update(pangocffi.markup_escape_text(unescaped))

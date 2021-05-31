@@ -27,16 +27,18 @@ Installing From Source
 First, you need to install all of Qtile's dependencies (although some are
 optional/not needed depending on your Python version, as noted below).
 
-All of Qtile's supported versions of python can be found in the yml files Here_.
-There are not many differences between versions aside from python features you
+We aim to always support the last three versions of CPython, the reference
+Python interpreter. We usually support the latest stable version of PyPy_ as
+well. You can check the versions and interpreters we currently run our test
+suite against in our `tox configuration file`_.
+
+There are not many differences between versions aside from Python features you
 may or may not be able to use in your config. PyPy should be faster at runtime
 than any corresponding CPython version under most circumstances, especially for
-bits of python code that are run many times. CPython should start up faster than
+bits of Python code that are run many times. CPython should start up faster than
 PyPy and has better compatibility for external libraries.
 
-For more information on PyPY, see PyPy_.
-
-.. _Here: https://github.com/qtile/qtile/tree/master/.github/workflows
+.. _`tox configuration file`: https://github.com/qtile/qtile/blob/master/tox.ini
 .. _PyPy: https://www.pypy.org/
 
 
@@ -81,7 +83,7 @@ dbus-next
 ---------
 
 Qtile uses ``dbus-next`` to interact with dbus. Qtile will run without this
-packagee but certain functionality will be lost (e.g. notifications).
+package but certain functionality will be lost (e.g. notifications).
 
 You can install dbus-next from PyPi:
 
@@ -109,3 +111,34 @@ Stable versions of Qtile can be installed from PyPI:
 As long as the necessary libraries are in place, this can be done at any point,
 however, it is recommended that you first install xcffib to ensure the
 cairo-xcb bindings are built (see above).
+
+Wayland
+-------
+
+Qtile can also be run as a Wayland compositor rather than an X11 window
+manager. This does not require an X server or ``xcffib`` to be installed.
+Instead Qtile uses pywlroots_, a Python binding around the wlroots_ library,
+both of which must be installed with the latest release. Be aware that some
+distributions package outdated versions of wlroots. pywlroots_ can be installed
+using ``pip install`` as above.
+
+Any Wayland-specific configuration is not intended to be stable at this time.
+
+Qtile can then be run either from a TTY, or within an existing X11 session
+where it will run inside a nested window:
+
+.. code-block:: bash
+
+    qtile start -b wayland
+
+.. important::
+
+    The Wayland backend is in early stages of development and is expected to be
+    unstable. Some features may be missing\* and there may be slight differences
+    between its behaviour and that of the X11 backend until it reaches feature
+    parity with the X11 backend.
+
+    \*Notably window Z positioning, and the status bar
+
+.. _pywlroots: https://github.com/flacjacket/pywlroots
+.. _wlroots: https://github.com/swaywm/wlroots

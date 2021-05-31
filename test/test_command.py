@@ -235,7 +235,7 @@ def test_items_group(manager):
 
     assert group.items("window") == (True, [wid])
     assert group.items("layout") == (True, [0, 1, 2])
-    assert group.items("screen") == (True, None)
+    assert group.items("screen") == (True, [])
 
 
 @server_config
@@ -299,7 +299,7 @@ def test_select_screen(manager):
 
 @server_config
 def test_items_bar(manager):
-    assert manager.c.bar["bottom"].items("screen") == (True, None)
+    assert manager.c.bar["bottom"].items("screen") == (True, [])
 
 
 @server_config
@@ -313,8 +313,8 @@ def test_select_bar(manager):
 
 @server_config
 def test_items_layout(manager):
-    assert manager.c.layout.items("screen") == (True, None)
-    assert manager.c.layout.items("group") == (True, None)
+    assert manager.c.layout.items("screen") == (True, [])
+    assert manager.c.layout.items("group") == (True, [])
 
 
 @server_config
@@ -336,9 +336,9 @@ def test_items_window(manager):
     window = manager.c.window
     window.info()["id"]
 
-    assert window.items("group") == (True, None)
+    assert window.items("group") == (True, [])
     assert window.items("layout") == (True, [0, 1, 2])
-    assert window.items("screen") == (True, None)
+    assert window.items("screen") == (True, [])
 
 
 @server_config
@@ -361,7 +361,7 @@ def test_select_window(manager):
 
 @server_config
 def test_items_widget(manager):
-    assert manager.c.widget["one"].items("bar") == (True, None)
+    assert manager.c.widget["one"].items("bar") == (True, [])
 
 
 @server_config

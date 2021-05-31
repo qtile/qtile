@@ -178,7 +178,7 @@ class Subscribe:
 
         **Arguments**
 
-            * ``window.Window`` object
+            * ``Window`` object
 
         Examples
         --------
@@ -202,7 +202,7 @@ class Subscribe:
 
         **Arguments**
 
-            * ``window.Window`` object of the managed window
+            * ``Window`` object of the managed window
         """
         return self._subscribe("client_managed", func)
 
@@ -211,7 +211,7 @@ class Subscribe:
 
         **Arguments**
 
-            * ``window.Window`` object of the killed window.
+            * ``Window`` object of the killed window.
         """
         return self._subscribe("client_killed", func)
 
@@ -220,7 +220,7 @@ class Subscribe:
 
         **Arguments**
 
-            * ``window.Window`` object of the new focus.
+            * ``Window`` object of the new focus.
         """
         return self._subscribe("client_focus", func)
 
@@ -229,7 +229,7 @@ class Subscribe:
 
         **Arguments**
 
-            * ``window.Window`` of window entered
+            * ``Window`` of window entered
         """
         return self._subscribe("client_mouse_enter", func)
 
@@ -238,7 +238,7 @@ class Subscribe:
 
         **Arguments**
 
-            * ``window.Window`` of client with updated name
+            * ``Window`` of client with updated name
         """
         return self._subscribe("client_name_updated", func)
 
@@ -247,7 +247,7 @@ class Subscribe:
 
         **Arguments**
 
-            * ``window.Window`` of client with hint change
+            * ``Window`` of client with hint change
         """
         return self._subscribe("client_urgent_hint_changed", func)
 
@@ -266,7 +266,7 @@ class Subscribe:
 
         **Arguments**
 
-            * ``window.Window`` of client with changed icon
+            * ``Window`` of client with changed icon
         """
         return self._subscribe("net_wm_icon_change", func)
 
@@ -295,21 +295,10 @@ class Subscribe:
     def screen_change(self, func):
         """Called when a screen is added or screen configuration is changed (via xrandr)
 
-        Common usage is simply to call ``qtile.cmd_restart()`` on each event
-        (to restart qtile when there is a new monitor):
-
         **Arguments**
 
             * ``xproto.randr.ScreenChangeNotify`` event
 
-        Examples
-        --------
-
-        ::
-
-            @libqtile.hook.subscribe.screen_change
-            def restart_on_randr(ev):
-                libqtile.qtile.cmd_restart()
         """
         return self._subscribe("screen_change", func)
 

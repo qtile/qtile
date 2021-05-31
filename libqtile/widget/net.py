@@ -82,7 +82,7 @@ class Net(base.ThreadPoolText):
         interfaces = {}
         if self.interface == ["all"]:
             net = psutil.net_io_counters(pernic=False)
-            interfaces["all"] = {'down': net[1], 'up': net[0]}
+            interfaces["all"] = {'down': net.bytes_recv, 'up': net.bytes_sent}
             return interfaces
         else:
             net = psutil.net_io_counters(pernic=True)
@@ -102,8 +102,8 @@ class Net(base.ThreadPoolText):
     def poll(self):
         ret_stat = []
         try:
+            new_stats = self.get_stats()
             for intf in self.interface:
-                new_stats = self.get_stats()
                 down = new_stats[intf]['down'] - \
                     self.stats[intf]['down']
                 up = new_stats[intf]['up'] - \

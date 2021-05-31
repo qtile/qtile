@@ -24,16 +24,25 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+#
+#
+# required for lazy type annotations
+# can be removed when python 3.7...3.9 support is dropped (see PEP 563)
+from __future__ import annotations
 
+import contextlib
 import os.path
 import sys
 import warnings
-from typing import Callable, List, Optional
+from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
-from libqtile import configurable, hook, utils, window
+from libqtile import configurable, hook, utils
+from libqtile.backend.x11 import window
 from libqtile.bar import BarType
-from libqtile.command.base import CommandObject
-from libqtile.lazy import lazy
+from libqtile.command.base import CommandObject, ItemT
+
+if TYPE_CHECKING:
+    from libqtile.group import _Group
 
 
 class Key:
@@ -73,19 +82,19 @@ class KeyChord:
     key:
         A key specification, e.g. "a", "Tab", "Return", "space".
     submappings:
-        A list of Key declarations to bind in this chord
+        A list of Key or KeyChord declarations to bind in this chord.
     mode:
-        A string with vim like mode name if it's set chord not end
-        after use one of submapings or Esc key
+        A string with vim like mode name. If it's set, the chord mode will
+        not be left after a keystroke (except for Esc which always leaves the
+        current chord/mode).
     """
-    def __init__(self, modifiers: List[str], key: str, submapings: List[Key], mode: str = ""):
+    def __init__(self, modifiers: List[str], key: str,
+                 submappings: List[Union[Key, KeyChord]], mode: str = ""):
         self.modifiers = modifiers
         self.key = key
 
-        def noop(qtile):
-            pass
-        submapings.append(Key([], "Escape", lazy.function(noop)))
-        self.submapings = submapings
+        submappings.append(Key([], "Escape"))
+        self.submappings = submappings
         self.mode = mode
 
     def __repr__(self):
@@ -101,6 +110,7 @@ class Mouse:
         self.button_code = int(self.button.replace('Button', ''))
         for k, v in kwargs.items():
             setattr(self, k, v)
+        self.modmask: int = 0
 
 
 class Drag(Mouse):
@@ -254,13 +264,14 @@ class Screen(CommandObject):
     resized to fill it. If the mode is 'stretch', the image is stretched to fit all of
     it into the screen.
     """
+    group: _Group
+    previous_group: _Group
+
     def __init__(self, top: Optional[BarType] = None, bottom: Optional[BarType] = None,
                  left: Optional[BarType] = None, right: Optional[BarType] = None,
                  wallpaper: Optional[str] = None, wallpaper_mode: Optional[str] = None,
                  x: Optional[int] = None, y: Optional[int] = None, width: Optional[int] = None,
                  height: Optional[int] = None):
-        self.group = None
-        self.previous_group = None
 
         self.top = top
         self.bottom = bottom
@@ -272,10 +283,10 @@ class Screen(CommandObject):
         self.index = None
         # x position of upper left corner can be > 0
         # if one screen is "right" of the other
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
+        self.x = x if x is not None else 0
+        self.y = y if y is not None else 0
+        self.width = width if width is not None else 0
+        self.height = height if height is not None else 0
 
     def _configure(self, qtile, index, x, y, width, height, group):
         self.qtile = qtile
@@ -335,7 +346,7 @@ class Screen(CommandObject):
         if new_group.screen == self:
             return
 
-        if save_prev:
+        if save_prev and hasattr(self, "group"):
             self.previous_group = self.group
 
         if new_group.screen:
@@ -353,15 +364,20 @@ class Screen(CommandObject):
             s1.group = g2
             g2._set_screen(s1)
         else:
-            old_group = self.group
+            if hasattr(self, "group"):
+                old_group = self.group
+                ctx = self.qtile.core.masked()
+            else:
+                old_group = None
+                ctx = contextlib.nullcontext()
             self.group = new_group
+            with ctx:
+                # display clients of the new group and then hide from old group
+                # to remove the screen flickering
+                new_group._set_screen(self)
 
-            # display clients of the new group and then hide from old group
-            # to remove the screen flickering
-            new_group._set_screen(self)
-
-            if old_group is not None:
-                old_group._set_screen(None)
+                if old_group is not None:
+                    old_group._set_screen(None)
 
         hook.fire("setgroup")
         hook.fire("focus_change")
@@ -371,17 +387,18 @@ class Screen(CommandObject):
 
     def toggle_group(self, group=None):
         """Switch to the selected group or to the previously active one"""
-        if group in (self.group, None):
+        if group in (self.group, None) and hasattr(self, "previous_group"):
             group = self.previous_group
         self.set_group(group)
 
-    def _items(self, name):
-        if name == "layout":
-            return (True, list(range(len(self.group.layouts))))
-        elif name == "window":
-            return (True, [i.window.wid for i in self.group.windows])
+    def _items(self, name: str) -> ItemT:
+        if name == "layout" and self.group is not None:
+            return True, list(range(len(self.group.layouts)))
+        elif name == "window" and self.group is not None:
+            return True, [i.wid for i in self.group.windows]
         elif name == "bar":
-            return (False, [x.position for x in self.gaps])
+            return False, [x.position for x in self.gaps]
+        return None
 
     def _select(self, name, sel):
         if name == "layout":
@@ -394,7 +411,7 @@ class Screen(CommandObject):
                 return self.group.current_window
             else:
                 for i in self.group.windows:
-                    if i.window.wid == sel:
+                    if i.wid == sel:
                         return i
         elif name == "bar":
             return getattr(self, sel)
@@ -462,37 +479,38 @@ class Group:
 
     Parameters
     ==========
-    name : string
+    name: string
         the name of this group
-    matches : default ``None``
+    matches: default ``None``
         list of ``Match`` objects whose  windows will be assigned to this group
-    exclusive : boolean
+    exclusive: boolean
         when other apps are started in this group, should we allow them here or not?
-    spawn : string or list of strings
+    spawn: string or list of strings
         this will be ``exec()`` d when the group is created, you can pass
         either a program name or a list of programs to ``exec()``
-    layout : string
+    layout: string
         the name of default layout for this group (e.g. 'max' or 'stack').
         This is the name specified for a particular layout in config.py
         or if not defined it defaults in general the class name in all lower case.
-    layouts : list
+    layouts: list
         the group layouts list overriding global layouts.
         Use this to define a separate list of layouts for this particular group.
-    persist : boolean
+    persist: boolean
         should this group stay alive with no member windows?
-    init : boolean
+    init: boolean
         is this group alive when qtile starts?
-    position : int
+    position  int
         group position
-    label : string
+    label: string
         the display name of the group.
         Use this to define a display name other than name of the group.
         If set to None, the display name is set to the name.
     """
-    def __init__(self, name, matches=None, exclusive=False,
-                 spawn=None, layout=None, layouts=None, persist=True, init=True,
+    def __init__(self, name: str, matches: List[Match] = None, exclusive=False,
+                 spawn: Union[str, List[str]] = None, layout: str = None,
+                 layouts: List = None, persist=True, init=True,
                  layout_opts=None, screen_affinity=None, position=sys.maxsize,
-                 label=None):
+                 label: Optional[str] = None):
         self.name = name
         self.label = label
         self.exclusive = exclusive
@@ -611,7 +629,7 @@ class Match:
         else:
             def predicate(other):
                 # match as an "include"-match
-                match = getattr(other, 'match', lambda v: other in v)
+                match = getattr(other, 'match', lambda v: v in other)
                 return match(value)
             return predicate
 

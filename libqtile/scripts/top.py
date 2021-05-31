@@ -25,15 +25,15 @@
 import curses
 import linecache
 import os
+import sys
 import time
 
 from libqtile import ipc
 from libqtile.command import client, interface
 
-""" These imports are here because they are not supported in pypy
-having them at the top of the file causes problems when running any
-of the other scripts.
-"""
+# These imports are here because they are not supported in pypy.
+# having them at the top of the file causes problems when running any
+# of the other scripts.
 try:
     import tracemalloc
     from tracemalloc import Snapshot
@@ -165,19 +165,20 @@ def top(opts):
         print("tracemalloc not started on qtile, start by setting "
               "PYTHONTRACEMALLOC=1 before starting qtile")
         print("or force start tracemalloc now, but you'll lose early traces")
-        exit(1)
+        sys.exit(1)
     except TraceCantStart:
         print("Can't start tracemalloc on qtile, check the logs")
     except KeyboardInterrupt:
-        exit(-1)
+        sys.exit(1)
     except curses.error:
         print("Terminal too small for curses interface.")
         raw_stats(c, limit=lines, force_start=force_start)
 
 
-def add_subcommand(subparsers):
-    parser = subparsers.add_parser("top", help="resource usage information")
-    parser.add_argument('-l', '--lines', type=int, dest="lines", default=10,
+def add_subcommand(subparsers, parents):
+    parser = subparsers.add_parser("top", parents=parents,
+                                   help="resource usage information")
+    parser.add_argument('-L', '--lines', type=int, dest="lines", default=10,
                         help='Number of lines.')
     parser.add_argument('-r', '--raw', dest="raw", action="store_true",
                         default=False, help='Output raw without curses')

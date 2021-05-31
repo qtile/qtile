@@ -23,6 +23,8 @@ The objects defining the nodes in the command graph and the navigation of the
 abstract command graph
 """
 
+from __future__ import annotations
+
 import abc
 from typing import Dict, List, Optional, Tuple, Type, Union
 
@@ -49,7 +51,7 @@ class CommandGraphNode(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def parent(self) -> Optional["CommandGraphNode"]:
+    def parent(self) -> Optional[CommandGraphNode]:
         """The parent of the current node"""
 
     @property
@@ -57,13 +59,13 @@ class CommandGraphNode(metaclass=abc.ABCMeta):
     def children(self) -> List[str]:
         """The child objects that are contained within this object"""
 
-    def navigate(self, name: str, selector: Optional[Union[str, int]]) -> "CommandGraphNode":
+    def navigate(self, name: str, selector: Optional[Union[str, int]]) -> CommandGraphNode:
         """Navigate from the current node to the specified child"""
         if name in self.children:
             return _COMMAND_GRAPH_MAP[name](selector, self)
         raise KeyError("Given node is not an object: {}".format(name))
 
-    def call(self, name: str) -> "CommandGraphCall":
+    def call(self, name: str) -> CommandGraphCall:
         """Execute the given call on the selected object"""
         return CommandGraphCall(name, self)
 
@@ -199,11 +201,11 @@ class _WindowGraphNode(CommandGraphObject):
     children = ["group", "screen", "layout"]
 
 
-_COMMAND_GRAPH_MAP = {
+_COMMAND_GRAPH_MAP: Dict[str, Type[CommandGraphObject]] = {
     "bar": _BarGraphNode,
     "group": _GroupGraphNode,
     "layout": _LayoutGraphNode,
     "widget": _WidgetGraphNode,
     "window": _WindowGraphNode,
     "screen": _ScreenGraphNode,
-}  # type: Dict[str, Type[CommandGraphObject]]
+}

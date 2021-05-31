@@ -24,7 +24,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from libqtile import layout
 
 
 def assert_focused(self, name):
@@ -95,19 +94,3 @@ def assert_focus_path_unordered(self, *names):
         unordered_names.remove(wname)
         ordered_names.append(wname)
     assert_focus_path(ordered_names)
-
-
-def iter_layouts():
-    # Retrieve the layouts dynamically (i.e. do not hard-code a list) to
-    # prevent forgetting to add new future layouts
-    for layout_name in dir(layout):
-        layout_cls = getattr(layout, layout_name)
-        try:
-            test = issubclass(layout_cls, layout.base.Layout)
-        except TypeError:
-            pass
-        else:
-            # Explicitly exclude the Slice layout, since it depends on
-            # other layouts (tested here) and has its own specific tests
-            if test and layout_name != 'Slice':
-                yield layout_name, layout_cls

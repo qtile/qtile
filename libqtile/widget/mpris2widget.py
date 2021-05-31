@@ -71,7 +71,6 @@ class Mpris2(base._TextBox):
         self.scroll_timer = None
         self.scroll_counter = None
         self.count = 0
-        self.connect_count = 0
 
     async def _config_async(self):
         subscribe = await add_signal_receiver(
@@ -92,7 +91,7 @@ class Mpris2(base._TextBox):
 
         self.update(*message.body)
 
-    def update(self, interface_name, changed_properties, invalidated_properties):
+    def update(self, interface_name, changed_properties, _invalidated_properties):
         """http://specifications.freedesktop.org/mpris-spec/latest/Track_List_Interface.html#Mapping:Metadata_Map"""
         if not self.configured:
             return True

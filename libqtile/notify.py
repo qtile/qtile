@@ -28,8 +28,7 @@ from typing import Any
 try:
     from dbus_next.aio import MessageBus  # type: ignore
     from dbus_next.service import ServiceInterface  # type: ignore
-    from dbus_next.service import method  # type: ignore
-    from dbus_next.service import signal  # type: ignore
+    from dbus_next.service import method, signal
     has_dbus = True
 except ImportError:
     has_dbus = False
@@ -70,16 +69,16 @@ if has_dbus:
             return self.manager.add(notif)
 
         @method()
-        def CloseNotification(self, id: 'u'):  # type:ignore  # noqa: N802, F821
+        def CloseNotification(self, _id: 'u'):  # type:ignore  # noqa: N802, F821
             pass
 
         @signal()
-        def NotificationClosed(self, id_in, reason_in):  # noqa: N802
+        def NotificationClosed(self, _id_in, _reason_in):  # noqa: N802
             pass
 
         @method()
         def GetServerInformation(self) -> 'ssss':  # type:ignore  # noqa: N802, F821
-            return ("qtile-notify-daemon", "qtile", "1.0", "1")
+            return ["qtile-notify-daemon", "qtile", "1.0", "1"]
 
     class Notification:
         def __init__(self, summary, body='', timeout=-1, hints=None, app_name='',

@@ -34,7 +34,7 @@ import subprocess
 from typing import Any, List, Tuple
 
 from libqtile import bar, configurable, confreader, drawer
-from libqtile.command.base import CommandError, CommandObject
+from libqtile.command.base import CommandError, CommandObject, ItemT
 from libqtile.log_utils import logger
 
 
@@ -201,7 +201,6 @@ class _Widget(CommandObject, configurable.Configurable):
             self.bar.height
         )
         if not self.configured:
-            self.configured = True
             self.qtile.call_soon(self.timer_setup)
             self.qtile.call_soon(asyncio.create_task, self._config_async())
 
@@ -257,9 +256,10 @@ class _Widget(CommandObject, configurable.Configurable):
             raise CommandError("No such widget: %s" % name)
         return w
 
-    def _items(self, name):
+    def _items(self, name: str) -> ItemT:
         if name == "bar":
-            return (True, None)
+            return True, []
+        return None
 
     def _select(self, name, sel):
         if name == "bar":
@@ -341,7 +341,8 @@ class _TextBox(_Widget):
             "font shadow color, default is None(no shadow)"
         ),
         ("markup", True, "Whether or not to use pango markup"),
-        ("fmt", "{}", "How to format the text")
+        ("fmt", "{}", "How to format the text"),
+        ('max_chars', 0, 'Maximum number of characters to display in widget.'),
     ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -356,6 +357,8 @@ class _TextBox(_Widget):
 
     @text.setter
     def text(self, value):
+        if len(value) > self.max_chars > 0:
+            value = value[:self.max_chars] + "…"
         self._text = value
         if self.layout:
             self.layout.text = self.formatted_text
@@ -423,9 +426,14 @@ class _TextBox(_Widget):
         else:
             return 0
 
+    def can_draw(self):
+        can_draw = self.layout is not None \
+                and not self.layout.finalized() \
+                and self.offsetx is not None  # if the bar hasn't placed us yet
+        return can_draw
+
     def draw(self):
-        # if the bar hasn't placed us yet
-        if self.offsetx is None:
+        if not self.can_draw():
             return
         self.drawer.clear(self.background or self.bar.background)
         self.layout.draw(
@@ -453,6 +461,22 @@ class _TextBox(_Widget):
         d['foreground'] = self.foreground
         d['text'] = self.formatted_text
         return d
+
+    def update(self, text):
+        if self.text == text:
+            return
+        if text is None:
+            text = ""
+
+        old_width = self.layout.width
+        self.text = text
+
+        # If our width hasn't changed, we just draw ourselves. Otherwise,
+        # we draw the whole bar.
+        if self.layout.width == old_width:
+            self.draw()
+        else:
+            self.bar.draw()
 
 
 class InLoopPollText(_TextBox):
@@ -502,17 +526,6 @@ class InLoopPollText(_TextBox):
         text = self.poll()
         self.update(text)
 
-    def update(self, text):
-        old_width = self.layout.width
-        if self.text != text:
-            self.text = text
-            # If our width hasn't changed, we just draw ourselves. Otherwise,
-            # we draw the whole bar.
-            if self.layout.width == old_width:
-                self.draw()
-            else:
-                self.bar.draw()
-
 
 class ThreadPoolText(_TextBox):
     """ A common interface for wrapping blocking events which when triggered
@@ -559,18 +572,6 @@ class ThreadPoolText(_TextBox):
         future = self.qtile.run_in_executor(self.poll)
         future.add_done_callback(on_done)
 
-    def update(self, text):
-        old_width = self.layout.width
-        if self.text == text:
-            return
-
-        self.text = text
-
-        if self.layout.width == old_width:
-            self.draw()
-        else:
-            self.bar.draw()
-
     def poll(self):
         pass
 
@@ -614,6 +615,29 @@ class MarginMixin(configurable.Configurable):
 
 
 class Mirror(_Widget):
+    """
+    A widget for showing the same widget content in more than one place, for
+    instance, on bars across multiple screens.
+
+    You don't need to use it directly; instead, just instantiate your widget
+    once and hand it in to multiple bars. For instance::
+
+        cpu = widget.CPUGraph()
+        clock = widget.Clock()
+
+        screens = [
+            Screen(top=bar.Bar([widget.GroupBox(), cpu, clock])),
+            Screen(top=bar.Bar([widget.GroupBox(), cpu, clock])),
+        ]
+
+    Widgets can be passed to more than one bar, so that there don't need to be
+    any duplicates executing the same code all the time, and they'll always be
+    visually identical.
+
+    This works for all widgets that use `drawers` (and nothing else) to display
+    their contents. Currently, this is all widgets except for `Systray`.
+    """
+
     def __init__(self, reflection):
         _Widget.__init__(self, reflection.length)
         reflection.draw = self.hook(reflection.draw)

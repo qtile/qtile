@@ -4,7 +4,7 @@ import pytest
 import xcffib
 import xcffib.testing
 
-from libqtile.backend.x11 import xcbq
+from libqtile.backend.x11 import window, xcbq
 
 
 @pytest.fixture(scope='function', autouse=True)
@@ -16,7 +16,7 @@ def xdisplay(request):
 def test_new_window(xdisplay):
     conn = xcbq.Connection(xdisplay)
     win = conn.create_window(1, 2, 640, 480)
-    assert isinstance(win, xcbq.Window)
+    assert isinstance(win, window.XWindow)
     geom = win.get_geometry()
     assert geom.x == 1
     assert geom.y == 2

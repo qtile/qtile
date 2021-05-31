@@ -58,6 +58,9 @@ class TextLayout:
     def finalize(self):
         self.layout.finalize()
 
+    def finalized(self):
+        self.layout.finalized()
+
     @property
     def text(self):
         return self.layout.get_text()
@@ -245,26 +248,26 @@ class Drawer:
         return self._pixmap
 
     def _create_gc(self):
-        gc = self.qtile.conn.conn.generate_id()
-        self.qtile.conn.conn.core.CreateGC(
+        gc = self.qtile.core.conn.conn.generate_id()
+        self.qtile.core.conn.conn.core.CreateGC(
             gc,
             self.wid,
             xcffib.xproto.GC.Foreground | xcffib.xproto.GC.Background,
             [
-                self.qtile.conn.default_screen.black_pixel,
-                self.qtile.conn.default_screen.white_pixel,
+                self.qtile.core.conn.default_screen.black_pixel,
+                self.qtile.core.conn.default_screen.white_pixel,
             ],
         )
         return gc
 
     def _free_gc(self):
         if self._gc is not None:
-            self.qtile.conn.conn.core.FreeGC(self._gc)
+            self.qtile.core.conn.conn.core.FreeGC(self._gc)
             self._gc = None
 
     def _create_xcb_surface(self):
         surface = cairocffi.XCBSurface(
-            self.qtile.conn.conn,
+            self.qtile.core.conn.conn,
             self._pixmap,
             self.find_root_visual(),
             self.width,
@@ -287,9 +290,9 @@ class Drawer:
         self.ctx = self.new_ctx()
 
     def _create_pixmap(self):
-        pixmap = self.qtile.conn.conn.generate_id()
-        self.qtile.conn.conn.core.CreatePixmap(
-            self.qtile.conn.default_screen.root_depth,
+        pixmap = self.qtile.core.conn.conn.generate_id()
+        self.qtile.core.conn.conn.core.CreatePixmap(
+            self.qtile.core.conn.default_screen.root_depth,
             pixmap,
             self.wid,
             self.width,
@@ -299,7 +302,7 @@ class Drawer:
 
     def _free_pixmap(self):
         if self._pixmap is not None:
-            self.qtile.conn.conn.core.FreePixmap(self._pixmap)
+            self.qtile.core.conn.conn.core.FreePixmap(self._pixmap)
             self._pixmap = None
 
     @property
@@ -411,7 +414,7 @@ class Drawer:
         self._paint()
 
         # Finally, copy XCBSurface's underlying pixmap to the window.
-        self.qtile.conn.conn.core.CopyArea(
+        self.qtile.core.conn.conn.core.CopyArea(
             self._pixmap,
             self.wid,
             self._gc,
@@ -422,9 +425,9 @@ class Drawer:
         )
 
     def find_root_visual(self):
-        for i in self.qtile.conn.default_screen.allowed_depths:
+        for i in self.qtile.core.conn.default_screen.allowed_depths:
             for v in i.visuals:
-                if v.visual_id == self.qtile.conn.default_screen.root_visual:
+                if v.visual_id == self.qtile.core.conn.default_screen.root_visual:
                     return v
 
     def new_ctx(self):
@@ -474,7 +477,7 @@ class Drawer:
         return max(widths), max(heights)
 
     # Old text layout functions, to be deprecated.
-    def set_font(self, fontface, size, antialias=True):
+    def set_font(self, fontface, size):
         self.ctx.select_font_face(fontface)
         self.ctx.set_font_size(size)
         fo = self.ctx.get_font_options()
