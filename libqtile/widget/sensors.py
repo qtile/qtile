@@ -28,11 +28,6 @@ import re
 from subprocess import CalledProcessError
 
 from libqtile.log_utils import logger
-from libqtile.utils import (
-    UnixCommandNotFound,
-    UnixCommandRuntimeError,
-    catch_exception_and_warn,
-)
 from libqtile.widget import base
 
 
@@ -85,10 +80,6 @@ class ThermalSensor(base.InLoopPollText):
                 self.tag_sensor = k
                 break
 
-    @catch_exception_and_warn(warning=UnixCommandNotFound, excepts=OSError)
-    @catch_exception_and_warn(warning=UnixCommandRuntimeError,
-                              excepts=CalledProcessError,
-                              return_on_exception="")
     def get_temp_sensors(self):
         """calls the unix `sensors` command with `-f` flag if user has specified that
         the output should be read in Fahrenheit.
@@ -96,9 +87,14 @@ class ThermalSensor(base.InLoopPollText):
         command = ["sensors", ]
         if not self.metric:
             command.append("-f")
-        sensors_out = self.call_process(command)
-        if not sensors_out:
+        try:
+            sensors_out = self.call_process(command)
+            if not sensors_out:
+                return None
+        except FileNotFoundError:
             return None
+        except CalledProcessError:
+            return ""
         return self._format_sensors_output(sensors_out)
 
     def _format_sensors_output(self, sensors_out):

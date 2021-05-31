@@ -20,32 +20,109 @@
 
 import pytest
 
-from test.layouts import layout_configs
+import libqtile
+import libqtile.config
+import libqtile.hook
+from libqtile import layout
+from libqtile.confreader import Config
 from test.layouts.layout_utils import (
     assert_dimensions_fit,
     assert_focus_path_unordered,
     assert_focused,
 )
 
-each_layout_config = pytest.mark.parametrize(
-    "manager",
-    layout_configs.all_layouts_config.values(),
-    indirect=True,
-)
-all_layouts_config = pytest.mark.parametrize(
-    "manager", [layout_configs.AllLayouts],
-    indirect=True,
-)
-each_layout_config_events = pytest.mark.parametrize(
-    "manager",
-    layout_configs.all_layouts_config_events.values(),
-    indirect=True,
-)
-each_delegate_layout_config = pytest.mark.parametrize(
-    "manager",
-    layout_configs.all_delegate_layouts_config.values(),
-    indirect=True,
-)
+
+class AllLayoutsConfig(Config):
+    """
+    Ensure that all layouts behave consistently in some common scenarios.
+    """
+    groups = [
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b"),
+        libqtile.config.Group("c"),
+        libqtile.config.Group("d"),
+    ]
+    follow_mouse_focus = False
+    floating_layout = libqtile.resources.default_config.floating_layout
+    screens = []
+
+    @staticmethod
+    def iter_layouts():
+        # Retrieve the layouts dynamically (i.e. do not hard-code a list) to
+        # prevent forgetting to add new future layouts
+        for layout_name in dir(layout):
+            layout_cls = getattr(layout, layout_name)
+            try:
+                test = issubclass(layout_cls, layout.base.Layout)
+            except TypeError:
+                pass
+            else:
+                # Explicitly exclude the Slice layout, since it depends on
+                # other layouts (tested here) and has its own specific tests
+                if test and layout_name != 'Slice':
+                    yield layout_name, layout_cls
+
+    @classmethod
+    def generate(cls):
+        """
+        Generate a configuration for each layout currently in the repo.
+        Each configuration has only the tested layout (i.e. 1 item) in the
+        'layouts' variable.
+        """
+        return [type(layout_name, (cls, ), {'layouts': [layout_cls()]})
+                for layout_name, layout_cls in cls.iter_layouts()]
+
+
+class AllDelegateLayoutsConfig(AllLayoutsConfig):
+
+    @classmethod
+    def generate(cls):
+        """
+        Generate a Slice configuration for each layout currently in the repo.
+        Each layout is made a delegate/fallback layout of the Slice layout.
+        Each configuration has only the tested layout (i.e. 1 item) in the
+        'layouts' variable.
+        """
+        return [
+            type(layout_name, (cls, ), {
+                'layouts': [
+                    layout.slice.Slice(
+                        wname='nevermatch', fallback=layout_cls())]})
+            for layout_name, layout_cls in cls.iter_layouts()]
+
+
+class AllLayouts(AllLayoutsConfig):
+    """
+    Like AllLayoutsConfig, but all the layouts in the repo are installed
+    together in the 'layouts' variable.
+    """
+    layouts = [layout_cls() for layout_name, layout_cls
+               in AllLayoutsConfig.iter_layouts()]
+
+
+class AllLayoutsConfigEvents(AllLayoutsConfig):
+    """
+    Extends AllLayoutsConfig to test events.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+        # TODO: Test more events
+
+        @libqtile.hook.subscribe.startup
+        def _():
+            libqtile.qtile.test_data = {
+                'focus_change': 0,
+            }
+
+        @libqtile.hook.subscribe.focus_change
+        def _():
+            libqtile.qtile.test_data['focus_change'] += 1
+
+
+each_layout_config = pytest.mark.parametrize("manager", AllLayoutsConfig.generate(), indirect=True)
+all_layouts_config = pytest.mark.parametrize("manager", [AllLayouts], indirect=True)
+each_layout_config_events = pytest.mark.parametrize("manager", AllLayoutsConfigEvents.generate(), indirect=True)
+each_delegate_layout_config = pytest.mark.parametrize("manager", AllDelegateLayoutsConfig.generate(), indirect=True)
 
 
 @each_layout_config
@@ -125,38 +202,37 @@ def test_focus_change_event(manager):
     # In short, this test prevents layouts from influencing each other in
     # unexpected ways.
 
-    # TODO: Why does it start with 2?
-    assert manager.c.get_test_data()['focus_change'] == 2
+    assert manager.c.get_test_data()['focus_change'] == 0
 
     # Spawning a window must fire only 1 focus_change event
     one = manager.test_window("one")
-    assert manager.c.get_test_data()['focus_change'] == 3
+    assert manager.c.get_test_data()['focus_change'] == 1
     two = manager.test_window("two")
-    assert manager.c.get_test_data()['focus_change'] == 4
+    assert manager.c.get_test_data()['focus_change'] == 2
     three = manager.test_window("three")
-    assert manager.c.get_test_data()['focus_change'] == 5
+    assert manager.c.get_test_data()['focus_change'] == 3
 
     # Switching window must fire only 1 focus_change event
     assert_focused(manager, "three")
     manager.c.group.focus_by_name("one")
-    assert manager.c.get_test_data()['focus_change'] == 6
+    assert manager.c.get_test_data()['focus_change'] == 4
     assert_focused(manager, "one")
 
     # Focusing the current window must fire another focus_change event
     manager.c.group.focus_by_name("one")
-    assert manager.c.get_test_data()['focus_change'] == 7
+    assert manager.c.get_test_data()['focus_change'] == 5
 
     # Toggling a window floating should not fire focus_change events
     manager.c.window.toggle_floating()
-    assert manager.c.get_test_data()['focus_change'] == 7
+    assert manager.c.get_test_data()['focus_change'] == 5
     manager.c.window.toggle_floating()
-    assert manager.c.get_test_data()['focus_change'] == 7
+    assert manager.c.get_test_data()['focus_change'] == 5
 
     # Removing the focused window must fire only 1 focus_change event
     assert_focused(manager, "one")
     assert manager.c.group.info()['focus_history'] == ["two", "three", "one"]
     manager.kill_window(one)
-    assert manager.c.get_test_data()['focus_change'] == 8
+    assert manager.c.get_test_data()['focus_change'] == 6
 
     # The position where 'one' was after it was floated and unfloated
     # above depends on the layout, so we can't predict here what window gets
@@ -164,17 +240,17 @@ def test_focus_change_event(manager):
     # continue testing
     manager.c.group.focus_by_name("three")
     assert manager.c.group.info()['focus_history'] == ["two", "three"]
-    assert manager.c.get_test_data()['focus_change'] == 9
+    assert manager.c.get_test_data()['focus_change'] == 7
 
     # Removing a non-focused window must not fire focus_change events
     manager.kill_window(two)
-    assert manager.c.get_test_data()['focus_change'] == 9
+    assert manager.c.get_test_data()['focus_change'] == 7
     assert_focused(manager, "three")
 
     # Removing the last window must still generate 1 focus_change event
     manager.kill_window(three)
     assert manager.c.layout.info()['clients'] == []
-    assert manager.c.get_test_data()['focus_change'] == 10
+    assert manager.c.get_test_data()['focus_change'] == 8
 
 
 @each_layout_config

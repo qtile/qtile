@@ -76,7 +76,7 @@ Configuration variables
 =======================
 
 A Qtile configuration consists of a file with a bunch of variables in it, which
-qtile imports and then runs as a python file to derive its final configuration.
+qtile imports and then runs as a Python file to derive its final configuration.
 The documentation below describes the most common configuration variables; more
 advanced configuration can be found in the `qtile-examples
 <https://github.com/qtile/qtile-examples>`_ repository, which includes a number
@@ -164,6 +164,10 @@ configuration variables that control specific aspects of Qtile's behavior:
              fontsize=12,
              padding=3)
       - Default settings for bar widgets.
+    * - reconfigure_screens
+      - True
+      - Controls whether or not to automatically reconfigure screens when there
+        are changes in randr output configuration.
     * - wmname
       - "LG3D"
       - Gasp! We're lying here. In fact, nobody really uses or cares
@@ -174,6 +178,10 @@ configuration variables that control specific aspects of Qtile's behavior:
         we're a working one by default. We choose LG3D to maximize irony:
         it is a 3D non-reparenting WM written in java that happens to be
         on java's whitelist.
+    * - auto_minimize
+      - True
+      - If things like steam games want to auto-minimize themselves when losing
+        focus, should we respect this or not?
 
 
 Testing your configuration

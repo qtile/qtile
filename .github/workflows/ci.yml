@@ -19,11 +19,35 @@ jobs:
               uses: actions/setup-python@v2
               with:
                   python-version: ${{ matrix.python-version }}
-            - run: |
+            - name: Install dependencies
+              run: |
                 sudo apt update
-                sudo apt install libdbus-1-dev libgirepository1.0-dev gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-gudev-1.0 graphviz imagemagick x11-apps xserver-xephyr xterm xvfb libpulse-dev lm-sensors
+                sudo apt install libdbus-1-dev libgirepository1.0-dev gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-gudev-1.0 \
+                  graphviz imagemagick x11-apps xserver-xephyr xterm xvfb libpulse-dev lm-sensors libwlroots-dev git ninja-build
                 pip install tox tox-gh-actions
-              name: install dependencies
+                # we want wlroots' dependencies only, so remove the packages (these are outdated in ubuntu's repos)
+                sudo dpkg -r --force-depends wlroots libwayland-dev
+            - name: Build wayland
+              env:
+                WAYLAND: 1.19.0
+              run: |
+                wget --no-check-certificate https://wayland.freedesktop.org/releases/wayland-$WAYLAND.tar.xz
+                tar -xJf wayland-$WAYLAND.tar.xz
+                cd wayland-$WAYLAND
+                ./configure --disable-documentation
+                make
+                sudo make install
+            - name: Build wlroots
+              env:
+                WLROOTS: 0.13.0
+              run: |
+                wget --no-check-certificate https://github.com/swaywm/wlroots/archive/$WLROOTS.tar.gz
+                tar -xzf $WLROOTS.tar.gz
+                sudo pip install meson
+                cd wlroots-$WLROOTS
+                meson build
+                ninja -C build
+                sudo ninja -C build install
             - name: run tests
               run: |
                 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]

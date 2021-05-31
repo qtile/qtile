@@ -82,7 +82,7 @@ def default_cmd(): return None
 
 
 format_fns = {
-    'all': lambda s: escape(s)
+    'all': escape,
 }
 
 

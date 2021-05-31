@@ -3,6 +3,7 @@ import importlib
 from libqtile.utils import QtileError
 
 CORES = [
+    'wayland',
     'x11',
 ]
 

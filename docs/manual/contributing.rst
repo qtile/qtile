@@ -31,6 +31,8 @@ Writing code
 
 To get started writing code for Qtile, check out our guide to :ref:`hacking`.
 
+A more detailed page on creating widgets is available :ref:`here <widget-creation>`.
+
 Submit a pull request
 ---------------------
 
@@ -51,6 +53,8 @@ to our `issue tracker <https://github.com/qtile/qtile/issues>`_ on GitHub.
 Feel free to add your contribution (no matter how small) to the appropriate
 place in the CHANGELOG as well!
 
+.. _unit-testing:
+
 Unit testing
 ------------
 
@@ -70,3 +74,37 @@ Qtile session.
 For any Qtile-specific question on testing, feel free to ask on our `issue
 tracker <https://github.com/qtile/qtile/issues>`_ or on IRC (#qtile on
 irc.oftc.net).
+
+Running tests locally
+---------------------
+
+This section gives an overview about ``tox`` so that you don't have to search
+`its documentation <https://tox.readthedocs.io/en/latest/>`_ just to get
+started.
+Checks are grouped in so-called ``environments``. Some of them are configured to
+check that the code works (the usual unit test, e.g. ``py39``, ``pypy3``),
+others make sure that your code conforms to the style guide (``pep8``,
+``codestyle``, ``mypy``). A third kind of test verifies that the documentation
+and packaging processes work (``docs``, ``docstyle``, ``packaging``).
+
+The following examples show how to run tests locally:
+   * To run the functional tests, use ``tox -e py39`` (or a different
+     environment). You can specify to only run a specific test file or even a
+     specific test within that file with the following commands:
+
+     .. code-block:: bash
+
+        tox -e py39 # Run all tests with python 3.9 as the interpreter
+        tox -e py39 -- -x test/widgets/test_widgetbox.py  # run a single file
+        tox -e py39 -- -x test/widgets/test_widgetbox.py::test_widgetbox_widget
+
+   * To run style and building checks, use ``tox -e docs,packaging,pep8,...``.
+     You can use ``-p auto`` to run the environments in parallel.
+
+     .. important::
+
+        The CI is configured to run all the environments. Hence it can be time-
+        consuming to make all the tests pass. As stated above, pull requests
+        that don't pass the tests are considered incomplete. Don't forget that
+        this does not only include the functionality, but the style, typing
+        annotations (if necessary) and documentation as well!

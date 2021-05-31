@@ -121,15 +121,6 @@ def test_window(manager):
 
 @treetab_config
 def test_sort_windows(manager):
-    def sorter(window):
-        try:
-            if int(window.name) % 2 == 0:
-                return 'Even'
-            else:
-                return 'Odd'
-        except ValueError:
-            return 'Bar'
-
     manager.test_window("one")
     manager.test_window("two")
     manager.test_window("101")
@@ -139,7 +130,18 @@ def test_sort_windows(manager):
         'Foo': [['one'], ['two'], ['101'], ['102'], ['103']],
         'Bar': []
     }
-    return  # TODO how to serialize a function object? i.e. `sorter`
+    """
+    # TODO how to serialize a function object? i.e. `sorter`:
+
+    def sorter(window):
+        try:
+            if int(window.name) % 2 == 0:
+                return 'Even'
+            else:
+                return 'Odd'
+        except ValueError:
+            return 'Bar'
+
     manager.c.layout.sort_windows(sorter)
     assert manager.c.layout.info()['client_trees'] == {
         'Foo': [],
@@ -147,3 +149,4 @@ def test_sort_windows(manager):
         'Even': [['102']],
         'Odd': [['101'], ['103']]
     }
+    """

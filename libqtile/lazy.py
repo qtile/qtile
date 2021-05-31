@@ -46,7 +46,7 @@ class LazyCall:
         self._args = args
         self._kwargs = kwargs
 
-        self._layouts = set()  # type: Set[str]
+        self._layouts: Set[str] = set()
         self._when_floating = True
 
     @property

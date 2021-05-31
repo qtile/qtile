@@ -31,15 +31,6 @@ class Max(_SimpleLayoutBase):
     commands to switch to next and previous windows in the stack.
     """
 
-    defaults = [("name", "max", "Name of this layout.")]
-
-    def __init__(self, **config):
-        super().__init__(**config)
-        self.add_defaults(Max.defaults)
-
-    def clone(self, group):
-        return super().clone(group)
-
     def add(self, client):
         return super().add(client, 1)
 

@@ -21,24 +21,15 @@
 
 import copy
 from abc import ABCMeta, abstractmethod
-from typing import Any, List, Tuple  # noqa: F401
+from typing import Any, List, Tuple
 
 from libqtile import configurable
-from libqtile.command.base import CommandObject
+from libqtile.command.base import CommandObject, ItemT
 
 
 class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
     """This class defines the API that should be exposed by all layouts"""
-    @classmethod
-    def _name(cls):
-        return cls.__class__.__name__.lower()
-
-    defaults = [(
-        "name",
-        None,
-        "The name of this layout"
-        " (usually the class' name in lowercase, e.g. 'max')"
-    )]  # type: List[Tuple[str, Any, str]]
+    defaults = []  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, **config):
         # name is a little odd; we can't resolve it until the class is defined
@@ -74,11 +65,12 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         c.group = group
         return c
 
-    def _items(self, name):
-        if name == "screen":
-            return (True, None)
+    def _items(self, name: str) -> ItemT:
+        if name == "screen" and self.group.screen is not None:
+            return True, []
         elif name == "group":
-            return (True, None)
+            return True, []
+        return None
 
     def _select(self, name, sel):
         if name == "screen":
@@ -293,19 +285,32 @@ class _ClientList:
             return self[idx - 1]
         return None
 
-    def add(self, client, offset_to_current=0):
+    def add(self, client, offset_to_current=0, client_position=None):
         """
         Insert the given client into collection at position of the current.
 
         Use parameter 'offset_to_current' to specify where the client shall be
         inserted. Defaults to zero, which means at position of current client.
         Positive values are after the client.
+
+        Use parameter 'client_position' to insert the given client at 4 specific
+        positions : top, bottom, after_current, before_current.
         """
-        pos = max(0, self._current_idx + offset_to_current)
-        if pos < len(self.clients):
-            self.clients.insert(pos, client)
+        if client_position is not None:
+            if client_position == "after_current":
+                return self.add(client, offset_to_current=1)
+            elif client_position == "before_current":
+                return self.add(client, offset_to_current=0)
+            elif client_position == "top":
+                self.append_head(client)
+            else:  # ie client_position == "bottom"
+                self.append(client)
         else:
-            self.clients.append(client)
+            pos = max(0, self._current_idx + offset_to_current)
+            if pos < len(self.clients):
+                self.clients.insert(pos, client)
+            else:
+                self.clients.append(client)
         self.current_client = client
 
     def append_head(self, client):

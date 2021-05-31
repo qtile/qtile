@@ -31,6 +31,7 @@ class CheckUpdates(base.ThreadPoolText):
     defaults = [
         ("distro", "Arch", "Name of your distribution"),
         ("custom_command", None, "Custom shell command for checking updates (counts the lines of the output)"),
+        ("custom_command_modify", (lambda x: x), "Lambda function to modify line count from custom_command"),
         ("update_interval", 60, "Update interval in seconds."),
         ('execute', None, 'Command to execute on click'),
         ("display_format", "Updates: {updates}", "Display format if updates available"),
@@ -44,6 +45,9 @@ class CheckUpdates(base.ThreadPoolText):
         base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(CheckUpdates.defaults)
 
+        # Helpful to have this as a variable as we can shorten it for testing
+        self.execute_polling_interval = 1
+
         # format: "Distro": ("cmd", "number of lines to subtract from output")
         self.cmd_dict = {"Arch": ("pacman -Qu", 0),
                          "Arch_checkupdates": ("checkupdates", 0),
@@ -51,20 +55,25 @@ class CheckUpdates(base.ThreadPoolText):
                          "Arch_yay": ("yay -Qu", 0),
                          "Debian": ("apt-show-versions -u -b", 0),
                          "Ubuntu": ("aptitude search ~U", 0),
-                         "Fedora": ("dnf list updates", 3),
+                         "Fedora": ("dnf list updates -q", 1),
                          "FreeBSD": ("pkg_version -I -l '<'", 0),
                          "Mandriva": ("urpmq --auto-select", 0)
                          }
 
-        # Check if distro name is valid.
-        try:
-            self.cmd = self.cmd_dict[self.distro][0].split()
-            self.subtr = self.cmd_dict[self.distro][1]
-        except KeyError:
-            distros = sorted(self.cmd_dict.keys())
-            logger.error(self.distro + ' is not a valid distro name. ' +
-                         'Use one of the list: ' + str(distros) + '.')
-            self.cmd = None
+        if self.custom_command:
+            # Use custom_command
+            self.cmd = self.custom_command
+
+        else:
+            # Check if distro name is valid.
+            try:
+                self.cmd = self.cmd_dict[self.distro][0]
+                self.custom_command_modify = (lambda x: x - self.cmd_dict[self.distro][1])
+            except KeyError:
+                distros = sorted(self.cmd_dict.keys())
+                logger.error(self.distro + ' is not a valid distro name. ' +
+                             'Use one of the list: ' + str(distros) + '.')
+                self.cmd = None
 
         if self.execute:
             self.add_callbacks({'Button1': self.do_execute})
@@ -72,15 +81,13 @@ class CheckUpdates(base.ThreadPoolText):
     def _check_updates(self):
         # type: () -> str
         try:
-            if self.custom_command is None:
-                updates = self.call_process(self.cmd)
-            else:
-                updates = self.call_process(self.custom_command, shell=True)
-                self.subtr = 0
+            updates = self.call_process(self.cmd, shell=True)
         except CalledProcessError:
             updates = ""
-        num_updates = len(updates.splitlines()) - self.subtr
+        num_updates = self.custom_command_modify(len(updates.splitlines()))
 
+        if num_updates < 0:
+            num_updates = 0
         if num_updates == 0:
             self.layout.colour = self.colour_no_updates
             return self.no_update_string
@@ -100,11 +107,11 @@ class CheckUpdates(base.ThreadPoolText):
 
     def do_execute(self):
         self._process = Popen(self.execute, shell=True)
-        self.timeout_add(1, self._refresh_count)
+        self.timeout_add(self.execute_polling_interval, self._refresh_count)
 
     def _refresh_count(self):
         if self._process.poll() is None:
-            self.timeout_add(1, self._refresh_count)
+            self.timeout_add(self.execute_polling_interval, self._refresh_count)
 
         else:
             self.timer_setup()

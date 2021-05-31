@@ -80,7 +80,7 @@ class Bluetooth(base._TextBox):
         props.on_properties_changed(self._signal_received)
         return connected, name
 
-    def _signal_received(self, interface_name, changed_properties, invalidated_properties):
+    def _signal_received(self, interface_name, changed_properties, _invalidated_properties):
         powered = changed_properties.get('Powered', None)
         if powered is not None:
             self.powered = powered.value
@@ -97,12 +97,12 @@ class Bluetooth(base._TextBox):
             self.update_text()
 
     def update_text(self):
+        text = ""
         if not self.powered:
-            self.text = 'off'
+            text = 'off'
         else:
             if not self.connected:
-                self.text = 'on'
+                text = 'on'
             else:
-                self.text = self.device
-
-        self.bar.draw()
+                text = self.device
+        self.update(text)

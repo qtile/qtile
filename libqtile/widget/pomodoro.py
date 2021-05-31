@@ -56,7 +56,6 @@ class Pomodoro(base.ThreadPoolText):
 
     status = "inactive"
     paused_status = None
-    notified = False
     end_time = datetime.now()
     time_left = None
     pomodoros = 1

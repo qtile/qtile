@@ -27,7 +27,9 @@ that interacts with qtile objects, it should favor using the command graph
 clients to do this interaction.
 """
 
-from typing import Any, List, Optional, Union
+from __future__ import annotations
+
+from typing import Any, List, Optional, Tuple, Union
 
 from libqtile.command.base import SelectError
 from libqtile.command.graph import (
@@ -37,14 +39,18 @@ from libqtile.command.graph import (
     CommandGraphRoot,
     GraphType,
 )
-from libqtile.command.interface import CommandInterface, IPCCommandInterface
+from libqtile.command.interface import (
+    CommandInterface,
+    IPCCommandInterface,
+    SelectorType,
+)
 from libqtile.ipc import Client, find_sockfile
 
 
 class CommandClient:
     """The object that resolves the commands"""
 
-    def __init__(self, command: CommandInterface = None, *, current_node: GraphType = None) -> None:
+    def __init__(self, command: CommandInterface = None, *, current_node: Optional[CommandGraphNode] = None) -> None:
         """A client that resolves calls through the command object interface
 
         Exposes a similar API to the command graph, but performs resolution of
@@ -64,19 +70,9 @@ class CommandClient:
         if command is None:
             command = IPCCommandInterface(Client(find_sockfile()))
         self._command = command
-        if current_node is None:
-            self._current_node = CommandGraphRoot()  # type: GraphType
-        else:
-            self._current_node = current_node
+        self._current_node = current_node if current_node is not None else CommandGraphRoot()
 
-    def __call__(self, *args, **kwargs) -> Any:
-        """When the client has navigated to a command, execute it"""
-        if not isinstance(self._current_node, CommandGraphCall):
-            raise SelectError("Invalid call", "", self._current_node.selectors)
-
-        return self._command.execute(self._current_node, args, kwargs)
-
-    def navigate(self, name: str, selector: Optional[str]) -> "CommandClient":
+    def navigate(self, name: str, selector: Optional[str]) -> CommandClient:
         """Resolve the given object in the command graph
 
         Parameters
@@ -92,55 +88,67 @@ class CommandClient:
         CommandClient
             The client with the given command graph object resolved.
         """
-        if not isinstance(self._current_node, CommandGraphNode):
-            raise SelectError("Invalid navigation", "", self._current_node.selectors)
-
         if name not in self.children:
             raise SelectError("Not valid child", name, self._current_node.selectors)
-        if selector is not None:
-            if self._command.has_item(self._current_node, name, selector):
+
+        normalized_selector = _normalize_item(name, selector) if selector is not None else None
+        if normalized_selector is not None:
+            if not self._command.has_item(self._current_node, name, normalized_selector):
                 raise SelectError("Item not available in object", name, self._current_node.selectors)
 
-        next_node = self._current_node.navigate(name, selector)
+        next_node = self._current_node.navigate(name, normalized_selector)
         return self.__class__(self._command, current_node=next_node)
 
-    def call(self, name: str) -> "CommandClient":
-        """Resolve the call into the command graph
+    def call(self, name: str, *args, **kwargs) -> Any:
+        """Resolve and invoke the call into the command graph
 
         Parameters
         ----------
         name : str
             The name of the command to resolve in the command graph.
+        args :
+            The arguments to pass into the call invocation.
+        kwargs :
+            The keyword arguments to pass into the call invocation.
 
         Returns
         -------
-        CommandClient
-            The client with the command resolved.
+        The output returned from the function call.
         """
-        if not isinstance(self._current_node, CommandGraphNode):
-            raise SelectError("Invalid navigation", "", self._current_node.selectors)
-
-        command_call = self._current_node.call("commands")
-        commands = self._command.execute(command_call, (), {})
-        if name not in commands:
+        if name not in self.commands:
             raise SelectError("Not valid child or command", name, self._current_node.selectors)
-        next_node = self._current_node.call(name)
-        return self.__class__(self._command, current_node=next_node)
+
+        call = self._current_node.call(name)
+
+        return self._command.execute(call, args, kwargs)
 
     @property
     def children(self) -> List[str]:
         """Get the children of the current location in the command graph"""
-        if isinstance(self._current_node, CommandGraphCall):
-            raise SelectError("No children of command graph call", "", self._current_node.selectors)
         return self._current_node.children
 
     @property
-    def root(self) -> "CommandClient":
+    def selectors(self) -> List[SelectorType]:
+        return self._current_node.selectors
+
+    @property
+    def commands(self) -> List[str]:
+        """Get the commands available on the current object"""
+        command_call = self._current_node.call("commands")
+        return self._command.execute(command_call, (), {})
+
+    def items(self, name: str) -> Tuple[bool, List[Union[str, int]]]:
+        """Get the available items"""
+        items_call = self._current_node.call("items")
+        return self._command.execute(items_call, (name,), {})
+
+    @property
+    def root(self) -> CommandClient:
         """Get the root of the command graph"""
         return self.__class__(self._command)
 
     @property
-    def parent(self) -> "CommandClient":
+    def parent(self) -> CommandClient:
         """Get the parent of the current client"""
         if self._current_node.parent is None:
             raise SelectError("", "", self._current_node.selectors)
@@ -171,10 +179,7 @@ class InteractiveCommandClient:
         if command is None:
             command = IPCCommandInterface(Client(find_sockfile()))
         self._command = command
-        if current_node is None:
-            self._current_node = CommandGraphRoot()  # type: GraphType
-        else:
-            self._current_node = current_node
+        self._current_node = current_node if current_node is not None else CommandGraphRoot()
 
     def __call__(self, *args, **kwargs) -> Any:
         """When the client has navigated to a command, execute it"""
@@ -183,7 +188,7 @@ class InteractiveCommandClient:
 
         return self._command.execute(self._current_node, args, kwargs)
 
-    def __getattr__(self, name: str) -> "InteractiveCommandClient":
+    def __getattr__(self, name: str) -> InteractiveCommandClient:
         """Get the child element of the currently selected object
 
         Resolve the element specified by the given name, either the child
@@ -216,7 +221,7 @@ class InteractiveCommandClient:
         next_node = self._current_node.navigate(name, None)
         return self.__class__(self._command, current_node=next_node)
 
-    def __getitem__(self, name: Union[str, int]) -> "InteractiveCommandClient":
+    def __getitem__(self, name: Union[str, int]) -> InteractiveCommandClient:
         """Get the selected element of the currently selected object
 
         From the current command graph object, select the instance with the
@@ -254,13 +259,17 @@ class InteractiveCommandClient:
         next_node = self._current_node.parent.navigate(self._current_node.object_type, name)
         return self.__class__(self._command, current_node=next_node)
 
-    def normalize_item(self, item: Union[str, int]) -> Union[str, int]:
+    def normalize_item(self, item: str) -> Union[str, int]:
         "Normalize the item according to Qtile._items()."
         object_type = self._current_node.object_type \
             if isinstance(self._current_node, CommandGraphObject) else None
-        if object_type in ["group", "widget", "bar"]:
-            return str(item)
-        elif object_type in ["layout", "window", "screen"]:
-            return int(item)
-        else:
-            return item
+        return _normalize_item(object_type, item)
+
+
+def _normalize_item(object_type: Optional[str], item: str) -> Union[str, int]:
+    if object_type in ["group", "widget", "bar"]:
+        return str(item)
+    elif object_type in ["layout", "window", "screen"]:
+        return int(item)
+    else:
+        return item

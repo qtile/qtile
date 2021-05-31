@@ -425,8 +425,8 @@ class Prompt(base._TextBox):
 
         hook.subscribe.client_focus(f)
 
-    def start_input(self, prompt, callback,
-                    complete=None, strict_completer=False) -> None:
+    def start_input(self, prompt, callback, complete=None,
+                    strict_completer=False, allow_empty_input=False) -> None:
         """Run the prompt
 
         Displays a prompt and starts to take one line of keyboard input from
@@ -450,6 +450,8 @@ class Prompt(base._TextBox):
         strict_completer :
             When True the return value wil be the exact completer result where
             available.
+        allow_empty_input :
+            When True, an empty value will still call the callback function
         """
 
         if self.cursor and self.cursorblink and not self.active:
@@ -464,6 +466,7 @@ class Prompt(base._TextBox):
         self.callback = callback
         self.completer = self.completers[complete](self.qtile)
         self.strict_completer = strict_completer
+        self.allow_empty_input = allow_empty_input
         self._update()
         self.bar.widget_grab_keyboard(self)
         if self.record_history:
@@ -571,7 +574,7 @@ class Prompt(base._TextBox):
             self.user_input = self.actual_value or self.user_input
             del self.actual_value
         self._history_to_input()
-        if self.user_input:
+        if self.user_input or self.allow_empty_input:
             # If history record is activated, also save command in history
             if self.record_history:
                 # ensure no dups in history
@@ -591,7 +594,7 @@ class Prompt(base._TextBox):
     def _alert(self):
         # Fire an alert (audible or visual), if bell style is not None.
         if self.bell_style == "audible":
-            self.qtile.conn.conn.core.Bell(0)
+            self.qtile.core.conn.conn.core.Bell(0)
         elif self.bell_style == "visual":
             self.background = self.visual_bell_color
             self.timeout_add(self.visual_bell_time, self._stop_visual_alert)
@@ -664,7 +667,7 @@ class Prompt(base._TextBox):
         mask = xcbq.ModMasks["shift"] | xcbq.ModMasks["lock"]
         state = 1 if e.state & mask else 0
 
-        keysym = self.qtile.conn.code_to_syms[e.detail][state]
+        keysym = self.qtile.core.conn.code_to_syms[e.detail][state]
 
         handle_key = self._get_keyhandler(keysym)
 
@@ -678,7 +681,7 @@ class Prompt(base._TextBox):
             pass
         d = Dummy()
         keysym = xcbq.keysyms[key]
-        d.detail = self.qtile.conn.keysym_to_keycode(keysym)[0]
+        d.detail = self.qtile.core.conn.keysym_to_keycode(keysym)[0]
         d.state = 0
         self.handle_KeyPress(d)
 
@@ -724,11 +727,11 @@ class Prompt(base._TextBox):
         try:
             obj = self.qtile.select([(object_name, selector)])
         except SelectError:
-            logger.warn("cannot select a object")
+            logger.warning("cannot select a object")
             return
         cmd = obj.command(cmd_name)
         if not cmd:
-            logger.warn("command not found")
+            logger.warning("command not found")
             return
 
         def f(args):

@@ -26,13 +26,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import contextlib
-
-import xcffib
-import xcffib.xproto
-
-from libqtile import hook, utils, window
-from libqtile.command.base import CommandObject
+from libqtile import hook, utils
+from libqtile.backend.base import FloatStates
+from libqtile.command.base import CommandObject, ItemT
 from libqtile.log_utils import logger
 
 
@@ -147,7 +143,7 @@ class _Group(CommandObject):
         to it.
         """
         if self.screen and self.windows:
-            with self.disable_mask(xcffib.xproto.EventMask.EnterWindow):
+            with self.qtile.core.masked():
                 normal = [x for x in self.windows if not x.floating]
                 floating = [
                     x for x in self.windows
@@ -183,20 +179,10 @@ class _Group(CommandObject):
 
     def hide(self):
         self.screen = None
-        with self.disable_mask(xcffib.xproto.EventMask.EnterWindow |
-                               xcffib.xproto.EventMask.FocusChange |
-                               xcffib.xproto.EventMask.LeaveWindow):
+        with self.qtile.core.masked():
             for i in self.windows:
                 i.hide()
             self.layout.hide()
-
-    @contextlib.contextmanager
-    def disable_mask(self, mask):
-        for i in self.windows:
-            i._disable_mask(mask)
-        yield
-        for i in self.windows:
-            i._reset_mask()
 
     def focus(self, win, warp=True, force=False):
         """Focus the given window
@@ -251,17 +237,10 @@ class _Group(CommandObject):
         hook.fire("group_window_add", self, win)
         self.windows.add(win)
         win.group = self
-        try:
-            if 'fullscreen' in win.window.get_net_wm_state() and \
-                    self.qtile.config.auto_fullscreen:
-                win._float_state = window.FULLSCREEN
-            elif self.floating_layout.match(win):
-                # !!! tell it to float, can't set floating
-                # because it's too early
-                # so just set the flag underneath
-                win._float_state = window.FLOATING
-        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
-            pass  # doesn't matter
+        if self.qtile.config.auto_fullscreen and win.wants_to_fullscreen:
+            win._float_state = FloatStates.FULLSCREEN
+        elif self.floating_layout.match(win):
+            win._float_state = FloatStates.FLOATING
         if win.floating:
             self.floating_layout.add(win)
         else:
@@ -325,14 +304,14 @@ class _Group(CommandObject):
                     i.focus(win)
         self.layout_all()
 
-    def _items(self, name):
+    def _items(self, name) -> ItemT:
         if name == "layout":
-            return (True, list(range(len(self.layouts))))
-        if name == "screen":
-            return (True, None)
+            return True, list(range(len(self.layouts)))
+        if name == "screen" and self.screen is not None:
+            return True, []
         if name == "window":
-            return (True, [i.window.wid for i in self.windows])
-        raise RuntimeError("Invalid item: {}".format(name))
+            return self.current_window is not None, [i.wid for i in self.windows]
+        return None
 
     def _select(self, name, sel):
         if name == "layout":
@@ -345,7 +324,7 @@ class _Group(CommandObject):
             if sel is None:
                 return self.current_window
             for i in self.windows:
-                if i.window.wid == sel:
+                if i.wid == sel:
                     return i
         raise RuntimeError("Invalid selection: {}".format(name))
 

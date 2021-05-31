@@ -109,7 +109,7 @@ class DGroups:
             self.rules.remove(rule)
             del self.rules_map[rule_id]
         else:
-            logger.warn('Rule "%s" not found', rule_id)
+            logger.warning('Rule "%s" not found', rule_id)
 
     def add_dgroup(self, group, start=False):
         self.groups_map[group.name] = group
