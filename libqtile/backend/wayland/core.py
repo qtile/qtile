@@ -232,6 +232,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         self.output_manager.set_configuration(config)
         self.outputs.sort(key=lambda o: (o.x, o.y))
+        hook.fire("screen_change", None)
 
     def _on_output_manager_apply(self, _listener, config: OutputConfigurationV1):
         logger.debug("Signal: output_manager apply_event")
