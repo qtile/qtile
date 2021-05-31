@@ -34,6 +34,7 @@ from wlroots.wlr_types import (
     DataDeviceManager,
     GammaControlManagerV1,
     OutputLayout,
+    PrimarySelectionV1DeviceManager,
     ScreencopyManagerV1,
     Surface,
     XCursorManager,
@@ -139,6 +140,7 @@ class Core(base.Core, wlrq.HasListeners):
         XdgOutputManagerV1(self.display, self.output_layout)
         ScreencopyManagerV1(self.display)
         GammaControlManagerV1(self.display)
+        PrimarySelectionV1DeviceManager(self.display)
         self._virtual_keyboard_manager_v1 = VirtualKeyboardManagerV1(self.display)
         self.add_listener(
             self._virtual_keyboard_manager_v1.new_virtual_keyboard_event,
