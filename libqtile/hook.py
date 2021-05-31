@@ -293,11 +293,11 @@ class Subscribe:
         return self._subscribe("selection_change", func)
 
     def screen_change(self, func):
-        """Called when a screen is added or screen configuration is changed (via xrandr)
+        """Called when the output configuration is changed (e.g. via randr in X11).
 
         **Arguments**
 
-            * ``xproto.randr.ScreenChangeNotify`` event
+            * ``xproto.randr.ScreenChangeNotify`` event (X11) or None (Wayland).
 
         """
         return self._subscribe("screen_change", func)
