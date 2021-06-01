@@ -58,7 +58,7 @@ class CryptoTicker(GenPollUrl):
             'The symbol for the baseline currency.'),
         ('crypto', 'BTC',
             'The cryptocurrency to display.'),
-        ('format', '{crypto}: {symbol}{value}',
+        ('format', '{crypto}: {symbol}{value:.2f}',
             'Display string formatting.'),
     ]
 
@@ -76,11 +76,9 @@ class CryptoTicker(GenPollUrl):
         return self.QUERY_URL.format(self.crypto, self.denomination.lower())
 
     def parse(self, body):
-        value = float(body['data']['amount'])
         variables = dict()
-
         variables['crypto'] = self.crypto
         variables['symbol'] = self.symbol
-        variables['value'] = round(value, 2)
+        variables['value'] = float(body['data']['amount'])
 
         return self.format.format(**variables)
