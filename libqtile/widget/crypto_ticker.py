@@ -73,4 +73,4 @@ class CryptoTicker(GenPollUrl):
         return self.QUERY_URL.format(self.crypto, self.denomination.lower())
 
     def parse(self, body):
-        return "{crypto}: {symbol}{amount:.2f}".format(crypto=self.crypto, symbol=self.symbol, amount=float(body['data']['amount']))
+        return "{}: {}{:.2f}".format(self.crypto, self.symbol, float(body['data']['amount']))
