@@ -54,8 +54,12 @@ class CryptoTicker(GenPollUrl):
     defaults = [
         ('denomination', _DEFAULT_CURRENCY.strip(),
             'The baseline currency that the value of the crypto is displayed in.'),
+        ('symbol', '$',
+            'The symbol for the baseline currency.'),
         ('crypto', 'BTC',
             'The cryptocurrency to display.'),
+        ('format', '{crypto}: {symbol}{value}',
+            'Display string formatting.'),
     ]
 
     def __init__(self, **config):
@@ -66,11 +70,17 @@ class CryptoTicker(GenPollUrl):
         if self.denomination == "":
             locale.setlocale(locale.LC_MONETARY, "en_US.UTF-8")
             self.denomination = locale.localeconv()['int_curr_symbol'].strip()
-        self.symbol = locale.localeconv()['currency_symbol']
 
     @property
     def url(self):
         return self.QUERY_URL.format(self.crypto, self.denomination.lower())
 
     def parse(self, body):
-        return "{}: {}{:.2f}".format(self.crypto, self.symbol, float(body['data']['amount']))
+        value = float(body['data']['amount'])
+        variables = dict()
+
+        variables['crypto'] = self.crypto
+        variables['symbol'] = self.symbol
+        variables['value'] = round(value, 2)
+
+        return self.format.format(**variables)
