@@ -181,6 +181,9 @@ reconfigure_screens = True
 # focus, should we respect this or not?
 auto_minimize = True
 
+# When using the Wayland backend, this can be used to configure input devices.
+wl_input_rules = None
+
 # XXX: Gasp! We're lying here. In fact, nobody really uses or cares about this
 # string besides java UI toolkits; you can see several discussions on the
 # mailing lists, GitHub issues, and other WM documentation that suggest setting

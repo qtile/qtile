@@ -72,6 +72,9 @@ class Config:
     reconfigure_screens: bool
     wmname: str
     auto_minimize: bool
+    # Really we'd want to check this Any is libqtile.backend.wayland.ImportConfig, but
+    # doing so forces the import, creating a hard dependency for wlroots.
+    wl_input_rules: dict[str, Any] | None
 
     def __init__(self, file_path=None, **settings):
         """Create a Config() object from settings
