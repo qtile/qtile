@@ -252,7 +252,7 @@ class Window(_Window, metaclass=ABCMeta):
         """Paint the window borders with the given color and width"""
 
     @abstractmethod
-    def cmd_focus(self, warp: Optional[bool] = None) -> None:
+    def cmd_focus(self, warp: bool = True) -> None:
         """Focuses the window."""
 
     @abstractmethod

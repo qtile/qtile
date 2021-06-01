@@ -444,11 +444,9 @@ class Window(base.Window, HasListeners):
                 self.group.mark_floating(self, True)
             hook.fire('float_change')
 
-    def cmd_focus(self, warp=None):
+    def cmd_focus(self, warp: bool = True) -> None:
         """Focuses the window."""
-        if warp is None:
-            warp = self.qtile.config.cursor_warp
-        self.focus(warp=warp)
+        self.focus(warp)
 
     def cmd_info(self) -> Dict:
         """Return a dictionary of info."""
