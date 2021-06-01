@@ -69,6 +69,14 @@ def pacman_to_checkupdates(query):
     )
 
 
+def bitcoin_to_crypto(query):
+    return (
+        query
+        .select_class("BitcoinTicker")
+        .rename("CryptoTicker")
+    )
+
+
 def hook_main_function(query):
     def modify_main(node, capture, filename):
         main = capture.get("function_def")
