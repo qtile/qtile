@@ -4,6 +4,7 @@
 # Copyright (c) 2014 Aborilov Pavel
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014-2015 Tycho Andersen
+# Copyright (c) 2021 Graeme Holliday
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,40 +32,45 @@ from libqtile.widget.generic_poll_text import GenPollUrl
 _DEFAULT_CURRENCY = str(locale.localeconv()['int_curr_symbol'])
 
 
-class BitcoinTicker(GenPollUrl):
+class CryptoTicker(GenPollUrl):
     """
-    A bitcoin ticker widget, data provided by the coinbase.com API. Defaults to
-    displaying currency in whatever the current locale is. Examples::
+    A cryptocurrency ticker widget, data provided by the coinbase.com API. Defaults to
+    displaying currency in whatever the current locale is. Examples:
 
         # display the average price of bitcoin in local currency
-        widget.BitcoinTicker()
+        widget.CryptoTicker()
 
         # display it in Euros:
-        widget.BitcoinTicker(currency="EUR")
+        widget.CryptoTicker(denomination="EUR")
+
+        # or a different cryptocurrency!
+        widget.CryptoTicker(crypto="ETH")
     """
 
-    QUERY_URL = "https://api.coinbase.com/v2/prices/spot?currency=%s"
+    QUERY_URL = "https://api.coinbase.com/v2/prices/{}-{}/spot"
 
     orientations = base.ORIENTATION_HORIZONTAL
 
     defaults = [
-        ('currency', _DEFAULT_CURRENCY.strip(),
-            'The currency the value that bitcoin is displayed in'),
+        ('denomination', _DEFAULT_CURRENCY.strip(),
+            'The baseline currency that the value of the crypto is displayed in.'),
+        ('crypto', 'BTC',
+            'The cryptocurrency to display.'),
     ]
 
     def __init__(self, **config):
         GenPollUrl.__init__(self, **config)
-        self.add_defaults(BitcoinTicker.defaults)
+        self.add_defaults(CryptoTicker.defaults)
 
         # set up USD as the default if no locale is set
-        if self.currency == "":
+        if self.denomination == "":
             locale.setlocale(locale.LC_MONETARY, "en_US.UTF-8")
-            self.currency = locale.localeconv()['int_curr_symbol'].strip()
+            self.denomination = locale.localeconv()['int_curr_symbol'].strip()
         self.symbol = locale.localeconv()['currency_symbol']
 
     @property
     def url(self):
-        return self.QUERY_URL % self.currency.lower()
+        return self.QUERY_URL.format(self.crypto, self.denomination.lower())
 
     def parse(self, body):
-        return "BTC: {symbol}{amount}".format(symbol=self.symbol, amount=body['data']['amount'])
+        return "{crypto}: {symbol}{amount:.2f}".format(crypto=self.crypto, symbol=self.symbol, amount=float(body['data']['amount']))
