@@ -916,11 +916,9 @@ class _Window:
         self.qtile.core._root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
         hook.fire("client_focus", self)
 
-    def cmd_focus(self, warp=None):
+    def cmd_focus(self, warp: bool = True) -> None:
         """Focuses the window."""
-        if warp is None:
-            warp = self.qtile.config.cursor_warp
-        self.focus(warp=warp)
+        self.focus(warp)
 
     def cmd_info(self):
         """Returns a dictionary of info for this object"""
