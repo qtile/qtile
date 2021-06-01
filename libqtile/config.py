@@ -330,7 +330,7 @@ class Screen(CommandObject):
     def get_rect(self):
         return ScreenRect(self.dx, self.dy, self.dwidth, self.dheight)
 
-    def set_group(self, new_group, save_prev=True):
+    def set_group(self, new_group, save_prev=True, warp=True):
         """Put group on this screen"""
         if new_group is None:
             return
@@ -352,9 +352,9 @@ class Screen(CommandObject):
             s2 = new_group.screen
 
             s2.group = g1
-            g1._set_screen(s2)
+            g1.set_screen(s2, warp)
             s1.group = g2
-            g2._set_screen(s1)
+            g2.set_screen(s1, warp)
         else:
             if hasattr(self, "group"):
                 old_group = self.group
@@ -366,10 +366,10 @@ class Screen(CommandObject):
             with ctx:
                 # display clients of the new group and then hide from old group
                 # to remove the screen flickering
-                new_group._set_screen(self)
+                new_group.set_screen(self, warp)
 
                 if old_group is not None:
-                    old_group._set_screen(None)
+                    old_group.set_screen(None, warp)
 
         hook.fire("setgroup")
         hook.fire("focus_change")
@@ -377,11 +377,11 @@ class Screen(CommandObject):
                   self.group.layouts[self.group.current_layout],
                   self.group)
 
-    def toggle_group(self, group=None):
+    def toggle_group(self, group=None, warp=True):
         """Switch to the selected group or to the previously active one"""
         if group in (self.group, None) and hasattr(self, "previous_group"):
             group = self.previous_group
-        self.set_group(group)
+        self.set_group(group, warp=warp)
 
     def _items(self, name: str) -> ItemT:
         if name == "layout" and self.group is not None:
@@ -443,16 +443,16 @@ class Screen(CommandObject):
         self.set_group(n)
         return n.name
 
-    def cmd_prev_group(self, skip_empty=False, skip_managed=False):
+    def cmd_prev_group(self, skip_empty=False, skip_managed=False, warp=True):
         """Switch to the previous group"""
         n = self.group.get_previous_group(skip_empty, skip_managed)
-        self.set_group(n)
+        self.set_group(n, warp=warp)
         return n.name
 
-    def cmd_toggle_group(self, group_name=None):
+    def cmd_toggle_group(self, group_name=None, warp=True):
         """Switch to the selected group or to the previously active one"""
         group = self.qtile.groups_map.get(group_name)
-        self.toggle_group(group)
+        self.toggle_group(group, warp=warp)
 
     def cmd_togglegroup(self, groupName=None):  # noqa
         """Switch to the selected group or to the previously active one

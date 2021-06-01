@@ -31,6 +31,7 @@
 # SOFTWARE.
 
 import itertools
+from functools import partial
 from typing import Any, List, Tuple
 
 from libqtile import bar, hook
@@ -132,7 +133,7 @@ class AGroupBox(_GroupBase):
 
     def _configure(self, qtile, bar):
         _GroupBase._configure(self, qtile, bar)
-        self.add_callbacks({'Button1': self.bar.screen.cmd_next_group})
+        self.add_callbacks({'Button1': partial(self.bar.screen.cmd_next_group, warp=False)})
 
     def calculate_length(self):
         return self.box_width(self.qtile.groups) + self.margin_x * 2
@@ -309,9 +310,9 @@ class GroupBox(_GroupBase):
     def go_to_group(self, group):
         if group:
             if self.bar.screen.group != group or not self.disable_drag:
-                self.bar.screen.set_group(group)
+                self.bar.screen.set_group(group, warp=False)
             else:
-                self.bar.screen.toggle_group(group)
+                self.bar.screen.toggle_group(group, warp=False)
 
     def button_release(self, x, y, button):
         self.click = x
