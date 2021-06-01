@@ -162,7 +162,7 @@ class _Group(CommandObject):
                         self.screen == self.qtile.current_screen:
                     self.current_window.focus(warp)
 
-    def _set_screen(self, screen):
+    def set_screen(self, screen, warp=True):
         """Set this group's screen to screen"""
         if screen == self.screen:
             return
@@ -170,7 +170,7 @@ class _Group(CommandObject):
         if self.screen:
             # move all floating guys offset to new screen
             self.floating_layout.to_screen(self, self.screen)
-            self.layout_all(warp=self.qtile.config.cursor_warp)
+            self.layout_all(warp=warp and self.qtile.config.cursor_warp)
             screen_rect = self.screen.get_rect()
             self.floating_layout.show(screen_rect)
             self.layout.show(screen_rect)
