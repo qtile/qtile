@@ -170,7 +170,9 @@ class Qtile(CommandObject):
         # no_spawn is set when we are restarting; we only want to run the
         # startup hook once.
         if not self.no_spawn:
-            hook.fire("startup_once")
+            if "startup_once" in hook.subscriptions:
+                hook.fire("startup_once")
+                del hook.subscriptions["startup_once"]
         hook.fire("startup")
 
         if self._state:
