@@ -89,7 +89,7 @@ class Window(base.Window, HasListeners):
         self.opacity: float = 1.0
 
         assert isinstance(surface, XdgSurface)
-        self._app_id: str = surface.toplevel.app_id
+        self._app_id: Optional[str] = surface.toplevel.app_id
         surface.set_tiled(EDGES_TILED)
         self._float_state = FloatStates.NOT_FLOATING
         self.float_x = self.x
@@ -234,7 +234,9 @@ class Window(base.Window, HasListeners):
         return pid[0]
 
     def get_wm_class(self) -> Optional[List]:
-        return [self._app_id]
+        if self._app_id:
+            return [self._app_id]
+        return None
 
     def togroup(self, group_name=None, *, switch_group=False):
         """Move window to a specified group
