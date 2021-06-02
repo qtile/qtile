@@ -502,13 +502,6 @@ class Core(base.Core):
         """Grab the given mouse button for events"""
         modmask = xcbq.translate_masks(mouse.modifiers)
 
-        if isinstance(mouse, config.Click) and mouse.focus:
-            # Make a freezing grab on mouse button to gain focus
-            # Event will propagate to target window
-            grabmode = xcffib.xproto.GrabMode.Sync
-        else:
-            grabmode = xcffib.xproto.GrabMode.Async
-
         eventmask = EventMask.ButtonPress
         if isinstance(mouse, config.Drag):
             eventmask |= EventMask.ButtonRelease
@@ -518,7 +511,7 @@ class Core(base.Core):
                 True,
                 self._root.wid,
                 eventmask,
-                grabmode,
+                xcffib.xproto.GrabMode.Async,
                 xcffib.xproto.GrabMode.Async,
                 xcffib.xproto.Atom._None,
                 xcffib.xproto.Atom._None,
@@ -612,6 +605,10 @@ class Core(base.Core):
         state = event.state
         state |= self._numlock_mask
         state &= self._valid_mask
+
+        if not event.child:  # The client's handle_ButtonPress will focus it
+            self.focus_by_click(event)
+
         self.qtile.process_button_click(
             button_code, state, event.event_x, event.event_y, event
         )
@@ -735,7 +732,7 @@ class Core(base.Core):
         d.state = modmasks
         self.handle_KeyPress(d)
 
-    def focus_by_click(self, e):
+    def focus_by_click(self, e, window=None):
         """Bring a window to the front
 
         Parameters
@@ -746,15 +743,12 @@ class Core(base.Core):
         qtile = self.qtile
         assert qtile is not None
 
-        if e.child:
-            wid = e.child
-            window = self.qtile.windows_map.get(wid)
-
+        if window:
             if qtile.config.bring_front_click and (
                 qtile.config.bring_front_click != "floating_only" or getattr(window, "floating", False)
             ):
                 self.conn.conn.core.ConfigureWindow(
-                    wid, xcffib.xproto.ConfigWindow.StackMode, [StackMode.Above]
+                    window.wid, xcffib.xproto.ConfigWindow.StackMode, [StackMode.Above]
                 )
 
             try:

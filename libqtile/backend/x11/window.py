@@ -1077,6 +1077,20 @@ class Static(_Window, base.Static):
         self.place(self.x, self.y, self.width, self.height, 0, 0)
         self.update_strut()
 
+        # Grab button 1 to focus upon click
+        for amask in self.qtile.core._auto_modmasks():
+            self.qtile.core.conn.conn.core.GrabButton(
+                True,
+                self.window.wid,
+                EventMask.ButtonPress,
+                xcffib.xproto.GrabMode.Sync,
+                xcffib.xproto.GrabMode.Async,
+                xcffib.xproto.Atom._None,
+                xcffib.xproto.Atom._None,
+                1,
+                amask,
+            )
+
     def handle_ConfigureRequest(self, e):  # noqa: N802
         cw = xcffib.xproto.ConfigWindow
         if self.conf_x is None and e.value_mask & cw.X:
@@ -1180,6 +1194,20 @@ class Window(_Window, base.Window):
         # add window to the save-set, so it gets mapped when qtile dies
         qtile.core.conn.conn.core.ChangeSaveSet(SetMode.Insert, self.window.wid)
         self.update_wm_net_icon()
+
+        # Grab button 1 to focus upon click
+        for amask in self.qtile.core._auto_modmasks():
+            self.qtile.core.conn.conn.core.GrabButton(
+                True,
+                self.window.wid,
+                EventMask.ButtonPress,
+                xcffib.xproto.GrabMode.Sync,
+                xcffib.xproto.GrabMode.Async,
+                xcffib.xproto.Atom._None,
+                xcffib.xproto.Atom._None,
+                1,
+                amask,
+            )
 
     @property
     def group(self):
@@ -1457,6 +1485,10 @@ class Window(_Window, base.Window):
             if self.group.screen and self.qtile.current_screen != self.group.screen:
                 self.qtile.focus_screen(self.group.screen.index, False)
         return True
+
+    def handle_ButtonPress(self, e):  # noqa: N802
+        self.qtile.core.focus_by_click(e, window=self)
+        self.qtile.core.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
 
     def handle_ConfigureRequest(self, e):  # noqa: N802
         if self.qtile._drag and self.qtile.current_window == self:
