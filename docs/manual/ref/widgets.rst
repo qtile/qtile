@@ -21,15 +21,27 @@ widgets as follows:
 
     from libqtile.widget.decorations import RectDecoration
 
+    decorated_widget = widget.WindowName(
+        decorations=[
+            RectDecoration(
+                colour="#660066",
+                radius=2,
+                filled=True
+            )
+        ]
+    )
 
+Alternatively, the same instance of the decoration can be passed to multiple widgets:
+
+::
+
+    from libqtile.widget.decorations import BorderDecoration
 
     decoration_config = {
         "decorations": [
             BorderDecoration(
-                padding=2,
-                padding_y=5,
-                filled=True,
-                dec_colour="#005555"
+                colour="#660000",
+                border_width=[0, 0, 2, 0]
             )
         ],
         "padding": 6, 
