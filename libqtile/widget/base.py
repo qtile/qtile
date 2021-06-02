@@ -193,6 +193,15 @@ class _Widget(CommandObject, configurable.Configurable):
         self.bar = bar
         self.drawer = bar.window.create_drawer(self.bar.width, self.bar.height)
         if not self.configured:
+
+            # Give each widget a copy of the decoration objects
+            temp_decs = []
+            for i, dec in enumerate(self.decorations):
+                cloned_dec = dec.clone()
+                cloned_dec._configure(self)
+                temp_decs.append(cloned_dec)
+            self.decorations = temp_decs
+
             self.qtile.call_soon(self.timer_setup)
             self.qtile.call_soon(asyncio.create_task, self._config_async())
 

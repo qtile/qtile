@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import copy
 import math
 from typing import Any, List, Tuple
 
@@ -38,6 +39,12 @@ class _Decoration(base.PaddingMixin):
         base.PaddingMixin.__init__(self, **config)
         self.add_defaults(_Decoration.defaults)
 
+    def _configure(self, parent):
+        self.parent = parent
+
+    def clone(self):
+        return copy.copy(self)
+
     @property
     def height(self):
         return self.parent.height
@@ -54,8 +61,8 @@ class _Decoration(base.PaddingMixin):
     def ctx(self):
         return self.parent.drawer.ctx
 
-    def draw(self, parent):
-        self.parent = parent
+    # def draw(self, parent):
+    #     self.parent = parent
 
 
 class RectDecoration(_Decoration):
@@ -80,8 +87,6 @@ class RectDecoration(_Decoration):
         self.add_defaults(RectDecoration.defaults)
 
     def draw(self, parent):
-        _Decoration.draw(self, parent)
-
         box_height = self.height - 2 * self.padding_y
         box_width = self.width - 2 * self.padding_x
 
@@ -174,8 +179,6 @@ class BorderDecoration(_Decoration):
         self.borders = [tp, bm, lt, rt]
 
     def draw(self, parent):
-        _Decoration.draw(self, parent)
-
         top, bottom, left, right = self.borders
 
         self.drawer.set_source_rgb(self.colour)
