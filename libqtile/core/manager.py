@@ -143,8 +143,6 @@ class Qtile(CommandObject):
                 self.groups.append(sp)
                 self.groups_map[sp.name] = sp
 
-        self.config.mouse += (Click([], "Button1", focus="after"),)
-
     def dump_state(self, buf) -> None:
         try:
             pickle.dump(QtileState(self), buf, protocol=0)

@@ -498,6 +498,20 @@ class _Window:
         }
         self.update_hints()
 
+        # Grab button 1 to focus upon click
+        for amask in self.qtile.core._auto_modmasks():
+            self.qtile.core.conn.conn.core.GrabButton(
+                True,
+                self.window.wid,
+                EventMask.ButtonPress,
+                xcffib.xproto.GrabMode.Sync,
+                xcffib.xproto.GrabMode.Async,
+                xcffib.xproto.Atom._None,
+                xcffib.xproto.Atom._None,
+                1,
+                amask,
+            )
+
     x = property(fset=_geometry_setter("x"), fget=_geometry_getter("x"))
     y = property(fset=_geometry_setter("y"), fget=_geometry_getter("y"))
     width = property(
@@ -1445,12 +1459,26 @@ class Window(_Window, base.Window):
 
     def handle_EnterNotify(self, e):  # noqa: N802
         hook.fire("client_mouse_enter", self)
-        if self.qtile.config.follow_mouse_focus:
+        if self.qtile.config.follow_mouse_focus or e.mode == 1:
             if self.group.current_window != self:
                 self.group.focus(self, False)
             if self.group.screen and self.qtile.current_screen != self.group.screen:
                 self.qtile.focus_screen(self.group.screen.index, False)
         return True
+
+    def handle_ButtonPress(self, e):  # noqa: N802
+        if self.group.current_window != self:
+            self.group.focus(self, False)
+        if self.group.screen and self.qtile.current_screen != self.group.screen:
+            self.qtile.focus_screen(self.group.screen.index, False)
+
+        if self.qtile.config.bring_front_click and (
+            self.qtile.config.bring_front_click != "floating_only" or getattr(window, "floating", False)
+        ):
+            self.qtile.core.conn.conn.core.ConfigureWindow(
+                self.window.wid, xcffib.xproto.ConfigWindow.StackMode, [StackMode.Above]
+            )
+        self.qtile.core.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
 
     def handle_ConfigureRequest(self, e):  # noqa: N802
         if self.qtile._drag and self.qtile.current_window == self:
