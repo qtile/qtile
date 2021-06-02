@@ -287,7 +287,7 @@ class _Widget(CommandObject, configurable.Configurable):
             background but before the widget's contents.
         """
         for decoration in self.decorations:
-            decoration.draw(self)
+            decoration.draw()
 
     def calculate_length(self):
         """

@@ -61,9 +61,6 @@ class _Decoration(base.PaddingMixin):
     def ctx(self):
         return self.parent.drawer.ctx
 
-    # def draw(self, parent):
-    #     self.parent = parent
-
 
 class RectDecoration(_Decoration):
     """
@@ -78,63 +75,74 @@ class RectDecoration(_Decoration):
     defaults = [
         ("filled", False, "Whether to fill shape"),
         ("radius", 4, "Radius for corners (0 for square)"),
-        ("dec_colour", "#000000", "Colour for decoration"),
-        ("linewidth", 2, "Line width for decoration")
+        ("colour", "#000000", "Colour for decoration"),
+        ("line_width", 2, "Line width for decoration")
     ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, **config):
         _Decoration.__init__(self, **config)
         self.add_defaults(RectDecoration.defaults)
 
-    def draw(self, parent):
+    def draw(self):
         box_height = self.height - 2 * self.padding_y
         box_width = self.width - 2 * self.padding_x
 
-        self.drawer.set_source_rgb(self.dec_colour)
+        self.drawer.set_source_rgb(self.colour)
 
-        degrees = math.pi / 180.0
+        if not self.radius:
 
-        self.ctx.new_sub_path()
+            self.ctx.rectangle(
+                self.padding_x,
+                self.padding_y,
+                box_width,
+                box_height
+            )
 
-        delta = self.radius + self.linewidth / 2
+        else:
 
-        self.ctx.arc(
-            self.padding_x + box_width - delta,
-            self.padding_y + delta,
-            self.radius,
-            -90 * degrees,
-            0 * degrees
-        )
+            degrees = math.pi / 180.0
 
-        self.ctx.arc(
-            self.padding_x + box_width - delta,
-            self.padding_y + box_height - delta,
-            self.radius,
-            0 * degrees,
-            90 * degrees
-        )
+            self.ctx.new_sub_path()
 
-        self.ctx.arc(
-            self.padding_x + delta,
-            self.padding_y + box_height - delta,
-            self.radius,
-            90 * degrees,
-            180 * degrees
-        )
-        self.ctx.arc(
-            self.padding_x + delta,
-            self.padding_y + delta,
-            self.radius,
-            180 * degrees,
-            270 * degrees
-        )
+            delta = self.radius + self.line_width / 2
 
-        self.ctx.close_path()
+            self.ctx.arc(
+                self.padding_x + box_width - delta,
+                self.padding_y + delta,
+                self.radius,
+                -90 * degrees,
+                0 * degrees
+            )
+
+            self.ctx.arc(
+                self.padding_x + box_width - delta,
+                self.padding_y + box_height - delta,
+                self.radius,
+                0 * degrees,
+                90 * degrees
+            )
+
+            self.ctx.arc(
+                self.padding_x + delta,
+                self.padding_y + box_height - delta,
+                self.radius,
+                90 * degrees,
+                180 * degrees
+            )
+            self.ctx.arc(
+                self.padding_x + delta,
+                self.padding_y + delta,
+                self.radius,
+                180 * degrees,
+                270 * degrees
+            )
+
+            self.ctx.close_path()
 
         if self.filled:
             self.ctx.fill()
         else:
-            self.ctx.set_line_width(self.linewidth)
+            self.ctx.set_line_width(self.line_width)
             self.ctx.stroke()
 
 
@@ -151,7 +159,7 @@ class BorderDecoration(_Decoration):
         (
             "border_width",
             2,
-            "Border width. Single number is all edges, or [top/bottom, left/right] or [top, bottom, left, right]"
+            "Border width as int or list of ints [N E S W]."
         )
     ]  # type: List[Tuple[str, Any, str]]
 
@@ -160,61 +168,38 @@ class BorderDecoration(_Decoration):
         self.add_defaults(BorderDecoration.defaults)
 
         if type(self.border_width) in [float, int]:
-            tp = bm = lt = rt = self.border_width
+            n = e = s = w = self.border_width
         elif type(self.border_width) in [tuple, list]:
             if len(self.border_width) == 1:
-                tp = bm = lt = rt = self.border_width[0]
-            elif len(self.border_width) == 2:
-                tp = bm = self.border_width[0]
-                lt = rt = self.border_width[1]
+                n = e = s = w = self.border_width[0]
             elif len(self.border_width) == 4:
-                tp, bm, lt, rt = self.border_width
+                n, e, s, w = self.border_width
             else:
-                logger.info("Border width should be a single number or a list of 1, 2 or 4 values")
-                tp = bm = lt = rt = 0
+                logger.info("Border width should be a single number or a list of 1 or 4 values")
+                n = e = s = w = 0
         else:
-            logger.info("Border width should be a single number or a list of 1, 2 or 4 values")
-            tp = bm = lt = rt = 0
+            logger.info("Border width should be a single number or a list of 1 or 4 values")
+            n = e = s = w = 0
 
-        self.borders = [tp, bm, lt, rt]
+        self.borders = [n, e, s, w]
 
-    def draw(self, parent):
-        top, bottom, left, right = self.borders
+    def draw(self):
+        top, right, bottom, left = self.borders
 
         self.drawer.set_source_rgb(self.colour)
 
         if top:
-            offset = top // 2
+            offset = top / 2
             self._draw_border(
-                offset + self.padding_x,
+                self.padding_x,  # offset not applied to x coords as seems to create a gap
                 offset + self.padding_y,
-                self.width - offset - self.padding_x,
+                self.width - self.padding_x,
                 offset + self.padding_y,
                 top
             )
 
-        if bottom:
-            offset = bottom // 2
-            self._draw_border(
-                offset + self.padding_x,
-                self.height - offset - self.padding_y,
-                self.width - offset - self.padding_y,
-                self.height - offset - self.padding_y,
-                bottom
-            )
-
-        if left:
-            offset = left // 2
-            self._draw_border(
-                offset + self.padding_x,
-                offset + self.padding_y,
-                offset + self.padding_x,
-                self.height - offset - self.padding_y,
-                left
-            )
-
         if right:
-            offset = right // 2
+            offset = right / 2
             self._draw_border(
                 self.width - offset - self.padding_x,
                 offset + self.padding_y,
@@ -223,8 +208,28 @@ class BorderDecoration(_Decoration):
                 right
             )
 
-    def _draw_border(self, x1, y1, x2, y2, linewidth):
+        if bottom:
+            offset = bottom / 2
+            self._draw_border(
+                self.padding_x,  # offset not applied to x coords as seems to create a gap
+                self.height - offset - self.padding_y,
+                self.width - self.padding_y,
+                self.height - offset - self.padding_y,
+                bottom
+            )
+
+        if left:
+            offset = left / 2
+            self._draw_border(
+                offset + self.padding_x,
+                offset + self.padding_y,
+                offset + self.padding_x,
+                self.height - offset - self.padding_y,
+                left
+            )
+
+    def _draw_border(self, x1, y1, x2, y2, line_width):
         self.ctx.move_to(x1, y1)
         self.ctx.line_to(x2, y2)
-        self.ctx.set_line_width(linewidth)
+        self.ctx.set_line_width(line_width)
         self.ctx.stroke()
