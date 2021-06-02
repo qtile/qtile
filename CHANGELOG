@@ -31,6 +31,7 @@ Qtile 0.x.x, released xxxx-xx-xx:
         - A Wayland backend has been added which can be used by calling `qtile start -b wayland` directly in your TTY.
           It requires the latest releases of wlroots, python-xkbcommon, pywayland and pywlroots. It is expected to be
           unstable so please let us know if you find any bugs!
+        - The 'focus` argument to `Click` and `Drag` objects in your config are no longer necessary (and are ignored).
 
 Qtile 0.17.0, released 2021-02-13:
     !!! Python version breakage !!!

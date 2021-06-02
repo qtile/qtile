@@ -143,8 +143,6 @@ class Qtile(CommandObject):
                 self.groups.append(sp)
                 self.groups_map[sp.name] = sp
 
-        self.config.mouse += (Click([], "Button1", focus="after"),)
-
     def dump_state(self, buf) -> None:
         try:
             pickle.dump(QtileState(self), buf, protocol=0)
@@ -667,9 +665,6 @@ class Qtile(CommandObject):
             if not m.modmask == modmask:
                 continue
 
-            if m.focus == "before":
-                self.core.focus_by_click(event)
-
             if isinstance(m, Click):
                 for i in m.commands:
                     if i.check(self):
@@ -693,9 +688,6 @@ class Qtile(CommandObject):
                     val = (0, 0)
                 self._drag = (x, y, val[0], val[1], m.commands)
                 self.core.grab_pointer()
-
-            if m.focus == "after":
-                self.core.focus_by_click(event)
 
     def process_button_release(self, button_code: int, modmask: int) -> None:
         for m in self.mouse_map.get(button_code, []):

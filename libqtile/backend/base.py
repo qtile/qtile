@@ -82,10 +82,6 @@ class Core(metaclass=ABCMeta):
     def ungrab_pointer(self) -> None:
         """Release grabbed pointer events"""
 
-    @abstractmethod
-    def focus_by_click(self, event: typing.Any) -> None:
-        """Focus a window by clicking on it."""
-
     def scan(self) -> None:
         """Scan for clients if required."""
 

@@ -284,6 +284,7 @@ class Core(base.Core, wlrq.HasListeners):
         state = self.seat.keyboard.modifier
         button = wlrq.buttons_inv[event.button]
         if event.button_state == input_device.ButtonState.PRESSED:
+            self._focus_by_click()
             self.qtile.process_button_click(button, state, self.cursor.x, self.cursor.y, event)
 
             if self._hovered_internal:
@@ -492,7 +493,7 @@ class Core(base.Core, wlrq.HasListeners):
             win.surface.set_activated(True)
         self.seat.keyboard_notify_enter(surface, self.seat.keyboard)
 
-    def focus_by_click(self, event) -> None:
+    def _focus_by_click(self) -> None:
         assert self.qtile is not None
         found = self._under_pointer()
 
