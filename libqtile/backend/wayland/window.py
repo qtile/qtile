@@ -191,6 +191,7 @@ class Window(base.Window, HasListeners):
     def _on_set_title(self, _listener, _data):
         logger.debug("Signal: window set_title")
         self.name = self.surface.toplevel.title
+        hook.fire('client_name_updated', self)
 
     def _on_set_app_id(self, _listener, _data):
         logger.debug("Signal: window set_app_id")
