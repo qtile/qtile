@@ -17,10 +17,15 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
+
 import copy
 import math
 from typing import Any, List, Tuple
 
+from cairocffi import Context
+
+from libqtile.backend.base import Drawer
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
@@ -39,26 +44,26 @@ class _Decoration(base.PaddingMixin):
         base.PaddingMixin.__init__(self, **config)
         self.add_defaults(_Decoration.defaults)
 
-    def _configure(self, parent):
+    def _configure(self, parent: base._Widget) -> None:
         self.parent = parent
 
-    def clone(self):
+    def clone(self) -> _Decoration:
         return copy.copy(self)
 
     @property
-    def height(self):
+    def height(self) -> int:
         return self.parent.height
 
     @property
-    def width(self):
+    def width(self) -> int:
         return self.parent.width
 
     @property
-    def drawer(self):
+    def drawer(self) -> Drawer:
         return self.parent.drawer
 
     @property
-    def ctx(self):
+    def ctx(self) -> Context:
         return self.parent.drawer.ctx
 
 
@@ -83,7 +88,7 @@ class RectDecoration(_Decoration):
         _Decoration.__init__(self, **config)
         self.add_defaults(RectDecoration.defaults)
 
-    def draw(self):
+    def draw(self) -> None:
         box_height = self.height - 2 * self.padding_y
         box_width = self.width - 2 * self.padding_x
 
@@ -183,7 +188,7 @@ class BorderDecoration(_Decoration):
 
         self.borders = [n, e, s, w]
 
-    def draw(self):
+    def draw(self) -> None:
         top, right, bottom, left = self.borders
 
         self.drawer.set_source_rgb(self.colour)
@@ -228,7 +233,7 @@ class BorderDecoration(_Decoration):
                 left
             )
 
-    def _draw_border(self, x1, y1, x2, y2, line_width):
+    def _draw_border(self, x1: float, y1: float, x2: float, y2: float, line_width: float) -> None:
         self.ctx.move_to(x1, y1)
         self.ctx.line_to(x2, y2)
         self.ctx.set_line_width(line_width)
