@@ -159,6 +159,15 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
     def get_wm_class(self) -> Optional[List]:
         """Return the class(es) of the window"""
+        return None
+
+    def get_wm_type(self) -> Optional[str]:
+        """Return the type of the window"""
+        return None
+
+    def get_wm_role(self) -> Optional[str]:
+        """Return the role of the window"""
+        return None
 
     @property
     def can_steal_focus(self):

@@ -572,6 +572,12 @@ class _Window:
     def get_wm_class(self):
         return self.window.get_wm_class()
 
+    def get_wm_type(self):
+        return self.window.get_wm_type()
+
+    def get_wm_role(self):
+        return self.window.get_wm_window_role()
+
     def is_transient_for(self):
         """What window is this window a transient windor for?"""
         return self.window.get_wm_transient_for()

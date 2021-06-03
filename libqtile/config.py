@@ -36,7 +36,6 @@ import sys
 import warnings
 from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
-import libqtile
 from libqtile import configurable, hook, utils
 from libqtile.backend import base
 from libqtile.bar import BarType
@@ -613,12 +612,10 @@ class Match:
         if func is not None:
             self._rules["func"] = func
 
-        if libqtile.qtile is None or libqtile.qtile.core.name == "x11":  # X11-only rules
-            # qtile is None when the default config is loaded during startup
-            if role is not None:
-                self._rules["role"] = role
-            if wm_type is not None:
-                self._rules["wm_type"] = wm_type
+        if role is not None:
+            self._rules["role"] = role
+        if wm_type is not None:
+            self._rules["wm_type"] = wm_type
 
     @staticmethod
     def _get_property_predicate(name, value):
@@ -650,13 +647,13 @@ class Match:
                 else:
                     value = wm_class
             elif property_name == 'role':
-                value = client.window.get_wm_window_role()
+                value = client.get_wm_role()
             elif property_name == 'func':
                 return rule_value(client)
             elif property_name == 'net_wm_pid':
                 value = client.get_pid()
             else:
-                value = client.window.get_wm_type()
+                value = client.get_wm_type()
 
             # Some of the window.get_...() functions can return None
             if value is None:
