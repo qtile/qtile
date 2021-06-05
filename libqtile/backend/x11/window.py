@@ -1163,8 +1163,6 @@ class Window(_Window, base.Window):
         EventMask.PropertyChange | \
         EventMask.EnterWindow | \
         EventMask.FocusChange
-    # Set when this object is being retired.
-    defunct = False
 
     def __init__(self, window, qtile):
         _Window.__init__(self, window, qtile)

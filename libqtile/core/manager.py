@@ -550,15 +550,10 @@ class Qtile(CommandObject):
         # mypy can't work out that the new tuple is also length 4 (see mypy #7509)
         self.reserve_space(tuple(-i for i in reserved_space), screen)  # type: ignore
 
-    def map_window(self, win: base.WindowType) -> None:
-        self.manage(win)
-        if not win.group or not win.group.screen:
-            return
-        win.unhide()
-
     def manage(self, win: base.WindowType) -> None:
         if isinstance(win, base.Internal):
             self.windows_map[win.wid] = win
+            return
 
         if win.wid in self.windows_map:
             return
@@ -570,9 +565,10 @@ class Qtile(CommandObject):
         if win.defunct:
             return
         self.windows_map[win.wid] = win
-        # Window may have been bound to a group in the hook.
-        if not win.group and self.current_screen and self.current_screen.group:
-            self.current_screen.group.add(win, focus=win.can_steal_focus)
+        if self.current_screen and not isinstance(win, base.Static):
+            # Window may have been bound to a group in the hook.
+            if not win.group and self.current_screen.group:
+                self.current_screen.group.add(win, focus=win.can_steal_focus)
         self.core.update_client_list(self.windows_map)
         hook.fire("client_managed", win)
 
@@ -580,10 +576,12 @@ class Qtile(CommandObject):
         c = self.windows_map.get(wid)
         if c:
             hook.fire("client_killed", c)
-            if isinstance(c, base.Static) and c.reserved_space:
-                self.free_reserved_space(c.reserved_space, c.screen)
-            if c.group:
-                c.group.remove(c)
+            if isinstance(c, base.Static):
+                if c.reserved_space:
+                    self.free_reserved_space(c.reserved_space, c.screen)
+            elif isinstance(c, base.Window):
+                if c.group:
+                    c.group.remove(c)
             del self.windows_map[wid]
             self.core.update_client_list(self.windows_map)
 
@@ -1204,7 +1202,7 @@ class Qtile(CommandObject):
 
     def find_window(self, wid: int) -> None:
         window = self.windows_map.get(wid)
-        if window and window.group:
+        if window and isinstance(window, base.Window) and window.group:
             if not window.group.screen:
                 self.current_screen.set_group(window.group)
             window.group.focus(window, False)
@@ -1235,6 +1233,7 @@ class Qtile(CommandObject):
         """Focus next window with urgent hint"""
         try:
             nxt = [w for w in self.windows_map.values() if w.urgent][0]
+            assert isinstance(nxt, base.Window)
             if nxt.group:
                 nxt.group.cmd_toscreen()
                 nxt.group.focus(nxt)

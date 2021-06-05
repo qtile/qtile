@@ -417,7 +417,7 @@ class Core(base.Core):
         This is needed for third party tasklists and drag and drop of tabs in
         chrome
         """
-        wids = [wid for wid, c in windows_map.items() if c.group]
+        wids = [wid for wid, c in windows_map.items() if not c.hidden]  # type: ignore
         self._root.set_property("_NET_CLIENT_LIST", wids)
         # TODO: check stack order
         self._root.set_property("_NET_CLIENT_LIST_STACKING", wids)
@@ -666,12 +666,14 @@ class Core(base.Core):
 
         win = self.qtile.windows_map.get(xwin.wid)
         if win:
-            if win.group is self.qtile.current_group:
+            if isinstance(win, window.Window) and win.group is self.qtile.current_group:
                 win.unhide()
             return
 
         if internal:
             win = window.Internal(xwin, self.qtile)
+            self.qtile.manage(win)
+            win.unhide()
         else:
             win = window.Window(xwin, self.qtile)
 
@@ -680,7 +682,10 @@ class Core(base.Core):
                 win.cmd_static(self.qtile.current_screen.index)
                 return
 
-        self.qtile.map_window(win)
+            self.qtile.manage(win)
+            if not win.group or not win.group.screen:
+                return
+            win.unhide()
 
     def handle_DestroyNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
