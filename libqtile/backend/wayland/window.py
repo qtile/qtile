@@ -523,7 +523,7 @@ class Window(base.Window, HasListeners):
         self.kill()
 
 
-class Internal(Window, base.Internal):
+class Internal(base.Internal, Window):
     """
     Internal windows are simply textures controlled by the compositor.
     """
@@ -607,7 +607,7 @@ class Internal(Window, base.Internal):
         self.damage()
 
 
-class Static(Window, base.Static):
+class Static(base.Static, Window):
     """
     Static windows represent both regular windows made static by the user and layer
     surfaces created as part of the wlr layer shell protocol.

@@ -204,6 +204,10 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
 
 class Window(_Window, metaclass=ABCMeta):
+    """A regular Window belonging to a client."""
+    def __repr__(self):
+        return "Window(name=%r, wid=%i)" % (self.name, self.wid)
+
     @property
     def floating(self) -> bool:
         """Whether this window is floating."""
@@ -368,6 +372,10 @@ class Window(_Window, metaclass=ABCMeta):
 
 
 class Internal(_Window, metaclass=ABCMeta):
+    """An Internal window belonging to Qtile."""
+    def __repr__(self):
+        return "Internal(wid=%s)" % self.wid
+
     @abstractmethod
     def create_drawer(self, width: int, height: int) -> Drawer:
         """Create a Drawer that draws to this window."""
@@ -392,8 +400,11 @@ class Internal(_Window, metaclass=ABCMeta):
 
 
 class Static(_Window, metaclass=ABCMeta):
+    """A Window not bound to a single Group."""
     screen: config.Screen
-    pass
+
+    def __repr__(self):
+        return "Static(name=%r, wid=%s)" % (self.name, self.wid)
 
 
 WindowType = typing.Union[Window, Internal, Static]
