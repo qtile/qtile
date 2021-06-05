@@ -33,7 +33,7 @@ import tempfile
 from typing import TYPE_CHECKING
 
 import libqtile
-from libqtile import bar, confreader, hook, ipc, utils
+from libqtile import bar, hook, ipc, utils
 from libqtile.backend import base
 from libqtile.command import interface
 from libqtile.command.base import (
@@ -106,18 +106,13 @@ class Qtile(CommandObject):
         self._stopped_event: Optional[asyncio.Event] = None
 
         self.server = IPCCommandServer(self)
-        self.load_config()
 
     def load_config(self) -> None:
         try:
             self.config.load()
             self.config.validate()
         except Exception as e:
-            logger.exception('Error while reading config file (%s)', e)
-            self.config = confreader.Config()
-            from libqtile.widget import TextBox
-            widgets = self.config.screens[0].bottom.widgets  # type: ignore
-            widgets.insert(0, TextBox('Config Err!'))
+            send_notification("Configuration error", str(e))
 
         if hasattr(self.core, "wmname"):
             self.core.wmname = getattr(self.config, "wmname", "qtile")  # type: ignore
@@ -228,6 +223,7 @@ class Qtile(CommandObject):
                 self._prepare_socket_path(self.socket_path),
                 self.server.call,
             ):
+                self.load_config()
                 self._configure()
                 await self._stopped_event.wait()
         finally:
