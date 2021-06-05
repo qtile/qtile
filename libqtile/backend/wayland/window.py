@@ -610,7 +610,6 @@ class Internal(base.Internal, Window):
     ):
         self.core = core
         self.qtile = qtile
-        self._group: Optional[_Group] = None
         self._mapped: bool = False
         self._wid: int = self.core.new_wid()
         self.x: int = x
@@ -717,7 +716,6 @@ class Static(base.Static, Window):
         base.Static.__init__(self)
         self.core = core
         self.qtile = qtile
-        self._group: Optional[_Group] = None
         self.surface = surface
         self.subsurfaces: List[SubSurface] = []
         self._wid = wid
@@ -729,9 +727,7 @@ class Static(base.Static, Window):
         self.opacity: float = 1.0
         self._outputs: List[Output] = []
         self._float_state = FloatStates.FLOATING
-        self.defunct = True
         self.is_layer = False
-        self.screen = qtile.current_screen
 
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)

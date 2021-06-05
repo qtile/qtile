@@ -28,6 +28,7 @@
 import collections
 
 import libqtile.hook
+from libqtile.backend.base import Static
 from libqtile.command import lazy
 from libqtile.config import Group, Key, Match, Rule
 from libqtile.log_utils import logger
@@ -153,7 +154,7 @@ class DGroups:
             self.timeout.pop(client).cancel()
 
         # ignore static windows
-        if client.defunct:
+        if isinstance(client, Static):
             return
 
         # ignore windows whose groups is already set (e.g. from another hook or
@@ -233,6 +234,10 @@ class DGroups:
             libqtile.hook.fire("changegroup")
 
     def _del(self, client):
+        # ignore static windows
+        if isinstance(client, Static):
+            return
+
         group = client.group
 
         def delete_client():

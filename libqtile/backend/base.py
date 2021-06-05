@@ -133,12 +133,9 @@ class _Window(CommandObject, metaclass=ABCMeta):
         self.borderwidth: int = 0
         self.name: str = "<no name>"
         self.reserved_space: Optional[Tuple[int, int, int, int]] = None
+        # Window.cmd_static sets this in case it is hooked to client_new to stop the
+        # Window object from being managed, now that a Static is being used instead
         self.defunct: bool = False
-
-    @property
-    @abstractmethod
-    def group(self) -> Optional[_Group]:
-        """The group to which this window belongs."""
 
     @property
     @abstractmethod
@@ -217,6 +214,11 @@ class Window(_Window, metaclass=ABCMeta):
 
     def __repr__(self):
         return "Window(name=%r, wid=%i)" % (self.name, self.wid)
+
+    @property
+    @abstractmethod
+    def group(self) -> Optional[_Group]:
+        """The group to which this window belongs."""
 
     @property
     def floating(self) -> bool:
