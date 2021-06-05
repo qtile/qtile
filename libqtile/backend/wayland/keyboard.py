@@ -30,6 +30,8 @@ from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
+    from typing import Dict, Optional, Tuple
+
     from wlroots.wlr_types import InputDevice
     from wlroots.wlr_types.keyboard import KeyboardKeyEvent
 
@@ -51,9 +53,10 @@ class Keyboard(HasListeners):
         self.keyboard = device.keyboard
         self.grabbed_keys = core.grabbed_keys
 
-        xkb_context = xkb.Context()
-        self.keyboard.set_keymap(xkb_context.keymap_new_from_names())
         self.keyboard.set_repeat_info(25, 600)
+        self.xkb_context = xkb.Context()
+        self._keymaps: Dict[Tuple[Optional[str], Optional[str]], xkb.Keymap] = {}
+        self.set_keymap(None, None)
 
         self.add_listener(self.keyboard.modifiers_event, self._on_modifier)
         self.add_listener(self.keyboard.key_event, self._on_key)
@@ -64,6 +67,19 @@ class Keyboard(HasListeners):
         self.core.keyboards.remove(self)
         if self.core.keyboards and self.core.seat.keyboard.destroyed:
             self.seat.set_keyboard(self.core.keyboards[-1].device)
+
+    def set_keymap(self, layout: Optional[str], options: Optional[str]) -> None:
+        """
+        Set the keymap for this keyboard. `layout` and `options` correspond to
+        XKB_DEFAULT_LAYOUT and XKB_DEFAULT_OPTIONS and if not specified are taken from
+        the environment.
+        """
+        if (layout, options) in self._keymaps:
+            keymap = self._keymaps[(layout, options)]
+        else:
+            keymap = self.xkb_context.keymap_new_from_names(layout=layout, options=options)
+            self._keymaps[(layout, options)] = keymap
+        self.keyboard.set_keymap(keymap)
 
     def _on_destroy(self, _listener, _data):
         logger.debug("Signal: keyboard destroy")
