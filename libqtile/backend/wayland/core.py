@@ -637,3 +637,12 @@ class Core(base.Core, wlrq.HasListeners):
 
         assert len(matched) == 1
         return matched[0]
+
+    def set_keymap(self, layout: Optional[str], options: Optional[str]) -> None:
+        """
+        Set the keymap for the current keyboard.
+        """
+        if self.keyboards:
+            self.keyboards[-1].set_keymap(layout, options)
+        else:
+            logger.warning("Could not set keymap: no keyboards set up.")
