@@ -1019,9 +1019,6 @@ class Internal(_Window, base.Internal):
         _Window.__init__(self, win, qtile)
         win.set_property("QTILE_INTERNAL", 1)
 
-    def __repr__(self):
-        return "Internal(%r, %s)" % (self.name, self.window.wid)
-
     def create_drawer(self, width: int, height: int) -> base.Drawer:
         """Create a Drawer that draws to this window."""
         return Drawer(self.qtile, self, width, height)
@@ -1145,9 +1142,6 @@ class Static(_Window, base.Static):
         name = self.qtile.core.conn.atoms.get_name(e.atom)
         if name == "_NET_WM_STRUT_PARTIAL":
             self.update_strut()
-
-    def __repr__(self):
-        return "Static(%r)" % self.name
 
 
 class Window(_Window, base.Window):
@@ -1645,9 +1639,6 @@ class Window(_Window, base.Window):
                 return utils.lget(self.group.layouts, sel)
         elif name == "screen":
             return self.group.screen
-
-    def __repr__(self):
-        return "Window(%r)" % self.name
 
     def cmd_kill(self):
         """Kill this window
