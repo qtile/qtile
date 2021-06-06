@@ -352,12 +352,6 @@ background. Usually this is done by including the following line at the start of
 The background can be a single colour or a list of colours which will result in a linear gradient
 from top to bottom.
 
-.. note:
-
-    Opacity is currently set at the window level and applies to the whole bar. As a result,
-    setting a completely transparent bar will result in the contents of the widget (text etc.)
-    also being transparent.
-
 Updating the widget
 ===================
 

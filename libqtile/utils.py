@@ -28,7 +28,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from random import randint
 from shutil import which
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 
 try:
     from dbus_next import Message, Variant  # type: ignore
@@ -108,6 +108,43 @@ def rgb(x):
 def hex(x):
     r, g, b, _ = rgb(x)
     return '#%02x%02x%02x' % (int(r * 255), int(g * 255), int(b * 255))
+
+
+def has_transparency(colour: Union[ColorType, List[ColorType]]):
+    """
+    Returns True if the colour is not fully opaque.
+
+    Where a list of colours is passed, returns True if any
+    colour is not fully opaque.
+    """
+    def has_alpha(col):
+        return rgb(col)[3] < 1
+
+    if isinstance(colour, (str, tuple)):
+        return has_alpha(colour)
+
+    elif isinstance(colour, list):
+        print([c for c in colour])
+        return any([has_transparency(c) for c in colour])
+
+    return False
+
+
+def remove_transparency(colour: Union[ColorType, List[ColorType]]):
+    """
+    Returns a tuple of (r, g, b) with no alpha.
+    """
+    def remove_alpha(col):
+        stripped = tuple(x * 255.0 for x in rgb(col)[:3])
+        return stripped
+
+    if isinstance(colour, (str, tuple)):
+        return remove_alpha(colour)
+
+    elif isinstance(colour, list):
+        return [remove_transparency(c) for c in colour]
+
+    return (0, 0, 0)
 
 
 def scrub_to_utf8(text):

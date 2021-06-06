@@ -216,7 +216,7 @@ class Bar(Gap, configurable.Configurable):
             # Whereas we won't have a window if we're startup up for the first time or
             # the window has been killed by us no longer using the bar's screen
             self.window = self.qtile.core.create_internal(
-                self.x, self.y, self.width, self.height,
+                self.x, self.y, self.width, self.height
             )
             self.window.opacity = self.opacity
             self.window.unhide()

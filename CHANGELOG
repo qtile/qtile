@@ -11,6 +11,7 @@ Qtile 0.x.x, released xxxx-xx-xx:
     !!! deprecation warning !!!
         - 'main' config functions, deprecated in 0.16.1, will no longer be executed.
     * features
+        - added transparency in x11 and wayland backends
         - added measure_mem and measure_swap attributes to memory widget to allow user to choose measurement units.
         - memory widget can now be displayed with decimal values
         - new "qtile migrate" command, which will attempt to upgrade previous
