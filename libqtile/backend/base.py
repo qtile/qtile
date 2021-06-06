@@ -558,7 +558,6 @@ class Drawer:
         self.set_source_rgb(colour)
         self.ctx.rectangle(0, 0, self.width, self.height)
         self.ctx.fill()
-        self.ctx.stroke()
 
     def textlayout(
         self, text, colour, font_family, font_size, font_shadow, markup=False, **kw

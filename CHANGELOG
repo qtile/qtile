@@ -13,6 +13,7 @@ Qtile 0.x.x, released xxxx-xx-xx:
     !!! Notice for packagers - new dependencies !!!
         - Tests now require the 'dbus-next' python module plus 'dbus-launch' and 'notify-send' applications
     * features
+        - added transparency in x11 and wayland backends
         - added measure_mem and measure_swap attributes to memory widget to allow user to choose measurement units.
         - memory widget can now be displayed with decimal values
         - new "qtile migrate" command, which will attempt to upgrade previous

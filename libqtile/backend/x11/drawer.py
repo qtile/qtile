@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import cairocffi
 import xcffib.xproto
 
+from libqtile import utils
 from libqtile.backend import base
 
 if TYPE_CHECKING:
@@ -88,7 +89,7 @@ class Drawer(base.Drawer):
         surface = cairocffi.XCBSurface(
             self.qtile.core.conn.conn,
             self._pixmap,
-            self._find_root_visual(),
+            self.qtile.core.conn.default_screen.default_visual,
             self.width,
             self.height,
         )
@@ -102,7 +103,7 @@ class Drawer(base.Drawer):
     def _create_pixmap(self):
         pixmap = self.qtile.core.conn.conn.generate_id()
         self.qtile.core.conn.conn.core.CreatePixmap(
-            self.qtile.core.conn.default_screen.root_depth,
+            self.qtile.core.conn.default_screen.default_depth,
             pixmap,
             self._win.wid,
             self.width,
@@ -171,3 +172,28 @@ class Drawer(base.Drawer):
             for v in i.visuals:
                 if v.visual_id == self.qtile.core.conn.default_screen.root_visual:
                     return v
+
+    def clear(self, colour):
+        # If the drawer is 32 bit then we need to do some extra work to clear it
+        # before drawing semi-opaque content
+        if utils.has_transparency(colour) and self.qtile.core.conn.default_screen.default_depth == 32:
+
+            # RecordingSurface won't write clear operation to surface so we
+            # need to clear that surface directly.
+            if getattr(self, "_xcb_surface", None) is not None:
+                ctx = cairocffi.Context(self._xcb_surface)
+                ctx.save()
+                ctx.set_operator(cairocffi.OPERATOR_CLEAR)
+                ctx.paint()
+                ctx.restore()
+
+        self.set_source_rgb(colour)
+        self.ctx.rectangle(0, 0, self.width, self.height)
+        self.ctx.fill()
+
+    def set_source_rgb(self, colour):
+        # Remove transparency from non-32 bit windows
+        if utils.has_transparency(colour) and self.qtile.core.conn.default_screen.default_depth != 32:
+            colour = utils.remove_transparency(colour)
+
+        base.Drawer.set_source_rgb(self, colour)

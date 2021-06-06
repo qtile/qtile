@@ -63,6 +63,35 @@ def test_rgb_from_base10_tuple_with_alpha():
     assert utils.rgb([255, 255, 0, 0.5]) == (1, 1, 0, 0.5)
 
 
+def test_has_transparency():
+    colours = [
+        ("#00000000", True),
+        ("#000000ff", False),
+        ("#ff00ff.5", True),
+        ((255, 255, 255, 0.5), True),
+        ((255, 255, 255), False),
+        (["#000000", "#ffffff"], False),
+        (["#000000", "#ffffffaa"], True)
+    ]
+
+    for colour, expected in colours:
+        assert utils.has_transparency(colour) == expected
+
+
+def test_remove_transparency():
+    colours = [
+        ("#00000000", (0.0, 0.0, 0.0)),
+        ("#ffffffff", (255.0, 255.0, 255.0)),
+        ((255, 255, 255, 0.5), (255.0, 255.0, 255.0)),
+        ((255, 255, 255), (255.0, 255.0, 255.0)),
+        (["#000000", "#ffffff"], [(0.0, 0.0, 0.0), (255.0, 255.0, 255.0)]),
+        (["#000000", "#ffffffaa"], [(0.0, 0.0, 0.0), (255.0, 255.0, 255.0)])
+    ]
+
+    for colour, expected in colours:
+        assert utils.remove_transparency(colour) == expected
+
+
 def test_scrub_to_utf8():
     assert utils.scrub_to_utf8(b"foo") == "foo"
 

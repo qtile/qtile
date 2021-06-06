@@ -308,6 +308,35 @@ class Screen(_Wrapper):
         self.default_colormap = Colormap(conn, screen.default_colormap)
         self.root = window.XWindow(conn, self.root)
 
+        # Try to default to 32 bit depth but fall back to root depth
+        for d in [32, self.root_depth]:
+            visual = self.get_visual_for_depth(self, d)
+            if visual:
+                self.default_depth = d
+                self.default_visual = visual
+                break
+
+        if self.default_depth != 32:
+            logger.info(f"32 bit colour depth not available. Using {self.default_depth}.")
+
+    @staticmethod
+    def get_visual_for_depth(screen, depth):
+        """
+        Returns the visual object of the screen @ some depth
+
+        For an ARGB visual -> depth=32
+        For a RGB visual   -> depth=24
+        """
+        allowed = screen.allowed_depths
+        if depth not in [x.depth for x in allowed]:
+            logger.warning(f"Unsupported colour depth: {depth}.")
+            return
+
+        for i in allowed:
+            if i.depth == depth:
+                if i.visuals:
+                    return i.visuals[0]
+
 
 class PseudoScreen:
     """
@@ -460,6 +489,24 @@ class Connection:
         self.modmap = None
         self.refresh_modmap()
 
+        self._cmap = None
+
+    @property
+    def colormap(self):
+        if self._cmap is not None:
+            return self._cmap
+
+        self._cmap = self.conn.generate_id()
+        self.conn.core.CreateColormap(
+            xcffib.xproto.ColormapAlloc._None,
+            self._cmap,
+            self.default_screen.root.wid,
+            self.default_screen.default_visual.visual_id,
+            is_checked=True,
+        ).check()
+
+        return self._cmap
+
     @property
     def pseudoscreens(self):
         pseudoscreens = []
@@ -539,18 +586,24 @@ class Connection:
 
     def create_window(self, x, y, width, height):
         wid = self.conn.generate_id()
+
+        value_mask = CW.BackPixmap | CW.BorderPixel | CW.EventMask | CW.Colormap
+        values = [
+            xcffib.xproto.BackPixmap._None,
+            0,
+            EventMask.StructureNotify | EventMask.Exposure,
+            self.colormap,
+        ]
+
         self.conn.core.CreateWindow(
-            self.default_screen.root_depth,
+            self.default_screen.default_depth,
             wid,
             self.default_screen.root.wid,
             x, y, width, height, 0,
             WindowClass.InputOutput,
-            self.default_screen.root_visual,
-            CW.BackPixel | CW.EventMask,
-            [
-                self.default_screen.black_pixel,
-                EventMask.StructureNotify | EventMask.Exposure
-            ]
+            self.default_screen.default_visual.visual_id,
+            value_mask,
+            values
         )
         return window.XWindow(self, wid)
 
@@ -641,6 +694,7 @@ class Painter:
                 if visual.visual_id == self.default_screen.root_visual:
                     root_visual = visual
                     break
+
         surface = cairocffi.xcb.XCBSurface(
             self.conn, root_pixmap, root_visual,
             self.default_screen.width_in_pixels,
