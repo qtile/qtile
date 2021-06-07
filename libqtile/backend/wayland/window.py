@@ -522,6 +522,45 @@ class Window(base.Window, HasListeners):
     def cmd_kill(self) -> None:
         self.kill()
 
+    def cmd_static(
+        self,
+        screen: Optional[int] = None,
+        x: Optional[int] = None,
+        y: Optional[int] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+    ) -> None:
+        self.defunct = True
+        if screen is None:
+            scr = self.qtile.current_screen
+        else:
+            scr = self.qtile.screens[screen]
+        if self.group:
+            self.group.remove(self)
+        if x is None:
+            x = self.x + self.borderwidth
+        if y is None:
+            y = self.y + self.borderwidth
+        if width is None:
+            width = self.width
+        if height is None:
+            height = self.height
+
+        self.finalize_listeners()
+        win = Static(self.core, self.qtile, self.surface, self.wid)
+        win._mapped = True
+        win.subsurfaces = self.subsurfaces
+        win.screen = scr
+        win.place(x, y, width, height, 0, None)
+        self.qtile.windows_map[self.wid] = win
+
+        if self.mapped:
+            z = self.core.mapped_windows.index(self)
+            self.core.mapped_windows[z] = win
+            self.core.stack_windows()
+
+        hook.fire("client_managed", win)
+
 
 class Internal(base.Internal, Window):
     """
@@ -627,6 +666,8 @@ class Static(base.Static, Window):
         self._mapped: bool = False
         self.x = 0
         self.y = 0
+        self._width = 0
+        self._height = 0
         self.borderwidth: int = 0
         self.bordercolor: ffi.CData = _rgb((0, 0, 0, 1))
         self.opacity: float = 1.0
@@ -731,6 +772,7 @@ class Static(base.Static, Window):
             self.core.mapped_windows.remove(self)
             self.core.mapped_windows.append(self)
             self.core.stack_windows()
+            self.damage()
 
 
 WindowType = typing.Union[Window, Internal, Static]

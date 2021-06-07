@@ -504,8 +504,8 @@ class Core(base.Core, wlrq.HasListeners):
                 if self.qtile.config.bring_front_click != "floating_only" or not win.floating:
                     win.cmd_bring_to_front()
 
-            if not isinstance(win, window.Internal):
-                if isinstance(win, window.Window):
+            if not isinstance(win, base.Internal):
+                if not isinstance(win, base.Static):
                     if win.group and win.group.screen is not self.qtile.current_screen:
                         self.qtile.focus_screen(win.group.screen.index, warp=False)
                     self.qtile.current_group.focus(win, False)

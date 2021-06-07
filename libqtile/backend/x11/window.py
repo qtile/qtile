@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import array
 import contextlib
 import inspect
 import traceback
 from itertools import islice
+from typing import TYPE_CHECKING
 
 import xcffib
 import xcffib.xproto
@@ -15,6 +18,9 @@ from libqtile.backend.x11 import xcbq
 from libqtile.backend.x11.drawer import Drawer
 from libqtile.command.base import CommandError, ItemT
 from libqtile.log_utils import logger
+
+if TYPE_CHECKING:
+    from typing import Optional
 
 # ICCM Constants
 NoValue = 0x0000
@@ -1333,7 +1339,14 @@ class Window(_Window, base.Window):
     def toggle_minimize(self):
         self.minimized = not self.minimized
 
-    def cmd_static(self, screen=None, x=None, y=None, width=None, height=None):
+    def cmd_static(
+        self,
+        screen: Optional[int] = None,
+        x: Optional[int] = None,
+        y: Optional[int] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+    ) -> None:
         """Makes this window a static window, attached to a Screen
 
         If any of the arguments are left unspecified, the values given by the
