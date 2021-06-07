@@ -378,6 +378,21 @@ class Window(_Window, metaclass=ABCMeta):
     def cmd_kill(self) -> None:
         """Kill the window. Try to be polite."""
 
+    @abstractmethod
+    def cmd_static(
+        self,
+        screen: Optional[int] = None,
+        x: Optional[int] = None,
+        y: Optional[int] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+    ) -> None:
+        """Makes this window a static window, attached to a Screen.
+
+        Values left unspecified are taken from the existing window state.
+        """
+        self.defunct = True
+
 
 class Internal(_Window, metaclass=ABCMeta):
     """An Internal window belonging to Qtile."""
@@ -411,7 +426,7 @@ class Internal(_Window, metaclass=ABCMeta):
 
 
 class Static(_Window, metaclass=ABCMeta):
-    """A Window not bound to a single Group."""
+    """A window bound to a screen rather than a group."""
     screen: config.Screen
 
     def __repr__(self):

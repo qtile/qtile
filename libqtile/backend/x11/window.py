@@ -1370,7 +1370,14 @@ class Window(_Window, base.Window):
     def toggle_minimize(self):
         self.minimized = not self.minimized
 
-    def cmd_static(self, screen=None, x=None, y=None, width=None, height=None):
+    def cmd_static(
+        self,
+        screen: Optional[int] = None,
+        x: Optional[int] = None,
+        y: Optional[int] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+    ) -> None:
         """Makes this window a static window, attached to a Screen
 
         If any of the arguments are left unspecified, the values given by the
