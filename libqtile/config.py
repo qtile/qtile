@@ -103,7 +103,6 @@ class KeyChord:
 
 class Mouse:
     def __init__(self, modifiers: List[str], button: str, *commands, **kwargs):
-        self.focus = kwargs.pop("focus", "before")
         self.modifiers = modifiers
         self.button = button
         self.commands = commands
@@ -117,10 +116,7 @@ class Drag(Mouse):
     """Defines binding of a mouse to some dragging action
 
     On each motion event command is executed with two extra parameters added x
-    and y offset from previous move
-
-    It focuses clicked window by default.  If you want to prevent it pass,
-    `focus=None` as an argument
+    and y offset from previous move.
     """
     def __init__(self, *args, start=False, **kwargs):
         super().__init__(*args, **kwargs)
@@ -131,11 +127,7 @@ class Drag(Mouse):
 
 
 class Click(Mouse):
-    """Defines binding of a mouse click
-
-    It focuses clicked window by default.  If you want to prevent it, pass
-    `focus=None` as an argument
-    """
+    """Defines binding of a mouse click"""
     def __repr__(self):
         return "<Click (%s, %s)>" % (self.modifiers, self.button)
 
