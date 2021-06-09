@@ -51,7 +51,7 @@ class CheckUpdates(base.ThreadPoolText):
         # format: "Distro": ("cmd", "number of lines to subtract from output")
         self.cmd_dict = {"Arch": ("pacman -Qu", 0),
                          "Arch_checkupdates": ("checkupdates", 0),
-                         "Arch_Sup": ("pacman -Sup", 1),
+                         "Arch_Sup": ("pacman -Sup", 0),
                          "Arch_paru": ("paru -Qu", 0),
                          "Arch_paru_Sup": ("paru -Sup", 0),
                          "Arch_yay": ("yay -Qu", 0),
