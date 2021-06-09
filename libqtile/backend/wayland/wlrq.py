@@ -146,7 +146,8 @@ class Painter:
                 screen.height,
                 cairocffi.cairo.cairo_image_surface_get_data(surface._pointer)
             )
-            self.core.outputs[screen.index].wallpaper = texture
+            outputs = [output for output in self.core.outputs if output.wlr_output.enabled]
+            outputs[screen.index].wallpaper = texture
 
 
 class HasListeners:

@@ -239,7 +239,6 @@ class Core(base.Core, wlrq.HasListeners):
 
         self.output_manager.set_configuration(config)
         self.outputs.sort(key=lambda o: (o.x, o.y))
-        hook.fire("screen_change", None)
 
     def _on_output_manager_apply(self, _listener, config: OutputConfigurationV1):
         logger.debug("Signal: output_manager apply_event")
@@ -363,6 +362,7 @@ class Core(base.Core, wlrq.HasListeners):
         else:
             config.send_failed()
         config.destroy()
+        hook.fire("screen_change", None)
 
     def _process_cursor_motion(self, time):
         self.qtile.process_button_motion(self.cursor.x, self.cursor.y)
@@ -563,7 +563,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def get_screen_info(self) -> List[Tuple[int, int, int, int]]:
         """Get the screen information"""
-        return [screen.get_geometry() for screen in self.outputs]
+        return [screen.get_geometry() for screen in self.outputs if screen.wlr_output.enabled]
 
     def grab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
         """Configure the backend to grab the key event"""
