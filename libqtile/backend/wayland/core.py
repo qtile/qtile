@@ -430,14 +430,18 @@ class Core(base.Core, wlrq.HasListeners):
 
             if self._hovered_internal:
                 self._hovered_internal.process_button_click(
-                    self.cursor.x, self.cursor.y, button
+                    self.cursor.x - self._hovered_internal.x,
+                    self.cursor.y - self._hovered_internal.y,
+                    button,
                 )
         else:
             self.qtile.process_button_release(button, self.seat.keyboard.modifier)
 
             if self._hovered_internal:
                 self._hovered_internal.process_button_release(
-                    self.cursor.x, self.cursor.y, button
+                    self.cursor.x - self._hovered_internal.x,
+                    self.cursor.y - self._hovered_internal.y,
+                    button,
                 )
 
     def _add_new_pointer(self, device: input_device.InputDevice):
