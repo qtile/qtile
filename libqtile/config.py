@@ -346,13 +346,16 @@ class Screen(CommandObject):
             # g2 (new_group) <-> s2 to
             # g1 <-> s2
             # g2 <-> s1
-            g1 = self.group
+            g1 = getattr(self, "group", None)
             s1 = self
             g2 = new_group
             s2 = new_group.screen
 
-            s2.group = g1
-            g1._set_screen(s2)
+            if g1 is None:
+                del s2.group
+            else:
+                s2.group = g1
+                g1._set_screen(s2)
             s1.group = g2
             g2._set_screen(s1)
         else:
