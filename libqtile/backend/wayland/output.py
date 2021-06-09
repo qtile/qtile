@@ -104,7 +104,7 @@ class Output(HasListeners):
                 if self.wallpaper:
                     renderer.render_texture(self.wallpaper, self.transform_matrix, 0, 0, 1)
                 else:
-                    renderer.clear([1, 0, 1, 1])
+                    renderer.clear([0, 0, 0, 1])
 
                 mapped = self.layers[LayerShellV1Layer.BACKGROUND] \
                     + self.layers[LayerShellV1Layer.BOTTOM] \
