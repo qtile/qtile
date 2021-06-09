@@ -239,7 +239,7 @@ class Window(base.Window, HasListeners):
     def damage(self) -> None:
         for output in self.core.outputs:
             if output.contains(self):
-                output.damage.add_whole()
+                output.damage()
 
     def hide(self):
         if self.mapped:
@@ -754,11 +754,11 @@ class Static(base.Static, Window):
 
     def damage(self) -> None:
         if self.is_layer:
-            self.output.damage.add_whole()
+            self.output.damage()
         else:
             for output in self.core.outputs:
                 if output.contains(self):
-                    output.damage.add_whole()
+                    output.damage()
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None, respect_hints=False):
@@ -818,23 +818,23 @@ class XdgPopupWindow(HasListeners):
 
     def _on_map(self, _listener, _data):
         logger.debug("Signal: popup map")
-        self.output.damage.add_whole()
+        self.output.damage()
 
     def _on_unmap(self, _listener, _data):
         logger.debug("Signal: popup unmap")
-        self.output.damage.add_whole()
+        self.output.damage()
 
     def _on_destroy(self, _listener, _data):
         logger.debug("Signal: popup destroy")
         self.finalize_listeners()
-        self.output.damage.add_whole()
+        self.output.damage()
 
     def _on_new_popup(self, _listener, xdg_popup: XdgPopup):
         logger.debug("Signal: popup new_popup")
         self.popups.append(XdgPopupWindow(self, xdg_popup))
 
     def _on_commit(self, _listener, _data):
-        self.output.damage.add_whole()
+        self.output.damage()
 
 
 class SubSurface(HasListeners):

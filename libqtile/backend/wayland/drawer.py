@@ -86,7 +86,7 @@ class Drawer(base.Drawer):
             dst_x=offsetx,
             dst_y=offsety,
         )
-        self._output.damage.add_whole()
+        self._output.damage()
 
         # Clear RecordingSurface of operations
         self._reset_surface()
