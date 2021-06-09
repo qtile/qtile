@@ -33,7 +33,7 @@ import tempfile
 from typing import TYPE_CHECKING
 
 import libqtile
-from libqtile import confreader, hook, ipc, utils
+from libqtile import bar, confreader, hook, ipc, utils
 from libqtile.backend import base
 from libqtile.command import interface
 from libqtile.command.base import (
@@ -261,9 +261,8 @@ class Qtile(CommandObject):
                 layout.finalize()
 
             for screen in self.screens:
-                for bar in [screen.top, screen.bottom, screen.left, screen.right]:
-                    if bar is not None:
-                        bar.finalize()
+                for gap in screen.gaps:
+                    gap.finalize()
         except:  # noqa: E722
             logger.exception('exception during finalize')
         finally:
@@ -311,6 +310,12 @@ class Qtile(CommandObject):
 
             scr._configure(self, i, x, y, w, h, grp)
             screens.append(scr)
+
+        for screen in self.screens:
+            if screen not in screens:
+                for gap in screen.gaps:
+                    if isinstance(gap, bar.Bar) and gap.window:
+                        gap.kill_window()
 
         self.screens = screens
 
@@ -524,19 +529,17 @@ class Qtile(CommandObject):
         """
         Reserve some space at the edge(s) of a screen.
         """
-        from libqtile.bar import Bar, Gap
-
         for i, pos in enumerate(["left", "right", "top", "bottom"]):
             if reserved_space[i]:
-                bar = getattr(screen, pos)
-                if isinstance(bar, Bar):
-                    bar.adjust_for_strut(reserved_space[i])
-                elif isinstance(bar, Gap):
-                    bar.size += reserved_space[i]
-                    if bar.size <= 0:
+                gap = getattr(screen, pos)
+                if isinstance(gap, bar.Bar):
+                    gap.adjust_for_strut(reserved_space[i])
+                elif isinstance(gap, bar.Gap):
+                    gap.size += reserved_space[i]
+                    if gap.size <= 0:
                         setattr(screen, pos, None)
                 else:
-                    setattr(screen, pos, Gap(reserved_space[i]))
+                    setattr(screen, pos, bar.Gap(reserved_space[i]))
         screen.resize()
 
     def free_reserved_space(
