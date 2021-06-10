@@ -399,8 +399,11 @@ class Core(base.Core, wlrq.HasListeners):
                 return
 
             focus_changed = self.seat.pointer_state.focused_surface != surface
-            self.seat.pointer_notify_enter(surface, sx, sy)
+            if surface is not None:
+                self.seat.pointer_notify_enter(surface, sx, sy)
             if focus_changed:
+                if surface is None:
+                    self.seat.pointer_clear_focus()
                 if win is not self.qtile.current_window:
                     hook.fire("client_mouse_enter", win)
 
@@ -536,7 +539,7 @@ class Core(base.Core, wlrq.HasListeners):
                     if win.x <= cx and win.y <= cy:
                         bw *= 2
                         if cx <= win.x + win.width + bw and cy <= win.y + win.height + bw:
-                            return win, win.surface.surface, 0, 0
+                            return win, None, 0, 0
         return None
 
     def stack_windows(self) -> None:
