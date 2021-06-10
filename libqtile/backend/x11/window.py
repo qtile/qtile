@@ -245,6 +245,7 @@ class XWindow:
             return self._property_string(r)
 
     def get_wm_transient_for(self):
+        """Returns the WID of the parent window"""
         r = self.get_property("WM_TRANSIENT_FOR", "WINDOW", unpack=int)
 
         if r:
@@ -580,7 +581,8 @@ class _Window:
 
     def is_transient_for(self):
         """What window is this window a transient windor for?"""
-        return self.window.get_wm_transient_for()
+        wid = self.window.get_wm_transient_for()
+        return self.qtile.windows_map.get(wid)
 
     def update_hints(self):
         """Update the local copy of the window's WM_HINTS
@@ -1175,10 +1177,9 @@ class Window(_Window, base.Window):
         if index is not None and index < len(qtile.groups):
             group = qtile.groups[index]
         elif index is None:
-            transient_for = window.get_wm_transient_for()
-            win = qtile.windows_map.get(transient_for)
-            if win is not None:
-                group = win._group
+            transient_for = self.is_transient_for()
+            if transient_for is not None:
+                group = transient_for._group
         if group is not None:
             group.add(self)
             self._group = group

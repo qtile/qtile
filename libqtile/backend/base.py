@@ -250,7 +250,7 @@ class Window(_Window, metaclass=ABCMeta):
         return False
 
     def is_transient_for(self) -> Optional["WindowType"]:
-        """What window is this window a transient windor for?"""
+        """What window is this window a transient window for?"""
         return None
 
     @abstractmethod
