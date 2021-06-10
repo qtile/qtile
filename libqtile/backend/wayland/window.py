@@ -89,6 +89,8 @@ class Window(base.Window, HasListeners):
         self.opacity: float = 1.0
 
         assert isinstance(surface, XdgSurface)
+        if surface.toplevel.title:
+            self.name = surface.toplevel.title
         self._app_id: Optional[str] = surface.toplevel.app_id
         surface.set_tiled(EDGES_TILED)
         self._float_state = FloatStates.NOT_FLOATING
