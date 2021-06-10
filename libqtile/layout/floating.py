@@ -81,6 +81,11 @@ class Floating(Layout):
             from libqtile.config import Match
             float_rules=[Match(wm_class="skype"), Match(wm_class="gimp")]
 
+        The following ``Match`` will float all windows that are transient windows for a
+        parent window:
+
+            Match(func=lambda c: bool(c.is_transient_for()))
+
         Specify these in the ``floating_layout`` in your config.
 
         Floating layout will try to center most of floating windows by default,
@@ -222,11 +227,10 @@ class Floating(Layout):
         if not client.has_user_set_position() or not self.on_screen(client, screen_rect):
             # client has not been properly placed before or it is off screen
             transient_for = client.is_transient_for()
-            win = client.group.qtile.windows_map.get(transient_for)
-            if win is not None:
+            if transient_for is not None:
                 # if transient for a window, place in the center of the window
-                center_x = win.x + win.width / 2
-                center_y = win.y + win.height / 2
+                center_x = transient_for.x + transient_for.width / 2
+                center_y = transient_for.y + transient_for.height / 2
                 above = False
             else:
                 center_x = screen_rect.x + screen_rect.width / 2

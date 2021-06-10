@@ -219,6 +219,16 @@ class Window(base.Window, HasListeners):
             0 < state.min_height == state.max_height
         )
 
+    def is_transient_for(self) -> Optional[base.WindowType]:
+        """What window is this window a transient window for?"""
+        assert isinstance(self.surface, XdgSurface)
+        parent = self.surface.toplevel.parent
+        if parent:
+            for win in self.qtile.windows_map.values():
+                if not isinstance(win, Internal) and win.surface == parent:  # type: ignore
+                    return win
+        return None
+
     def damage(self) -> None:
         for output in self.core.outputs:
             if output.contains(self):
