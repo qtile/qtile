@@ -96,6 +96,9 @@ class Core(base.Core, wlrq.HasListeners):
         self.fd = None
         self._hovered_internal: Optional[window.Internal] = None
 
+        # These windows have not been mapped yet; they'll get managed when mapped
+        self.pending_windows: List[window.WindowType] = []
+
         # mapped_windows contains just regular windows
         self.mapped_windows: List[window.WindowType] = []  # Ascending in Z
         # stacked_windows also contains layer_shell windows from the current output
@@ -251,16 +254,10 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_new_xdg_surface(self, _listener, surface: XdgSurface):
         logger.debug("Signal: xdg_shell new_surface_event")
-        assert self.qtile is not None
-
-        if surface.role != XdgSurfaceRole.TOPLEVEL:
-            return
-
-        wid = self.new_wid()
-        win = window.Window(self, self.qtile, surface, wid)
-        logger.info(f"Managing new top-level window with window ID: {wid}")
-        self._poll()  # Give the window the chance to map itself before focussing it
-        self.qtile.manage(win)
+        if surface.role == XdgSurfaceRole.TOPLEVEL:
+            assert self.qtile is not None
+            win = window.Window(self, self.qtile, surface, self.new_wid())
+            self.pending_windows.append(win)
 
     def _on_cursor_axis(self, _listener, event: pointer.PointerEventAxis):
         self.seat.pointer_notify_axis(
