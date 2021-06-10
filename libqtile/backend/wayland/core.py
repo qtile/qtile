@@ -31,6 +31,7 @@ from pywayland.protocol.wayland import WlSeat
 from pywayland.server import Display
 from wlroots.wlr_types import (
     Cursor,
+    DataControlManagerV1,
     DataDeviceManager,
     GammaControlManagerV1,
     OutputLayout,
@@ -109,7 +110,8 @@ class Core(base.Core, wlrq.HasListeners):
         self.keyboards: List[keyboard.Keyboard] = []
         self.grabbed_keys: List[Tuple[int, int]] = []
         self.grabbed_buttons: List[Tuple[int, int]] = []
-        self.device_manager = DataDeviceManager(self.display)
+        DataDeviceManager(self.display)
+        DataControlManagerV1(self.display)
         self.seat = seat.Seat(self.display, "seat0")
         self.add_listener(self.seat.request_set_selection_event, self._on_request_set_selection)
         self.add_listener(self.backend.new_input_event, self._on_new_input)
