@@ -158,6 +158,12 @@ class Window(base.Window, HasListeners):
 
     def _on_map(self, _listener, _data):
         logger.debug("Signal: window map")
+
+        if self in self.core.pending_windows:
+            self.core.pending_windows.remove(self)
+            logger.debug(f"Managing new top-level window with window ID: {self.wid}")
+            self.qtile.manage(self)
+
         if self.group.screen:
             self.mapped = True
             self.core.focus_window(self)
