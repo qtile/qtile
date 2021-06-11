@@ -409,8 +409,6 @@ class Window(base.Window, HasListeners):
             self.core.mapped_windows.append(self)
             self.core.stack_windows()
 
-        self.damage()
-
     def _tweak_float(self, x=None, y=None, dx=0, dy=0, w=None, h=None, dw=0, dh=0):
         if x is None:
             x = self.x
@@ -698,7 +696,6 @@ class Static(base.Static, Window):
     def _on_map(self, _listener, data):
         logger.debug("Signal: window map")
         self.mapped = True
-        self.damage()
         if self.is_layer:
             self.output.organise_layers()
             self.core.focus_window(self, self.surface.surface)
@@ -742,7 +739,6 @@ class Static(base.Static, Window):
         else:
             self.surface.set_size(int(width), int(height))
             self.paint_borders(bordercolor, borderwidth)
-        self.damage()
 
     def cmd_bring_to_front(self) -> None:
         if self.mapped and isinstance(self.surface, XdgSurface):
