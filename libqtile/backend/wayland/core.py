@@ -249,7 +249,6 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_request_cursor(self, _listener, event: seat.PointerRequestSetCursorEvent):
         logger.debug("Signal: seat request_set_cursor_event")
-        # if self._seat.pointer_state.focused_surface == event.seat_client:  # needs updating pywlroots first
         self.cursor.set_surface(event.surface, event.hotspot)
 
     def _on_new_xdg_surface(self, _listener, surface: XdgSurface):
