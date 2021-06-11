@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import array
 import contextlib
 import inspect
 import traceback
 from itertools import islice
+from typing import TYPE_CHECKING
 
 import xcffib
 import xcffib.xproto
@@ -15,6 +18,9 @@ from libqtile.backend.x11 import xcbq
 from libqtile.backend.x11.drawer import Drawer
 from libqtile.command.base import CommandError, ItemT
 from libqtile.log_utils import logger
+
+if TYPE_CHECKING:
+    from typing import Optional
 
 # ICCM Constants
 NoValue = 0x0000
@@ -96,25 +102,6 @@ def _geometry_setter(attr):
             value = int(value)
         setattr(self, "_" + attr, value)
     return f
-
-
-def _float_getter(attr):
-    def getter(self):
-        if self._float_info[attr] is not None:
-            return self._float_info[attr]
-
-        # we don't care so much about width or height, if not set, default to the window width/height
-        if attr in ('width', 'height'):
-            return getattr(self, attr)
-
-        raise AttributeError("Floating not yet configured yet")
-    return getter
-
-
-def _float_setter(attr):
-    def setter(self, value):
-        self._float_info[attr] = value
-    return setter
 
 
 class XWindow:
@@ -455,20 +442,12 @@ class _Window:
         window.set_attribute(eventmask=self._window_mask)
         self._group = None
 
-        self._float_info = {
-            'x': None,
-            'y': None,
-            'width': None,
-            'height': None,
-        }
         try:
             g = self.window.get_geometry()
             self._x = g.x
             self._y = g.y
             self._width = g.width
             self._height = g.height
-            self._float_info['width'] = g.width
-            self._float_info['height'] = g.height
         except xcffib.xproto.DrawableError:
             # Whoops, we were too early, so let's ignore it for now and get the
             # values on demand.
@@ -476,6 +455,11 @@ class _Window:
             self._y = None
             self._width = None
             self._height = None
+
+        self.float_x: Optional[int] = None
+        self.float_y: Optional[int] = None
+        self._float_width: int = self._width
+        self._float_height: int = self._height
 
         self.bordercolor = None
         self.state = NormalState
@@ -508,23 +492,6 @@ class _Window:
     height = property(
         fset=_geometry_setter("height"),
         fget=_geometry_getter("height"),
-    )
-
-    float_x = property(
-        fset=_float_setter("x"),
-        fget=_float_getter("x")
-    )
-    float_y = property(
-        fset=_float_setter("y"),
-        fget=_float_getter("y")
-    )
-    float_width = property(
-        fset=_float_setter("width"),
-        fget=_float_getter("width")
-    )
-    float_height = property(
-        fset=_float_setter("height"),
-        fget=_float_getter("height")
     )
 
     @property
@@ -644,6 +611,12 @@ class _Window:
             group = self.group.name
         else:
             group = None
+        float_info = {
+            "x": self.float_x,
+            "y": self.float_y,
+            "width": self._float_width,
+            "height": self._float_height,
+        }
         return dict(
             name=self.name,
             x=self.x,
@@ -653,7 +626,7 @@ class _Window:
             group=group,
             id=self.window.wid,
             floating=self._float_state != FloatStates.NOT_FLOATING,
-            float_info=self._float_info,
+            float_info=float_info,
             maximized=self._float_state == FloatStates.MAXIMIZED,
             minimized=self._float_state == FloatStates.MINIMIZED,
             fullscreen=self._float_state == FloatStates.FULLSCREEN
@@ -986,6 +959,13 @@ class _Window:
 
         state = self.window.get_wm_state()
 
+        float_info = {
+            "x": self.float_x,
+            "y": self.float_y,
+            "width": self._float_width,
+            "height": self._float_height,
+        }
+
         return dict(
             attributes=attrs,
             properties=props,
@@ -1000,7 +980,7 @@ class _Window:
             normalhints=normalhints,
             hints=hints,
             state=state,
-            float_info=self._float_info
+            float_info=float_info,
         )
 
 
@@ -1234,7 +1214,7 @@ class Window(_Window, base.Window):
             if self.group and self.group.screen:
                 screen = self.group.screen
                 self._enablefloating(
-                    screen.x + self.float_x, screen.y + self.float_y, self.float_width, self.float_height
+                    screen.x + self.float_x, screen.y + self.float_y, self._float_width, self._float_height
                 )
             else:
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
@@ -1242,8 +1222,8 @@ class Window(_Window, base.Window):
         elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
             if self._float_state == FloatStates.FLOATING:
                 # store last size
-                self.float_width = self.width
-                self.float_height = self.height
+                self._float_width = self.width
+                self._float_height = self.height
             self._float_state = FloatStates.NOT_FLOATING
             self.group.mark_floating(self, False)
             hook.fire('float_change')

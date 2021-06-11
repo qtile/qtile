@@ -142,15 +142,12 @@ class Floating(Layout):
             elif win.fullscreen:
                 win.fullscreen = True
             else:
-                # catch if the client hasn't been configured
-                try:
+                # If the window hasn't been floated before, it will be configured in
+                # .configure()
+                if win.float_x is not None and win.float_y is not None:
                     # By default, place window at same offset from top corner
                     new_x = new_screen.x + win.float_x
                     new_y = new_screen.y + win.float_y
-                except AttributeError:
-                    # this will be handled in .configure()
-                    pass
-                else:
                     # make sure window isn't off screen left/right...
                     new_x = min(new_x, new_screen.x + new_screen.width - win.width)
                     new_x = max(new_x, new_screen.x)
@@ -282,10 +279,7 @@ class Floating(Layout):
             above = False
 
             # We definitely have a screen here, so let's be sure we'll float on screen
-            try:
-                client.float_x
-                client.float_y
-            except AttributeError:
+            if client.float_x is None or client.float_y is None:
                 # this window hasn't been placed before, let's put it in a sensible spot
                 above = self.compute_client_position(client, screen_rect)
 
