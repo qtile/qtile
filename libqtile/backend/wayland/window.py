@@ -86,6 +86,10 @@ class Window(base.Window, HasListeners):
         self.bordercolor: ffi.CData = _rgb((0, 0, 0, 1))
         self.opacity: float = 1.0
 
+        # These start as None and are set in the first place() call
+        self._width: Optional[int] = None
+        self._height: Optional[int] = None
+
         assert isinstance(surface, XdgSurface)
         if surface.toplevel.title:
             self.name = surface.toplevel.title
@@ -119,11 +123,23 @@ class Window(base.Window, HasListeners):
 
     @property
     def width(self) -> int:
-        return self.surface.surface.current.width
+        if self._width is None:
+            return self.surface.surface.current.width
+        return self._width
+
+    @width.setter
+    def width(self, width: int) -> None:
+        self._width = width
 
     @property
     def height(self) -> int:
-        return self.surface.surface.current.height
+        if self._height is None:
+            return self.surface.surface.current.height
+        return self._height
+
+    @height.setter
+    def height(self, height: int) -> None:
+        self._height = height
 
     @property
     def group(self) -> Optional[_Group]:
@@ -405,6 +421,8 @@ class Window(base.Window, HasListeners):
         self.x = x
         self.y = y
         self.surface.set_size(int(width), int(height))
+        self._width = int(width)
+        self._height = int(height)
         self.paint_borders(bordercolor, borderwidth)
 
         if above and self._mapped:
@@ -558,8 +576,8 @@ class Internal(base.Internal, Window):
         self.x: int = x
         self.y: int = y
         self.opacity: float = 1.0
-        self.width: int = width
-        self.height: int = height
+        self._width: int = width
+        self._height: int = height
         self._reset_texture()
 
     def finalize(self):
