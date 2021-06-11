@@ -608,7 +608,8 @@ class Core(base.Core, wlrq.HasListeners):
         """Try to close windows gracefully before exiting"""
         assert self.qtile is not None
 
-        for win in self.qtile.windows_map.values():
+        # Copy in case the dictionary changes during the loop
+        for win in self.qtile.windows_map.copy().values():
             win.kill()
 
         # give everyone a little time to exit and write their state. but don't

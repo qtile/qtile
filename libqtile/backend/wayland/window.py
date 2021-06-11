@@ -604,7 +604,7 @@ class Internal(base.Internal, Window):
 
     def kill(self) -> None:
         self.hide()
-        self.qtile.call_soon(self.qtile.unmanage, self)
+        del self.qtile.windows_map[self.wid]
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None, respect_hints=False):
