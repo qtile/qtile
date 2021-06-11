@@ -382,7 +382,14 @@ class Window(base.Window, HasListeners):
             width -= margin[1] + margin[3]
             height -= margin[0] + margin[2]
 
-        # TODO: Can we get min/max size, resizing increments etc and respect them?
+        if respect_hints:
+            state = self.surface.toplevel._ptr.current
+            width = max(width, state.min_width)
+            height = max(height, state.min_height)
+            if state.max_width:
+                width = min(width, state.max_width)
+            if state.max_height:
+                height = min(height, state.max_height)
 
         # save x and y float offset
         if self.group is not None and self.group.screen is not None:
