@@ -293,6 +293,7 @@ class Floating(Layout):
                 bw,
                 bc,
                 above,
+                respect_hints=True,
             )
         client.unhide()
 
