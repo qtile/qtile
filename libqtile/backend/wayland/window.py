@@ -83,8 +83,6 @@ class Window(base.Window, HasListeners):
         self._mapped: bool = False
         self.x = 0
         self.y = 0
-        self._width: int = surface.surface.current.width
-        self._height: int = surface.surface.current.height
         self.bordercolor: ffi.CData = _rgb((0, 0, 0, 1))
         self.opacity: float = 1.0
 
@@ -93,11 +91,12 @@ class Window(base.Window, HasListeners):
             self.name = surface.toplevel.title
         self._app_id: Optional[str] = surface.toplevel.app_id
         surface.set_tiled(EDGES_TILED)
+
         self._float_state = FloatStates.NOT_FLOATING
-        self.float_x = self.x
-        self.float_y = self.y
-        self.float_width = self.width
-        self.float_height = self.height
+        self.float_x: Optional[int] = None
+        self.float_y: Optional[int] = None
+        self._float_width: int = self.width
+        self._float_height: int = self.height
 
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
@@ -120,19 +119,11 @@ class Window(base.Window, HasListeners):
 
     @property
     def width(self) -> int:
-        return self._width
-
-    @width.setter
-    def width(self, width: int) -> None:
-        self._width = width
+        return self.surface.surface.current.width
 
     @property
     def height(self) -> int:
-        return self._height
-
-    @height.setter
-    def height(self, height: int) -> None:
-        self._height = height
+        return self.surface.surface.current.height
 
     @property
     def group(self) -> Optional[_Group]:
@@ -300,8 +291,8 @@ class Window(base.Window, HasListeners):
                 self._enablefloating(
                     screen.x + self.float_x,
                     screen.y + self.float_y,
-                    self.float_width,
-                    self.float_height
+                    self._float_width,
+                    self._float_height
                 )
             else:
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
@@ -309,8 +300,8 @@ class Window(base.Window, HasListeners):
         elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
             if self._float_state == FloatStates.FLOATING:
                 # store last size
-                self.float_width = self.width
-                self.float_height = self.height
+                self._float_width = self.width
+                self._float_height = self.height
             self._float_state = FloatStates.NOT_FLOATING
             self.group.mark_floating(self, False)
             hook.fire('float_change')
@@ -411,8 +402,6 @@ class Window(base.Window, HasListeners):
         self.x = x
         self.y = y
         self.surface.set_size(int(width), int(height))
-        self.width = int(width)
-        self.height = int(height)
         self.paint_borders(bordercolor, borderwidth)
 
         if above and self._mapped:

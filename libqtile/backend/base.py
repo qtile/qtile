@@ -201,6 +201,11 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
 class Window(_Window, metaclass=ABCMeta):
     """A regular Window belonging to a client."""
+
+    # If float_x or float_y are None, the window has never floated
+    float_x: Optional[int]
+    float_y: Optional[int]
+
     def __repr__(self):
         return "Window(name=%r, wid=%i)" % (self.name, self.wid)
 
