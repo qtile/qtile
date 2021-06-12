@@ -201,6 +201,11 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
 class Window(_Window, metaclass=ABCMeta):
     """A regular Window belonging to a client."""
+
+    # If float_x or float_y are None, the window has never floated
+    float_x: Optional[int]
+    float_y: Optional[int]
+
     def __repr__(self):
         return "Window(name=%r, wid=%i)" % (self.name, self.wid)
 
@@ -250,7 +255,7 @@ class Window(_Window, metaclass=ABCMeta):
         return False
 
     def is_transient_for(self) -> Optional["WindowType"]:
-        """What window is this window a transient windor for?"""
+        """What window is this window a transient window for?"""
         return None
 
     @abstractmethod
@@ -521,8 +526,8 @@ class Drawer:
     def new_ctx(self):
         return pangocffi.patch_cairo_context(cairocffi.Context(self.surface))
 
-    def set_source_rgb(self, colour: ColorType):
-        if type(colour) == list:
+    def set_source_rgb(self, colour: Union[ColorType, List[ColorType]]):
+        if isinstance(colour, list):
             if len(colour) == 0:
                 # defaults to black
                 self.ctx.set_source_rgba(*utils.rgb("#000000"))

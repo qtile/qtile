@@ -166,7 +166,8 @@ class Subscribe:
 
         **Arguments**
 
-        None
+            * ``Group`` receiving the new window
+            * ``Window`` added to the group
         """
         return self._subscribe("group_window_add", func)
 

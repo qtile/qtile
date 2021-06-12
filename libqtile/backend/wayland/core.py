@@ -31,6 +31,7 @@ from pywayland.protocol.wayland import WlSeat
 from pywayland.server import Display
 from wlroots.wlr_types import (
     Cursor,
+    DataControlManagerV1,
     DataDeviceManager,
     GammaControlManagerV1,
     OutputLayout,
@@ -96,6 +97,9 @@ class Core(base.Core, wlrq.HasListeners):
         self.fd = None
         self._hovered_internal: Optional[window.Internal] = None
 
+        # These windows have not been mapped yet; they'll get managed when mapped
+        self.pending_windows: List[window.WindowType] = []
+
         # mapped_windows contains just regular windows
         self.mapped_windows: List[window.WindowType] = []  # Ascending in Z
         # stacked_windows also contains layer_shell windows from the current output
@@ -106,7 +110,8 @@ class Core(base.Core, wlrq.HasListeners):
         self.keyboards: List[keyboard.Keyboard] = []
         self.grabbed_keys: List[Tuple[int, int]] = []
         self.grabbed_buttons: List[Tuple[int, int]] = []
-        self.device_manager = DataDeviceManager(self.display)
+        DataDeviceManager(self.display)
+        DataControlManagerV1(self.display)
         self.seat = seat.Seat(self.display, "seat0")
         self.add_listener(self.seat.request_set_selection_event, self._on_request_set_selection)
         self.add_listener(self.backend.new_input_event, self._on_new_input)
@@ -246,21 +251,14 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_request_cursor(self, _listener, event: seat.PointerRequestSetCursorEvent):
         logger.debug("Signal: seat request_set_cursor_event")
-        # if self._seat.pointer_state.focused_surface == event.seat_client:  # needs updating pywlroots first
         self.cursor.set_surface(event.surface, event.hotspot)
 
     def _on_new_xdg_surface(self, _listener, surface: XdgSurface):
         logger.debug("Signal: xdg_shell new_surface_event")
-        assert self.qtile is not None
-
-        if surface.role != XdgSurfaceRole.TOPLEVEL:
-            return
-
-        wid = self.new_wid()
-        win = window.Window(self, self.qtile, surface, wid)
-        logger.info(f"Managing new top-level window with window ID: {wid}")
-        self._poll()  # Give the window the chance to map itself before focussing it
-        self.qtile.manage(win)
+        if surface.role == XdgSurfaceRole.TOPLEVEL:
+            assert self.qtile is not None
+            win = window.Window(self, self.qtile, surface, self.new_wid())
+            self.pending_windows.append(win)
 
     def _on_cursor_axis(self, _listener, event: pointer.PointerEventAxis):
         self.seat.pointer_notify_axis(
@@ -399,8 +397,11 @@ class Core(base.Core, wlrq.HasListeners):
                 return
 
             focus_changed = self.seat.pointer_state.focused_surface != surface
-            self.seat.pointer_notify_enter(surface, sx, sy)
+            if surface is not None:
+                self.seat.pointer_notify_enter(surface, sx, sy)
             if focus_changed:
+                if surface is None:
+                    self.seat.pointer_clear_focus()
                 if win is not self.qtile.current_window:
                     hook.fire("client_mouse_enter", win)
 
@@ -536,7 +537,7 @@ class Core(base.Core, wlrq.HasListeners):
                     if win.x <= cx and win.y <= cy:
                         bw *= 2
                         if cx <= win.x + win.width + bw and cy <= win.y + win.height + bw:
-                            return win, win.surface.surface, 0, 0
+                            return win, None, 0, 0
         return None
 
     def stack_windows(self) -> None:
@@ -607,7 +608,8 @@ class Core(base.Core, wlrq.HasListeners):
         """Try to close windows gracefully before exiting"""
         assert self.qtile is not None
 
-        for win in self.qtile.windows_map.values():
+        # Copy in case the dictionary changes during the loop
+        for win in self.qtile.windows_map.copy().values():
             win.kill()
 
         # give everyone a little time to exit and write their state. but don't

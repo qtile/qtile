@@ -83,19 +83,20 @@ class Window(base.Window, HasListeners):
         self._mapped: bool = False
         self.x = 0
         self.y = 0
-        self._width: int = surface.surface.current.width
-        self._height: int = surface.surface.current.height
         self.bordercolor: ffi.CData = _rgb((0, 0, 0, 1))
         self.opacity: float = 1.0
 
         assert isinstance(surface, XdgSurface)
+        if surface.toplevel.title:
+            self.name = surface.toplevel.title
         self._app_id: Optional[str] = surface.toplevel.app_id
         surface.set_tiled(EDGES_TILED)
+
         self._float_state = FloatStates.NOT_FLOATING
-        self.float_x = self.x
-        self.float_y = self.y
-        self.float_width = self.width
-        self.float_height = self.height
+        self.float_x: Optional[int] = None
+        self.float_y: Optional[int] = None
+        self._float_width: int = self.width
+        self._float_height: int = self.height
 
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
@@ -118,19 +119,11 @@ class Window(base.Window, HasListeners):
 
     @property
     def width(self) -> int:
-        return self._width
-
-    @width.setter
-    def width(self, width: int) -> None:
-        self._width = width
+        return self.surface.surface.current.width
 
     @property
     def height(self) -> int:
-        return self._height
-
-    @height.setter
-    def height(self, height: int) -> None:
-        self._height = height
+        return self.surface.surface.current.height
 
     @property
     def group(self) -> Optional[_Group]:
@@ -158,6 +151,12 @@ class Window(base.Window, HasListeners):
 
     def _on_map(self, _listener, _data):
         logger.debug("Signal: window map")
+
+        if self in self.core.pending_windows:
+            self.core.pending_windows.remove(self)
+            logger.debug(f"Managing new top-level window with window ID: {self.wid}")
+            self.qtile.manage(self)
+
         if self.group.screen:
             self.mapped = True
             self.core.focus_window(self)
@@ -210,6 +209,16 @@ class Window(base.Window, HasListeners):
             0 < state.min_width == state.max_width and
             0 < state.min_height == state.max_height
         )
+
+    def is_transient_for(self) -> Optional[base.WindowType]:
+        """What window is this window a transient window for?"""
+        assert isinstance(self.surface, XdgSurface)
+        parent = self.surface.toplevel.parent
+        if parent:
+            for win in self.qtile.windows_map.values():
+                if not isinstance(win, Internal) and win.surface == parent:  # type: ignore
+                    return win
+        return None
 
     def damage(self) -> None:
         for output in self.core.outputs:
@@ -282,8 +291,8 @@ class Window(base.Window, HasListeners):
                 self._enablefloating(
                     screen.x + self.float_x,
                     screen.y + self.float_y,
-                    self.float_width,
-                    self.float_height
+                    self._float_width,
+                    self._float_height
                 )
             else:
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
@@ -291,8 +300,8 @@ class Window(base.Window, HasListeners):
         elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
             if self._float_state == FloatStates.FLOATING:
                 # store last size
-                self.float_width = self.width
-                self.float_height = self.height
+                self._float_width = self.width
+                self._float_height = self.height
             self._float_state = FloatStates.NOT_FLOATING
             self.group.mark_floating(self, False)
             hook.fire('float_change')
@@ -376,7 +385,14 @@ class Window(base.Window, HasListeners):
             width -= margin[1] + margin[3]
             height -= margin[0] + margin[2]
 
-        # TODO: Can we get min/max size, resizing increments etc and respect them?
+        if respect_hints:
+            state = self.surface.toplevel._ptr.current
+            width = max(width, state.min_width)
+            height = max(height, state.min_height)
+            if state.max_width:
+                width = min(width, state.max_width)
+            if state.max_height:
+                height = min(height, state.max_height)
 
         # save x and y float offset
         if self.group is not None and self.group.screen is not None:
@@ -386,16 +402,12 @@ class Window(base.Window, HasListeners):
         self.x = x
         self.y = y
         self.surface.set_size(int(width), int(height))
-        self.width = int(width)
-        self.height = int(height)
         self.paint_borders(bordercolor, borderwidth)
 
         if above and self._mapped:
             self.core.mapped_windows.remove(self)
             self.core.mapped_windows.append(self)
             self.core.stack_windows()
-
-        self.damage()
 
     def _tweak_float(self, x=None, y=None, dx=0, dy=0, w=None, h=None, dw=0, dh=0):
         if x is None:
@@ -590,7 +602,7 @@ class Internal(base.Internal, Window):
 
     def kill(self) -> None:
         self.hide()
-        self.qtile.call_soon(self.qtile.unmanage, self)
+        del self.qtile.windows_map[self.wid]
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None, respect_hints=False):
@@ -684,7 +696,6 @@ class Static(base.Static, Window):
     def _on_map(self, _listener, data):
         logger.debug("Signal: window map")
         self.mapped = True
-        self.damage()
         if self.is_layer:
             self.output.organise_layers()
             self.core.focus_window(self, self.surface.surface)
@@ -728,7 +739,6 @@ class Static(base.Static, Window):
         else:
             self.surface.set_size(int(width), int(height))
             self.paint_borders(bordercolor, borderwidth)
-        self.damage()
 
     def cmd_bring_to_front(self) -> None:
         if self.mapped and isinstance(self.surface, XdgSurface):

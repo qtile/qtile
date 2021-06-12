@@ -222,7 +222,7 @@ async def _notify(title, message, urgency, timeout, id):
                     "",  # icon
                     title,  # summary
                     message,  # body
-                    [""],  # actions
+                    [],  # actions
                     {"urgency": Variant("y", urgency)},  # hints
                     timeout]  # timeout
 

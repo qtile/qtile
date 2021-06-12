@@ -81,6 +81,11 @@ class Floating(Layout):
             from libqtile.config import Match
             float_rules=[Match(wm_class="skype"), Match(wm_class="gimp")]
 
+        The following ``Match`` will float all windows that are transient windows for a
+        parent window:
+
+            Match(func=lambda c: bool(c.is_transient_for()))
+
         Specify these in the ``floating_layout`` in your config.
 
         Floating layout will try to center most of floating windows by default,
@@ -137,15 +142,12 @@ class Floating(Layout):
             elif win.fullscreen:
                 win.fullscreen = True
             else:
-                # catch if the client hasn't been configured
-                try:
+                # If the window hasn't been floated before, it will be configured in
+                # .configure()
+                if win.float_x is not None and win.float_y is not None:
                     # By default, place window at same offset from top corner
                     new_x = new_screen.x + win.float_x
                     new_y = new_screen.y + win.float_y
-                except AttributeError:
-                    # this will be handled in .configure()
-                    pass
-                else:
                     # make sure window isn't off screen left/right...
                     new_x = min(new_x, new_screen.x + new_screen.width - win.width)
                     new_x = max(new_x, new_screen.x)
@@ -222,11 +224,10 @@ class Floating(Layout):
         if not client.has_user_set_position() or not self.on_screen(client, screen_rect):
             # client has not been properly placed before or it is off screen
             transient_for = client.is_transient_for()
-            win = client.group.qtile.windows_map.get(transient_for)
-            if win is not None:
+            if transient_for is not None:
                 # if transient for a window, place in the center of the window
-                center_x = win.x + win.width / 2
-                center_y = win.y + win.height / 2
+                center_x = transient_for.x + transient_for.width / 2
+                center_y = transient_for.y + transient_for.height / 2
                 above = False
             else:
                 center_x = screen_rect.x + screen_rect.width / 2
@@ -278,10 +279,7 @@ class Floating(Layout):
             above = False
 
             # We definitely have a screen here, so let's be sure we'll float on screen
-            try:
-                client.float_x
-                client.float_y
-            except AttributeError:
+            if client.float_x is None or client.float_y is None:
                 # this window hasn't been placed before, let's put it in a sensible spot
                 above = self.compute_client_position(client, screen_rect)
 
@@ -293,6 +291,7 @@ class Floating(Layout):
                 bw,
                 bc,
                 above,
+                respect_hints=True,
             )
         client.unhide()
 
