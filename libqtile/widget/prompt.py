@@ -39,8 +39,9 @@ import string
 from collections import deque
 from typing import List, Optional, Tuple
 
-from libqtile import bar, hook, pangocffi, utils, xkeysyms
+from libqtile import bar, hook, pangocffi, utils
 from libqtile.backend.x11 import xcbq
+from libqtile.backend.x11.xkeysyms import keysyms
 from libqtile.command.base import CommandObject, SelectError
 from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import CommandError, QtileCommandInterface
@@ -363,21 +364,21 @@ class Prompt(base._TextBox):
         self.completer = None  # type: Optional[AbstractCompleter]
         # Define key handlers (action to do when hit an specific key)
         self.keyhandlers = {
-            xkeysyms.keysyms['Tab']: self._trigger_complete,
-            xkeysyms.keysyms['BackSpace']: self._delete_char(),
-            xkeysyms.keysyms['Delete']: self._delete_char(False),
-            xkeysyms.keysyms['KP_Delete']: self._delete_char(False),
-            xkeysyms.keysyms['Escape']: self._unfocus,
-            xkeysyms.keysyms['Return']: self._send_cmd,
-            xkeysyms.keysyms['KP_Enter']: self._send_cmd,
-            xkeysyms.keysyms['Up']: self._get_prev_cmd,
-            xkeysyms.keysyms['KP_Up']: self._get_prev_cmd,
-            xkeysyms.keysyms['Down']: self._get_next_cmd,
-            xkeysyms.keysyms['KP_Down']: self._get_next_cmd,
-            xkeysyms.keysyms['Left']: self._move_cursor(),
-            xkeysyms.keysyms['KP_Left']: self._move_cursor(),
-            xkeysyms.keysyms['Right']: self._move_cursor("right"),
-            xkeysyms.keysyms['KP_Right']: self._move_cursor("right"),
+            keysyms['Tab']: self._trigger_complete,
+            keysyms['BackSpace']: self._delete_char(),
+            keysyms['Delete']: self._delete_char(False),
+            keysyms['KP_Delete']: self._delete_char(False),
+            keysyms['Escape']: self._unfocus,
+            keysyms['Return']: self._send_cmd,
+            keysyms['KP_Enter']: self._send_cmd,
+            keysyms['Up']: self._get_prev_cmd,
+            keysyms['KP_Up']: self._get_prev_cmd,
+            keysyms['Down']: self._get_next_cmd,
+            keysyms['KP_Down']: self._get_next_cmd,
+            keysyms['Left']: self._move_cursor(),
+            keysyms['KP_Left']: self._move_cursor(),
+            keysyms['Right']: self._move_cursor("right"),
+            keysyms['KP_Right']: self._move_cursor("right"),
         }
         printables = {x: self._write_char for x in range(127) if
                       chr(x) in string.printable}
@@ -654,7 +655,7 @@ class Prompt(base._TextBox):
         # Return the action (a function) to do according the pressed key (k).
         self.key = k
         if k in self.keyhandlers:
-            if k != xkeysyms.keysyms['Tab']:
+            if k != keysyms['Tab']:
                 self.actual_value = self.completer.actual()
                 self.completer.reset()
             return self.keyhandlers[k]
@@ -680,7 +681,7 @@ class Prompt(base._TextBox):
         class Dummy:
             pass
         d = Dummy()
-        keysym = xcbq.keysyms[key]
+        keysym = keysyms[key]
         d.detail = self.qtile.core.conn.keysym_to_keycode(keysym)[0]
         d.state = 0
         self.handle_KeyPress(d)
