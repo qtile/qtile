@@ -49,13 +49,11 @@ import xcffib.xproto
 from xcffib.xfixes import SelectionEventMask
 from xcffib.xproto import CW, EventMask, WindowClass
 
-from libqtile import xkeysyms
 from libqtile.backend.x11 import window
 from libqtile.backend.x11.xcursors import Cursors
+from libqtile.backend.x11.xkeysyms import keysyms
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError, hex
-
-keysyms = xkeysyms.keysyms
 
 
 class XCBQError(QtileError):
@@ -69,7 +67,7 @@ def rdict(d):
     return r
 
 
-rkeysyms = rdict(xkeysyms.keysyms)
+rkeysyms = rdict(keysyms)
 
 # Keyboard modifiers bitmask values from X Protocol
 ModMasks = {
