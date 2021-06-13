@@ -86,12 +86,9 @@ class Keyboard(HasListeners):
         self.finalize()
 
     def _on_modifier(self, _listener, _data):
-        logger.debug("Signal: keyboard modifier")
         self.seat.keyboard_notify_modifiers(self.keyboard.modifiers)
 
     def _on_key(self, _listener, event: KeyboardKeyEvent):
-        logger.debug("Signal: keyboard key")
-
         if self.qtile is None:
             # shushes mypy
             self.qtile = self.core.qtile
