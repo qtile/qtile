@@ -40,7 +40,6 @@ from collections import deque
 from typing import List, Optional, Tuple
 
 from libqtile import bar, hook, pangocffi, utils
-from libqtile.backend.x11.xkeysyms import keysyms
 from libqtile.command.base import CommandObject, SelectError
 from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import CommandError, QtileCommandInterface
@@ -361,29 +360,10 @@ class Prompt(base._TextBox):
         self.name = name
         self.active = False
         self.completer = None  # type: Optional[AbstractCompleter]
-        # Define key handlers (action to do when hit an specific key)
-        self.keyhandlers = {
-            keysyms['Tab']: self._trigger_complete,
-            keysyms['BackSpace']: self._delete_char(),
-            keysyms['Delete']: self._delete_char(False),
-            keysyms['KP_Delete']: self._delete_char(False),
-            keysyms['Escape']: self._unfocus,
-            keysyms['Return']: self._send_cmd,
-            keysyms['KP_Enter']: self._send_cmd,
-            keysyms['Up']: self._get_prev_cmd,
-            keysyms['KP_Up']: self._get_prev_cmd,
-            keysyms['Down']: self._get_next_cmd,
-            keysyms['KP_Down']: self._get_next_cmd,
-            keysyms['Left']: self._move_cursor(),
-            keysyms['KP_Left']: self._move_cursor(),
-            keysyms['Right']: self._move_cursor("right"),
-            keysyms['KP_Right']: self._move_cursor("right"),
-        }
-        printables = {x: self._write_char for x in range(127) if
-                      chr(x) in string.printable}
-        self.keyhandlers.update(printables)
+
         if self.bell_style == "visual":
             self.original_background = self.background
+
         # If history record is on, get saved history or create history record
         if self.record_history:
             self.history_path = os.path.join(utils.get_cache_dir(),
@@ -424,6 +404,32 @@ class Prompt(base._TextBox):
                 self._unfocus()
 
         hook.subscribe.client_focus(f)
+
+        # Define key handlers (action to do when a specific key is hit)
+        keyhandlers = {
+            'Tab': self._trigger_complete,
+            'BackSpace': self._delete_char(),
+            'Delete': self._delete_char(False),
+            'KP_Delete': self._delete_char(False),
+            'Escape': self._unfocus,
+            'Return': self._send_cmd,
+            'KP_Enter': self._send_cmd,
+            'Up': self._get_prev_cmd,
+            'KP_Up': self._get_prev_cmd,
+            'Down': self._get_next_cmd,
+            'KP_Down': self._get_next_cmd,
+            'Left': self._move_cursor(),
+            'KP_Left': self._move_cursor(),
+            'Right': self._move_cursor("right"),
+            'KP_Right': self._move_cursor("right"),
+        }
+        self.keyhandlers = {
+            qtile.core.keysym_from_name(k): v for k, v in keyhandlers.items()
+        }
+        printables = {x: self._write_char for x in range(127) if
+                      chr(x) in string.printable}
+        self.keyhandlers.update(printables)
+        self.tab = qtile.core.keysym_from_name("Tab")
 
     def start_input(self, prompt, callback, complete=None,
                     strict_completer=False, allow_empty_input=False) -> None:
@@ -654,7 +660,7 @@ class Prompt(base._TextBox):
         # Return the action (a function) to do according the pressed key (k).
         self.key = k
         if k in self.keyhandlers:
-            if k != keysyms['Tab']:
+            if k != self.tab:
                 self.actual_value = self.completer.actual()
                 self.completer.reset()
             return self.keyhandlers[k]
@@ -671,14 +677,8 @@ class Prompt(base._TextBox):
             del self.key
         self._update()
 
-    def cmd_fake_keypress(self, key):
-        class Dummy:
-            pass
-        d = Dummy()
-        keysym = keysyms[key]
-        d.detail = self.qtile.core.conn.keysym_to_keycode(keysym)[0]
-        d.state = 0
-        self.handle_KeyPress(d)
+    def cmd_fake_keypress(self, key: str) -> None:
+        self.process_key_press(self.qtile.core.keysym_from_name(key))
 
     def cmd_info(self):
         """Returns a dictionary of info for this object"""

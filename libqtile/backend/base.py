@@ -109,6 +109,10 @@ class Core(metaclass=ABCMeta):
     def simulate_keypress(self, modifiers: List[str], key: str) -> None:
         """Simulate a keypress with given modifiers"""
 
+    def keysym_from_name(self, name: str) -> int:
+        """Get the keysym for a key from its name"""
+        raise NotImplementedError
+
     def change_vt(self, vt: int) -> bool:
         """Change virtual terminal, returning success."""
         return False

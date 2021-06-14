@@ -681,3 +681,7 @@ class Core(base.Core, wlrq.HasListeners):
             self.keyboards[-1].set_keymap(layout, options)
         else:
             logger.warning("Could not set keymap: no keyboards set up.")
+
+    def keysym_from_name(self, name: str) -> int:
+        """Get the keysym for a key from its name"""
+        return xkb.keysym_from_name(name, case_insensitive=True)

@@ -43,6 +43,7 @@ from xcffib.xproto import EventMask, StackMode
 from libqtile import config, hook, utils
 from libqtile.backend import base
 from libqtile.backend.x11 import window, xcbq
+from libqtile.backend.x11.xkeysyms import keysyms
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 
@@ -814,3 +815,7 @@ class Core(base.Core):
         """
         reply = self.conn.conn.core.QueryPointer(self._root.wid).reply()
         return reply.root_x, reply.root_y
+
+    def keysym_from_name(self, name: str) -> int:
+        """Get the keysym for a key from its name"""
+        return keysyms[name]
