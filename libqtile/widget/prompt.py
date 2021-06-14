@@ -40,7 +40,6 @@ from collections import deque
 from typing import List, Optional, Tuple
 
 from libqtile import bar, hook, pangocffi, utils
-from libqtile.backend.x11 import xcbq
 from libqtile.backend.x11.xkeysyms import keysyms
 from libqtile.command.base import CommandObject, SelectError
 from libqtile.command.client import InteractiveCommandClient
@@ -660,16 +659,11 @@ class Prompt(base._TextBox):
                 self.completer.reset()
             return self.keyhandlers[k]
 
-    def handle_KeyPress(self, e):  # noqa: N802
-        """KeyPress handler for the minibuffer.
+    def process_key_press(self, keysym: int):
+        """Key press handler for the minibuffer.
 
         Currently only supports ASCII characters.
         """
-        mask = xcbq.ModMasks["shift"] | xcbq.ModMasks["lock"]
-        state = 1 if e.state & mask else 0
-
-        keysym = self.qtile.core.conn.code_to_syms[e.detail][state]
-
         handle_key = self._get_keyhandler(keysym)
 
         if handle_key:

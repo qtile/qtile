@@ -387,6 +387,9 @@ class Window(base.Window, HasListeners):
 
     def focus(self, warp: bool) -> None:
         self.core.focus_window(self)
+        if isinstance(self, base.Internal):
+            # self.core.focus_window is enough for internal windows
+            return
 
         if warp and self.qtile.config.cursor_warp:
             self.core.warp_pointer(

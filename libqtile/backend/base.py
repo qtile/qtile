@@ -399,6 +399,9 @@ class Internal(_Window, metaclass=ABCMeta):
     def process_pointer_motion(self, x: int, y: int) -> None:
         """Handle pointer motion within the window."""
 
+    def process_key_press(self, keycode: int) -> None:
+        """Handle a key press."""
+
 
 class Static(_Window, metaclass=ABCMeta):
     """A Window not bound to a single Group."""
