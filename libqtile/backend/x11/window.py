@@ -898,6 +898,9 @@ class _Window:
         did_focus = self._do_focus()
         if not did_focus:
             return
+        if isinstance(self, base.Internal):
+            # self._do_focus is enough for internal windows
+            return
 
         # now, do all the other WM stuff since the focus actually changed
         if warp and self.qtile.config.cursor_warp:
@@ -1028,6 +1031,12 @@ class Internal(_Window, base.Internal):
 
     def handle_MotionNotify(self, e):  # noqa: N802
         self.process_pointer_motion(e.event_x, e.event_y)
+
+    def handle_KeyPress(self, e):  # noqa: N802
+        mask = xcbq.ModMasks["shift"] | xcbq.ModMasks["lock"]
+        state = 1 if e.state & mask else 0
+        keysym = self.qtile.core.conn.code_to_syms[e.detail][state]
+        self.process_key_press(keysym)
 
 
 class Static(_Window, base.Static):

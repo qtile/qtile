@@ -108,4 +108,8 @@ class Keyboard(HasListeners):
                     self.qtile.process_key_event(keysym, mods)
                     return
 
+            if self.core.focused_internal:
+                self.core.focused_internal.process_key_press(keysym)
+                return
+
         self.seat.keyboard_notify_key(event)

@@ -230,6 +230,7 @@ class Bar(Gap, configurable.Configurable):
             self.window.process_pointer_enter = self.process_pointer_enter
             self.window.process_pointer_leave = self.process_pointer_leave
             self.window.process_pointer_motion = self.process_pointer_motion
+            self.window.process_key_press = self.process_key_press
 
         self.crashed_widgets = []
         if self._configured:
@@ -388,23 +389,27 @@ class Bar(Gap, configurable.Configurable):
             )
         self.cursor_in = widget
 
+    def process_key_press(self, keycode: int) -> None:
+        if self.has_keyboard:
+            self.has_keyboard.process_key_press(keycode)
+
     def widget_grab_keyboard(self, widget):
         """
             A widget can call this method to grab the keyboard focus
             and receive keyboard messages. When done,
             widget_ungrab_keyboard() must be called.
         """
-        self.window.handle_KeyPress = widget.handle_KeyPress
+        self.has_keyboard = widget
         self.saved_focus = self.qtile.current_window
-        self.window.window.set_input_focus()
+        self.window.focus(False)
 
     def widget_ungrab_keyboard(self):
         """
-            Removes the widget's keyboard handler.
+            Removes keyboard focus from the widget.
         """
-        del self.window.handle_KeyPress
         if self.saved_focus is not None:
-            self.saved_focus.window.set_input_focus()
+            self.saved_focus.focus(False)
+        self.has_keyboard = None
 
     def draw(self):
         if not self.widgets:

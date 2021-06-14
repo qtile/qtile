@@ -96,6 +96,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.socket = self.display.add_socket()
         self.fd = None
         self._hovered_internal: Optional[window.Internal] = None
+        self.focused_internal: Optional[window.Internal] = None
 
         # These windows have not been mapped yet; they'll get managed when mapped
         self.pending_windows: List[window.WindowType] = []
@@ -496,7 +497,14 @@ class Core(base.Core, wlrq.HasListeners):
             return
 
         if surface is None and win is not None:
+            if isinstance(win, base.Internal):
+                self.focused_internal = win
+                self.seat.keyboard_clear_focus()
+                return
             surface = win.surface.surface
+
+        if self.focused_internal:
+            self.focused_internal = None
 
         previous_surface = self.seat.keyboard_state.focused_surface
         if previous_surface == surface:
