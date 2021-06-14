@@ -348,7 +348,7 @@ class Prompt(base._TextBox):
                  "Don't store duplicates in history"),
                 ("bell_style", "audible",
                  "Alert at the begin/end of the command history. " +
-                 "Possible values: 'audible', 'visual' and None."),
+                 "Possible values: 'audible' (X11 only), 'visual' and None."),
                 ("visual_bell_color", "ff0000",
                  "Color for the visual bell (changes prompt background)."),
                 ("visual_bell_time", 0.2,
@@ -360,9 +360,6 @@ class Prompt(base._TextBox):
         self.name = name
         self.active = False
         self.completer = None  # type: Optional[AbstractCompleter]
-
-        if self.bell_style == "visual":
-            self.original_background = self.background
 
         # If history record is on, get saved history or create history record
         if self.record_history:
@@ -430,6 +427,13 @@ class Prompt(base._TextBox):
                       chr(x) in string.printable}
         self.keyhandlers.update(printables)
         self.tab = qtile.core.keysym_from_name("Tab")
+
+        self.bell_style: str
+        if self.bell_style == "audible" and qtile.core.name != "x11":
+            self.bell_style = "visual"
+            logger.warning("Prompt widget only supports audible bell under X11")
+        if self.bell_style == "visual":
+            self.original_background = self.background
 
     def start_input(self, prompt, callback, complete=None,
                     strict_completer=False, allow_empty_input=False) -> None:
