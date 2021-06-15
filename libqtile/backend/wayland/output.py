@@ -63,7 +63,7 @@ class Output(HasListeners):
         self.add_listener(self.damage.frame_event, self._on_frame)
 
         # The layers enum indexes into this list to get a list of surfaces
-        self.layers: List[List[Static]] = [[]] * len(LayerShellV1Layer)
+        self.layers: List[List[Static]] = [[] for _ in range(len(LayerShellV1Layer))]
 
     def finalize(self):
         self.core.outputs.remove(self)
