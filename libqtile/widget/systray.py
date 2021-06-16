@@ -89,7 +89,16 @@ class Icon(window._Window):
 
 
 class Systray(window._Window, base._Widget):
-    """A widget that manages system tray"""
+    """
+    A widget that manages system tray.
+
+    Note: icons will not render correctly where the bar/widget is
+    drawn with a semi-transparent background. Instead, icons will be
+    drawn with a transparent background.
+
+    If using this widget it is therefore recommended to use a fully opaque
+    background colour, or a fully transparent one.
+    """
 
     _window_mask = EventMask.StructureNotify | \
         EventMask.Exposure
@@ -149,6 +158,19 @@ class Systray(window._Window, base._Widget):
             data=union
         )
         qtile.core._root.send_event(event, mask=EventMask.StructureNotify)
+
+        # We need tray to tell icons which visual to use.
+        # This needs to be the same as the bar/widget.
+        # This mainly benefits transparent bars.
+        conn.conn.core.ChangeProperty(
+            xcffib.xproto.PropMode.Replace,
+            win.wid,
+            atoms["_NET_SYSTEM_TRAY_VISUAL"],
+            xcffib.xproto.Atom.VISUALID,
+            32,
+            1,
+            [self.qtile.core.conn.default_screen.default_visual.visual_id]
+        )
 
     def handle_ClientMessage(self, event):  # noqa: N802
         atoms = self.conn.atoms
