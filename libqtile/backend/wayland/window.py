@@ -288,6 +288,9 @@ class Window(base.Window, HasListeners):
         if do_float and self._float_state == FloatStates.NOT_FLOATING:
             if self.group and self.group.screen:
                 screen = self.group.screen
+                if not self._float_width:  # These might start as 0
+                    self._float_width = self.width
+                    self._float_height = self.height
                 self._enablefloating(
                     screen.x + self.float_x,
                     screen.y + self.float_y,
