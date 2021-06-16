@@ -392,6 +392,7 @@ class Core(base.Core, wlrq.HasListeners):
                 if self._hovered_internal:
                     win.process_pointer_motion(self.cursor.x, self.cursor.y)
                 else:
+                    self.seat.pointer_clear_focus()
                     win.process_pointer_enter(self.cursor.x, self.cursor.y)
                     self._hovered_internal = win
                 return
