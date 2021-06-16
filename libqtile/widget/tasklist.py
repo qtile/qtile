@@ -348,13 +348,23 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         icon_padding = (self.icon_size + self.padding_x) if icon else 0
         padding_x = [self.padding_x + icon_padding, self.padding_x]
 
+        if bordercolor is None:
+            # border colour is set to None when we don't want to draw a border at all
+            # Rather than dealing with alpha blending issues, we just set border width
+            # to 0.
+            border_width = 0
+            framecolor = self.background or self.bar.background
+        else:
+            border_width = self.borderwidth
+            framecolor = bordercolor
+
         framed = self.layout.framed(
-            self.borderwidth,
-            bordercolor,
+            border_width,
+            framecolor,
             padding_x,
             self.padding_y
         )
-        if block:
+        if block and bordercolor is not None:
             framed.draw_fill(offset, self.margin_y, rounded)
         else:
             framed.draw(offset, self.margin_y, rounded)
@@ -450,12 +460,11 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 border = self.border
                 text_color = border
             else:
-                border = self.unfocused_border or (self.background or
-                                                   self.bar.background)
+                border = self.unfocused_border or None
                 text_color = self.foreground
 
             if self.highlight_method == 'text':
-                border = self.bar.background
+                border = None
             else:
                 text_color = self.foreground
 
