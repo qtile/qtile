@@ -85,6 +85,7 @@ class Window(base.Window, HasListeners):
         self.y = 0
         self.bordercolor: ffi.CData = _rgb((0, 0, 0, 1))
         self.opacity: float = 1.0
+        self._outputs: List[Output] = []
 
         # These start as None and are set in the first place() call
         self._width: Optional[int] = None
@@ -236,10 +237,13 @@ class Window(base.Window, HasListeners):
                     return win
         return None
 
+    def _find_outputs(self):
+        """Find the outputs on which this window can be seen."""
+        self._outputs = [o for o in self.core.outputs if o.contains(self)]
+
     def damage(self) -> None:
-        for output in self.core.outputs:
-            if output.contains(self):
-                output.damage()
+        for output in self._outputs:
+            output.damage()
 
     def hide(self):
         if self.mapped:
@@ -430,6 +434,9 @@ class Window(base.Window, HasListeners):
             self.core.mapped_windows.append(self)
             self.core.stack_windows()
 
+        self._find_outputs()
+        self.damage()
+
     def _tweak_float(self, x=None, y=None, dx=0, dy=0, w=None, h=None, dw=0, dh=0):
         if x is None:
             x = self.x
@@ -578,6 +585,8 @@ class Internal(base.Internal, Window):
         self.opacity: float = 1.0
         self._width: int = width
         self._height: int = height
+        self._outputs: List[Output] = []
+        self._find_outputs()
         self._reset_texture()
 
     def finalize(self):
@@ -646,6 +655,7 @@ class Internal(base.Internal, Window):
         if needs_reset:
             self._reset_texture()
 
+        self._find_outputs()
         self.damage()
 
 
@@ -674,6 +684,7 @@ class Static(base.Static, Window):
         self.borderwidth: int = 0
         self.bordercolor: ffi.CData = _rgb((0, 0, 0, 1))
         self.opacity: float = 1.0
+        self._outputs: List[Output] = []
         self._float_state = FloatStates.FLOATING
         self.defunct = True
         self.is_layer = False
@@ -691,6 +702,9 @@ class Static(base.Static, Window):
             self.output = core.output_from_wlr_output(surface.output)
             self.screen = self.output.screen
             self.mapped = True
+            self._outputs.append(self.output)
+        else:
+            self._find_outputs()
 
     @property
     def mapped(self) -> bool:
@@ -752,14 +766,6 @@ class Static(base.Static, Window):
         else:
             self.surface.send_close()
 
-    def damage(self) -> None:
-        if self.is_layer:
-            self.output.damage()
-        else:
-            for output in self.core.outputs:
-                if output.contains(self):
-                    output.damage()
-
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None, respect_hints=False):
         self.x = x
@@ -769,6 +775,7 @@ class Static(base.Static, Window):
         else:
             self.surface.set_size(int(width), int(height))
             self.paint_borders(bordercolor, borderwidth)
+        self.damage()
 
     def cmd_bring_to_front(self) -> None:
         if self.mapped and isinstance(self.surface, XdgSurface):
