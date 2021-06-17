@@ -519,6 +519,9 @@ class Window(base.Window, HasListeners):
     def cmd_toggle_maximize(self) -> None:
         self.maximized = not self.maximized
 
+    def cmd_toggle_minimize(self) -> None:
+        self.minimized = not self.minimized
+
     def cmd_toggle_fullscreen(self) -> None:
         self.fullscreen = not self.fullscreen
 
