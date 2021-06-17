@@ -28,6 +28,7 @@ import re
 import cairocffi
 
 from libqtile import bar, hook, pangocffi
+from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
@@ -282,6 +283,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
+
+        if qtile.core.name == "wayland" and self.icon_size != 0:
+            # Disable icons
+            self.icon_size = 0
+            logger.warning("TaskList icons not supported in Wayland.")
+
         if self.icon_size is None:
             self.icon_size = self.bar.height - 2 * (self.borderwidth +
                                                     self.margin_y)
@@ -378,7 +385,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 if window.floating:
                     window.cmd_bring_to_front()
             else:
-                window.toggle_minimize()
+                window.cmd_toggle_minimize()
 
     def get_window_icon(self, window):
         if not window.icons:
