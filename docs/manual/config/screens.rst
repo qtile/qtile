@@ -38,6 +38,17 @@ background="#000000")` will give you a black back ground (the default), while
 :code:`bar.Bar(..., background=["#000000", "#FFFFFF"])` will give you a
 background that fades from black to white.
 
+Bars (and widgets) also support transparency by adding an alpha value to the
+desired color. For example, :code:`bar.Bar(..., background="#00000000")` will
+result in a fully transparent bar. Widget contents will not be impacted i.e.
+this is different to the ``opacity`` parameter which sets the transparency of the
+entire window.
+
+.. note::
+    In X11 backends, transparency will be disabled in a bar if the ``background``
+    color is fully opaque.
+
+
 Fake Screens
 ============
 

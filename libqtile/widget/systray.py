@@ -92,12 +92,14 @@ class Systray(window._Window, base._Widget):
     """
     A widget that manages system tray.
 
-    Note: icons will not render correctly where the bar/widget is
-    drawn with a semi-transparent background. Instead, icons will be
-    drawn with a transparent background.
+    .. note::
+        Icons will not render correctly where the bar/widget is
+        drawn with a semi-transparent background. Instead, icons
+        will be drawn with a transparent background.
 
-    If using this widget it is therefore recommended to use a fully opaque
-    background colour, or a fully transparent one.
+        If using this widget it is therefore recommended to use
+        a fully opaque background colour or a fully transparent
+        one.
     """
 
     _window_mask = EventMask.StructureNotify | \
@@ -169,7 +171,7 @@ class Systray(window._Window, base._Widget):
             xcffib.xproto.Atom.VISUALID,
             32,
             1,
-            [self.qtile.core.conn.default_screen.default_visual.visual_id]
+            [self.drawer._visual.visual_id]
         )
 
     def handle_ClientMessage(self, event):  # noqa: N802
