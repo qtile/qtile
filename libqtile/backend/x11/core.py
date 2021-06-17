@@ -542,11 +542,12 @@ class Core(base.Core):
         for i in self.qtile.windows_map.values():
             i._reset_mask()
 
-    def create_internal(self, x: int, y: int, width: int, height: int) -> base.Internal:
+    def create_internal(self, x: int, y: int, width: int, height: int,
+                        desired_depth: Optional[int] = 32) -> base.Internal:
         assert self.qtile is not None
 
-        win = self.conn.create_window(x, y, width, height)
-        internal = window.Internal(win, self.qtile)
+        win = self.conn.create_window(x, y, width, height, desired_depth)
+        internal = window.Internal(win, self.qtile, desired_depth)
         internal.place(x, y, width, height, 0, None)
         self.qtile.manage(internal)
         return internal

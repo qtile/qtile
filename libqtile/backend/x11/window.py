@@ -998,9 +998,10 @@ class Internal(_Window, base.Internal):
         EventMask.ButtonRelease | \
         EventMask.KeyPress
 
-    def __init__(self, win, qtile):
+    def __init__(self, win, qtile, desired_depth=32):
         _Window.__init__(self, win, qtile)
         win.set_property("QTILE_INTERNAL", 1)
+        self._depth = desired_depth
 
     def create_drawer(self, width: int, height: int) -> base.Drawer:
         """Create a Drawer that draws to this window."""

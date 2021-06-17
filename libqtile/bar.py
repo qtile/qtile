@@ -25,6 +25,7 @@ import typing
 from libqtile import configurable
 from libqtile.command.base import CommandObject, ItemT
 from libqtile.log_utils import logger
+from libqtile.utils import has_transparency
 
 if typing.TYPE_CHECKING:
     from libqtile.widget.base import _Widget
@@ -215,9 +216,22 @@ class Bar(Gap, configurable.Configurable):
         else:
             # Whereas we won't have a window if we're startup up for the first time or
             # the window has been killed by us no longer using the bar's screen
-            self.window = self.qtile.core.create_internal(
-                self.x, self.y, self.width, self.height
-            )
+
+            # X11 only:
+            # To preserve correct display of SysTray widget, we need a 24-bit
+            # window where the user requests an opaque bar.
+            if self.qtile.core.name == "x11":
+                depth = 32 if has_transparency(self.background) else self.qtile.core.conn.default_screen.root_depth
+
+                self.window = self.qtile.core.create_internal(
+                    self.x, self.y, self.width, self.height, depth
+                )
+
+            else:
+                self.window = self.qtile.core.create_internal(
+                    self.x, self.y, self.width, self.height
+                )
+
             self.window.opacity = self.opacity
             self.window.unhide()
 

@@ -30,6 +30,7 @@ class Drawer(base.Drawer):
         self._xcb_surface = None
         self._pixmap = None
         self._gc = None
+        self._depth, self._visual = qtile.core.conn.default_screen._get_depth_and_visual(win._depth)  # type: ignore
 
     def finalize(self):
         self._free_xcb_surface()
@@ -89,7 +90,7 @@ class Drawer(base.Drawer):
         surface = cairocffi.XCBSurface(
             self.qtile.core.conn.conn,
             self._pixmap,
-            self.qtile.core.conn.default_screen.default_visual,
+            self._visual,
             self.width,
             self.height,
         )
@@ -103,7 +104,7 @@ class Drawer(base.Drawer):
     def _create_pixmap(self):
         pixmap = self.qtile.core.conn.conn.generate_id()
         self.qtile.core.conn.conn.core.CreatePixmap(
-            self.qtile.core.conn.default_screen.default_depth,
+            self._depth,
             pixmap,
             self._win.wid,
             self.width,
@@ -176,7 +177,7 @@ class Drawer(base.Drawer):
     def clear(self, colour):
         # If the drawer is 32 bit then we need to do some extra work to clear it
         # before drawing semi-opaque content
-        if utils.has_transparency(colour) and self.qtile.core.conn.default_screen.default_depth == 32:
+        if utils.has_transparency(colour) and self._depth == 32:
 
             # RecordingSurface won't write clear operation to surface so we
             # need to clear that surface directly.
@@ -193,7 +194,7 @@ class Drawer(base.Drawer):
 
     def set_source_rgb(self, colour):
         # Remove transparency from non-32 bit windows
-        if utils.has_transparency(colour) and self.qtile.core.conn.default_screen.default_depth != 32:
+        if utils.has_transparency(colour) and self._depth != 32:
             colour = utils.remove_transparency(colour)
 
         base.Drawer.set_source_rgb(self, colour)
