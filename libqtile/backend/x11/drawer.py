@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 from typing import TYPE_CHECKING
 
 import cairocffi
@@ -117,26 +116,27 @@ class Drawer(base.Drawer):
             self.qtile.core.conn.conn.core.FreePixmap(self._pixmap)
             self._pixmap = None
 
-    def paint_to(self, drawer):
-        # If XCBSurface has been invalidated, we need to draw now to create it
+    def _check_xcb(self):
+        # If the Drawer has been resized/invalidated we need to recreate these
         if self._xcb_surface is None:
-            self.draw()
-        drawer.ctx.set_source_surface(self._xcb_surface)
-        drawer.ctx.paint()
+            self._pixmap = self._create_pixmap()
+            self._xcb_surface = self._create_xcb_surface()
 
     def _paint(self):
-        # Only attempt to run RecordingSurface's operations if it actually has
-        # some. self.surface.ink_extents() computes the bounds of the current
-        # list of operations. If any of the bounds are not 0.0 then the surface
-        # has operations and we should paint them.
-        if any(not math.isclose(0.0, i) for i in self.surface.ink_extents()):
+        # Only attempt to run RecordingSurface's operations if ie actually need to
+        if self.needs_update:
             # Paint RecordingSurface operations to the XCBSurface
             ctx = cairocffi.Context(self._xcb_surface)
             ctx.set_source_surface(self.surface, 0, 0)
             ctx.paint()
 
-            # Clear RecordingSurface of operations
-            self._reset_surface()
+            # If the widget is not being reflected then clear RecordingSurface of operations
+            # If it is, we need to keep the RecordingSurface contents until the mirrors have
+            # been drawn
+            if not self.mirrors:
+                self._reset_surface()
+
+            self.previous_rect = self.current_rect
 
     def draw(
         self,
@@ -145,14 +145,16 @@ class Drawer(base.Drawer):
         width: Optional[int] = None,
         height: Optional[int] = None,
     ):
+
+        self.current_rect = (offsetx, offsety, width, height)
+
         # If this is our first draw, create the gc
         if self._gc is None:
             self._gc = self._create_gc()
 
-        # If the Drawer has been resized/invalidated we need to recreate these
-        if self._xcb_surface is None:
-            self._pixmap = self._create_pixmap()
-            self._xcb_surface = self._create_xcb_surface()
+        # Check if we need to re-create XCBSurface
+        # This may not be needed now that we call in `clear`
+        self._check_xcb()
 
         # paint stored operations(if any) to XCBSurface
         self._paint()
@@ -175,26 +177,21 @@ class Drawer(base.Drawer):
                     return v
 
     def clear(self, colour):
-        # If the drawer is 32 bit then we need to do some extra work to clear it
-        # before drawing semi-opaque content
-        if utils.has_transparency(colour) and self._depth == 32:
 
-            # RecordingSurface won't write clear operation to surface so we
-            # need to clear that surface directly.
-            if getattr(self, "_xcb_surface", None) is not None:
-                ctx = cairocffi.Context(self._xcb_surface)
-                ctx.save()
-                ctx.set_operator(cairocffi.OPERATOR_CLEAR)
-                ctx.paint()
-                ctx.restore()
+        # Check if we need to re-create XCBSurface
+        self._check_xcb()
 
-        self.set_source_rgb(colour)
-        self.ctx.rectangle(0, 0, self.width, self.height)
-        self.ctx.fill()
+        # Draw background straigt to XCB surface
+        ctx = cairocffi.Context(self._xcb_surface)
+        ctx.save()
+        ctx.set_operator(cairocffi.OPERATOR_SOURCE)
+        self.set_source_rgb(colour, ctx=ctx)
+        ctx.paint()
+        ctx.restore()
 
-    def set_source_rgb(self, colour):
+    def set_source_rgb(self, colour, ctx=None):
         # Remove transparency from non-32 bit windows
         if utils.has_transparency(colour) and self._depth != 32:
             colour = utils.remove_transparency(colour)
 
-        base.Drawer.set_source_rgb(self, colour)
+        base.Drawer.set_source_rgb(self, colour, ctx)
