@@ -424,6 +424,10 @@ class Drawer:
     We stage drawing operations locally in memory using a cairo RecordingSurface before
     finally drawing all operations to a backend-specific target.
     """
+    # We need to track extent of drawing to know when to redraw.
+    previous_rect: Tuple[int, int, Optional[int], Optional[int]]
+    current_rect: Tuple[int, int, Optional[int], Optional[int]]
+
     def __init__(self, qtile: Qtile, win: Internal, width: int, height: int):
         self.qtile = qtile
         self._win = win
@@ -434,12 +438,28 @@ class Drawer:
         self.ctx: cairocffi.Context
         self._reset_surface()
 
-        self.clear((0, 0, 1))
+        self.mirrors: Dict[Drawer, bool] = {}
+
+        self.current_rect = (0, 0, 0, 0)
+        self.previous_rect = (-1, -1, -1, -1)
 
     def finalize(self):
         """Destructor/Clean up resources"""
         self.surface = None
         self.ctx = None
+
+    def add_mirror(self, mirror: Drawer):
+        """Keep details of other drawers that are mirroring this one."""
+        self.mirrors[mirror] = False
+
+    def reset_mirrors(self):
+        """Reset the drawn status of mirrors."""
+        self.mirrors = {m: False for m in self.mirrors}
+
+    @property
+    def mirrors_drawn(self) -> bool:
+        """Returns True if all mirrors have been drawn with the current surface."""
+        return all(v for v in self.mirrors.values())
 
     @property
     def width(self) -> int:
@@ -465,8 +485,27 @@ class Drawer:
         )
         self.ctx = self.new_ctx()
 
+    @property
+    def needs_update(self) -> bool:
+        # We can't test for the surface's ink_extents here on its own as a completely
+        # transparent background would not show any extents but we may still need to
+        # redraw (e.g. if a Spacer widget has changed position and/or size)
+        # Check if the size of the area being drawn has changed
+        rect_changed = self.current_rect != self.previous_rect
+
+        # Check if draw has content (would be False for completely transparent drawer)
+        ink_changed = any(not math.isclose(0.0, i) for i in self.surface.ink_extents())
+
+        return ink_changed or rect_changed
+
     def paint_to(self, drawer: Drawer) -> None:
-        """Paint to another Drawer instance"""
+        drawer.ctx.set_source_surface(self.surface)
+        drawer.ctx.paint()
+        self.mirrors[drawer] = True
+
+        if self.mirrors_drawn:
+            self._reset_surface()
+            self.reset_mirrors()
 
     def _rounded_rect(self, x, y, width, height, linewidth):
         aspect = 1.0
@@ -533,13 +572,17 @@ class Drawer:
     def new_ctx(self):
         return pangocffi.patch_cairo_context(cairocffi.Context(self.surface))
 
-    def set_source_rgb(self, colour: Union[ColorType, List[ColorType]]):
+    def set_source_rgb(self, colour: Union[ColorType, List[ColorType]], ctx: cairocffi.Context = None):
+        # If an alternate context is not provided then we draw to the
+        # drawer's default context
+        if ctx is None:
+            ctx = self.ctx
         if isinstance(colour, list):
             if len(colour) == 0:
                 # defaults to black
-                self.ctx.set_source_rgba(*utils.rgb("#000000"))
+                ctx.set_source_rgba(*utils.rgb("#000000"))
             elif len(colour) == 1:
-                self.ctx.set_source_rgba(*utils.rgb(colour[0]))
+                ctx.set_source_rgba(*utils.rgb(colour[0]))
             else:
                 linear = cairocffi.LinearGradient(0.0, 0.0, 0.0, self.height)
                 step_size = 1.0 / (len(colour) - 1)
@@ -550,9 +593,9 @@ class Drawer:
                         rgb_col[3] = 1
                     linear.add_color_stop_rgba(step, *rgb_col)
                     step += step_size
-                self.ctx.set_source(linear)
+                ctx.set_source(linear)
         else:
-            self.ctx.set_source_rgba(*utils.rgb(colour))
+            ctx.set_source_rgba(*utils.rgb(colour))
 
     def clear(self, colour):
         self.set_source_rgb(colour)
