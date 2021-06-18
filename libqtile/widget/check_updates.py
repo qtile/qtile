@@ -52,6 +52,8 @@ class CheckUpdates(base.ThreadPoolText):
         self.cmd_dict = {"Arch": ("pacman -Qu", 0),
                          "Arch_checkupdates": ("checkupdates", 0),
                          "Arch_Sup": ("pacman -Sup", 1),
+                         "Arch_paru": ("paru -Qu", 0),
+                         "Arch_paru_Sup": ("paru -Sup", 0),
                          "Arch_yay": ("yay -Qu", 0),
                          "Debian": ("apt-show-versions -u -b", 0),
                          "Gentoo_eix": ("EIX_LIMIT=0 eix -u# --world", 0),
