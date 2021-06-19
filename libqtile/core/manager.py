@@ -341,12 +341,13 @@ class Qtile(CommandObject):
     ) -> None:
         self.core.painter.paint(screen, image_path, mode)
 
-    def process_key_event(self, keysym: int, mask: int) -> None:
+    def process_key_event(self, keysym: int, mask: int) -> bool:
         key = self.keys_map.get((keysym, mask), None)
         if key is None:
             logger.info("Ignoring unknown keysym: {keysym}, mask: {mask}".format(keysym=keysym, mask=mask))
-            return
+            return False
 
+        handled = False
         if isinstance(key, KeyChord):
             self.grab_chord(key)
         else:
@@ -357,9 +358,11 @@ class Qtile(CommandObject):
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("KB command error %s: %s" % (cmd.name, val))
+                    handled = True
             if self.chord_stack and (self.chord_stack[-1].mode == "" or key.key == "Escape"):
                 self.cmd_ungrab_chord()
-            return
+                handled = True
+        return handled
 
     def grab_keys(self) -> None:
         """Re-grab all of the keys configured in the key map
