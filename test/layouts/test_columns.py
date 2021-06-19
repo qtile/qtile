@@ -22,6 +22,7 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
+from test import conftest
 from test.conftest import no_xinerama
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
@@ -36,6 +37,8 @@ class ColumnsConfig(Config):
     ]
     layouts = [
         layout.Columns(num_columns=3),
+        layout.Columns(margin_on_single=10),
+        layout.Columns(margin_on_single=[10, 20, 30, 40]),
     ]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
@@ -139,3 +142,31 @@ def test_columns_swap_column_right(manager):
     assert columns[0]['clients'] == ['2']
     assert columns[1]['clients'] == ['1']
     assert columns[2]['clients'] == ['4', '3']
+
+
+@columns_config
+def test_columns_margins_single(manager):
+    manager.test_window("1")
+
+    # no margin
+    info = manager.c.window.info()
+    assert info['x'] == 0
+    assert info['y'] == 0
+    assert info['width'] == conftest.WIDTH
+    assert info['height'] == conftest.HEIGHT
+
+    # single margin for all sides
+    manager.c.next_layout()
+    info = manager.c.window.info()
+    assert info['x'] == 10
+    assert info['y'] == 10
+    assert info['width'] == conftest.WIDTH - 20
+    assert info['height'] == conftest.HEIGHT - 20
+
+    # one margin for each side (N E S W)
+    manager.c.next_layout()
+    info = manager.c.window.info()
+    assert info['x'] == 40
+    assert info['y'] == 10
+    assert info['width'] == conftest.WIDTH - 60
+    assert info['height'] == conftest.HEIGHT - 40
