@@ -462,7 +462,7 @@ class Core(base.Core):
                     modmask | amask,
                     code,
                     xcffib.xproto.GrabMode.Async,
-                    xcffib.xproto.GrabMode.Async,
+                    xcffib.xproto.GrabMode.Sync,
                 )
         return keysym, modmask & self._valid_mask
 
@@ -592,11 +592,22 @@ class Core(base.Core):
             except IndexError:
                 logger.info("Invalid Desktop Index: %s" % index)
 
-    def handle_KeyPress(self, event) -> None:  # noqa: N802
+    def handle_KeyPress(self, event, *, simulated=False) -> None:  # noqa: N802
         assert self.qtile is not None
 
         keysym = self.conn.code_to_syms[event.detail][0]
-        self.qtile.process_key_event(keysym, event.state & self._valid_mask)
+        handled = self.qtile.process_key_event(keysym, event.state & self._valid_mask)
+
+        if simulated:
+            # Simulated key press are currently for internal use only
+            return
+
+        if handled:
+            # Swallow the event
+            self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.SyncKeyboard, event.time)
+        else:
+            # Forward the event to any focussed client
+            self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayKeyboard, event.time)
 
     def handle_ButtonPress(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
@@ -730,7 +741,7 @@ class Core(base.Core):
         d = DummyEv()
         d.detail = self.conn.keysym_to_keycode(keysym)[0]
         d.state = modmasks
-        self.handle_KeyPress(d)
+        self.handle_KeyPress(d, simulated=True)
 
     def focus_by_click(self, e, window=None):
         """Bring a window to the front

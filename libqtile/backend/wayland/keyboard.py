@@ -105,7 +105,7 @@ class Keyboard(HasListeners):
             mods = self.keyboard.modifier
             for keysym in keysyms:
                 if (keysym, mods) in self.grabbed_keys:
-                    self.qtile.process_key_event(keysym, mods)
-                    return
+                    if self.qtile.process_key_event(keysym, mods):
+                        return
 
         self.seat.keyboard_notify_key(event)
