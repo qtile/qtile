@@ -769,7 +769,7 @@ class _Window:
             if "PMaxSize" in flags:
                 width = min(width, self.hints.get('max_width', 0)) or width
                 height = min(height, self.hints.get('max_height', 0)) or height
-            if "PAspect" in flags:
+            if "PAspect" in flags and self._float_state == FloatStates.FLOATING:
                 min_aspect = self.hints["min_aspect"]
                 max_aspect = self.hints["max_aspect"]
                 if width / height < min_aspect[0] / min_aspect[1]:

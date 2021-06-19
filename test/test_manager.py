@@ -696,6 +696,18 @@ def test_default_float(manager):
     try:
         manager.create_window(size_hints)
         assert manager.c.window.info()['floating'] is True
+        info = manager.c.window.info()
+        assert info['width'] == 10
+        assert info['height'] == 10
+        manager.c.window.toggle_floating()
+        assert manager.c.window.info()['floating'] is False
+        info = manager.c.window.info()
+        assert info['width'] == 398
+        assert info['height'] == 578
+        manager.c.window.toggle_fullscreen()
+        info = manager.c.window.info()
+        assert info['width'] == 800
+        assert info['height'] == 600
     finally:
         w.kill_client()
         conn.finalize()
