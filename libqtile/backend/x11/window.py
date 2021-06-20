@@ -1096,7 +1096,10 @@ class Internal(_Window, base.Internal):
         return Drawer(self.qtile, self, width, height)
 
     def kill(self):
-        self.qtile.core.conn.conn.core.DestroyWindow(self.window.wid)
+        if self.window.wid in self.qtile.windows_map:
+            # It will be present during config reloads; absent during shutdown as this
+            # will follow graceful_shutdown
+            self.qtile.core.conn.conn.core.DestroyWindow(self.window.wid)
 
     def cmd_kill(self):
         self.kill()
@@ -1231,20 +1234,7 @@ class Window(_Window, base.Window):
     def __init__(self, window, qtile):
         _Window.__init__(self, window, qtile)
         self.update_name()
-        # add to group by position according to _NET_WM_DESKTOP property
-        group = None
-        index = window.get_wm_desktop()
-        if index is not None and index < len(qtile.groups):
-            group = qtile.groups[index]
-        elif index is None:
-            transient_for = self.is_transient_for()
-            if transient_for is not None:
-                group = transient_for._group
-        if group is not None:
-            group.add(self)
-            self._group = group
-            if group != qtile.current_screen.group:
-                self.hide()
+        self.set_group()
 
         # add window to the save-set, so it gets mapped when qtile dies
         qtile.core.conn.conn.core.ChangeSaveSet(SetMode.Insert, self.window.wid)
@@ -1478,6 +1468,22 @@ class Window(_Window, base.Window):
             self.width = w
             self.height = h
         self._reconfigure_floating(new_float_state=new_float_state)
+
+    def set_group(self):
+        # add to group by position according to _NET_WM_DESKTOP property
+        group = None
+        index = self.window.get_wm_desktop()
+        if index is not None and index < len(self.qtile.groups):
+            group = self.qtile.groups[index]
+        elif index is None:
+            transient_for = self.is_transient_for()
+            if transient_for is not None:
+                group = transient_for._group
+        if group is not None:
+            group.add(self)
+            self._group = group
+            if group != self.qtile.current_screen.group:
+                self.hide()
 
     def togroup(self, group_name=None, *, switch_group=False):
         """Move window to a specified group
