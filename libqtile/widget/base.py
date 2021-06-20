@@ -208,6 +208,8 @@ class _Widget(CommandObject, configurable.Configurable):
         pass
 
     def finalize(self):
+        if hasattr(self, 'future'):
+            self.future.cancel()
         if hasattr(self, 'layout') and self.layout:
             self.layout.finalize()
         self.drawer.finalize()
@@ -289,8 +291,9 @@ class _Widget(CommandObject, configurable.Configurable):
         """
             This method calls either ``.call_later`` with given arguments.
         """
-        return self.qtile.call_later(seconds, self._wrapper, method,
-                                     *method_args)
+        self.future = self.qtile.call_later(
+            seconds, self._wrapper, method, *method_args
+        )
 
     def call_process(self, command, **kwargs):
         """
@@ -566,8 +569,8 @@ class ThreadPoolText(_TextBox):
             else:
                 logger.warning('poll() returned None, not rescheduling')
 
-        future = self.qtile.run_in_executor(self.poll)
-        future.add_done_callback(on_done)
+        self.future = self.qtile.run_in_executor(self.poll)
+        self.future.add_done_callback(on_done)
 
     def poll(self):
         pass
