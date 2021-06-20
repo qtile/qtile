@@ -29,19 +29,17 @@ class QtileState:
     Primarily used for restoring state across restarts; any additional state
     which doesn't fit nicely into X atoms can go here.
     """
-    def __init__(self, qtile):
-        # Note: window state is saved and restored via _NET_WM_STATE, so
-        # the only thing we need to restore here is the layout and screen
-        # configurations.
+    def __init__(self, qtile, restart=True):
         self.groups = []
         self.screens = {}
         self.current_screen = 0
         self.scratchpads = {}
         self.orphans = []
+        self.restart = restart  # True when restarting, False when config reloading
 
         for group in qtile.groups:
             if isinstance(group, ScratchPad):
-                self.scratchpads[group.name] = group.get_state()
+                self.scratchpads[group.name] = group.get_state(restart)
             else:
                 self.groups.append((group.name, group.layout.name, group.label))
 
@@ -71,13 +69,17 @@ class QtileState:
 
         for group in qtile.groups:
             if isinstance(group, ScratchPad) and group.name in self.scratchpads:
-                orphans = group.restore_state(self.scratchpads.pop(group.name))
+                orphans = group.restore_state(self.scratchpads.pop(group.name), self.restart)
                 self.orphans.extend(orphans)
         for sp_state in self.scratchpads.values():
             for _, wid, _ in sp_state:
                 self.orphans.append(wid)
         if self.orphans:
-            hook.subscribe.client_new(self.handle_orphan_dropdowns)
+            if self.restart:
+                hook.subscribe.client_new(self.handle_orphan_dropdowns)
+            else:
+                for wid in self.orphans:
+                    qtile.windows_map[wid].group = qtile.current_group
 
         qtile.focus_screen(self.current_screen)
 

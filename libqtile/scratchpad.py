@@ -215,7 +215,7 @@ class ScratchPad(group._Group):
         group._Group.__init__(self, name, label=label)
         self._dropdownconfig = {dd.name: dd for dd in dropdowns} if dropdowns is not None else {}
         self.dropdowns: Dict[str, DropDownToggler] = {}
-        self._spawned: Dict[int, str] = {}
+        self._spawned: Dict[str, Match] = {}
         self._to_hide: List[str] = []
         self._single = single
 
@@ -346,30 +346,49 @@ class ScratchPad(group._Group):
         else:
             raise ValueError('No DropDown named "%s".' % name)
 
-    def get_state(self):
+    def get_state(self, restart):
         """
         Get the state of existing dropdown windows. Used for restoring state across
-        Qtile restarts.
+        Qtile restarts (`restart` == True) or config reloads (`restart` == False).
         """
         state = []
         for name, dd in self.dropdowns.items():
-            client_wid = dd.window.window.wid
+            client_wid = dd.window.wid
             state.append((name, client_wid, dd.visible))
         return state
 
-    def restore_state(self, state):
+    def restore_state(self, state, restart: bool):
         """
         Restore the state of existing dropdown windows. Used for restoring state across
-        Qtile restarts.
+        Qtile restarts (`restart` == True) or config reloads (`restart` == False).
         """
         orphans = []
         for name, wid, visible in state:
             if name in self._dropdownconfig:
-                self._spawned[name] = Match(wid=wid)
-                if not visible:
-                    self._to_hide.append(name)
+                if restart:
+                    self._spawned[name] = Match(wid=wid)
+                    if not visible:
+                        self._to_hide.append(name)
+                else:
+                    # We are reloading the config; manage the clients now
+                    self.dropdowns[name] = DropDownToggler(
+                        self.qtile.windows_map[wid],
+                        self.name,
+                        self._dropdownconfig[name],
+                    )
+                    if not visible:
+                        self.dropdowns[name].hide()
             else:
                 orphans.append(wid)
+
         if self._spawned:
+            # Handle re-managed clients after restarting
+            assert restart
             hook.subscribe.client_new(self.on_client_new)
+
+        if not restart and self.dropdowns:
+            # We're only reloading so don't have these hooked via self.on_client_new
+            hook.subscribe.client_killed(self.on_client_killed)
+            hook.subscribe.float_change(self.on_float_change)
+
         return orphans

@@ -135,7 +135,7 @@ class Qtile(CommandObject):
                 self.groups.append(sp)
                 self.groups_map[sp.name] = sp
 
-        self._process_screens()
+        self._process_screens(reloading=not initial)
 
         # Map and Grab keys
         for key in self.config.keys:
@@ -250,7 +250,7 @@ class Qtile(CommandObject):
         Reload the configuration file.
         """
         logger.debug('Reloading the configuration file')
-        self._state = QtileState(self)
+        self._state = QtileState(self, restart=False)
         self._finalize_configurables()
         hook.clear()
         self.ungrab_keys()
@@ -286,7 +286,7 @@ class Qtile(CommandObject):
         self._finalize_configurables()
         self.core.finalize()
 
-    def _process_screens(self) -> None:
+    def _process_screens(self, reloading=False) -> None:
         current_groups = [s.group for s in self.screens if hasattr(s, "group")]
         screens = []
 
@@ -310,8 +310,9 @@ class Qtile(CommandObject):
             else:
                 scr = config[i]
 
-            if not hasattr(self, "current_screen"):
+            if not hasattr(self, "current_screen") or reloading:
                 self.current_screen = scr
+                reloading = False
 
             if len(self.groups) < i + 1:
                 name = f"autogen_{i + 1}"
