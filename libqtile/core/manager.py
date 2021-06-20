@@ -69,7 +69,6 @@ if TYPE_CHECKING:
 class Qtile(CommandObject):
     """This object is the `root` of the command graph"""
 
-    # These are assigned values in _configure
     current_screen: Screen
     dgroups: DGroups
     _eventloop: asyncio.AbstractEventLoop
@@ -85,7 +84,7 @@ class Qtile(CommandObject):
         self.core = kore
         self.config = config
         self.no_spawn = no_spawn
-        self._state = state
+        self._state: Optional[Union[QtileState, str]] = state
         self.socket_path = socket_path
 
         self._drag: Optional[Tuple] = None
@@ -107,7 +106,7 @@ class Qtile(CommandObject):
 
         self.server = IPCCommandServer(self)
 
-    def load_config(self) -> None:
+    def load_config(self, initial=False) -> None:
         try:
             self.config.load()
             self.config.validate()
@@ -119,10 +118,8 @@ class Qtile(CommandObject):
 
         self.dgroups = DGroups(self, self.config.groups, self.config.dgroups_key_binder)
 
-        if self.config.widget_defaults:
-            _Widget.global_defaults = self.config.widget_defaults
-        if self.config.extension_defaults:
-            _Extension.global_defaults = self.config.extension_defaults
+        _Widget.global_defaults = self.config.widget_defaults
+        _Extension.global_defaults = self.config.extension_defaults
 
         for installed_extension in _Extension.installed_extensions:
             installed_extension._configure(self)
@@ -138,20 +135,7 @@ class Qtile(CommandObject):
                 self.groups.append(sp)
                 self.groups_map[sp.name] = sp
 
-    def dump_state(self, buf) -> None:
-        try:
-            pickle.dump(QtileState(self), buf, protocol=0)
-        except:  # noqa: E722
-            logger.exception('Unable to pickle qtile state')
-
-    def _configure(self) -> None:
-        """
-        This is the part of init that needs to happen after the event loop is
-        fully set up. asyncio is required to listen and respond to backend
-        events.
-        """
         self._process_screens()
-        self.current_screen = self.screens[0]
 
         # Map and Grab keys
         for key in self.config.keys:
@@ -160,23 +144,28 @@ class Qtile(CommandObject):
         for button in self.config.mouse:
             self.grab_button(button)
 
-        # no_spawn is set when we are restarting; we only want to run the
+        # no_spawn is set after the very first startup; we only want to run the
         # startup hook once.
         if not self.no_spawn:
             hook.fire("startup_once")
+            self.no_spawn = True
         hook.fire("startup")
 
         if self._state:
-            try:
-                with open(self._state, 'rb') as f:
-                    st = pickle.load(f)
-                st.apply(self)
-            except:  # noqa: E722
-                logger.exception("failed restoring state")
-            finally:
-                os.remove(self._state)
+            if isinstance(self._state, str):
+                try:
+                    with open(self._state, 'rb') as f:
+                        st = pickle.load(f)
+                        st.apply(self)
+                except:  # noqa: E722
+                    logger.exception("failed restoring state")
+                finally:
+                    os.remove(self._state)
+            else:
+                self._state.apply(self)
 
-        self.core.scan()
+        self.core.distribute_windows(initial)
+
         if self._state:
             for screen in self.screens:
                 screen.group.layout_all()
@@ -187,7 +176,8 @@ class Qtile(CommandObject):
         if self.config.reconfigure_screens:
             hook.subscribe.screen_change(self.cmd_reconfigure_screens)
 
-        hook.fire("startup_complete")
+        if initial:
+            hook.fire("startup_complete")
 
     def _prepare_socket_path(
         self,
@@ -223,8 +213,7 @@ class Qtile(CommandObject):
                 self._prepare_socket_path(self.socket_path),
                 self.server.call,
             ):
-                self.load_config()
-                self._configure()
+                self.load_config(initial=True)
                 await self._stopped_event.wait()
         finally:
             self.finalize()
@@ -250,10 +239,38 @@ class Qtile(CommandObject):
         if self._stopped_event is not None:
             self._stopped_event.set()
 
-    def finalize(self) -> None:
+    def dump_state(self, buf) -> None:
+        try:
+            pickle.dump(QtileState(self), buf, protocol=0)
+        except:  # noqa: E722
+            logger.exception('Unable to pickle qtile state')
+
+    def cmd_reload_config(self) -> None:
+        """
+        Reload the configuration file.
+        """
+        logger.debug('Reloading the configuration file')
+        self._state = QtileState(self)
+        self._finalize_configurables()
+        hook.clear()
+        self.ungrab_keys()
+        self.chord_stack.clear()
+        self.core.ungrab_buttons()
+        self.mouse_map.clear()
+        self.groups_map.clear()
+        self.groups.clear()
+        self.screens.clear()
+        self.load_config()
+
+    def _finalize_configurables(self) -> None:
+        """
+        Finalize objects that are instantiated within the config file. In addition to
+        shutdown, these are finalized and then regenerated when reloading the config.
+        """
         try:
             for widget in self.widgets_map.values():
                 widget.finalize()
+            self.widgets_map.clear()
 
             for layout in self.config.layouts:
                 layout.finalize()
@@ -263,12 +280,14 @@ class Qtile(CommandObject):
                     gap.finalize()
         except:  # noqa: E722
             logger.exception('exception during finalize')
-        finally:
-            hook.clear()
-            self.core.finalize()
+        hook.clear()
+
+    def finalize(self) -> None:
+        self._finalize_configurables()
+        self.core.finalize()
 
     def _process_screens(self) -> None:
-        current_groups = [screen.group for screen in self.screens if screen.group]
+        current_groups = [s.group for s in self.screens if hasattr(s, "group")]
         screens = []
 
         if hasattr(self.config, 'fake_screens'):
@@ -1027,7 +1046,7 @@ class Qtile(CommandObject):
         try:
             self.config.load()
         except Exception as error:
-            send_notification("Configuration check", str(error.__context__))
+            send_notification("Configuration check", str(error))
         else:
             send_notification("Configuration check", "No error found!")
 
@@ -1037,7 +1056,7 @@ class Qtile(CommandObject):
             self.config.load()
         except Exception as error:
             logger.error("Preventing restart because of a configuration error: {}".format(error))
-            send_notification("Configuration error", str(error.__context__))
+            send_notification("Configuration error", str(error))
             return
         self.restart()
 

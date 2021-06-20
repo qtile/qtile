@@ -563,6 +563,42 @@ class Core(base.Core, wlrq.HasListeners):
             self.event_loop.dispatch(0)
             self.display.flush_clients()
 
+    def distribute_windows(self, initial: bool) -> None:
+        if initial:
+            # This backend does not support restarting
+            return
+
+        assert self.qtile is not None
+
+        for win in self.qtile.windows_map.values():
+            if isinstance(win, (window.Internal, window.Static)):
+                continue
+
+            group = None
+            if win.group:
+                if win.group.name in self.qtile.groups_map:
+                    # Put window on group with same name as its old group if one exists
+                    group = self.qtile.groups_map[win.group.name]
+                else:
+                    # Otherwise place it on the group at the same index
+                    for i, old_group in self.qtile._state.groups:  # type: ignore
+                        if i < len(self.qtile.groups):
+                            name = old_group[0]
+                            if win.group.name == name:
+                                group = self.qtile.groups[i]
+            if group is None:
+                # Falling back to current group if none found
+                group = self.qtile.current_group
+            if win.group and win in win.group.windows:
+                # It might not be in win.group.windows depending on how group state
+                # changed across a config reload
+                win.group.remove(win)
+            group.add(win)
+            if group == self.qtile.current_group:
+                win.unhide()
+            else:
+                win.hide()
+
     def new_wid(self) -> int:
         """Get a new unique window ID"""
         assert self.qtile is not None

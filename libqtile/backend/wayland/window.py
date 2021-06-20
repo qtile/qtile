@@ -730,7 +730,10 @@ class Internal(base.Internal, Window):
 
     def kill(self) -> None:
         self.hide()
-        del self.qtile.windows_map[self.wid]
+        if self.wid in self.qtile.windows_map:
+            # It will be present during config reloads; absent during shutdown as this
+            # will follow graceful_shutdown
+            del self.qtile.windows_map[self.wid]
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None, respect_hints=False):

@@ -340,7 +340,7 @@ def test_incompatible_widget(manager_nospawn):
 
     try:
         with pytest.raises(libqtile.confreader.ConfigError):
-            m._configure()
+            m.load_config()
     finally:
         m.core.finalize()
 

@@ -27,6 +27,7 @@
 # SOFTWARE.
 
 import logging
+from pathlib import Path
 
 import pytest
 
@@ -44,6 +45,8 @@ from libqtile.lazy import lazy
 from test.conftest import dualmonitor, multimonitor
 from test.helpers import BareConfig, Retry, assert_window_died
 from test.layouts.layout_utils import assert_focused
+
+configs_dir = Path(__file__).resolve().parent / "configs"
 
 
 class ManagerConfig(Config):
@@ -1078,3 +1081,66 @@ def test_switch_groups_cursor_warp(manager_nospawn):
     assert_focused(manager_nospawn, "three")
     assert manager_nospawn.c.group.info()["name"] == "b"
     assert manager_nospawn.c.layout.info()["name"] == "max"
+
+
+def test_cmd_reload_config(manager_nospawn):
+    # The test config uses presence of Qtile.test_data to change config values
+    # Here we just want to check configurables are being updated within the live Qtile
+    manager_nospawn.start(lambda: BareConfig(file_path=configs_dir / "reloading.py"))
+
+    # Original config
+    assert manager_nospawn.c.eval("len(self.keys_map)") == (True, '1')
+    assert manager_nospawn.c.eval("len(self.mouse_map)") == (True, '1')
+    assert "".join(manager_nospawn.c.groups().keys()) == "12345"
+    assert len(manager_nospawn.c.group.info()['layouts']) == 1
+    assert manager_nospawn.c.widget['clock'].eval('self.background') == (True, 'None')
+    screens = manager_nospawn.c.screens()[0]
+    assert screens['gaps']['bottom'][3] == 24 and not screens['gaps']['top']
+    assert len(manager_nospawn.c.internal_windows()) == 1
+    assert manager_nospawn.c.eval('self.dgroups.key_binder') == (True, 'None')
+    assert manager_nospawn.c.eval('len(self.dgroups.rules)') == (True, '5')
+    manager_nospawn.test_window("one")
+    assert manager_nospawn.c.window.info()['floating'] is True
+    manager_nospawn.c.window.kill()
+    if manager_nospawn.backend.name == "x11":
+        assert manager_nospawn.c.eval('self.core.wmname') == (True, 'LG3D')
+
+    # Reload #1 - with libqtile.qtile.test_data
+    manager_nospawn.c.eval("self.test_data = 1")
+    manager_nospawn.c.reload_config()
+    assert manager_nospawn.c.eval("len(self.keys_map)") == (True, '2')
+    assert manager_nospawn.c.eval("len(self.mouse_map)") == (True, '2')
+    assert "".join(manager_nospawn.c.groups().keys()) == "123456789"
+    assert len(manager_nospawn.c.group.info()['layouts']) == 2
+    assert manager_nospawn.c.widget['currentlayout'].eval('self.background') == (True, '#ff0000')
+    screens = manager_nospawn.c.screens()[0]
+    assert screens['gaps']['top'][3] == 32 and not screens['gaps']['bottom']
+    assert len(manager_nospawn.c.internal_windows()) == 1
+    _, binder = manager_nospawn.c.eval('self.dgroups.key_binder')
+    assert 'function simple_key_binder' in binder
+    assert manager_nospawn.c.eval('len(self.dgroups.rules)') == (True, '10')
+    manager_nospawn.test_window("one")
+    assert manager_nospawn.c.window.info()['floating'] is False
+    manager_nospawn.c.window.kill()
+    if manager_nospawn.backend.name == "x11":
+        assert manager_nospawn.c.eval('self.core.wmname') == (True, 'TEST')
+
+    # Reload #2 - back to without libqtile.qtile.test_data
+    manager_nospawn.c.eval("del self.test_data")
+    manager_nospawn.c.reload_config()
+    assert manager_nospawn.c.eval("len(self.keys_map)") == (True, '1')
+    assert manager_nospawn.c.eval("len(self.mouse_map)") == (True, '1')
+    # The last four groups persist within QtileState
+    assert "".join(manager_nospawn.c.groups().keys()) == "12345"
+    assert len(manager_nospawn.c.group.info()['layouts']) == 1
+    assert manager_nospawn.c.widget['clock'].eval('self.background') == (True, 'None')
+    screens = manager_nospawn.c.screens()[0]
+    assert screens['gaps']['bottom'][3] == 24 and not screens['gaps']['top']
+    assert len(manager_nospawn.c.internal_windows()) == 1
+    assert manager_nospawn.c.eval('self.dgroups.key_binder') == (True, 'None')
+    assert manager_nospawn.c.eval('len(self.dgroups.rules)') == (True, '5')
+    manager_nospawn.test_window("one")
+    assert manager_nospawn.c.window.info()['floating'] is True
+    manager_nospawn.c.window.kill()
+    if manager_nospawn.backend.name == "x11":
+        assert manager_nospawn.c.eval('self.core.wmname') == (True, 'LG3D')

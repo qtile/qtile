@@ -176,6 +176,7 @@ class Bar(Gap, configurable.Configurable):
         self._configured = False
 
         self.queued_draws = 0
+        self.future = None
 
     def _configure(self, qtile, screen):
         Gap._configure(self, qtile, screen)
@@ -308,7 +309,10 @@ class Bar(Gap, configurable.Configurable):
         return None
 
     def finalize(self):
+        self.future.cancel()
         self.drawer.finalize()
+        self.window.kill()
+        self.widgets.clear()
 
     def kill_window(self):
         """Kill the window when the bar's screen is no longer being used."""
@@ -446,7 +450,7 @@ class Bar(Gap, configurable.Configurable):
         if not self.widgets:
             return  # calling self._actual_draw in this case would cause a NameError.
         if self.queued_draws == 0:
-            self.qtile.call_soon(self._actual_draw)
+            self.future = self.qtile.call_soon(self._actual_draw)
         self.queued_draws += 1
 
     def _actual_draw(self):

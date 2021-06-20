@@ -222,10 +222,18 @@ class Core(base.Core):
             loop.remove_reader(self.fd)
             self.fd = None
 
-    def scan(self) -> None:
-        """Scan for existing windows"""
+    def distribute_windows(self, initial) -> None:
+        """Assign windows to groups"""
         assert self.qtile is not None
 
+        if not initial:
+            # We are just reloading config
+            for win in self.qtile.windows_map.values():
+                if type(win) is window.Window:
+                    win.set_group()
+            return
+
+        # Qtile just started - scan for clients
         _, _, children = self._root.query_tree()
         for item in children:
             try:
@@ -241,8 +249,8 @@ class Core(base.Core):
                 item.unmap()
                 continue
 
-            win = self.qtile.windows_map.get(item.wid)
-            if win:
+            if item.wid in self.qtile.windows_map:
+                win = self.qtile.windows_map[item.wid]
                 win.unhide()
                 return
 
