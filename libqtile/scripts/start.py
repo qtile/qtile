@@ -28,6 +28,7 @@ from sys import exit
 import libqtile.backend
 from libqtile import confreader
 from libqtile.log_utils import logger
+from libqtile.scripts.migrate import set_migration_count
 
 
 def rename_process():
@@ -58,6 +59,7 @@ def make_qtile(options):
                                             "resources",
                                             "default_config.py")
             copyfile(default_config_path, options.configfile)
+            set_migration_count(options.configfile)
             logger.info('Copied default_config.py to %s', options.configfile)
         except Exception as e:
             logger.exception('Failed to copy default_config.py to %s: (%s)',

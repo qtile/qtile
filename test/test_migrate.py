@@ -1,4 +1,4 @@
-import hashlib
+import io
 import os
 import shutil
 import subprocess
@@ -7,7 +7,14 @@ import textwrap
 
 import pytest
 
-from libqtile.scripts.migrate import BACKUP_SUFFIX
+from libqtile.scripts.migrate import (
+    BACKUP_SUFFIX,
+    MIGRATION_COUNT_PATTERN,
+    MIGRATIONS,
+    PREVIOUS_MIGRATIONS,
+    rename_hook,
+    set_migration_count,
+)
 from test.test_check import have_mypy, run_qtile_check
 
 
@@ -17,30 +24,28 @@ def run_qtile_migrate(config):
     subprocess.check_call(argv)
 
 
-def hash_file(p):
-    with open(p) as f:
-        h = hashlib.sha256()
-        h.update(f.read().encode('utf-8'))
-        return h.digest()
-
-
 def test_migrate_default_config_noop():
     with tempfile.TemporaryDirectory() as temp:
         default_config = os.path.join(os.path.dirname(__file__), '..', 'libqtile', 'resources', 'default_config.py')
         config_path = os.path.join(temp, "config.py")
         shutil.copyfile(default_config, config_path)
+        set_migration_count(config_path)
 
-        before = hash_file(config_path)
+        before = read_file_drop_migration_count(config_path)
         run_qtile_migrate(config_path)
-        after = hash_file(config_path)
+        after = read_file_drop_migration_count(config_path)
 
         assert before == after
         assert not os.path.exists(config_path + BACKUP_SUFFIX)
 
 
-def read_file(p):
+def read_file_drop_migration_count(p):
     with open(p) as f:
-        return f.read()
+        out = io.StringIO()
+        for line in f.readlines():
+            if MIGRATION_COUNT_PATTERN.fullmatch(line) is None:
+                out.write(line)
+        return out.getvalue()
 
 
 def test_extra_files_are_ok():
@@ -53,10 +58,10 @@ def test_extra_files_are_ok():
             config.write("from libqtile.command_graph import CommandGraphRoot\n")
         run_qtile_migrate(config_file)
         assert os.path.exists(bar_py + BACKUP_SUFFIX)
-        assert read_file(bar_py) == "from libqtile.command.graph import CommandGraphRoot\n"
+        assert read_file_drop_migration_count(bar_py) == "from libqtile.command.graph import CommandGraphRoot\n"
 
 
-def check_migrate(orig, expected):
+def check_migrate(orig, expected, orig_has_migrate_count=False, expected_has_migrate_count=False):
     with tempfile.TemporaryDirectory() as tempdir:
         config_path = os.path.join(tempdir, "config.py")
         with open(config_path, "wb") as f:
@@ -66,8 +71,23 @@ def check_migrate(orig, expected):
         if have_mypy():
             assert run_qtile_check(config_path)
 
-        assert expected == read_file(config_path)
-        assert orig == read_file(config_path+BACKUP_SUFFIX)
+        if expected_has_migrate_count:
+            with open(config_path) as f:
+                assert expected == f.read()
+        else:
+            assert expected == read_file_drop_migration_count(config_path)
+        if orig_has_migrate_count:
+            with open(config_path+BACKUP_SUFFIX) as f:
+                assert orig == f.read()
+        else:
+            assert orig == read_file_drop_migration_count(config_path+BACKUP_SUFFIX)
+
+
+def test_migration_count_pattern():
+    assert MIGRATION_COUNT_PATTERN.fullmatch("foo = 34\n") is None
+    assert MIGRATION_COUNT_PATTERN.fullmatch("migration_count = 34") is not None
+    assert MIGRATION_COUNT_PATTERN.fullmatch("migration_count = 34\n") is not None
+    assert MIGRATION_COUNT_PATTERN.fullmatch("migration_count=34") is not None
 
 
 def test_window_name_change():
@@ -189,9 +209,10 @@ def test_main():
         @subscribe.startup
         def main():
             pass
-    """)
+        migration_count = {}
+    """.format(len(MIGRATIONS)+PREVIOUS_MIGRATIONS))
     with pytest.raises(FileNotFoundError):
-        check_migrate(noop, noop)
+        check_migrate(noop, noop, expected_has_migrate_count=True)
 
 
 def test_new_at_current_to_new_client_position():
@@ -214,3 +235,46 @@ def test_new_at_current_to_new_client_position():
     """)
 
     check_migrate(orig, expected)
+
+
+def fake_migration(query):
+    rename_hook(query, "foo", "bar")
+
+
+def test_migrate_count_correctly_skips():
+    orig = textwrap.dedent("""
+        foo = 43
+    """)
+
+    MIGRATIONS.append(fake_migration)
+    check_migrate(orig, orig)
+    MIGRATIONS.remove(fake_migration)
+
+
+def test_migrate_count_adds_count():
+    orig = textwrap.dedent("""
+        from libqtile.config import Match
+    """)
+
+    expected = textwrap.dedent("""
+        from libqtile.config import Match
+        migration_count = {}
+    """.format(len(MIGRATIONS)+PREVIOUS_MIGRATIONS))
+
+    check_migrate(orig, expected, expected_has_migrate_count=True)
+
+
+def test_migrate_count_sets_count():
+    orig = textwrap.dedent("""
+        from libqtile.config import Match
+
+        migration_count = 0
+    """)
+
+    expected = textwrap.dedent("""
+        from libqtile.config import Match
+
+        migration_count = {}
+    """.format(len(MIGRATIONS)+PREVIOUS_MIGRATIONS))
+
+    check_migrate(orig, expected, orig_has_migrate_count=True, expected_has_migrate_count=True)

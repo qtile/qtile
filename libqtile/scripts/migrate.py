@@ -19,6 +19,7 @@
 import filecmp
 import os
 import os.path
+import re
 import shutil
 import sys
 from glob import glob
@@ -117,6 +118,7 @@ def new_at_current_to_new_client_position(query):
 
 
 MIGRATIONS = [
+    # from 0.17.0
     client_name_updated,
     tile_master_windows_rename,
     threaded_poll_text_rename,
@@ -127,6 +129,7 @@ MIGRATIONS = [
 
 
 MODULE_RENAMES = [
+    # from 0.17.0
     ("libqtile.command_graph", "libqtile.command.graph"),
     ("libqtile.command_client", "libqtile.command.client"),
     ("libqtile.command_interface", "libqtile.command.interface"),
@@ -144,6 +147,47 @@ for (fro, to) in MODULE_RENAMES:
     MIGRATIONS.append(f)
 
 
+# Number of migrations that have been removed.
+PREVIOUS_MIGRATIONS = 0
+
+MIGRATION_COUNT_PATTERN = re.compile(r"^migration_count\s*=\s*(\d+)\s*")
+
+
+def get_migration_count(config):
+    # this is fairly horrible, but there's no guarantee we can __import__() a
+    # config file in the current version, since it may not have been migrated
+    # yet. so we parse it manually :)
+    with open(config) as f:
+        for line in f.readlines():
+            match = MIGRATION_COUNT_PATTERN.fullmatch(line)
+            if match is not None:
+                return int(match.group(1))
+
+    # didn't find it, so the file hasn't been migrated before
+    return 0
+
+
+def set_migration_count(config):
+    new_migration_count = "migration_count = {}".format(PREVIOUS_MIGRATIONS + len(MIGRATIONS))
+    written = False
+    with open(config, "r+") as f:
+        lines = f.readlines()
+        f.seek(0)
+        for line in lines:
+            match = MIGRATION_COUNT_PATTERN.fullmatch(line)
+            if match is not None:
+                written = True
+                f.write(new_migration_count)
+                f.write("\n")
+            else:
+                f.write(line)
+
+    if not written:
+        with open(config, "a") as f:
+            f.write(new_migration_count)
+            f.write("\n")
+
+
 def file_and_backup(config_dir):
     for py in glob(os.path.join(config_dir, "*.py")):
         backup = py + BACKUP_SUFFIX
@@ -156,13 +200,21 @@ def do_migrate(args):
         print("install it and try again")
         sys.exit(1)
 
+    migration_count = get_migration_count(args.config)
+
     config_dir = os.path.dirname(args.config)
     for py, backup in file_and_backup(config_dir):
         shutil.copyfile(py, backup)
 
-    for m in MIGRATIONS:
+    # we only want to do migrations that haven't been done before
+    needed_migrations = MIGRATIONS[migration_count-PREVIOUS_MIGRATIONS:]
+    for m in needed_migrations:
         q = bowler.Query(config_dir)
         m(q).execute(interactive=args.interactive, write=True)
+
+    # if we actually did some migrations, let's update the migration_count
+    if len(needed_migrations) > 0:
+        set_migration_count(args.config)
 
     changed = False
     for py, backup in file_and_backup(config_dir):
