@@ -1053,6 +1053,9 @@ class Qtile(CommandObject):
 
     def cmd_restart(self) -> None:
         """Restart qtile"""
+        if not self.core.supports_restarting:
+            raise CommandError(f"Backend does not support restarting: {self.core.name}")
+
         try:
             self.config.load()
         except Exception as error:
