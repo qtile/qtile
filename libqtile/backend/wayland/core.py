@@ -88,6 +88,8 @@ if typing.TYPE_CHECKING:
 
 
 class Core(base.Core, wlrq.HasListeners):
+    supports_restarting: bool = False
+
     def __init__(self):
         """Setup the Wayland core backend"""
         self.qtile: Optional[Qtile] = None

@@ -23,6 +23,7 @@ if typing.TYPE_CHECKING:
 
 class Core(CommandObject, metaclass=ABCMeta):
     painter: Any
+    supports_restarting: bool = True
 
     @property
     @abstractmethod
