@@ -26,10 +26,10 @@ Default Configuration
 The `default configuration
 <https://github.com/qtile/qtile/blob/master/libqtile/resources/default_config.py>`_
 is invoked when qtile cannot find a configuration file. In addition, if qtile
-is restarted via qshell, qtile will load the default configuration if the
-config file it finds has some kind of error in it. The documentation below
-describes the configuration lookup process, as well as what the key bindings
-are in the default config.
+is restarted or the config is reloaded, qtile will load the default
+configuration if the config file it finds has some kind of error in it. The
+documentation below describes the configuration lookup process, as well as what
+the key bindings are in the default config.
 
 The default config is not intended to be suitable for all users; it's mostly
 just there so qtile does /something/ when fired up, and so that it doesn't
@@ -47,7 +47,7 @@ key. The basic operation is:
   layout)
 * ``mod + <tab>``: switch layouts
 * ``mod + w``: close window
-* ``mod + <ctrl> + r``: restart qtile with new config
+* ``mod + <ctrl> + r``: reload the config
 * ``mod + <group name>``: switch to that group
 * ``mod + <shift> + <group name>``: send a window to that group
 * ``mod + <enter>``: start terminal guessed by ``libqtile.utils.guess_terminal``
