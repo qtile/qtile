@@ -42,13 +42,13 @@ want to look at the ``startup`` and ``startup_once`` hooks. ``startup`` is
 emitted every time Qtile starts (including restarts), whereas ``startup_once``
 is only emitted on the very first startup.
 
-Let's create a file ``~/.config/qtile/autostart.sh`` that will set our desktop
-wallpaper and start a few programs when Qtile first runs.
+Let's create an executable file ``~/.config/qtile/autostart.sh`` that will
+start a few programs when Qtile first runs. Remember to `chmod +x` this file so
+that it can be executed.
 
 .. code-block:: bash
 
     #!/bin/sh
-    feh --bg-scale ~/images/wallpaper.jpg &
     pidgin &
     dropbox start &
 
