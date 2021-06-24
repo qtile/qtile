@@ -161,7 +161,7 @@ class Core(base.Core):
 
         numlock_code = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])[0]
         self._numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(numlock_code), 0)
-        self._valid_mask = ~(self._numlock_mask | xcbq.ModMasks["lock"])
+        self._valid_mask = ~(self._numlock_mask | xcbq.ModMasks["lock"] | xcbq.AllButtonsMask)
 
     @property
     def name(self):
@@ -602,9 +602,7 @@ class Core(base.Core):
         assert self.qtile is not None
 
         button_code = event.detail
-        state = event.state
-        state |= self._numlock_mask
-        state &= self._valid_mask
+        state = event.state & self._valid_mask
 
         if not event.child:  # The client's handle_ButtonPress will focus it
             self.focus_by_click(event)
@@ -618,8 +616,7 @@ class Core(base.Core):
         assert self.qtile is not None
 
         button_code = event.detail
-        state = event.state | self._numlock_mask
-        state &= self._valid_mask & ~xcbq.AllButtonsMask
+        state = event.state & self._valid_mask
         self.qtile.process_button_release(button_code, state)
 
     def handle_MotionNotify(self, event) -> None:  # noqa: N802
