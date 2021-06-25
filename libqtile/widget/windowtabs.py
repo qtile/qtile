@@ -24,6 +24,7 @@
 
 from libqtile import bar, hook
 from libqtile.widget import base
+from libqtile.log_utils import logger
 
 
 class WindowTabs(base._TextBox):
@@ -36,6 +37,14 @@ class WindowTabs(base._TextBox):
     defaults = [
         ("separator", " | ", "Task separator text."),
         ("selected", ("<b>", "</b>"), "Selected task indicator"),
+        ("parse_text", None, "Function to parse and modify window names. "
+         "e.g. function in config that removes excess "
+         "strings from window name: "
+         "def my_func(text)"
+         "    for string in [\" - Chromium\", \" - Firefox\"]:"
+         "        text = text.replace(string, \"\")"
+         "   return text"
+         "then set option parse_text=my_func"),
     ]
 
     def __init__(self, **config):
@@ -66,4 +75,9 @@ class WindowTabs(base._TextBox):
                 task = task.join(self.selected)
             names.append(task)
         self.text = self.separator.join(names)
+        if callable(self.parse_text):
+            try:
+                self.text = self.parse_text(self.text)
+            except:
+                logger.exception("parse_text function failed:")
         self.bar.draw()

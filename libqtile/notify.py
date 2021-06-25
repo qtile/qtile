@@ -125,7 +125,10 @@ if has_dbus:
             self.notifications.append(notif)
             notif.id = len(self.notifications)
             for callback in self.callbacks:
-                callback(notif)
+                try:
+                    callback(notif)
+                except Exception:
+                    logger.exception("Exception in notifier callback")
             return len(self.notifications)
 
         def show(self, *args, **kwargs):

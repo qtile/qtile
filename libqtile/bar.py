@@ -171,6 +171,7 @@ class Bar(Gap, configurable.Configurable):
         self.cursor_in = None
         self.window = None
         self.size_calculated = 0
+        self._configured = False
 
         self.queued_draws = 0
 
@@ -208,19 +209,17 @@ class Bar(Gap, configurable.Configurable):
             w._test_orientation_compatibility(self.horizontal)
 
         if self.window:
+            # We get _configure()-ed with an existing window when screens are getting
+            # reconfigured but this screen is present both before and after
             self.window.place(self.x, self.y, self.width, self.height, 0, None)
-            self.crashed_widgets = []
-            for i in self.widgets:
-                self._configure_widget(i)
-
-            self._remove_crashed_widgets()
-            self.draw()
-
         else:
+            # Whereas we won't have a window if we're startup up for the first time or
+            # the window has been killed by us no longer using the bar's screen
             self.window = self.qtile.core.create_internal(
                 self.x, self.y, self.width, self.height,
             )
             self.window.opacity = self.opacity
+            self.window.unhide()
 
             self.drawer = self.window.create_drawer(self.width, self.height)
             self.drawer.clear(self.background)
@@ -231,9 +230,12 @@ class Bar(Gap, configurable.Configurable):
             self.window.process_pointer_enter = self.process_pointer_enter
             self.window.process_pointer_leave = self.process_pointer_leave
             self.window.process_pointer_motion = self.process_pointer_motion
-            self.window.unhide()
 
-            self.crashed_widgets = []
+        self.crashed_widgets = []
+        if self._configured:
+            for i in self.widgets:
+                self._configure_widget(i)
+        else:
             for idx, i in enumerate(self.widgets):
                 if i.configured:
                     i = i.create_mirror()
@@ -242,9 +244,10 @@ class Bar(Gap, configurable.Configurable):
                 if success:
                     qtile.register_widget(i)
 
-            self._remove_crashed_widgets()
-
+        self._remove_crashed_widgets()
+        self.draw()
         self._resize(self.length, self.widgets)
+        self._configured = True
 
     def _configure_widget(self, widget):
         configured = True
@@ -274,6 +277,12 @@ class Bar(Gap, configurable.Configurable):
 
     def finalize(self):
         self.drawer.finalize()
+
+    def kill_window(self):
+        """Kill the window when the bar's screen is no longer being used."""
+        self.drawer.finalize()
+        self.window.kill()
+        self.window = None
 
     def _resize(self, length, widgets):
         stretches = [i for i in widgets if i.length_type == STRETCH]

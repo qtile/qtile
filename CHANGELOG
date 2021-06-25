@@ -28,6 +28,9 @@ Qtile 0.x.x, released xxxx-xx-xx:
         - added new argument for CheckUpdates widget: `custom_command_modify` which allows user to modify the
           the line count of the output of `custom_command` with a lambda function (i.e. `lambda x: x-3`).
           Argument defaults to `lambda x: x` and is overridden by `distro` argument's internal lambda.
+        - added new argument for the WindowName, WindowTabs and Tasklist widgets: `parse_text` which allows users to
+          define a function that takes a window name as an input, modify it in some way (e.g. str.replace(), str.upper() or regex)
+          and show that modification on screen.
         - A Wayland backend has been added which can be used by calling `qtile start -b wayland` directly in your TTY.
           It requires the latest releases of wlroots, python-xkbcommon, pywayland and pywlroots. It is expected to be
           unstable so please let us know if you find any bugs!

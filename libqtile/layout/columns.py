@@ -120,7 +120,7 @@ class Columns(Layout):
         ("border_width", 2, "Border width."),
         ("border_on_single", False, "Draw a border when there is one only window."),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])."),
-        ("margin_on_single", -1, "Margin when only one window. `-1` means use `margin`."),
+        ("margin_on_single", None, "Margin when only one window. (int or list of ints [N E S W])"),
         ("split", True, "New columns presentation mode."),
         ("num_columns", 2, "Preferred number of columns."),
         ("grow_amount", 10, "Amount by which to grow a window/column."),
@@ -235,7 +235,7 @@ class Columns(Layout):
         if len(self.columns) == 1 and (len(col) == 1 or not col.split):
             if not self.border_on_single:
                 border = 0
-            if self.margin_on_single > -1:
+            if self.margin_on_single is not None:
                 margin_size = self.margin_on_single
         width = int(
             0.5 + col.width * screen_rect.width * 0.01 / len(self.columns))

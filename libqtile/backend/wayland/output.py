@@ -54,13 +54,13 @@ class Output(HasListeners):
         self.wlr_output = wlr_output
         wlr_output.data = self
         self.output_layout = self.core.output_layout
-        self.damage: OutputDamage = OutputDamage(wlr_output)
+        self._damage: OutputDamage = OutputDamage(wlr_output)
         self.wallpaper = None
         self.transform_matrix = wlr_output.transform_matrix
         self.x, self.y = self.output_layout.output_coords(wlr_output)
 
         self.add_listener(wlr_output.destroy_event, self._on_destroy)
-        self.add_listener(self.damage.frame_event, self._on_frame)
+        self.add_listener(self._damage.frame_event, self._on_frame)
 
         # The layers enum indexes into this list to get a list of surfaces
         self.layers: List[List[Static]] = [[] for _ in range(len(LayerShellV1Layer))]
@@ -87,7 +87,7 @@ class Output(HasListeners):
         wlr_output = self.wlr_output
 
         with PixmanRegion32() as damage:
-            if not self.damage.attach_render(damage):
+            if not self._damage.attach_render(damage):
                 # no new frame needed
                 wlr_output.rollback()
                 return
@@ -280,3 +280,8 @@ class Output(HasListeners):
             return False
 
         return True
+
+    def damage(self) -> None:
+        """Damage this output so it gets re-rendered."""
+        if self.wlr_output.enabled:
+            self._damage.add_whole()

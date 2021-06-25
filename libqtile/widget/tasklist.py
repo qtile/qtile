@@ -85,6 +85,16 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             "Defaults to None, the normal behaviour."
         ),
         (
+            "parse_text", None, "Function to parse and modify window names. "
+            "e.g. function in config that removes excess "
+            "strings from window name: "
+            "def my_func(text)"
+            "    for string in [\" - Chromium\", \" - Firefox\"]:"
+            "        text = text.replace(string, \"\")"
+            "   return text"
+            "then set option parse_text=my_func"
+        ),
+        (
             "spacing",
             None,
             "Spacing between tasks."
@@ -208,6 +218,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             markup_str = self.markup_focused
 
         window_name = window.name if window and window.name else "?"
+
+        if callable(self.parse_text):
+            try:
+                window_name = self.parse_text(window_name)
+            except:
+                logger.exception("parse_text function failed:")
 
         # Emulate default widget behavior if markup_str is None
         if enforce_markup and markup_str is None:

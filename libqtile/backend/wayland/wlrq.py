@@ -53,12 +53,29 @@ ModMasks = {
 }
 
 # from linux/input-event-codes.h
-buttons = {
-    1 + i: 0x110 + i
-    for i in range(8)
-}
+_KEY_MAX = 0x2ff
+# These are mouse buttons 1-9
+BTN_LEFT = 0x110
+BTN_MIDDLE = 0x112
+BTN_RIGHT = 0x111
+SCROLL_UP = _KEY_MAX + 1
+SCROLL_DOWN = _KEY_MAX + 2
+SCROLL_LEFT = _KEY_MAX + 3
+SCROLL_RIGHT = _KEY_MAX + 4
+BTN_SIDE = 0x113
+BTN_EXTRA = 0x114
 
-buttons_inv = {v: k for k, v in buttons.items()}
+buttons = [
+    BTN_LEFT,
+    BTN_MIDDLE,
+    BTN_RIGHT,
+    SCROLL_UP,
+    SCROLL_DOWN,
+    SCROLL_LEFT,
+    SCROLL_RIGHT,
+    BTN_SIDE,
+    BTN_EXTRA,
+]
 
 # from drm_fourcc.h
 DRM_FORMAT_ARGB8888 = 875713089
@@ -129,7 +146,8 @@ class Painter:
                 screen.height,
                 cairocffi.cairo.cairo_image_surface_get_data(surface._pointer)
             )
-            self.core.outputs[screen.index].wallpaper = texture
+            outputs = [output for output in self.core.outputs if output.wlr_output.enabled]
+            outputs[screen.index].wallpaper = texture
 
 
 class HasListeners:

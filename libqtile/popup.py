@@ -69,8 +69,10 @@ class Popup(configurable.Configurable):
         self.win: Any = qtile.core.create_internal(x, y, width, height)  # TODO: better annotate Internal
         self.win.opacity = self.opacity
         self.win.process_button_click = self.process_button_click
+        self.win.process_window_expose = self.draw
 
         self.drawer: Drawer = self.win.create_drawer(width, height)
+        self.clear()
         self.layout = self.drawer.textlayout(
             text='',
             colour=self.foreground,
@@ -84,9 +86,6 @@ class Popup(configurable.Configurable):
 
         if self.border_width and self.border:
             self.win.paint_borders(self.border, self.border_width)
-
-        self.win.process_window_expose = self.draw
-        self.win.process_button_click = self.process_button_click
 
         self.x = self.win.x
         self.y = self.win.y
@@ -168,3 +167,5 @@ class Popup(configurable.Configurable):
 
     def kill(self) -> None:
         self.win.kill()
+        self.layout.finalize()
+        self.drawer.finalize()

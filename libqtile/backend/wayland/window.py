@@ -85,6 +85,7 @@ class Window(base.Window, HasListeners):
         self.y = 0
         self.bordercolor: ffi.CData = _rgb((0, 0, 0, 1))
         self.opacity: float = 1.0
+        self._outputs: List[Output] = []
 
         # These start as None and are set in the first place() call
         self._width: Optional[int] = None
@@ -236,10 +237,13 @@ class Window(base.Window, HasListeners):
                     return win
         return None
 
+    def _find_outputs(self):
+        """Find the outputs on which this window can be seen."""
+        self._outputs = [o for o in self.core.outputs if o.contains(self)]
+
     def damage(self) -> None:
-        for output in self.core.outputs:
-            if output.contains(self):
-                output.damage.add_whole()
+        for output in self._outputs:
+            output.damage()
 
     def hide(self):
         if self.mapped:
@@ -430,6 +434,9 @@ class Window(base.Window, HasListeners):
             self.core.mapped_windows.append(self)
             self.core.stack_windows()
 
+        self._find_outputs()
+        self.damage()
+
     def _tweak_float(self, x=None, y=None, dx=0, dy=0, w=None, h=None, dw=0, dh=0):
         if x is None:
             x = self.x
@@ -578,6 +585,8 @@ class Internal(base.Internal, Window):
         self.opacity: float = 1.0
         self._width: int = width
         self._height: int = height
+        self._outputs: List[Output] = []
+        self._find_outputs()
         self._reset_texture()
 
     def finalize(self):
@@ -620,9 +629,11 @@ class Internal(base.Internal, Window):
 
     def hide(self) -> None:
         self.mapped = False
+        self.damage()
 
     def unhide(self) -> None:
         self.mapped = True
+        self.damage()
 
     def kill(self) -> None:
         self.hide()
@@ -630,16 +641,21 @@ class Internal(base.Internal, Window):
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None, respect_hints=False):
-        if above:
+        if above and self._mapped:
             self.core.mapped_windows.remove(self)
             self.core.mapped_windows.append(self)
             self.core.stack_windows()
 
         self.x = x
         self.y = y
+        needs_reset = width != self.width or height != self.height
         self.width = width
         self.height = height
-        self._reset_texture()
+
+        if needs_reset:
+            self._reset_texture()
+
+        self._find_outputs()
         self.damage()
 
 
@@ -668,6 +684,7 @@ class Static(base.Static, Window):
         self.borderwidth: int = 0
         self.bordercolor: ffi.CData = _rgb((0, 0, 0, 1))
         self.opacity: float = 1.0
+        self._outputs: List[Output] = []
         self._float_state = FloatStates.FLOATING
         self.defunct = True
         self.is_layer = False
@@ -685,6 +702,9 @@ class Static(base.Static, Window):
             self.output = core.output_from_wlr_output(surface.output)
             self.screen = self.output.screen
             self.mapped = True
+            self._outputs.append(self.output)
+        else:
+            self._find_outputs()
 
     @property
     def mapped(self) -> bool:
@@ -746,14 +766,6 @@ class Static(base.Static, Window):
         else:
             self.surface.send_close()
 
-    def damage(self) -> None:
-        if self.is_layer:
-            self.output.damage.add_whole()
-        else:
-            for output in self.core.outputs:
-                if output.contains(self):
-                    output.damage.add_whole()
-
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None, respect_hints=False):
         self.x = x
@@ -763,6 +775,7 @@ class Static(base.Static, Window):
         else:
             self.surface.set_size(int(width), int(height))
             self.paint_borders(bordercolor, borderwidth)
+        self.damage()
 
     def cmd_bring_to_front(self) -> None:
         if self.mapped and isinstance(self.surface, XdgSurface):
@@ -812,23 +825,23 @@ class XdgPopupWindow(HasListeners):
 
     def _on_map(self, _listener, _data):
         logger.debug("Signal: popup map")
-        self.output.damage.add_whole()
+        self.output.damage()
 
     def _on_unmap(self, _listener, _data):
         logger.debug("Signal: popup unmap")
-        self.output.damage.add_whole()
+        self.output.damage()
 
     def _on_destroy(self, _listener, _data):
         logger.debug("Signal: popup destroy")
         self.finalize_listeners()
-        self.output.damage.add_whole()
+        self.output.damage()
 
     def _on_new_popup(self, _listener, xdg_popup: XdgPopup):
         logger.debug("Signal: popup new_popup")
         self.popups.append(XdgPopupWindow(self, xdg_popup))
 
     def _on_commit(self, _listener, _data):
-        self.output.damage.add_whole()
+        self.output.damage()
 
 
 class SubSurface(HasListeners):

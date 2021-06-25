@@ -36,11 +36,6 @@ class Drawer(base.Drawer):
             context.set_source_rgba(*utils.rgb("#000000"))
             context.paint()
 
-        for output in qtile.core.outputs:  # type: ignore
-            if output.contains(win):
-                break  # Internals only show on one output
-        self._output = output
-
     def paint_to(self, drawer):
         drawer.ctx.set_source_surface(self._source)
         drawer.ctx.paint()
@@ -86,7 +81,7 @@ class Drawer(base.Drawer):
             dst_x=offsetx,
             dst_y=offsety,
         )
-        self._output.damage.add_whole()
+        self._win.damage()  # type: ignore
 
         # Clear RecordingSurface of operations
         self._reset_surface()
