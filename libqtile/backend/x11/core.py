@@ -608,7 +608,7 @@ class Core(base.Core):
             self.focus_by_click(event)
 
         self.qtile.process_button_click(
-            button_code, state, event.event_x, event.event_y, event
+            button_code, state, event.event_x, event.event_y
         )
         self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, event.time)
 

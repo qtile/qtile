@@ -659,7 +659,7 @@ class Qtile(CommandObject):
         return closest_screen
 
     def process_button_click(
-        self, button_code: int, modmask: int, x: int, y: int, event: Any,
+        self, button_code: int, modmask: int, x: int, y: int
     ) -> None:
         for m in self.mouse_map.get(button_code, []):
             if not m.modmask == modmask:
