@@ -47,6 +47,23 @@ class _Decoration(base.PaddingMixin):
     def _configure(self, parent: base._Widget) -> None:
         self.parent = parent
 
+    def single_or_four(self, value, name: str):
+        if type(value) in [float, int]:
+            n = e = s = w = value
+        elif type(value) in [tuple, list]:
+            if len(value) == 1:
+                n = e = s = w = value[0]
+            elif len(value) == 4:
+                n, e, s, w = value
+            else:
+                logger.info(f"{name} should be a single number or a list of 1 or 4 values")
+                n = e = s = w = 0
+        else:
+            logger.info(f"{name} should be a single number or a list of 1 or 4 values")
+            n = e = s = w = 0
+
+        return [n, e, s, w]
+
     def clone(self) -> _Decoration:
         return copy.copy(self)
 
@@ -79,7 +96,7 @@ class RectDecoration(_Decoration):
     """
     defaults = [
         ("filled", False, "Whether to fill shape"),
-        ("radius", 4, "Radius for corners (0 for square)"),
+        ("radius", 4, "Corner radius as int or list of ints [TL TR BR BL]. 0 is square"),
         ("colour", "#000000", "Colour for decoration"),
         ("line_width", 2, "Line width for decoration")
     ]  # type: List[Tuple[str, Any, str]]
@@ -87,6 +104,7 @@ class RectDecoration(_Decoration):
     def __init__(self, **config):
         _Decoration.__init__(self, **config)
         self.add_defaults(RectDecoration.defaults)
+        self.corners = self.single_or_four(self.radius, "Corner radius")
 
     def draw(self) -> None:
         box_height = self.height - 2 * self.padding_y
@@ -109,37 +127,48 @@ class RectDecoration(_Decoration):
 
             self.ctx.new_sub_path()
 
-            delta = self.radius + self.line_width / 2
+            # Top left
+            radius = self.corners[0]
+            delta = radius + self.line_width / 2 - 1
+            self.ctx.arc(
+                self.padding_x + delta,
+                self.padding_y + delta,
+                radius,
+                180 * degrees,
+                270 * degrees
+            )
 
+            # Top right
+            radius = self.corners[1]
+            delta = radius + self.line_width / 2 - 1
             self.ctx.arc(
                 self.padding_x + box_width - delta,
                 self.padding_y + delta,
-                self.radius,
+                radius,
                 -90 * degrees,
                 0 * degrees
             )
 
+            # Bottom right
+            radius = self.corners[2]
+            delta = radius + self.line_width / 2 - 1
             self.ctx.arc(
                 self.padding_x + box_width - delta,
                 self.padding_y + box_height - delta,
-                self.radius,
+                radius,
                 0 * degrees,
                 90 * degrees
             )
 
+            # Bottom left
+            radius = self.corners[3]
+            delta = radius + self.line_width / 2 - 1
             self.ctx.arc(
                 self.padding_x + delta,
                 self.padding_y + box_height - delta,
-                self.radius,
+                radius,
                 90 * degrees,
                 180 * degrees
-            )
-            self.ctx.arc(
-                self.padding_x + delta,
-                self.padding_y + delta,
-                self.radius,
-                180 * degrees,
-                270 * degrees
             )
 
             self.ctx.close_path()
@@ -171,22 +200,7 @@ class BorderDecoration(_Decoration):
     def __init__(self, **config):
         _Decoration.__init__(self, **config)
         self.add_defaults(BorderDecoration.defaults)
-
-        if type(self.border_width) in [float, int]:
-            n = e = s = w = self.border_width
-        elif type(self.border_width) in [tuple, list]:
-            if len(self.border_width) == 1:
-                n = e = s = w = self.border_width[0]
-            elif len(self.border_width) == 4:
-                n, e, s, w = self.border_width
-            else:
-                logger.info("Border width should be a single number or a list of 1 or 4 values")
-                n = e = s = w = 0
-        else:
-            logger.info("Border width should be a single number or a list of 1 or 4 values")
-            n = e = s = w = 0
-
-        self.borders = [n, e, s, w]
+        self.borders = self.single_or_four(self.border_width, "Border width")
 
     def draw(self) -> None:
         top, right, bottom, left = self.borders
