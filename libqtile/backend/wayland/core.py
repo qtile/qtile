@@ -264,11 +264,12 @@ class Core(base.Core, wlrq.HasListeners):
         self.seat.pointer_notify_axis(
             event.time_msec, event.orientation, event.delta, event.delta_discrete, event.source,
         )
-        if self._hovered_internal:
-            button = 5 if 0 < event.delta else 4
-            self._hovered_internal.process_button_click(
-                self.cursor.x, self.cursor.y, button,
-            )
+        if event.delta != 0:
+            if event.orientation == pointer.AxisOrientation.VERTICAL:
+                button = 5 if 0 < event.delta else 4
+            else:
+                button = 7 if 0 < event.delta else 6
+            self._process_cursor_button(button, True)
 
     def _on_cursor_frame(self, _listener, _data):
         self.seat.pointer_notify_frame()
@@ -279,23 +280,13 @@ class Core(base.Core, wlrq.HasListeners):
             event.time_msec, event.button, event.button_state
         )
 
-        state = self.seat.keyboard.modifier
-        button = wlrq.buttons_inv[event.button]
-        if event.button_state == input_device.ButtonState.PRESSED:
+        pressed = event.button_state == input_device.ButtonState.PRESSED
+        if pressed:
             self._focus_by_click()
-            self.qtile.process_button_click(button, state, self.cursor.x, self.cursor.y, event)
 
-            if self._hovered_internal:
-                self._hovered_internal.process_button_click(
-                    self.cursor.x, self.cursor.y, button
-                )
-        else:
-            self.qtile.process_button_release(button, state)
-
-            if self._hovered_internal:
-                self._hovered_internal.process_button_release(
-                    self.cursor.x, self.cursor.y, button
-                )
+        if event.button in wlrq.buttons:
+            button = wlrq.buttons.index(event.button) + 1
+            self._process_cursor_button(button, pressed)
 
     def _on_cursor_motion(self, _listener, event: pointer.PointerEventMotion):
         assert self.qtile is not None
@@ -430,6 +421,24 @@ class Core(base.Core, wlrq.HasListeners):
             if self._hovered_internal:
                 self._hovered_internal.process_pointer_leave(self.cursor.x, self.cursor.y)
                 self._hovered_internal = None
+
+    def _process_cursor_button(self, button: int, pressed: bool):
+        if pressed:
+            self.qtile.process_button_click(
+                button, self.seat.keyboard.modifier, self.cursor.x, self.cursor.y
+            )
+
+            if self._hovered_internal:
+                self._hovered_internal.process_button_click(
+                    self.cursor.x, self.cursor.y, button
+                )
+        else:
+            self.qtile.process_button_release(button, self.seat.keyboard.modifier)
+
+            if self._hovered_internal:
+                self._hovered_internal.process_button_release(
+                    self.cursor.x, self.cursor.y, button
+                )
 
     def _add_new_pointer(self, device: input_device.InputDevice):
         logger.info("Adding new pointer")
@@ -576,8 +585,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def grab_button(self, mouse: config.Mouse) -> int:
         """Configure the backend to grab the mouse event"""
-        keysym = wlrq.buttons.get(mouse.button_code)
-        assert keysym is not None
+        keysym = wlrq.buttons[mouse.button_code]
         mask_key = wlrq.translate_masks(mouse.modifiers)
         self.grabbed_buttons.append((keysym, mask_key))
         return mask_key
