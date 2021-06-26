@@ -54,8 +54,8 @@ def test_window(manager):
     # setup 3 tiled and two floating clients
     manager.test_window("one")
     manager.test_window("two")
-    manager.test_dialog("float1")
-    manager.test_dialog("float2")
+    manager.test_window("float1", floating=True)
+    manager.test_window("float2", floating=True)
     manager.test_window("three")
 
     # test preconditions, columns adds clients at pos of current, in two stacks

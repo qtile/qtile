@@ -33,7 +33,7 @@ jobs:
                   imagemagick libpulse-dev lm-sensors git xserver-xephyr xterm xvfb x11-apps ninja-build libegl1-mesa-dev \
                   libgles2-mesa-dev libgbm-dev libinput-dev libxkbcommon-dev libpixman-1-dev libpciaccess-dev \
                   dbus-x11 libnotify-bin
-                sudo pip -q install tox tox-gh-actions meson
+                sudo pip -q install tox tox-gh-actions meson PyGObject
             - name: Build wayland
               run: |
                 wget -q --no-check-certificate https://wayland.freedesktop.org/releases/wayland-$WAYLAND.tar.xz
