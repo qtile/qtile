@@ -1,105 +1,44 @@
 #!/usr/bin/env python3
-# Copyright (c) 2011 Florian Mounier
-# Copyright (c) 2014 Sean Vig
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 """
-    This program is carefully crafted to exercise a number of corner-cases in
-    Qtile.
+This creates a minimal window using GTK that works the same in both X11 or Wayland.
 
-    Usage:
-        window.py DISPLAY WINDOW_NAME [WINDOW_TYPE]
+GTK sets the window class via `--name <class>`, and then we manually set the window
+title and type. Therefore this is intended to be called as:
+
+    python window.py --name <class> <title> <type>
+
+where <type> is "normal" or "notification"
+
+The window will close itself if it receives any key or button press events.
 """
+# flake8: noqa
+
+import os
+
+# Disable GTK ATK bridge, which appears to trigger errors with e.g. test_strut_handling
+# https://wiki.gnome.org/Accessibility/Documentation/GNOME2/Mechanics
+os.environ["NO_AT_BRIDGE"] = "1"
+
 import sys
-import time
 
-import xcffib
-import xcffib.xproto
+import gi
+gi.require_version('Gdk', '3.0')
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gdk, Gtk
 
-for i in range(20):
-    try:
-        conn = xcffib.connect(display=sys.argv[1])
-    except xcffib.ConnectionException:
-        time.sleep(0.1)
-        continue
-    except Exception as v:
-        print("Error opening test window: ", type(v), v, file=sys.stderr)
-        sys.exit(1)
-    break
-else:
-    print("Could not open window on display %s" % (sys.argv[1]), file=sys.stderr)
-    sys.exit(1)
+# GTK consumes the `--name <class>` args
+title = sys.argv[1]
+window_type = sys.argv[2]
 
-screen = conn.get_setup().roots[conn.pref_screen]
+win = Gtk.Window(title=title)
+win.connect("destroy", Gtk.main_quit)
+win.connect("key-press-event", Gtk.main_quit)
+win.set_default_size(100, 100)
 
-window = conn.generate_id()
-background = conn.core.AllocColor(screen.default_colormap, 0x2828, 0x8383, 0xCECE).reply().pixel  # Color "#2883ce"
-conn.core.CreateWindow(xcffib.CopyFromParent, window, screen.root,
-                       100, 100, 100, 100, 1,
-                       xcffib.xproto.WindowClass.InputOutput, screen.root_visual,
-                       xcffib.xproto.CW.BackPixel | xcffib.xproto.CW.EventMask,
-                       [background, xcffib.xproto.EventMask.StructureNotify | xcffib.xproto.EventMask.Exposure])
+if window_type == "notification":
+    win.set_type_hint(Gdk.WindowTypeHint.NOTIFICATION)
+elif window_type == "normal":
+    win.set_type_hint(Gdk.WindowTypeHint.NORMAL)
 
-conn.core.ChangeProperty(xcffib.xproto.PropMode.Replace,
-                         window, xcffib.xproto.Atom.WM_NAME,
-                         xcffib.xproto.Atom.STRING, 8, len(sys.argv[2]),
-                         sys.argv[2])
-
-wm_protocols = "WM_PROTOCOLS"
-wm_protocols = conn.core.InternAtom(0, len(wm_protocols), wm_protocols).reply().atom
-
-wm_delete_window = "WM_DELETE_WINDOW"
-wm_delete_window = conn.core.InternAtom(0, len(wm_delete_window), wm_delete_window).reply().atom
-
-conn.core.ChangeProperty(xcffib.xproto.PropMode.Replace,
-                         window, wm_protocols,
-                         xcffib.xproto.Atom.ATOM, 32, 1,
-                         [wm_delete_window])
-
-if len(sys.argv) > 3:
-    wm_type_atom = "_NET_WM_WINDOW_TYPE"
-    wm_type_atom = conn.core.InternAtom(0, len(wm_type_atom), wm_type_atom).reply().atom
-    wm_type = "_NET_WM_WINDOW_TYPE_" + sys.argv[3].upper()
-    wm_type = conn.core.InternAtom(0, len(wm_type), wm_type).reply().atom
-    conn.core.ChangeProperty(xcffib.xproto.PropMode.Replace,
-                             window, wm_type_atom,
-                             xcffib.xproto.Atom.ATOM, 32, 1,
-                             [wm_type])
-
-conn.core.ConfigureWindow(window,
-                          xcffib.xproto.ConfigWindow.X | xcffib.xproto.ConfigWindow.Y |
-                          xcffib.xproto.ConfigWindow.Width | xcffib.xproto.ConfigWindow.Height |
-                          xcffib.xproto.ConfigWindow.BorderWidth,
-                          [0, 0, 100, 100, 1])
-conn.core.MapWindow(window)
-conn.flush()
-conn.core.ConfigureWindow(window,
-                          xcffib.xproto.ConfigWindow.X | xcffib.xproto.ConfigWindow.Y |
-                          xcffib.xproto.ConfigWindow.Width | xcffib.xproto.ConfigWindow.Height |
-                          xcffib.xproto.ConfigWindow.BorderWidth,
-                          [0, 0, 100, 100, 1])
-
-try:
-    while 1:
-        event = conn.wait_for_event()
-        if event.__class__ == xcffib.xproto.ClientMessageEvent:
-            if conn.core.GetAtomName(event.data.data32[0]).reply().name.to_string() == "WM_DELETE_WINDOW":
-                sys.exit(1)
-except xcffib.XcffibException:
-    pass
+win.show()
+Gtk.main()

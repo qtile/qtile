@@ -31,6 +31,7 @@ import sys
 import tempfile
 import time
 import traceback
+from pathlib import Path
 
 import pytest
 import xcffib
@@ -388,13 +389,6 @@ class TestManager:
         self.testwindows.append(proc)
         return proc
 
-    def _spawn_script(self, script, *args):
-        python = sys.executable
-        d = os.path.dirname(os.path.realpath(__file__))
-        python = sys.executable
-        path = os.path.join(d, "scripts", script)
-        return self._spawn_window(python, path, *args)
-
     def kill_window(self, proc):
         """Kill a window and check that qtile unmaps it
 
@@ -416,18 +410,23 @@ class TestManager:
         if not success():
             raise AssertionError("Window could not be killed...")
 
-    def test_window(self, name, type="normal"):
+    def test_window(self, name, floating=False, wm_type="normal"):
         """
+        Create a simple window in X or Wayland. If `floating` is True then the wmclass
+        is set to "dialog", which triggers auto-floating based on `default_float_rules`.
+        `wm_type` can be changed from "normal" to "notification", which creates a window
+        that not only floats but does not grab focus.
+
         Windows created with this method must have their process killed explicitly, no
         matter what type they are.
         """
-        return self._spawn_script("window.py", self.display, name, type)
-
-    def test_dialog(self, name="dialog"):
-        return self.test_window(name, "dialog")
+        python = sys.executable
+        path = Path(__file__).parent / "scripts" / "window.py"
+        wmclass = "dialog" if floating else "TestWindow"
+        return self._spawn_window(python, path, "--name", wmclass, name, wm_type)
 
     def test_notification(self, name="notification"):
-        return self.test_window(name, "notification")
+        return self.test_window(name, wm_type="notification")
 
     def test_xclock(self):
         path = shutil.which("xclock")

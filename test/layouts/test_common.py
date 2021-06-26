@@ -130,7 +130,7 @@ def test_window_types(manager):
     manager.test_window("one")
 
     # A dialog should take focus and be floating
-    manager.test_dialog("dialog")
+    manager.test_window("dialog", floating=True)
     manager.c.window.info()['floating'] is True
     assert_focused(manager, "dialog")
 
@@ -144,8 +144,8 @@ def test_window_types(manager):
 def test_focus_cycle(manager):
     manager.test_window("one")
     manager.test_window("two")
-    manager.test_dialog("float1")
-    manager.test_dialog("float2")
+    manager.test_window("float1", floating=True)
+    manager.test_window("float2", floating=True)
     manager.test_window("three")
 
     # Test preconditions (the order of items in 'clients' is managed by each layout)
@@ -300,7 +300,7 @@ def test_remove(manager):
 def test_remove_floating(manager):
     one = manager.test_window("one")
     manager.test_window("two")
-    float1 = manager.test_dialog("float1")
+    float1 = manager.test_window("float1", floating=True)
     assert_focused(manager, "float1")
     assert set(manager.c.layout.info()['clients']) == {"one", "two"}
     assert manager.c.group.info()['focus_history'] == ["one", "two", "float1"]
@@ -310,7 +310,7 @@ def test_remove_floating(manager):
     assert_focused(manager, "two")
     assert manager.c.group.info()['focus_history'] == ["one", "two"]
 
-    float2 = manager.test_dialog("float2")
+    float2 = manager.test_window("float2", floating=True)
     assert_focused(manager, "float2")
     assert manager.c.group.info()['focus_history'] == ["one", "two", "float2"]
 
@@ -322,10 +322,10 @@ def test_remove_floating(manager):
 
     # Add more windows and shuffle the focus order
     manager.test_window("three")
-    float3 = manager.test_dialog("float3")
+    float3 = manager.test_window("float3", floating=True)
     manager.c.group.focus_by_name("one")
-    float4 = manager.test_dialog("float4")
-    float5 = manager.test_dialog("float5")
+    float4 = manager.test_window("float4", floating=True)
+    float5 = manager.test_window("float5", floating=True)
     manager.c.group.focus_by_name("three")
     manager.c.group.focus_by_name("float3")
     assert manager.c.group.info()['focus_history'] == ["two", "one", "float4",
@@ -348,7 +348,7 @@ def test_remove_floating(manager):
     assert manager.c.group.info()['focus_history'] == ["two", "three", "float3"]
 
     four = manager.test_window("four")
-    float6 = manager.test_dialog("float6")
+    float6 = manager.test_window("float6", floating=True)
     five = manager.test_window("five")
     manager.c.group.focus_by_name("float3")
     assert manager.c.group.info()['focus_history'] == ["two", "three", "four",
@@ -389,13 +389,13 @@ def test_desktop_notifications(manager):
 
     # Complicate the scenario with multiple windows and notifications
 
-    dialog1 = manager.test_dialog("dialog1")
+    dialog1 = manager.test_window("dialog1", floating=True)
     manager.test_window("two")
     notif4 = manager.test_notification("notif4")
     notif5 = manager.test_notification("notif5")
     assert manager.c.group.info()['focus_history'] == ["one", "dialog1", "two"]
 
-    dialog2 = manager.test_dialog("dialog2")
+    dialog2 = manager.test_window("dialog2", floating=True)
     manager.kill_window(notif5)
     manager.test_window("three")
     manager.kill_window(one)
@@ -407,7 +407,7 @@ def test_desktop_notifications(manager):
     assert manager.c.group.info()['focus_history'] == ["dialog1", "dialog2",
                                                        "three", "two"]
 
-    manager.test_dialog("dialog3")
+    manager.test_window("dialog3", floating=True)
     manager.kill_window(dialog1)
     manager.kill_window(dialog2)
     manager.kill_window(notif6)
