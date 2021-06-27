@@ -129,8 +129,8 @@ def test_user_position(xmanager):
     def user_position_window():
         nonlocal w
         w = conn.create_window(5, 5, 10, 10)
-        # xmanager config automatically floats xclock
-        w.set_property("WM_CLASS", "xclock", type="STRING", format=8)
+        # xmanager config automatically floats "float"
+        w.set_property("WM_CLASS", "float", type="STRING", format=8)
         # set the user specified position flag
         hints = [0] * 18
         hints[0] = xcbq.NormalHintsFlags["USPosition"]
@@ -175,8 +175,8 @@ def test_only_one_focus(xmanager):
         nonlocal w
         w = conn.create_window(5, 5, 10, 10)
         w.set_attribute(eventmask=xcffib.xproto.EventMask.FocusChange)
-        # xmanager config automatically floats xclock
-        w.set_property("WM_CLASS", "xclock", type="STRING", format=8)
+        # xmanager config automatically floats "float"
+        w.set_property("WM_CLASS", "float", type="STRING", format=8)
 
         # set both the input hit
         hints = [0] * 14
@@ -217,8 +217,8 @@ def test_only_wm_protocols_focus(xmanager):
         nonlocal w
         w = conn.create_window(5, 5, 10, 10)
         w.set_attribute(eventmask=xcffib.xproto.EventMask.FocusChange)
-        # xmanager config automatically floats xclock
-        w.set_property("WM_CLASS", "xclock", type="STRING", format=8)
+        # xmanager config automatically floats "float"
+        w.set_property("WM_CLASS", "float", type="STRING", format=8)
 
         hints = [0] * 14
         hints[0] = xcbq.HintsFlags["InputHint"]
@@ -258,8 +258,8 @@ def test_only_input_hint_focus(xmanager):
         nonlocal w
         w = conn.create_window(5, 5, 10, 10)
         w.set_attribute(eventmask=xcffib.xproto.EventMask.FocusChange)
-        # xmanager config automatically floats xclock
-        w.set_property("WM_CLASS", "xclock", type="STRING", format=8)
+        # xmanager config automatically floats "float"
+        w.set_property("WM_CLASS", "float", type="STRING", format=8)
 
         # set the input hint
         hints = [0] * 14
@@ -289,8 +289,8 @@ def test_no_focus(xmanager):
         nonlocal w
         w = conn.create_window(5, 5, 10, 10)
         w.set_attribute(eventmask=xcffib.xproto.EventMask.FocusChange)
-        # xmanager config automatically floats xclock
-        w.set_property("WM_CLASS", "xclock", type="STRING", format=8)
+        # xmanager config automatically floats "float"
+        w.set_property("WM_CLASS", "float", type="STRING", format=8)
 
         hints = [0] * 14
         hints[0] = xcbq.HintsFlags["InputHint"]
