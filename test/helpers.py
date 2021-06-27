@@ -96,14 +96,18 @@ class BareConfig(Config):
 
 
 class Backend:
-    """A helper to use a specific backend for tests"""
-    def __init__(self, core, env, args=()):
-        self.core = core
+    """A base class to help set up backends passed to TestManager"""
+    def __init__(self, env, args=()):
         self.env = env
         self.args = args
 
     def create(self):
+        """This is used to instantiate the Core"""
         return self.core(*self.args)
+
+    def configure(self, manager):
+        """This is used to do any post-startup configuration with the manager"""
+        pass
 
 
 @Retry(ignore_exceptions=(ipc.IPCError,), return_on_fail=True)
@@ -164,6 +168,7 @@ class TestManager:
             ipc_client = ipc.Client(self.sockfile)
             ipc_command = command.interface.IPCCommandInterface(ipc_client)
             self.c = command.client.InteractiveCommandClient(ipc_command)
+            self.backend.configure(self)
             return
         if rpipe.poll(0.1):
             error = rpipe.recv()
@@ -247,7 +252,12 @@ class TestManager:
 
         def spawn():
             nonlocal proc
-            proc = subprocess.Popen(args, env=self.backend.env.copy())
+            # Ensure the client only uses the test display
+            env = os.environ.copy()
+            env.pop("DISPLAY", None)
+            env.pop("WAYLAND_DISPLAY", None)
+            env.update(self.backend.env)
+            proc = subprocess.Popen(args, env=env)
 
         def failed():
             if proc.poll() is not None:

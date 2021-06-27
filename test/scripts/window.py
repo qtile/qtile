@@ -13,7 +13,14 @@ The window will close itself if it receives any key or button press events.
 """
 # flake8: noqa
 
+# This is needed otherwise the window will use any Wayland session it can find even if
+# WAYLAND_DISPLAY is not set.
 import os
+
+if os.environ.get("WAYLAND_DISPLAY"):
+    os.environ["GDK_BACKEND"] = "wayland"
+else:
+    os.environ["GDK_BACKEND"] = "x11"
 
 # Disable GTK ATK bridge, which appears to trigger errors with e.g. test_strut_handling
 # https://wiki.gnome.org/Accessibility/Documentation/GNOME2/Mechanics

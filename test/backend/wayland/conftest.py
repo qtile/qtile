@@ -1,9 +1,8 @@
 import contextlib
 import os
 
-import pytest
-
 from libqtile.backend.wayland.core import Core
+from test.helpers import Backend
 
 wlr_env = {
     "WLR_BACKENDS": "headless",
@@ -16,8 +15,24 @@ wlr_env = {
 @contextlib.contextmanager
 def wayland_environment(outputs):
     """This backend just needs some environmental variables set"""
-    old_env = os.environ.copy()
-    os.environ.update(wlr_env)
-    os.environ["WLR_HEADLESS_OUTPUTS"] = str(outputs)
-    yield os.environ
-    os.environ = old_env
+    env = wlr_env.copy()
+    env["WLR_HEADLESS_OUTPUTS"] = str(outputs)
+    yield env
+
+
+class WaylandBackend(Backend):
+    def __init__(self, env, args=()):
+        self.env = env
+        self.args = args
+        self.core = Core
+
+    def create(self):
+        """This is used to instantiate the Core"""
+        os.environ.update(self.env)
+        return self.core(*self.args)
+
+    def configure(self, manager):
+        """This backend needs to get WAYLAND_DISPLAY variable."""
+        success, display = manager.c.eval("self.core.display_name")
+        assert success
+        self.env["WAYLAND_DISPLAY"] = display
