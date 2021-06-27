@@ -63,7 +63,8 @@ class ManagerConfig(Config):
     floating_layout = libqtile.layout.floating.Floating(
         float_rules=[
             *libqtile.layout.floating.Floating.default_float_rules,
-            Match(wm_class='xclock')
+            Match(wm_class='float'),
+            Match(title='float')
         ]
     )
     keys = [
@@ -96,12 +97,12 @@ manager_config = pytest.mark.parametrize("manager", [ManagerConfig], indirect=Tr
 
 @manager_config
 def test_screen_dim(manager):
-    manager.test_xclock()
+    manager.test_window('one')
     assert manager.c.screen.info()["index"] == 0
     assert manager.c.screen.info()["x"] == 0
     assert manager.c.screen.info()["width"] == 800
     assert manager.c.group.info()["name"] == 'a'
-    assert manager.c.group.info()["focus"] == 'xclock'
+    assert manager.c.group.info()["focus"] == 'one'
 
     manager.c.to_screen(1)
     manager.test_xeyes()
@@ -116,18 +117,18 @@ def test_screen_dim(manager):
     assert manager.c.screen.info()["x"] == 0
     assert manager.c.screen.info()["width"] == 800
     assert manager.c.group.info()["name"] == 'a'
-    assert manager.c.group.info()["focus"] == 'xclock'
+    assert manager.c.group.info()["focus"] == 'one'
 
 
 @pytest.mark.parametrize("xephyr", [{"xoffset": 0}], indirect=True)
 @manager_config
 def test_clone_dim(manager):
-    manager.test_xclock()
+    manager.test_window('one')
     assert manager.c.screen.info()["index"] == 0
     assert manager.c.screen.info()["x"] == 0
     assert manager.c.screen.info()["width"] == 800
     assert manager.c.group.info()["name"] == 'a'
-    assert manager.c.group.info()["focus"] == 'xclock'
+    assert manager.c.group.info()["focus"] == 'one'
 
     assert len(manager.c.screens()) == 1
 
@@ -544,8 +545,8 @@ def test_inspect_xeyes(manager):
 
 @manager_config
 @no_xinerama
-def test_inspect_xclock(manager):
-    manager.test_xclock()
+def test_inspect_window(manager):
+    manager.test_window('one')
     assert manager.c.window.inspect()["wm_class"]
 
 
@@ -581,25 +582,25 @@ def test_default_float(manager):
     # change to 2 col stack
     manager.c.next_layout()
     assert len(manager.c.layout.info()["stacks"]) == 2
-    manager.test_xclock()
+    manager.test_window('float')
 
-    assert manager.c.group.info()['focus'] == 'xclock'
-    assert manager.c.window.info()['width'] == 164
-    assert manager.c.window.info()['height'] == 164
-    assert manager.c.window.info()['x'] == 318
-    assert manager.c.window.info()['y'] == 208
+    assert manager.c.group.info()['focus'] == 'float'
+    assert manager.c.window.info()['width'] == 100
+    assert manager.c.window.info()['height'] == 100
+    assert manager.c.window.info()['x'] == 350
+    assert manager.c.window.info()['y'] == 240
     assert manager.c.window.info()['floating'] is True
 
     manager.c.window.move_floating(10, 20)
-    assert manager.c.window.info()['width'] == 164
-    assert manager.c.window.info()['height'] == 164
-    assert manager.c.window.info()['x'] == 328
-    assert manager.c.window.info()['y'] == 228
+    assert manager.c.window.info()['width'] == 100
+    assert manager.c.window.info()['height'] == 100
+    assert manager.c.window.info()['x'] == 360
+    assert manager.c.window.info()['y'] == 260
     assert manager.c.window.info()['floating'] is True
 
     manager.c.window.set_position_floating(10, 20)
-    assert manager.c.window.info()['width'] == 164
-    assert manager.c.window.info()['height'] == 164
+    assert manager.c.window.info()['width'] == 100
+    assert manager.c.window.info()['height'] == 100
     assert manager.c.window.info()['x'] == 10
     assert manager.c.window.info()['y'] == 20
     assert manager.c.window.info()['floating'] is True
