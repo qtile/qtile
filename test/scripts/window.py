@@ -22,6 +22,7 @@ os.environ["NO_AT_BRIDGE"] = "1"
 import sys
 
 import gi
+
 gi.require_version('Gdk', '3.0')
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gdk, Gtk
