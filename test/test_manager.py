@@ -1059,42 +1059,6 @@ def test_dheight():
     assert s.dheight == 80
 
 
-class _Config(Config):
-    groups = [
-        libqtile.config.Group("a"),
-        libqtile.config.Group("b"),
-        libqtile.config.Group("c"),
-        libqtile.config.Group("d")
-    ]
-    layouts = [
-        libqtile.layout.stack.Stack(num_stacks=1),
-        libqtile.layout.stack.Stack(num_stacks=2)
-    ]
-    floating_layout = libqtile.resources.default_config.floating_layout
-    keys = [
-        libqtile.config.Key(
-            ["control"],
-            "k",
-            lazy.layout.up(),
-        ),
-        libqtile.config.Key(
-            ["control"],
-            "j",
-            lazy.layout.down(),
-        ),
-    ]
-    mouse = []
-    screens = [libqtile.config.Screen(
-        bottom=libqtile.bar.Bar(
-            [
-                libqtile.widget.GroupBox(),
-            ],
-            20
-        ),
-    )]
-    auto_fullscreen = True
-
-
 @manager_config
 def test_labelgroup(manager):
     manager.c.group["a"].toscreen()
