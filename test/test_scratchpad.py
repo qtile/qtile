@@ -68,8 +68,7 @@ def is_killed(manager, name):
 
 @scratchpad_config
 def test_toggling(manager):
-    # adjust command for current display
-    manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s sh' % manager.display)
+    manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a')
 
     manager.test_window("one")
     assert manager.c.group["a"].info()['windows'] == ['one']
@@ -97,9 +96,8 @@ def test_toggling(manager):
 
 @scratchpad_config
 def test_focus_cycle(manager):
-    # adjust command for current display
-    manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s sh' % manager.display)
-    manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-b', command='xterm -T dd-b -display %s sh' % manager.display)
+    manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a')
+    manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-b')
 
     manager.test_window("one")
     # spawn dd-a by toggling
@@ -125,9 +123,8 @@ def test_focus_cycle(manager):
 
 @scratchpad_config
 def test_focus_lost_hide(manager):
-    # adjust command for current display
-    manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-c', command='xterm -T dd-c -display %s sh' % manager.display)
-    manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-d', command='xterm -T dd-d -display %s sh' % manager.display)
+    manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-c')
+    manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-d')
 
     manager.test_window("one")
     assert_focused(manager, 'one')
@@ -178,8 +175,7 @@ def test_focus_lost_hide(manager):
 
 @scratchpad_config
 def test_kill(manager):
-    # adjust command for current display
-    manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s sh' % manager.display)
+    manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a')
 
     manager.test_window("one")
     assert_focused(manager, 'one')
@@ -202,8 +198,7 @@ def test_kill(manager):
 
 @scratchpad_config
 def test_floating_toggle(manager):
-    # adjust command for current display
-    manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s sh' % manager.display)
+    manager.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a')
 
     manager.test_window("one")
     assert_focused(manager, 'one')

@@ -142,7 +142,10 @@ class TestManager:
 
         def run_qtile():
             try:
+                os.environ.pop("DISPLAY", None)
+                os.environ.pop("WAYLAND_DISPLAY", None)
                 kore = self.backend.create()
+                os.environ.update(self.backend.env)
                 init_log(self.log_level, log_path=None, log_color=False)
                 Qtile(
                     kore,
