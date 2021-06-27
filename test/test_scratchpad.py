@@ -24,7 +24,8 @@ import libqtile.config
 import libqtile.layout
 import libqtile.widget
 from libqtile.confreader import Config
-from test.conftest import Retry, no_xinerama
+from test.conftest import no_xinerama
+from test.helpers import Retry
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 

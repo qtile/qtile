@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Matt Colligan
+# Copyright (c) 2020-1 Matt Colligan
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,20 +21,16 @@
 
 import textwrap
 
-import pytest
-
 from libqtile.backend.x11.xcbq import Connection
-from test.conftest import BareConfig
 
 
-@pytest.mark.parametrize("manager", [BareConfig], indirect=True)
-def test_popup_focus(manager):
-    manager.test_xeyes()
-    conn = Connection(manager.display)
+def test_popup_focus(xmanager):
+    xmanager.test_xeyes()
+    conn = Connection(xmanager.display)
     _, _, windows = conn.default_screen.root.query_tree()
     start_wins = len(windows)
 
-    success, msg = manager.c.eval(textwrap.dedent("""
+    success, msg = xmanager.c.eval(textwrap.dedent("""
         from libqtile.popup import Popup
         popup = Popup(self,
             x=0,
@@ -52,6 +48,6 @@ def test_popup_focus(manager):
     conn.finalize()
     assert end_wins == start_wins + 1
 
-    assert manager.c.group.info()['focus'] == 'xeyes'
-    assert manager.c.group.info()['windows'] == ['xeyes']
-    assert len(manager.c.windows()) == 1
+    assert xmanager.c.group.info()['focus'] == 'xeyes'
+    assert xmanager.c.group.info()['windows'] == ['xeyes']
+    assert len(xmanager.c.windows()) == 1

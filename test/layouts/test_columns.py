@@ -22,8 +22,8 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test import conftest
 from test.conftest import no_xinerama
+from test.helpers import HEIGHT, WIDTH
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
@@ -152,21 +152,21 @@ def test_columns_margins_single(manager):
     info = manager.c.window.info()
     assert info['x'] == 0
     assert info['y'] == 0
-    assert info['width'] == conftest.WIDTH
-    assert info['height'] == conftest.HEIGHT
+    assert info['width'] == WIDTH
+    assert info['height'] == HEIGHT
 
     # single margin for all sides
     manager.c.next_layout()
     info = manager.c.window.info()
     assert info['x'] == 10
     assert info['y'] == 10
-    assert info['width'] == conftest.WIDTH - 20
-    assert info['height'] == conftest.HEIGHT - 20
+    assert info['width'] == WIDTH - 20
+    assert info['height'] == HEIGHT - 20
 
     # one margin for each side (N E S W)
     manager.c.next_layout()
     info = manager.c.window.info()
     assert info['x'] == 40
     assert info['y'] == 10
-    assert info['width'] == conftest.WIDTH - 60
-    assert info['height'] == conftest.HEIGHT - 40
+    assert info['width'] == WIDTH - 60
+    assert info['height'] == HEIGHT - 40
