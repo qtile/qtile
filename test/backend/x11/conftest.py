@@ -170,7 +170,7 @@ def xmanager(request, xephyr):
         if not hasattr(config, attr):
             setattr(config, attr, getattr(default_config, attr))
 
-    backend = Backend(Core, [xephyr.display], {"DISPLAY": xephyr.display})
+    backend = XBackend({"DISPLAY": xephyr.display}, args=[xephyr.display])
 
     with tempfile.NamedTemporaryFile() as f:
         sockfile = f.name
@@ -184,3 +184,10 @@ def xmanager(request, xephyr):
             yield manager
         finally:
             manager.terminate()
+
+
+class XBackend(Backend):
+    def __init__(self, env, args=()):
+        self.env = env
+        self.args = args
+        self.core = Core

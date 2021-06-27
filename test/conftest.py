@@ -26,12 +26,10 @@ import tempfile
 import pytest
 
 from libqtile.backend import base
-from libqtile.backend.wayland.core import Core as WCore
-from libqtile.backend.x11.core import Core as XCore
 from libqtile.resources import default_config
-from test.backend.wayland.conftest import wayland_environment
-from test.backend.x11.conftest import x11_environment
-from test.helpers import Backend, BareConfig, TestManager
+from test.backend.wayland.conftest import WaylandBackend, wayland_environment
+from test.backend.x11.conftest import XBackend, x11_environment
+from test.helpers import BareConfig, TestManager
 
 
 def pytest_addoption(parser):
@@ -74,9 +72,9 @@ def wayland_session(outputs):  # noqa: F841
 @pytest.fixture(scope="function")
 def backend(request, backend_name, xephyr, wayland_session):
     if backend_name == "x11":
-        b = Backend(XCore, {"DISPLAY": xephyr.display}, args=[xephyr.display])
+        b = XBackend({"DISPLAY": xephyr.display}, args=[xephyr.display])
     elif backend_name == "wayland":
-        b = Backend(WCore, wayland_session)
+        b = WaylandBackend(wayland_session)
 
     yield b
 

@@ -1,6 +1,5 @@
 import pytest
 
-from libqtile.backend.x11 import xcbq
 from test.conftest import BareConfig
 
 bare_config = pytest.mark.parametrize("manager", [BareConfig], indirect=True)
