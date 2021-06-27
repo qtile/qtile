@@ -526,7 +526,9 @@ class Core(base.Core, wlrq.HasListeners):
         logger.debug("Focussing new window")
         if surface.is_xdg_surface and isinstance(win.surface, XdgSurface):
             win.surface.set_activated(True)
-        self.seat.keyboard_notify_enter(surface, self.seat.keyboard)
+
+        if self.seat.keyboard._ptr:  # This pointer is NULL when headless
+            self.seat.keyboard_notify_enter(surface, self.seat.keyboard)
 
     def _focus_by_click(self) -> None:
         assert self.qtile is not None
