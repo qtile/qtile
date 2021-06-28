@@ -641,7 +641,7 @@ def test_float_max_min_combo(manager):
     # change to 2 col stack
     manager.c.next_layout()
     assert len(manager.c.layout.info()["stacks"]) == 2
-    manager.test_xcalc()
+    manager.test_window('two')
     manager.test_window("one")
 
     assert manager.c.group.info()['focus'] == 'one'
@@ -685,7 +685,7 @@ def test_toggle_fullscreen(manager):
     # change to 2 col stack
     manager.c.next_layout()
     assert len(manager.c.layout.info()["stacks"]) == 2
-    manager.test_xcalc()
+    manager.test_window('two')
     manager.test_window("one")
 
     assert manager.c.group.info()['focus'] == 'one'
@@ -721,7 +721,7 @@ def test_toggle_max(manager):
     # change to 2 col stack
     manager.c.next_layout()
     assert len(manager.c.layout.info()["stacks"]) == 2
-    manager.test_xcalc()
+    manager.test_window('two')
     manager.test_window("one")
 
     assert manager.c.group.info()['focus'] == 'one'
@@ -755,7 +755,7 @@ def test_toggle_min(manager):
     # change to 2 col stack
     manager.c.next_layout()
     assert len(manager.c.layout.info()["stacks"]) == 2
-    manager.test_xcalc()
+    manager.test_window('two')
     manager.test_window("one")
 
     assert manager.c.group.info()['focus'] == 'one'
@@ -808,9 +808,8 @@ def test_floating_focus(manager):
     # change to 2 col stack
     manager.c.next_layout()
     assert len(manager.c.layout.info()["stacks"]) == 2
-    manager.test_xcalc()
+    manager.test_window("two")
     manager.test_window("one")
-    # manager.test_window("one")
     assert manager.c.window.info()['width'] == 398
     assert manager.c.window.info()['height'] == 578
     manager.c.window.toggle_floating()
@@ -820,7 +819,7 @@ def test_floating_focus(manager):
     # check what stack thinks is focus
     assert [x['current'] for x in manager.c.layout.info()['stacks']] == [0, 0]
 
-    # change focus to xcalc
+    # change focus to "one"
     manager.c.group.next_window()
     assert manager.c.window.info()['width'] == 398
     assert manager.c.window.info()['height'] == 578
@@ -919,21 +918,6 @@ def test_focus_stays_on_layout_switch(manager):
     manager.c.prev_layout()
 
     assert manager.c.window.info()['name'] == 'one'
-
-
-@pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
-@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
-def test_xcalc(manager):
-    manager.test_xcalc()
-
-
-@pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
-@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
-def test_xcalc_kill_window(manager):
-    manager.test_xcalc()
-    window_info = manager.c.window.info()
-    manager.c.window.kill()
-    assert_window_died(manager.c, window_info)
 
 
 @pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
