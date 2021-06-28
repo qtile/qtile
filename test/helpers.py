@@ -9,7 +9,6 @@ import functools
 import logging
 import multiprocessing
 import os
-import shutil
 import subprocess
 import sys
 import time
@@ -306,10 +305,6 @@ class TestManager:
 
     def test_notification(self, name="notification"):
         return self.test_window(name, wm_type="notification")
-
-    def test_xcalc(self):
-        path = shutil.which("xcalc")
-        return self._spawn_window(path)
 
     def groupconsistency(self):
         groups = self.c.groups()

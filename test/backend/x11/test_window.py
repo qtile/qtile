@@ -398,9 +398,9 @@ def test_strut_handling(xmanager):
         assert xmanager.c.window.info()['x'] == 800
         assert xmanager.c.window.info()['y'] == 0
 
-    xmanager.test_xcalc()
+    xmanager.test_window('one')
     xmanager.c.next_screen()
-    xmanager.test_xcalc()
+    xmanager.test_window('two')
     test_initial_state()
 
     try:
