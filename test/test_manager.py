@@ -105,12 +105,12 @@ def test_screen_dim(manager):
     assert manager.c.group.info()["focus"] == 'one'
 
     manager.c.to_screen(1)
-    manager.test_xeyes()
+    manager.test_window("one")
     assert manager.c.screen.info()["index"] == 1
     assert manager.c.screen.info()["x"] == 800
     assert manager.c.screen.info()["width"] == 640
     assert manager.c.group.info()["name"] == 'b'
-    assert manager.c.group.info()["focus"] == 'xeyes'
+    assert manager.c.group.info()["focus"] == 'one'
 
     manager.c.to_screen(0)
     assert manager.c.screen.info()["index"] == 0
@@ -538,13 +538,6 @@ def test_toggle_group(manager):
 
 @manager_config
 @no_xinerama
-def test_inspect_xeyes(manager):
-    manager.test_xeyes()
-    assert manager.c.window.inspect()
-
-
-@manager_config
-@no_xinerama
 def test_inspect_window(manager):
     manager.test_window('one')
     assert manager.c.window.inspect()["wm_class"]
@@ -571,8 +564,8 @@ def test_static(manager):
 @manager_config
 @no_xinerama
 def test_match(manager):
-    manager.test_xeyes()
-    assert manager.c.window.info()['name'] == 'xeyes'
+    manager.test_window("one")
+    assert manager.c.window.info()['name'] == 'one'
     assert not manager.c.window.info()['name'] == 'nonexistent'
 
 
@@ -612,13 +605,13 @@ def test_last_float_size(manager):
     """
     When you re-float something it would be preferable to have it use the previous float size
     """
-    manager.test_xeyes()
-    assert manager.c.window.info()['name'] == 'xeyes'
+    manager.test_window("one")
+    assert manager.c.window.info()['name'] == 'one'
     assert manager.c.window.info()['width'] == 798
     assert manager.c.window.info()['height'] == 578
     # float and it moves
     manager.c.window.toggle_floating()
-    assert manager.c.window.info()['width'] == 150
+    assert manager.c.window.info()['width'] == 100
     assert manager.c.window.info()['height'] == 100
     # resize
     manager.c.window.set_size_floating(50, 90)
@@ -649,9 +642,9 @@ def test_float_max_min_combo(manager):
     manager.c.next_layout()
     assert len(manager.c.layout.info()["stacks"]) == 2
     manager.test_xcalc()
-    manager.test_xeyes()
+    manager.test_window("one")
 
-    assert manager.c.group.info()['focus'] == 'xeyes'
+    assert manager.c.group.info()['focus'] == 'one'
     assert manager.c.window.info()['width'] == 398
     assert manager.c.window.info()['height'] == 578
     assert manager.c.window.info()['x'] == 400
@@ -667,7 +660,7 @@ def test_float_max_min_combo(manager):
     assert manager.c.window.info()['y'] == 0
 
     manager.c.window.toggle_minimize()
-    assert manager.c.group.info()['focus'] == 'xeyes'
+    assert manager.c.group.info()['focus'] == 'one'
     assert manager.c.window.info()['floating'] is True
     assert manager.c.window.info()['minimized'] is True
     assert manager.c.window.info()['width'] == 800
@@ -676,7 +669,7 @@ def test_float_max_min_combo(manager):
     assert manager.c.window.info()['y'] == 0
 
     manager.c.window.toggle_floating()
-    assert manager.c.group.info()['focus'] == 'xeyes'
+    assert manager.c.group.info()['focus'] == 'one'
     assert manager.c.window.info()['floating'] is False
     assert manager.c.window.info()['minimized'] is False
     assert manager.c.window.info()['maximized'] is False
@@ -693,13 +686,13 @@ def test_toggle_fullscreen(manager):
     manager.c.next_layout()
     assert len(manager.c.layout.info()["stacks"]) == 2
     manager.test_xcalc()
-    manager.test_xeyes()
+    manager.test_window("one")
 
-    assert manager.c.group.info()['focus'] == 'xeyes'
+    assert manager.c.group.info()['focus'] == 'one'
     assert manager.c.window.info()['width'] == 398
     assert manager.c.window.info()['height'] == 578
     assert manager.c.window.info()['float_info'] == {
-        'y': 0, 'x': 400, 'width': 150, 'height': 100}
+        'y': 0, 'x': 400, 'width': 100, 'height': 100}
     assert manager.c.window.info()['x'] == 400
     assert manager.c.window.info()['y'] == 0
 
@@ -729,13 +722,13 @@ def test_toggle_max(manager):
     manager.c.next_layout()
     assert len(manager.c.layout.info()["stacks"]) == 2
     manager.test_xcalc()
-    manager.test_xeyes()
+    manager.test_window("one")
 
-    assert manager.c.group.info()['focus'] == 'xeyes'
+    assert manager.c.group.info()['focus'] == 'one'
     assert manager.c.window.info()['width'] == 398
     assert manager.c.window.info()['height'] == 578
     assert manager.c.window.info()['float_info'] == {
-        'y': 0, 'x': 400, 'width': 150, 'height': 100}
+        'y': 0, 'x': 400, 'width': 100, 'height': 100}
     assert manager.c.window.info()['x'] == 400
     assert manager.c.window.info()['y'] == 0
 
@@ -763,18 +756,18 @@ def test_toggle_min(manager):
     manager.c.next_layout()
     assert len(manager.c.layout.info()["stacks"]) == 2
     manager.test_xcalc()
-    manager.test_xeyes()
+    manager.test_window("one")
 
-    assert manager.c.group.info()['focus'] == 'xeyes'
+    assert manager.c.group.info()['focus'] == 'one'
     assert manager.c.window.info()['width'] == 398
     assert manager.c.window.info()['height'] == 578
     assert manager.c.window.info()['float_info'] == {
-        'y': 0, 'x': 400, 'width': 150, 'height': 100}
+        'y': 0, 'x': 400, 'width': 100, 'height': 100}
     assert manager.c.window.info()['x'] == 400
     assert manager.c.window.info()['y'] == 0
 
     manager.c.window.toggle_minimize()
-    assert manager.c.group.info()['focus'] == 'xeyes'
+    assert manager.c.group.info()['focus'] == 'one'
     assert manager.c.window.info()['floating'] is True
     assert manager.c.window.info()['minimized'] is True
     assert manager.c.window.info()['width'] == 398
@@ -783,7 +776,7 @@ def test_toggle_min(manager):
     assert manager.c.window.info()['y'] == 0
 
     manager.c.window.toggle_minimize()
-    assert manager.c.group.info()['focus'] == 'xeyes'
+    assert manager.c.group.info()['focus'] == 'one'
     assert manager.c.window.info()['floating'] is False
     assert manager.c.window.info()['minimized'] is False
     assert manager.c.window.info()['width'] == 398
@@ -795,7 +788,7 @@ def test_toggle_min(manager):
 @manager_config
 @no_xinerama
 def test_toggle_floating(manager):
-    manager.test_xeyes()
+    manager.test_window("one")
     assert manager.c.window.info()['floating'] is False
     manager.c.window.toggle_floating()
     assert manager.c.window.info()['floating'] is True
@@ -816,14 +809,14 @@ def test_floating_focus(manager):
     manager.c.next_layout()
     assert len(manager.c.layout.info()["stacks"]) == 2
     manager.test_xcalc()
-    manager.test_xeyes()
+    manager.test_window("one")
     # manager.test_window("one")
     assert manager.c.window.info()['width'] == 398
     assert manager.c.window.info()['height'] == 578
     manager.c.window.toggle_floating()
     manager.c.window.move_floating(10, 20)
-    assert manager.c.window.info()['name'] == 'xeyes'
-    assert manager.c.group.info()['focus'] == 'xeyes'
+    assert manager.c.window.info()['name'] == 'one'
+    assert manager.c.group.info()['focus'] == 'one'
     # check what stack thinks is focus
     assert [x['current'] for x in manager.c.layout.info()['stacks']] == [0, 0]
 
@@ -831,29 +824,29 @@ def test_floating_focus(manager):
     manager.c.group.next_window()
     assert manager.c.window.info()['width'] == 398
     assert manager.c.window.info()['height'] == 578
-    assert manager.c.window.info()['name'] != 'xeyes'
-    assert manager.c.group.info()['focus'] != 'xeyes'
+    assert manager.c.window.info()['name'] != 'one'
+    assert manager.c.group.info()['focus'] != 'one'
     # check what stack thinks is focus
     # check what stack thinks is focus
     assert [x['current'] for x in manager.c.layout.info()['stacks']] == [0, 0]
 
-    # focus back to xeyes
+    # focus back to one
     manager.c.group.next_window()
-    assert manager.c.window.info()['name'] == 'xeyes'
+    assert manager.c.window.info()['name'] == 'one'
     # check what stack thinks is focus
     assert [x['current'] for x in manager.c.layout.info()['stacks']] == [0, 0]
 
     # now focusing via layout is borked (won't go to float)
     manager.c.layout.up()
-    assert manager.c.window.info()['name'] != 'xeyes'
+    assert manager.c.window.info()['name'] != 'one'
     manager.c.layout.up()
-    assert manager.c.window.info()['name'] != 'xeyes'
+    assert manager.c.window.info()['name'] != 'one'
     # check what stack thinks is focus
     assert [x['current'] for x in manager.c.layout.info()['stacks']] == [0, 0]
 
-    # focus back to xeyes
+    # focus back to one
     manager.c.group.next_window()
-    assert manager.c.window.info()['name'] == 'xeyes'
+    assert manager.c.window.info()['name'] == 'one'
     # check what stack thinks is focus
     assert [x['current'] for x in manager.c.layout.info()['stacks']] == [0, 0]
 
@@ -861,7 +854,7 @@ def test_floating_focus(manager):
 @manager_config
 @no_xinerama
 def test_move_floating(manager):
-    manager.test_xeyes()
+    manager.test_window("one")
     # manager.test_window("one")
     assert manager.c.window.info()['width'] == 798
     assert manager.c.window.info()['height'] == 578
@@ -872,7 +865,7 @@ def test_move_floating(manager):
     assert manager.c.window.info()['floating'] is True
 
     manager.c.window.move_floating(10, 20)
-    assert manager.c.window.info()['width'] == 150
+    assert manager.c.window.info()['width'] == 100
     assert manager.c.window.info()['height'] == 100
     assert manager.c.window.info()['x'] == 10
     assert manager.c.window.info()['y'] == 20
@@ -926,12 +919,6 @@ def test_focus_stays_on_layout_switch(manager):
     manager.c.prev_layout()
 
     assert manager.c.window.info()['name'] == 'one'
-
-
-@pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
-@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
-def test_xeyes(manager):
-    manager.test_xeyes()
 
 
 @pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)

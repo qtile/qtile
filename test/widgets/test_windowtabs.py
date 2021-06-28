@@ -78,24 +78,24 @@ def test_single_window_states(manager):
     # Default _TextBox text is " " and no hooks fired yet.
     assert widget_text() == " "
 
-    # Load xeyes
-    proc = manager.test_xeyes()
-    assert widget_text() == "<b>xeyes</b>"
+    # Load a window
+    proc = manager.test_window('one')
+    assert widget_text() == "<b>one</b>"
 
     # Maximize window
     manager.c.window.toggle_maximize()
-    assert widget_text() == "<b>[] xeyes</b>"
+    assert widget_text() == "<b>[] one</b>"
 
     # Minimize window
     manager.c.window.toggle_minimize()
-    assert widget_text() == "<b>_ xeyes</b>"
+    assert widget_text() == "<b>_ one</b>"
 
     # Float window
     manager.c.window.toggle_minimize()
     manager.c.window.toggle_floating()
-    assert widget_text() == "<b>V xeyes</b>"
+    assert widget_text() == "<b>V one</b>"
 
-    # Kill xeyes and check text again
+    # Kill the window and check text again
     # NB hooks fired so empty string is now ""
     manager.kill_window(proc)
     assert widget_text() == ""

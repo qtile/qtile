@@ -167,7 +167,7 @@ def test_basic(manager):
     assert manager.c.screen.info() == {
         'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
     manager.c.to_screen(2)
-    manager.test_xeyes()
+    manager.test_window('two')
     assert manager.c.screen.info() == {
         'y': 480, 'x': 0, 'index': 2, 'width': 500, 'height': 400}
     manager.c.to_screen(3)
@@ -247,10 +247,10 @@ def test_float_first_on_second_screen(manager):
 @fakescreen_config
 def test_float_change_screens(manager):
     # add some eyes, and float clock
-    manager.test_xeyes()
+    manager.test_window('tiled')
     manager.test_window('float')
     manager.c.window.toggle_floating()
-    assert set(manager.c.group.info()['windows']) == set(('xeyes', 'float'))
+    assert set(manager.c.group.info()['windows']) == set(('tiled', 'float'))
     assert manager.c.group.info()['floating_info']['clients'] == ['float']
     assert manager.c.window.info()['width'] == 100
     assert manager.c.window.info()['height'] == 100
@@ -269,7 +269,7 @@ def test_float_change_screens(manager):
         'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
     manager.c.group['a'].toscreen()
     assert manager.c.group.info()['name'] == 'a'
-    assert set(manager.c.group.info()['windows']) == set(('xeyes', 'float'))
+    assert set(manager.c.group.info()['windows']) == set(('tiled', 'float'))
     assert manager.c.window.info()['name'] == 'float'
     # width/height unchanged
     assert manager.c.window.info()['width'] == 100
@@ -287,7 +287,7 @@ def test_float_change_screens(manager):
     assert manager.c.group.info()['name'] == 'c'
     manager.c.group['a'].toscreen()
     assert manager.c.group.info()['name'] == 'a'
-    assert set(manager.c.group.info()['windows']) == set(('xeyes', 'float'))
+    assert set(manager.c.group.info()['windows']) == set(('tiled', 'float'))
     assert manager.c.window.info()['name'] == 'float'
     # width/height unchanged
     assert manager.c.window.info()['width'] == 100
@@ -303,7 +303,7 @@ def test_float_change_screens(manager):
     assert manager.c.group.info()['name'] == 'd'
     manager.c.group['a'].toscreen()
     assert manager.c.group.info()['name'] == 'a'
-    assert set(manager.c.group.info()['windows']) == set(('xeyes', 'float'))
+    assert set(manager.c.group.info()['windows']) == set(('tiled', 'float'))
     assert manager.c.window.info()['name'] == 'float'
     # width/height unchanged
     assert manager.c.window.info()['width'] == 100
@@ -319,7 +319,7 @@ def test_float_change_screens(manager):
     assert manager.c.group.info()['name'] == 'b'
     manager.c.group['a'].toscreen()
     assert manager.c.group.info()['name'] == 'a'
-    assert set(manager.c.group.info()['windows']) == set(('xeyes', 'float'))
+    assert set(manager.c.group.info()['windows']) == set(('tiled', 'float'))
     assert manager.c.window.info()['name'] == 'float'
     # back to the original location
     assert manager.c.window.info()['width'] == 100
