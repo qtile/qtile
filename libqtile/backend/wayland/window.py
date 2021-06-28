@@ -620,9 +620,11 @@ class Internal(base.Internal, Window):
 
     def hide(self) -> None:
         self.mapped = False
+        self.damage()
 
     def unhide(self) -> None:
         self.mapped = True
+        self.damage()
 
     def kill(self) -> None:
         self.hide()
@@ -630,16 +632,20 @@ class Internal(base.Internal, Window):
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None, respect_hints=False):
-        if above:
+        if above and self._mapped:
             self.core.mapped_windows.remove(self)
             self.core.mapped_windows.append(self)
             self.core.stack_windows()
 
         self.x = x
         self.y = y
+        needs_reset = width != self.width or height != self.height
         self.width = width
         self.height = height
-        self._reset_texture()
+
+        if needs_reset:
+            self._reset_texture()
+
         self.damage()
 
 
