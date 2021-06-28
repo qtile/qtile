@@ -222,7 +222,7 @@ class DWidget:
 
 @geom_config
 def test_geometry(manager):
-    manager.test_xeyes()
+    manager.test_window("one")
     g = manager.c.screens()[0]["gaps"]
     assert g["top"] == (0, 0, 800, 10)
     assert g["bottom"] == (0, 590, 800, 10)

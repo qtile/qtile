@@ -85,35 +85,35 @@ def test_window_names(manager):
     assert widget_text_on_screen(0) == " "
     assert widget_text_on_screen(0) == widget_text_on_screen(1)
 
-    # Load xeyes
-    proc = manager.test_xeyes()
-    assert widget_text_on_screen(0) == "xeyes"
+    # Load a window
+    proc = manager.test_window('one')
+    assert widget_text_on_screen(0) == "one"
     assert widget_text_on_screen(0) == widget_text_on_screen(1)
 
     # Maximize window
     manager.c.window.toggle_maximize()
-    assert widget_text_on_screen(0) == "[] xeyes"
+    assert widget_text_on_screen(0) == "[] one"
     assert widget_text_on_screen(0) == widget_text_on_screen(1)
 
     # Minimize window
     manager.c.window.toggle_minimize()
-    assert widget_text_on_screen(0) == "_ xeyes"
+    assert widget_text_on_screen(0) == "_ one"
     assert widget_text_on_screen(0) == widget_text_on_screen(1)
 
     # Float window
     manager.c.window.toggle_minimize()
     manager.c.window.toggle_floating()
-    assert widget_text_on_screen(0) == "V xeyes"
+    assert widget_text_on_screen(0) == "V one"
     assert widget_text_on_screen(0) == widget_text_on_screen(1)
 
-    # Kill xeyes and check text again
+    # Kill the window and check text again
     manager.kill_window(proc)
     assert widget_text_on_screen(0) == " "
     assert widget_text_on_screen(0) == widget_text_on_screen(1)
 
     # Quick test to check for_current_screen=False works
     manager.c.to_screen(1)
-    proc = manager.test_xeyes()
+    proc = manager.test_window('one')
     assert widget_text_on_screen(0) == " "
-    assert widget_text_on_screen(1) == "xeyes"
+    assert widget_text_on_screen(1) == "one"
     manager.kill_window(proc)

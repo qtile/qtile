@@ -25,7 +25,7 @@ from libqtile.backend.x11.xcbq import Connection
 
 
 def test_popup_focus(xmanager):
-    xmanager.test_xeyes()
+    xmanager.test_window("one")
     conn = Connection(xmanager.display)
     _, _, windows = conn.default_screen.root.query_tree()
     start_wins = len(windows)
@@ -48,6 +48,6 @@ def test_popup_focus(xmanager):
     conn.finalize()
     assert end_wins == start_wins + 1
 
-    assert xmanager.c.group.info()['focus'] == 'xeyes'
-    assert xmanager.c.group.info()['windows'] == ['xeyes']
+    assert xmanager.c.group.info()['focus'] == 'one'
+    assert xmanager.c.group.info()['windows'] == ['one']
     assert len(xmanager.c.windows()) == 1

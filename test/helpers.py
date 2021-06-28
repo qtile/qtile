@@ -307,10 +307,6 @@ class TestManager:
     def test_notification(self, name="notification"):
         return self.test_window(name, wm_type="notification")
 
-    def test_xeyes(self):
-        path = shutil.which("xeyes")
-        return self._spawn_window(path)
-
     def test_xcalc(self):
         path = shutil.which("xcalc")
         return self._spawn_window(path)
