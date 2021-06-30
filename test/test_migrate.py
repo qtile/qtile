@@ -13,7 +13,7 @@ from test.test_check import have_mypy, run_qtile_check
 
 def run_qtile_migrate(config):
     cmd = os.path.join(os.path.dirname(__file__), '..', 'bin', 'qtile')
-    argv = [cmd, "migrate", "-c", config]
+    argv = [cmd, "migrate", "--yes", "-c", config]
     subprocess.check_call(argv)
 
 
