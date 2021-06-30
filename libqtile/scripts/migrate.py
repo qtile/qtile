@@ -162,7 +162,7 @@ def do_migrate(args):
 
     for m in MIGRATIONS:
         q = bowler.Query(config_dir)
-        m(q).execute(interactive=args.interactive, write=True)
+        m(q).execute(interactive=not args.yes, write=True)
 
     changed = False
     for py, backup in file_and_backup(config_dir):
@@ -193,8 +193,8 @@ def add_subcommand(subparsers, parents):
         help="Use the specified configuration file (migrates every .py file in this directory)",
     )
     parser.add_argument(
-        "--interactive",
+        "--yes",
         action="store_true",
-        help="Interactively apply diff (similar to git add -p)",
+        help="Automatically apply diffs with no confirmation",
     )
     parser.set_defaults(func=do_migrate)
