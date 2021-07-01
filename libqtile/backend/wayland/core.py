@@ -386,6 +386,12 @@ class Core(base.Core, wlrq.HasListeners):
                         self.cursor.y - self._hovered_internal.y
                     )
                 else:
+                    if self._hovered_internal:
+                        self._hovered_internal.process_pointer_leave(
+                            self.cursor.x - self._hovered_internal.x,
+                            self.cursor.y - self._hovered_internal.y
+                        )
+                    self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
                     self.seat.pointer_clear_focus()
                     win.process_pointer_enter(self.cursor.x, self.cursor.y)
                     self._hovered_internal = win
@@ -422,7 +428,10 @@ class Core(base.Core, wlrq.HasListeners):
             self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
             self.seat.pointer_clear_focus()
             if self._hovered_internal:
-                self._hovered_internal.process_pointer_leave(self.cursor.x, self.cursor.y)
+                self._hovered_internal.process_pointer_leave(
+                    self.cursor.x - self._hovered_internal.x,
+                    self.cursor.y - self._hovered_internal.y
+                )
                 self._hovered_internal = None
 
     def _process_cursor_button(self, button: int, pressed: bool):
