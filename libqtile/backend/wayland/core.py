@@ -380,8 +380,11 @@ class Core(base.Core, wlrq.HasListeners):
         if found:
             win, surface, sx, sy = found
             if isinstance(win, window.Internal):
-                if self._hovered_internal:
-                    win.process_pointer_motion(self.cursor.x, self.cursor.y)
+                if self._hovered_internal is win:
+                    win.process_pointer_motion(
+                        self.cursor.x - self._hovered_internal.x,
+                        self.cursor.y - self._hovered_internal.y
+                    )
                 else:
                     self.seat.pointer_clear_focus()
                     win.process_pointer_enter(self.cursor.x, self.cursor.y)
