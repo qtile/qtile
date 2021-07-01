@@ -394,6 +394,8 @@ class Window(base.Window, HasListeners):
                 self.y + self.height // 2,
             )
 
+        if self.group:
+            self.group.current_window = self
         hook.fire("client_focus", self)
 
     def place(self, x, y, width, height, borderwidth, bordercolor,

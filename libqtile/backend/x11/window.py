@@ -914,6 +914,9 @@ class _Window:
                 self.window.set_property('_NET_WM_STATE', state)
 
         self.qtile.core._root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
+
+        if self.group:
+            self.group.current_window = self
         hook.fire("client_focus", self)
 
     def cmd_focus(self, warp=None):
