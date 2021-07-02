@@ -34,7 +34,7 @@ from libqtile.widget import notify
 
 # Bit of a hack... when we log a timer, save the delay in an attribute
 # We'll use this to check message timeouts are being honoured.
-def log_timeout(self, delay, func):
+def log_timeout(self, delay, func, method_args=None):
     self.delay = delay
     self.qtile.call_later(delay, func)
 
