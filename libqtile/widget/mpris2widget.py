@@ -33,10 +33,12 @@ class Mpris2(base._TextBox):
     """An MPRIS 2 widget
 
     A widget which displays the current track/artist of your favorite MPRIS
-    player. It should work with all MPRIS 2 compatible players which implement
-    a reasonably correct version of MPRIS, though I have only tested it with
-    audacious.  This widget scrolls the text if neccessary and information that
+    player. This widget scrolls the text if neccessary and information that
     is displayed is configurable.
+
+    Widget requirements: dbus-next_.
+
+    .. _dbus-next: https://pypi.org/project/dbus-next/
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
