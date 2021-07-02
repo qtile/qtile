@@ -35,6 +35,10 @@ class Bluetooth(base._TextBox):
     Displays bluetooth status or connected device.
 
     Uses dbus to communicate with the system bus.
+
+    Widget requirements: dbus-next_.
+
+    .. _dbus-next: https://pypi.org/project/dbus-next/
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
