@@ -11,6 +11,7 @@ import multiprocessing
 import os
 import subprocess
 import sys
+import tempfile
 import time
 import traceback
 from pathlib import Path
@@ -92,6 +93,7 @@ class BareConfig(Config):
     mouse = []
     screens = [config.Screen()]
     follow_mouse_focus = False
+    reconfigure_screens = False
 
 
 class Backend:
@@ -131,14 +133,24 @@ class TestManager:
     is done.  Windows can be spawned for the Qtile instance to interact with
     with various `.test_*` methods.
     """
-    def __init__(self, sockfile, backend, debug_log):
-        self.sockfile = sockfile
+    def __init__(self, backend, debug_log):
         self.backend = backend
         self.log_level = logging.DEBUG if debug_log else logging.INFO
 
         self.proc = None
         self.c = None
         self.testwindows = []
+
+    def __enter__(self):
+        """Set up resources"""
+        self._sockfile = tempfile.NamedTemporaryFile()
+        self.sockfile = self._sockfile.name
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        """Clean up resources"""
+        self.terminate()
+        self._sockfile.close()
 
     def start(self, config_class, no_spawn=False):
         rpipe, wpipe = multiprocessing.Pipe()

@@ -1,7 +1,6 @@
 import contextlib
 import os
 import subprocess
-import tempfile
 
 import pytest
 import xcffib
@@ -9,7 +8,6 @@ import xcffib.testing
 import xcffib.xproto
 
 from libqtile.backend.x11.core import Core
-from libqtile.resources import default_config
 from test.helpers import (
     HEIGHT,
     SECOND_HEIGHT,
@@ -165,25 +163,12 @@ def xmanager(request, xephyr):
     parametrize calls can be used.
     """
     config = getattr(request, "param", BareConfig)
-
-    for attr in dir(default_config):
-        if not hasattr(config, attr):
-            setattr(config, attr, getattr(default_config, attr))
-
     backend = XBackend({"DISPLAY": xephyr.display}, args=[xephyr.display])
 
-    with tempfile.NamedTemporaryFile() as f:
-        sockfile = f.name
-        try:
-            manager = TestManager(
-                sockfile, backend, request.config.getoption("--debuglog")
-            )
-            manager.display = xephyr.display
-            manager.start(config)
-
-            yield manager
-        finally:
-            manager.terminate()
+    with TestManager(backend, request.config.getoption("--debuglog")) as manager:
+        manager.display = xephyr.display
+        manager.start(config)
+        yield manager
 
 
 class XBackend(Backend):

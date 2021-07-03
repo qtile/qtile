@@ -21,12 +21,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import tempfile
-
 import pytest
 
 from libqtile.backend import base
-from libqtile.resources import default_config
 from test.backend.wayland.conftest import WaylandBackend, wayland_environment
 from test.backend.x11.conftest import XBackend, x11_environment
 from test.helpers import BareConfig, TestManager
@@ -80,37 +77,17 @@ def backend(request, backend_name, xephyr, wayland_session):
 
 
 @pytest.fixture(scope="function")
-def manager(request, backend):
-    config = getattr(request, "param", BareConfig)
-
-    for attr in dir(default_config):
-        if not hasattr(config, attr):
-            setattr(config, attr, getattr(default_config, attr))
-
-    with tempfile.NamedTemporaryFile() as f:
-        sockfile = f.name
-        try:
-            manager = TestManager(
-                sockfile, backend, request.config.getoption("--debuglog")
-            )
-            manager.start(config)
-
-            yield manager
-        finally:
-            manager.terminate()
+def manager_nospawn(request, backend):
+    with TestManager(backend, request.config.getoption("--debuglog")) as manager:
+        yield manager
 
 
 @pytest.fixture(scope="function")
-def manager_nospawn(request, backend):
-    with tempfile.NamedTemporaryFile() as f:
-        sockfile = f.name
-        try:
-            manager = TestManager(
-                sockfile, backend, request.config.getoption("--debuglog")
-            )
-            yield manager
-        finally:
-            manager.terminate()
+def manager(request, manager_nospawn):
+    config = getattr(request, "param", BareConfig)
+
+    manager_nospawn.start(config)
+    yield manager_nospawn
 
 
 no_xinerama = pytest.mark.parametrize("xephyr", [{"xinerama": False}], indirect=True)
