@@ -90,6 +90,7 @@ class ManagerConfig(Config):
         ),
     )]
     follow_mouse_focus = True
+    reconfigure_screens = False
 
 
 manager_config = pytest.mark.parametrize("manager", [ManagerConfig], indirect=True)
@@ -1068,12 +1069,12 @@ def test_change_loglevel(manager):
 
 
 def test_switch_groups_cursor_warp(manager_nospawn):
-    config = ManagerConfig
-    config.cursor_warp = True
-    config.layouts = [libqtile.layout.Stack(num_stacks=2), libqtile.layout.Max()]
-    config.groups = [libqtile.config.Group("a"), libqtile.config.Group("b", layout="max")]
+    class SwitchGroupsCursorWarpConfig(ManagerConfig):
+        cursor_warp = True
+        layouts = [libqtile.layout.Stack(num_stacks=2), libqtile.layout.Max()]
+        groups = [libqtile.config.Group("a"), libqtile.config.Group("b", layout="max")]
 
-    manager_nospawn.start(config)
+    manager_nospawn.start(SwitchGroupsCursorWarpConfig)
 
     manager_nospawn.test_window("one")
     manager_nospawn.test_window("two")

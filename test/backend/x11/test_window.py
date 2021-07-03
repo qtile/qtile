@@ -592,7 +592,6 @@ def test_min_size_hint(xmanager):
     try:
         xmanager.create_window(size_hints)
         xmanager.c.window.enable_floating()
-        print(w.get_wm_normal_hints())
         assert xmanager.c.window.info()['width'] == 100
         assert xmanager.c.window.info()['height'] == 100
 
@@ -627,7 +626,6 @@ def test_min_size_hint_no_flag(xmanager):
     try:
         xmanager.create_window(size_hints)
         xmanager.c.window.enable_floating()
-        print(w.get_wm_normal_hints())
         assert xmanager.c.window.info()['width'] == 100
         assert xmanager.c.window.info()['height'] == 100
 
@@ -663,7 +661,6 @@ def test_max_size_hint(xmanager):
     try:
         xmanager.create_window(size_hints)
         xmanager.c.window.enable_floating()
-        print(w.get_wm_normal_hints())
         assert xmanager.c.window.info()['width'] == 100
         assert xmanager.c.window.info()['height'] == 100
 
@@ -698,7 +695,6 @@ def test_max_size_hint_no_flag(xmanager):
     try:
         xmanager.create_window(size_hints)
         xmanager.c.window.enable_floating()
-        print(w.get_wm_normal_hints())
         assert xmanager.c.window.info()['width'] == 100
         assert xmanager.c.window.info()['height'] == 100
 
@@ -734,7 +730,6 @@ def test_both_size_hints(xmanager):
     try:
         xmanager.create_window(size_hints)
         xmanager.c.window.enable_floating()
-        print(w.get_wm_normal_hints())
         assert xmanager.c.window.info()['width'] == 100
         assert xmanager.c.window.info()['height'] == 100
 
