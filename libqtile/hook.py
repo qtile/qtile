@@ -144,7 +144,8 @@ class Subscribe:
         return self._subscribe("changegroup", func)
 
     def focus_change(self, func):
-        """Called when focus is changed
+        """Called when focus is changed, including moving focus between groups or when
+        focus is lost completely
 
         **Arguments**
 
@@ -217,7 +218,7 @@ class Subscribe:
         return self._subscribe("client_killed", func)
 
     def client_focus(self, func):
-        """Called whenever focus changes
+        """Called whenever focus moves to a client window
 
         **Arguments**
 
