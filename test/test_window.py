@@ -1,6 +1,7 @@
 import pytest
 
 from test.conftest import BareConfig
+from test.test_manager import ManagerConfig
 
 bare_config = pytest.mark.parametrize("manager", [BareConfig], indirect=True)
 
@@ -45,3 +46,63 @@ def test_no_size_hint(manager):
     manager.c.window.set_size_floating(200, 200)
     assert manager.c.window.info()['width'] == 200
     assert manager.c.window.info()['height'] == 200
+
+
+class BringFrontClickConfig(ManagerConfig):
+    bring_front_click = True
+
+
+class BringFrontClickFloatingOnlyConfig(ManagerConfig):
+    bring_front_click = "floating_only"
+
+
+@pytest.fixture
+def bring_front_click(request):
+    return request.param
+
+
+@pytest.mark.parametrize(
+    "manager, bring_front_click",
+    [
+        (ManagerConfig, False),
+        (BringFrontClickConfig, True),
+        (BringFrontClickFloatingOnlyConfig, "floating_only"),
+    ],
+    indirect=True,
+)
+def test_bring_front_click(manager, bring_front_click):
+    # this is a tiled window.
+    manager.test_window("one")
+
+    manager.test_window("two")
+    manager.c.window.set_position_floating(50, 50)
+    manager.c.window.set_size_floating(50, 50)
+
+    manager.test_window("three")
+    manager.c.window.set_position_floating(150, 50)
+    manager.c.window.set_size_floating(50, 50)
+
+    wids = [x["id"] for x in manager.c.windows()]
+    names = [x["name"] for x in manager.c.windows()]
+
+    assert names == ["one", "two", "three"]
+    wins = manager.backend.get_all_windows()
+    assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])
+
+    # Click on window two
+    manager.backend.fake_click(55, 55)
+    wins = manager.backend.get_all_windows()
+    if bring_front_click:
+        assert wins.index(wids[0]) < wins.index(wids[2]) < wins.index(wids[1])
+    else:
+        assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])
+
+    # Click on window one
+    manager.backend.fake_click(10, 10)
+    wins = manager.backend.get_all_windows()
+    if bring_front_click == "floating_only":
+        assert wins.index(wids[0]) < wins.index(wids[2]) < wins.index(wids[1])
+    elif bring_front_click:
+        assert wins.index(wids[2]) < wins.index(wids[1]) < wins.index(wids[0])
+    else:
+        assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])
