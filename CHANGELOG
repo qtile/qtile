@@ -1,4 +1,4 @@
-Qtile 0.x.x, released xxxx-xx-xx:
+Qtile 0.18.0, released 2021-07-04:
     !!! Config breakage !!!
         - The `qtile` entry point doesn't run `qtile start` by default anymore
         - New optional dependency for dbus related features: dbus-next.
