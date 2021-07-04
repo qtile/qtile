@@ -35,5 +35,5 @@ from libqtile.layout.stack import Stack
 from libqtile.layout.tile import Tile
 from libqtile.layout.tree import TreeTab
 from libqtile.layout.verticaltile import VerticalTile
-from libqtile.layout.xmonad import MonadTall, MonadWide
+from libqtile.layout.xmonad import MonadTall, MonadWide, MonadThreeCol
 from libqtile.layout.zoomy import Zoomy
