@@ -66,7 +66,7 @@ documentation, but there are tutorials online that explain how it is used.
 Our tests are written inside the ``test`` folder at the top level of the
 repository. Reading through these, you can get a feel for the approach we take
 to test a given unit. Most of the tests involve an object called ``manager``.
-This is the test manager (defined in test/conftest.py), which exposes a command
+This is the test manager (defined in test/helpers.py), which exposes a command
 client at ``manager.c`` that we use to test a Qtile instance running in a
 separate thread as if we were using a command client from within a running
 Qtile session.
