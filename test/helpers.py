@@ -14,6 +14,7 @@ import sys
 import tempfile
 import time
 import traceback
+from abc import ABCMeta, abstractmethod
 from pathlib import Path
 
 from libqtile import command, config, ipc, layout
@@ -96,7 +97,7 @@ class BareConfig(Config):
     reconfigure_screens = False
 
 
-class Backend:
+class Backend(metaclass=ABCMeta):
     """A base class to help set up backends passed to TestManager"""
     def __init__(self, env, args=()):
         self.env = env
@@ -108,6 +109,16 @@ class Backend:
 
     def configure(self, manager):
         """This is used to do any post-startup configuration with the manager"""
+        pass
+
+    @abstractmethod
+    def fake_click(self, x, y):
+        """Click at the specified coordinates"""
+        pass
+
+    @abstractmethod
+    def get_all_windows(self):
+        """Get a list of all windows in ascending order of Z position"""
         pass
 
 
@@ -136,6 +147,7 @@ class TestManager:
     def __init__(self, backend, debug_log):
         self.backend = backend
         self.log_level = logging.DEBUG if debug_log else logging.INFO
+        self.backend.manager = self
 
         self.proc = None
         self.c = None

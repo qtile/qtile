@@ -21,16 +21,12 @@
 
 import textwrap
 
-from libqtile.backend.x11.xcbq import Connection
 
+def test_popup_focus(manager):
+    manager.test_window("one")
+    start_wins = len(manager.backend.get_all_windows())
 
-def test_popup_focus(xmanager):
-    xmanager.test_window("one")
-    conn = Connection(xmanager.display)
-    _, _, windows = conn.default_screen.root.query_tree()
-    start_wins = len(windows)
-
-    success, msg = xmanager.c.eval(textwrap.dedent("""
+    success, msg = manager.c.eval(textwrap.dedent("""
         from libqtile.popup import Popup
         popup = Popup(self,
             x=0,
@@ -43,11 +39,9 @@ def test_popup_focus(xmanager):
     """))
     assert success, msg
 
-    _, _, windows = conn.default_screen.root.query_tree()
-    end_wins = len(windows)
-    conn.finalize()
+    end_wins = len(manager.backend.get_all_windows())
     assert end_wins == start_wins + 1
 
-    assert xmanager.c.group.info()['focus'] == 'one'
-    assert xmanager.c.group.info()['windows'] == ['one']
-    assert len(xmanager.c.windows()) == 1
+    assert manager.c.group.info()['focus'] == 'one'
+    assert manager.c.group.info()['windows'] == ['one']
+    assert len(manager.c.windows()) == 1

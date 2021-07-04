@@ -25,6 +25,7 @@ class WaylandBackend(Backend):
         self.env = env
         self.args = args
         self.core = Core
+        self.manager = None
 
     def create(self):
         """This is used to instantiate the Core"""
@@ -36,3 +37,11 @@ class WaylandBackend(Backend):
         success, display = manager.c.eval("self.core.display_name")
         assert success
         self.env["WAYLAND_DISPLAY"] = display
+
+    def fake_click(self, x, y):
+        """Click at the specified coordinates"""
+        raise NotImplementedError
+
+    def get_all_windows(self):
+        """Get a list of all windows in ascending order of Z position"""
+        raise NotImplementedError
