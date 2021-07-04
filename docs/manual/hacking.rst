@@ -7,27 +7,22 @@ Hacking on Qtile
 Requirements
 ============
 
-Any reasonably recent version of these should work, so you can probably just
-install them from your package manager.
-
-* `pytest <https://docs.pytest.org>`_
-* `Xephyr <https://freedesktop.org/wiki/Software/Xephyr/>`_
-* ``xrandr``, ``xcalc``, ``xeyes`` and ``xclock`` (``x11-apps`` on Ubuntu)
-
-On Ubuntu, if testing on Python 3, this can be done with:
+All tests require `pytest <https://docs.pytest.org>`_ and ``PyGObject``. These
+can be installed on Ubuntu with:
 
 .. code-block:: bash
 
-    sudo apt-get install python3-pytest xserver-xephyr x11-apps
+    sudo apt-get install python3-pytest python3-gi
 
-On ArchLinux, the X11 requirements are installed with:
+If you are using X11 then you will also need `Xephyr
+<https://freedesktop.org/wiki/Software/Xephyr/>`_:
 
 .. code-block:: bash
 
-    sudo pacman -S xorg-xrandr xorg-xcalc xorg-xeyes xorg-xclock
+    sudo apt-get install xserver-xephyr
 
-To build the documentation, you will also need to install `graphviz <https://www.graphviz.org/download/>`_.
-On ArchLinux, you can install it with ``sudo pacman -S graphviz``.
+To build the documentation, you will also need to install `graphviz
+<https://www.graphviz.org/download/>`_.
 
 
 Building cffi module
