@@ -24,6 +24,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from pathlib import Path
 from typing import List  # noqa: F401
 
 from libqtile import bar, layout, widget
@@ -122,6 +123,9 @@ widget_defaults = dict(
 )
 extension_defaults = widget_defaults.copy()
 
+wallpaper_path = Path(__file__).resolve() / ".." / "qtile-wallpaper.png"
+wallpaper = str(wallpaper_path.resolve())
+
 screens = [
     Screen(
         bottom=bar.Bar(
@@ -144,6 +148,9 @@ screens = [
             ],
             24,
         ),
+        wallpaper=wallpaper,
+        wallpaper_mode="fill"
+
     ),
 ]
 
