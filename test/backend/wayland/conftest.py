@@ -1,5 +1,6 @@
 import contextlib
 import os
+import textwrap
 
 from libqtile.backend.wayland.core import Core
 from test.helpers import Backend
@@ -40,8 +41,15 @@ class WaylandBackend(Backend):
 
     def fake_click(self, x, y):
         """Click at the specified coordinates"""
-        raise NotImplementedError
+        self.manager.c.eval(textwrap.dedent("""
+            self.core._focus_by_click()
+            self.core._process_cursor_button(1, True)
+        """))
 
     def get_all_windows(self):
         """Get a list of all windows in ascending order of Z position"""
-        raise NotImplementedError
+        success, result = self.manager.c.eval(textwrap.dedent("""
+            [win.wid for win in self.core.mapped_windows]
+        """))
+        assert success
+        return eval(result)
