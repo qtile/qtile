@@ -663,3 +663,10 @@ def test_both_size_hints(xmanager):
     finally:
         w.kill_client()
         conn.finalize()
+
+
+@manager_config
+@no_xinerama
+def test_inspect_window(xmanager):
+    xmanager.test_window('one')
+    assert xmanager.c.window.inspect()["wm_class"]

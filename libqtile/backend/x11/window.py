@@ -923,10 +923,6 @@ class _Window:
         """Focuses the window."""
         self.focus(warp)
 
-    def cmd_info(self):
-        """Returns a dictionary of info for this object"""
-        return self.info()
-
     def cmd_hints(self):
         """Returns the X11 hints (WM_HINTS and WM_SIZE_HINTS) for this window."""
         return self.hints
