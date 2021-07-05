@@ -687,3 +687,15 @@ class Core(base.Core, wlrq.HasListeners):
     def keysym_from_name(self, name: str) -> int:
         """Get the keysym for a key from its name"""
         return xkb.keysym_from_name(name, case_insensitive=True)
+
+    def simulate_keypress(self, modifiers: List[str], key: str) -> None:
+        #"""Simulates a keypress on the focused window."""
+        keysym = xkb.keysym_from_name(key, case_insensitive=True)
+        mods = wlrq.translate_masks(modifiers)
+
+        if (keysym, mods) in self.grabbed_keys:
+            self.qtile.process_key_event(keysym, mods)
+            return
+
+        if self.focused_internal:
+            self.focused_internal.process_key_press(keysym)
