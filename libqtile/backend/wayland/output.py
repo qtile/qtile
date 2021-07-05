@@ -20,6 +20,7 @@
 
 from __future__ import annotations
 
+import os
 import typing
 
 from wlroots.util.clock import Timespec
@@ -64,6 +65,17 @@ class Output(HasListeners):
 
         # The layers enum indexes into this list to get a list of surfaces
         self.layers: List[List[Static]] = [[] for _ in range(len(LayerShellV1Layer))]
+
+        # This is run during tests, when we want to fix the output's geometry
+        if wlr_output.is_headless and "PYTEST_CURRENT_TEST" in os.environ:
+            assert len(core.outputs) < 2, "This should not be reached"
+            if not core.outputs:
+                # First test output
+                wlr_output.set_custom_mode(800, 600, 0)
+            else:
+                # Secound test output
+                wlr_output.set_custom_mode(640, 480, 0)
+            wlr_output.commit()
 
     def finalize(self):
         self.core.outputs.remove(self)
