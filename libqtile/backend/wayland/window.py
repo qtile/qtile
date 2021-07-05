@@ -490,12 +490,14 @@ class Window(base.Window, HasListeners):
                 self.group.mark_floating(self, True)
             hook.fire('float_change')
 
-    def cmd_focus(self, warp: bool = True) -> None:
-        """Focuses the window."""
-        self.focus(warp)
-
-    def cmd_info(self) -> Dict:
+    def info(self) -> Dict:
         """Return a dictionary of info."""
+        float_info = {
+            "x": self.float_x,
+            "y": self.float_y,
+            "width": self._float_width,
+            "height": self._float_height,
+        }
         return dict(
             name=self.name,
             x=self.x,
@@ -504,11 +506,16 @@ class Window(base.Window, HasListeners):
             height=self.height,
             group=self.group.name if self.group else None,
             id=self.wid,
+            float_info=float_info,
             floating=self._float_state != FloatStates.NOT_FLOATING,
             maximized=self._float_state == FloatStates.MAXIMIZED,
             minimized=self._float_state == FloatStates.MINIMIZED,
             fullscreen=self._float_state == FloatStates.FULLSCREEN
         )
+
+    def cmd_focus(self, warp: bool = True) -> None:
+        """Focuses the window."""
+        self.focus(warp)
 
     def cmd_move_floating(self, dx: int, dy: int) -> None:
         self._tweak_float(dx=dx, dy=dy)
@@ -658,6 +665,16 @@ class Internal(base.Internal, Window):
 
         self._find_outputs()
         self.damage()
+
+    def info(self) -> Dict:
+        """Return a dictionary of info."""
+        return dict(
+            x=self.x,
+            y=self.y,
+            width=self.width,
+            height=self.height,
+            id=self.wid,
+        )
 
 
 class Static(base.Static, Window):

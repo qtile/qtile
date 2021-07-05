@@ -538,13 +538,6 @@ def test_toggle_group(manager):
 
 
 @manager_config
-@no_xinerama
-def test_inspect_window(manager):
-    manager.test_window('one')
-    assert manager.c.window.inspect()["wm_class"]
-
-
-@manager_config
 def test_static(manager):
     manager.test_window("one")
     manager.test_window("two")

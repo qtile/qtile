@@ -198,9 +198,14 @@ class _Window(CommandObject, metaclass=ABCMeta):
     def _select(self, name, sel):
         return None
 
+    @abstractmethod
     def info(self) -> Dict[str, Any]:
         """Return information on this window."""
         return {}
+
+    def cmd_info(self) -> Dict:
+        """Return a dictionary of info."""
+        return self.info()
 
 
 class Window(_Window, metaclass=ABCMeta):
@@ -272,10 +277,6 @@ class Window(_Window, metaclass=ABCMeta):
     @abstractmethod
     def cmd_focus(self, warp: bool = True) -> None:
         """Focuses the window."""
-
-    @abstractmethod
-    def cmd_info(self) -> Dict:
-        """Return a dictionary of info."""
 
     @abstractmethod
     def cmd_get_position(self) -> Tuple[int, int]:

@@ -236,8 +236,6 @@ def test_geometry(manager):
     assert geom["height"] == 578
     internal = manager.c.internal_windows()
     assert len(internal) == 4
-    wid = manager.c.bar["bottom"].info()["window"]
-    assert manager.c.window[wid].inspect()
 
 
 @geom_config
