@@ -294,9 +294,7 @@ class _Widget(CommandObject, configurable.Configurable):
             and return the string from stdout, which is decoded when using
             Python 3.
         """
-        output = subprocess.check_output(command, **kwargs)
-        output = output.decode()
-        return output
+        return subprocess.check_output(command, **kwargs, encoding="utf-8")
 
     def _wrapper(self, method, *method_args):
         try:
