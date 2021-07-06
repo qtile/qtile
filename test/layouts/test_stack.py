@@ -30,7 +30,6 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
@@ -53,8 +52,7 @@ class StackConfig(Config):
     follow_mouse_focus = False
 
 
-def stack_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [StackConfig], indirect=True)(x))
+stack_config = pytest.mark.parametrize("manager", [StackConfig], indirect=True)
 
 
 def _stacks(manager):

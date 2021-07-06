@@ -32,6 +32,7 @@ from libqtile.command.base import CommandObject
 from libqtile.command.interface import CommandError
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
+from test.conftest import dualmonitor
 
 
 class CallConfig(Config):
@@ -177,6 +178,7 @@ def test_call_unknown(manager):
         manager.c.layout.nonexistent
 
 
+@dualmonitor
 @server_config
 def test_items_qtile(manager):
     v = manager.c.items("group")
@@ -197,6 +199,7 @@ def test_items_qtile(manager):
     assert manager.c.items("screen") == (True, [0, 1])
 
 
+@dualmonitor
 @server_config
 def test_select_qtile(manager):
     assert manager.c.layout.info()["group"] == "a"
@@ -238,6 +241,7 @@ def test_items_group(manager):
     assert group.items("screen") == (True, [])
 
 
+@dualmonitor
 @server_config
 def test_select_group(manager):
     group = manager.c.group
@@ -302,6 +306,7 @@ def test_items_bar(manager):
     assert manager.c.bar["bottom"].items("screen") == (True, [])
 
 
+@dualmonitor
 @server_config
 def test_select_bar(manager):
     assert manager.c.screen[1].bar["bottom"].screen.info()["index"] == 1
@@ -330,6 +335,7 @@ def test_select_layout(manager):
         layout.group["a"]
 
 
+@dualmonitor
 @server_config
 def test_items_window(manager):
     manager.test_window("test")
@@ -341,6 +347,7 @@ def test_items_window(manager):
     assert window.items("screen") == (True, [])
 
 
+@dualmonitor
 @server_config
 def test_select_window(manager):
     manager.test_window("test")

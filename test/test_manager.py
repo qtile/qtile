@@ -41,7 +41,7 @@ from libqtile.command.interface import CommandError, CommandException
 from libqtile.config import Match
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
-from test.conftest import no_xinerama
+from test.conftest import dualmonitor, multimonitor
 from test.helpers import BareConfig, Retry, assert_window_died
 from test.layouts.layout_utils import assert_focused
 
@@ -96,6 +96,7 @@ class ManagerConfig(Config):
 manager_config = pytest.mark.parametrize("manager", [ManagerConfig], indirect=True)
 
 
+@dualmonitor
 @manager_config
 def test_screen_dim(manager):
     manager.test_window('one')
@@ -134,6 +135,7 @@ def test_clone_dim(manager):
     assert len(manager.c.screens()) == 1
 
 
+@dualmonitor
 @manager_config
 def test_to_screen(manager):
     assert manager.c.screen.info()["index"] == 0
@@ -158,6 +160,7 @@ def test_to_screen(manager):
     assert manager.c.window.info()["name"] == "one"
 
 
+@dualmonitor
 @manager_config
 def test_togroup(manager):
     manager.test_window("one")
@@ -196,13 +199,11 @@ def test_resize(manager):
     assert d['x'] == d['y'] == 10
 
 
-@no_xinerama
 def test_minimal(manager):
     assert manager.c.status() == "OK"
 
 
 @manager_config
-@no_xinerama
 def test_events(manager):
     assert manager.c.status() == "OK"
 
@@ -210,7 +211,6 @@ def test_events(manager):
 # FIXME: failing test disabled. For some reason we don't seem
 # to have a keymap in Xnest or Xephyr 99% of the time.
 @manager_config
-@no_xinerama
 def test_keypress(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -226,7 +226,7 @@ class TooFewGroupsConfig(ManagerConfig):
 
 
 @pytest.mark.parametrize("manager", [TooFewGroupsConfig], indirect=True)
-@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
+@multimonitor
 def test_too_few_groups(manager):
     assert manager.c.groups()
     assert len(manager.c.groups()) == len(manager.c.screens())
@@ -287,7 +287,6 @@ chords_config = pytest.mark.parametrize("manager", [_ChordsConfig], indirect=Tru
 
 
 @chords_config
-@no_xinerama
 def test_immediate_chord(manager):
     manager.test_window("three")
     manager.test_window("two")
@@ -315,7 +314,6 @@ def test_immediate_chord(manager):
 
 
 @chords_config
-@no_xinerama
 def test_mode_chord(manager):
     manager.test_window("three")
     manager.test_window("two")
@@ -347,7 +345,6 @@ def test_mode_chord(manager):
 
 
 @chords_config
-@no_xinerama
 def test_chord_stack(manager):
     manager.test_window("two")
     manager.test_window("one")
@@ -391,21 +388,18 @@ def test_chord_stack(manager):
 
 
 @manager_config
-@no_xinerama
 def test_spawn(manager):
     # Spawn something with a pid greater than init's
     assert int(manager.c.spawn("true")) > 1
 
 
 @manager_config
-@no_xinerama
 def test_spawn_list(manager):
     # Spawn something with a pid greater than init's
     assert int(manager.c.spawn(["echo", "true"])) > 1
 
 
 @manager_config
-@no_xinerama
 def test_kill_window(manager):
     manager.test_window("one")
     window_info = manager.c.window.info()
@@ -414,7 +408,6 @@ def test_kill_window(manager):
 
 
 @manager_config
-@no_xinerama
 def test_kill_other(manager):
     manager.c.group.setlayout("tile")
     one = manager.test_window("one")
@@ -437,7 +430,6 @@ def test_kill_other(manager):
 
 
 @manager_config
-@no_xinerama
 def test_regression_groupswitch(manager):
     manager.c.group["c"].toscreen()
     manager.c.group["d"].toscreen()
@@ -445,7 +437,6 @@ def test_regression_groupswitch(manager):
 
 
 @manager_config
-@no_xinerama
 def test_next_layout(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -459,7 +450,6 @@ def test_next_layout(manager):
 
 
 @manager_config
-@no_xinerama
 def test_setlayout(manager):
     assert not manager.c.layout.info()["name"] == "max"
     manager.c.group.setlayout("max")
@@ -467,7 +457,6 @@ def test_setlayout(manager):
 
 
 @manager_config
-@no_xinerama
 def test_to_layout_index(manager):
     manager.c.to_layout_index(-1)
     assert manager.c.layout.info()["name"] == "max"
@@ -480,7 +469,6 @@ def test_to_layout_index(manager):
 
 
 @manager_config
-@no_xinerama
 def test_adddelgroup(manager):
     manager.test_window("one")
     manager.c.addgroup("dummygroup")
@@ -504,7 +492,6 @@ def test_adddelgroup(manager):
 
 
 @manager_config
-@no_xinerama
 def test_delgroup(manager):
     manager.test_window("one")
     for i in ['a', 'd', 'c']:
@@ -514,7 +501,6 @@ def test_delgroup(manager):
 
 
 @manager_config
-@no_xinerama
 def test_nextprevgroup(manager):
     start = manager.c.group.info()["name"]
     ret = manager.c.screen.next_group()
@@ -525,7 +511,6 @@ def test_nextprevgroup(manager):
 
 
 @manager_config
-@no_xinerama
 def test_toggle_group(manager):
     manager.c.group["a"].toscreen()
     manager.c.group["b"].toscreen()
@@ -556,7 +541,6 @@ def test_static(manager):
 
 
 @manager_config
-@no_xinerama
 def test_match(manager):
     manager.test_window("one")
     assert manager.c.window.info()['name'] == 'one'
@@ -564,7 +548,6 @@ def test_match(manager):
 
 
 @manager_config
-@no_xinerama
 def test_default_float(manager):
     # change to 2 col stack
     manager.c.next_layout()
@@ -594,7 +577,6 @@ def test_default_float(manager):
 
 
 @manager_config
-@no_xinerama
 def test_last_float_size(manager):
     """
     When you re-float something it would be preferable to have it use the previous float size
@@ -630,7 +612,6 @@ def test_last_float_size(manager):
 
 
 @manager_config
-@no_xinerama
 def test_float_max_min_combo(manager):
     # change to 2 col stack
     manager.c.next_layout()
@@ -674,7 +655,6 @@ def test_float_max_min_combo(manager):
 
 
 @manager_config
-@no_xinerama
 def test_toggle_fullscreen(manager):
     # change to 2 col stack
     manager.c.next_layout()
@@ -710,7 +690,6 @@ def test_toggle_fullscreen(manager):
 
 
 @manager_config
-@no_xinerama
 def test_toggle_max(manager):
     # change to 2 col stack
     manager.c.next_layout()
@@ -744,7 +723,6 @@ def test_toggle_max(manager):
 
 
 @manager_config
-@no_xinerama
 def test_toggle_min(manager):
     # change to 2 col stack
     manager.c.next_layout()
@@ -780,7 +758,6 @@ def test_toggle_min(manager):
 
 
 @manager_config
-@no_xinerama
 def test_toggle_floating(manager):
     manager.test_window("one")
     assert manager.c.window.info()['floating'] is False
@@ -797,7 +774,6 @@ def test_toggle_floating(manager):
 
 
 @manager_config
-@no_xinerama
 def test_floating_focus(manager):
     # change to 2 col stack
     manager.c.next_layout()
@@ -845,7 +821,6 @@ def test_floating_focus(manager):
 
 
 @manager_config
-@no_xinerama
 def test_move_floating(manager):
     manager.test_window("one")
     # manager.test_window("one")
@@ -890,13 +865,17 @@ def test_move_floating(manager):
 
 
 @manager_config
-@no_xinerama
-def test_screens(manager):
-    assert len(manager.c.screens())
+def test_one_screen(manager):
+    assert len(manager.c.screens()) == 1
+
+
+@dualmonitor
+@manager_config
+def test_two_screens(manager):
+    assert len(manager.c.screens()) == 2
 
 
 @manager_config
-@no_xinerama
 def test_focus_stays_on_layout_switch(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -915,7 +894,6 @@ def test_focus_stays_on_layout_switch(manager):
 
 
 @pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
-@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
 def test_map_request(manager):
     manager.test_window("one")
     info = manager.c.groups()["a"]
@@ -929,7 +907,6 @@ def test_map_request(manager):
 
 
 @pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
-@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
 def test_unmap(manager):
     one = manager.test_window("one")
     two = manager.test_window("two")
@@ -956,7 +933,7 @@ def test_unmap(manager):
 
 
 @pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
-@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
+@multimonitor
 def test_setgroup(manager):
     manager.test_window("one")
     manager.c.group["b"].toscreen()
@@ -978,7 +955,7 @@ def test_setgroup(manager):
 
 
 @pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
-@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
+@multimonitor
 def test_unmap_noscreen(manager):
     manager.test_window("one")
     pid = manager.test_window("two")

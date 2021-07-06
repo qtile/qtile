@@ -22,7 +22,6 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
@@ -44,8 +43,7 @@ class BspConfig(Config):
     follow_mouse_focus = False
 
 
-def bsp_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [BspConfig], indirect=True)(x))
+bsp_config = pytest.mark.parametrize("manager", [BspConfig], indirect=True)
 
 # This currently only tests the window focus cycle
 

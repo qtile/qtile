@@ -27,7 +27,6 @@ import libqtile.config
 import libqtile.layout
 import libqtile.widget
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
 from test.helpers import Retry
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
@@ -57,9 +56,7 @@ class ScratchPadBaseConfic(Config):
     mouse = []
 
 
-# scratchpad_config = lambda x:
-def scratchpad_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [ScratchPadBaseConfic], indirect=True)(x))
+scratchpad_config = pytest.mark.parametrize("manager", [ScratchPadBaseConfic], indirect=True)
 
 
 @Retry(ignore_exceptions=(KeyError,))

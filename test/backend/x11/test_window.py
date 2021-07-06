@@ -4,7 +4,7 @@ import xcffib.xtest
 
 import libqtile.config
 from libqtile.backend.x11 import window, xcbq
-from test.conftest import no_xinerama
+from test.conftest import dualmonitor
 from test.helpers import (
     SECOND_HEIGHT,
     SECOND_WIDTH,
@@ -19,7 +19,6 @@ manager_config = pytest.mark.parametrize("xmanager", [ManagerConfig], indirect=T
 
 
 @manager_config
-@no_xinerama
 def test_kill_via_message(xmanager):
     xmanager.test_window("one")
     window_info = xmanager.c.window.info()
@@ -35,7 +34,6 @@ def test_kill_via_message(xmanager):
 
 
 @manager_config
-@no_xinerama
 def test_change_state_via_message(xmanager):
     xmanager.test_window("one")
     window_info = xmanager.c.window.info()
@@ -61,7 +59,6 @@ def test_change_state_via_message(xmanager):
 
 
 @manager_config
-@no_xinerama
 def test_default_float_hints(xmanager):
     xmanager.c.next_layout()
     w = None
@@ -355,6 +352,7 @@ def test_hints_setting_unsetting(xmanager):
         conn.finalize()
 
 
+@dualmonitor
 @manager_config
 def test_strut_handling(xmanager):
     w = []
@@ -456,6 +454,7 @@ class CursorWarpConfig(ManagerConfig):
     ]
 
 
+@dualmonitor
 @pytest.mark.parametrize(
     "xmanager",
     [CursorWarpConfig],
@@ -666,7 +665,6 @@ def test_both_size_hints(xmanager):
 
 
 @manager_config
-@no_xinerama
 def test_inspect_window(xmanager):
     xmanager.test_window('one')
     assert xmanager.c.window.inspect()["wm_class"]

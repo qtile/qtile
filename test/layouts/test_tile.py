@@ -30,7 +30,6 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
@@ -54,8 +53,7 @@ class TileConfig(Config):
     follow_mouse_focus = False
 
 
-def tile_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [TileConfig], indirect=True)(x))
+tile_config = pytest.mark.parametrize("manager", [TileConfig], indirect=True)
 
 
 @tile_config

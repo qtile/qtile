@@ -25,11 +25,13 @@ import libqtile.config
 import libqtile.confreader
 import libqtile.layout
 from libqtile import widget
+from test.conftest import dualmonitor
 
 ACTIVE = "#FF0000"
 INACTIVE = "#00FF00"
 
 
+@dualmonitor
 def test_change_screen(manager_nospawn, minimal_conf_noscreen):
     cswidget = widget.CurrentScreen(active_color=ACTIVE, inactive_color=INACTIVE)
 

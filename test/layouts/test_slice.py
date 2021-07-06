@@ -31,7 +31,6 @@ import libqtile.config
 from libqtile import layout
 from libqtile.config import Match
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
 from test.layouts.layout_utils import (
     assert_dimensions,
     assert_focus_path,
@@ -62,8 +61,7 @@ class SliceConfig(Config):
     follow_mouse_focus = False
 
 
-def slice_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [SliceConfig], indirect=True)(x))
+slice_config = pytest.mark.parametrize("manager", [SliceConfig], indirect=True)
 
 
 @slice_config

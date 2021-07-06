@@ -52,11 +52,15 @@ def outputs(request):
     return request.param
 
 
+dualmonitor = pytest.mark.parametrize("outputs", [2], indirect=True)
+multimonitor = pytest.mark.parametrize("outputs", [1, 2], indirect=True)
+
+
 @pytest.fixture(scope="session")
 def xephyr(request, outputs):  # noqa: F841
     kwargs = getattr(request, "param", {})
 
-    with x11_environment(**kwargs) as x:
+    with x11_environment(outputs, **kwargs) as x:
         yield x
 
 
@@ -88,9 +92,6 @@ def manager(request, manager_nospawn):
 
     manager_nospawn.start(config)
     yield manager_nospawn
-
-
-no_xinerama = pytest.mark.parametrize("xephyr", [{"xinerama": False}], indirect=True)
 
 
 @pytest.fixture(scope="function")
