@@ -513,6 +513,26 @@ class Window(base.Window, HasListeners):
             fullscreen=self._float_state == FloatStates.FULLSCREEN
         )
 
+    def _items(self, name: str) -> ItemT:
+        if name == "group":
+            return True, []
+        elif name == "layout":
+            return True, list(range(len(self.group.layouts)))
+        elif name == "screen" and self.group.screen is not None:
+            return True, []
+        return None
+
+    def _select(self, name, sel):
+        if name == "group":
+            return self.group
+        elif name == "layout":
+            if sel is None:
+                return self.group.layout
+            else:
+                return utils.lget(self.group.layouts, sel)
+        elif name == "screen":
+            return self.group.screen
+
     def cmd_focus(self, warp: bool = True) -> None:
         """Focuses the window."""
         self.focus(warp)
