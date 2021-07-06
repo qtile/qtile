@@ -28,7 +28,7 @@ from libqtile.config import Screen
 from libqtile.confreader import Config
 
 
-class FakeScreenConfig(Config):
+class WindowNameConfig(Config):
     auto_fullscreen = True
     groups = [
         libqtile.config.Group("a"),
@@ -64,16 +64,10 @@ class FakeScreenConfig(Config):
     screens = []
 
 
-xephyr_config = {
-    "xinerama": False,
-    "two_screens": False,
-    "width": 900,
-    "height": 960
-}
-fakescreen_config = pytest.mark.parametrize("xephyr, manager", [(xephyr_config, FakeScreenConfig)], indirect=True)
+windowname_config = pytest.mark.parametrize("manager", [WindowNameConfig], indirect=True)
 
 
-@fakescreen_config
+@windowname_config
 def test_window_names(manager):
 
     def widget_text_on_screen(index):

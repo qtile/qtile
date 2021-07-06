@@ -23,7 +23,6 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
 from test.layouts.layout_utils import (
     assert_dimensions,
     assert_focus_path,
@@ -46,8 +45,7 @@ class MonadTallConfig(Config):
     follow_mouse_focus = False
 
 
-def monadtall_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadTallConfig], indirect=True)(x))
+monadtall_config = pytest.mark.parametrize("manager", [MonadTallConfig], indirect=True)
 
 
 class MonadTallNCPBeforeCurrentConfig(Config):
@@ -65,8 +63,7 @@ class MonadTallNCPBeforeCurrentConfig(Config):
     follow_mouse_focus = False
 
 
-def monadtallncpbeforecurrent_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadTallNCPBeforeCurrentConfig], indirect=True)(x))
+monadtallncpbeforecurrent_config = pytest.mark.parametrize("manager", [MonadTallNCPBeforeCurrentConfig], indirect=True)
 
 
 class MonadTallNCPAfterCurrentConfig(Config):
@@ -84,8 +81,7 @@ class MonadTallNCPAfterCurrentConfig(Config):
     follow_mouse_focus = False
 
 
-def monadtallncpaftercurrent_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadTallNCPAfterCurrentConfig], indirect=True)(x))
+monadtallncpaftercurrent_config = pytest.mark.parametrize("manager", [MonadTallNCPAfterCurrentConfig], indirect=True)
 
 
 class MonadTallNewCLientPositionBottomConfig(Config):
@@ -103,10 +99,6 @@ class MonadTallNewCLientPositionBottomConfig(Config):
     follow_mouse_focus = False
 
 
-def monadtallnewclientpositionbottom_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadTallNewCLientPositionBottomConfig], indirect=True)(x))
-
-
 class MonadTallMarginsConfig(Config):
     auto_fullscreen = True
     groups = [
@@ -122,8 +114,7 @@ class MonadTallMarginsConfig(Config):
     follow_mouse_focus = False
 
 
-def monadtallmargins_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadTallMarginsConfig], indirect=True)(x))
+monadtallmargins_config = pytest.mark.parametrize("manager", [MonadTallMarginsConfig], indirect=True)
 
 
 class MonadWideConfig(Config):
@@ -141,8 +132,7 @@ class MonadWideConfig(Config):
     follow_mouse_focus = False
 
 
-def monadwide_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadWideConfig], indirect=True)(x))
+monadwide_config = pytest.mark.parametrize("manager", [MonadWideConfig], indirect=True)
 
 
 class MonadWideNewClientPositionTopConfig(Config):
@@ -160,10 +150,6 @@ class MonadWideNewClientPositionTopConfig(Config):
     follow_mouse_focus = False
 
 
-def monadwidenewclientpositiontop_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadWideNewClientPositionTopConfig], indirect=True)(x))
-
-
 class MonadWideMarginsConfig(Config):
     auto_fullscreen = True
     groups = [
@@ -177,10 +163,6 @@ class MonadWideMarginsConfig(Config):
     mouse = []
     screens = []
     follow_mouse_focus = False
-
-
-def monadwidemargins_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadWideMarginsConfig], indirect=True)(x))
 
 
 @monadtall_config
@@ -234,7 +216,7 @@ def test_tall_add_clients_after_current(manager):
     assert_focused(manager, 'four')
 
 
-@monadtallnewclientpositionbottom_config
+@pytest.mark.parametrize("manager", [MonadTallNewCLientPositionBottomConfig], indirect=True)
 def test_tall_add_clients_at_bottom(manager):
     manager.test_window('one')
     manager.test_window('two')
@@ -268,7 +250,7 @@ def test_wide_add_clients(manager):
     assert_focused(manager, 'four')
 
 
-@monadwidenewclientpositiontop_config
+@pytest.mark.parametrize("manager", [MonadWideNewClientPositionTopConfig], indirect=True)
 def test_wide_add_clients_new_client_postion_top(manager):
     manager.test_window('one')
     manager.test_window('two')
@@ -304,7 +286,7 @@ def test_tall_margins(manager):
     assert_dimensions(manager, 4, 4, 392, 588)
 
 
-@monadwidemargins_config
+@pytest.mark.parametrize("manager", [MonadWideMarginsConfig], indirect=True)
 def test_wide_margins(manager):
     manager.test_window('one')
     assert_dimensions(manager, 4, 4, 788, 588)

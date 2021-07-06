@@ -28,7 +28,7 @@ from libqtile.config import Screen
 from libqtile.confreader import Config
 
 
-class FakeScreenConfig(Config):
+class WindowTabsConfig(Config):
     auto_fullscreen = True
     groups = [
         libqtile.config.Group("a"),
@@ -60,16 +60,10 @@ class FakeScreenConfig(Config):
     screens = []
 
 
-xephyr_config = {
-    "xinerama": False,
-    "two_screens": False,
-    "width": 900,
-    "height": 960
-}
-fakescreen_config = pytest.mark.parametrize("xephyr, manager", [(xephyr_config, FakeScreenConfig)], indirect=True)
+windowtabs_config = pytest.mark.parametrize("manager", [WindowTabsConfig], indirect=True)
 
 
-@fakescreen_config
+@windowtabs_config
 def test_single_window_states(manager):
 
     def widget_text():
@@ -101,7 +95,7 @@ def test_single_window_states(manager):
     assert widget_text() == ""
 
 
-@fakescreen_config
+@windowtabs_config
 def test_multiple_windows(manager):
 
     def widget_text():
@@ -123,7 +117,7 @@ def test_multiple_windows(manager):
     assert widget_text() == ""
 
 
-@fakescreen_config
+@windowtabs_config
 def test_selected(manager):
 
     # Bottom bar widget has custom "selected" indicator

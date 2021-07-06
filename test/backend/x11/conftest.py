@@ -55,14 +55,12 @@ class Xephyr:
     must be started, and then stopped.
     """
     def __init__(self,
-                 xinerama=True,
-                 two_screens=True,
+                 outputs,
                  width=WIDTH,
                  height=HEIGHT,
                  xoffset=None):
-        self.xinerama = xinerama
-        self.two_screens = two_screens
 
+        self.outputs = outputs
         self.width = width
         self.height = height
         if xoffset is None:
@@ -106,10 +104,9 @@ class Xephyr:
             "-screen",
             "{}x{}".format(self.width, self.height),
         ]
-        if self.two_screens:
+        if self.outputs == 2:
             args.extend(["-origin", "%s,0" % self.xoffset, "-screen",
                          "%sx%s" % (SECOND_WIDTH, SECOND_HEIGHT)])
-        if self.xinerama:
             args.extend(["+xinerama"])
 
         self.proc = subprocess.Popen(args)
@@ -149,10 +146,10 @@ class Xephyr:
 
 
 @contextlib.contextmanager
-def x11_environment(**kwargs):
+def x11_environment(outputs, **kwargs):
     """This backend needs a Xephyr instance running"""
     with xvfb():
-        with Xephyr(**kwargs) as x:
+        with Xephyr(outputs, **kwargs) as x:
             yield x
 
 

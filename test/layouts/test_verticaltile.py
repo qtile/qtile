@@ -30,7 +30,6 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
 from test.layouts.layout_utils import (
     assert_dimensions,
     assert_focus_path,
@@ -55,8 +54,7 @@ class VerticalTileConfig(Config):
     screens = []
 
 
-def verticaltile_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [VerticalTileConfig], indirect=True)(x))
+verticaltile_config = pytest.mark.parametrize("manager", [VerticalTileConfig], indirect=True)
 
 
 @verticaltile_config

@@ -147,8 +147,6 @@ class FakeScreenConfig(Config):
 
 
 xephyr_config = {
-    "xinerama": False,
-    "two_screens": False,
     "width": 900,
     "height": 980
 }

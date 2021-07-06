@@ -23,7 +23,6 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
@@ -45,8 +44,7 @@ class TreeTabConfig(Config):
     follow_mouse_focus = False
 
 
-def treetab_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [TreeTabConfig], indirect=True)(x))
+treetab_config = pytest.mark.parametrize("manager", [TreeTabConfig], indirect=True)
 
 
 @treetab_config

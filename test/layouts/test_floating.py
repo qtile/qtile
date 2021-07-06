@@ -23,7 +23,6 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
 from test.layouts.layout_utils import assert_focused
 
 
@@ -42,8 +41,7 @@ class FloatingConfig(Config):
     follow_mouse_focus = False
 
 
-def floating_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [FloatingConfig], indirect=True)(x))
+floating_config = pytest.mark.parametrize("manager", [FloatingConfig], indirect=True)
 
 
 @floating_config
