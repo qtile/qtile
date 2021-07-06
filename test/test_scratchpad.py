@@ -18,6 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import sys
+from pathlib import Path
+
 import pytest
 
 import libqtile.config
@@ -29,15 +32,21 @@ from test.helpers import Retry
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
+def spawn_cmd(title):
+    script = Path(__file__).parent / "scripts" / "window.py"
+    cmd = f"{sys.executable} {script.as_posix()} --name TestWindow {title} normal"
+    return cmd
+
+
 class ScratchPadBaseConfic(Config):
     auto_fullscreen = True
     screens = []
     groups = [
         libqtile.config.ScratchPad('SCRATCHPAD', dropdowns=[
-            libqtile.config.DropDown('dd-a', 'xterm -T dd-a sh', on_focus_lost_hide=False),
-            libqtile.config.DropDown('dd-b', 'xterm -T dd-b sh', on_focus_lost_hide=False),
-            libqtile.config.DropDown('dd-c', 'xterm -T dd-c sh', on_focus_lost_hide=True),
-            libqtile.config.DropDown('dd-d', 'xterm -T dd-d sh', on_focus_lost_hide=True)
+            libqtile.config.DropDown('dd-a', spawn_cmd('dd-a'), on_focus_lost_hide=False),
+            libqtile.config.DropDown('dd-b', spawn_cmd('dd-b'), on_focus_lost_hide=False),
+            libqtile.config.DropDown('dd-c', spawn_cmd('dd-c'), on_focus_lost_hide=True),
+            libqtile.config.DropDown('dd-d', spawn_cmd('dd-d'), on_focus_lost_hide=True)
         ]),
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
@@ -81,7 +90,7 @@ def test_toggling(manager):
     assert sorted(manager.c.group["a"].info()['windows']) == ['dd-a', 'one']
     assert_focused(manager, 'dd-a')
 
-    # toggle again --> "hide" xterm in scratchpad group
+    # toggle again --> "hide" window in scratchpad group
     manager.c.group["SCRATCHPAD"].dropdown_toggle('dd-a')
     assert manager.c.group["a"].info()['windows'] == ['one']
     assert_focused(manager, 'one')
