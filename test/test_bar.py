@@ -319,32 +319,30 @@ class BrokenWidget(libqtile.widget.base._Widget):
         raise self.exception_class
 
 
-class IncompatibleWidgetConf(libqtile.confreader.Config):
-    keys = []
-    mouse = []
-    groups = [libqtile.config.Group("a")]
-    layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
-    floating_layout = libqtile.resources.default_config.floating_layout
-    screens = [
-        libqtile.config.Screen(
-            left=libqtile.bar.Bar(
-                [
-                    # This widget doesn't support vertical orientation
-                    ExampleWidget(),
-                ],
-                10
-            ),
-        )
-    ]
-
-
 def test_incompatible_widget(manager_nospawn):
+    class IncompatibleWidgetConf(libqtile.confreader.Config):
+        groups = [libqtile.config.Group("a")]
+        screens = [
+            libqtile.config.Screen(
+                left=libqtile.bar.Bar(
+                    [
+                        # This widget doesn't support vertical orientation
+                        ExampleWidget(),
+                    ],
+                    10
+                ),
+            )
+        ]
+
     # Ensure that adding a widget that doesn't support the orientation of the
     # bar raises ConfigError
     m = manager_nospawn.create_manager(IncompatibleWidgetConf)
-    with pytest.raises(libqtile.confreader.ConfigError):
-        m._configure()
-    m.core.finalize()
+
+    try:
+        with pytest.raises(libqtile.confreader.ConfigError):
+            m._configure()
+    finally:
+        m.core.finalize()
 
 
 def test_basic(manager_nospawn):
