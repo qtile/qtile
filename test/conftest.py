@@ -24,8 +24,6 @@
 import pytest
 
 from libqtile.backend import base
-from test.backend.wayland.conftest import WaylandBackend, wayland_environment
-from test.backend.x11.conftest import XBackend, x11_environment
 from test.helpers import BareConfig, TestManager
 
 
@@ -36,14 +34,26 @@ def pytest_addoption(parser):
     parser.addoption(
         "--backend",
         action="append",
-        default=[],
-        help="Specify a backend to test. Can be passed more than once.",
+        choices=("x11", "wayland"),
+        help="Test a specific backend. Can be passed more than once.",
     )
+
+
+def pytest_cmdline_main(config):
+    if not config.option.backend:
+        config.option.backend = ["x11"]
+
+    ignore = config.option.ignore or []
+    if "wayland" not in config.option.backend:
+        ignore.append("test/backend/wayland")
+    if "x11" not in config.option.backend:
+        ignore.append("test/backend/x11")
+    config.option.ignore = ignore
 
 
 def pytest_generate_tests(metafunc):
     if "backend" in metafunc.fixturenames:
-        backends = metafunc.config.getoption("backend") or ["x11"]
+        backends = metafunc.config.option.backend
         metafunc.parametrize("backend_name", backends)
 
 
@@ -57,7 +67,13 @@ multimonitor = pytest.mark.parametrize("outputs", [1, 2], indirect=True)
 
 
 @pytest.fixture(scope="session")
-def xephyr(request, outputs):  # noqa: F841
+def xephyr(request, outputs):
+    if "x11" not in request.config.option.backend:
+        yield
+        return
+
+    from test.backend.x11.conftest import x11_environment
+
     kwargs = getattr(request, "param", {})
 
     with x11_environment(outputs, **kwargs) as x:
@@ -65,7 +81,13 @@ def xephyr(request, outputs):  # noqa: F841
 
 
 @pytest.fixture(scope="session")
-def wayland_session(outputs):  # noqa: F841
+def wayland_session(request, outputs):
+    if "wayland" not in request.config.option.backend:
+        yield
+        return
+
+    from test.backend.wayland.conftest import wayland_environment
+
     with wayland_environment(outputs) as w:
         yield w
 
@@ -73,11 +95,11 @@ def wayland_session(outputs):  # noqa: F841
 @pytest.fixture(scope="function")
 def backend(request, backend_name, xephyr, wayland_session):
     if backend_name == "x11":
-        b = XBackend({"DISPLAY": xephyr.display}, args=[xephyr.display])
+        from test.backend.x11.conftest import XBackend
+        yield XBackend({"DISPLAY": xephyr.display}, args=[xephyr.display])
     elif backend_name == "wayland":
-        b = WaylandBackend(wayland_session)
-
-    yield b
+        from test.backend.wayland.conftest import WaylandBackend
+        yield WaylandBackend(wayland_session)
 
 
 @pytest.fixture(scope="function")
