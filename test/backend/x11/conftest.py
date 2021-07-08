@@ -171,6 +171,8 @@ def xmanager(request, xephyr):
 
 
 class XBackend(Backend):
+    name = "x11"
+
     def __init__(self, env, args=()):
         self.env = env
         self.args = args

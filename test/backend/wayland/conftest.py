@@ -22,6 +22,8 @@ def wayland_environment(outputs):
 
 
 class WaylandBackend(Backend):
+    name = "wayland"
+
     def __init__(self, env, args=()):
         self.env = env
         self.args = args
