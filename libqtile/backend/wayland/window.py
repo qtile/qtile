@@ -469,9 +469,7 @@ class Window(base.Window, HasListeners):
         if w < 0:
             w = 0
 
-        screen = self.qtile.find_closest_screen(
-            self.x + self.width // 2, self.y + self.height // 2
-        )
+        screen = self.qtile.find_closest_screen(x + w // 2, y + h // 2)
         if self.group and screen is not None and screen != self.group.screen:
             self.group.remove(self, force=True)
             screen.group.add(self, force=True)

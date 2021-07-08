@@ -43,16 +43,16 @@ GRAPH_KW = dict(line_width=1,
                 )
 
 # screens look like this
-#     600         300
+#     500         300
 #  |-------------|-----|
-#  |          480|     |580
+#  |          340|     |380
 #  |   A         |  B  |
 #  |----------|--|     |
-#  |       400|--|-----|
-#  |   C      |        |400
+#  |       220|--|-----|
+#  |   C      |        |220
 #  |----------|   D    |
-#     500     |--------|
-#                 400
+#     450     |--------|
+#                 350
 #
 # Notice there is a hole in the middle
 # also D goes down below the others
@@ -91,8 +91,6 @@ class FakeScreenConfig(Config):
                     widget.MemoryGraph(**GRAPH_KW),
                     widget.SwapGraph(foreground='20C020', **GRAPH_KW),
                     widget.Sep(),
-                    widget.Systray(),
-                    widget.Sep(),
                     widget.Clock(format='%H:%M:%S %d.%manager.%Y',
                                  fontsize=FONTSIZE, padding=6),
                 ],
@@ -101,7 +99,7 @@ class FakeScreenConfig(Config):
             ),
             left=bar.Gap(16),
             right=bar.Gap(20),
-            x=0, y=0, width=600, height=480
+            x=0, y=0, width=500, height=340
         ),
         Screen(
             top=bar.Bar(
@@ -114,7 +112,7 @@ class FakeScreenConfig(Config):
             ),
             bottom=bar.Gap(24),
             left=bar.Gap(12),
-            x=600, y=0, width=300, height=580
+            x=500, y=0, width=300, height=380
         ),
         Screen(
             top=bar.Bar(
@@ -127,7 +125,7 @@ class FakeScreenConfig(Config):
             ),
             bottom=bar.Gap(16),
             right=bar.Gap(40),
-            x=0, y=480, width=500, height=400
+            x=0, y=340, width=450, height=220
         ),
         Screen(
             top=bar.Bar(
@@ -140,17 +138,13 @@ class FakeScreenConfig(Config):
             ),
             left=bar.Gap(20),
             right=bar.Gap(24),
-            x=500, y=580, width=400, height=400
+            x=450, y=380, width=350, height=220
         ),
     ]
     screens = []
 
 
-xephyr_config = {
-    "width": 900,
-    "height": 980
-}
-fakescreen_config = pytest.mark.parametrize("xephyr, manager", [(xephyr_config, FakeScreenConfig)], indirect=True)
+fakescreen_config = pytest.mark.parametrize("manager", [FakeScreenConfig], indirect=True)
 
 
 @fakescreen_config
@@ -158,39 +152,39 @@ def test_basic(manager):
     manager.test_window("zero")
     assert manager.c.layout.info()["clients"] == ["zero"]
     assert manager.c.screen.info() == {
-        'y': 0, 'x': 0, 'index': 0, 'width': 600, 'height': 480}
+        'y': 0, 'x': 0, 'index': 0, 'width': 500, 'height': 340}
     manager.c.to_screen(1)
     manager.test_window("one")
     assert manager.c.layout.info()["clients"] == ["one"]
     assert manager.c.screen.info() == {
-        'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
+        'y': 0, 'x': 500, 'index': 1, 'width': 300, 'height': 380}
     manager.c.to_screen(2)
     manager.test_window('two')
     assert manager.c.screen.info() == {
-        'y': 480, 'x': 0, 'index': 2, 'width': 500, 'height': 400}
+        'y': 340, 'x': 0, 'index': 2, 'width': 450, 'height': 220}
     manager.c.to_screen(3)
     manager.test_window('one')
-    assert manager.c.screen.info() == {'y': 580, 'x': 500, 'index': 3, 'width': 400, 'height': 400}
+    assert manager.c.screen.info() == {'y': 380, 'x': 450, 'index': 3, 'width': 350, 'height': 220}
 
 
 @fakescreen_config
 def test_gaps(manager):
     g = manager.c.screens()[0]["gaps"]
-    assert g["bottom"] == (0, 456, 600, 24)
-    assert g["left"] == (0, 0, 16, 456)
-    assert g["right"] == (580, 0, 20, 456)
+    assert g["bottom"] == (0, 316, 500, 24)
+    assert g["left"] == (0, 0, 16, 316)
+    assert g["right"] == (480, 0, 20, 316)
     g = manager.c.screens()[1]["gaps"]
-    assert g["top"] == (600, 0, 300, 30)
-    assert g["bottom"] == (600, 556, 300, 24)
-    assert g["left"] == (600, 30, 12, 526)
+    assert g["top"] == (500, 0, 300, 30)
+    assert g["bottom"] == (500, 356, 300, 24)
+    assert g["left"] == (500, 30, 12, 326)
     g = manager.c.screens()[2]["gaps"]
-    assert g["top"] == (0, 480, 500, 30)
-    assert g["bottom"] == (0, 864, 500, 16)
-    assert g["right"] == (460, 510, 40, 354)
+    assert g["top"] == (0, 340, 450, 30)
+    assert g["bottom"] == (0, 544, 450, 16)
+    assert g["right"] == (410, 370, 40, 174)
     g = manager.c.screens()[3]["gaps"]
-    assert g["top"] == (500, 580, 400, 30)
-    assert g["left"] == (500, 610, 20, 370)
-    assert g["right"] == (876, 610, 24, 370)
+    assert g["top"] == (450, 380, 350, 30)
+    assert g["left"] == (450, 410, 20, 190)
+    assert g["right"] == (776, 410, 24, 190)
 
 
 @fakescreen_config
@@ -198,8 +192,8 @@ def test_maximize_with_move_to_screen(manager):
     """Ensure that maximize respects bars"""
     manager.test_window('one')
     manager.c.window.toggle_maximize()
-    assert manager.c.window.info()['width'] == 564
-    assert manager.c.window.info()['height'] == 456
+    assert manager.c.window.info()['width'] == 464
+    assert manager.c.window.info()['height'] == 316
     assert manager.c.window.info()['x'] == 16
     assert manager.c.window.info()['y'] == 0
     assert manager.c.window.info()['group'] == 'a'
@@ -207,13 +201,13 @@ def test_maximize_with_move_to_screen(manager):
     # go to second screen
     manager.c.to_screen(1)
     assert manager.c.screen.info() == {
-        'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
+        'y': 0, 'x': 500, 'index': 1, 'width': 300, 'height': 380}
     assert manager.c.group.info()['name'] == 'b'
     manager.c.group['a'].toscreen()
 
     assert manager.c.window.info()['width'] == 288
-    assert manager.c.window.info()['height'] == 526
-    assert manager.c.window.info()['x'] == 612
+    assert manager.c.window.info()['height'] == 326
+    assert manager.c.window.info()['x'] == 512
     assert manager.c.window.info()['y'] == 30
     assert manager.c.window.info()['group'] == 'a'
 
@@ -222,7 +216,7 @@ def test_maximize_with_move_to_screen(manager):
 def test_float_first_on_second_screen(manager):
     manager.c.to_screen(1)
     assert manager.c.screen.info() == {
-        'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
+        'y': 0, 'x': 500, 'index': 1, 'width': 300, 'height': 380}
 
     manager.test_window('one')
     # I don't know where y=30, x=12 comes from...
@@ -234,7 +228,7 @@ def test_float_first_on_second_screen(manager):
     assert manager.c.window.info()['width'] == 100
     assert manager.c.window.info()['height'] == 100
 
-    assert manager.c.window.info()['x'] == 612
+    assert manager.c.window.info()['x'] == 512
     assert manager.c.window.info()['y'] == 30
     assert manager.c.window.info()['group'] == 'b'
     assert manager.c.window.info()['float_info'] == {
@@ -244,7 +238,7 @@ def test_float_first_on_second_screen(manager):
 
 @fakescreen_config
 def test_float_change_screens(manager):
-    # add some eyes, and float clock
+    # add one tiled and one floating window
     manager.test_window('tiled')
     manager.test_window('float')
     manager.c.window.toggle_floating()
@@ -259,12 +253,12 @@ def test_float_change_screens(manager):
 
     # put on group b
     assert manager.c.screen.info() == {
-        'y': 0, 'x': 0, 'index': 0, 'width': 600, 'height': 480}
+        'y': 0, 'x': 0, 'index': 0, 'width': 500, 'height': 340}
     assert manager.c.group.info()['name'] == 'a'
     manager.c.to_screen(1)
     assert manager.c.group.info()['name'] == 'b'
     assert manager.c.screen.info() == {
-        'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
+        'y': 0, 'x': 500, 'index': 1, 'width': 300, 'height': 380}
     manager.c.group['a'].toscreen()
     assert manager.c.group.info()['name'] == 'a'
     assert set(manager.c.group.info()['windows']) == set(('tiled', 'float'))
@@ -272,8 +266,8 @@ def test_float_change_screens(manager):
     # width/height unchanged
     assert manager.c.window.info()['width'] == 100
     assert manager.c.window.info()['height'] == 100
-    # x is shifted by 600, y is shifted by 0
-    assert manager.c.window.info()['x'] == 616
+    # x is shifted by 500, y is shifted by 0
+    assert manager.c.window.info()['x'] == 516
     assert manager.c.window.info()['y'] == 0
     assert manager.c.window.info()['group'] == 'a'
     assert manager.c.group.info()['floating_info']['clients'] == ['float']
@@ -281,7 +275,7 @@ def test_float_change_screens(manager):
     # move to screen 3
     manager.c.to_screen(2)
     assert manager.c.screen.info() == {
-        'y': 480, 'x': 0, 'index': 2, 'width': 500, 'height': 400}
+        'y': 340, 'x': 0, 'index': 2, 'width': 450, 'height': 220}
     assert manager.c.group.info()['name'] == 'c'
     manager.c.group['a'].toscreen()
     assert manager.c.group.info()['name'] == 'a'
@@ -290,14 +284,14 @@ def test_float_change_screens(manager):
     # width/height unchanged
     assert manager.c.window.info()['width'] == 100
     assert manager.c.window.info()['height'] == 100
-    # x is shifted by 0, y is shifted by 480
+    # x is shifted by 0, y is shifted by 340
     assert manager.c.window.info()['x'] == 16
-    assert manager.c.window.info()['y'] == 480
+    assert manager.c.window.info()['y'] == 340
 
     # now screen 4 for fun
     manager.c.to_screen(3)
     assert manager.c.screen.info() == {
-        'y': 580, 'x': 500, 'index': 3, 'width': 400, 'height': 400}
+        'y': 380, 'x': 450, 'index': 3, 'width': 350, 'height': 220}
     assert manager.c.group.info()['name'] == 'd'
     manager.c.group['a'].toscreen()
     assert manager.c.group.info()['name'] == 'a'
@@ -306,14 +300,14 @@ def test_float_change_screens(manager):
     # width/height unchanged
     assert manager.c.window.info()['width'] == 100
     assert manager.c.window.info()['height'] == 100
-    # x is shifted by 500, y is shifted by 580
-    assert manager.c.window.info()['x'] == 516
-    assert manager.c.window.info()['y'] == 580
+    # x is shifted by 450, y is shifted by 40
+    assert manager.c.window.info()['x'] == 466
+    assert manager.c.window.info()['y'] == 380
 
     # and back to one
     manager.c.to_screen(0)
     assert manager.c.screen.info() == {
-        'y': 0, 'x': 0, 'index': 0, 'width': 600, 'height': 480}
+        'y': 0, 'x': 0, 'index': 0, 'width': 500, 'height': 340}
     assert manager.c.group.info()['name'] == 'b'
     manager.c.group['a'].toscreen()
     assert manager.c.group.info()['name'] == 'a'
@@ -364,10 +358,10 @@ def test_float_outside_edges(manager):
     assert manager.c.window.info()['group'] == 'a'
 
     # move down so still left, but next to screen c
-    manager.c.window.set_position_floating(-10, 520)
+    manager.c.window.set_position_floating(-10, 360)
     assert manager.c.window.info()['height'] == 100
     assert manager.c.window.info()['x'] == -10
-    assert manager.c.window.info()['y'] == 520
+    assert manager.c.window.info()['y'] == 360
     assert manager.c.window.info()['group'] == 'c'
 
     # move above b

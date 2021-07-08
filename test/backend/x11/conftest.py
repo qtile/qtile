@@ -56,15 +56,11 @@ class Xephyr:
     """
     def __init__(self,
                  outputs,
-                 width=WIDTH,
-                 height=HEIGHT,
                  xoffset=None):
 
         self.outputs = outputs
-        self.width = width
-        self.height = height
         if xoffset is None:
-            self.xoffset = width
+            self.xoffset = WIDTH
         else:
             self.xoffset = xoffset
 
@@ -102,7 +98,7 @@ class Xephyr:
             self.display,
             "-ac",
             "-screen",
-            "{}x{}".format(self.width, self.height),
+            "{}x{}".format(WIDTH, HEIGHT),
         ]
         if self.outputs == 2:
             args.extend(["-origin", "%s,0" % self.xoffset, "-screen",
