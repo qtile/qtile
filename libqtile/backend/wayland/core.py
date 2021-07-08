@@ -221,7 +221,9 @@ class Core(base.Core, wlrq.HasListeners):
             wlr_output.commit()
 
         self.outputs.append(Output(self, wlr_output))
-        self.output_layout.add_auto(wlr_output)
+        # Put new output at far right
+        layout_geo = self.output_layout.get_box()
+        self.output_layout.add(wlr_output, layout_geo.width, 0)
 
         if not self._current_output:
             self._current_output = self.outputs[0]
