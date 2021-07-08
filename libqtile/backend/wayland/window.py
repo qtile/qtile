@@ -87,9 +87,9 @@ class Window(base.Window, HasListeners):
         self.opacity: float = 1.0
         self._outputs: List[Output] = []
 
-        # These start as None and are set in the first place() call
-        self._width: Optional[int] = None
-        self._height: Optional[int] = None
+        # These become non-zero when being mapping for the first time
+        self._width: int = 0
+        self._height: int = 0
 
         assert isinstance(surface, XdgSurface)
         if surface.toplevel.title:
@@ -100,8 +100,8 @@ class Window(base.Window, HasListeners):
         self._float_state = FloatStates.NOT_FLOATING
         self.float_x: Optional[int] = None
         self.float_y: Optional[int] = None
-        self._float_width: int = self.width
-        self._float_height: int = self.height
+        self._float_width: int = 0
+        self._float_height: int = 0
 
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
@@ -124,8 +124,6 @@ class Window(base.Window, HasListeners):
 
     @property
     def width(self) -> int:
-        if self._width is None:
-            return self.surface.surface.current.width
         return self._width
 
     @width.setter
@@ -134,8 +132,6 @@ class Window(base.Window, HasListeners):
 
     @property
     def height(self) -> int:
-        if self._height is None:
-            return self.surface.surface.current.height
         return self._height
 
     @height.setter
@@ -172,6 +168,12 @@ class Window(base.Window, HasListeners):
         if self in self.core.pending_windows:
             self.core.pending_windows.remove(self)
             logger.debug(f"Managing new top-level window with window ID: {self.wid}")
+
+            # Save the client's desired geometry
+            geometry = self.surface.get_geometry()
+            self._width = self._float_width = geometry.width
+            self._height = self._float_height = geometry.height
+
             self.qtile.manage(self)
 
         if self.group.screen:
