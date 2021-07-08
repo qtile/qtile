@@ -60,6 +60,11 @@ no_test = [
     widgets.PulseVolume
 ]
 
+# To test a widget only under one backend, list the widget class here
+exclusive_backend = {
+    widgets.Systray: "x11",
+}
+
 ################################################################################
 # Do not edit below this line
 ################################################################################
@@ -87,6 +92,10 @@ def no_op(*args, **kwargs):
 
 @pytest.mark.parametrize("widget_class,kwargs", parameters)
 def test_widget_init_config(manager_nospawn, minimal_conf_noscreen, widget_class, kwargs):
+    if widget_class in exclusive_backend:
+        if exclusive_backend[widget_class] != manager_nospawn.backend.name:
+            pytest.skip("Unsupported backend")
+
     widget = widget_class(**kwargs)
     widget.draw = no_op
 
