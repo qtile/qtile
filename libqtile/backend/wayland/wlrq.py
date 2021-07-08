@@ -30,6 +30,7 @@ from wlroots.wlr_types import Texture
 from wlroots.wlr_types.keyboard import KeyboardModifier
 
 from libqtile.log_utils import logger
+from libqtile.utils import QtileError
 
 if TYPE_CHECKING:
     from typing import Callable, List
@@ -37,7 +38,7 @@ if TYPE_CHECKING:
     from pywayland.server import Signal
 
 
-class WlrQError(Exception):
+class WlrQError(QtileError):
     pass
 
 
