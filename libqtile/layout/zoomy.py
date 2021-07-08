@@ -27,6 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import libqtile
 from libqtile.layout.base import _SimpleLayoutBase
 
 
@@ -34,9 +35,9 @@ class Zoomy(_SimpleLayoutBase):
     """A layout with single active windows, and few other previews at the right"""
     defaults = [
         ("columnwidth", 150, "Width of the right column"),
-        ("property_name", "ZOOM", "Property to set on zoomed window"),
-        ("property_small", "0.1", "Property value to set on zoomed window"),
-        ("property_big", "1.0", "Property value to set on normal window"),
+        ("property_name", "ZOOM", "Property to set on zoomed window (X11 only)"),
+        ("property_small", "0.1", "Property value to set on zoomed window (X11 only)"),
+        ("property_big", "1.0", "Property value to set on normal window (X11 only)"),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])"),
     ]
 
@@ -90,6 +91,9 @@ class Zoomy(_SimpleLayoutBase):
         client.unhide()
 
     def focus(self, win):
+        if self.property_name and libqtile.qtile.core.name != "x11":
+            self.property_name = ""
+
         if (self.clients.current_client and
             self.property_name and
             self.clients.current_client.window.get_property(
