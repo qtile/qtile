@@ -35,8 +35,15 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gdk, Gtk
 
 # GTK consumes the `--name <class>` args
-title = sys.argv[1]
-window_type = sys.argv[2]
+if len(sys.argv) > 1:
+    title = sys.argv[1]
+else:
+    title = "TestWindow"
+
+if len(sys.argv) > 2:
+    window_type = sys.argv[2]
+else:
+    window_type = "normal"
 
 win = Gtk.Window(title=title)
 win.connect("destroy", Gtk.main_quit)
@@ -44,9 +51,20 @@ win.connect("key-press-event", Gtk.main_quit)
 win.set_default_size(100, 100)
 
 if window_type == "notification":
-    win.set_type_hint(Gdk.WindowTypeHint.NOTIFICATION)
+    if os.environ["GDK_BACKEND"] == "wayland":
+        try:
+            gi.require_version('GtkLayerShell', '0.1')
+            from gi.repository import GtkLayerShell
+        except ValueError:
+            sys.exit(1)
+        win.add(Gtk.Label(label='This is a test notification'))
+        GtkLayerShell.init_for_window(win)
+
+    else:
+        win.set_type_hint(Gdk.WindowTypeHint.NOTIFICATION)
+
 elif window_type == "normal":
     win.set_type_hint(Gdk.WindowTypeHint.NORMAL)
 
-win.show()
+win.show_all()
 Gtk.main()

@@ -32,6 +32,17 @@ from test.layouts.layout_utils import (
 )
 
 
+try:
+    # Check to see if we should skip tests using notifications on Wayland
+    import gi
+    gi.require_version('Gtk', '3.0')
+    gi.require_version('GtkLayerShell', '0.1')
+    from gi.repository import GtkLayerShell
+    has_wayland_notifications = True
+except (ImportError, ValueError):
+    has_wayland_notifications = False
+
+
 class AllLayoutsConfig(Config):
     """
     Ensure that all layouts behave consistently in some common scenarios.
@@ -127,17 +138,20 @@ each_delegate_layout_config = pytest.mark.parametrize("manager", AllDelegateLayo
 
 @each_layout_config
 def test_window_types(manager):
+    if manager.backend.name == "wayland" and not has_wayland_notifications:
+        pytest.skip("Notification tests for Wayland need gtk-layer-shell")
+
     manager.test_window("one")
 
     # A dialog should take focus and be floating
-    manager.test_window("dialog", floating=True)
-    manager.c.window.info()['floating'] is True
-    assert_focused(manager, "dialog")
-
     # A notification shouldn't steal focus and should be floating
+    manager.test_window("dialog", floating=True)
+    assert_focused(manager, "dialog")
     manager.test_notification("notification")
-    assert manager.c.group.info()['focus'] != 'notification'
-    manager.c.group.info_by_name('notification')['floating'] is True
+    assert manager.c.group.info()['focus'] == 'dialog'
+    for window in manager.c.windows():
+        if window["name"] in ("dialog", "notification"):
+            assert window["floating"]
 
 
 @each_layout_config
@@ -370,6 +384,8 @@ def test_remove_floating(manager):
 def test_desktop_notifications(manager):
     # Unlike normal floating windows such as dialogs, notifications don't steal
     # focus when they spawn, so test them separately
+    if manager.backend.name == "wayland" and not has_wayland_notifications:
+        pytest.skip("Notification tests for Wayland need gtk-layer-shell")
 
     # A notification fired in an empty group must not take focus
     notif1 = manager.test_notification("notif1")
