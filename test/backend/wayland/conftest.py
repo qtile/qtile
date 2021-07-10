@@ -10,6 +10,7 @@ wlr_env = {
     "WLR_LIBINPUT_NO_DEVICES": "1",
     "WLR_RENDERER_ALLOW_SOFTWARE": "1",
     "WLR_RENDERER": "pixman",
+    "XDG_RUNTIME_DIR": "/tmp",
 }
 
 
