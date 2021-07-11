@@ -494,7 +494,9 @@ class Core(base.Core, wlrq.HasListeners):
         assert self.qtile is not None
         return max(self.qtile.windows_map.keys(), default=0) + 1
 
-    def focus_window(self, win: window.WindowType, surface: Surface = None):
+    def focus_window(
+        self, win: window.WindowType, surface: Surface = None, enter: bool = True
+    ) -> None:
         if self.seat.destroyed:
             return
 
@@ -529,7 +531,7 @@ class Core(base.Core, wlrq.HasListeners):
         if surface.is_xdg_surface and isinstance(win.surface, XdgSurface):
             win.surface.set_activated(True)
 
-        if self.seat.keyboard._ptr:  # This pointer is NULL when headless
+        if enter and self.seat.keyboard._ptr:  # This pointer is NULL when headless
             self.seat.keyboard_notify_enter(surface, self.seat.keyboard)
 
     def _focus_by_click(self) -> None:
@@ -549,7 +551,7 @@ class Core(base.Core, wlrq.HasListeners):
                         self.qtile.focus_screen(win.group.screen.index, warp=False)
                     self.qtile.current_group.focus(win, False)
 
-                self.focus_window(win, surface=surface)
+                self.focus_window(win, surface=surface, enter=False)
 
         else:
             screen = self.qtile.find_screen(self.cursor.x, self.cursor.y)
