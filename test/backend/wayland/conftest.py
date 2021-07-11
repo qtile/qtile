@@ -44,9 +44,10 @@ class WaylandBackend(Backend):
 
     def fake_click(self, x, y):
         """Click at the specified coordinates"""
-        self.manager.c.eval(textwrap.dedent("""
+        # Currently only restacks windows, and does not trigger bindings
+        self.manager.c.eval(textwrap.dedent(f"""
+            self.core.warp_pointer({x}, {y})
             self.core._focus_by_click()
-            self.core._process_cursor_button(1, True)
         """))
 
     def get_all_windows(self):
