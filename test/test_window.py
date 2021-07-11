@@ -71,6 +71,7 @@ def bring_front_click(request):
     indirect=True,
 )
 def test_bring_front_click(manager, bring_front_click):
+    manager.c.group.setlayout("tile")
     # this is a tiled window.
     manager.test_window("one")
 
