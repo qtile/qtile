@@ -432,6 +432,17 @@ class Static(_Window, metaclass=ABCMeta):
     def __repr__(self):
         return "Static(name=%r, wid=%s)" % (self.name, self.wid)
 
+    def info(self) -> Dict:
+        """Return a dictionary of info."""
+        return dict(
+            name=self.name,
+            x=self.x,
+            y=self.y,
+            width=self.width,
+            height=self.height,
+            id=self.wid,
+        )
+
 
 WindowType = typing.Union[Window, Internal, Static]
 

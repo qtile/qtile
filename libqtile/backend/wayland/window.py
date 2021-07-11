@@ -784,6 +784,11 @@ class Static(base.Static, Window):
             self.mapped = True
             self._outputs.append(self.output)
         else:
+            if surface.toplevel.title:
+                self.name = surface.toplevel.title
+            self._app_id = surface.toplevel.app_id
+            self.add_listener(surface.toplevel.set_title_event, self._on_set_title)
+            self.add_listener(surface.toplevel.set_app_id_event, self._on_set_app_id)
             self._find_outputs()
 
     @property
@@ -850,6 +855,8 @@ class Static(base.Static, Window):
               above=False, margin=None, respect_hints=False):
         self.x = x
         self.y = y
+        self.width = width
+        self.height = height
         if self.is_layer:
             self.surface.configure(width, height)
         else:
