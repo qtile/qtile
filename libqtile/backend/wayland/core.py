@@ -259,7 +259,7 @@ class Core(base.Core, wlrq.HasListeners):
         logger.debug("Signal: xdg_shell new_surface_event")
         if surface.role == XdgSurfaceRole.TOPLEVEL:
             assert self.qtile is not None
-            win = window.Window(self, self.qtile, surface, self.new_wid())
+            win = window.Window(self, self.qtile, surface)
             self.pending_windows.append(win)
 
     def _on_cursor_axis(self, _listener, event: pointer.PointerEventAxis):

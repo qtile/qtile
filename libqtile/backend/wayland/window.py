@@ -71,7 +71,7 @@ SurfaceType = typing.Union[XdgSurface, LayerSurfaceV1]
 
 
 class Window(base.Window, HasListeners):
-    def __init__(self, core: Core, qtile: Qtile, surface: SurfaceType, wid: int):
+    def __init__(self, core: Core, qtile: Qtile, surface: SurfaceType):
         base.Window.__init__(self)
         self.core = core
         self.qtile = qtile
@@ -79,7 +79,6 @@ class Window(base.Window, HasListeners):
         self._group: Optional[_Group] = None
         self.popups: List[XdgPopupWindow] = []
         self.subsurfaces: List[SubSurface] = []
-        self._wid = wid
         self._mapped: bool = False
         self.x = 0
         self.y = 0
@@ -167,6 +166,7 @@ class Window(base.Window, HasListeners):
 
         if self in self.core.pending_windows:
             self.core.pending_windows.remove(self)
+            self._wid = self.core.new_wid()
             logger.debug(f"Managing new top-level window with window ID: {self.wid}")
 
             # Save the client's desired geometry
