@@ -1,7 +1,7 @@
 import pytest
 
 from libqtile.backend import get_core
-from libqtile.backend.x11 import core
+from libqtile.backend.x11 import core, xcbq
 
 
 def test_get_core_x11(display):
@@ -21,3 +21,32 @@ def test_no_two_qtiles(xmanager):
 def test_color_pixel(xmanager):
     (success, e) = xmanager.c.eval("self.core.conn.color_pixel(\"ffffff\")")
     assert success, e
+
+
+def test_net_client_list(xmanager):
+    conn = xcbq.Connection(xmanager.display)
+
+    def assert_clients(number):
+        clients = conn.default_screen.root.get_property('_NET_CLIENT_LIST', unpack=int)
+        assert len(clients) == number
+
+    assert_clients(0)
+    one = xmanager.test_window("one")
+    assert_clients(1)
+    two = xmanager.test_window("two")
+    wins = xmanager.c.windows()
+    xmanager.c.window.toggle_minimize()
+    three = xmanager.test_window("three")
+    xmanager.c.screen.next_group()
+    assert_clients(3)
+    xmanager.kill_window(one)
+    xmanager.c.screen.next_group()
+    assert_clients(2)
+    xmanager.kill_window(three)
+    assert_clients(1)
+    xmanager.c.screen.next_group()
+    one = xmanager.test_window("one")
+    assert_clients(2)
+    xmanager.kill_window(one)
+    xmanager.kill_window(two)
+    assert_clients(0)

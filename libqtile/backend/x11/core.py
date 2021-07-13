@@ -418,7 +418,9 @@ class Core(base.Core):
         This is needed for third party tasklists and drag and drop of tabs in
         chrome
         """
-        wids = [wid for wid, c in windows_map.items() if not c.hidden]  # type: ignore
+        wids = [
+            wid for wid, c in windows_map.items() if not isinstance(c, window.Internal)
+        ]
         self._root.set_property("_NET_CLIENT_LIST", wids)
         # TODO: check stack order
         self._root.set_property("_NET_CLIENT_LIST_STACKING", wids)
