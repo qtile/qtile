@@ -99,7 +99,7 @@ class _X11LayoutBackend(_BaseLayoutBackend):
 
 
 class _WaylandLayoutBackend(_BaseLayoutBackend):
-    def __init__(self, qtile: Qtile):
+    def __init__(self, qtile: Qtile) -> None:
         self.set_keymap = qtile.core.set_keymap  # type: ignore
         self._layout: str = ""
 
@@ -107,7 +107,12 @@ class _WaylandLayoutBackend(_BaseLayoutBackend):
         return self._layout
 
     def set_keyboard(self, layout: str, options: Optional[str]) -> None:
-        self.set_keymap(layout, options)
+        maybe_variant: Optional[str] = None
+        if " " in layout:
+            layout_name, _, maybe_variant = layout.partition(" ")
+        else:
+            layout_name = layout
+        self.set_keymap(layout_name, options, maybe_variant)
         self._layout = layout
 
 

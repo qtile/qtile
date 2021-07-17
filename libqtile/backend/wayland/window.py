@@ -50,6 +50,7 @@ if typing.TYPE_CHECKING:
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.output import Output
+    from libqtile.command.base import ItemT
     from libqtile.core.manager import Qtile
     from libqtile.group import _Group
     from libqtile.utils import ColorType
