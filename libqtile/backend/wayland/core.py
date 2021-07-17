@@ -114,16 +114,22 @@ class Core(base.Core, wlrq.HasListeners):
         DataDeviceManager(self.display)
         DataControlManagerV1(self.display)
         self.seat = seat.Seat(self.display, "seat0")
-        self.add_listener(self.seat.request_set_selection_event, self._on_request_set_selection)
+        self.add_listener(
+            self.seat.request_set_selection_event, self._on_request_set_selection
+        )
         self.add_listener(self.backend.new_input_event, self._on_new_input)
 
         # set up outputs
         self.outputs: List[Output] = []
         self.add_listener(self.backend.new_output_event, self._on_new_output)
         self.output_layout = OutputLayout()
-        self.add_listener(self.output_layout.change_event, self._on_output_layout_change)
+        self.add_listener(
+            self.output_layout.change_event, self._on_output_layout_change
+        )
         self.output_manager = OutputManagerV1(self.display)
-        self.add_listener(self.output_manager.apply_event, self._on_output_manager_apply)
+        self.add_listener(
+            self.output_manager.apply_event, self._on_output_manager_apply
+        )
         self.add_listener(self.output_manager.test_event, self._on_output_manager_test)
 
         # set up cursor
@@ -134,13 +140,17 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(self.cursor.frame_event, self._on_cursor_frame)
         self.add_listener(self.cursor.button_event, self._on_cursor_button)
         self.add_listener(self.cursor.motion_event, self._on_cursor_motion)
-        self.add_listener(self.cursor.motion_absolute_event, self._on_cursor_motion_absolute)
+        self.add_listener(
+            self.cursor.motion_absolute_event, self._on_cursor_motion_absolute
+        )
 
         # set up shell
         self.xdg_shell = XdgShell(self.display)
         self.add_listener(self.xdg_shell.new_surface_event, self._on_new_xdg_surface)
         self.layer_shell = LayerShellV1(self.display)
-        self.add_listener(self.layer_shell.new_surface_event, self._on_new_layer_surface)
+        self.add_listener(
+            self.layer_shell.new_surface_event, self._on_new_layer_surface
+        )
 
         # Add support for additional protocols
         XdgOutputManagerV1(self.display, self.output_layout)
@@ -150,9 +160,11 @@ class Core(base.Core, wlrq.HasListeners):
         self._virtual_keyboard_manager_v1 = VirtualKeyboardManagerV1(self.display)
         self.add_listener(
             self._virtual_keyboard_manager_v1.new_virtual_keyboard_event,
-            self._on_new_virtual_keyboard
+            self._on_new_virtual_keyboard,
         )
-        xdg_decoration_manager_v1 = xdg_decoration_v1.XdgDecorationManagerV1.create(self.display)
+        xdg_decoration_manager_v1 = xdg_decoration_v1.XdgDecorationManagerV1.create(
+            self.display
+        )
         self.add_listener(
             xdg_decoration_manager_v1.new_toplevel_decoration_event,
             self._on_new_toplevel_decoration,
@@ -189,7 +201,9 @@ class Core(base.Core, wlrq.HasListeners):
     def display_name(self) -> str:
         return self.socket.decode()
 
-    def _on_request_set_selection(self, _listener, event: seat.RequestSetSelectionEvent):
+    def _on_request_set_selection(
+        self, _listener, event: seat.RequestSetSelectionEvent
+    ):
         self.seat.set_selection(event._ptr.source, event.serial)
         logger.debug("Signal: seat request_set_selection")
 
@@ -264,7 +278,11 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_cursor_axis(self, _listener, event: pointer.PointerEventAxis):
         self.seat.pointer_notify_axis(
-            event.time_msec, event.orientation, event.delta, event.delta_discrete, event.source,
+            event.time_msec,
+            event.orientation,
+            event.delta,
+            event.delta_discrete,
+            event.source,
         )
         if event.delta != 0:
             if event.orientation == pointer.AxisOrientation.VERTICAL:
@@ -295,10 +313,15 @@ class Core(base.Core, wlrq.HasListeners):
         self.cursor.move(event.delta_x, event.delta_y, input_device=event.device)
         self._process_cursor_motion(event.time_msec)
 
-    def _on_cursor_motion_absolute(self, _listener, event: pointer.PointerEventMotionAbsolute):
+    def _on_cursor_motion_absolute(
+        self, _listener, event: pointer.PointerEventMotionAbsolute
+    ):
         assert self.qtile is not None
         self.cursor.warp(
-            WarpMode.AbsoluteClosest, event.x, event.y, input_device=event.device,
+            WarpMode.AbsoluteClosest,
+            event.x,
+            event.y,
+            input_device=event.device,
         )
         self._process_cursor_motion(event.time_msec)
 
@@ -386,13 +409,13 @@ class Core(base.Core, wlrq.HasListeners):
                 if self._hovered_internal is win:
                     win.process_pointer_motion(
                         self.cursor.x - self._hovered_internal.x,
-                        self.cursor.y - self._hovered_internal.y
+                        self.cursor.y - self._hovered_internal.y,
                     )
                 else:
                     if self._hovered_internal:
                         self._hovered_internal.process_pointer_leave(
                             self.cursor.x - self._hovered_internal.x,
-                            self.cursor.y - self._hovered_internal.y
+                            self.cursor.y - self._hovered_internal.y,
                         )
                     self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
                     self.seat.pointer_clear_focus()
@@ -415,7 +438,10 @@ class Core(base.Core, wlrq.HasListeners):
                         else:
                             if win.group.current_window != win:
                                 win.group.focus(win, False)
-                            if win.group.screen and self.qtile.current_screen != win.group.screen:
+                            if (
+                                win.group.screen
+                                and self.qtile.current_screen != win.group.screen
+                            ):
                                 self.qtile.focus_screen(win.group.screen.index, False)
                         self.focus_window(win, surface)
 
@@ -433,7 +459,7 @@ class Core(base.Core, wlrq.HasListeners):
             if self._hovered_internal:
                 self._hovered_internal.process_pointer_leave(
                     self.cursor.x - self._hovered_internal.x,
-                    self.cursor.y - self._hovered_internal.y
+                    self.cursor.y - self._hovered_internal.y,
                 )
                 self._hovered_internal = None
 
@@ -542,7 +568,10 @@ class Core(base.Core, wlrq.HasListeners):
             win, surface, _, _ = found
 
             if self.qtile.config.bring_front_click:
-                if self.qtile.config.bring_front_click != "floating_only" or win.floating:
+                if (
+                    self.qtile.config.bring_front_click != "floating_only"
+                    or win.floating
+                ):
                     win.cmd_bring_to_front()
 
             if not isinstance(win, base.Internal):
@@ -566,17 +595,25 @@ class Core(base.Core, wlrq.HasListeners):
 
         for win in reversed(self.stacked_windows):
             if isinstance(win, window.Internal):
-                if win.x <= cx <= win.x + win.width and win.y <= cy <= win.y + win.height:
+                if (
+                    win.x <= cx <= win.x + win.width
+                    and win.y <= cy <= win.y + win.height
+                ):
                     return win, None, 0, 0
             else:
                 bw = win.borderwidth
-                surface, sx, sy = win.surface.surface_at(cx - win.x - bw, cy - win.y - bw)
+                surface, sx, sy = win.surface.surface_at(
+                    cx - win.x - bw, cy - win.y - bw
+                )
                 if surface:
                     return win, surface, sx, sy
                 if bw:
                     if win.x <= cx and win.y <= cy:
                         bw *= 2
-                        if cx <= win.x + win.width + bw and cy <= win.y + win.height + bw:
+                        if (
+                            cx <= win.x + win.width + bw
+                            and cy <= win.y + win.height + bw
+                        ):
                             return win, None, 0, 0
         return None
 
@@ -584,16 +621,23 @@ class Core(base.Core, wlrq.HasListeners):
         """Put all windows of all types in a Z-ordered list."""
         if self._current_output:
             layers = self._current_output.layers
-            self.stacked_windows = layers[LayerShellV1Layer.BACKGROUND] + \
-                layers[LayerShellV1Layer.BOTTOM]  # type: ignore
+            self.stacked_windows = (
+                layers[LayerShellV1Layer.BACKGROUND] + layers[LayerShellV1Layer.BOTTOM]
+            )  # type: ignore
             self.stacked_windows += self.mapped_windows
-            self.stacked_windows += layers[LayerShellV1Layer.TOP] + layers[LayerShellV1Layer.OVERLAY]
+            self.stacked_windows += (
+                layers[LayerShellV1Layer.TOP] + layers[LayerShellV1Layer.OVERLAY]
+            )
         else:
             self.stacked_windows = self.mapped_windows
 
     def get_screen_info(self) -> List[Tuple[int, int, int, int]]:
         """Get the screen information"""
-        return [screen.get_geometry() for screen in self.outputs if screen.wlr_output.enabled]
+        return [
+            screen.get_geometry()
+            for screen in self.outputs
+            if screen.wlr_output.enabled
+        ]
 
     def grab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
         """Configure the backend to grab the key event"""
@@ -679,12 +723,14 @@ class Core(base.Core, wlrq.HasListeners):
         assert len(matched) == 1
         return matched[0]
 
-    def set_keymap(self, layout: Optional[str], options: Optional[str]) -> None:
+    def set_keymap(
+        self, layout: Optional[str], options: Optional[str], variant: Optional[str]
+    ) -> None:
         """
         Set the keymap for the current keyboard.
         """
         if self.keyboards:
-            self.keyboards[-1].set_keymap(layout, options)
+            self.keyboards[-1].set_keymap(layout, options, variant)
         else:
             logger.warning("Could not set keymap: no keyboards set up.")
 
