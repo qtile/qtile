@@ -693,7 +693,7 @@ class Core(base.Core, wlrq.HasListeners):
         return xkb.keysym_from_name(name, case_insensitive=True)
 
     def simulate_keypress(self, modifiers: List[str], key: str) -> None:
-        #"""Simulates a keypress on the focused window."""
+        """Simulates a keypress on the focused window."""
         keysym = xkb.keysym_from_name(key, case_insensitive=True)
         mods = wlrq.translate_masks(modifiers)
 
