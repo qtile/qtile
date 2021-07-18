@@ -55,11 +55,10 @@ Miscellaneous
     manual/faq
     manual/license
 
-How To
-======
+Tips & Tricks
+=============
 
 .. toctree::
-    :caption: Tips & Tricks
     :maxdepth: 1
 
     manual/howto/widget
