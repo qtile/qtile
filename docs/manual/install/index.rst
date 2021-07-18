@@ -20,12 +20,12 @@ running something else, please see `Installing From Source`_.
 
 .. _installing-from-source:
 
+
 Installing From Source
 ======================
 
-
-First, you need to install all of Qtile's dependencies (although some are
-optional/not needed depending on your Python version, as noted below).
+Python interpreters
+-------------------
 
 We aim to always support the last three versions of CPython, the reference
 Python interpreter. We usually support the latest stable version of PyPy_ as
@@ -42,54 +42,51 @@ PyPy and has better compatibility for external libraries.
 .. _PyPy: https://www.pypy.org/
 
 
-xcffib
-------
+Core Dependencies
+-----------------
 
-Qtile uses xcffib_ as an XCB binding, which has its own instructions for
-building from source. However, if you'd like to skip building it, you can
-install its dependencies, you will need libxcb and libffi with the associated
-headers (``libxcb-render0-dev`` and ``libffi-dev`` on Ubuntu), and install it
-via PyPI:
+Here are Qtile's core runtime dependencies and where available the package name
+that provides them in Ubuntu. Note that Qtile can run with one of two backends
+-- X11 and Wayland -- so only the dependencies of one of these is required.
 
-.. code-block:: bash
+================= =================== ==========================================
+Dependency        Ubuntu Package      Needed for
+================= =================== ==========================================
+CFFI_             python3-cffi        Both backends, bars and popups
+X server          xserver-xorg        X11 backend
+xcffib_           python3-xcffib      X11 backend
+wlroots_          libwlroots-dev      Wayland backend (see below)
+pywlroots_        --                  Wayland backend
+pywayland_        --                  Wayland backend
+python-xkbcommon_ --                  Wayland backend
+cairocffi_        python3-cairocffi   Drawing on bars and popups (see below)
+libpangocairo     libpangocairo-1.0-0 Writing on bars and popups
+dbus-next_        --                  Sending notifications with dbus (optional)
+================= =================== ==========================================
 
-    pip install xcffib
-
+.. _CFFI: https://cffi.readthedocs.io/en/latest/installation.html
 .. _xcffib: https://github.com/tych0/xcffib#installation
+.. _wlroots: https://github.com/swaywm/wlroots
+.. _pywlroots: https://github.com/flacjacket/pywlroots
+.. _pywayland: https://pywayland.readthedocs.io/en/latest/install.html
+.. _python-xkbcommon: https://github.com/sde1000/python-xkbcommon
+.. _cairocffi: https://cairocffi.readthedocs.io/en/stable/overview.html
+.. _dbus-next: https://python-dbus-next.readthedocs.io/en/latest/index.html
+
 
 cairocffi
 ---------
 
-Qtile uses cairocffi_ with XCB support via xcffib. You'll need ``libcairo2``,
-the underlying library used by the binding.  You should **be sure before you
-install cairocffi that xcffib has been installed**, otherwise the needed
-cairo-xcb bindings will not be built.  Once you've got the dependencies
-installed, you can use the latest version on PyPI:
+Qtile uses cairocffi_ for drawing on status bars and popup windows. Under X11,
+cairocffi requires XCB support via xcffib, which you should be sure to have
+installed **before** installing cairocffi, otherwise the needed cairo-xcb
+bindings will not be built. Once you've got the dependencies installed, you can
+use the latest version on PyPI:
 
 .. code-block:: bash
 
     pip install --no-cache-dir cairocffi
 
-.. _cairocffi: https://pythonhosted.org/cairocffi/overview.html
-
-pangocairo
-----------
-
-You'll also need ``libpangocairo``, which on Ubuntu can be installed via ``sudo
-apt-get install libpangocairo-1.0-0``. Qtile uses this to provide text
-rendering (and binds directly to it via cffi with a small in-tree binding).
-
-dbus-next
----------
-
-Qtile uses ``dbus-next`` to interact with dbus. Qtile will run without this
-package but certain functionality will be lost (e.g. notifications).
-
-You can install dbus-next from PyPi:
-
-.. code-block:: bash
-
-    pip install dbus-next
 
 Qtile
 -----
@@ -110,20 +107,22 @@ Stable versions of Qtile can be installed from PyPI:
 
 As long as the necessary libraries are in place, this can be done at any point,
 however, it is recommended that you first install xcffib to ensure the
-cairo-xcb bindings are built (see above).
+cairo-xcb bindings are built (X11 only) (see above).
+
 
 Wayland
--------
+=======
 
-Qtile can also be run as a Wayland compositor rather than an X11 window
-manager. This does not require an X server or ``xcffib`` to be installed.
-Instead Qtile uses pywlroots_, a Python binding around the wlroots_ library,
-both of which must be installed with the latest release. Be aware that some
-distributions package outdated versions of wlroots. pywlroots_ can be installed
-using ``pip install`` as above.
+Qtile can be run as a Wayland compositor rather than an X11 window manager. For
+this, Qtile uses wlroots_, a compositor library which is undergoing fast
+development. This means we can only support the latest release. Be aware that
+some distributions package outdated versions of wlroots. More up-to-date
+distributions such as Arch Linux may also package pywayland, pywlroots and
+python-xkbcommon.
 
-Qtile can then be run either from a TTY, or within an existing X11 or Wayland
-session where it will run inside a nested window:
+With the Wayland dependencies in place, Qtile can be run either from a TTY, or
+within an existing X11 or Wayland session where it will run inside a nested
+window:
 
 .. code-block:: bash
 
@@ -140,6 +139,3 @@ options set differently per backend, something like this may be useful:
        term = "urxvt"
    elif qtile.core.name == "wayland":
        term = "foot"
-
-.. _pywlroots: https://github.com/flacjacket/pywlroots
-.. _wlroots: https://github.com/swaywm/wlroots

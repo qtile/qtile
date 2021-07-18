@@ -7,22 +7,39 @@ Hacking on Qtile
 Requirements
 ============
 
-All tests require `pytest <https://docs.pytest.org>`_ and ``PyGObject``. These
-can be installed on Ubuntu with:
+Here are Qtile's additional dependencies that may be required for tests:
+
+================= =================== ==================================================
+Dependency        Ubuntu Package      Needed for
+================= =================== ==================================================
+pytest_           python3-pytest      Running tests
+PyGObject         python3-gi          Running tests (test windows)
+Xephyr_           xserver-xephyr      Testing with X11 backend (optional, see below)
+mypy              python3-mypy        Testing ``qtile check`` (optional)
+imagemagick>=6.8  imagemagick         ``test/test_images*`` (optional)
+gtk-layer-shell   libgtk-layer-shell0 Testing notification windows in Wayland (optional)
+dbus-launch       dbus-x11            Testing dbus-using widgets (optional)
+notifiy-send      libnotify-bin       Testing ``Notify`` widget (optional)
+================= =================== ==================================================
+
+.. _pytest: https://docs.pytest.org
+.. _Xephyr: https://freedesktop.org/wiki/Software/Xephyr
+
+
+Backends
+--------
+
+The test suite can be run using the X11 or Wayland backend, or both.  By
+default, only the X11 backend is used for tests. To test a single backend or
+both backends, specify as arguments to pytest:
 
 .. code-block:: bash
 
-    sudo apt-get install python3-pytest python3-gi
+    pytest --backend wayland  # Test just Wayland backend
+    pytest --backend x11 --backend wayland  # Test both
 
-If you are using X11 then you will also need `Xephyr
-<https://freedesktop.org/wiki/Software/Xephyr/>`_:
-
-.. code-block:: bash
-
-    sudo apt-get install xserver-xephyr
-
-To build the documentation, you will also need to install `graphviz
-<https://www.graphviz.org/download/>`_.
+Testing with the X11 backend requires Xephyr_ in addition to the core
+dependencies.
 
 
 Building cffi module
@@ -49,6 +66,9 @@ Deactivate it with the ``deactivate`` command.
 
 Building the documentation
 ==========================
+
+To build the documentation, you will also need to install `graphviz
+<https://www.graphviz.org/download/>`_.
 
 Go into the ``docs/`` directory and run ``pip install -r requirements.txt``.
 
