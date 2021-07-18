@@ -21,6 +21,7 @@
 # Widget specific tests
 
 import sys
+from importlib import reload
 from types import ModuleType
 
 import pytest
@@ -68,12 +69,19 @@ class FakeKeyring(ModuleType):
             return None
 
 
-def test_imapwidget(fake_qtile, monkeypatch, fake_window):
+@pytest.fixture()
+def patched_imap(monkeypatch):
+    monkeypatch.delitem(sys.modules, "imaplib", raising=False)
+    monkeypatch.delitem(sys.modules, "keyring", raising=False)
     monkeypatch.setitem(sys.modules, "imaplib", FakeIMAP("imaplib"))
     monkeypatch.setitem(sys.modules, "keyring", FakeKeyring("keyring"))
     from libqtile.widget import imapwidget
+    reload(imapwidget)
+    yield imapwidget
 
-    imap = imapwidget.ImapWidget(user="qtile")
+
+def test_imapwidget(fake_qtile, monkeypatch, fake_window, patched_imap):
+    imap = patched_imap.ImapWidget(user="qtile")
     fakebar = Bar([imap], 24)
     fakebar.window = fake_window
     fakebar.width = 10
@@ -84,13 +92,9 @@ def test_imapwidget(fake_qtile, monkeypatch, fake_window):
     assert text == "INBOX: 2"
 
 
-def test_imapwidget_keyring_error(fake_qtile, monkeypatch, fake_window):
-    monkeypatch.setitem(sys.modules, "imaplib", FakeIMAP("imaplib"))
-    monkeypatch.setitem(sys.modules, "keyring", FakeKeyring("keyring"))
-    from libqtile.widget import imapwidget
-    imapwidget.keyring.valid = False
-
-    imap = imapwidget.ImapWidget(user="qtile")
+def test_imapwidget_keyring_error(fake_qtile, monkeypatch, fake_window, patched_imap):
+    patched_imap.keyring.valid = False
+    imap = patched_imap.ImapWidget(user="qtile")
     fakebar = Bar([imap], 24)
     fakebar.window = fake_window
     fakebar.width = 10
@@ -106,14 +110,11 @@ def test_imapwidget_keyring_error(fake_qtile, monkeypatch, fake_window):
 # The widget will then fail when it looks up this attribute and then
 # fail again when it tries to return self.text.
 # TO DO: Fix widget's handling of this scenario.
-def test_imapwidget_password_none(fake_qtile, monkeypatch, fake_window):
-    monkeypatch.setitem(sys.modules, "imaplib", FakeIMAP("imaplib"))
-    monkeypatch.setitem(sys.modules, "keyring", FakeKeyring("keyring"))
-    from libqtile.widget import imapwidget
-    imapwidget.keyring.valid = False
-    imapwidget.keyring.error = False
+def test_imapwidget_password_none(fake_qtile, monkeypatch, fake_window, patched_imap):
+    patched_imap.keyring.valid = False
+    patched_imap.keyring.error = False
 
-    imap = imapwidget.ImapWidget(user="qtile")
+    imap = patched_imap.ImapWidget(user="qtile")
     fakebar = Bar([imap], 24)
     fakebar.window = fake_window
     fakebar.width = 10
