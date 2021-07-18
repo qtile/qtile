@@ -109,7 +109,7 @@ class _WaylandLayoutBackend(_BaseLayoutBackend):
     def set_keyboard(self, layout: str, options: Optional[str]) -> None:
         maybe_variant: Optional[str] = None
         if " " in layout:
-            layout_name, _, maybe_variant = layout.partition(" ")
+            layout_name, maybe_variant = layout.split(" ", maxsplit=1)
         else:
             layout_name = layout
         self.set_keymap(layout_name, options, maybe_variant)
