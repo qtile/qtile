@@ -10,6 +10,7 @@ Features
 * Simple, small and extensible. It's easy to write your own layouts,
   widgets and commands.
 * Configured in Python.
+* Runs as an X11 WM or a Wayland compositor.
 * Command shell that allows all aspects of Qtile to be managed and
   inspected.
 * Complete remote scriptability - write scripts to set up workspaces,
