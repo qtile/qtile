@@ -543,7 +543,8 @@ class Core(base.Core, wlrq.HasListeners):
         if previous_surface is not None and previous_surface.is_xdg_surface:
             # Deactivate the previously focused surface
             previous_xdg_surface = XdgSurface.from_surface(previous_surface)
-            previous_xdg_surface.set_activated(False)
+            if not win or win.surface != previous_xdg_surface:
+                previous_xdg_surface.set_activated(False)
 
         if not win:
             self.seat.keyboard_clear_focus()
