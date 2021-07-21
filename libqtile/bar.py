@@ -65,6 +65,7 @@ class Gap(CommandObject):
     def _configure(self, qtile, screen):
         self.qtile = qtile
         self.screen = screen
+        self.size = self.initial_size
         # If both horizontal and vertical gaps are present, screen corners are
         # given to the horizontal ones
         if screen.top is self:
