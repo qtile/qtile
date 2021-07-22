@@ -65,8 +65,3 @@ def test_fixed_size(manager_nospawn, minimal_conf_noscreen, screen, location, at
 
     info = bar.info()
     assert info["widgets"][0][attribute] == 100
-
-
-def test_deprecated_config():
-    space = widget.Spacer(width=80)
-    assert space.length == 80
