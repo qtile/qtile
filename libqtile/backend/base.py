@@ -428,6 +428,10 @@ class Internal(_Window, metaclass=ABCMeta):
 class Static(_Window, metaclass=ABCMeta):
     """A window bound to a screen rather than a group."""
     screen: config.Screen
+    x: Any
+    y: Any
+    width: Any
+    height: Any
 
     def __repr__(self):
         return "Static(name=%r, wid=%s)" % (self.name, self.wid)
