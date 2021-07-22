@@ -74,11 +74,6 @@ def test_no_filename(manager_nospawn, minimal_conf_noscreen, screen, location, a
     assert info["widgets"][0][attribute] == 0
 
 
-def test_deprecated_argument():
-    img1 = widget.Image(filename=IMAGE_FILE, width=10)
-    assert img1.length == 10
-
-
 def test_missing_file(manager_nospawn, minimal_conf_noscreen):
     img2 = widget.Image(filename="/this/file/does/not/exist")
 
