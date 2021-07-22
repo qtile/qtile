@@ -32,7 +32,7 @@ from typing import List, Optional
 
 from libqtile.config import Match
 from libqtile.layout.base import Layout
-from libqtile.window import Window
+from libqtile.backend.base import Window
 
 
 class Floating(Layout):
