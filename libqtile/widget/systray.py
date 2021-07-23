@@ -142,6 +142,19 @@ class Systray(window._Window, base._Widget):
         self.bar = bar
         atoms = conn.atoms
 
+        # We need tray to tell icons which visual to use.
+        # This needs to be the same as the bar/widget.
+        # This mainly benefits transparent bars.
+        conn.conn.core.ChangeProperty(
+            xcffib.xproto.PropMode.Replace,
+            win.wid,
+            atoms["_NET_SYSTEM_TRAY_VISUAL"],
+            xcffib.xproto.Atom.VISUALID,
+            32,
+            1,
+            [self.drawer._visual.visual_id]
+        )
+
         conn.conn.core.SetSelectionOwner(
             win.wid,
             atoms['_NET_SYSTEM_TRAY_S{:d}'.format(self.screen)],
@@ -160,19 +173,6 @@ class Systray(window._Window, base._Widget):
             data=union
         )
         qtile.core._root.send_event(event, mask=EventMask.StructureNotify)
-
-        # We need tray to tell icons which visual to use.
-        # This needs to be the same as the bar/widget.
-        # This mainly benefits transparent bars.
-        conn.conn.core.ChangeProperty(
-            xcffib.xproto.PropMode.Replace,
-            win.wid,
-            atoms["_NET_SYSTEM_TRAY_VISUAL"],
-            xcffib.xproto.Atom.VISUALID,
-            32,
-            1,
-            [self.drawer._visual.visual_id]
-        )
 
     def handle_ClientMessage(self, event):  # noqa: N802
         atoms = self.conn.atoms
