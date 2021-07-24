@@ -17,6 +17,7 @@
 import subprocess
 from functools import partial
 
+from libqtile import pangocffi
 from libqtile.widget import base
 
 
@@ -101,7 +102,7 @@ class Cmus(base.ThreadPoolText):
                     now_playing = title
             if now_playing:
                 now_playing = "♫ {0}".format(now_playing)
-        return now_playing
+        return pangocffi.markup_escape_text(now_playing)
 
     def play(self):
         """Play music if stopped, else toggle pause."""
