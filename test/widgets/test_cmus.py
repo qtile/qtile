@@ -80,6 +80,15 @@ class MockCmusRemoteProcess:
                 "tag title It's Not Unusual",
                 "stream tomjones"
             ],
+            [
+                "status playing",
+                "file /playing/file/always.mp3",
+                "duration 222",
+                "position 14",
+                "tag artist Above & Beyond",
+                "tag album Anjunabeats 14",
+                "tag title Always - Tinlicker Extended Mix"
+            ],
         ]
         cls.index = 0
         cls.is_error = False
@@ -221,3 +230,20 @@ def test_cmus_error_handling(fake_qtile, patched_cmus, fake_window):
     # Widget does nothing with error message so text is blank
     # TODO: update widget to show error?
     assert text == ""
+
+
+def test_escape_text(fake_qtile, patched_cmus, fake_window):
+    widget = patched_cmus.Cmus()
+
+    # Set track to a stopped item
+    MockCmusRemoteProcess.index = 3
+    fakebar = Bar([widget], 24)
+    fakebar.window = fake_window
+    fakebar.width = 10
+    fakebar.height = 10
+    fakebar.draw = no_op
+    widget._configure(fake_qtile, fakebar)
+    text = widget.poll()
+
+    # It's stopped so colour should reflect this
+    assert text == "♫ Above &amp; Beyond - Always - Tinlicker Extended Mix"
