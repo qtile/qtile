@@ -48,7 +48,7 @@ def run_qtile_check(config):
     try:
         newenv = os.environ.copy()
         old_pp = newenv.get("PYTHONPATH", "")
-        newenv["PYTHONPATH"] = os.path.join(os.path.dirname(__file__), "..") + old_pp
+        newenv["PYTHONPATH"] = os.path.join(os.path.dirname(__file__), "..") + ":" + old_pp
         subprocess.check_call(argv, env=newenv)
     except subprocess.CalledProcessError:
         return False
