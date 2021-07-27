@@ -36,6 +36,7 @@ MOCK_MODULES = [
     'dateutil.parser',
     'dbus_next',
     'dbus_next.aio',
+    'dbus_next.errors',
     'dbus_next.service',
     'dbus_next.constants',
     'iwlib',
