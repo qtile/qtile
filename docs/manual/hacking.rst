@@ -20,6 +20,7 @@ imagemagick>=6.8  imagemagick         ``test/test_images*`` (optional)
 gtk-layer-shell   libgtk-layer-shell0 Testing notification windows in Wayland (optional)
 dbus-launch       dbus-x11            Testing dbus-using widgets (optional)
 notifiy-send      libnotify-bin       Testing ``Notify`` widget (optional)
+xvfb              xvfb                Testing with X11 headless (optional)
 ================= =================== ==================================================
 
 .. _pytest: https://docs.pytest.org
@@ -38,7 +39,7 @@ both backends, specify as arguments to pytest:
     pytest --backend wayland  # Test just Wayland backend
     pytest --backend x11 --backend wayland  # Test both
 
-Testing with the X11 backend requires Xephyr_ in addition to the core
+Testing with the X11 backend requires Xephyr_ (and xvfb for headless mode) in addition to the core
 dependencies.
 
 
