@@ -37,6 +37,7 @@ MOCK_MODULES = [
     'dbus_next.aio',
     'dbus_next.service',
     'dbus_next.constants',
+    'dbus_next.errors',
     'iwlib',
     'keyring',
     'mpd',

@@ -161,22 +161,28 @@ class QtileHooks(SimpleDirectiveMixin, Directive):
 
 class QtileModule(SimpleDirectiveMixin, Directive):
     # :baseclass: <base class path>
+    # :exclude-base:
     # :no-commands:
     # :no-config:
-    optional_arguments = 4
+    optional_arguments = 5
 
     def make_rst(self):
         module = importlib.import_module(self.arguments[0])
 
         BaseClass = None
+        exclude_base = False
         if ':baseclass:' in self.arguments:
             BaseClass = import_class(*self.arguments[
                 self.arguments.index(':baseclass:') + 1].rsplit('.', 1))
 
+            # Prevent inherited classes from being displayed
+            if ':exclude-base:' in self.arguments:
+                exclude_base = True
+
         for item in dir(module):
             obj = import_class(self.arguments[0], item)
             if not inspect.isclass(obj) or (BaseClass and
-                not issubclass(obj, BaseClass)):
+                not issubclass(obj, BaseClass)) or (exclude_base and obj is BaseClass):
                 continue
 
             context = {

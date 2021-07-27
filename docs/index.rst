@@ -18,6 +18,7 @@ Getting started
 - :ref:`ref-hooks`
 - :ref:`ref-layouts`
 - :ref:`ref-widgets`
+- :ref:`ref-popup-toolkit`
 
 .. toctree::
     :maxdepth: 2
@@ -62,5 +63,6 @@ Tips & Tricks
     :maxdepth: 1
 
     manual/howto/widget
+    manual/howto/popup-toolkit
 
 * :ref:`genindex`

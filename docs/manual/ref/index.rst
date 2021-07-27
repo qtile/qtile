@@ -9,3 +9,4 @@ Reference
     layouts
     widgets
     extensions
+    popup_toolkit
