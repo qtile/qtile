@@ -39,7 +39,7 @@ both backends, specify as arguments to pytest:
     pytest --backend wayland  # Test just Wayland backend
     pytest --backend x11 --backend wayland  # Test both
 
-Testing with the X11 backend requires Xephyr_ and/or xvfb in addition to the core
+Testing with the X11 backend requires Xephyr_ (and xvfb for headless mode) in addition to the core
 dependencies.
 
 
