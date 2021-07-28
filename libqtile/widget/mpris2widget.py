@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from dbus_next.constants import MessageType  # type: ignore
+from dbus_next.constants import MessageType
 
 from libqtile.log_utils import logger
 from libqtile.utils import add_signal_receiver

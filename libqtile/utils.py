@@ -31,9 +31,9 @@ from shutil import which
 from typing import List, Tuple, Union
 
 try:
-    from dbus_next import Message, Variant  # type: ignore
-    from dbus_next.aio import MessageBus  # type: ignore
-    from dbus_next.constants import BusType, MessageType  # type: ignore
+    from dbus_next import Message, Variant
+    from dbus_next.aio import MessageBus
+    from dbus_next.constants import BusType, MessageType
     has_dbus = True
 except ImportError:
     has_dbus = False
