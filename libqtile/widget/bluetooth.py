@@ -18,8 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from dbus_next.aio import MessageBus  # type: ignore
-from dbus_next.constants import BusType  # type: ignore
+from dbus_next.aio import MessageBus
+from dbus_next.constants import BusType
 
 from libqtile.widget import base
 
