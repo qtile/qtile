@@ -148,7 +148,7 @@ class CurrentLayoutIcon(base._TextBox):
                 self.drawer.clear(self.background or self.bar.background)
                 self.drawer.ctx.set_source(surface)
                 self.drawer.ctx.paint()
-                self.drawer.draw(offsetx=self.offset, width=self.length)
+                self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
         else:
             # Fallback to text
             self.text = self.current_layout[0].upper()

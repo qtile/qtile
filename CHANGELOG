@@ -1,5 +1,6 @@
 Qtile x.x.x, released xxxx-xx-xx:
     * features
+        - Add ability to draw borders to the Bar. Can customise size and colour per edge.
         - Add `StatusNotifier` widget implementing the `StatusNotifierItem` specification.
           NB Widget does not provide context menus.
         - Add `total` bandwidth format value to the Net widget.

@@ -167,12 +167,12 @@ class _Widget(CommandObject, configurable.Configurable):
     def width(self):
         if self.bar.horizontal:
             return self.length
-        return self.bar.size
+        return self.bar.size - (self.bar.border_width[1] + self.bar.border_width[3])
 
     @property
     def height(self):
         if self.bar.horizontal:
-            return self.bar.size
+            return self.bar.size - (self.bar.border_width[0] + self.bar.border_width[2])
         return self.length
 
     @property
@@ -462,7 +462,7 @@ class _TextBox(_Widget):
             self.actual_padding or 0,
             int(self.bar.height / 2.0 - self.layout.height / 2.0) + 1
         )
-        self.drawer.draw(offsetx=self.offsetx, width=self.width)
+        self.drawer.draw(offsetx=self.offsetx, offsety=self.offsety, width=self.width)
 
     def cmd_set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED,
                      fontshadow=UNSPECIFIED):
@@ -698,7 +698,7 @@ class Mirror(_Widget):
             if self.reflects.drawer.needs_update:
                 self.drawer.clear(self.background or self.bar.background)
                 self.reflects.drawer.paint_to(self.drawer)
-            self.drawer.draw(offsetx=self.offset, width=self.width)
+            self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
 
     def button_press(self, x, y, button):
         self.reflects.button_press(x, y, button)

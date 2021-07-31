@@ -214,11 +214,11 @@ class LaunchBar(base._Widget):
                 # display an icon
                 self.drawer.ctx.set_source(self.surfaces[name])
                 self.drawer.ctx.paint()
-            self.drawer.draw(offsetx=self.offset + xoffset,
+            self.drawer.draw(offsetx=self.offset + xoffset, offsety=self.offsety,
                              width=icon_width + self.padding)
             xoffset += icon_width + self.padding
         if self.padding:
-            self.drawer.draw(offsetx=self.offset + xoffset, width=self.padding)
+            self.drawer.draw(offsetx=self.offset + xoffset, offsety=self.offsety, width=self.padding)
 
     def calculate_length(self):
         """ Compute the width of the widget according to each icon width. """
