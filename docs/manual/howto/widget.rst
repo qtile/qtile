@@ -201,13 +201,14 @@ components that make up the widget. Examples of displaying text, icons and
 drawings are set out below.
 
 It is important to note that the bar controls the placing of the widget by
-assigning the ``offsetx`` value (for horizontal orientations) and ``offsety``
-value (for vertical orientations). Widgets should use this at the end of the
-``draw`` method.
+assigning the ``offsetx`` value (for horizontal positioning) and ``offsety``
+value (for vertical positioning). Widgets should use this at the end of the
+``draw`` method. Both ``offsetx`` and ``offsety`` are required as both values will
+be set if the bar is drawing a border.
 
 .. code:: python
 
-    self.drawer.draw(offsetx=self.offsetx, width=self.width)
+    self.drawer.draw(offsetx=self.offsetx, offsety=self.offsety, width=self.width)
 
 .. note::
 

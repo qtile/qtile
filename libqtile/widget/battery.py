@@ -511,7 +511,7 @@ class BatteryIcon(base._Widget):
         self.drawer.clear(self.background or self.bar.background)
         self.drawer.ctx.set_source(self.surfaces[self.current_icon])
         self.drawer.ctx.paint()
-        self.drawer.draw(offsetx=self.offset, width=self.length)
+        self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
 
     @staticmethod
     def _get_icon_key(status: BatteryStatus) -> str:

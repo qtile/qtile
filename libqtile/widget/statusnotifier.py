@@ -645,7 +645,7 @@ class StatusNotifier(base._Widget):
 
                 xoffset += self.icon_size + self.padding
 
-            self.drawer.draw(offsetx=self.offset, width=self.length)
+            self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
 
         else:
             xoffset = (self.bar.width - self.icon_size) // 2
@@ -658,7 +658,7 @@ class StatusNotifier(base._Widget):
 
                 yoffset += self.icon_size + self.padding
 
-            self.drawer.draw(offsety=self.offset, height=self.length)
+            self.drawer.draw(offsety=self.offset, offsetx=self.offsetx, height=self.length)
 
     def activate(self):
         """Primary action when clicking on an icon"""

@@ -211,7 +211,7 @@ class Systray(window._Window, base._Widget):
     def draw(self):
         offset = self.padding
         self.drawer.clear(self.background or self.bar.background)
-        self.drawer.draw(offsetx=self.offset, width=self.length)
+        self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
         for pos, icon in enumerate(self.icons.values()):
             icon.window.set_attribute(backpixmap=self.drawer.pixmap)
             if self.bar.horizontal:
