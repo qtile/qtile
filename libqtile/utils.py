@@ -124,7 +124,6 @@ def has_transparency(colour: Union[ColorType, List[ColorType]]):
         return has_alpha(colour)
 
     elif isinstance(colour, list):
-        print([c for c in colour])
         return any([has_transparency(c) for c in colour])
 
     return False
