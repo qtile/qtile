@@ -81,7 +81,7 @@ class Notify(base._TextBox):
         if self.action:
             default_callbacks['Button3'] = self.invoke
         else:
-            self.capabilities = Notify.capabilities.difference({"action"})
+            self.capabilities = Notify.capabilities.difference({"actions"})
         self.add_callbacks(default_callbacks)
 
     def _configure(self, qtile, bar):
@@ -143,7 +143,10 @@ class Notify(base._TextBox):
         self.bar.draw()
 
     def clear(self, reason=ClosedReason.dismissed):
-        notifier._service.NotificationClosed(self.current_id, reason)
+        notifier._service.NotificationClosed(
+            notifier.notifications[self.current_id].id,
+            reason
+        )
         self.text = ''
         self.current_id = len(notifier.notifications) - 1
         self.bar.draw()
