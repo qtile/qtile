@@ -105,24 +105,24 @@ configuration variables that control specific aspects of Qtile's behavior:
     * - variable
       - default
       - description
-    * - auto_fullscreen
-      - True
+    * - ``auto_fullscreen``
+      - ``True``
       - If a window requests to be fullscreen, it is automatically
         fullscreened. Set this to false if you only want windows to be
         fullscreen if you ask them to be.
-    * - bring_front_click
-      - False
+    * - ``bring_front_click``
+      - ``False``
       - When clicked, should the window be brought to the front or not. If this
         is set to "floating_only", only floating windows will get affected (This
         sets the X Stack Mode to Above.)
-    * - cursor_warp
-      - False
+    * - ``cursor_warp``
+      - ``False``
       - If true, the cursor follows the focus as directed by the keyboard,
         warping to the center of the focused window. When switching focus between
         screens, If there are no windows in the screen, the cursor will warp to
         the center of the screen.
-    * - dgroups_key_binder
-      - None
+    * - ``dgroups_key_binder``
+      - ``None``
       - A function which generates group binding hotkeys. It takes a single
         argument, the DGroups object, and can use that to set up dynamic key
         bindings.
@@ -131,21 +131,21 @@ configuration variables that control specific aspects of Qtile's behavior:
         <https://github.com/qtile/qtile/blob/master/libqtile/dgroups.py>`_
         called simple_key_binder(), which will bind groups to mod+shift+0-10 by
         default.
-    * - dgroups_app_rules
-      - []
+    * - ``dgroups_app_rules``
+      - ``[]``
       - A list of Rule objects which can send windows to various groups based
         on matching criteria.
-    * - extension_defaults
-      - same as `widget_defaults`
+    * - ``extension_defaults``
+      - same as ``widget_defaults``
       - Default settings for extensions.
-    * - floating_layout
-      - layout.Floating(float_rules=[...])
+    * - ``floating_layout``
+      - ``layout.Floating(float_rules=[...])``
       - The default floating layout to use. This allows you to set
         custom floating rules among other things if you wish.
 
         See the configuration file for the default `float_rules`.
-    * - focus_on_window_activation
-      - smart
+    * - ``focus_on_window_activation``
+      - ``'smart'``
       - Behavior of the _NET_ACTIVATE_WINDOW message sent by applications
 
         - urgent: urgent flag is set for the window
@@ -155,24 +155,22 @@ configuration variables that control specific aspects of Qtile's behavior:
         - smart: automatically focus if the window is in the current group
 
         - never: never automatically focus any window that requests it
-    * - follow_mouse_focus
-      - True
+    * - ``follow_mouse_focus``
+      - ``True``
       - Controls whether or not focus follows the mouse around as it moves
         across windows in a layout.
-    * - widget_defaults
-      - dict(font='sans',
-             fontsize=12,
-             padding=3)
+    * - ``widget_defaults``
+      - ``dict(font='sans', fontsize=12, padding=3)``
       - Default settings for bar widgets.  Note: if the font file
         associated with the font selected here is modified while Qtile
         is running, Qtile may segfault (for details see `issue #2656
         <https://github.com/qtile/qtile/issues/2656>`_).
-    * - reconfigure_screens
-      - True
+    * - ``reconfigure_screens``
+      - ``True``
       - Controls whether or not to automatically reconfigure screens when there
         are changes in randr output configuration.
-    * - wmname
-      - "LG3D"
+    * - ``wmname``
+      - ``'LG3D'``
       - Gasp! We're lying here. In fact, nobody really uses or cares
         about this string besides java UI toolkits; you can see several
         discussions on the mailing lists, GitHub issues, and other WM
@@ -181,8 +179,8 @@ configuration variables that control specific aspects of Qtile's behavior:
         we're a working one by default. We choose LG3D to maximize irony:
         it is a 3D non-reparenting WM written in java that happens to be
         on java's whitelist.
-    * - auto_minimize
-      - True
+    * - ``auto_minimize``
+      - ``True``
       - If things like steam games want to auto-minimize themselves when losing
         focus, should we respect this or not?
 
