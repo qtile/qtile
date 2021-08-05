@@ -84,21 +84,22 @@ class PulseVolume(Volume):
             self.connected = True
             # once onnection is established we need to get server information
             self.timeout_add(0.1, self.get_server_info)
+            log.debug('Connection to pulseaudio ready')
         elif state == lib.PA_CONTEXT_FAILED:
             # failed to connect
             self.connected = False
             self._subscribed = False
-            log.error('Failed to connect to pulseaudio')
+            log.warning('Failed to connect to pulseaudio, retrying in 10s')
             self.timeout_add(10, self.connect)
         elif state == lib.PA_CONTEXT_TERMINATED:
             # done
             self.connected = False
             self._subscribed = False
-            log.warning('Connection to pulseaudio has been terminated')
+            log.debug('Connection to pulseaudio terminated cleanly')
         elif state == lib.PA_CONTEXT_UNCONNECTED:
             self.connected = False
             self._subscribed = False
-            log.error("Disconnected from pulsedio")
+            log.warning("Disconnected from pulseaudio")
 
     def get_server_info(self):
         lib.pa_context_get_server_info(

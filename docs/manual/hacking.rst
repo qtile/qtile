@@ -103,6 +103,30 @@ to ensure your patch complies with reasonable formatting constraints. We also
 request that git commit messages follow the
 `standard format <https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>`_.
 
+Logging
+=======
+
+Logs are important to us because they are our best way to see what Qtile is
+doing when something abnormal happens. However, our goal is not to have as many
+logs as possible, as this hinders readability. What we want are relevant logs.
+
+To decide which log level to use, refer to the following scenarios:
+
+* ERROR: a problem affects the behavior of Qtile in a way that is noticeable to
+  the end user, and we can't work around it.
+* WARNING: a problem causes Qtile to operate in a suboptimal manner.
+* INFO: the state of Qtile has changed.
+* DEBUG: information is worth giving to help the developer better understand
+  which branch the process is in.
+
+Be careful not to overuse DEBUG and clutter the logs. No information should be
+duplicated between two messages.
+
+Also, keep in mind that any other level than DEBUG is aimed at users who don't
+necessarily have advanced programming knowledge; adapt your message
+accordingly. If it can't make sense to your grandma, it's probably meant to be
+a DEBUG message.
+
 Deprecation policy
 ==================
 
