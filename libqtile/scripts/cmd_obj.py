@@ -162,7 +162,14 @@ def cmd_obj(args) -> None:
         obj = get_object(cmd_client, args.obj_spec)
 
         if args.function == "help":
-            print_commands("-o " + " ".join(args.obj_spec), obj)
+            try:
+                print_commands("-o " + " ".join(args.obj_spec), obj)
+            except CommandError:
+                if len(args.obj_spec) == 1:
+                    print(f"{args.obj_spec} object needs a specified identifier e.g. '-o bar top'.")
+                    sys.exit(1)
+                else:
+                    raise
         elif args.info:
             print(args.function + get_formated_info(obj, args.function, args=True, short=False))
         else:
