@@ -291,6 +291,22 @@ class Bar(Gap, configurable.Configurable):
             self.widgets.insert(index, crash)
             self.widgets.remove(i)
 
+    def _items(self, name: str) -> ItemT:
+        if name == "screen" and self.screen is not None:
+            return True, []
+        elif name == "widget" and self.widgets:
+            return False, [w.name for w in self.widgets]
+        return None
+
+    def _select(self, name, sel):
+        if name == "screen":
+            return self.screen
+        elif name == "widget":
+            for widget in self.widgets:
+                if widget.name == sel:
+                    return widget
+        return None
+
     def finalize(self):
         self.drawer.finalize()
 
