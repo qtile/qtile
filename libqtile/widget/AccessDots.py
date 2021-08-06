@@ -1,6 +1,7 @@
 # A qtile widget written to show active indication for mic or camera
-# my github (https://github.com/desdemona2)
+# my github (https://github.com/desdemona2).
 # maybe this is not well formatted as i am still a learner so feel free to modify this file.
+# This feature is also included in iOS 14 and Android 12 and inspired from an app AccessDots for Android.
 
 from libqtile.widget import base
 import os
