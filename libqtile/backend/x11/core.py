@@ -113,6 +113,7 @@ class Core(base.Core):
                 | EventMask.SubstructureRedirect
                 | EventMask.EnterWindow
                 | EventMask.LeaveWindow
+                | EventMask.ButtonPress
             )
         )
 

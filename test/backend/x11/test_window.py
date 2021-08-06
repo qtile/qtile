@@ -11,6 +11,7 @@ from libqtile import layout, utils
 from libqtile.backend.x11 import window, xcbq
 from test.conftest import dualmonitor
 from test.helpers import (
+    HEIGHT,
     SECOND_HEIGHT,
     SECOND_WIDTH,
     WIDTH,
@@ -495,6 +496,26 @@ def test_cursor_warp(xmanager):
     assert p.win_x == 25
     assert p.win_y == 25
     assert p.same_screen
+
+
+@dualmonitor
+def test_click_focus_screen(xmanager):
+    screen1 = (WIDTH // 2, HEIGHT // 2)
+    screen2 = (WIDTH + SECOND_WIDTH // 2, SECOND_HEIGHT // 2)
+    xmanager.c.eval(f"self.core.warp_pointer{screen1}")
+    assert xmanager.c.screen.info()["index"] == 0
+
+    # Warping alone shouldn't change the current screen
+    xmanager.c.eval(f"self.core.warp_pointer{screen2}")
+    assert xmanager.c.screen.info()["index"] == 0
+    # Clicking should
+    xmanager.backend.fake_click(*screen2)
+    assert xmanager.c.screen.info()["index"] == 1
+
+    xmanager.c.eval(f"self.core.warp_pointer{screen1}")
+    assert xmanager.c.screen.info()["index"] == 1
+    xmanager.backend.fake_click(*screen1)
+    assert xmanager.c.screen.info()["index"] == 0
 
 
 @bare_config
