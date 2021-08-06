@@ -251,11 +251,15 @@ class _Widget(CommandObject, configurable.Configurable):
     def _items(self, name: str) -> ItemT:
         if name == "bar":
             return True, []
+        elif name == "screen":
+            return True, []
         return None
 
     def _select(self, name, sel):
         if name == "bar":
             return self.bar
+        elif name == "screen":
+            return self.bar.screen
 
     def cmd_info(self):
         """
