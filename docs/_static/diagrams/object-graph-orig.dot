@@ -31,27 +31,18 @@ digraph G {
     root -> widget;
     root -> window;
 
-    bar -> screen;
-    bar -> widget;
+    bar -> screen [dir=both];
+    bar -> widget [dir=both];
 
-    group -> layout;
+    group -> layout [dir=both];
     group -> screen;
-    group -> window;
+    group -> window [dir=both];
 
-    layout -> group;
-    layout -> screen;
-    layout -> window;
+    layout -> screen [dir=both];
+    layout -> window [dir=both];
 
-    screen -> bar;
-    screen -> layout;
-    screen -> window;
-    screen -> widget;
+    screen -> window [dir=both];
+    screen -> widget [dir=both];
 
-    widget -> bar;
     widget -> group;
-    widget -> screen;
-
-    window -> group;
-    window -> screen;
-    window -> layout;
 }
