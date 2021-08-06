@@ -173,7 +173,7 @@ class CommandGraphObject(CommandGraphNode, metaclass=abc.ABCMeta):
 
 class _BarGraphNode(CommandGraphObject):
     object_type = "bar"
-    children = ["screen"]
+    children = ["screen", "widget"]
 
 
 class _GroupGraphNode(CommandGraphObject):
@@ -188,7 +188,7 @@ class _LayoutGraphNode(CommandGraphObject):
 
 class _ScreenGraphNode(CommandGraphObject):
     object_type = "screen"
-    children = ["layout", "window", "bar"]
+    children = ["layout", "window", "bar", "widget"]
 
 
 class _WidgetGraphNode(CommandGraphObject):

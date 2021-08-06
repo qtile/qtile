@@ -32,6 +32,7 @@ digraph G {
     root -> window;
 
     bar -> screen;
+    bar -> widget;
 
     group -> layout;
     group -> screen;
@@ -44,6 +45,7 @@ digraph G {
     screen -> bar;
     screen -> layout;
     screen -> window;
+    screen -> widget;
 
     widget -> bar;
     widget -> group;

@@ -37,7 +37,7 @@ from typing import TYPE_CHECKING, Callable, List, Optional, Union
 
 from libqtile import configurable, hook, utils
 from libqtile.backend import base
-from libqtile.bar import BarType
+from libqtile.bar import Bar, BarType
 from libqtile.command.base import CommandObject, ItemT
 
 if TYPE_CHECKING:
@@ -389,6 +389,8 @@ class Screen(CommandObject):
             return True, [i.wid for i in self.group.windows]
         elif name == "bar":
             return False, [x.position for x in self.gaps]
+        elif name == "widget":
+            return False, [w.name for g in self.gaps for w in g.widgets if isinstance(g, Bar)]
         return None
 
     def _select(self, name, sel):
@@ -406,6 +408,13 @@ class Screen(CommandObject):
                         return i
         elif name == "bar":
             return getattr(self, sel)
+        elif name == "widget":
+            for gap in self.gaps:
+                if not isinstance(gap, Bar):
+                    continue
+                for widget in gap.widgets:
+                    if widget.name == sel:
+                        return widget
 
     def resize(self, x=None, y=None, w=None, h=None):
         if x is None:
