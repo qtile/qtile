@@ -43,6 +43,4 @@ digraph G {
 
     screen -> window [dir=both];
     screen -> widget [dir=both];
-
-    widget -> group;
 }
