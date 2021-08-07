@@ -27,7 +27,7 @@ widgets = {
     "AGroupBox": "groupbox",
     "Backlight": "backlight",
     "Battery": "battery",
-    "AccessDots": "accessDots",
+    "active": "accessDots",
     "BatteryIcon": "battery",
     "Bluetooth": "bluetooth",
     "CPU": "cpu",
