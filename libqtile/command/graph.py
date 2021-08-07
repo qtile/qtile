@@ -188,7 +188,7 @@ class _LayoutGraphNode(CommandGraphObject):
 
 class _ScreenGraphNode(CommandGraphObject):
     object_type = "screen"
-    children = ["layout", "window", "bar", "widget"]
+    children = ["layout", "window", "bar", "widget", "group"]
 
 
 class _WidgetGraphNode(CommandGraphObject):

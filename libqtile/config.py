@@ -391,6 +391,8 @@ class Screen(CommandObject):
             return False, [x.position for x in self.gaps]
         elif name == "widget":
             return False, [w.name for g in self.gaps for w in g.widgets if isinstance(g, Bar)]
+        elif name == "group":
+            return True, [self.group.name]
         return None
 
     def _select(self, name, sel):
@@ -415,6 +417,11 @@ class Screen(CommandObject):
                 for widget in gap.widgets:
                     if widget.name == sel:
                         return widget
+        elif name == "group":
+            if sel is None:
+                return self.group
+            else:
+                return self.group if sel == self.group.name else None
 
     def resize(self, x=None, y=None, w=None, h=None):
         if x is None:
