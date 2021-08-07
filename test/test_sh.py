@@ -74,7 +74,7 @@ def test_ls(manager):
 
     assert sh.do_cd("layout") == "layout"
     assert sh.do_ls(None) == "group/   window/  screen/"
-    assert sh.do_ls("screen") == "screen/layout/  screen/window/  screen/bar/     screen/widget/"
+    assert sh.do_ls("screen") == "screen/layout/  screen/window/  screen/bar/     screen/widget/  screen/group/ "
 
 
 @sh_config

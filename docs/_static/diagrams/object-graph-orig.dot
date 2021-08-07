@@ -35,7 +35,7 @@ digraph G {
     bar -> widget [dir=both];
 
     group -> layout [dir=both];
-    group -> screen;
+    group -> screen [dir=both];
     group -> window [dir=both];
 
     layout -> screen [dir=both];
