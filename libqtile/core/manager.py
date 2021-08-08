@@ -344,7 +344,7 @@ class Qtile(CommandObject):
     def process_key_event(self, keysym: int, mask: int) -> None:
         key = self.keys_map.get((keysym, mask), None)
         if key is None:
-            logger.info("Ignoring unknown keysym: {keysym}, mask: {mask}".format(keysym=keysym, mask=mask))
+            logger.debug("Ignoring unknown keysym: {keysym}, mask: {mask}".format(keysym=keysym, mask=mask))
             return
 
         if isinstance(key, KeyChord):
@@ -1282,11 +1282,11 @@ class Qtile(CommandObject):
                 try:
                     self.groups_map[group].cmd_toscreen()
                 except KeyError:
-                    logger.info("No group named '{0:s}' present.".format(group))
+                    logger.warning("No group named '{0:s}' present.".format(group))
 
         mb = self.widgets_map.get(widget)
         if not mb:
-            logger.warning("No widget named '{0:s}' present.".format(widget))
+            logger.error("No widget named '{0:s}' present.".format(widget))
             return
 
         mb.start_input(prompt, f, "group", strict_completer=True)
@@ -1371,7 +1371,7 @@ class Qtile(CommandObject):
                     return
                 cmd_len = len(cmd_arg)
                 if cmd_len == 0:
-                    logger.info('No command entered.')
+                    logger.debug('No command entered.')
                     return
                 try:
                     result = eval(u'c.{0:s}'.format(cmd))
@@ -1466,7 +1466,7 @@ class Qtile(CommandObject):
             else:
                 logger.warning("Not found bar for hide/show.")
         else:
-            logger.error("Invalid position value:{0:s}".format(position))
+            logger.warning("Invalid position value:{0:s}".format(position))
 
     def cmd_get_state(self) -> str:
         """Get pickled state for restarting qtile"""
