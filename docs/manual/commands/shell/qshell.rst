@@ -23,20 +23,53 @@ builtin "cd" and "ls" commands act like their familiar shell counterparts:
     > ls
     layout/  widget/  screen/  bar/     window/  group/
 
-    > cd bar
+    > cd screen
+    layout/  window/  bar/  widget/
 
-    bar> ls
-    bottom/
-
-    bar> cd bottom
-
-    bar['bottom']> ls
-    screen/
-
-    bar['bottom']> cd ../..
+    > cd ..
+    /
 
     > ls
     layout/  widget/  screen/  bar/     window/  group/
+
+If you try to access an object that has no "default" value then you will see an
+error message:
+
+.. code-block:: bash
+
+    > ls
+    layout/  widget/  screen/  bar/     window/  group/
+
+    > cd bar
+    Item required for bar
+
+    > ls bar
+    bar[bottom]/
+
+    > cd bar/bottom
+    bar['bottom']> ls
+    screen/  widget/
+
+Please refer to :ref:`object_graph_keys` for a summary of which objects need a
+specified selector and the type of selector required. Using ``ls`` will show
+which selectors are available for an object. Please see below for an explanation
+about how Qtile displays shell paths.
+
+Alternatively, the ``items()`` command can be run on the parent object to show which
+selectors are available. The first value shows whether a selector is optional
+(``False`` means that a selector is required) and the second value is a list of
+selectors:
+
+.. code-block:: bash
+
+    > ls
+    layout/  widget/  screen/  bar/     window/  group/
+
+    > items(bar)
+    (False, ['bottom'])
+
+Displaying the shell path
+=========================
 
 Note that the shell provides a "short-hand" for specifying node keys (as
 opposed to children). The following is a valid shell path:
