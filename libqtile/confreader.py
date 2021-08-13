@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING
 from libqtile.backend.x11 import core
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List
+    from typing import Any, Dict, List, Union
 
     from typing_extensions import Literal
 
@@ -44,7 +44,7 @@ class ConfigError(Exception):
 
 
 config_pyi_header = """
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 from typing_extensions import Literal
 from libqtile.config import Group, Key, Mouse, Rule, Screen
 from libqtile.layout.base import Layout
@@ -68,7 +68,7 @@ class Config:
     auto_fullscreen: bool
     widget_defaults: Dict[str, Any]
     extension_defaults: Dict[str, Any]
-    bring_front_click: bool
+    bring_front_click: Union[bool, Literal["floating_only"]]
     reconfigure_screens: bool
     wmname: str
     auto_minimize: bool
