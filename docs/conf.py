@@ -95,7 +95,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Qtile'
-copyright = u'2008-2020, Aldo Cortesi and contributers'
+copyright = u'2008-2021, Aldo Cortesi and contributers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
