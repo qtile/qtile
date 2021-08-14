@@ -164,7 +164,7 @@ class KeyboardPNGFactory:
             key_pos[c] = pos.get_pos(c)
         key_pos['period'] = pos.get_pos('period')
         key_pos['comma'] = pos.get_pos('comma')
-        key_pos['/'] = pos.get_pos('/')
+        key_pos['slash'] = pos.get_pos('slash')
         pos.next_row()
 
         key_pos['control'] = pos.get_pos('control')
