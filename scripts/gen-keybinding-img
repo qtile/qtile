@@ -144,13 +144,18 @@ class KeyboardPNGFactory:
         pos.next_row()
 
         key_pos['Tab'] = pos.get_pos('Tab')
-        for c in 'qwertyuiop[]\\':
+        for c in 'qwertyuiop':
             key_pos[c] = pos.get_pos(c)
+        key_pos['bracketleft'] = pos.get_pos('bracketleft')
+        key_pos['bracketright'] = pos.get_pos('bracketright')
+        key_pos['backslash'] = pos.get_pos('backslash')
         pos.next_row()
 
         pos.skip_x(1.6)
-        for c in 'asdfghjkl;\'':
+        for c in 'asdfghjkl':
             key_pos[c] = pos.get_pos(c)
+        key_pos['semicolon'] = pos.get_pos('semicolon')
+        key_pos['apostrophe'] = pos.get_pos('apostrophe')
         key_pos['Return'] = pos.get_pos('Return')
         pos.next_row()
 
