@@ -1,7 +1,16 @@
 Qtile xxxxxx, released xxxxxxxxxx:
+    !!! deprecation warning !!!
+        - The windowname and windowtabs widgets are being phased out for
+          new options in the tasklist widget
     * features
         - All layouts will accept a list of colors for border_* options with which
           they will draw multiple borders on the appropriate windows.
+        - The tasklist widget now has the `current_win_only` option which mimics
+          the old windowname widget
+        - The tasklist widget now no longer shows windows with the `_NET_WM_STATE_SKIP_TASKBAR`
+          WM property. This primarily affects GTK applications.
+        - Widgets now accept `mouse_callbacks=None` which disables all mouse
+          buttons including built in options.
 
 Qtile 0.18.0, released 2021-07-04:
     !!! Config breakage !!!

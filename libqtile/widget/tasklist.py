@@ -154,6 +154,11 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             'Icon size. '
             '(Calculated if set to None. Icons are hidden if set to 0.)'
         ),
+        (
+            'current_win_only',
+            False,
+            'True: Only display the current window. False: display all windows'
+        ),
     ]
 
     def __init__(self, **config):
@@ -167,6 +172,10 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         self.clicked = None
         if self.spacing is None:
             self.spacing = self.margin_x
+        if self.current_win_only:
+            self.mouse_callbacks = None  # Minimized windows are hard to get back
+        if self.padding is None:
+            self.padding = 0
 
         self.add_callbacks({'Button1': self.select_window})
 
@@ -222,7 +231,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if callable(self.parse_text):
             try:
                 window_name = self.parse_text(window_name)
-            except:
+            except Exception:
                 logger.exception("parse_text function failed:")
 
         # Emulate default widget behavior if markup_str is None
@@ -238,7 +247,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
     @property
     def windows(self):
-        return self.bar.screen.group.windows
+        if self.current_win_only:
+            wins = self.bar.screen.group.current_window
+            wins = set([wins]) if wins else set([])  # Sets are necessary here to ensure consistent formatting
+        else:
+            wins = self.bar.screen.group.windows
+        return self.skip_taskbar(wins)
 
     def calc_box_widths(self):
         """
@@ -326,6 +340,14 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     def update(self, window=None):
         if not window or window in self.windows:
             self.bar.draw()
+
+    def skip_taskbar(self, windows):
+        """
+        Check every window's _NET_WM_STATE property for _NET_WM_STATE_SKIP_TASKBAR
+        and remove that window from the list to be shown on the taskbar.
+        This is mostly for GTK programs. Qt doesn't seem to support this
+        """
+        return {w for w in windows if "_NET_WM_STATE_SKIP_TASKBAR" not in w.window.get_net_wm_state()}
 
     def remove_icon_cache(self, window):
         wid = window.wid

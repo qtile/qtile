@@ -116,7 +116,8 @@ class _Widget(CommandObject, configurable.Configurable):
     offsety: int = 0
     defaults = [
         ("background", None, "Widget background color"),
-        ("mouse_callbacks", {}, "Dict of mouse button press callback functions."),
+        ("mouse_callbacks", {}, "Dict of mouse button press callback functions."
+         "Set to `None` to disable built in callbacks"),
     ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, length, **config):
@@ -228,12 +229,13 @@ class _Widget(CommandObject, configurable.Configurable):
 
     def add_callbacks(self, defaults):
         """Add default callbacks with a lower priority than user-specified callbacks."""
-        defaults.update(self.mouse_callbacks)
-        self.mouse_callbacks = defaults
+        if self.mouse_callbacks is not None:
+            defaults.update(self.mouse_callbacks)
+            self.mouse_callbacks = defaults
 
     def button_press(self, x, y, button):
         name = 'Button{0}'.format(button)
-        if name in self.mouse_callbacks:
+        if self.mouse_callbacks and name in self.mouse_callbacks:
             self.mouse_callbacks[name]()
 
     def button_release(self, x, y, button):

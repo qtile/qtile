@@ -169,6 +169,24 @@ def test_pacman():
     check_migrate(orig, expected)
 
 
+def test_windownametab_to_tasklist():
+    orig = textwrap.dedent("""
+        from libqtile import bar
+        from libqtile import widget
+
+        bar.Bar([widget.WindowName(markup=True), widget.WindowTabs(markup=False)], 30)
+        """)
+
+    expected = textwrap.dedent("""
+        from libqtile import bar
+        from libqtile import widget
+
+        bar.Bar([widget.TaskList(markup_normal=True), widget.TaskList(markup_normal=False)], 30)
+        """)
+
+    check_migrate(orig, expected)
+
+
 def test_main():
     orig = textwrap.dedent("""
         def main(qtile):

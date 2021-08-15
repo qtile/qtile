@@ -123,6 +123,12 @@ def new_at_current_to_new_client_position(query):
         .modify(update_node_nac)
     )
 
+def windowname_and_tabs_to_tasklist(query):
+    query.select_attribute("WindowName").rename("TaskList")
+    query.select_attribute("WindowTabs").rename("TaskList")
+    query.select_method("TaskList").modify_argument("markup", "markup_normal")
+    return query
+
 
 MIGRATIONS = [
     client_name_updated,
@@ -131,6 +137,7 @@ MIGRATIONS = [
     pacman_to_checkupdates,
     hook_main_function,
     new_at_current_to_new_client_position,
+    windowname_and_tabs_to_tasklist,
 ]
 
 
