@@ -270,6 +270,11 @@ def _normalize_item(object_type: Optional[str], item: str) -> Union[str, int]:
     if object_type in ["group", "widget", "bar"]:
         return str(item)
     elif object_type in ["layout", "window", "screen"]:
-        return int(item)
+        try:
+            return int(item)
+        except ValueError:
+            # A value error could arise because the next selector has been passed
+            raise SelectError(f"Unexpected index {item}. Is this an object_type?",
+                              str(object_type), [(str(object_type), str(item))])
     else:
         return item

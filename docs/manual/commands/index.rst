@@ -121,6 +121,8 @@ specifies the group belonging to the screen that belongs to group "b":
 This amout of connectivity makes it easy to reach out from a given object when
 callbacks and events fire on that object to related objects.
 
+.. _object_graph_keys:
+
 Keys
 ====
 
