@@ -169,6 +169,24 @@ def test_pacman():
     check_migrate(orig, expected)
 
 
+def test_crypto():
+    orig = textwrap.dedent("""
+        from libqtile import bar
+        from libqtile.widget import BitcoinTicker
+
+        bar.Bar([BitcoinTicker()], 30)
+    """)
+
+    expected = textwrap.dedent("""
+        from libqtile import bar
+        from libqtile.widget import CryptoTicker
+
+        bar.Bar([CryptoTicker()], 30)
+    """)
+
+    check_migrate(orig, expected)
+
+
 def test_main():
     orig = textwrap.dedent("""
         def main(qtile):
