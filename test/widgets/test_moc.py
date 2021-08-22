@@ -64,7 +64,11 @@ class MockMocpProcess:
     @classmethod
     def run(cls, cmd):
         if cls.is_error:
-            subprocess.call(["exit", "1"])
+            raise subprocess.CalledProcessError(
+                -1,
+                cmd=cmd,
+                output="Couldn't connect to moc."
+            )
 
         arg = cmd[1]
 
@@ -185,3 +189,9 @@ def test_moc_button_presses(manager_nospawn, minimal_conf_noscreen, monkeypatch)
     topbar.fake_button_press(0, "top", 0, 0, button=5)
     manager_nospawn.c.widget["moc"].eval("self.update(self.poll())")
     assert info()["text"] == "♫ Neil Diamond - Sweet Caroline"
+
+
+def test_moc_error_handling(patched_moc):
+    MockMocpProcess.is_error = True
+    # Widget does nothing with error message so text is blank
+    assert patched_moc.poll() == ""
