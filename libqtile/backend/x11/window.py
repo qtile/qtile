@@ -1108,10 +1108,11 @@ class Static(_Window, base.Static):
         y = y or 0
         self.x = x + screen.x
         self.y = y + screen.y
-        self.width = width or 0
-        self.height = height or 0
+        self.width = width or 200
+        self.height = height or 200
         self.screen = screen
         self.place(self.x, self.y, self.width, self.height, 0, 0)
+        self.unhide()
         self.update_strut()
 
         # Grab button 1 to focus upon click
