@@ -57,7 +57,7 @@ class Cmus(base.ThreadPoolText):
         try:
             output = self.call_process(['cmus-remote', '-C', 'status'])
         except subprocess.CalledProcessError as err:
-            output = err.output.decode()
+            output = err.output
         if output.startswith("status"):
             output = output.splitlines()
             info = {'status': "",
