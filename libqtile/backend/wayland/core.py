@@ -423,32 +423,28 @@ class Core(base.Core, wlrq.HasListeners):
                     self._hovered_internal = win
                 return
 
-            focus_changed = self.seat.pointer_state.focused_surface != surface
             if surface is not None:
                 self.seat.pointer_notify_enter(surface, sx, sy)
-            if focus_changed:
-                if surface is None:
-                    self.seat.pointer_clear_focus()
-                if win is not self.qtile.current_window:
-                    hook.fire("client_mouse_enter", win)
-
-                    if self.qtile.config.follow_mouse_focus:
-                        if isinstance(win, window.Static):
-                            self.qtile.focus_screen(win.screen.index, False)
-                        else:
-                            if win.group.current_window != win:
-                                win.group.focus(win, False)
-                            if (
-                                win.group.screen
-                                and self.qtile.current_screen != win.group.screen
-                            ):
-                                self.qtile.focus_screen(win.group.screen.index, False)
-                        self.focus_window(win, surface)
-
+                if self.seat.pointer_state.focused_surface == surface:
+                    self.seat.pointer_notify_motion(time, sx, sy)
             else:
-                # The enter event contains coordinates, so we only need to
-                # notify on motion if the focus did not change
-                self.seat.pointer_notify_motion(time, sx, sy)
+                self.seat.pointer_clear_focus()
+
+            if win is not self.qtile.current_window:
+                hook.fire("client_mouse_enter", win)
+
+                if self.qtile.config.follow_mouse_focus:
+                    if isinstance(win, window.Static):
+                        self.qtile.focus_screen(win.screen.index, False)
+                    else:
+                        if win.group.current_window != win:
+                            win.group.focus(win, False)
+                        if (
+                            win.group.screen
+                            and self.qtile.current_screen != win.group.screen
+                        ):
+                            self.qtile.focus_screen(win.group.screen.index, False)
+                    self.focus_window(win, surface)
 
             if self._hovered_internal:
                 self._hovered_internal = None
