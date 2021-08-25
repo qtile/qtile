@@ -77,10 +77,6 @@ class Output(HasListeners):
                 wlr_output.set_custom_mode(640, 480, 0)
             wlr_output.commit()
 
-    def finalize(self):
-        self.core.outputs.remove(self)
-        self.finalize_listeners()
-
     @property
     def screen(self) -> Screen:
         assert self.core.qtile is not None
@@ -93,7 +89,8 @@ class Output(HasListeners):
 
     def _on_destroy(self, _listener, _data):
         logger.debug("Signal: output destroy")
-        self.finalize()
+        self.core.outputs.remove(self)
+        self.finalize_listeners()
 
     def _on_frame(self, _listener, _data):
         wlr_output = self.wlr_output

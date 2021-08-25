@@ -183,17 +183,7 @@ class Core(base.Core, wlrq.HasListeners):
         return "wayland"
 
     def finalize(self):
-        for kb in self.keyboards:
-            kb.finalize()
-        for out in self.outputs:
-            out.finalize()
-
         self.finalize_listeners()
-        self.cursor_manager.destroy()
-        self.cursor.destroy()
-        self.output_layout.destroy()
-        self.seat.destroy()
-        self.backend.destroy()
         self.display.destroy()
         self.qtile = None
 

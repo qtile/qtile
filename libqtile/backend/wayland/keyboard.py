@@ -62,12 +62,6 @@ class Keyboard(HasListeners):
         self.add_listener(self.keyboard.key_event, self._on_key)
         self.add_listener(self.keyboard.destroy_event, self._on_destroy)
 
-    def finalize(self):
-        self.finalize_listeners()
-        self.core.keyboards.remove(self)
-        if self.core.keyboards and self.core.seat.keyboard.destroyed:
-            self.seat.set_keyboard(self.core.keyboards[-1].device)
-
     def set_keymap(
         self, layout: Optional[str], options: Optional[str], variant: Optional[str]
     ) -> None:
@@ -87,7 +81,10 @@ class Keyboard(HasListeners):
 
     def _on_destroy(self, _listener, _data):
         logger.debug("Signal: keyboard destroy")
-        self.finalize()
+        self.finalize_listeners()
+        self.core.keyboards.remove(self)
+        if self.core.keyboards and self.core.seat.keyboard.destroyed:
+            self.seat.set_keyboard(self.core.keyboards[-1].device)
 
     def _on_modifier(self, _listener, _data):
         self.seat.keyboard_notify_modifiers(self.keyboard.modifiers)
