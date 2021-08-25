@@ -245,7 +245,11 @@ def send_notification(title, message, urgent=False, timeout=10000, id=None):
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
-        logger.warning("Eventloop has not started. Cannot send notification.")
+        """
+        If event loop is not already running,
+        let asyncio.run() handle the task instead of just throwing warning
+        """
+        asyncio.run(_notify(title, message, urgency, timeout, id))
     else:
         loop.create_task(_notify(title, message, urgency, timeout, id))
 
