@@ -90,6 +90,7 @@ class Keyboard(HasListeners):
         self.finalize()
 
     def _on_modifier(self, _listener, _data):
+        self.seat.set_keyboard(self.device)
         self.seat.keyboard_notify_modifiers(self.keyboard.modifiers)
 
     def _on_key(self, _listener, event: KeyboardKeyEvent):
