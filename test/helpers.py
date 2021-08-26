@@ -164,7 +164,7 @@ class TestManager:
         self.terminate()
         self._sockfile.close()
 
-    def start(self, config_class, no_spawn=False):
+    def start(self, config_class, no_spawn=False, state=None):
         rpipe, wpipe = multiprocessing.Pipe()
 
         def run_qtile():
@@ -179,6 +179,7 @@ class TestManager:
                     config_class(),
                     socket_path=self.sockfile,
                     no_spawn=no_spawn,
+                    state=state
                 ).loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
