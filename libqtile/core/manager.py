@@ -663,7 +663,8 @@ class Qtile(CommandObject):
 
     def process_button_click(
         self, button_code: int, modmask: int, x: int, y: int
-    ) -> None:
+    ) -> bool:
+        handled = False
         for m in self.mouse_map.get(button_code, []):
             if not m.modmask == modmask:
                 continue
@@ -677,6 +678,7 @@ class Qtile(CommandObject):
                             logger.error(
                                 "Mouse command error %s: %s" % (i.name, val)
                             )
+                        handled = True
             elif isinstance(m, Drag):
                 if m.start:
                     i = m.start
@@ -691,13 +693,18 @@ class Qtile(CommandObject):
                     val = (0, 0)
                 self._drag = (x, y, val[0], val[1], m.commands)
                 self.core.grab_pointer()
+                handled = True
 
-    def process_button_release(self, button_code: int, modmask: int) -> None:
-        for m in self.mouse_map.get(button_code, []):
-            if isinstance(m, Drag):
-                self._drag = None
-                self.core.ungrab_pointer()
-                return
+        return handled
+
+    def process_button_release(self, button_code: int, modmask: int) -> bool:
+        if self._drag is not None:
+            for m in self.mouse_map.get(button_code, []):
+                if isinstance(m, Drag):
+                    self._drag = None
+                    self.core.ungrab_pointer()
+                    return True
+        return False
 
     def process_button_motion(self, x: int, y: int) -> None:
         if self._drag is None:
