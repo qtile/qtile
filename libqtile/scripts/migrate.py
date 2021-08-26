@@ -129,6 +129,7 @@ MIGRATIONS = [
     tile_master_windows_rename,
     threaded_poll_text_rename,
     pacman_to_checkupdates,
+    bitcoin_to_crypto,
     hook_main_function,
     new_at_current_to_new_client_position,
 ]
