@@ -33,4 +33,7 @@ import libqtile.core.lifecycle  # noqa: F401, E402
 from libqtile.scripts.main import main  # noqa: E402
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except:
+        logger.warning("Kindly try again")
