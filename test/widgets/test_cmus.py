@@ -99,7 +99,7 @@ class MockCmusRemoteProcess:
             raise subprocess.CalledProcessError(
                 -1,
                 cmd=cmd,
-                output=b"Couldn't connet to cmus"
+                output="Couldn't connect to cmus."
             )
 
         if cmd[1:] == ["-C", "status"]:

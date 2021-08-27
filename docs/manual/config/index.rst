@@ -161,7 +161,10 @@ configuration variables that control specific aspects of Qtile's behavior:
         across windows in a layout.
     * - ``widget_defaults``
       - ``dict(font='sans', fontsize=12, padding=3)``
-      - Default settings for bar widgets.
+      - Default settings for bar widgets.  Note: if the font file
+        associated with the font selected here is modified while Qtile
+        is running, Qtile may segfault (for details see `issue #2656
+        <https://github.com/qtile/qtile/issues/2656>`_).
     * - ``reconfigure_screens``
       - ``True``
       - Controls whether or not to automatically reconfigure screens when there
