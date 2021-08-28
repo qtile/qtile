@@ -35,6 +35,7 @@ from typing import TYPE_CHECKING
 from libqtile import configurable, hook, utils
 from libqtile.bar import Bar
 from libqtile.command.base import CommandObject
+from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
     from typing import Any, Callable, ContextManager, Iterable
@@ -93,10 +94,12 @@ class KeyChord:
     submappings:
         A list of :class:`Key` or :class:`KeyChord` declarations to bind in this chord.
     mode:
-        A string with Vim-like mode name. If set, the chord mode will not be left after
-        a keystroke (except for Esc which always leaves the current chord/mode).
-        (Optional)
-
+        Boolean. Setting to ``True`` will result in the chord persisting until
+        Escape is pressed. Setting to ``False`` (default) will exit the chord once
+        the sequence has ended.
+    name:
+        A string to name the chord. The name will be displayed in the Chord
+        widget.
     """
 
     def __init__(
@@ -104,14 +107,26 @@ class KeyChord:
         modifiers: list[str],
         key: str,
         submappings: list[Key | KeyChord],
-        mode: str = "",
-    ) -> None:
+        mode: bool | str = False,
+        name: str = "",
+    ):
         self.modifiers = modifiers
         self.key = key
 
         submappings.append(Key([], "Escape"))
         self.submappings = submappings
         self.mode = mode
+        self.name = name
+
+        if isinstance(mode, str):
+            logger.warning(
+                "The use of `mode` to set the KeyChord name is deprecated. "
+                "Please use `name='%s'` instead. "
+                "'mode' should be a boolean value to set whether the chord is persistent (True) or not.",
+                mode,
+            )
+            self.name = mode
+            self.mode = True
 
     def __repr__(self) -> str:
         return "<KeyChord (%s, %s)>" % (self.modifiers, self.key)

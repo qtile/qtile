@@ -394,7 +394,7 @@ class Qtile(CommandObject):
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("KB command error %s: %s", cmd.name, val)
-            if self.chord_stack and (self.chord_stack[-1].mode == "" or key.key == "Escape"):
+            if self.chord_stack and (not self.chord_stack[-1].mode or key.key == "Escape"):
                 self.cmd_ungrab_chord()
             return
 
@@ -425,7 +425,7 @@ class Qtile(CommandObject):
     def grab_chord(self, chord: KeyChord) -> None:
         self.chord_stack.append(chord)
         if self.chord_stack:
-            hook.fire("enter_chord", chord.mode)
+            hook.fire("enter_chord", chord.name)
 
         self.ungrab_keys()
         for key in chord.submappings:
@@ -990,11 +990,11 @@ class Qtile(CommandObject):
                 )
                 return
             if isinstance(k, KeyChord):
-                new_mode_s = k.mode if k.mode else "<unnamed>"
+                new_mode_s = k.name if k.name else "<unnamed>"
                 new_mode = (
-                    k.mode
+                    k.name
                     if mode == "<root>"
-                    else "{}>{}".format(mode, k.mode if k.mode else "_")
+                    else "{}>{}".format(mode, k.name if k.name else "_")
                 )
                 rows.append([mode, name, modifiers, "", "Enter {:s} mode".format(new_mode_s)])
                 for s in k.submappings:
