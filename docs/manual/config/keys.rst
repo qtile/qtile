@@ -98,8 +98,8 @@ The above code will launch xterm when the user presses Mod + z, followed by x.
 Modes
 -----
 
-Chords can optionally specify a "mode". When this is done, the mode will remain
-active until the user presses <escape>. This can be useful for configuring a
+Chords can optionally persist until a user presses <escape>. This can be done
+by setting ``mode=True``. This can be useful for configuring a
 subset of commands for a particular situations (i.e. similar to vim modes).
 
 ::
@@ -112,7 +112,8 @@ subset of commands for a particular situations (i.e. similar to vim modes).
             Key([], "s", lazy.layout.shrink()),
             Key([], "n", lazy.layout.normalize()),
             Key([], "m", lazy.layout.maximize())],
-            mode="Windows"
+            mode=True,
+            name="Windows"
         )
     ]
 
@@ -121,9 +122,10 @@ then resize windows by just pressing g (to grow the window), s to
 shrink it etc. as many times as needed. To exit the mode, press <escape>.
 
 .. note::
-    If using modes, users may also wish to use the Chord widget
-    (:class:`~libqtile.widget.Chord`) as this will display the name of the
-    currently active mode on the bar.
+    The Chord widget (:class:`~libqtile.widget.Chord`) will display the name
+    of the active chord (as set by the ``name`` parameter). This is particularly
+    useful where the chord is a persistent mode as this will indicate when the
+    chord's mode is still active.
 
 Chains
 ------
@@ -154,9 +156,9 @@ demonstrates the behaviour when using the ``mode`` argument in chains:
             KeyChord([], "y", [
                 KeyChord([], "x", [
                     Key([], "c", lazy.spawn("xterm"))
-                ], mode="inner")
+                ], mode=True, name="inner")
             ])
-        ], mode="outer")
+        ], mode=True, name="outer")
     ]
 
 After pressing Mod+z y x c, the "inner" mode will remain active. When pressing
