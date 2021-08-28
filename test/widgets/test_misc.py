@@ -24,6 +24,7 @@
 import pytest
 
 from libqtile.bar import Bar
+from libqtile.command.base import expose_command
 from libqtile.config import Screen
 from libqtile.widget import TextBox
 from test.conftest import BareConfig
@@ -32,6 +33,7 @@ from test.conftest import BareConfig
 class ColorChanger(TextBox):
     count = 0
 
+    @expose_command()
     def update(self, text):
         self.count += 1
         if self.count % 2 == 0:

@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING
 from dbus_next import Message, Variant
 from dbus_next.constants import MessageType
 
+from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 from libqtile.utils import _send_dbus_message, add_signal_receiver
 from libqtile.widget import base
@@ -101,9 +102,9 @@ class Mpris2(base._TextBox):
         self.status = "{track}"
         self.add_callbacks(
             {
-                "Button1": self.cmd_play_pause,
-                "Button4": self.cmd_next,
-                "Button5": self.cmd_previous,
+                "Button1": self.play_pause,
+                "Button4": self.next,
+                "Button5": self.previous,
             }
         )
         paused = ""
@@ -233,13 +234,6 @@ class Mpris2(base._TextBox):
 
         return text
 
-    def cmd_info(self) -> dict[str, Any]:
-        info = base._TextBox.info(self)
-        info["isplaying"] = self.is_playing
-        info["player"] = self.player
-
-        return info
-
     def _player_cmd(self, cmd: str) -> None:
         if self._current_player is None:
             return
@@ -275,18 +269,29 @@ class Mpris2(base._TextBox):
         if message.message_type != MessageType.METHOD_RETURN:
             logger.warning("Unable to send command to player.")
 
-    def cmd_play_pause(self) -> None:
+    @expose_command()
+    def play_pause(self) -> None:
         """Toggle the playback status."""
         self._player_cmd("PlayPause")
 
-    def cmd_next(self) -> None:
+    @expose_command()
+    def next(self) -> None:
         """Play the next track."""
         self._player_cmd("Next")
 
-    def cmd_previous(self) -> None:
+    @expose_command()
+    def previous(self) -> None:
         """Play the previous track."""
         self._player_cmd("Previous")
 
-    def cmd_stop(self) -> None:
+    @expose_command()
+    def stop(self) -> None:
         """Stop playback."""
         self._player_cmd("Stop")
+
+    @expose_command()
+    def info(self):
+        """What's the current state of the widget?"""
+        d = base._TextBox.info(self)
+        d.update(dict(isplaying=self.is_playing, player=self.player))
+        return d

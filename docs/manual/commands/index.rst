@@ -178,10 +178,11 @@ which will lead to the way the commands are dispatched.
 All of the configured objects setup by Qtile are ``CommandObject`` subclasses.
 These objects are so named because we can issue commands against them using the
 command scripting API.  Looking through the code, the commands that are exposed
-are commands named ``cmd_*``.  When writing custom layouts, widgets, or any
-other object, you can add your own custom ``cmd_`` functions and they will be
-callable using the standard command infrastructure.  An available command can
-be extracted by calling ``.command()`` with the name of the command.
+are commands that are decorated with the ``@expose_command()`` decorator.
+When writing custom layouts, widgets, or any other object, you can add your own
+custom functions and, once you add the decorator, they will be callable using the
+standard command infrastructure. An available command can be extracted by calling
+``.command()`` with the name of the command.
 
 In addition to having a set of associated commands, each command object also
 has a collection of items associated with it.  This is what forms the graph

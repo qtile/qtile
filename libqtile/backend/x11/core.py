@@ -265,7 +265,7 @@ class Core(base.Core):
 
                 if item.get_wm_type() == "dock" or win.reserved_space:
                     assert self.qtile.current_screen is not None
-                    win.cmd_static(self.qtile.current_screen.index)
+                    win.static(self.qtile.current_screen.index)
                     continue
 
             self.qtile.manage(win)
@@ -605,7 +605,7 @@ class Core(base.Core):
         if atoms["_NET_CURRENT_DESKTOP"] == opcode:
             index = data.data32[0]
             try:
-                self.qtile.groups[index].cmd_toscreen()
+                self.qtile.groups[index].toscreen()
             except IndexError:
                 logger.debug("Invalid desktop index: %s", index)
 
@@ -691,7 +691,7 @@ class Core(base.Core):
 
             if xwin.get_wm_type() == "dock" or win.reserved_space:
                 assert self.qtile.current_screen is not None
-                win.cmd_static(self.qtile.current_screen.index)
+                win.static(self.qtile.current_screen.index)
                 return
 
             self.qtile.manage(win)
@@ -722,11 +722,11 @@ class Core(base.Core):
                 # since the window is dead.
                 pass
             # Clear these atoms as per spec
-            win.window.conn.conn.core.DeleteProperty(  # type: ignore
-                win.wid, win.window.conn.atoms["_NET_WM_STATE"]  # type: ignore
+            win.window.conn.conn.core.DeleteProperty(
+                win.wid, win.window.conn.atoms["_NET_WM_STATE"]
             )
-            win.window.conn.conn.core.DeleteProperty(  # type: ignore
-                win.wid, win.window.conn.atoms["_NET_WM_DESKTOP"]  # type: ignore
+            win.window.conn.conn.core.DeleteProperty(
+                win.wid, win.window.conn.atoms["_NET_WM_DESKTOP"]
             )
         self.qtile.unmanage(event.window)
         if self.qtile.current_window is None:

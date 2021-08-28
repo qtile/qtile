@@ -27,6 +27,7 @@ from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1
 
 from libqtile.backend.wayland.subsurface import SubSurface
 from libqtile.backend.wayland.window import Static
+from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -156,5 +157,6 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self.surface.configure(self._width, self._height)
         self.damage()
 
-    def cmd_bring_to_front(self) -> None:
+    @expose_command()
+    def bring_to_front(self) -> None:
         pass

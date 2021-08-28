@@ -150,3 +150,15 @@ def test_command_propagation(manager):
     org_height = manager.c.window.info()["height"]
     manager.c.layout.toggle_split()
     assert manager.c.window.info()["height"] != org_height
+
+
+@slice_config
+def test_command_propagation_direct_call(manager):
+    manager.test_window("slice")
+    manager.test_window("one")
+    manager.test_window("two")
+    info = manager.c.layout.info()
+    assert info["name"] == "slice"
+    org_height = manager.c.window.info()["height"]
+    manager.c.layout.eval("self.toggle_split()")
+    assert manager.c.window.info()["height"] != org_height

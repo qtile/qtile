@@ -426,9 +426,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             if window is not current_win:
                 window.group.focus(window, False)
                 if window.floating:
-                    window.cmd_bring_to_front()
+                    window.bring_to_front()
             else:
-                window.cmd_toggle_minimize()
+                window.toggle_minimize()
 
     def _get_class_icon(self, window):
         if not getattr(window, "icons", False):

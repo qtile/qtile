@@ -45,7 +45,7 @@ def test_widgetbox_widget(fake_qtile, fake_window):
     assert fakebar.widgets == [widget_box]
 
     # Open box
-    widget_box.cmd_toggle()
+    widget_box.toggle()
 
     # Check it's open
     assert widget_box.box_is_open
@@ -54,7 +54,7 @@ def test_widgetbox_widget(fake_qtile, fake_window):
     assert fakebar.widgets == [widget_box, tb_one, tb_two]
 
     # Close box
-    widget_box.cmd_toggle()
+    widget_box.toggle()
 
     # Check it's closed
     assert not widget_box.box_is_open
@@ -66,7 +66,7 @@ def test_widgetbox_widget(fake_qtile, fake_window):
     widget_box.close_button_location = "right"
 
     # Re-open box with new layout
-    widget_box.cmd_toggle()
+    widget_box.toggle()
 
     # Now widgetbox is on the right
     assert fakebar.widgets == [tb_one, tb_two, widget_box]

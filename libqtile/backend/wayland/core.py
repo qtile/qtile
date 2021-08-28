@@ -78,6 +78,7 @@ from libqtile import hook, log_utils
 from libqtile.backend import base
 from libqtile.backend.wayland import inputs, layer, window, wlrq, xdgwindow, xwindow
 from libqtile.backend.wayland.output import Output
+from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -501,11 +502,8 @@ class Core(base.Core, wlrq.HasListeners):
         self.exclusive_client = self._input_inhibit_manager.active_client
 
         # If another client has keyboard focus, unfocus it.
-        if (
-            self.qtile.current_window
-            and not self.qtile.current_window.belongs_to_client(  # type: ignore
-                self.exclusive_client
-            )
+        if self.qtile.current_window and not self.qtile.current_window.belongs_to_client(
+            self.exclusive_client
         ):
             self.focus_window(None)
 
@@ -940,12 +938,12 @@ class Core(base.Core, wlrq.HasListeners):
                     return
 
             if self.qtile.config.bring_front_click is True:
-                win.cmd_bring_to_front()
+                win.bring_to_front()
             elif self.qtile.config.bring_front_click == "floating_only":
                 if isinstance(win, base.Window) and win.floating:
-                    win.cmd_bring_to_front()
+                    win.bring_to_front()
                 elif isinstance(win, base.Static):
-                    win.cmd_bring_to_front()
+                    win.bring_to_front()
 
             if isinstance(win, window.Static):
                 if win.screen is not self.qtile.current_screen:
@@ -1110,7 +1108,8 @@ class Core(base.Core, wlrq.HasListeners):
         if self.focused_internal:
             self.focused_internal.process_key_press(keysym)
 
-    def cmd_set_keymap(
+    @expose_command()
+    def set_keymap(
         self,
         layout: str | None = None,
         options: str | None = None,
@@ -1129,20 +1128,23 @@ class Core(base.Core, wlrq.HasListeners):
         else:
             logger.warning("Could not set keymap: no keyboards set up.")
 
-    def cmd_change_vt(self, vt: int) -> bool:
+    @expose_command()
+    def change_vt(self, vt: int) -> bool:
         """Change virtual terminal to that specified"""
         success = self.backend.get_session().change_vt(vt)
         if not success:
             logger.warning("Could not change VT to: %s", vt)
         return success
 
-    def cmd_hide_cursor(self) -> None:
+    @expose_command()
+    def hide_cursor(self) -> None:
         """Hide the cursor."""
         if not self._cursor_state.hidden:
             self.cursor.set_surface(None, self._cursor_state.hotspot)
             self._cursor_state.hidden = True
 
-    def cmd_unhide_cursor(self) -> None:
+    @expose_command()
+    def unhide_cursor(self) -> None:
         """Unhide the cursor."""
         if self._cursor_state.hidden:
             self.cursor.set_surface(
@@ -1151,7 +1153,8 @@ class Core(base.Core, wlrq.HasListeners):
             )
             self._cursor_state.hidden = False
 
-    def cmd_get_inputs(self) -> dict[str, list[dict[str, str]]]:
+    @expose_command()
+    def get_inputs(self) -> dict[str, list[dict[str, str]]]:
         """Get information on all input devices."""
         info = {}
         device_lists: dict[str, list[inputs._Device]] = {

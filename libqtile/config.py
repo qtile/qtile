@@ -33,7 +33,7 @@ from typing import TYPE_CHECKING
 
 from libqtile import configurable, hook, utils
 from libqtile.bar import Bar
-from libqtile.command.base import CommandObject
+from libqtile.command.base import CommandObject, expose_command
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
@@ -498,7 +498,7 @@ class Screen(CommandObject):
         hook.fire("focus_change")
         hook.fire("layout_change", self.group.layouts[self.group.current_layout], self.group)
 
-    def toggle_group(self, group: _Group | None = None, warp: bool = True) -> None:
+    def _toggle_group(self, group: _Group | None = None, warp: bool = True) -> None:
         """Switch to the selected group or to the previously active one"""
         if group in (self.group, None) and self.previous_group:
             group = self.previous_group
@@ -552,6 +552,7 @@ class Screen(CommandObject):
                 return self.group if sel == self.group.name else None
         return None
 
+    @expose_command
     def resize(
         self,
         x: int | None = None,
@@ -574,27 +575,20 @@ class Screen(CommandObject):
                 bar.draw()
         self.qtile.call_soon(self.group.layout_all)
 
-    def cmd_info(self) -> dict[str, int]:
+    @expose_command()
+    def info(self) -> dict[str, int]:
         """Returns a dictionary of info for this screen."""
         return dict(index=self.index, width=self.width, height=self.height, x=self.x, y=self.y)
 
-    def cmd_resize(
-        self,
-        x: int | None = None,
-        y: int | None = None,
-        w: int | None = None,
-        h: int | None = None,
-    ) -> None:
-        """Resize the screen"""
-        self.resize(x, y, w, h)
-
-    def cmd_next_group(self, skip_empty: bool = False, skip_managed: bool = False) -> None:
+    @expose_command()
+    def next_group(self, skip_empty: bool = False, skip_managed: bool = False) -> None:
         """Switch to the next group"""
         n = self.group.get_next_group(skip_empty, skip_managed)
         self.set_group(n)
         return n.name
 
-    def cmd_prev_group(
+    @expose_command()
+    def prev_group(
         self, skip_empty: bool = False, skip_managed: bool = False, warp: bool = True
     ) -> None:
         """Switch to the previous group"""
@@ -602,13 +596,15 @@ class Screen(CommandObject):
         self.set_group(n, warp=warp)
         return n.name
 
-    def cmd_toggle_group(self, group_name: str | None = None, warp: bool = True) -> None:
+    @expose_command()
+    def toggle_group(self, group_name: str | None = None, warp: bool = True) -> None:
         """Switch to the selected group or to the previously active one"""
         assert self.qtile is not None
         group = self.qtile.groups_map.get(group_name if group_name else "")
-        self.toggle_group(group, warp=warp)
+        self._toggle_group(group, warp=warp)
 
-    def cmd_set_wallpaper(self, path: str, mode: str | None = None) -> None:
+    @expose_command()
+    def set_wallpaper(self, path: str, mode: str | None = None) -> None:
         """Set the wallpaper to the given file."""
         self.paint(path, mode)
 

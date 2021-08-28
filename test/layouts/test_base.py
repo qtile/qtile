@@ -21,6 +21,7 @@
 import pytest
 
 import libqtile
+from libqtile.command.base import expose_command
 from libqtile.confreader import Config
 from libqtile.layout.base import _SimpleLayoutBase
 
@@ -35,19 +36,21 @@ class DummyLayout(_SimpleLayoutBase):
         _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(DummyLayout.defaults)
 
-    def add(self, client):
-        return super().add(
+    def add_client(self, client):
+        return super().add_client(
             client, offset_to_current=self.current_offset, client_position=self.current_position
         )
 
     def configure(self, client, screen_rect):
         pass
 
-    cmd_previous = _SimpleLayoutBase.previous
-    cmd_next = _SimpleLayoutBase.next
+    @expose_command("up")
+    def previous(self):
+        _SimpleLayoutBase.previous()
 
-    cmd_up = cmd_previous
-    cmd_down = cmd_next
+    @expose_command("down")
+    def next(self):
+        _SimpleLayoutBase.next()
 
 
 class BaseLayoutConfigBottom(Config):

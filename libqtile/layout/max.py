@@ -19,6 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
 
 
@@ -42,8 +43,8 @@ class Max(_SimpleLayoutBase):
         _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(Max.defaults)
 
-    def add(self, client):
-        return super().add(client, 1)
+    def add_client(self, client):
+        return super().add_client(client, 1)
 
     def configure(self, client, screen_rect):
         if self.clients and client is self.clients.current_client:
@@ -60,8 +61,10 @@ class Max(_SimpleLayoutBase):
         else:
             client.hide()
 
-    cmd_previous = _SimpleLayoutBase.previous
-    cmd_next = _SimpleLayoutBase.next
+    @expose_command("previous")
+    def up(self):
+        _SimpleLayoutBase.previous(self)
 
-    cmd_up = cmd_previous
-    cmd_down = cmd_next
+    @expose_command("next")
+    def down(self):
+        _SimpleLayoutBase.next(self)

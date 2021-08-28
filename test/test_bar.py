@@ -185,9 +185,9 @@ def test_textbox_errors(manager):
 @gb_config
 def test_groupbox_button_press(manager):
     manager.c.group["ccc"].toscreen()
-    assert manager.c.groups()["a"]["screen"] is None
+    assert manager.c.get_groups()["a"]["screen"] is None
     manager.c.bar["bottom"].fake_button_press(0, "bottom", 10, 10, 1)
-    assert manager.c.groups()["a"]["screen"] == 0
+    assert manager.c.get_groups()["a"]["screen"] == 0
 
 
 class GeomConf(libqtile.confreader.Config):
@@ -235,7 +235,7 @@ class DWidget:
 @geom_config
 def test_geometry(manager):
     manager.test_window("one")
-    g = manager.c.screens()[0]["gaps"]
+    g = manager.c.get_screens()[0]["gaps"]
     assert g["top"] == (0, 0, 800, 10)
     assert g["bottom"] == (0, 590, 800, 10)
     assert g["left"] == (0, 10, 10, 580)

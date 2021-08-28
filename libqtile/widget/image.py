@@ -22,6 +22,7 @@
 import os
 
 from libqtile import bar
+from libqtile.command.base import expose_command
 from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.widget import base
@@ -99,7 +100,8 @@ class Image(base._Widget, base.MarginMixin):
         else:
             return self.img.height + (self.margin_y * 2)
 
-    def cmd_update(self, filename):
+    @expose_command()
+    def update(self, filename):
         old_length = self.calculate_length()
         self.filename = filename
         self._update_image()

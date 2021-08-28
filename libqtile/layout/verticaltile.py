@@ -19,6 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
 
 
@@ -98,8 +99,8 @@ class VerticalTile(_SimpleLayoutBase):
         self.add_defaults(VerticalTile.defaults)
         self.maximized = None
 
-    def add(self, window):
-        return self.clients.add(window, 1)
+    def add_client(self, window):
+        return self.clients.add_client(window, 1)
 
     def remove(self, window):
         if self.maximized is window:
@@ -172,51 +173,59 @@ class VerticalTile(_SimpleLayoutBase):
         else:
             window.hide()
 
-    def grow(self):
+    def _grow(self):
         if self.ratio + self.steps < 1:
             self.ratio += self.steps
             self.group.layout_all()
 
-    def shrink(self):
+    def _shrink(self):
         if self.ratio - self.steps > 0:
             self.ratio -= self.steps
             self.group.layout_all()
 
-    cmd_previous = _SimpleLayoutBase.previous
-    cmd_next = _SimpleLayoutBase.next
+    @expose_command("up")
+    def previous(self):
+        _SimpleLayoutBase.previous(self)
 
-    cmd_up = cmd_previous
-    cmd_down = cmd_next
+    @expose_command("down")
+    def next(self):
+        _SimpleLayoutBase.next(self)
 
-    def cmd_shuffle_up(self):
+    @expose_command()
+    def shuffle_up(self):
         self.clients.shuffle_up()
         self.group.layout_all()
 
-    def cmd_shuffle_down(self):
+    @expose_command()
+    def shuffle_down(self):
         self.clients.shuffle_down()
         self.group.layout_all()
 
-    def cmd_maximize(self):
+    @expose_command()
+    def maximize(self):
         if self.clients:
             self.maximized = self.clients.current_client
             self.group.layout_all()
 
-    def cmd_normalize(self):
+    @expose_command()
+    def normalize(self):
         self.maximized = None
         self.group.layout_all()
 
-    def cmd_grow(self):
+    @expose_command()
+    def grow(self):
         if not self.maximized:
             return
         if self.clients.current_client is self.maximized:
-            self.grow()
+            self._grow()
         else:
-            self.shrink()
+            self._shrink()
 
-    def cmd_shrink(self):
+    @expose_command()
+    def shrink(self):
         if not self.maximized:
             return
         if self.clients.current_client is self.maximized:
-            self.shrink()
+            self._shrink()
         else:
-            self.grow()
+            self._grow()

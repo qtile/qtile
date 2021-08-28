@@ -172,19 +172,19 @@ def test_basic(manager):
 
 @fakescreen_config
 def test_gaps(manager):
-    g = manager.c.screens()[0]["gaps"]
+    g = manager.c.get_screens()[0]["gaps"]
     assert g["bottom"] == (0, 316, 500, 24)
     assert g["left"] == (0, 0, 16, 316)
     assert g["right"] == (480, 0, 20, 316)
-    g = manager.c.screens()[1]["gaps"]
+    g = manager.c.get_screens()[1]["gaps"]
     assert g["top"] == (500, 0, 300, 30)
     assert g["bottom"] == (500, 356, 300, 24)
     assert g["left"] == (500, 30, 12, 326)
-    g = manager.c.screens()[2]["gaps"]
+    g = manager.c.get_screens()[2]["gaps"]
     assert g["top"] == (0, 340, 450, 30)
     assert g["bottom"] == (0, 544, 450, 16)
     assert g["right"] == (410, 370, 40, 174)
-    g = manager.c.screens()[3]["gaps"]
+    g = manager.c.get_screens()[3]["gaps"]
     assert g["top"] == (450, 380, 350, 30)
     assert g["left"] == (450, 410, 20, 190)
     assert g["right"] == (776, 410, 24, 190)

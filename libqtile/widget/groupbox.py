@@ -157,7 +157,7 @@ class AGroupBox(_GroupBase):
 
     def _configure(self, qtile, bar):
         _GroupBase._configure(self, qtile, bar)
-        self.add_callbacks({"Button1": partial(self.bar.screen.cmd_next_group, warp=False)})
+        self.add_callbacks({"Button1": partial(self.bar.screen.next_group, warp=False)})
 
     def calculate_length(self):
         return self.box_width(self.qtile.groups) + self.margin_x * 2
@@ -335,7 +335,7 @@ class GroupBox(_GroupBase):
         if button not in (5, 4):
             group = self.get_clicked_group()
             if group and self.clicked:
-                group.cmd_switch_groups(self.clicked.name)
+                group.switch_groups(self.clicked.name)
                 self.clicked = None
 
     def calculate_length(self):

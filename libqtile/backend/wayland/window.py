@@ -41,7 +41,7 @@ from libqtile.backend import base
 from libqtile.backend.base import FloatStates
 from libqtile.backend.wayland.drawer import Drawer
 from libqtile.backend.wayland.wlrq import DRM_FORMAT_ARGB8888, HasListeners
-from libqtile.command.base import CommandError
+from libqtile.command.base import CommandError, expose_command
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -234,7 +234,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     def belongs_to_client(self, other: Client) -> bool:
         return other == Client.from_resource(self.surface.surface._ptr.resource)  # type: ignore
 
-    def focus(self, warp: bool) -> None:
+    def focus(self, warp: bool = True) -> None:
         self.core.focus_window(self)
 
         if warp and self.qtile.config.cursor_warp:
@@ -283,7 +283,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             self.x += group.screen.x
         group.add(self)
         if switch_group:
-            group.cmd_toscreen(toggle=toggle)
+            group.toscreen(toggle=toggle)
 
     def paint_borders(self, color: ColorsType | None, width: int) -> None:
         if color:
@@ -431,6 +431,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
                 self.group.mark_floating(self, True)
             hook.fire("float_change")
 
+    @expose_command()
     def info(self) -> dict:
         """Return a dictionary of info."""
         float_info = {
@@ -496,20 +497,20 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             return self.group.screen if self.group else None
         return None
 
-    def cmd_focus(self, warp: bool = True) -> None:
-        """Focuses the window."""
-        self.focus(warp)
-
-    def cmd_move_floating(self, dx: int, dy: int) -> None:
+    @expose_command()
+    def move_floating(self, dx: int, dy: int) -> None:
         self._tweak_float(dx=dx, dy=dy)
 
-    def cmd_resize_floating(self, dw: int, dh: int) -> None:
+    @expose_command()
+    def resize_floating(self, dw: int, dh: int) -> None:
         self._tweak_float(dw=dw, dh=dh)
 
-    def cmd_set_position_floating(self, x: int, y: int) -> None:
+    @expose_command()
+    def set_position_floating(self, x: int, y: int) -> None:
         self._tweak_float(x=x, y=y)
 
-    def cmd_set_position(self, x: int, y: int) -> None:
+    @expose_command()
+    def set_position(self, x: int, y: int) -> None:
         if self.floating:
             self._tweak_float(x=x, y=y)
             return
@@ -532,62 +533,59 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
                     self.group.layout_all()
                     return
 
-    def cmd_set_size_floating(self, w: int, h: int) -> None:
+    @expose_command()
+    def set_size_floating(self, w: int, h: int) -> None:
         self._tweak_float(w=w, h=h)
 
-    def cmd_place(
-        self,
-        x: int,
-        y: int,
-        width: int,
-        height: int,
-        borderwidth: int,
-        bordercolor: ColorsType | None,
-        above: bool = False,
-        margin: int | None = None,
-    ) -> None:
-        self.place(x, y, width, height, borderwidth, bordercolor, above, margin)
-
-    def cmd_get_position(self) -> tuple[int, int]:
+    @expose_command()
+    def get_position(self) -> tuple[int, int]:
         return self.x, self.y
 
-    def cmd_get_size(self) -> tuple[int, int]:
+    @expose_command()
+    def get_size(self) -> tuple[int, int]:
         return self.width, self.height
 
-    def cmd_toggle_floating(self) -> None:
+    @expose_command()
+    def toggle_floating(self) -> None:
         self.floating = not self.floating
 
-    def cmd_enable_floating(self) -> None:
+    @expose_command()
+    def enable_floating(self) -> None:
         self.floating = True
 
-    def cmd_disable_floating(self) -> None:
+    @expose_command()
+    def disable_floating(self) -> None:
         self.floating = False
 
-    def cmd_toggle_maximize(self) -> None:
+    @expose_command()
+    def toggle_maximize(self) -> None:
         self.maximized = not self.maximized
 
-    def cmd_toggle_minimize(self) -> None:
+    @expose_command()
+    def toggle_minimize(self) -> None:
         self.minimized = not self.minimized
 
-    def cmd_toggle_fullscreen(self) -> None:
+    @expose_command()
+    def toggle_fullscreen(self) -> None:
         self.fullscreen = not self.fullscreen
 
-    def cmd_enable_fullscreen(self) -> None:
+    @expose_command()
+    def enable_fullscreen(self) -> None:
         self.fullscreen = True
 
-    def cmd_disable_fullscreen(self) -> None:
+    @expose_command()
+    def disable_fullscreen(self) -> None:
         self.fullscreen = False
 
-    def cmd_bring_to_front(self) -> None:
+    @expose_command()
+    def bring_to_front(self) -> None:
         if self.mapped:
             self.core.mapped_windows.remove(self)
             self.core.mapped_windows.append(self)
             self.core.stack_windows()
 
-    def cmd_kill(self) -> None:
-        self.kill()
-
-    def cmd_static(
+    @expose_command()
+    def static(
         self,
         screen: int | None = None,
         x: int | None = None,
@@ -619,6 +617,10 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         if self in self.core.mapped_windows:
             self.core.mapped_windows.remove(self)
         self.core.stack_windows()
+
+    @expose_command()
+    def is_visible(self) -> bool:
+        return self._mapped
 
     @abc.abstractmethod
     def _to_static(self) -> Static:
@@ -689,7 +691,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         for output in self._outputs:
             output.damage()
 
-    def focus(self, warp: bool) -> None:
+    def focus(self, warp: bool = True) -> None:
         self.core.focus_window(self)
 
         if warp and self.qtile.config.cursor_warp:
@@ -771,7 +773,8 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
     def belongs_to_client(self, other: Client) -> bool:
         return other == Client.from_resource(self.surface.surface._ptr.resource)  # type: ignore
 
-    def cmd_bring_to_front(self) -> None:
+    @expose_command()
+    def bring_to_front(self) -> None:
         if self.mapped:
             self.core.mapped_windows.remove(self)
             self.core.mapped_windows.append(self)
@@ -843,9 +846,11 @@ class Internal(_Base, base.Internal):
         self.mapped = True
         self.damage()
 
-    def focus(self, warp: bool) -> None:
+    @expose_command()
+    def focus(self, warp: bool = True) -> None:
         self.core.focus_window(self)
 
+    @expose_command()
     def kill(self) -> None:
         self.hide()
         if self.wid in self.qtile.windows_map:
@@ -857,6 +862,7 @@ class Internal(_Base, base.Internal):
         for output in self._outputs:
             output.damage()
 
+    @expose_command()
     def place(
         self,
         x: int,
@@ -886,6 +892,7 @@ class Internal(_Base, base.Internal):
         self._outputs = set(o for o in self.core.outputs if o.contains(self))
         self.damage()
 
+    @expose_command()
     def info(self) -> dict:
         """Return a dictionary of info."""
         return dict(
@@ -896,7 +903,8 @@ class Internal(_Base, base.Internal):
             id=self.wid,
         )
 
-    def cmd_bring_to_front(self) -> None:
+    @expose_command()
+    def bring_to_front(self) -> None:
         if self.mapped:
             self.core.mapped_windows.remove(self)
             self.core.mapped_windows.append(self)
