@@ -10,6 +10,8 @@
 # Copyright (c) 2014 Nathan Hoad
 # Copyright (c) 2014 dequis
 # Copyright (c) 2014 Thomas Sarboni
+# Copyright (c) 2021 Guangwang Huang
+# Copyright (c) 2021 Jeroen Wijenbergh
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -35,30 +37,70 @@ from libqtile.layout.base import Layout
 to_superscript = dict(zip(map(ord, u'0123456789'), map(ord, u'⁰¹²³⁴⁵⁶⁷⁸⁹')))
 
 
+# For floating windows, replace its position with its first preorder child
+# conceptually, thought it isn't removed so as to keep its position if
+# been unfloating back.
 class TreeNode:
     def __init__(self):
-        self.children = []
-        self.parent = None
+        self._children = []
+        self._parent = None
         self.expanded = True
         self._children_top = None
         self._children_bot = None
 
     def add(self, node, hint=None):
-        """Add a node below this node
+        """Add a node to `self` as a child
 
-        The `hint` is a node to place the new node after in this nodes
-        children.
+        The `hint` is a node if not None, after which to place the new node.
         """
-        node.parent = self
+        node._parent = self
         if hint is not None:
             try:
-                idx = self.children.index(hint)
+                idx = self._children.index(hint)
             except ValueError:
                 pass
             else:
-                self.children.insert(idx + 1, node)
+                self._children.insert(idx + 1, node)
                 return
-        self.children.append(node)
+        self._children.append(node)
+
+    def remove_child(self, node):
+        '''Remove a `node` from `self`'s descendants.'''
+        node._parent._children.remove(node)
+
+    @property
+    def children(self):
+        '''Get effective children.'''
+        return self._children
+
+    @property
+    def parent(self):
+        '''Get the effective parent.'''
+        return self._parent
+
+    @parent.setter
+    def parent(self, new_parent):
+        '''Set the parent to `new_parent`.'''
+        self._parent = new_parent
+
+    def _swap_children_literally(self, i, j):
+        '''Swap children at i and j literally.'''
+        if i != j and 0 <= i < len(self._children) and 0 <= j < len(self._children):
+            self._children[i], self._children[j] = self._children[j], self._children[i]
+
+    def move_up(self):
+        '''Move up current node, the tree is "drawn" from left to right'''
+        parent = self.parent
+        virtual_children = parent.children
+        idx = virtual_children.index(self)
+        parent._swap_children_literally(idx, idx - 1)
+
+    def move_down(self):
+        '''Move down current node, the tree is "drawn" from left to right'''
+        parent = self.parent
+        virtual_children = parent.children
+        idx = virtual_children.index(self)
+        parent._swap_children_literally(idx, idx + 1)
 
     def draw(self, layout, top, level=0):
         """Draw the node and its children to a layout
@@ -74,7 +116,7 @@ class TreeNode:
         return top
 
     def button_press(self, x, y):
-        """Returns self or sibling which got the click"""
+        """Returns self or a child which got the click"""
         # if we store the locations of each child, it would be possible to do
         # this without having to traverse the tree...
         if not (self._children_top <= y < self._children_bot):
@@ -93,12 +135,12 @@ class TreeNode:
         return title
 
     def get_first_window(self):
-        """Find the first Window under this node
+        """Find the first Window under this node by preorder tree traverse.
 
         Returns self if this is a `Window`, otherwise finds first `Window` by
         depth-first search
         """
-        if isinstance(self, Window):
+        if isinstance(self, Window) and not self.window.floating:
             return self
         if self.expanded:
             for i in self.children:
@@ -117,12 +159,15 @@ class TreeNode:
                 node = i.get_last_window()
                 if node:
                     return node
-        if isinstance(self, Window):
+        if isinstance(self, Window) and not self.window.floating:
             return self
 
     def get_next_window(self):
-        if self.children and self.expanded:
-            return self.children[0]
+        children = self.children
+        if children and self.expanded:
+            for child in children:
+                return child
+
         node = self
         while not isinstance(node, Root):
             parent = node.parent
@@ -137,11 +182,12 @@ class TreeNode:
         node = self
         while not isinstance(node, Root):
             parent = node.parent
-            idx = parent.children.index(node)
-            if idx == 0 and isinstance(parent, Window):
+            children = parent.children
+            idx = children.index(node)
+            if idx == 0 and isinstance(parent, Window) and not parent.window.floating:
                 return parent
             for i in range(idx - 1, -1, -1):
-                res = parent.children[i].get_last_window()
+                res = children[i].get_last_window()
                 if res:
                     return res
             node = parent
@@ -191,27 +237,27 @@ class Root(TreeNode):
         if name in self.sections:
             raise ValueError("Duplicate section name")
         node = Section(name)
-        node.parent = self
+        node._parent = self
         self.sections[name] = node
-        self.children.append(node)
+        self._children.append(node)
 
     def del_section(self, name):
         """Remove the Section with the given name"""
         if name not in self.sections:
             raise ValueError("Section name not found")
-        if len(self.children) == 1:
+        if len(self._children) == 1:
             raise ValueError("Can't delete last section")
 
         sec = self.sections[name]
         # move the children of the deleted section to the previous section
         # if delecting the first section, add children to second section
-        idx = min(self.children.index(sec), 1)
-        next_sec = self.children[idx - 1]
+        idx = min(self._children.index(sec), 1)
+        next_sec = self._children[idx - 1]
         # delete old section, reparent children to next section
-        del self.children[idx]
-        next_sec.children.extend(sec.children)
-        for i in sec.children:
-            i.parent = next_sec
+        del self._children[idx]
+        next_sec._children.extend(sec._children)
+        for i in sec._children:
+            i._parent = next_sec
 
 
 class Section(TreeNode):
@@ -220,6 +266,7 @@ class Section(TreeNode):
         self.title = title
 
     def draw(self, layout, top, level=0):
+        '''Draw the section title and its children on the panel of `layout`.'''
         del layout._layout.width  # no centering
         # draw a horizontal line above the section
         layout._drawer.draw_hbar(
@@ -253,38 +300,63 @@ class Window(TreeNode):
         self.window = win
         self._title_top = None
 
+    @property
+    def children(self):
+        '''Get effective children.'''
+        children = []
+        for c in self._children:
+            if not c.window.floating:
+                children.append(c)
+            else:
+                # For a floating client, replace it with its first child
+                for cc in c.children():
+                    if cc:
+                        children.append(cc[0])
+                        break
+        return children
+
+    @property
+    def parent(self):
+        '''Get the effective parent.
+
+        Return the nearest ancestor which isn't a window or is a non-floating window.'''
+        p = self._parent
+        while isinstance(p, Window) and p.window.floating:
+            p = p.parent()
+        return p
+
     def draw(self, layout, top, level=0):
+        '''Draw the window title on the panel of ``layout``.'''
         self._title_top = top
 
-        # setup parameters for drawing self
-        left = layout.padding_left + level * layout.level_shift
-        layout._layout.font_size = layout.fontsize
-        layout._layout.text = self.add_superscript(self.window.name)
-        if self.window is layout._focused:
-            fg = layout.active_fg
-            bg = layout.active_bg
-        elif self.window.urgent:
-            fg = layout.urgent_fg
-            bg = layout.urgent_bg
-        else:
-            fg = layout.inactive_fg
-            bg = layout.inactive_bg
-        layout._layout.colour = fg
-        layout._layout.width = layout.panel_width - left
-        # get a text frame from the above
-        framed = layout._layout.framed(
-            layout.border_width,
-            bg,
-            layout.padding_x,
-            layout.padding_y
-        )
-        # draw the text frame at the given point
-        framed.draw_fill(left, top)
+        if not self.window.floating:
+            # setup parameters for drawing self
+            left = layout.padding_left + level * layout.level_shift
+            layout._layout.font_size = layout.fontsize
+            layout._layout.text = self.add_superscript(self.window.name)
+            if self.window is layout._focused:
+                fg = layout.active_fg
+                bg = layout.active_bg
+            else:
+                fg = layout.inactive_fg
+                bg = layout.inactive_bg
+            layout._layout.colour = fg
+            layout._layout.width = layout.panel_width - left
+            # get a text frame from the above
+            framed = layout._layout.framed(
+                layout.border_width,
+                bg,
+                layout.padding_x,
+                layout.padding_y
+            )
+            # draw the text frame at the given point
+            framed.draw_fill(left, top)
 
-        top += framed.height + layout.vspace + layout.border_width
+            top += framed.height + layout.vspace + layout.border_width
+            level += 1
 
         # run the TreeNode draw to draw children (if expanded)
-        return super().draw(layout, top, level + 1)
+        return super().draw(layout, top, level)
 
     def button_press(self, x, y):
         """Returns self if clicked on title else returns sibling"""
@@ -298,16 +370,16 @@ class Window(TreeNode):
         If this window has children, the first child takes the place of this
         window, and any remaining children are reparented to that node
         """
-        if self.children:
-            head = self.children[0]
+        if self._children:
+            head = self._children[0]
             # add the first child to our parent, next to ourselves
             self.parent.add(head, hint=self)
             # move remaining children to be under the new head
-            for i in self.children[1:]:
+            for i in self._children[1:]:
                 head.add(i)
 
-        self.parent.children.remove(self)
-        del self.children
+        self.parent._children.remove(self)
+        del self._children
 
 
 class TreeTab(Layout):
@@ -522,16 +594,25 @@ class TreeTab(Layout):
                          [c],
                         ]
             '''
-            tree = []
+            trees = []
+            children = root.children
             if isinstance(root, Window):
-                tree.append(root.window.name)
-            if root.expanded and root.children:
-                for child in root.children:
-                    tree.append(show_section_tree(child))
-            return tree
+                if not root.window.floating:
+                    trees.append(root.window.name)
+                elif children:
+                    # "Replace" root with the first child
+                    trees.append(children[0].window.name)
+                    children = children[1:]
+            if root.expanded and children:
+                for child in children:
+                    subtree = show_section_tree(child)
+                    if len(subtree) > 0:  # don't show empty subtrees
+                        trees.append(subtree)
+
+            return trees
 
         d = Layout.info(self)
-        d["clients"] = sorted([x.name for x in self._nodes])
+        d["clients"] = sorted([x.name for x in self._nodes if not x.floating])
         d["sections"] = [x.title for x in self._tree.children]
 
         trees = {}
@@ -582,11 +663,7 @@ class TreeTab(Layout):
         if not win:
             return
         node = self._nodes[win]
-        p = node.parent.children
-        idx = p.index(node)
-        if idx > 0:
-            p[idx] = p[idx - 1]
-            p[idx - 1] = node
+        node.move_up()
         self.draw_panel()
 
     def cmd_move_down(self):
@@ -594,11 +671,7 @@ class TreeTab(Layout):
         if not win:
             return
         node = self._nodes[win]
-        p = node.parent.children
-        idx = p.index(node)
-        if idx < len(p) - 1:
-            p[idx] = p[idx + 1]
-            p[idx + 1] = node
+        node.move_down()
         self.draw_panel()
 
     def cmd_move_left(self):
@@ -607,7 +680,7 @@ class TreeTab(Layout):
             return
         node = self._nodes[win]
         if not isinstance(node.parent, Section):
-            node.parent.children.remove(node)
+            node.parent.remove_child(node)
             node.parent.parent.add(node)
         self.draw_panel()
 
@@ -631,7 +704,7 @@ class TreeTab(Layout):
             snode = snode.parent
         idx = snode.parent.children.index(snode)
         if idx > 0:
-            node.parent.children.remove(node)
+            node.parent.remove_child(node)
             snode.parent.children[idx - 1].add(node)
         self.draw_panel()
 
@@ -643,10 +716,11 @@ class TreeTab(Layout):
         snode = node
         while not isinstance(snode, Section):
             snode = snode.parent
-        idx = snode.parent.children.index(snode)
-        if idx < len(snode.parent.children) - 1:
-            node.parent.children.remove(node)
-            snode.parent.children[idx + 1].add(node)
+        children = snode.parent.children
+        idx = children.index(snode)
+        if idx < len(children) - 1:
+            node.parent.remove_child(node)
+            children[idx + 1].add(node)
         self.draw_panel()
 
     def cmd_sort_windows(self, sorter, create_sections=True):
@@ -673,8 +747,8 @@ class TreeTab(Layout):
                         nsec = self._tree.sections[nname]
                     else:
                         continue
-                sec.children.remove(win)
-                nsec.children.append(win)
+                sec.remove_child(win)
+                nsec.add(win)
                 win.parent = nsec
         self.draw_panel()
 
@@ -685,7 +759,7 @@ class TreeTab(Layout):
         node = self._nodes[win]
         idx = node.parent.children.index(node)
         if idx > 0:
-            node.parent.children.remove(node)
+            node.parent.remove_child(node)
             node.parent.children[idx - 1].add(node)
         self.draw_panel()
 
