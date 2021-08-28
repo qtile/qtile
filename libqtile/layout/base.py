@@ -1,5 +1,7 @@
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
 # Copyright (c) 2017 Dirk Hartmann
+# Copyright (c) 2021 Guangwang Huang
+# Copyright (c) 2021 Jeroen Wijenbergh
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -80,6 +82,14 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
 
     def show(self, screen_rect):
         """Called when layout is being shown"""
+        pass
+
+    def float_client(self, client):
+        """Called when a client is set to floating"""
+        pass
+
+    def tile_client(self, client):
+        """Called when a client is set to tiling"""
         pass
 
     def hide(self):
@@ -210,7 +220,8 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
 
 class _ClientList:
     """
-    ClientList maintains a list of clients and a current client.
+    ClientList maintains a list of clients (tiled and floating clients) and a current client.
+    The only clients that are exposed are the tiled clients, the floating ones are skipped over.
 
     The collection is meant as a base or utility class for special layouts,
     which need to maintain one or several collections of windows, for example
@@ -220,15 +231,22 @@ class _ClientList:
     whereas 'current_client' property can be used with clients directly.
 
     The collection implements focus_xxx methods as desired for Group.
+
+    To get only tiled clients use the member clients
     """
 
     def __init__(self):
         self._current_idx = 0
-        self.clients = []
+        self._clients = []
 
     @property
     def current_index(self):
         return self._current_idx
+
+    @property
+    def clients(self):
+        """Get tiled clients"""
+        return [i for i in self._clients if not i.floating]
 
     @current_index.setter
     def current_index(self, x):
@@ -240,13 +258,11 @@ class _ClientList:
 
     @property
     def current_client(self):
-        if not self.clients:
-            return None
-        return self.clients[self._current_idx]
+        return self[self._current_idx]
 
     @current_client.setter
     def current_client(self, client):
-        self._current_idx = self.clients.index(client)
+        self._current_idx = self._clients.index(client)
 
     def focus(self, client):
         """
@@ -265,10 +281,7 @@ class _ClientList:
         """
         Returns the client next from win in collection.
         """
-        try:
-            return self[self.index(win) + 1]
-        except IndexError:
-            return None
+        return self[self.index(win) + 1]
 
     def focus_last(self):
         """
@@ -306,36 +319,42 @@ class _ClientList:
             else:  # ie client_position == "bottom"
                 self.append(client)
         else:
-            pos = max(0, self._current_idx + offset_to_current)
-            if pos < len(self.clients):
-                self.clients.insert(pos, client)
+            try:
+                idx = self._clients_tiled_index(self._current_idx)
+            except IndexError:
+                idx = 0
+
+            pos = max(0, idx + offset_to_current)
+            if pos < len(self._clients):
+                self._clients.insert(pos, client)
             else:
-                self.clients.append(client)
-        self.current_client = client
+                self._clients.append(client)
+
+            self.current_client = client
 
     def append_head(self, client):
         """
         Append the given client in front of list.
         """
-        self.clients.insert(0, client)
+        self._clients.insert(0, client)
 
     def append(self, client):
         """
         Append the given client to the end of the collection.
         """
-        self.clients.append(client)
+        self._clients.append(client)
 
     def remove(self, client):
         """
         Remove the given client from collection.
         """
-        if client not in self.clients:
+        if client not in self._clients:
             return
-        idx = self.clients.index(client)
-        del self.clients[idx]
+        idx = self._clients.index(client)
+        del self._clients[idx]
         if len(self) == 0:
             self._current_idx = 0
-        elif idx <= self._current_idx:
+        elif client.floating and idx <= self._current_idx:
             self._current_idx = max(0, self._current_idx - 1)
 
     def rotate_up(self, maintain_index=True):
@@ -345,7 +364,7 @@ class _ClientList:
         such that the same client stays current and goes up in list.
         """
         if len(self.clients) > 1:
-            self.clients.append(self.clients.pop(0))
+            self._clients.append(self._clients.pop(0))
             if maintain_index:
                 self.current_index -= 1
 
@@ -356,7 +375,7 @@ class _ClientList:
         such that the same client stays current and goes down in list.
         """
         if len(self.clients) > 1:
-            self.clients.insert(0, self.clients.pop())
+            self._clients.insert(0, self._clients.pop())
             if maintain_index:
                 self.current_index += 1
 
@@ -367,9 +386,9 @@ class _ClientList:
         In case of 1, the first client c1 is focused, in case of 2 the c2 and
         the current_index is not changed otherwise.
         """
-        i1 = self.clients.index(c1)
-        i2 = self.clients.index(c2)
-        self.clients[i1], self.clients[i2] = self.clients[i2], self.clients[i1]
+        i1 = self._clients.index(c1)
+        i2 = self._clients.index(c2)
+        self._clients[i1], self._clients[i2] = self._clients[i2], self._clients[i1]
         if focus == 1:
             self.current_index = i1
         elif focus == 2:
@@ -383,7 +402,9 @@ class _ClientList:
         """
         idx = self._current_idx
         if idx > 0:
-            self.clients[idx], self.clients[idx - 1] = self[idx - 1], self[idx]
+            tiled_index = self._clients_tiled_index(idx)
+            tiled_index_prev = self._clients_tiled_index(idx - 1)
+            self._clients[tiled_index], self._clients[tiled_index_prev] = self[tiled_index_prev], self[tiled_index]
             if maintain_index:
                 self.current_index -= 1
 
@@ -395,7 +416,9 @@ class _ClientList:
         """
         idx = self._current_idx
         if idx + 1 < len(self.clients):
-            self.clients[idx], self.clients[idx + 1] = self[idx + 1], self[idx]
+            tiled_index = self._clients_tiled_index(idx)
+            tiled_index_next = self._clients_tiled_index(idx + 1)
+            self._clients[tiled_index], self._clients[tiled_index_next] = self[tiled_index_next], self[tiled_index]
             if maintain_index:
                 self.current_index += 1
 
@@ -404,12 +427,15 @@ class _ClientList:
         Add clients from 'other' _WindowCollection to self.
         'offset_to_current' works as described for add()
         """
-        pos = max(0, self.current_index + offset_to_current)
-        if pos < len(self.clients):
-            self.clients = (self.clients[:pos:] + other.clients +
-                            self.clients[pos::])
+        try:
+            pos = max(0, self._clients_tiled_index(self.current_index) + offset_to_current)
+        except IndexError:
+            pos = len(self._clients)
+        if pos < len(self._clients):
+            self._clients = (self._clients[:pos:] + other._clients +
+                            self._clients[pos::])
         else:
-            self.clients.extend(other.clients)
+            self._clients.extend(other.clients)
 
     def index(self, client):
         return self.clients.index(client)
@@ -423,8 +449,14 @@ class _ClientList:
         except IndexError:
             return None
 
+    def _clients_tiled_index(self, tiled_index):
+        """Find the clients list index of a tiled client"""
+        tiled_client = self.clients[tiled_index]
+        return self._clients.index(tiled_client)
+
     def __setitem__(self, i, value):
-        self.clients[i] = value
+        index = self._clients_tiled_index(i)
+        self._clients[index] = value
 
     def __iter__(self):
         return self.clients.__iter__()
