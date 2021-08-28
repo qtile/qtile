@@ -7,6 +7,8 @@
 # Copyright (c) 2014 dequis
 # Copyright (c) 2015 Dario Giovannetti
 # Copyright (c) 2015 Alexander Lozovskoy
+# Copyright (c) 2021 Guangwang Huang
+# Copyright (c) 2021 Jeroen Wijenbergh
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -244,9 +246,8 @@ class _Group(CommandObject):
             win._float_state = FloatStates.FLOATING
         if win.floating:
             self.floating_layout.add(win)
-        else:
-            for i in self.layouts:
-                i.add(win)
+        for i in self.layouts:
+            i.add(win)
         if focus:
             self.focus(win, warp=True, force=force)
 
@@ -254,21 +255,21 @@ class _Group(CommandObject):
         self.windows.remove(win)
         hadfocus = self._remove_from_focus_history(win)
         win.group = None
+        nextfocus = None
+
+        for i in self.layouts:
+            if i is self.layout:
+                nextfocus = i.remove(win)
+            else:
+                i.remove(win)
 
         if win.floating:
             nextfocus = self.floating_layout.remove(win)
-
             nextfocus = nextfocus or \
                 self.current_window or \
                 self.layout.focus_first() or \
                 self.floating_layout.focus_first(group=self)
         else:
-            for i in self.layouts:
-                if i is self.layout:
-                    nextfocus = i.remove(win)
-                else:
-                    i.remove(win)
-
             nextfocus = nextfocus or \
                 self.floating_layout.focus_first(group=self) or \
                 self.current_window or \
@@ -290,7 +291,7 @@ class _Group(CommandObject):
                 pass
             else:
                 for i in self.layouts:
-                    i.remove(win)
+                    i.float_client(win)
                     if win is self.current_window:
                         i.blur()
                 self.floating_layout.add(win)
@@ -300,7 +301,7 @@ class _Group(CommandObject):
             self.floating_layout.remove(win)
             self.floating_layout.blur()
             for i in self.layouts:
-                i.add(win)
+                i.tile_client(win)
                 if win is self.current_window:
                     i.focus(win)
         self.layout_all()
