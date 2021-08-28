@@ -14,6 +14,8 @@
 # Copyright (c) 2014 dequis
 # Copyright (c) 2014 Florian Scherf
 # Copyright (c) 2017 Dirk Hartmann
+# Copyright (c) 2021 Guangwang Huang
+# Copyright (c) 2021 Jeroen Wijenbergh
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -207,6 +209,14 @@ class MonadTall(_SimpleLayoutBase):
     def add(self, client):
         "Add client to layout"
         self.clients.add(client, client_position=self.new_client_position)
+        self.do_normalize = True
+
+    def float_client(self, client):
+        "Called when a client is set to floating"
+        self.do_normalize = True
+
+    def tile_client(self, client):
+        "Called when a client is set to tiling"
         self.do_normalize = True
 
     def remove(self, client):
@@ -986,7 +996,7 @@ class MonadWide(MonadTall):
         """Swap current window with closest window to the down"""
         win = self.clients.current_client
         x, y = win.x, win.y
-        candidates = [c for c in self.clients.clients if c.info()["y"] > y]
+        candidates = [c for c in self.clients if c.info()["y"] > y]
         target = self._get_closest(x, y, candidates)
         self.cmd_swap(win, target)
 
