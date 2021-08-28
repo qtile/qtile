@@ -21,25 +21,31 @@ import pytest
 
 import libqtile.bar
 import libqtile.config
+from libqtile.command.base import expose_command
 from libqtile.widget import TextBox
 from libqtile.widget.base import ThreadPoolText, _Widget
 from test.helpers import BareConfig, Retry
 
 
 class TimerWidget(_Widget):
-    def cmd_set_timer1(self):
-        self.timer1 = self.timeout_add(10, self.cmd_set_timer1)
+    @expose_command()
+    def set_timer1(self):
+        self.timer1 = self.timeout_add(10, self.set_timer1)
 
-    def cmd_cancel_timer1(self):
+    @expose_command()
+    def cancel_timer1(self):
         self.timer1.cancel()
 
-    def cmd_set_timer2(self):
-        self.timer2 = self.timeout_add(10, self.cmd_set_timer2)
+    @expose_command()
+    def set_timer2(self):
+        self.timer2 = self.timeout_add(10, self.set_timer2)
 
-    def cmd_cancel_timer2(self):
+    @expose_command()
+    def cancel_timer2(self):
         self.timer2.cancel()
 
-    def cmd_get_active_timers(self):
+    @expose_command()
+    def get_active_timers(self):
         active = [x for x in self._futures if x._scheduled]
         return len(active)
 

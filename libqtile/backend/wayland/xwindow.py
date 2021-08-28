@@ -29,6 +29,7 @@ from libqtile import hook
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
 from libqtile.backend.wayland.window import Static, Window
+from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -74,7 +75,7 @@ class XWindow(Window[xwayland.Surface]):
 
             # Make it static if it isn't a regular window
             if self.surface.override_redirect:
-                self.cmd_static(
+                self.static(
                     None, self.surface.x, self.surface.y, self.surface.width, self.surface.height
                 )
                 win = self.qtile.windows_map[self._wid]
@@ -164,6 +165,7 @@ class XWindow(Window[xwayland.Surface]):
         if not self.mapped:
             self.surface.map_event.emit()
 
+    @expose_command()
     def kill(self) -> None:
         self.surface.close()
 
@@ -271,21 +273,23 @@ class XWindow(Window[xwayland.Surface]):
         self.paint_borders(bordercolor, borderwidth)
 
         if above:
-            self.cmd_bring_to_front()
+            self.bring_to_front()
 
         prev_outputs = self._outputs.copy()
         self._find_outputs()
         for output in self._outputs | prev_outputs:
             output.damage()
 
-    def cmd_bring_to_front(self) -> None:
+    @expose_command()
+    def bring_to_front(self) -> None:
         if self.mapped:
             self.core.mapped_windows.remove(self)
             self.core.mapped_windows.append(self)
             self.core.stack_windows()
             self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
 
-    def cmd_static(
+    @expose_command()
+    def static(
         self,
         screen: int | None = None,
         x: int | None = None,
@@ -293,7 +297,7 @@ class XWindow(Window[xwayland.Surface]):
         width: int | None = None,
         height: int | None = None,
     ) -> None:
-        Window.cmd_static(self, screen, x, y, width, height)
+        Window.static(self, screen, x, y, width, height)
         hook.fire("client_managed", self.qtile.windows_map[self._wid])
 
     def _to_static(self) -> XStatic:
@@ -331,6 +335,7 @@ class XStatic(Static[xwayland.Surface]):
         if surface.override_redirect:
             self.add_listener(surface.set_geometry_event, self._on_set_geometry)
 
+    @expose_command()
     def kill(self) -> None:
         self.surface.close()
 

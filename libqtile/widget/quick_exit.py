@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from libqtile.command.base import expose_command
 from libqtile.widget import base
 
 
@@ -41,7 +42,7 @@ class QuickExit(base._TextBox):
         self.text = self.default_text
         self.countdown = self.countdown_start
 
-        self.add_callbacks({"Button1": self.cmd_trigger})
+        self.add_callbacks({"Button1": self.trigger})
 
     def __reset(self):
         self.is_counting = False
@@ -62,7 +63,8 @@ class QuickExit(base._TextBox):
             self.qtile.stop()
             return
 
-    def cmd_trigger(self):
+    @expose_command()
+    def trigger(self):
         if not self.is_counting:
             self.is_counting = True
             self.update()

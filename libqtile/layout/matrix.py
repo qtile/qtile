@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import math
 
+from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
 from libqtile.log_utils import logger
 
@@ -72,6 +73,7 @@ class Matrix(_SimpleLayoutBase):
         """Calc column index of current client"""
         return self.clients.current_index % self.columns
 
+    @expose_command()
     def info(self):
         d = _SimpleLayoutBase.info(self)
         d["rows"] = [[win.name for win in self.get_row(i)] for i in range(self.rows)]
@@ -93,7 +95,7 @@ class Matrix(_SimpleLayoutBase):
         assert column < self.columns
         return [self.clients[i] for i in range(column, len(self.clients), self.columns)]
 
-    def add(self, client):
+    def add_client(self, client):
         """Add client to Layout.
         Note that for Matrix the clients are appended at end of list.
         If needed a new row in matrix is created"""
@@ -129,8 +131,13 @@ class Matrix(_SimpleLayoutBase):
         )
         client.unhide()
 
-    cmd_previous = _SimpleLayoutBase.previous
-    cmd_next = _SimpleLayoutBase.next
+    @expose_command()
+    def previous(self):
+        _SimpleLayoutBase.previous(self)
+
+    @expose_command()
+    def next(self):
+        _SimpleLayoutBase.next(self)
 
     def horizontal_traversal(self, direction):
         """
@@ -152,28 +159,34 @@ class Matrix(_SimpleLayoutBase):
         self.clients.current_index = row * self.columns + column
         self.group.focus(self.clients.current_client)
 
-    def cmd_left(self):
+    @expose_command()
+    def left(self):
         """Switch to the next window on current row"""
         self.horizontal_traversal(-1)
 
-    def cmd_right(self):
+    @expose_command()
+    def right(self):
         """Switch to the next window on current row"""
         self.horizontal_traversal(+1)
 
-    def cmd_up(self):
+    @expose_command()
+    def up(self):
         """Switch to the previous window in current column"""
         self.vertical_traversal(-1)
 
-    def cmd_down(self):
+    @expose_command()
+    def down(self):
         """Switch to the next window in current column"""
         self.vertical_traversal(+1)
 
-    def cmd_delete(self):
+    @expose_command()
+    def delete(self):
         """Decrease number of columns"""
         self.columns -= 1
         self.group.layout_all()
 
-    def cmd_add(self):
+    @expose_command()
+    def add(self):
         """Increase number of columns"""
         self.columns += 1
         self.group.layout_all()

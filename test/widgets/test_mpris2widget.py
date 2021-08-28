@@ -152,7 +152,7 @@ def test_mpris2_signal_handling(fake_qtile, patched_module, fake_window):
     mp.parse_message(*STATUS_PLAYING.body)
     assert mp.text == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"
 
-    info = mp.cmd_info()
+    info = mp.info()
     assert info["text"] == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"
     assert info["isplaying"]
 

@@ -156,7 +156,7 @@ class QtileCommandInterface(CommandInterface):
             return "No such command."
 
         logger.debug("Command: %s(%s, %s)", call.name, args, kwargs)
-        return cmd(*args, **kwargs)
+        return cmd(self._command_object, *args, **kwargs)
 
     def has_command(self, node: CommandGraphNode, command: str) -> bool:
         """Check if the given command exists
@@ -309,7 +309,12 @@ class IPCCommandServer:
 
         logger.debug("Command: %s(%s, %s)", name, args, kwargs)
         try:
-            return SUCCESS, cmd(*args, **kwargs)
+            # Check if method is bound
+            if hasattr(cmd, "__self__"):
+                return SUCCESS, cmd(*args, **kwargs)
+            else:
+                # If not, pass object as first argument
+                return SUCCESS, cmd(obj, *args, **kwargs)
         except CommandError as err:
             return ERROR, err.args[0]
         except Exception:

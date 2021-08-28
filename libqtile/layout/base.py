@@ -26,7 +26,7 @@ from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING
 
 from libqtile import configurable
-from libqtile.command.base import CommandObject
+from libqtile.command.base import CommandObject, expose_command
 
 if TYPE_CHECKING:
     from typing import Any
@@ -102,16 +102,13 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         """Called whenever focus is gone from this layout"""
         pass
 
+    @expose_command()
     def info(self):
         """Returns a dictionary of layout information"""
         return dict(name=self.name, group=self.group.name if self.group else None)
 
-    def cmd_info(self):
-        """Return a dictionary of info for this object"""
-        return self.info()
-
     @abstractmethod
-    def add(self, client):
+    def add_client(self, client):
         """Called whenever a window is added to the group
 
         Called whether the layout is current or not. The layout should just add
@@ -205,11 +202,11 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def cmd_next(self):
+    def next(self):
         pass
 
     @abstractmethod
-    def cmd_previous(self):
+    def previous(self):
         pass
 
 
@@ -290,7 +287,7 @@ class _ClientList:
             return self[idx - 1]
         return None
 
-    def add(self, client, offset_to_current=0, client_position=None):
+    def add_client(self, client, offset_to_current=0, client_position=None):
         """
         Insert the given client into collection at position of the current.
 
@@ -303,9 +300,9 @@ class _ClientList:
         """
         if client_position is not None:
             if client_position == "after_current":
-                return self.add(client, offset_to_current=1)
+                return self.add_client(client, offset_to_current=1)
             elif client_position == "before_current":
-                return self.add(client, offset_to_current=0)
+                return self.add_client(client, offset_to_current=0)
             elif client_position == "top":
                 self.append_head(client)
             else:  # ie client_position == "bottom"
@@ -442,6 +439,7 @@ class _ClientList:
             [("[%s]" if c == curr else "%s") % c.name for c in self.clients]
         )
 
+    @expose_command()
     def info(self):
         return dict(
             clients=[c.name for c in self.clients],
@@ -495,8 +493,8 @@ class _SimpleLayoutBase(Layout):
         client = self.focus_next(self.clients.current_client) or self.focus_first()
         self.group.focus(client, True)
 
-    def add(self, client, offset_to_current=0, client_position=None):
-        return self.clients.add(client, offset_to_current, client_position)
+    def add_client(self, client, offset_to_current=0, client_position=None):
+        return self.clients.add_client(client, offset_to_current, client_position)
 
     def remove(self, client):
         return self.clients.remove(client)
@@ -504,6 +502,7 @@ class _SimpleLayoutBase(Layout):
     def get_windows(self):
         return self.clients.clients
 
+    @expose_command()
     def info(self):
         d = Layout.info(self)
         d.update(self.clients.info())

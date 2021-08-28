@@ -28,7 +28,9 @@ class Drawer(base.Drawer):
         self._xcb_surface = None
         self._pixmap = None
         self._gc = None
-        self._depth, self._visual = qtile.core.conn.default_screen._get_depth_and_visual(win._depth)  # type: ignore
+        self._depth, self._visual = qtile.core.conn.default_screen._get_depth_and_visual(
+            win._depth
+        )
 
     def finalize(self):
         self._free_xcb_surface()
@@ -153,7 +155,7 @@ class Drawer(base.Drawer):
         self._paint()
 
         # Finally, copy XCBSurface's underlying pixmap to the window.
-        self.qtile.core.conn.conn.core.CopyArea(  # type: ignore
+        self.qtile.core.conn.conn.core.CopyArea(
             self._pixmap,
             self._win.wid,
             self._gc,
