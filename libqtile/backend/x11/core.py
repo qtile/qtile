@@ -53,7 +53,6 @@ if TYPE_CHECKING:
 _IGNORED_EVENTS = {
     xcffib.xproto.CreateNotifyEvent,
     xcffib.xproto.FocusInEvent,
-    xcffib.xproto.FocusOutEvent,
     xcffib.xproto.KeyReleaseEvent,
     # DWM handles this to help "broken focusing windows".
     xcffib.xproto.MapNotifyEvent,
@@ -546,6 +545,10 @@ class Core(base.Core):
         internal.place(x, y, width, height, 0, None)
         self.qtile.manage(internal)
         return internal
+
+    def handle_FocusOut(self, event) -> None:
+        if event.detail == xcffib.xproto.NotifyDetail._None:
+            self.conn.fixup_focus()
 
     def handle_SelectionNotify(self, event) -> None:  # noqa: N802
         if not getattr(event, "owner", None):
