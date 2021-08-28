@@ -15,6 +15,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import math
 from libqtile.layout.base import Layout
 
 
@@ -30,14 +31,21 @@ class _BspNode():
         self.h = 9
 
     def __iter__(self):
-        yield self
+        if self._is_tiling():
+            yield self
         for child in self.children:
             for c in child:
-                yield c
+                if c._is_tiling():
+                    yield c
+
+    def _is_tiling(self):
+        '''If this node is tiling'''
+        return not self.client or not self.client.floating
 
     def clients(self):
         if self.client:
-            yield self.client
+            if self._is_tiling():
+                yield self.client
         else:
             for child in self.children:
                 for c in child.clients():
@@ -45,7 +53,10 @@ class _BspNode():
 
     def _shortest(self, length):
         if len(self.children) == 0:
-            return self, length
+            if self._is_tiling():
+                return self, length
+            else:
+                return self, math.inf
 
         child0, length0 = self.children[0]._shortest(length + 1)
         child1, length1 = self.children[1]._shortest(length + 1)
@@ -83,7 +94,11 @@ class _BspNode():
             return 1, 1
         h0, v0 = self.children[0].distribute()
         h1, v1 = self.children[1].distribute()
-        if self.split_horizontal:
+        if not self.children[0]._is_tiling():
+            self.split_ratio = 0
+        elif not self.children[1]._is_tiling():
+            self.split_ratio = 100
+        elif self.split_horizontal:
             h = h0 + h1
             v = max(v0, v1)
             self.split_ratio = 100 * h0 / h
@@ -99,7 +114,13 @@ class _BspNode():
         self.w = w
         self.h = h
         if len(self.children) > 1:
-            if self.split_horizontal:
+            if not self.children[0]._is_tiling():
+                self.children[0].calc_geom(0, 0, 0, 0)
+                self.children[1].calc_geom(x, y, w, h)
+            elif not self.children[1]._is_tiling():
+                self.children[0].calc_geom(x, y, w, h)
+                self.children[1].calc_geom(0, 0, 0, 0)
+            elif self.split_horizontal:
                 w0 = int(self.split_ratio * w * 0.01 + 0.5)
                 self.children[0].calc_geom(x, y, w0, h)
                 self.children[1].calc_geom(x + w0, y, w - w0, h)
