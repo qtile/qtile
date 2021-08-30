@@ -415,8 +415,9 @@ class Core(base.Core):
         This is needed for third party tasklists and drag and drop of tabs in
         chrome
         """
+        # Regular top-level managed windows, i.e. excluding Static, Internal and Systray Icons
         wids = [
-            wid for wid, c in windows_map.items() if not isinstance(c, window.Internal)
+            wid for wid, c in windows_map.items() if isinstance(c, window.Window)
         ]
         self._root.set_property("_NET_CLIENT_LIST", wids)
         # TODO: check stack order
