@@ -341,6 +341,10 @@ class Window(_Window, metaclass=ABCMeta):
     def cmd_bring_to_front(self) -> None:
         """Bring the window to the front"""
 
+    @abstractmethod
+    def cmd_send_to_back(self) -> None:
+        """Send the window to the back"""
+
     def cmd_togroup(
         self, group_name: Optional[str] = None, *, switch_group: bool = False
     ) -> None:

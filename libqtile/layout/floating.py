@@ -253,7 +253,10 @@ class Floating(Layout):
         # alternatively, users may have asked us explicitly to leave the client alone
         elif any(m.compare(client) for m in self.no_reposition_rules):
             client.paint_borders(bc, bw)
-            client.cmd_bring_to_front()
+            if "_NET_WM_STATE_BELOW" in client.window.get_net_wm_state():
+                client.cmd_send_to_back()
+            else:
+                client.cmd_bring_to_front()
 
         else:
             above = False

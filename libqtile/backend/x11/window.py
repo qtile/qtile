@@ -1820,6 +1820,10 @@ class Window(_Window, base.Window):
         else:
             self._reconfigure_floating()  # atomatically above
 
+    def cmd_send_to_back(self):
+        if self.floating:
+            self.window.configure(stackmode=StackMode.Below)
+
     def cmd_match(self, *args, **kwargs):
         return self.match(*args, **kwargs)
 
