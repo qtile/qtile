@@ -206,6 +206,13 @@ class InteractiveCommandClient:
             a command graph node (if the name is a valid child) or a command
             graph call (if the name is a valid command).
         """
+
+        # Python's help() command will try to look up __name__ and __origin__ so we
+        # need to handle these explicitly otherwise they'll result in a SelectError
+        # which help() does not expect.
+        if name in ["__name__", "__origin__"]:
+            raise AttributeError
+
         if isinstance(self._current_node, CommandGraphCall):
             raise SelectError("Cannot select children of call", name, self._current_node.selectors)
 
