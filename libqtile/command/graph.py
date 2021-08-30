@@ -129,7 +129,7 @@ class CommandGraphRoot(CommandGraphNode):
     @property
     def children(self) -> List[str]:
         """All of the child elements in the root of the command graph"""
-        return ["bar", "group", "layout", "screen", "widget", "window"]
+        return ["bar", "group", "layout", "screen", "widget", "window", "core"]
 
 
 class CommandGraphObject(CommandGraphNode, metaclass=abc.ABCMeta):
@@ -201,6 +201,11 @@ class _WindowGraphNode(CommandGraphObject):
     children = ["group", "screen", "layout"]
 
 
+class _CoreGraphNode(CommandGraphObject):
+    object_type = "core"
+    children: List[str] = []
+
+
 _COMMAND_GRAPH_MAP: Dict[str, Type[CommandGraphObject]] = {
     "bar": _BarGraphNode,
     "group": _GroupGraphNode,
@@ -208,4 +213,5 @@ _COMMAND_GRAPH_MAP: Dict[str, Type[CommandGraphObject]] = {
     "widget": _WidgetGraphNode,
     "window": _WindowGraphNode,
     "screen": _ScreenGraphNode,
+    "core": _CoreGraphNode
 }

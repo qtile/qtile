@@ -758,6 +758,8 @@ class Qtile(CommandObject):
             return True, list(self.windows_map.keys())
         elif name == "screen":
             return True, list(range(len(self.screens)))
+        elif name == "core":
+            return True, []
         return None
 
     def _select(self, name: str, sel: Optional[Union[str, int]]) -> Optional[CommandObject]:
@@ -785,6 +787,8 @@ class Qtile(CommandObject):
                 return self.current_screen
             else:
                 return utils.lget(self.screens, sel)
+        elif name == "core":
+            return self.core
         return None
 
     def call_soon(self, func: Callable, *args) -> asyncio.Handle:

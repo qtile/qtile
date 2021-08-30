@@ -21,7 +21,7 @@ if typing.TYPE_CHECKING:
     from libqtile.utils import ColorType
 
 
-class Core(metaclass=ABCMeta):
+class Core(CommandObject, metaclass=ABCMeta):
     painter: Any
 
     @property
@@ -29,6 +29,12 @@ class Core(metaclass=ABCMeta):
     def name(self) -> str:
         """The name of the backend"""
         pass
+
+    def _items(self, name: str) -> ItemT:
+        return None
+
+    def _select(self, name, sel):
+        return None
 
     @abstractmethod
     def finalize(self):
@@ -116,6 +122,12 @@ class Core(metaclass=ABCMeta):
     def change_vt(self, vt: int) -> bool:
         """Change virtual terminal, returning success."""
         return False
+
+    def cmd_info(self):
+        return {
+            "backend": self.name,
+            "display_name": self.display_name
+        }
 
 
 @enum.unique
