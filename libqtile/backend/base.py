@@ -96,7 +96,7 @@ class Core(CommandObject, metaclass=ABCMeta):
     def warp_pointer(self, x: int, y: int) -> None:
         """Warp the pointer to the given coordinates relative."""
 
-    def update_client_list(self, windows_map: Dict[int, WindowType]) -> None:
+    def update_client_list(self) -> None:
         """Update the list of windows being managed"""
 
     def update_client_stack(self) -> None:

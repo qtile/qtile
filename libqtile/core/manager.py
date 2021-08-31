@@ -610,7 +610,7 @@ class Qtile(CommandObject):
             # Window may have been bound to a group in the hook.
             if not win.group and self.current_screen.group:
                 self.current_screen.group.add(win, focus=win.can_steal_focus)
-        self.core.update_client_list(self.windows_map)
+        self.core.update_client_list()
         self.core.update_client_stack()
         win.change_layer()
         hook.fire("client_managed", win)
@@ -626,7 +626,7 @@ class Qtile(CommandObject):
                 if c.group:
                     c.group.remove(c)
             del self.windows_map[wid]
-            self.core.update_client_list(self.windows_map)
+            self.core.update_client_list()
             self.core.update_client_stack()
 
     def find_screen(self, x: int, y: int) -> Optional[Screen]:
