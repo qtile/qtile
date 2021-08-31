@@ -935,7 +935,7 @@ class _Window:
 
         layering = self.window.get_layering_information()
         stack = list(self.window.query_tree())
-        if self.wid not in stack of len(stack) < 2:
+        if self.wid not in stack or len(stack) < 2:
             if kwargs:
                 self.window.configure(**kwargs)
             return
@@ -1870,6 +1870,41 @@ class Window(_Window, base.Window):
     def cmd_bring_to_front(self):
         self.change_layer()
         self.floating = True
+
+    def cmd_keep_above(self):
+        reply = list(self.window.get_property('_NET_WM_STATE', 'ATOM', unpack=int))
+        atom = self.window.conn.atoms["_NET_WM_STATE_BELOW"]
+        if atom in reply:
+            reply.remove(atom)
+        atom = self.window.conn.atoms["_NET_WM_STATE_ABOVE"]
+        if atom in reply:
+            reply.remove(atom)
+        else:
+            reply.append(atom)
+        self.window.set_property('_NET_WM_STATE', reply)
+        self.change_layer()
+
+    def cmd_keep_below(self):
+        reply = list(self.window.get_property('_NET_WM_STATE', 'ATOM', unpack=int))
+        atom = self.window.conn.atoms["_NET_WM_STATE_ABOVE"]
+        if atom in reply:
+            reply.remove(atom)
+        atom = self.window.conn.atoms["_NET_WM_STATE_BELOW"]
+        if atom in reply:
+            reply.remove(atom)
+        else:
+            reply.append(atom)
+        self.window.set_property('_NET_WM_STATE', reply)
+        self.change_layer(up=False)
+
+    def cmd_move_above(self):
+        self.change_layer()
+
+    def cmd_move_below(self):
+        self.change_layer(up=False)
+
+    def cmd_match(self, *args, **kwargs):
+        return self.match(*args, **kwargs)
 
     def _is_in_window(self, x, y, window):
         return (window.edges[0] <= x <= window.edges[2] and

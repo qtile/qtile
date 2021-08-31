@@ -761,3 +761,68 @@ def test_net_frame_extents(xmanager):
     xmanager.c.window.enable_floating()
     assert_frame(wid, (6, 6, 6, 6))
     xmanager.kill_window(pid)
+
+@manager_config
+def test_window_stacking_order(xmanager):
+    conn = xcbq.Connection(xmanager.display)
+
+    def _wnd(name):
+        return xmanager.c.window[{w['name']: w['id'] for w in xmanager.c.windows()}[name]]
+
+    def _clients():
+        root = conn.default_screen.root.wid
+        q = conn.conn.core.QueryTree(root).reply()
+        stack = list(q.children)
+        wins = [(w['name'], stack.index(w['id'])) for w in xmanager.c.windows()]
+        wins.sort(key=lambda x: x[1])
+        return [x[0] for x in wins]
+
+    xmanager.test_window('one')
+    xmanager.test_window('two')
+    xmanager.test_window('three')
+    xmanager.test_window('four')
+    xmanager.test_window('five')
+
+    assert _clients() == ['one', 'two', 'three', 'four', 'five']
+    _wnd('one').move_above()
+    assert _clients() == ['two', 'three', 'four', 'five', 'one']
+    _wnd('four').move_above()
+    assert _clients() == ['two', 'three', 'five', 'one', 'four']
+    _wnd('one').move_below()
+    assert _clients() == ['one', 'two', 'three', 'five', 'four']
+    _wnd('two').keep_above()  # pinned: two
+    assert _clients() == ['one', 'three', 'five', 'four', 'two']
+    _wnd('five').move_above()
+    assert _clients() == ['one', 'three', 'four', 'five', 'two']
+    _wnd('three').keep_below()  # pinned below: three
+    assert _clients() == ['three', 'one', 'four', 'five', 'two']
+    _wnd('four').move_below()
+    assert _clients() == ['three', 'four', 'one', 'five', 'two']
+    _wnd('four').keep_below()  # pinned below: four, three
+    assert _clients() == ['four', 'three', 'one', 'five', 'two']
+    _wnd('one').keep_above()  # pinned: two, one
+    assert _clients() == ['four', 'three', 'five', 'two', 'one']
+    _wnd('five').move_above()
+    assert _clients() == ['four', 'three', 'five', 'two', 'one']
+    _wnd('five').move_below()
+    assert _clients() == ['four', 'three', 'five', 'two', 'one']
+    _wnd('two').keep_below()  # unpinned two, pinned below: two, four, three
+    assert _clients() == ['two', 'four', 'three', 'five', 'one']
+    _wnd('four').keep_above()  # unpinned four, pinned: one, four
+    assert _clients() == ['two', 'three', 'five', 'one', 'four']
+    _wnd('four').keep_above()  # unpinned four, pinned: one
+    assert _clients() == ['two', 'three', 'five', 'four', 'one']
+    _wnd('five').move_above()
+    assert _clients() == ['two', 'three', 'four', 'five', 'one']
+    _wnd('one').keep_above()  # unpinned one, nothing pinned
+    assert _clients() == ['two', 'three', 'four', 'five', 'one']
+    _wnd('one').move_below()
+    assert _clients() == ['two', 'three', 'one', 'four', 'five']
+    _wnd('two').keep_below()  # unpinned two, pinned below: three
+    assert _clients() == ['three', 'two', 'one', 'four', 'five']
+    _wnd('three').keep_below()  # unpinned three, nothing pinned below
+    assert _clients() == ['three', 'two', 'one', 'four', 'five']
+    _wnd('two').move_below()
+    assert _clients() == ['two', 'three', 'one', 'four', 'five']
+    _wnd('one').move_below()
+    assert _clients() == ['one', 'two', 'three', 'four', 'five']

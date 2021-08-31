@@ -34,6 +34,11 @@ Qtile 0.18.1, released 2021-09-16:
     * features
         - All layouts will accept a list of colors for border_* options with which
           they will draw multiple borders on the appropriate windows.
+        - added `cmd_keep_above` and `cmd_keep_below` to Windows so they can be
+          kept above/below other windows permanently; calling the functions
+          a further time removes the flag
+        - added `cmd_move_above` and `cmd_move_below` to Windows so they can be
+          shifted along z
 
 Qtile 0.18.0, released 2021-07-04:
     !!! Config breakage !!!

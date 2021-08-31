@@ -218,6 +218,18 @@ class _Window(CommandObject, metaclass=ABCMeta):
         """Return a dictionary of info."""
         return self.info()
 
+    def cmd_keep_above(self) -> None:
+        """Keep this window above all others"""
+
+    def cmd_keep_below(self) -> None:
+        """Keep this window below all others"""
+
+    def cmd_move_above(self) -> None:
+        """Move this window above the next window along the z axis"""
+
+    def cmd_move_below(self) -> None:
+        """Move this window below the previous window along the z axis"""
+
 
 class Window(_Window, metaclass=ABCMeta):
     """
