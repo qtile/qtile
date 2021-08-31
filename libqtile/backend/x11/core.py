@@ -233,7 +233,7 @@ class Core(base.Core):
             return
 
         # Qtile just started - scan for clients
-        children = self._root.query_tree()
+        children = [window.XWindow(self.conn, i) for i in self._root.query_tree()]
         for item in children:
             try:
                 attrs = item.get_attributes()
@@ -416,7 +416,7 @@ class Core(base.Core):
         return self._display_name
 
     def update_client_list(self, windows_map: Dict[int, base.WindowType]) -> None:
-        """Updates the client stack list
+        """Updates the client list
 
         This is needed for third party tasklists and drag and drop of tabs in
         chrome
@@ -426,7 +426,14 @@ class Core(base.Core):
             wid for wid, c in windows_map.items() if isinstance(c, window.Window)
         ]
         self._root.set_property("_NET_CLIENT_LIST", wids)
-        # TODO: check stack order
+
+    def update_client_stack(self) -> None:
+        """Set the current stacking order of clients to the given list of windows"""
+        stack = self._root.query_tree()
+        wids = [
+            wid for wid, c in self.qtile.windows_map.items()
+            if isinstance(c, window.Window) and c.group and wid in stack
+        ]
         self._root.set_property("_NET_CLIENT_LIST_STACKING", wids)
 
     def update_desktops(self, groups, index: int) -> None:

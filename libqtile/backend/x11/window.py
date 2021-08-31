@@ -419,8 +419,7 @@ class XWindow:
         return self.conn.conn.core.GetWindowAttributes(self.wid).reply()
 
     def query_tree(self):
-        q = self.conn.conn.core.QueryTree(self.wid).reply()
-        return [XWindow(self.conn, i) for i in q.children]
+        return self.conn.conn.core.QueryTree(self.wid).reply().children
 
     def paint_borders(self, depth, colors, borderwidth, width, height):
         """
@@ -877,20 +876,29 @@ class _Window:
         self.width = width
         self.height = height
 
-        kwarg = dict(
+        kwargs = dict(
             x=x,
             y=y,
             width=width,
             height=height,
         )
         if above:
-            kwarg['stackmode'] = StackMode.Above
-
-        self.window.configure(**kwarg)
+            self.change_layer(kwargs=kwargs)
+        else:
+            self.window.configure(**kwargs)
         self.paint_borders(bordercolor, borderwidth)
 
         if send_notify:
             self.send_configure_notify(x, y, width, height)
+
+    def change_layer(self, up=True, kwargs=None):
+        if len(self.qtile.windows_map) < 2:
+            return
+        if not kwargs:
+            kwargs = {}
+        kwargs['stackmode'] = xcffib.xproto.StackMode.Above if up else xcffib.xproto.StackMode.Below
+        self.window.configure(**kwargs)
+        self.qtile.core.update_client_stack()
 
     def paint_borders(self, color, width):
         self.borderwidth = width
@@ -1318,6 +1326,7 @@ class Window(_Window, base.Window):
                 new_float_state=FloatStates.FULLSCREEN
             )
             set_state(prev_state, prev_state | atom)
+            self.change_layer()
             return
 
         if self._float_state == FloatStates.FULLSCREEN:
@@ -1447,7 +1456,7 @@ class Window(_Window, base.Window):
                 self.width, self.height,
                 self.borderwidth,
                 self.bordercolor,
-                above=True,
+                above=False,
                 respect_hints=True,
             )
         if self._float_state != new_float_state:
@@ -1783,10 +1792,8 @@ class Window(_Window, base.Window):
         self.toggle_minimize()
 
     def cmd_bring_to_front(self):
-        if self.floating:
-            self.window.configure(stackmode=StackMode.Above)
-        else:
-            self._reconfigure_floating()  # atomatically above
+        self.change_layer()
+        self.floating = True
 
     def _is_in_window(self, x, y, window):
         return (window.edges[0] <= x <= window.edges[2] and

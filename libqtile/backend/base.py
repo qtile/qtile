@@ -99,6 +99,9 @@ class Core(CommandObject, metaclass=ABCMeta):
     def update_client_list(self, windows_map: Dict[int, WindowType]) -> None:
         """Update the list of windows being managed"""
 
+    def update_client_stack(self) -> None:
+        """Update the list of windows currently stacked by Z axis"""
+
     @contextlib.contextmanager
     def masked(self):
         """A context manager to suppress window events while operating on many windows."""
