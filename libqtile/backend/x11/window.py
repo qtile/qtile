@@ -285,6 +285,28 @@ class XWindow:
         if r:
             return r[0]
 
+    def get_layering_information(self) -> Tuple[bool, bool, bool, bool]:
+        """
+        Get layer-related EMWH-flags
+        https://specifications.freedesktop.org/wm-spec/1.3/ar01s07.html#STACKINGORDER
+        """
+        state = self.get_net_wm_state()
+        _type = self.get_wm_type() or []
+
+        desktop = '_NET_WM_TYPE_DESKTOP' in _type
+        below = '_NET_WM_STATE_BELOW' in state
+        dock = '_NET_WM_TYPE_DOCK' in _type
+        above = '_NET_WM_STATE_ABOVE' in state
+        full = '_NET_WM_STATE_FULLSCREEN' in state
+
+        # sort the flags from bottom to top, True meaning further below than False at each step
+        return (
+            desktop,
+            below,
+            not (above or (dock and not below)),
+            not full  # not (c.has_focus and full)
+        )
+
     def configure(self, **kwargs):
         """
         Arguments can be: x, y, width, height, borderwidth, sibling, stackmode
@@ -892,12 +914,66 @@ class _Window:
             self.send_configure_notify(x, y, width, height)
 
     def change_layer(self, up=True, kwargs=None):
+        """Raise a window above its peers or move it below them, depending on 'up'.
+        Raising a normal window will not lift it above pinned windows etc.
+
+        There are a few important things to take note of when relaying windows:
+        1. If a window has a defined parent, it should not be moved underneath it.
+           In case children are blocking, this could leave an application in an unusable state.
+        2. If a window has children, they should be moved along with it.
+        3. If a window has a defined parent, either move the parent or do nothing at all.
+        4. EMWH-flags follow strict layering rules:
+           https://specifications.freedesktop.org/wm-spec/1.3/ar01s07.html#STACKINGORDER
+        """
         if len(self.qtile.windows_map) < 2:
             return
-        if not kwargs:
+        parent = self.window.get_wm_transient_for()
+        if parent is not None and not up:
+            if kwargs:
+                self.window.configure(**kwargs)
+            return
+
+        layering = self.window.get_layering_information()
+        stack = list(self.window.query_tree())
+        if self.wid not in stack of len(stack) < 2:
+            if kwargs:
+                self.window.configure(**kwargs)
+            return
+
+        if not up:
+            stack.reverse()
+
+        # map to windows and filter out ourselves
+        windows = map(
+            lambda w: (w, w.get_wm_transient_for(), w.get_layering_information()),
+            [
+                self.qtile.windows_map[i].window for i in stack
+                if i != self.wid and i in self.qtile.windows_map
+            ]
+        )
+
+        if up:
+            # look for the first top-level window to be layered above us (i.e. layering smaller than ours)
+            pos = next((stack.index(t[0].wid) for t in windows if t[1] is None and t[2] < layering), None)
+        else:
+            # look for the first top-level window to be layered below us (i.e. layering bigger than ours)
+            pos = next((stack.index(t[0].wid) for t in windows if t[1] is None and t[2] > layering), None)
+        if pos is None:  # we rose/fell through the entire stack
+            pos = len(stack) - 1
+            up = not up
+
+        if stack.index(self.wid) == pos:
+            if kwargs:
+                client.window.configure(**kwargs)
+            return
+
+        # place the window
+        if kwargs is None:
             kwargs = {}
-        kwargs['stackmode'] = xcffib.xproto.StackMode.Above if up else xcffib.xproto.StackMode.Below
+        kwargs['stackmode'] = xcffib.xproto.StackMode.Below if up else xcffib.xproto.StackMode.Above
+        kwargs['sibling'] = stack[pos]
         self.window.configure(**kwargs)
+        # TODO: also move our children if we were moved upwards
         self.qtile.core.update_client_stack()
 
     def paint_borders(self, color, width):
