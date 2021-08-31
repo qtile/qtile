@@ -420,13 +420,7 @@ class XWindow:
 
     def query_tree(self):
         q = self.conn.conn.core.QueryTree(self.wid).reply()
-        root = None
-        parent = None
-        if q.root:
-            root = XWindow(self.conn, q.root)
-        if q.parent:
-            parent = XWindow(self.conn, q.parent)
-        return root, parent, [XWindow(self.conn, i) for i in q.children]
+        return [XWindow(self.conn, i) for i in q.children]
 
     def paint_borders(self, depth, colors, borderwidth, width, height):
         """

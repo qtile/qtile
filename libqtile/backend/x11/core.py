@@ -233,7 +233,7 @@ class Core(base.Core):
             return
 
         # Qtile just started - scan for clients
-        _, _, children = self._root.query_tree()
+        children = self._root.query_tree()
         for item in children:
             try:
                 attrs = item.get_attributes()
