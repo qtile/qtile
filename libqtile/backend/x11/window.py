@@ -1456,6 +1456,49 @@ class Window(_Window, base.Window):
     def toggle_minimize(self):
         self.minimized = not self.minimized
 
+    @property
+    def kept_above(self):
+        reply = list(self.window.get_property('_NET_WM_STATE', 'ATOM', unpack=int))
+        atom = self.qtile.core.conn.atoms['_NET_WM_STATE_ABOVE']
+        return atom in reply
+
+    @kept_above.setter
+    def kept_above(self, value):
+        reply = list(self.window.get_property('_NET_WM_STATE', 'ATOM', unpack=int))
+        atom = self.qtile.core.conn.atoms['_NET_WM_STATE_ABOVE']
+        if value and atom not in reply:
+            reply.append(atom)
+        elif not value and atom in reply:
+            reply.remove(atom)
+        else:
+            return
+        atom = self.qtile.core.conn.atoms['_NET_WM_STATE_BELOW']
+        if atom in reply:
+            reply.remove(atom)
+        self.window.set_property('_NET_WM_STATE', reply)
+        self.change_layer()
+
+    @property
+    def kept_below(self):
+        reply = list(self.window.get_property('_NET_WM_STATE', 'ATOM', unpack=int))
+        atom = self.qtile.core.conn.atoms['_NET_WM_STATE_BELOW']
+        return atom in reply
+
+    @kept_below.setter
+    def kept_below(self, value):
+        reply = list(self.window.get_property('_NET_WM_STATE', 'ATOM', unpack=int))
+        atom = self.qtile.core.conn.atoms['_NET_WM_STATE_BELOW']
+        if value and atom not in reply:
+            reply.append(atom)
+        elif not value and atom in reply:
+            reply.remove(atom)
+        else:
+            return
+        atom = self.qtile.core.conn.atoms['_NET_WM_STATE_ABOVE']
+        if atom in reply:
+            reply.remove(atom)
+        self.window.set_property('_NET_WM_STATE', reply)
+
     def cmd_static(
         self,
         screen: Optional[int] = None,
@@ -1872,30 +1915,10 @@ class Window(_Window, base.Window):
         self.floating = True
 
     def cmd_keep_above(self):
-        reply = list(self.window.get_property('_NET_WM_STATE', 'ATOM', unpack=int))
-        atom = self.window.conn.atoms["_NET_WM_STATE_BELOW"]
-        if atom in reply:
-            reply.remove(atom)
-        atom = self.window.conn.atoms["_NET_WM_STATE_ABOVE"]
-        if atom in reply:
-            reply.remove(atom)
-        else:
-            reply.append(atom)
-        self.window.set_property('_NET_WM_STATE', reply)
-        self.change_layer()
+        self.kept_above = not self.kept_above
 
     def cmd_keep_below(self):
-        reply = list(self.window.get_property('_NET_WM_STATE', 'ATOM', unpack=int))
-        atom = self.window.conn.atoms["_NET_WM_STATE_ABOVE"]
-        if atom in reply:
-            reply.remove(atom)
-        atom = self.window.conn.atoms["_NET_WM_STATE_BELOW"]
-        if atom in reply:
-            reply.remove(atom)
-        else:
-            reply.append(atom)
-        self.window.set_property('_NET_WM_STATE', reply)
-        self.change_layer(up=False)
+        self.kept_below = not self.kept_below
 
     def cmd_move_above(self):
         self.change_layer()
