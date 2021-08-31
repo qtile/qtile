@@ -30,21 +30,37 @@ class Max(_SimpleLayoutBase):
     small screens. Conceptually, the windows are managed as a stack, with
     commands to switch to next and previous windows in the stack.
     """
+    defaults = [
+        ("only_focused", True, "Only draw the focused window"),
+    ]
+
+    def __init__(self, **config):
+        _SimpleLayoutBase.__init__(self, **config)
+        self.add_defaults(Max.defaults)
 
     def add(self, client):
         return super().add(client, 1)
 
     def configure(self, client, screen_rect):
-        if self.clients and client is self.clients.current_client:
+        if not self.only_focused or (
+            self.clients and client is self.clients.current_client
+        ):
             client.place(
                 screen_rect.x,
                 screen_rect.y,
                 screen_rect.width,
                 screen_rect.height,
                 0,
-                None
+                None,
             )
             client.unhide()
+            if (
+                not self.only_focused
+                and self.clients
+                and client is self.clients.current_client
+                and len(self.clients) > 1
+            ):
+                client.cmd_move_above()
         else:
             client.hide()
 

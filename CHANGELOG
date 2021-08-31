@@ -39,6 +39,8 @@ Qtile 0.18.1, released 2021-09-16:
           a further time removes the flag
         - added `cmd_move_above` and `cmd_move_below` to Windows so they can be
           shifted along z
+        - added `only_focused` setting to Max-layout, allowing to draw multiple
+          clients on top of each other when set to False
 
 Qtile 0.18.0, released 2021-07-04:
     !!! Config breakage !!!
