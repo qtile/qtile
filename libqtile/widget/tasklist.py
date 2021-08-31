@@ -249,7 +249,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     def windows(self):
         if self.current_win_only:
             wins = self.bar.screen.group.current_window
-            wins = set([wins]) if wins else set([])  # Sets are necessary here to ensure consistent formatting
+            wins = [wins] if wins else []  # Sets are necessary here to ensure consistent formatting
         else:
             wins = self.bar.screen.group.windows
         return self.skip_taskbar(wins)
@@ -347,7 +347,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         and remove that window from the list to be shown on the taskbar.
         This is mostly for GTK programs. Qt doesn't seem to support this
         """
-        return {w for w in windows if "_NET_WM_STATE_SKIP_TASKBAR" not in w.window.get_net_wm_state()}
+        return [w for w in windows if "_NET_WM_STATE_SKIP_TASKBAR" not in w.window.get_net_wm_state()]
 
     def remove_icon_cache(self, window):
         wid = window.wid
