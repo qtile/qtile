@@ -377,3 +377,7 @@ def test_select_widget(manager):
     assert widget.bar.info()["position"] == "bottom"
     with pytest.raises(libqtile.command.client.SelectError, match="Item not available in object"):
         widget.bar["bottom"]
+
+
+def test_core_node(manager, backend_name):
+    assert manager.c.core.info()["backend"] == backend_name

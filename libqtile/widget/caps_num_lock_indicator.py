@@ -40,7 +40,8 @@ class CapsNumLockIndicator(base.ThreadPoolText):
         try:
             output = self.call_process(['xset', 'q'])
         except subprocess.CalledProcessError as err:
-            output = err.output.decode()
+            output = err.output
+            return []
         if output.startswith("Keyboard"):
             indicators = re.findall(r"(Caps|Num)\s+Lock:\s*(\w*)", output)
             return indicators

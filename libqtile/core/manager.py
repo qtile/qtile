@@ -48,7 +48,7 @@ from libqtile.config import Click, Drag, Key, KeyChord, Match, Rule
 from libqtile.config import ScratchPad as ScratchPadConfig
 from libqtile.config import Screen
 from libqtile.core.lifecycle import lifecycle
-from libqtile.core.loop import LoopContext
+from libqtile.core.loop import LoopContext, QtileEventLoopPolicy
 from libqtile.core.state import QtileState
 from libqtile.dgroups import DGroups
 from libqtile.extension.base import _Extension
@@ -215,6 +215,8 @@ class Qtile(CommandObject):
         Finalizes the Qtile instance on exit.
         """
         self._eventloop = asyncio.get_running_loop()
+        # Set the event loop policy to facilitate access to main event loop
+        asyncio.set_event_loop_policy(QtileEventLoopPolicy(self))
         self._stopped_event = asyncio.Event()
         self.core.setup_listener(self)
         try:
@@ -756,6 +758,8 @@ class Qtile(CommandObject):
             return True, list(self.windows_map.keys())
         elif name == "screen":
             return True, list(range(len(self.screens)))
+        elif name == "core":
+            return True, []
         return None
 
     def _select(self, name: str, sel: Optional[Union[str, int]]) -> Optional[CommandObject]:
@@ -783,6 +787,8 @@ class Qtile(CommandObject):
                 return self.current_screen
             else:
                 return utils.lget(self.screens, sel)
+        elif name == "core":
+            return self.core
         return None
 
     def call_soon(self, func: Callable, *args) -> asyncio.Handle:

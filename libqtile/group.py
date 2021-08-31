@@ -44,7 +44,7 @@ class _Group(CommandObject):
         self.name = name
         self.label = name if label is None else label
         self.custom_layout = layout  # will be set on _configure
-        self.windows = set()
+        self.windows = []
         self.qtile = None
         self.layouts = []
         self.floating_layout = None
@@ -61,7 +61,7 @@ class _Group(CommandObject):
         self.screen = None
         self.current_layout = 0
         self.focus_history = []
-        self.windows = set()
+        self.windows = []
         self.qtile = qtile
         self.layouts = [i.clone(self) for i in layouts]
         self.floating_layout = floating_layout
@@ -235,7 +235,8 @@ class _Group(CommandObject):
 
     def add(self, win, focus=True, force=False):
         hook.fire("group_window_add", self, win)
-        self.windows.add(win)
+        if win not in self.windows:
+            self.windows.append(win)
         win.group = self
         if self.qtile.config.auto_fullscreen and win.wants_to_fullscreen:
             win._float_state = FloatStates.FULLSCREEN

@@ -169,6 +169,7 @@ def test_pacman():
     check_migrate(orig, expected)
 
 
+
 def test_windownametab_to_tasklist():
     orig = textwrap.dedent("""
         from libqtile import bar
@@ -183,6 +184,23 @@ def test_windownametab_to_tasklist():
 
         bar.Bar([widget.TaskList(markup_normal=True), widget.TaskList(markup_normal=False)], 30)
         """)
+
+
+def test_crypto():
+    orig = textwrap.dedent("""
+        from libqtile import bar
+        from libqtile.widget import BitcoinTicker
+
+        bar.Bar([BitcoinTicker()], 30)
+    """)
+
+    expected = textwrap.dedent("""
+        from libqtile import bar
+        from libqtile.widget import CryptoTicker
+
+        bar.Bar([CryptoTicker()], 30)
+    """)
+
 
     check_migrate(orig, expected)
 

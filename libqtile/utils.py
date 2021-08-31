@@ -243,7 +243,7 @@ def send_notification(title, message, urgent=False, timeout=10000, id=None):
     urgency = 2 if urgent else 1
 
     try:
-        loop = asyncio.get_running_loop()
+        loop = asyncio.get_event_loop()
     except RuntimeError:
         logger.warning("Eventloop has not started. Cannot send notification.")
     else:

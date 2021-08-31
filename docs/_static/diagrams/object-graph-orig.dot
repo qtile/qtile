@@ -24,12 +24,16 @@ digraph G {
     node [style="filled", color=Purple, fillcolor=Violet, label="window"];
     window;
 
+    node [style="filled", color=SlateBlue, fillcolor=SlateBlue1, label="core"];
+    core;
+
     root -> bar;
     root -> group;
     root -> layout;
     root -> screen;
     root -> widget;
     root -> window;
+    root -> core;
 
     bar -> screen [dir=both];
     bar -> widget [dir=both];
