@@ -764,6 +764,29 @@ class _Window:
             eventmask=self._window_mask
         )
 
+    def _grab_click(self):
+        # Grab button 1 to focus upon click when unfocussed
+        for amask in self.qtile.core._auto_modmasks():
+            self.qtile.core.conn.conn.core.GrabButton(
+                True,
+                self.window.wid,
+                EventMask.ButtonPress,
+                xcffib.xproto.GrabMode.Sync,
+                xcffib.xproto.GrabMode.Async,
+                xcffib.xproto.Atom._None,
+                xcffib.xproto.Atom._None,
+                1,
+                amask,
+            )
+
+    def _ungrab_click(self):
+        # Ungrab button 1 when focussed
+        self.qtile.core.conn.conn.core.UngrabButton(
+            xcffib.xproto.Atom.Any,
+            self.window.wid,
+            xcffib.xproto.ModMask.Any,
+        )
+
     def get_pid(self):
         return self.window.get_net_wm_pid()
 
@@ -967,7 +990,14 @@ class _Window:
                 state.remove(atom)
                 self.window.set_property('_NET_WM_STATE', state)
 
+        # re-grab button events on the previously focussed window
+        old = self.qtile.core._root.get_property("_NET_ACTIVE_WINDOW", 'WINDOW', unpack=int)
+        if old and old[0] in self.qtile.windows_map:
+            old_win = self.qtile.windows_map[old[0]]
+            if not isinstance(old_win, base.Internal):
+                old_win._grab_click()
         self.qtile.core._root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
+        self._ungrab_click()
 
         if self.group:
             self.group.current_window = self
@@ -1112,20 +1142,7 @@ class Static(_Window, base.Static):
         self.place(self.x, self.y, width or self.width, height or self.height, 0, 0)
         self.unhide()
         self.update_strut()
-
-        # Grab button 1 to focus upon click
-        for amask in self.qtile.core._auto_modmasks():
-            self.qtile.core.conn.conn.core.GrabButton(
-                True,
-                self.window.wid,
-                EventMask.ButtonPress,
-                xcffib.xproto.GrabMode.Sync,
-                xcffib.xproto.GrabMode.Async,
-                xcffib.xproto.Atom._None,
-                xcffib.xproto.Atom._None,
-                1,
-                amask,
-            )
+        self._grab_click()
 
     def handle_ConfigureRequest(self, e):  # noqa: N802
         cw = xcffib.xproto.ConfigWindow
@@ -1224,20 +1241,7 @@ class Window(_Window, base.Window):
         # add window to the save-set, so it gets mapped when qtile dies
         qtile.core.conn.conn.core.ChangeSaveSet(SetMode.Insert, self.window.wid)
         self.update_wm_net_icon()
-
-        # Grab button 1 to focus upon click
-        for amask in self.qtile.core._auto_modmasks():
-            self.qtile.core.conn.conn.core.GrabButton(
-                True,
-                self.window.wid,
-                EventMask.ButtonPress,
-                xcffib.xproto.GrabMode.Sync,
-                xcffib.xproto.GrabMode.Async,
-                xcffib.xproto.Atom._None,
-                xcffib.xproto.Atom._None,
-                1,
-                amask,
-            )
+        self._grab_click()
 
     @property
     def group(self):

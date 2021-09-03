@@ -92,6 +92,7 @@ def test_bring_front_click(manager, bring_front_click):
 
     # Click on window two
     manager.backend.fake_click(55, 55)
+    assert manager.c.window.info()["name"] == "two"
     wins = manager.backend.get_all_windows()
     if bring_front_click:
         assert wins.index(wids[0]) < wins.index(wids[2]) < wins.index(wids[1])
@@ -100,6 +101,7 @@ def test_bring_front_click(manager, bring_front_click):
 
     # Click on window one
     manager.backend.fake_click(10, 10)
+    assert manager.c.window.info()["name"] == "one"
     wins = manager.backend.get_all_windows()
     if bring_front_click == "floating_only":
         assert wins.index(wids[0]) < wins.index(wids[2]) < wins.index(wids[1])
