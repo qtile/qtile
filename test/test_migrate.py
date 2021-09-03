@@ -174,14 +174,30 @@ def test_crypto():
         from libqtile import bar
         from libqtile.widget import BitcoinTicker
 
-        bar.Bar([BitcoinTicker()], 30)
+        bar.Bar(
+            [
+                BitcoinTicker(crypto='BTC', format='BTC: {avg}'),
+                BitcoinTicker(format='{crypto}: {avg}', font='sans'),
+                BitcoinTicker(),
+                BitcoinTicker(currency='EUR', format='{avg}', foreground='ffffff'),
+            ],
+            30
+        )
     """)
 
     expected = textwrap.dedent("""
         from libqtile import bar
         from libqtile.widget import CryptoTicker
 
-        bar.Bar([CryptoTicker()], 30)
+        bar.Bar(
+            [
+                CryptoTicker(crypto='BTC'),
+                CryptoTicker( font='sans'),
+                CryptoTicker(),
+                CryptoTicker(currency='EUR', foreground='ffffff'),
+            ],
+            30
+        )
     """)
 
     check_migrate(orig, expected)
