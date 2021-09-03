@@ -69,10 +69,32 @@ def pacman_to_checkupdates(query):
     )
 
 
+def reset_format(node, capture, filename):
+    args = capture.get("class_arguments")
+    if args:
+        if args[0].type == 260:  # argument list
+            n_children = len(args[0].children)
+            for i in range(n_children):
+                # we only want to remove the format argument
+                if 'format' in str(args[0].children[i]):
+                    # remove the argument and the trailing or preceeding comma
+                    if i == n_children - 1:  # last argument
+                        args[0].children[i - 1].remove()
+                        args[0].children[i - 1].remove()
+                    else:
+                        args[0].children[i].remove()
+                        args[0].children[i].remove()
+
+                    break
+        else:  # there's only one argument
+            args[0].remove()
+
+
 def bitcoin_to_crypto(query):
     return (
         query
         .select_class("BitcoinTicker")
+        .modify(reset_format)
         .rename("CryptoTicker")
     )
 
