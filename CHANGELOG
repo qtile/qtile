@@ -2,6 +2,10 @@ Qtile xxxxxx, released xxxxxxxxxx:
     * features
         - All layouts will accept a list of colors for border_* options with which
           they will draw multiple borders on the appropriate windows.
+        - lazy.window.set_position_floating() now has the options
+          `border_snapping=bool`(False by default) and `snap_dist=int`(in pixels)
+          which allows floating window's borders to snap/stick to screen and other window's borders
+          similar to features seen in KDE and Gnome.
 
 Qtile 0.18.0, released 2021-07-04:
     !!! Config breakage !!!

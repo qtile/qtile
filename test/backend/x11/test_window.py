@@ -126,6 +126,62 @@ def test_default_float_hints(xmanager):
 
 
 @manager_config
+def test_set_position_floating_with_border_snap(xmanager):
+    conn = xcbq.Connection(xmanager.display)
+    win1_d = 10
+
+    def create_window(x, y, w, h):
+        w = conn.create_window(x, y, w, h)
+        w.set_property("WM_CLASS", "float", type="STRING", format=8)
+        hints = [0] * 18
+        hints[0] = xcbq.NormalHintsFlags["USPosition"]
+        w.set_property("WM_NORMAL_HINTS", hints, type="WM_SIZE_HINTS", format=32)
+        w.map()
+        conn.conn.flush()
+        return w
+
+    # Moving window.
+    win1 = create_window(0, 0, win1_d, win1_d)
+    # Doesn't move. Just provides borders.
+    win2 = create_window(WIDTH//2, HEIGHT//2, 15, 5)
+
+    move_window = xmanager.c.window[win1.wid].set_position_floating
+
+    def window_info():
+        temp = xmanager.c.window[win1.wid].info()
+        return (temp["x"], temp["y"])
+
+    # Sanity check with no border snapping
+    move_window(-5, -5, border_snapping=False)
+    assert window_info() == (-5, -5)
+    move_window(0, 0, border_snapping=False)
+
+    # Window doesn't go off edge of screen...
+    move_window(-5, -5, border_snapping=True)
+    assert window_info() == (0, 0)
+    # Until it tries to move far enough away.
+    move_window(-15, -15, border_snapping=True)
+    assert window_info() == (-15, -15)
+    # But getting in snap range without crossing over should be fine
+    move_window(-5, -5, border_snapping=True)
+    assert window_info() == (-5, -5)
+
+    # Repeat for win1 touching win2
+    # Vertical borders touch...
+    move_window(WIDTH//2-win1_d, HEIGHT//2, border_snapping=True)
+    assert window_info() == (WIDTH//2-win1_d, HEIGHT//2)
+    # And stay touching.
+    move_window(WIDTH//2-win1_d+5, HEIGHT//2, border_snapping=True)
+    assert window_info() == (WIDTH//2-win1_d, HEIGHT//2)
+    # Horizontal borders touch...
+    move_window(WIDTH//2+10, HEIGHT//2, border_snapping=True)
+    assert window_info() == (WIDTH//2+10, HEIGHT//2)
+    # And stay touching.
+    move_window(WIDTH//2+10, HEIGHT//2+5, border_snapping=True)
+    assert window_info() == (WIDTH//2+10, HEIGHT//2)
+
+
+@manager_config
 def test_user_position(xmanager):
     w = None
     conn = xcbq.Connection(xmanager.display)

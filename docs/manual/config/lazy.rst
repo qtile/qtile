@@ -107,6 +107,9 @@ Window functions
       - Put the focused window to/from floating mode
     * - ``lazy.window.toggle_fullscreen()``
       - Put the focused window to/from fullscreen mode
+    * - ``lazy.window.set_position_floating(x, y, border_snapping=False, snap_dist=10)``
+      - Move the focused floating window to x,y with optional border snapping for
+        for easy alignment with other windows and screen edges
 
 ScratchPad DropDown functions
 -----------------------------

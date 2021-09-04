@@ -1772,9 +1772,55 @@ class Window(_Window, base.Window):
         """Add dw and dh to size of window"""
         self.tweak_float(dw=dw, dh=dh)
 
-    def cmd_set_position_floating(self, x, y):
-        """Move window to x and y"""
-        self.tweak_float(x=x, y=y)
+    def cmd_set_position_floating(self, x, y, border_snapping=False, snap_dist=10):
+        """Move floating window to x and y.
+        Border snapping makes floating window's borders
+        stick to other borders for easy alignment
+        """
+        if border_snapping:
+            self.tweak_float(**self._borders_touch(x, y, snap_dist))
+        else:
+            self.tweak_float(x=x, y=y)
+
+    def _get_borders(self):
+        """Generate list of 4-tuples describing
+        the borders of every window and screen.
+        """
+        borders = []
+        for s in self.qtile.screens:
+            borders.append((s.x, s.y, s.x+s.width, s.y+s.height))
+            for w in s.group.windows:
+                borders.append(w.edges)
+        borders.remove(self.edges)
+        return borders
+
+    def _borders_touch(self, x, y, snap_dist):
+        """Compares this window's borders to the borders of other
+        windows/screens to see if they touch.
+        """
+        overlap_args = {"x": x, "y": y}
+        borders = self._get_borders()
+        for b in borders:
+            # Are the two borders on the same line
+            if any(i in [self.edges[0], self.edges[2]] for i in [b[0], b[2]]):
+                # Are they actually overlapping
+                if self.edges[1] < b[3] and self.edges[3] > b[1]:
+                    # Has the mouse moved outside of the snap area
+                    if any(abs(self.edges[i]-x) < snap_dist for i in [0, 2]):
+                        try:
+                            # Window should snap so don't move along this axis
+                            del overlap_args["x"]
+                        except Exception:
+                            pass
+            # Repeat for y
+            if any(i in [self.edges[1], self.edges[3]] for i in [b[1], b[3]]):
+                if self.edges[0] < b[2] and self.edges[2] > b[0]:
+                    if any(abs(self.edges[i]-y) < snap_dist for i in [1, 3]):
+                        try:
+                            del overlap_args["y"]
+                        except Exception:
+                            pass
+        return overlap_args
 
     def cmd_set_size_floating(self, w, h):
         """Set window dimensions to w and h"""
