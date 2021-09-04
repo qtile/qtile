@@ -318,7 +318,7 @@ class Battery(base.ThreadPoolText):
         ('show_short_text', True, 'Show "Full" or "Empty" rather than formated text'),
         ('low_percentage', 0.10, "Indicates when to use the low_foreground color 0 < x < 1"),
         ('low_foreground', '000000', 'Font color on low battery'),
-        ('low_background', 'FF0000', 'Font color on low battery'),
+        ('low_background', 'FF0000', 'Background color on low battery'),
         ('update_interval', 60, 'Seconds between status updates'),
         ('battery', 0, 'Which battery should be monitored (battery number or name)'),
         ('notify_below', None, 'Send a notification below this battery level.'),
