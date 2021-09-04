@@ -24,10 +24,12 @@ from libqtile.scratchpad import ScratchPad
 
 
 class QtileState:
-    """Represents the state of the qtile object
+    """Represents the state of the Qtile object
 
-    Primarily used for restoring state across restarts; any additional state
-    which doesn't fit nicely into X atoms can go here.
+    This is used for restoring state across restarts or config reloads.
+
+    If `restart` is True, the current set of groups will be saved in the state. This is
+    useful when restarting for Qtile version updates rather than reloading the config.
     """
     def __init__(self, qtile, restart=True):
         self.groups = []
@@ -37,11 +39,12 @@ class QtileState:
         self.orphans = []
         self.restart = restart  # True when restarting, False when config reloading
 
-        for group in qtile.groups:
-            if isinstance(group, ScratchPad):
-                self.scratchpads[group.name] = group.get_state(restart)
-            else:
-                self.groups.append((group.name, group.layout.name, group.label))
+        if restart:
+            for group in qtile.groups:
+                if isinstance(group, ScratchPad):
+                    self.scratchpads[group.name] = group.get_state(restart)
+                else:
+                    self.groups.append((group.name, group.layout.name, group.label))
 
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
