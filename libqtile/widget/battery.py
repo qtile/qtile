@@ -317,7 +317,8 @@ class Battery(base.ThreadPoolText):
         ('hide_threshold', None, 'Hide the text when there is enough energy 0 <= x < 1'),
         ('show_short_text', True, 'Show "Full" or "Empty" rather than formated text'),
         ('low_percentage', 0.10, "Indicates when to use the low_foreground color 0 < x < 1"),
-        ('low_foreground', 'FF0000', 'Font color on low battery'),
+        ('low_foreground', '000000', 'Font color on low battery'),
+        ('low_background', 'FF0000', 'Font color on low battery'),
         ('update_interval', 60, 'Seconds between status updates'),
         ('battery', 0, 'Which battery should be monitored (battery number or name)'),
         ('notify_below', None, 'Send a notification below this battery level.'),
@@ -496,9 +497,14 @@ class BatteryIcon(base._Widget):
         icon = self._get_icon_key(status)
         if icon != self.current_icon:
             self.current_icon = icon
-            self.draw()
+            self.draw(status)
 
-    def draw(self) -> None:
+    def draw(self,status: BatteryStatus) -> None:
+        if self.layout is not None:
+            if status.state == BatteryState.DISCHARGING and status.percent < self.low_percentage:
+                self.background = self.low_background
+            else:
+                self.layout.colour = self.background
         self.drawer.clear(self.background or self.bar.background)
         self.drawer.ctx.set_source(self.surfaces[self.current_icon])
         self.drawer.ctx.paint()
