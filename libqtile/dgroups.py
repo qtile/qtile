@@ -186,7 +186,7 @@ class DGroups:
                     group = self.groups_map.get(rule.group)
                     if group and group_added:
                         for k, v in list(group.layout_opts.items()):
-                            if isinstance(v, collections.Callable):
+                            if isinstance(v, collections.abc.Callable):
                                 v(group_obj.layout)
                             else:
                                 setattr(group_obj.layout, k, v)
