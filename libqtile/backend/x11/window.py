@@ -1790,7 +1790,8 @@ class Window(_Window, base.Window):
         for s in self.qtile.screens:
             borders.append((s.x, s.y, s.x+s.width, s.y+s.height))
             for w in s.group.windows:
-                borders.append(w.edges)
+                if not w.hidden:
+                    borders.append(w.edges)
         borders.remove(self.edges)
         return borders
 
