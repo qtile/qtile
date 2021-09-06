@@ -141,13 +141,13 @@ class TextFrame:
         self.drawer = self.layout.drawer
         self.highlight_color = highlight_color
 
-        if isinstance(pad_x, collections.Iterable):
+        if isinstance(pad_x, collections.abc.Iterable):
             self.pad_left = pad_x[0]
             self.pad_right = pad_x[1]
         else:
             self.pad_left = self.pad_right = pad_x
 
-        if isinstance(pad_y, collections.Iterable):
+        if isinstance(pad_y, collections.abc.Iterable):
             self.pad_top = pad_y[0]
             self.pad_bottom = pad_y[1]
         else:
