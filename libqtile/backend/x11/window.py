@@ -740,7 +740,8 @@ class _Window:
     def hide(self):
         # We don't want to get the UnmapNotify for this unmap
         with self.disable_mask(EventMask.StructureNotify):
-            self.window.unmap()
+            with self.qtile.core.disable_unmap_events():
+                self.window.unmap()
         self.hidden = True
 
     def unhide(self):
