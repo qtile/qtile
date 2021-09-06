@@ -106,16 +106,15 @@ class Core(base.Core):
                 logger.error("not starting; existing window manager {}".format(existing_wmname))
                 raise ExistingWMException(existing_wmname)
 
-        self._root.set_attribute(
-            eventmask=(
-                EventMask.StructureNotify
-                | EventMask.SubstructureNotify
-                | EventMask.SubstructureRedirect
-                | EventMask.EnterWindow
-                | EventMask.LeaveWindow
-                | EventMask.ButtonPress
-            )
+        self.eventmask = (
+            EventMask.StructureNotify
+            | EventMask.SubstructureNotify
+            | EventMask.SubstructureRedirect
+            | EventMask.EnterWindow
+            | EventMask.LeaveWindow
+            | EventMask.ButtonPress
         )
+        self._root.set_attribute(eventmask=self.eventmask)
 
         self._root.set_property(
             "_NET_SUPPORTED", [self.conn.atoms[x] for x in xcbq.SUPPORTED_ATOMS]
@@ -692,25 +691,41 @@ class Core(base.Core):
     def handle_UnmapNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
-        if event.event != self._root.wid:
-            win = self.qtile.windows_map.get(event.window)
-            if win and getattr(win, "group", None):
-                try:
-                    win.hide()
-                    assert isinstance(win, window._Window)
-                    win.state = window.WithdrawnState
-                except xcffib.xproto.WindowError:
-                    # This means that the window has probably been destroyed,
-                    # but we haven't yet seen the DestroyNotify (it is likely
-                    # next in the queue). So, we just let these errors pass
-                    # since the window is dead.
-                    pass
-            self.qtile.unmanage(event.window)
-            if self.qtile.current_window is None:
-                self.conn.fixup_focus()
+        win = self.qtile.windows_map.get(event.window)
+        assert isinstance(win, (window.Window, window.Static))
+
+        if win and getattr(win, "group", None):
+            try:
+                win.hide()
+                assert isinstance(win, window._Window)
+                win.state = window.WithdrawnState
+            except xcffib.xproto.WindowError:
+                # This means that the window has probably been destroyed,
+                # but we haven't yet seen the DestroyNotify (it is likely
+                # next in the queue). So, we just let these errors pass
+                # since the window is dead.
+                pass
+            # Clear these atoms as per spec
+            win.window.conn.conn.core.DeleteProperty(
+                win.wid, win.window.conn.atoms["_NET_WM_STATE"]
+            )
+            win.window.conn.conn.core.DeleteProperty(
+                win.wid, win.window.conn.atoms["_NET_WM_DESKTOP"]
+            )
+        self.qtile.unmanage(event.window)
+        if self.qtile.current_window is None:
+            self.conn.fixup_focus()
 
     def handle_ScreenChangeNotify(self, event) -> None:  # noqa: N802
         hook.fire("screen_change", event)
+
+    @contextlib.contextmanager
+    def disable_unmap_events(self):
+        self._root.set_attribute(
+            eventmask=self.eventmask & (~EventMask.SubstructureNotify)
+        )
+        yield
+        self._root.set_attribute(eventmask=self.eventmask)
 
     @property
     def painter(self):
