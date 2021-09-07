@@ -1,6 +1,9 @@
 <!--
 Please do not ask general questions here! There are [community
 contact](https://github.com/qtile/qtile#community) options for that.
+
+If you are suggesting a new feature/enhancement please instead post it on the
+discussions board as an idea: https://github.com/qtile/qtile/discussions/categories/ideas
 -->
 
 # Issue description
