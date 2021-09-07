@@ -74,7 +74,7 @@ from libqtile.backend.wayland.output import Output
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import List, Optional, Tuple, Union
+    from typing import List, Optional, Sequence, Tuple, Union
 
     from wlroots.wlr_types import Output as wlrOutput
 
@@ -104,7 +104,7 @@ class Core(base.Core, wlrq.HasListeners):
         # mapped_windows contains just regular windows
         self.mapped_windows: List[window.WindowType] = []  # Ascending in Z
         # stacked_windows also contains layer_shell windows from the current output
-        self.stacked_windows: List[window.WindowType] = []  # Ascending in Z
+        self.stacked_windows: Sequence[window.WindowType] = []  # Ascending in Z
         self._current_output: Optional[Output] = None
 
         # set up inputs
@@ -464,6 +464,8 @@ class Core(base.Core, wlrq.HasListeners):
                 self._hovered_internal = None
 
     def _process_cursor_button(self, button: int, pressed: bool):
+        assert self.qtile is not None
+
         if pressed:
             self.qtile.process_button_click(
                 button, self.seat.keyboard.modifier, self.cursor.x, self.cursor.y
@@ -623,11 +625,11 @@ class Core(base.Core, wlrq.HasListeners):
         if self._current_output:
             layers = self._current_output.layers
             self.stacked_windows = (
-                layers[LayerShellV1Layer.BACKGROUND] + layers[LayerShellV1Layer.BOTTOM]
-            )  # type: ignore
-            self.stacked_windows += self.mapped_windows
-            self.stacked_windows += (
-                layers[LayerShellV1Layer.TOP] + layers[LayerShellV1Layer.OVERLAY]
+                layers[LayerShellV1Layer.BACKGROUND] +
+                layers[LayerShellV1Layer.BOTTOM] +
+                self.mapped_windows +  # type: ignore
+                layers[LayerShellV1Layer.TOP] +
+                layers[LayerShellV1Layer.OVERLAY]
             )
         else:
             self.stacked_windows = self.mapped_windows
@@ -745,6 +747,7 @@ class Core(base.Core, wlrq.HasListeners):
         mods = wlrq.translate_masks(modifiers)
 
         if (keysym, mods) in self.grabbed_keys:
+            assert self.qtile is not None
             self.qtile.process_key_event(keysym, mods)
             return
 
