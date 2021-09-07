@@ -230,6 +230,11 @@ class GroupBox(_GroupBase):
             "Hide groups that have no windows and that are not displayed on any screen."
         ),
         (
+            "show_screen_only",
+            False,
+            "Show groups that are currenly only available to the attached screen"
+        ),
+        (
             "spacing",
             None,
             "Spacing between groups"
@@ -347,6 +352,10 @@ class GroupBox(_GroupBase):
 
         offset = self.margin_x
         for i, g in enumerate(self.groups):
+
+            if self.show_screen_only and self.qtile.current_screen != self.bar.screen:
+                continue
+
             to_highlight = False
             is_block = (self.highlight_method == 'block')
             is_line = (self.highlight_method == 'line')
