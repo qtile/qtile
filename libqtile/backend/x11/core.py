@@ -48,8 +48,6 @@ if TYPE_CHECKING:
 _IGNORED_EVENTS = {
     xcffib.xproto.CreateNotifyEvent,
     xcffib.xproto.FocusInEvent,
-    xcffib.xproto.KeyReleaseEvent,
-    # DWM handles this to help "broken focusing windows".
     xcffib.xproto.MapNotifyEvent,
     xcffib.xproto.NoExposureEvent,
     xcffib.xproto.ReparentNotifyEvent,
@@ -162,9 +160,32 @@ class Core(base.Core):
             | xcbq.PointerMotionHintMask
         )
 
+        self._mod_ks_to_mask = self._make_keysym_to_modmask_dict()
+
     @property
     def name(self):
         return "x11"
+
+    def _make_keysym_to_modmask_dict(self) -> dict[int, int]:
+        """Make a dictionary mapping modifier keysyms to modifer masks.
+
+        This essentially gives the same information as `xmodmap -pm`, but
+        with keysyms mapping to modifiers instead of the reverse.
+        """
+        modmap_reply = self.conn.conn.core.GetModifierMapping().reply()
+        modmap_keycodes = modmap_reply.keycodes.raw
+        keycodes_per_modifier = modmap_reply.keycodes_per_modifier
+        n_modifiers = modmap_reply.length
+        assert len(modmap_keycodes) >= n_modifiers * keycodes_per_modifier
+        ks_to_mask: Dict[int, int] = {}
+        for mod_num in range(n_modifiers):  # usually 8
+            for i_keycode in range(keycodes_per_modifier):  # usually 4
+                kc = modmap_keycodes[keycodes_per_modifier * mod_num + i_keycode]
+                if kc == 0x00:
+                    continue
+                ks = self.conn.keycode_to_keysym(kc, 0x00)
+                ks_to_mask[ks] = 1 << mod_num
+        return ks_to_mask
 
     def finalize(self) -> None:
         self.conn.conn.core.DeletePropertyChecked(
@@ -362,6 +383,7 @@ class Core(base.Core):
             "ButtonPress",
             "ButtonRelease",
             "KeyPress",
+            "KeyRelease",
         ]
         if hasattr(event, "window"):
             window = self.qtile.windows_map.get(event.window)
@@ -614,6 +636,19 @@ class Core(base.Core):
 
         keysym = self.conn.code_to_syms[event.detail][0]
         self.qtile.process_key_event(keysym, event.state & self._valid_mask)
+
+    def handle_KeyRelease(self, event) -> None:  # noqa: N802
+        assert self.qtile is not None
+
+        keysym = self.conn.code_to_syms[event.detail][0]
+        # We need to fix the mask if we use a modifier key like Control_R as a
+        # regular key. Otherwise it would be reported as Ctrl+Control_R and thus
+        # be ignored as an "unknown keysym"
+        modifier_as_mask = self._mod_ks_to_mask.get(keysym, 0x00)
+        mask = (event.state & self._valid_mask) ^ modifier_as_mask
+        self.qtile.process_key_event(
+            keysym, mask, is_release=True, key_as_modifier=modifier_as_mask
+        )
 
     def handle_ButtonPress(self, event) -> None:  # noqa: N802
         assert self.qtile is not None

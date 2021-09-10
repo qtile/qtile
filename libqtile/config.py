@@ -66,16 +66,24 @@ class Key:
         commands should be separated by commas.
     desc:
         Description to be added to the key binding. (Optional)
+    on_release:
+        Whether this binding should apply to key releases rather than presses. (Optional)
 
     """
 
     def __init__(
-        self, modifiers: list[str], key: str, *commands: LazyCall, desc: str = ""
+        self,
+        modifiers: list[str],
+        key: str,
+        *commands: LazyCall,
+        desc: str = "",
+        on_release: bool = False,
     ) -> None:
         self.modifiers = modifiers
         self.key = key
         self.commands = commands
         self.desc = desc
+        self.on_release = on_release
 
     def __repr__(self) -> str:
         return "<Key (%s, %s)>" % (self.modifiers, self.key)
