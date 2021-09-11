@@ -73,7 +73,7 @@ class Output(HasListeners):
                 # First test output
                 wlr_output.set_custom_mode(800, 600, 0)
             else:
-                # Secound test output
+                # Second test output
                 wlr_output.set_custom_mode(640, 480, 0)
             wlr_output.commit()
 
@@ -111,10 +111,16 @@ class Output(HasListeners):
 
                 now = Timespec.get_monotonic_time()
                 renderer = self.renderer
-                renderer.begin(*wlr_output.effective_resolution())
+                renderer.begin(wlr_output._ptr.width, wlr_output._ptr.height)
+                scale = wlr_output.scale
 
                 if self.wallpaper:
-                    renderer.render_texture(self.wallpaper, self.transform_matrix, 0, 0, 1)
+                    width, height = wlr_output.effective_resolution()
+                    box = Box(0, 0, int(width * scale), int(height * scale))
+                    matrix = Matrix.project_box(
+                        box, wlr_output.transform, 0, wlr_output.transform_matrix
+                    )
+                    renderer.render_texture_with_matrix(self.wallpaper, matrix, 1)
                 else:
                     renderer.clear([0, 0, 0, 1])
 
@@ -126,13 +132,16 @@ class Output(HasListeners):
 
                 for window in mapped:
                     if isinstance(window, Internal):
-                        renderer.render_texture(
-                            window.texture,
-                            self.transform_matrix,
-                            window.x - self.x,  # layout coordinates -> output coordinates
-                            window.y - self.y,
-                            window.opacity,
+                        box = Box(
+                            int((window.x - self.x) * scale),
+                            int((window.y - self.y) * scale),
+                            int(window.width * scale),
+                            int(window.height * scale)
                         )
+                        matrix = Matrix.project_box(
+                            box, wlr_output.transform, 0, wlr_output.transform_matrix
+                        )
+                        renderer.render_texture_with_matrix(window.texture, matrix, window.opacity)
                     else:
                         rdata = (
                             now,
