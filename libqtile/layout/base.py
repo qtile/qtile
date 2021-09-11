@@ -262,7 +262,7 @@ class _ClientList:
 
     @current_client.setter
     def current_client(self, client):
-        self._current_idx = self._clients.index(client)
+        self._current_idx = self.clients.index(client)
 
     def focus(self, client):
         """
