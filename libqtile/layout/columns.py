@@ -44,8 +44,10 @@ class _Column(_ClientList):
     def toggle_split(self):
         self.split = not self.split
 
-    def add(self, client, height=100):
-        _ClientList.add(self, client, self.insert_position)
+    def add(self, client, height=100, pseudo=False):
+        _ClientList.add(self, client, self.insert_position, pseudo=pseudo)
+        if pseudo:
+            return
         self.heights[client] = height
         delta = 100 - height
         if delta != 0:
@@ -55,8 +57,10 @@ class _Column(_ClientList):
             for c, g in zip(self, growth):
                 self.heights[c] += g
 
-    def remove(self, client):
-        _ClientList.remove(self, client)
+    def remove(self, client, pseudo=False):
+        _ClientList.remove(self, client, pseudo=pseudo)
+        if pseudo:
+            return
         delta = self.heights[client] - 100
         del self.heights[client]
         if delta != 0:
@@ -193,6 +197,16 @@ class Columns(Layout):
             growth[0] += delta - sum(growth)
             for c, g in zip(self.columns, growth):
                 c.width += g
+
+    def tile_client(self, client):
+        for c in self.columns:
+            if client in c:
+                c.add(client, pseudo=True)
+
+    def float_client(self, client):
+        for c in self.columns:
+            if c.has_floating_client(client):
+                c.remove(client, pseudo=True)
 
     def add(self, client):
         c = self.cc

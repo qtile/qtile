@@ -461,6 +461,9 @@ class _ClientList:
         except IndexError:
             return None
 
+    def has_floating_client(self, client):
+        return client in self._clients
+
     def _clients_tiled_index(self, tiled_index):
         """Find the clients list index of a tiled client"""
         tiled_client = self.clients[tiled_index]
