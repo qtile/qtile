@@ -243,6 +243,10 @@ class _ClientList:
     def current_index(self):
         return self._current_idx
 
+    def clients_with_client(self, client):
+        """Get tiled clients list with also 'client'"""
+        return [i for i in self._clients if not i.floating or i == client]
+
     @property
     def clients(self):
         """Get tiled clients"""
@@ -298,7 +302,7 @@ class _ClientList:
             return self[idx - 1]
         return None
 
-    def add(self, client, offset_to_current=0, client_position=None):
+    def add(self, client, offset_to_current=0, client_position=None, pseudo=False):
         """
         Insert the given client into collection at position of the current.
 
@@ -309,6 +313,10 @@ class _ClientList:
         Use parameter 'client_position' to insert the given client at 4 specific
         positions: top, bottom, after_current, before_current.
         """
+        if pseudo:
+            self.current_client = client
+            return
+
         if client_position is not None:
             if client_position == "after_current":
                 return self.add(client, offset_to_current=1)
@@ -344,17 +352,19 @@ class _ClientList:
         """
         self._clients.append(client)
 
-    def remove(self, client):
+    def remove(self, client, pseudo=False):
         """
         Remove the given client from collection.
         """
         if client not in self._clients:
             return
-        idx = self._clients.index(client)
-        del self._clients[idx]
+        all_idx = self._clients.index(client)
+        idx = self.index(client, True)
+        if not pseudo:
+            del self._clients[all_idx]
         if len(self) == 0:
             self._current_idx = 0
-        elif client.floating and idx <= self._current_idx:
+        elif idx <= self._current_idx:
             self._current_idx = max(0, self._current_idx - 1)
 
     def rotate_up(self, maintain_index=True):
@@ -437,7 +447,9 @@ class _ClientList:
         else:
             self._clients.extend(other.clients)
 
-    def index(self, client):
+    def index(self, client, included=False):
+        if included:
+            return self.clients_with_client(client).index(client)
         return self.clients.index(client)
 
     def __len__(self):
@@ -523,7 +535,7 @@ class _SimpleLayoutBase(Layout):
         self.group.focus(client, True)
 
     def add(self, client, offset_to_current=0):
-        return self.clients.add(client, offset_to_current)
+        return self.clients.add(client, offset_to_current=offset_to_current)
 
     def remove(self, client):
         return self.clients.remove(client)
