@@ -414,7 +414,7 @@ class _ClientList:
         if idx > 0:
             tiled_index = self._clients_tiled_index(idx)
             tiled_index_prev = self._clients_tiled_index(idx - 1)
-            self._clients[tiled_index], self._clients[tiled_index_prev] = self[tiled_index_prev], self[tiled_index]
+            self._clients[tiled_index], self._clients[tiled_index_prev] = self._clients[tiled_index_prev], self._clients[tiled_index]
             if maintain_index:
                 self.current_index -= 1
 
@@ -428,7 +428,7 @@ class _ClientList:
         if idx + 1 < len(self.clients):
             tiled_index = self._clients_tiled_index(idx)
             tiled_index_next = self._clients_tiled_index(idx + 1)
-            self._clients[tiled_index], self._clients[tiled_index_next] = self[tiled_index_next], self[tiled_index]
+            self._clients[tiled_index], self._clients[tiled_index_next] = self._clients[tiled_index_next], self._clients[tiled_index]
             if maintain_index:
                 self.current_index += 1
 
