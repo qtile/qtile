@@ -86,11 +86,11 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
 
     def float_client(self, client):
         """Called when a client is set to floating"""
-        pass
+        self.remove(client)
 
     def tile_client(self, client):
         """Called when a client is set to tiling"""
-        pass
+        self.add(client)
 
     def hide(self):
         """Called when layout is being hidden"""
