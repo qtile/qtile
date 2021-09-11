@@ -505,6 +505,18 @@ class TreeTab(Layout):
         # will be next focused one
         pass
 
+    def float_client(self, client):
+        """Called when a client is set to floating
+
+        Everything is already handled so we do nothing."""
+        pass
+
+    def tile_client(self, client):
+        """Called when a client is set to tiling
+
+        Everything is already handled so we do nothing."""
+        pass
+
     def add(self, win):
         if self._focused:
             node = self._tree.add(win, hint=self._nodes[self._focused])
