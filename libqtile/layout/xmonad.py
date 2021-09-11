@@ -339,7 +339,7 @@ class MonadTall(_SimpleLayoutBase):
                 xpos = self.screen_rect.x
 
         # calculate client height and place
-        if cidx > 0:
+        if cidx > 0 and cidx <= len(self.relative_sizes):
             # secondary client
             width = width_shared - 2 * self.border_width
             # ypos is the sum of all clients above it
@@ -908,7 +908,7 @@ class MonadWide(MonadTall):
                 ypos = self.screen_rect.y
 
         # calculate client height and place
-        if cidx > 0:
+        if cidx > 0 and cidx <= len(self.relative_sizes):
             # secondary client
             height = height_shared - 2 * self.border_width
             # xpos is the sum of all clients left of it
