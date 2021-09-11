@@ -204,6 +204,12 @@ class Bsp(Layout):
             if client is node.client:
                 return node
 
+    def tile_client(self, client):
+        self.current = self.get_node(client)
+
+    def float_client(self, client):
+        self.current = self.root.get_shortest()
+
     def focus(self, client):
         self.current = self.get_node(client)
 
