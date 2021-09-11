@@ -510,6 +510,17 @@ class _SimpleLayoutBase(Layout):
         self.clients.current_client = client
         self.group.layout_all()
 
+    def tile_client(self, client):
+        self.clients.add(client, pseudo=True)
+        self.refresh()
+
+    def float_client(self, client):
+        self.clients.remove(client, pseudo=True)
+        self.refresh()
+
+    def refresh(self):
+        pass
+
     def focus_first(self):
         return self.clients.focus_first()
 

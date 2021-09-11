@@ -211,12 +211,7 @@ class MonadTall(_SimpleLayoutBase):
         self.clients.add(client, client_position=self.new_client_position)
         self.do_normalize = True
 
-    def float_client(self, client):
-        "Called when a client is set to floating"
-        self.do_normalize = True
-
-    def tile_client(self, client):
-        "Called when a client is set to tiling"
+    def refresh(self):
         self.do_normalize = True
 
     def remove(self, client):
