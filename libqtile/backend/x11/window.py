@@ -443,11 +443,12 @@ class XWindow:
         core = self.conn.conn.core
         outer_w = width + borderwidth * 2
         outer_h = height + borderwidth * 2
+        depth = self.get_geometry().depth
 
         with PixmapID(self.conn.conn) as pixmap:
             with GContextID(self.conn.conn) as gc:
                 core.CreatePixmap(
-                    self.conn.default_screen.root_depth, pixmap, self.wid, outer_w, outer_h
+                    depth, pixmap, self.wid, outer_w, outer_h
                 )
                 core.CreateGC(gc, pixmap, 0, None)
                 borders = len(colors)
@@ -464,15 +465,15 @@ class XWindow:
                     )
                     core.PolyFillRectangle(pixmap, gc, 1, [rect])
                     coord += borderwidths[i]
-                self._set_borderpixmap(pixmap, gc, borderwidth, width, height)
+                self._set_borderpixmap(depth, pixmap, gc, borderwidth, width, height)
 
-    def _set_borderpixmap(self, pixmap, gc, borderwidth, width, height):
+    def _set_borderpixmap(self, depth, pixmap, gc, borderwidth, width, height):
         core = self.conn.conn.core
         outer_w = width + borderwidth * 2
         outer_h = height + borderwidth * 2
         with PixmapID(self.conn.conn) as border:
             core.CreatePixmap(
-                self.conn.default_screen.root_depth, border, self.wid, outer_w, outer_h
+                depth, border, self.wid, outer_w, outer_h
             )
             most_w = outer_w - borderwidth
             most_h = outer_h - borderwidth
