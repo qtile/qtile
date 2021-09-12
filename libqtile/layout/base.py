@@ -266,7 +266,8 @@ class _ClientList:
 
     @current_client.setter
     def current_client(self, client):
-        self._current_idx = self.clients.index(client)
+        if not client.floating:
+            self._current_idx = self.clients.index(client)
 
     def focus(self, client):
         """
@@ -313,6 +314,7 @@ class _ClientList:
         Use parameter 'client_position' to insert the given client at 4 specific
         positions: top, bottom, after_current, before_current.
         """
+        
         if pseudo:
             self.current_client = client
             return
