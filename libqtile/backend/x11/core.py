@@ -692,12 +692,11 @@ class Core(base.Core):
         assert self.qtile is not None
 
         win = self.qtile.windows_map.get(event.window)
-        assert isinstance(win, (window.Window, window.Static))
 
         if win and getattr(win, "group", None):
+            assert isinstance(win, window._Window)
             try:
                 win.hide()
-                assert isinstance(win, window._Window)
                 win.state = window.WithdrawnState
             except xcffib.xproto.WindowError:
                 # This means that the window has probably been destroyed,
