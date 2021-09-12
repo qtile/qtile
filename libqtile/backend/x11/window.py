@@ -89,6 +89,7 @@ def _geometry_getter(attr):
             self.y = g.y
             self.width = g.width
             self.height = g.height
+            self.depth = g.depth
         return getattr(self, "_" + attr)
     return get_attr
 
@@ -427,7 +428,7 @@ class XWindow:
             parent = XWindow(self.conn, q.parent)
         return root, parent, [XWindow(self.conn, i) for i in q.children]
 
-    def paint_borders(self, colors, borderwidth, width, height):
+    def paint_borders(self, depth, colors, borderwidth, width, height):
         """
         This method is used only by the managing Window class.
         """
@@ -443,7 +444,6 @@ class XWindow:
         core = self.conn.conn.core
         outer_w = width + borderwidth * 2
         outer_h = height + borderwidth * 2
-        depth = self.get_geometry().depth
 
         with PixmapID(self.conn.conn) as pixmap:
             with GContextID(self.conn.conn) as gc:
@@ -501,6 +501,7 @@ class _Window:
             self._y = g.y
             self._width = g.width
             self._height = g.height
+            self._depth = g.depth
         except xcffib.xproto.DrawableError:
             # Whoops, we were too early, so let's ignore it for now and get the
             # values on demand.
@@ -508,6 +509,7 @@ class _Window:
             self._y = None
             self._width = None
             self._height = None
+            self._depth = None
 
         self.float_x: Optional[int] = None
         self.float_y: Optional[int] = None
@@ -545,6 +547,10 @@ class _Window:
     height = property(
         fset=_geometry_setter("height"),
         fget=_geometry_getter("height"),
+    )
+    depth = property(
+        fset=_geometry_setter("depth"),
+        fget=_geometry_getter("depth"),
     )
 
     @property
@@ -893,7 +899,7 @@ class _Window:
         self.borderwidth = width
         self.bordercolor = color
         self.window.configure(borderwidth=width)
-        self.window.paint_borders(color, width, self.width, self.height)
+        self.window.paint_borders(self.depth, color, width, self.width, self.height)
 
     def send_configure_notify(self, x, y, width, height):
         """Send a synthetic ConfigureNotify"""
