@@ -100,7 +100,7 @@ class _X11LayoutBackend(_BaseLayoutBackend):
 
 class _WaylandLayoutBackend(_BaseLayoutBackend):
     def __init__(self, qtile: Qtile) -> None:
-        self.set_keymap = qtile.core.set_keymap  # type: ignore
+        self.set_keymap = qtile.core.cmd_set_keymap  # type: ignore
         self._layout: str = ""
 
     def get_keyboard(self) -> str:
