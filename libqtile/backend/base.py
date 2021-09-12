@@ -119,10 +119,6 @@ class Core(CommandObject, metaclass=ABCMeta):
         """Get the keysym for a key from its name"""
         raise NotImplementedError
 
-    def change_vt(self, vt: int) -> bool:
-        """Change virtual terminal, returning success."""
-        return False
-
     def cmd_info(self):
         return {
             "backend": self.name,
