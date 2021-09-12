@@ -724,17 +724,6 @@ class Core(base.Core, wlrq.HasListeners):
         assert len(matched) == 1
         return matched[0]
 
-    def set_keymap(
-        self, layout: Optional[str], options: Optional[str], variant: Optional[str]
-    ) -> None:
-        """
-        Set the keymap for the current keyboard.
-        """
-        if self.keyboards:
-            self.keyboards[-1].set_keymap(layout, options, variant)
-        else:
-            logger.warning("Could not set keymap: no keyboards set up.")
-
     def keysym_from_name(self, name: str) -> int:
         """Get the keysym for a key from its name"""
         return xkb.keysym_from_name(name, case_insensitive=True)
@@ -751,6 +740,20 @@ class Core(base.Core, wlrq.HasListeners):
 
         if self.focused_internal:
             self.focused_internal.process_key_press(keysym)
+
+    def cmd_set_keymap(
+        self,
+        layout: Optional[str] = None,
+        options: Optional[str] = None,
+        variant: Optional[str] = None,
+    ) -> None:
+        """
+        Set the keymap for the current keyboard.
+        """
+        if self.keyboards:
+            self.keyboards[-1].set_keymap(layout, options, variant)
+        else:
+            logger.warning("Could not set keymap: no keyboards set up.")
 
     def cmd_change_vt(self, vt: int) -> bool:
         """Change virtual terminal to that specified"""
