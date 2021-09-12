@@ -654,9 +654,9 @@ class TreeTab(Layout):
 
         Parameters
         ==========
-        sorter : function with single arg returning string
+        sorter: function with single arg returning string
             returns name of the section where window should be
-        create_sections :
+        create_sections:
             if this parameter is True (default), if sorter returns unknown
             section name it will be created dynamically
         """

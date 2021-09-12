@@ -41,13 +41,13 @@ class WindowVisibilityToggler:
 
         Parameters:
         ===========
-        scratchpad_name : string
+        scratchpad_name: string
             The name (not label) of the ScratchPad group used to hide the window
-        window : window
+        window: window
             The window to toggle
-        on_focus_lost_hide : bool
+        on_focus_lost_hide: bool
             if True the associated window is hidden if it loses focus
-        warp_pointer : bool
+        warp_pointer: bool
             if True the mouse pointer is warped to center of associated window
             if shown. Only used if on_focus_lost_hide is True
         """

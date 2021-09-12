@@ -542,13 +542,13 @@ class ScratchPad(Group):
 
     Parameters
     ==========
-    name : string
+    name: string
         the name of this group
-    dropdowns : default ``None``
+    dropdowns: default ``None``
         list of DropDown objects
-    position : int
+    position: int
         group position
-    label : string
+    label: string
         The display name of the ScratchPad group. Defaults to the empty string
         such that the group is hidden in ``GroupList`` widget.
     """
@@ -771,9 +771,9 @@ class DropDown(configurable.Configurable):
 
         Parameters
         ==========
-        name : string
+        name: string
             The name of the DropDown configuration.
-        cmd : string
+        cmd: string
             Command to spawn a process.
         """
         configurable.Configurable.__init__(self, **config)

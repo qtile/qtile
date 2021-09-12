@@ -91,7 +91,7 @@ class Mpd2(base.ThreadPoolText):
 
     Parameters
     ==========
-    status_format :
+    status_format:
         format string to display status
 
         For a full list of values, see:
@@ -110,7 +110,7 @@ class Mpd2(base.ThreadPoolText):
             Note that the ``time`` property of the song renamed to ``fulltime``
             to prevent conflicts with status information during formating.
 
-    idle_format :
+    idle_format:
         format string to display status when no song is in queue.
 
         Default::
@@ -118,13 +118,13 @@ class Mpd2(base.ThreadPoolText):
             '{play_status} {idle_message} \
                 [{repeat}{random}{single}{consume}{updating_db}]'
 
-    idle_message :
+    idle_message:
         text to display instead of song information when MPD is idle.
         (i.e. no song in queue)
 
         Default:: "MPD IDLE"
 
-    prepare_status :
+    prepare_status:
         dict of functions to replace values in status with custom characters.
 
         ``f(status, key, space_element) => str``
@@ -141,17 +141,17 @@ class Mpd2(base.ThreadPoolText):
                 'updating_db': 'U'
             }
 
-    format_fns :
+    format_fns:
         A dict of functions to format the various elements.
 
-        'Tag' : f(str) => str
+        'Tag': f(str) => str
 
         Default:: { 'all': lambda s: cgi.escape(s) }
 
         N.B. if 'all' is present, it is processed on every element of song_info
             before any other formatting is done.
 
-    mouse_buttons :
+    mouse_buttons:
         A dict of mouse button numbers to actions
 
     Widget requirements: python-mpd2_.

@@ -737,7 +737,7 @@ class Core(base.Core):
 
         Parameters
         ==========
-        e : xcb event
+        e: xcb event
             Click event used to determine window to focus
         """
         qtile = self.qtile
