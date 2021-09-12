@@ -77,9 +77,9 @@ class CommandClient:
 
         Parameters
         ----------
-        name : str
+        name: str
             The name of the command graph object to resolve.
-        selector : Optional[str]
+        selector: Optional[str]
             If given, the selector to use to select the next object, and if
             None, then selects the default object.
 
@@ -104,11 +104,11 @@ class CommandClient:
 
         Parameters
         ----------
-        name : str
+        name: str
             The name of the command to resolve in the command graph.
-        args :
+        args:
             The arguments to pass into the call invocation.
-        kwargs :
+        kwargs:
             The keyword arguments to pass into the call invocation.
 
         Returns
@@ -196,7 +196,7 @@ class InteractiveCommandClient:
 
         Parameters
         ----------
-        name : str
+        name: str
             The name of the element to resolve
 
         Return
@@ -236,7 +236,7 @@ class InteractiveCommandClient:
 
         Parameters
         ----------
-        name : str
+        name: str
             The name, or index if it's of int type, of the item to resolve
 
         Return

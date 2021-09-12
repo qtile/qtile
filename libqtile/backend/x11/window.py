@@ -312,9 +312,9 @@ class XWindow:
         """
         Parameters
         ==========
-        name : String Atom name
-        type : String Atom name
-        format : 8, 16, 32
+        name: String Atom name
+        type: String Atom name
+        format: 8, 16, 32
         """
         if name in xcbq.PropertyMap:
             if type or format:
@@ -774,16 +774,16 @@ class _Window:
 
         Parameters
         ==========
-        x : int
-        y : int
-        width : int
-        height : int
-        borderwidth : int
-        bordercolor : string
-        above : bool, optional
-        margin : int or list, optional
+        x: int
+        y: int
+        width: int
+        height: int
+        borderwidth: int
+        bordercolor: string
+        above: bool, optional
+        margin: int or list, optional
             space around window as int or list of ints [N E S W]
-        above : bool, optional
+        above: bool, optional
             If True, the geometry will be adjusted to respect hints provided by the
             client.
         """

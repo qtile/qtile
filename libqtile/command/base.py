@@ -133,7 +133,7 @@ class CommandObject(metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-        name : str
+        name: str
             The name of the command to fetch.
 
         Returns

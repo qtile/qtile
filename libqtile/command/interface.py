@@ -87,9 +87,9 @@ class CommandInterface(metaclass=ABCMeta):
 
         Parameters
         ----------
-        node : CommandGraphNode
+        node: CommandGraphNode
             The node to check for commands
-        command : str
+        command: str
             The name of the command to check for
 
         Returns
@@ -104,11 +104,11 @@ class CommandInterface(metaclass=ABCMeta):
 
         Parameters
         ----------
-        node : CommandGraphNode
+        node: CommandGraphNode
             The node to check for items
-        object_type : str
+        object_type: str
             The type of object to check for items.
-        command : str
+        command: str
             The name of the item to check for
 
         Returns
@@ -126,7 +126,7 @@ class QtileCommandInterface(CommandInterface):
 
         Parameters
         ----------
-        command_object : CommandObject
+        command_object: CommandObject
             The command object to use for resolving the commands and items
             against.
         """
@@ -162,9 +162,9 @@ class QtileCommandInterface(CommandInterface):
 
         Parameters
         ----------
-        node : CommandGraphNode
+        node: CommandGraphNode
             The node to check for commands
-        command : str
+        command: str
             The name of the command to check for
 
         Returns
@@ -181,11 +181,11 @@ class QtileCommandInterface(CommandInterface):
 
         Parameters
         ----------
-        node : CommandGraphNode
+        node: CommandGraphNode
             The node to check for items
-        object_type : str
+        object_type: str
             The type of object to check for items.
-        item : str
+        item: str
             The name or index of the item to check for
 
         Returns
@@ -208,7 +208,7 @@ class IPCCommandInterface(CommandInterface):
 
         Parameters
         ----------
-        ipc_client : ipc.Client
+        ipc_client: ipc.Client
             The client that is to be used to resolve the calls.
         """
         self._client = ipc_client
@@ -245,9 +245,9 @@ class IPCCommandInterface(CommandInterface):
 
         Parameters
         ----------
-        node : CommandGraphNode
+        node: CommandGraphNode
             The node to check for commands
-        command : str
+        command: str
             The name of the command to check for
 
         Returns
@@ -268,11 +268,11 @@ class IPCCommandInterface(CommandInterface):
 
         Parameters
         ----------
-        node : CommandGraphNode
+        node: CommandGraphNode
             The node to check for items
-        object_type : str
+        object_type: str
             The type of object to check for items.
-        command : str
+        command: str
             The name of the item to check for
 
         Returns
