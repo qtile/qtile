@@ -130,15 +130,9 @@ class Drawer(base.Drawer):
             ctx.set_source_surface(self.surface, 0, 0)
             ctx.paint()
 
-            # If the widget is not being reflected then clear RecordingSurface of operations
-            # If it is, we need to keep the RecordingSurface contents until the mirrors have
-            # been drawn
-            if not self.mirrors:
-                self._reset_surface()
-
             self.previous_rect = self.current_rect
 
-    def draw(
+    def _draw(
         self,
         offsetx: int = 0,
         offsety: int = 0,
