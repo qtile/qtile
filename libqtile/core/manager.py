@@ -1523,7 +1523,3 @@ class Qtile(CommandObject):
     def cmd_run_extension(self, extension: _Extension) -> None:
         """Run extensions"""
         extension.run()
-
-    def cmd_change_vt(self, vt: int) -> bool:
-        """Change virtual terminal, returning success."""
-        return self.core.change_vt(vt)

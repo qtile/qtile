@@ -711,13 +711,6 @@ class Core(base.Core, wlrq.HasListeners):
             if not self.qtile.windows_map:
                 break
 
-    def change_vt(self, vt: int) -> bool:
-        """Change virtual terminal to that specified"""
-        success = self.backend.get_session().change_vt(vt)
-        if not success:
-            logger.warning(f"Could not change VT to: {vt}")
-        return success
-
     @property
     def painter(self):
         return wlrq.Painter(self)
@@ -758,3 +751,10 @@ class Core(base.Core, wlrq.HasListeners):
 
         if self.focused_internal:
             self.focused_internal.process_key_press(keysym)
+
+    def cmd_change_vt(self, vt: int) -> bool:
+        """Change virtual terminal to that specified"""
+        success = self.backend.get_session().change_vt(vt)
+        if not success:
+            logger.warning(f"Could not change VT to: {vt}")
+        return success

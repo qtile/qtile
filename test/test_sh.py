@@ -114,7 +114,6 @@ def test_complete(manager):
     sh = QSh(command)
     assert sh._complete("c", "c") == [
         "cd",
-        "change_vt",
         "commands",
         "critical",
     ]
