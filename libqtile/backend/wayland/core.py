@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
 import time
 import typing
@@ -29,6 +30,7 @@ import wlroots.helper as wlroots_helper
 from pywayland import lib
 from pywayland.protocol.wayland import WlSeat
 from pywayland.server import Display
+from wlroots.util.clock import Timespec
 from wlroots.wlr_types import (
     Cursor,
     DataControlManagerV1,
@@ -79,7 +81,7 @@ from libqtile.backend.wayland.output import Output
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import List, Optional, Sequence, Tuple, Union
+    from typing import Dict, List, Optional, Sequence, Tuple, Union
 
     from wlroots.wlr_types import Output as wlrOutput
     from wlroots.wlr_types.data_device_manager import Drag
@@ -108,6 +110,12 @@ class Core(base.Core, wlrq.HasListeners):
 
         # These windows have not been mapped yet; they'll get managed when mapped
         self.pending_windows: List[window.WindowType] = []
+
+        # Pending x, y, width and height are stored here until all windows that are
+        # being configured with new geometry ack-configure their state changes
+        self.pending_geometry: Dict[window.WindowType, Tuple[int, int, int, int]] = {}
+        self.serials: Dict[window.Window, int] = {}
+        self._masked: bool = False
 
         # mapped_windows contains just regular windows
         self.mapped_windows: List[window.WindowType] = []  # Ascending in Z
@@ -781,6 +789,55 @@ class Core(base.Core, wlrq.HasListeners):
     def warp_pointer(self, x: int, y: int) -> None:
         """Warp the pointer to the coordinates in relative to the output layout"""
         self.cursor.warp(WarpMode.LayoutClosest, x, y)
+
+    @contextlib.contextmanager
+    def masked(self):
+        """A context manager to suppress window events while operating on many windows."""
+        # Store the fact that we are masked the prevent nested masked() actions
+        if self._masked:
+            yield
+            return
+
+        self._masked = True
+        yield
+        self._masked = False
+
+        if self.serials:
+            # Resized clients won't actually get resized until they reply with an
+            # ack-configure. Once all windows have acked, or the timer expires, all
+            # windows get resized atomically in end_configure_series()
+
+            # Tell clients to redraw
+            now = Timespec.get_monotonic_time()
+            for win in self.serials.keys():
+                win.surface.surface.send_frame_done(now)
+
+            # The last window to ack will call end_configure_series, but let's add it to
+            # a 200 ms timer in case a client decides not to ack.
+            self.qtile.call_later(0.200, self.end_configure_series)
+
+        elif self.pending_geometry:
+            # In this case, windows are being repositioned but not resized, so they
+            # don't need to do anything themselves.
+            self.end_configure_series()
+
+    def end_configure_series(self):
+        needs_damage = set()
+
+        # Set new geometry to all configured windows simultaneously
+        for win, geo in self.pending_geometry.items():
+            win.x, win.y, win.width, win.height = geo
+            if win.pending_map_state is not None:
+                win.mapped = win.pending_map_state
+                win.pending_map_state = None
+            win.find_outputs()
+            needs_damage |= win.outputs
+
+        for output in needs_damage:
+            output.damage()
+
+        self.pending_geometry.clear()
+        self.serials.clear()
 
     def flush(self) -> None:
         self._poll()

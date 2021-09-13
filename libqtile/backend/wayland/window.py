@@ -31,6 +31,7 @@ from wlroots.util.edges import Edges
 from wlroots.wlr_types import Texture
 from wlroots.wlr_types.layer_shell_v1 import LayerSurfaceV1
 from wlroots.wlr_types.xdg_shell import (
+    XdgSurfaceConfigure,
     XdgPopup,
     XdgSurface,
     XdgTopLevelSetFullscreenEvent,
@@ -45,7 +46,7 @@ from libqtile.command.base import CommandError
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Dict, List, Optional, Tuple, Union
+    from typing import Dict, List, Optional, Set, Tuple, Union
 
     from wlroots.wlr_types.surface import SubSurface as WlrSubSurface
 
@@ -86,7 +87,8 @@ class Window(base.Window, HasListeners):
         self.y = 0
         self.bordercolor: List[ffi.CData] = [_rgb((0, 0, 0, 1))]
         self._opacity: float = 1.0
-        self._outputs: List[Output] = []
+        self.outputs: Set[Output] = set()
+        self.pending_map_state: Optional[bool] = None
 
         # These become non-zero when being mapping for the first time
         self._width: int = 0
@@ -105,6 +107,7 @@ class Window(base.Window, HasListeners):
         self.add_listener(surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
         self.add_listener(surface.new_popup_event, self._on_new_popup)
+        self.add_listener(surface.ack_configure_event, self._on_ack_configure)
         self.add_listener(surface.surface.commit_event, self._on_commit)
         self.add_listener(surface.surface.new_subsurface_event, self._on_new_subsurface)
 
@@ -151,7 +154,7 @@ class Window(base.Window, HasListeners):
 
     @mapped.setter
     def mapped(self, mapped: bool) -> None:
-        """We keep track of which windows are mapped to we know which to render"""
+        """We keep track of which windows are mapped so we know which to render"""
         if mapped == self._mapped:
             return
         self._mapped = mapped
@@ -187,10 +190,18 @@ class Window(base.Window, HasListeners):
             self.add_listener(surface.toplevel.set_title_event, self._on_set_title)
             self.add_listener(surface.toplevel.set_app_id_event, self._on_set_app_id)
 
-            self.qtile.manage(self)
+            with self.core.masked():
+                self.qtile.manage(self)
+
+            # Do this now just in case the window opened itself at the desired geometry,
+            # which will not require an ack-configure.
+            self.find_outputs()
 
         if self.group.screen:
-            self.mapped = True
+            if self in self.core.serials:
+                self.pending_map_state = True
+            else:
+                self.mapped = True
             self.core.focus_window(self)
 
     def _on_unmap(self, _listener, _data):
@@ -210,13 +221,22 @@ class Window(base.Window, HasListeners):
 
         # Don't try to unmanage if we were never managed.
         if self not in self.core.pending_windows:
-            self.qtile.unmanage(self.wid)
+            with self.core.masked():
+                self.qtile.unmanage(self.wid)
 
         self.finalize()
 
     def _on_new_popup(self, _listener, xdg_popup: XdgPopup):
         logger.debug("Signal: window new_popup")
         self.popups.append(XdgPopupWindow(self, xdg_popup))
+
+    def _on_ack_configure(self, _listener, event: XdgSurfaceConfigure):
+        logger.debug("Signal: window ack configure event %i", event.serial)
+        if self.core.serials.get(self, 0) == event.serial:
+            self.core.serials.pop(self)
+
+        if not self.core.serials:
+            self.core.end_configure_series()
 
     def _on_request_fullscreen(self, _listener, event: XdgTopLevelSetFullscreenEvent):
         logger.debug("Signal: window request_fullscreen")
@@ -256,12 +276,12 @@ class Window(base.Window, HasListeners):
                     return win
         return None
 
-    def _find_outputs(self):
+    def find_outputs(self):
         """Find the outputs on which this window can be seen."""
-        self._outputs = [o for o in self.core.outputs if o.contains(self)]
+        self.outputs = {o for o in self.core.outputs if o.contains(self)}
 
     def damage(self) -> None:
-        for output in self._outputs:
+        for output in self.outputs:
             output.damage()
 
     def hide(self):
@@ -453,11 +473,15 @@ class Window(base.Window, HasListeners):
             self.float_x = x - self.group.screen.x
             self.float_y = y - self.group.screen.y
 
-        self.x = x
-        self.y = y
-        self.surface.set_size(int(width), int(height))
-        self._width = int(width)
-        self._height = int(height)
+        width = int(width)
+        height = int(height)
+        serial = self.surface.set_size(width, height)
+        if serial:  # 0 if the surface is already the desired size
+            self.core.serials[self] = serial
+        # Set geometry as pending either way as other windows may need resizing, and
+        # then all resizing and repositioning can happen atomically.
+        self.core.pending_geometry[self] = (x, y, width, height)
+
         self.paint_borders(bordercolor, borderwidth)
 
         if above and self._mapped:
@@ -465,8 +489,9 @@ class Window(base.Window, HasListeners):
             self.core.mapped_windows.append(self)
             self.core.stack_windows()
 
-        self._find_outputs()
-        self.damage()
+        # Regular windows (i.e. those that are part of the xdg shell) do not need to do
+        # self.find_outputs() and damage outputs here, as this will happen after all
+        # windows that are part of this series of updates have acked. See Core.masked.
 
     def _tweak_float(self, x=None, y=None, dx=0, dy=0, w=None, h=None, dw=0, dh=0):
         if x is None:
@@ -506,10 +531,11 @@ class Window(base.Window, HasListeners):
         if new_float_state == FloatStates.MINIMIZED:
             self.hide()
         else:
-            self.place(
-                x, y, w, h,
-                self.borderwidth, self.bordercolor, above=True, respect_hints=True
-            )
+            with self.core.masked():
+                # Mask here to apply position changes right away, as this method is
+                # often called when operating on a single window.
+                self.place(x, y, w, h, above=True, respect_hints=True)
+
         if self._float_state != new_float_state:
             self._float_state = new_float_state
             if self.group:  # may be not, if it's called from hook
@@ -644,6 +670,7 @@ class Window(base.Window, HasListeners):
             self.core.mapped_windows.remove(self)
             self.core.mapped_windows.append(self)
             self.core.stack_windows()
+            self.damage()
 
     def cmd_kill(self) -> None:
         self.kill()
@@ -706,8 +733,8 @@ class Internal(base.Internal, Window):
         self._opacity: float = 1.0
         self._width: int = width
         self._height: int = height
-        self._outputs: List[Output] = []
-        self._find_outputs()
+        self.outputs: Set[Output] = set()
+        self.find_outputs()
         self._reset_texture()
 
     def finalize(self):
@@ -779,7 +806,7 @@ class Internal(base.Internal, Window):
         if needs_reset:
             self._reset_texture()
 
-        self._find_outputs()
+        self.find_outputs()
         self.damage()
 
     def info(self) -> Dict:
@@ -819,7 +846,7 @@ class Static(base.Static, Window):
         self.borderwidth: int = 0
         self.bordercolor: List[ffi.CData] = [_rgb((0, 0, 0, 1))]
         self.opacity: float = 1.0
-        self._outputs: List[Output] = []
+        self.outputs: Set[Output] = set()
         self._float_state = FloatStates.FLOATING
         self.is_layer = False
 
@@ -835,14 +862,14 @@ class Static(base.Static, Window):
             self.output = core.output_from_wlr_output(surface.output)
             self.screen = self.output.screen
             self.mapped = True
-            self._outputs.append(self.output)
+            self.outputs.add(self.output)
         else:
             if surface.toplevel.title:
                 self.name = surface.toplevel.title
             self._app_id = surface.toplevel.app_id
             self.add_listener(surface.toplevel.set_title_event, self._on_set_title)
             self.add_listener(surface.toplevel.set_app_id_event, self._on_set_app_id)
-            self._find_outputs()
+            self.find_outputs()
 
     @property
     def mapped(self) -> bool:
