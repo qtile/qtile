@@ -67,13 +67,14 @@ def shuffle_down(lst):
 
 
 ColorType = Union[str, Tuple[int, int, int], Tuple[int, int, int, float]]
+ColorsType = Union[ColorType, List[ColorType]]
 
 
-def rgb(x):
+def rgb(x) -> Tuple[int, int, int, float]:
     """
         Returns a valid RGBA tuple.
 
-        Here are some valid specifcations:
+        Here are some valid specifications:
             #ff0000
             with alpha: #ff000080
             ff0000
@@ -110,7 +111,7 @@ def hex(x):
     return '#%02x%02x%02x' % (int(r * 255), int(g * 255), int(b * 255))
 
 
-def has_transparency(colour: Union[ColorType, List[ColorType]]):
+def has_transparency(colour: ColorsType):
     """
     Returns True if the colour is not fully opaque.
 
@@ -129,7 +130,7 @@ def has_transparency(colour: Union[ColorType, List[ColorType]]):
     return False
 
 
-def remove_transparency(colour: Union[ColorType, List[ColorType]]):
+def remove_transparency(colour: ColorsType):
     """
     Returns a tuple of (r, g, b) with no alpha.
     """

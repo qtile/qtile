@@ -18,7 +18,7 @@ if typing.TYPE_CHECKING:
     from libqtile.command.base import ItemT
     from libqtile.core.manager import Qtile
     from libqtile.group import _Group
-    from libqtile.utils import ColorType
+    from libqtile.utils import ColorsType
 
 
 class Core(CommandObject, metaclass=ABCMeta):
@@ -281,7 +281,7 @@ class Window(_Window, metaclass=ABCMeta):
     def get_pid(self) -> int:
         """Return the PID that owns the window."""
 
-    def paint_borders(self, color: Union[ColorType, List[ColorType]], width: int) -> None:
+    def paint_borders(self, color: ColorsType, width: int) -> None:
         """Paint the window borders with the given color(s) and width"""
 
     @abstractmethod
@@ -663,7 +663,7 @@ class Drawer:
     def new_ctx(self):
         return pangocffi.patch_cairo_context(cairocffi.Context(self.surface))
 
-    def set_source_rgb(self, colour: Union[ColorType, List[ColorType]], ctx: cairocffi.Context = None):
+    def set_source_rgb(self, colour: ColorsType, ctx: cairocffi.Context = None):
         # If an alternate context is not provided then we draw to the
         # drawer's default context
         if ctx is None:
@@ -671,22 +671,23 @@ class Drawer:
         if isinstance(colour, list):
             if len(colour) == 0:
                 # defaults to black
-                ctx.set_source_rgba(*utils.rgb("#000000"))
+                r, g, b, _ = utils.rgb("#000000")
+                ctx.set_source_rgba(r, g, b)
             elif len(colour) == 1:
-                ctx.set_source_rgba(*utils.rgb(colour[0]))
+                r, g, b, _ = utils.rgb(colour[0])
+                ctx.set_source_rgba(r, g, b)
             else:
                 linear = cairocffi.LinearGradient(0.0, 0.0, 0.0, self.height)
                 step_size = 1.0 / (len(colour) - 1)
                 step = 0.0
                 for c in colour:
-                    rgb_col = utils.rgb(c)
-                    if len(rgb_col) < 4:
-                        rgb_col[3] = 1
-                    linear.add_color_stop_rgba(step, *rgb_col)
+                    r, g, b, _ = utils.rgb(c)
+                    linear.add_color_stop_rgba(step, r, g, b)
                     step += step_size
                 ctx.set_source(linear)
         else:
-            ctx.set_source_rgba(*utils.rgb(colour))
+            r, g, b, _ = utils.rgb(colour)
+            ctx.set_source_rgba(r, g, b)
 
     def clear(self, colour):
         self.set_source_rgb(colour)
