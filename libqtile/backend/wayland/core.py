@@ -826,7 +826,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         # Set new geometry to all configured windows simultaneously
         for win, geo in self.pending_geometry.items():
-            win.x, win.y, win.width, win.height = geo
+            win._x, win._y, win._width, win._height = geo
             if win.pending_map_state is not None:
                 win.mapped = win.pending_map_state
                 win.pending_map_state = None

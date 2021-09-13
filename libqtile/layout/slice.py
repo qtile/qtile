@@ -55,8 +55,7 @@ class Single(Layout):
             window.place(
                 screen_rect.x, screen_rect.y,
                 screen_rect.width, screen_rect.height,
-                0,
-                None,
+                0
             )
             window.unhide()
         else:

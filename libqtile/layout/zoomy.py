@@ -57,7 +57,6 @@ class Zoomy(_SimpleLayoutBase):
                 left.width,
                 left.height,
                 0,
-                None,
                 margin=self.margin,
             )
         else:
@@ -74,7 +73,6 @@ class Zoomy(_SimpleLayoutBase):
                     right.width,
                     h,
                     0,
-                    None,
                     margin=self.margin,
                 )
             else:
@@ -85,7 +83,6 @@ class Zoomy(_SimpleLayoutBase):
                     right.width,
                     h,
                     0,
-                    None,
                     margin=self.margin,
                 )
         client.unhide()

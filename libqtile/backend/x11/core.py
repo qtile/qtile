@@ -550,7 +550,7 @@ class Core(base.Core):
 
         win = self.conn.create_window(x, y, width, height, desired_depth)
         internal = window.Internal(win, self.qtile, desired_depth)
-        internal.place(x, y, width, height, 0, None)
+        internal.place(x, y, width, height, 0)
         self.qtile.manage(internal)
         return internal
 

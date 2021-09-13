@@ -214,7 +214,7 @@ class Bar(Gap, configurable.Configurable):
         if self.window:
             # We get _configure()-ed with an existing window when screens are getting
             # reconfigured but this screen is present both before and after
-            self.window.place(self.x, self.y, self.width, self.height, 0, None)
+            self.window.place(self.x, self.y, self.width, self.height)
         else:
             # Whereas we won't have a window if we're startup up for the first time or
             # the window has been killed by us no longer using the bar's screen

@@ -73,6 +73,21 @@ def _rgb(color: ColorType) -> ffi.CData:
 SurfaceType = typing.Union[XdgSurface, LayerSurfaceV1]
 
 
+def _geometry_getter(attr):
+    def get_attr(self):
+        return getattr(self, "_" + attr)
+    return get_attr
+
+
+def _geometry_setter(attr):
+    def f(self, value):
+        logger.warning(
+            "Setting window geometry directly is deprecated. Please use place()."
+        )
+        setattr(self, "_" + attr, value)
+    return f
+
+
 class Window(base.Window, HasListeners):
     def __init__(self, core: Core, qtile: Qtile, surface: SurfaceType):
         base.Window.__init__(self)
@@ -83,8 +98,8 @@ class Window(base.Window, HasListeners):
         self.popups: List[XdgPopupWindow] = []
         self.subsurfaces: List[SubSurface] = []
         self._mapped: bool = False
-        self.x = 0
-        self.y = 0
+        self._x = 0
+        self._y = 0
         self.bordercolor: List[ffi.CData] = [_rgb((0, 0, 0, 1))]
         self._opacity: float = 1.0
         self.outputs: Set[Output] = set()
@@ -111,6 +126,17 @@ class Window(base.Window, HasListeners):
         self.add_listener(surface.surface.commit_event, self._on_commit)
         self.add_listener(surface.surface.new_subsurface_event, self._on_new_subsurface)
 
+    x = property(fset=_geometry_setter("x"), fget=_geometry_getter("x"))
+    y = property(fset=_geometry_setter("y"), fget=_geometry_getter("y"))
+    width = property(
+        fset=_geometry_setter("width"),
+        fget=_geometry_getter("width"),
+    )
+    height = property(
+        fset=_geometry_setter("height"),
+        fget=_geometry_getter("height"),
+    )
+
     def finalize(self):
         self.finalize_listeners()
         for subsurface in self.subsurfaces:
@@ -123,22 +149,6 @@ class Window(base.Window, HasListeners):
     @property
     def wid(self):
         return self._wid
-
-    @property
-    def width(self) -> int:
-        return self._width
-
-    @width.setter
-    def width(self, width: int) -> None:
-        self._width = width
-
-    @property
-    def height(self) -> int:
-        return self._height
-
-    @height.setter
-    def height(self, height: int) -> None:
-        self._height = height
 
     @property
     def group(self) -> Optional[_Group]:
@@ -320,20 +330,27 @@ class Window(base.Window, HasListeners):
                 raise CommandError("No such group: %s" % group_name)
 
         if self.group is not group:
+            x = self._x
+            y = self._y
             self.hide()
             if self.group:
                 if self.group.screen:
                     # for floats remove window offset
-                    self.x -= self.group.screen.x
+                    x -= self.group.screen.x
+                    y -= self.group.screen.y
                 self.group.remove(self)
 
-            if group.screen and self.x < group.screen.x:
-                self.x += group.screen.x
+            if group.screen:
+                if x < group.screen.x:
+                    x += group.screen.x
+                if y < group.screen.y:
+                    y += group.screen.y
+            self.place(x=x, y=y)
             group.add(self)
             if switch_group:
                 group.cmd_toscreen(toggle=False)
 
-    def paint_borders(self, color: ColorsType, width) -> None:
+    def paint_borders(self, color: Optional[ColorsType], width: int) -> None:
         if color:
             if isinstance(color, list):
                 if len(color) > width:
@@ -355,7 +372,7 @@ class Window(base.Window, HasListeners):
                 if not self._float_width:  # These might start as 0
                     self._float_width = self.width
                     self._float_height = self.height
-                self._enablefloating(
+                self._reconfigure_floating(
                     screen.x + self.float_x,
                     screen.y + self.float_y,
                     self._float_width,
@@ -384,7 +401,7 @@ class Window(base.Window, HasListeners):
             screen = self.group.screen or \
                 self.qtile.find_closest_screen(self.x, self.y)
             bw = self.group.floating_layout.fullscreen_border_width
-            self._enablefloating(
+            self._reconfigure_floating(
                 screen.x,
                 screen.y,
                 screen.width - 2 * bw,
@@ -407,7 +424,7 @@ class Window(base.Window, HasListeners):
                 self.qtile.find_closest_screen(self.x, self.y)
 
             bw = self.group.floating_layout.max_border_width
-            self._enablefloating(
+            self._reconfigure_floating(
                 screen.dx,
                 screen.dy,
                 screen.dwidth - 2 * bw,
@@ -426,7 +443,7 @@ class Window(base.Window, HasListeners):
     def minimized(self, do_minimize):
         if do_minimize:
             if self._float_state != FloatStates.MINIMIZED:
-                self._enablefloating(new_float_state=FloatStates.MINIMIZED)
+                self._reconfigure_floating(new_float_state=FloatStates.MINIMIZED)
         else:
             if self._float_state == FloatStates.MINIMIZED:
                 self.floating = False
@@ -447,8 +464,23 @@ class Window(base.Window, HasListeners):
             self.group.current_window = self
         hook.fire("client_focus", self)
 
-    def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, margin=None, respect_hints=False):
+    def place(
+        self, x=None, y=None, width=None, height=None, borderwidth=None,
+        bordercolor=None, above=False, margin=None, respect_hints=False
+    ):
+        old_x = self._x
+        old_y = self._y
+        old_width = self.width
+        old_height = self.height
+
+        if x is None:
+            x = self._x
+        if y is None:
+            y = self._y
+        if width is None:
+            width = self.width
+        if height is None:
+            height = self.height
 
         # Adjust the placement to account for layout margins, if there are any.
         if margin is not None:
@@ -468,21 +500,26 @@ class Window(base.Window, HasListeners):
             if state.max_height:
                 height = min(height, state.max_height)
 
+        moving = old_x != x or old_y != y
+        resizing = old_width != width or old_height != height
+
         # save x and y float offset
         if self.group is not None and self.group.screen is not None:
             self.float_x = x - self.group.screen.x
             self.float_y = y - self.group.screen.y
 
-        width = int(width)
-        height = int(height)
-        serial = self.surface.set_size(width, height)
-        if serial:  # 0 if the surface is already the desired size
-            self.core.serials[self] = serial
-        # Set geometry as pending either way as other windows may need resizing, and
-        # then all resizing and repositioning can happen atomically.
-        self.core.pending_geometry[self] = (x, y, width, height)
+        # Resizing asks the client to configure itself and we listen for its reply
+        if resizing:
+            serial = self.surface.set_size(width, height)
+            if serial:  # 0 if the surface is already the desired size
+                self.core.serials[self] = serial
+        if resizing or moving:
+            # Set geometry as pending either way as other windows may need resizing, and
+            # then all resizing and repositioning can happen atomically.
+            self.core.pending_geometry[self] = (x, y, width, height)
 
-        self.paint_borders(bordercolor, borderwidth)
+        if borderwidth is not None:
+            self.paint_borders(bordercolor, borderwidth)
 
         if above and self._mapped:
             self.core.mapped_windows.remove(self)
@@ -495,7 +532,7 @@ class Window(base.Window, HasListeners):
 
     def _tweak_float(self, x=None, y=None, dx=0, dy=0, w=None, h=None, dw=0, dh=0):
         if x is None:
-            x = self.x
+            x = self._x
         x += dx
 
         if y is None:
@@ -523,11 +560,9 @@ class Window(base.Window, HasListeners):
 
         self._reconfigure_floating(x, y, w, h)
 
-    def _enablefloating(self, x=None, y=None, w=None, h=None,
-                        new_float_state=FloatStates.FLOATING):
-        self._reconfigure_floating(x, y, w, h, new_float_state)
-
-    def _reconfigure_floating(self, x, y, w, h, new_float_state=FloatStates.FLOATING):
+    def _reconfigure_floating(
+        self, x=None, y=None, w=None, h=None, new_float_state=FloatStates.FLOATING
+    ):
         if new_float_state == FloatStates.MINIMIZED:
             self.hide()
         else:
@@ -630,11 +665,6 @@ class Window(base.Window, HasListeners):
     def cmd_set_size_floating(self, w: int, h: int) -> None:
         self._tweak_float(w=w, h=h)
 
-    def cmd_place(self, x, y, width, height, borderwidth, bordercolor,
-                  above=False, margin=None):
-        self.place(x, y, width, height, borderwidth, bordercolor, above,
-                   margin)
-
     def cmd_get_position(self) -> Tuple[int, int]:
         return self.x, self.y
 
@@ -691,9 +721,9 @@ class Window(base.Window, HasListeners):
         if self.group:
             self.group.remove(self)
         if x is None:
-            x = self.x + self.borderwidth
+            x = self._x + self.borderwidth
         if y is None:
-            y = self.y + self.borderwidth
+            y = self._y + self.borderwidth
         if width is None:
             width = self.width
         if height is None:
@@ -704,7 +734,7 @@ class Window(base.Window, HasListeners):
         win._mapped = True
         win.subsurfaces = self.subsurfaces
         win.screen = scr
-        win.place(x, y, width, height, 0, None)
+        win.place(x, y, width, height, 0)
         self.qtile.windows_map[self.wid] = win
 
         if self.mapped:
@@ -728,8 +758,8 @@ class Internal(base.Internal, Window):
         self.qtile = qtile
         self._mapped: bool = False
         self._wid: int = self.core.new_wid()
-        self.x: int = x
-        self.y: int = y
+        self._x: int = x
+        self._y: int = y
         self._opacity: float = 1.0
         self._width: int = width
         self._height: int = height
@@ -759,22 +789,6 @@ class Internal(base.Internal, Window):
         """Create a Drawer that draws to this window."""
         return Drawer(self.qtile, self, width, height)
 
-    @property
-    def width(self) -> int:
-        return self._width
-
-    @width.setter
-    def width(self, value: int) -> None:
-        self._width = value
-
-    @property
-    def height(self) -> int:
-        return self._height
-
-    @height.setter
-    def height(self, value: int) -> None:
-        self._height = value
-
     def hide(self) -> None:
         self.mapped = False
         self.damage()
@@ -790,18 +804,20 @@ class Internal(base.Internal, Window):
             # will follow graceful_shutdown
             del self.qtile.windows_map[self.wid]
 
-    def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, margin=None, respect_hints=False):
+    def place(
+        self, x=None, y=None, width=None, height=None, borderwidth=None,
+        bordercolor=None, above=False, margin=None, respect_hints=False
+    ):
         if above and self._mapped:
             self.core.mapped_windows.remove(self)
             self.core.mapped_windows.append(self)
             self.core.stack_windows()
 
-        self.x = x
-        self.y = y
+        self._x = x
+        self._y = y
         needs_reset = width != self.width or height != self.height
-        self.width = width
-        self.height = height
+        self._width = width
+        self._height = height
 
         if needs_reset:
             self._reset_texture()
@@ -839,8 +855,8 @@ class Static(base.Static, Window):
         self.subsurfaces: List[SubSurface] = []
         self._wid = wid
         self._mapped: bool = False
-        self.x = 0
-        self.y = 0
+        self._x = 0
+        self._y = 0
         self._width = 0
         self._height = 0
         self.borderwidth: int = 0
@@ -931,16 +947,18 @@ class Static(base.Static, Window):
         else:
             self.surface.send_close()
 
-    def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, margin=None, respect_hints=False):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
+    def place(
+        self, x=None, y=None, width=None, height=None, borderwidth=None,
+        bordercolor=None, above=False, margin=None, respect_hints=False
+    ):
+        self._x = x
+        self._y = y
+        self._width = width
+        self._height = height
         if self.is_layer:
             self.surface.configure(width, height)
         else:
-            self.surface.set_size(int(width), int(height))
+            self.surface.set_size(width, height)
             self.paint_borders(bordercolor, borderwidth)
         self.damage()
 

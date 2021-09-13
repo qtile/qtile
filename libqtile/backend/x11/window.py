@@ -23,6 +23,8 @@ from libqtile.log_utils import logger
 if TYPE_CHECKING:
     from typing import Optional
 
+    from libqtile.utils import ColorsType
+
 # ICCM Constants
 NoValue = 0x0000
 XValue = 0x0001
@@ -84,24 +86,19 @@ def _geometry_getter(attr):
     def get_attr(self):
         if getattr(self, "_" + attr) is None:
             g = self.window.get_geometry()
-            # trigger the geometry setter on all these
-            self.x = g.x
-            self.y = g.y
-            self.width = g.width
-            self.height = g.height
-            self.depth = g.depth
+            self._x = g.x
+            self._y = g.y
+            self._width = g.width
+            self._height = g.height
         return getattr(self, "_" + attr)
     return get_attr
 
 
 def _geometry_setter(attr):
     def f(self, value):
-        if not isinstance(value, int):
-            frame = inspect.currentframe()
-            stack_trace = traceback.format_stack(frame)
-            logger.error("!!!! setting %s to a non-int %s; please report this!", attr, value)
-            logger.error(''.join(stack_trace[:-1]))
-            value = int(value)
+        logger.warning(
+            "Setting window geometry directly is deprecated. Please use place()."
+        )
         setattr(self, "_" + attr, value)
     return f
 
@@ -798,40 +795,42 @@ class _Window:
     def get_pid(self):
         return self.window.get_net_wm_pid()
 
-    def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, margin=None, respect_hints=False):
+    def place(
+        self, x=None, y=None, width=None, height=None, borderwidth=None,
+        bordercolor=None, above=False, margin=None, respect_hints=False
+    ):
         """
-        Places the window at the specified location with the given size.
+        Places the window at the specified location with the given size. All values are
+        optional, and only those provided are applied.
 
         Parameters
         ==========
-        x: int
-        y: int
-        width: int
-        height: int
-        borderwidth: int
-        bordercolor: string
-        above: bool, optional
-        margin: int or list, optional
+        x : int, optional
+        y : int, optional
+        width : int, optional
+        height : int, optional
+        borderwidth : int, optional
+        bordercolor : string, optional
+        above : bool, optional
+        margin : int or list, optional
             space around window as int or list of ints [N E S W]
-        above: bool, optional
+        above : bool, optional
             If True, the geometry will be adjusted to respect hints provided by the
             client.
         """
+        old_x = self.x
+        old_y = self.y
+        old_width = self.width
+        old_height = self.height
 
-        # TODO: self.x/y/height/width are updated BEFORE
-        # place is called, so there's no way to know if only
-        # the position is changed, so we are sending
-        # the ConfigureNotify every time place is called
-        #
-        # # if position change and size don't
-        # # send a configure notify. See ICCCM 4.2.3
-        # send_notify = False
-        # if (self.x != x or self.y != y) and \
-        #    (self.width == width and self.height == height):
-        #       send_notify = True
-        # #for now, we just:
-        send_notify = True
+        if x is None:
+            x = self.x
+        if y is None:
+            y = self.y
+        if width is None:
+            width = self.width
+        if height is None:
+            height = self.height
 
         # Adjust the placement to account for layout margins, if there are any.
         if margin is not None:
@@ -863,44 +862,51 @@ class _Window:
                 width_adjustment = (width - self.hints['base_width']) % self.hints['width_inc']
                 width -= width_adjustment
                 if self.fullscreen:
-                    x += int(width_adjustment / 2)
+                    x += width_adjustment // 2
 
             if self.hints['base_height'] and self.hints['height_inc']:
                 height_adjustment = (height - self.hints['base_height']) % self.hints['height_inc']
                 height -= height_adjustment
                 if self.fullscreen:
-                    y += int(height_adjustment / 2)
+                    y += height_adjustment // 2
+
+        moving = old_x != x or old_y != y
+        resizing = old_width != width or old_height != height
 
         # save x and y float offset
         if self.group is not None and self.group.screen is not None:
             self.float_x = x - self.group.screen.x
             self.float_y = y - self.group.screen.y
 
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-
-        kwarg = dict(
-            x=x,
-            y=y,
-            width=width,
-            height=height,
-        )
+        kwarg = {}
+        if moving:
+            self._x = x
+            self._y = y
+            kwarg["x"] = x
+            kwarg["y"] = y
+        if resizing:
+            self._width = width
+            self._height = height
+            kwarg["width"] = width
+            kwarg["height"] = height
         if above:
             kwarg['stackmode'] = StackMode.Above
 
         self.window.configure(**kwarg)
-        self.paint_borders(bordercolor, borderwidth)
 
-        if send_notify:
+        if borderwidth is not None:
+            self.paint_borders(bordercolor, borderwidth)
+
+        # If position changes and size doesn't, send a configure notify. See ICCCM 4.2.3
+        if moving and not resizing:
             self.send_configure_notify(x, y, width, height)
 
-    def paint_borders(self, color, width):
+    def paint_borders(self, color: Optional[ColorsType], width: int) -> None:
         self.borderwidth = width
-        self.bordercolor = color
         self.window.configure(borderwidth=width)
-        self.window.paint_borders(self.depth, color, width, self.width, self.height)
+        if color:
+            self.bordercolor = color
+        self.window.paint_borders(self.depth, self.bordercolor, width, self.width, self.height)
 
     def send_configure_notify(self, x, y, width, height):
         """Send a synthetic ConfigureNotify"""
@@ -1145,35 +1151,27 @@ class Static(_Window, base.Static):
         self.conf_y = y
         self.conf_width = width
         self.conf_height = height
-        x = x or self.x
-        y = y or self.y
-        self.x = x + screen.x
-        self.y = y + screen.y
+        x = (x if x is not None else self.x) + screen.x
+        y = (y if y is not None else self.y) + screen.y
         self.screen = screen
-        self.place(self.x, self.y, width or self.width, height or self.height, 0, 0)
+        self.place(x, y, width or self.width, height or self.height, 0)
         self.unhide()
         self.update_strut()
         self._grab_click()
 
     def handle_ConfigureRequest(self, e):  # noqa: N802
         cw = xcffib.xproto.ConfigWindow
+        updates = {}
         if self.conf_x is None and e.value_mask & cw.X:
-            self.x = e.x
+            updates['x'] = e.x + self.screen.x
         if self.conf_y is None and e.value_mask & cw.Y:
-            self.y = e.y
+            updates['y'] = e.y + self.screen.y
         if self.conf_width is None and e.value_mask & cw.Width:
-            self.width = e.width
+            updates['width'] = e.width
         if self.conf_height is None and e.value_mask & cw.Height:
-            self.height = e.height
+            updates['height'] = e.height
 
-        self.place(
-            self.screen.x + self.x,
-            self.screen.y + self.y,
-            self.width,
-            self.height,
-            self.borderwidth,
-            self.bordercolor
-        )
+        self.place(**updates)
         return False
 
     def update_strut(self):
@@ -1270,8 +1268,11 @@ class Window(_Window, base.Window):
         if do_float and self._float_state == FloatStates.NOT_FLOATING:
             if self.group and self.group.screen:
                 screen = self.group.screen
-                self._enablefloating(
-                    screen.x + self.float_x, screen.y + self.float_y, self._float_width, self._float_height
+                self._reconfigure_floating(
+                    screen.x + self.float_x,
+                    screen.y + self.float_y,
+                    self._float_width,
+                    self._float_height
                 )
             else:
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
@@ -1314,7 +1315,7 @@ class Window(_Window, base.Window):
                 self.qtile.find_closest_screen(self.x, self.y)
 
             bw = self.group.floating_layout.fullscreen_border_width
-            self._enablefloating(
+            self._reconfigure_floating(
                 screen.x,
                 screen.y,
                 screen.width - 2 * bw,
@@ -1345,7 +1346,7 @@ class Window(_Window, base.Window):
                 self.qtile.find_closest_screen(self.x, self.y)
 
             bw = self.group.floating_layout.max_border_width
-            self._enablefloating(
+            self._reconfigure_floating(
                 screen.dx,
                 screen.dy,
                 screen.dwidth - 2 * bw,
@@ -1367,7 +1368,7 @@ class Window(_Window, base.Window):
     def minimized(self, do_minimize):
         if do_minimize:
             if self._float_state != FloatStates.MINIMIZED:
-                self._enablefloating(new_float_state=FloatStates.MINIMIZED)
+                self._reconfigure_floating(new_float_state=FloatStates.MINIMIZED)
         else:
             if self._float_state == FloatStates.MINIMIZED:
                 self.floating = False
@@ -1402,38 +1403,36 @@ class Window(_Window, base.Window):
         self.qtile.core.update_client_list(self.qtile.windows_map)
         hook.fire("client_managed", s)
 
-    def tweak_float(self, x=None, y=None, dx=0, dy=0,
+    def _tweak_float(self, x=None, y=None, dx=0, dy=0,
                     w=None, h=None, dw=0, dh=0):
-        if x is not None:
-            self.x = x
-        self.x += dx
+        if x is None:
+            x = self.x
+        x += dx
 
-        if y is not None:
-            self.y = y
-        self.y += dy
+        if y is None:
+            y = self.y
+        y += dy
 
-        if w is not None:
-            self.width = w
-        self.width += dw
+        if w is None:
+            w = self.width
+        w += dw
 
-        if h is not None:
-            self.height = h
-        self.height += dh
+        if h is None:
+            h = self.height
+        h += dh
 
-        if self.height < 0:
-            self.height = 0
-        if self.width < 0:
-            self.width = 0
+        if w < 0:
+            w = 0
+        if h < 0:
+            h = 0
 
-        screen = self.qtile.find_closest_screen(
-            self.x + self.width // 2, self.y + self.height // 2
-        )
+        screen = self.qtile.find_closest_screen(x + w // 2, y + h // 2)
         if self.group and screen is not None and screen != self.group.screen:
             self.group.remove(self, force=True)
             screen.group.add(self, force=True)
             self.qtile.focus_screen(screen.index)
 
-        self._reconfigure_floating()
+        self._reconfigure_floating(x, y, w, h)
 
     def getsize(self):
         return (self.width, self.height)
@@ -1441,33 +1440,20 @@ class Window(_Window, base.Window):
     def getposition(self):
         return (self.x, self.y)
 
-    def _reconfigure_floating(self, new_float_state=FloatStates.FLOATING):
+    def _reconfigure_floating(
+        self, x=None, y=None, w=None, h=None, new_float_state=FloatStates.FLOATING
+    ):
         if new_float_state == FloatStates.MINIMIZED:
             self.state = IconicState
             self.hide()
         else:
-            self.place(
-                self.x, self.y,
-                self.width, self.height,
-                self.borderwidth,
-                self.bordercolor,
-                above=True,
-                respect_hints=True,
-            )
+            self.place(x, y, w, h, above=True, respect_hints=True)
+
         if self._float_state != new_float_state:
             self._float_state = new_float_state
             if self.group:  # may be not, if it's called from hook
                 self.group.mark_floating(self, True)
             hook.fire('float_change')
-
-    def _enablefloating(self, x=None, y=None, w=None, h=None,
-                        new_float_state=FloatStates.FLOATING):
-        if new_float_state != FloatStates.MINIMIZED:
-            self.x = x
-            self.y = y
-            self.width = w
-            self.height = h
-        self._reconfigure_floating(new_float_state=new_float_state)
 
     def set_group(self):
         # add to group by position according to _NET_WM_DESKTOP property
@@ -1498,15 +1484,22 @@ class Window(_Window, base.Window):
                 raise CommandError("No such group: %s" % group_name)
 
         if self.group is not group:
+            x = self.x
+            y = self.y
             self.hide()
             if self.group:
                 if self.group.screen:
                     # for floats remove window offset
-                    self.x -= self.group.screen.x
+                    x -= self.group.screen.x
+                    y -= self.group.screen.y
                 self.group.remove(self)
 
-            if group.screen and self.x < group.screen.x:
-                self.x += group.screen.x
+            if group.screen:
+                if x < group.screen.x:
+                    x += group.screen.x
+                if y < group.screen.y:
+                    y += group.screen.y
+            self.place(x=x, y=y)
             group.add(self)
             if switch_group:
                 group.cmd_toscreen(toggle=False)
@@ -1552,11 +1545,7 @@ class Window(_Window, base.Window):
             width, height, x, y = self.width, self.height, self.x, self.y
 
         if self.group and self.group.screen:
-            self.place(
-                x, y,
-                width, height,
-                self.borderwidth, self.bordercolor,
-            )
+            self.place(x, y, width, height)
         self.update_state()
         return False
 
@@ -1737,24 +1726,19 @@ class Window(_Window, base.Window):
 
     def cmd_move_floating(self, dx, dy):
         """Move window by dx and dy"""
-        self.tweak_float(dx=dx, dy=dy)
+        self._tweak_float(dx=dx, dy=dy)
 
     def cmd_resize_floating(self, dw, dh):
         """Add dw and dh to size of window"""
-        self.tweak_float(dw=dw, dh=dh)
+        self._tweak_float(dw=dw, dh=dh)
 
     def cmd_set_position_floating(self, x, y):
         """Move window to x and y"""
-        self.tweak_float(x=x, y=y)
+        self._tweak_float(x=x, y=y)
 
     def cmd_set_size_floating(self, w, h):
         """Set window dimensions to w and h"""
-        self.tweak_float(w=w, h=h)
-
-    def cmd_place(self, x, y, width, height, borderwidth, bordercolor,
-                  above=False, margin=None):
-        self.place(x, y, width, height, borderwidth, bordercolor, above,
-                   margin)
+        self._tweak_float(w=w, h=h)
 
     def cmd_get_position(self):
         return self.getposition()
@@ -1798,7 +1782,7 @@ class Window(_Window, base.Window):
 
     def cmd_set_position(self, x, y):
         if self.floating:
-            self.tweak_float(x, y)
+            self._tweak_float(x, y)
             return
         curx, cury = self.qtile.core.get_mouse_position()
         for window in self.group.windows:

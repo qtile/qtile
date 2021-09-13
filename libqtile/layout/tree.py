@@ -486,8 +486,7 @@ class TreeTab(Layout):
             client.place(
                 screen_rect.x, screen_rect.y,
                 screen_rect.width, screen_rect.height,
-                0,
-                None
+                0
             )
             client.unhide()
         else:
@@ -742,8 +741,7 @@ class TreeTab(Layout):
             self._panel.place(
                 screen_rect.x, screen_rect.y,
                 screen_rect.width, screen_rect.height,
-                0,
-                None
+                0
             )
             self._create_drawer(screen_rect)
             self.draw_panel()
