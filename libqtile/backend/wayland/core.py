@@ -81,7 +81,7 @@ from libqtile.backend.wayland.output import Output
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Dict, List, Optional, Sequence, Tuple, Union
+    from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
     from wlroots.wlr_types import Output as wlrOutput
     from wlroots.wlr_types.data_device_manager import Drag
@@ -109,7 +109,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.focused_internal: Optional[window.Internal] = None
 
         # These windows have not been mapped yet; they'll get managed when mapped
-        self.pending_windows: List[window.WindowType] = []
+        self.pending_windows: Set[window.WindowType] = set()
 
         # Pending x, y, width and height are stored here until all windows that are
         # being configured with new geometry ack-configure their state changes
@@ -313,7 +313,7 @@ class Core(base.Core, wlrq.HasListeners):
         if surface.role == XdgSurfaceRole.TOPLEVEL:
             assert self.qtile is not None
             win = window.Window(self, self.qtile, surface)
-            self.pending_windows.append(win)
+            self.pending_windows.add(win)
 
     def _on_cursor_axis(self, _listener, event: pointer.PointerEventAxis):
         handled = False
