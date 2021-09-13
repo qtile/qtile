@@ -54,7 +54,7 @@ if typing.TYPE_CHECKING:
     from libqtile.command.base import ItemT
     from libqtile.core.manager import Qtile
     from libqtile.group import _Group
-    from libqtile.utils import ColorType
+    from libqtile.utils import ColorType, ColorsType
 
 EDGES_TILED = Edges.TOP | Edges.BOTTOM | Edges.LEFT | Edges.RIGHT
 EDGES_FLOAT = Edges.NONE
@@ -302,7 +302,7 @@ class Window(base.Window, HasListeners):
             if switch_group:
                 group.cmd_toscreen(toggle=False)
 
-    def paint_borders(self, color: Union[ColorType, List[ColorType]], width) -> None:
+    def paint_borders(self, color: ColorsType, width) -> None:
         if color:
             if isinstance(color, list):
                 if len(color) > width:
