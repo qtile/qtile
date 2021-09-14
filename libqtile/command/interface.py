@@ -310,7 +310,9 @@ class IPCCommandServer:
 
         logger.debug("Command: %s(%s, %s)", name, args, kwargs)
         try:
-            return SUCCESS, cmd(*args, **kwargs)
+            retval = cmd(*args, **kwargs)
+            self.qtile.core.flush()
+            return SUCCESS, retval
         except CommandError as err:
             return ERROR, err.args[0]
         except Exception:
