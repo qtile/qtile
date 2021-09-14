@@ -830,6 +830,9 @@ class Core(base.Core, wlrq.HasListeners):
             if win.pending_map_state is not None:
                 win.mapped = win.pending_map_state
                 win.pending_map_state = None
+            if win.pending_borders is not None:
+                win.paint_borders(*win.pending_borders)
+                win.pending_borders = None
             win.find_outputs()
             needs_damage |= win.outputs
 

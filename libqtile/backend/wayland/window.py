@@ -104,6 +104,7 @@ class Window(base.Window, HasListeners):
         self._opacity: float = 1.0
         self.outputs: Set[Output] = set()
         self.pending_map_state: Optional[bool] = None
+        self.pending_borders: Optional[Tuple[Optional[ColorsType], int]] = None
 
         # These become non-zero when being mapping for the first time
         self._width: int = 0
@@ -519,7 +520,10 @@ class Window(base.Window, HasListeners):
             self.core.pending_geometry[self] = (x, y, width, height)
 
         if borderwidth is not None:
-            self.paint_borders(bordercolor, borderwidth)
+            if resizing or moving:
+                self.pending_borders = (bordercolor, borderwidth)
+            else:
+                self.paint_borders(bordercolor, borderwidth)
 
         if above and self._mapped:
             self.core.mapped_windows.remove(self)
