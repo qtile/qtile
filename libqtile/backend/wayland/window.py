@@ -93,8 +93,6 @@ class Window(base.Window, HasListeners):
         self._height: int = 0
 
         assert isinstance(surface, XdgSurface)
-        if surface.toplevel.title:
-            self.name = surface.toplevel.title
         self._app_id: Optional[str] = surface.toplevel.app_id
         surface.set_tiled(EDGES_TILED)
 
@@ -108,9 +106,6 @@ class Window(base.Window, HasListeners):
         self.add_listener(surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
         self.add_listener(surface.new_popup_event, self._on_new_popup)
-        self.add_listener(surface.toplevel.request_fullscreen_event, self._on_request_fullscreen)
-        self.add_listener(surface.toplevel.set_title_event, self._on_set_title)
-        self.add_listener(surface.toplevel.set_app_id_event, self._on_set_app_id)
         self.add_listener(surface.surface.commit_event, self._on_commit)
         self.add_listener(surface.surface.new_subsurface_event, self._on_new_subsurface)
 
@@ -176,9 +171,19 @@ class Window(base.Window, HasListeners):
             logger.debug(f"Managing new top-level window with window ID: {self.wid}")
 
             # Save the client's desired geometry
-            geometry = self.surface.get_geometry()
+            surface = self.surface
+            geometry = surface.get_geometry()
             self._width = self._float_width = geometry.width
             self._height = self._float_height = geometry.height
+
+            # Get the client's name
+            if surface.toplevel.title:
+                self.name = surface.toplevel.title
+
+            # Add the toplevel's listeners
+            self.add_listener(surface.toplevel.request_fullscreen_event, self._on_request_fullscreen)
+            self.add_listener(surface.toplevel.set_title_event, self._on_set_title)
+            self.add_listener(surface.toplevel.set_app_id_event, self._on_set_app_id)
 
             self.qtile.manage(self)
 
@@ -200,7 +205,11 @@ class Window(base.Window, HasListeners):
         if self.mapped:
             logger.warning("Window destroyed before unmap event.")
             self.mapped = False
-        self.qtile.unmanage(self.wid)
+
+        # Don't try to unmanage if we were never managed.
+        if self not in self.core.pending_windows:
+            self.qtile.unmanage(self.wid)
+
         self.finalize()
 
     def _on_new_popup(self, _listener, xdg_popup: XdgPopup):
