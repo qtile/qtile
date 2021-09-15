@@ -56,6 +56,10 @@ from wlroots.wlr_types.output_management_v1 import (
     OutputConfigurationV1,
     OutputManagerV1,
 )
+from wlroots.wlr_types.pointer_constraints_v1 import (
+    PointerConstraintsV1,
+    PointerConstraintV1,
+)
 from wlroots.wlr_types.server_decoration import (
     ServerDecorationManager,
     ServerDecorationManagerMode,
@@ -172,6 +176,13 @@ class Core(base.Core, wlrq.HasListeners):
         # wlr_server_decoration will be removed in a future version of wlroots
         server_decoration_manager = ServerDecorationManager.create(self.display)
         server_decoration_manager.set_default_mode(ServerDecorationManagerMode.SERVER)
+        pointer_constraints_v1 = PointerConstraintsV1(self.display)
+        self.add_listener(
+            pointer_constraints_v1.new_constraint_event,
+            self._on_new_pointer_constraint,
+        )
+        self.pointer_constraints: Set[wlrq.PointerConstraint] = set()
+        self.active_pointer_constraint: Optional[wlrq.PointerConstraint] = None
 
         # start
         os.environ["WAYLAND_DISPLAY"] = self.socket.decode()
@@ -316,6 +327,14 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_cursor_motion(self, _listener, event: pointer.PointerEventMotion):
         assert self.qtile is not None
+
+        if self.active_pointer_constraint:
+            if not self.active_pointer_constraint.rect.contains_point(
+                self.cursor.x + event.delta_x,
+                self.cursor.y + event.delta_y
+            ):
+                return
+
         self.cursor.move(event.delta_x, event.delta_y, input_device=event.device)
         self._process_cursor_motion(event.time_msec)
 
@@ -330,6 +349,16 @@ class Core(base.Core, wlrq.HasListeners):
             input_device=event.device,
         )
         self._process_cursor_motion(event.time_msec)
+
+    def _on_new_pointer_constraint(self, _listener, wlr_constraint: PointerConstraintV1):
+        logger.debug("Signal: pointer_constraints new_constraint")
+        constraint = wlrq.PointerConstraint(self, wlr_constraint)
+        self.pointer_constraints.add(constraint)
+
+        if self.seat.pointer_state.focused_surface == wlr_constraint.surface:
+            if self.active_pointer_constraint:
+                self.active_pointer_constraint.disable()
+            constraint.enable()
 
     def _on_new_virtual_keyboard(self, _listener, virtual_keyboard: VirtualKeyboardV1):
         self._add_new_keyboard(virtual_keyboard.input_device)
