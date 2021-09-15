@@ -28,14 +28,20 @@ import cairocffi
 from pywayland.server import Listener
 from wlroots.wlr_types import Texture
 from wlroots.wlr_types.keyboard import KeyboardModifier
+from wlroots.wlr_types.pointer_constraints_v1 import PointerConstraintV1, PointerConstraintV1StateField
+from wlroots.wlr_types.xdg_shell import XdgSurface
 
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
+from libqtile.backend.base import Internal
 
 if TYPE_CHECKING:
     from typing import Callable, List
 
     from pywayland.server import Signal
+    from wlroots.wlr_types import Box
+
+    from libqtile.backend.wayland.core import Core
 
 
 class WlrQError(QtileError):
@@ -168,3 +174,78 @@ class HasListeners:
     def finalize_listeners(self):
         for listener in reversed(self._listeners):
             listener.remove()
+
+
+class PointerConstraint(HasListeners):
+    """
+    A small object to listen to signals on `struct wlr_pointer_constraint_v1` instances.
+    """
+    rect: Box
+
+    def __init__(self, core: Core, wlr_constraint: PointerConstraintV1):
+        self.core = core
+        self.wlr_constraint = wlr_constraint
+        self.window: Optional[window.WindowType] = None
+        self._warp_target = (0, 0)
+        self._needs_warp = False
+
+        self.add_listener(wlr_constraint.set_region_event, self._on_set_region)
+        self.add_listener(wlr_constraint.destroy_event, self._on_destroy)
+
+        self._get_window()
+
+    def _get_window(self):
+        for win in self.core.qtile.windows_map.values():
+            if not isinstance(win, Internal) and isinstance(win.surface, XdgSurface):
+                if win.surface.surface == self.wlr_constraint.surface:
+                    break
+        else:
+            self.finalize()
+
+        self.window = win
+
+    def finalize(self):
+        if self.core.active_pointer_constraint is self:
+            self.disable()
+        self.finalize_listeners()
+        self.core.pointer_constraints.remove(self)
+
+    def _on_set_region(self, _listener, _data):
+        logger.debug("Signal: wlr_pointer_constraint_v1 set_region")
+        self._get_region()
+
+    def _on_destroy(self, _listener, wlr_constraint: PointerConstraintV1):
+        logger.debug("Signal: wlr_pointer_constraint_v1 destroy")
+        self.finalize()
+
+    def _on_commit(self, _listener, _data):
+        if self._needs_warp:
+            # Warp in case the pointer is not inside the rect
+            if not self.rect.contains_point(self.cursor.x, self.cursor.y):
+                self.core.warp_pointer(*self._warp_target)
+            self._needs_warp = False
+
+    def _get_region(self):
+        rect = self.wlr_constraint.region.rectangles_as_boxes()[0]
+        rect.x += self.window.x + self.window.borderwidth
+        rect.y += self.window.y + self.window.borderwidth
+        self._warp_target = (rect.x + rect.width / 2, rect.y + rect.height / 2)
+        self.rect = rect
+        self._needs_warp = True
+
+    def enable(self):
+        logger.debug("Enabling pointer constraints.")
+        self.core.active_pointer_constraint = self
+        self._get_region()
+        self.add_listener(self.wlr_constraint.surface.commit_event, self._on_commit)
+        self.wlr_constraint.send_activated()
+
+    def disable(self):
+        logger.debug("Disabling pointer constraints.")
+
+        if self.wlr_constraint.current.committed & PointerConstraintV1StateField.CURSOR_HINT:
+            x, y = self.wlr_constraint.current.cursor_hint
+            self.core.warp_pointer(x + self.window.x, y + self.window.y)
+
+        self.core.active_pointer_constraint = None
+        self.wlr_constraint.send_deactivated()

@@ -119,6 +119,10 @@ class Window(base.Window, HasListeners):
         for subsurface in self.subsurfaces:
             subsurface.finalize()
 
+        for pc in self.core.pointer_constraints.copy():
+            if pc.window is self:
+                pc.finalize()
+
     @property
     def wid(self):
         return self._wid
