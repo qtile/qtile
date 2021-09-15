@@ -42,6 +42,7 @@ from wlroots.wlr_types import (
     XdgOutputManagerV1,
     input_device,
     pointer,
+    RelativePointerManagerV1,
     seat,
     xdg_decoration_v1,
 )
@@ -183,6 +184,7 @@ class Core(base.Core, wlrq.HasListeners):
         )
         self.pointer_constraints: Set[wlrq.PointerConstraint] = set()
         self.active_pointer_constraint: Optional[wlrq.PointerConstraint] = None
+        self._relative_pointer_manager_v1 = RelativePointerManagerV1(self.display)
 
         # start
         os.environ["WAYLAND_DISPLAY"] = self.socket.decode()
@@ -328,14 +330,24 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_cursor_motion(self, _listener, event: pointer.PointerEventMotion):
         assert self.qtile is not None
 
+        dx = event.delta_x
+        dy = event.delta_y
+
+        # Send relative pointer events to seat - used e.g. by games that have
+        # constrained cursor movement but want movement events
+        self._relative_pointer_manager_v1.send_relative_motion(
+            self.seat, event.time_msec * 1000, dx, dy,
+            event.unaccel_delta_x, event.unaccel_delta_y
+        )
+
         if self.active_pointer_constraint:
             if not self.active_pointer_constraint.rect.contains_point(
-                self.cursor.x + event.delta_x,
-                self.cursor.y + event.delta_y
+                self.cursor.x + dx,
+                self.cursor.y + dy
             ):
                 return
 
-        self.cursor.move(event.delta_x, event.delta_y, input_device=event.device)
+        self.cursor.move(dx, dy, input_device=event.device)
         self._process_cursor_motion(event.time_msec)
 
     def _on_cursor_motion_absolute(
