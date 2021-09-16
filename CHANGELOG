@@ -1,4 +1,4 @@
-Qtile xxxxxx, released xxxxxxxxxx:
+Qtile 0.18.1, released 2021-09-16:
     * features
         - All layouts will accept a list of colors for border_* options with which
           they will draw multiple borders on the appropriate windows.
