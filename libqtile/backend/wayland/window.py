@@ -26,8 +26,9 @@ import typing
 import cairocffi
 import pywayland
 from wlroots import ffi
+from wlroots.util.box import Box
 from wlroots.util.edges import Edges
-from wlroots.wlr_types import Box, Texture
+from wlroots.wlr_types import Texture
 from wlroots.wlr_types.layer_shell_v1 import LayerSurfaceV1
 from wlroots.wlr_types.xdg_shell import (
     XdgPopup,
