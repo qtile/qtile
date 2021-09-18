@@ -551,11 +551,15 @@ class ScratchPad(Group):
     label: string
         The display name of the ScratchPad group. Defaults to the empty string
         such that the group is hidden in ``GroupList`` widget.
+    single : Boolean
+        Only one of the window among the specified dropdowns will be
+        visible at a time.
     """
-    def __init__(self, name, dropdowns=None, position=sys.maxsize, label=''):
+    def __init__(self, name, dropdowns=None, position=sys.maxsize, label='', single=False):
         Group.__init__(self, name, layout='floating', layouts=['floating'],
                        init=False, position=position, label=label)
         self.dropdowns = dropdowns if dropdowns is not None else []
+        self.single = single
 
     def __repr__(self):
         return '<config.ScratchPad %r (%s)>' % (
@@ -593,7 +597,7 @@ class Match:
     """
     def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
                  wm_instance_class=None, net_wm_pid=None,
-                 func: Callable[[base.WindowType], bool] = None):
+                 func: Callable[[base.WindowType], bool] = None, wid=None):
         self._rules = {}
 
         if title is not None:
@@ -602,6 +606,8 @@ class Match:
             self._rules["wm_class"] = wm_class
         if wm_instance_class is not None:
             self._rules["wm_instance_class"] = wm_instance_class
+        if wid is not None:
+            self._rules["wid"] = wid
         if net_wm_pid is not None:
             try:
                 self._rules["net_wm_pid"] = int(net_wm_pid)
@@ -619,7 +625,7 @@ class Match:
 
     @staticmethod
     def _get_property_predicate(name, value):
-        if name == 'net_wm_pid':
+        if name == 'net_wm_pid' or name == 'wid':
             return lambda other: other == value
         elif name == 'wm_class':
             def predicate(other):
@@ -652,6 +658,8 @@ class Match:
                 return rule_value(client)
             elif property_name == 'net_wm_pid':
                 value = client.get_pid()
+            elif property_name == "wid":
+                value = client.window.wid
             else:
                 value = client.get_wm_type()
 
@@ -763,7 +771,7 @@ class DropDown(configurable.Configurable):
         ),
     )
 
-    def __init__(self, name, cmd, **config):
+    def __init__(self, name, cmd, match=None, **config):
         """
         Initialize DropDown window wrapper.
         Define a command to spawn a process for the first time the DropDown
@@ -775,10 +783,13 @@ class DropDown(configurable.Configurable):
             The name of the DropDown configuration.
         cmd: string
             Command to spawn a process.
+        match : Match
+            A match object to identify the window instead of the pid.
         """
         configurable.Configurable.__init__(self, **config)
         self.name = name
         self.command = cmd
+        self.match = match
         self.add_defaults(self.defaults)
 
     def info(self):

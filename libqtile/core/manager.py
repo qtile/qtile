@@ -137,7 +137,7 @@ class Qtile(CommandObject):
 
         for grp in self.config.groups:
             if isinstance(grp, ScratchPadConfig):
-                sp = ScratchPad(grp.name, grp.dropdowns, grp.label)
+                sp = ScratchPad(grp.name, grp.dropdowns, grp.label, grp.single)
                 sp._configure([self.config.floating_layout],
                               self.config.floating_layout, self)
                 self.groups.append(sp)
