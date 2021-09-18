@@ -45,8 +45,22 @@ class ScratchPadBaseConfic(Config):
             libqtile.config.DropDown('dd-a', spawn_cmd('dd-a'), on_focus_lost_hide=False),
             libqtile.config.DropDown('dd-b', spawn_cmd('dd-b'), on_focus_lost_hide=False),
             libqtile.config.DropDown('dd-c', spawn_cmd('dd-c'), on_focus_lost_hide=True),
-            libqtile.config.DropDown('dd-d', spawn_cmd('dd-d'), on_focus_lost_hide=True)
+            libqtile.config.DropDown('dd-d', spawn_cmd('dd-d'), on_focus_lost_hide=True),
+            libqtile.config.DropDown(
+                'dd-e',
+                spawn_cmd('dd-e'),
+                match=libqtile.config.Match(title='dd-e'),
+                on_focus_lost_hide=False,
+            )
         ]),
+        libqtile.config.ScratchPad(
+            'SINGLE_SCRATCHPAD',
+            dropdowns=[
+                libqtile.config.DropDown('dd-e', spawn_cmd('dd-e'), on_focus_lost_hide=False),
+                libqtile.config.DropDown('dd-f', spawn_cmd('dd-f'), on_focus_lost_hide=False),
+            ],
+            single=True,
+        ),
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
     ]
@@ -60,8 +74,8 @@ scratchpad_config = pytest.mark.parametrize("manager", [ScratchPadBaseConfic], i
 
 
 @Retry(ignore_exceptions=(KeyError,))
-def is_spawned(manager, name):
-    manager.c.group["SCRATCHPAD"].dropdown_info(name)['window']
+def is_spawned(manager, name, scratch_group="SCRATCHPAD"):
+    manager.c.group[scratch_group].dropdown_info(name)['window']
     return True
 
 
@@ -70,6 +84,68 @@ def is_killed(manager, name):
     if 'window' not in manager.c.group["SCRATCHPAD"].dropdown_info(name):
         return True
     raise ValueError('not yet killed')
+
+
+@scratchpad_config
+def test_sratchpad_with_matcher(manager):
+    # adjust command for current display
+    manager.c.group["SCRATCHPAD"].dropdown_reconfigure("dd-e")
+
+    manager.test_window("one")
+    assert manager.c.group["a"].info()['windows'] == ['one']
+
+    # First toggling: wait for window
+    manager.c.group["SCRATCHPAD"].dropdown_toggle('dd-e')
+    is_spawned(manager, 'dd-e')
+
+    # assert window in current group "a"
+    assert sorted(manager.c.group["a"].info()['windows']) == ['dd-e', 'one']
+    assert_focused(manager, 'dd-e')
+
+    # toggle again --> "hide" dd-e
+    manager.c.group["SCRATCHPAD"].dropdown_toggle('dd-e')
+    assert manager.c.group["a"].info()['windows'] == ['one']
+    assert_focused(manager, 'one')
+    assert manager.c.group["SCRATCHPAD"].info()['windows'] == ['dd-e']
+
+    # toggle again --> show again
+    manager.c.group["SCRATCHPAD"].dropdown_toggle('dd-e')
+    assert sorted(manager.c.group["a"].info()['windows']) == ['dd-e', 'one']
+    assert_focused(manager, 'dd-e')
+    assert manager.c.group["SCRATCHPAD"].info()['windows'] == []
+
+
+@scratchpad_config
+def test_toggling_single(manager):
+    # adjust command for current display
+    manager.c.group["SINGLE_SCRATCHPAD"].dropdown_reconfigure("dd-e")
+    manager.c.group["SINGLE_SCRATCHPAD"].dropdown_reconfigure("dd-f")
+    manager.c.group["SINGLE_SCRATCHPAD"].dropdown_reconfigure("dd-g")
+    manager.c.group["SINGLE_SCRATCHPAD"].dropdown_reconfigure("dd-h")
+
+    manager.test_window("one")
+    assert manager.c.group["a"].info()['windows'] == ['one']
+
+    # First toggling: wait for window
+    manager.c.group["SINGLE_SCRATCHPAD"].dropdown_toggle('dd-e')
+    is_spawned(manager, 'dd-e', "SINGLE_SCRATCHPAD")
+
+    # assert window in current group "a"
+    assert sorted(manager.c.group["a"].info()['windows']) == ['dd-e', 'one']
+    assert_focused(manager, 'dd-e')
+
+    # toggle another window, this should hide the previous one.
+    manager.c.group["SINGLE_SCRATCHPAD"].dropdown_toggle('dd-f')
+    is_spawned(manager, 'dd-f', "SINGLE_SCRATCHPAD")
+    assert sorted(manager.c.group["a"].info()['windows']) == ['dd-f', 'one']
+    assert_focused(manager, 'dd-f')
+    assert manager.c.group["SINGLE_SCRATCHPAD"].info()['windows'] == ['dd-e']
+
+    # toggle the scratchpad that is now visible.
+    manager.c.group["SINGLE_SCRATCHPAD"].dropdown_toggle('dd-f')
+    assert sorted(manager.c.group["a"].info()['windows']) == ['one']
+    assert_focused(manager, 'one')
+    assert sorted(manager.c.group["SINGLE_SCRATCHPAD"].info()['windows']) == ['dd-e', 'dd-f']
 
 
 @scratchpad_config

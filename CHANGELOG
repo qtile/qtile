@@ -3,6 +3,11 @@ Qtile x.x.x, released xxxx-xx-xx:
         - Add `StatusNotifier` widget implementing the `StatusNotifierItem` specification.
           NB Widget does not provide context menus.
         - Add `total` bandwidth format value to the Net widget.
+        - Scratchpad groups could be defined as single so that only one of the scratchpad in the group is visible
+          at a given time.
+        - All scratchpads in a Scratchpad group can be hidden with hide_all() function.
+        - For saving states of scratchpads during restart, we use wids instead of pids.
+        - Scratchpads can now be defined with an optional matcher to match with window properties.
 
 Qtile 0.18.1, released 2021-09-16:
     * features
