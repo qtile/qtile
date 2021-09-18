@@ -23,9 +23,10 @@ from __future__ import annotations
 import os
 import typing
 
+from wlroots.util.box import Box
 from wlroots.util.clock import Timespec
 from wlroots.util.region import PixmanRegion32
-from wlroots.wlr_types import Box, Matrix
+from wlroots.wlr_types import Matrix
 from wlroots.wlr_types import Output as wlrOutput
 from wlroots.wlr_types import OutputDamage
 from wlroots.wlr_types.layer_shell_v1 import (
