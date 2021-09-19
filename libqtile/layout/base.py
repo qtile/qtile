@@ -463,7 +463,7 @@ class _ClientList:
         except IndexError:
             return None
 
-    def has_floating_client(self, client):
+    def contains_client(self, client):
         return client in self._clients
 
     def _clients_tiled_index(self, tiled_index):

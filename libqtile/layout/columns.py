@@ -205,7 +205,7 @@ class Columns(Layout):
 
     def float_client(self, client):
         for c in self.columns:
-            if c.has_floating_client(client):
+            if c.contains_client(client):
                 c.remove(client, pseudo=True)
 
     def add(self, client):
@@ -222,7 +222,7 @@ class Columns(Layout):
     def remove(self, client):
         remove = None
         for c in self.columns:
-            if client in c:
+            if c.contains_client(client):
                 c.remove(client)
                 if len(c) == 0 and len(self.columns) > 1:
                     remove = c
