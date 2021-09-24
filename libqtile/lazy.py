@@ -35,11 +35,11 @@ class LazyCall:
 
         Parameters
         ----------
-        call : CommandGraphCall
+        call: CommandGraphCall
             The call that is made
-        args : Tuple
+        args: Tuple
             The args passed to the call when it is evaluated.
-        kwargs : Dict
+        kwargs: Dict
             The kwargs passed to the call when it is evaluated.
         """
         self._call = call
@@ -75,10 +75,10 @@ class LazyCall:
 
         Parameters
         ----------
-        layout : str, Iterable[str], or None
+        layout: str, Iterable[str], or None
             Restrict call to one or more layouts.
             If None, enable the call for all layouts.
-        when_floating : bool
+        when_floating: bool
             Enable call when the current window is floating.
         """
         if layout is not None:

@@ -294,7 +294,7 @@ class _ClientList:
         Positive values are after the client.
 
         Use parameter 'client_position' to insert the given client at 4 specific
-        positions : top, bottom, after_current, before_current.
+        positions: top, bottom, after_current, before_current.
         """
         if client_position is not None:
             if client_position == "after_current":

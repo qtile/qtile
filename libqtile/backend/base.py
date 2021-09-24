@@ -21,7 +21,7 @@ if typing.TYPE_CHECKING:
     from libqtile.utils import ColorType
 
 
-class Core(metaclass=ABCMeta):
+class Core(CommandObject, metaclass=ABCMeta):
     painter: Any
 
     @property
@@ -29,6 +29,12 @@ class Core(metaclass=ABCMeta):
     def name(self) -> str:
         """The name of the backend"""
         pass
+
+    def _items(self, name: str) -> ItemT:
+        return None
+
+    def _select(self, name, sel):
+        return None
 
     @abstractmethod
     def finalize(self):
@@ -116,6 +122,12 @@ class Core(metaclass=ABCMeta):
     def change_vt(self, vt: int) -> bool:
         """Change virtual terminal, returning success."""
         return False
+
+    def cmd_info(self):
+        return {
+            "backend": self.name,
+            "display_name": self.display_name
+        }
 
 
 @enum.unique
@@ -475,6 +487,7 @@ class Drawer:
 
         self.current_rect = (0, 0, 0, 0)
         self.previous_rect = (-1, -1, -1, -1)
+        self._enabled = True
 
     def finalize(self):
         """Destructor/Clean up resources"""
@@ -517,6 +530,14 @@ class Drawer:
             None,
         )
         self.ctx = self.new_ctx()
+
+    def _check_surface_reset(self):
+        """
+        Checks to see if the widget is not being reflected and
+        then clears RecordingSurface of operations.
+        """
+        if not self.mirrors:
+            self._reset_surface()
 
     @property
     def needs_update(self) -> bool:
@@ -579,7 +600,48 @@ class Drawer:
         self.ctx.fill()
         self.ctx.stroke()
 
+    def enable(self):
+        """Enable drawing of surface to Internal window."""
+        self._enabled = True
+
+    def disable(self):
+        """Disable drawing of surface to Internal window."""
+        self._enabled = False
+
     def draw(
+        self,
+        offsetx: int = 0,
+        offsety: int = 0,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+    ):
+        """
+        A wrapper for the draw operation.
+
+        This draws our cached operations to the Internal window.
+
+        If Drawer has been disabled then the RecordingSurface will
+        be cleared if no mirrors are waiting to copy its contents.
+
+        Parameters
+        ==========
+
+        offsetx :
+            the X offset to start drawing at.
+        offsety :
+            the Y offset to start drawing at.
+        width :
+            the X portion of the canvas to draw at the starting point.
+        height :
+            the Y portion of the canvas to draw at the starting point.
+        """
+        if self._enabled:
+            self._draw(offsetx, offsety, width, height)
+
+        # Check to see if RecordingSurface can be cleared.
+        self._check_surface_reset()
+
+    def _draw(
         self,
         offsetx: int = 0,
         offsety: int = 0,

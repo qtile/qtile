@@ -36,7 +36,7 @@ class Drawer(base.Drawer):
             context.set_source_rgba(*utils.rgb("#000000"))
             context.paint()
 
-    def draw(
+    def _draw(
         self,
         offsetx: int = 0,
         offsety: int = 0,
@@ -81,12 +81,6 @@ class Drawer(base.Drawer):
             dst_y=offsety,
         )
         self._win.damage()  # type: ignore
-
-        # If the widget is not being reflected then clear RecordingSurface of operations
-        # If it is, we need to keep the RecordingSurface contents until the mirrors have
-        # been drawn
-        if not self.mirrors:
-            self._reset_surface()
 
     def clear(self, colour):
         # Draw background straight to ImageSurface

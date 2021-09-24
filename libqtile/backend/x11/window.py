@@ -89,6 +89,7 @@ def _geometry_getter(attr):
             self.y = g.y
             self.width = g.width
             self.height = g.height
+            self.depth = g.depth
         return getattr(self, "_" + attr)
     return get_attr
 
@@ -312,9 +313,9 @@ class XWindow:
         """
         Parameters
         ==========
-        name : String Atom name
-        type : String Atom name
-        format : 8, 16, 32
+        name: String Atom name
+        type: String Atom name
+        format: 8, 16, 32
         """
         if name in xcbq.PropertyMap:
             if type or format:
@@ -427,7 +428,7 @@ class XWindow:
             parent = XWindow(self.conn, q.parent)
         return root, parent, [XWindow(self.conn, i) for i in q.children]
 
-    def paint_borders(self, colors, borderwidth, width, height):
+    def paint_borders(self, depth, colors, borderwidth, width, height):
         """
         This method is used only by the managing Window class.
         """
@@ -447,7 +448,7 @@ class XWindow:
         with PixmapID(self.conn.conn) as pixmap:
             with GContextID(self.conn.conn) as gc:
                 core.CreatePixmap(
-                    self.conn.default_screen.root_depth, pixmap, self.wid, outer_w, outer_h
+                    depth, pixmap, self.wid, outer_w, outer_h
                 )
                 core.CreateGC(gc, pixmap, 0, None)
                 borders = len(colors)
@@ -464,15 +465,15 @@ class XWindow:
                     )
                     core.PolyFillRectangle(pixmap, gc, 1, [rect])
                     coord += borderwidths[i]
-                self._set_borderpixmap(pixmap, gc, borderwidth, width, height)
+                self._set_borderpixmap(depth, pixmap, gc, borderwidth, width, height)
 
-    def _set_borderpixmap(self, pixmap, gc, borderwidth, width, height):
+    def _set_borderpixmap(self, depth, pixmap, gc, borderwidth, width, height):
         core = self.conn.conn.core
         outer_w = width + borderwidth * 2
         outer_h = height + borderwidth * 2
         with PixmapID(self.conn.conn) as border:
             core.CreatePixmap(
-                self.conn.default_screen.root_depth, border, self.wid, outer_w, outer_h
+                depth, border, self.wid, outer_w, outer_h
             )
             most_w = outer_w - borderwidth
             most_h = outer_h - borderwidth
@@ -500,6 +501,7 @@ class _Window:
             self._y = g.y
             self._width = g.width
             self._height = g.height
+            self._depth = g.depth
         except xcffib.xproto.DrawableError:
             # Whoops, we were too early, so let's ignore it for now and get the
             # values on demand.
@@ -507,6 +509,7 @@ class _Window:
             self._y = None
             self._width = None
             self._height = None
+            self._depth = None
 
         self.float_x: Optional[int] = None
         self.float_y: Optional[int] = None
@@ -544,6 +547,10 @@ class _Window:
     height = property(
         fset=_geometry_setter("height"),
         fget=_geometry_getter("height"),
+    )
+    depth = property(
+        fset=_geometry_setter("depth"),
+        fget=_geometry_getter("depth"),
     )
 
     @property
@@ -740,7 +747,8 @@ class _Window:
     def hide(self):
         # We don't want to get the UnmapNotify for this unmap
         with self.disable_mask(EventMask.StructureNotify):
-            self.window.unmap()
+            with self.qtile.core.disable_unmap_events():
+                self.window.unmap()
         self.hidden = True
 
     def unhide(self):
@@ -764,6 +772,29 @@ class _Window:
             eventmask=self._window_mask
         )
 
+    def _grab_click(self):
+        # Grab button 1 to focus upon click when unfocussed
+        for amask in self.qtile.core._auto_modmasks():
+            self.qtile.core.conn.conn.core.GrabButton(
+                True,
+                self.window.wid,
+                EventMask.ButtonPress,
+                xcffib.xproto.GrabMode.Sync,
+                xcffib.xproto.GrabMode.Async,
+                xcffib.xproto.Atom._None,
+                xcffib.xproto.Atom._None,
+                1,
+                amask,
+            )
+
+    def _ungrab_click(self):
+        # Ungrab button 1 when focussed
+        self.qtile.core.conn.conn.core.UngrabButton(
+            xcffib.xproto.Atom.Any,
+            self.window.wid,
+            xcffib.xproto.ModMask.Any,
+        )
+
     def get_pid(self):
         return self.window.get_net_wm_pid()
 
@@ -774,16 +805,16 @@ class _Window:
 
         Parameters
         ==========
-        x : int
-        y : int
-        width : int
-        height : int
-        borderwidth : int
-        bordercolor : string
-        above : bool, optional
-        margin : int or list, optional
+        x: int
+        y: int
+        width: int
+        height: int
+        borderwidth: int
+        bordercolor: string
+        above: bool, optional
+        margin: int or list, optional
             space around window as int or list of ints [N E S W]
-        above : bool, optional
+        above: bool, optional
             If True, the geometry will be adjusted to respect hints provided by the
             client.
         """
@@ -869,7 +900,7 @@ class _Window:
         self.borderwidth = width
         self.bordercolor = color
         self.window.configure(borderwidth=width)
-        self.window.paint_borders(color, width, self.width, self.height)
+        self.window.paint_borders(self.depth, color, width, self.width, self.height)
 
     def send_configure_notify(self, x, y, width, height):
         """Send a synthetic ConfigureNotify"""
@@ -967,7 +998,14 @@ class _Window:
                 state.remove(atom)
                 self.window.set_property('_NET_WM_STATE', state)
 
+        # re-grab button events on the previously focussed window
+        old = self.qtile.core._root.get_property("_NET_ACTIVE_WINDOW", 'WINDOW', unpack=int)
+        if old and old[0] in self.qtile.windows_map:
+            old_win = self.qtile.windows_map[old[0]]
+            if not isinstance(old_win, base.Internal):
+                old_win._grab_click()
         self.qtile.core._root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
+        self._ungrab_click()
 
         if self.group:
             self.group.current_window = self
@@ -1112,20 +1150,7 @@ class Static(_Window, base.Static):
         self.place(self.x, self.y, width or self.width, height or self.height, 0, 0)
         self.unhide()
         self.update_strut()
-
-        # Grab button 1 to focus upon click
-        for amask in self.qtile.core._auto_modmasks():
-            self.qtile.core.conn.conn.core.GrabButton(
-                True,
-                self.window.wid,
-                EventMask.ButtonPress,
-                xcffib.xproto.GrabMode.Sync,
-                xcffib.xproto.GrabMode.Async,
-                xcffib.xproto.Atom._None,
-                xcffib.xproto.Atom._None,
-                1,
-                amask,
-            )
+        self._grab_click()
 
     def handle_ConfigureRequest(self, e):  # noqa: N802
         cw = xcffib.xproto.ConfigWindow
@@ -1224,20 +1249,7 @@ class Window(_Window, base.Window):
         # add window to the save-set, so it gets mapped when qtile dies
         qtile.core.conn.conn.core.ChangeSaveSet(SetMode.Insert, self.window.wid)
         self.update_wm_net_icon()
-
-        # Grab button 1 to focus upon click
-        for amask in self.qtile.core._auto_modmasks():
-            self.qtile.core.conn.conn.core.GrabButton(
-                True,
-                self.window.wid,
-                EventMask.ButtonPress,
-                xcffib.xproto.GrabMode.Sync,
-                xcffib.xproto.GrabMode.Async,
-                xcffib.xproto.Atom._None,
-                xcffib.xproto.Atom._None,
-                1,
-                amask,
-            )
+        self._grab_click()
 
     @property
     def group(self):
@@ -1395,6 +1407,7 @@ class Window(_Window, base.Window):
             self.group.remove(self)
         s = Static(self.window, self.qtile, screen, x, y, width, height)
         self.qtile.windows_map[self.window.wid] = s
+        self.qtile.core.update_client_list(self.qtile.windows_map)
         hook.fire("client_managed", s)
 
     def tweak_float(self, x=None, y=None, dx=0, dy=0,
