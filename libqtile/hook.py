@@ -304,6 +304,19 @@ class Subscribe:
         """
         return self._subscribe("screen_change", func)
 
+    def screens_reconfigured(self, func):
+        """Called when all ``screen_change`` hooks have fired.
+
+        This is primarily useful where you want a callback to be triggered once
+        ``qtile.cmd_reconfigure_screens`` has completed (e.g. if
+        ``reconfigure_screens`` is set to ``True`` in your config).
+
+        **Arguments**
+
+        None
+        """
+        return self._subscribe("screens_reconfigured", func)
+
     def current_screen_change(self, func):
         """Called when the current screen (i.e. the screen with focus) changes
 
