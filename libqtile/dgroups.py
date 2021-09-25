@@ -195,7 +195,7 @@ class DGroups:
                             self.qtile.screens[affinity].set_group(group_obj)
 
                 if rule.float:
-                    client.enablefloating()
+                    client.cmd_enable_floating()
 
                 if rule.intrusive:
                     intrusive = rule.intrusive
