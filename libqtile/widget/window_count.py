@@ -25,7 +25,10 @@ from libqtile.widget import base
 
 
 class WindowCount(base._TextBox):
-    """A simple widget to show the number of windows in the current group."""
+    """
+    A simple widget to display the number of windows in the
+    current group of the screen on which the widget is.
+    """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("font", "sans", "Text font"),
@@ -55,7 +58,7 @@ class WindowCount(base._TextBox):
 
     def _wincount(self, *args):
         try:
-            self._count = len(self.qtile.current_group.windows)
+            self._count = len(self.bar.screen.group.windows)
         except AttributeError:
             self._count = 0
 
@@ -63,12 +66,11 @@ class WindowCount(base._TextBox):
 
     def _win_killed(self, window):
         try:
-            self._count = len(self.qtile.current_group.windows)
+            self._count = len(self.bar.screen.group.windows)
+            if window.group == self.bar.screen.group:
+                self._count -= 1
         except AttributeError:
             self._count = 0
-
-        if self._count and getattr(window, "group", None):
-            self._count -= 1
 
         self.update(self.text_format.format(num=self._count))
 
