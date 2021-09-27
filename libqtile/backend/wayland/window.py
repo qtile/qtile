@@ -348,11 +348,12 @@ class Window(base.Window, HasListeners):
         if do_full:
             screen = self.group.screen or \
                 self.qtile.find_closest_screen(self.x, self.y)
+            bw = self.group.floating_layout.fullscreen_border_width
             self._enablefloating(
                 screen.x,
                 screen.y,
-                screen.width,
-                screen.height,
+                screen.width - 2 * bw,
+                screen.height - 2 * bw,
                 new_float_state=FloatStates.FULLSCREEN
             )
             return
@@ -370,11 +371,12 @@ class Window(base.Window, HasListeners):
             screen = self.group.screen or \
                 self.qtile.find_closest_screen(self.x, self.y)
 
+            bw = self.group.floating_layout.max_border_width
             self._enablefloating(
                 screen.dx,
                 screen.dy,
-                screen.dwidth,
-                screen.dheight,
+                screen.dwidth - 2 * bw,
+                screen.dheight - 2 * bw,
                 new_float_state=FloatStates.MAXIMIZED
             )
         else:
