@@ -266,8 +266,7 @@ class _ClientList:
 
     @current_client.setter
     def current_client(self, client):
-        if not client.floating:
-            self._current_idx = self.clients.index(client)
+        self._current_idx = self.clients.index(client)
 
     def focus(self, client):
         """

@@ -246,8 +246,9 @@ class _Group(CommandObject):
             win._float_state = FloatStates.FLOATING
         if win.floating:
             self.floating_layout.add(win)
-        for i in self.layouts:
-            i.add(win)
+        else:
+            for i in self.layouts:
+                i.add(win)
         if focus:
             self.focus(win, warp=True, force=force)
 

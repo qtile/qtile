@@ -216,8 +216,7 @@ class Bsp(Layout):
     def add(self, client):
         node = self.root.get_shortest() if self.fair else self.current
         inserted = node.insert(client, int(self.lower_right), self.ratio)
-        if not client.floating:
-            self.current = inserted
+        self.current = inserted
 
     def remove(self, client):
         node = self.get_node(client)
