@@ -1,3 +1,7 @@
+Qtile x.x.x, released xxxx-xx-xx:
+    * features
+        - Add `total` bandwidth format value to the Net widget.
+
 Qtile 0.18.1, released 2021-09-16:
     * features
         - All layouts will accept a list of colors for border_* options with which
