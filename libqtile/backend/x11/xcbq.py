@@ -674,14 +674,25 @@ class Connection:
 
 class Painter:
     def __init__(self, display):
-        self.conn = xcffib.connect(display=display)
-        self.setup = self.conn.get_setup()
-        self.screens = [Screen(self, i) for i in self.setup.roots]
-        self.default_screen = self.screens[self.conn.pref_screen]
+        self.display = display
+        self._connect()
         self.conn.core.SetCloseDownMode(xcffib.xproto.CloseDown.RetainPermanent)
         self.atoms = AtomCache(self)
+        self.default_screen = None
+
+    def _connect(self):
+        self.conn = xcffib.connect(display=self.display)
+        self.setup = self.conn.get_setup()
 
     def paint(self, screen, image_path, mode=None):
+        """Paints an image to the screen."""
+
+        # We need to refresh the connection to the X server to check the root
+        # window dimensions have not changed.
+        self._connect()
+        screens = [Screen(self, i) for i in self.setup.roots]
+        default_screen = screens[self.conn.pref_screen]
+
         try:
             with open(image_path, 'rb') as f:
                 image, _ = cairocffi.pixbuf.decode_to_image_surface(f.read())
@@ -689,13 +700,25 @@ class Painter:
             logger.error('Wallpaper: %s' % e)
             return
 
-        root_pixmap = self.default_screen.root.get_property(
-            '_XROOTPMAP_ID', xcffib.xproto.Atom.PIXMAP, int
-        )
-        if not root_pixmap:
+        # If the screen has changed then we will need a new pixmap
+        if (
+            self.default_screen is None or
+            default_screen.width_in_pixels != self.default_screen.width_in_pixels or
+            default_screen.height_in_pixels != self.default_screen.height_in_pixels
+        ):
+            self.default_screen = default_screen
+            root_pixmap = None
+
+        # If not, see if we can load current pixmap
+        else:
             root_pixmap = self.default_screen.root.get_property(
-                'ESETROOT_PMAP_ID', xcffib.xproto.Atom.PIXMAP, int
+                '_XROOTPMAP_ID', xcffib.xproto.Atom.PIXMAP, int
             )
+            if not root_pixmap:
+                root_pixmap = self.default_screen.root.get_property(
+                    'ESETROOT_PMAP_ID', xcffib.xproto.Atom.PIXMAP, int
+                )
+
         if root_pixmap:
             root_pixmap = root_pixmap[0]
         else:
