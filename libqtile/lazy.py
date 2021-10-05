@@ -49,6 +49,27 @@ class LazyCall:
         self._layouts: Set[str] = set()
         self._when_floating = True
 
+    def __call__(self, *args, **kwargs):
+        """Convenience method to allow users to pass arguments to
+        functions decorated with `@lazy.function`.
+
+            @lazy.function
+            def my_function(qtile, pos_arg, keyword_arg=False):
+                pass
+
+            ...
+
+            Key(... my_function("Positional argument", keyword_arg=True))
+
+        """
+        # We need to return a new object so the arguments are not shared between
+        # a single instance of the LazyCall object.
+        return LazyCall(
+            self._call,
+            (*self._args, *args),
+            {**self._kwargs, **kwargs}
+        )
+
     @property
     def selectors(self) -> List[SelectorType]:
         """The selectors for the given call"""

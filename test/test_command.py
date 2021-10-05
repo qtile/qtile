@@ -381,3 +381,33 @@ def test_select_widget(manager):
 
 def test_core_node(manager, backend_name):
     assert manager.c.core.info()["backend"] == backend_name
+
+
+def test_lazy_arguments(manager_nospawn):
+
+    # Decorated function to be bound to key presses
+    @lazy.function
+    def test_func(qtile, value, multiplier=1):
+        qtile.test_func_output = value * multiplier
+
+    config = ServerConfig
+    config.keys = [
+        libqtile.config.Key(
+            ["control"], "j",
+            test_func(10),
+        ),
+        libqtile.config.Key(
+            ["control"], "k",
+            test_func(5, multiplier=100)
+        ),
+    ]
+
+    manager_nospawn.start(config)
+
+    manager_nospawn.c.simulate_keypress(["control"], "j")
+    _, val = manager_nospawn.c.eval("self.test_func_output")
+    assert val == "10"
+
+    manager_nospawn.c.simulate_keypress(["control"], "k")
+    _, val = manager_nospawn.c.eval("self.test_func_output")
+    assert val == "500"
