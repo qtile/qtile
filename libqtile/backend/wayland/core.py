@@ -34,6 +34,7 @@ from wlroots.wlr_types import (
     DataControlManagerV1,
     DataDeviceManager,
     GammaControlManagerV1,
+    InputInhibitManager,
     OutputLayout,
     PrimarySelectionV1DeviceManager,
     ScreencopyManagerV1,
@@ -156,6 +157,7 @@ class Core(base.Core, wlrq.HasListeners):
         XdgOutputManagerV1(self.display, self.output_layout)
         ScreencopyManagerV1(self.display)
         GammaControlManagerV1(self.display)
+        self.input_inhibit_manager = InputInhibitManager(self.display)
         PrimarySelectionV1DeviceManager(self.display)
         self._virtual_keyboard_manager_v1 = VirtualKeyboardManagerV1(self.display)
         self.add_listener(

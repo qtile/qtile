@@ -52,6 +52,7 @@ class Keyboard(HasListeners):
         self.seat = core.seat
         self.keyboard = device.keyboard
         self.grabbed_keys = core.grabbed_keys
+        self._inhibitor = core.input_inhibit_manager
 
         self.keyboard.set_repeat_info(25, 600)
         self.xkb_context = xkb.Context()
@@ -99,7 +100,8 @@ class Keyboard(HasListeners):
             self.qtile = self.core.qtile
             assert self.qtile is not None
 
-        if event.state == KEY_PRESSED:
+        # don't handle shortcuts if screen is locked
+        if event.state == KEY_PRESSED and self._inhibitor.is_inactive():
             # translate libinput keycode -> xkbcommon
             keycode = event.keycode + 8
             layout_index = lib.xkb_state_key_get_layout(
@@ -114,6 +116,7 @@ class Keyboard(HasListeners):
             )
             keysyms = [xkb_keysym[0][i] for i in range(nsyms)]
             mods = self.keyboard.modifier
+
             for keysym in keysyms:
                 if (keysym, mods) in self.grabbed_keys:
                     self.qtile.process_key_event(keysym, mods)
