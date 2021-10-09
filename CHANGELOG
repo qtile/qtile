@@ -9,6 +9,9 @@ Qtile x.x.x, released xxxx-xx-xx:
         - For saving states of scratchpads during restart, we use wids instead of pids.
         - Scratchpads can now be defined with an optional matcher to match with window properties.
         - `Qtile.cmd_reload_config` is added for reloading the config without completely restarting.
+        - Window.cmd_togroup's argument `groupName` should be changed to
+          `group_name`. For the time being a log warning is in place and a
+          migration is added. In the future `groupName` will fail.
 
 Qtile 0.18.1, released 2021-09-16:
     * features

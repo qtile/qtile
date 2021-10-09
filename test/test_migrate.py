@@ -248,3 +248,23 @@ def test_new_at_current_to_new_client_position():
     """)
 
     check_migrate(orig, expected)
+
+
+def test_windowtogroup_groupName_argument():
+    orig = textwrap.dedent("""
+        from libqtile.config import Key
+        from libqtile.lazy import lazy
+
+        k = Key([], 's', lazy.window.togroup(groupName="g"))
+        c = lambda win: win.cmd_togroup(groupName="g")
+    """)
+
+    expected = textwrap.dedent("""
+        from libqtile.config import Key
+        from libqtile.lazy import lazy
+
+        k = Key([], 's', lazy.window.togroup(group_name="g"))
+        c = lambda win: win.cmd_togroup(group_name="g")
+    """)
+
+    check_migrate(orig, expected)
