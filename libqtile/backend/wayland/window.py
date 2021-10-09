@@ -36,7 +36,7 @@ from wlroots.wlr_types.xdg_shell import (
     XdgTopLevelSetFullscreenEvent,
 )
 
-from libqtile import hook, utils
+from libqtile import config, hook, utils
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
 from libqtile.backend.wayland.drawer import Drawer
@@ -85,7 +85,7 @@ class Window(base.Window, HasListeners):
         self.x = 0
         self.y = 0
         self.bordercolor: List[ffi.CData] = [_rgb((0, 0, 0, 1))]
-        self.opacity: float = 1.0
+        self._opacity: float = 1.0
         self._outputs: List[Output] = []
 
         # These become non-zero when being mapping for the first time
@@ -537,6 +537,9 @@ class Window(base.Window, HasListeners):
             fullscreen=self._float_state == FloatStates.FULLSCREEN
         )
 
+    def match(self, match: config.Match) -> bool:
+        return match.compare(self)
+
     def _items(self, name: str) -> ItemT:
         if name == "group":
             return True, []
@@ -572,6 +575,29 @@ class Window(base.Window, HasListeners):
 
     def cmd_set_position_floating(self, x: int, y: int) -> None:
         self._tweak_float(x=x, y=y)
+
+    def cmd_set_position(self, x: int, y: int) -> None:
+        if self.floating:
+            self._tweak_float(x=x, y=y)
+            return
+
+        if self.group:
+            cx = self.core.cursor.x
+            cy = self.core.cursor.y
+            for window in self.group.windows:
+                if (
+                    window is not self and
+                    not window.floating and
+                    window.x <= cx <= (window.x + window.width) and
+                    window.y <= cy <= (window.y + window.height)
+                ):
+                    clients = self.group.layout.clients
+                    index1 = clients.index(self)
+                    index2 = clients.index(window)
+                    clients[index1], clients[index2] = clients[index2], clients[index1]
+                    self.group.layout.focused = index2
+                    self.group.layout_all()
+                    return
 
     def cmd_set_size_floating(self, w: int, h: int) -> None:
         self._tweak_float(w=w, h=h)
@@ -675,7 +701,7 @@ class Internal(base.Internal, Window):
         self._wid: int = self.core.new_wid()
         self.x: int = x
         self.y: int = y
-        self.opacity: float = 1.0
+        self._opacity: float = 1.0
         self._width: int = width
         self._height: int = height
         self._outputs: List[Output] = []

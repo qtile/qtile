@@ -9,7 +9,8 @@ from abc import ABCMeta, abstractmethod
 import cairocffi
 
 from libqtile import drawer, pangocffi, utils
-from libqtile.command.base import CommandObject
+from libqtile.command.base import CommandError, CommandObject
+from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
     from typing import Any, Dict, List, Optional, Tuple, Union
@@ -120,7 +121,8 @@ class Core(CommandObject, metaclass=ABCMeta):
         """Get the keysym for a key from its name"""
         raise NotImplementedError
 
-    def cmd_info(self):
+    def cmd_info(self) -> Dict:
+        """Get basic information about the running backend."""
         return {
             "backend": self.name,
             "display_name": self.display_name
@@ -215,7 +217,14 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
 
 class Window(_Window, metaclass=ABCMeta):
-    """A regular Window belonging to a client."""
+    """
+    A regular Window belonging to a client.
+
+    Abstract methods are required to be defined as part of a specific backend's
+    implementation. Non-abstract methods have default implementations here to be shared
+    across backends.
+    """
+    qtile: Qtile
 
     # If float_x or float_y are None, the window has never floated
     float_x: Optional[int]
@@ -248,6 +257,16 @@ class Window(_Window, metaclass=ABCMeta):
     def wants_to_fullscreen(self) -> bool:
         """Does this window want to be fullscreen?"""
         return False
+
+    @property
+    def opacity(self) -> float:
+        """The opacity of this window from 0 (transparent) to 1 (opaque)."""
+        return self._opacity
+
+    @opacity.setter
+    def opacity(self, opacity: float) -> None:
+        """Opacity setter."""
+        self._opacity = opacity
 
     def match(self, match: config.Match) -> bool:
         """Compare this window against a Match instance."""
@@ -289,6 +308,9 @@ class Window(_Window, metaclass=ABCMeta):
     def cmd_focus(self, warp: bool = True) -> None:
         """Focuses the window."""
 
+    def cmd_match(self, *args, **kwargs) -> bool:
+        return self.match(*args, **kwargs)
+
     @abstractmethod
     def cmd_get_position(self) -> Tuple[int, int]:
         """Get the (x, y) of the window"""
@@ -308,6 +330,13 @@ class Window(_Window, metaclass=ABCMeta):
     @abstractmethod
     def cmd_set_position_floating(self, x: int, y: int) -> None:
         """Move window to x and y"""
+
+    @abstractmethod
+    def cmd_set_position(self, x: int, y: int) -> None:
+        """
+        Move floating window to x and y; swap tiling window with the window under the
+        pointer.
+        """
 
     @abstractmethod
     def cmd_set_size_floating(self, w: int, h: int) -> None:
@@ -332,7 +361,11 @@ class Window(_Window, metaclass=ABCMeta):
 
     @abstractmethod
     def cmd_toggle_maximize(self) -> None:
-        """Toggle the fullscreen state of the window."""
+        """Toggle the maximize state of the window."""
+
+    @abstractmethod
+    def cmd_toggle_minimize(self) -> None:
+        """Toggle the minimize state of the window."""
 
     @abstractmethod
     def cmd_toggle_fullscreen(self) -> None:
@@ -351,16 +384,55 @@ class Window(_Window, metaclass=ABCMeta):
         """Bring the window to the front"""
 
     def cmd_togroup(
-        self, group_name: Optional[str] = None, *, switch_group: bool = False
+        self,
+        group_name: Optional[str] = None,
+        groupName: Optional[str] = None,  # Deprecated
+        switch_group: bool = False
     ) -> None:
         """Move window to a specified group
 
-        Also switch to that group if switch_group is True.
+        Also switch to that group if `switch_group` is True.
+
+        `groupName` is deprecated and will be dropped soon. Please use `group_name`
+        instead.
         """
+        if groupName is not None:
+            logger.warning(
+                "Window.cmd_togroup's groupName is deprecated; use group_name"
+            )
+            group_name = groupName
         self.togroup(group_name, switch_group=switch_group)
 
-    def cmd_opacity(self, opacity):
-        """Set the window's opacity"""
+    def cmd_toscreen(self, index: Optional[int] = None) -> None:
+        """Move window to a specified screen.
+
+        If index is not specified, we assume the current screen
+
+        Examples
+        ========
+
+        Move window to current screen::
+
+            toscreen()
+
+        Move window to screen 0::
+
+            toscreen(0)
+        """
+        if index is None:
+            screen = self.qtile.current_screen
+        else:
+            try:
+                screen = self.qtile.screens[index]
+            except IndexError:
+                raise CommandError('No such screen: %d' % index)
+        self.togroup(screen.group.name)
+
+    def cmd_opacity(self, opacity: float) -> None:
+        """Set the window's opacity.
+
+        The value must be between 0 and 1 inclusive.
+        """
         if opacity < .1:
             self.opacity = .1
         elif opacity > 1:
@@ -368,16 +440,16 @@ class Window(_Window, metaclass=ABCMeta):
         else:
             self.opacity = opacity
 
-    def cmd_down_opacity(self):
-        """Decrease the window's opacity"""
+    def cmd_down_opacity(self) -> None:
+        """Decrease the window's opacity by 10%."""
         if self.opacity > .2:
             # don't go completely clear
             self.opacity -= .1
         else:
             self.opacity = .1
 
-    def cmd_up_opacity(self):
-        """Increase the window's opacity"""
+    def cmd_up_opacity(self) -> None:
+        """Increase the window's opacity by 10%."""
         if self.opacity < .9:
             self.opacity += .1
         else:

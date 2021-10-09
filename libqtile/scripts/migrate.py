@@ -21,6 +21,7 @@ import os
 import os.path
 import shutil
 import sys
+from functools import partial
 from glob import glob
 
 BACKUP_SUFFIX = ".migrate.bak"
@@ -146,6 +147,14 @@ def new_at_current_to_new_client_position(query):
     )
 
 
+def windowtogroup_groupName_argument(funcname, query):
+    return (
+        query
+        .select_method(funcname)
+        .modify_argument("groupName", "group_name")
+    )
+
+
 MIGRATIONS = [
     client_name_updated,
     tile_master_windows_rename,
@@ -154,6 +163,8 @@ MIGRATIONS = [
     bitcoin_to_crypto,
     hook_main_function,
     new_at_current_to_new_client_position,
+    partial(windowtogroup_groupName_argument, "togroup"),
+    partial(windowtogroup_groupName_argument, "cmd_togroup"),
 ]
 
 

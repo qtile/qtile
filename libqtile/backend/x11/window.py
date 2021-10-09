@@ -701,6 +701,7 @@ class _Window:
 
     @property
     def opacity(self):
+        assert hasattr(self, "window")
         opacity = self.window.get_property(
             "_NET_WM_WINDOW_OPACITY", unpack=int
         )
@@ -713,12 +714,11 @@ class _Window:
             return as_float
 
     @opacity.setter
-    def opacity(self, opacity):
+    def opacity(self, opacity: float) -> None:
         if 0.0 <= opacity <= 1.0:
             real_opacity = int(opacity * 0xffffffff)
+            assert hasattr(self, "window")
             self.window.set_property('_NET_WM_WINDOW_OPACITY', real_opacity)
-        else:
-            return
 
     def kill(self):
         if "WM_DELETE_WINDOW" in self.window.get_wm_protocols():
@@ -1511,17 +1511,6 @@ class Window(_Window, base.Window):
             if switch_group:
                 group.cmd_toscreen(toggle=False)
 
-    def toscreen(self, index=None):
-        """Move window to a specified screen, or the current screen."""
-        if index is None:
-            screen = self.qtile.current_screen
-        else:
-            try:
-                screen = self.qtile.screens[index]
-            except IndexError:
-                raise CommandError('No such screen: %d' % index)
-        self.togroup(screen.group.name)
-
     def match(self, match):
         """Match window against given attributes.
 
@@ -1746,47 +1735,6 @@ class Window(_Window, base.Window):
         """
         self.kill()
 
-    def cmd_togroup(self, groupName=None, *, switch_group=False):  # noqa: 803
-        """Move window to a specified group.
-
-        If groupName is not specified, we assume the current group.
-        If switch_group is True, also switch to that group.
-
-        Examples
-        ========
-
-        Move window to current group::
-
-            togroup()
-
-        Move window to group "a"::
-
-            togroup("a")
-
-        Move window to group "a", and switch to group "a"::
-
-            togroup("a", switch_group=True)
-        """
-        self.togroup(groupName, switch_group=switch_group)
-
-    def cmd_toscreen(self, index=None):
-        """Move window to a specified screen.
-
-        If index is not specified, we assume the current screen
-
-        Examples
-        ========
-
-        Move window to current screen::
-
-            toscreen()
-
-        Move window to screen 0::
-
-            toscreen(0)
-        """
-        self.toscreen(index)
-
     def cmd_move_floating(self, dx, dy):
         """Move window by dx and dy"""
         self.tweak_float(dx=dx, dy=dy)
@@ -1843,9 +1791,6 @@ class Window(_Window, base.Window):
             self.window.configure(stackmode=StackMode.Above)
         else:
             self._reconfigure_floating()  # atomatically above
-
-    def cmd_match(self, *args, **kwargs):
-        return self.match(*args, **kwargs)
 
     def _is_in_window(self, x, y, window):
         return (window.edges[0] <= x <= window.edges[2] and

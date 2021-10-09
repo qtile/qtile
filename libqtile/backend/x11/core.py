@@ -705,10 +705,9 @@ class Core(base.Core):
         win = self.qtile.windows_map.get(event.window)
 
         if win and getattr(win, "group", None):
-            assert isinstance(win, window._Window)
             try:
                 win.hide()
-                win.state = window.WithdrawnState
+                win.state = window.WithdrawnState  # type: ignore
             except xcffib.xproto.WindowError:
                 # This means that the window has probably been destroyed,
                 # but we haven't yet seen the DestroyNotify (it is likely
@@ -716,11 +715,11 @@ class Core(base.Core):
                 # since the window is dead.
                 pass
             # Clear these atoms as per spec
-            win.window.conn.conn.core.DeleteProperty(
-                win.wid, win.window.conn.atoms["_NET_WM_STATE"]
+            win.window.conn.conn.core.DeleteProperty(  # type: ignore
+                win.wid, win.window.conn.atoms["_NET_WM_STATE"]  # type: ignore
             )
-            win.window.conn.conn.core.DeleteProperty(
-                win.wid, win.window.conn.atoms["_NET_WM_DESKTOP"]
+            win.window.conn.conn.core.DeleteProperty(  # type: ignore
+                win.wid, win.window.conn.atoms["_NET_WM_DESKTOP"]  # type: ignore
             )
         self.qtile.unmanage(event.window)
         if self.qtile.current_window is None:
