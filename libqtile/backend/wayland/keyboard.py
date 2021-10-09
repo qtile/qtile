@@ -72,9 +72,7 @@ class Keyboard(HasListeners):
         self, layout: Optional[str], options: Optional[str], variant: Optional[str]
     ) -> None:
         """
-        Set the keymap for this keyboard. `layout` and `options` correspond to
-        XKB_DEFAULT_LAYOUT and XKB_DEFAULT_OPTIONS and if not specified are taken from
-        the environment.
+        Set the keymap for this keyboard.
         """
         if (layout, options, variant) in self._keymaps:
             keymap = self._keymaps[(layout, options, variant)]

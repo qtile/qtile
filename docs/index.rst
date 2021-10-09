@@ -11,6 +11,7 @@ Getting started
     manual/install/index
     manual/config/index
     manual/troubleshooting
+    As a Wayland Compositor <manual/wayland>
     manual/commands/shell/index
     manual/ref/extensions
     manual/ref/hooks
