@@ -1,5 +1,3 @@
-.. _ref-extensions:
-
 ===================
 Built-in Extensions
 ===================

@@ -12,12 +12,10 @@ Getting started
     manual/config/index
     manual/troubleshooting
     manual/commands/shell/index
-
-
-- :ref:`ref-extensions`
-- :ref:`ref-hooks`
-- :ref:`ref-layouts`
-- :ref:`ref-widgets`
+    manual/ref/extensions
+    manual/ref/hooks
+    manual/ref/layouts
+    manual/ref/widgets
 
 .. toctree::
     :maxdepth: 2
