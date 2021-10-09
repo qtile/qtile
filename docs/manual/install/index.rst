@@ -128,14 +128,5 @@ window:
 
     qtile start -b wayland
 
-If you want your config file to work with different backends but want some
-options set differently per backend, something like this may be useful:
-
-.. code-block:: python
-
-   from libqtile import qtile
-
-   if qtile.core.name == "x11":
-       term = "urxvt"
-   elif qtile.core.name == "wayland":
-       term = "foot"
+See the :ref:`Wayland <wayland>` page for more information on running Qtile as
+a Wayland compositor.

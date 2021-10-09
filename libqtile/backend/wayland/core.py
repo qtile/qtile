@@ -828,6 +828,10 @@ class Core(base.Core, wlrq.HasListeners):
     ) -> None:
         """
         Set the keymap for the current keyboard.
+
+        The options correspond to xkbcommon configuration environmental variables and if
+        not specified are taken from the environment. Acceptable values are strings
+        identical to those accepted by the env variables.
         """
         if self.keyboards:
             self.keyboards[-1].set_keymap(layout, options, variant)
