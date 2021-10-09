@@ -1712,10 +1712,13 @@ class Window(_Window, base.Window):
     def _items(self, name: str) -> ItemT:
         if name == "group":
             return True, []
-        elif name == "layout":
-            return True, list(range(len(self.group.layouts)))
-        elif name == "screen" and self.group.screen is not None:
-            return True, []
+        if name == "layout":
+            if self.group:
+                return True, list(range(len(self.group.layouts)))
+            return None
+        if name == "screen":
+            if self.group and self.group.screen:
+                return True, []
         return None
 
     def _select(self, name, sel):

@@ -36,12 +36,13 @@ from libqtile.utils import QtileError
 from libqtile.backend.base import Internal
 
 if TYPE_CHECKING:
-    from typing import Callable, List
+    from typing import Callable, List, Optional
 
     from pywayland.server import Signal
     from wlroots.wlr_types import Box
 
     from libqtile.backend.wayland.core import Core
+    from libqtile.backend.wayland.window import WindowType
 
 
 class WlrQError(QtileError):
@@ -185,7 +186,7 @@ class PointerConstraint(HasListeners):
     def __init__(self, core: Core, wlr_constraint: PointerConstraintV1):
         self.core = core
         self.wlr_constraint = wlr_constraint
-        self.window: Optional[window.WindowType] = None
+        self.window: Optional[WindowType] = None
         self._warp_target = (0, 0)
         self._needs_warp = False
 
