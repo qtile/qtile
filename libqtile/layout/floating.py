@@ -289,6 +289,9 @@ class Floating(Layout):
         self.clients.remove(client)
         return next_focus
 
+    def clients_window(self):
+        return self.clients
+
     def info(self):
         d = Layout.info(self)
         d["clients"] = [c.name for c in self.clients]

@@ -496,6 +496,9 @@ class _SimpleLayoutBase(Layout):
     def remove(self, client):
         return self.clients.remove(client)
 
+    def clients_window(self):
+        return self.clients.clients
+
     def info(self):
         d = Layout.info(self)
         d.update(self.clients.info())

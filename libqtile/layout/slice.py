@@ -30,7 +30,6 @@ Slice layout. Serves as example of delegating layouts (or sublayouts)
 from libqtile.layout.base import Layout
 from libqtile.layout.max import Max
 
-
 class Single(Layout):
     """Layout with single window
 
@@ -94,6 +93,9 @@ class Single(Layout):
 
     def cmd_previous(self):
         pass
+
+    def clients_window(self):
+        return self.window
 
 
 class Slice(Layout):
@@ -265,6 +267,13 @@ class Slice(Layout):
     def commands(self):
         return self._get_active_layout().commands
 
+    def clients_window(self):
+        clients = list()
+        for layout in self._get_layouts():
+            if layout.clients_window() is not None:
+                clients.extend(layout.clients_window())
+        return clients
+        
     def info(self):
         d = Layout.info(self)
         for layout in self._get_layouts():
