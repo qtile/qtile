@@ -498,6 +498,13 @@ class TreeTab(Layout):
         if self._drawer is not None:
             self._drawer.finalize()
 
+    def clients_window(self):
+        clients = []
+        for section in self._tree.children:
+            for window in section.children:
+                clients.append(window.window)
+        return clients
+
     def info(self):
 
         def show_section_tree(root):
