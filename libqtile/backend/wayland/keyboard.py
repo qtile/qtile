@@ -76,8 +76,8 @@ class Keyboard(HasListeners):
         XKB_DEFAULT_LAYOUT and XKB_DEFAULT_OPTIONS and if not specified are taken from
         the environment.
         """
-        if (layout, options) in self._keymaps:
-            keymap = self._keymaps[(layout, options)]
+        if (layout, options, variant) in self._keymaps:
+            keymap = self._keymaps[(layout, options, variant)]
         else:
             keymap = self.xkb_context.keymap_new_from_names(
                 layout=layout, options=options, variant=variant
