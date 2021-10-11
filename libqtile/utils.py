@@ -70,7 +70,7 @@ ColorType = Union[str, Tuple[int, int, int], Tuple[int, int, int, float]]
 ColorsType = Union[ColorType, List[ColorType]]
 
 
-def rgb(x) -> Tuple[int, int, int, float]:
+def rgb(x: ColorType) -> Tuple[float, float, float, float]:
     """
         Returns a valid RGBA tuple.
 
@@ -81,28 +81,30 @@ def rgb(x) -> Tuple[int, int, int, float]:
             with alpha: ff0000.5
             (255, 0, 0)
             with alpha: (255, 0, 0, 0.5)
+
+        Which is returned as (1.0, 0.0, 0.0, 0.5).
     """
     if isinstance(x, (tuple, list)):
         if len(x) == 4:
-            alpha = x[3]
+            alpha = x[-1]
         else:
-            alpha = 1
+            alpha = 1.0
         return (x[0] / 255.0, x[1] / 255.0, x[2] / 255.0, alpha)
     elif isinstance(x, str):
         if x.startswith("#"):
             x = x[1:]
         if "." in x:
-            x, alpha = x.split(".")
-            alpha = float("0." + alpha)
+            x, alpha_str = x.split(".")
+            alpha = float("0." + alpha_str)
         else:
-            alpha = 1
+            alpha = 1.0
         if len(x) not in (6, 8):
             raise ValueError("RGB specifier must be 6 or 8 characters long.")
-        vals = [int(i, 16) for i in (x[0:2], x[2:4], x[4:6])]
+        vals = tuple(int(i, 16) for i in (x[0:2], x[2:4], x[4:6]))
         if len(x) == 8:
             alpha = int(x[6:8], 16) / 255.0
-        vals.append(alpha)
-        return rgb(vals)
+        vals += (alpha,)
+        return rgb(vals)  # type: ignore
     raise ValueError("Invalid RGB specifier.")
 
 
