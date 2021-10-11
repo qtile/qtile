@@ -259,6 +259,7 @@ class Stack(Layout):
         d["stacks"] = [i.info() for i in self.stacks]
         d["current_stack"] = self.current_stack_offset
         d["clients"] = [c.name for c in self.clients]
+        d["clients_win"] = self.clients
         return d
 
     def cmd_toggle_split(self):

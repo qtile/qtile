@@ -532,6 +532,7 @@ class TreeTab(Layout):
 
         d = Layout.info(self)
         d["clients"] = sorted([x.name for x in self._nodes])
+        d["clients_win"] = list(self._nodes)
         d["sections"] = [x.title for x in self._tree.children]
 
         trees = {}

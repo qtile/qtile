@@ -94,7 +94,11 @@ class Single(Layout):
 
     def cmd_previous(self):
         pass
-
+    
+    def info(self):
+        d = Layout.info(self)
+        d["clients_win"] = [self.window]
+        return d
 
 class Slice(Layout):
     """Slice layout
@@ -267,6 +271,9 @@ class Slice(Layout):
 
     def info(self):
         d = Layout.info(self)
+        d["clients_win"] = []
         for layout in self._get_layouts():
             d[layout.name] = layout.info()
+            d["clients_win"].extend(layout.info()["clients_win"])
+        d["clients_win"] = list(filter(None,d["clients_win"]))
         return d

@@ -151,9 +151,11 @@ class Columns(Layout):
         d = Layout.info(self)
         d["clients"] = []
         d["columns"] = []
+        d["clients_win"] = []
         for c in self.columns:
             cinfo = c.info()
             d["clients"].extend(cinfo['clients'])
+            d["clients_win"].extend(cinfo['clients_win'])
             d["columns"].append(cinfo)
         d["current"] = self.current
         return d

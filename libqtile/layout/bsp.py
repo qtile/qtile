@@ -174,7 +174,8 @@ class Bsp(Layout):
     def info(self):
         return dict(
             name=self.name,
-            clients=[c.name for c in self.root.clients()])
+            clients=[c.name for c in self.root.clients()],
+            clients_win=list(self.root.clients()))
 
     def get_node(self, client):
         for node in self.root:

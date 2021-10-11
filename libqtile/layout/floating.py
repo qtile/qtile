@@ -292,6 +292,7 @@ class Floating(Layout):
     def info(self):
         d = Layout.info(self)
         d["clients"] = [c.name for c in self.clients]
+        d["clients_win"] = self.clients
         return d
 
     def cmd_next(self):

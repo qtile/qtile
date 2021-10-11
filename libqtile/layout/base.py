@@ -440,6 +440,7 @@ class _ClientList:
     def info(self):
         return dict(
             clients=[c.name for c in self.clients],
+            clients_win=self.clients,
             current=self._current_idx,
         )
 
