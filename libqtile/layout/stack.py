@@ -254,7 +254,7 @@ class Stack(Layout):
             else:
                 client.hide()
 
-    def clients_window(self):
+    def get_windows(self):
         return self.clients
 
     def info(self):

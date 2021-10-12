@@ -289,7 +289,7 @@ class Floating(Layout):
         self.clients.remove(client)
         return next_focus
 
-    def clients_window(self):
+    def get_windows(self):
         return self.clients
 
     def info(self):

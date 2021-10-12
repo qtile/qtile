@@ -239,7 +239,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     @property
     def windows(self):
         current_layout = self.bar.screen.group.current_layout
-        return self.bar.screen.group.layouts[current_layout].clients_window()
+        return self.bar.screen.group.layouts[current_layout].get_windows()
 
     def calc_box_widths(self):
         """

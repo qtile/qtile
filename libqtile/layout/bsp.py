@@ -171,7 +171,7 @@ class Bsp(Layout):
         c.current = c.root
         return c
 
-    def clients_window(self):
+    def get_windows(self):
         return list(self.root.clients())
 
     def info(self):
