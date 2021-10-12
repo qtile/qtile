@@ -147,7 +147,7 @@ class Columns(Layout):
         c.columns = [_Column(self.split, self.insert_position)]
         return c
 
-    def clients_window(self):
+    def get_windows(self):
         clients = []
         for c in self.columns:
             clients.extend(c.clients)
