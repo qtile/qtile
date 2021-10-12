@@ -1,6 +1,7 @@
 setuptools_scm
 sphinx
 sphinx_rtd_theme
+funcparserlib==1.0.0a0
 sphinxcontrib-seqdiag
 numpydoc
 
