@@ -8,6 +8,7 @@ Qtile x.x.x, released xxxx-xx-xx:
         - All scratchpads in a Scratchpad group can be hidden with hide_all() function.
         - For saving states of scratchpads during restart, we use wids instead of pids.
         - Scratchpads can now be defined with an optional matcher to match with window properties.
+        - `Qtile.cmd_reload_config` is added for reloading the config without completely restarting.
 
 Qtile 0.18.1, released 2021-09-16:
     * features
@@ -53,7 +54,6 @@ Qtile 0.18.0, released 2021-07-04:
         - A Wayland backend has been added which can be used by calling `qtile start -b wayland` directly in your TTY.
           It requires the latest releases of wlroots, python-xkbcommon, pywayland and pywlroots. It is expected to be
           unstable so please let us know if you find any bugs!
-        - `Qtile.cmd_reload_config` is added for reloading the config without completely restarting.
         - The 'focus` argument to `Click` and `Drag` objects in your config are no longer necessary (and are ignored).
 
 Qtile 0.17.0, released 2021-02-13:
