@@ -39,9 +39,10 @@ if TYPE_CHECKING:
     from typing import Callable, List, Optional
 
     from pywayland.server import Signal
-    from wlroots.wlr_types import Box
+    from wlroots.wlr_types import data_device_manager, Box
 
     from libqtile.backend.wayland.core import Core
+    from libqtile.backend.wayland.output import Output
     from libqtile.backend.wayland.window import WindowType
 
 
@@ -250,3 +251,55 @@ class PointerConstraint(HasListeners):
 
         self.core.active_pointer_constraint = None
         self.wlr_constraint.send_deactivated()
+
+
+class Dnd(HasListeners):
+    """A helper for drag and drop functionality."""
+    def __init__(self, core: Core, wlr_drag: data_device_manager.Drag):
+        self.core = core
+        self.wlr_drag = wlr_drag
+        self._outputs: Set[Output] = set()
+
+        self.x: float = core.cursor.x
+        self.y: float = core.cursor.y
+        self.width: int = 0  # Set upon surface commit
+        self.height: int = 0
+
+        self.add_listener(wlr_drag.destroy_event, self._on_destroy)
+        self.add_listener(wlr_drag.icon.map_event, self._on_icon_map)
+        self.add_listener(wlr_drag.icon.unmap_event, self._on_icon_unmap)
+        self.add_listener(wlr_drag.icon.destroy_event, self._on_icon_destroy)
+        self.add_listener(wlr_drag.icon.surface.commit_event, self._on_icon_commit)
+
+    def finalize(self) -> None:
+        self.finalize_listeners()
+        self.core.live_dnd = None
+
+    def _on_destroy(self, _listener, _event) -> None:
+        logger.debug("Signal: wlr_drag destroy")
+        self.finalize()
+
+    def _on_icon_map(self, _listener, _event) -> None:
+        logger.debug("Signal: wlr_drag_icon map")
+        for output in self._outputs:
+            output.damage()
+
+    def _on_icon_unmap(self, _listener, _event) -> None:
+        logger.debug("Signal: wlr_drag_icon unmap")
+        for output in self._outputs:
+            output.damage()
+
+    def _on_icon_destroy(self, _listener, _event) -> None:
+        logger.debug("Signal: wlr_drag_icon destroy")
+
+    def _on_icon_commit(self, _listener, _event) -> None:
+        self.width = self.wlr_drag.icon.surface.current.width
+        self.height = self.wlr_drag.icon.surface.current.height
+        self.position(self.core.cursor.x, self.core.cursor.y)
+
+    def position(self, cx: float, cy: float) -> None:
+        self.x = cx
+        self.y = cy
+        self._outputs = {o for o in self.core.outputs if o.contains(self)}
+        for output in self._outputs:
+            output.damage()

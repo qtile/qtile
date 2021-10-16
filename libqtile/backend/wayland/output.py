@@ -46,6 +46,7 @@ if typing.TYPE_CHECKING:
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.window import WindowType
+    from libqtile.backend.wayland.wlrq import Dnd
     from libqtile.config import Screen
 
 
@@ -154,6 +155,9 @@ class Output(HasListeners):
                         )
                         window.surface.for_each_surface(self._render_surface, rdata)
 
+                if self.core.live_dnd:
+                    self._render_dnd_icon(now)
+
                 wlr_output.render_software_cursors(damage=damage)
                 renderer.end()
 
@@ -212,6 +216,25 @@ class Output(HasListeners):
         matrix = Matrix.project_box(box, inverse, 0, transform_matrix)
         self.renderer.render_texture_with_matrix(texture, matrix, opacity)
         surface.send_frame_done(now)
+
+    def _render_dnd_icon(self, now: Timespec) -> None:
+        """Render the drag-n-drop icon if there is one."""
+        dnd = self.core.live_dnd
+        icon = dnd.wlr_drag.icon
+        if icon.mapped:
+            texture = icon.surface.get_texture()
+            if texture:
+                scale = self.wlr_output.scale
+                box = Box(
+                    int((dnd.x - self.x) * scale),
+                    int((dnd.y - self.y) * scale),
+                    int(icon.surface.current.width * scale),
+                    int(icon.surface.current.height * scale),
+                )
+                inverse = wlrOutput.transform_invert(icon.surface.current.transform)
+                matrix = Matrix.project_box(box, inverse, 0, self.transform_matrix)
+                self.renderer.render_texture_with_matrix(texture, matrix, 1)
+                icon.surface.send_frame_done(now)
 
     def get_geometry(self) -> Tuple[int, int, int, int]:
         width, height = self.wlr_output.effective_resolution()
@@ -294,17 +317,17 @@ class Output(HasListeners):
 
         self.core.stack_windows()
 
-    def contains(self, win: WindowType) -> bool:
+    def contains(self, rect: Union[WindowType, Dnd]) -> bool:
         """Returns whether the given window is visible on this output."""
-        if win.x + win.width < self.x:
+        if rect.x + rect.width < self.x:
             return False
-        if win.y + win.height < self.y:
+        if rect.y + rect.height < self.y:
             return False
 
         ow, oh = self.wlr_output.effective_resolution()
-        if self.x + ow < win.x:
+        if self.x + ow < rect.x:
             return False
-        if self.y + oh < win.y:
+        if self.y + oh < rect.y:
             return False
 
         return True
