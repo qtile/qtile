@@ -250,6 +250,14 @@ class Qtile(CommandObject):
         Reload the configuration file.
         """
         logger.debug('Reloading the configuration file')
+
+        try:
+            self.config.load()
+        except Exception as error:
+            logger.error("Configuration error: {}".format(error))
+            send_notification("Configuration error", str(error))
+            return
+
         self._state = QtileState(self, restart=False)
         self._finalize_configurables()
         hook.clear()
