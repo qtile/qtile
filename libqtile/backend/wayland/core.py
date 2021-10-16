@@ -82,6 +82,7 @@ if typing.TYPE_CHECKING:
     from typing import List, Optional, Sequence, Tuple, Union
 
     from wlroots.wlr_types import Output as wlrOutput
+    from wlroots.wlr_types.data_device_manager import Drag
 
     from libqtile import config
     from libqtile.core.manager import Qtile
@@ -119,11 +120,14 @@ class Core(base.Core, wlrq.HasListeners):
         self.grabbed_keys: List[Tuple[int, int]] = []
         self.grabbed_buttons: List[Tuple[int, int]] = []
         DataDeviceManager(self.display)
+        self.live_dnd: Optional[wlrq.Dnd] = None
         DataControlManagerV1(self.display)
         self.seat = seat.Seat(self.display, "seat0")
         self.add_listener(
             self.seat.request_set_selection_event, self._on_request_set_selection
         )
+        self.add_listener(self.seat.request_start_drag_event, self._on_request_start_drag)
+        self.add_listener(self.seat.start_drag_event, self._on_start_drag)
         self.add_listener(self.backend.new_input_event, self._on_new_input)
 
         # set up outputs
@@ -221,6 +225,18 @@ class Core(base.Core, wlrq.HasListeners):
     ):
         self.seat.set_selection(event._ptr.source, event.serial)
         logger.debug("Signal: seat request_set_selection")
+
+    def _on_request_start_drag(self, _listener, event: seat.RequestStartDragEvent):
+        logger.debug("Signal: seat request_start_drag")
+
+        if not self.live_dnd and self.seat.validate_pointer_grab_serial(event.origin, event.serial):
+            self.seat.start_pointer_drag(event.drag, event.serial)
+        else:
+            event.drag.source.destroy()
+
+    def _on_start_drag(self, _listener, event: Drag):
+        logger.debug("Signal: seat start_drag")
+        self.live_dnd = wlrq.Dnd(self, event)
 
     def _on_new_input(self, _listener, device: input_device.InputDevice):
         logger.debug("Signal: backend new_input_event")
@@ -350,7 +366,7 @@ class Core(base.Core, wlrq.HasListeners):
                 return
 
         self.cursor.move(dx, dy, input_device=event.device)
-        self._process_cursor_motion(event.time_msec)
+        self._process_cursor_motion(event.time_msec, self.cursor.x, self.cursor.y)
 
     def _on_cursor_motion_absolute(
         self, _listener, event: pointer.PointerEventMotionAbsolute
@@ -362,7 +378,7 @@ class Core(base.Core, wlrq.HasListeners):
             event.y,
             input_device=event.device,
         )
-        self._process_cursor_motion(event.time_msec)
+        self._process_cursor_motion(event.time_msec, self.cursor.x, self.cursor.y)
 
     def _on_new_pointer_constraint(self, _listener, wlr_constraint: PointerConstraintV1):
         logger.debug("Signal: pointer_constraints new_constraint")
@@ -440,16 +456,17 @@ class Core(base.Core, wlrq.HasListeners):
         hook.fire("screen_change", None)
         hook.fire("screens_reconfigured")
 
-    def _process_cursor_motion(self, time):
-        self.qtile.process_button_motion(self.cursor.x, self.cursor.y)
+    def _process_cursor_motion(self, time_msec: int, cx: float, cy: float):
+        self.qtile.process_button_motion(int(cx), int(cy))
 
         if len(self.outputs) > 1:
-            current_output = self.output_layout.output_at(
-                self.cursor.x, self.cursor.y
-            ).data
+            current_output = self.output_layout.output_at(cx, cy).data
             if self._current_output is not current_output:
                 self._current_output = current_output
                 self.stack_windows()
+
+        if self.live_dnd:
+            self.live_dnd.position(cx, cy)
 
         found = self._under_pointer()
 
@@ -458,27 +475,26 @@ class Core(base.Core, wlrq.HasListeners):
             if isinstance(win, window.Internal):
                 if self._hovered_internal is win:
                     win.process_pointer_motion(
-                        self.cursor.x - self._hovered_internal.x,
-                        self.cursor.y - self._hovered_internal.y,
+                        cx - self._hovered_internal.x,
+                        cy - self._hovered_internal.y,
                     )
                 else:
                     if self._hovered_internal:
                         self._hovered_internal.process_pointer_leave(
-                            self.cursor.x - self._hovered_internal.x,
-                            self.cursor.y - self._hovered_internal.y,
+                            cx - self._hovered_internal.x,
+                            cy - self._hovered_internal.y,
                         )
                     self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
-                    self.seat.pointer_clear_focus()
-                    win.process_pointer_enter(self.cursor.x, self.cursor.y)
+                    self.seat.pointer_notify_clear_focus()
+                    win.process_pointer_enter(cx, cy)
                     self._hovered_internal = win
                 return
 
-            if surface is not None:
+            if surface:
                 self.seat.pointer_notify_enter(surface, sx, sy)
-                if self.seat.pointer_state.focused_surface == surface:
-                    self.seat.pointer_notify_motion(time, sx, sy)
+                self.seat.pointer_notify_motion(time_msec, sx, sy)
             else:
-                self.seat.pointer_clear_focus()
+                self.seat.pointer_notify_clear_focus()
 
             if win is not self.qtile.current_window:
                 hook.fire("client_mouse_enter", win)
@@ -501,11 +517,11 @@ class Core(base.Core, wlrq.HasListeners):
 
         else:
             self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
-            self.seat.pointer_clear_focus()
+            self.seat.pointer_notify_clear_focus()
             if self._hovered_internal:
                 self._hovered_internal.process_pointer_leave(
-                    self.cursor.x - self._hovered_internal.x,
-                    self.cursor.y - self._hovered_internal.y,
+                    cx - self._hovered_internal.x,
+                    cy - self._hovered_internal.y,
                 )
                 self._hovered_internal = None
 
@@ -514,7 +530,8 @@ class Core(base.Core, wlrq.HasListeners):
 
         if pressed:
             handled = self.qtile.process_button_click(
-                button, self.seat.keyboard.modifier, self.cursor.x, self.cursor.y
+                button, self.seat.keyboard.modifier,
+                int(self.cursor.x), int(self.cursor.y)
             )
 
             if self._hovered_internal:
