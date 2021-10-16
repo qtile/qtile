@@ -176,6 +176,12 @@ class GroupBox(_GroupBase):
             "Method of highlighting ('border', 'block', 'text', or 'line')"
             "Uses `*_border` color settings"
         ),
+        (
+            "unfocused_highlight_method",
+            "border",
+            "Highlight for group on unfocused screen ('border', 'block', 'text', or 'line')"
+            "Uses `*_border` color settings"
+        ),
         ("rounded", True, "To round or not to round box borders"),
         (
             "this_current_screen_border",
@@ -348,8 +354,8 @@ class GroupBox(_GroupBase):
         offset = self.margin_x
         for i, g in enumerate(self.groups):
             to_highlight = False
-            is_block = (self.highlight_method == 'block')
-            is_line = (self.highlight_method == 'line')
+            is_block = False
+            is_line = False
 
             bw = self.box_width([g])
 
@@ -371,13 +377,26 @@ class GroupBox(_GroupBase):
                         if self.qtile.current_screen == self.bar.screen:
                             border = self.this_current_screen_border
                             to_highlight = True
+                            is_block = (self.highlight_method == 'block')
+                            is_line = (self.highlight_method == 'line')
                         else:
                             border = self.this_screen_border
+                            if self.unfocused_highlight_method != 'border':
+                                to_highlight = True
+                                is_block = (self.unfocused_highlight_method == 'block')
+                                is_line = (self.unfocused_highlight_method == 'line')
                     else:
                         if self.qtile.current_screen == g.screen:
                             border = self.other_current_screen_border
+                            to_highlight = True
+                            is_block = (self.highlight_method == 'block')
+                            is_line = (self.highlight_method == 'line')
                         else:
                             border = self.other_screen_border
+                            if self.unfocused_highlight_method != 'border':
+                                to_highlight = True
+                                is_block = (self.unfocused_highlight_method == 'block')
+                                is_line = (self.unfocused_highlight_method == 'line')
             elif self.group_has_urgent(g) and \
                     self.urgent_alert_method in ('border', 'block', 'line'):
                 border = self.urgent_border
