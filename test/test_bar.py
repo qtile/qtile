@@ -34,7 +34,7 @@ import libqtile.confreader
 import libqtile.layout
 import libqtile.widget
 from libqtile.command.base import CommandError
-from test.helpers import Retry
+from test.helpers import BareConfig, Retry
 
 
 class GBConfig(libqtile.confreader.Config):
@@ -606,3 +606,22 @@ def test_bar_border_vertical(manager_nospawn):
 
     _, yoffset = manager_nospawn.c.bar["right"].eval("self.widgets[0].offsety")
     assert xoffset == "0"
+
+
+def test_unsupported_widget(manager_nospawn):
+    """Widgets on unsupported backends should be removed silently from the bar."""
+
+    class UnsupportedWidget(libqtile.widget.TextBox):
+        if manager_nospawn.backend.name == "x11":
+            supported_backends = {"wayland"}
+        elif manager_nospawn.backend.name == "wayland":
+            supported_backends = {"x11"}
+        else:
+            pytest.skip("Unknown backend")
+
+    class UnsupportedConfig(BareConfig):
+        screens = [libqtile.config.Screen(top=libqtile.bar.Bar([UnsupportedWidget()], 20))]
+
+    manager_nospawn.start(UnsupportedConfig)
+
+    assert len(manager_nospawn.c.bar["top"].info()["widgets"]) == 0
