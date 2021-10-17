@@ -2,6 +2,9 @@ Qtile x.xx.x, released XXXX-XX-XX:
     * features
         - Add ability to draw borders and add margins to the `Max` layout.
     * bugfixes
+        - Widgets that are incompatible with a backend (e.g. Systray on Wayland) will no longer show 
+          as a ConfigError in the bar. Instead the widget is silently removed from the bar and a message
+          included in the logs.
 
 Qtile 0.21.0, released 2022-03-23:
     * features
