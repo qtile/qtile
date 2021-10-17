@@ -94,7 +94,6 @@ class Window(base.Window, HasListeners):
 
         assert isinstance(surface, XdgSurface)
         self._app_id: Optional[str] = surface.toplevel.app_id
-        surface.set_tiled(EDGES_TILED)
 
         self._float_state = FloatStates.NOT_FLOATING
         self.float_x: Optional[int] = None
@@ -175,6 +174,9 @@ class Window(base.Window, HasListeners):
             geometry = surface.get_geometry()
             self._width = self._float_width = geometry.width
             self._height = self._float_height = geometry.height
+
+            # Tell the client to render tiled edges
+            surface.set_tiled(EDGES_TILED)
 
             # Get the client's name
             if surface.toplevel.title:
