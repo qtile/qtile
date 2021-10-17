@@ -12,6 +12,7 @@ from mpd import CommandError, ConnectionError, MPDClient
 
 from libqtile import utils
 from libqtile.log_utils import logger
+from libqtile.pangocffi import markup_escape_text
 from libqtile.widget import base
 
 # Mouse Interaction
@@ -325,6 +326,7 @@ class Mpd2(base.ThreadPoolText):
         if not isinstance(fmt, str):
             fmt = str(fmt)
 
+        song_info = {k: markup_escape_text(v) for k, v in song_info.items()}
         formatted = fmt.format_map(song_info)
 
         if self.color_progress and status['state'] != 'stop':
