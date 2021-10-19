@@ -125,11 +125,12 @@ class XWindow:
         self.conn.conn.core.KillClient(self.wid)
 
     def set_input_focus(self):
-        self.conn.conn.core.SetInputFocus(
-            xcffib.xproto.InputFocus.PointerRoot,
-            self.wid,
-            xcffib.xproto.Time.CurrentTime
-        )
+        if self.wid != self.conn.default_screen.root.wid:
+            self.conn.conn.core.SetInputFocus(
+                xcffib.xproto.InputFocus.PointerRoot,
+                self.wid,
+                xcffib.xproto.Time.CurrentTime
+            )
 
     def warp_pointer(self, x, y):
         """Warps the pointer to the location `x`, `y` on the window"""
