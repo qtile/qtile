@@ -671,11 +671,10 @@ class Core(base.Core, wlrq.HasListeners):
         if found:
             win, surface, _, _ = found
 
-            if self.qtile.config.bring_front_click:
-                if (
-                    self.qtile.config.bring_front_click != "floating_only"
-                    or win.floating
-                ):
+            if self.qtile.config.bring_front_click is True:
+                win.cmd_bring_to_front()
+            elif self.qtile.config.bring_front_click == "floating_only":
+                if not isinstance(win, base.Internal) and win.floating:
                     win.cmd_bring_to_front()
 
             if not isinstance(win, base.Internal):
