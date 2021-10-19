@@ -30,6 +30,7 @@ class QtileState:
 
     If `restart` is True, the current set of groups will be saved in the state. This is
     useful when restarting for Qtile version updates rather than reloading the config.
+    ScratchPad groups are saved for both reloading and restarting.
     """
     def __init__(self, qtile, restart=True):
         self.groups = []
@@ -39,12 +40,11 @@ class QtileState:
         self.orphans = []
         self.restart = restart  # True when restarting, False when config reloading
 
-        if restart:
-            for group in qtile.groups:
-                if isinstance(group, ScratchPad):
-                    self.scratchpads[group.name] = group.get_state(restart)
-                else:
-                    self.groups.append((group.name, group.layout.name, group.label))
+        for group in qtile.groups:
+            if isinstance(group, ScratchPad):
+                self.scratchpads[group.name] = group.get_state()
+            elif restart:
+                self.groups.append((group.name, group.layout.name, group.label))
 
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
