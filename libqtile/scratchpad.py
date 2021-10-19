@@ -346,7 +346,7 @@ class ScratchPad(group._Group):
         else:
             raise ValueError('No DropDown named "%s".' % name)
 
-    def get_state(self, restart):
+    def get_state(self):
         """
         Get the state of existing dropdown windows. Used for restoring state across
         Qtile restarts (`restart` == True) or config reloads (`restart` == False).

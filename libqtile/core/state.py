@@ -90,7 +90,7 @@ class QtileState:
         """
         Remove any windows from now non-existent scratchpad groups.
         """
-        client_wid = client.window.wid
+        client_wid = client.wid
         if client_wid in self.orphans:
             self.orphans.remove(client_wid)
             client.group = None
