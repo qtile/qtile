@@ -59,12 +59,16 @@ class Key:
         If multiple Call objects are specified, they are run in sequence.
     desc:
         description to be added to the key binding
+    swallow:
+        Configures when we swallow the key binding.
+        Setting it to False will forward the key binding to the focused window after the commands have been executed.
     """
-    def __init__(self, modifiers: List[str], key: str, *commands, desc: str = ""):
+    def __init__(self, modifiers: List[str], key: str, *commands, desc: str = "", swallow: bool = True):
         self.modifiers = modifiers
         self.key = key
         self.commands = commands
         self.desc = desc
+        self.swallow = swallow
 
     def __repr__(self):
         return "<Key (%s, %s)>" % (self.modifiers, self.key)
@@ -86,22 +90,26 @@ class KeyChord:
         A string with vim like mode name. If it's set, the chord mode will
         not be left after a keystroke (except for Esc which always leaves the
         current chord/mode).
+    swallow:
+        Configures when we swallow the key binding of the chord.
+        Setting it to False will forward the key binding to the focused window after the commands have been executed.
     """
     def __init__(self, modifiers: List[str], key: str,
-                 submappings: List[Union[Key, KeyChord]], mode: str = ""):
+                 submappings: List[Union[Key, KeyChord]], mode: str = "", swallow: bool = True):
         self.modifiers = modifiers
         self.key = key
 
         submappings.append(Key([], "Escape"))
         self.submappings = submappings
         self.mode = mode
+        self.swallow = swallow
 
     def __repr__(self):
         return "<KeyChord (%s, %s)>" % (self.modifiers, self.key)
 
 
 class Mouse:
-    def __init__(self, modifiers: List[str], button: str, *commands, **kwargs):
+    def __init__(self, modifiers: List[str], button: str, *commands, swallow: bool = True, **kwargs):
         self.modifiers = modifiers
         self.button = button
         self.commands = commands
@@ -109,6 +117,7 @@ class Mouse:
         for k, v in kwargs.items():
             setattr(self, k, v)
         self.modmask: int = 0
+        self.swallow = swallow
 
 
 class Drag(Mouse):
