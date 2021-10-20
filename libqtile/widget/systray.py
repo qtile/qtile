@@ -247,3 +247,11 @@ class Systray(window._Window, base._Widget):
             xcffib.CurrentTime,
         )
         self.hide()
+
+        root = self.qtile.core._root.wid
+        for wid in self.icons:
+            self.conn.conn.core.ReparentWindow(wid, root, 0, 0)
+        self.conn.conn.flush()
+
+        del self.qtile.windows_map[self.wid]
+        self.conn.conn.core.DestroyWindow(self.wid)
