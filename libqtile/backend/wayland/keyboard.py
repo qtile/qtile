@@ -114,8 +114,8 @@ class Keyboard(HasListeners):
             mods = self.keyboard.modifier
             for keysym in keysyms:
                 if (keysym, mods) in self.grabbed_keys:
-                    self.qtile.process_key_event(keysym, mods)
-                    return
+                    if self.qtile.process_key_event(keysym, mods):
+                        return
 
             if self.core.focused_internal:
                 self.core.focused_internal.process_key_press(keysym)
