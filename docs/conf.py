@@ -46,7 +46,6 @@ MOCK_MODULES = [
     'pywayland',
     'pywayland.protocol.wayland',
     'pywayland.server',
-    'trollius',
     'wlroots',
     'wlroots.helper',
     'wlroots.util',
