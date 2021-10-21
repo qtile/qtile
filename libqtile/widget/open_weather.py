@@ -144,7 +144,9 @@ class OpenWeather(GenPollUrl):
         - main_temp_min
         - main_temp_max
         - clouds_all
-    """
+        - icon # Arch distribution: ttf-joypixels else https://github.com/emojione/emojione-assets/releases/download/4.5/emojione-android.ttf
+                # mkdir -p $HOME/.local/share/fonts  and copy download ttf file, reload fonts command:: fc-cache -f -v
+        """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         # One of (cityid, location, zip, coordinates) must be set.
@@ -244,5 +246,35 @@ class OpenWeather(GenPollUrl):
         data = rp.data
         data['units_temperature'] = 'C' if self.metric else 'F'
         data['units_wind_speed'] = 'Km/h' if self.metric else 'm/h'
+
+        symbols = {
+            "Unknown": "✨",
+            "01d": "☀️",
+            "01n": "🌕",
+            "02d": "🌤️",
+            "02n": "☁️",
+            "03d": "🌥️",
+            "03n": "☁️",
+            "04d": "☁️",
+            "04n": "☁️",
+            "09d": "🌧️",
+            "09n": "🌧️",
+            "10d": "⛈",
+            "10n": "⛈",
+            "11d": "🌩",
+            "11n": "🌩",
+            "13d": "❄️",
+            "13n": "❄️",
+            "50d": "🌫",
+            "50n": "🌫",
+        }
+
+        symbol = symbols.get(data['weather_0_icon'])
+        if symbol:
+            icon = symbol
+        else:
+            icon = symbols['Unknown']
+
+        data['icon'] = icon
 
         return self.format.format(**data)
