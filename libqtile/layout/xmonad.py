@@ -687,7 +687,8 @@ class MonadTall(_SimpleLayoutBase):
         """Get closest window to a point x,y"""
         target = min(
             clients,
-            key=lambda c: math.hypot(c.info()["x"] - x, c.info()["y"] - y)
+            key=lambda c: math.hypot(c.x - x, c.y - y),
+            default=self.clients.current_client
         )
         return target
 
