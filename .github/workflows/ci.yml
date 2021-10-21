@@ -33,7 +33,8 @@ jobs:
                   imagemagick libpulse-dev git xserver-xephyr xterm xvfb ninja-build libegl1-mesa-dev \
                   libgles2-mesa-dev libgbm-dev libinput-dev libxkbcommon-dev libpixman-1-dev libpciaccess-dev \
                   dbus-x11 libnotify-bin
-                sudo pip -q install tox tox-gh-actions meson PyGObject
+                sudo pip -q install meson PyGObject
+                pip -q install "tox<4" tox-gh-actions 
             - name: Build wayland
               run: |
                 wget -q --no-check-certificate https://wayland.freedesktop.org/releases/wayland-$WAYLAND.tar.xz
@@ -74,7 +75,7 @@ jobs:
                 meson build -Dexamples=false --prefix=/usr
                 ninja -C build
                 sudo ninja -C build install
-            - name: run tests
+            - name: Run Tests
               run: |
                 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
                 tox
