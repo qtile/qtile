@@ -139,7 +139,6 @@ class OpenWeather(GenPollUrl):
         - wind_deg
         - wind_direction
 
-        - weather_0_icon  # See: https://openweathermap.org/weather-conditions; TODO: Use icons.
         - main_feels_like
         - main_temp_min
         - main_temp_max
