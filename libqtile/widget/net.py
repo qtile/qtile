@@ -38,7 +38,7 @@ class Net(base.ThreadPoolText):
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('format', '{interface}: {down} \u2193\u2191 {up}',
-         'Display format of down/upload/total speed of given interfaces'),
+         'Display format of down/upload/total speed and down_size/up_size of given interfaces'),
         ('interface', None, 'List of interfaces or single NIC as string to monitor, \
             None to displays all active NICs combined'),
         ('update_interval', 1, 'The update interval.'),
@@ -100,14 +100,18 @@ class Net(base.ThreadPoolText):
                     }
             return interfaces
 
-    def _format(self, down, down_letter, up, up_letter, total, total_letter):
+    def _format(self, down, down_letter, up, up_letter, total, total_letter, size_down, size_down_letter, size_up, size_up_letter):
         max_len_down = 7 - len(down_letter)
         max_len_up = 7 - len(up_letter)
         max_len_total = 7 - len(total_letter)
+        max_len_donw_size = 7 - len(size_down_letter)
+        max_len_up_size = 7 - len(size_up_letter)
         down = '{val:{max_len}.2f}'.format(val=down, max_len=max_len_down)
         up = '{val:{max_len}.2f}'.format(val=up, max_len=max_len_up)
         total = '{val:{max_len}.2f}'.format(val=total, max_len=max_len_total)
-        return down[:max_len_down], up[:max_len_up], total[:max_len_total]
+        size_down = '{val:{max_len}.2f}'.format(val=size_down, max_len=max_len_donw_size)
+        size_up = '{val:{max_len}.2f}'.format(val=size_up, max_len=max_len_up_size)
+        return down[:max_len_down], up[:max_len_up], total[:max_len_total], size_down[:max_len_donw_size], size_up[:max_len_up_size]
 
     def poll(self):
         ret_stat = []
@@ -124,13 +128,19 @@ class Net(base.ThreadPoolText):
                 down = down / self.update_interval
                 up = up / self.update_interval
                 total = total / self.update_interval
+                size_down = new_stats[intf]['down'] 
+                size_up = new_stats[intf]['up']
                 down, down_letter = self.convert_b(down)
                 up, up_letter = self.convert_b(up)
                 total, total_letter = self.convert_b(total)
-                down, up, total = self._format(
+                size_down, size_down_letter = self.convert_b(size_down)
+                size_up, size_up_letter = self.convert_b(size_up)
+                down, up, total, size_down, size_up  = self._format(
                         down, down_letter,
                         up, up_letter,
-                        total, total_letter
+                        total, total_letter,
+                        size_down, size_down_letter,
+                        size_up, size_up_letter
                     )
                 self.stats[intf] = new_stats[intf]
                 ret_stat.append(
@@ -140,6 +150,8 @@ class Net(base.ThreadPoolText):
                             'down': down + down_letter,
                             'up': up + up_letter,
                             'total': total + total_letter,
+                            'size_down': size_down + size_down_letter,
+                            'size_up': size_up + size_up_letter
                         }))
 
             return " ".join(ret_stat)
