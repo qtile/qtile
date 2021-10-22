@@ -104,14 +104,14 @@ class Net(base.ThreadPoolText):
         max_len_down = 7 - len(down_letter)
         max_len_up = 7 - len(up_letter)
         max_len_total = 7 - len(total_letter)
-        max_len_donw_size = 7 - len(size_down_letter)
+        max_len_down_size = 7 - len(size_down_letter)
         max_len_up_size = 7 - len(size_up_letter)
         down = '{val:{max_len}.2f}'.format(val=down, max_len=max_len_down)
         up = '{val:{max_len}.2f}'.format(val=up, max_len=max_len_up)
         total = '{val:{max_len}.2f}'.format(val=total, max_len=max_len_total)
-        size_down = '{val:{max_len}.2f}'.format(val=size_down, max_len=max_len_donw_size)
+        size_down = '{val:{max_len}.2f}'.format(val=size_down, max_len=max_len_down_size)
         size_up = '{val:{max_len}.2f}'.format(val=size_up, max_len=max_len_up_size)
-        return down[:max_len_down], up[:max_len_up], total[:max_len_total], size_down[:max_len_donw_size], size_up[:max_len_up_size]
+        return down[:max_len_down], up[:max_len_up], total[:max_len_total], size_down[:max_len_down_size], size_up[:max_len_up_size]
 
     def poll(self):
         ret_stat = []
