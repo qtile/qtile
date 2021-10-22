@@ -70,7 +70,7 @@ def patch_net(fake_qtile, monkeypatch, fake_window):
         # Reload fixes cases where psutil may have been imported previously
         reload(net)
         widget = net.Net(
-                format='{interface}: U {up} D {down} T {total}',
+                format='{interface}: U {up} D {down} T {total} DS {size_down} US {size_up}',
                 **kwargs
             )
         fakebar = Bar([widget], 24)
@@ -84,35 +84,51 @@ def patch_net(fake_qtile, monkeypatch, fake_window):
     return build_widget
 
 
-def test_net_defaults(patch_net):
+def test_net_defaults_si_prefix(patch_net):
     '''Default: widget shows `all` interfaces'''
     net1 = patch_net()
-    assert net1.poll() == "all: U 40.00kB D  1.20MB T  1.24MB"
+    assert net1.poll() == "all: U 40.00kB D  1.20MB T  1.24MB DS  2.40MB US 80.00kB"
 
+def test_net_defaults_binnary_prefix(patch_net):
+    '''Default: widget shows `all` interfaces'''
+    net1 = patch_net(factor=1024)
+    assert net1.poll() == "all: U 39.06kiB D  1.14MiB T  1.18MiB DS  4.58MiB US 156.2kiB"
 
-def test_net_single_interface(patch_net):
+def test_net_single_interface_si_prefix(patch_net):
     '''Display single named interface'''
     net2 = patch_net(interface="wlp58s0")
-    assert net2.poll() == "wlp58s0: U 40.00kB D  1.20MB T  1.24MB"
+    assert net2.poll() == "wlp58s0: U 40.00kB D  1.20MB T  1.24MB DS  7.20MB US 240.0kB"
+
+def test_net_single_interface_binnary_prefix(patch_net):
+    '''Display single named interface'''
+    net2 = patch_net(interface="wlp58s0", factor=1024)
+    assert net2.poll() == "wlp58s0: U 39.06kiB D  1.14MiB T  1.18MiB DS  9.16MiB US 312.5kiB"
 
 
-def test_net_list_interface(patch_net):
+def test_net_list_interface_si_prefix(patch_net):
     '''Display multiple named interfaces'''
-    net2 = patch_net(interface=["wlp58s0", "lo"])
-    assert net2.poll() == "wlp58s0: U 40.00kB D  1.20MB T  1.24MB lo: U 40.00kB D  1.20MB T  1.24MB"
+    net3 = patch_net(interface=["wlp58s0", "lo"])
+    assert net3.poll() == "wlp58s0: U 40.00kB D  1.20MB T  1.24MB DS 12.00MB US 400.0kB lo: U 40.00kB D  1.20MB T  1.24MB DS 12.00MB US 400.0kB"
 
+def test_net_list_interface_binnary_prefix(patch_net):
+    '''Display multiple named interfaces'''
+    net3 = patch_net(interface=["wlp58s0", "lo"], factor=1024)
+    assert net3.poll() == "wlp58s0: U 39.06kiB D  1.14MiB T  1.18MiB DS 13.73MiB US 468.7kiB lo: U 39.06kiB D  1.14MiB T  1.18MiB DS 13.73MiB US 468.7kiB"
 
 def test_net_invalid_interface(patch_net):
     '''Pass an invalid interface value'''
     with pytest.raises(AttributeError):
         _ = patch_net(interface=12)
 
-
-def test_net_use_bits(patch_net):
+def test_net_use_bits_si_prefix(patch_net):
     '''Display all interfaces in bits rather than bytes'''
     net4 = patch_net(use_bits=True)
-    assert net4.poll() == "all: U 320.0kb D  9.60Mb T  9.92Mb"
+    assert net4.poll() == "all: U 320.0kb D  9.60Mb T  9.92Mb DS 134.4Mb US  4.48Mb"
 
+def test_net_use_bits_binnary_prefix(patch_net):
+    '''Display all interfaces in bits rather than bytes'''
+    net4 = patch_net(use_bits=True, factor=1024)
+    assert net4.poll() == "all: U 312.5kib D  9.16Mib T  9.46Mib DS 146.4Mib US  4.88Mib"
 
 def test_net_convert_zero_b(patch_net):
     '''Zero bytes is a special case in `convert_b`'''
