@@ -22,6 +22,8 @@ from typing import Tuple
 
 import psutil
 
+import time
+
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
@@ -43,6 +45,7 @@ class Net(base.ThreadPoolText):
             None to displays all active NICs combined'),
         ('update_interval', 1, 'The update interval.'),
         ('use_bits', False, 'Use bits instead of bytes per second?'),
+        ('factor', 1000, 'Factor to calculate bytes, ex to 1000 for kB or 1024 for kiB'),
     ]
 
     def __init__(self, **config):
@@ -55,17 +58,21 @@ class Net(base.ThreadPoolText):
                 self.interface = [self.interface]
             else:
                 raise AttributeError("Invalid Argument passed: %s\nAllowed Types: List, String, None" % self.interface)
-        self.stats = self.get_stats()
 
+        if self.factor not in [1000, 1024]:
+            raise AttributeError("Invalid Argument passed: %s\nAllowed value: 1000, 1024" % self.factor)
+
+        self.stats = self.get_stats()
+            
     def convert_b(self, num_bytes: float) -> Tuple[float, str]:
         """Converts the number of bytes to the correct unit"""
-        factor = 1000.0
+        factor = self.factor
 
         if self.use_bits:
             letters = ["b", "kb", "Mb", "Gb", "Tb", "Pb", "Eb", "Zb", "Yb"]
             num_bytes *= 8
         else:
-            letters = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+            letters = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]            
 
         if num_bytes > 0:
             power = int(log(num_bytes) / log(factor))
@@ -76,10 +83,14 @@ class Net(base.ThreadPoolText):
         converted_bytes = num_bytes / factor**power
         unit = letters[power]
 
+        if factor == 1024 and len(unit) > 1:
+            unit = unit[:1] + "i" + unit[1:]
+
         return converted_bytes, unit
 
     def get_stats(self):
         interfaces = {}
+        print(time.time())
         if self.interface == ["all"]:
             net = psutil.net_io_counters(pernic=False)
             interfaces["all"] = {
@@ -101,11 +112,16 @@ class Net(base.ThreadPoolText):
             return interfaces
 
     def _format(self, down, down_letter, up, up_letter, total, total_letter, size_down, size_down_letter, size_up, size_up_letter):
-        max_len_down = 7 - len(down_letter)
-        max_len_up = 7 - len(up_letter)
-        max_len_total = 7 - len(total_letter)
-        max_len_down_size = 7 - len(size_down_letter)
-        max_len_up_size = 7 - len(size_up_letter)
+        if self.factor == 1000:
+            value_size = 7
+        else:
+            value_size = 8
+
+        max_len_down = value_size - len(down_letter)
+        max_len_up = value_size - len(up_letter)
+        max_len_total = value_size - len(total_letter)
+        max_len_down_size = value_size - len(size_down_letter)
+        max_len_up_size = value_size - len(size_up_letter)
         down = '{val:{max_len}.2f}'.format(val=down, max_len=max_len_down)
         up = '{val:{max_len}.2f}'.format(val=up, max_len=max_len_up)
         total = '{val:{max_len}.2f}'.format(val=total, max_len=max_len_total)
