@@ -70,7 +70,7 @@ class Net(base.ThreadPoolText):
             letters = ["b", "kb", "Mb", "Gb", "Tb", "Pb", "Eb", "Zb", "Yb"]
             num_bytes *= 8
         else:
-            letters = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]            
+            letters = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
 
         if num_bytes > 0:
             power = int(log(num_bytes) / log(factor))
