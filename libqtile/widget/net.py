@@ -43,7 +43,7 @@ class Net(base.ThreadPoolText):
             None to displays all active NICs combined'),
         ('update_interval', 1, 'The update interval.'),
         ('use_bits', False, 'Use bits instead of bytes per second?'),
-        ('factor', 1000, 'Factor to calculate bytes, ex to 1000 for kB or 1024 for kiB'),
+        ('factor', 1000, 'Factor to calculate bytes, allowed is 1000 for ex. kB and 1024 for ex kiB),
     ]
 
     def __init__(self, **config):
