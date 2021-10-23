@@ -27,7 +27,11 @@ import libqtile.config
 import libqtile.confreader
 import libqtile.layout
 import libqtile.widget as widgets
+from libqtile.widget.base import ORIENTATION_VERTICAL
+from libqtile.widget.clock import Clock
 from libqtile.widget.crashme import _CrashMe
+
+from .conftest import FakeBar
 
 # This file runs a very simple test to check that widgets can be initialised
 # and that keyword arguments are added to default values.
@@ -117,3 +121,11 @@ def test_widget_init_config(manager_nospawn, minimal_conf_noscreen, widget_class
 
     # Check widget is registered by checking names of widgets in bar
     assert i["widgets"][0]["name"] == widget.name
+
+
+def test_incompatible_orientation(fake_qtile, fake_window):
+    clk1 = Clock()
+    clk1.orientations = ORIENTATION_VERTICAL
+    fakebar = FakeBar([clk1], window=fake_window)
+    with pytest.raises(libqtile.confreader.ConfigError):
+        clk1._configure(fake_qtile, fakebar)
