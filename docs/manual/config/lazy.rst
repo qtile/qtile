@@ -122,6 +122,10 @@ ScratchPad DropDown functions
     * - ``lazy.group["group_name"].dropdown_toggle("name")``
       - Toggles the visibility of the specified DropDown window.
         On first use, the configured process is spawned.
+    * - ``lazy.group["group_name"].hide_all()``
+      - Hides all DropDown windows.
+    * - ``lazy.group["group_name"].dropdown_reconfigure("name", **configuration)``
+      - Update the configuration of the named DropDown.
 
 User-defined functions
 ----------------------

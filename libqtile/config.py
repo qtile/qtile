@@ -769,9 +769,17 @@ class DropDown(configurable.Configurable):
             'This has only effect if any of the on_focus_lost_xxx '
             'configurations is True'
         ),
+        (
+            'match',
+            None,
+            "Use a ``config.Match`` to identify the spawned window and move it to the "
+            "scratchpad, instead of relying on the window's PID. This works around "
+            "some programs that may not be caught by the window's PID if it does "
+            "not match the PID of the spawned process."
+        ),
     )
 
-    def __init__(self, name, cmd, match=None, **config):
+    def __init__(self, name, cmd, **config):
         """
         Initialize DropDown window wrapper.
         Define a command to spawn a process for the first time the DropDown
@@ -789,7 +797,6 @@ class DropDown(configurable.Configurable):
         configurable.Configurable.__init__(self, **config)
         self.name = name
         self.command = cmd
-        self.match = match
         self.add_defaults(self.defaults)
 
     def info(self):
