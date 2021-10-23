@@ -16,6 +16,7 @@ Qtile x.x.x, released xxxx-xx-xx:
         - Add ability for widget `mouse_callbacks` to take `lazy` calls (similar to keybindings)
         - Add `aliases` to `lazy.spawncmd()` which takes a dictionary mapping convenient aliases
           to full command lines.
+        - Add a new 'prefix' option to the net widget to display speeds with a static unit (e.g. MB).
 
 Qtile 0.18.1, released 2021-09-16:
     * features
