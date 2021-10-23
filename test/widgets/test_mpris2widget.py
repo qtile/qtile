@@ -26,7 +26,7 @@ from types import ModuleType
 
 import pytest
 
-from libqtile.bar import Bar
+from test.widgets.conftest import FakeBar
 
 
 def no_op(*args, **kwargs):
@@ -124,11 +124,7 @@ def patched_module(monkeypatch):
 
 def test_mpris2_signal_handling(fake_qtile, patched_module, fake_window):
     mp = patched_module.Mpris2(scroll_chars=20, scroll_wait_intervals=5)
-    fakebar = Bar([mp], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([mp], window=fake_window)
     mp.timeout_add = fake_timer
     mp._configure(fake_qtile, fakebar)
 
@@ -187,11 +183,7 @@ def test_mpris2_signal_handling(fake_qtile, patched_module, fake_window):
 
 def test_mpris2_custom_stop_text(fake_qtile, patched_module, fake_window):
     mp = patched_module.Mpris2(stop_pause_text="Test Paused")
-    fakebar = Bar([mp], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([mp], window=fake_window)
     mp.timeout_add = fake_timer
     mp._configure(fake_qtile, fakebar)
     mp.configured = True
@@ -208,11 +200,7 @@ def test_mpris2_custom_stop_text(fake_qtile, patched_module, fake_window):
 
 def test_mpris2_no_metadata(fake_qtile, patched_module, fake_window):
     mp = patched_module.Mpris2(stop_pause_text="Test Paused")
-    fakebar = Bar([mp], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([mp], window=fake_window)
     mp.timeout_add = fake_timer
     mp._configure(fake_qtile, fakebar)
     mp.configured = True
@@ -225,11 +213,7 @@ def test_mpris2_no_scroll(fake_qtile, patched_module, fake_window):
     # If no scrolling, then the update function creates the text to display
     # and draws the bar.
     mp = patched_module.Mpris2(scroll_chars=None)
-    fakebar = Bar([mp], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([mp], window=fake_window)
     mp.timeout_add = fake_timer
     mp._configure(fake_qtile, fakebar)
     mp.configured = True
@@ -243,11 +227,7 @@ def test_mpris2_no_scroll(fake_qtile, patched_module, fake_window):
 
 def test_mpris2_clear_after_scroll(fake_qtile, patched_module, fake_window):
     mp = patched_module.Mpris2(scroll_chars=60, scroll_wait_intervals=2)
-    fakebar = Bar([mp], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([mp], window=fake_window)
     mp.timeout_add = fake_timer
     mp._configure(fake_qtile, fakebar)
     mp.configured = True

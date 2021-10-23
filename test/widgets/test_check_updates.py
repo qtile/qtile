@@ -1,11 +1,6 @@
 import libqtile.config
-from libqtile.bar import Bar
 from libqtile.widget.check_updates import CheckUpdates, Popen  # noqa: F401
-
-
-def no_op(*args, **kwargs):
-    pass
-
+from test.widgets.conftest import FakeBar
 
 wrong_distro = "Barch"
 good_distro = "Arch"
@@ -28,11 +23,7 @@ def test_update_available(fake_qtile, fake_window):
                        custom_command=cmd_1_line,
                        colour_have_updates="#123456"
                        )
-    fakebar = Bar([cu2], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([cu2], window=fake_window)
     cu2._configure(fake_qtile, fakebar)
     text = cu2.poll()
     assert text == "Updates: 1"
@@ -42,11 +33,7 @@ def test_update_available(fake_qtile, fake_window):
 def test_no_update_available_without_no_update_string(fake_qtile, fake_window):
     """ test output with no update (without dedicated string nor color) """
     cu3 = CheckUpdates(distro=good_distro, custom_command=cmd_0_line)
-    fakebar = Bar([cu3], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([cu3], window=fake_window)
     cu3._configure(fake_qtile, fakebar)
     text = cu3.poll()
     assert text == ""
@@ -61,11 +48,7 @@ def test_no_update_available_with_no_update_string_and_color_no_updates(
                        no_update_string=nus,
                        colour_no_updates="#654321"
                        )
-    fakebar = Bar([cu4], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([cu4], window=fake_window)
     cu4._configure(fake_qtile, fakebar)
     text = cu4.poll()
     assert text == nus
@@ -79,11 +62,7 @@ def test_update_available_with_restart_indicator(monkeypatch, fake_qtile, fake_w
                        restart_indicator="*",
                        )
     monkeypatch.setattr("os.path.exists", lambda x: True)
-    fakebar = Bar([cu5], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([cu5], window=fake_window)
     cu5._configure(fake_qtile, fakebar)
     text = cu5.poll()
     assert text == "Updates: 1*"
@@ -155,11 +134,7 @@ def test_update_process_error(fake_qtile, fake_window):
                        custom_command=cmd_error,
                        no_update_string="ERROR",
                        )
-    fakebar = Bar([cu7], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([cu7], window=fake_window)
     cu7._configure(fake_qtile, fakebar)
     text = cu7.poll()
     assert text == "ERROR"
@@ -176,11 +151,7 @@ def test_line_truncations(fake_qtile, monkeypatch, fake_window):
     cu8 = CheckUpdates(distro="Fedora")
 
     monkeypatch.setattr(cu8, "call_process", mock_process)
-    fakebar = Bar([cu8], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([cu8], window=fake_window)
     cu8._configure(fake_qtile, fakebar)
     text = cu8.poll()
 

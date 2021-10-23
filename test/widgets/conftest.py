@@ -5,19 +5,28 @@ import subprocess
 
 import pytest
 
-import libqtile.bar
 import libqtile.config
 import libqtile.confreader
 import libqtile.layout
+from libqtile.bar import Bar
+from libqtile.widget.base import ORIENTATION_HORIZONTAL
 
 
 @pytest.fixture(scope='function')
 def fake_bar():
-    from libqtile.bar import Bar
-    height = 24
-    b = Bar([], height)
-    b.height = height
-    return b
+    return FakeBar([])
+
+
+class FakeBar(Bar):
+    def __init__(self, widgets, size=24, width=100, window=None, **config):
+        Bar.__init__(self, widgets, size, **config)
+        self.height = size
+        self.width = width
+        self.window = window
+        self.horizontal = ORIENTATION_HORIZONTAL
+
+    def draw(self):
+        pass
 
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))

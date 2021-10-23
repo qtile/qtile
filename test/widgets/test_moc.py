@@ -25,8 +25,8 @@ import subprocess
 import pytest
 
 import libqtile.config
-from libqtile.bar import Bar
 from libqtile.widget import moc
+from test.widgets.conftest import FakeBar
 
 
 class MockMocpProcess:
@@ -103,11 +103,7 @@ def patched_moc(fake_qtile, monkeypatch, fake_window):
     MockMocpProcess.reset()
     monkeypatch.setattr(widget, "call_process", MockMocpProcess.run)
     monkeypatch.setattr("libqtile.widget.moc.subprocess.Popen", MockMocpProcess.run)
-    fakebar = Bar([widget], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([widget], window=fake_window)
     widget._configure(fake_qtile, fakebar)
     return widget
 

@@ -2,7 +2,6 @@ import cairocffi
 import pytest
 
 from libqtile import images
-from libqtile.bar import Bar
 from libqtile.widget import battery
 from libqtile.widget.battery import (
     Battery,
@@ -10,7 +9,7 @@ from libqtile.widget.battery import (
     BatteryState,
     BatteryStatus,
 )
-from test.widgets.conftest import TEST_DIR
+from test.widgets.conftest import TEST_DIR, FakeBar
 
 
 class DummyBattery:
@@ -241,11 +240,7 @@ def test_battery_background(fake_qtile, fake_window, monkeypatch):
             low_percentage=0.2, low_background=low_background, background=background
         )
 
-    fakebar = Bar([batt], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = lambda *a, **k: None
+    fakebar = FakeBar([batt], window=fake_window)
     batt._configure(fake_qtile, fakebar)
 
     assert batt.background == background

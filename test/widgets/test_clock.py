@@ -27,8 +27,8 @@ from importlib import reload
 import pytest
 
 import libqtile.config
-from libqtile.bar import Bar
 from libqtile.widget import clock
+from test.widgets.conftest import FakeBar
 
 
 def no_op(*args, **kwargs):
@@ -69,11 +69,7 @@ def test_clock(fake_qtile, monkeypatch, fake_window):
     """ test clock output with default settings """
     monkeypatch.setattr("libqtile.widget.clock.datetime", MockDatetime)
     clk1 = clock.Clock()
-    fakebar = Bar([clk1], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([clk1], window=fake_window)
     clk1._configure(fake_qtile, fakebar)
     text = clk1.poll()
     assert text == "10:20"
@@ -104,11 +100,7 @@ def test_clock_invalid_timezone(fake_qtile, monkeypatch, fake_window):
     # Fake datetime module just adds the timezone value to the time
     clk2 = clock.Clock(timezone="1")
 
-    fakebar = Bar([clk2], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([clk2], window=fake_window)
     clk2._configure(fake_qtile, fakebar)
 
     # An invalid timezone current causes a TypeError
@@ -136,11 +128,7 @@ def test_clock_datetime_timezone(fake_qtile, monkeypatch, fake_window):
     # Fake datetime module just adds the timezone value to the time
     clk3 = clock.Clock(timezone=1)
 
-    fakebar = Bar([clk3], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([clk3], window=fake_window)
     clk3._configure(fake_qtile, fakebar)
     text = clk3.poll()
 
@@ -178,11 +166,7 @@ def test_clock_pytz_timezone(fake_qtile, monkeypatch, fake_window):
     # Pytz timezone must be a string
     clk4 = clock.Clock(timezone="1")
 
-    fakebar = Bar([clk4], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([clk4], window=fake_window)
     clk4._configure(fake_qtile, fakebar)
     text = clk4.poll()
 
@@ -217,11 +201,7 @@ def test_clock_dateutil_timezone(fake_qtile, monkeypatch, fake_window):
     # Pytz timezone must be a string
     clk5 = clock.Clock(timezone="1")
 
-    fakebar = Bar([clk5], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([clk5], window=fake_window)
     clk5._configure(fake_qtile, fakebar)
     text = clk5.poll()
 

@@ -25,8 +25,8 @@ import subprocess
 import pytest
 
 import libqtile.config
-from libqtile.bar import Bar
 from libqtile.widget import cmus
+from test.widgets.conftest import FakeBar
 
 
 class MockCmusRemoteProcess:
@@ -144,11 +144,7 @@ def patched_cmus(monkeypatch):
 
 def test_cmus(fake_qtile, patched_cmus, fake_window):
     widget = patched_cmus.Cmus()
-    fakebar = Bar([widget], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([widget], window=fake_window)
     widget._configure(fake_qtile, fakebar)
     text = widget.poll()
     assert text == "♫ Rick Astley - Never Gonna Give You Up"
@@ -165,11 +161,7 @@ def test_cmus_play_stopped(fake_qtile, patched_cmus, fake_window):
 
     # Set track to a stopped item
     MockCmusRemoteProcess.index = 2
-    fakebar = Bar([widget], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([widget], window=fake_window)
     widget._configure(fake_qtile, fakebar)
     text = widget.poll()
 
@@ -219,11 +211,7 @@ def test_cmus_buttons(minimal_conf_noscreen, manager_nospawn, patched_cmus):
 def test_cmus_error_handling(fake_qtile, patched_cmus, fake_window):
     widget = patched_cmus.Cmus()
     MockCmusRemoteProcess.is_error = True
-    fakebar = Bar([widget], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([widget], window=fake_window)
     widget._configure(fake_qtile, fakebar)
     text = widget.poll()
 
@@ -237,11 +225,7 @@ def test_escape_text(fake_qtile, patched_cmus, fake_window):
 
     # Set track to a stopped item
     MockCmusRemoteProcess.index = 3
-    fakebar = Bar([widget], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([widget], window=fake_window)
     widget._configure(fake_qtile, fakebar)
     text = widget.poll()
 

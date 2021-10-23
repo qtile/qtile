@@ -30,8 +30,7 @@ import libqtile.widget as widgets
 from libqtile.widget.base import ORIENTATION_VERTICAL
 from libqtile.widget.clock import Clock
 from libqtile.widget.crashme import _CrashMe
-
-from .conftest import FakeBar
+from test.widgets.conftest import FakeBar
 
 # This file runs a very simple test to check that widgets can be initialised
 # and that keyword arguments are added to default values.
