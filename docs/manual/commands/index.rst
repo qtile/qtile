@@ -10,9 +10,9 @@ different places:
 
 * Commands can be :ref:`bound to keys <config-keys>` in the Qtile
   configuration file.
-* Commands can be :ref:`called through qtile shell <qshell>`, the
+* Commands can be :ref:`called through qtile shell <qtile-shell>`, the
   Qtile shell.
-* The qsh can also be hooked into a Jupyter kernel :ref:`called iqshell
+* The shell can also be hooked into a Jupyter kernel :ref:`called iqshell
   <iqshell>`.
 * Commands can be :ref:`called from a script <scripting>` to
   interact with Qtile from Python.
