@@ -26,11 +26,7 @@ from types import ModuleType
 
 import pytest
 
-from libqtile.bar import Bar
-
-
-def no_op(*args, **kwargs):
-    pass
+from test.widgets.conftest import FakeBar
 
 
 # Net widget only needs bytes_recv/sent attributes
@@ -73,11 +69,7 @@ def patch_net(fake_qtile, monkeypatch, fake_window):
                 format='{interface}: U {up} D {down} T {total}',
                 **kwargs
             )
-        fakebar = Bar([widget], 24)
-        fakebar.window = fake_window
-        fakebar.width = 10
-        fakebar.height = 10
-        fakebar.draw = no_op
+        fakebar = FakeBar([widget], window=fake_window)
         widget._configure(fake_qtile, fakebar)
 
         return widget

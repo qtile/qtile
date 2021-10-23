@@ -26,11 +26,7 @@ from types import ModuleType
 
 import pytest
 
-from libqtile.bar import Bar
-
-
-def no_op(*args, **kwargs):
-    pass
+from test.widgets.conftest import FakeBar
 
 
 class FakeIMAP(ModuleType):
@@ -82,11 +78,7 @@ def patched_imap(monkeypatch):
 
 def test_imapwidget(fake_qtile, monkeypatch, fake_window, patched_imap):
     imap = patched_imap.ImapWidget(user="qtile")
-    fakebar = Bar([imap], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([imap], window=fake_window)
     imap._configure(fake_qtile, fakebar)
     text = imap.poll()
     assert text == "INBOX: 2"
@@ -95,11 +87,7 @@ def test_imapwidget(fake_qtile, monkeypatch, fake_window, patched_imap):
 def test_imapwidget_keyring_error(fake_qtile, monkeypatch, fake_window, patched_imap):
     patched_imap.keyring.valid = False
     imap = patched_imap.ImapWidget(user="qtile")
-    fakebar = Bar([imap], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([imap], window=fake_window)
     imap._configure(fake_qtile, fakebar)
     text = imap.poll()
     assert text == "Gnome Keyring Error"
@@ -115,11 +103,7 @@ def test_imapwidget_password_none(fake_qtile, monkeypatch, fake_window, patched_
     patched_imap.keyring.error = False
 
     imap = patched_imap.ImapWidget(user="qtile")
-    fakebar = Bar([imap], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([imap], window=fake_window)
     imap._configure(fake_qtile, fakebar)
     with pytest.raises(AttributeError):
         with pytest.raises(UnboundLocalError):

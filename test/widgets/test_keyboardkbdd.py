@@ -31,11 +31,7 @@ from types import ModuleType
 
 import pytest
 
-from libqtile.bar import Bar
-
-
-def no_op(*args, **kwargs):
-    pass
+from test.widgets.conftest import FakeBar
 
 
 async def mock_signal_receiver(*args, **kwargs):
@@ -80,11 +76,7 @@ def patched_widget(monkeypatch):
 def test_keyboardkbdd_process_running(fake_qtile, patched_widget, fake_window):
     MockSpawn.call_count = 1
     kbd = patched_widget.KeyboardKbdd(configured_keyboards=["gb", "us"])
-    fakebar = Bar([kbd], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([kbd], window=fake_window)
     kbd._configure(fake_qtile, fakebar)
     assert kbd.is_kbdd_running
     assert kbd.keyboard == "gb"
@@ -103,11 +95,7 @@ def test_keyboardkbdd_process_running(fake_qtile, patched_widget, fake_window):
 def test_keyboardkbdd_process_not_running(fake_qtile, patched_widget, fake_window):
     MockSpawn.call_count = 0
     kbd = patched_widget.KeyboardKbdd(configured_keyboards=["gb", "us"])
-    fakebar = Bar([kbd], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([kbd], window=fake_window)
     kbd._configure(fake_qtile, fakebar)
     assert not kbd.is_kbdd_running
     assert kbd.keyboard == "N/A"
@@ -126,11 +114,7 @@ def test_keyboard_kbdd_colours(fake_qtile, patched_widget, fake_window):
         configured_keyboards=["gb", "us"],
         colours=["#ff0000", "#00ff00"]
     )
-    fakebar = Bar([kbd], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([kbd], window=fake_window)
     kbd._configure(fake_qtile, fakebar)
 
     # Create a message with the index of the active keyboard
