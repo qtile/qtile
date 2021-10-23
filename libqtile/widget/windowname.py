@@ -80,7 +80,7 @@ class WindowName(base._TextBox):
             if callable(self.parse_text):
                 try:
                     var["name"] = self.parse_text(var["name"])
-                except:
+                except:  # noqa: E722
                     logger.exception("parse_text function failed:")
             wm_class = w.get_wm_class()
             var["class"] = wm_class[0] if wm_class else ""

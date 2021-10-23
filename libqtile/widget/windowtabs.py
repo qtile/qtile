@@ -78,6 +78,6 @@ class WindowTabs(base._TextBox):
         if callable(self.parse_text):
             try:
                 self.text = self.parse_text(self.text)
-            except:
+            except:  # noqa: E722
                 logger.exception("parse_text function failed:")
         self.bar.draw()
