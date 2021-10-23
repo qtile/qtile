@@ -40,14 +40,28 @@ class Net(base.ThreadPoolText):
         ('format', '{interface}: {down} \u2193\u2191 {up}',
          'Display format of down/upload/total speed of given interfaces'),
         ('interface', None, 'List of interfaces or single NIC as string to monitor, \
-            None to displays all active NICs combined'),
+            None to display all active NICs combined'),
         ('update_interval', 1, 'The update interval.'),
         ('use_bits', False, 'Use bits instead of bytes per second?'),
+        ('prefix', None, 'Use a specific prefix for the unit of the speed.'),
     ]
 
     def __init__(self, **config):
         base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(Net.defaults)
+
+        self.factor = 1000.0
+        self.allowed_prefixes = ["", "k", "M", "G", "T", "P", "E", "Z", "Y"]
+
+        if self.use_bits:
+            self.base_unit = "b"
+            self.byte_multiplier = 8
+        else:
+            self.base_unit = "B"
+            self.byte_multiplier = 1
+
+        self.units = list(map(lambda p: p + self.base_unit, self.allowed_prefixes))
+
         if not isinstance(self.interface, list):
             if self.interface is None:
                 self.interface = ["all"]
@@ -59,22 +73,20 @@ class Net(base.ThreadPoolText):
 
     def convert_b(self, num_bytes: float) -> Tuple[float, str]:
         """Converts the number of bytes to the correct unit"""
-        factor = 1000.0
 
-        if self.use_bits:
-            letters = ["b", "kb", "Mb", "Gb", "Tb", "Pb", "Eb", "Zb", "Yb"]
-            num_bytes *= 8
+        num_bytes *= self.byte_multiplier
+
+        if self.prefix is None:
+            if num_bytes > 0:
+                power = int(log(num_bytes) / log(self.factor))
+                power = min(power, len(self.units) - 1)
+            else:
+                power = 0
         else:
-            letters = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+            power = self.allowed_prefixes.index(self.prefix)
 
-        if num_bytes > 0:
-            power = int(log(num_bytes) / log(factor))
-            power = max(min(power, len(letters) - 1), 0)
-        else:
-            power = 0
-
-        converted_bytes = num_bytes / factor**power
-        unit = letters[power]
+        converted_bytes = num_bytes / self.factor**power
+        unit = self.units[power]
 
         return converted_bytes, unit
 
