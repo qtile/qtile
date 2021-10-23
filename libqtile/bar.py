@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 import typing
+from collections import defaultdict
 
 from libqtile import configurable
 from libqtile.command.base import CommandObject, ItemT
@@ -357,13 +358,27 @@ class Bar(Gap, configurable.Configurable):
         self.window = None
 
     def _resize(self, length, widgets):
-        stretches = [i for i in widgets if i.length_type == STRETCH]
+        # We want consecutive stretch widgets to split one 'block' of space between them
+        stretches = []
+        consecutive_stretches = defaultdict(list)
+        prev_stretch = None
+        for widget in widgets:
+            if widget.length_type == STRETCH:
+                if prev_stretch:
+                    consecutive_stretches[prev_stretch].append(widget)
+                else:
+                    stretches.append(widget)
+                    prev_stretch = widget
+            else:
+                prev_stretch = None
+
         if stretches:
             stretchspace = length - sum(
                 [i.length for i in widgets if i.length_type != STRETCH]
             )
             stretchspace = max(stretchspace, 0)
             num_stretches = len(stretches)
+
             if num_stretches == 1:
                 stretches[0].length = stretchspace
             else:
@@ -372,12 +387,13 @@ class Bar(Gap, configurable.Configurable):
                 for i in widgets:
                     if i.length_type != STRETCH:
                         block += i.length
-                    else:
+                    elif i in stretches:  # False for consecutive_stretches
                         blocks.append(block)
                         block = 0
                 if block:
                     blocks.append(block)
                 interval = length // num_stretches
+
                 for idx, i in enumerate(stretches):
                     if idx == 0:
                         i.length = interval - blocks[0] - blocks[1] // 2
@@ -386,8 +402,18 @@ class Bar(Gap, configurable.Configurable):
                     else:
                         i.length = int(interval - blocks[idx] / 2 - blocks[idx + 1] / 2)
                     stretchspace -= i.length
+
                 stretches[0].length += stretchspace // 2
                 stretches[-1].length += stretchspace - stretchspace // 2
+
+            for i, followers in consecutive_stretches.items():
+                length = i.length // (len(followers) + 1)
+                rem = i.length - length
+                i.length = length
+                for f in followers:
+                    f.length = length
+                    rem -= length
+                i.length += rem
 
         if self.horizontal:
             offset = self.border_width[3]

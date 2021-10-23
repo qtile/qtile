@@ -277,8 +277,8 @@ def test_resize(manager):
         assert off(dwidget_list) == [0, 10, 50, 90]
 
         b._resize(101, dwidget_list)
-        assert wd(dwidget_list) == [10, 40, 41, 10]
-        assert off(dwidget_list) == [0, 10, 50, 91]
+        assert wd(dwidget_list) == [10, 41, 40, 10]
+        assert off(dwidget_list) == [0, 10, 51, 91]
 
         dwidget_list = [
             DWidget(10, libqtile.bar.CALCULATED)
@@ -331,32 +331,6 @@ class BrokenWidget(libqtile.widget.base._Widget):
 
     def _configure(self, qtile, bar):
         raise self.exception_class
-
-
-def test_incompatible_widget(manager_nospawn):
-    class IncompatibleWidgetConf(libqtile.confreader.Config):
-        groups = [libqtile.config.Group("a")]
-        screens = [
-            libqtile.config.Screen(
-                left=libqtile.bar.Bar(
-                    [
-                        # This widget doesn't support vertical orientation
-                        ExampleWidget(),
-                    ],
-                    10
-                ),
-            )
-        ]
-
-    # Ensure that adding a widget that doesn't support the orientation of the
-    # bar raises ConfigError
-    m = manager_nospawn.create_manager(IncompatibleWidgetConf)
-
-    try:
-        with pytest.raises(libqtile.confreader.ConfigError):
-            m.load_config()
-    finally:
-        m.core.finalize()
 
 
 def test_basic(manager_nospawn):
@@ -434,6 +408,45 @@ def test_nospacer(manager_nospawn):
     i = manager_nospawn.c.bar["bottom"].info()
     assert i["widgets"][0]["offset"] == 0
     assert i["widgets"][1]["offset"] == 10
+    libqtile.hook.clear()
+
+
+def test_consecutive_spacer(manager_nospawn):
+    config = GeomConf
+    config.screens = [
+        libqtile.config.Screen(
+            bottom=libqtile.bar.Bar(
+                [
+                    ExampleWidget(),  # Left
+                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
+                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
+                    ExampleWidget(),  # Centre
+                    ExampleWidget(),
+                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
+                    ExampleWidget(),  # Right
+                ],
+                10
+            )
+        )
+    ]
+
+    manager_nospawn.start(config)
+
+    i = manager_nospawn.c.bar["bottom"].info()
+    assert i["widgets"][0]["offset"] == 0
+    assert i["widgets"][0]["width"] == 10
+    assert i["widgets"][1]["offset"] == 10
+    assert i["widgets"][1]["width"] == 190
+    assert i["widgets"][2]["offset"] == 200
+    assert i["widgets"][2]["width"] == 190
+    assert i["widgets"][3]["offset"] == 390
+    assert i["widgets"][3]["width"] == 10
+    assert i["widgets"][4]["offset"] == 400
+    assert i["widgets"][4]["width"] == 10
+    assert i["widgets"][5]["offset"] == 410
+    assert i["widgets"][5]["width"] == 380
+    assert i["widgets"][6]["offset"] == 790
+    assert i["widgets"][6]["width"] == 10
     libqtile.hook.clear()
 
 
