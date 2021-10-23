@@ -238,13 +238,6 @@ class Bar(Gap, configurable.Configurable):
         width = self.width + (self.border_width[1] + self.border_width[3])
         height = self.height + (self.border_width[0] + self.border_width[2])
 
-        for w in self.widgets:
-            # Executing _test_orientation_compatibility later, for example in
-            # the _configure() method of each widget, would still pass
-            # test/test_bar.py but a segfault would be raised when nosetests is
-            # about to exit
-            w._test_orientation_compatibility(self.horizontal)
-
         if self.window:
             # We get _configure()-ed with an existing window when screens are getting
             # reconfigured but this screen is present both before and after
