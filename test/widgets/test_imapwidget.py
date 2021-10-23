@@ -59,7 +59,7 @@ class FakeKeyring(ModuleType):
     valid = True
     error = True
 
-    def get_password(self, app, user):
+    def get_password(self, _app, user):
         if self.valid:
             return "password"
 

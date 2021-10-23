@@ -159,7 +159,7 @@ class TestManager:
         self.sockfile = self._sockfile.name
         return self
 
-    def __exit__(self, exc_type, exc_value, exc_tb):
+    def __exit__(self, _exc_type, _exc_value, _exc_tb):
         """Clean up resources"""
         self.terminate()
         self._sockfile.close()

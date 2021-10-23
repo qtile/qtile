@@ -41,7 +41,7 @@ class MockPsutil(ModuleType):
     down = 0
 
     @classmethod
-    def net_io_counters(cls, pernic=False, nowrap=True):
+    def net_io_counters(cls, pernic=False, _nowrap=True):
 
         class IOCounters:
             def __init__(self, up, down):
