@@ -25,10 +25,10 @@ import fcntl
 import inspect
 import pprint
 import re
-import readline
 import struct
 import sys
 import termios
+from importlib import import_module
 from typing import Any, List, Optional, Tuple
 
 from libqtile.command.client import CommandClient
@@ -54,12 +54,16 @@ class QSh:
     """Qtile shell instance"""
 
     def __init__(self, client: CommandInterface, completekey="tab") -> None:
+        # Readline is imported here to prevent issues with terminal resizing
+        # which would result from readline being imported when qtile is first
+        # started
+        self.readline = import_module("readline")
         self._command_client = CommandClient(client)
         self._completekey = completekey
         self._builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
 
     def complete(self, arg, state) -> Optional[str]:
-        buf = readline.get_line_buffer()
+        buf = self.readline.get_line_buffer()
         completers = self._complete(buf, arg)
         if completers and state < len(completers):
             return completers[state]
@@ -331,9 +335,9 @@ class QSh:
         return "Invalid command: {}".format(line)
 
     def loop(self) -> None:
-        readline.set_completer(self.complete)
-        readline.parse_and_bind(self._completekey + ": complete")
-        readline.set_completer_delims(" ()|")
+        self.readline.set_completer(self.complete)
+        self.readline.parse_and_bind(self._completekey + ": complete")
+        self.readline.set_completer_delims(" ()|")
 
         while True:
             try:
