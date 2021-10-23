@@ -58,7 +58,7 @@ bind thats process' window to it. The associated window can then be shown and
 hidden by the lazy command ``dropdown_toggle()``
 (see :ref:`lazy`) from the ScratchPad group.
 Thus - for example - your favorite terminal emulator turns into a quake-like
-terminal by the control of qtile.
+terminal by the control of Qtile.
 
 If the DropDown window turns visible it is placed as a floating window on top
 of the current group.
@@ -90,18 +90,19 @@ Example
     Key([], 'F12', lazy.group['scratchpad'].dropdown_toggle('qshell')),
   ]
 
-There is only one DropDown visible in current group at a time.
-If a further DropDown is set visible the currently shown DropDown turns
-invisble immediately.
-
 Note that if the window is set to not floating, it is detached from DropDown
-and ScratchPad, and a new pocess is spawned next time the DropDown is set visible.
+and ScratchPad, and a new process is spawned next time the DropDown is set
+visible.
+
+Some programs run in a server-like mode where the spawned process does not
+directly own the window that is created, which is instead created by a
+background process. In this case, the window may not be correctly caught in the
+scratchpad group. To work around this, you can pass a ``config.Match`` object
+to the corresponding ``Dropdown``. See below.
 
 Reference
 ---------
 
 .. qtile_class:: libqtile.config.ScratchPad
-    :no-commands:
 
 .. qtile_class:: libqtile.config.DropDown
-     :no-commands:
