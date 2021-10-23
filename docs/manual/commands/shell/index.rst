@@ -10,7 +10,7 @@ repository are also documented below.
     :maxdepth: 1
 
     qtile start <qtile-start>
-    qtile shell <qshell>
+    qtile shell <qtile-shell>
     qtile cmd-obj <qtile-cmd>
     qtile run-cmd <qtile-run>
     qtile top <qtile-top>

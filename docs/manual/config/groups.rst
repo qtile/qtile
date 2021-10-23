@@ -77,8 +77,8 @@ Example
           # it is placed in the upper third of screen by default.
           DropDown("term", "urxvt", opacity=0.8),
 
-          # define another terminal exclusively for qshell at different position
-          DropDown("qshell", "urxvt -hold -e qshell",
+          # define another terminal exclusively for ``qtile shell` at different position
+          DropDown("qtile shell", "urxvt -hold -e 'qtile shell'",
                    x=0.05, y=0.4, width=0.9, height=0.6, opacity=0.9,
                    on_focus_lost_hide=True) ]),
       Group("a"),
@@ -87,7 +87,7 @@ Example
   keys = [
     # toggle visibiliy of above defined DropDown named "term"
     Key([], 'F11', lazy.group['scratchpad'].dropdown_toggle('term')),
-    Key([], 'F12', lazy.group['scratchpad'].dropdown_toggle('qshell')),
+    Key([], 'F12', lazy.group['scratchpad'].dropdown_toggle('qtile shell')),
   ]
 
 Note that if the window is set to not floating, it is detached from DropDown
