@@ -148,10 +148,12 @@ class _Widget(CommandObject, configurable.Configurable):
         if length in (bar.CALCULATED, bar.STRETCH):
             self.length_type = length
             self.length = 0
-        else:
-            assert isinstance(length, int)
+        elif isinstance(length, int):
             self.length_type = bar.STATIC
             self.length = length
+        else:
+            raise confreader.ConfigError("Widget width must be an int")
+
         self.configured = False
         self._futures: List[asyncio.TimerHandle] = []
 
