@@ -183,8 +183,6 @@ class _Widget(CommandObject, configurable.Configurable):
             return self.offsetx
         return self.offsety
 
-    # Do not start the name with "test", or nosetests will try to test it
-    # directly (prepend an underscore instead)
     def _test_orientation_compatibility(self, horizontal):
         if horizontal:
             if not self.orientations & ORIENTATION_HORIZONTAL:
@@ -204,6 +202,8 @@ class _Widget(CommandObject, configurable.Configurable):
         pass
 
     def _configure(self, qtile, bar):
+        self._test_orientation_compatibility(bar.horizontal)
+
         self.qtile = qtile
         self.bar = bar
         self.drawer = bar.window.create_drawer(self.bar.width, self.bar.height)
