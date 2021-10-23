@@ -10,6 +10,7 @@ from libqtile.log_utils import logger
 if TYPE_CHECKING:
     from libqtile.core.manager import Qtile
 
+
 class LoopContext(contextlib.AbstractAsyncContextManager):
     def __init__(
         self,
