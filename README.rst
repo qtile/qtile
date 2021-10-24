@@ -1,33 +1,8 @@
-.. raw:: html
+|logo|
 
-   <p align="center">
-     <a href="https://www.qtile.org">
-       <img
-         src="https://raw.githubusercontent.com/qtile/qtile/master/logo.png"
-         alt="Logo"
-       >
-     </a>
-   </p>
-   <p align="center">
-     <b>A full-featured, hackable tiling window manager written and configured in Python</b>
-   </p>
-   <p align="center">
-     <a href="https://www.qtile.org">
-       <img src="https://img.shields.io/badge/website-qtile.org-blue.svg" alt="Website">
-     </a>
-     <a href="https://pypi.org/project/qtile/">
-       <img src="https://img.shields.io/pypi/v/qtile.svg" alt="PyPI">
-     </a>
-     <a href="https://github.com/qtile/qtile/actions">
-       <img src="https://github.com/qtile/qtile/workflows/ci/badge.svg?branch=master" alt="CI Status">
-     </a>
-     <a href="https://docs.qtile.org/en/latest/">
-       <img src="https://readthedocs.org/projects/qtile/badge/?version=latest" alt="Read the Docs">
-     </a>
-     <a href="https://github.com/qtile/qtile/blob/master/LICENSE">
-       <img src="https://img.shields.io/github/license/qtile/qtile.svg" alt="License">
-     </a>
-   </p>
+**A full-featured, hackable tiling window manager written and configured in Python**
+
+|website| |pypi| |ci| |rtd| |license|
 
 Features
 ========
@@ -62,6 +37,26 @@ and `guidelines`_ for contributing in the documentation.
 .. _`issue tracker`: https://github.com/qtile/qtile/issues
 .. _`tips & tricks`: https://docs.qtile.org/en/latest/manual/hacking.html
 .. _`guidelines`: https://docs.qtile.org/en/latest/manual/contributing.html
+
+.. |logo| image:: https://raw.githubusercontent.com/qtile/qtile/master/logo.png
+    :alt: Logo
+    :target: https://www.qtile.org
+.. |website| image:: https://img.shields.io/badge/website-qtile.org-blue.svg
+    :alt: Website
+    :target: https://www.qtile.org
+.. |pypi| image:: https://img.shields.io/pypi/v/qtile.svg
+    :alt: PyPI
+    :target: https://pypi.org/project/qtile/
+.. |ci| image:: https://github.com/qtile/qtile/workflows/ci/badge.svg?branch=master
+    :alt: CI status
+    :target: https://github.com/qtile/qtile/actions
+.. |rtd| image:: https://readthedocs.org/projects/qtile/badge/?version=latest
+    :alt: Read the Docs
+    :target: https://docs.qtile.org/en/latest/
+.. |license| image:: https://img.shields.io/github/license/qtile/qtile.svg
+    :alt: License
+    :target: https://github.com/qtile/qtile/blob/master/LICENSE
+
 
 Maintainers
 ===========
