@@ -39,7 +39,7 @@ from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 
 if TYPE_CHECKING:
-    from typing import Callable, List, Optional
+    from typing import Callable, List, Optional, Set
 
     from pywayland.server import Signal
     from wlroots.wlr_types import Box, data_device_manager

@@ -40,7 +40,7 @@ from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import List, Tuple
+    from typing import List, Tuple, Union
 
     from wlroots.wlr_types import Surface
 
@@ -220,6 +220,7 @@ class Output(HasListeners):
     def _render_dnd_icon(self, now: Timespec) -> None:
         """Render the drag-n-drop icon if there is one."""
         dnd = self.core.live_dnd
+        assert dnd
         icon = dnd.wlr_drag.icon
         if icon.mapped:
             texture = icon.surface.get_texture()
