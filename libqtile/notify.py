@@ -26,8 +26,8 @@
 from typing import Any
 
 try:
-    from dbus_next.aio import MessageBus  # type: ignore
-    from dbus_next.service import ServiceInterface  # type: ignore
+    from dbus_next.aio import MessageBus
+    from dbus_next.service import ServiceInterface
     from dbus_next.service import method, signal
     has_dbus = True
 except ImportError:
@@ -39,6 +39,13 @@ BUS_NAME = 'org.freedesktop.Notifications'
 SERVICE_PATH = '/org/freedesktop/Notifications'
 
 notifier: Any = None
+
+
+class ClosedReason:
+    expired = 1
+    dismissed = 2
+    method = 3  # CloseNotification method
+
 
 if has_dbus:
     class NotificationService(ServiceInterface):
@@ -69,12 +76,16 @@ if has_dbus:
             return self.manager.add(notif)
 
         @method()
-        def CloseNotification(self, _id: 'u'):  # type:ignore  # noqa: N802, F821
-            pass
+        def CloseNotification(self, nid: 'u'):  # type:ignore  # noqa: N802, F821
+            self.manager.close(nid)
 
         @signal()
-        def NotificationClosed(self, _id_in, _reason_in):  # noqa: N802
-            pass
+        def NotificationClosed(self, nid: 'u', reason: 'u') -> 'uu':  # type:ignore  # noqa: N802, F821
+            return [nid, reason]
+
+        @signal()
+        def ActionInvoked(self, nid: 'u', action_key: 's') -> 'us':  # type:ignore  # noqa: N802, F821
+            return [nid, action_key]
 
         @method()
         def GetServerInformation(self) -> 'ssss':  # type:ignore  # noqa: N802, F821
@@ -96,6 +107,7 @@ if has_dbus:
         def __init__(self):
             self.notifications = []
             self.callbacks = []
+            self.close_callbacks = []
             self._service = None
 
         async def service(self):
@@ -110,7 +122,7 @@ if has_dbus:
                     self._service = None
             return self._service
 
-        async def register(self, callback, capabilities=None):
+        async def register(self, callback, capabilities=None, on_close=None):
             service = await self.service()
             if not service:
                 logger.warning(
@@ -120,17 +132,31 @@ if has_dbus:
             self.callbacks.append(callback)
             if capabilities:
                 self._service.register_capabilities(capabilities)
+            if on_close:
+                self.close_callbacks.append(on_close)
 
         def add(self, notif):
             self.notifications.append(notif)
             notif.id = len(self.notifications)
             for callback in self.callbacks:
-                callback(notif)
+                try:
+                    callback(notif)
+                except Exception:
+                    logger.exception("Exception in notifier callback")
             return len(self.notifications)
 
         def show(self, *args, **kwargs):
             notif = Notification(*args, **kwargs)
             return (notif, self.add(notif))
+
+        def close(self, nid):
+            notif = self.notifications[nid]
+
+            for callback in self.close_callbacks:
+                try:
+                    callback(notif)
+                except Exception:
+                    logger.exception("Exception in notifier close callback")
 
     notifier = NotificationManager()
 

@@ -34,6 +34,10 @@ class KeyboardKbdd(base.ThreadPoolText):
 
     kbdd should be installed and running, you can get it from:
     https://github.com/qnikst/kbdd
+
+    The widget also requires dbus-next_.
+
+    .. _dbus-next: https://pypi.org/project/dbus-next/
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
@@ -53,14 +57,20 @@ class KeyboardKbdd(base.ThreadPoolText):
         self.keyboard = self.configured_keyboards[0]
         self.is_kbdd_running = self._check_kbdd()
         if not self.is_kbdd_running:
-            logger.error('Please check if kbdd is running')
             self.keyboard = "N/A"
 
     def _check_kbdd(self):
-        running_list = self.call_process(["ps", "axw"])
+        try:
+            running_list = self.call_process(["ps", "axw"])
+        except FileNotFoundError:
+            logger.error("'ps' is not installed. Cannot check if kbdd is running.")
+            return False
+
         if re.search("kbdd", running_list):
             self.keyboard = self.configured_keyboards[0]
             return True
+
+        logger.error("kbdd is not running.")
         return False
 
     async def _config_async(self):
@@ -90,8 +100,8 @@ class KeyboardKbdd(base.ThreadPoolText):
         if isinstance(self.colours, list):
             try:
                 self.layout.colour = self.colours[index]
-            except ValueError:
-                self._setColour(index - 1)
+            except IndexError:
+                self._set_colour(index - 1)
         else:
             logger.error('variable "colours" should be a list, to set a\
                             colour for all layouts, use "foreground".')

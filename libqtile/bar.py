@@ -18,11 +18,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Union
+from __future__ import annotations
 
-from libqtile import configurable, drawer, window
+import typing
+
+from libqtile import configurable
 from libqtile.command.base import CommandObject, ItemT
 from libqtile.log_utils import logger
+from libqtile.utils import has_transparency
+
+if typing.TYPE_CHECKING:
+    from libqtile.widget.base import _Widget
 
 
 class Gap(CommandObject):
@@ -59,6 +65,7 @@ class Gap(CommandObject):
     def _configure(self, qtile, screen):
         self.qtile = qtile
         self.screen = screen
+        self.size = self.initial_size
         # If both horizontal and vertical gaps are present, screen corners are
         # given to the horizontal ones
         if screen.top is self:
@@ -166,8 +173,10 @@ class Bar(Gap, configurable.Configurable):
         self.cursor_in = None
         self.window = None
         self.size_calculated = 0
+        self._configured = False
 
         self.queued_draws = 0
+        self.future = None
 
     def _configure(self, qtile, screen):
         Gap._configure(self, qtile, screen)
@@ -203,38 +212,47 @@ class Bar(Gap, configurable.Configurable):
             w._test_orientation_compatibility(self.horizontal)
 
         if self.window:
+            # We get _configure()-ed with an existing window when screens are getting
+            # reconfigured but this screen is present both before and after
             self.window.place(self.x, self.y, self.width, self.height, 0, None)
-            self.crashed_widgets = []
-            for i in self.widgets:
-                self._configure_widget(i)
-
-            self._remove_crashed_widgets()
-
         else:
-            self.window = window.Internal.create(
-                self.qtile,
-                self.x, self.y, self.width, self.height,
-                self.opacity
-            )
+            # Whereas we won't have a window if we're startup up for the first time or
+            # the window has been killed by us no longer using the bar's screen
 
-            self.drawer = drawer.Drawer(
-                self.qtile,
-                self.window.window.wid,
-                self.width,
-                self.height
-            )
-            self.drawer.clear(self.background)
+            # X11 only:
+            # To preserve correct display of SysTray widget, we need a 24-bit
+            # window where the user requests an opaque bar.
+            if self.qtile.core.name == "x11":
+                depth = 32 if has_transparency(self.background) else self.qtile.core.conn.default_screen.root_depth
 
-            self.window.handle_Expose = self.handle_Expose
-            self.window.handle_ButtonPress = self.handle_ButtonPress
-            self.window.handle_ButtonRelease = self.handle_ButtonRelease
-            self.window.handle_EnterNotify = self.handle_EnterNotify
-            self.window.handle_LeaveNotify = self.handle_LeaveNotify
-            self.window.handle_MotionNotify = self.handle_MotionNotify
-            qtile.windows_map[self.window.window.wid] = self.window
+                self.window = self.qtile.core.create_internal(
+                    self.x, self.y, self.width, self.height, depth
+                )
+
+            else:
+                self.window = self.qtile.core.create_internal(
+                    self.x, self.y, self.width, self.height
+                )
+
+            self.window.opacity = self.opacity
             self.window.unhide()
 
-            self.crashed_widgets = []
+            self.drawer = self.window.create_drawer(self.width, self.height)
+            self.drawer.clear(self.background)
+
+            self.window.process_window_expose = self.draw
+            self.window.process_button_click = self.process_button_click
+            self.window.process_button_release = self.process_button_release
+            self.window.process_pointer_enter = self.process_pointer_enter
+            self.window.process_pointer_leave = self.process_pointer_leave
+            self.window.process_pointer_motion = self.process_pointer_motion
+            self.window.process_key_press = self.process_key_press
+
+        self.crashed_widgets = []
+        if self._configured:
+            for i in self.widgets:
+                self._configure_widget(i)
+        else:
             for idx, i in enumerate(self.widgets):
                 if i.configured:
                     i = i.create_mirror()
@@ -243,14 +261,16 @@ class Bar(Gap, configurable.Configurable):
                 if success:
                     qtile.register_widget(i)
 
-            self._remove_crashed_widgets()
-
+        self._remove_crashed_widgets()
+        self.draw()
         self._resize(self.length, self.widgets)
+        self._configured = True
 
     def _configure_widget(self, widget):
         configured = True
         try:
             widget._configure(self.qtile, self)
+            widget.configured = True
         except Exception as e:
             logger.error(
                 "{} widget crashed during _configure with "
@@ -272,8 +292,33 @@ class Bar(Gap, configurable.Configurable):
             self.widgets.insert(index, crash)
             self.widgets.remove(i)
 
+    def _items(self, name: str) -> ItemT:
+        if name == "screen" and self.screen is not None:
+            return True, []
+        elif name == "widget" and self.widgets:
+            return False, [w.name for w in self.widgets]
+        return None
+
+    def _select(self, name, sel):
+        if name == "screen":
+            return self.screen
+        elif name == "widget":
+            for widget in self.widgets:
+                if widget.name == sel:
+                    return widget
+        return None
+
     def finalize(self):
+        self.future.cancel()
         self.drawer.finalize()
+        self.window.kill()
+        self.widgets.clear()
+
+    def kill_window(self):
+        """Kill the window when the bar's screen is no longer being used."""
+        self.drawer.finalize()
+        self.window.kill()
+        self.window = None
 
     def _resize(self, length, widgets):
         stretches = [i for i in widgets if i.length_type == STRETCH]
@@ -320,66 +365,68 @@ class Bar(Gap, configurable.Configurable):
                 i.offsety = offset
                 offset += i.length
 
-    def handle_Expose(self, e):  # noqa: N802
-        self.draw()
-
-    def get_widget_in_position(self, e):
+    def get_widget_in_position(self, x: int, y: int) -> typing.Optional[_Widget]:
         if self.horizontal:
             for i in self.widgets:
-                if e.event_x < i.offsetx + i.length:
+                if x < i.offsetx + i.length:
                     return i
         else:
             for i in self.widgets:
-                if e.event_y < i.offsety + i.length:
+                if y < i.offsety + i.length:
                     return i
+        return None
 
-    def handle_ButtonPress(self, e):  # noqa: N802
-        widget = self.get_widget_in_position(e)
+    def process_button_click(self, x: int, y: int, button: int) -> None:
+        widget = self.get_widget_in_position(x, y)
         if widget:
             widget.button_press(
-                e.event_x - widget.offsetx,
-                e.event_y - widget.offsety,
-                e.detail
+                x - widget.offsetx,
+                y - widget.offsety,
+                button,
             )
 
-    def handle_ButtonRelease(self, e):  # noqa: N802
-        widget = self.get_widget_in_position(e)
+    def process_button_release(self, x: int, y: int, button: int) -> None:
+        widget = self.get_widget_in_position(x, y)
         if widget:
             widget.button_release(
-                e.event_x - widget.offsetx,
-                e.event_y - widget.offsety,
-                e.detail
+                x - widget.offsetx,
+                y - widget.offsety,
+                button,
             )
 
-    def handle_EnterNotify(self, e):  # noqa: N802
-        widget = self.get_widget_in_position(e)
+    def process_pointer_enter(self, x: int, y: int) -> None:
+        widget = self.get_widget_in_position(x, y)
         if widget:
             widget.mouse_enter(
-                e.event_x - widget.offsetx,
-                e.event_y - widget.offsety,
+                x - widget.offsetx,
+                y - widget.offsety,
             )
         self.cursor_in = widget
 
-    def handle_LeaveNotify(self, e):  # noqa: N802
+    def process_pointer_leave(self, x: int, y: int) -> None:
         if self.cursor_in:
             self.cursor_in.mouse_leave(
-                e.event_x - self.cursor_in.offsetx,
-                e.event_y - self.cursor_in.offsety,
+                x - self.cursor_in.offsetx,
+                y - self.cursor_in.offsety,
             )
             self.cursor_in = None
 
-    def handle_MotionNotify(self, e):  # noqa: N802
-        widget = self.get_widget_in_position(e)
+    def process_pointer_motion(self, x: int, y: int) -> None:
+        widget = self.get_widget_in_position(x, y)
         if widget and self.cursor_in and widget is not self.cursor_in:
             self.cursor_in.mouse_leave(
-                e.event_x - self.cursor_in.offsetx,
-                e.event_y - self.cursor_in.offsety,
+                x - self.cursor_in.offsetx,
+                y - self.cursor_in.offsety,
             )
             widget.mouse_enter(
-                e.event_x - widget.offsetx,
-                e.event_y - widget.offsety,
+                x - widget.offsetx,
+                y - widget.offsety,
             )
         self.cursor_in = widget
+
+    def process_key_press(self, keycode: int) -> None:
+        if self.has_keyboard:
+            self.has_keyboard.process_key_press(keycode)
 
     def widget_grab_keyboard(self, widget):
         """
@@ -387,23 +434,23 @@ class Bar(Gap, configurable.Configurable):
             and receive keyboard messages. When done,
             widget_ungrab_keyboard() must be called.
         """
-        self.window.handle_KeyPress = widget.handle_KeyPress
+        self.has_keyboard = widget
         self.saved_focus = self.qtile.current_window
-        self.window.window.set_input_focus()
+        self.window.focus(False)
 
     def widget_ungrab_keyboard(self):
         """
-            Removes the widget's keyboard handler.
+            Removes keyboard focus from the widget.
         """
-        del self.window.handle_KeyPress
         if self.saved_focus is not None:
-            self.saved_focus.window.set_input_focus()
+            self.saved_focus.focus(False)
+        self.has_keyboard = None
 
     def draw(self):
         if not self.widgets:
             return  # calling self._actual_draw in this case would cause a NameError.
         if self.queued_draws == 0:
-            self.qtile.call_soon(self._actual_draw)
+            self.future = self.qtile.call_soon(self._actual_draw)
         self.queued_draws += 1
 
     def _actual_draw(self):
@@ -427,7 +474,7 @@ class Bar(Gap, configurable.Configurable):
             height=self.height,
             position=self.position,
             widgets=[i.info() for i in self.widgets],
-            window=self.window.window.wid
+            window=self.window.wid
         )
 
     def is_show(self):
@@ -466,13 +513,7 @@ class Bar(Gap, configurable.Configurable):
             :screen The integer screen offset
             :position One of "top", "bottom", "left", or "right"
         """
-        class _Fake:
-            pass
-        fake = _Fake()
-        fake.event_x = x
-        fake.event_y = y
-        fake.detail = button
-        self.handle_ButtonPress(fake)
+        self.process_button_click(x, y, button)
 
 
-BarType = Union[Bar, Gap]
+BarType = typing.Union[Bar, Gap]

@@ -31,6 +31,7 @@
 # SOFTWARE.
 
 import itertools
+from functools import partial
 from typing import Any, List, Tuple
 
 from libqtile import bar, hook
@@ -100,9 +101,20 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
             ]
         else:
             pad_y = self.padding_y
+
+        if bordercolor is None:
+            # border colour is set to None when we don't want to draw a border at all
+            # Rather than dealing with alpha blending issues, we just set border width
+            # to 0.
+            border_width = 0
+            framecolor = self.background or self.bar.background
+        else:
+            border_width = self.borderwidth
+            framecolor = bordercolor
+
         framed = self.layout.framed(
-            self.borderwidth,
-            bordercolor,
+            border_width,
+            framecolor,
             0,
             pad_y,
             highlight_color
@@ -113,7 +125,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
                 if t[0] == 'margin':
                     y += (self.bar.height - framed.height) / 2 - t[1]
                     break
-        if block:
+        if block and bordercolor is not None:
             framed.draw_fill(offset, y, rounded)
         elif line:
             framed.draw_line(offset, y, highlighted)
@@ -132,7 +144,7 @@ class AGroupBox(_GroupBase):
 
     def _configure(self, qtile, bar):
         _GroupBase._configure(self, qtile, bar)
-        self.add_callbacks({'Button1': self.bar.screen.cmd_next_group})
+        self.add_callbacks({'Button1': partial(self.bar.screen.cmd_next_group, warp=False)})
 
     def calculate_length(self):
         return self.box_width(self.qtile.groups) + self.margin_x * 2
@@ -309,9 +321,9 @@ class GroupBox(_GroupBase):
     def go_to_group(self, group):
         if group:
             if self.bar.screen.group != group or not self.disable_drag:
-                self.bar.screen.set_group(group)
+                self.bar.screen.set_group(group, warp=False)
             else:
-                self.bar.screen.toggle_group(group)
+                self.bar.screen.toggle_group(group, warp=False)
 
     def button_release(self, x, y, button):
         self.click = x
@@ -350,7 +362,7 @@ class GroupBox(_GroupBase):
 
             if g.screen:
                 if self.highlight_method == 'text':
-                    border = self.bar.background
+                    border = None
                     text_color = self.this_current_screen_border
                 else:
                     if self.block_highlight_text_color:
@@ -374,7 +386,7 @@ class GroupBox(_GroupBase):
                 elif self.urgent_alert_method == 'line':
                     is_line = True
             else:
-                border = self.background or self.bar.background
+                border = None
 
             self.drawbox(
                 offset,

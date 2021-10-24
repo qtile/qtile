@@ -31,7 +31,7 @@ def test_resolve_nodes():
     assert isinstance(node_2, CommandGraphObject)
 
     with pytest.raises(KeyError, match="Given node is not an object"):
-        node_1.navigate("widget", None)
+        node_1.navigate("root", None)
 
 
 def test_resolve_selections():

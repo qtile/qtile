@@ -45,6 +45,26 @@ The :class:`EzKey` modifier keys (i.e. ``MASC``) can be overwritten through the
        'C': 'control',
     }
 
+Callbacks can also be configured to work only under certain conditions by using
+the ``when()`` method. Currently, two conditions are supported:
+
+::  
+
+    from libqtile.config import Key
+
+    keys = [
+        # Only trigger callback for a specific layout
+        Key(
+            [mod, 'shift'],
+            "j",
+            lazy.layout.grow().when(layout='verticaltile'),
+            lazy.layout.grow_down().when(layout='columns')
+        ),
+
+        # Limit action to when the current window is not floating (default True)
+        Key([mod], "f", lazy.window.toggle_fullscreen().when(when_floating=False))
+    ]
+
 KeyChords
 =========
 
@@ -171,7 +191,7 @@ Special keys
 ============
 
 These are most commonly used special keys. For complete list please see
-`the code <https://github.com/qtile/qtile/blob/master/libqtile/xkeysyms.py>`_.
+`the code <https://github.com/qtile/qtile/blob/master/libqtile/backend/x11/xkeysyms.py>`_.
 You can create bindings on them just like for the regular keys. For example
 ``Key(["mod1"], "F4", lazy.window.kill())``.
 

@@ -39,8 +39,7 @@ import string
 from collections import deque
 from typing import List, Optional, Tuple
 
-from libqtile import bar, hook, pangocffi, utils, xkeysyms
-from libqtile.backend.x11 import xcbq
+from libqtile import bar, hook, pangocffi, utils
 from libqtile.command.base import CommandObject, SelectError
 from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import CommandError, QtileCommandInterface
@@ -349,7 +348,7 @@ class Prompt(base._TextBox):
                  "Don't store duplicates in history"),
                 ("bell_style", "audible",
                  "Alert at the begin/end of the command history. " +
-                 "Possible values: 'audible', 'visual' and None."),
+                 "Possible values: 'audible' (X11 only), 'visual' and None."),
                 ("visual_bell_color", "ff0000",
                  "Color for the visual bell (changes prompt background)."),
                 ("visual_bell_time", 0.2,
@@ -361,29 +360,7 @@ class Prompt(base._TextBox):
         self.name = name
         self.active = False
         self.completer = None  # type: Optional[AbstractCompleter]
-        # Define key handlers (action to do when hit an specific key)
-        self.keyhandlers = {
-            xkeysyms.keysyms['Tab']: self._trigger_complete,
-            xkeysyms.keysyms['BackSpace']: self._delete_char(),
-            xkeysyms.keysyms['Delete']: self._delete_char(False),
-            xkeysyms.keysyms['KP_Delete']: self._delete_char(False),
-            xkeysyms.keysyms['Escape']: self._unfocus,
-            xkeysyms.keysyms['Return']: self._send_cmd,
-            xkeysyms.keysyms['KP_Enter']: self._send_cmd,
-            xkeysyms.keysyms['Up']: self._get_prev_cmd,
-            xkeysyms.keysyms['KP_Up']: self._get_prev_cmd,
-            xkeysyms.keysyms['Down']: self._get_next_cmd,
-            xkeysyms.keysyms['KP_Down']: self._get_next_cmd,
-            xkeysyms.keysyms['Left']: self._move_cursor(),
-            xkeysyms.keysyms['KP_Left']: self._move_cursor(),
-            xkeysyms.keysyms['Right']: self._move_cursor("right"),
-            xkeysyms.keysyms['KP_Right']: self._move_cursor("right"),
-        }
-        printables = {x: self._write_char for x in range(127) if
-                      chr(x) in string.printable}
-        self.keyhandlers.update(printables)
-        if self.bell_style == "visual":
-            self.original_background = self.background
+
         # If history record is on, get saved history or create history record
         if self.record_history:
             self.history_path = os.path.join(utils.get_cache_dir(),
@@ -424,6 +401,39 @@ class Prompt(base._TextBox):
                 self._unfocus()
 
         hook.subscribe.client_focus(f)
+
+        # Define key handlers (action to do when a specific key is hit)
+        keyhandlers = {
+            'Tab': self._trigger_complete,
+            'BackSpace': self._delete_char(),
+            'Delete': self._delete_char(False),
+            'KP_Delete': self._delete_char(False),
+            'Escape': self._unfocus,
+            'Return': self._send_cmd,
+            'KP_Enter': self._send_cmd,
+            'Up': self._get_prev_cmd,
+            'KP_Up': self._get_prev_cmd,
+            'Down': self._get_next_cmd,
+            'KP_Down': self._get_next_cmd,
+            'Left': self._move_cursor(),
+            'KP_Left': self._move_cursor(),
+            'Right': self._move_cursor("right"),
+            'KP_Right': self._move_cursor("right"),
+        }
+        self.keyhandlers = {
+            qtile.core.keysym_from_name(k): v for k, v in keyhandlers.items()
+        }
+        printables = {x: self._write_char for x in range(127) if
+                      chr(x) in string.printable}
+        self.keyhandlers.update(printables)
+        self.tab = qtile.core.keysym_from_name("Tab")
+
+        self.bell_style: str
+        if self.bell_style == "audible" and qtile.core.name != "x11":
+            self.bell_style = "visual"
+            logger.warning("Prompt widget only supports audible bell under X11")
+        if self.bell_style == "visual":
+            self.original_background = self.background
 
     def start_input(self, prompt, callback, complete=None,
                     strict_completer=False, allow_empty_input=False) -> None:
@@ -594,7 +604,7 @@ class Prompt(base._TextBox):
     def _alert(self):
         # Fire an alert (audible or visual), if bell style is not None.
         if self.bell_style == "audible":
-            self.qtile.conn.conn.core.Bell(0)
+            self.qtile.core.conn.conn.core.Bell(0)
         elif self.bell_style == "visual":
             self.background = self.visual_bell_color
             self.timeout_add(self.visual_bell_time, self._stop_visual_alert)
@@ -654,21 +664,16 @@ class Prompt(base._TextBox):
         # Return the action (a function) to do according the pressed key (k).
         self.key = k
         if k in self.keyhandlers:
-            if k != xkeysyms.keysyms['Tab']:
+            if k != self.tab:
                 self.actual_value = self.completer.actual()
                 self.completer.reset()
             return self.keyhandlers[k]
 
-    def handle_KeyPress(self, e):  # noqa: N802
-        """KeyPress handler for the minibuffer.
+    def process_key_press(self, keysym: int):
+        """Key press handler for the minibuffer.
 
         Currently only supports ASCII characters.
         """
-        mask = xcbq.ModMasks["shift"] | xcbq.ModMasks["lock"]
-        state = 1 if e.state & mask else 0
-
-        keysym = self.qtile.conn.code_to_syms[e.detail][state]
-
         handle_key = self._get_keyhandler(keysym)
 
         if handle_key:
@@ -676,14 +681,8 @@ class Prompt(base._TextBox):
             del self.key
         self._update()
 
-    def cmd_fake_keypress(self, key):
-        class Dummy:
-            pass
-        d = Dummy()
-        keysym = xcbq.keysyms[key]
-        d.detail = self.qtile.conn.keysym_to_keycode(keysym)[0]
-        d.state = 0
-        self.handle_KeyPress(d)
+    def cmd_fake_keypress(self, key: str) -> None:
+        self.process_key_press(self.qtile.core.keysym_from_name(key))
 
     def cmd_info(self):
         """Returns a dictionary of info for this object"""

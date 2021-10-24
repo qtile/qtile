@@ -207,10 +207,9 @@ class GridInfo:
 class RatioTile(_SimpleLayoutBase):
     """Tries to tile all windows in the width/height ratio passed in"""
     defaults = [
-        ("border_focus", "#0000ff", "Border colour for the focused window."),
-        ("border_normal", "#000000", "Border colour for un-focused windows."),
+        ("border_focus", "#0000ff", "Border colour(s) for the focused window."),
+        ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
         ("border_width", 1, "Border width."),
-        ("name", "ratiotile", "Name of this layout."),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])"),
         ("ratio", GOLDEN_RATIO, "Ratio of the tiles"),
         ("ratio_increment", 0.1, "Amount to increment per ratio increment"),

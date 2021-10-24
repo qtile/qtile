@@ -111,17 +111,16 @@ class Columns(Layout):
         Key([mod], "n", lazy.layout.normalize()),
     """
     defaults = [
-        ("name", "columns", "Name of this layout."),
-        ("border_focus", "#881111", "Border colour for the focused window."),
-        ("border_normal", "#220000", "Border colour for un-focused windows."),
+        ("border_focus", "#881111", "Border colour(s) for the focused window."),
+        ("border_normal", "#220000", "Border colour(s) for un-focused windows."),
         ("border_focus_stack", "#881111",
-         "Border colour for the focused window in stacked columns."),
+         "Border colour(s) for the focused window in stacked columns."),
         ("border_normal_stack", "#220000",
-         "Border colour for un-focused windows in stacked columns."),
+         "Border colour(s) for un-focused windows in stacked columns."),
         ("border_width", 2, "Border width."),
         ("border_on_single", False, "Draw a border when there is one only window."),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])."),
-        ("margin_on_single", -1, "Margin when only one window. `-1` means use `margin`."),
+        ("margin_on_single", None, "Margin when only one window. (int or list of ints [N E S W])"),
         ("split", True, "New columns presentation mode."),
         ("num_columns", 2, "Preferred number of columns."),
         ("grow_amount", 10, "Amount by which to grow a window/column."),
@@ -147,6 +146,12 @@ class Columns(Layout):
         c = Layout.clone(self, group)
         c.columns = [_Column(self.split, self.insert_position)]
         return c
+
+    def get_windows(self):
+        clients = []
+        for c in self.columns:
+            clients.extend(c.clients)
+        return clients
 
     def info(self):
         d = Layout.info(self)
@@ -236,7 +241,7 @@ class Columns(Layout):
         if len(self.columns) == 1 and (len(col) == 1 or not col.split):
             if not self.border_on_single:
                 border = 0
-            if self.margin_on_single > -1:
+            if self.margin_on_single is not None:
                 margin_size = self.margin_on_single
         width = int(
             0.5 + col.width * screen_rect.width * 0.01 / len(self.columns))

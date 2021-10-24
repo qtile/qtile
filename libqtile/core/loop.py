@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import asyncio
 import contextlib
 import signal
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, Optional, TYPE_CHECKING
 
 from libqtile.log_utils import logger
 
+if TYPE_CHECKING:
+    from libqtile.core.manager import Qtile
 
 class LoopContext(contextlib.AbstractAsyncContextManager):
     def __init__(
@@ -59,3 +63,20 @@ class LoopContext(contextlib.AbstractAsyncContextManager):
                 logger.exception(exc)
         else:
             logger.error(f'unhandled error in event loop: {context["msg"]}')
+
+
+class QtileEventLoopPolicy(asyncio.DefaultEventLoopPolicy):  # type: ignore
+    """
+    Asyncio policy to ensure the main event loop is accessible
+    even if `get_event_loop()` is called from a different thread.
+    """
+
+    def __init__(self, qtile: Qtile) -> None:
+        asyncio.DefaultEventLoopPolicy.__init__(self)
+        self.qtile = qtile
+
+    def get_event_loop(self) -> asyncio.AbstractEventLoop:
+        if isinstance(self.qtile._eventloop, asyncio.AbstractEventLoop):
+            return self.qtile._eventloop
+
+        raise RuntimeError

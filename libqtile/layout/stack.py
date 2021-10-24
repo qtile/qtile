@@ -55,10 +55,9 @@ class Stack(Layout):
     Unlike the columns layout the number of stacks is fixed.
     """
     defaults = [
-        ("border_focus", "#0000ff", "Border colour for the focused window."),
-        ("border_normal", "#000000", "Border colour for un-focused windows."),
+        ("border_focus", "#0000ff", "Border colour(s) for the focused window."),
+        ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
         ("border_width", 1, "Border width."),
-        ("name", "stack", "Name of this layout."),
         ("autosplit", False, "Auto split all new stacks."),
         ("num_stacks", 2, "Number of stacks."),
         ("fair", False, "Add new windows to the stacks in a round robin way."),
@@ -254,6 +253,9 @@ class Stack(Layout):
                 client.unhide()
             else:
                 client.hide()
+
+    def get_windows(self):
+        return self.clients
 
     def info(self):
         d = Layout.info(self)

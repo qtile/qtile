@@ -24,10 +24,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import re
-from subprocess import CalledProcessError
+import psutil
 
-from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
@@ -38,6 +36,10 @@ class ThermalSensor(base.InLoopPollText):
     You can get a list of the tag_sensors executing "sensors" in your terminal.
     Then you can choose which you want, otherwise it will display the first
     available.
+
+    Widget requirements: psutil_.
+
+    .. _psutil: https://pypi.org/project/psutil/
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
@@ -58,16 +60,6 @@ class ThermalSensor(base.InLoopPollText):
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(ThermalSensor.defaults)
-        self.sensors_temp = re.compile(
-            (r"\n([\w ]+):"  # Sensor tag name
-             r"\s+[+|-]"     # temp signed
-             r"(\d+\.\d+)"   # temp value
-             "({degrees}"   # degree symbol match
-             "[C|F])"       # Celsius or Fahrenheit
-             ).format(degrees=u"\xb0"),
-            re.UNICODE | re.VERBOSE
-        )
-        self.value_temp = re.compile(r"\d+\.\d+")
         temp_values = self.get_temp_sensors()
         self.foreground_normal = self.foreground
 
@@ -81,32 +73,24 @@ class ThermalSensor(base.InLoopPollText):
                 break
 
     def get_temp_sensors(self):
-        """calls the unix `sensors` command with `-f` flag if user has specified that
-        the output should be read in Fahrenheit.
         """
-        command = ["sensors", ]
-        if not self.metric:
-            command.append("-f")
-        try:
-            sensors_out = self.call_process(command)
-            if not sensors_out:
-                return None
-        except FileNotFoundError:
-            return None
-        except CalledProcessError:
-            return ""
-        return self._format_sensors_output(sensors_out)
+        Reads temperatures from sys-fs via psutil.
+        Output will be read Fahrenheit if user has specified it to be.
+        """
 
-    def _format_sensors_output(self, sensors_out):
-        """formats output of unix `sensors` command into a dict of
-        {<sensor_name>: (<temperature>, <temperature symbol>), ..etc..}
-        """
-        temperature_values = {}
-        logger.debug(self.sensors_temp.findall(sensors_out))
-        for name, temp, symbol in self.sensors_temp.findall(sensors_out):
-            name = name.strip()
-            temperature_values[name] = temp, symbol
-        return temperature_values
+        temperature_list = {}
+        temps = psutil.sensors_temperatures(fahrenheit=not self.metric)
+        unit = '°C' if self.metric else '°F'
+        empty_index = 0
+        for kernel_module in temps:
+            for sensor in temps[kernel_module]:
+                label = sensor.label
+                if not label:
+                    label = "{}-{}".format(kernel_module if kernel_module else 'UNKNOWN', str(empty_index))
+                    empty_index += 1
+                temperature_list[label] = (str(round(sensor.current, 1)), unit)
+
+        return temperature_list
 
     def poll(self):
         temp_values = self.get_temp_sensors()

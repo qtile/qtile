@@ -1,0 +1,162 @@
+name: Publish to PyPI
+on:
+  push:
+    branches-ignore: ['*']
+    tags: ['*']
+  release:
+    types: [published]
+jobs:
+  build-wheel:
+    name: Build wheels
+    runs-on: ubuntu-latest
+    container: quay.io/pypa/manylinux_2_24_x86_64
+    strategy:
+      matrix:
+        python-version: ["cp3.7", "cp3.8", "cp3.9", "cp3.10", "pp3.7"]
+    steps:
+      - name: Install dependencies
+        run: |
+          apt update
+          apt-get install -y --no-install-recommends \
+            libcairo-dev \
+            libffi-dev \
+            libpulse-dev
+      - uses: actions/checkout@v2
+      - name: Set environment variables
+        run: |
+          PYTHON_ROOT=$(find /opt/python -name ${PYTHON_VERSION/./}-*)
+          echo "${PYTHON_ROOT}/bin" >> $GITHUB_PATH
+        shell: bash
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+      - name: Build wheels
+        run: |
+          pip install xcffib
+          python setup.py bdist_wheel
+          auditwheel repair --plat manylinux2014_x86_64 -w output_wheels dist/qtile-*.whl
+      - name: Upload wheels
+        uses: actions/upload-artifact@v2
+        with:
+          name: wheels-${{ matrix.python-version }}
+          path: output_wheels/*.whl
+  test-wheel:
+    name: Test wheels
+    runs-on: ubuntu-latest
+    needs: build-wheel
+    strategy:
+      matrix:
+        python-version: ["3.7", "3.8", "3.9"]
+        include:
+          - python-version: "pypy-3.7"
+            manual-version: "pp3.7"
+    steps:
+      - name: Download wheels
+        if: ${{ matrix.manual-version == '' }}
+        uses: actions/download-artifact@v2
+        with:
+          name: wheels-cp${{ matrix.python-version }}
+      - name: Download wheels (manual)
+        if: ${{ matrix.manual-version != '' }}
+        uses: actions/download-artifact@v2
+        with:
+          name: wheels-${{ matrix.manual-version }}
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install wheel
+        run: pip install qtile-*.whl
+      - name: Check installation
+        run: qtile -h
+  build-source:
+    name: Build source
+    runs-on: ubuntu-latest
+    container: quay.io/pypa/manylinux_2_24_x86_64
+    env:
+      python-version: "cp3.9"
+    steps:
+      - name: Install dependencies
+        run: |
+          apt update
+          apt-get install -y --no-install-recommends \
+            libcairo-dev \
+            libpulse-dev
+      - uses: actions/checkout@v2
+      - name: Set environment variables
+        run: |
+          PYTHON_ROOT=$(find /opt/python -name ${PYTHON_VERSION/./}-*)
+          echo "${PYTHON_ROOT}/bin" >> $GITHUB_PATH
+        shell: bash
+        env:
+          PYTHON_VERSION: ${{ env.python-version }}
+      - name: Build source
+        run: |
+          python setup.py sdist
+      - name: Upload source
+        uses: actions/upload-artifact@v2
+        with:
+          name: source
+          path: dist/*.tar.gz
+  upload-wheel:
+    name: Upload wheels
+    runs-on: ubuntu-latest
+    needs: [test-wheel, build-source]
+    strategy:
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        include:
+          - python-version: "pypy-3.7"
+            manual-version: "pp3.7"
+    steps:
+      - name: Download wheels
+        if: ${{ matrix.manual-version == '' }}
+        uses: actions/download-artifact@v2
+        with:
+          name: wheels-cp${{ matrix.python-version }}
+          path: dist/
+      - name: Download wheels (manual)
+        if: ${{ matrix.manual-version != '' }}
+        uses: actions/download-artifact@v2
+        with:
+          name: wheels-${{ matrix.manual-version }}
+          path: dist/
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        if: github.event_name == 'release'
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Publish package to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        if: github.event_name == 'push'
+        with:
+          user: __token__
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
+          skip_existing: true
+  upload-source:
+    name: Upload source
+    runs-on: ubuntu-latest
+    needs: [test-wheel, build-source]
+    env:
+      python-version: "cp3.9"
+    steps:
+      - name: Download source
+        uses: actions/download-artifact@v2
+        with:
+          name: source
+          path: dist/
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        if: github.event_name == 'release'
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Publish package to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        if: github.event_name == 'push'
+        with:
+          user: __token__
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
+          skip_existing: true

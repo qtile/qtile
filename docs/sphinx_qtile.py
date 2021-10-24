@@ -63,7 +63,7 @@ qtile_class_template = Template('''
         {% for key, default, description in defaults %}
         * - ``{{ key }}``
           - ``{{ default }}``
-          - {{ description }}
+          - {{ description[1:-1] }}
         {% endfor %}
     {% endif %}
     {% if commandable %}
@@ -125,6 +125,8 @@ class QtileClass(SimpleDirectiveMixin, Directive):
         defaults = [
             (k, sphinx_escape(v[0]), sphinx_escape(v[1])) for k, v in sorted(defaults.items())
         ]
+        if len(defaults) == 0:
+            is_configurable = False
 
         context = {
             'module': module,

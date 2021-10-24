@@ -26,6 +26,7 @@
 
 from libqtile import bar, hook, pangocffi
 from libqtile.widget import base
+from libqtile.log_utils import logger
 
 
 class WindowName(base._TextBox):
@@ -35,6 +36,14 @@ class WindowName(base._TextBox):
         ('for_current_screen', False, 'instead of this bars screen use currently active screen'),
         ('empty_group_string', ' ', 'string to display when no windows are focused on current group'),
         ('format', '{state}{name}', 'format of the text'),
+        ('parse_text', None, 'Function to parse and modify window names. '
+         'e.g. function in config that removes excess '
+         'strings from window name: '
+         'def my_func(text)'
+         '    for string in [\" - Chromium\", \" - Firefox\"]:'
+         '        text = text.replace(string, \"\")'
+         '   return text'
+         'then set option parse_text=my_func'),
     ]
 
     def __init__(self, width=bar.STRETCH, **config):
@@ -68,7 +77,13 @@ class WindowName(base._TextBox):
             var = {}
             var["state"] = state
             var["name"] = w.name
-            var["class"] = w.window.get_wm_class()[0] if len(w.window.get_wm_class()) > 0 else ""
+            if callable(self.parse_text):
+                try:
+                    var["name"] = self.parse_text(var["name"])
+                except:
+                    logger.exception("parse_text function failed:")
+            wm_class = w.get_wm_class()
+            var["class"] = wm_class[0] if wm_class else ""
             unescaped = self.format.format(**var)
         else:
             unescaped = self.empty_group_string

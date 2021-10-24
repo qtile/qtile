@@ -24,28 +24,27 @@ from libqtile.scratchpad import ScratchPad
 
 
 class QtileState:
-    """Represents the state of the qtile object
+    """Represents the state of the Qtile object
 
-    Primarily used for restoring state across restarts; any additional state
-    which doesn't fit nicely into X atoms can go here.
+    This is used for restoring state across restarts or config reloads.
+
+    If `restart` is True, the current set of groups will be saved in the state. This is
+    useful when restarting for Qtile version updates rather than reloading the config.
     """
-    def __init__(self, qtile):
-        # Note: window state is saved and restored via _NET_WM_STATE, so
-        # the only thing we need to restore here is the layout and screen
-        # configurations.
+    def __init__(self, qtile, restart=True):
         self.groups = []
         self.screens = {}
         self.current_screen = 0
         self.scratchpads = {}
         self.orphans = []
+        self.restart = restart  # True when restarting, False when config reloading
 
-        for group in qtile.groups:
-            if isinstance(group, ScratchPad):
-                self.scratchpads[group.name] = group.get_state()
-                for dd in group.dropdowns.values():
-                    dd.hide()
-            else:
-                self.groups.append((group.name, group.layout.name, group.label))
+        if restart:
+            for group in qtile.groups:
+                if isinstance(group, ScratchPad):
+                    self.scratchpads[group.name] = group.get_state(restart)
+                else:
+                    self.groups.append((group.name, group.layout.name, group.label))
 
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
@@ -73,13 +72,17 @@ class QtileState:
 
         for group in qtile.groups:
             if isinstance(group, ScratchPad) and group.name in self.scratchpads:
-                orphans = group.restore_state(self.scratchpads.pop(group.name))
+                orphans = group.restore_state(self.scratchpads.pop(group.name), self.restart)
                 self.orphans.extend(orphans)
         for sp_state in self.scratchpads.values():
-            for _, pid, _ in sp_state:
-                self.orphans.append(pid)
+            for _, wid, _ in sp_state:
+                self.orphans.append(wid)
         if self.orphans:
-            hook.subscribe.client_new(self.handle_orphan_dropdowns)
+            if self.restart:
+                hook.subscribe.client_new(self.handle_orphan_dropdowns)
+            else:
+                for wid in self.orphans:
+                    qtile.windows_map[wid].group = qtile.current_group
 
         qtile.focus_screen(self.current_screen)
 
@@ -87,9 +90,9 @@ class QtileState:
         """
         Remove any windows from now non-existent scratchpad groups.
         """
-        client_pid = client.window.get_net_wm_pid()
-        if client_pid in self.orphans:
-            self.orphans.remove(client_pid)
+        client_wid = client.window.wid
+        if client_wid in self.orphans:
+            self.orphans.remove(client_wid)
             client.group = None
             if not self.orphans:
                 hook.unsubscribe.client_new(self.handle_orphan_dropdowns)

@@ -45,14 +45,20 @@ class CheckUpdates(base.ThreadPoolText):
         base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(CheckUpdates.defaults)
 
+        # Helpful to have this as a variable as we can shorten it for testing
+        self.execute_polling_interval = 1
+
         # format: "Distro": ("cmd", "number of lines to subtract from output")
         self.cmd_dict = {"Arch": ("pacman -Qu", 0),
                          "Arch_checkupdates": ("checkupdates", 0),
-                         "Arch_Sup": ("pacman -Sup", 1),
+                         "Arch_Sup": ("pacman -Sup", 0),
+                         "Arch_paru": ("paru -Qu", 0),
+                         "Arch_paru_Sup": ("paru -Sup", 0),
                          "Arch_yay": ("yay -Qu", 0),
                          "Debian": ("apt-show-versions -u -b", 0),
+                         "Gentoo_eix": ("EIX_LIMIT=0 eix -u# --world", 0),
                          "Ubuntu": ("aptitude search ~U", 0),
-                         "Fedora": ("dnf list updates", 3),
+                         "Fedora": ("dnf list updates -q", 1),
                          "FreeBSD": ("pkg_version -I -l '<'", 0),
                          "Mandriva": ("urpmq --auto-select", 0)
                          }
@@ -83,6 +89,8 @@ class CheckUpdates(base.ThreadPoolText):
             updates = ""
         num_updates = self.custom_command_modify(len(updates.splitlines()))
 
+        if num_updates < 0:
+            num_updates = 0
         if num_updates == 0:
             self.layout.colour = self.colour_no_updates
             return self.no_update_string
@@ -102,11 +110,11 @@ class CheckUpdates(base.ThreadPoolText):
 
     def do_execute(self):
         self._process = Popen(self.execute, shell=True)
-        self.timeout_add(1, self._refresh_count)
+        self.timeout_add(self.execute_polling_interval, self._refresh_count)
 
     def _refresh_count(self):
         if self._process.poll() is None:
-            self.timeout_add(1, self._refresh_count)
+            self.timeout_add(self.execute_polling_interval, self._refresh_count)
 
         else:
             self.timer_setup()

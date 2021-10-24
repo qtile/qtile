@@ -144,7 +144,8 @@ class Subscribe:
         return self._subscribe("changegroup", func)
 
     def focus_change(self, func):
-        """Called when focus is changed
+        """Called when focus is changed, including moving focus between groups or when
+        focus is lost completely
 
         **Arguments**
 
@@ -166,7 +167,8 @@ class Subscribe:
 
         **Arguments**
 
-        None
+            * ``Group`` receiving the new window
+            * ``Window`` added to the group
         """
         return self._subscribe("group_window_add", func)
 
@@ -178,7 +180,7 @@ class Subscribe:
 
         **Arguments**
 
-            * ``window.Window`` object
+            * ``Window`` object
 
         Examples
         --------
@@ -202,7 +204,7 @@ class Subscribe:
 
         **Arguments**
 
-            * ``window.Window`` object of the managed window
+            * ``Window`` object of the managed window
         """
         return self._subscribe("client_managed", func)
 
@@ -211,16 +213,16 @@ class Subscribe:
 
         **Arguments**
 
-            * ``window.Window`` object of the killed window.
+            * ``Window`` object of the killed window.
         """
         return self._subscribe("client_killed", func)
 
     def client_focus(self, func):
-        """Called whenever focus changes
+        """Called whenever focus moves to a client window
 
         **Arguments**
 
-            * ``window.Window`` object of the new focus.
+            * ``Window`` object of the new focus.
         """
         return self._subscribe("client_focus", func)
 
@@ -229,7 +231,7 @@ class Subscribe:
 
         **Arguments**
 
-            * ``window.Window`` of window entered
+            * ``Window`` of window entered
         """
         return self._subscribe("client_mouse_enter", func)
 
@@ -238,7 +240,7 @@ class Subscribe:
 
         **Arguments**
 
-            * ``window.Window`` of client with updated name
+            * ``Window`` of client with updated name
         """
         return self._subscribe("client_name_updated", func)
 
@@ -247,7 +249,7 @@ class Subscribe:
 
         **Arguments**
 
-            * ``window.Window`` of client with hint change
+            * ``Window`` of client with hint change
         """
         return self._subscribe("client_urgent_hint_changed", func)
 
@@ -266,7 +268,7 @@ class Subscribe:
 
         **Arguments**
 
-            * ``window.Window`` of client with changed icon
+            * ``Window`` of client with changed icon
         """
         return self._subscribe("net_wm_icon_change", func)
 
@@ -293,14 +295,27 @@ class Subscribe:
         return self._subscribe("selection_change", func)
 
     def screen_change(self, func):
-        """Called when a screen is added or screen configuration is changed (via xrandr)
+        """Called when the output configuration is changed (e.g. via randr in X11).
 
         **Arguments**
 
-            * ``xproto.randr.ScreenChangeNotify`` event
+            * ``xproto.randr.ScreenChangeNotify`` event (X11) or None (Wayland).
 
         """
         return self._subscribe("screen_change", func)
+
+    def screens_reconfigured(self, func):
+        """Called when all ``screen_change`` hooks have fired.
+
+        This is primarily useful where you want a callback to be triggered once
+        ``qtile.cmd_reconfigure_screens`` has completed (e.g. if
+        ``reconfigure_screens`` is set to ``True`` in your config).
+
+        **Arguments**
+
+        None
+        """
+        return self._subscribe("screens_reconfigured", func)
 
     def current_screen_change(self, func):
         """Called when the current screen (i.e. the screen with focus) changes

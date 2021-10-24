@@ -43,16 +43,16 @@ GRAPH_KW = dict(line_width=1,
                 )
 
 # screens look like this
-#     600         300
+#     500         300
 #  |-------------|-----|
-#  |          480|     |580
+#  |          340|     |380
 #  |   A         |  B  |
 #  |----------|--|     |
-#  |       400|--|-----|
-#  |   C      |        |400
+#  |       220|--|-----|
+#  |   C      |        |220
 #  |----------|   D    |
-#     500     |--------|
-#                 400
+#     450     |--------|
+#                 350
 #
 # Notice there is a hole in the middle
 # also D goes down below the others
@@ -91,8 +91,6 @@ class FakeScreenConfig(Config):
                     widget.MemoryGraph(**GRAPH_KW),
                     widget.SwapGraph(foreground='20C020', **GRAPH_KW),
                     widget.Sep(),
-                    widget.Systray(),
-                    widget.Sep(),
                     widget.Clock(format='%H:%M:%S %d.%manager.%Y',
                                  fontsize=FONTSIZE, padding=6),
                 ],
@@ -101,7 +99,7 @@ class FakeScreenConfig(Config):
             ),
             left=bar.Gap(16),
             right=bar.Gap(20),
-            x=0, y=0, width=600, height=480
+            x=0, y=0, width=500, height=340
         ),
         Screen(
             top=bar.Bar(
@@ -114,7 +112,7 @@ class FakeScreenConfig(Config):
             ),
             bottom=bar.Gap(24),
             left=bar.Gap(12),
-            x=600, y=0, width=300, height=580
+            x=500, y=0, width=300, height=380
         ),
         Screen(
             top=bar.Bar(
@@ -127,7 +125,7 @@ class FakeScreenConfig(Config):
             ),
             bottom=bar.Gap(16),
             right=bar.Gap(40),
-            x=0, y=480, width=500, height=400
+            x=0, y=340, width=450, height=220
         ),
         Screen(
             top=bar.Bar(
@@ -140,19 +138,13 @@ class FakeScreenConfig(Config):
             ),
             left=bar.Gap(20),
             right=bar.Gap(24),
-            x=500, y=580, width=400, height=400
+            x=450, y=380, width=350, height=220
         ),
     ]
     screens = []
 
 
-xephyr_config = {
-    "xinerama": False,
-    "two_screens": False,
-    "width": 900,
-    "height": 980
-}
-fakescreen_config = pytest.mark.parametrize("xephyr, manager", [(xephyr_config, FakeScreenConfig)], indirect=True)
+fakescreen_config = pytest.mark.parametrize("manager", [FakeScreenConfig], indirect=True)
 
 
 @fakescreen_config
@@ -160,48 +152,48 @@ def test_basic(manager):
     manager.test_window("zero")
     assert manager.c.layout.info()["clients"] == ["zero"]
     assert manager.c.screen.info() == {
-        'y': 0, 'x': 0, 'index': 0, 'width': 600, 'height': 480}
+        'y': 0, 'x': 0, 'index': 0, 'width': 500, 'height': 340}
     manager.c.to_screen(1)
     manager.test_window("one")
     assert manager.c.layout.info()["clients"] == ["one"]
     assert manager.c.screen.info() == {
-        'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
+        'y': 0, 'x': 500, 'index': 1, 'width': 300, 'height': 380}
     manager.c.to_screen(2)
-    manager.test_xeyes()
+    manager.test_window('two')
     assert manager.c.screen.info() == {
-        'y': 480, 'x': 0, 'index': 2, 'width': 500, 'height': 400}
+        'y': 340, 'x': 0, 'index': 2, 'width': 450, 'height': 220}
     manager.c.to_screen(3)
-    manager.test_xclock()
-    assert manager.c.screen.info() == {'y': 580, 'x': 500, 'index': 3, 'width': 400, 'height': 400}
+    manager.test_window('one')
+    assert manager.c.screen.info() == {'y': 380, 'x': 450, 'index': 3, 'width': 350, 'height': 220}
 
 
 @fakescreen_config
 def test_gaps(manager):
     g = manager.c.screens()[0]["gaps"]
-    assert g["bottom"] == (0, 456, 600, 24)
-    assert g["left"] == (0, 0, 16, 456)
-    assert g["right"] == (580, 0, 20, 456)
+    assert g["bottom"] == (0, 316, 500, 24)
+    assert g["left"] == (0, 0, 16, 316)
+    assert g["right"] == (480, 0, 20, 316)
     g = manager.c.screens()[1]["gaps"]
-    assert g["top"] == (600, 0, 300, 30)
-    assert g["bottom"] == (600, 556, 300, 24)
-    assert g["left"] == (600, 30, 12, 526)
+    assert g["top"] == (500, 0, 300, 30)
+    assert g["bottom"] == (500, 356, 300, 24)
+    assert g["left"] == (500, 30, 12, 326)
     g = manager.c.screens()[2]["gaps"]
-    assert g["top"] == (0, 480, 500, 30)
-    assert g["bottom"] == (0, 864, 500, 16)
-    assert g["right"] == (460, 510, 40, 354)
+    assert g["top"] == (0, 340, 450, 30)
+    assert g["bottom"] == (0, 544, 450, 16)
+    assert g["right"] == (410, 370, 40, 174)
     g = manager.c.screens()[3]["gaps"]
-    assert g["top"] == (500, 580, 400, 30)
-    assert g["left"] == (500, 610, 20, 370)
-    assert g["right"] == (876, 610, 24, 370)
+    assert g["top"] == (450, 380, 350, 30)
+    assert g["left"] == (450, 410, 20, 190)
+    assert g["right"] == (776, 410, 24, 190)
 
 
 @fakescreen_config
 def test_maximize_with_move_to_screen(manager):
     """Ensure that maximize respects bars"""
-    manager.test_xclock()
+    manager.test_window('one')
     manager.c.window.toggle_maximize()
-    assert manager.c.window.info()['width'] == 564
-    assert manager.c.window.info()['height'] == 456
+    assert manager.c.window.info()['width'] == 464
+    assert manager.c.window.info()['height'] == 316
     assert manager.c.window.info()['x'] == 16
     assert manager.c.window.info()['y'] == 0
     assert manager.c.window.info()['group'] == 'a'
@@ -209,13 +201,13 @@ def test_maximize_with_move_to_screen(manager):
     # go to second screen
     manager.c.to_screen(1)
     assert manager.c.screen.info() == {
-        'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
+        'y': 0, 'x': 500, 'index': 1, 'width': 300, 'height': 380}
     assert manager.c.group.info()['name'] == 'b'
     manager.c.group['a'].toscreen()
 
     assert manager.c.window.info()['width'] == 288
-    assert manager.c.window.info()['height'] == 526
-    assert manager.c.window.info()['x'] == 612
+    assert manager.c.window.info()['height'] == 326
+    assert manager.c.window.info()['x'] == 512
     assert manager.c.window.info()['y'] == 30
     assert manager.c.window.info()['group'] == 'a'
 
@@ -224,36 +216,36 @@ def test_maximize_with_move_to_screen(manager):
 def test_float_first_on_second_screen(manager):
     manager.c.to_screen(1)
     assert manager.c.screen.info() == {
-        'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
+        'y': 0, 'x': 500, 'index': 1, 'width': 300, 'height': 380}
 
-    manager.test_xclock()
+    manager.test_window('one')
     # I don't know where y=30, x=12 comes from...
     assert manager.c.window.info()['float_info'] == {
-        'y': 30, 'x': 12, 'width': 164, 'height': 164
+        'y': 30, 'x': 12, 'width': 100, 'height': 100
     }
 
     manager.c.window.toggle_floating()
-    assert manager.c.window.info()['width'] == 164
-    assert manager.c.window.info()['height'] == 164
+    assert manager.c.window.info()['width'] == 100
+    assert manager.c.window.info()['height'] == 100
 
-    assert manager.c.window.info()['x'] == 612
+    assert manager.c.window.info()['x'] == 512
     assert manager.c.window.info()['y'] == 30
     assert manager.c.window.info()['group'] == 'b'
     assert manager.c.window.info()['float_info'] == {
-        'y': 30, 'x': 12, 'width': 164, 'height': 164
+        'y': 30, 'x': 12, 'width': 100, 'height': 100
     }
 
 
 @fakescreen_config
 def test_float_change_screens(manager):
-    # add some eyes, and float clock
-    manager.test_xeyes()
-    manager.test_xclock()
+    # add one tiled and one floating window
+    manager.test_window('tiled')
+    manager.test_window('float')
     manager.c.window.toggle_floating()
-    assert set(manager.c.group.info()['windows']) == set(('xeyes', 'xclock'))
-    assert manager.c.group.info()['floating_info']['clients'] == ['xclock']
-    assert manager.c.window.info()['width'] == 164
-    assert manager.c.window.info()['height'] == 164
+    assert set(manager.c.group.info()['windows']) == set(('tiled', 'float'))
+    assert manager.c.group.info()['floating_info']['clients'] == ['float']
+    assert manager.c.window.info()['width'] == 100
+    assert manager.c.window.info()['height'] == 100
     # 16 is given by the left gap width
     assert manager.c.window.info()['x'] == 16
     assert manager.c.window.info()['y'] == 0
@@ -261,79 +253,79 @@ def test_float_change_screens(manager):
 
     # put on group b
     assert manager.c.screen.info() == {
-        'y': 0, 'x': 0, 'index': 0, 'width': 600, 'height': 480}
+        'y': 0, 'x': 0, 'index': 0, 'width': 500, 'height': 340}
     assert manager.c.group.info()['name'] == 'a'
     manager.c.to_screen(1)
     assert manager.c.group.info()['name'] == 'b'
     assert manager.c.screen.info() == {
-        'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
+        'y': 0, 'x': 500, 'index': 1, 'width': 300, 'height': 380}
     manager.c.group['a'].toscreen()
     assert manager.c.group.info()['name'] == 'a'
-    assert set(manager.c.group.info()['windows']) == set(('xeyes', 'xclock'))
-    assert manager.c.window.info()['name'] == 'xclock'
+    assert set(manager.c.group.info()['windows']) == set(('tiled', 'float'))
+    assert manager.c.window.info()['name'] == 'float'
     # width/height unchanged
-    assert manager.c.window.info()['width'] == 164
-    assert manager.c.window.info()['height'] == 164
-    # x is shifted by 600, y is shifted by 0
-    assert manager.c.window.info()['x'] == 616
+    assert manager.c.window.info()['width'] == 100
+    assert manager.c.window.info()['height'] == 100
+    # x is shifted by 500, y is shifted by 0
+    assert manager.c.window.info()['x'] == 516
     assert manager.c.window.info()['y'] == 0
     assert manager.c.window.info()['group'] == 'a'
-    assert manager.c.group.info()['floating_info']['clients'] == ['xclock']
+    assert manager.c.group.info()['floating_info']['clients'] == ['float']
 
     # move to screen 3
     manager.c.to_screen(2)
     assert manager.c.screen.info() == {
-        'y': 480, 'x': 0, 'index': 2, 'width': 500, 'height': 400}
+        'y': 340, 'x': 0, 'index': 2, 'width': 450, 'height': 220}
     assert manager.c.group.info()['name'] == 'c'
     manager.c.group['a'].toscreen()
     assert manager.c.group.info()['name'] == 'a'
-    assert set(manager.c.group.info()['windows']) == set(('xeyes', 'xclock'))
-    assert manager.c.window.info()['name'] == 'xclock'
+    assert set(manager.c.group.info()['windows']) == set(('tiled', 'float'))
+    assert manager.c.window.info()['name'] == 'float'
     # width/height unchanged
-    assert manager.c.window.info()['width'] == 164
-    assert manager.c.window.info()['height'] == 164
-    # x is shifted by 0, y is shifted by 480
+    assert manager.c.window.info()['width'] == 100
+    assert manager.c.window.info()['height'] == 100
+    # x is shifted by 0, y is shifted by 340
     assert manager.c.window.info()['x'] == 16
-    assert manager.c.window.info()['y'] == 480
+    assert manager.c.window.info()['y'] == 340
 
     # now screen 4 for fun
     manager.c.to_screen(3)
     assert manager.c.screen.info() == {
-        'y': 580, 'x': 500, 'index': 3, 'width': 400, 'height': 400}
+        'y': 380, 'x': 450, 'index': 3, 'width': 350, 'height': 220}
     assert manager.c.group.info()['name'] == 'd'
     manager.c.group['a'].toscreen()
     assert manager.c.group.info()['name'] == 'a'
-    assert set(manager.c.group.info()['windows']) == set(('xeyes', 'xclock'))
-    assert manager.c.window.info()['name'] == 'xclock'
+    assert set(manager.c.group.info()['windows']) == set(('tiled', 'float'))
+    assert manager.c.window.info()['name'] == 'float'
     # width/height unchanged
-    assert manager.c.window.info()['width'] == 164
-    assert manager.c.window.info()['height'] == 164
-    # x is shifted by 500, y is shifted by 580
-    assert manager.c.window.info()['x'] == 516
-    assert manager.c.window.info()['y'] == 580
+    assert manager.c.window.info()['width'] == 100
+    assert manager.c.window.info()['height'] == 100
+    # x is shifted by 450, y is shifted by 40
+    assert manager.c.window.info()['x'] == 466
+    assert manager.c.window.info()['y'] == 380
 
     # and back to one
     manager.c.to_screen(0)
     assert manager.c.screen.info() == {
-        'y': 0, 'x': 0, 'index': 0, 'width': 600, 'height': 480}
+        'y': 0, 'x': 0, 'index': 0, 'width': 500, 'height': 340}
     assert manager.c.group.info()['name'] == 'b'
     manager.c.group['a'].toscreen()
     assert manager.c.group.info()['name'] == 'a'
-    assert set(manager.c.group.info()['windows']) == set(('xeyes', 'xclock'))
-    assert manager.c.window.info()['name'] == 'xclock'
+    assert set(manager.c.group.info()['windows']) == set(('tiled', 'float'))
+    assert manager.c.window.info()['name'] == 'float'
     # back to the original location
-    assert manager.c.window.info()['width'] == 164
-    assert manager.c.window.info()['height'] == 164
+    assert manager.c.window.info()['width'] == 100
+    assert manager.c.window.info()['height'] == 100
     assert manager.c.window.info()['x'] == 16
     assert manager.c.window.info()['y'] == 0
 
 
 @fakescreen_config
 def test_float_outside_edges(manager):
-    manager.test_xclock()
+    manager.test_window('one')
     manager.c.window.toggle_floating()
-    assert manager.c.window.info()['width'] == 164
-    assert manager.c.window.info()['height'] == 164
+    assert manager.c.window.info()['width'] == 100
+    assert manager.c.window.info()['height'] == 100
     # 16 is given by the left gap width
     assert manager.c.window.info()['x'] == 16
     assert manager.c.window.info()['y'] == 0
@@ -343,39 +335,39 @@ def test_float_outside_edges(manager):
 
     # move left, but some still on screen 0
     manager.c.window.move_floating(-30, 20)
-    assert manager.c.window.info()['width'] == 164
-    assert manager.c.window.info()['height'] == 164
+    assert manager.c.window.info()['width'] == 100
+    assert manager.c.window.info()['height'] == 100
     assert manager.c.window.info()['x'] == -14
     assert manager.c.window.info()['y'] == 20
     assert manager.c.window.info()['group'] == 'a'
 
     # move up, but some still on screen 0
     manager.c.window.set_position_floating(-10, -20)
-    assert manager.c.window.info()['width'] == 164
-    assert manager.c.window.info()['height'] == 164
+    assert manager.c.window.info()['width'] == 100
+    assert manager.c.window.info()['height'] == 100
     assert manager.c.window.info()['x'] == -10
     assert manager.c.window.info()['y'] == -20
     assert manager.c.window.info()['group'] == 'a'
 
     # move above a
     manager.c.window.set_position_floating(50, -20)
-    assert manager.c.window.info()['width'] == 164
-    assert manager.c.window.info()['height'] == 164
+    assert manager.c.window.info()['width'] == 100
+    assert manager.c.window.info()['height'] == 100
     assert manager.c.window.info()['x'] == 50
     assert manager.c.window.info()['y'] == -20
     assert manager.c.window.info()['group'] == 'a'
 
     # move down so still left, but next to screen c
-    manager.c.window.set_position_floating(-10, 520)
-    assert manager.c.window.info()['height'] == 164
+    manager.c.window.set_position_floating(-10, 360)
+    assert manager.c.window.info()['height'] == 100
     assert manager.c.window.info()['x'] == -10
-    assert manager.c.window.info()['y'] == 520
+    assert manager.c.window.info()['y'] == 360
     assert manager.c.window.info()['group'] == 'c'
 
     # move above b
     manager.c.window.set_position_floating(700, -10)
-    assert manager.c.window.info()['width'] == 164
-    assert manager.c.window.info()['height'] == 164
+    assert manager.c.window.info()['width'] == 100
+    assert manager.c.window.info()['height'] == 100
     assert manager.c.window.info()['x'] == 700
     assert manager.c.window.info()['y'] == -10
     assert manager.c.window.info()['group'] == 'b'
@@ -387,14 +379,13 @@ def test_hammer_tile(manager):
     manager.c.next_layout()
     manager.c.next_layout()
     for i in range(7):
-        manager.test_xclock()
+        manager.test_window('one')
     for i in range(30):
 
         manager.c.to_screen((i + 1) % 4)
         manager.c.group['a'].toscreen()
     assert manager.c.group['a'].info()['windows'] == [
-        'xclock', 'xclock', 'xclock', 'xclock',
-        'xclock', 'xclock', 'xclock']
+        'one', 'one', 'one', 'one', 'one', 'one', 'one']
 
 
 @fakescreen_config
@@ -402,13 +393,12 @@ def test_hammer_ratio_tile(manager):
     # change to ratio tile layout
     manager.c.next_layout()
     for i in range(7):
-        manager.test_xclock()
+        manager.test_window('one')
     for i in range(30):
         manager.c.to_screen((i + 1) % 4)
         manager.c.group['a'].toscreen()
     assert manager.c.group['a'].info()['windows'] == [
-        'xclock', 'xclock', 'xclock', 'xclock',
-        'xclock', 'xclock', 'xclock']
+        'one', 'one', 'one', 'one', 'one', 'one', 'one']
 
 
 @fakescreen_config
@@ -416,16 +406,14 @@ def test_ratio_to_fourth_screen(manager):
     # change to ratio tile layout
     manager.c.next_layout()
     for i in range(7):
-        manager.test_xclock()
+        manager.test_window('one')
     manager.c.to_screen(1)
     manager.c.group['a'].toscreen()
     assert manager.c.group['a'].info()['windows'] == [
-        'xclock', 'xclock', 'xclock', 'xclock',
-        'xclock', 'xclock', 'xclock']
+        'one', 'one', 'one', 'one', 'one', 'one', 'one']
 
     # now move to 4th, fails...
     manager.c.to_screen(3)
     manager.c.group['a'].toscreen()
     assert manager.c.group['a'].info()['windows'] == [
-        'xclock', 'xclock', 'xclock', 'xclock',
-        'xclock', 'xclock', 'xclock']
+        'one', 'one', 'one', 'one', 'one', 'one', 'one']

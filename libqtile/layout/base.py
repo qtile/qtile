@@ -29,16 +29,7 @@ from libqtile.command.base import CommandObject, ItemT
 
 class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
     """This class defines the API that should be exposed by all layouts"""
-    @classmethod
-    def _name(cls):
-        return cls.__class__.__name__.lower()
-
-    defaults = [(
-        "name",
-        None,
-        "The name of this layout"
-        " (usually the class' name in lowercase, e.g. 'max')"
-    )]  # type: List[Tuple[str, Any, str]]
+    defaults = []  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, **config):
         # name is a little odd; we can't resolve it until the class is defined
@@ -303,7 +294,7 @@ class _ClientList:
         Positive values are after the client.
 
         Use parameter 'client_position' to insert the given client at 4 specific
-        positions : top, bottom, after_current, before_current.
+        positions: top, bottom, after_current, before_current.
         """
         if client_position is not None:
             if client_position == "after_current":
@@ -504,6 +495,9 @@ class _SimpleLayoutBase(Layout):
 
     def remove(self, client):
         return self.clients.remove(client)
+
+    def get_windows(self):
+        return self.clients.clients
 
     def info(self):
         d = Layout.info(self)

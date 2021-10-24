@@ -32,7 +32,6 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
@@ -55,8 +54,7 @@ class RatioTileConfig(Config):
     follow_mouse_focus = False
 
 
-def ratiotile_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [RatioTileConfig], indirect=True)(x))
+ratiotile_config = pytest.mark.parametrize("manager", [RatioTileConfig], indirect=True)
 
 
 @ratiotile_config

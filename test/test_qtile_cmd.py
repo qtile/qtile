@@ -140,13 +140,9 @@ def test_display_kb(manager):
                      table)
     assert re.search(r"(?m)^<root>\s{3,}q\s{3,}mod4\s{13,}Enter named mode\s*$",
                      table)
-    assert re.search(r"(?m)^named\s{3,}Escape\s{9,}function\(noop\)\s*$",
-                     table)
     assert re.search(r"(?m)^named\s{3,}q\s{13,}Enter <unnamed> mode\s*$",
                      table)
     assert re.search(r"(?m)^named\s{3,}b\s{9,}togroup\('b'\)\s*$",
-                     table)
-    assert re.search(r"(?m)^named>_\s{3,}Escape\s{9,}function\(noop\)\s*$",
                      table)
     assert re.search(r"(?m)^named>_\s{3,}a\s{9,}togroup\('a'\)\s*$",
                      table)

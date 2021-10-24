@@ -68,13 +68,13 @@ def test_ls(manager):
     client = ipc.Client(manager.sockfile)
     command = IPCCommandInterface(client)
     sh = QSh(command)
-    assert sh.do_ls(None) == "bar/     group/   layout/  screen/  widget/  window/"
-    assert sh.do_ls("") == "bar/     group/   layout/  screen/  widget/  window/"
+    assert sh.do_ls(None) == "bar/     group/   layout/  screen/  widget/  window/  core/  "
+    assert sh.do_ls("") == "bar/     group/   layout/  screen/  widget/  window/  core/  "
     assert sh.do_ls("layout") == "layout/group/   layout/window/  layout/screen/  layout[0]/    "
 
     assert sh.do_cd("layout") == "layout"
     assert sh.do_ls(None) == "group/   window/  screen/"
-    assert sh.do_ls("screen") == "screen/layout/  screen/window/  screen/bar/   "
+    assert sh.do_ls("screen") == "screen/layout/  screen/window/  screen/bar/     screen/widget/  screen/group/ "
 
 
 @sh_config

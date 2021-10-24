@@ -36,14 +36,7 @@ class Image(base._Widget, base.MarginMixin):
         ("filename", None, "Image filename. Can contain '~'"),
     ]
 
-    def __init__(self, length=bar.CALCULATED, width=None, **config):
-        # 'width' was replaced by 'length' since the widget can be installed in
-        # vertical bars
-        if width is not None:
-            logger.warning('width kwarg or positional argument is '
-                           'deprecated. Please use length.')
-            length = width
-
+    def __init__(self, length=bar.CALCULATED, **config):
         base._Widget.__init__(self, length, **config)
         self.add_defaults(Image.defaults)
         self.add_defaults(base.MarginMixin.defaults)

@@ -2,7 +2,7 @@
 
 **A full-featured, hackable tiling window manager written and configured in Python**
 
-|website| |pypi| |ci| |rtd| |coveralls| |license|
+|website| |pypi| |ci| |rtd| |license|
 
 Features
 ========
@@ -10,6 +10,7 @@ Features
 * Simple, small and extensible. It's easy to write your own layouts,
   widgets and commands.
 * Configured in Python.
+* Runs as an X11 WM or a Wayland compositor.
 * Command shell that allows all aspects of Qtile to be managed and
   inspected.
 * Complete remote scriptability - write scripts to set up workspaces,
@@ -23,7 +24,7 @@ Community
 Qtile is supported by a dedicated group of users. If you need any help, please
 don't hesitate to fire off an email to our mailing list or join us on IRC.
 
-:Mailing List: http://groups.google.com/group/qtile-dev
+:Mailing List: https://groups.google.com/group/qtile-dev
 :IRC: irc://irc.oftc.net:6667/qtile
 
 Contributing
@@ -34,15 +35,15 @@ the GitHub `issue tracker`_. There are also a few `tips & tricks`_,
 and `guidelines`_ for contributing in the documentation.
 
 .. _`issue tracker`: https://github.com/qtile/qtile/issues
-.. _`tips & tricks`: http://docs.qtile.org/en/latest/manual/hacking.html
-.. _`guidelines`: http://docs.qtile.org/en/latest/manual/contributing.html
+.. _`tips & tricks`: https://docs.qtile.org/en/latest/manual/hacking.html
+.. _`guidelines`: https://docs.qtile.org/en/latest/manual/contributing.html
 
 .. |logo| image:: https://raw.githubusercontent.com/qtile/qtile/master/logo.png
     :alt: Logo
-    :target: http://www.qtile.org
+    :target: https://www.qtile.org
 .. |website| image:: https://img.shields.io/badge/website-qtile.org-blue.svg
     :alt: Website
-    :target: http://www.qtile.org
+    :target: https://www.qtile.org
 .. |pypi| image:: https://img.shields.io/pypi/v/qtile.svg
     :alt: PyPI
     :target: https://pypi.org/project/qtile/
@@ -51,10 +52,7 @@ and `guidelines`_ for contributing in the documentation.
     :target: https://github.com/qtile/qtile/actions
 .. |rtd| image:: https://readthedocs.org/projects/qtile/badge/?version=latest
     :alt: Read the Docs
-    :target: http://docs.qtile.org/en/latest/
-.. |coveralls| image:: https://coveralls.io/repos/github/qtile/qtile/badge.svg?branch=master
-    :alt: Coveralls
-    :target: https://coveralls.io/github/qtile/qtile?branch=master
+    :target: https://docs.qtile.org/en/latest/
 .. |license| image:: https://img.shields.io/github/license/qtile/qtile.svg
     :alt: License
     :target: https://github.com/qtile/qtile/blob/master/LICENSE
@@ -67,8 +65,10 @@ Maintainers
 | `@ramnes`_ GPG: ``99CC A84E 2C8C 74F3 2E12  AD53 8C17 0207 0803 487A``
 | `@m-col`_ GPG: ``35D9 2E7C C735 7A81 173E  A1C9 74F9 FDD2 0984 FBEC``
 | `@flacjacket`_ GPG: ``58B5 F350 8339 BFE5 CA93  AC9F 439D 9701 E7EA C588``
+| `@elParaguayo`_ GPG: ``A6BA A1E1 7D26 64AD B97B  2C6F 58A9 AA7C 8672 7DF7``
 
 .. _`@tych0`: https://github.com/tych0
 .. _`@ramnes`: https://github.com/ramnes
 .. _`@m-col`: https://github.com/m-col
 .. _`@flacjacket`: https://github.com/flacjacket
+.. _`@elParaguayo`: https://github.com/elparaguayo

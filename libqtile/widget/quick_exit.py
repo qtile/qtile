@@ -59,8 +59,8 @@ class QuickExit(base._TextBox):
 
         self.countdown -= 1
         self.text = self.countdown_format.format(self.countdown)
-        func = self.timeout_add(self.timer_interval, self.update)
-        self.__call_later_funcs.append(func)
+        self.timeout_add(self.timer_interval, self.update)
+        self.__call_later_funcs.append(self.future)
         self.draw()
 
         if self.countdown == 0:

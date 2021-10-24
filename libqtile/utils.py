@@ -28,11 +28,12 @@ from collections import defaultdict
 from collections.abc import Sequence
 from random import randint
 from shutil import which
+from typing import List, Tuple, Union
 
 try:
-    from dbus_next import Message, Variant  # type: ignore
-    from dbus_next.aio import MessageBus  # type: ignore
-    from dbus_next.constants import BusType, MessageType  # type: ignore
+    from dbus_next import Message, Variant
+    from dbus_next.aio import MessageBus
+    from dbus_next.constants import BusType, MessageType
     has_dbus = True
 except ImportError:
     has_dbus = False
@@ -65,45 +66,87 @@ def shuffle_down(lst):
         lst.append(c)
 
 
-def rgb(x):
+ColorType = Union[str, Tuple[int, int, int], Tuple[int, int, int, float]]
+ColorsType = Union[ColorType, List[ColorType]]
+
+
+def rgb(x: ColorType) -> Tuple[float, float, float, float]:
     """
         Returns a valid RGBA tuple.
 
-        Here are some valid specifcations:
+        Here are some valid specifications:
             #ff0000
             with alpha: #ff000080
             ff0000
             with alpha: ff0000.5
             (255, 0, 0)
             with alpha: (255, 0, 0, 0.5)
+
+        Which is returned as (1.0, 0.0, 0.0, 0.5).
     """
     if isinstance(x, (tuple, list)):
         if len(x) == 4:
-            alpha = x[3]
+            alpha = x[-1]
         else:
-            alpha = 1
+            alpha = 1.0
         return (x[0] / 255.0, x[1] / 255.0, x[2] / 255.0, alpha)
     elif isinstance(x, str):
         if x.startswith("#"):
             x = x[1:]
         if "." in x:
-            x, alpha = x.split(".")
-            alpha = float("0." + alpha)
+            x, alpha_str = x.split(".")
+            alpha = float("0." + alpha_str)
         else:
-            alpha = 1
+            alpha = 1.0
         if len(x) not in (6, 8):
             raise ValueError("RGB specifier must be 6 or 8 characters long.")
-        vals = [int(i, 16) for i in (x[0:2], x[2:4], x[4:6])]
+        vals = tuple(int(i, 16) for i in (x[0:2], x[2:4], x[4:6]))
         if len(x) == 8:
             alpha = int(x[6:8], 16) / 255.0
-        vals.append(alpha)
-        return rgb(vals)
+        vals += (alpha,)
+        return rgb(vals)  # type: ignore
     raise ValueError("Invalid RGB specifier.")
 
 
 def hex(x):
     r, g, b, _ = rgb(x)
     return '#%02x%02x%02x' % (int(r * 255), int(g * 255), int(b * 255))
+
+
+def has_transparency(colour: ColorsType):
+    """
+    Returns True if the colour is not fully opaque.
+
+    Where a list of colours is passed, returns True if any
+    colour is not fully opaque.
+    """
+    def has_alpha(col):
+        return rgb(col)[3] < 1
+
+    if isinstance(colour, (str, tuple)):
+        return has_alpha(colour)
+
+    elif isinstance(colour, list):
+        return any([has_transparency(c) for c in colour])
+
+    return False
+
+
+def remove_transparency(colour: ColorsType):
+    """
+    Returns a tuple of (r, g, b) with no alpha.
+    """
+    def remove_alpha(col):
+        stripped = tuple(x * 255.0 for x in rgb(col)[:3])
+        return stripped
+
+    if isinstance(colour, (str, tuple)):
+        return remove_alpha(colour)
+
+    elif isinstance(colour, list):
+        return [remove_transparency(c) for c in colour]
+
+    return (0, 0, 0)
 
 
 def scrub_to_utf8(text):
@@ -203,7 +246,7 @@ def send_notification(title, message, urgent=False, timeout=10000, id=None):
     urgency = 2 if urgent else 1
 
     try:
-        loop = asyncio.get_running_loop()
+        loop = asyncio.get_event_loop()
     except RuntimeError:
         logger.warning("Eventloop has not started. Cannot send notification.")
     else:
@@ -218,7 +261,7 @@ async def _notify(title, message, urgency, timeout, id):
                     "",  # icon
                     title,  # summary
                     message,  # body
-                    [""],  # actions
+                    [],  # actions
                     {"urgency": Variant("y", urgency)},  # hints
                     timeout]  # timeout
 

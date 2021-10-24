@@ -7,27 +7,40 @@ Hacking on Qtile
 Requirements
 ============
 
-Any reasonably recent version of these should work, so you can probably just
-install them from your package manager.
+Here are Qtile's additional dependencies that may be required for tests:
 
-* `pytest <https://docs.pytest.org>`_
-* `Xephyr <https://freedesktop.org/wiki/Software/Xephyr/>`_
-* ``xrandr``, ``xcalc``, ``xeyes`` and ``xclock`` (``x11-apps`` on Ubuntu)
+================= =================== ==================================================
+Dependency        Ubuntu Package      Needed for
+================= =================== ==================================================
+pytest_           python3-pytest      Running tests
+PyGObject         python3-gi          Running tests (test windows)
+Xephyr_           xserver-xephyr      Testing with X11 backend (optional, see below)
+mypy              python3-mypy        Testing ``qtile check`` (optional)
+imagemagick>=6.8  imagemagick         ``test/test_images*`` (optional)
+gtk-layer-shell   libgtk-layer-shell0 Testing notification windows in Wayland (optional)
+dbus-launch       dbus-x11            Testing dbus-using widgets (optional)
+notifiy-send      libnotify-bin       Testing ``Notify`` widget (optional)
+xvfb              xvfb                Testing with X11 headless (optional)
+================= =================== ==================================================
 
-On Ubuntu, if testing on Python 3, this can be done with:
+.. _pytest: https://docs.pytest.org
+.. _Xephyr: https://freedesktop.org/wiki/Software/Xephyr
+
+
+Backends
+--------
+
+The test suite can be run using the X11 or Wayland backend, or both.  By
+default, only the X11 backend is used for tests. To test a single backend or
+both backends, specify as arguments to pytest:
 
 .. code-block:: bash
 
-    sudo apt-get install python3-pytest xserver-xephyr x11-apps
+    pytest --backend wayland  # Test just Wayland backend
+    pytest --backend x11 --backend wayland  # Test both
 
-On ArchLinux, the X11 requirements are installed with:
-
-.. code-block:: bash
-
-    sudo pacman -S xorg-xrandr xorg-xcalc xorg-xeyes xorg-xclock
-
-To build the documentation, you will also need to install `graphviz <https://www.graphviz.org/download/>`_.
-On ArchLinux, you can install it with ``sudo pacman -S graphviz``.
+Testing with the X11 backend requires Xephyr_ (and xvfb for headless mode) in addition to the core
+dependencies.
 
 
 Building cffi module
@@ -54,6 +67,9 @@ Deactivate it with the ``deactivate`` command.
 
 Building the documentation
 ==========================
+
+To build the documentation, you will also need to install `graphviz
+<https://www.graphviz.org/download/>`_.
 
 Go into the ``docs/`` directory and run ``pip install -r requirements.txt``.
 
@@ -86,6 +102,30 @@ The ``make lint`` command will run a linter with our configuration over libqtile
 to ensure your patch complies with reasonable formatting constraints. We also
 request that git commit messages follow the
 `standard format <https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>`_.
+
+Logging
+=======
+
+Logs are important to us because they are our best way to see what Qtile is
+doing when something abnormal happens. However, our goal is not to have as many
+logs as possible, as this hinders readability. What we want are relevant logs.
+
+To decide which log level to use, refer to the following scenarios:
+
+* ERROR: a problem affects the behavior of Qtile in a way that is noticeable to
+  the end user, and we can't work around it.
+* WARNING: a problem causes Qtile to operate in a suboptimal manner.
+* INFO: the state of Qtile has changed.
+* DEBUG: information is worth giving to help the developer better understand
+  which branch the process is in.
+
+Be careful not to overuse DEBUG and clutter the logs. No information should be
+duplicated between two messages.
+
+Also, keep in mind that any other level than DEBUG is aimed at users who don't
+necessarily have advanced programming knowledge; adapt your message
+accordingly. If it can't make sense to your grandma, it's probably meant to be
+a DEBUG message.
 
 Deprecation policy
 ==================

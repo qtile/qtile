@@ -18,8 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from dbus_next.aio import MessageBus  # type: ignore
-from dbus_next.constants import BusType  # type: ignore
+from dbus_next.aio import MessageBus
+from dbus_next.constants import BusType
 
 from libqtile.widget import base
 
@@ -35,6 +35,10 @@ class Bluetooth(base._TextBox):
     Displays bluetooth status or connected device.
 
     Uses dbus to communicate with the system bus.
+
+    Widget requirements: dbus-next_.
+
+    .. _dbus-next: https://pypi.org/project/dbus-next/
     """
 
     orientations = base.ORIENTATION_HORIZONTAL

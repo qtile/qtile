@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Qtile (Wayland)
+Comment=Qtile Session
+Exec=qtile start -b wayland
+Type=Application
+Keywords=wm;tiling

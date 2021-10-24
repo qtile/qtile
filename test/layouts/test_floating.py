@@ -23,7 +23,6 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
 from test.layouts.layout_utils import assert_focused
 
 
@@ -35,15 +34,17 @@ class FloatingConfig(Config):
     layouts = [
         layout.Floating()
     ]
-    floating_layout = libqtile.resources.default_config.floating_layout
+    floating_layout = layout.Floating(
+        fullscreen_border_width=15,
+        max_border_width=10,
+    )
     keys = []
     mouse = []
     screens = []
     follow_mouse_focus = False
 
 
-def floating_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [FloatingConfig], indirect=True)(x))
+floating_config = pytest.mark.parametrize("manager", [FloatingConfig], indirect=True)
 
 
 @floating_config
@@ -71,3 +72,32 @@ def test_float_next_prev_window(manager):
     assert_focused(manager, "two")
     manager.c.group.next_window()
     assert_focused(manager, "three")
+
+
+@floating_config
+def test_border_widths(manager):
+    manager.test_window("one")
+
+    # Default geometry
+    info = manager.c.window.info()
+    assert info["x"] == 350
+    assert info["y"] == 250
+    assert info["width"] == 100
+    assert info["height"] == 100
+
+    # Fullscreen
+    manager.c.window.enable_fullscreen()
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == 770
+    assert info["height"] == 570
+    manager.c.window.disable_fullscreen()
+
+    # Maximized
+    manager.c.window.toggle_maximize()
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == 780
+    assert info["height"] == 580

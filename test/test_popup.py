@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Matt Colligan
+# Copyright (c) 2020-1 Matt Colligan
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,31 +19,29 @@
 # SOFTWARE.
 
 
-import pytest
-
-from libqtile.backend.x11 import xcbq
-from libqtile.popup import Popup
-from test.conftest import BareConfig
+import textwrap
 
 
-@pytest.mark.parametrize("manager", [BareConfig], indirect=True)
 def test_popup_focus(manager):
-    manager.test_xeyes()
-    manager.windows_map = {}
+    manager.test_window("one")
+    start_wins = len(manager.backend.get_all_windows())
 
-    # we have to add .conn so that Popup thinks this is libqtile.qtile
-    manager.conn = xcbq.Connection(manager.display)
-
-    try:
-        popup = Popup(manager)
-        popup.width = manager.c.screen.info()["width"]
-        popup.height = manager.c.screen.info()["height"]
+    success, msg = manager.c.eval(textwrap.dedent("""
+        from libqtile.popup import Popup
+        popup = Popup(self,
+            x=0,
+            y=0,
+            width=self.current_screen.width,
+            height=self.current_screen.height,
+        )
         popup.place()
         popup.unhide()
-        assert manager.c.group.info()['focus'] == 'xeyes'
-        assert manager.c.group.info()['windows'] == ['xeyes']
-        assert len(manager.c.windows()) == 1
-        popup.hide()
-    finally:
-        popup.kill()
-        manager.conn.finalize()
+    """))
+    assert success, msg
+
+    end_wins = len(manager.backend.get_all_windows())
+    assert end_wins == start_wins + 1
+
+    assert manager.c.group.info()['focus'] == 'one'
+    assert manager.c.group.info()['windows'] == ['one']
+    assert len(manager.c.windows()) == 1

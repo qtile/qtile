@@ -30,10 +30,11 @@
 # SOFTWARE.
 
 import asyncio
+import copy
 import subprocess
 from typing import Any, List, Tuple
 
-from libqtile import bar, configurable, confreader, drawer
+from libqtile import bar, configurable, confreader
 from libqtile.command.base import CommandError, CommandObject, ItemT
 from libqtile.log_utils import logger
 
@@ -111,8 +112,8 @@ class _Widget(CommandObject, configurable.Configurable):
     to the passed dictionary.
     """
     orientations = ORIENTATION_BOTH
-    offsetx = None
-    offsety = None
+    offsetx: int = 0
+    offsety: int = 0
     defaults = [
         ("background", None, "Widget background color"),
         ("mouse_callbacks", {}, "Dict of mouse button press callback functions."),
@@ -167,10 +168,6 @@ class _Widget(CommandObject, configurable.Configurable):
             return self.offsetx
         return self.offsety
 
-    @property
-    def win(self):
-        return self.bar.window.window
-
     # Do not start the name with "test", or nosetests will try to test it
     # directly (prepend an underscore instead)
     def _test_orientation_compatibility(self, horizontal):
@@ -194,14 +191,8 @@ class _Widget(CommandObject, configurable.Configurable):
     def _configure(self, qtile, bar):
         self.qtile = qtile
         self.bar = bar
-        self.drawer = drawer.Drawer(
-            qtile,
-            self.win.wid,
-            self.bar.width,
-            self.bar.height
-        )
+        self.drawer = bar.window.create_drawer(self.bar.width, self.bar.height)
         if not self.configured:
-            self.configured = True
             self.qtile.call_soon(self.timer_setup)
             self.qtile.call_soon(asyncio.create_task, self._config_async())
 
@@ -217,6 +208,8 @@ class _Widget(CommandObject, configurable.Configurable):
         pass
 
     def finalize(self):
+        if hasattr(self, 'future'):
+            self.future.cancel()
         if hasattr(self, 'layout') and self.layout:
             self.layout.finalize()
         self.drawer.finalize()
@@ -260,11 +253,15 @@ class _Widget(CommandObject, configurable.Configurable):
     def _items(self, name: str) -> ItemT:
         if name == "bar":
             return True, []
+        elif name == "screen":
+            return True, []
         return None
 
     def _select(self, name, sel):
         if name == "bar":
             return self.bar
+        elif name == "screen":
+            return self.bar.screen
 
     def cmd_info(self):
         """
@@ -294,8 +291,9 @@ class _Widget(CommandObject, configurable.Configurable):
         """
             This method calls either ``.call_later`` with given arguments.
         """
-        return self.qtile.call_later(seconds, self._wrapper, method,
-                                     *method_args)
+        self.future = self.qtile.call_later(
+            seconds, self._wrapper, method, *method_args
+        )
 
     def call_process(self, command, **kwargs):
         """
@@ -303,9 +301,7 @@ class _Widget(CommandObject, configurable.Configurable):
             and return the string from stdout, which is decoded when using
             Python 3.
         """
-        output = subprocess.check_output(command, **kwargs)
-        output = output.decode()
-        return output
+        return subprocess.check_output(command, **kwargs, encoding="utf-8")
 
     def _wrapper(self, method, *method_args):
         try:
@@ -314,7 +310,10 @@ class _Widget(CommandObject, configurable.Configurable):
             logger.exception('got exception from widget timer')
 
     def create_mirror(self):
-        return Mirror(self)
+        return Mirror(self, background=self.background)
+
+    def clone(self):
+        return copy.copy(self)
 
     def mouse_enter(self, x, y):
         pass
@@ -570,8 +569,8 @@ class ThreadPoolText(_TextBox):
             else:
                 logger.warning('poll() returned None, not rescheduling')
 
-        future = self.qtile.run_in_executor(self.poll)
-        future.add_done_callback(on_done)
+        self.future = self.qtile.run_in_executor(self.poll)
+        self.future.add_done_callback(on_done)
 
     def poll(self):
         pass
@@ -616,11 +615,41 @@ class MarginMixin(configurable.Configurable):
 
 
 class Mirror(_Widget):
-    def __init__(self, reflection):
-        _Widget.__init__(self, reflection.length)
+    """
+    A widget for showing the same widget content in more than one place, for
+    instance, on bars across multiple screens.
+
+    You don't need to use it directly; instead, just instantiate your widget
+    once and hand it in to multiple bars. For instance::
+
+        cpu = widget.CPUGraph()
+        clock = widget.Clock()
+
+        screens = [
+            Screen(top=bar.Bar([widget.GroupBox(), cpu, clock])),
+            Screen(top=bar.Bar([widget.GroupBox(), cpu, clock])),
+        ]
+
+    Widgets can be passed to more than one bar, so that there don't need to be
+    any duplicates executing the same code all the time, and they'll always be
+    visually identical.
+
+    This works for all widgets that use `drawers` (and nothing else) to display
+    their contents. Currently, this is all widgets except for `Systray`.
+    """
+
+    def __init__(self, reflection, **config):
+        _Widget.__init__(self, reflection.length, **config)
         reflection.draw = self.hook(reflection.draw)
         self.reflects = reflection
         self._length = 0
+
+    def _configure(self, qtile, bar):
+        _Widget._configure(self, qtile, bar)
+        self.reflects.drawer.add_mirror(self.drawer)
+        # We need to fill the background once before `draw` is called so, if
+        # there's no reflection, the mirror matches its parent bar.
+        self.drawer.clear(self.background or self.bar.background)
 
     @property
     def length(self):
@@ -641,7 +670,12 @@ class Mirror(_Widget):
             self._length = self.length
             self.bar.draw()
         else:
-            self.reflects.drawer.paint_to(self.drawer)
+            # We only update the mirror's drawer if the parent widget has
+            # contents in its RecordingSurface. If this is False then the widget
+            # wil just show the existing drawer contents.
+            if self.reflects.drawer.needs_update:
+                self.drawer.clear(self.background or self.bar.background)
+                self.reflects.drawer.paint_to(self.drawer)
             self.drawer.draw(offsetx=self.offset, width=self.width)
 
     def button_press(self, x, y, button):

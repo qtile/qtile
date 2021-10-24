@@ -29,7 +29,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import drawer, hook, window
+from libqtile import hook
 from libqtile.layout.base import Layout
 
 to_superscript = dict(zip(map(ord, u'0123456789'), map(ord, u'⁰¹²³⁴⁵⁶⁷⁸⁹')))
@@ -384,7 +384,6 @@ class TreeTab(Layout):
         ("section_left", 4, "Left margin of section label"),
         ("panel_width", 150, "Width of the left panel"),
         ("sections", ['Default'], "Foreground color of inactive tab"),
-        ("name", "treetab", "Name of this layout."),
         ("previous_on_rm", False, "Focus previous window on close instead of first."),
     ]
 
@@ -458,22 +457,17 @@ class TreeTab(Layout):
         self.draw_panel()
 
     def _create_panel(self, screen_rect):
-        self._panel = window.Internal.create(
-            self.group.qtile,
+        self._panel = self.group.qtile.core.create_internal(
             screen_rect.x,
             screen_rect.y,
             self.panel_width,
             100
         )
         self._create_drawer(screen_rect)
-        self._panel.handle_Expose = self._handle_Expose
-        self._panel.handle_ButtonPress = self._handle_ButtonPress
-        self.group.qtile.windows_map[self._panel.window.wid] = self._panel
+        self._panel.process_window_expose = self.draw_panel
+        self._panel.process_button_click = self.process_button_click
         hook.subscribe.client_name_updated(self.draw_panel)
         hook.subscribe.focus_change(self.draw_panel)
-
-    def _handle_Expose(self, e):  # noqa: N802
-        self.draw_panel()
 
     def draw_panel(self, *args):
         if not self._panel:
@@ -482,8 +476,8 @@ class TreeTab(Layout):
         self._tree.draw(self, 0)
         self._drawer.draw(offsetx=0, width=self.panel_width)
 
-    def _handle_ButtonPress(self, event):  # noqa: N802
-        node = self._tree.button_press(event.event_x, event.event_y)
+    def process_button_click(self, x, y, _buttom):
+        node = self._tree.button_press(x, y)
         if node:
             self.group.focus(node.window, False)
 
@@ -503,6 +497,13 @@ class TreeTab(Layout):
         Layout.finalize(self)
         if self._drawer is not None:
             self._drawer.finalize()
+
+    def get_windows(self):
+        clients = []
+        for section in self._tree.children:
+            for window in section.children:
+                clients.append(window.window)
+        return clients
 
     def info(self):
 
@@ -660,9 +661,9 @@ class TreeTab(Layout):
 
         Parameters
         ==========
-        sorter : function with single arg returning string
+        sorter: function with single arg returning string
             returns name of the section where window should be
-        create_sections :
+        create_sections:
             if this parameter is True (default), if sorter returns unknown
             section name it will be created dynamically
         """
@@ -717,11 +718,9 @@ class TreeTab(Layout):
 
     def _create_drawer(self, screen_rect):
         if self._drawer is None:
-            self._drawer = drawer.Drawer(
-                self.group.qtile,
-                self._panel.window.wid,
+            self._drawer = self._panel.create_drawer(
                 self.panel_width,
-                screen_rect.height
+                screen_rect.height,
             )
         self._drawer.clear(self.bg_color)
         self._layout = self._drawer.textlayout(

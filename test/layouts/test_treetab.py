@@ -23,7 +23,6 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
@@ -45,8 +44,7 @@ class TreeTabConfig(Config):
     follow_mouse_focus = False
 
 
-def treetab_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [TreeTabConfig], indirect=True)(x))
+treetab_config = pytest.mark.parametrize("manager", [TreeTabConfig], indirect=True)
 
 
 @treetab_config
@@ -54,8 +52,8 @@ def test_window(manager):
     # setup 3 tiled and two floating clients
     manager.test_window("one")
     manager.test_window("two")
-    manager.test_dialog("float1")
-    manager.test_dialog("float2")
+    manager.test_window("float1", floating=True)
+    manager.test_window("float2", floating=True)
     manager.test_window("three")
 
     # test preconditions, columns adds clients at pos of current, in two stacks

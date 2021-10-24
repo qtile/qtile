@@ -56,22 +56,3 @@ def test_textbox_color_change(manager):
     manager.c.widget["colorchanger"].update('f')
     assert manager.c.widget["colorchanger"].info()["foreground"] == "ff0000"
 
-
-def test_thermalsensor_regex_compatibility():
-    sensors = ThermalSensor()
-    test_sensors_output = """
-    coretemp-isa-0000
-    Adapter: ISA adapter
-    Physical id 0:  +61.0°C  (high = +86.0°C, crit = +100.0°C)
-    Core 0:         +54.0°C  (high = +86.0°C, crit = +100.0°C)
-    Core 1:         +56.0°C  (high = +86.0°C, crit = +100.0°C)
-    Core 2:         +58.0°C  (high = +86.0°C, crit = +100.0°C)
-    Core 3:         +61.0°C  (high = +86.0°C, crit = +100.0°C)
-    """
-    sensors_detected = sensors._format_sensors_output(test_sensors_output)
-    assert sensors_detected["Physical id 0"] == ("61.0", "°C")
-    assert sensors_detected["Core 0"] == ("54.0", "°C")
-    assert sensors_detected["Core 1"] == ("56.0", "°C")
-    assert sensors_detected["Core 2"] == ("58.0", "°C")
-    assert sensors_detected["Core 3"] == ("61.0", "°C")
-    assert not ("Adapter" in sensors_detected.keys())

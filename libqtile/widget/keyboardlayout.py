@@ -22,14 +22,104 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import re
-from subprocess import CalledProcessError
+from __future__ import annotations
 
+import re
+from abc import ABCMeta, abstractmethod
+from subprocess import CalledProcessError, check_output
+from typing import TYPE_CHECKING
+
+from libqtile.confreader import ConfigError
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
-kb_layout_regex = re.compile(r'layout:\s+(?P<layout>\w+)')
-kb_variant_regex = re.compile(r'variant:\s+(?P<variant>\w+)')
+if TYPE_CHECKING:
+    from typing import Optional
+
+    from libqtile.core.manager import Qtile
+
+
+class _BaseLayoutBackend(metaclass=ABCMeta):
+    def __init__(self, qtile: Qtile):
+        """
+        This handles getting and setter the keyboard layout with the appropriate
+        backend.
+        """
+
+    @abstractmethod
+    def get_keyboard(self) -> str:
+        """
+        Return the currently used keyboard layout as a string
+
+        Examples: "us", "us dvorak".  In case of error returns "unknown".
+        """
+
+    def set_keyboard(self, layout: str, options: Optional[str]) -> None:
+        """
+        Set the keyboard layout with specified options.
+        """
+
+
+class _X11LayoutBackend(_BaseLayoutBackend):
+    kb_layout_regex = re.compile(r'layout:\s+(?P<layout>\w+)')
+    kb_variant_regex = re.compile(r'variant:\s+(?P<variant>\w+)')
+
+    def get_keyboard(self) -> str:
+        try:
+            command = 'setxkbmap -verbose 10 -query'
+            setxkbmap_output = check_output(command.split(' ')).decode()
+        except CalledProcessError as e:
+            logger.error('Can not get the keyboard layout: {0}'.format(e))
+            return "unknown"
+        except OSError as e:
+            logger.error('Please, check that xset is available: {0}'.format(e))
+            return "unknown"
+
+        match_layout = self.kb_layout_regex.search(setxkbmap_output)
+        if match_layout is None:
+            return 'ERR'
+        keyboard = match_layout.group('layout')
+
+        match_variant = self.kb_variant_regex.search(setxkbmap_output)
+        if match_variant:
+            keyboard += " " + match_variant.group('variant')
+        return keyboard
+
+    def set_keyboard(self, layout: str, options: Optional[str]) -> None:
+        command = ['setxkbmap']
+        command.extend(layout.split(" "))
+        if options:
+            command.extend(['-option', options])
+        try:
+            check_output(command)
+        except CalledProcessError as e:
+            logger.error('Can not change the keyboard layout: {0}'.format(e))
+        except OSError as e:
+            logger.error('Please, check that setxkbmap is available: {0}'.format(e))
+
+
+class _WaylandLayoutBackend(_BaseLayoutBackend):
+    def __init__(self, qtile: Qtile) -> None:
+        self.set_keymap = qtile.core.cmd_set_keymap  # type: ignore
+        self._layout: str = ""
+
+    def get_keyboard(self) -> str:
+        return self._layout
+
+    def set_keyboard(self, layout: str, options: Optional[str]) -> None:
+        maybe_variant: Optional[str] = None
+        if " " in layout:
+            layout_name, maybe_variant = layout.split(" ", maxsplit=1)
+        else:
+            layout_name = layout
+        self.set_keymap(layout_name, options, maybe_variant)
+        self._layout = layout
+
+
+layout_backends = {
+    'x11': _X11LayoutBackend,
+    'wayland': _WaylandLayoutBackend,
+}
 
 
 class KeyboardLayout(base.InLoopPollText):
@@ -42,7 +132,7 @@ class KeyboardLayout(base.InLoopPollText):
 
         Key([mod], "space", lazy.widget["keyboardlayout"].next_keyboard(), desc="Next keyboard layout."),
 
-    It requires setxkbmap to be available in the system.
+    When running Qtile with the X11 backend, this widget requires setxkbmap to be available.
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
@@ -59,10 +149,18 @@ class KeyboardLayout(base.InLoopPollText):
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(KeyboardLayout.defaults)
-
-        self.keyboard = self.configured_keyboards[0]
-
         self.add_callbacks({'Button1': self.next_keyboard})
+
+    def _configure(self, qtile, bar):
+        base.InLoopPollText._configure(self, qtile, bar)
+
+        if qtile.core.name not in layout_backends:
+            raise ConfigError(
+                "KeyboardLayout does not support backend: " + qtile.core.name
+            )
+
+        self.backend = layout_backends[qtile.core.name](qtile)
+        self.backend.set_keyboard(self.configured_keyboards[0], self.option)
 
     def next_keyboard(self):
         """Set the next layout in the list of configured keyboard layouts as
@@ -72,7 +170,7 @@ class KeyboardLayout(base.InLoopPollText):
         layout the first one in the list.
         """
 
-        current_keyboard = self.keyboard
+        current_keyboard = self.backend.get_keyboard()
         if current_keyboard in self.configured_keyboards:
             # iterate the list circularly
             next_keyboard = self.configured_keyboards[
@@ -81,56 +179,15 @@ class KeyboardLayout(base.InLoopPollText):
         else:
             next_keyboard = self.configured_keyboards[0]
 
-        self.keyboard = next_keyboard
+        self.backend.set_keyboard(next_keyboard, self.option)
 
         self.tick()
 
     def poll(self):
-        if self.keyboard in self.display_map.keys():
-            return self.display_map[self.keyboard]
-        return self.keyboard.upper()
-
-    def get_keyboard_layout(self, setxkbmap_output):
-        match_layout = kb_layout_regex.search(setxkbmap_output)
-        match_variant = kb_variant_regex.search(setxkbmap_output)
-
-        if match_layout is None:
-            return 'ERR'
-
-        kb = match_layout.group('layout')
-        if match_variant:
-            kb += " " + match_variant.group('variant')
-        return kb
-
-    @property
-    def keyboard(self):
-        """Return the currently used keyboard layout as a string
-
-        Examples: "us", "us dvorak".  In case of error returns "unknown".
-        """
-        try:
-            command = 'setxkbmap -verbose 10 -query'
-            setxkbmap_output = self.call_process(command.split(' '))
-            keyboard = self.get_keyboard_layout(setxkbmap_output)
-            return str(keyboard)
-        except CalledProcessError as e:
-            logger.error('Can not get the keyboard layout: {0}'.format(e))
-        except OSError as e:
-            logger.error('Please, check that xset is available: {0}'.format(e))
-        return "unknown"
-
-    @keyboard.setter
-    def keyboard(self, keyboard):
-        command = ['setxkbmap']
-        command.extend(keyboard.split(" "))
-        if self.option:
-            command.extend(['-option', self.option])
-        try:
-            self.call_process(command)
-        except CalledProcessError as e:
-            logger.error('Can not change the keyboard layout: {0}'.format(e))
-        except OSError as e:
-            logger.error('Please, check that setxkbmap is available: {0}'.format(e))
+        keyboard = self.backend.get_keyboard()
+        if keyboard in self.display_map.keys():
+            return self.display_map[keyboard]
+        return keyboard.upper()
 
     def cmd_next_keyboard(self):
         """Select next keyboard layout"""

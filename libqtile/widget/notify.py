@@ -30,12 +30,23 @@
 from os import path
 
 from libqtile import bar, pangocffi, utils
-from libqtile.notify import notifier
+from libqtile.log_utils import logger
+from libqtile.notify import ClosedReason, notifier
 from libqtile.widget import base
 
 
 class Notify(base._TextBox):
-    """A notify widget"""
+    """
+    A notify widget
+
+    This widget can handle actions provided by notification clients. However, only the
+    default action is supported, so if a client provides multiple actions then only the
+    default (first) action can be invoked. Some programs will provide their own
+    notification windows if the notification server does not support actions, so if you
+    want your notifications to handle more than one action then specify ``False`` for
+    the ``action`` option to disable all action handling. Unfortunately we cannot
+    specify the capability for exactly one action.
+    """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("foreground_urgent", "ff0000", "Foreground urgent priority colour"),
@@ -46,18 +57,32 @@ class Notify(base._TextBox):
             "Default timeout (seconds) for notifications"
         ),
         ("audiofile", None, "Audiofile played during notifications"),
+        ("action", True, "Enable handling of default action upon right click"),
+        (
+            "parse_text", None, "Function to parse and modify notifications. "
+            "e.g. function in config that removes line returns:"
+            "def my_func(text)"
+            "   return text.replace('\n', '')"
+            "then set option parse_text=my_func"
+        ),
     ]
+    capabilities = {'body', 'actions'}
 
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "", width, **config)
         self.add_defaults(Notify.defaults)
         self.current_id = 0
 
-        self.add_callbacks({
+        default_callbacks = {
             'Button1': self.clear,
             'Button4': self.prev,
             'Button5': self.next,
-        })
+        }
+        if self.action:
+            default_callbacks['Button3'] = self.invoke
+        else:
+            self.capabilities = Notify.capabilities.difference({"actions"})
+        self.add_callbacks(default_callbacks)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
@@ -71,11 +96,11 @@ class Notify(base._TextBox):
         )
 
     async def _config_async(self):
-        await notifier.register(self.update)
+        await notifier.register(self.update, self.capabilities, on_close=self.on_close)
 
     def set_notif_text(self, notif):
         self.text = pangocffi.markup_escape_text(notif.summary)
-        urgency = notif.hints.get('urgency', 1)
+        urgency = getattr(notif.hints.get('urgency'), "value", 1)
         if urgency != 1:
             self.text = '<span color="%s">%s</span>' % (
                 utils.hex(
@@ -88,6 +113,11 @@ class Notify(base._TextBox):
             self.text = '<span weight="bold">%s</span> - %s' % (
                 self.text, pangocffi.markup_escape_text(notif.body)
             )
+        if callable(self.parse_text):
+            try:
+                self.text = self.parse_text(self.text)
+            except:
+                logger.exception("parse_text function failed:")
         if self.audiofile and path.exists(self.audiofile):
             self.qtile.cmd_spawn("aplay -q '%s'" % self.audiofile)
 
@@ -98,9 +128,13 @@ class Notify(base._TextBox):
         self.set_notif_text(notif)
         self.current_id = notif.id - 1
         if notif.timeout and notif.timeout > 0:
-            self.timeout_add(notif.timeout / 1000, self.clear)
+            self.timeout_add(
+                notif.timeout / 1000, self.clear, method_args=(ClosedReason.expired,)
+            )
         elif self.default_timeout:
-            self.timeout_add(self.default_timeout, self.clear)
+            self.timeout_add(
+                self.default_timeout, self.clear, method_args=(ClosedReason.expired,)
+            )
         self.bar.draw()
         return True
 
@@ -108,10 +142,20 @@ class Notify(base._TextBox):
         self.set_notif_text(notifier.notifications[self.current_id])
         self.bar.draw()
 
-    def clear(self):
+    def clear(self, reason=ClosedReason.dismissed):
+        notifier._service.NotificationClosed(
+            notifier.notifications[self.current_id].id,
+            reason
+        )
         self.text = ''
         self.current_id = len(notifier.notifications) - 1
         self.bar.draw()
+
+    def on_close(self, nid):
+        if self.current_id < len(notifier.notifications):
+            notif = notifier.notifications[self.current_id]
+            if notif.id == nid:
+                self.clear(ClosedReason.method)
 
     def prev(self):
         if self.current_id > 0:
@@ -122,6 +166,13 @@ class Notify(base._TextBox):
         if self.current_id < len(notifier.notifications) - 1:
             self.current_id += 1
             self.display()
+
+    def invoke(self):
+        if self.current_id < len(notifier.notifications):
+            notif = notifier.notifications[self.current_id]
+            if notif.actions:
+                notifier._service.ActionInvoked(notif.id, notif.actions[0])
+            self.clear()
 
     def cmd_display(self):
         """Display the notifcication"""
@@ -145,3 +196,8 @@ class Notify(base._TextBox):
     def cmd_next(self):
         """Show next notification"""
         self.next()
+
+    def cmd_invoke(self):
+        """Invoke the notification's default action"""
+        if self.action:
+            self.invoke()

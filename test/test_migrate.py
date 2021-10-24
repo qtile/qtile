@@ -13,7 +13,7 @@ from test.test_check import have_mypy, run_qtile_check
 
 def run_qtile_migrate(config):
     cmd = os.path.join(os.path.dirname(__file__), '..', 'bin', 'qtile')
-    argv = [cmd, "migrate", "-c", config]
+    argv = [cmd, "migrate", "--yes", "-c", config]
     subprocess.check_call(argv)
 
 
@@ -41,6 +41,19 @@ def test_migrate_default_config_noop():
 def read_file(p):
     with open(p) as f:
         return f.read()
+
+
+def test_extra_files_are_ok():
+    with tempfile.TemporaryDirectory() as tempdir:
+        config_file = os.path.join(tempdir, "config.py")
+        with open(config_file, "w") as config:
+            config.write("from .bar import CommandGraphRoot\n")
+        bar_py = os.path.join(tempdir, "bar.py")
+        with open(bar_py, "w") as config:
+            config.write("from libqtile.command_graph import CommandGraphRoot\n")
+        run_qtile_migrate(config_file)
+        assert os.path.exists(bar_py + BACKUP_SUFFIX)
+        assert read_file(bar_py) == "from libqtile.command.graph import CommandGraphRoot\n"
 
 
 def check_migrate(orig, expected):
@@ -76,17 +89,29 @@ def test_window_name_change():
     check_migrate(orig, expected)
 
 
-def test_libqtile_command_graph():
+def test_modules_renames():
     orig = textwrap.dedent("""
         from libqtile.command_graph import CommandGraphRoot
+        from libqtile.command_client import CommandClient
+        from libqtile.command_interface import CommandInterface
+        from libqtile.command_object import CommandObject
+        from libqtile.window import Internal
 
-        o = CommandGraphRoot()
+        print(
+            CommandGraphRoot, CommandClient, CommandInterface, CommandObject, Internal
+        )
     """)
 
     expected = textwrap.dedent("""
         from libqtile.command.graph import CommandGraphRoot
+        from libqtile.command.client import CommandClient
+        from libqtile.command.interface import CommandInterface
+        from libqtile.command.base import CommandObject
+        from libqtile.backend.x11.window import Internal
 
-        o = CommandGraphRoot()
+        print(
+            CommandGraphRoot, CommandClient, CommandInterface, CommandObject, Internal
+        )
     """)
 
     check_migrate(orig, expected)
@@ -144,6 +169,40 @@ def test_pacman():
     check_migrate(orig, expected)
 
 
+def test_crypto():
+    orig = textwrap.dedent("""
+        from libqtile import bar
+        from libqtile.widget import BitcoinTicker
+
+        bar.Bar(
+            [
+                BitcoinTicker(crypto='BTC', format='BTC: {avg}'),
+                BitcoinTicker(format='{crypto}: {avg}', font='sans'),
+                BitcoinTicker(),
+                BitcoinTicker(currency='EUR', format='{avg}', foreground='ffffff'),
+            ],
+            30
+        )
+    """)
+
+    expected = textwrap.dedent("""
+        from libqtile import bar
+        from libqtile.widget import CryptoTicker
+
+        bar.Bar(
+            [
+                CryptoTicker(crypto='BTC'),
+                CryptoTicker( font='sans'),
+                CryptoTicker(),
+                CryptoTicker(currency='EUR', foreground='ffffff'),
+            ],
+            30
+        )
+    """)
+
+    check_migrate(orig, expected)
+
+
 def test_main():
     orig = textwrap.dedent("""
         def main(qtile):
@@ -186,6 +245,26 @@ def test_new_at_current_to_new_client_position():
             layout.MonadTall(border_focus='#ff0000', new_client_position='after_current'),
             layout.MonadWide(new_client_position='before_current', border_focus='#ff0000'),
         ]
+    """)
+
+    check_migrate(orig, expected)
+
+
+def test_windowtogroup_groupName_argument():
+    orig = textwrap.dedent("""
+        from libqtile.config import Key
+        from libqtile.lazy import lazy
+
+        k = Key([], 's', lazy.window.togroup(groupName="g"))
+        c = lambda win: win.cmd_togroup(groupName="g")
+    """)
+
+    expected = textwrap.dedent("""
+        from libqtile.config import Key
+        from libqtile.lazy import lazy
+
+        k = Key([], 's', lazy.window.togroup(group_name="g"))
+        c = lambda win: win.cmd_togroup(group_name="g")
     """)
 
     check_migrate(orig, expected)

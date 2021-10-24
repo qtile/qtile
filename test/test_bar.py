@@ -222,7 +222,7 @@ class DWidget:
 
 @geom_config
 def test_geometry(manager):
-    manager.test_xeyes()
+    manager.test_window("one")
     g = manager.c.screens()[0]["gaps"]
     assert g["top"] == (0, 0, 800, 10)
     assert g["bottom"] == (0, 590, 800, 10)
@@ -236,8 +236,6 @@ def test_geometry(manager):
     assert geom["height"] == 578
     internal = manager.c.internal_windows()
     assert len(internal) == 4
-    wid = manager.c.bar["bottom"].info()["window"]
-    assert manager.c.window[wid].inspect()
 
 
 @geom_config
@@ -321,32 +319,30 @@ class BrokenWidget(libqtile.widget.base._Widget):
         raise self.exception_class
 
 
-class IncompatibleWidgetConf(libqtile.confreader.Config):
-    keys = []
-    mouse = []
-    groups = [libqtile.config.Group("a")]
-    layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
-    floating_layout = libqtile.resources.default_config.floating_layout
-    screens = [
-        libqtile.config.Screen(
-            left=libqtile.bar.Bar(
-                [
-                    # This widget doesn't support vertical orientation
-                    ExampleWidget(),
-                ],
-                10
-            ),
-        )
-    ]
-
-
 def test_incompatible_widget(manager_nospawn):
+    class IncompatibleWidgetConf(libqtile.confreader.Config):
+        groups = [libqtile.config.Group("a")]
+        screens = [
+            libqtile.config.Screen(
+                left=libqtile.bar.Bar(
+                    [
+                        # This widget doesn't support vertical orientation
+                        ExampleWidget(),
+                    ],
+                    10
+                ),
+            )
+        ]
+
     # Ensure that adding a widget that doesn't support the orientation of the
     # bar raises ConfigError
     m = manager_nospawn.create_manager(IncompatibleWidgetConf)
-    with pytest.raises(libqtile.confreader.ConfigError):
-        m._configure()
-    m.core.finalize()
+
+    try:
+        with pytest.raises(libqtile.confreader.ConfigError):
+            m.load_config()
+    finally:
+        m.core.finalize()
 
 
 def test_basic(manager_nospawn):

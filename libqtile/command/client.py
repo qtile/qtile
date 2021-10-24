@@ -77,9 +77,9 @@ class CommandClient:
 
         Parameters
         ----------
-        name : str
+        name: str
             The name of the command graph object to resolve.
-        selector : Optional[str]
+        selector: Optional[str]
             If given, the selector to use to select the next object, and if
             None, then selects the default object.
 
@@ -104,11 +104,11 @@ class CommandClient:
 
         Parameters
         ----------
-        name : str
+        name: str
             The name of the command to resolve in the command graph.
-        args :
+        args:
             The arguments to pass into the call invocation.
-        kwargs :
+        kwargs:
             The keyword arguments to pass into the call invocation.
 
         Returns
@@ -196,7 +196,7 @@ class InteractiveCommandClient:
 
         Parameters
         ----------
-        name : str
+        name: str
             The name of the element to resolve
 
         Return
@@ -206,6 +206,13 @@ class InteractiveCommandClient:
             a command graph node (if the name is a valid child) or a command
             graph call (if the name is a valid command).
         """
+
+        # Python's help() command will try to look up __name__ and __origin__ so we
+        # need to handle these explicitly otherwise they'll result in a SelectError
+        # which help() does not expect.
+        if name in ["__name__", "__origin__"]:
+            raise AttributeError
+
         if isinstance(self._current_node, CommandGraphCall):
             raise SelectError("Cannot select children of call", name, self._current_node.selectors)
 
@@ -229,7 +236,7 @@ class InteractiveCommandClient:
 
         Parameters
         ----------
-        name : str
+        name: str
             The name, or index if it's of int type, of the item to resolve
 
         Return
@@ -270,6 +277,11 @@ def _normalize_item(object_type: Optional[str], item: str) -> Union[str, int]:
     if object_type in ["group", "widget", "bar"]:
         return str(item)
     elif object_type in ["layout", "window", "screen"]:
-        return int(item)
+        try:
+            return int(item)
+        except ValueError:
+            # A value error could arise because the next selector has been passed
+            raise SelectError(f"Unexpected index {item}. Is this an object_type?",
+                              str(object_type), [(str(object_type), str(item))])
     else:
         return item

@@ -50,8 +50,10 @@ General functions
       - Run the ``application``
     * - ``lazy.spawncmd()``
       - Open command prompt on the bar. See prompt widget.
+    * - ``lazy.reload_config()``
+      - Reload the config.
     * - ``lazy.restart()``
-      - Restart Qtile and reload its config. It won't close your windows
+      - Restart Qtile. In X11, it won't close your windows.
     * - ``lazy.shutdown()``
       - Close the whole Qtile
 
@@ -74,6 +76,10 @@ Group functions
       - Move to the group on the left
     * - ``lazy.screen.toggle_group()``
       - Move to the last visited group
+    * - ``lazy.group.next_window()``
+      - Switch window focus to next window in group
+    * - ``lazy.group.prev_window()``
+      - Switch window focus to previous window in group
     * - ``lazy.group["group_name"].toscreen()``
       - Move to the group called ``group_name``.
         Takes an optional ``toggle`` parameter (defaults to True).

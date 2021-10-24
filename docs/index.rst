@@ -11,13 +11,12 @@ Getting started
     manual/install/index
     manual/config/index
     manual/troubleshooting
+    As a Wayland Compositor <manual/wayland>
     manual/commands/shell/index
-
-
-- :ref:`ref-extensions`
-- :ref:`ref-hooks`
-- :ref:`ref-layouts`
-- :ref:`ref-widgets`
+    manual/ref/extensions
+    manual/ref/hooks
+    manual/ref/layouts
+    manual/ref/widgets
 
 .. toctree::
     :maxdepth: 2
@@ -43,8 +42,8 @@ Getting involved
 .. toctree::
     :maxdepth: 1
 
-    manual/contributing
     manual/hacking
+    manual/contributing
 
 Miscellaneous
 =============
@@ -55,13 +54,13 @@ Miscellaneous
     manual/faq
     manual/license
 
-How To
-======
+Tips & Tricks
+=============
 
 .. toctree::
-    :caption: Tips & Tricks
     :maxdepth: 1
 
     manual/howto/widget
+    manual/howto/git
 
 * :ref:`genindex`

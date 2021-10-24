@@ -69,8 +69,11 @@ class NvidiaSensors(base.ThreadPoolText):
                 for gpu in self._get_sensors_data(command)
             ]
             for gpu in sensors_data:
-                if gpu.get('temp') and int(gpu['temp']) > self.threshold:
-                    self.foreground = self.foreground_alert
+                if gpu.get('temp'):
+                    if int(gpu['temp']) > self.threshold:
+                        self.foreground = self.foreground_alert
+                    else:
+                        self.foreground = self.foreground_normal
             return ' - '.join(
                 [self.format.format(**gpu) for gpu in sensors_data]
             )

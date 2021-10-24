@@ -4,6 +4,51 @@ qtile cmd-obj
 This is a simple tool to expose qtile.command functionality to shell.
 This can be used standalone or in other shell scripts.
 
+How it works
+------------
+
+``qtile cmd-obj`` works by selecting a command object and calling a specified function of that object.
+
+As per :ref:`commands-api`, Qtile's object graph has seven nodes: ``layout``, ``window``, ``group``,
+``bar``, ``widget``, ``screen``, and a special ``root`` node. These are the objects that can be accessed
+via ``qtile cmd-obj`` (NB the root node is called ``cmd`` when using the ``cmd-obj`` script to give it
+an addressable name).
+
+Running the command against a selected object without a function (``-f``) will run the ``help``
+command and list the commands available to the object. Commands shown with an asterisk ("*") require
+arguments to be passed via the ``-a`` flag.
+
+Selecting an object
+~~~~~~~~~~~~~~~~~~~
+
+With the exception of ``cmd``, all objects need an identifier so the correct object can be selected. Refer to
+:ref:`object_graph_keys` for more information.
+
+.. note::
+
+    You will see from the graph on :ref:`commands-api` that certain objects can be accessed from other objects.
+    For example, ``qtile cmd-obj -o group term layout`` will list the commands for the current layout on the
+    ``term`` group.
+
+Information on functions
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Running a function with the ``-i`` flag will provide additional detail about that function (i.e. what it does and what
+arguments it expects).
+
+
+Passing arguments to functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Arguments can be passed to a function by using the ``-a`` flag. For example, to change the label for the group named "1"
+to "A", you would run ``qtile cmd-obj -o group 1 -f set_label -a A``.
+
+.. warning::
+
+    It is not currently possible to pass non-string arguments to functions via ``qtile cmd-obj``. Doing so will
+    result in an error.
+
+
 Examples:
 ---------
 
@@ -35,6 +80,8 @@ Output of ``qtile cmd-obj -h``
      qtile cmd-obj -o cmd -f prev_layout -i
      qtile cmd-obj -o cmd -f prev_layout -a 3 # prev_layout on group 3
      qtile cmd-obj -o group 3 -f focus_back
+     qtile cmd-obj -o widget textbox -f update -a "New text"
+     qtile cmd-obj -o cmd -f restart # restart qtile
 
 Output of ``qtile cmd-obj -o group 3``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -96,7 +143,6 @@ Output of ``qtile cmd-obj -o cmd``
     -o cmd -f remove_rule           * Remove a dgroup rule by rule_id
     -o cmd -f restart                 Restart qtile
     -o cmd -f run_extension         * Run extensions
-    -o cmd -f run_extention         * Deprecated alias for cmd_run_extension()
     -o cmd -f run_external          * Run external Python script
     -o cmd -f screens                 Return a list of dictionaries providing information on all screens
     -o cmd -f shutdown                Quit Qtile

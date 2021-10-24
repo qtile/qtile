@@ -24,32 +24,27 @@ digraph G {
     node [style="filled", color=Purple, fillcolor=Violet, label="window"];
     window;
 
+    node [style="filled", color=SlateBlue, fillcolor=SlateBlue1, label="core"];
+    core;
+
     root -> bar;
     root -> group;
     root -> layout;
     root -> screen;
     root -> widget;
     root -> window;
+    root -> core;
 
-    bar -> screen;
+    bar -> screen [dir=both];
+    bar -> widget [dir=both];
 
-    group -> layout;
-    group -> screen;
-    group -> window;
+    group -> layout [dir=both];
+    group -> screen [dir=both];
+    group -> window [dir=both];
 
-    layout -> group;
-    layout -> screen;
-    layout -> window;
+    layout -> screen [dir=both];
+    layout -> window [dir=both];
 
-    screen -> bar;
-    screen -> layout;
-    screen -> window;
-
-    widget -> bar;
-    widget -> group;
-    widget -> screen;
-
-    window -> group;
-    window -> screen;
-    window -> layout;
+    screen -> window [dir=both];
+    screen -> widget [dir=both];
 }

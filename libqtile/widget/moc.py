@@ -57,7 +57,7 @@ class Moc(base.ThreadPoolText):
         try:
             output = self.call_process(['mocp', '-i'])
         except subprocess.CalledProcessError as err:
-            output = err.output.decode()
+            output = err.output
         if output.startswith("State"):
             output = output.splitlines()
             info = {'State': "",

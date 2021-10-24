@@ -32,6 +32,17 @@ from test.layouts.layout_utils import (
 )
 
 
+try:
+    # Check to see if we should skip tests using notifications on Wayland
+    import gi
+    gi.require_version('Gtk', '3.0')
+    gi.require_version('GtkLayerShell', '0.1')
+    from gi.repository import GtkLayerShell
+    has_wayland_notifications = True
+except (ImportError, ValueError):
+    has_wayland_notifications = False
+
+
 class AllLayoutsConfig(Config):
     """
     Ensure that all layouts behave consistently in some common scenarios.
@@ -127,25 +138,28 @@ each_delegate_layout_config = pytest.mark.parametrize("manager", AllDelegateLayo
 
 @each_layout_config
 def test_window_types(manager):
+    if manager.backend.name == "wayland" and not has_wayland_notifications:
+        pytest.skip("Notification tests for Wayland need gtk-layer-shell")
+
     manager.test_window("one")
 
     # A dialog should take focus and be floating
-    manager.test_dialog("dialog")
-    manager.c.window.info()['floating'] is True
-    assert_focused(manager, "dialog")
-
     # A notification shouldn't steal focus and should be floating
+    manager.test_window("dialog", floating=True)
+    assert_focused(manager, "dialog")
     manager.test_notification("notification")
-    assert manager.c.group.info()['focus'] != 'notification'
-    manager.c.group.info_by_name('notification')['floating'] is True
+    assert manager.c.group.info()['focus'] == 'dialog'
+    for window in manager.c.windows():
+        if window["name"] in ("dialog", "notification"):
+            assert window["floating"]
 
 
 @each_layout_config
 def test_focus_cycle(manager):
     manager.test_window("one")
     manager.test_window("two")
-    manager.test_dialog("float1")
-    manager.test_dialog("float2")
+    manager.test_window("float1", floating=True)
+    manager.test_window("float2", floating=True)
     manager.test_window("three")
 
     # Test preconditions (the order of items in 'clients' is managed by each layout)
@@ -300,7 +314,7 @@ def test_remove(manager):
 def test_remove_floating(manager):
     one = manager.test_window("one")
     manager.test_window("two")
-    float1 = manager.test_dialog("float1")
+    float1 = manager.test_window("float1", floating=True)
     assert_focused(manager, "float1")
     assert set(manager.c.layout.info()['clients']) == {"one", "two"}
     assert manager.c.group.info()['focus_history'] == ["one", "two", "float1"]
@@ -310,7 +324,7 @@ def test_remove_floating(manager):
     assert_focused(manager, "two")
     assert manager.c.group.info()['focus_history'] == ["one", "two"]
 
-    float2 = manager.test_dialog("float2")
+    float2 = manager.test_window("float2", floating=True)
     assert_focused(manager, "float2")
     assert manager.c.group.info()['focus_history'] == ["one", "two", "float2"]
 
@@ -322,10 +336,10 @@ def test_remove_floating(manager):
 
     # Add more windows and shuffle the focus order
     manager.test_window("three")
-    float3 = manager.test_dialog("float3")
+    float3 = manager.test_window("float3", floating=True)
     manager.c.group.focus_by_name("one")
-    float4 = manager.test_dialog("float4")
-    float5 = manager.test_dialog("float5")
+    float4 = manager.test_window("float4", floating=True)
+    float5 = manager.test_window("float5", floating=True)
     manager.c.group.focus_by_name("three")
     manager.c.group.focus_by_name("float3")
     assert manager.c.group.info()['focus_history'] == ["two", "one", "float4",
@@ -348,7 +362,7 @@ def test_remove_floating(manager):
     assert manager.c.group.info()['focus_history'] == ["two", "three", "float3"]
 
     four = manager.test_window("four")
-    float6 = manager.test_dialog("float6")
+    float6 = manager.test_window("float6", floating=True)
     five = manager.test_window("five")
     manager.c.group.focus_by_name("float3")
     assert manager.c.group.info()['focus_history'] == ["two", "three", "four",
@@ -370,6 +384,8 @@ def test_remove_floating(manager):
 def test_desktop_notifications(manager):
     # Unlike normal floating windows such as dialogs, notifications don't steal
     # focus when they spawn, so test them separately
+    if manager.backend.name == "wayland" and not has_wayland_notifications:
+        pytest.skip("Notification tests for Wayland need gtk-layer-shell")
 
     # A notification fired in an empty group must not take focus
     notif1 = manager.test_notification("notif1")
@@ -389,13 +405,13 @@ def test_desktop_notifications(manager):
 
     # Complicate the scenario with multiple windows and notifications
 
-    dialog1 = manager.test_dialog("dialog1")
+    dialog1 = manager.test_window("dialog1", floating=True)
     manager.test_window("two")
     notif4 = manager.test_notification("notif4")
     notif5 = manager.test_notification("notif5")
     assert manager.c.group.info()['focus_history'] == ["one", "dialog1", "two"]
 
-    dialog2 = manager.test_dialog("dialog2")
+    dialog2 = manager.test_window("dialog2", floating=True)
     manager.kill_window(notif5)
     manager.test_window("three")
     manager.kill_window(one)
@@ -407,7 +423,7 @@ def test_desktop_notifications(manager):
     assert manager.c.group.info()['focus_history'] == ["dialog1", "dialog2",
                                                        "three", "two"]
 
-    manager.test_dialog("dialog3")
+    manager.test_window("dialog3", floating=True)
     manager.kill_window(dialog1)
     manager.kill_window(dialog2)
     manager.kill_window(notif6)
@@ -452,3 +468,25 @@ def test_cycle_layouts(manager):
         # Use manager.c.layout.info()['name'] in the assertion message, so we
         # know which layout is buggy
         assert manager.c.window.info()['name'] == "three", manager.c.layout.info()['name']
+
+
+class AllLayoutsMultipleBorders(AllLayoutsConfig):
+    """
+    Like AllLayouts, but all the layouts have border_focus set to a list of colors.
+    """
+    layouts = [
+        layout_cls(border_focus=['#000' '#111', '#222', '#333', '#444'])
+        for layout_name, layout_cls in AllLayoutsConfig.iter_layouts()
+    ]
+
+
+@pytest.mark.parametrize("manager", [AllLayoutsMultipleBorders], indirect=True)
+def test_multiple_borders(manager):
+    manager.test_window("one")
+    manager.test_window("two")
+
+    initial_layout_name = manager.c.layout.info()['name']
+    while True:
+        manager.c.next_layout()
+        if manager.c.layout.info()['name'] == initial_layout_name:
+            break

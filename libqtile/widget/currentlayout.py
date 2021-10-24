@@ -46,7 +46,8 @@ class CurrentLayout(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        self.text = self.bar.screen.group.layouts[0].name
+        layout_id = self.bar.screen.group.current_layout
+        self.text = self.bar.screen.group.layouts[layout_id].name
         self.setup_hooks()
 
         self.add_callbacks({
@@ -110,7 +111,8 @@ class CurrentLayoutIcon(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        self.text = self.bar.screen.group.layouts[0].name
+        layout_id = self.bar.screen.group.current_layout
+        self.text = self.bar.screen.group.layouts[layout_id].name
         self.current_layout = self.text
         self.icons_loaded = False
         self.icon_paths = []

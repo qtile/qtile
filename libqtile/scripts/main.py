@@ -6,10 +6,16 @@ from libqtile.log_utils import init_log
 from libqtile.scripts import check, cmd_obj, migrate, run_cmd, shell, start, top
 
 try:
-    import pkg_resources
-    VERSION = pkg_resources.require("qtile")[0].version
-except (pkg_resources.DistributionNotFound, ImportError):
-    VERSION = 'dev'
+    # Python>3.7 can get the version from importlib
+    from importlib.metadata import distribution
+    VERSION = distribution("qtile").version
+except ModuleNotFoundError:
+    try:
+        # pkg_resources is required for 3.7
+        import pkg_resources
+        VERSION = pkg_resources.require("qtile")[0].version
+    except (pkg_resources.DistributionNotFound, ModuleNotFoundError):
+        VERSION = 'dev'
 
 
 def main():

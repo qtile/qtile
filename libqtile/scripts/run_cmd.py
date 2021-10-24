@@ -38,7 +38,11 @@ def run_cmd(opts) -> None:
     client = ipc.Client(socket)
     root = graph.CommandGraphRoot()
 
-    proc = subprocess.Popen(opts.cmd)
+    cmd = [opts.cmd]
+    if opts.args:
+        cmd.extend(opts.args)
+
+    proc = subprocess.Popen(cmd)
     match_args = {"net_wm_pid": proc.pid}
     rule_args = {"float": opts.float, "intrusive": opts.intrusive,
                  "group": opts.group, "break_on_match": not opts.dont_break}
@@ -86,6 +90,11 @@ def add_subcommand(subparsers, parents):
         help='Set the window group.')
     parser.add_argument(
         'cmd',
+        help='Command to execute.'),
+    parser.add_argument(
+        'args',
         nargs=argparse.REMAINDER,
-        help='Command to execute')
+        metavar='[args ...]',
+        help='Optional arguments to pass to command.'
+    )
     parser.set_defaults(func=run_cmd)

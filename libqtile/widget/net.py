@@ -38,7 +38,7 @@ class Net(base.ThreadPoolText):
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('format', '{interface}: {down} \u2193\u2191 {up}',
-         'Display format of down-/upload speed of given interfaces'),
+         'Display format of down/upload/total speed of given interfaces'),
         ('interface', None, 'List of interfaces or single NIC as string to monitor, \
             None to displays all active NICs combined'),
         ('update_interval', 1, 'The update interval.'),
@@ -82,45 +82,64 @@ class Net(base.ThreadPoolText):
         interfaces = {}
         if self.interface == ["all"]:
             net = psutil.net_io_counters(pernic=False)
-            interfaces["all"] = {'down': net[1], 'up': net[0]}
+            interfaces["all"] = {
+                    'down': net.bytes_recv,
+                    'up': net.bytes_sent,
+                    'total': net.bytes_recv + net.bytes_sent,
+                }
             return interfaces
         else:
             net = psutil.net_io_counters(pernic=True)
             for iface in net:
                 down = net[iface].bytes_recv
                 up = net[iface].bytes_sent
-                interfaces[iface] = {'down': down, 'up': up}
+                interfaces[iface] = {
+                        'down': down,
+                        'up': up,
+                        'total': down + up,
+                    }
             return interfaces
 
-    def _format(self, down, down_letter, up, up_letter):
+    def _format(self, down, down_letter, up, up_letter, total, total_letter):
         max_len_down = 7 - len(down_letter)
         max_len_up = 7 - len(up_letter)
+        max_len_total = 7 - len(total_letter)
         down = '{val:{max_len}.2f}'.format(val=down, max_len=max_len_down)
         up = '{val:{max_len}.2f}'.format(val=up, max_len=max_len_up)
-        return down[:max_len_down], up[:max_len_up]
+        total = '{val:{max_len}.2f}'.format(val=total, max_len=max_len_total)
+        return down[:max_len_down], up[:max_len_up], total[:max_len_total]
 
     def poll(self):
         ret_stat = []
         try:
+            new_stats = self.get_stats()
             for intf in self.interface:
-                new_stats = self.get_stats()
                 down = new_stats[intf]['down'] - \
                     self.stats[intf]['down']
                 up = new_stats[intf]['up'] - \
                     self.stats[intf]['up']
+                total = new_stats[intf]['total'] - \
+                    self.stats[intf]['total']
 
                 down = down / self.update_interval
                 up = up / self.update_interval
+                total = total / self.update_interval
                 down, down_letter = self.convert_b(down)
                 up, up_letter = self.convert_b(up)
-                down, up = self._format(down, down_letter, up, up_letter)
+                total, total_letter = self.convert_b(total)
+                down, up, total = self._format(
+                        down, down_letter,
+                        up, up_letter,
+                        total, total_letter
+                    )
                 self.stats[intf] = new_stats[intf]
                 ret_stat.append(
                     self.format.format(
                         **{
                             'interface': intf,
                             'down': down + down_letter,
-                            'up': up + up_letter
+                            'up': up + up_letter,
+                            'total': total + total_letter,
                         }))
 
             return " ".join(ret_stat)

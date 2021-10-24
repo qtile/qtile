@@ -1,7 +1,7 @@
 import pytest
 
-from libqtile.backend.x11 import xcbq
 from test.conftest import BareConfig
+from test.test_manager import ManagerConfig
 
 bare_config = pytest.mark.parametrize("manager", [BareConfig], indirect=True)
 
@@ -48,179 +48,64 @@ def test_no_size_hint(manager):
     assert manager.c.window.info()['height'] == 200
 
 
-@bare_config
-def test_min_size_hint(manager):
-    w = None
-    conn = xcbq.Connection(manager.display)
-
-    def size_hints():
-        nonlocal w
-        w = conn.create_window(0, 0, 100, 100)
-
-        # set the size hints
-        hints = [0] * 18
-        hints[0] = xcbq.NormalHintsFlags["PMinSize"]
-        hints[5] = hints[6] = 100
-        w.set_property("WM_NORMAL_HINTS", hints, type="WM_SIZE_HINTS", format=32)
-        w.map()
-        conn.conn.flush()
-
-    try:
-        manager.create_window(size_hints)
-        manager.c.window.enable_floating()
-        print(w.get_wm_normal_hints())
-        assert manager.c.window.info()['width'] == 100
-        assert manager.c.window.info()['height'] == 100
-
-        manager.c.window.set_size_floating(50, 50)
-        assert manager.c.window.info()['width'] == 100
-        assert manager.c.window.info()['height'] == 100
-
-        manager.c.window.set_size_floating(200, 200)
-        assert manager.c.window.info()['width'] == 200
-        assert manager.c.window.info()['height'] == 200
-    finally:
-        w.kill_client()
-        conn.finalize()
+class BringFrontClickConfig(ManagerConfig):
+    bring_front_click = True
 
 
-@bare_config
-def test_min_size_hint_no_flag(manager):
-    w = None
-    conn = xcbq.Connection(manager.display)
-
-    def size_hints():
-        nonlocal w
-        w = conn.create_window(0, 0, 100, 100)
-
-        # set the size hints
-        hints = [0] * 18
-        hints[5] = hints[6] = 100
-        w.set_property("WM_NORMAL_HINTS", hints, type="WM_SIZE_HINTS", format=32)
-        w.map()
-        conn.conn.flush()
-
-    try:
-        manager.create_window(size_hints)
-        manager.c.window.enable_floating()
-        print(w.get_wm_normal_hints())
-        assert manager.c.window.info()['width'] == 100
-        assert manager.c.window.info()['height'] == 100
-
-        manager.c.window.set_size_floating(50, 50)
-        assert manager.c.window.info()['width'] == 50
-        assert manager.c.window.info()['height'] == 50
-
-        manager.c.window.set_size_floating(200, 200)
-        assert manager.c.window.info()['width'] == 200
-        assert manager.c.window.info()['height'] == 200
-    finally:
-        w.kill_client()
-        conn.finalize()
+class BringFrontClickFloatingOnlyConfig(ManagerConfig):
+    bring_front_click = "floating_only"
 
 
-@bare_config
-def test_max_size_hint(manager):
-    w = None
-    conn = xcbq.Connection(manager.display)
-
-    def size_hints():
-        nonlocal w
-        w = conn.create_window(0, 0, 100, 100)
-
-        # set the size hints
-        hints = [0] * 18
-        hints[0] = xcbq.NormalHintsFlags["PMaxSize"]
-        hints[7] = hints[8] = 100
-        w.set_property("WM_NORMAL_HINTS", hints, type="WM_SIZE_HINTS", format=32)
-        w.map()
-        conn.conn.flush()
-
-    try:
-        manager.create_window(size_hints)
-        manager.c.window.enable_floating()
-        print(w.get_wm_normal_hints())
-        assert manager.c.window.info()['width'] == 100
-        assert manager.c.window.info()['height'] == 100
-
-        manager.c.window.set_size_floating(50, 50)
-        assert manager.c.window.info()['width'] == 50
-        assert manager.c.window.info()['height'] == 50
-
-        manager.c.window.set_size_floating(200, 200)
-        assert manager.c.window.info()['width'] == 100
-        assert manager.c.window.info()['height'] == 100
-    finally:
-        w.kill_client()
-        conn.finalize()
+@pytest.fixture
+def bring_front_click(request):
+    return request.param
 
 
-@bare_config
-def test_max_size_hint_no_flag(manager):
-    w = None
-    conn = xcbq.Connection(manager.display)
+@pytest.mark.parametrize(
+    "manager, bring_front_click",
+    [
+        (ManagerConfig, False),
+        (BringFrontClickConfig, True),
+        (BringFrontClickFloatingOnlyConfig, "floating_only"),
+    ],
+    indirect=True,
+)
+def test_bring_front_click(manager, bring_front_click):
+    manager.c.group.setlayout("tile")
+    # this is a tiled window.
+    manager.test_window("one")
 
-    def size_hints():
-        nonlocal w
-        w = conn.create_window(0, 0, 100, 100)
+    manager.test_window("two")
+    manager.c.window.set_position_floating(50, 50)
+    manager.c.window.set_size_floating(50, 50)
 
-        # set the size hints
-        hints = [0] * 18
-        hints[7] = hints[8] = 100
-        w.set_property("WM_NORMAL_HINTS", hints, type="WM_SIZE_HINTS", format=32)
-        w.map()
-        conn.conn.flush()
+    manager.test_window("three")
+    manager.c.window.set_position_floating(150, 50)
+    manager.c.window.set_size_floating(50, 50)
 
-    try:
-        manager.create_window(size_hints)
-        manager.c.window.enable_floating()
-        print(w.get_wm_normal_hints())
-        assert manager.c.window.info()['width'] == 100
-        assert manager.c.window.info()['height'] == 100
+    wids = [x["id"] for x in manager.c.windows()]
+    names = [x["name"] for x in manager.c.windows()]
 
-        manager.c.window.set_size_floating(50, 50)
-        assert manager.c.window.info()['width'] == 50
-        assert manager.c.window.info()['height'] == 50
+    assert names == ["one", "two", "three"]
+    wins = manager.backend.get_all_windows()
+    assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])
 
-        manager.c.window.set_size_floating(200, 200)
-        assert manager.c.window.info()['width'] == 200
-        assert manager.c.window.info()['height'] == 200
-    finally:
-        w.kill_client()
-        conn.finalize()
+    # Click on window two
+    manager.backend.fake_click(55, 55)
+    assert manager.c.window.info()["name"] == "two"
+    wins = manager.backend.get_all_windows()
+    if bring_front_click:
+        assert wins.index(wids[0]) < wins.index(wids[2]) < wins.index(wids[1])
+    else:
+        assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])
 
-
-@bare_config
-def test_both_size_hints(manager):
-    w = None
-    conn = xcbq.Connection(manager.display)
-
-    def size_hints():
-        nonlocal w
-        w = conn.create_window(0, 0, 100, 100)
-
-        # set the size hints
-        hints = [0] * 18
-        hints[0] = xcbq.NormalHintsFlags["PMinSize"] | xcbq.NormalHintsFlags["PMaxSize"]
-        hints[5] = hints[6] = hints[7] = hints[8] = 100
-        w.set_property("WM_NORMAL_HINTS", hints, type="WM_SIZE_HINTS", format=32)
-        w.map()
-        conn.conn.flush()
-
-    try:
-        manager.create_window(size_hints)
-        manager.c.window.enable_floating()
-        print(w.get_wm_normal_hints())
-        assert manager.c.window.info()['width'] == 100
-        assert manager.c.window.info()['height'] == 100
-
-        manager.c.window.set_size_floating(50, 50)
-        assert manager.c.window.info()['width'] == 100
-        assert manager.c.window.info()['height'] == 100
-
-        manager.c.window.set_size_floating(200, 200)
-        assert manager.c.window.info()['width'] == 100
-        assert manager.c.window.info()['height'] == 100
-    finally:
-        w.kill_client()
-        conn.finalize()
+    # Click on window one
+    manager.backend.fake_click(10, 10)
+    assert manager.c.window.info()["name"] == "one"
+    wins = manager.backend.get_all_windows()
+    if bring_front_click == "floating_only":
+        assert wins.index(wids[0]) < wins.index(wids[2]) < wins.index(wids[1])
+    elif bring_front_click:
+        assert wins.index(wids[2]) < wins.index(wids[1]) < wins.index(wids[0])
+    else:
+        assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])

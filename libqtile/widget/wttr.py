@@ -78,7 +78,7 @@ class Wttr(GenPollUrl):
     ]
 
     def __init__(self, **config):
-        GenPollUrl.__init__(self, **config)
+        GenPollUrl.__init__(self, json=False, **config)
         self.add_defaults(Wttr.defaults)
         self.url = self._get_url()
 

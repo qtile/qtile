@@ -95,6 +95,9 @@ class Single(Layout):
     def cmd_previous(self):
         pass
 
+    def get_windows(self):
+        return self.window
+
 
 class Slice(Layout):
     """Slice layout
@@ -106,7 +109,6 @@ class Slice(Layout):
     defaults = [
         ("width", 256, "Slice width."),
         ("side", "left", "Position of the slice (left, right, top, bottom)."),
-        ("name", "slice", "Name of this layout."),
         ("match", None, "Match-object describing which window(s) to move to the slice."),
         ("fallback", Max(), "Layout to be used for the non-slice area."),
     ]
@@ -266,6 +268,13 @@ class Slice(Layout):
     def commands(self):
         return self._get_active_layout().commands
 
+    def get_windows(self):
+        clients = list()
+        for layout in self._get_layouts():
+            if layout.get_windows() is not None:
+                clients.extend(layout.get_windows())
+        return clients
+        
     def info(self):
         d = Layout.info(self)
         for layout in self._get_layouts():

@@ -26,12 +26,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import contextlib
-
-import xcffib
-import xcffib.xproto
-
-from libqtile import hook, utils, window
+from libqtile import hook, utils
+from libqtile.backend.base import FloatStates
 from libqtile.command.base import CommandObject, ItemT
 from libqtile.log_utils import logger
 
@@ -48,7 +44,7 @@ class _Group(CommandObject):
         self.name = name
         self.label = name if label is None else label
         self.custom_layout = layout  # will be set on _configure
-        self.windows = set()
+        self.windows = []
         self.qtile = None
         self.layouts = []
         self.floating_layout = None
@@ -65,7 +61,7 @@ class _Group(CommandObject):
         self.screen = None
         self.current_layout = 0
         self.focus_history = []
-        self.windows = set()
+        self.windows = []
         self.qtile = qtile
         self.layouts = [i.clone(self) for i in layouts]
         self.floating_layout = floating_layout
@@ -147,7 +143,7 @@ class _Group(CommandObject):
         to it.
         """
         if self.screen and self.windows:
-            with self.disable_mask(xcffib.xproto.EventMask.EnterWindow):
+            with self.qtile.core.masked():
                 normal = [x for x in self.windows if not x.floating]
                 floating = [
                     x for x in self.windows
@@ -166,7 +162,7 @@ class _Group(CommandObject):
                         self.screen == self.qtile.current_screen:
                     self.current_window.focus(warp)
 
-    def _set_screen(self, screen):
+    def set_screen(self, screen, warp=True):
         """Set this group's screen to screen"""
         if screen == self.screen:
             return
@@ -174,7 +170,7 @@ class _Group(CommandObject):
         if self.screen:
             # move all floating guys offset to new screen
             self.floating_layout.to_screen(self, self.screen)
-            self.layout_all(warp=self.qtile.config.cursor_warp)
+            self.layout_all(warp=warp and self.qtile.config.cursor_warp)
             screen_rect = self.screen.get_rect()
             self.floating_layout.show(screen_rect)
             self.layout.show(screen_rect)
@@ -183,20 +179,10 @@ class _Group(CommandObject):
 
     def hide(self):
         self.screen = None
-        with self.disable_mask(xcffib.xproto.EventMask.EnterWindow |
-                               xcffib.xproto.EventMask.FocusChange |
-                               xcffib.xproto.EventMask.LeaveWindow):
+        with self.qtile.core.masked():
             for i in self.windows:
                 i.hide()
             self.layout.hide()
-
-    @contextlib.contextmanager
-    def disable_mask(self, mask):
-        for i in self.windows:
-            i._disable_mask(mask)
-        yield
-        for i in self.windows:
-            i._reset_mask()
 
     def focus(self, win, warp=True, force=False):
         """Focus the given window
@@ -249,19 +235,13 @@ class _Group(CommandObject):
 
     def add(self, win, focus=True, force=False):
         hook.fire("group_window_add", self, win)
-        self.windows.add(win)
+        if win not in self.windows:
+            self.windows.append(win)
         win.group = self
-        try:
-            if 'fullscreen' in win.window.get_net_wm_state() and \
-                    self.qtile.config.auto_fullscreen:
-                win._float_state = window.FULLSCREEN
-            elif self.floating_layout.match(win):
-                # !!! tell it to float, can't set floating
-                # because it's too early
-                # so just set the flag underneath
-                win._float_state = window.FLOATING
-        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
-            pass  # doesn't matter
+        if self.qtile.config.auto_fullscreen and win.wants_to_fullscreen:
+            win._float_state = FloatStates.FULLSCREEN
+        elif self.floating_layout.match(win):
+            win._float_state = FloatStates.FLOATING
         if win.floating:
             self.floating_layout.add(win)
         else:
@@ -331,7 +311,7 @@ class _Group(CommandObject):
         if name == "screen" and self.screen is not None:
             return True, []
         if name == "window":
-            return self.current_window is not None, [i.window.wid for i in self.windows]
+            return self.current_window is not None, [i.wid for i in self.windows]
         return None
 
     def _select(self, name, sel):
@@ -345,7 +325,7 @@ class _Group(CommandObject):
             if sel is None:
                 return self.current_window
             for i in self.windows:
-                if i.window.wid == sel:
+                if i.wid == sel:
                     return i
         raise RuntimeError("Invalid selection: {}".format(name))
 

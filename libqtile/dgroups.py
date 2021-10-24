@@ -28,6 +28,7 @@
 import collections
 
 import libqtile.hook
+from libqtile.backend.base import Static
 from libqtile.command import lazy
 from libqtile.config import Group, Key, Match, Rule
 from libqtile.log_utils import logger
@@ -149,11 +150,11 @@ class DGroups:
 
     def _add(self, client):
         if client in self.timeout:
-            logger.info('Remove dgroup source')
+            logger.debug('Remove dgroup source')
             self.timeout.pop(client).cancel()
 
         # ignore static windows
-        if client.defunct:
+        if isinstance(client, Static):
             return
 
         # ignore windows whose groups is already set (e.g. from another hook or
@@ -185,7 +186,7 @@ class DGroups:
                     group = self.groups_map.get(rule.group)
                     if group and group_added:
                         for k, v in list(group.layout_opts.items()):
-                            if isinstance(v, collections.Callable):
+                            if isinstance(v, collections.abc.Callable):
                                 v(group_obj.layout)
                             else:
                                 setattr(group_obj.layout, k, v)
@@ -194,7 +195,7 @@ class DGroups:
                             self.qtile.screens[affinity].set_group(group_obj)
 
                 if rule.float:
-                    client.enablefloating()
+                    client.cmd_enable_floating()
 
                 if rule.intrusive:
                     intrusive = rule.intrusive
@@ -209,7 +210,7 @@ class DGroups:
                     self.groups_map[current_group].exclusive and \
                     not intrusive:
 
-                wm_class = client.window.get_wm_class()
+                wm_class = client.get_wm_class()
 
                 if wm_class:
                     if len(wm_class) > 1:
@@ -233,6 +234,10 @@ class DGroups:
             libqtile.hook.fire("changegroup")
 
     def _del(self, client):
+        # ignore static windows
+        if isinstance(client, Static):
+            return
+
         group = client.group
 
         def delete_client():
@@ -244,8 +249,7 @@ class DGroups:
                 self.sort_groups()
             del self.timeout[client]
 
-        # Wait the delay until really delete the group
-        logger.info('Add dgroup timer with delay {}s'.format(self.delay))
+        logger.debug(f'Deleting {group} in {self.delay}s')
         self.timeout[client] = self.qtile.call_later(
             self.delay, delete_client
         )

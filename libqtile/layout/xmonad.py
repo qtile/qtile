@@ -145,12 +145,11 @@ class MonadTall(_SimpleLayoutBase):
     _med_ratio = 0.5
 
     defaults = [
-        ("border_focus", "#ff0000", "Border colour for the focused window."),
-        ("border_normal", "#000000", "Border colour for un-focused windows."),
+        ("border_focus", "#ff0000", "Border colour(s) for the focused window."),
+        ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
         ("border_width", 2, "Border width."),
         ("single_border_width", None, "Border width for single window"),
         ("single_margin", None, "Margin size for single window"),
-        ("name", "xmonadtall", "Name of this layout."),
         ("margin", 0, "Margin of the layout"),
         ("ratio", .5,
             "The percent of the screen-space the master pane should occupy "
@@ -168,7 +167,7 @@ class MonadTall(_SimpleLayoutBase):
         ("change_ratio", .05, "Resize ratio"),
         ("change_size", 20, "Resize change in pixels"),
         ("new_client_position", "after_current",
-            "Place new windows : "
+            "Place new windows: "
             " after_current - after the active window."
             " before_current - before the active window,"
             " top - at the top of the stack,"
@@ -688,7 +687,8 @@ class MonadTall(_SimpleLayoutBase):
         """Get closest window to a point x,y"""
         target = min(
             clients,
-            key=lambda c: math.hypot(c.info()["x"] - x, c.info()["y"] - y)
+            key=lambda c: math.hypot(c.x - x, c.y - y),
+            default=self.clients.current_client
         )
         return target
 
