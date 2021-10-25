@@ -44,7 +44,7 @@ class TileConfig(Config):
     layouts = [
         layout.Tile(),
         layout.Tile(master_length=2),
-        layout.Tile(add_on_top=False)
+        layout.Tile(add_on_top=False),
     ]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
@@ -159,3 +159,31 @@ def test_tile_add_on_top(manager):
     assert manager.c.layout.info()["clients"] == ['one', 'two', 'four', 'three']
     assert manager.c.layout.info()["slave"] == ["two", "four", "three"]
     assert_focus_path(manager, 'three', 'one', 'two', 'four')
+
+
+@tile_config
+def test_tile_min_max_ratios(manager):
+    manager.test_window("one")
+    manager.test_window("two")
+
+    orig_windows = manager.c.windows()
+
+    # Defaul increment is 5% so 20 steps would move by 100%
+    # i.e. past the edge
+    for _ in range(20):
+        manager.c.layout.decrease_ratio()
+
+    # Window should now be 15% of screen width less it's border
+    assert manager.c.windows()[1]["width"] == (800 * 0.15) - 2
+
+    for _ in range(20):
+        manager.c.layout.increase_ratio()
+
+    # Window should now be 85% of screen width less it's border
+    assert manager.c.windows()[1]["width"] == (800 * 0.85) - 2
+
+    # Reset the layout to original settings
+    manager.c.layout.reset()
+
+    # Check the windows match their original sizes
+    assert manager.c.windows() == orig_windows
