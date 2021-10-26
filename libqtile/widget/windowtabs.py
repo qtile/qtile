@@ -23,8 +23,8 @@
 # SOFTWARE.
 
 from libqtile import bar, hook
-from libqtile.widget import base
 from libqtile.log_utils import logger
+from libqtile.widget import base
 
 
 class WindowTabs(base._TextBox):

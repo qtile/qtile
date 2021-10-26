@@ -31,13 +31,12 @@ from test.layouts.layout_utils import (
     assert_focused,
 )
 
-
 try:
     # Check to see if we should skip tests using notifications on Wayland
     import gi
     gi.require_version('Gtk', '3.0')
     gi.require_version('GtkLayerShell', '0.1')
-    from gi.repository import GtkLayerShell
+    from gi.repository import GtkLayerShell  # noqa: F401
     has_wayland_notifications = True
 except (ImportError, ValueError):
     has_wayland_notifications = False

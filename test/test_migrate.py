@@ -250,7 +250,7 @@ def test_new_at_current_to_new_client_position():
     check_migrate(orig, expected)
 
 
-def test_windowtogroup_groupName_argument():
+def test_windowtogroup_groupName_argument():  # noqa: N802
     orig = textwrap.dedent("""
         from libqtile.config import Key
         from libqtile.lazy import lazy

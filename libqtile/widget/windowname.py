@@ -25,8 +25,8 @@
 # SOFTWARE.
 
 from libqtile import bar, hook, pangocffi
-from libqtile.widget import base
 from libqtile.log_utils import logger
+from libqtile.widget import base
 
 
 class WindowName(base._TextBox):

@@ -758,7 +758,6 @@ def test_wide_swap(manager):
     assert manager.c.layout.info()['secondary'] == ['focused', 'two', 'one']
 
 
-
 @monadtall_config
 def test_tall_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients

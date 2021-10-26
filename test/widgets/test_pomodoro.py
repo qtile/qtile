@@ -25,6 +25,15 @@ import pytest
 from libqtile.bar import Bar
 from libqtile.widget import pomodoro
 
+COLOR_INACTIVE = "123456"
+COLOR_ACTIVE = "654321"
+COLOR_BREAK = "AABBCC"
+PREFIX_INACTIVE = "TESTING POMODORO"
+PREFIX_ACTIVE = "ACTIVE"
+PREFIX_BREAK = "BREAK"
+PREFIX_LONG_BREAK = "LONG BREAK"
+PREFIX_PAUSED = "PAUSING"
+
 
 def no_op(*args, **kwargs):
     pass
@@ -49,15 +58,6 @@ def patched_widget(monkeypatch):
 
 @pytest.mark.usefixtures("patched_widget")
 def test_pomodoro(fake_qtile, fake_window):
-    COLOR_INACTIVE = "123456"
-    COLOR_ACTIVE = "654321"
-    COLOR_BREAK = "AABBCC"
-    PREFIX_INACTIVE = "TESTING POMODORO"
-    PREFIX_ACTIVE = "ACTIVE"
-    PREFIX_BREAK = "BREAK"
-    PREFIX_LONG_BREAK = "LONG BREAK"
-    PREFIX_PAUSED = "PAUSING"
-
     widget = pomodoro.Pomodoro(
         update_interval=100,
         color_active=COLOR_ACTIVE,

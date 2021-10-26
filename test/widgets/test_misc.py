@@ -25,7 +25,7 @@ import pytest
 
 from libqtile.bar import Bar
 from libqtile.config import Screen
-from libqtile.widget import TextBox, ThermalSensor
+from libqtile.widget import TextBox
 from test.conftest import BareConfig
 
 
@@ -55,4 +55,3 @@ def test_textbox_color_change(manager):
 
     manager.c.widget["colorchanger"].update('f')
     assert manager.c.widget["colorchanger"].info()["foreground"] == "ff0000"
-
