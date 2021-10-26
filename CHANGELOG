@@ -17,6 +17,8 @@ Qtile x.x.x, released xxxx-xx-xx:
         - Add `aliases` to `lazy.spawncmd()` which takes a dictionary mapping convenient aliases
           to full command lines.
         - Add a new 'prefix' option to the net widget to display speeds with a static unit (e.g. MB).
+        - `lazy.group.toscreen()` now does not toggle groups by default. To get this behaviour back, use
+          `lazy.group.toscreen(toggle=True)`
 
 Qtile 0.18.1, released 2021-09-16:
     * features
