@@ -33,7 +33,8 @@ from libqtile.confreader import Config
 class GroupConfig(Config):
     auto_fullscreen = True
     groups = [
-        libqtile.config.Group("a")
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b"),
     ]
     layouts = [
         layout.Max()
@@ -57,7 +58,7 @@ def test_window_order(manager):
     for win in windows_name:
         windows[win] = manager.test_window(win)
 
-    # Winmust be sotred in the same order as they were created
+    # Windows must be sorted in the same order as they were created
     assert windows_name == manager.c.group.info()["windows"]
 
     # Randomly remove 5 windows and see if orders remains persistant
@@ -67,3 +68,17 @@ def test_window_order(manager):
         manager.kill_window(windows[win_to_remove])
         del windows[win_to_remove]
         assert windows_name == manager.c.group.info()["windows"]
+
+
+@group_config
+def test_toscreen_toggle(manager):
+    assert manager.c.group.info()["name"] == "a"  # Start on "a"
+    manager.c.group["b"].toscreen()
+    assert manager.c.group.info()["name"] == "b"  # Switch to "b"
+    manager.c.group["b"].toscreen()
+    assert manager.c.group.info()["name"] == "b"  # Does not toggle by default
+    manager.c.group["b"].toscreen(toggle=True)
+    assert manager.c.group.info()["name"] == "a"  # Explicitly toggling moves to "a"
+    manager.c.group["b"].toscreen(toggle=True)
+    manager.c.group["b"].toscreen(toggle=True)
+    assert manager.c.group.info()["name"] == "a"  # Toggling twice roundtrips between the two

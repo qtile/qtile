@@ -952,7 +952,7 @@ def test_setgroup(manager):
     assert manager.c.groups()["c"]["screen"] == 0
 
     # Setting the current group once again switches back to the previous group
-    manager.c.group["c"].toscreen()
+    manager.c.group["c"].toscreen(toggle=True)
     manager.groupconsistency()
     assert manager.c.group.info()["name"] == "b"
 
