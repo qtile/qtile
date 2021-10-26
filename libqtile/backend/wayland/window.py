@@ -54,7 +54,7 @@ if typing.TYPE_CHECKING:
     from libqtile.command.base import ItemT
     from libqtile.core.manager import Qtile
     from libqtile.group import _Group
-    from libqtile.utils import ColorType, ColorsType
+    from libqtile.utils import ColorsType, ColorType
 
 EDGES_TILED = Edges.TOP | Edges.BOTTOM | Edges.LEFT | Edges.RIGHT
 EDGES_FLOAT = Edges.NONE

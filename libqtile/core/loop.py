@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import signal
-from typing import Callable, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Dict, Optional
 
 from libqtile.log_utils import logger
 

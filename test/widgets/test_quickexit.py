@@ -78,7 +78,7 @@ def test_exit(manager_nospawn, minimal_conf_noscreen):
     # Click widget to start countdown
     topbar.fake_button_press(0, "top", 0, 0, button=1)
 
-    # Trying to access bar should now give IPCError or a ConnectionResetError 
+    # Trying to access bar should now give IPCError or a ConnectionResetError
     # as qtile has shutdown
     with pytest.raises((IPCError, ConnectionResetError)):
         assert topbar.info()

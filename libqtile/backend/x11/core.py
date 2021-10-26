@@ -554,7 +554,7 @@ class Core(base.Core):
         self.qtile.manage(internal)
         return internal
 
-    def handle_FocusOut(self, event) -> None:
+    def handle_FocusOut(self, event) -> None:  # noqa: N802
         if event.detail == xcffib.xproto.NotifyDetail._None:
             self.conn.fixup_focus()
 
