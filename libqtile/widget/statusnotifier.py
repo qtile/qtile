@@ -550,7 +550,10 @@ class StatusNotifier(base._Widget):
 
     .. note::
 
-        Context menus are not currently supported by the widget.
+        Context menus are not currently supported by the official widget.
+        However, a modded version of the widget which provides basic menu
+        support is avaialable from elParaguayo's `qtile-extras
+        <https://github.com/elParaguayo/qtile-extras>`_ repo.
 
     .. _xdg: https://pypi.org/project/xdg/
     """
