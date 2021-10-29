@@ -18,13 +18,6 @@ Getting started
     manual/ref/layouts
     manual/ref/widgets
 
-.. toctree::
-    :maxdepth: 2
-    :hidden:
-
-    manual/ref/index
-
-
 Advanced scripting
 ==================
 
