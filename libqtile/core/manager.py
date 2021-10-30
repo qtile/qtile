@@ -1357,6 +1357,7 @@ class Qtile(CommandObject):
         command: str = "%s",
         complete: str = "cmd",
         shell: bool = True,
+        aliases: Optional[Dict[str, str]] = None,
     ) -> None:
         """Spawn a command using a prompt widget, with tab-completion.
 
@@ -1370,9 +1371,16 @@ class Qtile(CommandObject):
             command template (default: "%s").
         complete :
             Tab completion function (default: "cmd")
+        shell :
+            Execute the command with /bin/sh (default: True)
+        aliases :
+            Dictionary mapping aliases to commands. If the entered command is a key in
+            this dict, the command it maps to will be executed instead.
         """
         def f(args):
             if args:
+                if aliases and args in aliases:
+                    args = aliases[args]
                 self.cmd_spawn(command % args, shell=shell)
         try:
             mb = self.widgets_map[widget]
