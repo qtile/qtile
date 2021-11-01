@@ -21,6 +21,7 @@
 
 import asyncio
 import contextlib
+import enum
 import os
 import signal
 import time
@@ -71,6 +72,39 @@ def get_modifiers() -> List[str]:
 
 class ExistingWMException(Exception):
     pass
+
+
+class SelectionStatus(enum.Enum):
+    empty = enum.auto()
+    targets = enum.auto()
+    awaiting = enum.auto()
+    incremental_transfer = enum.auto()
+    available = enum.auto()
+
+
+class Selection:
+    def __init__(self):
+        self.owner = None
+        self.binary_selection = b""
+        self.selection = ""
+        self.status = SelectionStatus.empty
+        self.targets = []
+        self._cur_tar = -1
+
+    @property
+    def current_target(self):
+        return self.targets[self._cur_tar] if self.targets and self._cur_tar >= 0 else "UTF8_STRING"
+
+    # For backwards compatibility
+    def __index__(self, idx):
+        return self.__dict__[idx]
+
+    def __repr__(self):
+        bin_sel = (self.binary_selection[:29] + b"...") if len(self.binary_selection) > 32 else self.binary_selection
+        sel = (self.selection[:29] + "...") if len(self.selection) > 32 else self.selection
+        return "<x11.Selection owner=({}) bin_sel=({}) sel=({}) status=({}) targets=({}) current_target=({})>".format(
+            self.owner, bin_sel, sel, self.status, self.targets, self.current_target
+        )
 
 
 class Core(base.Core):
@@ -130,8 +164,8 @@ class Core(base.Core):
         )
 
         self._selection = {
-            "PRIMARY": {"owner": None, "selection": ""},
-            "CLIPBOARD": {"owner": None, "selection": ""},
+            "PRIMARY": Selection(),
+            "CLIPBOARD": Selection()
         }
         self._selection_window = self.conn.create_window(-1, -1, 1, 1)
         self._selection_window.set_attribute(
@@ -143,11 +177,11 @@ class Core(base.Core):
 
         primary_atom = self.conn.atoms["PRIMARY"]
         reply = self.conn.conn.core.GetSelectionOwner(primary_atom).reply()
-        self._selection["PRIMARY"]["owner"] = reply.owner
+        self._selection["PRIMARY"].owner = reply.owner
 
         clipboard_atom = self.conn.atoms["CLIPBOARD"]
         reply = self.conn.conn.core.GetSelectionOwner(primary_atom).reply()
-        self._selection["CLIPBOARD"]["owner"] = reply.owner
+        self._selection["CLIPBOARD"].owner = reply.owner
 
         # ask for selection on start-up
         self.convert_selection(primary_atom)
@@ -559,30 +593,89 @@ class Core(base.Core):
             self.conn.fixup_focus()
 
     def handle_SelectionNotify(self, event) -> None:  # noqa: N802
-        if not getattr(event, "owner", None):
-            return
-
         name = self.conn.atoms.get_name(event.selection)
-        self._selection[name]["owner"] = event.owner
-        self._selection[name]["selection"] = ""
 
-        self.convert_selection(event.selection)
+        sel = self._selection[name]
 
-        hook.fire("selection_notify", name, self._selection[name])
+        if sel.status == SelectionStatus.targets:
+            prop = self._selection_window.get_property(event.selection, xcffib.xproto.Atom.ATOM, int)
+            if prop:
+                if not sel.targets:
+                    sel.targets = [self.conn.atoms.get_name(at) for at in prop]
+                    if "UTF8_STRING" in sel.targets:
+                        idx = sel.targets.index("UTF8_STRING")
+                        sel.targets[0], sel.targets[idx] = sel.targets[idx], sel.targets[0]
+                    sel._cur_tar = 0
+                elif sel._cur_tar < len(sel.targets):
+                    sel._cur_tar += 1
+
+                if sel._cur_tar == len(sel.targets):
+                    logger.debug(f"All reported targets were invalid for {sel}.")
+                    sel.status = SelectionStatus.empty
+                    self.conn.conn.core.DeleteProperty(self._selection_window.wid, event.selection)
+                else:
+                    self.convert_selection(event.selection, sel.current_target)
+            elif sel.targets:
+                logger.debug(f"Settled on target {sel.current_target} for {sel}.")
+                sel.status = SelectionStatus.awaiting
+            else:
+                logger.warn(f"Selection requested targets, but did not receive them. {sel}")
+                sel.status = SelectionStatus.empty
+        if sel.status == SelectionStatus.awaiting:
+            # We need to determine if we need to go into incremental transfer mode.
+            prop = self._selection_window.get_property(event.selection, xcffib.xproto.Atom.Any, dict)
+            if not prop:
+                logger.warn(f"Before copying, selection was unavailable. {sel}")
+                sel.status = SelectionStatus.empty
+            if self.conn.atoms.get_name(prop["type"]) == "INCR":
+                # Initiate the incremental transfer
+                sel.status = SelectionStatus.incremental_transfer
+                self.conn.conn.core.DeleteProperty(self._selection_window.wid, event.selection)
+            else:
+                prop = self._selection_window.get_property(event.selection, prop["type"])
+                sel.binary_selection = b"".join(prop.value)
+                try:
+                    value = sel.binary_selection.decode()
+                except UnicodeDecodeError:
+                    value = ""
+                sel.selection = value
+                sel.status = SelectionStatus.available
+        elif getattr(event, "owner", None) and sel.status in [SelectionStatus.empty, SelectionStatus.available]:
+            sel = self._selection[name] = Selection()
+            sel.status = SelectionStatus.targets
+            self.convert_selection(event.selection, "TARGETS")
+
+        if sel.status == SelectionStatus.available:
+            hook.fire("selection_change", name, sel)
+
+        hook.fire("selection_notify", name, sel)
 
     def handle_PropertyNotify(self, event) -> None:  # noqa: N802
         name = self.conn.atoms.get_name(event.atom)
         # it's the selection property
-        if name in ("PRIMARY", "CLIPBOARD"):
-            assert event.window == self._selection_window.wid
-            prop = self._selection_window.get_property(event.atom, "UTF8_STRING")
+        if name not in ("PRIMARY", "CLIPBOARD"):
+            return
 
-            # If the selection property is None, it is unset, which means the
-            # clipboard is empty.
-            value = prop and prop.value.to_utf8() or ""
+        assert event.window == self._selection_window.wid
+        sel = self._selection[name]
 
-            self._selection[name]["selection"] = value
-            hook.fire("selection_change", name, self._selection[name])
+        if sel.status == SelectionStatus.incremental_transfer:
+            if event.state == xcffib.xproto.Property.Delete:
+                return
+
+            prop = self._selection_window.get_property(event.atom, xcffib.xproto.Atom.Any, None, delete=True)
+            if prop:
+                sel.binary_selection += b"".join(prop.value)
+                return
+
+            try:
+                value = sel.binary_selection.decode()
+            except UnicodeDecodeError:
+                value = ""
+
+            sel.status = SelectionStatus.available
+            sel.selection = value
+            hook.fire("selection_change", name, sel)
 
     def handle_ClientMessage(self, event) -> None:  # noqa: N802
         assert self.qtile is not None

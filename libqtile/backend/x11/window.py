@@ -359,7 +359,7 @@ class XWindow:
                 'X error in SetProperty (wid=%r, prop=%r), ignoring',
                 self.wid, name)
 
-    def get_property(self, prop, type=None, unpack=None):
+    def get_property(self, prop, type=None, unpack=None, delete=False):
         """Return the contents of a property as a GetPropertyReply
 
         If unpack is specified, a tuple of values is returned.  The type to
@@ -375,7 +375,7 @@ class XWindow:
 
         try:
             r = self.conn.conn.core.GetProperty(
-                False, self.wid,
+                delete, self.wid,
                 self.conn.atoms[prop]
                 if isinstance(prop, str)
                 else prop,
@@ -391,6 +391,9 @@ class XWindow:
             if unpack:
                 return []
             return None
+
+        if unpack is dict:
+            return r.__dict__
 
         if not r.value_len:
             if unpack:
