@@ -35,7 +35,9 @@ import subprocess
 from typing import Any, List, Tuple
 
 from libqtile import bar, configurable, confreader
+from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandObject, ItemT
+from libqtile.lazy import LazyCall
 from libqtile.log_utils import logger
 
 
@@ -93,8 +95,11 @@ class _Widget(CommandObject, configurable.Configurable):
     have been configured.
 
     Callback functions can be assigned to button presses by passing a dict to the
-    'callbacks' kwarg. No arguments are passed to the callback function so, if
+    'callbacks' kwarg. No arguments are passed to the function so, if
     you need access to the qtile object, it needs to be imported into your code.
+
+    ``lazy`` functions can also be passed as callback functions and can be used in
+    the same was as keybindings.
 
     For example:
 
@@ -105,18 +110,26 @@ class _Widget(CommandObject, configurable.Configurable):
         def open_calendar():
             qtile.cmd_spawn('gsimplecal next_month')
 
-        clock = widget.Clock(mouse_callbacks={'Button1': open_calendar})
+        clock = widget.Clock(
+            mouse_callbacks={
+                'Button1': open_calendar,
+                'Button3': lazy.spawn('gsimplecal prev_month')
+            }
+        )
 
     When the clock widget receives a click with button 1, the ``open_calendar`` function
-    will be executed. Callbacks can be assigned to other buttons by adding more entries
-    to the passed dictionary.
+    will be executed.
     """
     orientations = ORIENTATION_BOTH
     offsetx: int = 0
     offsety: int = 0
     defaults = [
         ("background", None, "Widget background color"),
-        ("mouse_callbacks", {}, "Dict of mouse button press callback functions."),
+        (
+            "mouse_callbacks",
+            {},
+            "Dict of mouse button press callback functions. Acceps functions and ``lazy`` calls."
+        ),
     ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, length, **config):
@@ -236,7 +249,16 @@ class _Widget(CommandObject, configurable.Configurable):
     def button_press(self, x, y, button):
         name = 'Button{0}'.format(button)
         if name in self.mouse_callbacks:
-            self.mouse_callbacks[name]()
+            cmd = self.mouse_callbacks[name]
+            if isinstance(cmd, LazyCall):
+                if cmd.check(self.qtile):
+                    status, val = self.qtile.server.call(
+                        (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
+                    )
+                    if status in (interface.ERROR, interface.EXCEPTION):
+                        logger.error("Mouse callback command error %s: %s" % (cmd.name, val))
+            else:
+                cmd()
 
     def button_release(self, x, y, button):
         pass
