@@ -183,49 +183,55 @@ class Bar(Gap, configurable.Configurable):
         if isinstance(self.border_width, int):
             self.border_width = [self.border_width] * 4
 
+        self._initial_margin = self.margin[:]
+        self.struts = [0, 0, 0, 0]
+        self._add_strut = False
+
         self.queued_draws = 0
         self.future = None
 
     def _configure(self, qtile, screen):
-        Gap._configure(self, qtile, screen)
+        # We only want to adjust margin sizes once unless there's a new strut
+        if not self._configured or self._add_strut:
+            Gap._configure(self, qtile, screen)
 
-        if sum(self.margin) or sum(self.border_width):
+            if sum(self._initial_margin) or sum(self.border_width) or self._add_strut:
 
-            try:
-                # Check if colours are valid but don't convert to rgba here
-                if isinstance(self.border_color, list) and len(self.border_color) == 4:
-                    [rgb(col) for col in self.border_color]
+                try:
+                    # Check if colours are valid but don't convert to rgba here
+                    if isinstance(self.border_color, list) and len(self.border_color) == 4:
+                        [rgb(col) for col in self.border_color]
+                    else:
+                        rgb(self.border_color)
+                        self.border_color = [self.border_color] * 4
+                except (ValueError, TypeError):
+                    logger.warning("Invalid border_color specified. Borders will not be displayed.")
+                    self.border_width = [0, 0, 0, 0]
+
+                # Increase the margin size for the border. The border will be drawn
+                # in this space so the empty space will just be the margin.
+                self.margin = [m + b + s for m, b, s in zip(self._initial_margin, self.border_width, self.struts)]
+
+                if self.horizontal:
+                    self.x += self.margin[3] - self.border_width[3]
+                    self.width -= (self.margin[1] + self.margin[3])
+                    self.length = self.width
+                    if self.size == self.initial_size:
+                        self.size += (self.margin[0] + self.margin[2])
+                    if self.screen.top is self:
+                        self.y += self.margin[0] - self.border_width[0]
+                    else:
+                        self.y -= self.margin[2] + self.border_width[2]
+
                 else:
-                    rgb(self.border_color)
-                    self.border_color = [self.border_color] * 4
-            except (ValueError, TypeError):
-                logger.warning("Invalid border_color specified. Borders will not be displayed.")
-                self.border_width = [0, 0, 0, 0]
-
-            # Increase the margin size for the border. The border will be drawn
-            # in this space so the empty space will just be the margin.
-            self.margin = [m + b for m, b in zip(self.margin, self.border_width)]
-
-            if self.horizontal:
-                self.x += self.margin[3] - self.border_width[3]
-                self.width -= (self.margin[1] + self.margin[3])
-                self.length = self.width
-                if self.size == self.initial_size:
-                    self.size += (self.margin[0] + self.margin[2])
-                if self.screen.top is self:
                     self.y += self.margin[0] - self.border_width[0]
-                else:
-                    self.y -= self.margin[2] + self.border_width[2]
-
-            else:
-                self.y += self.margin[0] - self.border_width[0]
-                self.height -= (self.margin[0] + self.margin[2])
-                self.length = self.height
-                self.size += (self.margin[1] + self.margin[3])
-                if self.screen.left is self:
-                    self.x += self.margin[3]
-                else:
-                    self.x -= self.margin[1]
+                    self.height -= (self.margin[0] + self.margin[2])
+                    self.length = self.height
+                    self.size += (self.margin[1] + self.margin[3])
+                    if self.screen.left is self:
+                        self.x += self.margin[3]
+                    else:
+                        self.x -= self.margin[1]
 
         width = self.width + (self.border_width[1] + self.border_width[3])
         height = self.height + (self.border_width[0] + self.border_width[2])
@@ -289,6 +295,7 @@ class Bar(Gap, configurable.Configurable):
         self.draw()
         self._resize(self.length, self.widgets)
         self._configured = True
+        self._add_strut = False
 
     def _configure_widget(self, widget):
         configured = True
@@ -576,16 +583,11 @@ class Bar(Gap, configurable.Configurable):
     def adjust_for_strut(self, size):
         if self.size:
             self.size = self.initial_size
-        if not self.margin:
-            self.margin = [0, 0, 0, 0]
-        if self.screen.top is self:
-            self.margin[0] += size
-        elif self.screen.bottom is self:
-            self.margin[2] += size
-        elif self.screen.left is self:
-            self.margin[3] += size
-        else:  # right
-            self.margin[1] += size
+        for i, gap in enumerate(["top", "right", "bottom", "left"]):
+            if getattr(self.screen, gap) is self:
+                self.struts[i] += size
+
+        self._add_strut = True
 
     def cmd_fake_button_press(self, screen, position, x, y, button=1):
         """
