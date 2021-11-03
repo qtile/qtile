@@ -79,4 +79,22 @@ jobs:
               run: |
                 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
                 tox
+            - name: Upload coverage data to coveralls.io
+              run: |
+                pip -q install coveralls
+                coveralls --service=github
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
+                COVERALLS_PARALLEL: true
 
+    coverage:
+        name: Finalize Coverage
+        needs: build
+        runs-on: ubuntu-20.04
+        steps:
+            - name: Coveralls Finished
+              uses: coverallsapp/github-action@master
+              with:
+                github-token: ${{ secrets.GITHUB_TOKEN }}
+                parallel-finished: true
