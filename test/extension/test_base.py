@@ -19,7 +19,7 @@
 # SOFTWARE.
 import pytest
 
-from libqtile.extension.base import _Extension
+from libqtile.extension.base import RunCommand, _Extension
 
 parameters = [
     ("#000", "#000"),
@@ -36,3 +36,30 @@ parameters = [
 def test_valid_colours(value, expected):
     extension = _Extension(foreground=value)
     assert extension.foreground == expected
+
+
+def test_base_methods():
+    class FakeQtile:
+        pass
+
+    qtile = FakeQtile()
+    extension = _Extension()
+    extension._configure(qtile)
+
+    assert extension.qtile is qtile
+
+    with pytest.raises(NotImplementedError):
+        extension.run()
+
+
+def test_run_command(monkeypatch):
+
+    def fake_popen(cmd, *args, **kwargs):
+        return cmd
+
+    monkeypatch.setattr('libqtile.extension.base.Popen', fake_popen)
+
+    extension = RunCommand(command="command --arg1 --arg2")
+
+    assert extension.command == "command --arg1 --arg2"
+    assert extension.run() == "command --arg1 --arg2"
