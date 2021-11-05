@@ -67,7 +67,7 @@ class Wttr(GenPollUrl):
         (
             'units', 'm',
             "``'m'`` - metric, ``'M'`` - show wind speed in m/s, "
-            "``'s'`` - imperial"
+            "``'u'`` - USCS"
         ),
         (
             'update_interval', 600,
