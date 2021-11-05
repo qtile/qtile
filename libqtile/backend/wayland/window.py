@@ -766,6 +766,7 @@ class Internal(base.Internal, Window):
         self._outputs: List[Output] = []
         self._find_outputs()
         self._reset_texture()
+        self._group = None
 
     def finalize(self):
         self.hide()

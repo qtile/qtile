@@ -103,6 +103,7 @@ class RunCommand(_Extension):
     def __init__(self, **config):
         _Extension.__init__(self, **config)
         self.add_defaults(RunCommand.defaults)
+        self.configured_command = None
 
     def run(self):
         """
