@@ -284,6 +284,23 @@ class Keyboard(_Device):
             self.set_keymap(config.kb_layout, config.kb_options, config.kb_variant)
 
 
+class MultilanguageMapping:
+    def __init__(self):
+        ctx = xkb.Context()
+        keymap = ctx.keymap_new_from_names()
+        self.mapping = {}
+        for keycode in keymap:
+            layouts = keymap.num_layouts_for_key(keycode)
+            if layouts > 1:
+                keysyms = tuple(keymap.key_get_syms_by_level(keycode, layout, 0)[0] for layout in range(layouts))
+                for keysym in keysyms:
+                    self.mapping[keysym] = keysyms
+
+    def get_keysyms(self, key: Union[config.Key, config.KeyChord]) -> tuple[int, ...]:
+        keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
+        self.mapping.get(keysym, (keysym, ))
+
+
 class Pointer(_Device):
     _logged_unsupported = False
 

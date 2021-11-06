@@ -436,13 +436,21 @@ class Qtile(CommandObject):
 
     def grab_key(self, key: Key | KeyChord) -> None:
         """Grab the given key event"""
-        keysym, mask_key = self.core.grab_key(key)
-        self.keys_map[(keysym, mask_key)] = key
+        keysyms, mask_key = self.core.grab_key(key)
+        if isinstance(keysyms, tuple):
+            for keysym in keysyms:
+                self.keys_map[(keysym, mask_key)] = key
+        else:
+            self.keys_map[(keysyms, mask_key)] = key
 
     def ungrab_key(self, key: Key | KeyChord) -> None:
         """Ungrab a given key event"""
-        keysym, mask_key = self.core.ungrab_key(key)
-        self.keys_map.pop((keysym, mask_key))
+        keysyms, mask_key = self.core.ungrab_key(key)
+        if isinstance(keysym, tuple):
+            for keysym in keysyms:
+                self.keys_map.pop((keysym, mask_key))
+        else:
+            self.keys_map.pop((keysyms, mask_key))
 
     def ungrab_keys(self) -> None:
         """Ungrab all key events"""

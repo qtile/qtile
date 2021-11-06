@@ -135,6 +135,7 @@ class Core(base.Core, wlrq.HasListeners):
         self._pointers: list[inputs.Pointer] = []
         self.grabbed_keys: list[tuple[int, int]] = []
         self.grabbed_buttons: list[tuple[int, int]] = []
+        self._multilang_mapping = MultilanguageMapping()
         DataDeviceManager(self.display)
         self.live_dnd: wlrq.Dnd | None = None
         DataControlManagerV1(self.display)
@@ -1011,19 +1012,21 @@ class Core(base.Core, wlrq.HasListeners):
         """Get the screen information"""
         return [screen.get_geometry() for screen in self.outputs if screen.wlr_output.enabled]
 
-    def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
+    def grab_key(self, key: config.Key | config.KeyChord) -> tuple[tuple[int, ...], int]:
         """Configure the backend to grab the key event"""
-        keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
+        keysyms = self._multilang_mapping.get_keysyms(key)
         mask_key = wlrq.translate_masks(key.modifiers)
-        self.grabbed_keys.append((keysym, mask_key))
-        return keysym, mask_key
+        for keysym in keysyms:
+            self.grabbed_keys.append((keysym, mask_key))
+        return keysyms, mask_key
 
-    def ungrab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
+    def ungrab_key(self, key: config.Key | config.KeyChord) -> tuple[tuple[int, ...], int]:
         """Release the given key event"""
-        keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
+        keysyms = self._multilang_mapping.get_keysyms(key)
         mask_key = wlrq.translate_masks(key.modifiers)
-        self.grabbed_keys.remove((keysym, mask_key))
-        return keysym, mask_key
+        for keysym in keysyms:
+            self.grabbed_keys.remove((keysym, mask_key))
+        return keysyms, mask_key
 
     def ungrab_keys(self) -> None:
         """Release the grabbed key events"""
