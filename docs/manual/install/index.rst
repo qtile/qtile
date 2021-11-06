@@ -49,19 +49,19 @@ Here are Qtile's core runtime dependencies and where available the package name
 that provides them in Ubuntu. Note that Qtile can run with one of two backends
 -- X11 and Wayland -- so only the dependencies of one of these is required.
 
-================= =================== ==========================================
-Dependency        Ubuntu Package      Needed for
-================= =================== ==========================================
-CFFI_             python3-cffi        Both backends, bars and popups
-X server          xserver-xorg        X11 backend
-xcffib_           python3-xcffib      X11 backend
-wlroots_          libwlroots-dev      Wayland backend (see below)
-pywlroots_        --                  Wayland backend
-pywayland_        --                  Wayland backend
-python-xkbcommon_ --                  Wayland backend
-cairocffi_        python3-cairocffi   Drawing on bars and popups (see below)
-libpangocairo     libpangocairo-1.0-0 Writing on bars and popups
-dbus-next_        --                  Sending notifications with dbus (optional)
+================= =================== ==================== ==========================================
+Dependency        Ubuntu Package      Fedora               Needed for
+================= =================== ==================== ==========================================
+CFFI_             python3-cffi        python3-cffi         Both backends, bars and popups
+X server          xserver-xorg        xorg-x11-server-Xorg X11 backend
+xcffib_           python3-xcffib      python3-xcffib       X11 backend
+wlroots_          libwlroots-dev                           Wayland backend (see below)
+pywlroots_        --                                       Wayland backend
+pywayland_        --                                       Wayland backend
+python-xkbcommon_ --                                       Wayland backend
+cairocffi_        python3-cairocffi   python3-cairocffi    Drawing on bars and popups (see below)
+libpangocairo     libpangocairo-1.0-0 pango                Writing on bars and popups
+dbus-next_        --                  python3-dbus-next    Sending notifications with dbus (optional)
 ================= =================== ==========================================
 
 .. _CFFI: https://cffi.readthedocs.io/en/latest/installation.html
