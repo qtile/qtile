@@ -86,6 +86,8 @@ def test_matrix_navigation(manager):
     assert manager.c.layout.info()["current_window"] == (1, 1)
     manager.c.layout.right()
     assert manager.c.layout.info()["current_window"] == (0, 1)
+    manager.c.layout.left()
+    assert manager.c.layout.info()["current_window"] == (1, 1)
 
 
 @matrix_config
@@ -129,3 +131,13 @@ def test_matrix_next_no_clients(manager):
 @matrix_config
 def test_matrix_previous_no_clients(manager):
     manager.c.layout.previous()
+
+
+def test_unknown_client():
+    """Simple test to get coverage to 100%!"""
+    matrix = layout.Matrix()
+
+    # The layout will not configure an unknown client.
+    # Without the return statement in "configure" the following
+    # code would result in an error
+    assert matrix.configure("fakeclient", None) is None

@@ -46,6 +46,7 @@ class RatioTileConfig(Config):
     layouts = [
         layout.RatioTile(ratio=.5),
         layout.RatioTile(),
+        layout.RatioTile(fancy=True)
     ]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
@@ -211,3 +212,132 @@ def test_ratiotile_window_focus_cycle(manager):
 
     # assert window focus cycle, according to order in layout
     assert_focus_path(manager, 'two', 'one', 'float1', 'float2', 'three')
+
+
+@ratiotile_config
+def test_ratiotile_alternative_calculation(manager):
+    manager.c.next_layout()
+    manager.c.next_layout()
+
+    for i in range(12):
+        manager.test_window(str(i))
+        print(manager.c.layout.info()["layout_info"])
+        if i == 0:
+            assert manager.c.layout.info()['layout_info'] == [
+                (0, 0, 800, 600)
+            ]
+        elif i == 4:
+            assert manager.c.layout.info()['layout_info'] == [
+                (0, 0, 400, 200),
+                (0, 200, 400, 200),
+                (0, 400, 400, 200),
+                (400, 0, 400, 300),
+                (400, 300, 400, 300)
+            ]
+        elif i == 5:
+            assert manager.c.layout.info()['layout_info'] == [
+                (0, 0, 400, 200),
+                (0, 200, 400, 200),
+                (0, 400, 400, 200),
+                (400, 0, 400, 200),
+                (400, 200, 400, 200),
+                (400, 400, 400, 200)
+            ]
+        elif i == 9:
+            assert manager.c.layout.info()['layout_info'] == [
+                (0, 0, 266, 150),
+                (0, 150, 266, 150),
+                (0, 300, 266, 150),
+                (0, 450, 266, 150),
+                (266, 0, 267, 200),
+                (266, 200, 267, 200),
+                (266, 400, 267, 200),
+                (533, 0, 267, 200),
+                (533, 200, 267, 200),
+                (533, 400, 267, 200)
+            ]
+        elif i == 10:
+            assert manager.c.layout.info()['layout_info'] == [
+                (0, 0, 266, 150),
+                (0, 150, 266, 150),
+                (0, 300, 266, 150),
+                (0, 450, 266, 150),
+                (266, 0, 267, 150),
+                (266, 150, 267, 150),
+                (266, 300, 267, 150),
+                (266, 450, 267, 150),
+                (533, 0, 267, 200),
+                (533, 200, 267, 200),
+                (533, 400, 267, 200)
+            ]
+        elif i == 11:
+            assert manager.c.layout.info()['layout_info'] == [
+                (0, 0, 266, 150),
+                (0, 150, 266, 150),
+                (0, 300, 266, 150),
+                (0, 450, 266, 150),
+                (266, 0, 267, 150),
+                (266, 150, 267, 150),
+                (266, 300, 267, 150),
+                (266, 450, 267, 150),
+                (533, 0, 267, 150),
+                (533, 150, 267, 150),
+                (533, 300, 267, 150),
+                (533, 450, 267, 150)
+            ]
+
+
+@ratiotile_config
+def test_shuffling(manager):
+
+    def clients():
+        return manager.c.layout.info()["clients"]
+
+    for i in range(3):
+        manager.test_window(str(i))
+
+    assert clients() == ['2', '1', '0']
+    manager.c.layout.shuffle_up()
+    assert clients() == ['0', '2', '1']
+    manager.c.layout.shuffle_up()
+    assert clients() == ['1', '0', '2']
+    manager.c.layout.shuffle_down()
+    assert clients() == ['0', '2', '1']
+    manager.c.layout.shuffle_down()
+    assert clients() == ['2', '1', '0']
+
+
+@ratiotile_config
+def test_resizing(manager):
+
+    def sizes():
+        return manager.c.layout.info()["layout_info"]
+
+    for i in range(5):
+        manager.test_window(str(i))
+
+    assert sizes() == [
+        (0, 0, 160, 600),
+        (160, 0, 160, 600),
+        (320, 0, 160, 600),
+        (480, 0, 160, 600),
+        (640, 0, 160, 600)
+    ]
+
+    manager.c.layout.increase_ratio()
+    assert sizes() == [
+        (0, 0, 266, 300),
+        (266, 0, 266, 300),
+        (532, 0, 268, 300),
+        (0, 300, 400, 300),
+        (400, 300, 400, 300)
+    ]
+
+    manager.c.layout.decrease_ratio()
+    assert sizes() == [
+        (0, 0, 160, 600),
+        (160, 0, 160, 600),
+        (320, 0, 160, 600),
+        (480, 0, 160, 600),
+        (640, 0, 160, 600)
+    ]
