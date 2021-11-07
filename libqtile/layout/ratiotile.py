@@ -289,15 +289,10 @@ class RatioTile(_SimpleLayoutBase):
     def info(self):
         d = _SimpleLayoutBase.info(self)
         focused = self.clients.current_client
-        d['ratio'] = self.ratio,
-        d['focused'] = focused.name if focused else None,
+        d['ratio'] = self.ratio
+        d['focused'] = focused.name if focused else None
         d['layout_info'] = self.layout_info
         return d
-
-    def shuffle(self, function):
-        if self.clients:
-            function(self.clients)
-            self.group.layout_all()
 
     cmd_down = _SimpleLayoutBase.previous
     cmd_up = _SimpleLayoutBase.next
