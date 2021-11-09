@@ -1,5 +1,5 @@
-name: "Bug report"
-description: Report a bug in Qtile
+name: "Issue template"
+description: Required
 labels: ["unconfirmed"]
 body:
   - type: markdown
