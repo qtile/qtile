@@ -23,8 +23,7 @@ config, if it doesn't exist yet.
 Default Configuration
 =====================
 
-The `default configuration
-<https://github.com/qtile/qtile/blob/master/libqtile/resources/default_config.py>`_
+The :ref:`default configuration<default_config>`
 is invoked when qtile cannot find a configuration file. In addition, if qtile
 is restarted or the config is reloaded, qtile will load the default
 configuration if the config file it finds has some kind of error in it. The
