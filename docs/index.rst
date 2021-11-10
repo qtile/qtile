@@ -13,10 +13,18 @@ Getting started
     manual/troubleshooting
     As a Wayland Compositor <manual/wayland>
     manual/commands/shell/index
+
+Reference
+=========
+
+.. toctree::
+    :maxdepth: 1
+
     manual/ref/extensions
     manual/ref/hooks
     manual/ref/layouts
     manual/ref/widgets
+    manual/config/default
 
 Advanced scripting
 ==================
