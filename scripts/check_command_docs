@@ -1,0 +1,140 @@
+#!/usr/bin/env python
+# Copyright (c) 2021 elParaguayo
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# A short script which identifies any exposed commands which do not have
+# docstrings.
+
+import argparse
+import importlib
+import importlib.util
+import inspect
+import os
+import sys
+from pathlib import Path
+
+this_dir = os.path.dirname(__file__)
+base_dir = os.path.abspath(os.path.join(this_dir, ".."))
+sys.path.insert(0, base_dir)
+
+from libqtile.command.base import CommandObject  # noqa: E402
+
+
+def folder(value):
+    if not os.path.isdir(value):
+        raise argparse.ArgumentTypeError("Invalid root folder.")
+    return value
+
+
+class CommandChecker:
+    """
+    Object that takes path to libqtile module and loops over modules to
+    identify undocumented commands.
+    """
+    def __init__(self, path: str):
+        self.path = path
+        self._find_files()
+        self.errors = 0
+
+    def _find_files(self) -> None:
+        """
+        Method to find all python files in the given path and convert this into a
+        dictionary of:
+            {"path_to/libqtile/folder/module.py": "libqtile.folder.module"}
+        """
+        modules = {}
+        all_files = [f.as_posix() for f in Path(self.path).rglob("*.py")]
+        for f in all_files:
+            path = f.split("/")
+            try:
+                qtile = f.index("libqtile")
+            except ValueError:
+                continue
+
+            modules[f] = ".".join(path[qtile:])[:-3]
+
+        self.modules = modules
+
+    def check(self) -> None:
+        """
+        Entry point for checking module.
+
+        Returns nothing. Success can be verified by looking
+        at number of `errors`.
+        """
+
+        # Loop over discovered modules
+        for path, modulename in self.modules.items():
+            try:
+                # See if we can import it
+                module = importlib.import_module(modulename)
+            except ImportError:
+                continue
+
+            # We need to filter out certain objects
+            for _, obj in inspect.getmembers(module):
+                # Commands are exposed in CommandObjects so, if it's not a class
+                # we can skip it.
+                if not inspect.isclass(obj):
+                    continue
+
+                # We only want to check classes when they are defined in the given
+                # file, rather than via an import. This prevents duplication of
+                # results. `getfile` may fail on certain objects so we need to catch
+                # the error.
+                try:
+                    if inspect.getfile(obj) != os.path.abspath(path):
+                        continue
+                except TypeError:
+                    continue
+
+                # Commands can only be exposed on CommandObjects so, if we're not
+                # inheriting that, we can skip.
+                if not issubclass(obj, CommandObject):
+                    continue
+
+                # We've got a CommandObject so time to loop over the methods.
+                self.check_methods(obj, path)
+
+    def check_methods(self, obj: CommandObject, path: str) -> None:
+        """Checks a CommandObject for undocumented commands."""
+        for _, method in inspect.getmembers(obj):
+            # Commands are exposed as `cmd_*` so check for the prefix.
+            if not hasattr(method, "__name__") or not method.__name__.startswith("cmd_"):
+                continue
+
+            # Check whether command has a docstring and report an error if not.
+            if not hasattr(method, "__doc__") or not method.__doc__:
+                self.errors += 1
+                print(f"{self.errors}: {path}: Command '{method.__name__}' is undocumented.")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Check all exposed commands are documented.")
+    parser.add_argument("-r", "--root", dest="root", type=folder, help="Root folder to search.", required=True)
+    parser.add_argument("-w", "--warn-only", dest="warn", action="store_true",
+                        help="Don't return error code on failure.")
+
+    args = parser.parse_args()
+
+    cc = CommandChecker(args.root)
+    cc.check()
+    if cc.errors and not args.warn:
+        sys.exit("ERROR: Code has undocumented commands.")
