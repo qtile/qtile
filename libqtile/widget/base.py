@@ -562,7 +562,7 @@ class ThreadPoolText(_TextBox):
     """
     defaults = [
         ("update_interval", 600, "Update interval in seconds, if none, the "
-            "widget updates whenever it's done'."),
+            "widget updates whenever it's done."),
     ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, text, **config):
