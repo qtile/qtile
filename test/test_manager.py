@@ -1216,3 +1216,80 @@ def test_windows_from_commands(manager):
     assert len(windows) == 1
     # And the Systray is absent
     assert "TestWindow" in windows[0]["wm_class"]
+
+
+class DuplicateWidgetsConfig(ManagerConfig):
+    screens = [
+        libqtile.config.Screen(
+            bottom=libqtile.bar.Bar(
+                [
+                    libqtile.widget.Prompt(),
+                    libqtile.widget.Prompt(),
+                    libqtile.widget.Prompt(),
+                    libqtile.widget.Prompt(name="foo"),
+                    libqtile.widget.GroupBox(),
+                    libqtile.widget.GroupBox(),
+                    libqtile.widget.GroupBox(),
+                    libqtile.widget.GroupBox(name="foo"),
+                ],
+                20,
+            ),
+        )
+    ]
+
+
+duplicate_widgets_config = pytest.mark.parametrize(
+    "manager", [DuplicateWidgetsConfig], indirect=True
+)
+
+
+@duplicate_widgets_config
+def test_widget_duplicate_names(manager):
+    # Verify every widget is in widgets_map
+    _, result = manager.c.eval("len(self.widgets_map)")
+    assert int(result) == len(DuplicateWidgetsConfig.screens[0].bottom.widgets)
+
+    # Verify renaming in qtile.widgets_map
+    assert manager.c.widget["prompt"]
+    assert manager.c.widget["prompt_1"]
+    assert manager.c.widget["prompt_2"]
+    assert manager.c.widget["groupbox"]
+    assert manager.c.widget["groupbox_1"]
+    assert manager.c.widget["groupbox_2"]
+    assert manager.c.widget["foo"]
+    assert manager.c.widget["foo_1"]
+
+    # No renaming of actual widgets
+    assert manager.c.bar["bottom"].info()["widgets"][0]["name"] == "prompt"
+    assert manager.c.bar["bottom"].info()["widgets"][1]["name"] == "prompt"
+    assert manager.c.bar["bottom"].info()["widgets"][2]["name"] == "prompt"
+    assert manager.c.bar["bottom"].info()["widgets"][3]["name"] == "foo"
+    assert manager.c.bar["bottom"].info()["widgets"][4]["name"] == "groupbox"
+    assert manager.c.bar["bottom"].info()["widgets"][5]["name"] == "groupbox"
+    assert manager.c.bar["bottom"].info()["widgets"][6]["name"] == "groupbox"
+    assert manager.c.bar["bottom"].info()["widgets"][7]["name"] == "foo"
+
+
+@duplicate_widgets_config
+def test_widget_duplicate_warnings(logger, manager):
+    # Logging messages were created during setup so we need to access them
+    records = logger.get_records("setup")
+
+    # We need to filter out other potential log messages here
+    records = [r for r in records if r.msg.startswith("Widget was renamed")]
+
+    # Check that there's a warning about each renamed widget
+    assert all(
+        [
+            any(
+                [
+                    f"Widget was renamed to {w}" in r.msg
+                    for w in ["prompt_1", "prompt_2", "groupbox_1", "groupbox_2", "foo_1"]
+                ]
+            )
+            for r in records
+        ]
+    )
+
+    # Check these were warnings
+    assert all([r.levelno == logging.WARNING for r in records])

@@ -526,20 +526,51 @@ class Qtile(CommandObject):
             self.update_desktops()
 
     def register_widget(self, w: _Widget) -> None:
-        """Register a bar widget
-
-        If a widget with the same name already exists, this will silently
-        ignore that widget. However, this is not necessarily a bug. By default
-        a widget's name is just ``self.__class__.lower()``, so putting multiple
-        widgets of the same class will alias and one will be inaccessible.
-        Since more than one groupbox widget is useful when you have more than
-        one screen, this is a not uncommon occurrence. If you want to use the
-        debug info for widgets with the same name, set the name yourself.
         """
-        if w.name:
-            if w.name in self.widgets_map:
-                return
-            self.widgets_map[w.name] = w
+        Register a bar widget
+
+        If a widget with the same name already exists, the new widget will be
+        automatically renamed by appending numeric suffixes. For example, if
+        the widget is named "foo", we will attempt "foo_1", "foo_2", and so on,
+        until a free name is found.
+
+        This naming convention is only used for qtile.widgets_map as every widget
+        MUST be registered here to ensure that objects are finalised correctly.
+
+        Widgets can still be accessed by their name when using
+        lazy.screen.widget[name] or lazy.bar["top"].widget[name] unless there are
+        duplicate widgets in the bar/screen.
+
+        A warning will be provided where renaming has occurred.
+        """
+        # Find unoccupied name by appending numeric suffixes
+        name = w.name
+        i = 0
+        bars = set()
+        screens = set()
+        while name in self.widgets_map:
+            bars.add(self.widgets_map[name].bar)
+            screens.add(self.widgets_map[name].bar.screen)
+
+            i += 1
+            name = f"{w.name}_{i}"
+
+        if name != w.name:
+            msg = (
+                f"Widget was renamed to {name} in qtile.widgets_map. "
+                f"To bind commands, rename the widget or use lazy.widget['{name}']."
+            )
+
+            if w.bar in bars or w.bar.screen in screens:
+                msg += (
+                    " A duplicate widget was also found in the same bar or screen. "
+                    "If you wish to access the widget via lazy.bar[position].widget or lazy.screen.widget, "
+                    "you should rename the widget in your config."
+                )
+
+            logger.warning(msg)
+
+        self.widgets_map[name] = w
 
     @property
     def current_layout(self) -> Layout:
