@@ -178,8 +178,8 @@ class GroupBox(_GroupBase):
         ),
         (
             "unfocused_highlight_method",
-            "border",
-            "Highlight for group on unfocused screen ('border', 'block', 'text', or 'line')"
+            None,
+            "Highlight for group on unfocused screen [optional] ('border', 'block', 'text', or 'line')"
             "Uses `*_border` color settings"
         ),
         ("rounded", True, "To round or not to round box borders"),
@@ -354,8 +354,8 @@ class GroupBox(_GroupBase):
         offset = self.margin_x
         for i, g in enumerate(self.groups):
             to_highlight = False
-            is_block = False
-            is_line = False
+            is_block = False 
+            is_line = False 
 
             bw = self.box_width([g])
 
@@ -367,36 +367,65 @@ class GroupBox(_GroupBase):
                 text_color = self.inactive
 
             if g.screen:
-                if self.highlight_method == 'text':
-                    border = None
-                    text_color = self.this_current_screen_border
-                else:
-                    if self.block_highlight_text_color:
-                        text_color = self.block_highlight_text_color
-                    if self.bar.screen.group.name == g.name:
-                        if self.qtile.current_screen == self.bar.screen:
-                            border = self.this_current_screen_border
-                            to_highlight = True
-                            is_block = (self.highlight_method == 'block')
-                            is_line = (self.highlight_method == 'line')
+                    if self.unfocused_highlight_method == None:
+                        is_block = (self.highlight_method == 'block') 
+                        is_line = (self.highlight_method == 'line') 
+                        if self.highlight_method == 'text':
+                            border = None
+                            text_color = self.this_current_screen_border
                         else:
-                            border = self.this_screen_border
-                            if self.unfocused_highlight_method != 'border':
-                                to_highlight = True
-                                is_block = (self.unfocused_highlight_method == 'block')
-                                is_line = (self.unfocused_highlight_method == 'line')
+                            if self.block_highlight_text_color:
+                                text_color = self.block_highlight_text_color
+                            if self.bar.screen.group.name == g.name:
+                                if self.qtile.current_screen == self.bar.screen:
+                                    border = self.this_current_screen_border
+                                    to_highlight = True
+                                else:
+                                    border = self.this_screen_border
+                            else:
+                                if self.qtile.current_screen == g.screen:
+                                    border = self.other_current_screen_border
+                                else:
+                                    border = self.other_screen_border
                     else:
-                        if self.qtile.current_screen == g.screen:
-                            border = self.other_current_screen_border
-                            to_highlight = True
-                            is_block = (self.highlight_method == 'block')
-                            is_line = (self.highlight_method == 'line')
-                        else:
-                            border = self.other_screen_border
-                            if self.unfocused_highlight_method != 'border':
-                                to_highlight = True
+                        if self.bar.screen.group.name == g.name:
+                            if self.qtile.current_screen == self.bar.screen:
+                                is_block = (self.highlight_method == 'block')
+                                is_line = (self.highlight_method == 'line')
+                                if self.highlight_method == 'text':
+                                    border = None
+                                    text_color = self.this_current_screen_border
+                                else:
+                                    border = self.this_current_screen_border
+                                    to_highlight = True
+                            else:
                                 is_block = (self.unfocused_highlight_method == 'block')
                                 is_line = (self.unfocused_highlight_method == 'line')
+                                if self.unfocused_highlight_method == 'text':
+                                    border = None
+                                    text_color = self.this_screen_border
+                                else:
+                                    border = self.this_screen_border
+                                    to_highlight = True
+                        else:
+                            if self.qtile.current_screen == g.screen:
+                                is_block = (self.highlight_method == 'block')
+                                is_line = (self.highlight_method == 'line')
+                                if self.highlight_method == 'text':
+                                    border = None
+                                    text_color = self.other_current_screen_border
+                                else:
+                                    border = self.other_current_screen_border
+                                    to_highlight = True
+                            else:
+                                is_block = (self.unfocused_highlight_method == 'block')
+                                is_line = (self.unfocused_highlight_method == 'line')
+                                if self.unfocused_highlight_method == 'text':
+                                    border = None
+                                    text_color = self.other_screen_border
+                                else:
+                                    border = self.other_screen_border
+                                    to_highlight = True
             elif self.group_has_urgent(g) and \
                     self.urgent_alert_method in ('border', 'block', 'line'):
                 border = self.urgent_border
