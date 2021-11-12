@@ -11,6 +11,7 @@ Qtile x.x.x, released xxxx-xx-xx:
         - Fix a bug where a .when() check for lazy functions errors out when matching
           on focused windows when none is focused. By default we do not match on focused windows,
           to change this set `if_no_focused` to True.
+        - Widget with duplicate names will be automatically renamed by appending numeric suffixes
 
 Qtile 0.20.0, released 2022-01-24:
     * features
