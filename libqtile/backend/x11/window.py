@@ -432,6 +432,8 @@ class XWindow:
         """
         This method is used only by the managing Window class.
         """
+        self.set_property('_NET_FRAME_EXTENTS', [borderwidth] * 4)
+
         if not colors or not borderwidth:
             return
 
