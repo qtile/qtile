@@ -51,6 +51,8 @@ class Tile(_SimpleLayoutBase):
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])"),
         ("ratio", 0.618,
             "Width-percentage of screen size reserved for master windows."),
+        ("max_ratio", 0.85, "Maximum width of master windows"),
+        ("min_ratio", 0.15, "Minimum width of master windows"),
         ("master_length", 1,
             "Amount of windows displayed in the master stack. Surplus windows "
             "will be moved to the slave stack."),
@@ -76,6 +78,15 @@ class Tile(_SimpleLayoutBase):
     def __init__(self, **config):
         _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(Tile.defaults)
+        self._initial_ratio = self.ratio
+
+    @property
+    def ratio_size(self):
+        return self.ratio
+
+    @ratio_size.setter
+    def ratio_size(self, ratio):
+        self.ratio = min(max(ratio, self.min_ratio), self.max_ratio)
 
     @property
     def master_windows(self):
@@ -129,16 +140,16 @@ class Tile(_SimpleLayoutBase):
         if self.clients and client in self.clients:
             pos = self.clients.index(client)
             if client in self.master_windows:
-                w = int(screen_width * self.ratio) \
+                w = int(screen_width * self.ratio_size) \
                     if len(self.slave_windows) or not self.expand \
                     else screen_width
                 h = screen_height // self.master_length
                 x = screen_rect.x
                 y = screen_rect.y + pos * h
             else:
-                w = screen_width - int(screen_width * self.ratio)
+                w = screen_width - int(screen_width * self.ratio_size)
                 h = screen_height // (len(self.slave_windows))
-                x = screen_rect.x + int(screen_width * self.ratio)
+                x = screen_rect.x + int(screen_width * self.ratio_size)
                 y = screen_rect.y + self.clients[self.master_length:].index(client) * h
             if client.has_focus:
                 bc = self.border_focus
@@ -171,6 +182,12 @@ class Tile(_SimpleLayoutBase):
     def cmd_shuffle_up(self):
         self.up()
 
+    def cmd_reset(self):
+        self.ratio_size = self._initial_ratio
+        self.group.layout_all()
+
+    cmd_normalize = cmd_reset
+
     cmd_shuffle_left = cmd_shuffle_up
     cmd_shuffle_right = cmd_shuffle_down
 
@@ -182,11 +199,11 @@ class Tile(_SimpleLayoutBase):
     cmd_right = cmd_next
 
     def cmd_decrease_ratio(self):
-        self.ratio -= self.ratio_increment
+        self.ratio_size -= self.ratio_increment
         self.group.layout_all()
 
     def cmd_increase_ratio(self):
-        self.ratio += self.ratio_increment
+        self.ratio_size += self.ratio_increment
         self.group.layout_all()
 
     def cmd_decrease_nmaster(self):

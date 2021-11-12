@@ -30,9 +30,9 @@
 
 from typing import List, Optional
 
+from libqtile.backend.base import Window
 from libqtile.config import Match
 from libqtile.layout.base import Layout
-from libqtile.backend.base import Window
 
 
 class Floating(Layout):

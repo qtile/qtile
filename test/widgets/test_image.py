@@ -101,5 +101,4 @@ def test_no_scale(manager_nospawn, minimal_conf_noscreen):
     bar = manager_nospawn.c.bar["top"]
 
     info = bar.info()
-    print(info)
     assert info["widgets"][0]["width"] == 24

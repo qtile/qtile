@@ -274,7 +274,7 @@ class Slice(Layout):
             if layout.get_windows() is not None:
                 clients.extend(layout.get_windows())
         return clients
-        
+
     def info(self):
         d = Layout.info(self)
         for layout in self._get_layouts():

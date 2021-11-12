@@ -47,8 +47,8 @@ def run_cmd(opts) -> None:
     rule_args = {"float": opts.float, "intrusive": opts.intrusive,
                  "group": opts.group, "break_on_match": not opts.dont_break}
 
-    cmd = root.call("add_rule")
-    _, rule_id = client.send((root.selectors, cmd.name, (match_args, rule_args), {}))
+    graph_cmd = root.call("add_rule")
+    _, rule_id = client.send((root.selectors, graph_cmd.name, (match_args, rule_args), {}))
 
     def remove_rule() -> None:
         cmd = root.call("remove_rule")

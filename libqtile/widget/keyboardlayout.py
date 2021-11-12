@@ -142,7 +142,7 @@ class KeyboardLayout(base.InLoopPollText):
             "['us', 'us colemak', 'es', 'fr']."),
         ("display_map", {}, "Custom display of layout. Key should be in format "
             "'layout variant'. For example: "
-            "{'us': 'us ', 'lt sgs': 'sgs', 'ru phonetic': 'ru '}"),
+            "{'us': 'us', 'lt sgs': 'sgs', 'ru phonetic': 'ru'}"),
         ("option", None, "string of setxkbmap option. Ex., 'compose:menu,grp_led:scroll'"),
     ]
 

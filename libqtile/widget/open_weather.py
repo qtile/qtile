@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import time
+from typing import Any, List, Tuple
 from urllib.parse import urlencode
 
 from libqtile.widget import base
@@ -139,12 +140,38 @@ class OpenWeather(GenPollUrl):
         - wind_deg
         - wind_direction
 
-        - weather_0_icon  # See: https://openweathermap.org/weather-conditions; TODO: Use icons.
         - main_feels_like
         - main_temp_min
         - main_temp_max
         - clouds_all
+        - icon
+
+    Icon support is available but you will need a suitable font installed. A default icon mapping
+    is provided (``OpenWeather.symbols``) but changes can be made by setting ``weather_symbols``.
+    Available icon codes can be viewed here: https://openweathermap.org/weather-conditions#Icon-list
     """
+    symbols = {
+        "Unknown": "✨",
+        "01d": "☀️",
+        "01n": "🌕",
+        "02d": "🌤️",
+        "02n": "☁️",
+        "03d": "🌥️",
+        "03n": "☁️",
+        "04d": "☁️",
+        "04n": "☁️",
+        "09d": "🌧️",
+        "09n": "🌧️",
+        "10d": "⛈",
+        "10n": "⛈",
+        "11d": "🌩",
+        "11n": "🌩",
+        "13d": "❄️",
+        "13n": "❄️",
+        "50d": "🌫",
+        "50n": "🌫",
+    }
+
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         # One of (cityid, location, zip, coordinates) must be set.
@@ -204,12 +231,18 @@ class OpenWeather(GenPollUrl):
         ('language', 'en',
          """Language of response. List of languages supported can
          be seen at: https://openweathermap.org/current under
-         Multilingual support""")
-    ]
+         Multilingual support"""),
+        (
+            'weather_symbols',
+            dict(),
+            'Dictionary of weather symbols. Can be used to override default symbols.'
+        )
+    ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, **config):
         GenPollUrl.__init__(self, **config)
         self.add_defaults(OpenWeather.defaults)
+        self.symbols.update(self.weather_symbols)
 
     @property
     def url(self):
@@ -244,5 +277,6 @@ class OpenWeather(GenPollUrl):
         data = rp.data
         data['units_temperature'] = 'C' if self.metric else 'F'
         data['units_wind_speed'] = 'Km/h' if self.metric else 'm/h'
+        data['icon'] = self.symbols.get(data['weather_0_icon'], self.symbols['Unknown'])
 
         return self.format.format(**data)

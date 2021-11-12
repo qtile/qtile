@@ -120,7 +120,6 @@ def test_gen_poll_url_xml_has_xmltodict(monkeypatch):
     monkeypatch.setattr(generic_poll_text, "Request", MockRequest)
     monkeypatch.setattr(generic_poll_text, "urlopen", Mockurlopen)
     generic_poll_text.Request.return_value = b"OK"
-    print(gpurl.poll())
     assert gpurl.poll()["test"] == "OK"
 
 

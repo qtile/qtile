@@ -28,18 +28,21 @@ import cairocffi
 from pywayland.server import Listener
 from wlroots.wlr_types import Texture
 from wlroots.wlr_types.keyboard import KeyboardModifier
-from wlroots.wlr_types.pointer_constraints_v1 import PointerConstraintV1, PointerConstraintV1StateField
+from wlroots.wlr_types.pointer_constraints_v1 import (
+    PointerConstraintV1,
+    PointerConstraintV1StateField,
+)
 from wlroots.wlr_types.xdg_shell import XdgSurface
 
+from libqtile.backend.base import Internal
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
-from libqtile.backend.base import Internal
 
 if TYPE_CHECKING:
-    from typing import Callable, List, Optional
+    from typing import Callable, List, Optional, Set
 
     from pywayland.server import Signal
-    from wlroots.wlr_types import data_device_manager, Box
+    from wlroots.wlr_types import Box, data_device_manager
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.output import Output

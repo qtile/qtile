@@ -143,7 +143,6 @@ Output of ``qtile cmd-obj -o cmd``
     -o cmd -f remove_rule           * Remove a dgroup rule by rule_id
     -o cmd -f restart                 Restart qtile
     -o cmd -f run_extension         * Run extensions
-    -o cmd -f run_extention         * Deprecated alias for cmd_run_extension()
     -o cmd -f run_external          * Run external Python script
     -o cmd -f screens                 Return a list of dictionaries providing information on all screens
     -o cmd -f shutdown                Quit Qtile

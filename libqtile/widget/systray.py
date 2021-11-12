@@ -105,7 +105,7 @@ class Systray(window._Window, base._Widget):
     _window_mask = EventMask.StructureNotify | \
         EventMask.Exposure
 
-    orientations = base.ORIENTATION_HORIZONTAL
+    orientations = base.ORIENTATION_BOTH
 
     defaults = [
         ('icon_size', 20, 'Icon width'),
@@ -119,9 +119,12 @@ class Systray(window._Window, base._Widget):
         self.screen = 0
 
     def calculate_length(self):
-        width = sum(i.width for i in self.icons.values())
-        width += self.padding * len(self.icons)
-        return width
+        if self.bar.horizontal:
+            length = sum(i.width for i in self.icons.values())
+        else:
+            length = sum(i.height for i in self.icons.values())
+        length += self.padding * len(self.icons)
+        return length
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
@@ -206,14 +209,23 @@ class Systray(window._Window, base._Widget):
         return False
 
     def draw(self):
-        xoffset = self.padding
+        offset = self.padding
         self.drawer.clear(self.background or self.bar.background)
         self.drawer.draw(offsetx=self.offset, width=self.length)
         for pos, icon in enumerate(self.icons.values()):
             icon.window.set_attribute(backpixmap=self.drawer.pixmap)
+            if self.bar.horizontal:
+                xoffset = self.offsetx + offset
+                yoffset = self.bar.height // 2 - self.icon_size // 2 + self.offsety
+                step = icon.width
+            else:
+                xoffset = self.bar.width // 2 - self.icon_size // 2 + self.offsetx
+                yoffset = self.offsety + offset
+                step = icon.height
+
             icon.place(
-                self.offset + xoffset,
-                self.bar.height // 2 - self.icon_size // 2,
+                xoffset,
+                yoffset,
                 icon.width, self.icon_size,
                 0,
                 None
@@ -236,7 +248,7 @@ class Systray(window._Window, base._Widget):
                 )
                 self.window.send_event(event)
 
-            xoffset += icon.width + self.padding
+            offset += step + self.padding
 
     def finalize(self):
         base._Widget.finalize(self)
@@ -247,3 +259,11 @@ class Systray(window._Window, base._Widget):
             xcffib.CurrentTime,
         )
         self.hide()
+
+        root = self.qtile.core._root.wid
+        for wid in self.icons:
+            self.conn.conn.core.ReparentWindow(wid, root, 0, 0)
+        self.conn.conn.flush()
+
+        del self.qtile.windows_map[self.wid]
+        self.conn.conn.core.DestroyWindow(self.wid)

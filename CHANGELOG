@@ -12,6 +12,10 @@ Qtile x.x.x, released xxxx-xx-xx:
         - Window.cmd_togroup's argument `groupName` should be changed to
           `group_name`. For the time being a log warning is in place and a
           migration is added. In the future `groupName` will fail.
+        - Add `min/max_ratio` to Tile layout and fix bug where windows can extend offscreen.
+        - Add ability for widget `mouse_callbacks` to take `lazy` calls (similar to keybindings)
+        - Add `aliases` to `lazy.spawncmd()` which takes a dictionary mapping convenient aliases
+          to full command lines.
 
 Qtile 0.18.1, released 2021-09-16:
     * features

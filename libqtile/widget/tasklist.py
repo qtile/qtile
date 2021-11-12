@@ -222,7 +222,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if callable(self.parse_text):
             try:
                 window_name = self.parse_text(window_name)
-            except:
+            except:  # noqa: E722
                 logger.exception("parse_text function failed:")
 
         # Emulate default widget behavior if markup_str is None
@@ -238,8 +238,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
     @property
     def windows(self):
-        current_layout = self.bar.screen.group.current_layout
-        return self.bar.screen.group.layouts[current_layout].get_windows()
+        return self.bar.screen.group.windows
 
     def calc_box_widths(self):
         """

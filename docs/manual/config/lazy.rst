@@ -7,7 +7,7 @@ Lazy objects
 The ``lazy.lazy`` object is a special helper object to specify a command for
 later execution. This object acts like the root of the object graph, which
 means that we can specify a key binding command with the same syntax used to
-call the command through a script or through :ref:`qshell`.
+call the command through a script or through :ref:`qtile-shell`.
 
 Example
 -------
@@ -122,6 +122,10 @@ ScratchPad DropDown functions
     * - ``lazy.group["group_name"].dropdown_toggle("name")``
       - Toggles the visibility of the specified DropDown window.
         On first use, the configured process is spawned.
+    * - ``lazy.group["group_name"].hide_all()``
+      - Hides all DropDown windows.
+    * - ``lazy.group["group_name"].dropdown_reconfigure("name", **configuration)``
+      - Update the configuration of the named DropDown.
 
 User-defined functions
 ----------------------

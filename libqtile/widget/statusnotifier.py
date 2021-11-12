@@ -345,13 +345,13 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
     """
     def __init__(self, service: str):
         super().__init__(service)
-        self._items = []
-        self._hosts = []
+        self._items: List[str] = []
+        self._hosts: List[str] = []
         self.service = service
-        self.on_item_added = None
-        self.on_host_added = None
-        self.on_item_removed = None
-        self.on_host_removed = None
+        self.on_item_added: Optional[Callable] = None
+        self.on_host_added: Optional[Callable] = None
+        self.on_item_removed: Optional[Callable] = None
+        self.on_host_removed: Optional[Callable] = None
 
     async def start(self):
         # Set up and register the service on ths bus
@@ -414,51 +414,51 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
             self.StatusNotifierHostUnregistered(name)
 
     @method()
-    def RegisterStatusNotifierItem(self, service: 's'):  # noqa: F821, N802
+    def RegisterStatusNotifierItem(self, service: 's'):  # type: ignore  # noqa: F821, N802
         if service not in self._items:
             self._items.append(service)
             self.StatusNotifierItemRegistered(service)
 
     @method()
-    def RegisterStatusNotifierHost(self, service: 's'):  # noqa: F821, N802
+    def RegisterStatusNotifierHost(self, service: 's'):  # type: ignore  # noqa: F821, N802
         if service not in self._hosts:
             self._hosts.append(service)
             self.StatusNotifierHostRegistered(service)
 
     @dbus_property(access=PropertyAccess.READ)
-    def RegisteredStatusNotifierItems(self) -> 'as':  # noqa: F722, F821, N802
+    def RegisteredStatusNotifierItems(self) -> 'as':  # type: ignore  # noqa: F722, F821, N802
         return self._items
 
     @dbus_property(access=PropertyAccess.READ)
-    def IsStatusNotifierHostRegistered(self) -> 'b':  # noqa: F821, N802
+    def IsStatusNotifierHostRegistered(self) -> 'b':  # type: ignore  # noqa: F821, N802
         # Note: applications may not register items unless this
         # returns True
         return len(self._hosts) > 0
 
     @dbus_property(access=PropertyAccess.READ)
-    def ProtocolVersion(self) -> 'i':  # noqa: F821, N802
+    def ProtocolVersion(self) -> 'i':  # type: ignore  # noqa: F821, N802
         return PROTOCOL_VERSION
 
     @signal()
-    def StatusNotifierItemRegistered(self, service) -> 's':  # noqa: F821, N802
+    def StatusNotifierItemRegistered(self, service) -> 's':  # type: ignore  # noqa: F821, N802
         if self.on_item_added is not None:
             self.on_item_added(service)
         return service
 
     @signal()
-    def StatusNotifierItemUnregistered(self, service) -> 's':  # noqa: F821, N802
+    def StatusNotifierItemUnregistered(self, service) -> 's':  # type: ignore  # noqa: F821, N802
         if self.on_item_removed is not None:
             self.on_item_removed(service)
         return service
 
     @signal()
-    def StatusNotifierHostRegistered(self, service) -> 's':  # noqa: F821, N802
+    def StatusNotifierHostRegistered(self, service) -> 's':  # type: ignore  # noqa: F821, N802
         if self.on_host_added is not None:
             self.on_host_added(service)
         return service
 
     @signal()
-    def StatusNotifierHostUnregistered(self, service) -> 's':  # noqa: F821, N802
+    def StatusNotifierHostUnregistered(self, service) -> 's':  # type: ignore  # noqa: F821, N802
         if self.on_host_removed is not None:
             self.on_host_removed(service)
         return service
@@ -550,7 +550,10 @@ class StatusNotifier(base._Widget):
 
     .. note::
 
-        Context menus are not currently supported by the widget.
+        Context menus are not currently supported by the official widget.
+        However, a modded version of the widget which provides basic menu
+        support is available from elParaguayo's `qtile-extras
+        <https://github.com/elParaguayo/qtile-extras>`_ repo.
 
     .. _xdg: https://pypi.org/project/xdg/
     """

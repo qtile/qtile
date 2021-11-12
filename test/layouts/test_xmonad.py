@@ -677,6 +677,25 @@ def test_tall_swap(manager):
     assert manager.c.layout.info()['main'] == 'focused'
     assert manager.c.layout.info()['secondary'] == ['three', 'two', 'one']
 
+    # Since the focused window is already to the right this swap shouldn't
+    # change the position of the windows
+    # The swap function will try to get all windows to the right of the
+    # focused window, which will result in a empty list that could cause
+    # an error if not handled
+
+    # Swap againts right edge
+    manager.c.layout.swap_right()
+    assert manager.c.layout.info()['main'] == 'focused'
+    assert manager.c.layout.info()['secondary'] == ['three', 'two', 'one']
+
+    # Same as above but for the swap_left function
+
+    # Swap againts left edge
+    manager.c.layout.swap_left()
+    manager.c.layout.swap_left()
+    assert manager.c.layout.info()['main'] == 'three'
+    assert manager.c.layout.info()['secondary'] == ['focused', 'two', 'one']
+
 
 @monadwide_config
 def test_wide_swap(manager):
@@ -718,6 +737,25 @@ def test_wide_swap(manager):
     manager.c.layout.swap_main()
     assert manager.c.layout.info()['main'] == 'focused'
     assert manager.c.layout.info()['secondary'] == ['three', 'two', 'one']
+
+    # Since the focused window is already to the left this swap shouldn't
+    # change the position of the windows
+    # The swap function will try to get all windows to the left of the
+    # focused window, which will result in a empty list that could cause
+    # an error if not handled
+
+    # Swap againts left edge
+    manager.c.layout.swap_left()
+    assert manager.c.layout.info()['main'] == 'focused'
+    assert manager.c.layout.info()['secondary'] == ['three', 'two', 'one']
+
+    # Same as above but for the swap_right function
+
+    # Swap againts right edge
+    manager.c.layout.swap_right()
+    manager.c.layout.swap_right()
+    assert manager.c.layout.info()['main'] == 'three'
+    assert manager.c.layout.info()['secondary'] == ['focused', 'two', 'one']
 
 
 @monadtall_config

@@ -386,7 +386,7 @@ class Window(_Window, metaclass=ABCMeta):
     def cmd_togroup(
         self,
         group_name: Optional[str] = None,
-        groupName: Optional[str] = None,  # Deprecated
+        groupName: Optional[str] = None,  # Deprecated  # noqa: N803
         switch_group: bool = False
     ) -> None:
         """Move window to a specified group

@@ -490,8 +490,8 @@ class _SimpleLayoutBase(Layout):
         client = self.focus_next(self.clients.current_client) or self.focus_first()
         self.group.focus(client, True)
 
-    def add(self, client, offset_to_current=0):
-        return self.clients.add(client, offset_to_current)
+    def add(self, client, offset_to_current=0, client_position=None):
+        return self.clients.add(client, offset_to_current, client_position)
 
     def remove(self, client):
         return self.clients.remove(client)

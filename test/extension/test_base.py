@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2015 Tycho Andersen
+# Copyright (c) 2021 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,40 +17,22 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-# Widget specific tests
-
 import pytest
 
-from libqtile.bar import Bar
-from libqtile.config import Screen
-from libqtile.widget import TextBox
-from test.conftest import BareConfig
+from libqtile.extension.base import _Extension
+
+parameters = [
+    ("#000", "#000"),
+    ("#000000", "#000000"),
+    ("000", "#000"),
+    ("000000", "#000000"),
+    ("#0000", None),
+    ("0000", None),
+    (0, None)
+]
 
 
-class ColorChanger(TextBox):
-    count = 0
-
-    def update(self, text):
-        self.count += 1
-        if self.count % 2 == 0:
-            self.foreground = "ff0000"
-        else:
-            self.foreground = "0000ff"
-        self.text = text
-
-
-class WidgetTestConf(BareConfig):
-    screens = [Screen(bottom=Bar([ColorChanger(name="colorchanger")], 20))]
-
-
-widget_conf = pytest.mark.parametrize("manager", [WidgetTestConf], indirect=True)
-
-
-@widget_conf
-def test_textbox_color_change(manager):
-    manager.c.widget["colorchanger"].update('f')
-    assert manager.c.widget["colorchanger"].info()["foreground"] == "0000ff"
-
-    manager.c.widget["colorchanger"].update('f')
-    assert manager.c.widget["colorchanger"].info()["foreground"] == "ff0000"
+@pytest.mark.parametrize("value,expected", parameters)
+def test_valid_colours(value, expected):
+    extension = _Extension(foreground=value)
+    assert extension.foreground == expected

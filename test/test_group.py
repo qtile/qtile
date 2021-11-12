@@ -22,10 +22,13 @@
 # SOFTWARE.
 
 import random
+
 import pytest
+
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
+
 
 class GroupConfig(Config):
     auto_fullscreen = True
@@ -47,7 +50,7 @@ group_config = pytest.mark.parametrize("manager", [GroupConfig], indirect=True)
 @group_config
 def test_window_order(manager):
     # windows to add
-    windows_name = ["one","two","three","four","five","six","seven","eight","nine","ten"]
+    windows_name = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
     windows = {}
 
     # Add windows one by one
