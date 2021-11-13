@@ -94,13 +94,23 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         self.layout.colour = textcolor
         if width is not None:
             self.layout.width = width
-        if line:
-            pad_y = [
-                (self.bar.height - self.layout.height - self.borderwidth) / 2,
-                (self.bar.height - self.layout.height + self.borderwidth) / 2
-            ]
+
+        if self.unfocused_highlight_method == None:
+            if self.highlight_method == 'line':
+                pad_y = [
+                    (self.bar.height - self.layout.height - self.borderwidth) / 2,
+                    (self.bar.height - self.layout.height + self.borderwidth) / 2
+                ]
+            else:
+                pad_y = self.padding_y
         else:
-            pad_y = self.padding_y
+            if line:
+                pad_y = [
+                    (self.bar.height - self.layout.height) / 2,
+                    (self.bar.height - self.layout.height) / 2
+                ]
+            else:
+                pad_y = self.padding_y
 
         if bordercolor is None:
             # border colour is set to None when we don't want to draw a border at all
@@ -398,6 +408,8 @@ class GroupBox(_GroupBase):
                                 else:
                                     border = self.this_current_screen_border
                                     to_highlight = True
+                                    if self.block_highlight_text_color:
+                                        text_color = self.block_highlight_text_color
                             else:
                                 is_block = (self.unfocused_highlight_method == 'block')
                                 is_line = (self.unfocused_highlight_method == 'line')
@@ -407,6 +419,8 @@ class GroupBox(_GroupBase):
                                 else:
                                     border = self.this_screen_border
                                     to_highlight = True
+                                    if self.block_highlight_text_color:
+                                        text_color = self.block_highlight_text_color
                         else:
                             if self.qtile.current_screen == g.screen:
                                 is_block = (self.highlight_method == 'block')
@@ -417,6 +431,8 @@ class GroupBox(_GroupBase):
                                 else:
                                     border = self.other_current_screen_border
                                     to_highlight = True
+                                    if self.block_highlight_text_color:
+                                        text_color = self.block_highlight_text_color
                             else:
                                 is_block = (self.unfocused_highlight_method == 'block')
                                 is_line = (self.unfocused_highlight_method == 'line')
@@ -426,6 +442,8 @@ class GroupBox(_GroupBase):
                                 else:
                                     border = self.other_screen_border
                                     to_highlight = True
+                                    if self.block_highlight_text_color:
+                                        text_color = self.block_highlight_text_color
             elif self.group_has_urgent(g) and \
                     self.urgent_alert_method in ('border', 'block', 'line'):
                 border = self.urgent_border
