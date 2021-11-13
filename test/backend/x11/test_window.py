@@ -728,3 +728,36 @@ def test_multiple_borders(xmanager):
         next_avg = sum(color) / 3
         assert avg < next_avg
         avg = next_avg
+
+
+class NetFrameExtentsConfig(BareConfig):
+    layouts = [
+        layout.Columns(border_width=2, border_on_single=True),
+        layout.Columns(border_width=4, border_on_single=True),
+    ]
+    floating_layout = layout.Floating(border_width=6)
+
+
+@pytest.mark.parametrize("xmanager", [NetFrameExtentsConfig], indirect=True)
+def test_net_frame_extents(xmanager):
+    conn = xcbq.Connection(xmanager.display)
+
+    def assert_frame(wid, frame):
+        r = conn.conn.core.GetProperty(
+            False,
+            wid,
+            conn.atoms["_NET_FRAME_EXTENTS"],
+            conn.atoms["CARDINAL"],
+            0,
+            (2 ** 32) - 1
+        ).reply()
+        assert r.value.to_atoms() == frame
+
+    pid = xmanager.test_window("one")
+    wid = xmanager.c.window.info()["id"]
+    assert_frame(wid, (2, 2, 2, 2))
+    xmanager.c.next_layout()
+    assert_frame(wid, (4, 4, 4, 4))
+    xmanager.c.window.enable_floating()
+    assert_frame(wid, (6, 6, 6, 6))
+    xmanager.kill_window(pid)

@@ -139,3 +139,67 @@ User-defined functions
     * - ``lazy.function(func, *args, **kwargs)``
       - Calls ``func(qtile, *args, **kwargs)``. NB. the ``qtile`` object is
         automatically passed as the first argument.
+
+Examples
+--------
+
+``lazy.function`` can also be used as a decorator for functions.
+
+::
+
+    from libqtile.config import Key
+    from libqtile.command import lazy
+
+    @lazy.function
+    def my_function(qtile):
+        ...
+
+    keys = [
+        Key(
+            ["mod1"], "k",
+            my_function
+        )
+    ]
+
+Additionally, you can pass arguments to user-defined function in one of two ways:
+
+1) In-line definition
+
+Arguments can be added to the ``lazy.function`` call.
+
+::
+
+    from libqtile.config import Key
+    from libqtile.command import lazy
+    from libqtile.log_utils import logger
+
+    def multiply(qtile, value, multiplier=10):
+        logger.warning(f"Multiplication results: {value * multiplier}")
+
+    keys = [
+        Key(
+            ["mod1"], "k",
+            lazy.function(multiply, 10, multiplier=2)
+        )
+    ]
+
+2) Decorator
+
+Arguments can also be passed to the decorated function.
+
+::
+
+    from libqtile.config import Key
+    from libqtile.command import lazy
+    from libqtile.log_utils import logger
+
+    @lazy.function
+    def multiply(qtile, value, multiplier=10):
+        logger.warning(f"Multiplication results: {value * multiplier}")
+
+    keys = [
+        Key(
+            ["mod1"], "k",
+            multiply(10, multiplier=2)
+        )
+    ]

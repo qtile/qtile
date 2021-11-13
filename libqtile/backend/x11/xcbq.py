@@ -171,6 +171,7 @@ PropertyMap = {
     "_NET_WM_STRUT_PARTIAL": ("CARDINAL", 32),
     "_NET_WM_WINDOW_OPACITY": ("CARDINAL", 32),
     "_NET_WM_WINDOW_TYPE": ("ATOM", 32),
+    "_NET_FRAME_EXTENTS": ("CARDINAL", 32),
     # Net State
     "_NET_WM_STATE": ("ATOM", 32),
     # Xembed
