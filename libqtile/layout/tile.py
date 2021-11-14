@@ -50,7 +50,7 @@ class Tile(_SimpleLayoutBase):
         ("border_on_single", 1, "Draw border if there is only one window."),
         ("border_width", 1, "Border width."),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])"),
-        ("margin_on_single", 1, "Draw margin if there is only one window."),
+        ("margin_on_single", True, "Whether to draw margin if there is only one window."),
         ("ratio", 0.618,
             "Width-percentage of screen size reserved for master windows."),
         ("max_ratio", 0.85, "Maximum width of master windows"),
