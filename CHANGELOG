@@ -20,6 +20,8 @@ Qtile x.x.x, released xxxx-xx-xx:
         - Add a new 'prefix' option to the net widget to display speeds with a static unit (e.g. MB).
         - `lazy.group.toscreen()` now does not toggle groups by default. To get this behaviour back, use
           `lazy.group.toscreen(toggle=True)`
+        - Tile layout has new `margin_on_single` and `border_on_single` option to specify
+          whether to draw margin and border when there is only one window.
 
 Qtile 0.18.1, released 2021-09-16:
     * features
