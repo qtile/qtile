@@ -86,11 +86,13 @@ class Output(HasListeners):
     @property
     def screen(self) -> Screen:
         assert self.core.qtile is not None
-        x, y, w, h = self.get_geometry()
-        for screen in self.core.qtile.screens:
-            if screen.x == x and screen.y == y:
-                if screen.width == w and screen.height == h:
-                    return screen
+
+        if len(self.core.qtile.screens) > 1:
+            x, y, w, h = self.get_geometry()
+            for screen in self.core.qtile.screens:
+                if screen.x == x and screen.y == y:
+                    if screen.width == w and screen.height == h:
+                        return screen
         return self.core.qtile.current_screen
 
     def _on_destroy(self, _listener, _data):
