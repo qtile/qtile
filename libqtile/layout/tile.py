@@ -168,7 +168,7 @@ class Tile(_SimpleLayoutBase):
                 h - border_width * 2,
                 border_width,
                 bc,
-                margin = 0 if (not self.margin_on_single and len(self.clients) == 1) else self.margin,
+                margin=0 if (not self.margin_on_single and len(self.clients) == 1) else self.margin,
             )
             client.unhide()
         else:
