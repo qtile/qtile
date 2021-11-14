@@ -116,8 +116,4 @@ def test_widget_init_config(manager_nospawn, minimal_conf_noscreen, widget_class
     i = manager_nospawn.c.bar["top"].info()
 
     # Check widget is registered by checking names of widgets in bar
-    allowed_names = [
-        widget.name,
-        "<no name>"  # systray is called "<no name>" as it subclasses _Window
-    ]
-    assert i["widgets"][0]["name"] in allowed_names
+    assert i["widgets"][0]["name"] == widget.name
