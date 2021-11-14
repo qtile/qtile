@@ -75,4 +75,51 @@ LibreOffice menus don't appear or don't stay visible
 A workaround for problem with the mouse in libreoffice is setting the environment variable »SAL_USE_VCLPLUGIN=gen«.
 It is dependet on your system configuration where to do this. e.g. ArchLinux with libreoffice-fresh in /etc/profile.d/libreoffice-fresh.sh.
 
+How can I get my groups to stick to screens?
+============================================
 
+This behaviour can be replicated by configuring your keybindings to not move
+groups between screens. For example if you want groups ``"1"``, ``"2"`` and
+``"3"`` on one screen and ``"q"``, ``"w"``, and ``"e"`` on the other, instead
+of binding keys to ``lazy.group[name].toscreen()``, use this:
+
+.. code-block:: python
+
+    def go_to_group(name: str) -> Callable:
+        def _inner(qtile: Qtile) -> None:
+            if len(qtile.screens) == 1:
+                qtile.groups_map[name].cmd_toscreen()
+                return
+
+            if name in '123':
+                qtile.focus_screen(0)
+                qtile.groups_map[name].cmd_toscreen()
+            else:
+                qtile.focus_screen(1)
+                qtile.groups_map[name].cmd_toscreen()
+
+        return _inner
+
+    for i in groups:
+        keys.append(Key([mod], i.name, lazy.function(go_to_group(i.name))))
+
+If you use the ``GroupBox`` widget you can make it reflect this behaviour:
+
+.. code-block:: python
+
+    groupbox1 = widget.GroupBox(visible_groups=['1', '2', '3'])
+    groupbox2 = widget.GroupBox(visible_groups=['q', 'w', 'e'])
+
+And if you jump between having single and double screens then modifying the
+visible groups on the fly may be useful:
+
+.. code-block:: python
+
+   @hook.subscribe.screens_reconfigured
+   async def _():
+       if len(qtile.screens) > 1:
+           groupbox1.visible_groups = ['1', '2', '3']
+       else:
+           groupbox1.visible_groups = ['1', '2', '3', 'q', 'w', 'e']
+       if hasattr(groupbox1, 'bar'):
+           groupbox1.bar.draw()
