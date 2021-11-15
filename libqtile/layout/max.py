@@ -31,13 +31,30 @@ class Max(_SimpleLayoutBase):
     commands to switch to next and previous windows in the stack.
     """
 
+    defaults = [
+        ("margin", 0, "Margin of the layout (int or list of ints [N E S W])"),
+        ("border_focus", "#0000ff", "Border colour(s) for the window when focused"),
+        ("border_normal", "#000000", "Border colour(s) for the window when not focused"),
+        ("border_width", 0, "Border width."),
+    ]
+
+    def __init__(self, **config):
+        _SimpleLayoutBase.__init__(self, **config)
+        self.add_defaults(Max.defaults)
+
     def add(self, client):
         return super().add(client, 1)
 
     def configure(self, client, screen_rect):
         if self.clients and client is self.clients.current_client:
             client.place(
-                screen_rect.x, screen_rect.y, screen_rect.width, screen_rect.height, 0, None
+                screen_rect.x,
+                screen_rect.y,
+                screen_rect.width - self.border_width * 2,
+                screen_rect.height - self.border_width * 2,
+                self.border_width,
+                self.border_focus if client.has_focus else self.border_normal,
+                margin=self.margin,
             )
             client.unhide()
         else:

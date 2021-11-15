@@ -28,6 +28,7 @@
 import pytest
 
 import libqtile.config
+import libqtile.resources.default_config
 from libqtile import layout
 from libqtile.confreader import Config
 from test.layouts.layout_utils import assert_focus_path, assert_focused
@@ -41,7 +42,11 @@ class MaxConfig(Config):
         libqtile.config.Group("c"),
         libqtile.config.Group("d"),
     ]
-    layouts = [layout.Max()]
+    layouts = [
+        layout.Max(),
+        layout.Max(margin=5),
+        layout.Max(margin=5, border_width=5),
+    ]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
@@ -98,3 +103,22 @@ def test_max_window_focus_cycle(manager):
 
     # assert window focus cycle, according to order in layout
     assert_focus_path(manager, "float1", "float2", "one", "two", "three")
+
+
+@max_config
+def test_max_window_margins_and_borders(manager):
+    def parse_margin(margin):
+        if isinstance(margin, int):
+            return (margin,) * 4
+        return margin
+
+    manager.test_window("one")
+    screen = manager.c.group["a"].screen.info()
+    for _layout in MaxConfig.layouts:
+        window = manager.c.window.info()
+        margin = parse_margin(_layout.margin)
+        border = _layout.border_width
+
+        assert screen["width"] == window["width"] + margin[0] + margin[2] + border * 2
+        assert screen["height"] == window["height"] + margin[1] + margin[3] + border * 2
+        manager.c.next_layout()
