@@ -209,6 +209,8 @@ class Qtile(CommandObject):
                 signal.SIGTERM: self.stop,
                 signal.SIGINT: self.stop,
                 signal.SIGHUP: self.stop,
+                signal.SIGUSR1: self.cmd_reload_config,
+                signal.SIGUSR2: self.cmd_restart,
             }), ipc.Server(
                 self._prepare_socket_path(self.socket_path),
                 self.server.call,
@@ -248,6 +250,8 @@ class Qtile(CommandObject):
     def cmd_reload_config(self) -> None:
         """
         Reload the configuration file.
+
+        Can also be triggered by sending Qtile a SIGUSR1 signal.
         """
         logger.debug('Reloading the configuration file')
 
@@ -1060,7 +1064,11 @@ class Qtile(CommandObject):
             send_notification("Configuration check", "No error found!")
 
     def cmd_restart(self) -> None:
-        """Restart qtile"""
+        """
+        Restart Qtile.
+
+        Can also be triggered by sending Qtile a SIGUSR2 signal.
+        """
         if not self.core.supports_restarting:
             raise CommandError(f"Backend does not support restarting: {self.core.name}")
 
