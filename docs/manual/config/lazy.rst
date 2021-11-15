@@ -82,9 +82,9 @@ Group functions
       - Switch window focus to previous window in group
     * - ``lazy.group["group_name"].toscreen()``
       - Move to the group called ``group_name``.
-        Takes an optional ``toggle`` parameter (defaults to True).
-        If this group is already on the screen, then the group is toggled
-        with last used
+        Takes an optional ``toggle`` parameter (defaults to False).
+        If this group is already on the screen, it does nothing by default;
+        to toggle with the last used group instead, use ``toggle=True``.
     * - ``lazy.layout.increase_ratio()``
       - Increase the space for master window at the expense of slave windows
     * - ``lazy.layout.decrease_ratio()``
