@@ -30,7 +30,11 @@ import itertools
 import pprint
 import sys
 import textwrap
-from typing import List
+from pathlib import Path
+from typing import List, Optional
+
+import typer
+from typer import Option
 
 from libqtile.command.base import CommandError, CommandException, SelectError
 from libqtile.command.client import CommandClient
@@ -151,62 +155,49 @@ def print_base_objects() -> None:
     print("\n".join(actions))
 
 
-def cmd_obj(args) -> None:
-    "Runs tool according to specified arguments."
+def cmd_obj(
+    obj_spec: List[str] = Option(
+        None, "-o", "--object", help="Specify path to object (space separated). "
+                                     "If no --function flag display available "
+                                     "commands. Use `cmd` to specify root command."
+    ),
+    function: Optional[str] = Option(
+        None, "-f", "--function", help="Select function to execute."
+    ),
+    args: List[str] = Option(
+        None, "-a", "--args", help="Set arguments supplied to function."
+    ),
+    info: bool = Option(
+        False, "-i", "--info", help="With both --object and --function args prints documentation."
+    ),
+    socket: Optional[Path] = Option(None, "-s", "--socket", help="Path of the Qtile IPC socket."),
+) -> None:
+    """
+    qtile.command functionality exposed to the shell.
+    """
 
-    if args.obj_spec:
-        sock_file = args.socket or find_sockfile()
+    if obj_spec:
+        sock_file = socket or find_sockfile()
         ipc_client = Client(sock_file)
         cmd_object = IPCCommandInterface(ipc_client)
         cmd_client = CommandClient(cmd_object)
-        obj = get_object(cmd_client, args.obj_spec)
+        obj = get_object(cmd_client, obj_spec)
 
-        if args.function == "help":
+        if function == "help":
             try:
-                print_commands("-o " + " ".join(args.obj_spec), obj)
+                print_commands("-o " + " ".join(obj_spec), obj)
             except CommandError:
                 if len(args.obj_spec) == 1:
                     print(f"{args.obj_spec} object needs a specified identifier e.g. '-o bar top'.")
-                    sys.exit(1)
+                    typer.Exit(code=1)
                 else:
                     raise
-        elif args.info:
-            print(args.function + get_formated_info(obj, args.function, args=True, short=False))
+        elif info:
+            print(function + get_formated_info(obj, function, args=True, short=False))
         else:
-            ret = run_function(obj, args.function, args.args)
+            ret = run_function(obj, function, args)
             if ret is not None:
                 pprint.pprint(ret)
     else:
         print_base_objects()
-        sys.exit(1)
-
-
-def add_subcommand(subparsers, parents):
-    epilog = textwrap.dedent('''\
-    Examples:
-     qtile cmd-obj
-     qtile cmd-obj -o cmd
-     qtile cmd-obj -o cmd -f prev_layout -i
-     qtile cmd-obj -o cmd -f prev_layout -a 3 # prev_layout on group 3
-     qtile cmd-obj -o group 3 -f focus_back
-     qtile cmd-obj -o cmd -f restart # restart qtile
-     ''')
-    description = 'qtile.command functionality exposed to the shell.'
-    parser = subparsers.add_parser("cmd-obj", help=description,
-                                   parents=parents, epilog=epilog,
-                                   formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--object', '-o', dest='obj_spec', nargs='+',
-                        help='Specify path to object (space separated).  '
-                             'If no --function flag display available commands.  '
-                             'Use `cmd` to specify root command.')
-    parser.add_argument('--function', '-f', default="help",
-                        help='Select function to execute.')
-    parser.add_argument('--args', '-a', nargs='+', default=[],
-                        help='Set arguments supplied to function.')
-    parser.add_argument('--info', '-i', action='store_true',
-                        help='With both --object and --function args prints documentation for function.')
-    parser.add_argument(
-        "--socket", "-s",
-        help='Path of the Qtile IPC socket.'
-    )
-    parser.set_defaults(func=cmd_obj)
+        typer.Exit(code=1)

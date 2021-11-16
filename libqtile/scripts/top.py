@@ -27,6 +27,10 @@ import linecache
 import os
 import sys
 import time
+from typing import Optional
+
+import typer
+from typer import Option
 
 from libqtile import ipc
 from libqtile.command import client, interface
@@ -139,16 +143,20 @@ def raw_stats(c, group_by='lineno', limit=10, force_start=False):
     print("Total allocated size: {0:.1f} KiB".format(total / 1024.0))
 
 
-def top(opts):
+def top(
+    lines: int = Option(10, '-L', '--lines', help="Number of lines."),
+    raw: bool = Option(False, '-r', '--raw', help="Output in raw form without curses."),
+    seconds: float = Option(1.5, '-t', '--time', help="Number of seconds between refreshes."),
+    force_start: bool = Option(False, '--force-start', help="Force start tracemalloc on Qtile."),
+    socket: Optional[str] = Option(None, '-s', '--socket', help="Path of the Qtile IPC socket."),
+):
+    """
+    Display Qtile's resource usage.
+    """
     if not ENABLED:
         raise Exception('Could not import tracemalloc')
-    lines = opts.lines
-    seconds = opts.seconds
-    force_start = opts.force_start
-    if opts.socket is None:
+    if socket is None:
         socket = ipc.find_sockfile()
-    else:
-        socket = opts.socket
     c = client.InteractiveCommandClient(
         interface.IPCCommandInterface(
             ipc.Client(socket),
@@ -156,7 +164,7 @@ def top(opts):
     )
 
     try:
-        if not opts.raw:
+        if not raw:
             curses.wrapper(get_stats, c, limit=lines, seconds=seconds,
                            force_start=force_start)
         else:
@@ -165,28 +173,11 @@ def top(opts):
         print("tracemalloc not started on qtile, start by setting "
               "PYTHONTRACEMALLOC=1 before starting qtile")
         print("or force start tracemalloc now, but you'll lose early traces")
-        sys.exit(1)
+        typer.Exit(code=1)
     except TraceCantStart:
         print("Can't start tracemalloc on qtile, check the logs")
     except KeyboardInterrupt:
-        sys.exit(1)
+        typer.Exit(code=1)
     except curses.error:
         print("Terminal too small for curses interface.")
         raw_stats(c, limit=lines, force_start=force_start)
-
-
-def add_subcommand(subparsers, parents):
-    parser = subparsers.add_parser("top", parents=parents,
-                                   help="resource usage information")
-    parser.add_argument('-L', '--lines', type=int, dest="lines", default=10,
-                        help='Number of lines.')
-    parser.add_argument('-r', '--raw', dest="raw", action="store_true",
-                        default=False, help='Output raw without curses')
-    parser.add_argument('-t', '--time', type=float, dest="seconds",
-                        default=1.5, help='Number of seconds to refresh')
-    parser.add_argument('--force-start', dest="force_start",
-                        action="store_true", default=False,
-                        help='Force start tracemalloc on qtile')
-    parser.add_argument('-s', '--socket', type=str, dest="socket",
-                        help='Use specified communication socket.')
-    parser.set_defaults(func=top)

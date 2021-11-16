@@ -22,9 +22,12 @@
 # whose defaults depend on a reasonable locale sees something reasonable.
 import shutil
 import subprocess
-import sys
 import tempfile
-from os import environ, getenv, path
+from os import environ, path
+from pathlib import Path
+
+import typer
+from typer import Option
 
 from libqtile import confreader
 
@@ -87,7 +90,7 @@ def type_check_config_vars(tempdir, config_name):
     )
     p.wait()
     if p.returncode != 0:
-        sys.exit(1)
+        typer.Exit(code=1)
 
 
 def type_check_config_args(config_file):
@@ -102,44 +105,33 @@ def type_check_config_args(config_file):
         print("config file type checking succeeded")
     except subprocess.CalledProcessError as e:
         print("config file type checking failed: {}".format(e))
-        sys.exit(1)
+        typer.Exit(code=1)
 
 
-def check_config(args):
-    print("checking qtile config file {}".format(args.configfile))
+def check(
+    configfile: Path = Option(
+        confreader.path, "-c", "--config", help="Use the specified configuration file."
+    ),
+):
+    """
+    Check a configuration file for errors.
+    """
+    print("Checking Qtile config file:", configfile)
 
     # need to do all the checking in a tempdir because we need to write stuff
     # for stubtest
     with tempfile.TemporaryDirectory() as tempdir:
-        shutil.copytree(path.dirname(args.configfile), tempdir, dirs_exist_ok=True)
-        tmp_path = path.join(tempdir, path.basename(args.configfile))
+        shutil.copytree(configfile.parent, tempdir, dirs_exist_ok=True)
+        tmp_path = path.join(tempdir, configfile.name)
 
         # are the top level config variables the right type?
-        module_name = path.splitext(path.basename(args.configfile))[0]
-        type_check_config_vars(tempdir, module_name)
+        type_check_config_vars(tempdir, configfile.stem)
 
         # are arguments passed to qtile APIs correct?
         type_check_config_args(tmp_path)
 
     # can we load the config?
-    config = confreader.Config(args.configfile)
+    config = confreader.Config(configfile)
     config.load()
     config.validate()
-    print("config file can be loaded by qtile")
-
-
-def add_subcommand(subparsers, parents):
-    parser = subparsers.add_parser(
-        "check",
-        parents=parents,
-        help="Check a configuration file for errors"
-    )
-    parser.add_argument(
-        "-c", "--config",
-        action="store",
-        default=path.expanduser(path.join(
-            getenv('XDG_CONFIG_HOME', '~/.config'), 'qtile', 'config.py')),
-        dest="configfile",
-        help='Use the specified configuration file',
-    )
-    parser.set_defaults(func=check_config)
+    print("Config file can be loaded by Qtile.")

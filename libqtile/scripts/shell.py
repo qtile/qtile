@@ -18,47 +18,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from pathlib import Path
+from typing import Optional
+
+import typer
+
 from libqtile import ipc, sh
 from libqtile.command import interface
 
 
-def qshell(args) -> None:
-    if args.socket is None:
+def shell(
+    socket: Optional[Path] = typer.Option(None, "-s", "--socket", help="Path of the Qtile IPC socket."),
+    command: Optional[str] = typer.Option(None, "-c", "--command", help="Run the specified shell command."),
+    json: bool = typer.Option(False, "-j", "--json", help="Don't spawn apps (Used for restart)."),
+) -> None:
+    """
+    A shell-like interface to Qtile.
+    """
+    if socket is None:
         socket = ipc.find_sockfile()
-    else:
-        socket = args.socket
-    client = ipc.Client(socket, is_json=args.is_json)
+    client = ipc.Client(socket, is_json=json)
     cmd_object = interface.IPCCommandInterface(client)
     qsh = sh.QSh(cmd_object)
-    if args.command is not None:
-        qsh.process_line(args.command)
+    if command:
+        qsh.process_line(command)
     else:
         qsh.loop()
-
-
-def add_subcommand(subparsers, parents):
-    parser = subparsers.add_parser(
-        "shell",
-        parents=parents,
-        help="shell-like interface to qtile"
-    )
-    parser.add_argument(
-        "-s", "--socket",
-        action="store", type=str,
-        default=None,
-        help='Use specified socket to connect to qtile.'
-    )
-    parser.add_argument(
-        "-c", "--command",
-        action="store", type=str,
-        default=None,
-        help='Run the specified qshell command and exit.'
-    )
-    parser.add_argument(
-        "-j", "--json",
-        action="store_true",
-        default=False,
-        dest="is_json",
-        help='Use json in order to communicate with qtile server.'
-    )
-    parser.set_defaults(func=qshell)

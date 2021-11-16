@@ -21,13 +21,22 @@
 
 # Set the locale before any widgets or anything are imported, so any widget
 # whose defaults depend on a reasonable locale sees something reasonable.
+
 import locale
+import logging
+import sys
+from enum import Enum
 from os import getenv, makedirs, path
-from sys import exit
+from pathlib import Path
+from typing import Optional
+
+import typer
+from typer import Option
 
 import libqtile.backend
 from libqtile import confreader
-from libqtile.log_utils import logger
+from libqtile.backend import Backends
+from libqtile.log_utils import init_log, LogLevels, logger
 
 
 def rename_process():
@@ -46,24 +55,31 @@ def rename_process():
         pass
 
 
-def make_qtile(options):
-    kore = libqtile.backend.get_core(options.backend)
+def make_qtile(
+    configfile: Path,
+    socket: Optional[Path],
+    backend: Backends,
+    no_spawn: bool,
+    with_state: Optional[str],
+):
 
-    if not path.isfile(options.configfile):
+    kore = libqtile.backend.get_core(backend)
+
+    if not configfile.is_file():
         try:
-            makedirs(path.dirname(options.configfile), exist_ok=True)
+            makedirs(configfile.parent, exist_ok=True)
             from shutil import copyfile
             default_config_path = path.join(path.dirname(__file__),
                                             "..",
                                             "resources",
                                             "default_config.py")
-            copyfile(default_config_path, options.configfile)
-            logger.info('Copied default_config.py to %s', options.configfile)
+            copyfile(default_config_path, configfile)
+            logger.info('Copied default_config.py to %s', configfile)
         except Exception as e:
             logger.exception('Failed to copy default_config.py to %s: (%s)',
-                             options.configfile, e)
+                             configfile, e)
 
-    config = confreader.Config(options.configfile)
+    config = confreader.Config(configfile)
 
     # XXX: the import is here because we need to call init_log
     # before start importing stuff
@@ -71,67 +87,37 @@ def make_qtile(options):
     return Qtile(
         kore,
         config,
-        no_spawn=options.no_spawn,
-        state=options.state,
-        socket_path=options.socket,
+        no_spawn=no_spawn,
+        state=with_state,
+        socket_path=socket,
     )
 
 
-def start(options):
+def start(
+    config: Path = Option(confreader.path, "-c", "--config", help="Use the specified configuration file."),
+    socket: Optional[Path] = Option(None, "-s", "--socket", help="Path of the Qtile IPC socket."),
+    backend: Backends = Option(Backends.x11, "-b", "--backend", help="Use specified backend."),
+    log_level: LogLevels = Option(
+        LogLevels.WARNING, "-l", "--log-level", help="Set the log level.", case_sensitive=False
+    ),
+    no_spawn: bool = Option(False, "--no_spawn", help="Don't spawn apps (Used for restart)."),
+    with_state: Optional[Path] = Option(None, help="State file (Used for restart)."),
+) -> None:
+    """
+    Start Qtile.
+    """
     try:
         locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
     except locale.Error:
         pass
 
+    init_log(log_level=log_level.value, log_color=sys.stdout.isatty())
+
     rename_process()
-    q = make_qtile(options)
+    q = make_qtile(config, socket, backend, no_spawn, with_state)
     try:
         q.loop()
     except Exception:
         logger.exception('Qtile crashed')
-        exit(1)
+        raise typer.Exit(code=1)
     logger.info('Exiting...')
-
-
-def add_subcommand(subparsers, parents):
-    parser = subparsers.add_parser(
-        "start",
-        parents=parents,
-        help="Start the window manager"
-    )
-    parser.add_argument(
-        "-c", "--config",
-        action="store",
-        default=path.expanduser(path.join(
-            getenv('XDG_CONFIG_HOME', '~/.config'), 'qtile', 'config.py')),
-        dest="configfile",
-        help='Use the specified configuration file',
-    )
-    parser.add_argument(
-        "-s", "--socket",
-        action="store",
-        default=None,
-        dest="socket",
-        help='Path of the Qtile IPC socket.'
-    )
-    parser.add_argument(
-        "-n", "--no-spawn",
-        action="store_true",
-        default=False,
-        dest="no_spawn",
-        help='Avoid spawning apps. (Used for restart)'
-    )
-    parser.add_argument(
-        '--with-state',
-        default=None,
-        dest='state',
-        help='Pickled QtileState object (typically used only internally)',
-    )
-    parser.add_argument(
-        '-b', '--backend',
-        default='x11',
-        dest='backend',
-        choices=libqtile.backend.CORES,
-        help='Use specified backend.',
-    )
-    parser.set_defaults(func=start)

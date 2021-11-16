@@ -30,7 +30,7 @@ sys.path.insert(0, base_dir)
 
 # import lifecycle early so no atexit handlers are lost on restart
 import libqtile.core.lifecycle  # noqa: F401, E402
-from libqtile.scripts.main import main  # noqa: E402
+from libqtile.scripts.main import app  # noqa: E402
 
 if __name__ == '__main__':
-    main()
+    app()

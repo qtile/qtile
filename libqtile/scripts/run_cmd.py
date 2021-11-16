@@ -25,27 +25,36 @@
 import argparse
 import atexit
 import subprocess
+from pathlib import Path
+from typing import Optional, List
+
+from typer import Option, Argument
 
 from libqtile import ipc
 from libqtile.command import graph
 
 
-def run_cmd(opts) -> None:
-    if opts.socket is None:
+def run_cmd(
+    cmd: str = Argument(..., help="The command the execute."),
+    args: List[str] = Argument(None, help="Optional arguments to pass to command."),
+    socket: Optional[Path] = Option(None, "-s", "--socket", help="Path of the Qtile IPC socket."),
+    intrusive: bool = Option(False, "-i", "--intrusive", help="If the new window should be intrusive."),
+    floating: bool = Option(False, "-f", "--float", help="If the new window should be floating."),
+    no_break: bool = Option(False, "-b", "--dont-break", help="Do not break on match (keep applying rules)."),
+    group: Optional[str] = Option(None, "-g", "--group", help="Set the window's group."),
+) -> None:
+    """
+    A wrapper around the command graph.
+    """
+    if socket is None:
         socket = ipc.find_sockfile()
-    else:
-        socket = opts.socket
     client = ipc.Client(socket)
     root = graph.CommandGraphRoot()
 
-    cmd = [opts.cmd]
-    if opts.args:
-        cmd.extend(opts.args)
-
-    proc = subprocess.Popen(cmd)
+    proc = subprocess.Popen((cmd,) + args)
     match_args = {"net_wm_pid": proc.pid}
-    rule_args = {"float": opts.float, "intrusive": opts.intrusive,
-                 "group": opts.group, "break_on_match": not opts.dont_break}
+    rule_args = {"float": floating, "intrusive": intrusive,
+                 "group": group, "break_on_match": not no_break}
 
     graph_cmd = root.call("add_rule")
     _, rule_id = client.send((root.selectors, graph_cmd.name, (match_args, rule_args), {}))
@@ -57,44 +66,3 @@ def run_cmd(opts) -> None:
     atexit.register(remove_rule)
 
     proc.wait()
-
-
-def add_subcommand(subparsers, parents):
-    parser = subparsers.add_parser(
-        "run-cmd",
-        parents=parents,
-        help="A wrapper around the command graph"
-    )
-    parser.add_argument(
-        '-s',
-        '--socket',
-        help='Use specified communication socket.')
-    parser.add_argument(
-        '-i',
-        '--intrusive',
-        action='store_true',
-        help='If the new window should be intrusive.')
-    parser.add_argument(
-        '-f',
-        '--float',
-        action='store_true',
-        help='If the new window should be float.')
-    parser.add_argument(
-        '-b',
-        '--dont-break',
-        action='store_true',
-        help='Do not break on match (keep applying rules).')
-    parser.add_argument(
-        '-g',
-        '--group',
-        help='Set the window group.')
-    parser.add_argument(
-        'cmd',
-        help='Command to execute.'),
-    parser.add_argument(
-        'args',
-        nargs=argparse.REMAINDER,
-        metavar='[args ...]',
-        help='Optional arguments to pass to command.'
-    )
-    parser.set_defaults(func=run_cmd)

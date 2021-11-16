@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import importlib
 import sys
+from os import getenv
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -37,6 +38,9 @@ if TYPE_CHECKING:
 
     from libqtile.config import Group, Key, Mouse, Rule, Screen
     from libqtile.layout.base import Layout
+
+
+path = Path(getenv('XDG_CONFIG_HOME', '~/.config')).expanduser() / 'qtile' / 'config.py'
 
 
 class ConfigError(Exception):

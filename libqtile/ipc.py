@@ -31,6 +31,7 @@ import marshal
 import os.path
 import socket
 import struct
+from pathlib import Path
 from typing import Any, Optional, Tuple
 
 from libqtile.log_utils import logger
@@ -61,25 +62,25 @@ def find_sockfile(display: str = None):
         - else raise an IPCError.
 
     """
-    cache_directory = get_cache_dir()
+    cache_directory = Path(get_cache_dir())
 
     if display:
-        return os.path.join(cache_directory, SOCKBASE % display)
+        return cache_directory / (SOCKBASE % display)
 
     display = os.environ.get("WAYLAND_DISPLAY")
     if display:
-        return os.path.join(cache_directory, SOCKBASE % display)
+        return cache_directory / (SOCKBASE % display)
 
     display = os.environ.get("DISPLAY")
     if display:
-        return os.path.join(cache_directory, SOCKBASE % display)
+        return cache_directory / (SOCKBASE % display)
 
-    sockfile = os.path.join(cache_directory, SOCKBASE % "wayland-0")
-    if os.path.exists(sockfile):
+    sockfile = cache_directory / (SOCKBASE % "wayland-0")
+    if sockfile.exists():
         return sockfile
 
-    sockfile = os.path.join(cache_directory, SOCKBASE % ":0")
-    if os.path.exists(sockfile):
+    sockfile = cache_directory / (SOCKBASE % ":0")
+    if sockfile.exists():
         return sockfile
 
     raise IPCError("Could not find socket file.")
@@ -137,7 +138,7 @@ class _IPC:
 
 
 class Client:
-    def __init__(self, socket_path: str, is_json=False) -> None:
+    def __init__(self, socket_path: Path, is_json=False) -> None:
         """Create a new IPC client
 
         Parameters
@@ -170,7 +171,7 @@ class Client:
         """
         try:
             reader, writer = await asyncio.wait_for(
-                asyncio.open_unix_connection(path=self.socket_path), timeout=3
+                asyncio.open_unix_connection(path=self.socket_path.as_posix()), timeout=3
             )
         except (ConnectionRefusedError, FileNotFoundError):
             raise IPCError("Could not open {}".format(self.socket_path))
@@ -194,18 +195,14 @@ class Client:
 
 
 class Server:
-    def __init__(self, socket_path: str, handler) -> None:
-        self.socket_path = socket_path
+    def __init__(self, socket_path: Path, handler) -> None:
         self.handler = handler
         self.server = None  # type: Optional[asyncio.AbstractServer]
-
-        if os.path.exists(socket_path):
-            os.unlink(socket_path)
 
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, 0)
         flags = fcntl.fcntl(self.sock.fileno(), fcntl.F_GETFD)
         fcntl.fcntl(self.sock.fileno(), fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
-        self.sock.bind(self.socket_path)
+        self.sock.bind(socket_path.as_posix())
 
     async def _server_callback(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter

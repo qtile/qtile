@@ -23,6 +23,12 @@ import shutil
 import sys
 from functools import partial
 from glob import glob
+from pathlib import Path
+
+import typer
+from typer import Option
+
+from libqtile import confreader
 
 BACKUP_SUFFIX = ".migrate.bak"
 
@@ -192,19 +198,28 @@ def file_and_backup(config_dir):
         yield py, backup
 
 
-def do_migrate(args):
+def migrate(
+    config: Path = Option(
+        confreader.path, "-c", "--config", help="Use the specified configuration file"
+                                                "(migrates every .py file in this directory)."
+    ),
+    yes: bool = Option(False, "--yes", help="Automatically apply diffs with no confirmation"),
+):
+    """
+    Migrate a configuration file to the current API.
+    """
     if "bowler" not in sys.modules:
-        print("bowler can't be found, not migrating config file")
-        print("install it and try again")
-        sys.exit(1)
+        typer.echo("bowler can't be found, not migrating config file")
+        typer.echo("install it and try again")
+        typer.Exit(code=1)
 
-    config_dir = os.path.dirname(args.config)
+    config_dir = config.parent
     for py, backup in file_and_backup(config_dir):
         shutil.copyfile(py, backup)
 
     for m in MIGRATIONS:
         q = bowler.Query(config_dir)
-        m(q).execute(interactive=not args.yes, write=True)
+        m(q).execute(interactive=not yes, write=True)
 
     changed = False
     for py, backup in file_and_backup(config_dir):
@@ -214,29 +229,6 @@ def do_migrate(args):
             break
 
     if not changed:
-        print("Config unchanged.")
+        typer.echo("Config unchanged.")
         for _, backup in file_and_backup(config_dir):
             os.remove(backup)
-
-
-def add_subcommand(subparsers, parents):
-    parser = subparsers.add_parser(
-        "migrate",
-        parents=parents,
-        help="Migrate a configuration file to the current API"
-    )
-    parser.add_argument(
-        "-c",
-        "--config",
-        action="store",
-        default=os.path.expanduser(
-            os.path.join(os.getenv("XDG_CONFIG_HOME", "~/.config"), "qtile", "config.py")
-        ),
-        help="Use the specified configuration file (migrates every .py file in this directory)",
-    )
-    parser.add_argument(
-        "--yes",
-        action="store_true",
-        help="Automatically apply diffs with no confirmation",
-    )
-    parser.set_defaults(func=do_migrate)

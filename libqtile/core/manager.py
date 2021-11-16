@@ -79,7 +79,7 @@ class Qtile(CommandObject):
         config,  # mypy doesn't like the config's dynamic attributes
         no_spawn: bool = False,
         state: Optional[str] = None,
-        socket_path: Optional[str] = None,
+        socket_path: Optional[Path] = None,
     ):
         self.core = kore
         self.config = config
@@ -179,17 +179,14 @@ class Qtile(CommandObject):
         if initial:
             hook.fire("startup_complete")
 
-    def _prepare_socket_path(
-        self,
-        socket_path: Optional[str] = None,
-    ) -> str:
-        if socket_path is None:
-            socket_path = ipc.find_sockfile(self.core.display_name)
+    def _prepare_socket_path(self) -> str:
+        if self.socket_path is None:
+            self.socket_path = ipc.find_sockfile(self.core.display_name)
 
-        if os.path.exists(socket_path):
-            os.unlink(socket_path)
+        if self.socket_path.exists():
+            self.socket_path.unlink()
 
-        return socket_path
+        return self.socket_path
 
     def loop(self) -> None:
         asyncio.run(self.async_loop())
@@ -212,7 +209,7 @@ class Qtile(CommandObject):
                 signal.SIGUSR1: self.cmd_reload_config,
                 signal.SIGUSR2: self.cmd_restart,
             }), ipc.Server(
-                self._prepare_socket_path(self.socket_path),
+                self._prepare_socket_path(),
                 self.server.call,
             ):
                 self.load_config(initial=True)

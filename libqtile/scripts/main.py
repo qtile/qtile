@@ -2,7 +2,9 @@ import argparse
 import logging
 import sys
 
-from libqtile.log_utils import init_log
+import typer
+from typer import Option
+
 from libqtile.scripts import check, cmd_obj, migrate, run_cmd, shell, start, top
 
 try:
@@ -17,55 +19,38 @@ except ModuleNotFoundError:
     except (pkg_resources.DistributionNotFound, ModuleNotFoundError):
         VERSION = 'dev'
 
+app = typer.Typer(
+    help="A full-featured, pure-Python tiling window manager.",
+    context_settings={"help_option_names": ["-h", "--help"]},
+    no_args_is_help=True,
+)
+app.command()(start.start)
+app.command()(shell.shell)
+app.command()(top.top)
+app.command()(run_cmd.run_cmd)
+app.command()(cmd_obj.cmd_obj)
+app.command()(check.check)
+app.command()(migrate.migrate)
 
-def main():
-    parent_parser = argparse.ArgumentParser(add_help=False)
-    parent_parser.add_argument(
-        '-l', '--log-level',
-        default='WARNING',
-        dest='log_level',
-        type=str.upper,
-        choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),
-        help='Set qtile log level'
-    )
 
-    main_parser = argparse.ArgumentParser(
-        prog='qtile',
-        description='A full-featured, pure-Python tiling window manager.',
-    )
-    main_parser.add_argument(
-        '-v', '--version',
-        action='version',
-        version=VERSION,
-    )
+def _print_version(do):
+    if do:
+        typer.echo(f"Your Qtile version is: {VERSION}")
+        raise typer.Exit()
 
-    subparsers = main_parser.add_subparsers()
-    start.add_subcommand(subparsers, [parent_parser])
-    shell.add_subcommand(subparsers, [parent_parser])
-    top.add_subcommand(subparsers, [parent_parser])
-    run_cmd.add_subcommand(subparsers, [parent_parser])
-    cmd_obj.add_subcommand(subparsers, [parent_parser])
-    check.add_subcommand(subparsers, [parent_parser])
-    migrate.add_subcommand(subparsers, [parent_parser])
 
-    # `qtile help` should print help
-    def print_help(options):
-        main_parser.print_help()
-    help_ = subparsers.add_parser("help", help="Print help information and exit")
-    help_.set_defaults(func=print_help)
+def _print_help(do):
+    if do:
+        typer.echo(f"HELP")
+        raise typer.Exit()
 
-    options = main_parser.parse_args()
-    try:
-        log_level = getattr(logging, options.log_level)
-        init_log(log_level=log_level, log_color=sys.stdout.isatty())
-        options.func(options)
-    except AttributeError:
-        main_parser.print_usage()
-        print("")
-        print("Did you mean:")
-        print(" ".join(sys.argv + ['start']))
-        sys.exit(1)
+
+@app.callback()
+def main(
+    _version: bool = Option(False, "--version", callback=_print_version, is_eager=True),
+):
+    pass
 
 
 if __name__ == "__main__":
-    main()
+    app()

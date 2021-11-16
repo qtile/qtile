@@ -24,8 +24,13 @@
 import os
 import sys
 import warnings
+from enum import Enum
 from logging import (
+    DEBUG,
+    INFO,
     WARNING,
+    ERROR,
+    CRITICAL,
     Formatter,
     StreamHandler,
     captureWarnings,
@@ -34,6 +39,14 @@ from logging import (
 from logging.handlers import RotatingFileHandler
 
 logger = getLogger(__package__)
+
+
+class LogLevels(str, Enum):
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
 
 
 class ColorFormatter(Formatter):
