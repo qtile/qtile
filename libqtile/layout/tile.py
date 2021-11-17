@@ -47,8 +47,10 @@ class Tile(_SimpleLayoutBase):
     defaults = [
         ("border_focus", "#0000ff", "Border colour(s) for the focused window."),
         ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
+        ("border_on_single", True, "Whether to draw border if there is only one window."),
         ("border_width", 1, "Border width."),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])"),
+        ("margin_on_single", True, "Whether to draw margin if there is only one window."),
         ("ratio", 0.618,
             "Width-percentage of screen size reserved for master windows."),
         ("max_ratio", 0.85, "Maximum width of master windows"),
@@ -155,6 +157,10 @@ class Tile(_SimpleLayoutBase):
                 bc = self.border_focus
             else:
                 bc = self.border_normal
+            if not self.border_on_single and len(self.clients) == 1:
+                border_width = 0
+            else:
+                border_width = self.border_width
             client.place(
                 x,
                 y,
@@ -162,7 +168,7 @@ class Tile(_SimpleLayoutBase):
                 h - border_width * 2,
                 border_width,
                 bc,
-                margin=self.margin,
+                margin=0 if (not self.margin_on_single and len(self.clients) == 1) else self.margin,
             )
             client.unhide()
         else:

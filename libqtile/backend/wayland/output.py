@@ -40,7 +40,7 @@ from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import List, Tuple
+    from typing import List, Tuple, Union
 
     from wlroots.wlr_types import Surface
 
@@ -86,11 +86,13 @@ class Output(HasListeners):
     @property
     def screen(self) -> Screen:
         assert self.core.qtile is not None
-        x, y, w, h = self.get_geometry()
-        for screen in self.core.qtile.screens:
-            if screen.x == x and screen.y == y:
-                if screen.width == w and screen.height == h:
-                    return screen
+
+        if len(self.core.qtile.screens) > 1:
+            x, y, w, h = self.get_geometry()
+            for screen in self.core.qtile.screens:
+                if screen.x == x and screen.y == y:
+                    if screen.width == w and screen.height == h:
+                        return screen
         return self.core.qtile.current_screen
 
     def _on_destroy(self, _listener, _data):
@@ -220,6 +222,7 @@ class Output(HasListeners):
     def _render_dnd_icon(self, now: Timespec) -> None:
         """Render the drag-n-drop icon if there is one."""
         dnd = self.core.live_dnd
+        assert dnd
         icon = dnd.wlr_drag.icon
         if icon.mapped:
             texture = icon.surface.get_texture()

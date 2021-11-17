@@ -336,7 +336,7 @@ class _Group(CommandObject):
         """Returns a dictionary of info for this group"""
         return self.info()
 
-    def cmd_toscreen(self, screen=None, toggle=True):
+    def cmd_toscreen(self, screen=None, toggle=False):
         """Pull a group to a specified screen.
 
         Parameters

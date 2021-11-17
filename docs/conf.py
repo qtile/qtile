@@ -207,6 +207,10 @@ html_static_path = ['_static']
 # typographically correct entities.
 #html_use_smartypants = True
 
+# smartypants was deprecated in favour of smartquotes
+# We want to disable this so users can copy an paste text into their configs
+smartquotes = False
+
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
 

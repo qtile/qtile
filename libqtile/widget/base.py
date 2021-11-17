@@ -35,7 +35,9 @@ import subprocess
 from typing import Any, List, Tuple
 
 from libqtile import bar, configurable, confreader
+from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandObject, ItemT
+from libqtile.lazy import LazyCall
 from libqtile.log_utils import logger
 
 
@@ -93,8 +95,11 @@ class _Widget(CommandObject, configurable.Configurable):
     have been configured.
 
     Callback functions can be assigned to button presses by passing a dict to the
-    'callbacks' kwarg. No arguments are passed to the callback function so, if
+    'callbacks' kwarg. No arguments are passed to the function so, if
     you need access to the qtile object, it needs to be imported into your code.
+
+    ``lazy`` functions can also be passed as callback functions and can be used in
+    the same was as keybindings.
 
     For example:
 
@@ -105,18 +110,26 @@ class _Widget(CommandObject, configurable.Configurable):
         def open_calendar():
             qtile.cmd_spawn('gsimplecal next_month')
 
-        clock = widget.Clock(mouse_callbacks={'Button1': open_calendar})
+        clock = widget.Clock(
+            mouse_callbacks={
+                'Button1': open_calendar,
+                'Button3': lazy.spawn('gsimplecal prev_month')
+            }
+        )
 
     When the clock widget receives a click with button 1, the ``open_calendar`` function
-    will be executed. Callbacks can be assigned to other buttons by adding more entries
-    to the passed dictionary.
+    will be executed.
     """
     orientations = ORIENTATION_BOTH
     offsetx: int = 0
     offsety: int = 0
     defaults = [
         ("background", None, "Widget background color"),
-        ("mouse_callbacks", {}, "Dict of mouse button press callback functions."),
+        (
+            "mouse_callbacks",
+            {},
+            "Dict of mouse button press callback functions. Acceps functions and ``lazy`` calls."
+        ),
     ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, length, **config):
@@ -154,12 +167,12 @@ class _Widget(CommandObject, configurable.Configurable):
     def width(self):
         if self.bar.horizontal:
             return self.length
-        return self.bar.size
+        return self.bar.size - (self.bar.border_width[1] + self.bar.border_width[3])
 
     @property
     def height(self):
         if self.bar.horizontal:
-            return self.bar.size
+            return self.bar.size - (self.bar.border_width[0] + self.bar.border_width[2])
         return self.length
 
     @property
@@ -236,7 +249,16 @@ class _Widget(CommandObject, configurable.Configurable):
     def button_press(self, x, y, button):
         name = 'Button{0}'.format(button)
         if name in self.mouse_callbacks:
-            self.mouse_callbacks[name]()
+            cmd = self.mouse_callbacks[name]
+            if isinstance(cmd, LazyCall):
+                if cmd.check(self.qtile):
+                    status, val = self.qtile.server.call(
+                        (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
+                    )
+                    if status in (interface.ERROR, interface.EXCEPTION):
+                        logger.error("Mouse callback command error %s: %s" % (cmd.name, val))
+            else:
+                cmd()
 
     def button_release(self, x, y, button):
         pass
@@ -440,7 +462,7 @@ class _TextBox(_Widget):
             self.actual_padding or 0,
             int(self.bar.height / 2.0 - self.layout.height / 2.0) + 1
         )
-        self.drawer.draw(offsetx=self.offsetx, width=self.width)
+        self.drawer.draw(offsetx=self.offsetx, offsety=self.offsety, width=self.width)
 
     def cmd_set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED,
                      fontshadow=UNSPECIFIED):
@@ -540,7 +562,7 @@ class ThreadPoolText(_TextBox):
     """
     defaults = [
         ("update_interval", 600, "Update interval in seconds, if none, the "
-            "widget updates whenever it's done'."),
+            "widget updates whenever it's done."),
     ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, text, **config):
@@ -676,7 +698,7 @@ class Mirror(_Widget):
             if self.reflects.drawer.needs_update:
                 self.drawer.clear(self.background or self.bar.background)
                 self.reflects.drawer.paint_to(self.drawer)
-            self.drawer.draw(offsetx=self.offset, width=self.width)
+            self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
 
     def button_press(self, x, y, button):
         self.reflects.button_press(x, y, button)

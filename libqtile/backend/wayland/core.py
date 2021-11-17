@@ -36,13 +36,13 @@ from wlroots.wlr_types import (
     GammaControlManagerV1,
     OutputLayout,
     PrimarySelectionV1DeviceManager,
+    RelativePointerManagerV1,
     ScreencopyManagerV1,
     Surface,
     XCursorManager,
     XdgOutputManagerV1,
     input_device,
     pointer,
-    RelativePointerManagerV1,
     seat,
     xdg_decoration_v1,
 )
@@ -79,7 +79,7 @@ from libqtile.backend.wayland.output import Output
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import List, Optional, Sequence, Tuple, Union
+    from typing import List, Optional, Sequence, Set, Tuple, Union
 
     from wlroots.wlr_types import Output as wlrOutput
     from wlroots.wlr_types.data_device_manager import Drag
@@ -457,7 +457,10 @@ class Core(base.Core, wlrq.HasListeners):
         hook.fire("screens_reconfigured")
 
     def _process_cursor_motion(self, time_msec: int, cx: float, cy: float):
-        self.qtile.process_button_motion(int(cx), int(cy))
+        assert self.qtile
+        cx_int = int(cx)
+        cy_int = int(cy)
+        self.qtile.process_button_motion(cx_int, cy_int)
 
         if len(self.outputs) > 1:
             current_output = self.output_layout.output_at(cx, cy).data
@@ -475,18 +478,18 @@ class Core(base.Core, wlrq.HasListeners):
             if isinstance(win, window.Internal):
                 if self._hovered_internal is win:
                     win.process_pointer_motion(
-                        cx - self._hovered_internal.x,
-                        cy - self._hovered_internal.y,
+                        cx_int - self._hovered_internal.x,
+                        cy_int - self._hovered_internal.y,
                     )
                 else:
                     if self._hovered_internal:
                         self._hovered_internal.process_pointer_leave(
-                            cx - self._hovered_internal.x,
-                            cy - self._hovered_internal.y,
+                            cx_int - self._hovered_internal.x,
+                            cy_int - self._hovered_internal.y,
                         )
                     self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
                     self.seat.pointer_notify_clear_focus()
-                    win.process_pointer_enter(cx, cy)
+                    win.process_pointer_enter(cx_int, cy_int)
                     self._hovered_internal = win
                 return
 
@@ -520,8 +523,8 @@ class Core(base.Core, wlrq.HasListeners):
             self.seat.pointer_notify_clear_focus()
             if self._hovered_internal:
                 self._hovered_internal.process_pointer_leave(
-                    cx - self._hovered_internal.x,
-                    cy - self._hovered_internal.y,
+                    cx_int - self._hovered_internal.x,
+                    cy_int - self._hovered_internal.y,
                 )
                 self._hovered_internal = None
 
@@ -594,6 +597,7 @@ class Core(base.Core, wlrq.HasListeners):
                 continue
 
             group = None
+            assert isinstance(win, window.Window)
             if win.group:
                 if win.group.name in self.qtile.groups_map:
                     # Put window on group with same name as its old group if one exists

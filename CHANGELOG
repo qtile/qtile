@@ -1,5 +1,6 @@
 Qtile x.x.x, released xxxx-xx-xx:
     * features
+        - Add ability to draw borders to the Bar. Can customise size and colour per edge.
         - Add `StatusNotifier` widget implementing the `StatusNotifierItem` specification.
           NB Widget does not provide context menus.
         - Add `total` bandwidth format value to the Net widget.
@@ -13,6 +14,14 @@ Qtile x.x.x, released xxxx-xx-xx:
           `group_name`. For the time being a log warning is in place and a
           migration is added. In the future `groupName` will fail.
         - Add `min/max_ratio` to Tile layout and fix bug where windows can extend offscreen.
+        - Add ability for widget `mouse_callbacks` to take `lazy` calls (similar to keybindings)
+        - Add `aliases` to `lazy.spawncmd()` which takes a dictionary mapping convenient aliases
+          to full command lines.
+        - Add a new 'prefix' option to the net widget to display speeds with a static unit (e.g. MB).
+        - `lazy.group.toscreen()` now does not toggle groups by default. To get this behaviour back, use
+          `lazy.group.toscreen(toggle=True)`
+        - Tile layout has new `margin_on_single` and `border_on_single` option to specify
+          whether to draw margin and border when there is only one window.
 
 Qtile 0.18.1, released 2021-09-16:
     * features

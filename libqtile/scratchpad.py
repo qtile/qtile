@@ -21,8 +21,8 @@
 from typing import Dict, List
 
 from libqtile import config, group, hook
-from libqtile.config import Match
 from libqtile.backend.base import FloatStates
+from libqtile.config import Match
 
 
 class WindowVisibilityToggler:

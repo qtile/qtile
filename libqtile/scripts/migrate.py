@@ -147,7 +147,7 @@ def new_at_current_to_new_client_position(query):
     )
 
 
-def windowtogroup_groupName_argument(funcname, query):
+def windowtogroup_groupName_argument(funcname, query):  # noqa: N802
     return (
         query
         .select_method(funcname)

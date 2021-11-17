@@ -42,7 +42,7 @@ from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 from libqtile import bar, configurable, images
 from libqtile.images import Img
 from libqtile.log_utils import logger
-from libqtile.utils import send_notification
+from libqtile.utils import ColorsType, send_notification
 from libqtile.widget import base
 
 
@@ -306,6 +306,8 @@ class _LinuxBattery(_Battery, configurable.Configurable):
 
 class Battery(base.ThreadPoolText):
     """A text-based battery monitoring widget currently supporting FreeBSD"""
+    background: Optional[ColorsType]
+    low_background: Optional[ColorsType]
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('charge_char', '^', 'Character to indicate the battery is charging'),
@@ -509,7 +511,7 @@ class BatteryIcon(base._Widget):
         self.drawer.clear(self.background or self.bar.background)
         self.drawer.ctx.set_source(self.surfaces[self.current_icon])
         self.drawer.ctx.paint()
-        self.drawer.draw(offsetx=self.offset, width=self.length)
+        self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
 
     @staticmethod
     def _get_icon_key(status: BatteryStatus) -> str:

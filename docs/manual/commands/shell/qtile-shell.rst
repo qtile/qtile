@@ -1,4 +1,4 @@
-.. _qshell:
+.. _qtile-shell:
 
 ===========
 qtile shell

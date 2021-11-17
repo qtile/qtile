@@ -55,7 +55,7 @@ class Keyboard(HasListeners):
 
         self.keyboard.set_repeat_info(25, 600)
         self.xkb_context = xkb.Context()
-        self._keymaps: Dict[Tuple[Optional[str], Optional[str]], xkb.Keymap] = {}
+        self._keymaps: Dict[Tuple[Optional[str], ...], xkb.Keymap] = {}
         self.set_keymap(None, None, None)
 
         self.add_listener(self.keyboard.modifiers_event, self._on_modifier)

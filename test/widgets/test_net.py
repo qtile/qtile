@@ -41,7 +41,7 @@ class MockPsutil(ModuleType):
     down = 0
 
     @classmethod
-    def net_io_counters(cls, pernic=False, nowrap=True):
+    def net_io_counters(cls, pernic=False, _nowrap=True):
 
         class IOCounters:
             def __init__(self, up, down):
@@ -118,6 +118,12 @@ def test_net_convert_zero_b(patch_net):
     '''Zero bytes is a special case in `convert_b`'''
     net5 = patch_net()
     assert net5.convert_b(0.0) == (0.0, "B")
+
+
+def test_net_use_prefix(patch_net):
+    '''Tests `prefix` configurable option'''
+    net6 = patch_net(prefix="M")
+    assert net6.poll() == "all: U  0.04MB D  1.20MB T  1.24MB"
 
 
 # Untested: 128-129 - generic exception catching

@@ -18,7 +18,7 @@ commands to the running instance.  Commands then appear as methods with the
 appropriate signature on the ``InteractiveCommandClient`` object.  The object hierarchy is
 described in the :ref:`commands-api` section of this manual. Full
 command documentation is available through the :ref:`Qtile Shell
-<qshell>`.
+<qtile-shell>`.
 
 
 Example

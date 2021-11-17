@@ -82,9 +82,9 @@ class Image(base._Widget, base.MarginMixin):
         self.drawer.ctx.restore()
 
         if self.bar.horizontal:
-            self.drawer.draw(offsetx=self.offset, width=self.width)
+            self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
         else:
-            self.drawer.draw(offsety=self.offset, height=self.width)
+            self.drawer.draw(offsety=self.offset, offsetx=self.offsetx, height=self.width)
 
     def calculate_length(self):
         if self.img is None:

@@ -170,7 +170,7 @@ class WidgetBox(base._Widget):
                          int(self.bar.height / 2.0 -
                              self.layout.height / 2.0) + 1)
 
-        self.drawer.draw(offsetx=self.offsetx, width=self.width)
+        self.drawer.draw(offsetx=self.offsetx, offsety=self.offsety, width=self.width)
 
     def cmd_toggle(self):
         """Toggle box state"""

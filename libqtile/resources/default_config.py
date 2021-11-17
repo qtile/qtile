@@ -35,6 +35,9 @@ mod = "mod4"
 terminal = guess_terminal()
 
 keys = [
+    # A list of available commands that can be bound to keys can be found
+    # at https://docs.qtile.org/en/latest/manual/config/lazy.html
+
     # Switch between windows
     Key([mod], "h", lazy.layout.left(), desc="Move focus to left"),
     Key([mod], "l", lazy.layout.right(), desc="Move focus to right"),
@@ -143,6 +146,8 @@ screens = [
                 widget.QuickExit(),
             ],
             24,
+            # border_width=[2, 0, 2, 0],  # Draw top and bottom borders
+            # border_color=["ff00ff", "000000", "ff00ff", "000000"]  # Borders are magenta
         ),
     ),
 ]

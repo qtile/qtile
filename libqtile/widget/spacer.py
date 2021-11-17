@@ -57,6 +57,6 @@ class Spacer(base._Widget):
         if self.length > 0:
             self.drawer.clear(self.background or self.bar.background)
             if self.bar.horizontal:
-                self.drawer.draw(offsetx=self.offset, width=self.length)
+                self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
             else:
-                self.drawer.draw(offsety=self.offset, height=self.length)
+                self.drawer.draw(offsety=self.offset, offsetx=self.offsetx, height=self.length)

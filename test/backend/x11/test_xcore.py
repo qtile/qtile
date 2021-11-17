@@ -2,7 +2,6 @@ import pytest
 
 from libqtile.backend import get_core
 from libqtile.backend.x11 import core, xcbq
-
 from test.test_manager import ManagerConfig
 
 
@@ -38,7 +37,6 @@ def test_net_client_list(xmanager):
     one = xmanager.test_window("one")
     assert_clients(1)
     two = xmanager.test_window("two")
-    wins = xmanager.c.windows()
     xmanager.c.window.toggle_minimize()
     three = xmanager.test_window("three")
     xmanager.c.screen.next_group()

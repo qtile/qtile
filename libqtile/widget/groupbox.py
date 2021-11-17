@@ -156,7 +156,7 @@ class AGroupBox(_GroupBase):
             if i.name == self.bar.screen.group.name
         )
         self.drawbox(self.margin_x, e.name, self.border, self.foreground)
-        self.drawer.draw(offsetx=self.offset, width=self.width)
+        self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
 
 
 class GroupBox(_GroupBase):
@@ -401,4 +401,4 @@ class GroupBox(_GroupBase):
                 highlighted=to_highlight
             )
             offset += bw + self.spacing
-        self.drawer.draw(offsetx=self.offset, width=self.width)
+        self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)

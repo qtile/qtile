@@ -7,7 +7,7 @@ Lazy objects
 The ``lazy.lazy`` object is a special helper object to specify a command for
 later execution. This object acts like the root of the object graph, which
 means that we can specify a key binding command with the same syntax used to
-call the command through a script or through :ref:`qshell`.
+call the command through a script or through :ref:`qtile-shell`.
 
 Example
 -------
@@ -82,9 +82,9 @@ Group functions
       - Switch window focus to previous window in group
     * - ``lazy.group["group_name"].toscreen()``
       - Move to the group called ``group_name``.
-        Takes an optional ``toggle`` parameter (defaults to True).
-        If this group is already on the screen, then the group is toggled
-        with last used
+        Takes an optional ``toggle`` parameter (defaults to False).
+        If this group is already on the screen, it does nothing by default;
+        to toggle with the last used group instead, use ``toggle=True``.
     * - ``lazy.layout.increase_ratio()``
       - Increase the space for master window at the expense of slave windows
     * - ``lazy.layout.decrease_ratio()``
@@ -122,6 +122,10 @@ ScratchPad DropDown functions
     * - ``lazy.group["group_name"].dropdown_toggle("name")``
       - Toggles the visibility of the specified DropDown window.
         On first use, the configured process is spawned.
+    * - ``lazy.group["group_name"].hide_all()``
+      - Hides all DropDown windows.
+    * - ``lazy.group["group_name"].dropdown_reconfigure("name", **configuration)``
+      - Update the configuration of the named DropDown.
 
 User-defined functions
 ----------------------
@@ -135,3 +139,67 @@ User-defined functions
     * - ``lazy.function(func, *args, **kwargs)``
       - Calls ``func(qtile, *args, **kwargs)``. NB. the ``qtile`` object is
         automatically passed as the first argument.
+
+Examples
+--------
+
+``lazy.function`` can also be used as a decorator for functions.
+
+::
+
+    from libqtile.config import Key
+    from libqtile.command import lazy
+
+    @lazy.function
+    def my_function(qtile):
+        ...
+
+    keys = [
+        Key(
+            ["mod1"], "k",
+            my_function
+        )
+    ]
+
+Additionally, you can pass arguments to user-defined function in one of two ways:
+
+1) In-line definition
+
+Arguments can be added to the ``lazy.function`` call.
+
+::
+
+    from libqtile.config import Key
+    from libqtile.command import lazy
+    from libqtile.log_utils import logger
+
+    def multiply(qtile, value, multiplier=10):
+        logger.warning(f"Multiplication results: {value * multiplier}")
+
+    keys = [
+        Key(
+            ["mod1"], "k",
+            lazy.function(multiply, 10, multiplier=2)
+        )
+    ]
+
+2) Decorator
+
+Arguments can also be passed to the decorated function.
+
+::
+
+    from libqtile.config import Key
+    from libqtile.command import lazy
+    from libqtile.log_utils import logger
+
+    @lazy.function
+    def multiply(qtile, value, multiplier=10):
+        logger.warning(f"Multiplication results: {value * multiplier}")
+
+    keys = [
+        Key(
+            ["mod1"], "k",
+            multiply(10, multiplier=2)
+        )
+    ]

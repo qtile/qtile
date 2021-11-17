@@ -25,7 +25,7 @@ import typing
 from libqtile import configurable
 from libqtile.command.base import CommandObject, ItemT
 from libqtile.log_utils import logger
-from libqtile.utils import has_transparency
+from libqtile.utils import has_transparency, rgb
 
 if typing.TYPE_CHECKING:
     from libqtile.widget.base import _Widget
@@ -162,6 +162,8 @@ class Bar(Gap, configurable.Configurable):
         ("background", "#000000", "Background colour."),
         ("opacity", 1, "Bar window opacity."),
         ("margin", 0, "Space around bar as int or list of ints [N E S W]."),
+        ("border_color", "#000000", "Border colour as str or list of str [N E S W]"),
+        ("border_width", 0, "Width of border as int of list of ints [N E S W]")
     ]
 
     def __init__(self, widgets, size, **config):
@@ -175,34 +177,64 @@ class Bar(Gap, configurable.Configurable):
         self.size_calculated = 0
         self._configured = False
 
+        if isinstance(self.margin, int):
+            self.margin = [self.margin] * 4
+
+        if isinstance(self.border_width, int):
+            self.border_width = [self.border_width] * 4
+
+        self._initial_margin = self.margin[:]
+        self.struts = [0, 0, 0, 0]
+        self._add_strut = False
+
         self.queued_draws = 0
         self.future = None
 
     def _configure(self, qtile, screen):
-        Gap._configure(self, qtile, screen)
+        # We only want to adjust margin sizes once unless there's a new strut
+        if not self._configured or self._add_strut:
+            Gap._configure(self, qtile, screen)
 
-        if self.margin:
-            if isinstance(self.margin, int):
-                self.margin = [self.margin] * 4
-            if self.horizontal:
-                self.x += self.margin[3]
-                self.width -= self.margin[1] + self.margin[3]
-                self.length = self.width
-                if self.size == self.initial_size:
-                    self.size += self.margin[0] + self.margin[2]
-                if self.screen.top is self:
-                    self.y += self.margin[0]
+            if sum(self._initial_margin) or sum(self.border_width) or self._add_strut:
+
+                try:
+                    # Check if colours are valid but don't convert to rgba here
+                    if isinstance(self.border_color, list) and len(self.border_color) == 4:
+                        [rgb(col) for col in self.border_color]
+                    else:
+                        rgb(self.border_color)
+                        self.border_color = [self.border_color] * 4
+                except (ValueError, TypeError):
+                    logger.warning("Invalid border_color specified. Borders will not be displayed.")
+                    self.border_width = [0, 0, 0, 0]
+
+                # Increase the margin size for the border. The border will be drawn
+                # in this space so the empty space will just be the margin.
+                self.margin = [m + b + s for m, b, s in zip(self._initial_margin, self.border_width, self.struts)]
+
+                if self.horizontal:
+                    self.x += self.margin[3] - self.border_width[3]
+                    self.width -= (self.margin[1] + self.margin[3])
+                    self.length = self.width
+                    if self.size == self.initial_size:
+                        self.size += (self.margin[0] + self.margin[2])
+                    if self.screen.top is self:
+                        self.y += self.margin[0] - self.border_width[0]
+                    else:
+                        self.y -= self.margin[2] + self.border_width[2]
+
                 else:
-                    self.y -= self.margin[2]
-            else:
-                self.y += self.margin[0]
-                self.height -= self.margin[0] + self.margin[2]
-                self.length = self.height
-                self.size += self.margin[1] + self.margin[3]
-                if self.screen.left is self:
-                    self.x += self.margin[3]
-                else:
-                    self.x -= self.margin[1]
+                    self.y += self.margin[0] - self.border_width[0]
+                    self.height -= (self.margin[0] + self.margin[2])
+                    self.length = self.height
+                    self.size += (self.margin[1] + self.margin[3])
+                    if self.screen.left is self:
+                        self.x += self.margin[3]
+                    else:
+                        self.x -= self.margin[1]
+
+        width = self.width + (self.border_width[1] + self.border_width[3])
+        height = self.height + (self.border_width[0] + self.border_width[2])
 
         for w in self.widgets:
             # Executing _test_orientation_compatibility later, for example in
@@ -214,7 +246,7 @@ class Bar(Gap, configurable.Configurable):
         if self.window:
             # We get _configure()-ed with an existing window when screens are getting
             # reconfigured but this screen is present both before and after
-            self.window.place(self.x, self.y, self.width, self.height, 0, None)
+            self.window.place(self.x, self.y, width, height, 0, None)
         else:
             # Whereas we won't have a window if we're startup up for the first time or
             # the window has been killed by us no longer using the bar's screen
@@ -226,18 +258,16 @@ class Bar(Gap, configurable.Configurable):
                 depth = 32 if has_transparency(self.background) else self.qtile.core.conn.default_screen.root_depth
 
                 self.window = self.qtile.core.create_internal(
-                    self.x, self.y, self.width, self.height, depth
+                    self.x, self.y, width, height, depth
                 )
 
             else:
-                self.window = self.qtile.core.create_internal(
-                    self.x, self.y, self.width, self.height
-                )
+                self.window = self.qtile.core.create_internal(self.x, self.y, width, height)
 
             self.window.opacity = self.opacity
             self.window.unhide()
 
-            self.drawer = self.window.create_drawer(self.width, self.height)
+            self.drawer = self.window.create_drawer(width, height)
             self.drawer.clear(self.background)
 
             self.window.process_window_expose = self.draw
@@ -265,11 +295,18 @@ class Bar(Gap, configurable.Configurable):
         self.draw()
         self._resize(self.length, self.widgets)
         self._configured = True
+        self._add_strut = False
 
     def _configure_widget(self, widget):
         configured = True
         try:
             widget._configure(self.qtile, self)
+
+            if self.horizontal:
+                widget.offsety = self.border_width[0]
+            else:
+                widget.offsetx = self.border_width[3]
+
             widget.configured = True
         except Exception as e:
             logger.error(
@@ -289,6 +326,10 @@ class Bar(Gap, configurable.Configurable):
             index = self.widgets.index(i)
             crash = ConfigErrorWidget(widget=i)
             crash._configure(self.qtile, self)
+            if self.horizontal:
+                crash.offsety = self.border_width[0]
+            else:
+                crash.offsetx = self.border_width[3]
             self.widgets.insert(index, crash)
             self.widgets.remove(i)
 
@@ -353,15 +394,14 @@ class Bar(Gap, configurable.Configurable):
                 stretches[0].length += stretchspace // 2
                 stretches[-1].length += stretchspace - stretchspace // 2
 
-        offset = 0
         if self.horizontal:
+            offset = self.border_width[3]
             for i in widgets:
                 i.offsetx = offset
-                i.offsety = 0
                 offset += i.length
         else:
+            offset = self.border_width[0]
             for i in widgets:
-                i.offsetx = 0
                 i.offsety = offset
                 offset += i.length
 
@@ -456,6 +496,55 @@ class Bar(Gap, configurable.Configurable):
     def _actual_draw(self):
         self.queued_draws = 0
         self._resize(self.length, self.widgets)
+
+        # We draw the border before the widgets
+        if self.border_width:
+
+            # The border is drawn "outside" of the bar (i.e. not in the space that the
+            # widgets occupy) so we need to add the additional space
+            width = self.width + self.border_width[1] + self.border_width[3]
+            height = self.height + self.border_width[0] + self.border_width[2]
+
+            # line_opts is a list of tuples where each tuple represents the borders
+            # in the order N, E, S, W. The border tuple contains two pairs of
+            # co-ordinates for the start and end of the border.
+            line_opts = [
+                (
+                    (0, self.border_width[0] * 0.5),
+                    (width, self.border_width[0] * 0.5)
+                ),
+                (
+                    (width - (self.border_width[1] * 0.5), self.border_width[0]),
+                    (width - (self.border_width[1] * 0.5), height - self.border_width[2])
+                ),
+                (
+                    (0, height - self.border_width[2] + (self.border_width[2] * 0.5)),
+                    (width, height - self.border_width[2] + (self.border_width[2] * 0.5))
+                ),
+                (
+                    (self.border_width[3] * 0.5, self.border_width[0]),
+                    (self.border_width[3] * 0.5, height - self.border_width[2])
+                )
+            ]
+
+            self.drawer.clear(self.background)
+
+            for border_width, colour, opts in zip(self.border_width, self.border_color, line_opts):
+
+                if not border_width:
+                    continue
+
+                move_to, line_to = opts
+
+                # Draw the border
+                self.drawer.set_source_rgb(colour)
+                self.drawer.ctx.set_line_width(border_width)
+                self.drawer.ctx.move_to(*move_to)
+                self.drawer.ctx.line_to(*line_to)
+                self.drawer.ctx.stroke()
+
+            self.drawer.draw(0, 0)
+
         for i in self.widgets:
             i.draw()
         end = i.offset + i.length  # pylint: disable=undefined-loop-variable
@@ -494,16 +583,11 @@ class Bar(Gap, configurable.Configurable):
     def adjust_for_strut(self, size):
         if self.size:
             self.size = self.initial_size
-        if not self.margin:
-            self.margin = [0, 0, 0, 0]
-        if self.screen.top is self:
-            self.margin[0] += size
-        elif self.screen.bottom is self:
-            self.margin[2] += size
-        elif self.screen.left is self:
-            self.margin[3] += size
-        else:  # right
-            self.margin[1] += size
+        for i, gap in enumerate(["top", "right", "bottom", "left"]):
+            if getattr(self.screen, gap) is self:
+                self.struts[i] += size
+
+        self._add_strut = True
 
     def cmd_fake_button_press(self, screen, position, x, y, button=1):
         """
