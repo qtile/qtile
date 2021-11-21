@@ -42,6 +42,10 @@ def fake_timer(interval, func, *args, **kwargs):
         def cancel(self):
             pass
 
+        @property
+        def _scheduled(self):
+            return False
+
     return TimerObj()
 
 
@@ -125,7 +129,7 @@ def test_mpris2_signal_handling(fake_qtile, patched_module, fake_window):
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
-    fake_qtile.call_later = fake_timer
+    mp.timeout_add = fake_timer
     mp._configure(fake_qtile, fakebar)
 
     assert mp.displaytext == ""
@@ -188,7 +192,7 @@ def test_mpris2_custom_stop_text(fake_qtile, patched_module, fake_window):
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
-    fake_qtile.call_later = fake_timer
+    mp.timeout_add = fake_timer
     mp._configure(fake_qtile, fakebar)
     mp.configured = True
 
@@ -209,7 +213,7 @@ def test_mpris2_no_metadata(fake_qtile, patched_module, fake_window):
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
-    fake_qtile.call_later = no_op
+    mp.timeout_add = fake_timer
     mp._configure(fake_qtile, fakebar)
     mp.configured = True
 
@@ -226,7 +230,7 @@ def test_mpris2_no_scroll(fake_qtile, patched_module, fake_window):
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
-    fake_qtile.call_later = no_op
+    mp.timeout_add = fake_timer
     mp._configure(fake_qtile, fakebar)
     mp.configured = True
 
@@ -244,7 +248,7 @@ def test_mpris2_clear_after_scroll(fake_qtile, patched_module, fake_window):
     fakebar.width = 10
     fakebar.height = 10
     fakebar.draw = no_op
-    fake_qtile.call_later = no_op
+    mp.timeout_add = fake_timer
     mp._configure(fake_qtile, fakebar)
     mp.configured = True
 

@@ -42,7 +42,6 @@ class QuickExit(base._TextBox):
         self.is_counting = False
         self.text = self.default_text
         self.countdown = self.countdown_start
-        self.__call_later_funcs = []
 
         self.add_callbacks({'Button1': self.cmd_trigger})
 
@@ -50,8 +49,7 @@ class QuickExit(base._TextBox):
         self.is_counting = False
         self.countdown = self.countdown_start
         self.text = self.default_text
-        for f in self.__call_later_funcs:
-            f.cancel()
+        self.timer.cancel()
 
     def update(self):
         if not self.is_counting:
@@ -59,8 +57,7 @@ class QuickExit(base._TextBox):
 
         self.countdown -= 1
         self.text = self.countdown_format.format(self.countdown)
-        self.timeout_add(self.timer_interval, self.update)
-        self.__call_later_funcs.append(self.future)
+        self.timer = self.timeout_add(self.timer_interval, self.update)
         self.draw()
 
         if self.countdown == 0:
