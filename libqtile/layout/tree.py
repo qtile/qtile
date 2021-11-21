@@ -205,13 +205,15 @@ class Root(TreeNode):
         sec = self.sections[name]
         # move the children of the deleted section to the previous section
         # if delecting the first section, add children to second section
-        idx = min(self.children.index(sec), 1)
+        idx = max(self.children.index(sec), 1)
         next_sec = self.children[idx - 1]
         # delete old section, reparent children to next section
         del self.children[idx]
         next_sec.children.extend(sec.children)
         for i in sec.children:
             i.parent = next_sec
+
+        del self.sections[name]
 
 
 class Section(TreeNode):
@@ -624,7 +626,7 @@ class TreeTab(Layout):
         self.draw_panel()
 
     def cmd_del_section(self, name):
-        """Add named section to tree"""
+        """Remove named section from tree"""
         self._tree.del_section(name)
         self.draw_panel()
 
