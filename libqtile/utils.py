@@ -66,7 +66,7 @@ def shuffle_down(lst):
         lst.append(c)
 
 
-ColorType = Union[str, Tuple[int, int, int], Tuple[int, int, int, float]]
+ColorType = Union[str, Tuple[int, int, int], Tuple[int, int, int, int]]
 ColorsType = Union[ColorType, List[ColorType]]
 
 
@@ -84,26 +84,27 @@ def rgb(x: ColorType) -> Tuple[float, float, float, float]:
 
         Which is returned as (1.0, 0.0, 0.0, 0.5).
     """
+    # logger.warning(f"x: {x}")
     if isinstance(x, (tuple, list)):
         if len(x) == 4:
             alpha = x[-1]
         else:
-            alpha = 1.0
-        return (x[0] / 255.0, x[1] / 255.0, x[2] / 255.0, alpha)
+            alpha = 255
+        return (int(x[0]), int(x[1]), int(x[2]), int(alpha))
     elif isinstance(x, str):
         if x.startswith("#"):
             x = x[1:]
         if "." in x:
             x, alpha_str = x.split(".")
-            alpha = float("0." + alpha_str)
+            alpha = 255 if int(alpha_str) >= int(100) else int(float("0." + alpha_str) * 255)
         else:
-            alpha = 1.0
+            alpha = 255
         if len(x) not in (6, 8):
             raise ValueError("RGB specifier must be 6 or 8 characters long.")
         vals = tuple(int(i, 16) for i in (x[0:2], x[2:4], x[4:6]))
         if len(x) == 8:
-            alpha = int(x[6:8], 16) / 255.0
-        vals += (alpha,)
+            alpha = int(x[6:8], 16)
+        vals += (int(alpha),)
         return rgb(vals)  # type: ignore
     raise ValueError("Invalid RGB specifier.")
 
@@ -137,7 +138,7 @@ def remove_transparency(colour: ColorsType):
     Returns a tuple of (r, g, b) with no alpha.
     """
     def remove_alpha(col):
-        stripped = tuple(x * 255.0 for x in rgb(col)[:3])
+        stripped = tuple(int(x) for x in rgb(col)[:3])
         return stripped
 
     if isinstance(colour, (str, tuple)):
