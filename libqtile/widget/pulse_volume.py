@@ -58,6 +58,7 @@ class PulseVolume(Volume):
         lib.pa_mainloop_quit(self.loop, 1)
         lib.pa_context_unref(self.context)
         lib.pa_mainloop_free(self.loop)
+        Volume.finalize(self)
 
     def connect(self):
         """

@@ -152,6 +152,7 @@ class _Widget(CommandObject, configurable.Configurable):
             self.length_type = bar.STATIC
             self.length = length
         self.configured = False
+        self._futures: List[asyncio.TimerHandle] = []
 
     @property
     def length(self):
@@ -221,8 +222,8 @@ class _Widget(CommandObject, configurable.Configurable):
         pass
 
     def finalize(self):
-        if hasattr(self, 'future'):
-            self.future.cancel()
+        for future in self._futures:
+            future.cancel()
         if hasattr(self, 'layout') and self.layout:
             self.layout.finalize()
         self.drawer.finalize()
@@ -311,11 +312,14 @@ class _Widget(CommandObject, configurable.Configurable):
 
     def timeout_add(self, seconds, method, method_args=()):
         """
-            This method calls either ``.call_later`` with given arguments.
+            This method calls ``.call_later`` with given arguments.
         """
-        self.future = self.qtile.call_later(
+        future = self.qtile.call_later(
             seconds, self._wrapper, method, *method_args
         )
+
+        self._futures.append(future)
+        return future
 
     def call_process(self, command, **kwargs):
         """
@@ -325,7 +329,15 @@ class _Widget(CommandObject, configurable.Configurable):
         """
         return subprocess.check_output(command, **kwargs, encoding="utf-8")
 
+    def _remove_dead_timers(self):
+        """Remove completed and cancelled timers from the list."""
+        self._futures = [
+            timer for timer in self._futures
+            if not (timer.cancelled() or timer.when() < self.qtile._eventloop.time())
+        ]
+
     def _wrapper(self, method, *method_args):
+        self._remove_dead_timers()
         try:
             method(*method_args)
         except:  # noqa: E722
