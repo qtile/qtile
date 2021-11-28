@@ -563,7 +563,7 @@ class StatusNotifier(base._Widget):
     defaults = [
         ('icon_size', 16, 'Icon width'),
         ('icon_theme', None, 'Name of theme to use for app icons'),
-        ('padding', 5, 'Padding between icons'),
+        ('padding', 3, 'Padding between icons'),
     ]
 
     def __init__(self, **config):
@@ -611,15 +611,17 @@ class StatusNotifier(base._Widget):
 
     def find_icon_at_pos(self, x, y):
         """returns StatusNotifierItem object for icon in given position"""
-        xoffset = self.padding
-        if x < xoffset:
+        offset = self.padding
+        val = x if self.bar.horizontal else y
+
+        if val < offset:
             return None
 
         for icon in self.available_icons:
-            xoffset += self.icon_size
-            if x < xoffset:
+            offset += self.icon_size
+            if val < offset:
                 return icon
-            xoffset += self.padding
+            offset += self.padding
 
         return None
 

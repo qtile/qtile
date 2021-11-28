@@ -313,12 +313,15 @@ class TestManager:
         if not success():
             raise AssertionError("Window could not be killed...")
 
-    def test_window(self, name, floating=False, wm_type="normal"):
+    def test_window(self, name, floating=False, wm_type="normal", export_sni=False):
         """
         Create a simple window in X or Wayland. If `floating` is True then the wmclass
         is set to "dialog", which triggers auto-floating based on `default_float_rules`.
         `wm_type` can be changed from "normal" to "notification", which creates a window
         that not only floats but does not grab focus.
+
+        Setting `export_sni` to True will publish a simplified StatusNotifierItem interface
+        on DBus.
 
         Windows created with this method must have their process killed explicitly, no
         matter what type they are.
@@ -326,7 +329,10 @@ class TestManager:
         python = sys.executable
         path = Path(__file__).parent / "scripts" / "window.py"
         wmclass = "dialog" if floating else "TestWindow"
-        return self._spawn_window(python, path, "--name", wmclass, name, wm_type)
+        args = [python, path, "--name", wmclass, name, wm_type]
+        if export_sni:
+            args.append("export_sni_interface")
+        return self._spawn_window(*args)
 
     def test_notification(self, name="notification"):
         return self.test_window(name, wm_type="notification")
