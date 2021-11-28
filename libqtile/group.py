@@ -46,6 +46,7 @@ class _Group(CommandObject):
         self.label = name if label is None else label
         self.custom_layout = layout  # will be set on _configure
         self.windows = []
+        self.tiled_windows = set()
         self.qtile = None
         self.layouts = []
         self.floating_layout = None
@@ -217,6 +218,7 @@ class _Group(CommandObject):
             name=self.name,
             label=self.label,
             focus=self.current_window.name if self.current_window else None,
+            tiled_windows={i.name for i in self.tiled_windows},
             windows=[i.name for i in self.windows],
             focus_history=[i.name for i in self.focus_history],
             layout=self.layout.name,
@@ -236,7 +238,8 @@ class _Group(CommandObject):
             win._float_state = FloatStates.FLOATING
         if win.floating:
             self.floating_layout.add(win)
-        else:
+        if not win.floating or win.fullscreen:
+            self.tiled_windows.add(win)
             for i in self.layouts:
                 i.add(win)
         if focus:
@@ -256,7 +259,8 @@ class _Group(CommandObject):
                 or self.layout.focus_first()
                 or self.floating_layout.focus_first(group=self)
             )
-        else:
+        # Remove from the tiled layouts if it was not floating or fullscreen
+        if not win.floating or win.fullscreen:
             for i in self.layouts:
                 if i is self.layout:
                     nextfocus = i.remove(win)
@@ -269,6 +273,8 @@ class _Group(CommandObject):
                 or self.current_window
                 or self.layout.focus_first()
             )
+
+            self.tiled_windows.remove(win)
 
         # a notification may not have focus
         if hadfocus:
@@ -285,19 +291,27 @@ class _Group(CommandObject):
                 # already floating
                 pass
             else:
-                for i in self.layouts:
-                    i.remove(win)
-                    if win is self.current_window:
-                        i.blur()
+                # Remove from the tiled windows list if the window is not fullscreen
+                if not win.fullscreen:
+                    self.tiled_windows.remove(win)
+                    # Remove the window from the layout if it is not fullscreen
+                    for i in self.layouts:
+                        i.remove(win)
+                        if win is self.current_window:
+                            i.blur()
                 self.floating_layout.add(win)
                 if win is self.current_window:
                     self.floating_layout.focus(win)
         else:
             self.floating_layout.remove(win)
             self.floating_layout.blur()
-            for i in self.layouts:
-                i.add(win)
-                if win is self.current_window:
+            # A window that was fullscreen should only be added if it was not a tiled window
+            if win not in self.tiled_windows:
+                for i in self.layouts:
+                    i.add(win)
+                self.tiled_windows.add(win)
+            if win is self.current_window:
+                for i in self.layouts:
                     i.focus(win)
         self.layout_all()
 
