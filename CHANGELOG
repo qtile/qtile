@@ -39,6 +39,8 @@ Qtile 0.19.0, released 2021-12-22:
         - Allow TextBox-based widgets to display in vertical bars.
         - Added a focused attribute to `lazy.function.when` which can be used to Match on focused windows.
         - Allow to update Image widget with update() function by giving a new path.
+    * bugfixes
+        - Windows are now properly re-ordered in the layouts when toggled on and off fullscreen
 
 Qtile 0.18.1, released 2021-09-16:
     * features
