@@ -1,6 +1,13 @@
 from libqtile.widget import base
 
 class ThermalZone(base.ThreadPoolText):
+    """
+    This is simple thermal zone monitoring widget.
+
+    Widget requirements: linux kernel >= 5.x.x
+
+    It allows you to get CPU temperature in Celsius degrees from /sys/class/thermal/ sensors.
+    """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('update_interval', 2.0, 'Update interval for the thermal zone sensor'),
