@@ -20,6 +20,6 @@ class ThermalZone(base.ThreadPoolText):
                 value = str(round(int(f.read().rstrip()) / 1000)) + '°C'
             return value
         else:
-            logger.debug('zone {} does not exist'.format(zone))
+            logger.exception('{} does not exist'.format(zone))
             return 'err!'
 
