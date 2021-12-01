@@ -1,13 +1,8 @@
+from os import path
 from libqtile.widget import base
+from libqtile.log_utils import logger
 
 class ThermalZone(base.ThreadPoolText):
-    """
-    This is simple thermal zone monitoring widget.
-
-    Widget requirements: linux kernel >= 5.x.x
-
-    It allows you to get CPU temperature in Celsius degrees from /sys/class/thermal/ sensors.
-    """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('update_interval', 2.0, 'Update interval for the thermal zone sensor'),
@@ -18,12 +13,13 @@ class ThermalZone(base.ThreadPoolText):
         super().__init__("", **config)
         self.add_defaults(ThermalZone.defaults)
 
-    def get_temp(self):
-        with open('/sys/class/thermal/thermal_zone' + self.zone + '/temp') as f:
-            value = str(round(int(f.read().rstrip()) / 1000)) + '°C'
-        return value
-
     def poll(self):
-        temp_values = self.get_temp()
-        return temp_values
+        zone = '/sys/class/thermal/thermal_zone' + self.zone + '/temp'
+        if path.isfile(zone):
+            with open(zone) as f:
+                value = str(round(int(f.read().rstrip()) / 1000)) + '°C'
+            return value
+        else:
+            logger.debug('zone {} does not exist'.format(zone))
+            return 'err!'
 
