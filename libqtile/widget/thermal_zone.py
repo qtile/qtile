@@ -1,4 +1,3 @@
-from os import path
 from libqtile.widget import base
 from libqtile.log_utils import logger
 
@@ -15,11 +14,12 @@ class ThermalZone(base.ThreadPoolText):
         self.add_defaults(ThermalZone.defaults)
 
     def poll(self):
-        if path.isfile(self.zone):
+        try:
             with open(self.zone) as f:
                 variables = dict()
                 variables['temp'] = str(round(int(f.read().rstrip()) / 1000))
             return self.format.format(**variables)
-        else:
+        except OSError:
             logger.exception('{} does not exist'.format(self.zone))
             return 'err!'
+
