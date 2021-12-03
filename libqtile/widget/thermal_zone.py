@@ -22,4 +22,3 @@ class ThermalZone(base.ThreadPoolText):
         except OSError:
             logger.exception('{} does not exist'.format(self.zone))
             return 'err!'
-
