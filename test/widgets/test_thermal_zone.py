@@ -12,6 +12,5 @@ def test_thermal_zone_getting_value():
 
     thermal_zone = widget.ThermalZone(zone=zone_file)
     output = thermal_zone.poll()
-    print(output)
     assert output == '22°C'
 
