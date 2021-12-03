@@ -7,6 +7,7 @@ class ThermalZone(base.ThreadPoolText):
     defaults = [
         ('update_interval', 2.0, 'Update interval for the thermal zone sensor'),
         ('zone', '/sys/class/thermal/thermal_zone0/temp', 'Default thermal zone'),
+        ('format', '{temp}°C', 'Thermal zone display format'),
     ]
 
     def __init__(self, **config):
@@ -16,8 +17,9 @@ class ThermalZone(base.ThreadPoolText):
     def poll(self):
         if path.isfile(self.zone):
             with open(self.zone) as f:
-                value = str(round(int(f.read().rstrip()) / 1000)) + '°C'
-            return value
+                variables = dict()
+                variables['temp'] = str(round(int(f.read().rstrip()) / 1000))
+            return self.format.format(**variables)
         else:
             logger.exception('{} does not exist'.format(self.zone))
             return 'err!'
