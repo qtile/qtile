@@ -1,6 +1,7 @@
 from libqtile.widget import base
 from libqtile.log_utils import logger
 
+
 class ThermalZone(base.ThreadPoolText):
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [

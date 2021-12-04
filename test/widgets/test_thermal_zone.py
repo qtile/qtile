@@ -1,6 +1,7 @@
 import os
 from libqtile import widget
 
+
 def test_thermal_zone_getting_value():
     # Create temporary zone file
     tmp = '/var/tmp/qtile/test/widgets/thermal_zone'
