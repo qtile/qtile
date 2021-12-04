@@ -25,9 +25,9 @@ class ThermalZone(base.ThreadPoolText):
                 value = round(int(f.read().rstrip()) / 1000)
                 if value < self.high:
                     self.layout.colour = self.fgcolor_normal
-                elif value in range(self.high, self.crit):
+                elif value < self.crit:
                     self.layout.colour = self.fgcolor_high
-                elif value > self.crit:
+                elif value >= self.crit:
                     self.layout.colour = self.fgcolor_crit
                 variables = dict()
                 variables['temp'] = str(value)
