@@ -22,6 +22,7 @@ Qtile x.x.x, released xxxx-xx-xx:
           `lazy.group.toscreen(toggle=True)`
         - Tile layout has new `margin_on_single` and `border_on_single` option to specify
           whether to draw margin and border when there is only one window.
+	- Thermal zone widget.
 
 Qtile 0.18.1, released 2021-09-16:
     * features

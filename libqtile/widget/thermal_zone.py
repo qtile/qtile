@@ -8,6 +8,7 @@ class ThermalZone(base.ThreadPoolText):
         ('update_interval', 2.0, 'Update interval'),
         ('zone', '/sys/class/thermal/thermal_zone0/temp', 'Thermal zone'),
         ('format', '{temp}°C', 'Thermal zone display format'),
+        ('hidden', False, 'Set True to only show if critical value reached'),
         ('fgcolor_crit', 'ff0000', 'Font color on critical values'),
         ('fgcolor_high', 'ffaa00', 'Font color on high values'),
         ('fgcolor_normal', 'ffffff', 'Font color on normal values'),
@@ -31,7 +32,11 @@ class ThermalZone(base.ThreadPoolText):
                     self.layout.colour = self.fgcolor_crit
                 variables = dict()
                 variables['temp'] = str(value)
-            return self.format.format(**variables)
+            if self.hidden and value < self.crit:
+                output = ""
+            else:
+                output = self.format.format(**variables)
+            return output
         except OSError:
             logger.exception('{} does not exist'.format(self.zone))
             return 'err!'
