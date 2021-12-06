@@ -29,7 +29,6 @@ class Pomodoro(base.ThreadPoolText):
     """Pomodoro technique widget"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("fmt", "{}", "fmt"),
         ("num_pomodori", 4, "Number of pomodori to do in a cycle"),
         ("length_pomodori", 25, "Length of one pomodori in minutes"),
         ("length_short_break", 5, "Length of a short break in minutes"),
@@ -171,4 +170,4 @@ class Pomodoro(base.ThreadPoolText):
         send_notification("Pomodoro", message, urgent=urgent)
 
     def poll(self):
-        return self.fmt.format(self._get_text())
+        return self._get_text()
