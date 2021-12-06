@@ -335,6 +335,7 @@ def scan_files(dirpath, *names):
     ['/wallpapers/w2.jpg', '/wallpapers/w3.jpg']})
 
     """
+    dirpath = os.path.expanduser(dirpath)
     files = defaultdict(list)
 
     for name in names:
