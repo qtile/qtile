@@ -40,8 +40,6 @@ class Bluetooth(base._TextBox):
 
     .. _dbus-next: https://pypi.org/project/dbus-next/
     """
-
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('hci', '/dev_XX_XX_XX_XX_XX_XX', 'hci0 device path, can be found with d-feet or similar dbus explorer.')
     ]

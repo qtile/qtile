@@ -32,7 +32,6 @@ class CurrentScreen(base._TextBox):
         ('active_color', '00ff00', 'Color when screen is active'),
         ('inactive_color', 'ff0000', 'Color when screen is inactive')
     ]
-    orientations = base.ORIENTATION_HORIZONTAL
 
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "", width, **config)

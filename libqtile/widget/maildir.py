@@ -33,7 +33,6 @@ from libqtile.widget import base
 
 class Maildir(base.ThreadPoolText):
     """A simple widget showing the number of new mails in maildir mailboxes"""
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("maildir_path", "~/Mail", "path to the Maildir folder"),
         (

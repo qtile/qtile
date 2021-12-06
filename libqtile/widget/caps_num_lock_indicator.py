@@ -27,8 +27,6 @@ from libqtile.widget import base
 
 class CapsNumLockIndicator(base.ThreadPoolText):
     """Really simple widget to show the current Caps/Num Lock state."""
-
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [('update_interval', 0.5, 'Update Time in seconds.')]
 
     def __init__(self, **config):

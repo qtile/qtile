@@ -134,7 +134,6 @@ class KeyboardLayout(base.InLoopPollText):
 
     When running Qtile with the X11 backend, this widget requires setxkbmap to be available.
     """
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("update_interval", 1, "Update time in seconds."),
         ("configured_keyboards", ["us"], "A list of predefined keyboard layouts "

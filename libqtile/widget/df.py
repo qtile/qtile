@@ -28,7 +28,6 @@ class DF(base.ThreadPoolText):
 
     By default the widget only displays if the space is less than warn_space.
     """
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('partition', '/', 'the partition to check space'),
         ('warn_color', 'ff0000', 'Warning color'),

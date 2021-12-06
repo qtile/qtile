@@ -27,7 +27,6 @@ from libqtile.widget import base
 
 class Pomodoro(base.ThreadPoolText):
     """Pomodoro technique widget"""
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("num_pomodori", 4, "Number of pomodori to do in a cycle"),
         ("length_pomodori", 25, "Length of one pomodori in minutes"),

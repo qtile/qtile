@@ -31,6 +31,7 @@
 
 import asyncio
 import copy
+import math
 import subprocess
 from typing import Any, List, Tuple
 
@@ -363,7 +364,7 @@ class _TextBox(_Widget):
     """
         Base class for widgets that are just boxes containing text.
     """
-    orientations = ORIENTATION_HORIZONTAL
+    orientations = ORIENTATION_BOTH
     defaults = [
         ("font", "sans", "Default font"),
         ("fontsize", None, "Font size. Calculated if None."),
@@ -453,10 +454,16 @@ class _TextBox(_Widget):
 
     def calculate_length(self):
         if self.text:
-            return min(
-                self.layout.width,
-                self.bar.width
-            ) + self.actual_padding * 2
+            if self.bar.horizontal:
+                return min(
+                    self.layout.width,
+                    self.bar.width
+                ) + self.actual_padding * 2
+            else:
+                return min(
+                    self.layout.width,
+                    self.bar.height
+                ) + self.actual_padding * 2
         else:
             return 0
 
@@ -470,10 +477,31 @@ class _TextBox(_Widget):
         if not self.can_draw():
             return
         self.drawer.clear(self.background or self.bar.background)
-        self.layout.draw(
-            self.actual_padding or 0,
-            int(self.bar.height / 2.0 - self.layout.height / 2.0) + 1
-        )
+        if self.bar.horizontal:
+            self.layout.draw(
+                self.actual_padding or 0,
+                int(self.bar.height / 2.0 - self.layout.height / 2.0) + 1
+            )
+        else:
+            # We need to do some transformations for vertical bars.
+            self.drawer.ctx.save()
+
+            # Left bar reads bottom to top
+            if self.bar.screen.left is self.bar:
+                self.drawer.ctx.rotate(-90 * math.pi / 180.0)
+                self.drawer.ctx.translate(-self.length, 0)
+
+            # Right bar is top to bottom
+            else:
+                self.drawer.ctx.translate(self.bar.width, 0)
+                self.drawer.ctx.rotate(90 * math.pi / 180.0)
+
+            self.layout.draw(
+                self.actual_padding or 0,
+                int(self.bar.width / 2.0 - self.layout.height / 2.0) + 1
+            )
+            self.drawer.ctx.restore()
+
         self.drawer.draw(offsetx=self.offsetx, offsety=self.offsety, width=self.width)
 
     def cmd_set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED,

@@ -46,8 +46,6 @@ class Memory(base.ThreadPoolText):
 
     .. _psutil: https://pypi.org/project/psutil/
     """
-
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("format", "{MemUsed: .0f}{mm}/{MemTotal: .0f}{mm}", "Formatting for field names."),
         ("update_interval", 1.0, "Update interval for the Memory"),

@@ -1,6 +1,6 @@
 from urllib.parse import quote, urlencode
 
-from libqtile.widget import GenPollUrl, base
+from libqtile.widget import GenPollUrl
 
 
 class Wttr(GenPollUrl):
@@ -44,8 +44,6 @@ class Wttr(GenPollUrl):
 
     Cities will change randomly every update.
     """
-
-    orientation = base.ORIENTATION_HORIZONTAL
     defaults = [
         (
             'format', '3',

@@ -29,7 +29,6 @@ class WindowCount(base._TextBox):
     A simple widget to display the number of windows in the
     current group of the screen on which the widget is.
     """
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("font", "sans", "Text font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),

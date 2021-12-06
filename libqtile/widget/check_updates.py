@@ -27,7 +27,6 @@ from libqtile.widget import base
 
 class CheckUpdates(base.ThreadPoolText):
     """Shows number of pending updates in different unix systems"""
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("distro", "Arch", "Name of your distribution"),
         ("custom_command", None, "Custom shell command for checking updates (counts the lines of the output)"),

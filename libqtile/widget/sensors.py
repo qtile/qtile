@@ -41,7 +41,6 @@ class ThermalSensor(base.InLoopPollText):
 
     .. _psutil: https://pypi.org/project/psutil/
     """
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('metric', True, 'True to use metric/C, False to use imperial/F'),
         ('show_tag', False, 'Show tag sensor'),

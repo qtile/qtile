@@ -64,7 +64,6 @@ class ImapWidget(base.ThreadPoolText):
 
     .. _keyring: https://pypi.org/project/keyring/
     """
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('mbox', '"INBOX"', 'mailbox to fetch'),
         ('label', 'INBOX', 'label for display'),

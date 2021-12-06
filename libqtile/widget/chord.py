@@ -27,7 +27,6 @@ from libqtile.widget import base
 
 class Chord(base._TextBox):
     """Display current key chord"""
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("chords_colors", {},
             "colors per chord in form of tuple ('bg', 'fg')."),

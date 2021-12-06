@@ -31,7 +31,6 @@ from libqtile.widget import base
 
 class WindowName(base._TextBox):
     """Displays the name of the window that currently has focus"""
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('for_current_screen', False, 'instead of this bars screen use currently active screen'),
         ('empty_group_string', ' ', 'string to display when no windows are focused on current group'),

@@ -157,7 +157,6 @@ class Mpd2(base.ThreadPoolText):
     .. _python-mpd2: https://pypi.org/project/python-mpd2/
     """
 
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('update_interval', 1, 'Interval of update widget'),
         ('host', 'localhost', 'Host of mpd server'),

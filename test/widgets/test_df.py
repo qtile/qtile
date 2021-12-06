@@ -73,6 +73,7 @@ def test_df_no_warning(fake_qtile, fake_window):
     ''' Test no text when free space over threshold '''
     df1 = df.DF()
     fakebar = Bar([df1], 24)
+    fakebar.horizontal = True
     fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
@@ -90,6 +91,7 @@ def test_df_always_visible(fake_qtile, fake_window):
     ''' Test text is always displayed '''
     df2 = df.DF(visible_on_warn=False)
     fakebar = Bar([df2], 24)
+    fakebar.horizontal = True
     fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10
@@ -112,6 +114,7 @@ def test_df_warn_space(fake_qtile, fake_window):
     '''
     df3 = df.DF(warn_space=40)
     fakebar = Bar([df3], 24)
+    fakebar.horizontal = True
     fakebar.window = fake_window
     fakebar.width = 10
     fakebar.height = 10

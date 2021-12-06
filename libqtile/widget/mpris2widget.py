@@ -40,7 +40,6 @@ class Mpris2(base._TextBox):
 
     .. _dbus-next: https://pypi.org/project/dbus-next/
     """
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('name', 'audacious', 'Name of the MPRIS widget.'),
 
