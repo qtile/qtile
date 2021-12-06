@@ -18,15 +18,13 @@ from libqtile.widget import base
 # TODO: Volume inc/dec support
 keys = {
     # Left mouse button
-    "toggle": 1,
+    1: "toggle",
     # Right mouse button
-    "stop": 3,
+    3: "stop",
     # Scroll up
-    "previous": 4,
+    4: "previous",
     # Scroll down
-    "next": 5,
-    # User defined command
-    "command": None
+    5: "next"
 }
 
 # To display mpd state
@@ -165,7 +163,7 @@ class Mpd2(base.ThreadPoolText):
         ('host', 'localhost', 'Host of mpd server'),
         ('port', 6600, 'Port of mpd server'),
         ('password', None, 'Password for auth on mpd server'),
-        ('mouse_buttons', {}, 'b_num -> action.'),
+        ('mouse_buttons', keys, 'b_num -> action.'),
         ('play_states', play_states, 'Play state mapping'),
         ('format_fns', format_fns, 'Dictionary of format methods'),
         ('command', default_cmd,

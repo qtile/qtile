@@ -33,6 +33,7 @@ from wlroots.wlr_types import (
     Cursor,
     DataControlManagerV1,
     DataDeviceManager,
+    ForeignToplevelManagerV1,
     GammaControlManagerV1,
     OutputLayout,
     PrimarySelectionV1DeviceManager,
@@ -191,6 +192,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.pointer_constraints: Set[wlrq.PointerConstraint] = set()
         self.active_pointer_constraint: Optional[wlrq.PointerConstraint] = None
         self._relative_pointer_manager_v1 = RelativePointerManagerV1(self.display)
+        self.foreign_toplevel_manager_v1 = ForeignToplevelManagerV1.create(self.display)
 
         # start
         os.environ["WAYLAND_DISPLAY"] = self.socket.decode()
@@ -513,7 +515,6 @@ class Core(base.Core, wlrq.HasListeners):
                             and self.qtile.current_screen != win.group.screen
                         ):
                             self.qtile.focus_screen(win.group.screen.index, False)
-                    self.focus_window(win, surface)
 
             if self._hovered_internal:
                 self._hovered_internal = None
@@ -643,6 +644,10 @@ class Core(base.Core, wlrq.HasListeners):
         if self.focused_internal:
             self.focused_internal = None
 
+        if isinstance(win.surface, LayerSurfaceV1):
+            if not win.surface.current.keyboard_interactive:
+                return
+
         previous_surface = self.seat.keyboard_state.focused_surface
         if previous_surface == surface:
             return
@@ -652,18 +657,17 @@ class Core(base.Core, wlrq.HasListeners):
             previous_xdg_surface = XdgSurface.from_surface(previous_surface)
             if not win or win.surface != previous_xdg_surface:
                 previous_xdg_surface.set_activated(False)
+                if previous_xdg_surface.data:
+                    previous_xdg_surface.data.set_activated(False)
 
         if not win:
             self.seat.keyboard_clear_focus()
             return
 
-        if isinstance(win.surface, LayerSurfaceV1):
-            if not win.surface.current.keyboard_interactive:
-                return
-
         logger.debug("Focussing new window")
         if surface.is_xdg_surface and isinstance(win.surface, XdgSurface):
             win.surface.set_activated(True)
+            win.ftm_handle.set_activated(True)
 
         if enter and self.seat.keyboard._ptr:  # This pointer is NULL when headless
             self.seat.keyboard_notify_enter(surface, self.seat.keyboard)
@@ -682,12 +686,14 @@ class Core(base.Core, wlrq.HasListeners):
                     win.cmd_bring_to_front()
 
             if not isinstance(win, base.Internal):
-                if not isinstance(win, base.Static):
+                if isinstance(win, window.Static):
+                    if win.screen is not self.qtile.current_screen:
+                        self.qtile.focus_screen(win.screen.index, warp=False)
+                    win.focus(False)
+                else:
                     if win.group and win.group.screen is not self.qtile.current_screen:
                         self.qtile.focus_screen(win.group.screen.index, warp=False)
                     self.qtile.current_group.focus(win, False)
-
-                self.focus_window(win, surface=surface, enter=False)
 
         else:
             screen = self.qtile.find_screen(self.cursor.x, self.cursor.y)

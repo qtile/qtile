@@ -189,11 +189,13 @@ class Bar(Gap, configurable.Configurable):
 
         self.queued_draws = 0
         self.future = None
+        self._borders_drawn = False
 
     def _configure(self, qtile, screen):
         # We only want to adjust margin sizes once unless there's a new strut
         if not self._configured or self._add_strut:
             Gap._configure(self, qtile, screen)
+            self._borders_drawn = False
 
             if sum(self._initial_margin) or sum(self.border_width) or self._add_strut:
 
@@ -498,7 +500,7 @@ class Bar(Gap, configurable.Configurable):
         self._resize(self.length, self.widgets)
 
         # We draw the border before the widgets
-        if self.border_width:
+        if any(self.border_width) and not self._borders_drawn:
 
             # The border is drawn "outside" of the bar (i.e. not in the space that the
             # widgets occupy) so we need to add the additional space
@@ -545,6 +547,9 @@ class Bar(Gap, configurable.Configurable):
 
             self.drawer.draw(0, 0)
 
+            # Prevent multiple redraws of borders
+            self._borders_drawn = True
+
         for i in self.widgets:
             i.draw()
         end = i.offset + i.length  # pylint: disable=undefined-loop-variable
@@ -573,6 +578,7 @@ class Bar(Gap, configurable.Configurable):
         if is_show != self.is_show():
             if is_show:
                 self.size = self.size_calculated
+                self._borders_drawn = False
                 self.window.unhide()
             else:
                 self.size_calculated = self.size
