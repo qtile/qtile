@@ -3,6 +3,13 @@ from libqtile.log_utils import logger
 
 
 class ThermalZone(base.ThreadPoolText):
+    """Thermal zone widget.
+
+    This widget was made to read thermal zone files and transform values to
+    human readable format. You can set zone parameter to any standard thermal
+    zone file from /sys/class/thermal directory.
+    """
+
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('update_interval', 2.0, 'Update interval'),
