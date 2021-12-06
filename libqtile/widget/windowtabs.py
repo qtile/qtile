@@ -33,7 +33,6 @@ class WindowTabs(base._TextBox):
         Contrary to TaskList this is not an interactive widget.
         The window that currently has focus is highlighted.
     """
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("separator", " | ", "Task separator text."),
         ("selected", ("<b>", "</b>"), "Selected task indicator"),

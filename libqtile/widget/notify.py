@@ -47,7 +47,6 @@ class Notify(base._TextBox):
     the ``action`` option to disable all action handling. Unfortunately we cannot
     specify the capability for exactly one action.
     """
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("foreground_urgent", "ff0000", "Foreground urgent priority colour"),
         ("foreground_low", "dddddd", "Foreground low priority  colour"),

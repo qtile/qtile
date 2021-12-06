@@ -39,7 +39,6 @@ class KeyboardKbdd(base.ThreadPoolText):
 
     .. _dbus-next: https://pypi.org/project/dbus-next/
     """
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("update_interval", 1, "Update interval in seconds."),
         ("configured_keyboards", ["us", "ir"],

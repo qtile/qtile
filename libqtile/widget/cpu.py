@@ -31,8 +31,6 @@ class CPU(base.ThreadPoolText):
 
     .. _psutil: https://pypi.org/project/psutil/
     """
-    orientations = base.ORIENTATION_HORIZONTAL
-
     defaults = [
         ("update_interval", 1.0, "Update interval for the CPU widget"),
         (

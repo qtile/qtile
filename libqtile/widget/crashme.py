@@ -41,8 +41,6 @@ class _CrashMe(base._TextBox):
         A fixed width, or bar.CALCULATED to calculate the width automatically
         (which is recommended).
     """
-    orientations = base.ORIENTATION_HORIZONTAL
-
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "Crash me !", width, **config)
 

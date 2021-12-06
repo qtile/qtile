@@ -335,7 +335,7 @@ class Prompt(base._TextBox):
         "window": WindowCompleter,
         None: NullCompleter
     }
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [("cursor", True, "Show a cursor"),
                 ("cursorblink", 0.5, "Cursor blink rate. 0 to disable."),
                 ("cursor_color", "bef098",

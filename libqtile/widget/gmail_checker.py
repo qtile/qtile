@@ -30,7 +30,6 @@ from libqtile.widget import base
 
 class GmailChecker(base.ThreadPoolText):
     """A simple gmail checker. If 'status_only_unseen' is True - set 'fmt' for one argument, ex. 'unseen: {0}'"""
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("update_interval", 30, "Update time in seconds."),
         ("username", None, "username"),

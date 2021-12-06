@@ -21,7 +21,6 @@
 
 import datetime
 
-from libqtile.widget import base
 from libqtile.widget.generic_poll_text import GenPollUrl
 
 
@@ -38,9 +37,6 @@ class IdleRPG(GenPollUrl):
 
     .. _xmltodict: https://pypi.org/project/xmltodict/
     """
-
-    orientations = base.ORIENTATION_HORIZONTAL
-
     defaults = [
         ('format', 'IdleRPG: {online} TTL: {ttl}', 'Display format'),
         ('json', False, 'Not json :)'),

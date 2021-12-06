@@ -30,7 +30,6 @@ from libqtile.widget import base
 
 class Canto(base.ThreadPoolText):
     """Display RSS feeds updates using the canto console reader"""
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("fetch", False, "Whether to fetch new items on update"),
         ("feeds", [], "List of feeds to display, empty for all"),

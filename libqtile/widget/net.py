@@ -35,7 +35,7 @@ class Net(base.ThreadPoolText):
 
     .. _psutil: https://pypi.org/project/psutil/
     """
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
         ('format', '{interface}: {down} \u2193\u2191 {up}',
          'Display format of down/upload/total speed of given interfaces'),

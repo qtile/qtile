@@ -16,8 +16,6 @@ def _all_sensors_names_correct(sensors):
 
 class NvidiaSensors(base.ThreadPoolText):
     """Displays temperature, fan speed and performance level Nvidia GPU."""
-
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         (
             'format', '{temp}°C',

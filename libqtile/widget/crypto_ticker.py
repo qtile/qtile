@@ -26,7 +26,6 @@
 
 import locale
 
-from libqtile.widget import base
 from libqtile.widget.generic_poll_text import GenPollUrl
 
 _DEFAULT_CURRENCY = str(locale.localeconv()['int_curr_symbol'])
@@ -50,10 +49,7 @@ class CryptoTicker(GenPollUrl):
         # change the currency symbol:
         widget.CryptoTicker(currency="EUR", symbol="€")
     """
-
     QUERY_URL = "https://api.coinbase.com/v2/prices/{}-{}/spot"
-
-    orientations = base.ORIENTATION_HORIZONTAL
 
     defaults = [
         ('currency', _DEFAULT_CURRENCY.strip(),

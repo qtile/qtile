@@ -27,7 +27,6 @@ class She(base.InLoopPollText):
 
     Can display either the mode or CPU speed on eeepc computers.
     """
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('device', '/sys/devices/platform/eeepc/cpufv', 'sys path to cpufv'),
         ('format', 'speed', 'Type of info to display "speed" or "name"'),

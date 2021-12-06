@@ -19,11 +19,10 @@
 # SOFTWARE.
 
 # Widget specific tests
+import pytest
 
 import libqtile.bar
 import libqtile.config
-import libqtile.confreader
-import libqtile.layout
 from libqtile.widget.base import _Widget
 
 
@@ -38,27 +37,28 @@ class BadWidget(_Widget):
         pass
 
 
-def test_configerrorwidget(manager_nospawn, minimal_conf_noscreen):
+@pytest.mark.parametrize("position", ["top", "bottom", "left", "right"])
+def test_configerrorwidget(manager_nospawn, minimal_conf_noscreen, position):
+    """ConfigError widget should show in any bar orientation."""
     widget = BadWidget(length=10)
 
     config = minimal_conf_noscreen
     config.screens = [
         libqtile.config.Screen(
-            top=libqtile.bar.Bar([widget], 10)
+            **{position: libqtile.bar.Bar([widget], 10)}
         )
     ]
 
     manager_nospawn.start(config)
 
-    topbar = manager_nospawn.c.bar["top"]
-    w = topbar.info()["widgets"][0]
+    testbar = manager_nospawn.c.bar[position]
+    w = testbar.info()["widgets"][0]
 
     # Check that BadWidget has been replaced by ConfigErrorWidget
     assert w["name"] == "configerrorwidget"
     assert w["text"] == "Widget crashed: BadWidget (click to hide)"
 
     # Clicking on widget hides it so let's check it works
-    topbar.fake_button_press(0, "top", 0, 0, button=1)
-    w = topbar.info()["widgets"][0]
+    testbar.fake_button_press(0, position, 0, 0, button=1)
+    w = testbar.info()["widgets"][0]
     assert w["text"] == ""
-    assert w["width"] == 0

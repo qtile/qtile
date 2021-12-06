@@ -59,7 +59,6 @@ class KhalCalendar(base.ThreadPoolText):
 
     .. _dateutil: https://pypi.org/project/python-dateutil/
     """
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         (
             'reminder_color',

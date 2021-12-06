@@ -308,7 +308,7 @@ class Battery(base.ThreadPoolText):
     """A text-based battery monitoring widget currently supporting FreeBSD"""
     background: Optional[ColorsType]
     low_background: Optional[ColorsType]
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
         ('charge_char', '^', 'Character to indicate the battery is charging'),
         ('discharge_char', 'V', 'Character to indicate the battery is discharging'),

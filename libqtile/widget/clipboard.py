@@ -28,7 +28,6 @@ from libqtile.widget import base
 
 class Clipboard(base._TextBox):
     """Display current clipboard contents"""
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("selection", "CLIPBOARD",
             "the selection to display(CLIPBOARD or PRIMARY)"),

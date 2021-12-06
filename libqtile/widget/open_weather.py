@@ -24,7 +24,6 @@ import time
 from typing import Any, List, Tuple
 from urllib.parse import urlencode
 
-from libqtile.widget import base
 from libqtile.widget.generic_poll_text import GenPollUrl
 
 # See documentation: https://openweathermap.org/current
@@ -172,7 +171,6 @@ class OpenWeather(GenPollUrl):
         "50n": "🌫",
     }
 
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         # One of (cityid, location, zip, coordinates) must be set.
         (
