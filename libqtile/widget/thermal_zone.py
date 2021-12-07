@@ -32,19 +32,20 @@ class ThermalZone(base.ThreadPoolText):
         try:
             with open(self.zone) as f:
                 value = round(int(f.read().rstrip()) / 1000)
-                variables = dict()
-                variables['temp'] = str(value)
-                output = self.format.format(**variables)
-                if value < self.high:
-                    self.layout.colour = self.fgcolor_normal
-                elif value < self.crit:
-                    self.layout.colour = self.fgcolor_high
-                elif value >= self.crit:
-                    self.layout.colour = self.fgcolor_crit
-                    output = self.format_crit.format(**variables)
-            if self.hidden and value < self.crit:
-                output = ""
-            return output
         except OSError:
             logger.exception('{} does not exist'.format(self.zone))
             return 'err!'
+
+        variables = dict()
+        variables['temp'] = str(value)
+        output = self.format.format(**variables)
+        if value < self.high:
+            self.layout.colour = self.fgcolor_normal
+        elif value < self.crit:
+            self.layout.colour = self.fgcolor_high
+        elif value >= self.crit:
+            self.layout.colour = self.fgcolor_crit
+            output = self.format_crit.format(**variables)
+        if self.hidden and value < self.crit:
+            output = ""
+        return output
