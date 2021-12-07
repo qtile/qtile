@@ -590,9 +590,6 @@ class StatusNotifier(base._Widget):
         )
 
     def _configure(self, qtile, bar):
-        if self.configured:
-            return
-
         if has_xdg and self.icon_theme:
             host.icon_theme = self.icon_theme
 
