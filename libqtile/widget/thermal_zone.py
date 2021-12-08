@@ -1,5 +1,5 @@
-from libqtile.widget import base
 from libqtile.log_utils import logger
+from libqtile.widget import base
 
 
 class ThermalZone(base.ThreadPoolText):
