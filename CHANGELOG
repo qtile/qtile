@@ -27,6 +27,7 @@ Qtile x.x.x, released xxxx-xx-xx:
           By default the keys are not passed (swallowed), so this argument is set to `True`.
           When set to `False`, the keys are passed to the focused client. A key is never swallowed if the
           function is not executed, e.g. due to failing the `.when()` check.
+        - Thermal zone widget.
 
 Qtile 0.18.1, released 2021-09-16:
     * features

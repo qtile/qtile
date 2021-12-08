@@ -83,6 +83,7 @@ widgets = {
     "TaskList": "tasklist",
     "TextBox": "textbox",
     "ThermalSensor": "sensors",
+    "ThermalZone": "thermal_zone",
     "Volume": "volume",
     "Wallpaper": "wallpaper",
     "WidgetBox": "widgetbox",
