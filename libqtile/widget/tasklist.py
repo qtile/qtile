@@ -154,6 +154,11 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             'Icon size. '
             '(Calculated if set to None. Icons are hidden if set to 0.)'
         ),
+        (
+            'icon_only',
+            False,
+            'Hide all text and just show icons (X11 only)'
+        )
     ]
 
     def __init__(self, **config):
@@ -304,6 +309,17 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             # Disable icons
             self.icon_size = 0
             logger.warning("TaskList icons not supported in Wayland.")
+            if self.icon_only:
+                self.icon_only = False
+                logger.info("'icon_only' mode disabled.")
+
+        if self.icon_only:
+            if self.icon_size == 0:
+                self.icon_size = None
+            self.parse_text = lambda _: ""
+            self.text_minimized = ""
+            self.text_maximized = ""
+            self.text_floating = ""
 
         if self.icon_size is None:
             self.icon_size = self.bar.height - 2 * (self.borderwidth +
