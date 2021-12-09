@@ -67,6 +67,9 @@ Qtile 0.22.0, released 2022-09-22:
         - `KeyChord`'s signature has changed. ``mode`` is now a boolean to indicate whether the mode should persist.
           The ``name`` parameter should be used to name the chord (e.g. for the ``Chord`` widget).
     * features
+        - lazy.<object>.when(when_floating=X) now behaves differently: the lazy call will be executed
+          independently of the current window's float state by default, and can be limited to when it
+          is floating or tiled by passing when_floating as True or False respectively.
         - Add ability to draw borders and add margins to the `Max` layout.
         - The default XWayland cursor is now set at startup to left_ptr, so an xsetroot call is not needed to
           avoid the ugly X cursor.
