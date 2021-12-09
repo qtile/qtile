@@ -47,7 +47,7 @@ class LazyCall:
         self._kwargs = kwargs
 
         self._layouts: Set[str] = set()
-        self._when_floating = True
+        self._when_floating = None
 
     def __call__(self, *args, **kwargs):
         """Convenience method to allow users to pass arguments to
@@ -91,7 +91,7 @@ class LazyCall:
         return self._kwargs
 
     def when(self, layout: Optional[Union[Iterable[str], str]] = None,
-             when_floating: bool = True) -> 'LazyCall':
+             when_floating: Optional[bool] = None) -> 'LazyCall':
         """Enable call only for given layout(s) and floating state
 
         Parameters
@@ -111,7 +111,10 @@ class LazyCall:
     def check(self, q) -> bool:
         cur_win_floating = q.current_window and q.current_window.floating
 
-        if cur_win_floating and not self._when_floating:
+        if cur_win_floating and self._when_floating is False:
+            return False
+
+        if not cur_win_floating and self._when_floating:
             return False
 
         if self._layouts and q.current_layout.name not in self._layouts:

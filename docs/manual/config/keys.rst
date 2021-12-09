@@ -61,8 +61,11 @@ the ``when()`` method. Currently, two conditions are supported:
             lazy.layout.grow_down().when(layout='columns')
         ),
 
-        # Limit action to when the current window is not floating (default True)
+        # Limit action to when the current window is not floating
         Key([mod], "f", lazy.window.toggle_fullscreen().when(when_floating=False))
+
+        # Limit action to when the current window is floating
+        Key([mod], "f", lazy.window.toggle_fullscreen().when(when_floating=True))
     ]
 
 KeyChords

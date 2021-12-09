@@ -1,6 +1,9 @@
 Qtile x.x.x, released xxxx-xx-xx:
     * features
         - Add ability to draw borders to the Bar. Can customise size and colour per edge.
+        - lazy.<object>.when(when_floating=X) now behaves differently: the lazy call will be executed
+          independently of the current window's float state by default, and can be limited to when it
+          is floating or tiled by passing when_floating as True or False respectively.
         - Add `StatusNotifier` widget implementing the `StatusNotifierItem` specification.
           NB Widget does not provide context menus.
         - Add `total` bandwidth format value to the Net widget.
