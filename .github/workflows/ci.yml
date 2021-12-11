@@ -79,14 +79,12 @@ jobs:
               run: |
                 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
                 tox
-            - name: Upload coverage data to coveralls.io
-              run: |
-                pip -q install coveralls
-                coveralls --service=github
-              env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
-                COVERALLS_PARALLEL: true
+            - name: Coveralls Parallel
+              uses: coverallsapp/github-action@master
+              with:
+                github-token: ${{ secrets.github_token }}
+                flag-name: run-${{ matrix.python-version }}
+                parallel: true
 
     coverage:
         name: Finalize Coverage
