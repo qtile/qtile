@@ -26,11 +26,17 @@ from libqtile.log_utils import init_log, logger
 
 
 @pytest.fixture
+def fake_qtile():
+    class FakeQtile:
+        def cmd_spawn(self, value):
+            logger.warning(value)
+
+    yield FakeQtile()
+
+
+@pytest.fixture
 def log_extension_output(monkeypatch):
     init_log(logging.WARNING, log_path=None, log_color=False)
-
-    def fake_system(value):
-        logger.warning(value)
 
     def fake_popen(cmd, *args, **kwargs):
         class PopenObj:
@@ -42,14 +48,13 @@ def log_extension_output(monkeypatch):
 
         return PopenObj()
 
-    monkeypatch.setattr("libqtile.extension.command_set.system", fake_system)
     monkeypatch.setattr("libqtile.extension.base.Popen", fake_popen)
 
     yield
 
 
 @pytest.mark.usefixtures("log_extension_output")
-def test_command_set_valid_command(caplog):
+def test_command_set_valid_command(caplog, fake_qtile):
     """Extension should run pre-commands and selected command."""
     extension = CommandSet(
         pre_commands=["run pre-command"],
@@ -57,7 +62,7 @@ def test_command_set_valid_command(caplog):
             "key": "run testcommand"
         }
     )
-    extension._configure(None)
+    extension._configure(fake_qtile)
     extension.run()
 
     assert caplog.record_tuples == [
@@ -67,7 +72,7 @@ def test_command_set_valid_command(caplog):
 
 
 @pytest.mark.usefixtures("log_extension_output")
-def test_command_set_invalid_command(caplog):
+def test_command_set_invalid_command(caplog, fake_qtile):
     """Where the key is not in "commands", no command will be run."""
     extension = CommandSet(
         pre_commands=["run pre-command"],
@@ -75,7 +80,7 @@ def test_command_set_invalid_command(caplog):
             "missing": "run testcommand"
         }
     )
-    extension._configure(None)
+    extension._configure(fake_qtile)
     extension.run()
 
     assert caplog.record_tuples == [
