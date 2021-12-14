@@ -47,13 +47,15 @@ class _Extension(configurable.Configurable):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(_Extension.defaults)
         _Extension.installed_extensions.append(self)
-        self._check_colors()
 
     def _check_colors(self):
         """
         dmenu needs colours to be in #rgb or #rrggbb format.
 
         Checks colour value, removes invalid values and adds # if missing.
+
+        NB This should not be called in _Extension.__init__ as _Extension.global_defaults
+        may not have been set at this point.
         """
         for c in ["background", "foreground", "selected_background", "selected_foreground"]:
             col = getattr(self, c, None)
@@ -74,6 +76,7 @@ class _Extension(configurable.Configurable):
 
     def _configure(self, qtile):
         self.qtile = qtile
+        self._check_colors()
 
     def run(self):
         """
