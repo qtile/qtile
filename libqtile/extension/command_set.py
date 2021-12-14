@@ -18,8 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from os import system
-
 from libqtile.extension.dmenu import Dmenu
 
 
@@ -61,7 +59,7 @@ class CommandSet(Dmenu):
 
         if self.pre_commands:
             for cmd in self.pre_commands:
-                system(cmd)
+                self.qtile.cmd_spawn(cmd)
 
         out = super(CommandSet, self).run(items=self.commands.keys())
 
@@ -76,4 +74,4 @@ class CommandSet(Dmenu):
         if sout not in self.commands:
             return
 
-        system(self.commands[sout])
+        self.qtile.cmd_spawn(self.commands[sout])
