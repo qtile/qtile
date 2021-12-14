@@ -35,7 +35,27 @@ parameters = [
 @pytest.mark.parametrize("value,expected", parameters)
 def test_valid_colours(value, expected):
     extension = _Extension(foreground=value)
+    extension._configure(None)
     assert extension.foreground == expected
+
+
+def test_valid_colours_extension_defaults(monkeypatch):
+    defaults = {
+        "foreground": "00ff00",
+        "background": "000000",
+        "selected_foreground": "000000",
+        "selected_background": "00ff00",
+    }
+    extension = _Extension(foreground="0000ff")
+
+    # Set defaults after widget is created to mimic behaviour of extension being
+    # initialised in config.
+    monkeypatch.setattr(_Extension, "global_defaults", defaults)
+    extension._configure(None)
+    assert extension.foreground == "#0000ff"
+    assert extension.background == "#000000"
+    assert extension.selected_foreground == "#000000"
+    assert extension.selected_background == "#00ff00"
 
 
 def test_base_methods():
