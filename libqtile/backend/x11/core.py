@@ -454,6 +454,11 @@ class Core(base.Core):
         keysym, modmask = self.lookup_key(key)
         codes = self.conn.keysym_to_keycode(keysym)
 
+        grab_mode = xcffib.xproto.GrabMode.Async
+        # If the key needs to be passed, we need to grab sync
+        if not key.swallow:
+            grab_mode = xcffib.xproto.GrabMode.Sync
+
         for code in codes:
             if code == 0:
                 logger.warning(f"Can't grab {key} (unknown keysym: {hex(keysym)})")
@@ -465,7 +470,7 @@ class Core(base.Core):
                     modmask | amask,
                     code,
                     xcffib.xproto.GrabMode.Async,
-                    xcffib.xproto.GrabMode.Sync,
+                    grab_mode,
                 )
         return keysym, modmask & self._valid_mask
 
@@ -509,12 +514,17 @@ class Core(base.Core):
         if isinstance(mouse, config.Drag):
             eventmask |= EventMask.ButtonRelease
 
+        grab_mode = xcffib.xproto.GrabMode.Async
+        # If the key needs to be passed, we need to grab sync
+        if not mouse.swallow:
+            grab_mode = xcffib.xproto.GrabMode.Sync
+
         for amask in self._auto_modmasks():
             self.conn.conn.core.GrabButton(
                 True,
                 self._root.wid,
                 eventmask,
-                xcffib.xproto.GrabMode.Sync,
+                grab_mode,
                 xcffib.xproto.GrabMode.Async,
                 xcffib.xproto.Atom._None,
                 xcffib.xproto.Atom._None,
