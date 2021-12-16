@@ -99,6 +99,11 @@ class Image(base._Widget, base.MarginMixin):
             return self.img.height + (self.margin_y * 2)
 
     def cmd_update(self, filename):
+        old_length = self.calculate_length()
         self.filename = filename
         self._update_image()
-        self.draw()
+
+        if self.calculate_length() == old_length:
+            self.draw()
+        else:
+            self.bar.draw()
