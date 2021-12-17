@@ -22,11 +22,6 @@ Qtile x.x.x, released xxxx-xx-xx:
           `lazy.group.toscreen(toggle=True)`
         - Tile layout has new `margin_on_single` and `border_on_single` option to specify
           whether to draw margin and border when there is only one window.
-        - `Key`, `KeyChord`, `Click` and `Drag` bindings now have another argument `swallow`.
-          It indicates whether or not the pressed keys should be passed on to the focused client.
-          By default the keys are not passed (swallowed), so this argument is set to `True`.
-          When set to `False`, the keys are passed to the focused client. A key is never swallowed if the
-          function is not executed, e.g. due to failing the `.when()` check.
         - Thermal zone widget.
         - Allow TextBox-based widgets to display in vertical bars.
 
