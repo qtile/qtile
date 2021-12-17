@@ -371,17 +371,15 @@ class Qtile(CommandObject):
     ) -> None:
         self.core.painter.paint(screen, image_path, mode)
 
-    def process_key_event(self, keysym: int, mask: int) -> bool:
+    def process_key_event(self, keysym: int, mask: int) -> None:
         key = self.keys_map.get((keysym, mask), None)
         if key is None:
             logger.debug("Ignoring unknown keysym: {keysym}, mask: {mask}".format(keysym=keysym, mask=mask))
-            return False
+            return
 
         if isinstance(key, KeyChord):
             self.grab_chord(key)
         else:
-            # Keep track if we have executed a command
-            executed = False
             for cmd in key.commands:
                 if cmd.check(self):
                     status, val = self.server.call(
@@ -389,15 +387,9 @@ class Qtile(CommandObject):
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("KB command error %s: %s" % (cmd.name, val))
-                    executed = True
             if self.chord_stack and (self.chord_stack[-1].mode == "" or key.key == "Escape"):
                 self.cmd_ungrab_chord()
-            # We never swallow when no commands have been executed,
-            # even when key.swallow is set to True
-            elif not executed:
-                return False
-        # Return whether we have handled the key based on the key's swallow parameter
-        return key.swallow
+            return
 
     def grab_keys(self) -> None:
         """Re-grab all of the keys configured in the key map
@@ -714,7 +706,7 @@ class Qtile(CommandObject):
                             logger.error(
                                 "Mouse command error %s: %s" % (i.name, val)
                             )
-                        handled = m.swallow
+                        handled = True
             elif isinstance(m, Drag):
                 if m.start:
                     i = m.start
@@ -729,7 +721,7 @@ class Qtile(CommandObject):
                     val = (0, 0)
                 self._drag = (x, y, val[0], val[1], m.commands)
                 self.core.grab_pointer()
-                handled = m.swallow
+                handled = True
 
         return handled
 
