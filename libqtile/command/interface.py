@@ -148,10 +148,13 @@ class QtileCommandInterface(CommandInterface):
             The keyword arguments to pass into the command graph call.
         """
         obj = self._command_object.select(call.selectors)
-
+        cmd = None
         try:
             cmd = obj.command(call.name)
         except SelectError:
+            pass
+
+        if cmd is None:
             return "No such command."
 
         logger.debug("Command: %s(%s, %s)", call.name, args, kwargs)
