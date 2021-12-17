@@ -128,7 +128,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         Return None if no such object exists
         """
 
-    def command(self, name: str) -> Callable:
+    def command(self, name: str) -> Optional[Callable]:
         """Return the command with the given name
 
         Parameters
@@ -170,6 +170,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         """
         if name in self.commands:
             command = self.command(name)
+            assert command
             signature = self._get_command_signature(command)
             spec = name + signature
             htext = inspect.getdoc(command) or ""
