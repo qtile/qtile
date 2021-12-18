@@ -14,6 +14,7 @@ exclude libqtile/backend/x11/_ffi*.py
 exclude Makefile
 exclude dev.sh
 exclude logo.png
+exclude .readthedocs.yaml
 
 graft libqtile/resources
 graft resources

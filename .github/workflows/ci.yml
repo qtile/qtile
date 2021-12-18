@@ -20,6 +20,8 @@ jobs:
                 # - /tox.ini:[gh-actions]
                 # - /setup.cfg:[mypy]
                 # - /libqtile/scripts/check.py mypy argument
+                # If adding new python versions, consider also updating
+                # python version in .readthedocs.yaml
                 python-version: [pypy-3.7, 3.7, 3.8, 3.9, '3.10']
         steps:
             - uses: actions/checkout@v2
