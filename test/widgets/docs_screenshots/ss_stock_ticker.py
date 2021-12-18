@@ -1,4 +1,4 @@
-# Copyright (c) 2021 elParaguayo
+# Copyright (c) 2022 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -17,8 +17,9 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import pytest
 
-from libqtile import widget
+from libqtile.widget import stock_ticker
 
 RESPONSE = {
     "Meta Data": {
@@ -62,14 +63,15 @@ RESPONSE = {
 }
 
 
-def test_stock_ticker_methods():
-    ticker = widget.StockTicker(symbol="QTIL")
+@pytest.fixture
+def widget(monkeypatch):
+    def result(self):
+        return RESPONSE
 
-    assert ticker.url == (
-        "https://www.alphavantage.co/query?interval=1min&outputsize=compact&"
-        "function=TIME_SERIES_INTRADAY&symbol=QTIL"
-    )
+    monkeypatch.setattr("libqtile.widget.stock_ticker.StockTicker.fetch", result)
+    yield stock_ticker.StockTicker
 
-    # We don't know what locale is on the testing system but we can just use
-    # whatever the widget is using.
-    assert ticker.parse(RESPONSE) == f"QTIL: {ticker.sign}140.98"
+
+@pytest.mark.parametrize("screenshot_manager", [{"symbol": "QTIL"}], indirect=True)
+def ss_stock_ticker(screenshot_manager):
+    screenshot_manager.take_screenshot()

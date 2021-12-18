@@ -27,6 +27,7 @@ else:
 os.environ["NO_AT_BRIDGE"] = "1"
 
 import sys
+from pathlib import Path
 
 import gi
 
@@ -37,6 +38,8 @@ from dbus_next.constants import MessageType, PropertyAccess
 from dbus_next.glib import MessageBus
 from dbus_next.service import ServiceInterface, dbus_property, method, signal
 from gi.repository import Gdk, Gtk
+
+ICON = Path(__file__).parent / "qtile_icon.rgba"
 
 
 class SNItem(ServiceInterface):
@@ -51,6 +54,17 @@ class SNItem(ServiceInterface):
         ServiceInterface.__init__(self, *args)
         self.window = window
         self.fullscreen = False
+
+        with open(ICON, "rb") as f:
+            self.icon = f.read()
+
+        arr = bytearray(self.icon)
+        for i in range(0, len(arr), 4):
+            r, g, b, a = arr[i : i + 4]
+            arr[i] = a
+            arr[i + 1 : i + 4] = bytearray([r, g, b])
+
+        self.icon = bytes(arr)
 
     @method()
     def Activate(self, x: "i", y: "i"):
@@ -67,7 +81,7 @@ class SNItem(ServiceInterface):
 
     @dbus_property(PropertyAccess.READ)
     def IconPixmap(self) -> "a(iiay)":
-        return [[32, 32, bytes([100] * (32 * 32 * 4))]]
+        return [[32, 32, self.icon]]
 
     @dbus_property(PropertyAccess.READ)
     def AttentionIconPixmap(self) -> "a(iiay)":

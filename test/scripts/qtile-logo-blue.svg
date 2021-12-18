@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="220mm"
+   height="220mm"
+   viewBox="0 0 220 220"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20, custom)"
+   sodipodi:docname="qtile-logo-blue.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     width="220mm"
+     inkscape:zoom="0.26772146"
+     inkscape:cx="93.380635"
+     inkscape:cy="509.85827"
+     inkscape:window-width="1920"
+     inkscape:window-height="1056"
+     inkscape:window-x="0"
+     inkscape:window-y="24"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     inkscape:snap-page="true" />
+  <defs
+     id="defs2">
+    <rect
+       x="138.90721"
+       y="143.26299"
+       width="136.07198"
+       height="134.09091"
+       id="rect3708" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#2980b9;fill-opacity:1;stroke-width:0.62656;stroke-linecap:round;stroke-linejoin:round"
+       id="rect1016"
+       width="220"
+       height="220"
+       x="0"
+       y="0" />
+    <g
+       aria-label=""
+       transform="matrix(-1.3199682,1.3199682,-1.3199682,-1.3199682,608.291,128.95403)"
+       id="text3706"
+       style="font-weight:bold;font-size:85.3333px;line-height:1.25;font-family:'Font Awesome 5 Free';-inkscape-font-specification:'Font Awesome 5 Free Bold';letter-spacing:0px;word-spacing:0px;white-space:pre;shape-inside:url(#rect3708);fill:#ffffff;fill-opacity:1">
+      <path
+         d="m 205.57289,163.097 c -2,-1.5 -4.66667,-0.83334 -5.83333,1.16666 l -2.66667,4.66667 c -1,1.83333 -0.5,4 1,5.16666 7.33333,5.5 11.33333,13.83333 11.5,22.33333 0,15.83332 -12.83333,28.16665 -27.99999,28.16665 -15.66666,0 -28.16666,-12.49999 -27.99999,-27.99999 0,-9.16666 4.33333,-17.33332 11.33333,-22.49999 1.5,-1.16666 2,-3.33333 1,-5.16666 l -2.66667,-4.66667 c -1.16666,-2 -3.83333,-2.66666 -5.83333,-1.16666 -10.49999,7.49999 -17.33332,19.83332 -17.16666,33.66665 0,22.66666 18.66666,41.33332 41.33332,41.16665 22.83332,0 41.33331,-18.49999 41.33331,-41.33332 0,-13.83332 -6.83333,-25.99999 -17.33332,-33.49998 z m -17.33333,34.83332 v -39.99999 c 0,-2.16666 -1.83333,-4 -4,-4 h -5.33333 c -2.33333,0 -4,1.83334 -4,4 v 39.99999 c 0,2.33333 1.66667,3.99999 4,3.99999 h 5.33333 c 2.16667,0 4,-1.66666 4,-3.99999 z"
+         id="path63138"
+         style="fill:#ffffff;fill-opacity:1" />
+    </g>
+  </g>
+</svg>

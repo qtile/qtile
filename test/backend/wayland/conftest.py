@@ -2,7 +2,12 @@ import contextlib
 import os
 import textwrap
 
-from libqtile.backend.wayland.core import Core
+try:
+    from libqtile.backend.wayland.core import Core
+
+    has_wayland = True
+except ImportError:
+    has_wayland = False
 from test.helpers import Backend
 
 wlr_env = {

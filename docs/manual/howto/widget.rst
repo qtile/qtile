@@ -525,8 +525,14 @@ development.
     Debugging messages should be removed from your code before submitting pull
     requests.
 
+Submitting the widget to the official repo
+==========================================
+
+The following sections are only relevant for users who wish for their widgets to
+be submitted as a PR for inclusion in the main Qtile repo.
+
 Including the widget in libqtile.widget
-=======================================
+---------------------------------------
 
 You should include your widget in the ``widgets`` dict in ``libqtile.widget.__init__.py``.
 The relevant format is ``{"ClassName": "modulename"}``.
@@ -538,7 +544,7 @@ This has a number of benefits:
 - Inclusion in basic unit testing (see below)
 
 Testing
-=======
+-------
 
 Any new widgets should include an accompanying unit test.
 
@@ -550,6 +556,91 @@ However, where possible, it is strongly encouraged that widgets include addition
 tests that test specific functionality of the widget (e.g. reaction to hooks).
 
 See :ref:`unit-testing` for more.
+
+Documentation
+-------------
+
+It is really important that we maintain good documentation for Qtile. Any new widgets must
+therefore include sufficient documentation in order for users to understand how to
+use/configure the widget.
+
+The majority of the documentation is generated automatically from your module. The widget's
+docstring will be used as the description of the widget. Any parameters defined in the
+widget's ``defaults`` attribute will also be displayed. It is essential that there is a
+clear explanation of each new parameter defined by the widget.
+
+Screenshots
+~~~~~~~~~~~
+
+While not essential, it is strongly recommended that the documentation includes one or more
+screenshots.
+
+Screenshots can be generated automatically with a minimal amount of coding by using the fixtures
+created by Qtile's test suite.
+
+A screenshot file must satisfy the following criteria:
+
+ - Be named ``ss_[widgetname].py``
+ - Any function that takes a screenshot must be prefixed with ``ss_``
+ - Define a pytest fixture named ``widget``
+
+An example screenshot file is below:
+
+.. code:: python
+
+    import pytest
+
+    from libqtile.widget import wttr
+
+    RESPONSE = "London: +17°C"
+
+
+    @pytest.fixture
+    def widget(monkeypatch):
+        def result(self):
+            return RESPONSE
+
+        monkeypatch.setattr("libqtile.widget.wttr.Wttr.fetch", result)
+        yield wttr.Wttr
+
+
+    @pytest.mark.parametrize(
+        "screenshot_manager",
+        [
+            {"location": {"London": "Home"}}
+        ],
+        indirect=True
+    )
+    def ss_wttr(screenshot_manager):
+        screenshot_manager.take_screenshot()
+
+The ``widget`` fixture returns the widget class (not an instance of the widget). Any monkeypatching
+of the widget should be included in this fixture.
+
+The screenshot function (here, called ``ss_wttr``) must take an argument called ``screenshot_manager``. 
+The function can also be parameterized, in which case, each dict object will be used
+to configure the widget for the screenshot (and the configuration will be displayed in the docs). If
+you want to include parameterizations but also want to show the default configuration, you should include
+an empty dict (``{}``) as the first object in the list.
+
+Taking a screenshot is then as simple as calling ``screenshot_manager.take_screenshot()``. The method
+can be called multiple times in the same function.
+
+``screenshot_manager.take_screenshot()`` only takes a picture of the widget. If you need to take a screenshot
+of the bar then you need a few extra steps:
+
+.. code:: python
+
+    def ss_bar_screenshot(screenshot_manager):
+        # Generate a filename for the screenshot
+        target = screenshot_manager.target()
+
+        # Get the bar object
+        bar = screenshot_manager.c.bar["top"]
+
+        # Take a screenshot. Will take screenshot of whole bar unless
+        # a `width` parameter is set.
+        bar.take_screenshot(target, width=width)
 
 Getting help
 ============

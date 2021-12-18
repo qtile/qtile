@@ -1,4 +1,5 @@
 # Copyright (c) 2015 dmpayton
+# Copyright (c) 2021 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +23,11 @@ import builtins
 import functools
 import importlib
 import inspect
+import json
 import os
 import pprint
-from subprocess import call
+from pathlib import Path
+from subprocess import CalledProcessError, run
 
 from docutils import nodes
 from docutils.parsers.rst import Directive
@@ -51,6 +54,27 @@ qtile_class_template = Template('''
     .. compound::
 
         Supported bar orientations: {{ obj.orientations }}
+    {% endif %}
+    {% if is_widget and screen_shots %}
+    .. raw:: html
+
+        <table class="docutils">
+        <tr>
+        <td width="50%"><b>example</b></td>
+        <td width="50%"><b>config</td>
+        </tr>
+    {% for sshot, conf in screen_shots.items() %}
+        <tr>
+        <td><img src="{{ sshot }}" /></td>
+        {% if conf %}
+        <td><code class="docutils literal notranslate">{{ conf }}</code></td>
+        {% else %}
+        <td><i>default</i></td>
+        {% endif %}
+        </tr>
+    {% endfor %}
+        </table>
+
     {% endif %}
     {% if configurable %}
     .. list-table::
@@ -128,6 +152,22 @@ class QtileClass(SimpleDirectiveMixin, Directive):
         if len(defaults) == 0:
             is_configurable = False
 
+        is_widget = issubclass(obj, widget.base._Widget)
+
+        if is_widget:
+            index = Path(__file__).parent / "_static" / "screenshots" / "widgets" / "shots.json"
+            try:
+                with open(index, "r") as f:
+                    shots = json.load(f)
+            except json.JSONDecodeError:
+                shots = {}
+
+            widget_shots = shots.get(class_name.lower(), dict())
+        else:
+            widget_shots = {}
+
+        widget_shots = {f"../../widgets/{class_name.lower()}/{k}.png": v for k, v in widget_shots.items()}
+
         context = {
             'module': module,
             'class_name': class_name,
@@ -136,8 +176,9 @@ class QtileClass(SimpleDirectiveMixin, Directive):
             'defaults': defaults,
             'configurable': is_configurable and issubclass(obj, configurable.Configurable),
             'commandable': is_commandable and issubclass(obj, command.base.CommandObject),
-            'is_widget': issubclass(obj, widget.base._Widget),
+            'is_widget': is_widget,
             'extra_arguments': arguments,
+            'screen_shots': widget_shots
         }
         if context['commandable']:
             context['commands'] = [
@@ -195,12 +236,21 @@ class QtileModule(SimpleDirectiveMixin, Directive):
 def generate_keybinding_images():
     this_dir = os.path.dirname(__file__)
     base_dir = os.path.abspath(os.path.join(this_dir, ".."))
-    call(['make', '-C', base_dir, 'run-ffibuild'])
-    call(['make', '-C', this_dir, 'genkeyimg'])
+    run(['make', '-C', base_dir, 'run-ffibuild'])
+    run(['make', '-C', this_dir, 'genkeyimg'])
+
+
+def generate_widget_screenshots():
+    this_dir = os.path.dirname(__file__)
+    try:
+        run(['make', '-C', this_dir, 'genwidgetscreenshots'], check=True)
+    except CalledProcessError:
+        raise Exception("Widget screenshots failed to build.")
 
 
 def setup(app):
     generate_keybinding_images()
+    generate_widget_screenshots()
     app.add_directive('qtile_class', QtileClass)
     app.add_directive('qtile_hooks', QtileHooks)
     app.add_directive('qtile_module', QtileModule)

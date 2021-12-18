@@ -55,6 +55,7 @@ venv
 
 # screenshots
 docs/screenshots/take_all.log
+docs/_static/screenshots/
 
 # ViM tags
 /tags
