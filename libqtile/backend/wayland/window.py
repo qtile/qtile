@@ -903,6 +903,11 @@ class Static(base.Static, Window):
             self._app_id = surface.toplevel.app_id
             self.add_listener(surface.toplevel.set_title_event, self._on_set_title)
             self.add_listener(surface.toplevel.set_app_id_event, self._on_set_app_id)
+            self.ftm_handle = surface.data
+            assert self.ftm_handle
+            self.add_listener(
+                self.ftm_handle.request_close_event, self._on_foreign_request_close
+            )
             self._find_outputs()
             self.screen = qtile.current_screen
 
