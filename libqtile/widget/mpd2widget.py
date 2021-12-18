@@ -183,7 +183,7 @@ class Mpd2(base.ThreadPoolText):
 
     def __init__(self, **config):
         """Constructor."""
-        super().__init__(None, **config)
+        super().__init__("", **config)
 
         self.add_defaults(Mpd2.defaults)
         self.client = MPDClient()

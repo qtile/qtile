@@ -385,8 +385,8 @@ class _TextBox(_Widget):
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
         self.layout = None
         _Widget.__init__(self, width, **config)
-        self._text = text
         self.add_defaults(_TextBox.defaults)
+        self.text = text
 
     @property
     def text(self):

@@ -46,3 +46,20 @@ def test_text_box_bar_orientations(manager_nospawn, minimal_conf_noscreen, posit
 
     tbox.update("Updated")
     assert tbox.info()["text"] == "Updated"
+
+
+def test_text_box_max_chars(manager_nospawn, minimal_conf_noscreen):
+    """Text boxes are available on any bar position."""
+    textbox = widget.TextBox(text="Testing", max_chars=4)
+
+    config = minimal_conf_noscreen
+    config.screens = [
+        libqtile.config.Screen(
+            top=libqtile.bar.Bar([textbox], 10)
+        )
+    ]
+
+    manager_nospawn.start(config)
+    tbox = manager_nospawn.c.widget["textbox"]
+
+    assert tbox.info()["text"] == "Test…"
