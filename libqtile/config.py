@@ -66,16 +66,16 @@ class Key:
         commands should be separated by commas.
     desc:
         Description to be added to the key binding. (Optional)
-
+    swallow:
+        Configures when we swallow the key binding. (Optional)
+        Setting it to False will forward the key binding to the focused window after the commands have been executed.
     """
-
-    def __init__(
-        self, modifiers: list[str], key: str, *commands: LazyCall, desc: str = ""
-    ) -> None:
+    def __init__(self, modifiers: list[str], key: str, *commands: LazyCall, desc: str = "", swallow: bool = True) -> None:
         self.modifiers = modifiers
         self.key = key
         self.commands = commands
         self.desc = desc
+        self.swallow = swallow
 
     def __repr__(self) -> str:
         return "<Key (%s, %s)>" % (self.modifiers, self.key)
@@ -106,8 +106,10 @@ class KeyChord:
         A string to describe the chord. This attribute is not directly used by Qtile
         but users may want to access this when creating scripts to show configured
         keybindings.
+    swallow:
+        Configures when we swallow the key binding of the chord. (Optional)
+        Setting it to False will forward the key binding to the focused window after the commands have been executed.
     """
-
     def __init__(
         self,
         modifiers: list[str],
@@ -116,6 +118,7 @@ class KeyChord:
         mode: bool | str = False,
         name: str = "",
         desc: str = "",
+        swallow: bool = True,
     ):
         self.modifiers = modifiers
         self.key = key
@@ -135,18 +138,20 @@ class KeyChord:
             )
             self.name = mode
             self.mode = True
+        self.swallow = swallow
 
     def __repr__(self) -> str:
         return "<KeyChord (%s, %s)>" % (self.modifiers, self.key)
 
 
 class Mouse:
-    def __init__(self, modifiers: list[str], button: str, *commands: LazyCall) -> None:
+    def __init__(self, modifiers: list[str], button: str, *commands: LazyCall, swallow: bool = True):
         self.modifiers = modifiers
         self.button = button
         self.commands = commands
         self.button_code = int(self.button.replace("Button", ""))
         self.modmask: int = 0
+        self.swallow = swallow
 
 
 class Drag(Mouse):
