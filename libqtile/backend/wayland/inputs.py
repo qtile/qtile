@@ -266,7 +266,7 @@ class Keyboard(_Device):
             mods = self.keyboard.modifier
             for keysym in keysyms:
                 if (keysym, mods) in self.grabbed_keys:
-                    if self.qtile.process_key_event(keysym, mods):
+                    if self.qtile.process_key_event(keysym, mods)[1]:
                         return
 
             if self.core.focused_internal:

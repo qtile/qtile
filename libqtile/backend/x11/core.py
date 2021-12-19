@@ -31,6 +31,7 @@ from typing import TYPE_CHECKING
 import xcffib
 import xcffib.render
 import xcffib.xproto
+import xcffib.xtest
 from xcffib.xproto import EventMask, StackMode
 
 from libqtile import config, hook, utils
@@ -48,6 +49,7 @@ if TYPE_CHECKING:
 _IGNORED_EVENTS = {
     xcffib.xproto.CreateNotifyEvent,
     xcffib.xproto.FocusInEvent,
+    xcffib.xproto.KeyReleaseEvent,
     # DWM handles this to help "broken focusing windows".
     xcffib.xproto.MapNotifyEvent,
     xcffib.xproto.NoExposureEvent,
@@ -360,7 +362,6 @@ class Core(base.Core):
             "ButtonPress",
             "ButtonRelease",
             "KeyPress",
-            "KeyRelease",
         ]
         if hasattr(event, "window"):
             window = self.qtile.windows_map.get(event.window)
@@ -468,7 +469,7 @@ class Core(base.Core):
                     modmask | amask,
                     code,
                     xcffib.xproto.GrabMode.Async,
-                    xcffib.xproto.GrabMode.Sync,
+                    xcffib.xproto.GrabMode.Async,
                 )
         return keysym, modmask & self._valid_mask
 
@@ -608,28 +609,40 @@ class Core(base.Core):
             except IndexError:
                 logger.debug("Invalid desktop index: %s", index)
 
+    def fake_KeyPress(self, event) -> None:
+        xtest = self.conn.conn(xcffib.xtest.key)
+        # First release the key as it is possibly already pressed
+        xtest.FakeInput(3, event.detail, xcffib.xproto.Time.CurrentTime, event.root, event.root_x, event.root_y, 0)
+        self.flush()
+        # Fake input by...
+        # Presssing the key
+        xtest.FakeInput(2, event.detail, xcffib.xproto.Time.CurrentTime, event.root, event.root_x, event.root_y, 0)
+        self.flush()
+        # And then releasing again
+        xtest.FakeInput(3, event.detail, xcffib.xproto.Time.CurrentTime, event.root, event.root_x, event.root_y, 0)
+        self.flush()
+
     def handle_KeyPress(self, event, *, simulated=False) -> None:  # noqa: N802
         assert self.qtile is not None
 
         keysym = self.conn.code_to_syms[event.detail][0]
-        handled = self.qtile.process_key_event(keysym, event.state & self._valid_mask)
+        key, handled = self.qtile.process_key_event(keysym, event.state & self._valid_mask)
 
         if simulated:
-            # Simulated key press are currently for internal use only
+            # Even though simulated keybindings could use a proper X11 event, we don't want do any fake input
+            # This is because it needs extra code for e.g. pressing/releasing the modifiers
+            # This we don't want to handle and instead leave to external tools such as xdotool
             return
 
-        if handled:
-            # Swallow the event
-            self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.SyncKeyboard, event.time)
-        else:
-            # Forward the event to any focused client
-            self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayKeyboard, event.time)
-
-    def handle_KeyRelease(self, event) -> None:  # noqa: N802
-        assert self.qtile is not None
-
-        # We just forward the event to any focused client as we do not handle on release key bindings yet
-        self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayKeyboard, event.time)
+        # As we're grabbing async we can't just replay it, so...
+        # We need to forward the event to the focused window
+        if not handled and key:
+            # We need to ungrab the key as otherwise we get an event loop
+            self.ungrab_key(key)
+            # Modifier is pressed, just repeat the event with xtest
+            self.fake_KeyPress(event)
+            # Grab the key again
+            self.grab_key(key)
 
     def handle_ButtonPress(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
@@ -785,7 +798,6 @@ class Core(base.Core):
 
     def simulate_keypress(self, modifiers, key):
         """Simulates a keypress on the focused window."""
-        # FIXME: This needs to be done with sendevent, once we have that fixed.
         modmasks = xcbq.translate_masks(modifiers)
         keysym = xcbq.keysyms.get(key.lower())
 

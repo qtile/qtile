@@ -412,11 +412,11 @@ class Qtile(CommandObject):
     def paint_screen(self, screen: Screen, image_path: str, mode: str | None = None) -> None:
         self.core.painter.paint(screen, image_path, mode)
 
-    def process_key_event(self, keysym: int, mask: int) -> bool:
+    def process_key_event(self, keysym: int, mask: int) -> Tuple[Optional[Union[Key, KeyChord]], bool]:
         key = self.keys_map.get((keysym, mask), None)
         if key is None:
             logger.debug("Ignoring unknown keysym: %s, mask: %s", keysym, mask)
-            return False
+            return (None, False)
 
         if isinstance(key, KeyChord):
             self.grab_chord(key)
@@ -436,9 +436,9 @@ class Qtile(CommandObject):
             # We never swallow when no commands have been executed,
             # even when key.swallow is set to True
             elif not executed:
-                return False
+                return (key, False)
         # Return whether we have handled the key based on the key's swallow parameter
-        return key.swallow
+        return (key, key.swallow)
 
     def grab_keys(self) -> None:
         """Re-grab all of the keys configured in the key map
