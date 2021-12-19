@@ -76,6 +76,12 @@ Qtile 0.22.0, released 2022-09-22:
         - Add icon theme support to `TaskList` widget (available on X11 and Wayland backends).
         - Wayland: Use `qtile cmd-obj -o core -f get_inputs` to get input device identifiers for
           configuring inputs. Also input configs will be updated by config reloads (pywlroots>=0.15.21)
+        - `Key`, `KeyChord`, `Click` and `Drag` bindings now have another argument `swallow`.
+          It indicates whether or not the pressed keys should be passed on to the focused client.
+          By default the keys are not passed (swallowed), so this argument is set to `True`.
+          When set to `False`, the keys are passed to the focused client. A key is never swallowed if the
+          function is not executed, e.g. due to failing the `.when()` check.
+
     * bugfixes
         - Widgets that are incompatible with a backend (e.g. Systray on Wayland) will no longer show 
           as a ConfigError in the bar. Instead the widget is silently removed from the bar and a message

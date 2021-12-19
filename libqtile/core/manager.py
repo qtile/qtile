@@ -412,15 +412,17 @@ class Qtile(CommandObject):
     def paint_screen(self, screen: Screen, image_path: str, mode: str | None = None) -> None:
         self.core.painter.paint(screen, image_path, mode)
 
-    def process_key_event(self, keysym: int, mask: int) -> None:
+    def process_key_event(self, keysym: int, mask: int) -> bool:
         key = self.keys_map.get((keysym, mask), None)
         if key is None:
             logger.debug("Ignoring unknown keysym: %s, mask: %s", keysym, mask)
-            return
+            return False
 
         if isinstance(key, KeyChord):
             self.grab_chord(key)
         else:
+            # Keep track if we have executed a command
+            executed = False
             for cmd in key.commands:
                 if cmd.check(self):
                     status, val = self.server.call(
@@ -428,9 +430,15 @@ class Qtile(CommandObject):
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("KB command error %s: %s", cmd.name, val)
+                    executed = True
             if self.chord_stack and (not self.chord_stack[-1].mode or key.key == "Escape"):
                 self.ungrab_chord()
-            return
+            # We never swallow when no commands have been executed,
+            # even when key.swallow is set to True
+            elif not executed:
+                return False
+        # Return whether we have handled the key based on the key's swallow parameter
+        return key.swallow
 
     def grab_keys(self) -> None:
         """Re-grab all of the keys configured in the key map
@@ -765,7 +773,7 @@ class Qtile(CommandObject):
                         status, val = self.server.call((i.selectors, i.name, i.args, i.kwargs))
                         if status in (interface.ERROR, interface.EXCEPTION):
                             logger.error("Mouse command error %s: %s", i.name, val)
-                        handled = True
+                        handled = m.swallow
             elif isinstance(m, Drag):
                 if m.start:
                     i = m.start
@@ -785,7 +793,7 @@ class Qtile(CommandObject):
 
                 self._drag = (x, y, val[0], val[1], m.commands)
                 self.core.grab_pointer()
-                handled = True
+                handled = m.swallow
 
         return handled
 

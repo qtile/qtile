@@ -48,7 +48,6 @@ if TYPE_CHECKING:
 _IGNORED_EVENTS = {
     xcffib.xproto.CreateNotifyEvent,
     xcffib.xproto.FocusInEvent,
-    xcffib.xproto.KeyReleaseEvent,
     # DWM handles this to help "broken focusing windows".
     xcffib.xproto.MapNotifyEvent,
     xcffib.xproto.NoExposureEvent,
@@ -361,6 +360,7 @@ class Core(base.Core):
             "ButtonPress",
             "ButtonRelease",
             "KeyPress",
+            "KeyRelease",
         ]
         if hasattr(event, "window"):
             window = self.qtile.windows_map.get(event.window)
@@ -468,7 +468,7 @@ class Core(base.Core):
                     modmask | amask,
                     code,
                     xcffib.xproto.GrabMode.Async,
-                    xcffib.xproto.GrabMode.Async,
+                    xcffib.xproto.GrabMode.Sync,
                 )
         return keysym, modmask & self._valid_mask
 
@@ -519,7 +519,7 @@ class Core(base.Core):
                 True,
                 self._root.wid,
                 eventmask,
-                xcffib.xproto.GrabMode.Async,
+                xcffib.xproto.GrabMode.Sync,
                 xcffib.xproto.GrabMode.Async,
                 xcffib.xproto.Atom._None,
                 xcffib.xproto.Atom._None,
@@ -608,23 +608,54 @@ class Core(base.Core):
             except IndexError:
                 logger.debug("Invalid desktop index: %s", index)
 
-    def handle_KeyPress(self, event) -> None:  # noqa: N802
+    def handle_KeyPress(self, event, *, simulated=False) -> None:  # noqa: N802
         assert self.qtile is not None
 
         keysym = self.conn.code_to_syms[event.detail][0]
-        self.qtile.process_key_event(keysym, event.state & self._valid_mask)
+        handled = self.qtile.process_key_event(keysym, event.state & self._valid_mask)
+
+        if simulated:
+            # Simulated key press are currently for internal use only
+            return
+
+        if handled:
+            # Swallow the event
+            self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.SyncKeyboard, event.time)
+        else:
+            # Forward the event to any focused client
+            self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayKeyboard, event.time)
+
+    def handle_KeyRelease(self, event) -> None:  # noqa: N802
+        assert self.qtile is not None
+
+        # We just forward the event to any focused client as we do not handle on release key bindings yet
+        self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayKeyboard, event.time)
 
     def handle_ButtonPress(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
         button_code = event.detail
         state = event.state & self._valid_mask
+        root = False
 
         if not event.child:  # The client's handle_ButtonPress will focus it
+            root = True
             self.focus_by_click(event)
 
-        self.qtile.process_button_click(button_code, state, event.event_x, event.event_y)
-        self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, event.time)
+        handled = self.qtile.process_button_click(
+            button_code, state, event.event_x, event.event_y
+        )
+
+        # Prevent double clicks on the root window if handled was False
+        if root:
+            handled = True
+
+        if handled:
+            # Swallow the event
+            self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.SyncPointer, event.time)
+        else:
+            # Forward the event to any focused client
+            self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, event.time)
 
     def handle_ButtonRelease(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
@@ -764,7 +795,7 @@ class Core(base.Core):
         d = DummyEv()
         d.detail = self.conn.keysym_to_keycode(keysym)[0]
         d.state = modmasks
-        self.handle_KeyPress(d)
+        self.handle_KeyPress(d, simulated=True)
 
     def focus_by_click(self, e, window=None):
         """Bring a window to the front
