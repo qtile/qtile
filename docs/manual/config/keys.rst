@@ -46,7 +46,7 @@ The :class:`EzKey` modifier keys (i.e. ``MASC``) can be overwritten through the
     }
 
 Callbacks can also be configured to work only under certain conditions by using
-the ``when()`` method. Currently, two conditions are supported:
+the ``when()`` method. Currently, the following conditions are supported:
 
 ::  
 
@@ -63,6 +63,10 @@ the ``when()`` method. Currently, two conditions are supported:
 
         # Limit action to when the current window is not floating (default True)
         Key([mod], "f", lazy.window.toggle_fullscreen().when(when_floating=False))
+
+        # Also matches are supported on the current window
+        # For example to match on the wm_class for fullscreen do the following
+        Key([mod], "f", lazy.window.toggle_fullscreen().when(focused=Match(wm_class="yourclasshere"))
     ]
 
 KeyChords
