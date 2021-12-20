@@ -24,6 +24,7 @@ Qtile x.x.x, released xxxx-xx-xx:
           whether to draw margin and border when there is only one window.
         - Thermal zone widget.
         - Allow TextBox-based widgets to display in vertical bars.
+        - Added a focused attribute to `lazy.function.when` which can be used to Match on focused windows.
 
 Qtile 0.18.1, released 2021-09-16:
     * features
