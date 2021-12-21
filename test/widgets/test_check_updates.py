@@ -7,7 +7,32 @@ good_distro = "Arch"
 cmd_0_line = "export toto"  # quick "monkeypatch" simulating 0 output, ie 0 update
 cmd_1_line = "echo toto"  # quick "monkeypatch" simulating 1 output, ie 1 update
 cmd_error = "false"
-nus = "No Update Avalaible"
+nus = "No Update Available"
+
+
+# This class returns None when first polled (to simulate that the task is still running)
+# and then 0 on the second call.
+class MockPopen:
+    def __init__(self, *args, **kwargs):
+        self.call_count = 0
+
+    def poll(self):
+        if self.call_count == 0:
+            self.call_count += 1
+            return None
+        return 0
+
+
+# Bit of an ugly hack to replicate the above functionality but for a method.
+class MockSpawn:
+    call_count = 0
+
+    @classmethod
+    def call_process(cls, *args, **kwargs):
+        if cls.call_count == 0:
+            cls.call_count += 1
+            return "Updates"
+        return ""
 
 
 def test_unknown_distro():
