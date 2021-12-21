@@ -46,6 +46,9 @@ class Image(base._Widget, base.MarginMixin):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
+        self._update_image()
+
+    def _update_image(self):
         self.img = None
 
         if not self.filename:
@@ -94,3 +97,13 @@ class Image(base._Widget, base.MarginMixin):
             return self.img.width + (self.margin_x * 2)
         else:
             return self.img.height + (self.margin_y * 2)
+
+    def cmd_update(self, filename):
+        old_length = self.calculate_length()
+        self.filename = filename
+        self._update_image()
+
+        if self.calculate_length() == old_length:
+            self.draw()
+        else:
+            self.bar.draw()
