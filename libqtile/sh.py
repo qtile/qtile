@@ -63,7 +63,7 @@ class QSh:
         self._builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
 
     def complete(self, arg, state) -> Optional[str]:
-        buf = self.readline.get_line_buffer()  # type: ignore
+        buf = self.readline.get_line_buffer()
         completers = self._complete(buf, arg)
         if completers and state < len(completers):
             return completers[state]
@@ -335,9 +335,9 @@ class QSh:
         return "Invalid command: {}".format(line)
 
     def loop(self) -> None:
-        self.readline.set_completer(self.complete)  # type: ignore
-        self.readline.parse_and_bind(self._completekey + ": complete")  # type: ignore
-        self.readline.set_completer_delims(" ()|")  # type: ignore
+        self.readline.set_completer(self.complete)
+        self.readline.parse_and_bind(self._completekey + ": complete")
+        self.readline.set_completer_delims(" ()|")
 
         while True:
             try:
