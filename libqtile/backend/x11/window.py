@@ -32,18 +32,26 @@ HeightValue = 0x0008
 AllValues = 0x000F
 XNegative = 0x0010
 YNegative = 0x0020
-InputHint = (1 << 0)
-StateHint = (1 << 1)
-IconPixmapHint = (1 << 2)
-IconWindowHint = (1 << 3)
-IconPositionHint = (1 << 4)
-IconMaskHint = (1 << 5)
-WindowGroupHint = (1 << 6)
-MessageHint = (1 << 7)
-UrgencyHint = (1 << 8)
-AllHints = (InputHint | StateHint | IconPixmapHint | IconWindowHint |
-            IconPositionHint | IconMaskHint | WindowGroupHint | MessageHint |
-            UrgencyHint)
+InputHint = 1 << 0
+StateHint = 1 << 1
+IconPixmapHint = 1 << 2
+IconWindowHint = 1 << 3
+IconPositionHint = 1 << 4
+IconMaskHint = 1 << 5
+WindowGroupHint = 1 << 6
+MessageHint = 1 << 7
+UrgencyHint = 1 << 8
+AllHints = (
+    InputHint
+    | StateHint
+    | IconPixmapHint
+    | IconWindowHint
+    | IconPositionHint
+    | IconMaskHint
+    | WindowGroupHint
+    | MessageHint
+    | UrgencyHint
+)
 
 WithdrawnState = 0
 DontCareState = 0
@@ -91,6 +99,7 @@ def _geometry_getter(attr):
             self.height = g.height
             self.depth = g.depth
         return getattr(self, "_" + attr)
+
     return get_attr
 
 
@@ -100,9 +109,10 @@ def _geometry_setter(attr):
             frame = inspect.currentframe()
             stack_trace = traceback.format_stack(frame)
             logger.error("!!!! setting %s to a non-int %s; please report this!", attr, value)
-            logger.error(''.join(stack_trace[:-1]))
+            logger.error("".join(stack_trace[:-1]))
             value = int(value)
         setattr(self, "_" + attr, value)
+
     return f
 
 
@@ -126,18 +136,20 @@ class XWindow:
 
     def set_input_focus(self):
         self.conn.conn.core.SetInputFocus(
-            xcffib.xproto.InputFocus.PointerRoot,
-            self.wid,
-            xcffib.xproto.Time.CurrentTime
+            xcffib.xproto.InputFocus.PointerRoot, self.wid, xcffib.xproto.Time.CurrentTime
         )
 
     def warp_pointer(self, x, y):
         """Warps the pointer to the location `x`, `y` on the window"""
         self.conn.conn.core.WarpPointer(
-            0, self.wid,  # src_window, dst_window
-            0, 0,         # src_x, src_y
-            0, 0,         # src_width, src_height
-            x, y          # dest_x, dest_y
+            0,
+            self.wid,  # src_window, dst_window
+            0,
+            0,  # src_x, src_y
+            0,
+            0,  # src_width, src_height
+            x,
+            y,  # dest_x, dest_y
         )
 
     def get_name(self):
@@ -160,10 +172,7 @@ class XWindow:
         if r:
             return self._property_utf8(r)
 
-        r = self.get_property(
-            xcffib.xproto.Atom.WM_NAME,
-            xcffib.xproto.GetPropertyType.Any
-        )
+        r = self.get_property(xcffib.xproto.Atom.WM_NAME, xcffib.xproto.GetPropertyType.Any)
         if r:
             return self._property_string(r)
 
@@ -181,14 +190,11 @@ class XWindow:
                 "icon_x": atoms_list[5] if "IconPositionHint" in flags else None,
                 "icon_y": atoms_list[6] if "IconPositionHint" in flags else None,
                 "icon_mask": atoms_list[7] if "IconMaskHint" in flags else None,
-                "window_group": atoms_list[8] if 'WindowGroupHint' in flags else None,
+                "window_group": atoms_list[8] if "WindowGroupHint" in flags else None,
             }
 
     def get_wm_normal_hints(self):
-        wm_normal_hints = self.get_property(
-            "WM_NORMAL_HINTS",
-            xcffib.xproto.GetPropertyType.Any
-        )
+        wm_normal_hints = self.get_property("WM_NORMAL_HINTS", xcffib.xproto.GetPropertyType.Any)
         if wm_normal_hints:
             atom_list = wm_normal_hints.value.to_atoms()
             flags = {k for k, v in xcbq.NormalHintsFlags.items() if atom_list[0] & v}
@@ -201,7 +207,7 @@ class XWindow:
                 "width_inc": atom_list[9],
                 "height_inc": atom_list[10],
                 "min_aspect": (atom_list[11], atom_list[12]),
-                "max_aspect": (atom_list[13], atom_list[14])
+                "max_aspect": (atom_list[13], atom_list[14]),
             }
 
             # WM_SIZE_HINTS is potentially extensible (append to the end only)
@@ -268,13 +274,13 @@ class XWindow:
         """
         http://standards.freedesktop.org/wm-spec/wm-spec-latest.html#id2551529
         """
-        r = self.get_property('_NET_WM_WINDOW_TYPE', "ATOM", unpack=int)
+        r = self.get_property("_NET_WM_WINDOW_TYPE", "ATOM", unpack=int)
         if r:
             name = self.conn.atoms.get_name(r[0])
             return xcbq.WindowTypes.get(name, name)
 
     def get_net_wm_state(self):
-        r = self.get_property('_NET_WM_STATE', "ATOM", unpack=int)
+        r = self.get_property("_NET_WM_STATE", "ATOM", unpack=int)
         if r:
             names = [self.conn.atoms.get_name(p) for p in r]
             return [xcbq.WindowStates.get(n, n) for n in names]
@@ -292,22 +298,18 @@ class XWindow:
         mask, values = xcbq.ConfigureMasks(**kwargs)
         # older versions of xcb pack everything into unsigned ints "=I"
         # since 1.12, uses switches to pack things sensibly
-        if float(".".join(xcffib.__xcb_proto_version__.split(".")[0: 2])) < 1.12:
-            values = [i & 0xffffffff for i in values]
+        if float(".".join(xcffib.__xcb_proto_version__.split(".")[0:2])) < 1.12:
+            values = [i & 0xFFFFFFFF for i in values]
         return self.conn.conn.core.ConfigureWindow(self.wid, mask, values)
 
     def set_attribute(self, **kwargs):
         mask, values = xcbq.AttributeMasks(**kwargs)
-        self.conn.conn.core.ChangeWindowAttributesChecked(
-            self.wid, mask, values
-        )
+        self.conn.conn.core.ChangeWindowAttributesChecked(self.wid, mask, values)
 
     def set_cursor(self, name):
         cursor_id = self.conn.cursors[name]
         mask, values = xcbq.AttributeMasks(cursor=cursor_id)
-        self.conn.conn.core.ChangeWindowAttributesChecked(
-            self.wid, mask, values
-        )
+        self.conn.conn.core.ChangeWindowAttributesChecked(self.wid, mask, values)
 
     def set_property(self, name, value, type=None, format=None):
         """
@@ -319,15 +321,11 @@ class XWindow:
         """
         if name in xcbq.PropertyMap:
             if type or format:
-                raise ValueError(
-                    "Over-riding default type or format for property."
-                )
+                raise ValueError("Over-riding default type or format for property.")
             type, format = xcbq.PropertyMap[name]
         else:
             if None in (type, format):
-                raise ValueError(
-                    "Must specify type and format for unknown property."
-                )
+                raise ValueError("Must specify type and format for unknown property.")
 
         try:
             if isinstance(value, str):
@@ -352,12 +350,10 @@ class XWindow:
                 self.conn.atoms[type],
                 format,  # Format - 8, 16, 32
                 len(value),
-                value
+                value,
             ).check()
         except xcffib.xproto.WindowError:
-            logger.debug(
-                'X error in SetProperty (wid=%r, prop=%r), ignoring',
-                self.wid, name)
+            logger.debug("X error in SetProperty (wid=%r, prop=%r), ignoring", self.wid, name)
 
     def get_property(self, prop, type=None, unpack=None):
         """Return the contents of a property as a GetPropertyReply
@@ -367,27 +363,21 @@ class XWindow:
         """
         if type is None:
             if prop not in xcbq.PropertyMap:
-                raise ValueError(
-                    "Must specify type for unknown property."
-                )
+                raise ValueError("Must specify type for unknown property.")
             else:
                 type, _ = xcbq.PropertyMap[prop]
 
         try:
             r = self.conn.conn.core.GetProperty(
-                False, self.wid,
-                self.conn.atoms[prop]
-                if isinstance(prop, str)
-                else prop,
-                self.conn.atoms[type]
-                if isinstance(type, str)
-                else type,
-                0, (2 ** 32) - 1
+                False,
+                self.wid,
+                self.conn.atoms[prop] if isinstance(prop, str) else prop,
+                self.conn.atoms[type] if isinstance(type, str) else type,
+                0,
+                (2 ** 32) - 1,
             ).reply()
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
-            logger.debug(
-                'X error in GetProperty (wid=%r, prop=%r), ignoring',
-                self.wid, prop)
+            logger.debug("X error in GetProperty (wid=%r, prop=%r), ignoring", self.wid, prop)
             if unpack:
                 return []
             return None
@@ -432,7 +422,7 @@ class XWindow:
         """
         This method is used only by the managing Window class.
         """
-        self.set_property('_NET_FRAME_EXTENTS', [borderwidth] * 4)
+        self.set_property("_NET_FRAME_EXTENTS", [borderwidth] * 4)
 
         if not colors or not borderwidth:
             return
@@ -449,9 +439,7 @@ class XWindow:
 
         with PixmapID(self.conn.conn) as pixmap:
             with GContextID(self.conn.conn) as gc:
-                core.CreatePixmap(
-                    depth, pixmap, self.wid, outer_w, outer_h
-                )
+                core.CreatePixmap(depth, pixmap, self.wid, outer_w, outer_h)
                 core.CreateGC(gc, pixmap, 0, None)
                 borders = len(colors)
                 borderwidths = [borderwidth // borders] * borders
@@ -474,9 +462,7 @@ class XWindow:
         outer_w = width + borderwidth * 2
         outer_h = height + borderwidth * 2
         with PixmapID(self.conn.conn) as border:
-            core.CreatePixmap(
-                depth, border, self.wid, outer_w, outer_h
-            )
+            core.CreatePixmap(depth, border, self.wid, outer_w, outer_h)
             most_w = outer_w - borderwidth
             most_h = outer_h - borderwidth
             core.CopyArea(pixmap, border, gc, borderwidth, borderwidth, 0, 0, most_w, most_h)
@@ -524,19 +510,19 @@ class _Window:
         self._demands_attention = False
 
         self.hints = {
-            'input': True,
-            'icon_pixmap': None,
-            'icon_window': None,
-            'icon_x': 0,
-            'icon_y': 0,
-            'icon_mask': 0,
-            'window_group': None,
-            'urgent': False,
+            "input": True,
+            "icon_pixmap": None,
+            "icon_window": None,
+            "icon_x": 0,
+            "icon_y": 0,
+            "icon_mask": 0,
+            "window_group": None,
+            "urgent": False,
             # normal or size hints
-            'width_inc': None,
-            'height_inc': None,
-            'base_width': 0,
-            'base_height': 0,
+            "width_inc": None,
+            "height_inc": None,
+            "base_width": 0,
+            "base_height": 0,
         }
         self.update_hints()
 
@@ -565,8 +551,10 @@ class _Window:
 
     def has_fixed_ratio(self) -> bool:
         try:
-            if ('PAspect' in self.hints['flags'] and
-                    self.hints["min_aspect"] == self.hints["max_aspect"]):
+            if (
+                "PAspect" in self.hints["flags"]
+                and self.hints["min_aspect"] == self.hints["max_aspect"]
+            ):
                 return True
         except KeyError:
             pass
@@ -574,10 +562,12 @@ class _Window:
 
     def has_fixed_size(self) -> bool:
         try:
-            if ('PMinSize' in self.hints['flags'] and
-                    'PMaxSize' in self.hints['flags'] and
-                    0 < self.hints["min_width"] == self.hints["max_width"] and
-                    0 < self.hints["min_height"] == self.hints["max_height"]):
+            if (
+                "PMinSize" in self.hints["flags"]
+                and "PMaxSize" in self.hints["flags"]
+                and 0 < self.hints["min_width"] == self.hints["max_width"]
+                and 0 < self.hints["min_height"] == self.hints["max_height"]
+            ):
                 return True
         except KeyError:
             pass
@@ -585,7 +575,7 @@ class _Window:
 
     def has_user_set_position(self):
         try:
-            if 'USPosition' in self.hints['flags'] or 'PPosition' in self.hints['flags']:
+            if "USPosition" in self.hints["flags"] or "PPosition" in self.hints["flags"]:
                 return True
         except KeyError:
             pass
@@ -596,7 +586,7 @@ class _Window:
             self.name = self.window.get_name()
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             return
-        hook.fire('client_name_updated', self)
+        hook.fire("client_name_updated", self)
 
     def get_wm_class(self):
         return self.window.get_wm_class()
@@ -626,18 +616,18 @@ class _Window:
         if normh:
             self.hints.update(normh)
 
-        if h and 'UrgencyHint' in h['flags']:
+        if h and "UrgencyHint" in h["flags"]:
             if self.qtile.current_window != self:
-                self.hints['urgent'] = True
-                hook.fire('client_urgent_hint_changed', self)
+                self.hints["urgent"] = True
+                hook.fire("client_urgent_hint_changed", self)
         elif self.urgent:
-            self.hints['urgent'] = False
-            hook.fire('client_urgent_hint_changed', self)
+            self.hints["urgent"] = False
+            hook.fire("client_urgent_hint_changed", self)
 
-        if h and 'InputHint' in h['flags']:
-            self.hints['input'] = h['input']
+        if h and "InputHint" in h["flags"]:
+            self.hints["input"] = h["input"]
 
-        if getattr(self, 'group', None):
+        if getattr(self, "group", None):
             if self.group.floating_layout.match(self):
                 self.floating = True
             self.group.layout_all()
@@ -645,10 +635,10 @@ class _Window:
         return
 
     def update_state(self):
-        triggered = ['urgent']
+        triggered = ["urgent"]
 
         if self.qtile.config.auto_fullscreen:
-            triggered.append('fullscreen')
+            triggered.append("fullscreen")
 
         state = self.window.get_net_wm_state()
 
@@ -657,14 +647,14 @@ class _Window:
 
     @property
     def urgent(self):
-        return self.hints['urgent'] or self._demands_attention
+        return self.hints["urgent"] or self._demands_attention
 
     @urgent.setter
     def urgent(self, val):
         self._demands_attention = val
         # TODO unset window hint as well?
         if not val:
-            self.hints['urgent'] = False
+            self.hints["urgent"] = False
 
     def info(self):
         if self.group:
@@ -689,7 +679,7 @@ class _Window:
             float_info=float_info,
             maximized=self._float_state == FloatStates.MAXIMIZED,
             minimized=self._float_state == FloatStates.MINIMIZED,
-            fullscreen=self._float_state == FloatStates.FULLSCREEN
+            fullscreen=self._float_state == FloatStates.FULLSCREEN,
         )
 
     @property
@@ -699,28 +689,26 @@ class _Window:
     @state.setter
     def state(self, val):
         if val in (WithdrawnState, NormalState, IconicState):
-            self.window.set_property('WM_STATE', [val, 0])
+            self.window.set_property("WM_STATE", [val, 0])
 
     @property
     def opacity(self):
         assert hasattr(self, "window")
-        opacity = self.window.get_property(
-            "_NET_WM_WINDOW_OPACITY", unpack=int
-        )
+        opacity = self.window.get_property("_NET_WM_WINDOW_OPACITY", unpack=int)
         if not opacity:
             return 1.0
         else:
             value = opacity[0]
             # 2 decimal places
-            as_float = round(value / 0xffffffff, 2)
+            as_float = round(value / 0xFFFFFFFF, 2)
             return as_float
 
     @opacity.setter
     def opacity(self, opacity: float) -> None:
         if 0.0 <= opacity <= 1.0:
-            real_opacity = int(opacity * 0xffffffff)
+            real_opacity = int(opacity * 0xFFFFFFFF)
             assert hasattr(self, "window")
-            self.window.set_property('_NET_WM_WINDOW_OPACITY', real_opacity)
+            self.window.set_property("_NET_WM_WINDOW_OPACITY", real_opacity)
 
     def kill(self):
         if "WM_DELETE_WINDOW" in self.window.get_wm_protocols():
@@ -729,7 +717,7 @@ class _Window:
                 xcffib.xproto.Time.CurrentTime,
                 0,
                 0,
-                0
+                0,
             ]
 
             u = xcffib.xproto.ClientMessageData.synthetic(data, "I" * 5)
@@ -738,7 +726,7 @@ class _Window:
                 format=32,
                 window=self.window.wid,
                 type=self.qtile.core.conn.atoms["WM_PROTOCOLS"],
-                data=u
+                data=u,
             )
 
             self.window.send_event(e)
@@ -765,14 +753,10 @@ class _Window:
         self._reset_mask()
 
     def _disable_mask(self, mask):
-        self.window.set_attribute(
-            eventmask=self._window_mask & (~mask)
-        )
+        self.window.set_attribute(eventmask=self._window_mask & (~mask))
 
     def _reset_mask(self):
-        self.window.set_attribute(
-            eventmask=self._window_mask
-        )
+        self.window.set_attribute(eventmask=self._window_mask)
 
     def _grab_click(self):
         # Grab button 1 to focus upon click when unfocussed
@@ -800,8 +784,18 @@ class _Window:
     def get_pid(self):
         return self.window.get_net_wm_pid()
 
-    def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, margin=None, respect_hints=False):
+    def place(
+        self,
+        x,
+        y,
+        width,
+        height,
+        borderwidth,
+        bordercolor,
+        above=False,
+        margin=None,
+        respect_hints=False,
+    ):
         """
         Places the window at the specified location with the given size.
 
@@ -848,11 +842,11 @@ class _Window:
         if respect_hints:
             flags = self.hints.get("flags", {})
             if "PMinSize" in flags:
-                width = max(width, self.hints.get('min_width', 0))
-                height = max(height, self.hints.get('min_height', 0))
+                width = max(width, self.hints.get("min_width", 0))
+                height = max(height, self.hints.get("min_height", 0))
             if "PMaxSize" in flags:
-                width = min(width, self.hints.get('max_width', 0)) or width
-                height = min(height, self.hints.get('max_height', 0)) or height
+                width = min(width, self.hints.get("max_width", 0)) or width
+                height = min(height, self.hints.get("max_height", 0)) or height
             if "PAspect" in flags and self._float_state == FloatStates.FLOATING:
                 min_aspect = self.hints["min_aspect"]
                 max_aspect = self.hints["max_aspect"]
@@ -861,14 +855,16 @@ class _Window:
                 elif width / height > max_aspect[0] / max_aspect[1]:
                     height = width * max_aspect[1] // max_aspect[0]
 
-            if self.hints['base_width'] and self.hints['width_inc']:
-                width_adjustment = (width - self.hints['base_width']) % self.hints['width_inc']
+            if self.hints["base_width"] and self.hints["width_inc"]:
+                width_adjustment = (width - self.hints["base_width"]) % self.hints["width_inc"]
                 width -= width_adjustment
                 if self.fullscreen:
                     x += int(width_adjustment / 2)
 
-            if self.hints['base_height'] and self.hints['height_inc']:
-                height_adjustment = (height - self.hints['base_height']) % self.hints['height_inc']
+            if self.hints["base_height"] and self.hints["height_inc"]:
+                height_adjustment = (height - self.hints["base_height"]) % self.hints[
+                    "height_inc"
+                ]
                 height -= height_adjustment
                 if self.fullscreen:
                     y += int(height_adjustment / 2)
@@ -890,7 +886,7 @@ class _Window:
             height=height,
         )
         if above:
-            kwarg['stackmode'] = StackMode.Above
+            kwarg["stackmode"] = StackMode.Above
 
         self.window.configure(**kwarg)
         self.paint_borders(bordercolor, borderwidth)
@@ -920,14 +916,14 @@ class _Window:
             width=width,
             height=height,
             border_width=self.borderwidth,
-            override_redirect=override_redirect
+            override_redirect=override_redirect,
         )
 
         self.window.send_event(event, mask=EventMask.StructureNotify)
 
     @property
     def can_steal_focus(self):
-        return self.window.get_wm_type() != 'notification'
+        return self.window.get_wm_type() != "notification"
 
     def _do_focus(self):
         """
@@ -941,7 +937,7 @@ class _Window:
             return False
 
         # if the window can be focused, just focus it.
-        if self.hints['input']:
+        if self.hints["input"]:
             self.window.set_input_focus()
             return True
 
@@ -960,7 +956,7 @@ class _Window:
                 self.qtile.core.get_valid_timestamp(),
                 0,
                 0,
-                0
+                0,
             ]
 
             u = xcffib.xproto.ClientMessageData.synthetic(data, "I" * 5)
@@ -968,7 +964,7 @@ class _Window:
                 format=32,
                 window=self.window.wid,
                 type=self.qtile.core.conn.atoms["WM_PROTOCOLS"],
-                data=u
+                data=u,
             )
 
             self.window.send_event(e)
@@ -994,14 +990,14 @@ class _Window:
             self.urgent = False
 
             atom = self.qtile.core.conn.atoms["_NET_WM_STATE_DEMANDS_ATTENTION"]
-            state = list(self.window.get_property('_NET_WM_STATE', 'ATOM', unpack=int))
+            state = list(self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
 
             if atom in state:
                 state.remove(atom)
-                self.window.set_property('_NET_WM_STATE', state)
+                self.window.set_property("_NET_WM_STATE", state)
 
         # re-grab button events on the previously focussed window
-        old = self.qtile.core._root.get_property("_NET_ACTIVE_WINDOW", 'WINDOW', unpack=int)
+        old = self.qtile.core._root.get_property("_NET_ACTIVE_WINDOW", "WINDOW", unpack=int)
         if old and old[0] in self.qtile.windows_map:
             old_win = self.qtile.windows_map[old[0]]
             if not isinstance(old_win, base.Internal):
@@ -1039,7 +1035,7 @@ class _Window:
             # "colormap": a.colormap,
             "all_event_masks": a.all_event_masks,
             "your_event_mask": a.your_event_mask,
-            "do_not_propagate_mask": a.do_not_propagate_mask
+            "do_not_propagate_mask": a.do_not_propagate_mask,
         }
         props = self.window.list_properties()
         normalhints = self.window.get_wm_normal_hints()
@@ -1077,16 +1073,19 @@ class _Window:
 
 class Internal(_Window, base.Internal):
     """An internal window, that should not be managed by qtile"""
-    _window_mask = EventMask.StructureNotify | \
-        EventMask.PropertyChange | \
-        EventMask.EnterWindow | \
-        EventMask.LeaveWindow | \
-        EventMask.PointerMotion | \
-        EventMask.FocusChange | \
-        EventMask.Exposure | \
-        EventMask.ButtonPress | \
-        EventMask.ButtonRelease | \
-        EventMask.KeyPress
+
+    _window_mask = (
+        EventMask.StructureNotify
+        | EventMask.PropertyChange
+        | EventMask.EnterWindow
+        | EventMask.LeaveWindow
+        | EventMask.PointerMotion
+        | EventMask.FocusChange
+        | EventMask.Exposure
+        | EventMask.ButtonPress
+        | EventMask.ButtonRelease
+        | EventMask.KeyPress
+    )
 
     def __init__(self, win, qtile, desired_depth=32):
         _Window.__init__(self, win, qtile)
@@ -1133,14 +1132,16 @@ class Internal(_Window, base.Internal):
 
 class Static(_Window, base.Static):
     """An static window, belonging to a screen rather than a group"""
-    _window_mask = EventMask.StructureNotify | \
-        EventMask.PropertyChange | \
-        EventMask.EnterWindow | \
-        EventMask.FocusChange | \
-        EventMask.Exposure
 
-    def __init__(self, win, qtile, screen,
-                 x=None, y=None, width=None, height=None):
+    _window_mask = (
+        EventMask.StructureNotify
+        | EventMask.PropertyChange
+        | EventMask.EnterWindow
+        | EventMask.FocusChange
+        | EventMask.Exposure
+    )
+
+    def __init__(self, win, qtile, screen, x=None, y=None, width=None, height=None):
         _Window.__init__(self, win, qtile)
         self.update_name()
         self.conf_x = x
@@ -1174,18 +1175,15 @@ class Static(_Window, base.Static):
             self.width,
             self.height,
             self.borderwidth,
-            self.bordercolor
+            self.bordercolor,
         )
         return False
 
     def update_strut(self):
-        strut = self.window.get_property(
-            "_NET_WM_STRUT_PARTIAL",
-            unpack=int
-        )
+        strut = self.window.get_property("_NET_WM_STRUT_PARTIAL", unpack=int)
         if strut:
             x_screen_dimensions = self.qtile.core._root.get_geometry()
-            if strut[0]:    # left
+            if strut[0]:  # left
                 x = strut[0]
                 y = (strut[4] + strut[5]) / 2 or (strut[6] + strut[7]) / 2
             elif strut[1]:  # right
@@ -1194,7 +1192,7 @@ class Static(_Window, base.Static):
             elif strut[2]:  # top
                 x = (strut[8] + strut[9]) / 2 or (strut[10] + strut[11]) / 2
                 y = strut[2]
-            else:           # bottom
+            else:  # bottom
                 x = (strut[8] + strut[9]) / 2 or (strut[10] + strut[11]) / 2
                 y = x_screen_dimensions.height - strut[3]
             self.screen = self.qtile.find_screen(x, y)
@@ -1210,7 +1208,7 @@ class Static(_Window, base.Static):
                 self.screen.x,
                 x_screen_dimensions.width - self.screen.x - self.screen.width,
                 self.screen.y,
-                x_screen_dimensions.height - self.screen.y - self.screen.height
+                x_screen_dimensions.height - self.screen.y - self.screen.height,
             ]
             self.reserved_space = tuple(
                 strut[i] - empty if strut[i] else 0 for i, empty in enumerate(empty_space)
@@ -1228,10 +1226,12 @@ class Static(_Window, base.Static):
 
 
 class Window(_Window, base.Window):
-    _window_mask = EventMask.StructureNotify | \
-        EventMask.PropertyChange | \
-        EventMask.EnterWindow | \
-        EventMask.FocusChange
+    _window_mask = (
+        EventMask.StructureNotify
+        | EventMask.PropertyChange
+        | EventMask.EnterWindow
+        | EventMask.FocusChange
+    )
 
     def __init__(self, window, qtile):
         _Window.__init__(self, window, qtile)
@@ -1251,10 +1251,7 @@ class Window(_Window, base.Window):
     def group(self, group):
         if group:
             try:
-                self.window.set_property(
-                    "_NET_WM_DESKTOP",
-                    self.qtile.groups.index(group)
-                )
+                self.window.set_property("_NET_WM_DESKTOP", self.qtile.groups.index(group))
             except xcffib.xproto.WindowError:
                 logger.exception("whoops, got error setting _NET_WM_DESKTOP, too early?")
         self._group = group
@@ -1273,7 +1270,10 @@ class Window(_Window, base.Window):
             if self.group and self.group.screen:
                 screen = self.group.screen
                 self._enablefloating(
-                    screen.x + self.float_x, screen.y + self.float_y, self._float_width, self._float_height
+                    screen.x + self.float_x,
+                    screen.y + self.float_y,
+                    self._float_width,
+                    self._float_height,
                 )
             else:
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
@@ -1285,12 +1285,12 @@ class Window(_Window, base.Window):
                 self._float_height = self.height
             self._float_state = FloatStates.NOT_FLOATING
             self.group.mark_floating(self, False)
-            hook.fire('float_change')
+            hook.fire("float_change")
 
     @property
     def wants_to_fullscreen(self):
         try:
-            return 'fullscreen' in self.window.get_net_wm_state()
+            return "fullscreen" in self.window.get_net_wm_state()
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             pass
         return False
@@ -1305,15 +1305,14 @@ class Window(_Window, base.Window):
     @fullscreen.setter
     def fullscreen(self, do_full):
         atom = set([self.qtile.core.conn.atoms["_NET_WM_STATE_FULLSCREEN"]])
-        prev_state = set(self.window.get_property('_NET_WM_STATE', 'ATOM', unpack=int))
+        prev_state = set(self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
 
         def set_state(old_state, new_state):
             if new_state != old_state:
-                self.window.set_property('_NET_WM_STATE', list(new_state))
+                self.window.set_property("_NET_WM_STATE", list(new_state))
 
         if do_full:
-            screen = self.group.screen or \
-                self.qtile.find_closest_screen(self.x, self.y)
+            screen = self.group.screen or self.qtile.find_closest_screen(self.x, self.y)
 
             bw = self.group.floating_layout.fullscreen_border_width
             self._enablefloating(
@@ -1321,7 +1320,7 @@ class Window(_Window, base.Window):
                 screen.y,
                 screen.width - 2 * bw,
                 screen.height - 2 * bw,
-                new_float_state=FloatStates.FULLSCREEN
+                new_float_state=FloatStates.FULLSCREEN,
             )
             set_state(prev_state, prev_state | atom)
             return
@@ -1343,8 +1342,7 @@ class Window(_Window, base.Window):
     @maximized.setter
     def maximized(self, do_maximize):
         if do_maximize:
-            screen = self.group.screen or \
-                self.qtile.find_closest_screen(self.x, self.y)
+            screen = self.group.screen or self.qtile.find_closest_screen(self.x, self.y)
 
             bw = self.group.floating_layout.max_border_width
             self._enablefloating(
@@ -1352,7 +1350,7 @@ class Window(_Window, base.Window):
                 screen.dy,
                 screen.dwidth - 2 * bw,
                 screen.dheight - 2 * bw,
-                new_float_state=FloatStates.MAXIMIZED
+                new_float_state=FloatStates.MAXIMIZED,
             )
         else:
             if self._float_state == FloatStates.MAXIMIZED:
@@ -1404,8 +1402,7 @@ class Window(_Window, base.Window):
         self.qtile.core.update_client_list(self.qtile.windows_map)
         hook.fire("client_managed", s)
 
-    def tweak_float(self, x=None, y=None, dx=0, dy=0,
-                    w=None, h=None, dw=0, dh=0):
+    def tweak_float(self, x=None, y=None, dx=0, dy=0, w=None, h=None, dw=0, dh=0):
         if x is not None:
             self.x = x
         self.x += dx
@@ -1449,8 +1446,10 @@ class Window(_Window, base.Window):
             self.hide()
         else:
             self.place(
-                self.x, self.y,
-                self.width, self.height,
+                self.x,
+                self.y,
+                self.width,
+                self.height,
                 self.borderwidth,
                 self.bordercolor,
                 above=True,
@@ -1460,10 +1459,11 @@ class Window(_Window, base.Window):
             self._float_state = new_float_state
             if self.group:  # may be not, if it's called from hook
                 self.group.mark_floating(self, True)
-            hook.fire('float_change')
+            hook.fire("float_change")
 
-    def _enablefloating(self, x=None, y=None, w=None, h=None,
-                        new_float_state=FloatStates.FLOATING):
+    def _enablefloating(
+        self, x=None, y=None, w=None, h=None, new_float_state=FloatStates.FLOATING
+    ):
         if new_float_state != FloatStates.MINIMIZED:
             self.x = x
             self.y = y
@@ -1543,7 +1543,7 @@ class Window(_Window, base.Window):
         if self.qtile._drag and self.qtile.current_window == self:
             # ignore requests while user is dragging window
             return
-        if getattr(self, 'floating', False):
+        if getattr(self, "floating", False):
             # only obey resize for floating windows
             cw = xcffib.xproto.ConfigWindow
             width = e.width if e.value_mask & cw.Width else self.width
@@ -1555,9 +1555,12 @@ class Window(_Window, base.Window):
 
         if self.group and self.group.screen:
             self.place(
-                x, y,
-                width, height,
-                self.borderwidth, self.bordercolor,
+                x,
+                y,
+                width,
+                height,
+                self.borderwidth,
+                self.bordercolor,
             )
         self.update_state()
         return False
@@ -1565,7 +1568,7 @@ class Window(_Window, base.Window):
     def update_wm_net_icon(self):
         """Set a dict with the icons of the window"""
 
-        icon = self.window.get_property('_NET_WM_ICON', 'CARDINAL')
+        icon = self.window.get_property("_NET_WM_ICON", "CARDINAL")
         if not icon:
             return
         icon = list(map(ord, icon.value))
@@ -1588,7 +1591,7 @@ class Window(_Window, base.Window):
 
             arr = array.array("B", data)
             for i in range(0, len(arr), 4):
-                mult = arr[i + 3] / 255.
+                mult = arr[i + 3] / 255.0
                 arr[i + 0] = int(arr[i + 0] * mult)
                 arr[i + 1] = int(arr[i + 1] * mult)
                 arr[i + 2] = int(arr[i + 2] * mult)
@@ -1603,11 +1606,7 @@ class Window(_Window, base.Window):
         opcode = event.type
         data = event.data
         if atoms["_NET_WM_STATE"] == opcode:
-            prev_state = self.window.get_property(
-                '_NET_WM_STATE',
-                'ATOM',
-                unpack=int
-            )
+            prev_state = self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int)
 
             current_state = set(prev_state)
 
@@ -1624,7 +1623,7 @@ class Window(_Window, base.Window):
                 elif action == _NET_WM_STATE_TOGGLE:
                     current_state ^= set([prop])  # toggle :D
 
-            self.window.set_property('_NET_WM_STATE', list(current_state))
+            self.window.set_property("_NET_WM_STATE", list(current_state))
         elif atoms["_NET_ACTIVE_WINDOW"] == opcode:
             source = data.data32[0]
             if source == 2:  # XCB_EWMH_CLIENT_SOURCE_TYPE_NORMAL
@@ -1654,7 +1653,9 @@ class Window(_Window, base.Window):
                 elif focus_behavior == "never":
                     logger.debug("Ignoring focus request")
                 else:
-                    logger.debug("Invalid value for focus_on_window_activation: {}".format(focus_behavior))
+                    logger.debug(
+                        "Invalid value for focus_on_window_activation: {}".format(focus_behavior)
+                    )
         elif atoms["_NET_CLOSE_WINDOW"] == opcode:
             self.kill()
         elif atoms["WM_CHANGE_STATE"] == opcode:
@@ -1753,10 +1754,8 @@ class Window(_Window, base.Window):
         """Set window dimensions to w and h"""
         self.tweak_float(w=w, h=h)
 
-    def cmd_place(self, x, y, width, height, borderwidth, bordercolor,
-                  above=False, margin=None):
-        self.place(x, y, width, height, borderwidth, bordercolor, above,
-                   margin)
+    def cmd_place(self, x, y, width, height, borderwidth, bordercolor, above=False, margin=None):
+        self.place(x, y, width, height, borderwidth, bordercolor, above, margin)
 
     def cmd_get_position(self):
         return self.getposition()
@@ -1795,8 +1794,7 @@ class Window(_Window, base.Window):
             self._reconfigure_floating()  # atomatically above
 
     def _is_in_window(self, x, y, window):
-        return (window.edges[0] <= x <= window.edges[2] and
-                window.edges[1] <= y <= window.edges[3])
+        return window.edges[0] <= x <= window.edges[2] and window.edges[1] <= y <= window.edges[3]
 
     def cmd_set_position(self, x, y):
         if self.floating:

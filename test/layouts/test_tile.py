@@ -39,7 +39,7 @@ class TileConfig(Config):
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
         libqtile.config.Group("c"),
-        libqtile.config.Group("d")
+        libqtile.config.Group("d"),
     ]
     layouts = [
         layout.Tile(),
@@ -131,12 +131,12 @@ def test_tile_window_focus_cycle(manager):
     manager.test_window("three")
 
     # test preconditions, Tile adds (by default) clients at pos of current
-    assert manager.c.layout.info()['clients'] == ['three', 'two', 'one']
+    assert manager.c.layout.info()["clients"] == ["three", "two", "one"]
     # last added window has focus
     assert_focused(manager, "three")
 
     # assert window focus cycle, according to order in layout
-    assert_focus_path(manager, 'two', 'one', 'float1', 'float2', 'three')
+    assert_focus_path(manager, "two", "one", "float1", "float2", "three")
 
 
 @tile_config
@@ -156,9 +156,9 @@ def test_tile_add_on_top(manager):
     # test second exemple
     assert_focused(manager, "two")
     manager.test_window("four")
-    assert manager.c.layout.info()["clients"] == ['one', 'two', 'four', 'three']
+    assert manager.c.layout.info()["clients"] == ["one", "two", "four", "three"]
     assert manager.c.layout.info()["slave"] == ["two", "four", "three"]
-    assert_focus_path(manager, 'three', 'one', 'two', 'four')
+    assert_focus_path(manager, "three", "one", "two", "four")
 
 
 @tile_config

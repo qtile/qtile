@@ -39,7 +39,9 @@ class StockTicker(GenPollUrl):
         widget.StockTicker(apikey=..., symbol="AMZN")
 
         # Display BTC
-        widget.StockTicker(apikey=..., function="DIGITAL_CURRENCY_INTRADAY", symbol="BTC", market="USD")
+        widget.StockTicker(
+            apikey=..., function="DIGITAL_CURRENCY_INTRADAY", symbol="BTC", market="USD"
+        )
     """
 
     defaults = [
@@ -50,23 +52,23 @@ class StockTicker(GenPollUrl):
     def __init__(self, **config):
         GenPollUrl.__init__(self, **config)
         self.add_defaults(StockTicker.defaults)
-        self.sign = locale.localeconv()['currency_symbol']
+        self.sign = locale.localeconv()["currency_symbol"]
         self.query = {
             "interval": self.interval,
             "outputsize": "compact",
-            "function": self.function
+            "function": self.function,
         }
         for k, v in config.items():
             self.query[k] = v
 
     @property
     def url(self):
-        url = 'https://www.alphavantage.co/query?' + urlencode(self.query)
+        url = "https://www.alphavantage.co/query?" + urlencode(self.query)
         return url
 
     def parse(self, body):
         last = None
-        for k, v in body['Meta Data'].items():
+        for k, v in body["Meta Data"].items():
             # In instead of ==, because of the number prefix that is inconsistent
             if "Last Refreshed" in k:
                 last = v

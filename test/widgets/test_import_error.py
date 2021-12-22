@@ -38,11 +38,7 @@ def test_importerrorwidget(monkeypatch, manager_nospawn, minimal_conf_noscreen, 
     badwidget = widget.TextBox("I am a naughty widget.")
 
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            **{position: libqtile.bar.Bar([badwidget], 10)}
-        )
-    ]
+    config.screens = [libqtile.config.Screen(**{position: libqtile.bar.Bar([badwidget], 10)})]
 
     manager_nospawn.start(config)
 

@@ -30,14 +30,13 @@ import sys
 
 import gi
 
-gi.require_version('Gdk', '3.0')
-gi.require_version('Gtk', '3.0')
-from gi.repository import Gdk, Gtk
-
+gi.require_version("Gdk", "3.0")
+gi.require_version("Gtk", "3.0")
 from dbus_next import Message
-from dbus_next.glib import MessageBus
 from dbus_next.constants import MessageType, PropertyAccess
+from dbus_next.glib import MessageBus
 from dbus_next.service import ServiceInterface, dbus_property, method, signal
+from gi.repository import Gdk, Gtk
 
 
 class SNItem(ServiceInterface):
@@ -47,13 +46,14 @@ class SNItem(ServiceInterface):
     Only exports methods, properties and signals required by
     StatusNotifier widget.
     """
+
     def __init__(self, window, *args):
         ServiceInterface.__init__(self, *args)
         self.window = window
         self.fullscreen = False
 
     @method()
-    def Activate(self, x: 'i', y: 'i'):
+    def Activate(self, x: "i", y: "i"):
         if self.fullscreen:
             self.window.unfullscreen()
         else:
@@ -62,21 +62,19 @@ class SNItem(ServiceInterface):
         self.fullscreen = not self.fullscreen
 
     @dbus_property(PropertyAccess.READ)
-    def IconName(self) -> 's':
+    def IconName(self) -> "s":
         return ""
 
     @dbus_property(PropertyAccess.READ)
-    def IconPixmap(self) -> 'a(iiay)':
-        return [
-            [32, 32, bytes([100] * (32 * 32 * 4))]
-        ]
+    def IconPixmap(self) -> "a(iiay)":
+        return [[32, 32, bytes([100] * (32 * 32 * 4))]]
 
     @dbus_property(PropertyAccess.READ)
-    def AttentionIconPixmap(self) -> 'a(iiay)':
+    def AttentionIconPixmap(self) -> "a(iiay)":
         return []
 
     @dbus_property(PropertyAccess.READ)
-    def OverlayIconPixmap(self) -> 'a(iiay)':
+    def OverlayIconPixmap(self) -> "a(iiay)":
         return []
 
     @signal()
@@ -116,11 +114,11 @@ if __name__ == "__main__":
     if window_type == "notification":
         if os.environ["GDK_BACKEND"] == "wayland":
             try:
-                gi.require_version('GtkLayerShell', '0.1')
+                gi.require_version("GtkLayerShell", "0.1")
                 from gi.repository import GtkLayerShell
             except ValueError:
                 sys.exit(1)
-            win.add(Gtk.Label(label='This is a test notification'))
+            win.add(Gtk.Label(label="This is a test notification"))
             GtkLayerShell.init_for_window(win)
 
         else:
@@ -148,7 +146,7 @@ if __name__ == "__main__":
                 path="/StatusNotifierWatcher",
                 member="RegisterStatusNotifierItem",
                 signature="s",
-                body=[bus.unique_name]
+                body=[bus.unique_name],
             )
         )
 

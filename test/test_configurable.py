@@ -26,7 +26,7 @@ class ConfigurableWithFallback(configurable.Configurable):
         ("foo", 3, ""),
     ]
 
-    bar = configurable.ExtraFallback('bar', 'foo')
+    bar = configurable.ExtraFallback("bar", "foo")
 
     def __init__(self, **config):
         configurable.Configurable.__init__(self, **config)

@@ -36,7 +36,9 @@ class DummyLayout(_SimpleLayoutBase):
         self.add_defaults(DummyLayout.defaults)
 
     def add(self, client):
-        return super().add(client, offset_to_current=self.current_offset, client_position=self.current_position)
+        return super().add(
+            client, offset_to_current=self.current_offset, client_position=self.current_position
+        )
 
     def configure(self, client, screen_rect):
         pass
@@ -50,12 +52,8 @@ class DummyLayout(_SimpleLayoutBase):
 
 class BaseLayoutConfigBottom(Config):
     auto_fullscreen = True
-    groups = [
-        libqtile.config.Group("a")
-    ]
-    layouts = [
-        DummyLayout(current_position="bottom")
-    ]
+    groups = [libqtile.config.Group("a")]
+    layouts = [DummyLayout(current_position="bottom")]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
@@ -64,19 +62,17 @@ class BaseLayoutConfigBottom(Config):
 
 class BaseLayoutConfigTop(Config):
     auto_fullscreen = True
-    groups = [
-        libqtile.config.Group("a")
-    ]
-    layouts = [
-        DummyLayout(current_position="top")
-    ]
+    groups = [libqtile.config.Group("a")]
+    layouts = [DummyLayout(current_position="top")]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
 
 
-baselayoutconfigbottom = pytest.mark.parametrize("manager", [BaseLayoutConfigBottom], indirect=True)
+baselayoutconfigbottom = pytest.mark.parametrize(
+    "manager", [BaseLayoutConfigBottom], indirect=True
+)
 baselayoutconfigtop = pytest.mark.parametrize("manager", [BaseLayoutConfigTop], indirect=True)
 
 
@@ -84,11 +80,11 @@ baselayoutconfigtop = pytest.mark.parametrize("manager", [BaseLayoutConfigTop], 
 def test_base_client_position_bottom(manager):
     manager.test_window("one")
     manager.test_window("two")
-    assert manager.c.layout.info()["clients"] == ['one', 'two']
+    assert manager.c.layout.info()["clients"] == ["one", "two"]
 
 
 @baselayoutconfigtop
 def test_base_client_position_top(manager):
     manager.test_window("one")
     manager.test_window("two")
-    assert manager.c.layout.info()["clients"] == ['two', 'one']
+    assert manager.c.layout.info()["clients"] == ["two", "one"]

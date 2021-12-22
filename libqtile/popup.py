@@ -38,19 +38,20 @@ class Popup(configurable.Configurable):
     """
     This class can be used to create popup windows that display images and/or text.
     """
+
     defaults = [
-        ('opacity', 1.0, 'Opacity of notifications.'),
-        ('foreground', '#ffffff', 'Colour of text.'),
-        ('background', '#111111', 'Background colour.'),
-        ('border', '#111111', 'Border colour.'),
-        ('border_width', 0, 'Line width of drawn borders.'),
-        ('font', 'sans', 'Font used in notifications.'),
-        ('font_size', 14, 'Size of font.'),
-        ('fontshadow', None, 'Colour for text shadows, or None for no shadows.'),
-        ('horizontal_padding', 0, 'Padding at sides of text.'),
-        ('vertical_padding', 0, 'Padding at top and bottom of text.'),
-        ('text_alignment', 'left', 'Text alignment: left, center or right.'),
-        ('wrap', True, 'Whether to wrap text.'),
+        ("opacity", 1.0, "Opacity of notifications."),
+        ("foreground", "#ffffff", "Colour of text."),
+        ("background", "#111111", "Background colour."),
+        ("border", "#111111", "Border colour."),
+        ("border_width", 0, "Line width of drawn borders."),
+        ("font", "sans", "Font used in notifications."),
+        ("font_size", 14, "Size of font."),
+        ("fontshadow", None, "Colour for text shadows, or None for no shadows."),
+        ("horizontal_padding", 0, "Padding at sides of text."),
+        ("vertical_padding", 0, "Padding at top and bottom of text."),
+        ("text_alignment", "left", "Text alignment: left, center or right."),
+        ("wrap", True, "Whether to wrap text."),
     ]
 
     def __init__(
@@ -66,7 +67,9 @@ class Popup(configurable.Configurable):
         self.add_defaults(Popup.defaults)
         self.qtile = qtile
 
-        self.win: Any = qtile.core.create_internal(x, y, width, height)  # TODO: better annotate Internal
+        self.win: Any = qtile.core.create_internal(
+            x, y, width, height
+        )  # TODO: better annotate Internal
         self.win.opacity = self.opacity
         self.win.process_button_click = self.process_button_click
         self.win.process_window_expose = self.draw
@@ -74,7 +77,7 @@ class Popup(configurable.Configurable):
         self.drawer: Drawer = self.win.create_drawer(width, height)
         self.clear()
         self.layout = self.drawer.textlayout(
-            text='',
+            text="",
             colour=self.foreground,
             font_family=self.font,
             font_size=self.font_size,
@@ -127,7 +130,7 @@ class Popup(configurable.Configurable):
     @foreground.setter
     def foreground(self, value: ColorType) -> None:
         self._foreground = value
-        if hasattr(self, 'layout'):
+        if hasattr(self, "layout"):
             self.layout.colour = value
 
     def set_border(self, color: ColorType) -> None:
@@ -147,8 +150,7 @@ class Popup(configurable.Configurable):
 
     def place(self) -> None:
         self.win.place(
-            self.x, self.y, self.width, self.height,
-            self.border_width, self.border, above=True
+            self.x, self.y, self.width, self.height, self.border_width, self.border, above=True
         )
 
     def unhide(self) -> None:

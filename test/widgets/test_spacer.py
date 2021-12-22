@@ -32,7 +32,7 @@ space = widget.Spacer()
 
 parameters = [
     (libqtile.config.Screen(top=libqtile.bar.Bar([space], 10)), "top", "width"),
-    (libqtile.config.Screen(left=libqtile.bar.Bar([space], 10)), "left", "height")
+    (libqtile.config.Screen(left=libqtile.bar.Bar([space], 10)), "left", "height"),
 ]
 
 
@@ -51,7 +51,7 @@ def test_stretch(manager_nospawn, minimal_conf_noscreen, screen, location, attri
 space = widget.Spacer(length=100)
 parameters = [
     (libqtile.config.Screen(top=libqtile.bar.Bar([space], 10)), "top", "width"),
-    (libqtile.config.Screen(left=libqtile.bar.Bar([space], 10)), "left", "height")
+    (libqtile.config.Screen(left=libqtile.bar.Bar([space], 10)), "left", "height"),
 ]
 
 

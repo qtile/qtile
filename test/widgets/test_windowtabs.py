@@ -30,13 +30,8 @@ from libqtile.confreader import Config
 
 class WindowTabsConfig(Config):
     auto_fullscreen = True
-    groups = [
-        libqtile.config.Group("a"),
-        libqtile.config.Group("b")
-    ]
-    layouts = [
-        layout.Stack()
-    ]
+    groups = [libqtile.config.Group("a"), libqtile.config.Group("b")]
+    layouts = [layout.Stack()]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
@@ -54,7 +49,10 @@ class WindowTabsConfig(Config):
                 ],
                 24,
             ),
-            x=0, y=0, width=900, height=960,
+            x=0,
+            y=0,
+            width=900,
+            height=960,
         ),
     ]
     screens = []
@@ -65,7 +63,6 @@ windowtabs_config = pytest.mark.parametrize("manager", [WindowTabsConfig], indir
 
 @windowtabs_config
 def test_single_window_states(manager):
-
     def widget_text():
         return manager.c.bar["top"].info()["widgets"][0]["text"]
 
@@ -73,7 +70,7 @@ def test_single_window_states(manager):
     assert widget_text() == " "
 
     # Load a window
-    proc = manager.test_window('one')
+    proc = manager.test_window("one")
     assert widget_text() == "<b>one</b>"
 
     # Maximize window
@@ -97,7 +94,6 @@ def test_single_window_states(manager):
 
 @windowtabs_config
 def test_multiple_windows(manager):
-
     def widget_text():
         return manager.c.bar["top"].info()["widgets"][0]["text"]
 

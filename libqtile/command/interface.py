@@ -27,17 +27,8 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, List, Tuple, Union
 
 from libqtile import ipc
-from libqtile.command.base import (
-    CommandError,
-    CommandException,
-    CommandObject,
-    SelectError,
-)
-from libqtile.command.graph import (
-    CommandGraphCall,
-    CommandGraphNode,
-    SelectorType,
-)
+from libqtile.command.base import CommandError, CommandException, CommandObject, SelectError
+from libqtile.command.graph import CommandGraphCall, CommandGraphNode, SelectorType
 from libqtile.log_utils import logger
 
 SUCCESS = 0
@@ -231,9 +222,7 @@ class IPCCommandInterface(CommandInterface):
         kwargs:
             The keyword arguments to pass into the command graph call.
         """
-        status, result = self._client.send((
-            call.parent.selectors, call.name, args, kwargs
-        ))
+        status, result = self._client.send((call.parent.selectors, call.name, args, kwargs))
         if status == SUCCESS:
             return result
         if status == ERROR:

@@ -7,16 +7,7 @@ import sys
 from pathlib import Path
 
 from libqtile import bar, layout, qtile, widget
-from libqtile.config import (
-    Drag,
-    DropDown,
-    Group,
-    Key,
-    Match,
-    Rule,
-    ScratchPad,
-    Screen,
-)
+from libqtile.config import Drag, DropDown, Group, Key, Match, Rule, ScratchPad, Screen
 from libqtile.dgroups import simple_key_binder
 from libqtile.lazy import lazy
 

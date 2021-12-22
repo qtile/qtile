@@ -61,11 +61,13 @@ class WindowVisibilityToggler:
         self.show()
 
     def info(self):
-        return dict(window=self.window.info(),
-                    scratchpad_name=self.scratchpad_name,
-                    visible=self.visible,
-                    on_focus_lost_hide=self.on_focus_lost_hide,
-                    warp_pointer=self.warp_pointer)
+        return dict(
+            window=self.window.info(),
+            scratchpad_name=self.scratchpad_name,
+            visible=self.visible,
+            on_focus_lost_hide=self.on_focus_lost_hide,
+            warp_pointer=self.warp_pointer,
+        )
 
     @property
     def visible(self):
@@ -76,14 +78,16 @@ class WindowVisibilityToggler:
         """
         if self.window.group is None:
             return False
-        return (self.window.group.name != self.scratchpad_name and
-                self.window.group is self.window.qtile.current_group)
+        return (
+            self.window.group.name != self.scratchpad_name
+            and self.window.group is self.window.qtile.current_group
+        )
 
     def toggle(self):
         """
         Toggle the visibility of associated window. Either show() or hide().
         """
-        if (not self.visible or not self.shown):
+        if not self.visible or not self.shown:
             self.show()
         else:
             self.hide()
@@ -142,8 +146,10 @@ class WindowVisibilityToggler:
         """
         if self.shown:
             current_group = self.window.qtile.current_group
-            if (self.window.group is not current_group or
-                    self.window is not current_group.current_window):
+            if (
+                self.window.group is not current_group
+                or self.window is not current_group.current_window
+            ):
                 if self.on_focus_lost_hide:
                     self.hide()
 
@@ -154,6 +160,7 @@ class DropDownToggler(WindowVisibilityToggler):
     each time it is shown at desired location.
     For example this can be used to create a quake-like terminal.
     """
+
     def __init__(self, window, scratchpad_name, ddconfig):
         self.name = ddconfig.name
         self.x = ddconfig.x
@@ -169,11 +176,9 @@ class DropDownToggler(WindowVisibilityToggler):
 
     def info(self):
         info = WindowVisibilityToggler.info(self)
-        info.update(dict(name=self.name,
-                         x=self.x,
-                         y=self.y,
-                         width=self.width,
-                         height=self.height))
+        info.update(
+            dict(name=self.name, x=self.x, y=self.y, width=self.width, height=self.height)
+        )
         return info
 
     def show(self):
@@ -193,9 +198,7 @@ class DropDownToggler(WindowVisibilityToggler):
             win.float_y = y
             width = int(screen.dwidth * self.width)
             height = int(screen.dheight * self.height)
-            win.place(
-                x, y, width, height, win.borderwidth, win.bordercolor, respect_hints=True
-            )
+            win.place(x, y, width, height, win.borderwidth, win.bordercolor, respect_hints=True)
             # Toggle the dropdown
             WindowVisibilityToggler.show(self)
 
@@ -211,7 +214,10 @@ class ScratchPad(group._Group):
     The ScratchPad, by default, has no label and thus is not shown in
     GroupBox widget.
     """
-    def __init__(self, name='scratchpad', dropdowns: List[config.DropDown] = None, label='', single=False):
+
+    def __init__(
+        self, name="scratchpad", dropdowns: List[config.DropDown] = None, label="", single=False
+    ):
         group._Group.__init__(self, name, label=label)
         self._dropdownconfig = {dd.name: dd for dd in dropdowns} if dropdowns is not None else {}
         self.dropdowns: Dict[str, DropDownToggler] = {}
@@ -256,9 +262,7 @@ class ScratchPad(group._Group):
             self._spawned.pop(name)
             if not self._spawned:
                 hook.unsubscribe.client_new(self.on_client_new)
-            self.dropdowns[name] = DropDownToggler(
-                client, self.name, self._dropdownconfig[name]
-            )
+            self.dropdowns[name] = DropDownToggler(client, self.name, self._dropdownconfig[name])
             if self._single:
                 for n, d in self.dropdowns.items():
                     if n != name:
@@ -338,7 +342,7 @@ class ScratchPad(group._Group):
         If name is None, a list of all dropdown names is returned.
         """
         if name is None:
-            return {'dropdowns': [ddname for ddname in self._dropdownconfig]}
+            return {"dropdowns": [ddname for ddname in self._dropdownconfig]}
         elif name in self.dropdowns:
             return self.dropdowns[name].info()
         elif name in self._dropdownconfig:

@@ -9,9 +9,7 @@ def test_widgetbox_widget(fake_qtile, fake_window):
     tb_two = TextBox(name="tb_two", text="TB TWO")
 
     # Give widgetbox invalid value for button location
-    widget_box = WidgetBox([tb_one, tb_two],
-                           close_button_location="middle",
-                           fontsize=10)
+    widget_box = WidgetBox([tb_one, tb_two], close_button_location="middle", fontsize=10)
 
     # Create a bar and set attributes needed to run widget
     fakebar = FakeBar([widget_box], window=fake_window)
@@ -56,11 +54,7 @@ def test_widgetbox_widget(fake_qtile, fake_window):
 def test_widgetbox_mirror(manager_nospawn, minimal_conf_noscreen):
     config = minimal_conf_noscreen
     tbox = TextBox(text="Text Box")
-    config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar([tbox, WidgetBox([tbox])], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([tbox, WidgetBox([tbox])], 10))]
 
     manager_nospawn.start(config)
 
@@ -73,11 +67,7 @@ def test_widgetbox_mirror(manager_nospawn, minimal_conf_noscreen):
 def test_widgetbox_mouse_click(manager_nospawn, minimal_conf_noscreen):
     config = minimal_conf_noscreen
     tbox = TextBox(text="Text Box")
-    config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar([WidgetBox([tbox])], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([WidgetBox([tbox])], 10))]
 
     manager_nospawn.start(config)
 

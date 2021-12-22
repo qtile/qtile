@@ -31,9 +31,7 @@ class FloatingConfig(Config):
     groups = [
         libqtile.config.Group("a"),
     ]
-    layouts = [
-        layout.Floating()
-    ]
+    layouts = [layout.Floating()]
     floating_layout = layout.Floating(
         fullscreen_border_width=15,
         max_border_width=10,

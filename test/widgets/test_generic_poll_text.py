@@ -77,7 +77,7 @@ def test_gen_poll_url_headers_and_json():
     gpurl = generic_poll_text.GenPollUrl(
         headers={"fake-header": "fake-value"},
         data={"argument": "data value"},
-        user_agent="qtile test"
+        user_agent="qtile test",
     )
 
     assert gpurl.headers["User-agent"] == "qtile test"

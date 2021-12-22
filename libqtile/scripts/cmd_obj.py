@@ -55,7 +55,7 @@ def get_formated_info(obj: CommandClient, cmd: str, args=True, short=True) -> st
     doc = obj.call("doc", cmd).splitlines()
 
     tdoc = doc[0]
-    doc_args = tdoc[tdoc.find("("):tdoc.find(")") + 1].strip()
+    doc_args = tdoc[tdoc.find("(") : tdoc.find(")") + 1].strip()
 
     short_description = doc[1] if len(doc) > 1 else ""
 
@@ -136,8 +136,11 @@ def run_function(client: CommandClient, funcname: str, args: List[str]) -> str:
         print("error: Command '{}' returned error: {}".format(funcname, str(e)))
         sys.exit(1)
     except CommandException as e:
-        print("error: Sorry cannot run function '{}' with arguments {}: {}"
-              .format(funcname, args, str(e)))
+        print(
+            "error: Sorry cannot run function '{}' with arguments {}: {}".format(
+                funcname, args, str(e)
+            )
+        )
         sys.exit(1)
 
     return ret
@@ -166,7 +169,9 @@ def cmd_obj(args) -> None:
                 print_commands("-o " + " ".join(args.obj_spec), obj)
             except CommandError:
                 if len(args.obj_spec) == 1:
-                    print(f"{args.obj_spec} object needs a specified identifier e.g. '-o bar top'.")
+                    print(
+                        f"{args.obj_spec} object needs a specified identifier e.g. '-o bar top'."
+                    )
                     sys.exit(1)
                 else:
                     raise
@@ -182,7 +187,8 @@ def cmd_obj(args) -> None:
 
 
 def add_subcommand(subparsers, parents):
-    epilog = textwrap.dedent('''\
+    epilog = textwrap.dedent(
+        """\
     Examples:
      qtile cmd-obj
      qtile cmd-obj -o cmd
@@ -190,23 +196,34 @@ def add_subcommand(subparsers, parents):
      qtile cmd-obj -o cmd -f prev_layout -a 3 # prev_layout on group 3
      qtile cmd-obj -o group 3 -f focus_back
      qtile cmd-obj -o cmd -f restart # restart qtile
-     ''')
-    description = 'qtile.command functionality exposed to the shell.'
-    parser = subparsers.add_parser("cmd-obj", help=description,
-                                   parents=parents, epilog=epilog,
-                                   formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--object', '-o', dest='obj_spec', nargs='+',
-                        help='Specify path to object (space separated).  '
-                             'If no --function flag display available commands.  '
-                             'Use `cmd` to specify root command.')
-    parser.add_argument('--function', '-f', default="help",
-                        help='Select function to execute.')
-    parser.add_argument('--args', '-a', nargs='+', default=[],
-                        help='Set arguments supplied to function.')
-    parser.add_argument('--info', '-i', action='store_true',
-                        help='With both --object and --function args prints documentation for function.')
-    parser.add_argument(
-        "--socket", "-s",
-        help='Path of the Qtile IPC socket.'
+     """
     )
+    description = "qtile.command functionality exposed to the shell."
+    parser = subparsers.add_parser(
+        "cmd-obj",
+        help=description,
+        parents=parents,
+        epilog=epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--object",
+        "-o",
+        dest="obj_spec",
+        nargs="+",
+        help="Specify path to object (space separated).  "
+        "If no --function flag display available commands.  "
+        "Use `cmd` to specify root command.",
+    )
+    parser.add_argument("--function", "-f", default="help", help="Select function to execute.")
+    parser.add_argument(
+        "--args", "-a", nargs="+", default=[], help="Set arguments supplied to function."
+    )
+    parser.add_argument(
+        "--info",
+        "-i",
+        action="store_true",
+        help="With both --object and --function args prints documentation for function.",
+    )
+    parser.add_argument("--socket", "-s", help="Path of the Qtile IPC socket.")
     parser.set_defaults(func=cmd_obj)

@@ -28,7 +28,6 @@ from libqtile.widget.base import _Widget
 
 # This widget needs to crash during _configure
 class BadWidget(_Widget):
-
     def _configure(self, qtile, bar):
         _Widget._configure(qtile, bar)
         1 / 0
@@ -43,11 +42,7 @@ def test_configerrorwidget(manager_nospawn, minimal_conf_noscreen, position):
     widget = BadWidget(length=10)
 
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            **{position: libqtile.bar.Bar([widget], 10)}
-        )
-    ]
+    config.screens = [libqtile.config.Screen(**{position: libqtile.bar.Bar([widget], 10)})]
 
     manager_nospawn.start(config)
 

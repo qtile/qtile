@@ -42,10 +42,7 @@ class FakeIMAP(ModuleType):
             if not (self.username and self.password):
                 return False, None
 
-            return (
-                "OK",
-                ['"{}" (UNSEEN 2)'.format(path).encode()]
-            )
+            return ("OK", ['"{}" (UNSEEN 2)'.format(path).encode()])
 
         def logout(self):
             pass
@@ -72,6 +69,7 @@ def patched_imap(monkeypatch):
     monkeypatch.setitem(sys.modules, "imaplib", FakeIMAP("imaplib"))
     monkeypatch.setitem(sys.modules, "keyring", FakeKeyring("keyring"))
     from libqtile.widget import imapwidget
+
     reload(imapwidget)
     yield imapwidget
 

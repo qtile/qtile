@@ -69,34 +69,30 @@ class obj:  # noqa: N801
 
 # Creates a mock message body containing both metadata and playback status
 def metadata_and_status(status):
-    return MockMessage(body=(
-        "",
-        {
-            'Metadata': obj(
-                {
-                    'mpris:trackid': obj(1),
-                    'xesam:url': obj("/path/to/rickroll.mp3"),
-                    'xesam:title': obj("Never Gonna Give You Up"),
-                    'xesam:artist': obj(["Rick Astley"]),
-                    'xesam:album': obj("Whenever You Need Somebody"),
-                    'mpris:length': obj(200000000)
-                }
-            ),
-            'PlaybackStatus': obj(status)
-        },
-        [])
+    return MockMessage(
+        body=(
+            "",
+            {
+                "Metadata": obj(
+                    {
+                        "mpris:trackid": obj(1),
+                        "xesam:url": obj("/path/to/rickroll.mp3"),
+                        "xesam:title": obj("Never Gonna Give You Up"),
+                        "xesam:artist": obj(["Rick Astley"]),
+                        "xesam:album": obj("Whenever You Need Somebody"),
+                        "mpris:length": obj(200000000),
+                    }
+                ),
+                "PlaybackStatus": obj(status),
+            },
+            [],
+        )
     )
 
 
 # Creates a mock message body containing just playback status
 def playback_status(status, signal=True):
-    return MockMessage(is_signal=signal, body=(
-        "",
-        {
-            'PlaybackStatus': obj(status)
-        },
-        [])
-    )
+    return MockMessage(is_signal=signal, body=("", {"PlaybackStatus": obj(status)}, []))
 
 
 METADATA_PLAYING = metadata_and_status("Playing")
@@ -142,16 +138,29 @@ def test_mpris2_signal_handling(fake_qtile, patched_module, fake_window):
 
     # Text is displayed after first run of scroll_text
     mp.scroll_text()
-    assert mp.text == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[:mp.scroll_chars]
+    assert (
+        mp.text
+        == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[: mp.scroll_chars]
+    )
 
     # Text is scrolled 1 character after `scroll_wait_intervals`runs of scroll_text
     for _ in range(mp.scroll_wait_intervals):
         mp.scroll_text()
-    assert mp.text == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[1:mp.scroll_chars + 1]
+    assert (
+        mp.text
+        == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[
+            1 : mp.scroll_chars + 1
+        ]
+    )
 
     # Non-signal type message will be ignored
     mp.message(NON_SIGNAL)
-    assert mp.text == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[1:mp.scroll_chars + 1]
+    assert (
+        mp.text
+        == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[
+            1 : mp.scroll_chars + 1
+        ]
+    )
 
     # If widget receives "paused" signal with no metadata then default message is "Paused"
     mp.message(STATUS_PAUSED)
@@ -164,20 +173,34 @@ def test_mpris2_signal_handling(fake_qtile, patched_module, fake_window):
     # Reset to playing + metadata
     mp.message(METADATA_PLAYING)
     mp.scroll_text()
-    assert mp.text == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[:mp.scroll_chars]
+    assert (
+        mp.text
+        == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[: mp.scroll_chars]
+    )
 
     # If widget receives "paused" signal with metadata then message is "Paused: {metadata}"
     mp.message(METADATA_PAUSED)
     mp.scroll_text()
-    assert mp.text == "Paused: Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[:mp.scroll_chars]
+    assert (
+        mp.text
+        == "Paused: Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[
+            : mp.scroll_chars
+        ]
+    )
 
     # If widget now receives "playing" signal with no metadata, "paused" word is removed
     mp.message(STATUS_PLAYING)
     mp.scroll_text()
-    assert mp.text == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[:mp.scroll_chars]
+    assert (
+        mp.text
+        == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[: mp.scroll_chars]
+    )
 
     info = mp.cmd_info()
-    assert info["displaytext"] == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"
+    assert (
+        info["displaytext"]
+        == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"
+    )
     assert info["isplaying"]
 
 
@@ -242,6 +265,7 @@ def test_mpris2_clear_after_scroll(fake_qtile, patched_module, fake_window):
     for i in range(10):
         mp.scroll_text()
     assert mp.text == ""
+
 
 # TO DO: untested lines
 # 85-86: Logging when unable to subscribe to dbus signal. Needs `caplog`

@@ -56,18 +56,13 @@ def log_extension_output(monkeypatch):
 @pytest.mark.usefixtures("log_extension_output")
 def test_command_set_valid_command(caplog, fake_qtile):
     """Extension should run pre-commands and selected command."""
-    extension = CommandSet(
-        pre_commands=["run pre-command"],
-        commands={
-            "key": "run testcommand"
-        }
-    )
+    extension = CommandSet(pre_commands=["run pre-command"], commands={"key": "run testcommand"})
     extension._configure(fake_qtile)
     extension.run()
 
     assert caplog.record_tuples == [
         ("libqtile", logging.WARNING, "run pre-command"),
-        ("libqtile", logging.WARNING, "run testcommand")
+        ("libqtile", logging.WARNING, "run testcommand"),
     ]
 
 
@@ -75,14 +70,9 @@ def test_command_set_valid_command(caplog, fake_qtile):
 def test_command_set_invalid_command(caplog, fake_qtile):
     """Where the key is not in "commands", no command will be run."""
     extension = CommandSet(
-        pre_commands=["run pre-command"],
-        commands={
-            "missing": "run testcommand"
-        }
+        pre_commands=["run pre-command"], commands={"missing": "run testcommand"}
     )
     extension._configure(fake_qtile)
     extension.run()
 
-    assert caplog.record_tuples == [
-        ("libqtile", logging.WARNING, "run pre-command")
-    ]
+    assert caplog.record_tuples == [("libqtile", logging.WARNING, "run pre-command")]

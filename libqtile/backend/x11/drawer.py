@@ -24,6 +24,7 @@ class Drawer(base.Drawer):
     that our drawing area is resized, we invalidate the underlying surface and pixmap
     and recreate them when we need them again with the new geometry.
     """
+
     def __init__(self, qtile: Qtile, win: Internal, width: int, height: int):
         base.Drawer.__init__(self, qtile, win, width, height)
         self._xcb_surface = None
@@ -158,10 +159,12 @@ class Drawer(base.Drawer):
             self._pixmap,
             self._win.wid,
             self._gc,
-            0, 0,  # srcx, srcy
-            offsetx, offsety,  # dstx, dsty
+            0,
+            0,  # srcx, srcy
+            offsetx,
+            offsety,  # dstx, dsty
             self.width if width is None else width,
-            self.height if height is None else height
+            self.height if height is None else height,
         )
 
     def _find_root_visual(self):

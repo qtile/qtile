@@ -32,7 +32,7 @@ class ColumnsConfig(Config):
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
         libqtile.config.Group("c"),
-        libqtile.config.Group("d")
+        libqtile.config.Group("d"),
     ]
     layouts = [
         layout.Columns(num_columns=3),
@@ -64,15 +64,15 @@ def test_columns_window_focus_cycle(manager):
     manager.test_window("four")
 
     # test preconditions, columns adds clients at pos after current, in two stacks
-    columns = manager.c.layout.info()['columns']
-    assert columns[0]['clients'] == ['one']
-    assert columns[1]['clients'] == ['two']
-    assert columns[2]['clients'] == ['four', 'three']
+    columns = manager.c.layout.info()["columns"]
+    assert columns[0]["clients"] == ["one"]
+    assert columns[1]["clients"] == ["two"]
+    assert columns[2]["clients"] == ["four", "three"]
     # last added window has focus
     assert_focused(manager, "four")
 
     # assert window focus cycle, according to order in layout
-    assert_focus_path(manager, 'three', 'float1', 'float2', 'one', 'two', 'four')
+    assert_focus_path(manager, "three", "float1", "float2", "one", "two", "four")
 
 
 @columns_config
@@ -83,30 +83,30 @@ def test_columns_swap_column_left(manager):
     manager.test_window("4")
 
     # test preconditions
-    columns = manager.c.layout.info()['columns']
-    assert columns[0]['clients'] == ['1']
-    assert columns[1]['clients'] == ['2']
-    assert columns[2]['clients'] == ['4', '3']
+    columns = manager.c.layout.info()["columns"]
+    assert columns[0]["clients"] == ["1"]
+    assert columns[1]["clients"] == ["2"]
+    assert columns[2]["clients"] == ["4", "3"]
     assert_focused(manager, "4")
 
     # assert columns are swapped left
     manager.c.layout.swap_column_left()
-    columns = manager.c.layout.info()['columns']
-    assert columns[0]['clients'] == ['1']
-    assert columns[1]['clients'] == ['4', '3']
-    assert columns[2]['clients'] == ['2']
+    columns = manager.c.layout.info()["columns"]
+    assert columns[0]["clients"] == ["1"]
+    assert columns[1]["clients"] == ["4", "3"]
+    assert columns[2]["clients"] == ["2"]
 
     manager.c.layout.swap_column_left()
-    columns = manager.c.layout.info()['columns']
-    assert columns[0]['clients'] == ['4', '3']
-    assert columns[1]['clients'] == ['1']
-    assert columns[2]['clients'] == ['2']
+    columns = manager.c.layout.info()["columns"]
+    assert columns[0]["clients"] == ["4", "3"]
+    assert columns[1]["clients"] == ["1"]
+    assert columns[2]["clients"] == ["2"]
 
     manager.c.layout.swap_column_left()
-    columns = manager.c.layout.info()['columns']
-    assert columns[0]['clients'] == ['2']
-    assert columns[1]['clients'] == ['1']
-    assert columns[2]['clients'] == ['4', '3']
+    columns = manager.c.layout.info()["columns"]
+    assert columns[0]["clients"] == ["2"]
+    assert columns[1]["clients"] == ["1"]
+    assert columns[2]["clients"] == ["4", "3"]
 
 
 @columns_config
@@ -117,29 +117,29 @@ def test_columns_swap_column_right(manager):
     manager.test_window("4")
 
     # test preconditions
-    assert manager.c.layout.info()['columns'][0]['clients'] == ['1']
-    assert manager.c.layout.info()['columns'][1]['clients'] == ['2']
-    assert manager.c.layout.info()['columns'][2]['clients'] == ['4', '3']
+    assert manager.c.layout.info()["columns"][0]["clients"] == ["1"]
+    assert manager.c.layout.info()["columns"][1]["clients"] == ["2"]
+    assert manager.c.layout.info()["columns"][2]["clients"] == ["4", "3"]
     assert_focused(manager, "4")
 
     # assert columns are swapped right
     manager.c.layout.swap_column_right()
-    columns = manager.c.layout.info()['columns']
-    assert columns[0]['clients'] == ['4', '3']
-    assert columns[1]['clients'] == ['2']
-    assert columns[2]['clients'] == ['1']
+    columns = manager.c.layout.info()["columns"]
+    assert columns[0]["clients"] == ["4", "3"]
+    assert columns[1]["clients"] == ["2"]
+    assert columns[2]["clients"] == ["1"]
 
     manager.c.layout.swap_column_right()
-    columns = manager.c.layout.info()['columns']
-    assert columns[0]['clients'] == ['2']
-    assert columns[1]['clients'] == ['4', '3']
-    assert columns[2]['clients'] == ['1']
+    columns = manager.c.layout.info()["columns"]
+    assert columns[0]["clients"] == ["2"]
+    assert columns[1]["clients"] == ["4", "3"]
+    assert columns[2]["clients"] == ["1"]
 
     manager.c.layout.swap_column_right()
-    columns = manager.c.layout.info()['columns']
-    assert columns[0]['clients'] == ['2']
-    assert columns[1]['clients'] == ['1']
-    assert columns[2]['clients'] == ['4', '3']
+    columns = manager.c.layout.info()["columns"]
+    assert columns[0]["clients"] == ["2"]
+    assert columns[1]["clients"] == ["1"]
+    assert columns[2]["clients"] == ["4", "3"]
 
 
 @columns_config
@@ -148,23 +148,23 @@ def test_columns_margins_single(manager):
 
     # no margin
     info = manager.c.window.info()
-    assert info['x'] == 0
-    assert info['y'] == 0
-    assert info['width'] == WIDTH
-    assert info['height'] == HEIGHT
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == WIDTH
+    assert info["height"] == HEIGHT
 
     # single margin for all sides
     manager.c.next_layout()
     info = manager.c.window.info()
-    assert info['x'] == 10
-    assert info['y'] == 10
-    assert info['width'] == WIDTH - 20
-    assert info['height'] == HEIGHT - 20
+    assert info["x"] == 10
+    assert info["y"] == 10
+    assert info["width"] == WIDTH - 20
+    assert info["height"] == HEIGHT - 20
 
     # one margin for each side (N E S W)
     manager.c.next_layout()
     info = manager.c.window.info()
-    assert info['x'] == 40
-    assert info['y'] == 10
-    assert info['width'] == WIDTH - 60
-    assert info['height'] == HEIGHT - 40
+    assert info["x"] == 40
+    assert info["y"] == 10
+    assert info["width"] == WIDTH - 60
+    assert info["height"] == HEIGHT - 40

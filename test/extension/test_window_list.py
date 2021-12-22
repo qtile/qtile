@@ -46,22 +46,15 @@ def extension_manager(monkeypatch, manager_nospawn):
             libqtile.config.Group("a"),
             libqtile.config.Group("b"),
         ]
-        layouts = [
-            libqtile.layout.max.Max()
-        ]
+        layouts = [libqtile.layout.max.Max()]
         keys = [
-            libqtile.config.Key(
-                ["control"],
-                "k",
-                lazy.run_extension(extension)
-            ),
+            libqtile.config.Key(["control"], "k", lazy.run_extension(extension)),
         ]
-        screens = [libqtile.config.Screen(
-            bottom=libqtile.bar.Bar(
-                [],
-                20
-            ),
-        )]
+        screens = [
+            libqtile.config.Screen(
+                bottom=libqtile.bar.Bar([], 20),
+            )
+        ]
 
     manager_nospawn.start(ManagerConfig)
 

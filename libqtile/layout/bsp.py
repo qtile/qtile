@@ -18,7 +18,7 @@
 from libqtile.layout.base import Layout
 
 
-class _BspNode():
+class _BspNode:
     def __init__(self, parent=None):
         self.parent = parent
         self.children = []
@@ -147,13 +147,13 @@ class Bsp(Layout):
         Key([mod, "shift"], "n", lazy.layout.normalize()),
         Key([mod], "Return", lazy.layout.toggle_split()),
     """
+
     defaults = [
         ("border_focus", "#881111", "Border colour(s) for the focused window."),
         ("border_normal", "#220000", "Border colour(s) for un-focused windows."),
         ("border_width", 2, "Border width."),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])."),
-        ("ratio", 1.6,
-         "Width/height ratio that defines the partition direction."),
+        ("ratio", 1.6, "Width/height ratio that defines the partition direction."),
         ("grow_amount", 10, "Amount by which to grow a window/column."),
         ("lower_right", True, "New client occupies lower or right subspace."),
         ("fair", True, "New clients are inserted in the shortest branch."),
@@ -175,9 +175,7 @@ class Bsp(Layout):
         return list(self.root.clients())
 
     def info(self):
-        return dict(
-            name=self.name,
-            clients=[c.name for c in self.root.clients()])
+        return dict(name=self.name, clients=[c.name for c in self.root.clients()])
 
     def get_node(self, client):
         for node in self.root:
@@ -206,8 +204,7 @@ class Bsp(Layout):
             self.current = self.root
 
     def configure(self, client, screen_rect):
-        self.root.calc_geom(screen_rect.x, screen_rect.y, screen_rect.width,
-                            screen_rect.height)
+        self.root.calc_geom(screen_rect.x, screen_rect.y, screen_rect.width, screen_rect.height)
         node = self.get_node(client)
         color = self.border_focus if client.has_focus else self.border_normal
         border = 0 if node is self.root else self.border_width
@@ -219,7 +216,8 @@ class Bsp(Layout):
                 node.h - 2 * border,
                 border,
                 color,
-                margin=self.margin)
+                margin=self.margin,
+            )
         client.unhide()
 
     def cmd_toggle_split(self):
@@ -419,8 +417,7 @@ class Bsp(Layout):
         parent = child.parent
         while parent:
             if parent.split_horizontal and child is parent.children[1]:
-                parent.split_ratio = max(5,
-                                         parent.split_ratio - self.grow_amount)
+                parent.split_ratio = max(5, parent.split_ratio - self.grow_amount)
                 self.group.layout_all()
                 break
             child = parent
@@ -431,8 +428,7 @@ class Bsp(Layout):
         parent = child.parent
         while parent:
             if parent.split_horizontal and child is parent.children[0]:
-                parent.split_ratio = min(95,
-                                         parent.split_ratio + self.grow_amount)
+                parent.split_ratio = min(95, parent.split_ratio + self.grow_amount)
                 self.group.layout_all()
                 break
             child = parent
@@ -443,8 +439,7 @@ class Bsp(Layout):
         parent = child.parent
         while parent:
             if not parent.split_horizontal and child is parent.children[1]:
-                parent.split_ratio = max(5,
-                                         parent.split_ratio - self.grow_amount)
+                parent.split_ratio = max(5, parent.split_ratio - self.grow_amount)
                 self.group.layout_all()
                 break
             child = parent
@@ -455,8 +450,7 @@ class Bsp(Layout):
         parent = child.parent
         while parent:
             if not parent.split_horizontal and child is parent.children[0]:
-                parent.split_ratio = min(95,
-                                         parent.split_ratio + self.grow_amount)
+                parent.split_ratio = min(95, parent.split_ratio + self.grow_amount)
                 self.group.layout_all()
                 break
             child = parent

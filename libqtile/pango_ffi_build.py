@@ -29,7 +29,8 @@ pango_ffi.set_source("libqtile._ffi_pango", None)
 
 pango_ffi.include(cairocffi_ffi)
 
-pango_ffi.cdef("""
+pango_ffi.cdef(
+    """
     typedef ... PangoContext;
     typedef ... PangoLayout;
     typedef ... PangoFontDescription;
@@ -138,7 +139,8 @@ pango_ffi.cdef("""
     gchar *
     g_markup_escape_text(const gchar *text,
                          gssize length);
-""")
+"""
+)
 
 if __name__ == "__main__":
     pango_ffi.compile()

@@ -4,25 +4,24 @@ from test.widgets.conftest import FakeBar
 
 wrong_distro = "Barch"
 good_distro = "Arch"
-cmd_0_line = "export toto"   # quick "monkeypatch" simulating 0 output, ie 0 update
-cmd_1_line = "echo toto"     # quick "monkeypatch" simulating 1 output, ie 1 update
+cmd_0_line = "export toto"  # quick "monkeypatch" simulating 0 output, ie 0 update
+cmd_1_line = "echo toto"  # quick "monkeypatch" simulating 1 output, ie 1 update
 cmd_error = "false"
 nus = "No Update Avalaible"
 
 
 def test_unknown_distro():
-    """ test an unknown distribution """
+    """test an unknown distribution"""
     cu = CheckUpdates(distro=wrong_distro)
     text = cu.poll()
     assert text == "N/A"
 
 
 def test_update_available(fake_qtile, fake_window):
-    """ test output with update (check number of updates and color) """
-    cu2 = CheckUpdates(distro=good_distro,
-                       custom_command=cmd_1_line,
-                       colour_have_updates="#123456"
-                       )
+    """test output with update (check number of updates and color)"""
+    cu2 = CheckUpdates(
+        distro=good_distro, custom_command=cmd_1_line, colour_have_updates="#123456"
+    )
     fakebar = FakeBar([cu2], window=fake_window)
     cu2._configure(fake_qtile, fakebar)
     text = cu2.poll()
@@ -31,7 +30,7 @@ def test_update_available(fake_qtile, fake_window):
 
 
 def test_no_update_available_without_no_update_string(fake_qtile, fake_window):
-    """ test output with no update (without dedicated string nor color) """
+    """test output with no update (without dedicated string nor color)"""
     cu3 = CheckUpdates(distro=good_distro, custom_command=cmd_0_line)
     fakebar = FakeBar([cu3], window=fake_window)
     cu3._configure(fake_qtile, fakebar)
@@ -39,15 +38,14 @@ def test_no_update_available_without_no_update_string(fake_qtile, fake_window):
     assert text == ""
 
 
-def test_no_update_available_with_no_update_string_and_color_no_updates(
-    fake_qtile, fake_window
-):
-    """ test output with no update (with dedicated string and color) """
-    cu4 = CheckUpdates(distro=good_distro,
-                       custom_command=cmd_0_line,
-                       no_update_string=nus,
-                       colour_no_updates="#654321"
-                       )
+def test_no_update_available_with_no_update_string_and_color_no_updates(fake_qtile, fake_window):
+    """test output with no update (with dedicated string and color)"""
+    cu4 = CheckUpdates(
+        distro=good_distro,
+        custom_command=cmd_0_line,
+        no_update_string=nus,
+        colour_no_updates="#654321",
+    )
     fakebar = FakeBar([cu4], window=fake_window)
     cu4._configure(fake_qtile, fakebar)
     text = cu4.poll()
@@ -56,11 +54,12 @@ def test_no_update_available_with_no_update_string_and_color_no_updates(
 
 
 def test_update_available_with_restart_indicator(monkeypatch, fake_qtile, fake_window):
-    """ test output with no indicator where restart needed """
-    cu5 = CheckUpdates(distro=good_distro,
-                       custom_command=cmd_1_line,
-                       restart_indicator="*",
-                       )
+    """test output with no indicator where restart needed"""
+    cu5 = CheckUpdates(
+        distro=good_distro,
+        custom_command=cmd_1_line,
+        restart_indicator="*",
+    )
     monkeypatch.setattr("os.path.exists", lambda x: True)
     fakebar = FakeBar([cu5], window=fake_window)
     cu5._configure(fake_qtile, fakebar)
@@ -69,7 +68,7 @@ def test_update_available_with_restart_indicator(monkeypatch, fake_qtile, fake_w
 
 
 def test_update_available_with_execute(manager_nospawn, minimal_conf_noscreen, monkeypatch):
-    """ test polling after executing command """
+    """test polling after executing command"""
 
     # Use monkeypatching to patch both Popen (for execute command) and call_process
 
@@ -96,22 +95,19 @@ def test_update_available_with_execute(manager_nospawn, minimal_conf_noscreen, m
                 return "Updates"
             return ""
 
-    cu6 = CheckUpdates(distro=good_distro,
-                       custom_command="dummy",
-                       execute="dummy",
-                       no_update_string=nus,
-                       )
+    cu6 = CheckUpdates(
+        distro=good_distro,
+        custom_command="dummy",
+        execute="dummy",
+        no_update_string=nus,
+    )
 
     # Patch the necessary object
     monkeypatch.setattr(cu6, "call_process", MockSpawn.call_process)
     monkeypatch.setattr("libqtile.widget.check_updates.Popen", MockPopen)
 
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar([cu6], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([cu6], 10))]
 
     manager_nospawn.start(config)
 
@@ -129,11 +125,12 @@ def test_update_available_with_execute(manager_nospawn, minimal_conf_noscreen, m
 
 
 def test_update_process_error(fake_qtile, fake_window):
-    """ test output where update check gives error"""
-    cu7 = CheckUpdates(distro=good_distro,
-                       custom_command=cmd_error,
-                       no_update_string="ERROR",
-                       )
+    """test output where update check gives error"""
+    cu7 = CheckUpdates(
+        distro=good_distro,
+        custom_command=cmd_error,
+        no_update_string="ERROR",
+    )
     fakebar = FakeBar([cu7], window=fake_window)
     cu7._configure(fake_qtile, fakebar)
     text = cu7.poll()
@@ -141,7 +138,7 @@ def test_update_process_error(fake_qtile, fake_window):
 
 
 def test_line_truncations(fake_qtile, monkeypatch, fake_window):
-    """ test update count is reduced"""
+    """test update count is reduced"""
 
     # Mock output to return 5 lines of text
     def mock_process(*args, **kwargs):

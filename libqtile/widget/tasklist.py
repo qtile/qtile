@@ -38,16 +38,13 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     Contrary to WindowTabs this is an interactive widget.  The window that
     currently has focus is highlighted.
     """
+
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("font", "sans", "Default font"),
         ("fontsize", None, "Font size. Calculated if None."),
         ("foreground", "ffffff", "Foreground colour"),
-        (
-            "fontshadow",
-            None,
-            "font shadow color, default is None(no shadow)"
-        ),
+        ("fontshadow", None, "font shadow color, default is None(no shadow)"),
         ("borderwidth", 2, "Current group border width"),
         ("border", "215578", "Border colour"),
         ("rounded", True, "To round or not to round borders"),
@@ -55,104 +52,94 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             "highlight_method",
             "border",
             "Method of highlighting (one of 'border' or 'block') "
-            "Uses `*_border` color settings"
+            "Uses `*_border` color settings",
         ),
         ("urgent_border", "FF0000", "Urgent border color"),
         (
             "urgent_alert_method",
             "border",
-            "Method for alerting you of WM urgent "
-            "hints (one of 'border' or 'text')"
+            "Method for alerting you of WM urgent " "hints (one of 'border' or 'text')",
         ),
         (
             "unfocused_border",
             None,
             "Border color for unfocused windows. "
             "Affects only hightlight_method 'border' and 'block'. "
-            "Defaults to None, which means no special color."
+            "Defaults to None, which means no special color.",
         ),
         (
             "max_title_width",
             None,
-            "Max size in pixels of task title."
-            "(if set to None, as much as available.)"
+            "Max size in pixels of task title." "(if set to None, as much as available.)",
         ),
-
         (
             "title_width_method",
             None,
             "Method to compute the width of task title. (None, 'uniform'.)"
-            "Defaults to None, the normal behaviour."
+            "Defaults to None, the normal behaviour.",
         ),
         (
-            "parse_text", None, "Function to parse and modify window names. "
+            "parse_text",
+            None,
+            "Function to parse and modify window names. "
             "e.g. function in config that removes excess "
             "strings from window name: "
             "def my_func(text)"
-            "    for string in [\" - Chromium\", \" - Firefox\"]:"
-            "        text = text.replace(string, \"\")"
+            '    for string in [" - Chromium", " - Firefox"]:'
+            '        text = text.replace(string, "")'
             "   return text"
-            "then set option parse_text=my_func"
+            "then set option parse_text=my_func",
+        ),
+        ("spacing", None, "Spacing between tasks." "(if set to None, will be equal to margin_x)"),
+        (
+            "txt_minimized",
+            "_ ",
+            "Text representation of the minimized window state. " 'e.g., "_ " or "\U0001F5D5 "',
         ),
         (
-            "spacing",
+            "txt_maximized",
+            "[] ",
+            "Text representation of the maximized window state. " 'e.g., "[] " or "\U0001F5D6 "',
+        ),
+        (
+            "txt_floating",
+            "V ",
+            "Text representation of the floating window state. " 'e.g., "V " or "\U0001F5D7 "',
+        ),
+        (
+            "markup_normal",
             None,
-            "Spacing between tasks."
-            "(if set to None, will be equal to margin_x)"
+            "Text markup of the normal window state. Supports pangomarkup with markup=True."
+            'e.g., "{}" or "<span underline="low">{}</span>"',
         ),
         (
-            'txt_minimized',
-            '_ ',
-            'Text representation of the minimized window state. '
-            'e.g., "_ " or "\U0001F5D5 "'
-        ),
-        (
-            'txt_maximized',
-            '[] ',
-            'Text representation of the maximized window state. '
-            'e.g., "[] " or "\U0001F5D6 "'
-        ),
-        (
-            'txt_floating',
-            'V ',
-            'Text representation of the floating window state. '
-            'e.g., "V " or "\U0001F5D7 "'
-        ),
-        (
-            'markup_normal',
+            "markup_minimized",
             None,
-            'Text markup of the normal window state. Supports pangomarkup with markup=True.'
-            'e.g., "{}" or "<span underline="low">{}</span>"'
+            "Text markup of the minimized window state. Supports pangomarkup with markup=True."
+            'e.g., "{}" or "<span underline="low">{}</span>"',
         ),
         (
-            'markup_minimized',
+            "markup_maximized",
             None,
-            'Text markup of the minimized window state. Supports pangomarkup with markup=True.'
-            'e.g., "{}" or "<span underline="low">{}</span>"'
+            "Text markup of the maximized window state. Supports pangomarkup with markup=True."
+            'e.g., "{}" or "<span underline="low">{}</span>"',
         ),
         (
-            'markup_maximized',
+            "markup_floating",
             None,
-            'Text markup of the maximized window state. Supports pangomarkup with markup=True.'
-            'e.g., "{}" or "<span underline="low">{}</span>"'
+            "Text markup of the floating window state. Supports pangomarkup with markup=True."
+            'e.g., "{}" or "<span underline="low">{}</span>"',
         ),
         (
-            'markup_floating',
+            "markup_focused",
             None,
-            'Text markup of the floating window state. Supports pangomarkup with markup=True.'
-            'e.g., "{}" or "<span underline="low">{}</span>"'
+            "Text markup of the focused window state. Supports pangomarkup with markup=True."
+            'e.g., "{}" or "<span underline="low">{}</span>"',
         ),
         (
-            'markup_focused',
+            "icon_size",
             None,
-            'Text markup of the focused window state. Supports pangomarkup with markup=True.'
-            'e.g., "{}" or "<span underline="low">{}</span>"'
-        ),
-        (
-            'icon_size',
-            None,
-            'Icon size. '
-            '(Calculated if set to None. Icons are hidden if set to 0.)'
+            "Icon size. " "(Calculated if set to None. Icons are hidden if set to 0.)",
         ),
     ]
 
@@ -168,7 +155,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if self.spacing is None:
             self.spacing = self.margin_x
 
-        self.add_callbacks({'Button1': self.select_window})
+        self.add_callbacks({"Button1": self.select_window})
 
     def box_width(self, text):
         """
@@ -176,12 +163,8 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         If max_title_width is given, the returned width is limited to it.
         """
         if self.markup:
-            text = re.sub('<[^<]+?>', '', text)
-        width, _ = self.drawer.max_layout_size(
-            [text],
-            self.font,
-            self.fontsize
-        )
+            text = re.sub("<[^<]+?>", "", text)
+        width, _ = self.drawer.max_layout_size([text], self.font, self.fontsize)
         width = width + 2 * (self.padding_x + self.borderwidth)
         return width
 
@@ -191,14 +174,18 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         Depending on its state minimized, maximized and floating
         appropriate characters are prepended.
         """
-        state = ''
+        state = ""
         markup_str = self.markup_normal
 
         # Enforce markup and new string format behaviour when
         # at least one markup_* option is used.
         # Mixing non markup and markup may cause problems.
-        if self.markup_minimized or self.markup_maximized\
-                or self.markup_floating or self.markup_focused:
+        if (
+            self.markup_minimized
+            or self.markup_maximized
+            or self.markup_floating
+            or self.markup_focused
+        ):
             enforce_markup = True
         else:
             enforce_markup = False
@@ -254,8 +241,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             return []
 
         # Determine available and max average width for task name boxes.
-        width_total = (self.width - 2 * self.margin_x -
-                       (window_count - 1) * self.spacing)
+        width_total = self.width - 2 * self.margin_x - (window_count - 1) * self.spacing
         width_avg = width_total / window_count
 
         names = [self.get_taskname(w) for w in windows]
@@ -273,9 +259,13 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             # Default behaviour: calculated width for each task according to
             # icon and task name consisting
             # of state abbreviation and window name
-            width_boxes = [(self.box_width(names[idx]) +
-                            ((self.icon_size + self.padding_x) if icons[idx] else 0))
-                           for idx in range(window_count)]
+            width_boxes = [
+                (
+                    self.box_width(names[idx])
+                    + ((self.icon_size + self.padding_x) if icons[idx] else 0)
+                )
+                for idx in range(window_count)
+            ]
 
         # Obey max_title_width if specified
         if self.max_title_width:
@@ -289,11 +279,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             # and calculate a ratio to shrink boxes greater than width_avg
             width_shorter_sum = sum([w for w in width_boxes if w < width_avg])
 
-            ratio = ((width_total - width_shorter_sum) /
-                     (width_sum - width_shorter_sum))
+            ratio = (width_total - width_shorter_sum) / (width_sum - width_shorter_sum)
             # determine new box widths by shrinking boxes greater than avg
-            width_boxes = [(w if w < width_avg else w * ratio)
-                           for w in width_boxes]
+            width_boxes = [(w if w < width_avg else w * ratio) for w in width_boxes]
 
         return zip(windows, icons, names, width_boxes)
 
@@ -306,20 +294,13 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             logger.warning("TaskList icons not supported in Wayland.")
 
         if self.icon_size is None:
-            self.icon_size = self.bar.height - 2 * (self.borderwidth +
-                                                    self.margin_y)
+            self.icon_size = self.bar.height - 2 * (self.borderwidth + self.margin_y)
 
         if self.fontsize is None:
-            calc = self.bar.height - self.margin_y * 2 - \
-                self.borderwidth * 2 - self.padding_y * 2
+            calc = self.bar.height - self.margin_y * 2 - self.borderwidth * 2 - self.padding_y * 2
             self.fontsize = max(calc, 1)
         self.layout = self.drawer.textlayout(
-            "",
-            "ffffff",
-            self.font,
-            self.fontsize,
-            self.fontshadow,
-            wrap=False
+            "", "ffffff", self.font, self.fontsize, self.fontshadow, wrap=False
         )
         self.setup_hooks()
 
@@ -357,8 +338,17 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if width is not None:
             self.layout.width = width
 
-    def drawbox(self, offset, text, bordercolor, textcolor,
-                width=None, rounded=False, block=False, icon=None):
+    def drawbox(
+        self,
+        offset,
+        text,
+        bordercolor,
+        textcolor,
+        width=None,
+        rounded=False,
+        block=False,
+        icon=None,
+    ):
         self.drawtext(text, textcolor, width)
 
         icon_padding = (self.icon_size + self.padding_x) if icon else 0
@@ -374,12 +364,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             border_width = self.borderwidth
             framecolor = bordercolor
 
-        framed = self.layout.framed(
-            border_width,
-            framecolor,
-            padding_x,
-            self.padding_y
-        )
+        framed = self.layout.framed(border_width, framecolor, padding_x, self.padding_y)
         if block and bordercolor is not None:
             framed.draw_fill(offset, self.margin_y, rounded)
         else:
@@ -423,16 +408,13 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         icons = sorted(
             iter(window.icons.items()),
-            key=lambda x: abs(self.icon_size - int(x[0].split("x")[0]))
+            key=lambda x: abs(self.icon_size - int(x[0].split("x")[0])),
         )
         icon = icons[0]
         width, height = map(int, icon[0].split("x"))
 
         img = cairocffi.ImageSurface.create_for_data(
-            icon[1],
-            cairocffi.FORMAT_ARGB32,
-            width,
-            height
+            icon[1], cairocffi.FORMAT_ARGB32, width, height
         )
 
         surface = cairocffi.SurfacePattern(img)
@@ -479,23 +461,24 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 border = self.unfocused_border or None
                 text_color = self.foreground
 
-            if self.highlight_method == 'text':
+            if self.highlight_method == "text":
                 border = None
             else:
                 text_color = self.foreground
 
-            textwidth = (bw - 2 * self.padding_x -
-                         ((self.icon_size + self.padding_x) if icon else 0))
+            textwidth = (
+                bw - 2 * self.padding_x - ((self.icon_size + self.padding_x) if icon else 0)
+            )
             self.drawbox(
                 offset,
                 task,
                 border,
                 text_color,
                 rounded=self.rounded,
-                block=(self.highlight_method == 'block'),
+                block=(self.highlight_method == "block"),
                 width=textwidth,
                 icon=icon,
             )
-            offset += (bw + self.spacing)
+            offset += bw + self.spacing
 
         self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)

@@ -68,7 +68,7 @@ def test_pomodoro(fake_qtile, fake_window):
         prefix_active=PREFIX_ACTIVE,
         prefix_break=PREFIX_BREAK,
         prefix_long_break=PREFIX_LONG_BREAK,
-        prefix_paused=PREFIX_PAUSED
+        prefix_paused=PREFIX_PAUSED,
     )
 
     fakebar = FakeBar([widget], window=fake_window)

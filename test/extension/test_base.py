@@ -28,7 +28,7 @@ parameters = [
     ("000000", "#000000"),
     ("#0000", None),
     ("0000", None),
-    (0, None)
+    (0, None),
 ]
 
 
@@ -73,11 +73,10 @@ def test_base_methods():
 
 
 def test_run_command(monkeypatch):
-
     def fake_popen(cmd, *args, **kwargs):
         return cmd
 
-    monkeypatch.setattr('libqtile.extension.base.Popen', fake_popen)
+    monkeypatch.setattr("libqtile.extension.base.Popen", fake_popen)
 
     extension = RunCommand(command="command --arg1 --arg2")
 

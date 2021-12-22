@@ -46,7 +46,7 @@ def test_dmenu_configuration_options():
         ({"foreground": BLACK}, ["-nf", BLACK]),
         ({"selected_background": BLACK}, ["-sb", BLACK]),
         ({"selected_foreground": BLACK}, ["-sf", BLACK]),
-        ({"dmenu_height": 100}, ["-h", "100"])
+        ({"dmenu_height": 100}, ["-h", "100"]),
     ]
 
     # Loop over options, create an instance of Dmenu with the provided "config"
@@ -56,7 +56,7 @@ def test_dmenu_configuration_options():
         extension = Dmenu(**config)
         extension._configure(None)
         index = extension.configured_command.index(output[0])
-        assert output == extension.configured_command[index:index + len(output)]
+        assert output == extension.configured_command[index : index + len(output)]
 
 
 def test_dmenu_run(monkeypatch):
@@ -110,4 +110,4 @@ def test_j4dmenu_configuration_options():
         extension._configure(None)
         index = extension.configured_command.index(output[0])
         print(extension.configured_command)
-        assert output == extension.configured_command[index:index + len(output)]
+        assert output == extension.configured_command[index : index + len(output)]

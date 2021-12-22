@@ -29,21 +29,21 @@ class QuickExit(base._TextBox):
     """
 
     defaults = [
-        ('default_text', '[ shutdown ]', 'A text displayed as a button'),
-        ('countdown_format', '[ {} seconds ]', 'This text is showed when counting down.'),
-        ('timer_interval', 1, 'A countdown interval.'),
-        ('countdown_start', 5, 'Time to accept the second pushing.'),
+        ("default_text", "[ shutdown ]", "A text displayed as a button"),
+        ("countdown_format", "[ {} seconds ]", "This text is showed when counting down."),
+        ("timer_interval", 1, "A countdown interval."),
+        ("countdown_start", 5, "Time to accept the second pushing."),
     ]
 
     def __init__(self, widget=bar.CALCULATED, **config):
-        base._TextBox.__init__(self, '', widget, **config)
+        base._TextBox.__init__(self, "", widget, **config)
         self.add_defaults(QuickExit.defaults)
 
         self.is_counting = False
         self.text = self.default_text
         self.countdown = self.countdown_start
 
-        self.add_callbacks({'Button1': self.cmd_trigger})
+        self.add_callbacks({"Button1": self.cmd_trigger})
 
     def __reset(self):
         self.is_counting = False

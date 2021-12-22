@@ -35,8 +35,14 @@ sleep_time = 0.1
 
 
 class Retry:
-    def __init__(self, fail_msg='retry failed!', ignore_exceptions=(),
-                 dt=sleep_time, tmax=max_sleep, return_on_fail=False):
+    def __init__(
+        self,
+        fail_msg="retry failed!",
+        ignore_exceptions=(),
+        dt=sleep_time,
+        tmax=max_sleep,
+        return_on_fail=False,
+    ):
         self.fail_msg = fail_msg
         self.ignore_exceptions = ignore_exceptions
         self.dt = dt
@@ -63,21 +69,14 @@ class Retry:
                 return False
             else:
                 raise AssertionError(self.fail_msg)
+
         return wrapper
 
 
 class BareConfig(Config):
     auto_fullscreen = True
-    groups = [
-        config.Group("a"),
-        config.Group("b"),
-        config.Group("c"),
-        config.Group("d")
-    ]
-    layouts = [
-        layout.stack.Stack(num_stacks=1),
-        layout.stack.Stack(num_stacks=2)
-    ]
+    groups = [config.Group("a"), config.Group("b"), config.Group("c"), config.Group("d")]
+    layouts = [layout.stack.Stack(num_stacks=1), layout.stack.Stack(num_stacks=2)]
     floating_layout = default_config.floating_layout
     keys = [
         config.Key(
@@ -99,6 +98,7 @@ class BareConfig(Config):
 
 class Backend(metaclass=ABCMeta):
     """A base class to help set up backends passed to TestManager"""
+
     def __init__(self, env, args=()):
         self.env = env
         self.args = args
@@ -131,7 +131,7 @@ def can_connect_qtile(socket_path, *, ok=None):
     ipc_command = command.interface.IPCCommandInterface(ipc_client)
     client = command.client.InteractiveCommandClient(ipc_command)
     val = client.status()
-    if val == 'OK':
+    if val == "OK":
         return True
     return False
 
@@ -144,6 +144,7 @@ class TestManager:
     is done.  Windows can be spawned for the Qtile instance to interact with
     with various `.test_*` methods.
     """
+
     def __init__(self, backend, debug_log):
         self.backend = backend
         self.log_level = logging.DEBUG if debug_log else logging.INFO
@@ -179,7 +180,7 @@ class TestManager:
                     config_class(),
                     socket_path=self.sockfile,
                     no_spawn=no_spawn,
-                    state=state
+                    state=state,
                 ).loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
@@ -254,12 +255,13 @@ class TestManager:
         start = len(client.windows())
         create()
 
-        @Retry(ignore_exceptions=(RuntimeError,), fail_msg='Window never appeared...')
+        @Retry(ignore_exceptions=(RuntimeError,), fail_msg="Window never appeared...")
         def success():
             while failed is None or not failed():
                 if len(client.windows()) > start:
                     return True
             raise RuntimeError("not here yet")
+
         return success()
 
     def _spawn_window(self, *args):
@@ -308,7 +310,7 @@ class TestManager:
         def success():
             if len(self.c.windows()) < start:
                 return True
-            raise ValueError('window is still in client list!')
+            raise ValueError("window is still in client list!")
 
         if not success():
             raise AssertionError("Window could not be killed...")
@@ -345,15 +347,14 @@ class TestManager:
             scrn = g["screen"]
             if scrn is not None:
                 if scrn in seen:
-                    raise AssertionError(
-                        "Screen referenced from more than one group.")
+                    raise AssertionError("Screen referenced from more than one group.")
                 seen.add(scrn)
                 assert screens[scrn]["group"] == g["name"]
         assert len(seen) == len(screens), "Not all screens had an attached group."
 
 
-@Retry(ignore_exceptions=(AssertionError,), fail_msg='Window did not die!')
+@Retry(ignore_exceptions=(AssertionError,), fail_msg="Window did not die!")
 def assert_window_died(client, window_info):
     client.sync()
-    wid = window_info['id']
-    assert wid not in set([x['id'] for x in client.windows()])
+    wid = window_info["id"]
+    assert wid not in set([x["id"] for x in client.windows()])

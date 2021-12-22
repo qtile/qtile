@@ -71,7 +71,7 @@ def test_has_transparency():
         ((255, 255, 255, 0.5), True),
         ((255, 255, 255), False),
         (["#000000", "#ffffff"], False),
-        (["#000000", "#ffffffaa"], True)
+        (["#000000", "#ffffffaa"], True),
     ]
 
     for colour, expected in colours:
@@ -85,7 +85,7 @@ def test_remove_transparency():
         ((255, 255, 255, 0.5), (255.0, 255.0, 255.0)),
         ((255, 255, 255), (255.0, 255.0, 255.0)),
         (["#000000", "#ffffff"], [(0.0, 0.0, 0.0), (255.0, 255.0, 255.0)]),
-        (["#000000", "#ffffffaa"], [(0.0, 0.0, 0.0), (255.0, 255.0, 255.0)])
+        (["#000000", "#ffffffaa"], [(0.0, 0.0, 0.0), (255.0, 255.0, 255.0)]),
     ]
 
     for colour, expected in colours:
@@ -105,57 +105,57 @@ def test_shuffle():
 
 
 def test_guess_terminal_accepts_a_preference(path):
-    term = 'shitty'
+    term = "shitty"
     Path(path, term).touch(mode=0o777)
     assert utils.guess_terminal(term) == term
 
 
 def test_guess_terminal_accepts_a_list_of_preferences(path):
-    term = 'shitty'
+    term = "shitty"
     Path(path, term).touch(mode=0o777)
-    assert utils.guess_terminal(['nutty', term]) == term
+    assert utils.guess_terminal(["nutty", term]) == term
 
 
 def test_guess_terminal_falls_back_to_defaults(path):
-    Path(path, 'kitty').touch(mode=0o777)
-    assert utils.guess_terminal(['nutty', 'witty', 'petty']) == 'kitty'
+    Path(path, "kitty").touch(mode=0o777)
+    assert utils.guess_terminal(["nutty", "witty", "petty"]) == "kitty"
 
 
 @pytest.fixture
 def path(monkeypatch):
     "Create a TemporaryDirectory as the PATH"
     with TemporaryDirectory() as d:
-        monkeypatch.setenv('PATH', d)
+        monkeypatch.setenv("PATH", d)
         yield d
 
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(TEST_DIR, 'data')
+DATA_DIR = os.path.join(TEST_DIR, "data")
 
 
 class TestScanFiles:
     def test_audio_volume_muted(self):
-        name = 'audio-volume-muted.*'
+        name = "audio-volume-muted.*"
         dfiles = utils.scan_files(DATA_DIR, name)
         result = dfiles[name]
         assert len(result) == 2
-        png = os.path.join(DATA_DIR, 'png', 'audio-volume-muted.png')
+        png = os.path.join(DATA_DIR, "png", "audio-volume-muted.png")
         assert png in result
-        svg = os.path.join(DATA_DIR, 'svg', 'audio-volume-muted.svg')
+        svg = os.path.join(DATA_DIR, "svg", "audio-volume-muted.svg")
         assert svg in result
 
     def test_only_svg(self):
-        name = 'audio-volume-muted.svg'
+        name = "audio-volume-muted.svg"
         dfiles = utils.scan_files(DATA_DIR, name)
         result = dfiles[name]
         assert len(result) == 1
-        svg = os.path.join(DATA_DIR, 'svg', 'audio-volume-muted.svg')
+        svg = os.path.join(DATA_DIR, "svg", "audio-volume-muted.svg")
         assert svg in result
 
     def test_multiple(self):
         names = OrderedDict()
-        names['audio-volume-muted.*'] = 2
-        names['battery-caution-charging.*'] = 1
+        names["audio-volume-muted.*"] = 2
+        names["battery-caution-charging.*"] = 1
         dfiles = utils.scan_files(DATA_DIR, *names)
         for name, length in names.items():
             assert len(dfiles[name]) == length

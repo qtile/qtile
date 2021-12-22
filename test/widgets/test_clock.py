@@ -39,7 +39,6 @@ def no_op(*args, **kwargs):
 # has a simplified timezone method to check functionality of
 # the widget.
 class MockDatetime(datetime.datetime):
-
     @classmethod
     def now(cls, *args, **kwargs):
         return cls(2021, 1, 1, 10, 20, 30)
@@ -66,7 +65,7 @@ def patched_clock(monkeypatch):
 
 
 def test_clock(fake_qtile, monkeypatch, fake_window):
-    """ test clock output with default settings """
+    """test clock output with default settings"""
     monkeypatch.setattr("libqtile.widget.clock.datetime", MockDatetime)
     clk1 = clock.Clock()
     fakebar = FakeBar([clk1], window=fake_window)
@@ -77,7 +76,8 @@ def test_clock(fake_qtile, monkeypatch, fake_window):
 
 @pytest.mark.usefixtures("patched_clock")
 def test_clock_invalid_timezone(fake_qtile, monkeypatch, fake_window):
-    """ test clock widget with invalid timezone (and no pytz or dateutil modules) """
+    """test clock widget with invalid timezone (and no pytz or dateutil modules)"""
+
     class FakeDateutilTZ:
         @classmethod
         def tz(cls):
@@ -110,7 +110,8 @@ def test_clock_invalid_timezone(fake_qtile, monkeypatch, fake_window):
 
 @pytest.mark.usefixtures("patched_clock")
 def test_clock_datetime_timezone(fake_qtile, monkeypatch, fake_window):
-    """ test clock with datetime timezone """
+    """test clock with datetime timezone"""
+
     class FakeDateutilTZ:
         class TZ:
             @classmethod
@@ -138,7 +139,8 @@ def test_clock_datetime_timezone(fake_qtile, monkeypatch, fake_window):
 
 @pytest.mark.usefixtures("patched_clock")
 def test_clock_pytz_timezone(fake_qtile, monkeypatch, fake_window):
-    """ test clock with pytz timezone """
+    """test clock with pytz timezone"""
+
     class FakeDateutilTZ:
         class TZ:
             @classmethod
@@ -177,7 +179,8 @@ def test_clock_pytz_timezone(fake_qtile, monkeypatch, fake_window):
 
 @pytest.mark.usefixtures("patched_clock")
 def test_clock_dateutil_timezone(fake_qtile, monkeypatch, fake_window):
-    """ test clock with dateutil timezone """
+    """test clock with dateutil timezone"""
+
     class FakeDateutilTZ:
         class TZ:
             @classmethod
@@ -212,7 +215,7 @@ def test_clock_dateutil_timezone(fake_qtile, monkeypatch, fake_window):
 
 @pytest.mark.usefixtures("patched_clock")
 def test_clock_tick(manager_nospawn, minimal_conf_noscreen, monkeypatch):
-    ''' Test clock ticks '''
+    """Test clock ticks"""
 
     class FakeDateutilTZ:
         class TZ:
@@ -259,11 +262,7 @@ def test_clock_tick(manager_nospawn, minimal_conf_noscreen, monkeypatch):
     clk6 = clock.Clock(update_interval=100)
 
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar([clk6], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([clk6], 10))]
 
     manager_nospawn.start(config)
 

@@ -64,30 +64,31 @@ class ImapWidget(base.ThreadPoolText):
 
     .. _keyring: https://pypi.org/project/keyring/
     """
+
     defaults = [
-        ('mbox', '"INBOX"', 'mailbox to fetch'),
-        ('label', 'INBOX', 'label for display'),
-        ('user', None, 'email username'),
-        ('server', None, 'email server name'),
+        ("mbox", '"INBOX"', "mailbox to fetch"),
+        ("label", "INBOX", "label for display"),
+        ("user", None, "email username"),
+        ("server", None, "email server name"),
     ]
 
     def __init__(self, **config):
         base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(ImapWidget.defaults)
-        password = keyring.get_password('imapwidget', self.user)
+        password = keyring.get_password("imapwidget", self.user)
         if password is not None:
             self.password = password
         else:
-            logger.critical('Gnome Keyring Error')
+            logger.critical("Gnome Keyring Error")
 
     def poll(self):
         im = imaplib.IMAP4_SSL(self.server, 993)
-        if self.password == 'Gnome Keyring Error':
-            text = 'Gnome Keyring Error'
+        if self.password == "Gnome Keyring Error":
+            text = "Gnome Keyring Error"
         else:
             im.login(self.user, self.password)
-            status, response = im.status(self.mbox, '(UNSEEN)')
+            status, response = im.status(self.mbox, "(UNSEEN)")
             text = response[0].decode()
-            text = self.label + ': ' + re.sub(r'\).*$', '', re.sub(r'^.*N\s', '', text))
+            text = self.label + ": " + re.sub(r"\).*$", "", re.sub(r"^.*N\s", "", text))
             im.logout()
         return text

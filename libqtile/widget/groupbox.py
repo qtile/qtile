@@ -52,9 +52,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
 
     def box_width(self, groups):
         width, _ = self.drawer.max_layout_size(
-            [i.label for i in groups],
-            self.font,
-            self.fontsize
+            [i.label for i in groups], self.font, self.fontsize
         )
         return width + self.padding_x * 2 + self.borderwidth * 2
 
@@ -62,22 +60,18 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         base._Widget._configure(self, qtile, bar)
 
         if self.fontsize is None:
-            calc = self.bar.height - self.margin_y * 2 - \
-                self.borderwidth * 2 - self.padding_y * 2
+            calc = self.bar.height - self.margin_y * 2 - self.borderwidth * 2 - self.padding_y * 2
             self.fontsize = max(calc, 1)
 
         self.layout = self.drawer.textlayout(
-            "",
-            "ffffff",
-            self.font,
-            self.fontsize,
-            self.fontshadow
+            "", "ffffff", self.font, self.fontsize, self.fontshadow
         )
         self.setup_hooks()
 
     def setup_hooks(self):
         def hook_response(*args, **kwargs):
             self.bar.draw()
+
         hook.subscribe.client_managed(hook_response)
         hook.subscribe.client_urgent_hint_changed(hook_response)
         hook.subscribe.client_killed(hook_response)
@@ -86,8 +80,19 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         hook.subscribe.current_screen_change(hook_response)
         hook.subscribe.changegroup(hook_response)
 
-    def drawbox(self, offset, text, bordercolor, textcolor, highlight_color=None,
-                width=None, rounded=False, block=False, line=False, highlighted=False):
+    def drawbox(
+        self,
+        offset,
+        text,
+        bordercolor,
+        textcolor,
+        highlight_color=None,
+        width=None,
+        rounded=False,
+        block=False,
+        line=False,
+        highlighted=False,
+    ):
         self.layout.text = text
         self.layout.font_family = self.font
         self.layout.font_size = self.fontsize
@@ -97,7 +102,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         if line:
             pad_y = [
                 (self.bar.height - self.layout.height - self.borderwidth) / 2,
-                (self.bar.height - self.layout.height + self.borderwidth) / 2
+                (self.bar.height - self.layout.height + self.borderwidth) / 2,
             ]
         else:
             pad_y = self.padding_y
@@ -112,17 +117,11 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
             border_width = self.borderwidth
             framecolor = bordercolor
 
-        framed = self.layout.framed(
-            border_width,
-            framecolor,
-            0,
-            pad_y,
-            highlight_color
-        )
+        framed = self.layout.framed(border_width, framecolor, 0, pad_y, highlight_color)
         y = self.margin_y
         if self.center_aligned:
             for t in base.MarginMixin.defaults:
-                if t[0] == 'margin':
+                if t[0] == "margin":
                     y += (self.bar.height - framed.height) / 2 - t[1]
                     break
         if block and bordercolor is not None:
@@ -135,6 +134,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
 
 class AGroupBox(_GroupBase):
     """A widget that graphically displays the current group"""
+
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [("border", "000000", "group box border color")]
 
@@ -144,17 +144,14 @@ class AGroupBox(_GroupBase):
 
     def _configure(self, qtile, bar):
         _GroupBase._configure(self, qtile, bar)
-        self.add_callbacks({'Button1': partial(self.bar.screen.cmd_next_group, warp=False)})
+        self.add_callbacks({"Button1": partial(self.bar.screen.cmd_next_group, warp=False)})
 
     def calculate_length(self):
         return self.box_width(self.qtile.groups) + self.margin_x * 2
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
-        e = next(
-            i for i in self.qtile.groups
-            if i.name == self.bar.screen.group.name
-        )
+        e = next(i for i in self.qtile.groups if i.name == self.bar.screen.group.name)
         self.drawbox(self.margin_x, e.name, self.border, self.foreground)
         self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
 
@@ -165,6 +162,7 @@ class GroupBox(_GroupBase):
     All groups are displayed by their label.
     If the label of a group is the empty string that group will not be displayed.
     """
+
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("block_highlight_text_color", None, "Selected group font colour"),
@@ -174,47 +172,43 @@ class GroupBox(_GroupBase):
             "highlight_method",
             "border",
             "Method of highlighting ('border', 'block', 'text', or 'line')"
-            "Uses `*_border` color settings"
+            "Uses `*_border` color settings",
         ),
         ("rounded", True, "To round or not to round box borders"),
         (
             "this_current_screen_border",
             "215578",
-            "Border or line colour for group on this screen when focused."
+            "Border or line colour for group on this screen when focused.",
         ),
         (
             "this_screen_border",
             "215578",
-            "Border or line colour for group on this screen when unfocused."
+            "Border or line colour for group on this screen when unfocused.",
         ),
         (
             "other_current_screen_border",
             "404040",
-            "Border or line colour for group on other screen when focused."
+            "Border or line colour for group on other screen when focused.",
         ),
         (
             "other_screen_border",
             "404040",
-            "Border or line colour for group on other screen when unfocused."
+            "Border or line colour for group on other screen when unfocused.",
         ),
         (
             "highlight_color",
             ["000000", "282828"],
-            "Active group highlight color when using 'line' highlight method."
+            "Active group highlight color when using 'line' highlight method.",
         ),
         (
             "urgent_alert_method",
             "border",
             "Method for alerting you of WM urgent "
-            "hints (one of 'border', 'text', 'block', or 'line')"
+            "hints (one of 'border', 'text', 'block', or 'line')",
         ),
         ("urgent_text", "FF0000", "Urgent group font color"),
         ("urgent_border", "FF0000", "Urgent border or line color"),
-        (
-            "disable_drag",
-            False,
-            "Disable dragging and dropping of group names on widget"
-        ),
+        ("disable_drag", False, "Disable dragging and dropping of group names on widget"),
         ("invert_mouse_wheel", False, "Whether to invert mouse wheel group movement"),
         ("use_mouse_wheel", True, "Whether to use mouse wheel events"),
         (
@@ -222,18 +216,14 @@ class GroupBox(_GroupBase):
             None,
             "Groups that will be visible. "
             "If set to None or [], all groups will be visible."
-            "Visible groups are identified by name not by their displayed label."
+            "Visible groups are identified by name not by their displayed label.",
         ),
         (
             "hide_unused",
             False,
-            "Hide groups that have no windows and that are not displayed on any screen."
+            "Hide groups that have no windows and that are not displayed on any screen.",
         ),
-        (
-            "spacing",
-            None,
-            "Spacing between groups"
-            "(if set to None, will be equal to margin_x)")
+        ("spacing", None, "Spacing between groups" "(if set to None, will be equal to margin_x)"),
     ]
 
     def __init__(self, **config):
@@ -244,12 +234,14 @@ class GroupBox(_GroupBase):
         self.clicked = None
         self.click = None
 
-        default_callbacks = {'Button1': self.select_group}
+        default_callbacks = {"Button1": self.select_group}
         if self.use_mouse_wheel:
-            default_callbacks.update({
-                'Button5' if self.invert_mouse_wheel else 'Button4': self.prev_group,
-                'Button4' if self.invert_mouse_wheel else 'Button5': self.next_group,
-            })
+            default_callbacks.update(
+                {
+                    "Button5" if self.invert_mouse_wheel else "Button4": self.prev_group,
+                    "Button4" if self.invert_mouse_wheel else "Button5": self.next_group,
+                }
+            )
         self.add_callbacks(default_callbacks)
 
     @property
@@ -262,16 +254,16 @@ class GroupBox(_GroupBase):
         """
         if self.hide_unused:
             if self.visible_groups:
-                return [g for g in self.qtile.groups
-                        if g.label and (g.windows or g.screen) and
-                        g.name in self.visible_groups]
+                return [
+                    g
+                    for g in self.qtile.groups
+                    if g.label and (g.windows or g.screen) and g.name in self.visible_groups
+                ]
             else:
-                return [g for g in self.qtile.groups if g.label and
-                        (g.windows or g.screen)]
+                return [g for g in self.qtile.groups if g.label and (g.windows or g.screen)]
         else:
             if self.visible_groups:
-                return [g for g in self.qtile.groups
-                        if g.label and g.name in self.visible_groups]
+                return [g for g in self.qtile.groups if g.label and g.name in self.visible_groups]
             else:
                 return [g for g in self.qtile.groups if g.label]
 
@@ -348,8 +340,8 @@ class GroupBox(_GroupBase):
         offset = self.margin_x
         for i, g in enumerate(self.groups):
             to_highlight = False
-            is_block = (self.highlight_method == 'block')
-            is_line = (self.highlight_method == 'line')
+            is_block = self.highlight_method == "block"
+            is_line = self.highlight_method == "line"
 
             bw = self.box_width([g])
 
@@ -361,7 +353,7 @@ class GroupBox(_GroupBase):
                 text_color = self.inactive
 
             if g.screen:
-                if self.highlight_method == 'text':
+                if self.highlight_method == "text":
                     border = None
                     text_color = self.this_current_screen_border
                 else:
@@ -378,12 +370,15 @@ class GroupBox(_GroupBase):
                             border = self.other_current_screen_border
                         else:
                             border = self.other_screen_border
-            elif self.group_has_urgent(g) and \
-                    self.urgent_alert_method in ('border', 'block', 'line'):
+            elif self.group_has_urgent(g) and self.urgent_alert_method in (
+                "border",
+                "block",
+                "line",
+            ):
                 border = self.urgent_border
-                if self.urgent_alert_method == 'block':
+                if self.urgent_alert_method == "block":
                     is_block = True
-                elif self.urgent_alert_method == 'line':
+                elif self.urgent_alert_method == "line":
                     is_line = True
             else:
                 border = None
@@ -398,7 +393,7 @@ class GroupBox(_GroupBase):
                 rounded=self.rounded,
                 block=is_block,
                 line=is_line,
-                highlighted=to_highlight
+                highlighted=to_highlight,
             )
             offset += bw + self.spacing
         self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)

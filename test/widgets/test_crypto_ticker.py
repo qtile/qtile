@@ -23,13 +23,7 @@
 
 from libqtile import widget
 
-RESPONSE = {
-    "data": {
-        "base": "BTC",
-        "currency": "GBP",
-        "amount": "29625.02"
-    }
-}
+RESPONSE = {"data": {"base": "BTC", "currency": "GBP", "amount": "29625.02"}}
 
 
 def test_set_defaults():

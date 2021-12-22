@@ -48,8 +48,7 @@ from test.widgets.conftest import FakeBar
 # Widgets listed here will replace the default values.
 # This should be used as a last resort - any failure may indicate an
 # underlying issue in the widget that should be resolved.
-overrides = [
-]
+overrides = []
 
 # Some widgets are not included in __init__.py
 # They can be included in the tests by adding their details here
@@ -58,10 +57,7 @@ extras = [
 ]
 
 # To skip a test entirely, list the widget class here
-no_test = [
-    widgets.Mirror,  # Mirror requires a reflection object
-    widgets.PulseVolume
-]
+no_test = [widgets.Mirror, widgets.PulseVolume]  # Mirror requires a reflection object
 
 # To test a widget only under one backend, list the widget class here
 exclusive_backend = {
@@ -73,9 +69,7 @@ exclusive_backend = {
 ################################################################################
 
 # Build default list of all widgets and assign simple keyword argument
-parameters = [
-    (getattr(widgets, w), {"dummy_parameter": 1}) for w in widgets.__all__
-]
+parameters = [(getattr(widgets, w), {"dummy_parameter": 1}) for w in widgets.__all__]
 
 # Replace items in default list with overrides
 for ovr in overrides:
@@ -108,11 +102,7 @@ def test_widget_init_config(manager_nospawn, minimal_conf_noscreen, widget_class
 
     # Test configuration
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar([widget], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([widget], 10))]
 
     manager_nospawn.start(config)
 

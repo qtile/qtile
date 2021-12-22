@@ -35,28 +35,17 @@ class MockMPD(ModuleType):
 
     class MPDClient:
         tracks = [
-            {
-                "title": "Never gonna give you up",
-                "artist": "Rick Astley"
-            },
-            {
-                "title": "Sweet Caroline",
-                "artist": "Neil Diamond"
-            },
-            {
-                "title": "Marea",
-                "artist": "Fred Again.."
-            },
-            {}
+            {"title": "Never gonna give you up", "artist": "Rick Astley"},
+            {"title": "Sweet Caroline", "artist": "Neil Diamond"},
+            {"title": "Marea", "artist": "Fred Again.."},
+            {},
         ]
 
         def __init__(self):
             self._index = 0
             self._connected = False
             self._state_override = True
-            self._status = {
-                "state": "pause"
-            }
+            self._status = {"state": "pause"}
 
         @property
         def _current_song(self):
@@ -106,13 +95,7 @@ class MockMPD(ModuleType):
 
         def add_states(self):
             self._status.update(
-                {
-                    'repeat': "1",
-                    'random': "1",
-                    'single': "1",
-                    'consume': "1",
-                    'updating_db': "1"
-                }
+                {"repeat": "1", "random": "1", "single": "1", "consume": "1", "updating_db": "1"}
             )
 
         def force_idle(self):
@@ -128,11 +111,11 @@ def mpd2_manager(manager_nospawn, monkeypatch, minimal_conf_noscreen):
     config = minimal_conf_noscreen
     config.screens = [
         libqtile.config.Screen(
-                top=libqtile.bar.Bar(
-                    [widget.Mpd2()],
-                    50,
-                ),
-            )
+            top=libqtile.bar.Bar(
+                [widget.Mpd2()],
+                50,
+            ),
+        )
     ]
 
     manager_nospawn.start(config)

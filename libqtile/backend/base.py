@@ -123,10 +123,7 @@ class Core(CommandObject, metaclass=ABCMeta):
 
     def cmd_info(self) -> Dict:
         """Get basic information about the running backend."""
-        return {
-            "backend": self.name,
-            "display_name": self.display_name
-        }
+        return {"backend": self.name, "display_name": self.display_name}
 
 
 @enum.unique
@@ -196,8 +193,18 @@ class _Window(CommandObject, metaclass=ABCMeta):
         return False
 
     @abstractmethod
-    def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, margin=None, respect_hints=False):
+    def place(
+        self,
+        x,
+        y,
+        width,
+        height,
+        borderwidth,
+        bordercolor,
+        above=False,
+        margin=None,
+        respect_hints=False,
+    ):
         """Place the window in the given position."""
 
     def _items(self, name: str) -> ItemT:
@@ -224,6 +231,7 @@ class Window(_Window, metaclass=ABCMeta):
     implementation. Non-abstract methods have default implementations here to be shared
     across backends.
     """
+
     qtile: Qtile
 
     # If float_x or float_y are None, the window has never floated
@@ -277,9 +285,7 @@ class Window(_Window, metaclass=ABCMeta):
         """Focus this window and optional warp the pointer to it."""
 
     @abstractmethod
-    def togroup(
-        self, group_name: Optional[str] = None, *, switch_group: bool = False
-    ) -> None:
+    def togroup(self, group_name: Optional[str] = None, *, switch_group: bool = False) -> None:
         """Move window to a specified group
 
         Also switch to that group if switch_group is True.
@@ -343,8 +349,9 @@ class Window(_Window, metaclass=ABCMeta):
         """Set window dimensions to w and h"""
 
     @abstractmethod
-    def cmd_place(self, x, y, width, height, borderwidth, bordercolor,
-                  above=False, margin=None) -> None:
+    def cmd_place(
+        self, x, y, width, height, borderwidth, bordercolor, above=False, margin=None
+    ) -> None:
         """Place the window with the given position and geometry."""
 
     @abstractmethod
@@ -387,7 +394,7 @@ class Window(_Window, metaclass=ABCMeta):
         self,
         group_name: Optional[str] = None,
         groupName: Optional[str] = None,  # Deprecated  # noqa: N803
-        switch_group: bool = False
+        switch_group: bool = False,
     ) -> None:
         """Move window to a specified group
 
@@ -397,9 +404,7 @@ class Window(_Window, metaclass=ABCMeta):
         instead.
         """
         if groupName is not None:
-            logger.warning(
-                "Window.cmd_togroup's groupName is deprecated; use group_name"
-            )
+            logger.warning("Window.cmd_togroup's groupName is deprecated; use group_name")
             group_name = groupName
         self.togroup(group_name, switch_group=switch_group)
 
@@ -425,7 +430,7 @@ class Window(_Window, metaclass=ABCMeta):
             try:
                 screen = self.qtile.screens[index]
             except IndexError:
-                raise CommandError('No such screen: %d' % index)
+                raise CommandError("No such screen: %d" % index)
         self.togroup(screen.group.name)
 
     def cmd_opacity(self, opacity: float) -> None:
@@ -433,8 +438,8 @@ class Window(_Window, metaclass=ABCMeta):
 
         The value must be between 0 and 1 inclusive.
         """
-        if opacity < .1:
-            self.opacity = .1
+        if opacity < 0.1:
+            self.opacity = 0.1
         elif opacity > 1:
             self.opacity = 1
         else:
@@ -442,16 +447,16 @@ class Window(_Window, metaclass=ABCMeta):
 
     def cmd_down_opacity(self) -> None:
         """Decrease the window's opacity by 10%."""
-        if self.opacity > .2:
+        if self.opacity > 0.2:
             # don't go completely clear
-            self.opacity -= .1
+            self.opacity -= 0.1
         else:
-            self.opacity = .1
+            self.opacity = 0.1
 
     def cmd_up_opacity(self) -> None:
         """Increase the window's opacity by 10%."""
-        if self.opacity < .9:
-            self.opacity += .1
+        if self.opacity < 0.9:
+            self.opacity += 0.1
         else:
             self.opacity = 1
 
@@ -477,6 +482,7 @@ class Window(_Window, metaclass=ABCMeta):
 
 class Internal(_Window, metaclass=ABCMeta):
     """An Internal window belonging to Qtile."""
+
     def __repr__(self):
         return "Internal(wid=%s)" % self.wid
 
@@ -508,6 +514,7 @@ class Internal(_Window, metaclass=ABCMeta):
 
 class Static(_Window, metaclass=ABCMeta):
     """A window bound to a screen rather than a group."""
+
     screen: config.Screen
     x: Any
     y: Any
@@ -538,6 +545,7 @@ class Drawer:
     We stage drawing operations locally in memory using a cairo RecordingSurface before
     finally drawing all operations to a backend-specific target.
     """
+
     # We need to track extent of drawing to know when to redraw.
     previous_rect: Tuple[int, int, Optional[int], Optional[int]]
     current_rect: Tuple[int, int, Optional[int], Optional[int]]
@@ -639,14 +647,10 @@ class Drawer:
         self.ctx.new_sub_path()
 
         delta = radius + linewidth / 2
-        self.ctx.arc(x + width - delta, y + delta, radius,
-                     -90 * degrees, 0 * degrees)
-        self.ctx.arc(x + width - delta, y + height - delta,
-                     radius, 0 * degrees, 90 * degrees)
-        self.ctx.arc(x + delta, y + height - delta, radius,
-                     90 * degrees, 180 * degrees)
-        self.ctx.arc(x + delta, y + delta, radius,
-                     180 * degrees, 270 * degrees)
+        self.ctx.arc(x + width - delta, y + delta, radius, -90 * degrees, 0 * degrees)
+        self.ctx.arc(x + width - delta, y + height - delta, radius, 0 * degrees, 90 * degrees)
+        self.ctx.arc(x + delta, y + height - delta, radius, 90 * degrees, 180 * degrees)
+        self.ctx.arc(x + delta, y + delta, radius, 180 * degrees, 270 * degrees)
         self.ctx.close_path()
 
     def rounded_rectangle(self, x: int, y: int, width: int, height: int, linewidth: int):
@@ -763,9 +767,7 @@ class Drawer:
         self.ctx.rectangle(0, 0, self.width, self.height)
         self.ctx.fill()
 
-    def textlayout(
-        self, text, colour, font_family, font_size, font_shadow, markup=False, **kw
-    ):
+    def textlayout(self, text, colour, font_family, font_size, font_shadow, markup=False, **kw):
         """Get a text layout"""
         textlayout = drawer.TextLayout(
             self, text, colour, font_family, font_size, font_shadow, markup=markup, **kw
@@ -791,8 +793,7 @@ class Drawer:
         """Try to find a maximum font size that fits any strings within the height"""
         self.ctx.set_font_size(heightlimit)
         asc, desc, height, _, _ = self.font_extents()
-        self.ctx.set_font_size(
-            int(heightlimit * heightlimit / height))
+        self.ctx.set_font_size(int(heightlimit * heightlimit / height))
         return self.font_extents()
 
     def fit_text(self, strings, heightlimit):
@@ -801,8 +802,7 @@ class Drawer:
         _, _, _, maxheight, _, _ = self.ctx.text_extents("".join(strings))
         if not maxheight:
             return 0, 0
-        self.ctx.set_font_size(
-            int(heightlimit * heightlimit / maxheight))
+        self.ctx.set_font_size(int(heightlimit * heightlimit / maxheight))
         maxwidth, maxheight = 0, 0
         for i in strings:
             _, _, x, y, _, _ = self.ctx.text_extents(i)

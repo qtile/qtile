@@ -100,9 +100,7 @@ class Keyboard(HasListeners):
         if event.state == KEY_PRESSED:
             # translate libinput keycode -> xkbcommon
             keycode = event.keycode + 8
-            layout_index = lib.xkb_state_key_get_layout(
-                self.keyboard._ptr.xkb_state, keycode
-            )
+            layout_index = lib.xkb_state_key_get_layout(self.keyboard._ptr.xkb_state, keycode)
             nsyms = lib.xkb_keymap_key_get_syms_by_level(
                 self.keyboard._ptr.keymap,
                 keycode,

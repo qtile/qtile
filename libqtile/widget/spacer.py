@@ -42,14 +42,12 @@ class Spacer(base._Widget):
     width :
         DEPRECATED, same as ``length``.
     """
+
     orientations = base.ORIENTATION_BOTH
-    defaults = [
-        ("background", None, "Widget background color")
-    ]
+    defaults = [("background", None, "Widget background color")]
 
     def __init__(self, length=bar.STRETCH, **config):
-        """
-        """
+        """ """
         base._Widget.__init__(self, length, **config)
         self.add_defaults(Spacer.defaults)
 

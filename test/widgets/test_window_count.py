@@ -20,19 +20,25 @@ class DifferentScreens(Config):
                 [
                     WindowCount(),
                 ],
-                20
+                20,
             ),
-            x=0, y=0, width=300, height=300
+            x=0,
+            y=0,
+            width=300,
+            height=300,
         ),
         libqtile.config.Screen(
             top=libqtile.bar.Bar(
                 [
                     WindowCount(),
                 ],
-                20
+                20,
             ),
-            x=0, y=300, width=300, height=300
-        )
+            x=0,
+            y=300,
+            width=300,
+            height=300,
+        ),
     ]
     auto_fullscreen = True
 
@@ -57,11 +63,7 @@ def test_different_screens(manager):
 
 def test_window_count(manager_nospawn, minimal_conf_noscreen):
     config = minimal_conf_noscreen
-    config.screens = [
-            libqtile.config.Screen(
-                top=libqtile.bar.Bar([WindowCount()], 10)
-            )
-        ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([WindowCount()], 10))]
 
     manager_nospawn.start(config)
 

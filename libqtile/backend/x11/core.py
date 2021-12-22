@@ -24,16 +24,7 @@ import contextlib
 import os
 import signal
 import time
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import TYPE_CHECKING, Callable, Dict, Iterator, List, Optional, Tuple, Union
 
 import xcffib
 import xcffib.render
@@ -94,13 +85,16 @@ class Core(base.Core):
         # screen's root is _the_ root.
         self._root = self.conn.default_screen.root
 
-        supporting_wm_wid = self._root.get_property("_NET_SUPPORTING_WM_CHECK",
-                                                    "WINDOW", unpack=int)
+        supporting_wm_wid = self._root.get_property(
+            "_NET_SUPPORTING_WM_CHECK", "WINDOW", unpack=int
+        )
         if len(supporting_wm_wid) > 0:
             supporting_wm_wid = supporting_wm_wid[0]
 
             supporting_wm = window.XWindow(self.conn, supporting_wm_wid)
-            existing_wmname = supporting_wm.get_property("_NET_WM_NAME", "UTF8_STRING", unpack=str)
+            existing_wmname = supporting_wm.get_property(
+                "_NET_WM_NAME", "UTF8_STRING", unpack=str
+            )
             if existing_wmname:
                 logger.error("not starting; existing window manager {}".format(existing_wmname))
                 raise ExistingWMException(existing_wmname)
@@ -125,18 +119,14 @@ class Core(base.Core):
         self._supporting_wm_check_window.set_property(
             "_NET_SUPPORTING_WM_CHECK", self._supporting_wm_check_window.wid
         )
-        self._root.set_property(
-            "_NET_SUPPORTING_WM_CHECK", self._supporting_wm_check_window.wid
-        )
+        self._root.set_property("_NET_SUPPORTING_WM_CHECK", self._supporting_wm_check_window.wid)
 
         self._selection = {
             "PRIMARY": {"owner": None, "selection": ""},
             "CLIPBOARD": {"owner": None, "selection": ""},
         }
         self._selection_window = self.conn.create_window(-1, -1, 1, 1)
-        self._selection_window.set_attribute(
-            eventmask=EventMask.PropertyChange
-        )
+        self._selection_window.set_attribute(eventmask=EventMask.PropertyChange)
         if hasattr(self.conn, "xfixes"):
             self.conn.xfixes.select_selection_input(self._selection_window, "PRIMARY")  # type: ignore
             self.conn.xfixes.select_selection_input(self._selection_window, "CLIPBOARD")  # type: ignore
@@ -179,11 +169,14 @@ class Core(base.Core):
         info = [(s.x, s.y, s.width, s.height) for s in self.conn.pseudoscreens]
 
         if not info:
-            info.append((
-                0, 0,
-                self.conn.default_screen.width_in_pixels,
-                self.conn.default_screen.height_in_pixels,
-            ))
+            info.append(
+                (
+                    0,
+                    0,
+                    self.conn.default_screen.width_in_pixels,
+                    self.conn.default_screen.height_in_pixels,
+                )
+            )
 
         if self.qtile:
             self._xpoll()
@@ -199,9 +192,7 @@ class Core(base.Core):
         self._wmname = wmname
         self._supporting_wm_check_window.set_property("_NET_WM_NAME", wmname)
 
-    def setup_listener(
-        self, qtile: "Qtile"
-    ) -> None:
+    def setup_listener(self, qtile: "Qtile") -> None:
         """Setup a listener for the given qtile instance
 
         :param qtile:
@@ -243,7 +234,11 @@ class Core(base.Core):
             except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
                 continue
 
-            if attrs and attrs.map_state == xcffib.xproto.MapState.Unmapped or attrs.override_redirect:
+            if (
+                attrs
+                and attrs.map_state == xcffib.xproto.MapState.Unmapped
+                or attrs.override_redirect
+            ):
                 continue
             if state and state[0] == window.WithdrawnState:
                 item.unmap()
@@ -389,9 +384,7 @@ class Core(base.Core):
         conn = None
         try:
             conn = xcbq.Connection(self._display_name)
-            conn.default_screen.root.set_attribute(
-                eventmask=EventMask.PropertyChange
-            )
+            conn.default_screen.root.set_attribute(eventmask=EventMask.PropertyChange)
             conn.conn.core.ChangePropertyChecked(
                 xcffib.xproto.PropMode.Append,
                 self._root.wid,
@@ -422,9 +415,7 @@ class Core(base.Core):
         chrome
         """
         # Regular top-level managed windows, i.e. excluding Static, Internal and Systray Icons
-        wids = [
-            wid for wid, c in windows_map.items() if isinstance(c, window.Window)
-        ]
+        wids = [wid for wid, c in windows_map.items() if isinstance(c, window.Window)]
         self._root.set_property("_NET_CLIENT_LIST", wids)
         # TODO: check stack order
         self._root.set_property("_NET_CLIENT_LIST_STACKING", wids)
@@ -482,7 +473,9 @@ class Core(base.Core):
 
     def ungrab_keys(self) -> None:
         """Ungrab all of the key events"""
-        self.conn.conn.core.UngrabKey(xcffib.xproto.Atom.Any, self._root.wid, xcffib.xproto.ModMask.Any)
+        self.conn.conn.core.UngrabKey(
+            xcffib.xproto.Atom.Any, self._root.wid, xcffib.xproto.ModMask.Any
+        )
 
     def grab_pointer(self) -> None:
         """Get the focus for pointer events"""
@@ -526,7 +519,9 @@ class Core(base.Core):
 
     def ungrab_buttons(self) -> None:
         """Un-grab all mouse events"""
-        self.conn.conn.core.UngrabButton(xcffib.xproto.Atom.Any, self._root.wid, xcffib.xproto.ModMask.Any)
+        self.conn.conn.core.UngrabButton(
+            xcffib.xproto.Atom.Any, self._root.wid, xcffib.xproto.ModMask.Any
+        )
 
     def _auto_modmasks(self) -> Iterator[int]:
         """The modifier masks to add"""
@@ -544,8 +539,9 @@ class Core(base.Core):
         for i in self.qtile.windows_map.values():
             i._reset_mask()
 
-    def create_internal(self, x: int, y: int, width: int, height: int,
-                        desired_depth: Optional[int] = 32) -> base.Internal:
+    def create_internal(
+        self, x: int, y: int, width: int, height: int, desired_depth: Optional[int] = 32
+    ) -> base.Internal:
         assert self.qtile is not None
 
         win = self.conn.create_window(x, y, width, height, desired_depth)
@@ -615,9 +611,7 @@ class Core(base.Core):
         if not event.child:  # The client's handle_ButtonPress will focus it
             self.focus_by_click(event)
 
-        self.qtile.process_button_click(
-            button_code, state, event.event_x, event.event_y
-        )
+        self.qtile.process_button_click(button_code, state, event.event_x, event.event_y)
         self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, event.time)
 
     def handle_ButtonRelease(self, event) -> None:  # noqa: N802
@@ -731,9 +725,7 @@ class Core(base.Core):
 
     @contextlib.contextmanager
     def disable_unmap_events(self):
-        self._root.set_attribute(
-            eventmask=self.eventmask & (~EventMask.SubstructureNotify)
-        )
+        self._root.set_attribute(eventmask=self.eventmask & (~EventMask.SubstructureNotify))
         yield
         self._root.set_attribute(eventmask=self.eventmask)
 
@@ -770,7 +762,8 @@ class Core(base.Core):
 
         if window:
             if qtile.config.bring_front_click and (
-                qtile.config.bring_front_click != "floating_only" or getattr(window, "floating", False)
+                qtile.config.bring_front_click != "floating_only"
+                or getattr(window, "floating", False)
             ):
                 self.conn.conn.core.ConfigureWindow(
                     window.wid, xcffib.xproto.ConfigWindow.StackMode, [StackMode.Above]
@@ -809,6 +802,7 @@ class Core(base.Core):
             except Exception:
                 logger.exception("Got an exception in getting the window pid")
                 return None
+
         pids = map(get_interesting_pid, self.qtile.windows_map.values())
         pids = list(filter(lambda x: x is not None, pids))
 

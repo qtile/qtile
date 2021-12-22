@@ -64,8 +64,7 @@ class _Extension(configurable.Configurable):
 
             if not isinstance(col, str) or not RGB.match(col):
                 logger.warning(
-                    f"Invalid extension '{c}' color: {col}. "
-                    f"Must be #RGB or #RRGGBB string."
+                    f"Invalid extension '{c}' color: {col}. " f"Must be #RGB or #RRGGBB string."
                 )
                 setattr(self, c, None)
                 continue
@@ -95,6 +94,7 @@ class RunCommand(_Extension):
     Also consider simply using lazy.spawn() or writing a
     `client <http://docs.qtile.org/en/latest/manual/commands/scripting.html>`_.
     """
+
     defaults = [
         # NOTE: Do not use a list as a default value, since it would be shared
         #       among all the objects inheriting this class, and if one of them

@@ -28,16 +28,13 @@ from libqtile.widget import base
 
 class Sep(base._Widget):
     """A visible widget separator"""
+
     orientations = base.ORIENTATION_BOTH
     defaults = [
         ("padding", 2, "Padding on either side of separator."),
         ("linewidth", 1, "Width of separator line."),
         ("foreground", "888888", "Separator line colour."),
-        (
-            "size_percent",
-            80,
-            "Size as a percentage of bar size (0-100)."
-        ),
+        ("size_percent", 80, "Size as a percentage of bar size (0-100)."),
     ]
 
     def __init__(self, **config):
@@ -55,7 +52,7 @@ class Sep(base._Widget):
                 float(self.length) / 2,
                 margin_top,
                 self.bar.height - margin_top,
-                linewidth=self.linewidth
+                linewidth=self.linewidth,
             )
             self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
         else:
@@ -65,6 +62,6 @@ class Sep(base._Widget):
                 margin_left,
                 self.bar.width - margin_left,
                 float(self.length) / 2,
-                linewidth=self.linewidth
+                linewidth=self.linewidth,
             )
             self.drawer.draw(offsety=self.offset, offsetx=self.offsetx, height=self.length)

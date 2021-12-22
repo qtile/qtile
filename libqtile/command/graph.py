@@ -213,5 +213,5 @@ _COMMAND_GRAPH_MAP: Dict[str, Type[CommandGraphObject]] = {
     "widget": _WidgetGraphNode,
     "window": _WindowGraphNode,
     "screen": _ScreenGraphNode,
-    "core": _CoreGraphNode
+    "core": _CoreGraphNode,
 }

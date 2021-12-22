@@ -55,41 +55,38 @@ class FakePsutil(ModuleType):
 
 
 @pytest.fixture()
-def patched_memory(monkeypatch, ):
+def patched_memory(
+    monkeypatch,
+):
     monkeypatch.setitem(sys.modules, "psutil", FakePsutil("psutil"))
     from libqtile.widget import memory
+
     reload(memory)
     return memory
 
 
 def test_memory_defaults(manager_nospawn, minimal_conf_noscreen, patched_memory):
-    ''' Test no text when free space over threshold '''
+    """Test no text when free space over threshold"""
     widget = patched_memory.Memory()
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar([widget], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([widget], 10))]
     manager_nospawn.start(config)
     assert manager_nospawn.c.widget["memory"].info()["text"] == " 2417M/ 7802M"
 
 
-@pytest.mark.parametrize("unit,expects", [
-    ("G", " 2G/ 8G"),
-    ("M", " 2417M/ 7802M"),
-    ("K", " 2474864K/ 7988952K"),
-    ("B", " 2534260736B/ 8180686848B")
-    ]
+@pytest.mark.parametrize(
+    "unit,expects",
+    [
+        ("G", " 2G/ 8G"),
+        ("M", " 2417M/ 7802M"),
+        ("K", " 2474864K/ 7988952K"),
+        ("B", " 2534260736B/ 8180686848B"),
+    ],
 )
 def test_memory_units(manager_nospawn, minimal_conf_noscreen, patched_memory, unit, expects):
-    ''' Test no text when free space over threshold '''
+    """Test no text when free space over threshold"""
     widget = patched_memory.Memory(measure_mem=unit)
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar([widget], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([widget], 10))]
     manager_nospawn.start(config)
     assert manager_nospawn.c.widget["memory"].info()["text"] == expects
