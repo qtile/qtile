@@ -64,11 +64,14 @@ class MockMessage:
 def patched_widget(monkeypatch):
     monkeypatch.setitem(sys.modules, "dbus_next.constants", Mockconstants("dbus_next.constants"))
     from libqtile.widget import keyboardkbdd
+
     reload(keyboardkbdd)
 
     # The next line shouldn't be necessary but I got occasional failures without it when testing locally
     monkeypatch.setattr("libqtile.widget.keyboardkbdd.MessageType", Mockconstants.MessageType)
-    monkeypatch.setattr("libqtile.widget.keyboardkbdd.KeyboardKbdd.call_process", MockSpawn.call_process)
+    monkeypatch.setattr(
+        "libqtile.widget.keyboardkbdd.KeyboardKbdd.call_process", MockSpawn.call_process
+    )
     monkeypatch.setattr("libqtile.widget.keyboardkbdd.add_signal_receiver", mock_signal_receiver)
     return keyboardkbdd
 
@@ -111,8 +114,7 @@ def test_keyboardkbdd_process_not_running(fake_qtile, patched_widget, fake_windo
 def test_keyboard_kbdd_colours(fake_qtile, patched_widget, fake_window):
     MockSpawn.call_count = 1
     kbd = patched_widget.KeyboardKbdd(
-        configured_keyboards=["gb", "us"],
-        colours=["#ff0000", "#00ff00"]
+        configured_keyboards=["gb", "us"], colours=["#ff0000", "#00ff00"]
     )
     fakebar = FakeBar([kbd], window=fake_window)
     kbd._configure(fake_qtile, fakebar)

@@ -16,10 +16,11 @@ pulseaudio_ffi.set_source(
     #include "pulse/context.h"
     #include "pulse/subscribe.h"
     """,
-    libraries=['pulse'],
+    libraries=["pulse"],
 )
 
-pulseaudio_ffi.cdef("""
+pulseaudio_ffi.cdef(
+    """
     /** mainloop-api.h */
     typedef struct pa_mainloop_api pa_mainloop_api;
 
@@ -413,7 +414,8 @@ pulseaudio_ffi.cdef("""
     extern "Python" void qtile_on_sink_update(
         pa_context *c, pa_subscription_event_type_t t, uint32_t idx, void *userdata);
 
-""")
+"""
+)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pulseaudio_ffi.compile()

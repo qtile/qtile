@@ -46,6 +46,7 @@ class Memory(base.ThreadPoolText):
 
     .. _psutil: https://pypi.org/project/psutil/
     """
+
     defaults = [
         ("format", "{MemUsed: .0f}{mm}/{MemTotal: .0f}{mm}", "Formatting for field names."),
         ("update_interval", 1.0, "Update interval for the Memory"),
@@ -53,10 +54,7 @@ class Memory(base.ThreadPoolText):
         ("measure_swap", "M", "Measurement for Swap (G, M, K, B)"),
     ]
 
-    measures = {"G": 1024 * 1024 * 1024,
-                "M": 1024 * 1024,
-                "K": 1024,
-                "B": 1}
+    measures = {"G": 1024 * 1024 * 1024, "M": 1024 * 1024, "K": 1024, "B": 1}
 
     def __init__(self, **config):
         super().__init__("", **config)

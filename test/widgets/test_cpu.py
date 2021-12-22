@@ -50,17 +50,11 @@ class MockPsutil(ModuleType):
 def cpu_manager(monkeypatch, manager_nospawn, minimal_conf_noscreen):
     monkeypatch.setitem(sys.modules, "psutil", MockPsutil("psutil"))
     from libqtile.widget import cpu
+
     reload(cpu)
 
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=Bar(
-                [cpu.CPU()],
-                10
-            )
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=Bar([cpu.CPU()], 10))]
 
     manager_nospawn.start(config)
     yield manager_nospawn

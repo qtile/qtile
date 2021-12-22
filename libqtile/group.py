@@ -40,6 +40,7 @@ class _Group(CommandObject):
 
     A group is identified by its name but displayed in GroupBox widget by its label.
     """
+
     def __init__(self, name, layout=None, label=None):
         self.name = name
         self.label = name if label is None else label
@@ -112,11 +113,7 @@ class _Group(CommandObject):
         for index, obj in enumerate(self.layouts):
             if obj.name == layout:
                 self.current_layout = index
-                hook.fire(
-                    "layout_change",
-                    self.layouts[self.current_layout],
-                    self
-                )
+                hook.fire("layout_change", self.layouts[self.current_layout], self)
                 self.layout_all()
                 return
         logger.error("No such layout: {}".format(layout))
@@ -145,21 +142,16 @@ class _Group(CommandObject):
         if self.screen and self.windows:
             with self.qtile.core.masked():
                 normal = [x for x in self.windows if not x.floating]
-                floating = [
-                    x for x in self.windows
-                    if x.floating and not x.minimized
-                ]
+                floating = [x for x in self.windows if x.floating and not x.minimized]
                 screen_rect = self.screen.get_rect()
                 if normal:
                     try:
                         self.layout.layout(normal, screen_rect)
                     except Exception:
-                        logger.exception("Exception in layout %s",
-                                         self.layout.name)
+                        logger.exception("Exception in layout %s", self.layout.name)
                 if floating:
                     self.floating_layout.layout(floating, screen_rect)
-                if self.current_window and \
-                        self.screen == self.qtile.current_screen:
+                if self.current_window and self.screen == self.qtile.current_screen:
                     self.current_window.focus(warp)
 
     def set_screen(self, screen, warp=True):
@@ -230,7 +222,7 @@ class _Group(CommandObject):
             layout=self.layout.name,
             layouts=[i.name for i in self.layouts],
             floating_info=self.floating_layout.info(),
-            screen=self.screen.index if self.screen else None
+            screen=self.screen.index if self.screen else None,
         )
 
     def add(self, win, focus=True, force=False):
@@ -258,10 +250,12 @@ class _Group(CommandObject):
         if win.floating:
             nextfocus = self.floating_layout.remove(win)
 
-            nextfocus = nextfocus or \
-                self.current_window or \
-                self.layout.focus_first() or \
-                self.floating_layout.focus_first(group=self)
+            nextfocus = (
+                nextfocus
+                or self.current_window
+                or self.layout.focus_first()
+                or self.floating_layout.focus_first(group=self)
+            )
         else:
             for i in self.layouts:
                 if i is self.layout:
@@ -269,10 +263,12 @@ class _Group(CommandObject):
                 else:
                     i.remove(win)
 
-            nextfocus = nextfocus or \
-                self.floating_layout.focus_first(group=self) or \
-                self.current_window or \
-                self.layout.focus_first()
+            nextfocus = (
+                nextfocus
+                or self.floating_layout.focus_first(group=self)
+                or self.current_window
+                or self.layout.focus_first()
+            )
 
         # a notification may not have focus
         if hadfocus:
@@ -419,13 +415,17 @@ class _Group(CommandObject):
         if not self.windows:
             return
         if self.current_window.floating:
-            nxt = self.floating_layout.focus_next(self.current_window) or \
-                self.layout.focus_first() or \
-                self.floating_layout.focus_first(group=self)
+            nxt = (
+                self.floating_layout.focus_next(self.current_window)
+                or self.layout.focus_first()
+                or self.floating_layout.focus_first(group=self)
+            )
         else:
-            nxt = self.layout.focus_next(self.current_window) or \
-                self.floating_layout.focus_first(group=self) or \
-                self.layout.focus_first()
+            nxt = (
+                self.layout.focus_next(self.current_window)
+                or self.floating_layout.focus_first(group=self)
+                or self.layout.focus_first()
+            )
         self.focus(nxt, True)
 
     def cmd_prev_window(self):
@@ -439,13 +439,17 @@ class _Group(CommandObject):
         if not self.windows:
             return
         if self.current_window.floating:
-            nxt = self.floating_layout.focus_previous(self.current_window) or \
-                self.layout.focus_last() or \
-                self.floating_layout.focus_last(group=self)
+            nxt = (
+                self.floating_layout.focus_previous(self.current_window)
+                or self.layout.focus_last()
+                or self.floating_layout.focus_last(group=self)
+            )
         else:
-            nxt = self.layout.focus_previous(self.current_window) or \
-                self.floating_layout.focus_last(group=self) or \
-                self.layout.focus_last()
+            nxt = (
+                self.layout.focus_previous(self.current_window)
+                or self.floating_layout.focus_last(group=self)
+                or self.layout.focus_last()
+            )
         self.focus(nxt, True)
 
     def cmd_focus_back(self):

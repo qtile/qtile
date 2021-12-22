@@ -64,7 +64,7 @@ class CommandSet(Dmenu):
         out = super(CommandSet, self).run(items=self.commands.keys())
 
         try:
-            sout = out.rstrip('\n')
+            sout = out.rstrip("\n")
         except AttributeError:
             # out is not a string (for example it's a Popen object returned
             # by super(WindowList, self).run() when there are no menu items to

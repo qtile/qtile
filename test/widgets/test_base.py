@@ -22,7 +22,6 @@ from libqtile.widget.base import _Widget
 
 
 class TimerWidget(_Widget):
-
     def cmd_set_timer1(self):
         self.timer1 = self.timeout_add(10, self.cmd_set_timer1)
 
@@ -42,11 +41,7 @@ class TimerWidget(_Widget):
 
 def test_multiple_timers(minimal_conf_noscreen, manager_nospawn):
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar([TimerWidget(10)], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([TimerWidget(10)], 10))]
 
     # Start manager and check no active timers
     manager_nospawn.start(config)

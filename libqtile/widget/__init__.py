@@ -94,5 +94,4 @@ widgets = {
     "Wttr": "wttr",
 }
 
-__all__, __dir__, __getattr__ = lazify_imports(widgets, __package__,
-                                               fallback=make_error)
+__all__, __dir__, __getattr__ = lazify_imports(widgets, __package__, fallback=make_error)

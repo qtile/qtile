@@ -28,9 +28,7 @@ from test.helpers import BareConfig, TestManager
 
 
 def pytest_addoption(parser):
-    parser.addoption(
-        "--debuglog", action="store_true", default=False, help="enable debug output"
-    )
+    parser.addoption("--debuglog", action="store_true", default=False, help="enable debug output")
     parser.addoption(
         "--backend",
         action="append",
@@ -96,9 +94,11 @@ def wayland_session(request, outputs):
 def backend(request, backend_name, xephyr, wayland_session):
     if backend_name == "x11":
         from test.backend.x11.conftest import XBackend
+
         yield XBackend({"DISPLAY": xephyr.display}, args=[xephyr.display])
     elif backend_name == "wayland":
         from test.backend.wayland.conftest import WaylandBackend
+
         yield WaylandBackend(wayland_session)
 
 
@@ -121,9 +121,11 @@ def fake_window():
     """
     A fake window that can provide a fake drawer to test widgets.
     """
+
     class FakeWindow:
         class _NestedWindow:
             wid = 10
+
         window = _NestedWindow()
 
         def create_drawer(self, width, height):

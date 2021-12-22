@@ -32,6 +32,7 @@ class QtileState:
     useful when restarting for Qtile version updates rather than reloading the config.
     ScratchPad groups are saved for both reloading and restarting.
     """
+
     def __init__(self, qtile, restart=True):
         self.groups = []
         self.screens = {}

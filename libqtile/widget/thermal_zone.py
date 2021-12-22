@@ -12,16 +12,16 @@ class ThermalZone(base.ThreadPoolText):
 
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('update_interval', 2.0, 'Update interval'),
-        ('zone', '/sys/class/thermal/thermal_zone0/temp', 'Thermal zone'),
-        ('format', '{temp}°C', 'Display format'),
-        ('format_crit', '{temp}°C CRIT!', 'Critical display format'),
-        ('hidden', False, 'Set True to only show if critical value reached'),
-        ('fgcolor_crit', 'ff0000', 'Font color on critical values'),
-        ('fgcolor_high', 'ffaa00', 'Font color on high values'),
-        ('fgcolor_normal', 'ffffff', 'Font color on normal values'),
-        ('crit', 70, 'Critical temperature level'),
-        ('high', 50, 'High themperature level'),
+        ("update_interval", 2.0, "Update interval"),
+        ("zone", "/sys/class/thermal/thermal_zone0/temp", "Thermal zone"),
+        ("format", "{temp}°C", "Display format"),
+        ("format_crit", "{temp}°C CRIT!", "Critical display format"),
+        ("hidden", False, "Set True to only show if critical value reached"),
+        ("fgcolor_crit", "ff0000", "Font color on critical values"),
+        ("fgcolor_high", "ffaa00", "Font color on high values"),
+        ("fgcolor_normal", "ffffff", "Font color on normal values"),
+        ("crit", 70, "Critical temperature level"),
+        ("high", 50, "High themperature level"),
     ]
 
     def __init__(self, **config):
@@ -33,11 +33,11 @@ class ThermalZone(base.ThreadPoolText):
             with open(self.zone) as f:
                 value = round(int(f.read().rstrip()) / 1000)
         except OSError:
-            logger.exception('{} does not exist'.format(self.zone))
-            return 'err!'
+            logger.exception("{} does not exist".format(self.zone))
+            return "err!"
 
         variables = dict()
-        variables['temp'] = str(value)
+        variables["temp"] = str(value)
         output = self.format.format(**variables)
         if value < self.high:
             self.layout.colour = self.fgcolor_normal

@@ -45,43 +45,20 @@ class WidgetBox(base._Widget):
             ]
         ),
     """
+
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        (
-            "font",
-            "sans",
-            "Text font"
-        ),
-        (
-            "fontsize",
-            None,
-            "Font pixel size. Calculated if None."
-        ),
-        (
-            "fontshadow",
-            None,
-            "font shadow color, default is None(no shadow)"
-        ),
-        (
-            "foreground",
-            "#ffffff",
-            "Foreground colour."
-        ),
+        ("font", "sans", "Text font"),
+        ("fontsize", None, "Font pixel size. Calculated if None."),
+        ("fontshadow", None, "font shadow color, default is None(no shadow)"),
+        ("foreground", "#ffffff", "Foreground colour."),
         (
             "close_button_location",
             "left",
-            "Location of close button when box open ('left' or 'right')"
+            "Location of close button when box open ('left' or 'right')",
         ),
-        (
-            "text_closed",
-            "[<]",
-            "Text when box is closed"
-        ),
-        (
-            "text_open",
-            "[>]",
-            "Text when box is open"
-        ),
+        ("text_closed", "[<]", "Text when box is closed"),
+        ("text_open", "[>]", "Text when box is open"),
     ]
 
     def __init__(self, widgets: list = None, **config):
@@ -130,8 +107,7 @@ class WidgetBox(base._Widget):
         return self.layout.width
 
     def set_box_label(self):
-        self.layout.text = (self.text_open if self.box_is_open
-                            else self.text_closed)
+        self.layout.text = self.text_open if self.box_is_open else self.text_closed
 
     def toggle_widgets(self):
         for widget in self.widgets:
@@ -166,9 +142,7 @@ class WidgetBox(base._Widget):
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
 
-        self.layout.draw(0,
-                         int(self.bar.height / 2.0 -
-                             self.layout.height / 2.0) + 1)
+        self.layout.draw(0, int(self.bar.height / 2.0 - self.layout.height / 2.0) + 1)
 
         self.drawer.draw(offsetx=self.offsetx, offsety=self.offsety, width=self.width)
 

@@ -39,7 +39,7 @@ class StackConfig(Config):
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
         libqtile.config.Group("c"),
-        libqtile.config.Group("d")
+        libqtile.config.Group("d"),
     ]
     layouts = [
         layout.Stack(num_stacks=2),
@@ -102,7 +102,7 @@ def test_stack_addremove(manager):
     manager.c.layout.next()
     two = manager.test_window("two")
     three = manager.test_window("three")
-    assert _stacks(manager) == [['one'], ['three', 'two']]
+    assert _stacks(manager) == [["one"], ["three", "two"]]
     assert manager.c.layout.info()["current_stack"] == 1
     manager.kill_window(three)
     assert manager.c.layout.info()["current_stack"] == 1
@@ -242,9 +242,9 @@ def test_stack_window_focus_cycle(manager):
     manager.test_window("three")
 
     # test preconditions, stack adds clients at pos of current
-    assert manager.c.layout.info()['clients'] == ['three', 'one', 'two']
+    assert manager.c.layout.info()["clients"] == ["three", "one", "two"]
     # last added window has focus
     assert_focused(manager, "three")
 
     # assert window focus cycle, according to order in layout
-    assert_focus_path(manager, 'one', 'two', 'float1', 'float2', 'three')
+    assert_focus_path(manager, "one", "two", "float1", "float2", "three")

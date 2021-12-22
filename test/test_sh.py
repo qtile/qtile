@@ -40,9 +40,7 @@ class ShConfig(Config):
         Max(),
     ]
     floating_layout = resources.default_config.floating_layout
-    screens = [
-        config.Screen()
-    ]
+    screens = [config.Screen()]
 
 
 sh_config = pytest.mark.parametrize("manager", [ShConfig], indirect=True)
@@ -60,7 +58,7 @@ def test_columnize(manager):
 
     sh.termwidth = 15
     v = sh.columnize(["one", "two", "three", "four", "five"], update_termwidth=False)
-    assert v == 'one    two  \nthree  four \nfive '
+    assert v == "one    two  \nthree  four \nfive "
 
 
 @sh_config
@@ -74,7 +72,10 @@ def test_ls(manager):
 
     assert sh.do_cd("layout") == "layout"
     assert sh.do_ls(None) == "group/   window/  screen/"
-    assert sh.do_ls("screen") == "screen/layout/  screen/window/  screen/bar/     screen/widget/  screen/group/ "
+    assert (
+        sh.do_ls("screen")
+        == "screen/layout/  screen/window/  screen/bar/     screen/widget/  screen/group/ "
+    )
 
 
 @sh_config
@@ -82,12 +83,12 @@ def test_do_cd(manager):
     client = ipc.Client(manager.sockfile)
     command = IPCCommandInterface(client)
     sh = QSh(command)
-    assert sh.do_cd("layout") == 'layout'
-    assert sh.do_cd("../layout/0") == 'layout[0]'
-    assert sh.do_cd("..") == '/'
-    assert sh.do_cd("layout") == 'layout'
-    assert sh.do_cd("../layout0/wibble") == 'No such path.'
-    assert sh.do_cd(None) == '/'
+    assert sh.do_cd("layout") == "layout"
+    assert sh.do_cd("../layout/0") == "layout[0]"
+    assert sh.do_cd("..") == "/"
+    assert sh.do_cd("layout") == "layout"
+    assert sh.do_cd("../layout0/wibble") == "No such path."
+    assert sh.do_cd(None) == "/"
 
 
 @sh_config

@@ -34,11 +34,7 @@ if TYPE_CHECKING:
     from libqtile.config import Match
 
 from libqtile.command.client import InteractiveCommandClient
-from libqtile.command.graph import (
-    CommandGraphCall,
-    CommandGraphNode,
-    SelectorType,
-)
+from libqtile.command.graph import CommandGraphCall, CommandGraphNode, SelectorType
 from libqtile.command.interface import CommandInterface
 
 
@@ -78,11 +74,7 @@ class LazyCall:
         """
         # We need to return a new object so the arguments are not shared between
         # a single instance of the LazyCall object.
-        return LazyCall(
-            self._call,
-            (*self._args, *args),
-            {**self._kwargs, **kwargs}
-        )
+        return LazyCall(self._call, (*self._args, *args), {**self._kwargs, **kwargs})
 
     @property
     def selectors(self) -> List[SelectorType]:
@@ -104,8 +96,12 @@ class LazyCall:
         """The kwargs to the given call"""
         return self._kwargs
 
-    def when(self, focused: Optional[Match] = None, layout: Optional[Union[Iterable[str], str]] = None,
-             when_floating: bool = True) -> 'LazyCall':
+    def when(
+        self,
+        focused: Optional[Match] = None,
+        layout: Optional[Union[Iterable[str], str]] = None,
+        when_floating: bool = True,
+    ) -> "LazyCall":
         """Enable call only for given layout(s) and floating state
 
         Parameters

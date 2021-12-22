@@ -26,7 +26,7 @@ import libqtile.widget
 from test.helpers import Retry  # noqa: I001
 
 
-@Retry(ignore_exceptions=(AssertionError, ))
+@Retry(ignore_exceptions=(AssertionError,))
 def wait_for_icon(widget, hidden=True, prop="width"):
     width = widget.info()[prop]
     if hidden:
@@ -35,7 +35,7 @@ def wait_for_icon(widget, hidden=True, prop="width"):
         assert width > 0
 
 
-@Retry(ignore_exceptions=(AssertionError, ))
+@Retry(ignore_exceptions=(AssertionError,))
 def check_fullscreen(windows, fullscreen=True):
     full = windows()[0]["fullscreen"]
     assert full is fullscreen
@@ -48,11 +48,12 @@ def sni_config(request, manager_nospawn):
 
     Widget can be customised via parameterize.
     """
+
     class SNIConfig(libqtile.confreader.Config):
         """Config for the test."""
+
         auto_fullscreen = True
-        keys = [
-        ]
+        keys = []
         mouse = []
         groups = [
             libqtile.config.Group("a"),
@@ -62,11 +63,7 @@ def sni_config(request, manager_nospawn):
         screens = [
             libqtile.config.Screen(
                 top=libqtile.bar.Bar(
-                    [
-                        libqtile.widget.StatusNotifier(
-                            **getattr(request, "param", dict())
-                        )
-                    ],
+                    [libqtile.widget.StatusNotifier(**getattr(request, "param", dict()))],
                     50,
                 ),
             )

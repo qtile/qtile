@@ -41,7 +41,7 @@ def log_timeout(self, delay, func, method_args=None):
 
 
 def notification(subject, body, urgency=None, timeout=None):
-    '''Function to build notification text and command list'''
+    """Function to build notification text and command list"""
     cmds = []
 
     urgs = {0: "low", 1: "normal", 2: "critical"}
@@ -57,10 +57,10 @@ def notification(subject, body, urgency=None, timeout=None):
     text = '<span weight="bold">'
     if urg_level != "normal":
         text += '<span color="{{colour}}">'
-    text += '{subject}'
+    text += "{subject}"
     if urg_level != "normal":
-        text += '</span>'
-    text += '</span> - {body}'
+        text += "</span>"
+    text += "</span> - {body}"
 
     text = text.format(subject=subject, body=body)
 
@@ -74,34 +74,22 @@ URGENT = "#ff00ff"
 LOW = "#cccccc"
 DEFAULT_TIMEOUT = 3.0
 
-MESSAGE_1, NOTIFICATION_1 = notification("Message 1",
-                                         "Test Message 1",
-                                         timeout=5000)
-MESSAGE_2, NOTIFICATION_2 = notification("Urgent Message",
-                                         "This is not a test!",
-                                         urgency=2,
-                                         timeout=10000)
-MESSAGE_3, NOTIFICATION_3 = notification("Low priority",
-                                         "Windows closed unexpectedly",
-                                         urgency=0)
+MESSAGE_1, NOTIFICATION_1 = notification("Message 1", "Test Message 1", timeout=5000)
+MESSAGE_2, NOTIFICATION_2 = notification(
+    "Urgent Message", "This is not a test!", urgency=2, timeout=10000
+)
+MESSAGE_3, NOTIFICATION_3 = notification("Low priority", "Windows closed unexpectedly", urgency=0)
 
 
-@pytest.mark.skipif(
-    shutil.which("notify-send") is None,
-    reason="notify-send not installed."
-    )
+@pytest.mark.skipif(shutil.which("notify-send") is None, reason="notify-send not installed.")
 @pytest.mark.usefixtures("dbus")
 def test_notifications(manager_nospawn, minimal_conf_noscreen):
     notify.Notify.timeout_add = log_timeout
-    widget = notify.Notify(foreground_urgent=URGENT,
-                           foreground_low=LOW,
-                           default_timeout=DEFAULT_TIMEOUT)
+    widget = notify.Notify(
+        foreground_urgent=URGENT, foreground_low=LOW, default_timeout=DEFAULT_TIMEOUT
+    )
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=Bar([widget], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=Bar([widget], 10))]
 
     manager_nospawn.start(config)
     obj = manager_nospawn.c.widget["notify"]
@@ -183,10 +171,7 @@ def test_capabilities():
     assert widget_no_actions.capabilities == {"body"}
 
 
-@pytest.mark.skipif(
-    shutil.which("notify-send") is None,
-    reason="notify-send not installed."
-    )
+@pytest.mark.skipif(shutil.which("notify-send") is None, reason="notify-send not installed.")
 @pytest.mark.usefixtures("dbus")
 def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
 
@@ -272,11 +257,7 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
     notify.Notify.timeout_add = log_timeout
     widget = notify.Notify()
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=Bar([widget], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=Bar([widget], 10))]
 
     # Start the manager
     manager_nospawn.start(config)
@@ -316,26 +297,20 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
     assert result == "[2, 'default']"
 
 
-@pytest.mark.skipif(
-    shutil.which("notify-send") is None,
-    reason="notify-send not installed."
-    )
+@pytest.mark.skipif(shutil.which("notify-send") is None, reason="notify-send not installed.")
 @pytest.mark.usefixtures("dbus")
 def test_parse_text(manager_nospawn, minimal_conf_noscreen):
-
     def test_parser(text):
         return f"TEST:{text}"
 
-    widget = notify.Notify(foreground_urgent=URGENT,
-                           foreground_low=LOW,
-                           default_timeout=DEFAULT_TIMEOUT,
-                           parse_text=test_parser)
+    widget = notify.Notify(
+        foreground_urgent=URGENT,
+        foreground_low=LOW,
+        default_timeout=DEFAULT_TIMEOUT,
+        parse_text=test_parser,
+    )
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=Bar([widget], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=Bar([widget], 10))]
 
     manager_nospawn.start(config)
     obj = manager_nospawn.c.widget["notify"]

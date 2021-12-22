@@ -41,6 +41,7 @@ def rename_process():
     """
     try:
         import setproctitle
+
         setproctitle.setproctitle("qtile")
     except ImportError:
         pass
@@ -53,21 +54,23 @@ def make_qtile(options):
         try:
             makedirs(path.dirname(options.configfile), exist_ok=True)
             from shutil import copyfile
-            default_config_path = path.join(path.dirname(__file__),
-                                            "..",
-                                            "resources",
-                                            "default_config.py")
+
+            default_config_path = path.join(
+                path.dirname(__file__), "..", "resources", "default_config.py"
+            )
             copyfile(default_config_path, options.configfile)
-            logger.info('Copied default_config.py to %s', options.configfile)
+            logger.info("Copied default_config.py to %s", options.configfile)
         except Exception as e:
-            logger.exception('Failed to copy default_config.py to %s: (%s)',
-                             options.configfile, e)
+            logger.exception(
+                "Failed to copy default_config.py to %s: (%s)", options.configfile, e
+            )
 
     config = confreader.Config(options.configfile)
 
     # XXX: the import is here because we need to call init_log
     # before start importing stuff
     from libqtile.core.manager import Qtile
+
     return Qtile(
         kore,
         config,
@@ -88,50 +91,51 @@ def start(options):
     try:
         q.loop()
     except Exception:
-        logger.exception('Qtile crashed')
+        logger.exception("Qtile crashed")
         exit(1)
-    logger.info('Exiting...')
+    logger.info("Exiting...")
 
 
 def add_subcommand(subparsers, parents):
-    parser = subparsers.add_parser(
-        "start",
-        parents=parents,
-        help="Start the window manager"
-    )
+    parser = subparsers.add_parser("start", parents=parents, help="Start the window manager")
     parser.add_argument(
-        "-c", "--config",
+        "-c",
+        "--config",
         action="store",
-        default=path.expanduser(path.join(
-            getenv('XDG_CONFIG_HOME', '~/.config'), 'qtile', 'config.py')),
+        default=path.expanduser(
+            path.join(getenv("XDG_CONFIG_HOME", "~/.config"), "qtile", "config.py")
+        ),
         dest="configfile",
-        help='Use the specified configuration file',
+        help="Use the specified configuration file",
     )
     parser.add_argument(
-        "-s", "--socket",
+        "-s",
+        "--socket",
         action="store",
         default=None,
         dest="socket",
-        help='Path of the Qtile IPC socket.'
+        help="Path of the Qtile IPC socket.",
     )
     parser.add_argument(
-        "-n", "--no-spawn",
+        "-n",
+        "--no-spawn",
         action="store_true",
         default=False,
         dest="no_spawn",
-        help='Avoid spawning apps. (Used for restart)'
+        help="Avoid spawning apps. (Used for restart)",
     )
     parser.add_argument(
-        '--with-state',
+        "--with-state",
         default=None,
-        dest='state',
-        help='Pickled QtileState object (typically used only internally)',
+        dest="state",
+        help="Pickled QtileState object (typically used only internally)",
     )
     parser.add_argument(
-        '-b', '--backend',
-        default='x11',
-        dest='backend',
+        "-b",
+        "--backend",
+        default="x11",
+        dest="backend",
         choices=libqtile.backend.CORES,
-        help='Use specified backend.',
+        help="Use specified backend.",
     )
     parser.set_defaults(func=start)

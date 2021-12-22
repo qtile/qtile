@@ -38,7 +38,8 @@ class _Column(_ClientList):
             dict(
                 heights=[self.heights[c] for c in self.clients],
                 split=self.split,
-            ))
+            )
+        )
         return info
 
     def toggle_split(self):
@@ -68,11 +69,14 @@ class _Column(_ClientList):
 
     def __str__(self):
         cur = self.current
-        return "_Column: " + ", ".join([
-            "[%s: %d]" % (c.name, self.heights[c])
-            if c == cur else "%s: %d" % (c.name, self.heights[c])
-            for c in self.clients
-        ])
+        return "_Column: " + ", ".join(
+            [
+                "[%s: %d]" % (c.name, self.heights[c])
+                if c == cur
+                else "%s: %d" % (c.name, self.heights[c])
+                for c in self.clients
+            ]
+        )
 
 
 class Columns(Layout):
@@ -110,30 +114,41 @@ class Columns(Layout):
         Key([mod], "Return", lazy.layout.toggle_split()),
         Key([mod], "n", lazy.layout.normalize()),
     """
+
     defaults = [
         ("border_focus", "#881111", "Border colour(s) for the focused window."),
         ("border_normal", "#220000", "Border colour(s) for un-focused windows."),
-        ("border_focus_stack", "#881111",
-         "Border colour(s) for the focused window in stacked columns."),
-        ("border_normal_stack", "#220000",
-         "Border colour(s) for un-focused windows in stacked columns."),
+        (
+            "border_focus_stack",
+            "#881111",
+            "Border colour(s) for the focused window in stacked columns.",
+        ),
+        (
+            "border_normal_stack",
+            "#220000",
+            "Border colour(s) for un-focused windows in stacked columns.",
+        ),
         ("border_width", 2, "Border width."),
         ("border_on_single", False, "Draw a border when there is one only window."),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])."),
-        ("margin_on_single", None, "Margin when only one window. (int or list of ints [N E S W])"),
+        (
+            "margin_on_single",
+            None,
+            "Margin when only one window. (int or list of ints [N E S W])",
+        ),
         ("split", True, "New columns presentation mode."),
         ("num_columns", 2, "Preferred number of columns."),
         ("grow_amount", 10, "Amount by which to grow a window/column."),
         ("fair", False, "Add new windows to the column with least windows."),
-        ("insert_position", 0,
-         "Position relative to the current window where new ones are inserted "
-         "(0 means right above the current window, 1 means right after)."),
-        ("wrap_focus_columns", True,
-         "Wrap the screen when moving focus across columns."),
-        ("wrap_focus_rows", True,
-         "Wrap the screen when moving focus across rows."),
-        ("wrap_focus_stacks", True,
-         "Wrap the screen when moving focus across stacked."),
+        (
+            "insert_position",
+            0,
+            "Position relative to the current window where new ones are inserted "
+            "(0 means right above the current window, 1 means right after).",
+        ),
+        ("wrap_focus_columns", True, "Wrap the screen when moving focus across columns."),
+        ("wrap_focus_rows", True, "Wrap the screen when moving focus across rows."),
+        ("wrap_focus_stacks", True, "Wrap the screen when moving focus across stacked."),
     ]
 
     def __init__(self, **config):
@@ -159,7 +174,7 @@ class Columns(Layout):
         d["columns"] = []
         for c in self.columns:
             cinfo = c.info()
-            d["clients"].extend(cinfo['clients'])
+            d["clients"].extend(cinfo["clients"])
             d["columns"].append(cinfo)
         d["current"] = self.current
         return d
@@ -243,8 +258,7 @@ class Columns(Layout):
                 border = 0
             if self.margin_on_single is not None:
                 margin_size = self.margin_on_single
-        width = int(
-            0.5 + col.width * screen_rect.width * 0.01 / len(self.columns))
+        width = int(0.5 + col.width * screen_rect.width * 0.01 / len(self.columns))
         x = screen_rect.x + int(0.5 + pos * screen_rect.width * 0.01 / len(self.columns))
         if col.split:
             pos = 0
@@ -252,17 +266,11 @@ class Columns(Layout):
                 if client == c:
                     break
                 pos += col.heights[c]
-            height = int(
-                0.5 + col.heights[client] * screen_rect.height * 0.01 / len(col))
+            height = int(0.5 + col.heights[client] * screen_rect.height * 0.01 / len(col))
             y = screen_rect.y + int(0.5 + pos * screen_rect.height * 0.01 / len(col))
             client.place(
-                x,
-                y,
-                width - 2 * border,
-                height - 2 * border,
-                border,
-                color,
-                margin=margin_size)
+                x, y, width - 2 * border, height - 2 * border, border, color, margin=margin_size
+            )
             client.unhide()
         elif client == col.cw:
             client.place(
@@ -272,7 +280,8 @@ class Columns(Layout):
                 screen_rect.height - 2 * border,
                 border,
                 color,
-                margin=margin_size)
+                margin=margin_size,
+            )
             client.unhide()
         else:
             client.hide()
@@ -289,7 +298,7 @@ class Columns(Layout):
 
     def focus_next(self, win):
         """Returns the next client after 'win' in layout,
-           or None if there is no such client"""
+        or None if there is no such client"""
         # First: try to get next window in column of win (self.columns is non-empty)
         # pylint: disable=undefined-loop-variable
         for idx, col in enumerate(self.columns):
@@ -305,7 +314,7 @@ class Columns(Layout):
 
     def focus_previous(self, win):
         """Returns the client previous to 'win' in layout.
-           or None if there is no such client"""
+        or None if there is no such client"""
         # First: try to focus previous client in column (self.columns is non-empty)
         # pylint: disable=undefined-loop-variable
         for idx, col in enumerate(self.columns):
@@ -329,7 +338,7 @@ class Columns(Layout):
                 self.current = (self.current - 1) % len(self.columns)
         else:
             if self.current > 0:
-                self.current = (self.current - 1)
+                self.current = self.current - 1
         self.group.focus(self.cc.cw, True)
 
     def cmd_right(self):
@@ -338,7 +347,7 @@ class Columns(Layout):
                 self.current = (self.current + 1) % len(self.columns)
         else:
             if len(self.columns) - 1 > self.current:
-                self.current = (self.current + 1)
+                self.current = self.current + 1
         self.group.focus(self.cc.cw, True)
 
     def want_wrap(self, col):

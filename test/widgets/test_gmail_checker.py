@@ -41,10 +41,7 @@ class FakeIMAP(ModuleType):
             if not (self.username and self.password):
                 return False, None
 
-            return (
-                "OK",
-                ['("{}" (MESSAGES 10 UNSEEN 2)'.format(path).encode()]
-            )
+            return ("OK", ['("{}" (MESSAGES 10 UNSEEN 2)'.format(path).encode()])
 
 
 def test_gmail_checker_valid_response(fake_qtile, monkeypatch, fake_window):
@@ -76,10 +73,7 @@ def test_gmail_checker_only_unseen(fake_qtile, monkeypatch, fake_window):
     reload(gmail_checker)
 
     gmc = gmail_checker.GmailChecker(
-        display_fmt="unseen[{0}]",
-        status_only_unseen=True,
-        username="qtile",
-        password="test"
+        display_fmt="unseen[{0}]", status_only_unseen=True, username="qtile", password="test"
     )
     fakebar = FakeBar([gmc], window=fake_window)
     gmc._configure(fake_qtile, fakebar)

@@ -38,16 +38,8 @@ from test.helpers import TestManager as BareManager
 
 class TwoScreenConfig(Config):
     auto_fullscreen = True
-    groups = [
-        config.Group("a"),
-        config.Group("b"),
-        config.Group("c"),
-        config.Group("d")
-    ]
-    layouts = [
-        layout.stack.Stack(num_stacks=1),
-        layout.stack.Stack(num_stacks=2)
-    ]
+    groups = [config.Group("a"), config.Group("b"), config.Group("c"), config.Group("d")]
+    layouts = [layout.stack.Stack(num_stacks=1), layout.stack.Stack(num_stacks=2)]
     floating_layout = default_config.floating_layout
     keys = [
         config.Key(
@@ -68,13 +60,11 @@ class TwoScreenConfig(Config):
     screens = []
     fake_screens = [
         libqtile.config.Screen(
-            top=libqtile.bar.Bar([TextBox("Qtile Test")], 10),
-            x=0, y=0, width=400, height=600
+            top=libqtile.bar.Bar([TextBox("Qtile Test")], 10), x=0, y=0, width=400, height=600
         ),
         libqtile.config.Screen(
-            top=libqtile.bar.Bar([TextBox("Qtile Test")], 10),
-            x=400, y=0, width=400, height=600
-        )
+            top=libqtile.bar.Bar([TextBox("Qtile Test")], 10), x=400, y=0, width=400, height=600
+        ),
     ]
 
 
@@ -130,7 +120,7 @@ def test_restart_hook_and_state(manager_nospawn, request, backend, backend_name)
     assert manager.restart_calls.value == 1
 
     # Get the path to the state file
-    _, state_file = manager.c.eval('self.lifecycle.state_file')
+    _, state_file = manager.c.eval("self.lifecycle.state_file")
     assert state_file
 
     # We need a copy of this as the next file will probably overwrite it
@@ -138,7 +128,7 @@ def test_restart_hook_and_state(manager_nospawn, request, backend, backend_name)
     shutil.copy(state_file, original_state)
 
     # Stop the manager
-    manager.c.eval('self._do_stop()')
+    manager.c.eval("self._do_stop()")
 
     # Manager should have shutdown now so trying to access it will raise an error
     with pytest.raises((IPCError, ConnectionResetError)):
@@ -172,15 +162,15 @@ def test_restart_hook_and_state(manager_nospawn, request, backend, backend_name)
         # As before, inject code, restart and get state file
         restarted_manager.c.eval(inject)
         restarted_manager.c.restart()
-        _, restarted_state = restarted_manager.c.eval('self.lifecycle.state_file')
+        _, restarted_state = restarted_manager.c.eval("self.lifecycle.state_file")
         assert restarted_state
-        restarted_manager.c.eval('self._do_stop()')
+        restarted_manager.c.eval("self._do_stop()")
 
     # Load the two QtileState objects
-    with open(original_state, 'rb') as f:
+    with open(original_state, "rb") as f:
         original = pickle.load(f)
 
-    with open(restarted_state, 'rb') as f:
+    with open(restarted_state, "rb") as f:
         restarted = pickle.load(f)
 
     # Confirm that they're the same

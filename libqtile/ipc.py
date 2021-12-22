@@ -118,11 +118,9 @@ class _IPC:
             assert len(data) >= HDRLEN
             size = struct.unpack(HDRFORMAT, data[:HDRLEN])[0]
             assert size >= len(data[HDRLEN:])
-            return marshal.loads(data[HDRLEN:HDRLEN + size]), False
+            return marshal.loads(data[HDRLEN : HDRLEN + size]), False
         except AssertionError as e:
-            raise IPCError(
-                "error reading reply! (probably the socket was disconnected)"
-            ) from e
+            raise IPCError("error reading reply! (probably the socket was disconnected)") from e
 
     @staticmethod
     def pack(msg: Any, *, is_json: bool = False) -> bytes:
@@ -250,9 +248,7 @@ class Server:
         assert self.server is None
 
         logger.debug("Starting server")
-        server_coroutine = asyncio.start_unix_server(
-            self._server_callback, sock=self.sock
-        )
+        server_coroutine = asyncio.start_unix_server(self._server_callback, sock=self.sock)
         self.server = await server_coroutine
 
     async def close(self) -> None:

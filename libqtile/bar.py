@@ -45,9 +45,9 @@ class Gap(CommandObject):
         The "thickness" of the gap, i.e. the height of a horizontal gap, or the
         width of a vertical gap.
     """
+
     def __init__(self, size):
-        """
-        """
+        """ """
         # 'size' corresponds to the height of a horizontal gap, or the width
         # of a vertical gap
         self.size = size
@@ -127,7 +127,7 @@ class Gap(CommandObject):
 
     def cmd_info(self):
         """
-            Info for this object.
+        Info for this object.
         """
         return self.info()
 
@@ -159,12 +159,13 @@ class Bar(Gap, configurable.Configurable):
         The "thickness" of the bar, i.e. the height of a horizontal bar, or the
         width of a vertical bar.
     """
+
     defaults = [
         ("background", "#000000", "Background colour."),
         ("opacity", 1, "Bar window opacity."),
         ("margin", 0, "Space around bar as int or list of ints [N E S W]."),
         ("border_color", "#000000", "Border colour as str or list of str [N E S W]"),
-        ("border_width", 0, "Width of border as int of list of ints [N E S W]")
+        ("border_width", 0, "Width of border as int of list of ints [N E S W]"),
     ]
 
     def __init__(self, widgets, size, **config):
@@ -208,19 +209,24 @@ class Bar(Gap, configurable.Configurable):
                         rgb(self.border_color)
                         self.border_color = [self.border_color] * 4
                 except (ValueError, TypeError):
-                    logger.warning("Invalid border_color specified. Borders will not be displayed.")
+                    logger.warning(
+                        "Invalid border_color specified. Borders will not be displayed."
+                    )
                     self.border_width = [0, 0, 0, 0]
 
                 # Increase the margin size for the border. The border will be drawn
                 # in this space so the empty space will just be the margin.
-                self.margin = [m + b + s for m, b, s in zip(self._initial_margin, self.border_width, self.struts)]
+                self.margin = [
+                    m + b + s
+                    for m, b, s in zip(self._initial_margin, self.border_width, self.struts)
+                ]
 
                 if self.horizontal:
                     self.x += self.margin[3] - self.border_width[3]
-                    self.width -= (self.margin[1] + self.margin[3])
+                    self.width -= self.margin[1] + self.margin[3]
                     self.length = self.width
                     if self.size == self.initial_size:
-                        self.size += (self.margin[0] + self.margin[2])
+                        self.size += self.margin[0] + self.margin[2]
                     if self.screen.top is self:
                         self.y += self.margin[0] - self.border_width[0]
                     else:
@@ -228,9 +234,9 @@ class Bar(Gap, configurable.Configurable):
 
                 else:
                     self.y += self.margin[0] - self.border_width[0]
-                    self.height -= (self.margin[0] + self.margin[2])
+                    self.height -= self.margin[0] + self.margin[2]
                     self.length = self.height
-                    self.size += (self.margin[1] + self.margin[3])
+                    self.size += self.margin[1] + self.margin[3]
                     if self.screen.left is self:
                         self.x += self.margin[3]
                     else:
@@ -251,7 +257,11 @@ class Bar(Gap, configurable.Configurable):
             # To preserve correct display of SysTray widget, we need a 24-bit
             # window where the user requests an opaque bar.
             if self.qtile.core.name == "x11":
-                depth = 32 if has_transparency(self.background) else self.qtile.core.conn.default_screen.root_depth
+                depth = (
+                    32
+                    if has_transparency(self.background)
+                    else self.qtile.core.conn.default_screen.root_depth
+                )
 
                 self.window = self.qtile.core.create_internal(
                     self.x, self.y, width, height, depth
@@ -373,9 +383,7 @@ class Bar(Gap, configurable.Configurable):
                 prev_stretch = None
 
         if stretches:
-            stretchspace = length - sum(
-                [i.length for i in widgets if i.length_type != STRETCH]
-            )
+            stretchspace = length - sum([i.length for i in widgets if i.length_type != STRETCH])
             stretchspace = max(stretchspace, 0)
             num_stretches = len(stretches)
 
@@ -491,9 +499,9 @@ class Bar(Gap, configurable.Configurable):
 
     def widget_grab_keyboard(self, widget):
         """
-            A widget can call this method to grab the keyboard focus
-            and receive keyboard messages. When done,
-            widget_ungrab_keyboard() must be called.
+        A widget can call this method to grab the keyboard focus
+        and receive keyboard messages. When done,
+        widget_ungrab_keyboard() must be called.
         """
         self.has_keyboard = widget
         self.saved_focus = self.qtile.current_window
@@ -501,7 +509,7 @@ class Bar(Gap, configurable.Configurable):
 
     def widget_ungrab_keyboard(self):
         """
-            Removes keyboard focus from the widget.
+        Removes keyboard focus from the widget.
         """
         if self.saved_focus is not None:
             self.saved_focus.focus(False)
@@ -530,27 +538,26 @@ class Bar(Gap, configurable.Configurable):
             # in the order N, E, S, W. The border tuple contains two pairs of
             # co-ordinates for the start and end of the border.
             line_opts = [
-                (
-                    (0, self.border_width[0] * 0.5),
-                    (width, self.border_width[0] * 0.5)
-                ),
+                ((0, self.border_width[0] * 0.5), (width, self.border_width[0] * 0.5)),
                 (
                     (width - (self.border_width[1] * 0.5), self.border_width[0]),
-                    (width - (self.border_width[1] * 0.5), height - self.border_width[2])
+                    (width - (self.border_width[1] * 0.5), height - self.border_width[2]),
                 ),
                 (
                     (0, height - self.border_width[2] + (self.border_width[2] * 0.5)),
-                    (width, height - self.border_width[2] + (self.border_width[2] * 0.5))
+                    (width, height - self.border_width[2] + (self.border_width[2] * 0.5)),
                 ),
                 (
                     (self.border_width[3] * 0.5, self.border_width[0]),
-                    (self.border_width[3] * 0.5, height - self.border_width[2])
-                )
+                    (self.border_width[3] * 0.5, height - self.border_width[2]),
+                ),
             ]
 
             self.drawer.clear(self.background)
 
-            for border_width, colour, opts in zip(self.border_width, self.border_color, line_opts):
+            for border_width, colour, opts in zip(
+                self.border_width, self.border_color, line_opts
+            ):
 
                 if not border_width:
                     continue
@@ -587,7 +594,7 @@ class Bar(Gap, configurable.Configurable):
             height=self.height,
             position=self.position,
             widgets=[i.info() for i in self.widgets],
-            window=self.window.wid
+            window=self.window.wid,
         )
 
     def is_show(self):
@@ -616,11 +623,11 @@ class Bar(Gap, configurable.Configurable):
 
     def cmd_fake_button_press(self, screen, position, x, y, button=1):
         """
-            Fake a mouse-button-press on the bar. Co-ordinates are relative
-            to the top-left corner of the bar.
+        Fake a mouse-button-press on the bar. Co-ordinates are relative
+        to the top-left corner of the bar.
 
-            :screen The integer screen offset
-            :position One of "top", "bottom", "left", or "right"
+        :screen The integer screen offset
+        :position One of "top", "bottom", "left", or "right"
         """
         self.process_button_click(x, y, button)
 

@@ -111,12 +111,14 @@ class QSh:
             for i in range(rows):
                 # Because Python array slicing can go beyond the array bounds,
                 # we don't need to be careful with the values here
-                sl = lst[i * cols: (i + 1) * cols]
+                sl = lst[i * cols : (i + 1) * cols]
                 sl = [x + " " * (mx - len(x)) for x in sl]
                 ret.append("  ".join(sl))
         return "\n".join(ret)
 
-    def _ls(self, client: CommandClient, object_type: Optional[str]) -> Tuple[List[str], List[str]]:
+    def _ls(
+        self, client: CommandClient, object_type: Optional[str]
+    ) -> Tuple[List[str], List[str]]:
         if object_type is not None:
             allow_root, items = client.items(object_type)
             str_items = [str(i) for i in items]
@@ -230,9 +232,7 @@ class QSh:
 
         objects, items = self._ls(node, rest_path)
 
-        formatted_ls = [
-            "{}{}/".format(base_path, i) for i in objects
-        ] + [
+        formatted_ls = ["{}{}/".format(base_path, i) for i in objects] + [
             "{}[{}]/".format(base_path[:-1], i) for i in items
         ]
         return self.columnize(formatted_ls)
@@ -257,8 +257,9 @@ class QSh:
     def do_help(self, arg: Optional[str]) -> str:
         """Give help on commands and builtins
 
-        When invoked without arguments, provides an overview of all commands.
-        When passed as an argument, also provides a detailed help on a specific command or builtin.
+        When invoked without arguments, provides an overview of all commands. When
+        passed as an argument, also provides a detailed help on a specific command or
+        builtin.
 
         Examples
         ========
@@ -330,7 +331,11 @@ class QSh:
             try:
                 return self._command_client.call(cmd, *cmd_args)
             except CommandException as e:
-                return "Caught command exception (is the command invoked incorrectly?): {}\n".format(e)
+                return (
+                    "Caught command exception (is the command invoked incorrectly?): {}\n".format(
+                        e
+                    )
+                )
 
         return "Invalid command: {}".format(line)
 

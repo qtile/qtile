@@ -31,6 +31,7 @@ from libqtile.widget import base
 
 class TextBox(base._TextBox):
     """A flexible textbox that can be updated from bound keys, scripts, and qshell."""
+
     defaults = [
         ("font", "sans", "Text font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),

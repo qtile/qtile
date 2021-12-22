@@ -29,15 +29,15 @@ import libqtile.config
 from libqtile import widget
 
 TEST_DIR = path.dirname(path.abspath(__file__))
-DATA_DIR = path.join(TEST_DIR, '..', 'data', 'png')
-IMAGE_FILE = path.join(DATA_DIR, 'audio-volume-muted.png')
+DATA_DIR = path.join(TEST_DIR, "..", "data", "png")
+IMAGE_FILE = path.join(DATA_DIR, "audio-volume-muted.png")
 
 
 img = widget.Image(filename=IMAGE_FILE)
 
 parameters = [
     (libqtile.config.Screen(top=libqtile.bar.Bar([img], 40)), "top", "height"),
-    (libqtile.config.Screen(left=libqtile.bar.Bar([img], 40)), "left", "width")
+    (libqtile.config.Screen(left=libqtile.bar.Bar([img], 40)), "left", "width"),
 ]
 
 
@@ -58,7 +58,7 @@ no_img = widget.Image()
 
 parameters = [
     (libqtile.config.Screen(top=libqtile.bar.Bar([no_img], 40)), "top", "width"),
-    (libqtile.config.Screen(left=libqtile.bar.Bar([no_img], 40)), "left", "height")
+    (libqtile.config.Screen(left=libqtile.bar.Bar([no_img], 40)), "left", "height"),
 ]
 
 
@@ -78,9 +78,7 @@ def test_missing_file(manager_nospawn, minimal_conf_noscreen):
     img2 = widget.Image(filename="/this/file/does/not/exist")
 
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(top=libqtile.bar.Bar([img2], 40))
-    ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([img2], 40))]
 
     manager_nospawn.start(config)
     bar = manager_nospawn.c.bar["top"]
@@ -93,9 +91,7 @@ def test_no_scale(manager_nospawn, minimal_conf_noscreen):
     img2 = widget.Image(filename=IMAGE_FILE, scale=False)
 
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(top=libqtile.bar.Bar([img2], 40))
-    ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([img2], 40))]
 
     manager_nospawn.start(config)
     bar = manager_nospawn.c.bar["top"]

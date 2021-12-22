@@ -24,13 +24,7 @@
 import os
 import sys
 import warnings
-from logging import (
-    WARNING,
-    Formatter,
-    StreamHandler,
-    captureWarnings,
-    getLogger,
-)
+from logging import WARNING, Formatter, StreamHandler, captureWarnings, getLogger
 from logging.handlers import RotatingFileHandler
 
 logger = getLogger(__package__)
@@ -38,53 +32,65 @@ logger = getLogger(__package__)
 
 class ColorFormatter(Formatter):
     """Logging formatter adding console colors to the output."""
+
     black, red, green, yellow, blue, magenta, cyan, white = range(8)
     colors = {
-        'WARNING': yellow,
-        'INFO': green,
-        'DEBUG': blue,
-        'CRITICAL': yellow,
-        'ERROR': red,
-        'RED': red,
-        'GREEN': green,
-        'YELLOW': yellow,
-        'BLUE': blue,
-        'MAGENTA': magenta,
-        'CYAN': cyan,
-        'WHITE': white
+        "WARNING": yellow,
+        "INFO": green,
+        "DEBUG": blue,
+        "CRITICAL": yellow,
+        "ERROR": red,
+        "RED": red,
+        "GREEN": green,
+        "YELLOW": yellow,
+        "BLUE": blue,
+        "MAGENTA": magenta,
+        "CYAN": cyan,
+        "WHITE": white,
     }
-    reset_seq = '\033[0m'
-    color_seq = '\033[%dm'
-    bold_seq = '\033[1m'
+    reset_seq = "\033[0m"
+    color_seq = "\033[%dm"
+    bold_seq = "\033[1m"
 
     def format(self, record):
         """Format the record with colors."""
         color = self.color_seq % (30 + self.colors[record.levelname])
         message = Formatter.format(self, record)
-        message = message.replace('$RESET', self.reset_seq)\
-            .replace('$BOLD', self.bold_seq)\
-            .replace('$COLOR', color)
+        message = (
+            message.replace("$RESET", self.reset_seq)
+            .replace("$BOLD", self.bold_seq)
+            .replace("$COLOR", color)
+        )
         for color, value in self.colors.items():
-            message = message.replace(
-                '$' + color, self.color_seq % (value + 30))\
-                .replace('$BG' + color, self.color_seq % (value + 40))\
-                .replace('$BG-' + color, self.color_seq % (value + 40))
+            message = (
+                message.replace("$" + color, self.color_seq % (value + 30))
+                .replace("$BG" + color, self.color_seq % (value + 40))
+                .replace("$BG-" + color, self.color_seq % (value + 40))
+            )
         return message + self.reset_seq
 
 
-def init_log(log_level=WARNING, log_path=True, log_truncate=False,
-             log_size=10000000, log_numbackups=1, log_color=True):
+def init_log(
+    log_level=WARNING,
+    log_path=True,
+    log_truncate=False,
+    log_size=10000000,
+    log_numbackups=1,
+    log_color=True,
+):
     for handler in logger.handlers:
         logger.removeHandler(handler)
     formatter = Formatter(
-        "%(asctime)s %(levelname)s %(name)s %(filename)s:%(funcName)s():L%(lineno)d %(message)s"
+        "%(asctime)s %(levelname)s %(name)s "
+        "%(filename)s:%(funcName)s():L%(lineno)d %(message)s"
     )
 
     # We'll always use a stream handler
     stream_handler = StreamHandler(sys.stdout)
     if log_color:
         color_formatter = ColorFormatter(
-            '$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s %(filename)s:%(funcName)s():L%(lineno)d $RESET %(message)s'
+            "$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s "
+            "%(filename)s:%(funcName)s():L%(lineno)d $RESET %(message)s"
         )
         stream_handler.setFormatter(color_formatter)
     else:
@@ -94,16 +100,16 @@ def init_log(log_level=WARNING, log_path=True, log_truncate=False,
     # If we have a log path, we'll also setup a log file
     if log_path:
         if not isinstance(log_path, str):
-            data_directory = os.path.expandvars('$XDG_DATA_HOME')
-            if data_directory == '$XDG_DATA_HOME':
+            data_directory = os.path.expandvars("$XDG_DATA_HOME")
+            if data_directory == "$XDG_DATA_HOME":
                 # if variable wasn't set
                 data_directory = os.path.expanduser("~/.local/share")
-            data_directory = os.path.join(data_directory, 'qtile')
+            data_directory = os.path.join(data_directory, "qtile")
             if not os.path.exists(data_directory):
                 os.makedirs(data_directory)
-            log_path = os.path.join(data_directory, '%s.log')
+            log_path = os.path.join(data_directory, "%s.log")
         try:
-            log_path %= 'qtile'
+            log_path %= "qtile"
         except TypeError:  # Happens if log_path doesn't contain formatters.
             pass
         log_path = os.path.expanduser(log_path)
@@ -111,9 +117,7 @@ def init_log(log_level=WARNING, log_path=True, log_truncate=False,
             with open(log_path, "w"):
                 pass
         file_handler = RotatingFileHandler(
-            log_path,
-            maxBytes=log_size,
-            backupCount=log_numbackups
+            log_path, maxBytes=log_size, backupCount=log_numbackups
         )
 
         file_handler.setFormatter(formatter)
@@ -123,5 +127,5 @@ def init_log(log_level=WARNING, log_path=True, log_truncate=False,
     # Capture everything from the warnings module.
     captureWarnings(True)
     warnings.simplefilter("always")
-    logger.debug('Starting logging for Qtile')
+    logger.debug("Starting logging for Qtile")
     return logger

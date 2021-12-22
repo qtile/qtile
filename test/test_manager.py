@@ -55,19 +55,19 @@ class ManagerConfig(Config):
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
         libqtile.config.Group("c"),
-        libqtile.config.Group("d")
+        libqtile.config.Group("d"),
     ]
     layouts = [
         libqtile.layout.stack.Stack(num_stacks=1),
         libqtile.layout.stack.Stack(num_stacks=2),
         libqtile.layout.tile.Tile(ratio=0.5),
-        libqtile.layout.max.Max()
+        libqtile.layout.max.Max(),
     ]
     floating_layout = libqtile.layout.floating.Floating(
         float_rules=[
             *libqtile.layout.floating.Floating.default_float_rules,
-            Match(wm_class='float'),
-            Match(title='float')
+            Match(wm_class="float"),
+            Match(title="float"),
         ]
     )
     keys = [
@@ -83,15 +83,17 @@ class ManagerConfig(Config):
         ),
     ]
     mouse = []
-    screens = [libqtile.config.Screen(
-        bottom=libqtile.bar.Bar(
-            [
-                libqtile.widget.Prompt(),
-                libqtile.widget.GroupBox(),
-            ],
-            20
-        ),
-    )]
+    screens = [
+        libqtile.config.Screen(
+            bottom=libqtile.bar.Bar(
+                [
+                    libqtile.widget.Prompt(),
+                    libqtile.widget.GroupBox(),
+                ],
+                20,
+            ),
+        )
+    ]
     follow_mouse_focus = True
     reconfigure_screens = False
 
@@ -102,38 +104,38 @@ manager_config = pytest.mark.parametrize("manager", [ManagerConfig], indirect=Tr
 @dualmonitor
 @manager_config
 def test_screen_dim(manager):
-    manager.test_window('one')
+    manager.test_window("one")
     assert manager.c.screen.info()["index"] == 0
     assert manager.c.screen.info()["x"] == 0
     assert manager.c.screen.info()["width"] == 800
-    assert manager.c.group.info()["name"] == 'a'
-    assert manager.c.group.info()["focus"] == 'one'
+    assert manager.c.group.info()["name"] == "a"
+    assert manager.c.group.info()["focus"] == "one"
 
     manager.c.to_screen(1)
     manager.test_window("one")
     assert manager.c.screen.info()["index"] == 1
     assert manager.c.screen.info()["x"] == 800
     assert manager.c.screen.info()["width"] == 640
-    assert manager.c.group.info()["name"] == 'b'
-    assert manager.c.group.info()["focus"] == 'one'
+    assert manager.c.group.info()["name"] == "b"
+    assert manager.c.group.info()["focus"] == "one"
 
     manager.c.to_screen(0)
     assert manager.c.screen.info()["index"] == 0
     assert manager.c.screen.info()["x"] == 0
     assert manager.c.screen.info()["width"] == 800
-    assert manager.c.group.info()["name"] == 'a'
-    assert manager.c.group.info()["focus"] == 'one'
+    assert manager.c.group.info()["name"] == "a"
+    assert manager.c.group.info()["focus"] == "one"
 
 
 @pytest.mark.parametrize("xephyr", [{"xoffset": 0}], indirect=True)
 @manager_config
 def test_clone_dim(manager):
-    manager.test_window('one')
+    manager.test_window("one")
     assert manager.c.screen.info()["index"] == 0
     assert manager.c.screen.info()["x"] == 0
     assert manager.c.screen.info()["width"] == 800
-    assert manager.c.group.info()["name"] == 'a'
-    assert manager.c.group.info()["focus"] == 'one'
+    assert manager.c.group.info()["name"] == "a"
+    assert manager.c.group.info()["focus"] == "one"
 
     assert len(manager.c.screens()) == 1
 
@@ -195,11 +197,12 @@ def test_resize(manager):
     @Retry(ignore_exceptions=(AssertionError), fail_msg="Screen didn't resize")
     def run():
         d = manager.c.screen[0].info()
-        assert d['width'] == 100
-        assert d['height'] == 100
+        assert d["width"] == 100
+        assert d["height"] == 100
         return d
+
     d = run()
-    assert d['x'] == d['y'] == 10
+    assert d["x"] == d["y"] == 10
 
 
 def test_minimal(manager):
@@ -236,12 +239,8 @@ def test_too_few_groups(manager):
 
 
 class _ChordsConfig(Config):
-    groups = [
-        libqtile.config.Group("a")
-    ]
-    layouts = [
-        libqtile.layout.max.Max()
-    ]
+    groups = [libqtile.config.Group("a")]
+    layouts = [libqtile.layout.max.Max()]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = [
         libqtile.config.Key(
@@ -249,40 +248,65 @@ class _ChordsConfig(Config):
             "k",
             lazy.layout.up(),
         ),
-        libqtile.config.KeyChord(["control"], "a", [
-            libqtile.config.Key(
-                [],
-                "j",
-                lazy.layout.down(),
-            )
-        ]),
-        libqtile.config.KeyChord(["control"], "b", [
-            libqtile.config.Key(
-                [],
-                "j",
-                lazy.layout.down(),
-            )
-        ], "test"),
-        libqtile.config.KeyChord(["control"], "d", [
-            libqtile.config.KeyChord([], "a", [
-                libqtile.config.KeyChord([], "1", [
-                    libqtile.config.Key([], "u", lazy.ungrab_chord()),
-                    libqtile.config.Key([], "v", lazy.ungrab_all_chords()),
-                    libqtile.config.Key([], "j", lazy.layout.down()),
-                ], "inner_named"),
-            ]),
-            libqtile.config.Key([], "z", lazy.layout.down()),
-        ], "nesting_test"),
+        libqtile.config.KeyChord(
+            ["control"],
+            "a",
+            [
+                libqtile.config.Key(
+                    [],
+                    "j",
+                    lazy.layout.down(),
+                )
+            ],
+        ),
+        libqtile.config.KeyChord(
+            ["control"],
+            "b",
+            [
+                libqtile.config.Key(
+                    [],
+                    "j",
+                    lazy.layout.down(),
+                )
+            ],
+            "test",
+        ),
+        libqtile.config.KeyChord(
+            ["control"],
+            "d",
+            [
+                libqtile.config.KeyChord(
+                    [],
+                    "a",
+                    [
+                        libqtile.config.KeyChord(
+                            [],
+                            "1",
+                            [
+                                libqtile.config.Key([], "u", lazy.ungrab_chord()),
+                                libqtile.config.Key([], "v", lazy.ungrab_all_chords()),
+                                libqtile.config.Key([], "j", lazy.layout.down()),
+                            ],
+                            "inner_named",
+                        ),
+                    ],
+                ),
+                libqtile.config.Key([], "z", lazy.layout.down()),
+            ],
+            "nesting_test",
+        ),
     ]
     mouse = []
-    screens = [libqtile.config.Screen(
-        bottom=libqtile.bar.Bar(
-            [
-                libqtile.widget.GroupBox(),
-            ],
-            20
-        ),
-    )]
+    screens = [
+        libqtile.config.Screen(
+            bottom=libqtile.bar.Bar(
+                [
+                    libqtile.widget.GroupBox(),
+                ],
+                20,
+            ),
+        )
+    ]
     auto_fullscreen = True
 
 
@@ -490,17 +514,17 @@ def test_adddelgroup(manager):
         manager.c.delgroup(list(manager.c.groups().keys())[0])
 
     # Assert that setting layout via cmd_addgroup works
-    manager.c.addgroup("testgroup2", layout='max')
-    assert manager.c.groups()["testgroup2"]['layout'] == 'max'
+    manager.c.addgroup("testgroup2", layout="max")
+    assert manager.c.groups()["testgroup2"]["layout"] == "max"
 
 
 @manager_config
 def test_delgroup(manager):
     manager.test_window("one")
-    for i in ['a', 'd', 'c']:
+    for i in ["a", "d", "c"]:
         manager.c.delgroup(i)
     with pytest.raises(CommandException):
-        manager.c.delgroup('b')
+        manager.c.delgroup("b")
 
 
 @manager_config
@@ -530,7 +554,11 @@ def test_static(manager):
     manager.test_window("one")
     manager.test_window("two")
     manager.c.window[manager.c.window.info()["id"]].static(
-        screen=0, x=10, y=10, width=10, height=10,
+        screen=0,
+        x=10,
+        y=10,
+        width=10,
+        height=10,
     )
     info = manager.c.window.info()
     assert info["name"] == "one"
@@ -546,8 +574,8 @@ def test_static(manager):
 @manager_config
 def test_match(manager):
     manager.test_window("one")
-    assert manager.c.window.info()['name'] == 'one'
-    assert not manager.c.window.info()['name'] == 'nonexistent'
+    assert manager.c.window.info()["name"] == "one"
+    assert not manager.c.window.info()["name"] == "nonexistent"
 
 
 @manager_config
@@ -555,28 +583,28 @@ def test_default_float(manager):
     # change to 2 col stack
     manager.c.next_layout()
     assert len(manager.c.layout.info()["stacks"]) == 2
-    manager.test_window('float')
+    manager.test_window("float")
 
-    assert manager.c.group.info()['focus'] == 'float'
-    assert manager.c.window.info()['width'] == 100
-    assert manager.c.window.info()['height'] == 100
-    assert manager.c.window.info()['x'] == 350
-    assert manager.c.window.info()['y'] == 240
-    assert manager.c.window.info()['floating'] is True
+    assert manager.c.group.info()["focus"] == "float"
+    assert manager.c.window.info()["width"] == 100
+    assert manager.c.window.info()["height"] == 100
+    assert manager.c.window.info()["x"] == 350
+    assert manager.c.window.info()["y"] == 240
+    assert manager.c.window.info()["floating"] is True
 
     manager.c.window.move_floating(10, 20)
-    assert manager.c.window.info()['width'] == 100
-    assert manager.c.window.info()['height'] == 100
-    assert manager.c.window.info()['x'] == 360
-    assert manager.c.window.info()['y'] == 260
-    assert manager.c.window.info()['floating'] is True
+    assert manager.c.window.info()["width"] == 100
+    assert manager.c.window.info()["height"] == 100
+    assert manager.c.window.info()["x"] == 360
+    assert manager.c.window.info()["y"] == 260
+    assert manager.c.window.info()["floating"] is True
 
     manager.c.window.set_position_floating(10, 20)
-    assert manager.c.window.info()['width'] == 100
-    assert manager.c.window.info()['height'] == 100
-    assert manager.c.window.info()['x'] == 10
-    assert manager.c.window.info()['y'] == 20
-    assert manager.c.window.info()['floating'] is True
+    assert manager.c.window.info()["width"] == 100
+    assert manager.c.window.info()["height"] == 100
+    assert manager.c.window.info()["x"] == 10
+    assert manager.c.window.info()["y"] == 20
+    assert manager.c.window.info()["floating"] is True
 
 
 @manager_config
@@ -585,33 +613,33 @@ def test_last_float_size(manager):
     When you re-float something it would be preferable to have it use the previous float size
     """
     manager.test_window("one")
-    assert manager.c.window.info()['name'] == 'one'
-    assert manager.c.window.info()['width'] == 798
-    assert manager.c.window.info()['height'] == 578
+    assert manager.c.window.info()["name"] == "one"
+    assert manager.c.window.info()["width"] == 798
+    assert manager.c.window.info()["height"] == 578
     # float and it moves
     manager.c.window.toggle_floating()
-    assert manager.c.window.info()['width'] == 100
-    assert manager.c.window.info()['height'] == 100
+    assert manager.c.window.info()["width"] == 100
+    assert manager.c.window.info()["height"] == 100
     # resize
     manager.c.window.set_size_floating(50, 90)
-    assert manager.c.window.info()['width'] == 50
-    assert manager.c.window.info()['height'] == 90
+    assert manager.c.window.info()["width"] == 50
+    assert manager.c.window.info()["height"] == 90
     # back to not floating
     manager.c.window.toggle_floating()
-    assert manager.c.window.info()['width'] == 798
-    assert manager.c.window.info()['height'] == 578
+    assert manager.c.window.info()["width"] == 798
+    assert manager.c.window.info()["height"] == 578
     # float again, should use last float size
     manager.c.window.toggle_floating()
-    assert manager.c.window.info()['width'] == 50
-    assert manager.c.window.info()['height'] == 90
+    assert manager.c.window.info()["width"] == 50
+    assert manager.c.window.info()["height"] == 90
 
     # make sure it works through min and max
     manager.c.window.toggle_maximize()
     manager.c.window.toggle_minimize()
     manager.c.window.toggle_minimize()
     manager.c.window.toggle_floating()
-    assert manager.c.window.info()['width'] == 50
-    assert manager.c.window.info()['height'] == 90
+    assert manager.c.window.info()["width"] == 50
+    assert manager.c.window.info()["height"] == 90
 
 
 @manager_config
@@ -619,42 +647,42 @@ def test_float_max_min_combo(manager):
     # change to 2 col stack
     manager.c.next_layout()
     assert len(manager.c.layout.info()["stacks"]) == 2
-    manager.test_window('two')
+    manager.test_window("two")
     manager.test_window("one")
 
-    assert manager.c.group.info()['focus'] == 'one'
-    assert manager.c.window.info()['width'] == 398
-    assert manager.c.window.info()['height'] == 578
-    assert manager.c.window.info()['x'] == 400
-    assert manager.c.window.info()['y'] == 0
-    assert manager.c.window.info()['floating'] is False
+    assert manager.c.group.info()["focus"] == "one"
+    assert manager.c.window.info()["width"] == 398
+    assert manager.c.window.info()["height"] == 578
+    assert manager.c.window.info()["x"] == 400
+    assert manager.c.window.info()["y"] == 0
+    assert manager.c.window.info()["floating"] is False
 
     manager.c.window.toggle_maximize()
-    assert manager.c.window.info()['floating'] is True
-    assert manager.c.window.info()['maximized'] is True
-    assert manager.c.window.info()['width'] == 800
-    assert manager.c.window.info()['height'] == 580
-    assert manager.c.window.info()['x'] == 0
-    assert manager.c.window.info()['y'] == 0
+    assert manager.c.window.info()["floating"] is True
+    assert manager.c.window.info()["maximized"] is True
+    assert manager.c.window.info()["width"] == 800
+    assert manager.c.window.info()["height"] == 580
+    assert manager.c.window.info()["x"] == 0
+    assert manager.c.window.info()["y"] == 0
 
     manager.c.window.toggle_minimize()
-    assert manager.c.group.info()['focus'] == 'one'
-    assert manager.c.window.info()['floating'] is True
-    assert manager.c.window.info()['minimized'] is True
-    assert manager.c.window.info()['width'] == 800
-    assert manager.c.window.info()['height'] == 580
-    assert manager.c.window.info()['x'] == 0
-    assert manager.c.window.info()['y'] == 0
+    assert manager.c.group.info()["focus"] == "one"
+    assert manager.c.window.info()["floating"] is True
+    assert manager.c.window.info()["minimized"] is True
+    assert manager.c.window.info()["width"] == 800
+    assert manager.c.window.info()["height"] == 580
+    assert manager.c.window.info()["x"] == 0
+    assert manager.c.window.info()["y"] == 0
 
     manager.c.window.toggle_floating()
-    assert manager.c.group.info()['focus'] == 'one'
-    assert manager.c.window.info()['floating'] is False
-    assert manager.c.window.info()['minimized'] is False
-    assert manager.c.window.info()['maximized'] is False
-    assert manager.c.window.info()['width'] == 398
-    assert manager.c.window.info()['height'] == 578
-    assert manager.c.window.info()['x'] == 400
-    assert manager.c.window.info()['y'] == 0
+    assert manager.c.group.info()["focus"] == "one"
+    assert manager.c.window.info()["floating"] is False
+    assert manager.c.window.info()["minimized"] is False
+    assert manager.c.window.info()["maximized"] is False
+    assert manager.c.window.info()["width"] == 398
+    assert manager.c.window.info()["height"] == 578
+    assert manager.c.window.info()["x"] == 400
+    assert manager.c.window.info()["y"] == 0
 
 
 @manager_config
@@ -662,34 +690,38 @@ def test_toggle_fullscreen(manager):
     # change to 2 col stack
     manager.c.next_layout()
     assert len(manager.c.layout.info()["stacks"]) == 2
-    manager.test_window('two')
+    manager.test_window("two")
     manager.test_window("one")
 
-    assert manager.c.group.info()['focus'] == 'one'
-    assert manager.c.window.info()['width'] == 398
-    assert manager.c.window.info()['height'] == 578
-    assert manager.c.window.info()['float_info'] == {
-        'y': 0, 'x': 400, 'width': 100, 'height': 100}
-    assert manager.c.window.info()['x'] == 400
-    assert manager.c.window.info()['y'] == 0
+    assert manager.c.group.info()["focus"] == "one"
+    assert manager.c.window.info()["width"] == 398
+    assert manager.c.window.info()["height"] == 578
+    assert manager.c.window.info()["float_info"] == {
+        "y": 0,
+        "x": 400,
+        "width": 100,
+        "height": 100,
+    }
+    assert manager.c.window.info()["x"] == 400
+    assert manager.c.window.info()["y"] == 0
 
     manager.c.window.toggle_fullscreen()
-    assert manager.c.window.info()['floating'] is True
-    assert manager.c.window.info()['maximized'] is False
-    assert manager.c.window.info()['fullscreen'] is True
-    assert manager.c.window.info()['width'] == 800
-    assert manager.c.window.info()['height'] == 600
-    assert manager.c.window.info()['x'] == 0
-    assert manager.c.window.info()['y'] == 0
+    assert manager.c.window.info()["floating"] is True
+    assert manager.c.window.info()["maximized"] is False
+    assert manager.c.window.info()["fullscreen"] is True
+    assert manager.c.window.info()["width"] == 800
+    assert manager.c.window.info()["height"] == 600
+    assert manager.c.window.info()["x"] == 0
+    assert manager.c.window.info()["y"] == 0
 
     manager.c.window.toggle_fullscreen()
-    assert manager.c.window.info()['floating'] is False
-    assert manager.c.window.info()['maximized'] is False
-    assert manager.c.window.info()['fullscreen'] is False
-    assert manager.c.window.info()['width'] == 398
-    assert manager.c.window.info()['height'] == 578
-    assert manager.c.window.info()['x'] == 400
-    assert manager.c.window.info()['y'] == 0
+    assert manager.c.window.info()["floating"] is False
+    assert manager.c.window.info()["maximized"] is False
+    assert manager.c.window.info()["fullscreen"] is False
+    assert manager.c.window.info()["width"] == 398
+    assert manager.c.window.info()["height"] == 578
+    assert manager.c.window.info()["x"] == 400
+    assert manager.c.window.info()["y"] == 0
 
 
 @manager_config
@@ -697,32 +729,36 @@ def test_toggle_max(manager):
     # change to 2 col stack
     manager.c.next_layout()
     assert len(manager.c.layout.info()["stacks"]) == 2
-    manager.test_window('two')
+    manager.test_window("two")
     manager.test_window("one")
 
-    assert manager.c.group.info()['focus'] == 'one'
-    assert manager.c.window.info()['width'] == 398
-    assert manager.c.window.info()['height'] == 578
-    assert manager.c.window.info()['float_info'] == {
-        'y': 0, 'x': 400, 'width': 100, 'height': 100}
-    assert manager.c.window.info()['x'] == 400
-    assert manager.c.window.info()['y'] == 0
+    assert manager.c.group.info()["focus"] == "one"
+    assert manager.c.window.info()["width"] == 398
+    assert manager.c.window.info()["height"] == 578
+    assert manager.c.window.info()["float_info"] == {
+        "y": 0,
+        "x": 400,
+        "width": 100,
+        "height": 100,
+    }
+    assert manager.c.window.info()["x"] == 400
+    assert manager.c.window.info()["y"] == 0
 
     manager.c.window.toggle_maximize()
-    assert manager.c.window.info()['floating'] is True
-    assert manager.c.window.info()['maximized'] is True
-    assert manager.c.window.info()['width'] == 800
-    assert manager.c.window.info()['height'] == 580
-    assert manager.c.window.info()['x'] == 0
-    assert manager.c.window.info()['y'] == 0
+    assert manager.c.window.info()["floating"] is True
+    assert manager.c.window.info()["maximized"] is True
+    assert manager.c.window.info()["width"] == 800
+    assert manager.c.window.info()["height"] == 580
+    assert manager.c.window.info()["x"] == 0
+    assert manager.c.window.info()["y"] == 0
 
     manager.c.window.toggle_maximize()
-    assert manager.c.window.info()['floating'] is False
-    assert manager.c.window.info()['maximized'] is False
-    assert manager.c.window.info()['width'] == 398
-    assert manager.c.window.info()['height'] == 578
-    assert manager.c.window.info()['x'] == 400
-    assert manager.c.window.info()['y'] == 0
+    assert manager.c.window.info()["floating"] is False
+    assert manager.c.window.info()["maximized"] is False
+    assert manager.c.window.info()["width"] == 398
+    assert manager.c.window.info()["height"] == 578
+    assert manager.c.window.info()["x"] == 400
+    assert manager.c.window.info()["y"] == 0
 
 
 @manager_config
@@ -730,50 +766,54 @@ def test_toggle_min(manager):
     # change to 2 col stack
     manager.c.next_layout()
     assert len(manager.c.layout.info()["stacks"]) == 2
-    manager.test_window('two')
+    manager.test_window("two")
     manager.test_window("one")
 
-    assert manager.c.group.info()['focus'] == 'one'
-    assert manager.c.window.info()['width'] == 398
-    assert manager.c.window.info()['height'] == 578
-    assert manager.c.window.info()['float_info'] == {
-        'y': 0, 'x': 400, 'width': 100, 'height': 100}
-    assert manager.c.window.info()['x'] == 400
-    assert manager.c.window.info()['y'] == 0
+    assert manager.c.group.info()["focus"] == "one"
+    assert manager.c.window.info()["width"] == 398
+    assert manager.c.window.info()["height"] == 578
+    assert manager.c.window.info()["float_info"] == {
+        "y": 0,
+        "x": 400,
+        "width": 100,
+        "height": 100,
+    }
+    assert manager.c.window.info()["x"] == 400
+    assert manager.c.window.info()["y"] == 0
 
     manager.c.window.toggle_minimize()
-    assert manager.c.group.info()['focus'] == 'one'
-    assert manager.c.window.info()['floating'] is True
-    assert manager.c.window.info()['minimized'] is True
-    assert manager.c.window.info()['width'] == 398
-    assert manager.c.window.info()['height'] == 578
-    assert manager.c.window.info()['x'] == 400
-    assert manager.c.window.info()['y'] == 0
+    assert manager.c.group.info()["focus"] == "one"
+    assert manager.c.window.info()["floating"] is True
+    assert manager.c.window.info()["minimized"] is True
+    assert manager.c.window.info()["width"] == 398
+    assert manager.c.window.info()["height"] == 578
+    assert manager.c.window.info()["x"] == 400
+    assert manager.c.window.info()["y"] == 0
 
     manager.c.window.toggle_minimize()
-    assert manager.c.group.info()['focus'] == 'one'
-    assert manager.c.window.info()['floating'] is False
-    assert manager.c.window.info()['minimized'] is False
-    assert manager.c.window.info()['width'] == 398
-    assert manager.c.window.info()['height'] == 578
-    assert manager.c.window.info()['x'] == 400
-    assert manager.c.window.info()['y'] == 0
+    assert manager.c.group.info()["focus"] == "one"
+    assert manager.c.window.info()["floating"] is False
+    assert manager.c.window.info()["minimized"] is False
+    assert manager.c.window.info()["width"] == 398
+    assert manager.c.window.info()["height"] == 578
+    assert manager.c.window.info()["x"] == 400
+    assert manager.c.window.info()["y"] == 0
 
 
 @manager_config
 def test_toggle_floating(manager):
     manager.test_window("one")
-    assert manager.c.window.info()['floating'] is False
+    assert manager.c.window.info()["floating"] is False
     manager.c.window.toggle_floating()
-    assert manager.c.window.info()['floating'] is True
+    assert manager.c.window.info()["floating"] is True
     manager.c.window.toggle_floating()
-    assert manager.c.window.info()['floating'] is False
+    assert manager.c.window.info()["floating"] is False
     manager.c.window.toggle_floating()
-    assert manager.c.window.info()['floating'] is True
+    assert manager.c.window.info()["floating"] is True
 
     # change layout (should still be floating)
     manager.c.next_layout()
-    assert manager.c.window.info()['floating'] is True
+    assert manager.c.window.info()["floating"] is True
 
 
 @manager_config
@@ -783,88 +823,88 @@ def test_floating_focus(manager):
     assert len(manager.c.layout.info()["stacks"]) == 2
     manager.test_window("two")
     manager.test_window("one")
-    assert manager.c.window.info()['width'] == 398
-    assert manager.c.window.info()['height'] == 578
+    assert manager.c.window.info()["width"] == 398
+    assert manager.c.window.info()["height"] == 578
     manager.c.window.toggle_floating()
     manager.c.window.move_floating(10, 20)
-    assert manager.c.window.info()['name'] == 'one'
-    assert manager.c.group.info()['focus'] == 'one'
+    assert manager.c.window.info()["name"] == "one"
+    assert manager.c.group.info()["focus"] == "one"
     # check what stack thinks is focus
-    assert [x['current'] for x in manager.c.layout.info()['stacks']] == [0, 0]
+    assert [x["current"] for x in manager.c.layout.info()["stacks"]] == [0, 0]
 
     # change focus to "one"
     manager.c.group.next_window()
-    assert manager.c.window.info()['width'] == 398
-    assert manager.c.window.info()['height'] == 578
-    assert manager.c.window.info()['name'] != 'one'
-    assert manager.c.group.info()['focus'] != 'one'
+    assert manager.c.window.info()["width"] == 398
+    assert manager.c.window.info()["height"] == 578
+    assert manager.c.window.info()["name"] != "one"
+    assert manager.c.group.info()["focus"] != "one"
     # check what stack thinks is focus
     # check what stack thinks is focus
-    assert [x['current'] for x in manager.c.layout.info()['stacks']] == [0, 0]
+    assert [x["current"] for x in manager.c.layout.info()["stacks"]] == [0, 0]
 
     # focus back to one
     manager.c.group.next_window()
-    assert manager.c.window.info()['name'] == 'one'
+    assert manager.c.window.info()["name"] == "one"
     # check what stack thinks is focus
-    assert [x['current'] for x in manager.c.layout.info()['stacks']] == [0, 0]
+    assert [x["current"] for x in manager.c.layout.info()["stacks"]] == [0, 0]
 
     # now focusing via layout is borked (won't go to float)
     manager.c.layout.up()
-    assert manager.c.window.info()['name'] != 'one'
+    assert manager.c.window.info()["name"] != "one"
     manager.c.layout.up()
-    assert manager.c.window.info()['name'] != 'one'
+    assert manager.c.window.info()["name"] != "one"
     # check what stack thinks is focus
-    assert [x['current'] for x in manager.c.layout.info()['stacks']] == [0, 0]
+    assert [x["current"] for x in manager.c.layout.info()["stacks"]] == [0, 0]
 
     # focus back to one
     manager.c.group.next_window()
-    assert manager.c.window.info()['name'] == 'one'
+    assert manager.c.window.info()["name"] == "one"
     # check what stack thinks is focus
-    assert [x['current'] for x in manager.c.layout.info()['stacks']] == [0, 0]
+    assert [x["current"] for x in manager.c.layout.info()["stacks"]] == [0, 0]
 
 
 @manager_config
 def test_move_floating(manager):
     manager.test_window("one")
     # manager.test_window("one")
-    assert manager.c.window.info()['width'] == 798
-    assert manager.c.window.info()['height'] == 578
+    assert manager.c.window.info()["width"] == 798
+    assert manager.c.window.info()["height"] == 578
 
-    assert manager.c.window.info()['x'] == 0
-    assert manager.c.window.info()['y'] == 0
+    assert manager.c.window.info()["x"] == 0
+    assert manager.c.window.info()["y"] == 0
     manager.c.window.toggle_floating()
-    assert manager.c.window.info()['floating'] is True
+    assert manager.c.window.info()["floating"] is True
 
     manager.c.window.move_floating(10, 20)
-    assert manager.c.window.info()['width'] == 100
-    assert manager.c.window.info()['height'] == 100
-    assert manager.c.window.info()['x'] == 10
-    assert manager.c.window.info()['y'] == 20
+    assert manager.c.window.info()["width"] == 100
+    assert manager.c.window.info()["height"] == 100
+    assert manager.c.window.info()["x"] == 10
+    assert manager.c.window.info()["y"] == 20
 
     manager.c.window.set_size_floating(50, 90)
-    assert manager.c.window.info()['width'] == 50
-    assert manager.c.window.info()['height'] == 90
-    assert manager.c.window.info()['x'] == 10
-    assert manager.c.window.info()['y'] == 20
+    assert manager.c.window.info()["width"] == 50
+    assert manager.c.window.info()["height"] == 90
+    assert manager.c.window.info()["x"] == 10
+    assert manager.c.window.info()["y"] == 20
 
     manager.c.window.resize_floating(10, 20)
-    assert manager.c.window.info()['width'] == 60
-    assert manager.c.window.info()['height'] == 110
-    assert manager.c.window.info()['x'] == 10
-    assert manager.c.window.info()['y'] == 20
+    assert manager.c.window.info()["width"] == 60
+    assert manager.c.window.info()["height"] == 110
+    assert manager.c.window.info()["x"] == 10
+    assert manager.c.window.info()["y"] == 20
 
     manager.c.window.set_size_floating(10, 20)
-    assert manager.c.window.info()['width'] == 10
-    assert manager.c.window.info()['height'] == 20
-    assert manager.c.window.info()['x'] == 10
-    assert manager.c.window.info()['y'] == 20
+    assert manager.c.window.info()["width"] == 10
+    assert manager.c.window.info()["height"] == 20
+    assert manager.c.window.info()["x"] == 10
+    assert manager.c.window.info()["y"] == 20
 
     # change layout (x, y should be same)
     manager.c.next_layout()
-    assert manager.c.window.info()['width'] == 10
-    assert manager.c.window.info()['height'] == 20
-    assert manager.c.window.info()['x'] == 10
-    assert manager.c.window.info()['y'] == 20
+    assert manager.c.window.info()["width"] == 10
+    assert manager.c.window.info()["height"] == 20
+    assert manager.c.window.info()["x"] == 10
+    assert manager.c.window.info()["y"] == 20
 
 
 @manager_config
@@ -893,7 +933,7 @@ def test_focus_stays_on_layout_switch(manager):
     manager.c.next_layout()
     manager.c.prev_layout()
 
-    assert manager.c.window.info()['name'] == 'one'
+    assert manager.c.window.info()["name"] == "one"
 
 
 @pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
@@ -1023,22 +1063,22 @@ def test_labelgroup(manager):
 @manager_config
 def test_change_loglevel(manager):
     assert manager.c.loglevel() == logging.INFO
-    assert manager.c.loglevelname() == 'INFO'
+    assert manager.c.loglevelname() == "INFO"
     manager.c.debug()
     assert manager.c.loglevel() == logging.DEBUG
-    assert manager.c.loglevelname() == 'DEBUG'
+    assert manager.c.loglevelname() == "DEBUG"
     manager.c.info()
     assert manager.c.loglevel() == logging.INFO
-    assert manager.c.loglevelname() == 'INFO'
+    assert manager.c.loglevelname() == "INFO"
     manager.c.warning()
     assert manager.c.loglevel() == logging.WARNING
-    assert manager.c.loglevelname() == 'WARNING'
+    assert manager.c.loglevelname() == "WARNING"
     manager.c.error()
     assert manager.c.loglevel() == logging.ERROR
-    assert manager.c.loglevelname() == 'ERROR'
+    assert manager.c.loglevelname() == "ERROR"
     manager.c.critical()
     assert manager.c.loglevel() == logging.CRITICAL
-    assert manager.c.loglevelname() == 'CRITICAL'
+    assert manager.c.loglevelname() == "CRITICAL"
 
 
 def test_switch_groups_cursor_warp(manager_nospawn):
@@ -1093,68 +1133,68 @@ def test_cmd_reload_config(manager_nospawn):
         assert "dd" in manager_nospawn.c.group.info()["windows"]
 
     # Original config
-    assert manager_nospawn.c.eval("len(self.keys_map)") == (True, '1')
-    assert manager_nospawn.c.eval("len(self.mouse_map)") == (True, '1')
+    assert manager_nospawn.c.eval("len(self.keys_map)") == (True, "1")
+    assert manager_nospawn.c.eval("len(self.mouse_map)") == (True, "1")
     assert "".join(manager_nospawn.c.groups().keys()) == "12345S"
-    assert len(manager_nospawn.c.group.info()['layouts']) == 1
-    assert manager_nospawn.c.widget['clock'].eval('self.background') == (True, 'None')
+    assert len(manager_nospawn.c.group.info()["layouts"]) == 1
+    assert manager_nospawn.c.widget["clock"].eval("self.background") == (True, "None")
     screens = manager_nospawn.c.screens()[0]
-    assert screens['gaps']['bottom'][3] == 24 and not screens['gaps']['top']
+    assert screens["gaps"]["bottom"][3] == 24 and not screens["gaps"]["top"]
     assert len(manager_nospawn.c.internal_windows()) == 1
-    assert manager_nospawn.c.eval('self.dgroups.key_binder') == (True, 'None')
-    assert manager_nospawn.c.eval('len(self.dgroups.rules)') == (True, '6')
+    assert manager_nospawn.c.eval("self.dgroups.key_binder") == (True, "None")
+    assert manager_nospawn.c.eval("len(self.dgroups.rules)") == (True, "6")
     manager_nospawn.test_window("one")
-    assert manager_nospawn.c.window.info()['floating'] is True
+    assert manager_nospawn.c.window.info()["floating"] is True
     manager_nospawn.c.window.kill()
     if manager_nospawn.backend.name == "x11":
-        assert manager_nospawn.c.eval('self.core.wmname') == (True, 'LG3D')
-    manager_nospawn.c.group['S'].dropdown_toggle('dropdown1')  # Spawn dropdown
+        assert manager_nospawn.c.eval("self.core.wmname") == (True, "LG3D")
+    manager_nospawn.c.group["S"].dropdown_toggle("dropdown1")  # Spawn dropdown
     assert_dd_appeared()
-    manager_nospawn.c.group['S'].dropdown_toggle('dropdown1')  # Send it to ScratchPad
+    manager_nospawn.c.group["S"].dropdown_toggle("dropdown1")  # Send it to ScratchPad
 
     # Reload #1 - with libqtile.qtile.test_data
     manager_nospawn.c.eval("self.test_data = 1")
     manager_nospawn.c.reload_config()
-    assert manager_nospawn.c.eval("len(self.keys_map)") == (True, '2')
-    assert manager_nospawn.c.eval("len(self.mouse_map)") == (True, '2')
+    assert manager_nospawn.c.eval("len(self.keys_map)") == (True, "2")
+    assert manager_nospawn.c.eval("len(self.mouse_map)") == (True, "2")
     assert "".join(manager_nospawn.c.groups().keys()) == "123456789S"
-    assert len(manager_nospawn.c.group.info()['layouts']) == 2
-    assert manager_nospawn.c.widget['currentlayout'].eval('self.background') == (True, '#ff0000')
+    assert len(manager_nospawn.c.group.info()["layouts"]) == 2
+    assert manager_nospawn.c.widget["currentlayout"].eval("self.background") == (True, "#ff0000")
     screens = manager_nospawn.c.screens()[0]
-    assert screens['gaps']['top'][3] == 32 and not screens['gaps']['bottom']
+    assert screens["gaps"]["top"][3] == 32 and not screens["gaps"]["bottom"]
     assert len(manager_nospawn.c.internal_windows()) == 1
-    _, binder = manager_nospawn.c.eval('self.dgroups.key_binder')
-    assert 'function simple_key_binder' in binder
-    assert manager_nospawn.c.eval('len(self.dgroups.rules)') == (True, '11')
+    _, binder = manager_nospawn.c.eval("self.dgroups.key_binder")
+    assert "function simple_key_binder" in binder
+    assert manager_nospawn.c.eval("len(self.dgroups.rules)") == (True, "11")
     manager_nospawn.test_window("one")
-    assert manager_nospawn.c.window.info()['floating'] is False
+    assert manager_nospawn.c.window.info()["floating"] is False
     manager_nospawn.c.window.kill()
     if manager_nospawn.backend.name == "x11":
-        assert manager_nospawn.c.eval('self.core.wmname') == (True, 'TEST')
-    manager_nospawn.c.group['S'].dropdown_toggle('dropdown2')  # Spawn second dropdown
+        assert manager_nospawn.c.eval("self.core.wmname") == (True, "TEST")
+    manager_nospawn.c.group["S"].dropdown_toggle("dropdown2")  # Spawn second dropdown
     assert_dd_appeared()
-    manager_nospawn.c.group['S'].dropdown_toggle('dropdown1')  # Send it to ScratchPad
-    assert 'dd' in manager_nospawn.c.groups()['S']['windows']
-    assert 'dd' in manager_nospawn.c.groups()['S']['windows']
+    manager_nospawn.c.group["S"].dropdown_toggle("dropdown1")  # Send it to ScratchPad
+    assert "dd" in manager_nospawn.c.groups()["S"]["windows"]
+    assert "dd" in manager_nospawn.c.groups()["S"]["windows"]
 
     # Reload #2 - back to without libqtile.qtile.test_data
     manager_nospawn.c.eval("del self.test_data")
     manager_nospawn.c.reload_config()
-    assert manager_nospawn.c.eval("len(self.keys_map)") == (True, '1')
-    assert manager_nospawn.c.eval("len(self.mouse_map)") == (True, '1')
+    assert manager_nospawn.c.eval("len(self.keys_map)") == (True, "1")
+    assert manager_nospawn.c.eval("len(self.mouse_map)") == (True, "1")
     # The last four groups persist within QtileState
     assert "".join(manager_nospawn.c.groups().keys()) == "12345S"
-    assert len(manager_nospawn.c.group.info()['layouts']) == 1
-    assert manager_nospawn.c.widget['clock'].eval('self.background') == (True, 'None')
+    assert len(manager_nospawn.c.group.info()["layouts"]) == 1
+    assert manager_nospawn.c.widget["clock"].eval("self.background") == (True, "None")
     screens = manager_nospawn.c.screens()[0]
-    assert screens['gaps']['bottom'][3] == 24 and not screens['gaps']['top']
+    assert screens["gaps"]["bottom"][3] == 24 and not screens["gaps"]["top"]
     assert len(manager_nospawn.c.internal_windows()) == 1
-    assert manager_nospawn.c.eval('self.dgroups.key_binder') == (True, 'None')
-    assert manager_nospawn.c.eval('len(self.dgroups.rules)') == (True, '6')
+    assert manager_nospawn.c.eval("self.dgroups.key_binder") == (True, "None")
+    assert manager_nospawn.c.eval("len(self.dgroups.rules)") == (True, "6")
     manager_nospawn.test_window("one")
-    assert manager_nospawn.c.window.info()['floating'] is True
+    assert manager_nospawn.c.window.info()["floating"] is True
     manager_nospawn.c.window.kill()
     if manager_nospawn.backend.name == "x11":
-        assert manager_nospawn.c.eval('self.core.wmname') == (True, 'LG3D')
-    assert 'dd' in manager_nospawn.c.groups()['S']['windows']  # First dropdown persists
-    assert 'dd' in manager_nospawn.c.groups()['1']['windows']  # Second orphans to group
+        assert manager_nospawn.c.eval("self.core.wmname") == (True, "LG3D")
+    assert "dd" in manager_nospawn.c.groups()["S"]["windows"]  # First dropdown persists
+    assert "dd" in manager_nospawn.c.groups()["1"]["windows"]  # Second orphans to group

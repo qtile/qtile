@@ -35,12 +35,12 @@ class WhenConfig(Config):
         config.Key(
             ["control"],
             "j",
-            lazy.window.toggle_floating().when(config.Match(wm_class='TestWindow')),
+            lazy.window.toggle_floating().when(config.Match(wm_class="TestWindow")),
         ),
         config.Key(
             ["control"],
             "h",
-            lazy.window.toggle_floating().when(config.Match(wm_class='idonotexist')),
+            lazy.window.toggle_floating().when(config.Match(wm_class="idonotexist")),
         ),
     ]
 
@@ -51,17 +51,17 @@ when_config = pytest.mark.parametrize("manager", [WhenConfig], indirect=True)
 @when_config
 def test_when(manager):
     # Check if the test window is alive and tiled
-    manager.test_window('one')
-    assert not manager.c.window.info()['floating']
+    manager.test_window("one")
+    assert not manager.c.window.info()["floating"]
 
     # This sets the window to floating as there is no when
     manager.c.simulate_keypress(["control"], "k")
-    assert manager.c.window.info()['floating']
+    assert manager.c.window.info()["floating"]
 
     # This keeps the window floating as the class doesn't match
     manager.c.simulate_keypress(["control"], "h")
-    assert manager.c.window.info()['floating']
+    assert manager.c.window.info()["floating"]
 
     # This sets the window tiled as the class does match
     manager.c.simulate_keypress(["control"], "j")
-    assert not manager.c.window.info()['floating']
+    assert not manager.c.window.info()["floating"]

@@ -42,32 +42,20 @@ def rename_hook(query, fro, to):
 
 
 def client_name_updated(query):
-    """ Rename window_name_change -> client_name_updated"""
+    """Rename window_name_change -> client_name_updated"""
     return rename_hook(query, "window_name_change", "client_name_updated")
 
 
 def tile_master_windows_rename(query):
-    return (
-        query
-        .select_function("Tile")
-        .modify_argument("masterWindows", "master_length")
-    )
+    return query.select_function("Tile").modify_argument("masterWindows", "master_length")
 
 
 def threaded_poll_text_rename(query):
-    return (
-        query
-        .select_class("ThreadedPollText")
-        .rename("ThreadPoolText")
-    )
+    return query.select_class("ThreadedPollText").rename("ThreadPoolText")
 
 
 def pacman_to_checkupdates(query):
-    return (
-        query
-        .select_class("Pacman")
-        .rename("CheckUpdates")
-    )
+    return query.select_class("Pacman").rename("CheckUpdates")
 
 
 def reset_format(node, capture, filename):
@@ -77,7 +65,7 @@ def reset_format(node, capture, filename):
             n_children = len(args[0].children)
             for i in range(n_children):
                 # we only want to remove the format argument
-                if 'format' in str(args[0].children[i]):
+                if "format" in str(args[0].children[i]):
                     # remove the argument and the trailing or preceeding comma
                     if i == n_children - 1:  # last argument
                         args[0].children[i - 1].remove()
@@ -92,12 +80,7 @@ def reset_format(node, capture, filename):
 
 
 def bitcoin_to_crypto(query):
-    return (
-        query
-        .select_class("BitcoinTicker")
-        .modify(reset_format)
-        .rename("CryptoTicker")
-    )
+    return query.select_class("BitcoinTicker").modify(reset_format).rename("CryptoTicker")
 
 
 def hook_main_function(query):
@@ -113,12 +96,7 @@ def hook_main_function(query):
             main.prefix += "from libqtile import hook, qtile\n"
             main.prefix += "@hook.subscribe.startup\n"
 
-    return (
-        query
-        .select_function("main")
-        .is_def()
-        .modify(modify_main)
-    )
+    return query.select_function("main").is_def().modify(modify_main)
 
 
 # Deprecated new_at_current key replaced by new_client_position.
@@ -140,19 +118,11 @@ def new_at_current_to_new_client_position(query):
     old_pattern = """
         argument< k="new_at_current" "=" v=any >
     """
-    return (
-        query
-        .select(old_pattern)
-        .modify(update_node_nac)
-    )
+    return query.select(old_pattern).modify(update_node_nac)
 
 
 def windowtogroup_groupName_argument(funcname, query):  # noqa: N802
-    return (
-        query
-        .select_method(funcname)
-        .modify_argument("groupName", "group_name")
-    )
+    return query.select_method(funcname).modify_argument("groupName", "group_name")
 
 
 MIGRATIONS = [
@@ -177,12 +147,10 @@ MODULE_RENAMES = [
 ]
 
 for (fro, to) in MODULE_RENAMES:
+
     def f(query, fro=fro, to=to):
-        return (
-            query
-            .select_module(fro)
-            .rename(to)
-        )
+        return query.select_module(fro).rename(to)
+
     MIGRATIONS.append(f)
 
 
@@ -221,9 +189,7 @@ def do_migrate(args):
 
 def add_subcommand(subparsers, parents):
     parser = subparsers.add_parser(
-        "migrate",
-        parents=parents,
-        help="Migrate a configuration file to the current API"
+        "migrate", parents=parents, help="Migrate a configuration file to the current API"
     )
     parser.add_argument(
         "-c",

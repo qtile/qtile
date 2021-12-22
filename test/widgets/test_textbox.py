@@ -33,11 +33,7 @@ def test_text_box_bar_orientations(manager_nospawn, minimal_conf_noscreen, posit
     textbox = widget.TextBox(text="Testing")
 
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            **{position: libqtile.bar.Bar([textbox], 10)}
-        )
-    ]
+    config.screens = [libqtile.config.Screen(**{position: libqtile.bar.Bar([textbox], 10)})]
 
     manager_nospawn.start(config)
     tbox = manager_nospawn.c.widget["textbox"]
@@ -53,11 +49,7 @@ def test_text_box_max_chars(manager_nospawn, minimal_conf_noscreen):
     textbox = widget.TextBox(text="Testing", max_chars=4)
 
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar([textbox], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([textbox], 10))]
 
     manager_nospawn.start(config)
     tbox = manager_nospawn.c.widget["textbox"]

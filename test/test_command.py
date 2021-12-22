@@ -40,11 +40,13 @@ from test.conftest import dualmonitor
 class CallConfig(Config):
     keys = [
         libqtile.config.Key(
-            ["control"], "j",
+            ["control"],
+            "j",
             lazy.layout.down(),
         ),
         libqtile.config.Key(
-            ["control"], "k",
+            ["control"],
+            "k",
             lazy.layout.up(),
         ),
     ]
@@ -64,7 +66,7 @@ class CallConfig(Config):
                 [
                     libqtile.widget.GroupBox(),
                 ],
-                20
+                20,
             ),
         )
     ]
@@ -146,7 +148,7 @@ class ServerConfig(Config):
                 [
                     libqtile.widget.TextBox(name="one"),
                 ],
-                20
+                20,
             ),
         ),
         libqtile.config.Screen(
@@ -154,9 +156,9 @@ class ServerConfig(Config):
                 [
                     libqtile.widget.TextBox(name="two"),
                 ],
-                20
+                20,
             ),
-        )
+        ),
     ]
 
 
@@ -191,7 +193,7 @@ def test_items_qtile(manager):
 
     v = manager.c.items("widget")
     assert not v[0]
-    assert sorted(v[1]) == ['one', 'two']
+    assert sorted(v[1]) == ["one", "two"]
 
     assert manager.c.items("bar") == (False, ["bottom"])
     t, lst = manager.c.items("window")
@@ -395,13 +397,11 @@ def test_lazy_arguments(manager_nospawn):
     config = ServerConfig
     config.keys = [
         libqtile.config.Key(
-            ["control"], "j",
+            ["control"],
+            "j",
             test_func(10),
         ),
-        libqtile.config.Key(
-            ["control"], "k",
-            test_func(5, multiplier=100)
-        ),
+        libqtile.config.Key(["control"], "k", test_func(5, multiplier=100)),
     ]
 
     manager_nospawn.start(config)
@@ -419,43 +419,47 @@ def test_deprecated_modules(caplog):
     libqtile.log_utils.init_log(logging.WARNING, log_path=None, log_color=False)
 
     from libqtile.command_client import InteractiveCommandClient  # noqa: F401
+
     assert caplog.record_tuples == [
         (
-            'libqtile',
+            "libqtile",
             logging.WARNING,
-            'libqtile.command_client is deprecated. It has been moved to libqtile.command.client'
+            "libqtile.command_client is deprecated. It has been moved to libqtile.command.client",
         )
     ]
 
     caplog.clear()
 
     from libqtile.command_graph import CommandGraphNode  # noqa: F401
+
     assert caplog.record_tuples == [
         (
-            'libqtile',
+            "libqtile",
             logging.WARNING,
-            'libqtile.command_graph is deprecated. It has been moved to libqtile.command.graph'
+            "libqtile.command_graph is deprecated. It has been moved to libqtile.command.graph",
         )
     ]
 
     caplog.clear()
 
     from libqtile.command_interface import CommandInterface  # noqa: F401
+
     assert caplog.record_tuples == [
         (
-            'libqtile',
+            "libqtile",
             logging.WARNING,
-            'libqtile.command_interface is deprecated. It has been moved to libqtile.command.interface'
+            "libqtile.command_interface is deprecated. It has been moved to libqtile.command.interface",
         )
     ]
 
     caplog.clear()
 
     from libqtile.command_object import CommandObject  # noqa: F401
+
     assert caplog.record_tuples == [
         (
-            'libqtile',
+            "libqtile",
             logging.WARNING,
-            'libqtile.command_object is deprecated. It has been moved to libqtile.command.base.'
+            "libqtile.command_object is deprecated. It has been moved to libqtile.command.base.",
         )
     ]

@@ -31,15 +31,11 @@ def test_lazy_callback(manager_nospawn, minimal_conf_noscreen):
         text="Testing",
         mouse_callbacks={
             "Button1": lazy.widget["textbox"].update("LazyCall"),
-        }
+        },
     )
 
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar([textbox], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([textbox], 10))]
 
     manager_nospawn.start(config)
 

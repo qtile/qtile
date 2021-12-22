@@ -50,8 +50,8 @@ widget_conf = pytest.mark.parametrize("manager", [WidgetTestConf], indirect=True
 
 @widget_conf
 def test_textbox_color_change(manager):
-    manager.c.widget["colorchanger"].update('f')
+    manager.c.widget["colorchanger"].update("f")
     assert manager.c.widget["colorchanger"].info()["foreground"] == "0000ff"
 
-    manager.c.widget["colorchanger"].update('f')
+    manager.c.widget["colorchanger"].update("f")
     assert manager.c.widget["colorchanger"].info()["foreground"] == "ff0000"

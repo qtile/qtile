@@ -65,7 +65,7 @@ ModMasks = {
 }
 
 # from linux/input-event-codes.h
-_KEY_MAX = 0x2ff
+_KEY_MAX = 0x2FF
 # These are mouse buttons 1-9
 BTN_LEFT = 0x110
 BTN_MIDDLE = 0x112
@@ -116,17 +116,15 @@ class Painter:
 
     def paint(self, screen, image_path, mode=None):
         try:
-            with open(image_path, 'rb') as f:
+            with open(image_path, "rb") as f:
                 image, _ = cairocffi.pixbuf.decode_to_image_surface(f.read())
         except IOError as e:
-            logger.error('Wallpaper: %s' % e)
+            logger.error("Wallpaper: %s" % e)
             return
 
-        surface = cairocffi.ImageSurface(
-            cairocffi.FORMAT_ARGB32, screen.width, screen.height
-        )
+        surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, screen.width, screen.height)
         with cairocffi.Context(surface) as context:
-            if mode == 'fill':
+            if mode == "fill":
                 context.rectangle(0, 0, screen.width, screen.height)
                 context.clip()
                 image_w = image.get_width()
@@ -136,11 +134,9 @@ class Painter:
                     context.scale(width_ratio)
                 else:
                     height_ratio = screen.height / image_h
-                    context.translate(
-                        - (image_w * height_ratio - screen.width) // 2, 0
-                    )
+                    context.translate(-(image_w * height_ratio - screen.width) // 2, 0)
                     context.scale(height_ratio)
-            elif mode == 'stretch':
+            elif mode == "stretch":
                 context.scale(
                     sx=screen.width / image.get_width(),
                     sy=screen.height / image.get_height(),
@@ -156,7 +152,7 @@ class Painter:
                 stride,
                 screen.width,
                 screen.height,
-                cairocffi.cairo.cairo_image_surface_get_data(surface._pointer)
+                cairocffi.cairo.cairo_image_surface_get_data(surface._pointer),
             )
             outputs = [output for output in self.core.outputs if output.wlr_output.enabled]
             outputs[screen.index].wallpaper = texture
@@ -169,6 +165,7 @@ class HasListeners:
 
     This guarantees that all listeners that set up and then removed in reverse order.
     """
+
     def add_listener(self, event: Signal, callback: Callable):
         if not hasattr(self, "_listeners"):
             self._listeners = []
@@ -185,6 +182,7 @@ class PointerConstraint(HasListeners):
     """
     A small object to listen to signals on `struct wlr_pointer_constraint_v1` instances.
     """
+
     rect: Box
 
     def __init__(self, core: Core, wlr_constraint: PointerConstraintV1):
@@ -258,6 +256,7 @@ class PointerConstraint(HasListeners):
 
 class Dnd(HasListeners):
     """A helper for drag and drop functionality."""
+
     def __init__(self, core: Core, wlr_drag: data_device_manager.Drag):
         self.core = core
         self.wlr_drag = wlr_drag

@@ -58,11 +58,7 @@ class MockCapsNumLockIndicator:
     @classmethod
     def call_process(cls, cmd):
         if cls.is_error:
-            raise subprocess.CalledProcessError(
-                -1,
-                cmd=cmd,
-                output="Couldn't call xset."
-            )
+            raise subprocess.CalledProcessError(-1, cmd=cmd, output="Couldn't call xset.")
 
         if cmd[1:] == ["q"]:
             track = cls.info[cls.index]
@@ -77,12 +73,18 @@ def no_op(*args, **kwargs):
 @pytest.fixture
 def patched_cnli(monkeypatch):
     MockCapsNumLockIndicator.reset()
-    monkeypatch.setattr("libqtile.widget.caps_num_lock_indicator.subprocess", MockCapsNumLockIndicator)
-    monkeypatch.setattr("libqtile.widget.caps_num_lock_indicator.subprocess.CalledProcessError",
-                        subprocess.CalledProcessError)
+    monkeypatch.setattr(
+        "libqtile.widget.caps_num_lock_indicator.subprocess", MockCapsNumLockIndicator
+    )
+    monkeypatch.setattr(
+        "libqtile.widget.caps_num_lock_indicator.subprocess.CalledProcessError",
+        subprocess.CalledProcessError,
+    )
 
-    monkeypatch.setattr("libqtile.widget.caps_num_lock_indicator.base.ThreadPoolText.call_process",
-                        MockCapsNumLockIndicator.call_process)
+    monkeypatch.setattr(
+        "libqtile.widget.caps_num_lock_indicator.base.ThreadPoolText.call_process",
+        MockCapsNumLockIndicator.call_process,
+    )
     return caps_num_lock_indicator
 
 
