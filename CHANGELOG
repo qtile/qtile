@@ -1,4 +1,6 @@
 Qtile x.x.x, released xxxx-xx-xx:
+
+Qtile 0.19.0, released 2021-12-22:
     * features
         - Add ability to draw borders to the Bar. Can customise size and colour per edge.
         - Add `StatusNotifier` widget implementing the `StatusNotifierItem` specification.
