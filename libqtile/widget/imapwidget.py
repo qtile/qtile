@@ -83,11 +83,11 @@ class ImapWidget(base.ThreadPoolText):
     def poll(self):
         im = imaplib.IMAP4_SSL(self.server, 993)
         if self.password == 'Gnome Keyring Error':
-            self.text = 'Gnome Keyring Error'
+            text = 'Gnome Keyring Error'
         else:
             im.login(self.user, self.password)
             status, response = im.status(self.mbox, '(UNSEEN)')
-            self.text = response[0].decode()
-            self.text = self.label + ': ' + re.sub(r'\).*$', '', re.sub(r'^.*N\s', '', self.text))
+            text = response[0].decode()
+            text = self.label + ': ' + re.sub(r'\).*$', '', re.sub(r'^.*N\s', '', text))
             im.logout()
-        return self.text
+        return text
