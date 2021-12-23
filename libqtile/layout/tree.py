@@ -387,6 +387,7 @@ class TreeTab(Layout):
         ("panel_width", 150, "Width of the left panel"),
         ("sections", ['Default'], "Foreground color of inactive tab"),
         ("previous_on_rm", False, "Focus previous window on close instead of first."),
+        ("place_right", False, "Place the tab panel on the right side"),
     ]
 
     def __init__(self, **config):
@@ -552,7 +553,10 @@ class TreeTab(Layout):
     def show(self, screen_rect):
         if not self._panel:
             self._create_panel(screen_rect)
-        panel, body = screen_rect.hsplit(self.panel_width)
+        if self.place_right:
+            body, panel = screen_rect.hsplit(screen_rect.width - self.panel_width)
+        else:
+            panel, body = screen_rect.hsplit(self.panel_width)
         self._resize_panel(panel)
         self._panel.unhide()
 
@@ -735,7 +739,10 @@ class TreeTab(Layout):
         )
 
     def layout(self, windows, screen_rect):
-        panel, body = screen_rect.hsplit(self.panel_width)
+        if self.place_right:
+            body, panel = screen_rect.hsplit(screen_rect.width - self.panel_width)
+        else:
+            panel, body = screen_rect.hsplit(self.panel_width)
         self._resize_panel(panel)
         Layout.layout(self, windows, body)
 
