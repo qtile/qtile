@@ -168,6 +168,7 @@ class Qtile(CommandObject):
 
         if self._state:
             for screen in self.screens:
+                screen.group.layout.show(screen.get_rect())
                 screen.group.layout_all()
         self._state = None
         self.update_desktops()
