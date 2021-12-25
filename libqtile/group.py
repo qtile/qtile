@@ -57,6 +57,7 @@ class _Group(CommandObject):
         self.focus_history = []
         self.screen = None
         self.current_layout = None
+        self.last_focused = None
 
     def _configure(self, layouts, floating_layout, qtile):
         self.screen = None
@@ -153,6 +154,10 @@ class _Group(CommandObject):
                     self.floating_layout.layout(floating, screen_rect)
                 if self.current_window and self.screen == self.qtile.current_screen:
                     self.current_window.focus(warp)
+                else:
+                    # Screen has lost focus so we reset record of focused window so
+                    # focus will warp when screen is focused again
+                    self.last_focused = None
 
     def set_screen(self, screen, warp=True):
         """Set this group's screen to screen"""
@@ -200,7 +205,13 @@ class _Group(CommandObject):
         if win:
             if win not in self.windows:
                 return
+
+            # ignore focus events if window is the current window
+            if win is self.last_focused:
+                warp = False
+
             self.current_window = win
+            self.last_focused = self.current_window
             if win.floating:
                 for layout in self.layouts:
                     layout.blur()
