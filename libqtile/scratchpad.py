@@ -203,6 +203,64 @@ class DropDownToggler(WindowVisibilityToggler):
             WindowVisibilityToggler.show(self)
 
 
+class DropDownTogglerSet:
+    """
+    DropDownTogglerSet is wrapper that stores DropDownToggler objects and allows
+    to toggle, show, hide the entire set.
+    """
+
+    def __init__(self, scratchpad_name, ddconfig):
+        self.scratchpad_name = scratchpad_name
+        self.ddconfig = ddconfig
+        self._windows = {}
+
+    def reconfigure(self, ddconfig):
+        self.ddconfig = ddconfig
+
+    def add_window(self, window):
+        self._windows[window] = DropDownToggler(window, self.scratchpad_name, self.ddconfig)
+
+    def remove_window(self, window):
+        self._windows.pop(window).unsubscribe()
+
+    def get_dropdown(self, window) -> DropDownToggler:
+        return self._windows[window]
+
+    def contains_window(self, window):
+        return window in self._windows
+
+    def __iter__(self):
+        for d in self._windows.values():
+            yield d
+
+    def __bool__(self):
+        return bool(self._windows)
+
+    def toggle(self):
+        for d in self:
+            d.toggle()
+
+    def hide(self):
+        for d in self:
+            d.hide()
+
+    def show(self):
+        for d in self:
+            d.show()
+
+    def info(self):
+        info = self.ddconfig.info()
+        oldest_window = next(iter(self))
+        info.update(
+            dict(
+                scratchpad_name=self.scratchpad_name,
+                visible=oldest_window.visible,
+                windows=[d.info() for d in self],
+            )
+        )
+        return info
+
+
 class ScratchPad(group._Group):
     """
     Specialized group which is by default invisible and can be configured, to
@@ -219,14 +277,18 @@ class ScratchPad(group._Group):
         self, name="scratchpad", dropdowns: List[config.DropDown] = None, label="", single=False
     ):
         group._Group.__init__(self, name, label=label)
-        self._dropdownconfig = {dd.name: dd for dd in dropdowns} if dropdowns is not None else {}
-        self.dropdowns: Dict[str, DropDownToggler] = {}
-        self._spawned: Dict[str, Match] = {}
+        self._dropdownconfig = {d.name: d for d in dropdowns} if dropdowns is not None else {}
+        self.dropdowns: Dict[str, DropDownTogglerSet] = {}
+        self._matchmap: Dict[str, Match] = (
+            {d.name: d.match for d in dropdowns if d.match} if dropdowns is not None else {}
+        )
         self._to_hide: List[str] = []
         self._single = single
 
+        hook.subscribe.client_new(self.on_client_new)
+
     def _check_unsubscribe(self):
-        if not self.dropdowns:
+        if not any(self.dropdowns):
             hook.unsubscribe.client_killed(self.on_client_killed)
             hook.unsubscribe.float_change(self.on_float_change)
 
@@ -239,12 +301,8 @@ class ScratchPad(group._Group):
         In case of a match the window gets associated to this DropDown object.
         """
         name = ddconfig.name
-        if name not in self._spawned:
-            if not self._spawned:
-                hook.subscribe.client_new(self.on_client_new)
-
-            pid = self.qtile.cmd_spawn(ddconfig.command)
-            self._spawned[name] = ddconfig.match or Match(net_wm_pid=pid)
+        pid = self.qtile.cmd_spawn(ddconfig.command)
+        self._matchmap[name] = ddconfig.match or Match(net_wm_pid=pid)
 
     def on_client_new(self, client, *args, **kwargs):
         """
@@ -253,20 +311,20 @@ class ScratchPad(group._Group):
         and unsubscribed immediately if the associated window is detected.
         """
         name = None
-        for n, match in self._spawned.items():
+        for n, match in self._matchmap.items():
             if match.compare(client):
                 name = n
                 break
 
         if name is not None:
-            self._spawned.pop(name)
-            if not self._spawned:
-                hook.unsubscribe.client_new(self.on_client_new)
-            self.dropdowns[name] = DropDownToggler(client, self.name, self._dropdownconfig[name])
+            if name not in self.dropdowns:
+                self.dropdowns[name] = DropDownTogglerSet(self.name, self._dropdownconfig[name])
+            self.dropdowns[name].add_window(client)
+
             if self._single:
-                for n, d in self.dropdowns.items():
+                for n, dd in self.dropdowns.items():
                     if n != name:
-                        d.hide()
+                        dd.hide()
             if name in self._to_hide:
                 self.dropdowns[name].hide()
                 self._to_hide.remove(name)
@@ -281,9 +339,10 @@ class ScratchPad(group._Group):
         """
         name = None
         for name, dd in self.dropdowns.items():
-            if dd.window is client:
-                dd.unsubscribe()
-                del self.dropdowns[name]
+            if dd.contains_window(client):
+                dd.remove_window(client)
+                if not dd:
+                    del self.dropdowns[name]
                 break
         self._check_unsubscribe()
 
@@ -295,12 +354,18 @@ class ScratchPad(group._Group):
         will spawn a new process.
         """
         name = None
+        found_window = False
         for name, dd in self.dropdowns.items():
-            if not dd.window.floating:
-                if dd.window.group is not self:
-                    dd.unsubscribe()
-                    del self.dropdowns[name]
-                    break
+            for d in dd:
+                if not d.window.floating:
+                    if d.window.group is not self:
+                        dd.remove_window(d.window)
+                        found_window = True
+                        break
+            if not dd:
+                del self.dropdowns[name]
+            if found_window:
+                break
         self._check_unsubscribe()
 
     def cmd_dropdown_toggle(self, name):
@@ -308,10 +373,10 @@ class ScratchPad(group._Group):
         Toggle visibility of named DropDown.
         """
         if self._single:
-            for n, d in self.dropdowns.items():
+            for n, dd in self.dropdowns.items():
                 if n != name:
-                    d.hide()
-        if name in self.dropdowns:
+                    dd.hide()
+        if self.dropdowns.get(name):
             self.dropdowns[name].toggle()
         else:
             if name in self._dropdownconfig:
@@ -321,8 +386,8 @@ class ScratchPad(group._Group):
         """
         Hide all scratchpads.
         """
-        for d in self.dropdowns.values():
-            d.hide()
+        for dd in self.dropdowns.values():
+            dd.hide()
 
     def cmd_dropdown_reconfigure(self, name, **kwargs):
         """
@@ -336,6 +401,9 @@ class ScratchPad(group._Group):
             if hasattr(dd, attr):
                 setattr(dd, attr, value)
 
+        for name, dd in self.dropdowns:
+            dd.reconfigure(self._dropdownconfig[name])
+
     def cmd_dropdown_info(self, name=None):
         """
         Get information on configured or currently active DropDowns.
@@ -343,7 +411,7 @@ class ScratchPad(group._Group):
         """
         if name is None:
             return {"dropdowns": [ddname for ddname in self._dropdownconfig]}
-        elif name in self.dropdowns:
+        elif self.dropdowns.get(name):
             return self.dropdowns[name].info()
         elif name in self._dropdownconfig:
             return self._dropdownconfig[name].info()
@@ -357,8 +425,9 @@ class ScratchPad(group._Group):
         """
         state = []
         for name, dd in self.dropdowns.items():
-            client_wid = dd.window.wid
-            state.append((name, client_wid, dd.visible))
+            for d in dd:
+                client_wid = d.window.wid
+                state.append((name, client_wid, d.visible))
         return state
 
     def restore_state(self, state, restart: bool):
@@ -370,25 +439,24 @@ class ScratchPad(group._Group):
         for name, wid, visible in state:
             if name in self._dropdownconfig:
                 if restart:
-                    self._spawned[name] = Match(wid=wid)
+                    self._matchmap[name] = self._dropdownconfig[name].match or Match(wid=wid)
                     if not visible:
                         self._to_hide.append(name)
                 else:
                     # We are reloading the config; manage the clients now
-                    self.dropdowns[name] = DropDownToggler(
-                        self.qtile.windows_map[wid],
-                        self.name,
-                        self._dropdownconfig[name],
-                    )
+                    if name not in self.dropdowns:
+                        self.dropdowns[name] = DropDownTogglerSet(
+                            self.name, self._dropdownconfig[name]
+                        )
+                    window = self.qtile.windows_map[wid]
+                    self.dropdowns[name].add_window(window)
+
                     if not visible:
-                        self.dropdowns[name].hide()
+                        self.dropdowns[name].get_dropdown(window).hide()
             else:
                 orphans.append(wid)
 
-        if self._spawned:
-            # Handle re-managed clients after restarting
-            assert restart
-            hook.subscribe.client_new(self.on_client_new)
+        hook.subscribe.client_new(self.on_client_new)
 
         if not restart and self.dropdowns:
             # We're only reloading so don't have these hooked via self.on_client_new
