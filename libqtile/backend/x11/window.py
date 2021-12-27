@@ -678,6 +678,7 @@ class _Window:
             height=self.height,
             group=group,
             id=self.window.wid,
+            wm_class=self.get_wm_class(),
             floating=self._float_state != FloatStates.NOT_FLOATING,
             float_info=float_info,
             maximized=self._float_state == FloatStates.MAXIMIZED,

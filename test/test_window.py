@@ -7,6 +7,24 @@ bare_config = pytest.mark.parametrize("manager", [BareConfig], indirect=True)
 
 
 @bare_config
+def test_info(manager):
+    """
+    Checks each backend Window implementation provides the required information.
+    """
+    manager.test_window("one")
+    manager.c.sync()
+    info = manager.c.window.info()
+    assert info["name"] == "one"
+    assert info["group"] == "a"
+    assert info["wm_class"][0] == "TestWindow"
+    assert "x" in info
+    assert "y" in info
+    assert "width" in info
+    assert "height" in info
+    assert "id" in info
+
+
+@bare_config
 def test_margin(manager):
     manager.test_window("one")
 
