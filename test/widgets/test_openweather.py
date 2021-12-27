@@ -17,6 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import time
+
 import pytest
 
 import libqtile.config
@@ -64,6 +66,7 @@ def mock_fetch(*args, **kwargs):
 @pytest.fixture
 def patch_openweather(request, monkeypatch):
     monkeypatch.setattr("libqtile.widget.generic_poll_text.GenPollUrl.fetch", mock_fetch)
+    monkeypatch.setattr("libqtile.widget.open_weather.time.localtime", time.gmtime)
     yield libqtile.widget.open_weather
 
 
