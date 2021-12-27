@@ -215,7 +215,20 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
     @abstractmethod
     def info(self) -> Dict[str, Any]:
-        """Return information on this window."""
+        """
+        Return information on this window.
+
+        Mimimum required keys are:
+        - name
+        - x
+        - y
+        - width
+        - height
+        - group
+        - id
+        - wm_class
+
+        """
         return {}
 
     def cmd_info(self) -> Dict:
@@ -528,6 +541,7 @@ class Static(_Window, metaclass=ABCMeta):
         """Return a dictionary of info."""
         return dict(
             name=self.name,
+            wm_class=self.get_wm_class(),
             x=self.x,
             y=self.y,
             width=self.width,

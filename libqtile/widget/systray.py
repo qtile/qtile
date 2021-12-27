@@ -26,12 +26,17 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from typing import TYPE_CHECKING
+
 import xcffib
 from xcffib.xproto import ClientMessageData, ClientMessageEvent, EventMask, SetMode
 
 from libqtile import bar
 from libqtile.backend.x11 import window
 from libqtile.widget import base
+
+if TYPE_CHECKING:
+    from typing import List, Optional
 
 XEMBED_PROTOCOL_VERSION = 0
 
@@ -118,6 +123,7 @@ class Systray(window._Window, base._Widget):
         self.tray_icons = []
         self.screen = 0
         self._name = config.get("name", "systray")
+        self._wm_class: Optional[List[str]] = None
 
     def calculate_length(self):
         if self.bar.horizontal:

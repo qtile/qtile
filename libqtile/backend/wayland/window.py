@@ -592,6 +592,7 @@ class Window(base.Window, HasListeners):
             height=self.height,
             group=self.group.name if self.group else None,
             id=self.wid,
+            wm_class=self.get_wm_class(),
             float_info=float_info,
             floating=self._float_state != FloatStates.NOT_FLOATING,
             maximized=self._float_state == FloatStates.MAXIMIZED,
