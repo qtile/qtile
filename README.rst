@@ -2,7 +2,7 @@
 
 **A full-featured, hackable tiling window manager written and configured in Python**
 
-|website| |pypi| |ci| |rtd| |license|
+|website| |pypi| |ci| |rtd| |license| |black|
 
 Features
 ========
@@ -56,6 +56,9 @@ and `guidelines`_ for contributing in the documentation.
 .. |license| image:: https://img.shields.io/github/license/qtile/qtile.svg
     :alt: License
     :target: https://github.com/qtile/qtile/blob/master/LICENSE
+.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :alt: Codestyle
+    :target: https://github.com/psf/black
 
 
 Maintainers
