@@ -14,8 +14,7 @@ class ThreeCol(_SimpleLayoutBase):
         (
             "ratio",
             0.5,
-            "The percent of the screen-space the master pane should occupy "
-            "by default.",
+            "The percent of the screen-space the master pane should occupy by default.",
         ),
         (
             "new_client_position",
@@ -73,14 +72,14 @@ class ThreeCol(_SimpleLayoutBase):
             border_width = self.single_border_width
             margin = self.single_margin
 
-            x = self.screen_rect.x
-            y = self.screen_rect.y
+            x = 0
+            y = 0
             width = self.screen_rect.width
             height = self.screen_rect.height
         else:
             border_width = self.border_width
             margin = [
-                self.margin,
+                self.margin if index < 3 else 0,
                 2 * self.border_width,
                 self.margin + 2 * self.border_width,
                 self.margin,
@@ -96,16 +95,20 @@ class ThreeCol(_SimpleLayoutBase):
             # handle main window
             if index == 0:
                 x = width_shared if client_count > 2 else 0
-                y = self.screen_rect.y
+                y = 0
                 width = width_main
                 height = self.screen_rect.height
+
             # handle children
             else:
                 # determine x position in 2 or 3 col view
                 if client_count == 2:
                     x = width_main
+                elif index % 2 == 1:
+                    x = width_main + width_shared
                 else:
-                    x = width_main + width_shared if index % 2 == 1 else 0
+                    x = 0
+
                 width = width_shared
 
                 # compute height of children on both sides
@@ -120,12 +123,12 @@ class ThreeCol(_SimpleLayoutBase):
                         self.screen_rect.height / (math.floor(client_count / 2.0))
                     )
                 # position of children depending on height
-                y = self.screen_rect.y + int(height * math.floor((index - 1) / 2.0))
+                y = int(height * math.floor((index - 1) / 2.0))
 
         # place the window at the computed position
         client.place(
-            x,
-            y,
+            self.screen_rect.x + x,
+            self.screen_rect.y + y,
             width - 2 * border_width,
             height - 2 * border_width,
             border_width,
