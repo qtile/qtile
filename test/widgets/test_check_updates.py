@@ -126,11 +126,7 @@ def test_update_available_with_execute(manager_nospawn, minimal_conf_noscreen, m
 
 def test_update_process_error(fake_qtile, fake_window):
     """test output where update check gives error"""
-    cu7 = CheckUpdates(
-        distro=good_distro,
-        custom_command=cmd_error,
-        no_update_string="ERROR",
-    )
+    cu7 = CheckUpdates(distro=good_distro, custom_command=cmd_error, error_string="ERROR")
     fakebar = FakeBar([cu7], window=fake_window)
     cu7._configure(fake_qtile, fakebar)
     text = cu7.poll()

@@ -47,6 +47,7 @@ class CheckUpdates(base.ThreadPoolText):
         ("colour_have_updates", "ffffff", "Colour when there are updates."),
         ("restart_indicator", "", "Indicator to represent reboot is required. (Ubuntu only)"),
         ("no_update_string", "", "String to display if no updates available"),
+        ("error_string", "", "String to display if there is an error while checking updates"),
     ]
 
     def __init__(self, **config):
@@ -100,7 +101,9 @@ class CheckUpdates(base.ThreadPoolText):
         try:
             updates = self.call_process(self.cmd, shell=True)
         except CalledProcessError:
-            updates = ""
+            logger.error("CheckUpdates widget failed to check updates (non-zero return code).")
+            return self.error_string
+
         num_updates = self.custom_command_modify(len(updates.splitlines()))
 
         if num_updates < 0:
