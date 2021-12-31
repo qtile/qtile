@@ -770,7 +770,9 @@ class Qtile(CommandObject):
         elif name == "bar":
             return False, [x.position for x in self.current_screen.gaps]
         elif name == "window":
-            return True, list(self.windows_map.keys())
+            windows: List[Union[str, int]]
+            windows = [k for k, v in self.windows_map.items() if isinstance(v, CommandObject)]
+            return True, windows
         elif name == "screen":
             return True, list(range(len(self.screens)))
         elif name == "core":
@@ -796,7 +798,11 @@ class Qtile(CommandObject):
             if sel is None:
                 return self.current_window
             else:
-                return self.windows_map.get(sel)  # type: ignore
+                windows: Dict[Union[str, int], base._Window]
+                windows = {
+                    k: v for k, v in self.windows_map.items() if isinstance(v, CommandObject)
+                }
+                return windows.get(sel)
         elif name == "screen":
             if sel is None:
                 return self.current_screen

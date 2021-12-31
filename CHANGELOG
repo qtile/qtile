@@ -1,6 +1,9 @@
 Qtile x.x.x, released xxxx-xx-xx:
     * features
         - Add `place_right` option in the TreeTab layout to place the tab panel on the right side
+    * bugfixes
+        - Remove non-commandable windows from IPC. Fixes bug where IPC would fail when trying to get info
+          on all windows but Systray has icons (which are non-commandable `_Window`s.)
 
 Qtile 0.19.0, released 2021-12-22:
     * features
