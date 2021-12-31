@@ -492,6 +492,30 @@ class Window(_Window, metaclass=ABCMeta):
         """
         self.defunct = True
 
+    def cmd_center(self) -> None:
+        """Centers a floating window on the screen."""
+        if not self.floating:
+            return
+
+        if not (self.group and self.group.screen):
+            return
+
+        screen = self.group.screen
+
+        x = (screen.width - self.width) // 2  # type: ignore
+        y = (screen.height - self.height) // 2  # type: ignore
+
+        self.place(
+            x,
+            y,
+            self.width,  # type: ignore
+            self.height,  # type: ignore
+            self.borderwidth,
+            self.bordercolor,  # type: ignore
+            above=True,
+            respect_hints=True,
+        )
+
 
 class Internal(_Window, metaclass=ABCMeta):
     """An Internal window belonging to Qtile."""

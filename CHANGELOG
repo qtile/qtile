@@ -17,6 +17,7 @@ Qtile x.x.x, released xxxx-xx-xx:
           managers to request the name.
         - Fix bug where `Battery` widget did not retrieve `background` from `widget_defaults`.
         - Fix bug where widgets in a `WidgetBox` are rendered on top of bar borders.
+        - Add `lazy.window.center()` command to center a floating window on the screen.
 
 Qtile 0.19.0, released 2021-12-22:
     * features
