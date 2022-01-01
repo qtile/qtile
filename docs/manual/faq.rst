@@ -123,3 +123,11 @@ visible groups on the fly may be useful:
            groupbox1.visible_groups = ['1', '2', '3', 'q', 'w', 'e']
        if hasattr(groupbox1, 'bar'):
            groupbox1.bar.draw()
+
+Where can I find example configurations and other scripts?
+==========================================================
+
+Please visit our `qtile-examples`_ repo which contains examples of users' configurations,
+scripts and other useful links.
+
+.. _`qtile-examples`: https://github.com/qtile/qtile-examples
