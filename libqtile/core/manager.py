@@ -50,7 +50,7 @@ from libqtile.extension.base import _Extension
 from libqtile.group import _Group
 from libqtile.log_utils import logger
 from libqtile.scratchpad import ScratchPad
-from libqtile.utils import get_cache_dir, send_notification
+from libqtile.utils import get_cache_dir, lget, send_notification
 from libqtile.widget.base import _Widget
 
 if TYPE_CHECKING:
@@ -625,7 +625,7 @@ class Qtile(CommandObject):
             return result[0]
         return None
 
-    def find_closest_screen(self, x: int, y: int) -> Screen:
+    def find_closest_screen(self, x: int, y: int) -> Optional[Screen]:
         """
         If find_screen returns None, then this basically extends a
         screen vertically and horizontally and see if x,y lies in the
@@ -653,15 +653,16 @@ class Qtile(CommandObject):
             return y_match[0]
         return self._find_closest_closest(x, y, x_match + y_match)
 
-    def _find_closest_closest(self, x: int, y: int, candidate_screens: List[Screen]) -> Screen:
+    def _find_closest_closest(
+        self, x: int, y: int, candidate_screens: List[Screen]
+    ) -> Optional[Screen]:
         """
         if find_closest_screen can't determine one, we've got multiple
         screens, so figure out who is closer.  We'll calculate using
         the square of the distance from the center of a screen.
 
         Note that this could return None if x, y is right/below all
-        screens (shouldn't happen but we don't do anything about it
-        here other than returning None)
+        screens.
         """
         closest_distance: Optional[float] = None  # because mypy only considers first value
         if not candidate_screens:
@@ -672,7 +673,7 @@ class Qtile(CommandObject):
         candidate_screens = [
             s for s in candidate_screens if x < s.x + s.width and y < s.y + s.height
         ]
-        closest_screen = candidate_screens[0]
+        closest_screen = lget(candidate_screens, 0)
         for s in candidate_screens:
             middle_x = s.x + s.width / 2
             middle_y = s.y + s.height / 2
