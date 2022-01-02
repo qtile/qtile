@@ -29,6 +29,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - New widget: GenPollCommand
         - Add ability to add a group at a specified index
         - Add ability to open the `WidgetBox` widgets at startup.
+        - Add ability to swap focused window based on index, and change the order of windows inside current group
     * bugfixes
         - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
         - Fix `Notify` bug when apps close notifications.
@@ -117,6 +118,7 @@ Qtile 0.20.0, released 2022-01-24:
         - Fix bug where `Battery` widget did not retrieve `background` from `widget_defaults`.
         - Fix bug where widgets in a `WidgetBox` are rendered on top of bar borders.
 
+        - Add ability to swap focused window based on index, and change the order of windows inside current group
 Qtile 0.19.0, released 2021-12-22:
     * features
         - Add ability to draw borders to the Bar. Can customise size and colour per edge.

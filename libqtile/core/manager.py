@@ -1384,6 +1384,32 @@ class Qtile(CommandObject):
         mb.start_input(prompt, self.find_window, "window", strict_completer=True)
 
     @expose_command()
+    def switch_window(self, location: int) -> None:
+        """
+        Change to the window at the specified index in the current group.
+        """
+        windows = self.current_group.windows
+        if location < 1 or location > len(windows):
+            return
+
+        self.current_group.focus(windows[location - 1])
+
+    @expose_command()
+    def change_window_order(self, new_location: int) -> None:
+        """
+        Change the order of the current window within the current group.
+        """
+        if new_location < 1 or new_location > len(self.current_group.windows):
+            return
+
+        windows = self.current_group.windows
+        current_window_index = windows.index(self.current_window)
+
+        temp = windows[current_window_index]
+        windows[current_window_index] = windows[new_location - 1]
+        windows[new_location - 1] = temp
+
+    @expose_command()
     def next_urgent(self) -> None:
         """Focus next window with urgent hint"""
         try:
