@@ -446,6 +446,11 @@ class Bar(Gap, configurable.Configurable):
         return None
 
     def process_button_click(self, x: int, y: int, button: int) -> None:
+        # If we're clicking on a bar that's not on the current screen, focus that screen
+        if self.screen is not self.qtile.current_screen:
+            index = self.qtile.screens.index(self.screen)
+            self.qtile.focus_screen(index, warp=False)
+
         widget = self.get_widget_in_position(x, y)
         if widget:
             widget.button_press(
