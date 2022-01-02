@@ -126,7 +126,10 @@ class XWindow:
         return r.value.to_string()
 
     def _property_utf8(self, r):
-        return r.value.to_utf8()
+        try:
+            return r.value.to_utf8()
+        except UnicodeDecodeError:
+            return r.value.to_string()
 
     def send_event(self, synthevent, mask=EventMask.NoEvent):
         self.conn.conn.core.SendEvent(False, self.wid, mask, synthevent.pack())
