@@ -892,6 +892,7 @@ class Static(base.Static, Window):
         self._outputs: List[Output] = []
         self._float_state = FloatStates.FLOATING
         self.is_layer = False
+        self._app_id: Optional[str] = None  # Not used by layer-shell surfaces
 
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
