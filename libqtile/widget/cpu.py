@@ -50,7 +50,10 @@ class CPU(base.ThreadPoolText):
 
         variables["load_percent"] = round(psutil.cpu_percent(), 1)
         freq = psutil.cpu_freq()
-        variables["freq_current"] = round(freq.current / 1000, 1)
+        if(float(psutil.__version__[:-2]) <= 5.8):
+            variables["freq_current"] = round(freq.current / 1000, 1)
+        else:
+            variables["freq_current"] = round(freq.current, 1)
         variables["freq_max"] = round(freq.max / 1000, 1)
         variables["freq_min"] = round(freq.min / 1000, 1)
 
