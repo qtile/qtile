@@ -276,7 +276,7 @@ class Bar(Gap, configurable.Configurable):
             self.drawer = self.window.create_drawer(width, height)
             self.drawer.clear(self.background)
 
-            self.window.process_window_expose = self.draw
+            self.window.process_window_expose = self.process_window_expose
             self.window.process_button_click = self.process_button_click
             self.window.process_button_release = self.process_button_release
             self.window.process_pointer_enter = self.process_pointer_enter
@@ -514,6 +514,13 @@ class Bar(Gap, configurable.Configurable):
         if self.saved_focus is not None:
             self.saved_focus.focus(False)
         self.has_keyboard = None
+
+    def process_window_expose(self):
+        """
+        If the window is being redrawn we need to redraw borders too.
+        """
+        self._borders_drawn = False
+        self.draw()
 
     def draw(self):
         if not self.widgets:
