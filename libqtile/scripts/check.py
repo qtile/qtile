@@ -31,12 +31,11 @@ from libqtile import confreader
 
 def type_check_config_vars(tempdir, config_name):
     if shutil.which("stubtest") is None:
-        print("stubtest not found, can't type check config file\n"
-              "install it and try again")
+        print("stubtest not found, can't type check config file\n" "install it and try again")
         return
 
     # write a .pyi file to tempdir:
-    f = open(path.join(tempdir, config_name+".pyi"), "w")
+    f = open(path.join(tempdir, config_name + ".pyi"), "w")
     f.write(confreader.config_pyi_header)
     for name, type_ in confreader.Config.__annotations__.items():
         f.write(name)
@@ -59,7 +58,7 @@ def type_check_config_vars(tempdir, config_name):
     )
     stdout, stderr = p.communicate()
     missing_vars = []
-    for line in (stdout+stderr).split("\n"):
+    for line in (stdout + stderr).split("\n"):
         # filter out stuff that users didn't specify; they'll be imported from
         # the default config
         if "is not present at runtime" in line:
@@ -72,13 +71,15 @@ def type_check_config_vars(tempdir, config_name):
         whitelist.write("\n")
     whitelist.close()
 
-    p = subprocess.Popen([
+    p = subprocess.Popen(
+        [
             "stubtest",
             # ignore variables that the user creates in their config that
             # aren't in our default config list
             "--ignore-missing-stub",
             # use our whitelist to ignore stuff users didn't specify
-            "--whitelist", whitelist.name,
+            "--whitelist",
+            whitelist.name,
             config_name,
         ],
         cwd=tempdir,
@@ -92,8 +93,7 @@ def type_check_config_vars(tempdir, config_name):
 
 def type_check_config_args(config_file):
     if shutil.which("mypy") is None:
-        print("mypy not found, can't type check config file"
-              "install it and try again")
+        print("mypy not found, can't type check config file" "install it and try again")
         return
     try:
         # we want to use Literal, which is in 3.8. If people have a mypy that
@@ -130,16 +130,16 @@ def check_config(args):
 
 def add_subcommand(subparsers, parents):
     parser = subparsers.add_parser(
-        "check",
-        parents=parents,
-        help="Check a configuration file for errors"
+        "check", parents=parents, help="Check a configuration file for errors"
     )
     parser.add_argument(
-        "-c", "--config",
+        "-c",
+        "--config",
         action="store",
-        default=path.expanduser(path.join(
-            getenv('XDG_CONFIG_HOME', '~/.config'), 'qtile', 'config.py')),
+        default=path.expanduser(
+            path.join(getenv("XDG_CONFIG_HOME", "~/.config"), "qtile", "config.py")
+        ),
         dest="configfile",
-        help='Use the specified configuration file',
+        help="Use the specified configuration file",
     )
     parser.set_defaults(func=check_config)

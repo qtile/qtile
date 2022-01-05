@@ -23,11 +23,11 @@ from dbus_next.constants import BusType
 
 from libqtile.widget import base
 
-BLUEZ = 'org.bluez'
-BLUEZ_PATH = '/org/bluez/hci0'
-BLUEZ_ADAPTER = 'org.bluez.Adapter1'
-BLUEZ_DEVICE = 'org.bluez.Device1'
-BLUEZ_PROPERTIES = 'org.freedesktop.DBus.Properties'
+BLUEZ = "org.bluez"
+BLUEZ_PATH = "/org/bluez/hci0"
+BLUEZ_ADAPTER = "org.bluez.Adapter1"
+BLUEZ_DEVICE = "org.bluez.Device1"
+BLUEZ_PROPERTIES = "org.freedesktop.DBus.Properties"
 
 
 class Bluetooth(base._TextBox):
@@ -41,13 +41,16 @@ class Bluetooth(base._TextBox):
     .. _dbus-next: https://pypi.org/project/dbus-next/
     """
 
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('hci', '/dev_XX_XX_XX_XX_XX_XX', 'hci0 device path, can be found with d-feet or similar dbus explorer.')
+        (
+            "hci",
+            "/dev_XX_XX_XX_XX_XX_XX",
+            "hci0 device path, can be found with d-feet or similar dbus explorer.",
+        )
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, '', **config)
+        base._TextBox.__init__(self, "", **config)
         self.add_defaults(Bluetooth.defaults)
 
     async def _config_async(self):
@@ -85,17 +88,17 @@ class Bluetooth(base._TextBox):
         return connected, name
 
     def _signal_received(self, interface_name, changed_properties, _invalidated_properties):
-        powered = changed_properties.get('Powered', None)
+        powered = changed_properties.get("Powered", None)
         if powered is not None:
             self.powered = powered.value
             self.update_text()
 
-        connected = changed_properties.get('Connected', None)
+        connected = changed_properties.get("Connected", None)
         if connected is not None:
             self.connected = connected.value
             self.update_text()
 
-        device = changed_properties.get('Name', None)
+        device = changed_properties.get("Name", None)
         if device is not None:
             self.device = device.value
             self.update_text()
@@ -103,10 +106,10 @@ class Bluetooth(base._TextBox):
     def update_text(self):
         text = ""
         if not self.powered:
-            text = 'off'
+            text = "off"
         else:
             if not self.connected:
-                text = 'on'
+                text = "on"
             else:
                 text = self.device
         self.update(text)

@@ -47,13 +47,15 @@ class _Extension(configurable.Configurable):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(_Extension.defaults)
         _Extension.installed_extensions.append(self)
-        self._check_colors()
 
     def _check_colors(self):
         """
         dmenu needs colours to be in #rgb or #rrggbb format.
 
         Checks colour value, removes invalid values and adds # if missing.
+
+        NB This should not be called in _Extension.__init__ as _Extension.global_defaults
+        may not have been set at this point.
         """
         for c in ["background", "foreground", "selected_background", "selected_foreground"]:
             col = getattr(self, c, None)
@@ -62,8 +64,7 @@ class _Extension(configurable.Configurable):
 
             if not isinstance(col, str) or not RGB.match(col):
                 logger.warning(
-                    f"Invalid extension '{c}' color: {col}. "
-                    f"Must be #RGB or #RRGGBB string."
+                    f"Invalid extension '{c}' color: {col}. " f"Must be #RGB or #RRGGBB string."
                 )
                 setattr(self, c, None)
                 continue
@@ -74,6 +75,7 @@ class _Extension(configurable.Configurable):
 
     def _configure(self, qtile):
         self.qtile = qtile
+        self._check_colors()
 
     def run(self):
         """
@@ -92,6 +94,7 @@ class RunCommand(_Extension):
     Also consider simply using lazy.spawn() or writing a
     `client <http://docs.qtile.org/en/latest/manual/commands/scripting.html>`_.
     """
+
     defaults = [
         # NOTE: Do not use a list as a default value, since it would be shared
         #       among all the objects inheriting this class, and if one of them
@@ -103,6 +106,7 @@ class RunCommand(_Extension):
     def __init__(self, **config):
         _Extension.__init__(self, **config)
         self.add_defaults(RunCommand.defaults)
+        self.configured_command = None
 
     def run(self):
         """

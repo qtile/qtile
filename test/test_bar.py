@@ -46,7 +46,7 @@ class GBConfig(libqtile.confreader.Config):
         libqtile.config.Group("bb"),
         libqtile.config.Group("ccc"),
         libqtile.config.Group("dddd"),
-        libqtile.config.Group("Pppy")
+        libqtile.config.Group("Pppy"),
     ]
     layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
     floating_layout = libqtile.resources.default_config.floating_layout
@@ -59,12 +59,11 @@ class GBConfig(libqtile.confreader.Config):
                         type="linefill",
                         border_width=20,
                         margin_x=1,
-                        margin_y=1
+                        margin_y=1,
                     ),
                     libqtile.widget.MemoryGraph(type="line"),
                     libqtile.widget.SwapGraph(type="box"),
-                    libqtile.widget.TextBox(name="text",
-                                            background="333333"),
+                    libqtile.widget.TextBox(name="text", background="333333"),
                 ],
                 50,
             ),
@@ -77,7 +76,7 @@ class GBConfig(libqtile.confreader.Config):
                     libqtile.widget.Sep(),
                     libqtile.widget.Clock(),
                 ],
-                50
+                50,
             ),
             # TODO: Add vertical bars and test widgets that support them
         )
@@ -110,9 +109,8 @@ def test_completion():
     c.reset()
 
     home_dir = os.path.expanduser("~")
-    with tempfile.TemporaryDirectory(prefix="qtile_test_",
-                                     dir=home_dir) as absolute_tmp_path:
-        tmp_dirname = absolute_tmp_path[len(home_dir + os.sep):]
+    with tempfile.TemporaryDirectory(prefix="qtile_test_", dir=home_dir) as absolute_tmp_path:
+        tmp_dirname = absolute_tmp_path[len(home_dir + os.sep) :]
         user_input = os.path.join("~", tmp_dirname)
         assert c.complete(user_input) == user_input
 
@@ -200,7 +198,7 @@ class GeomConf(libqtile.confreader.Config):
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
         libqtile.config.Group("c"),
-        libqtile.config.Group("d")
+        libqtile.config.Group("d"),
     ]
     layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
     floating_layout = libqtile.resources.default_config.floating_layout
@@ -277,20 +275,15 @@ def test_resize(manager):
         assert off(dwidget_list) == [0, 10, 50, 90]
 
         b._resize(101, dwidget_list)
-        assert wd(dwidget_list) == [10, 40, 41, 10]
-        assert off(dwidget_list) == [0, 10, 50, 91]
+        assert wd(dwidget_list) == [10, 41, 40, 10]
+        assert off(dwidget_list) == [0, 10, 51, 91]
 
-        dwidget_list = [
-            DWidget(10, libqtile.bar.CALCULATED)
-        ]
+        dwidget_list = [DWidget(10, libqtile.bar.CALCULATED)]
         b._resize(100, dwidget_list)
         assert wd(dwidget_list) == [10]
         assert off(dwidget_list) == [0]
 
-        dwidget_list = [
-            DWidget(10, libqtile.bar.CALCULATED),
-            DWidget(None, libqtile.bar.STRETCH)
-        ]
+        dwidget_list = [DWidget(10, libqtile.bar.CALCULATED), DWidget(None, libqtile.bar.STRETCH)]
         b._resize(100, dwidget_list)
         assert wd(dwidget_list) == [10, 90]
         assert off(dwidget_list) == [0, 10]
@@ -324,39 +317,12 @@ class ExampleWidget(libqtile.widget.base._Widget):
 
 
 class BrokenWidget(libqtile.widget.base._Widget):
-
     def __init__(self, exception_class, **config):
         libqtile.widget.base._Widget.__init__(self, 10, **config)
         self.exception_class = exception_class
 
     def _configure(self, qtile, bar):
         raise self.exception_class
-
-
-def test_incompatible_widget(manager_nospawn):
-    class IncompatibleWidgetConf(libqtile.confreader.Config):
-        groups = [libqtile.config.Group("a")]
-        screens = [
-            libqtile.config.Screen(
-                left=libqtile.bar.Bar(
-                    [
-                        # This widget doesn't support vertical orientation
-                        ExampleWidget(),
-                    ],
-                    10
-                ),
-            )
-        ]
-
-    # Ensure that adding a widget that doesn't support the orientation of the
-    # bar raises ConfigError
-    m = manager_nospawn.create_manager(IncompatibleWidgetConf)
-
-    try:
-        with pytest.raises(libqtile.confreader.ConfigError):
-            m.load_config()
-    finally:
-        m.core.finalize()
 
 
 def test_basic(manager_nospawn):
@@ -371,9 +337,9 @@ def test_basic(manager_nospawn):
                     libqtile.widget.Spacer(libqtile.bar.STRETCH),
                     ExampleWidget(),
                     libqtile.widget.Spacer(libqtile.bar.STRETCH),
-                    ExampleWidget()
+                    ExampleWidget(),
                 ],
-                10
+                10,
             )
         )
     ]
@@ -402,7 +368,7 @@ def test_singlespacer(manager_nospawn):
                 [
                     libqtile.widget.Spacer(libqtile.bar.STRETCH),
                 ],
-                10
+                10,
             )
         )
     ]
@@ -418,13 +384,32 @@ def test_singlespacer(manager_nospawn):
 def test_nospacer(manager_nospawn):
     config = GeomConf
     config.screens = [
+        libqtile.config.Screen(bottom=libqtile.bar.Bar([ExampleWidget(), ExampleWidget()], 10))
+    ]
+
+    manager_nospawn.start(config)
+
+    i = manager_nospawn.c.bar["bottom"].info()
+    assert i["widgets"][0]["offset"] == 0
+    assert i["widgets"][1]["offset"] == 10
+    libqtile.hook.clear()
+
+
+def test_consecutive_spacer(manager_nospawn):
+    config = GeomConf
+    config.screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
+                    ExampleWidget(),  # Left
+                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
+                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
+                    ExampleWidget(),  # Centre
                     ExampleWidget(),
-                    ExampleWidget()
+                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
+                    ExampleWidget(),  # Right
                 ],
-                10
+                10,
             )
         )
     ]
@@ -433,7 +418,19 @@ def test_nospacer(manager_nospawn):
 
     i = manager_nospawn.c.bar["bottom"].info()
     assert i["widgets"][0]["offset"] == 0
+    assert i["widgets"][0]["width"] == 10
     assert i["widgets"][1]["offset"] == 10
+    assert i["widgets"][1]["width"] == 190
+    assert i["widgets"][2]["offset"] == 200
+    assert i["widgets"][2]["width"] == 190
+    assert i["widgets"][3]["offset"] == 390
+    assert i["widgets"][3]["width"] == 10
+    assert i["widgets"][4]["offset"] == 400
+    assert i["widgets"][4]["width"] == 10
+    assert i["widgets"][5]["offset"] == 410
+    assert i["widgets"][5]["width"] == 380
+    assert i["widgets"][6]["offset"] == 790
+    assert i["widgets"][6]["width"] == 10
     libqtile.hook.clear()
 
 
@@ -450,14 +447,7 @@ def test_configure_broken_widgets(manager_nospawn):
         libqtile.widget.Spacer(libqtile.bar.STRETCH),
     ]
 
-    config.screens = [
-        libqtile.config.Screen(
-            bottom=libqtile.bar.Bar(
-                widget_list,
-                10
-            )
-        )
-    ]
+    config.screens = [libqtile.config.Screen(bottom=libqtile.bar.Bar(widget_list, 10))]
 
     manager_nospawn.start(config)
 
@@ -473,25 +463,17 @@ def test_configure_broken_widgets(manager_nospawn):
 
 
 def test_bar_hide_show_with_margin(manager_nospawn):
-    """ Check :
-            - the height of a horizontal bar with its margins,
-            - the ordinate of a unique window.
-        after 3 successive actions :
-            - creation
-            - hidding the bar
-            - unhidding the bar
+    """Check :
+        - the height of a horizontal bar with its margins,
+        - the ordinate of a unique window.
+    after 3 successive actions :
+        - creation
+        - hidding the bar
+        - unhidding the bar
     """
     config = GeomConf
 
-    config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar(
-                [],
-                12,
-                margin=[5, 5, 5, 5]
-            )
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([], 12, margin=[5, 5, 5, 5]))]
 
     manager_nospawn.start(config)
     manager_nospawn.test_window("w")

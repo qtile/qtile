@@ -34,6 +34,7 @@ try:
     from dbus_next import Message, Variant
     from dbus_next.aio import MessageBus
     from dbus_next.constants import BusType, MessageType
+
     has_dbus = True
 except ImportError:
     has_dbus = False
@@ -72,17 +73,17 @@ ColorsType = Union[ColorType, List[ColorType]]
 
 def rgb(x: ColorType) -> Tuple[float, float, float, float]:
     """
-        Returns a valid RGBA tuple.
+    Returns a valid RGBA tuple.
 
-        Here are some valid specifications:
-            #ff0000
-            with alpha: #ff000080
-            ff0000
-            with alpha: ff0000.5
-            (255, 0, 0)
-            with alpha: (255, 0, 0, 0.5)
+    Here are some valid specifications:
+        #ff0000
+        with alpha: #ff000080
+        ff0000
+        with alpha: ff0000.5
+        (255, 0, 0)
+        with alpha: (255, 0, 0, 0.5)
 
-        Which is returned as (1.0, 0.0, 0.0, 0.5).
+    Which is returned as (1.0, 0.0, 0.0, 0.5).
     """
     if isinstance(x, (tuple, list)):
         if len(x) == 4:
@@ -103,14 +104,14 @@ def rgb(x: ColorType) -> Tuple[float, float, float, float]:
         vals = tuple(int(i, 16) for i in (x[0:2], x[2:4], x[4:6]))
         if len(x) == 8:
             alpha = int(x[6:8], 16) / 255.0
-        vals += (alpha,)
+        vals += (alpha,)  # type: ignore
         return rgb(vals)  # type: ignore
     raise ValueError("Invalid RGB specifier.")
 
 
 def hex(x):
     r, g, b, _ = rgb(x)
-    return '#%02x%02x%02x' % (int(r * 255), int(g * 255), int(b * 255))
+    return "#%02x%02x%02x" % (int(r * 255), int(g * 255), int(b * 255))
 
 
 def has_transparency(colour: ColorsType):
@@ -120,6 +121,7 @@ def has_transparency(colour: ColorsType):
     Where a list of colours is passed, returns True if any
     colour is not fully opaque.
     """
+
     def has_alpha(col):
         return rgb(col)[3] < 1
 
@@ -136,6 +138,7 @@ def remove_transparency(colour: ColorsType):
     """
     Returns a tuple of (r, g, b) with no alpha.
     """
+
     def remove_alpha(col):
         stripped = tuple(x * 255.0 for x in rgb(col)[:3])
         return stripped
@@ -163,11 +166,11 @@ def get_cache_dir():
     Returns the cache directory and create if it doesn't exists
     """
 
-    cache_directory = os.path.expandvars('$XDG_CACHE_HOME')
-    if cache_directory == '$XDG_CACHE_HOME':
+    cache_directory = os.path.expandvars("$XDG_CACHE_HOME")
+    if cache_directory == "$XDG_CACHE_HOME":
         # if variable wasn't set
         cache_directory = os.path.expanduser("~/.cache")
-    cache_directory = os.path.join(cache_directory, 'qtile')
+    cache_directory = os.path.join(cache_directory, "qtile")
     if not os.path.exists(cache_directory):
         os.makedirs(cache_directory)
     return cache_directory
@@ -184,9 +187,9 @@ def describe_attributes(obj, attrs, func=lambda x: x):
     for attr in attrs:
         value = getattr(obj, attr, None)
         if func(value):
-            pairs.append('%s=%s' % (attr, value))
+            pairs.append("%s=%s" % (attr, value))
 
-    return ', '.join(pairs)
+    return ", ".join(pairs)
 
 
 def import_class(module_path, class_name, fallback=None):
@@ -199,8 +202,7 @@ def import_class(module_path, class_name, fallback=None):
         module = importlib.import_module(module_path, __package__)
         return getattr(module, class_name)
     except ImportError as error:
-        logger.warning("Unmet dependencies for '%s.%s': %s", module_path,
-                       class_name, error)
+        logger.warning("Unmet dependencies for '%s.%s': %s", module_path, class_name, error)
         if fallback:
             logger.debug("%s", traceback.format_exc())
             return fallback(module_path, class_name)
@@ -237,9 +239,7 @@ def send_notification(title, message, urgent=False, timeout=10000, id=None):
     https://developer.gnome.org/notification-spec/
     """
     if not has_dbus:
-        logger.warning(
-            "dbus-next is not installed. Unable to send notifications."
-        )
+        logger.warning("dbus-next is not installed. Unable to send notifications.")
         return -1
 
     id = randint(10, 1000) if id is None else id
@@ -256,27 +256,30 @@ def send_notification(title, message, urgent=False, timeout=10000, id=None):
 
 
 async def _notify(title, message, urgency, timeout, id):
-    notification = ["qtile",  # Application name
-                    id,  # id
-                    "",  # icon
-                    title,  # summary
-                    message,  # body
-                    [],  # actions
-                    {"urgency": Variant("y", urgency)},  # hints
-                    timeout]  # timeout
+    notification = [
+        "qtile",  # Application name
+        id,  # id
+        "",  # icon
+        title,  # summary
+        message,  # body
+        [],  # actions
+        {"urgency": Variant("y", urgency)},  # hints
+        timeout,
+    ]  # timeout
 
-    bus, msg = await _send_dbus_message(True,
-                                        MessageType.METHOD_CALL,
-                                        "org.freedesktop.Notifications",
-                                        "org.freedesktop.Notifications",
-                                        "/org/freedesktop/Notifications",
-                                        "Notify",
-                                        "susssasa{sv}i",
-                                        notification)
+    bus, msg = await _send_dbus_message(
+        True,
+        MessageType.METHOD_CALL,
+        "org.freedesktop.Notifications",
+        "org.freedesktop.Notifications",
+        "/org/freedesktop/Notifications",
+        "Notify",
+        "susssasa{sv}i",
+        notification,
+    )
 
     if msg.message_type == MessageType.ERROR:
-        logger.warning("Unable to send notification. "
-                       "Is a notification server running?")
+        logger.warning("Unable to send notification. " "Is a notification server running?")
 
     # a new bus connection is made each time a notification is sent so
     # we disconnect when the notification is done
@@ -291,37 +294,37 @@ def guess_terminal(preference=None):
     elif isinstance(preference, Sequence):
         test_terminals += list(preference)
     test_terminals += [
-        'roxterm',
-        'sakura',
-        'hyper',
-        'alacritty',
-        'terminator',
-        'termite',
-        'gnome-terminal',
-        'konsole',
-        'xfce4-terminal',
-        'lxterminal',
-        'mate-terminal',
-        'kitty',
-        'yakuake',
-        'tilda',
-        'guake',
-        'eterm',
-        'st',
-        'urxvt',
-        'xterm',
-        'x-terminal-emulator',
+        "roxterm",
+        "sakura",
+        "hyper",
+        "alacritty",
+        "terminator",
+        "termite",
+        "gnome-terminal",
+        "konsole",
+        "xfce4-terminal",
+        "lxterminal",
+        "mate-terminal",
+        "kitty",
+        "yakuake",
+        "tilda",
+        "guake",
+        "eterm",
+        "st",
+        "urxvt",
+        "xterm",
+        "x-terminal-emulator",
     ]
 
     for terminal in test_terminals:
-        logger.debug('Guessing terminal: {}'.format(terminal))
+        logger.debug("Guessing terminal: {}".format(terminal))
         if not which(terminal, os.X_OK):
             continue
 
-        logger.info('Terminal found: {}'.format(terminal))
+        logger.info("Terminal found: {}".format(terminal))
         return terminal
 
-    logger.error('Default terminal has not been found.')
+    logger.error("Default terminal has not been found.")
 
 
 def scan_files(dirpath, *names):
@@ -335,17 +338,19 @@ def scan_files(dirpath, *names):
     ['/wallpapers/w2.jpg', '/wallpapers/w3.jpg']})
 
     """
+    dirpath = os.path.expanduser(dirpath)
     files = defaultdict(list)
 
     for name in names:
-        found = glob.glob(os.path.join(dirpath, '**', name), recursive=True)
+        found = glob.glob(os.path.join(dirpath, "**", name), recursive=True)
         files[name].extend(found)
 
     return files
 
 
-async def _send_dbus_message(session_bus, message_type, destination, interface,
-                             path, member, signature, body):
+async def _send_dbus_message(
+    session_bus, message_type, destination, interface, path, member, signature, body
+):
     """
     Private method to send messages to dbus via dbus_next.
 
@@ -362,19 +367,23 @@ async def _send_dbus_message(session_bus, message_type, destination, interface,
     bus = await MessageBus(bus_type=bus_type).connect()
 
     msg = await bus.call(
-        Message(message_type=message_type,
-                destination=destination,
-                interface=interface,
-                path=path,
-                member=member,
-                signature=signature,
-                body=body))
+        Message(
+            message_type=message_type,
+            destination=destination,
+            interface=interface,
+            path=path,
+            member=member,
+            signature=signature,
+            body=body,
+        )
+    )
 
     return bus, msg
 
 
-async def add_signal_receiver(callback, session_bus=False, signal_name=None,
-                              dbus_interface=None, bus_name=None, path=None):
+async def add_signal_receiver(
+    callback, session_bus=False, signal_name=None, dbus_interface=None, bus_name=None, path=None
+):
     """
     Helper function which aims to recreate python-dbus's add_signal_receiver
     method in dbus_next with asyncio calls.
@@ -382,10 +391,7 @@ async def add_signal_receiver(callback, session_bus=False, signal_name=None,
     Returns True if subscription is successful.
     """
     if not has_dbus:
-        logger.warning(
-            "dbus-next is not installed. "
-            "Unable to subscribe to signals"
-        )
+        logger.warning("dbus-next is not installed. " "Unable to subscribe to signals")
         return False
 
     match_args = {
@@ -393,20 +399,21 @@ async def add_signal_receiver(callback, session_bus=False, signal_name=None,
         "sender": bus_name,
         "member": signal_name,
         "path": path,
-        "interface": dbus_interface
+        "interface": dbus_interface,
     }
 
-    rule = ",".join("{}='{}'".format(k, v)
-                    for k, v in match_args.items() if v)
+    rule = ",".join("{}='{}'".format(k, v) for k, v in match_args.items() if v)
 
-    bus, msg = await _send_dbus_message(session_bus,
-                                        MessageType.METHOD_CALL,
-                                        "org.freedesktop.DBus",
-                                        "org.freedesktop.DBus",
-                                        "/org/freedesktop/DBus",
-                                        "AddMatch",
-                                        "s",
-                                        rule)
+    bus, msg = await _send_dbus_message(
+        session_bus,
+        MessageType.METHOD_CALL,
+        "org.freedesktop.DBus",
+        "org.freedesktop.DBus",
+        "/org/freedesktop/DBus",
+        "AddMatch",
+        "s",
+        rule,
+    )
 
     # Check if message sent successfully
     if msg.message_type == MessageType.METHOD_RETURN:

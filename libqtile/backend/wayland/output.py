@@ -128,11 +128,13 @@ class Output(HasListeners):
                 else:
                     renderer.clear([0, 0, 0, 1])
 
-                mapped = self.layers[LayerShellV1Layer.BACKGROUND] \
-                    + self.layers[LayerShellV1Layer.BOTTOM] \
-                    + self.core.mapped_windows \
-                    + self.layers[LayerShellV1Layer.TOP] \
+                mapped = (
+                    self.layers[LayerShellV1Layer.BACKGROUND]
+                    + self.layers[LayerShellV1Layer.BOTTOM]
+                    + self.core.mapped_windows
+                    + self.layers[LayerShellV1Layer.TOP]
                     + self.layers[LayerShellV1Layer.OVERLAY]
+                )
 
                 for window in mapped:
                     if isinstance(window, Internal):
@@ -140,12 +142,14 @@ class Output(HasListeners):
                             int((window.x - self.x) * scale),
                             int((window.y - self.y) * scale),
                             int(window.width * scale),
-                            int(window.height * scale)
+                            int(window.height * scale),
                         )
                         matrix = Matrix.project_box(
                             box, wlr_output.transform, 0, wlr_output.transform_matrix
                         )
-                        renderer.render_texture_with_matrix(window.texture, matrix, window.opacity)
+                        renderer.render_texture_with_matrix(
+                            window.texture, matrix, window.opacity
+                        )
                     else:
                         rdata = (
                             now,
@@ -260,9 +264,9 @@ class Output(HasListeners):
                 if (state.anchor & LayerSurfaceV1Anchor.HORIZONTAL) and ww == 0:
                     x = margin.left
                     ww = ow - margin.left - margin.right
-                elif (state.anchor & LayerSurfaceV1Anchor.LEFT):
+                elif state.anchor & LayerSurfaceV1Anchor.LEFT:
                     x = margin.left
-                elif (state.anchor & LayerSurfaceV1Anchor.RIGHT):
+                elif state.anchor & LayerSurfaceV1Anchor.RIGHT:
                     x = ow - ww - margin.right
                 else:
                     x = int(ow / 2 - ww / 2)
@@ -271,9 +275,9 @@ class Output(HasListeners):
                 if (state.anchor & LayerSurfaceV1Anchor.VERTICAL) and wh == 0:
                     y = margin.top
                     wh = oh - margin.top - margin.bottom
-                elif (state.anchor & LayerSurfaceV1Anchor.TOP):
+                elif state.anchor & LayerSurfaceV1Anchor.TOP:
                     y = margin.top
-                elif (state.anchor & LayerSurfaceV1Anchor.BOTTOM):
+                elif state.anchor & LayerSurfaceV1Anchor.BOTTOM:
                     y = oh - wh - margin.bottom
                 else:
                     y = int(oh / 2 - wh / 2)

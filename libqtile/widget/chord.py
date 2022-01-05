@@ -27,12 +27,14 @@ from libqtile.widget import base
 
 class Chord(base._TextBox):
     """Display current key chord"""
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
-        ("chords_colors", {},
-            "colors per chord in form of tuple ('bg', 'fg')."),
-        ("name_transform", lambda txt: txt,
-            "preprocessor for chord name it is pure function string -> string")
+        ("chords_colors", {}, "colors per chord in form of tuple ('bg', 'fg')."),
+        (
+            "name_transform",
+            lambda txt: txt,
+            "preprocessor for chord name it is pure function string -> string",
+        ),
     ]
 
     def __init__(self, width=bar.CALCULATED, **config):

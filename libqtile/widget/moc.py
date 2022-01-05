@@ -33,11 +33,11 @@ class Moc(base.ThreadPoolText):
 
     MOC (http://moc.daper.net) should be installed.
     """
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
-        ('play_color', '00ff00', 'Text colour when playing.'),
-        ('noplay_color', 'cecece', 'Text colour when not playing.'),
-        ('update_interval', 0.5, 'Update Time in seconds.'),
+        ("play_color", "00ff00", "Text colour when playing."),
+        ("noplay_color", "cecece", "Text colour when not playing."),
+        ("update_interval", 0.5, "Update Time in seconds."),
     ]
 
     def __init__(self, **config):
@@ -46,30 +46,28 @@ class Moc(base.ThreadPoolText):
         self.status = ""
         self.local = None
 
-        self.add_callbacks({
-            'Button1': self.play,
-            'Button4': partial(subprocess.Popen, ['mocp', '-f']),
-            'Button5': partial(subprocess.Popen, ['mocp', '-r']),
-        })
+        self.add_callbacks(
+            {
+                "Button1": self.play,
+                "Button4": partial(subprocess.Popen, ["mocp", "-f"]),
+                "Button5": partial(subprocess.Popen, ["mocp", "-r"]),
+            }
+        )
 
     def get_info(self):
         """Return a dictionary with info about the current MOC status."""
         try:
-            output = self.call_process(['mocp', '-i'])
+            output = self.call_process(["mocp", "-i"])
         except subprocess.CalledProcessError as err:
             output = err.output
         if output.startswith("State"):
             output = output.splitlines()
-            info = {'State': "",
-                    'File': "",
-                    'SongTitle': "",
-                    'Artist': "",
-                    'Album': ""}
+            info = {"State": "", "File": "", "SongTitle": "", "Artist": "", "Album": ""}
 
             for line in output:
                 for data in info:
                     if data in line:
-                        info[data] = line[len(data) + 2:].strip()
+                        info[data] = line[len(data) + 2 :].strip()
                         break
             return info
 
@@ -78,21 +76,21 @@ class Moc(base.ThreadPoolText):
         info = self.get_info()
         now_playing = ""
         if info:
-            status = info['State']
+            status = info["State"]
             if self.status != status:
                 self.status = status
                 if self.status == "PLAY":
                     self.layout.colour = self.play_color
                 else:
                     self.layout.colour = self.noplay_color
-            title = info['SongTitle']
-            artist = info['Artist']
+            title = info["SongTitle"]
+            artist = info["Artist"]
             if title and artist:
                 now_playing = "♫ {0} - {1}".format(artist, title)
             elif title:
                 now_playing = "♫ {0}".format(title)
             else:
-                basename = os.path.basename(info['File'])
+                basename = os.path.basename(info["File"])
                 filename = os.path.splitext(basename)[0]
                 now_playing = "♫ {0}".format(filename)
 
@@ -103,10 +101,10 @@ class Moc(base.ThreadPoolText):
 
     def play(self):
         """Play music if stopped, else toggle pause."""
-        if self.status in ('PLAY', 'PAUSE'):
-            subprocess.Popen(['mocp', '-G'])
-        elif self.status == 'STOP':
-            subprocess.Popen(['mocp', '-p'])
+        if self.status in ("PLAY", "PAUSE"):
+            subprocess.Popen(["mocp", "-G"])
+        elif self.status == "STOP":
+            subprocess.Popen(["mocp", "-p"])
 
     def poll(self):
         """Poll content for the text box."""

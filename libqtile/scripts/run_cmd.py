@@ -44,8 +44,12 @@ def run_cmd(opts) -> None:
 
     proc = subprocess.Popen(cmd)
     match_args = {"net_wm_pid": proc.pid}
-    rule_args = {"float": opts.float, "intrusive": opts.intrusive,
-                 "group": opts.group, "break_on_match": not opts.dont_break}
+    rule_args = {
+        "float": opts.float,
+        "intrusive": opts.intrusive,
+        "group": opts.group,
+        "break_on_match": not opts.dont_break,
+    }
 
     graph_cmd = root.call("add_rule")
     _, rule_id = client.send((root.selectors, graph_cmd.name, (match_args, rule_args), {}))
@@ -61,40 +65,27 @@ def run_cmd(opts) -> None:
 
 def add_subcommand(subparsers, parents):
     parser = subparsers.add_parser(
-        "run-cmd",
-        parents=parents,
-        help="A wrapper around the command graph"
+        "run-cmd", parents=parents, help="A wrapper around the command graph"
+    )
+    parser.add_argument("-s", "--socket", help="Use specified communication socket.")
+    parser.add_argument(
+        "-i", "--intrusive", action="store_true", help="If the new window should be intrusive."
     )
     parser.add_argument(
-        '-s',
-        '--socket',
-        help='Use specified communication socket.')
+        "-f", "--float", action="store_true", help="If the new window should be float."
+    )
     parser.add_argument(
-        '-i',
-        '--intrusive',
-        action='store_true',
-        help='If the new window should be intrusive.')
+        "-b",
+        "--dont-break",
+        action="store_true",
+        help="Do not break on match (keep applying rules).",
+    )
+    parser.add_argument("-g", "--group", help="Set the window group.")
+    parser.add_argument("cmd", help="Command to execute."),
     parser.add_argument(
-        '-f',
-        '--float',
-        action='store_true',
-        help='If the new window should be float.')
-    parser.add_argument(
-        '-b',
-        '--dont-break',
-        action='store_true',
-        help='Do not break on match (keep applying rules).')
-    parser.add_argument(
-        '-g',
-        '--group',
-        help='Set the window group.')
-    parser.add_argument(
-        'cmd',
-        help='Command to execute.'),
-    parser.add_argument(
-        'args',
+        "args",
         nargs=argparse.REMAINDER,
-        metavar='[args ...]',
-        help='Optional arguments to pass to command.'
+        metavar="[args ...]",
+        help="Optional arguments to pass to command.",
     )
     parser.set_defaults(func=run_cmd)

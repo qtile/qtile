@@ -7,10 +7,10 @@ import xcffib.testing
 from libqtile.backend.x11 import window, xcbq
 
 
-@pytest.fixture(scope='function', autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 def xdisplay(request):
     with xcffib.testing.XvfbTest(width=1280, height=720):
-        yield os.environ['DISPLAY']
+        yield os.environ["DISPLAY"]
 
 
 def test_new_window(xdisplay):
@@ -29,7 +29,7 @@ def test_new_window(xdisplay):
 
 def test_masks():
     cfgmasks = xcbq.ConfigureMasks
-    d = {'x': 1, 'y': 2, 'width': 640, 'height': 480}
+    d = {"x": 1, "y": 2, "width": 640, "height": 480}
     mask, vals = cfgmasks(**d)
     assert set(vals) == set(d.values())
     with pytest.raises(ValueError):

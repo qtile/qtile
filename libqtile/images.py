@@ -32,7 +32,7 @@ class LoadingError(Exception):
     pass
 
 
-_SurfaceInfo = namedtuple('_SurfaceInfo', ('surface', 'file_type'))
+_SurfaceInfo = namedtuple("_SurfaceInfo", ("surface", "file_type"))
 
 
 def _decode_to_image_surface(bytes_img, width=None, height=None):
@@ -41,6 +41,7 @@ def _decode_to_image_surface(bytes_img, width=None, height=None):
         return _SurfaceInfo(surf, fmt)
     except TypeError:
         from libqtile.log_utils import logger
+
         logger.exception(
             "Couldn't load cairo image at specified width and height. "
             "Falling back to image scaling using cairo. "
@@ -53,7 +54,7 @@ def _decode_to_image_surface(bytes_img, width=None, height=None):
 def get_cairo_surface(bytes_img, width=None, height=None):
     try:
         surf = cairocffi.ImageSurface.create_from_png(io.BytesIO(bytes_img))
-        return _SurfaceInfo(surf, 'png')
+        return _SurfaceInfo(surf, "png")
     except (MemoryError, OSError):
         pass
     return _decode_to_image_surface(bytes_img, width, height)
@@ -99,7 +100,7 @@ def get_cairo_pattern(surface, width=None, height=None, theta=0.0):
 class _Descriptor:
     def __init__(self, name=None, default=None, **opts):
         self.name = name
-        self.under_name = '_' + name
+        self.under_name = "_" + name
         self.default = default
         for key, value in opts.items():
             setattr(self, key, value)
@@ -145,7 +146,7 @@ class _Rotation(_Resetter):
         super().__set__(obj, value)
 
 
-_ImgSize = namedtuple('_ImgSize', ('width', 'height'))
+_ImgSize = namedtuple("_ImgSize", ("width", "height"))
 
 
 class Img:
@@ -161,13 +162,14 @@ class Img:
     - theta :: rotation of pattern counter clockwise in degrees
     Pattern is first stretched, then rotated.
     """
-    def __init__(self, bytes_img, name='', path=''):
+
+    def __init__(self, bytes_img, name="", path=""):
         self.bytes_img = bytes_img
         self.name = name
         self.path = path
 
     def _reset(self):
-        attrs = ('surface', 'pattern')
+        attrs = ("surface", "pattern")
         for attr in attrs:
             try:
                 delattr(self, attr)
@@ -177,7 +179,7 @@ class Img:
     @classmethod
     def from_path(cls, image_path):
         "Create an Img instance from image_path"
-        with open(image_path, 'rb') as fobj:
+        with open(image_path, "rb") as fobj:
             bytes_img = fobj.read()
         name = os.path.basename(image_path)
         name, file_type = os.path.splitext(name)
@@ -202,9 +204,9 @@ class Img:
             self._default_size = size
             return size
 
-    theta = _Rotation('theta', default=0.0)
-    width = _PixelSize('width')
-    height = _PixelSize('height')
+    theta = _Rotation("theta", default=0.0)
+    width = _PixelSize("width")
+    height = _PixelSize("height")
 
     def resize(self, width=None, height=None):
         width0, height0 = self.default_size
@@ -222,7 +224,7 @@ class Img:
 
     def scale(self, width_factor=None, height_factor=None, lock_aspect_ratio=False):
         if not (width_factor or height_factor):
-            raise ValueError('You must supply width_factor or height_factor')
+            raise ValueError("You must supply width_factor or height_factor")
         if lock_aspect_ratio:
             res = self._scale_lock(width_factor, height_factor, self.default_size)
         else:
@@ -286,7 +288,7 @@ class Img:
             pass
 
     def __repr__(self):
-        return '<{cls_name}: {name!r}, {width}x{height}@{theta:.1f}deg, {path!r}>'.format(
+        return "<{cls_name}: {name!r}, {width}x{height}@{theta:.1f}deg, {path!r}>".format(
             cls_name=self.__class__.__name__,
             name=self.name,
             width=self.width,
@@ -310,6 +312,7 @@ class Loader:
     >>> ldr = Loader('/usr/share/icons/Adwaita/24x24', '/usr/share/icons/Adwaita')
     >>> d_loaded_images = ldr('audio-volume-muted', 'audio-volume-low')
     """
+
     def __init__(self, *directories, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -324,7 +327,7 @@ class Loader:
             if ext:
                 set_names.add(n)
             else:
-                set_names.add(n + '.*')
+                set_names.add(n + ".*")
 
         for directory in self.directories:
             d_matches = scan_files(directory, *(set_names - seen))

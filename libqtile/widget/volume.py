@@ -37,10 +37,10 @@ from libqtile import bar
 from libqtile.widget import base
 
 __all__ = [
-    'Volume',
+    "Volume",
 ]
 
-re_vol = re.compile(r'\[(\d?\d?\d?)%\]')
+re_vol = re.compile(r"\[(\d?\d?\d?)%\]")
 
 
 class Volume(base._TextBox):
@@ -52,6 +52,7 @@ class Volume(base._TextBox):
 
     If theme_path is set it draw widget as icons.
     """
+
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("cardid", None, "Card Id"),
@@ -60,19 +61,27 @@ class Volume(base._TextBox):
         ("padding", 3, "Padding left and right. Calculated if None."),
         ("update_interval", 0.2, "Update time in seconds."),
         ("theme_path", None, "Path of the icons"),
-        ("emoji", False, "Use emoji to display volume states, only if ``theme_path`` is not set."
-                         "The specified font needs to contain the correct unicode characters."),
+        (
+            "emoji",
+            False,
+            "Use emoji to display volume states, only if ``theme_path`` is not set."
+            "The specified font needs to contain the correct unicode characters.",
+        ),
         ("mute_command", None, "Mute command"),
         ("volume_app", None, "App to control volume"),
         ("volume_up_command", None, "Volume up command"),
         ("volume_down_command", None, "Volume down command"),
         ("get_volume_command", None, "Command to get the current volume"),
-        ("step", 2, "Volume change for up an down commands in percentage."
-                    "Only used if ``volume_up_command`` and ``volume_down_command`` are not set.")
+        (
+            "step",
+            2,
+            "Volume change for up an down commands in percentage."
+            "Only used if ``volume_up_command`` and ``volume_down_command`` are not set.",
+        ),
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, '0', width=bar.CALCULATED, **config)
+        base._TextBox.__init__(self, "0", width=bar.CALCULATED, **config)
         self.add_defaults(Volume.defaults)
         if self.theme_path:
             self.length_type = bar.STATIC
@@ -80,12 +89,14 @@ class Volume(base._TextBox):
         self.surfaces = {}
         self.volume = None
 
-        self.add_callbacks({
-            'Button1': self.cmd_mute,
-            'Button3': self.cmd_run_app,
-            'Button4': self.cmd_increase_vol,
-            'Button5': self.cmd_decrease_vol,
-        })
+        self.add_callbacks(
+            {
+                "Button1": self.cmd_mute,
+                "Button3": self.cmd_run_app,
+                "Button4": self.cmd_increase_vol,
+                "Button5": self.cmd_decrease_vol,
+            }
+        )
 
     def timer_setup(self):
         self.timeout_add(self.update_interval, self.update)
@@ -93,13 +104,13 @@ class Volume(base._TextBox):
             self.setup_images()
 
     def create_amixer_command(self, *args):
-        cmd = ['amixer']
+        cmd = ["amixer"]
 
-        if (self.cardid is not None):
-            cmd.extend(['-c', str(self.cardid)])
+        if self.cardid is not None:
+            cmd.extend(["-c", str(self.cardid)])
 
-        if (self.device is not None):
-            cmd.extend(['-D', str(self.device)])
+        if self.device is not None:
+            cmd.extend(["-D", str(self.device)])
 
         cmd.extend([x for x in args])
         return cmd
@@ -122,38 +133,39 @@ class Volume(base._TextBox):
         if self.theme_path:
             self.drawer.clear(self.background or self.bar.background)
             if self.volume <= 0:
-                img_name = 'audio-volume-muted'
+                img_name = "audio-volume-muted"
             elif self.volume <= 30:
-                img_name = 'audio-volume-low'
+                img_name = "audio-volume-low"
             elif self.volume < 80:
-                img_name = 'audio-volume-medium'
+                img_name = "audio-volume-medium"
             else:  # self.volume >= 80:
-                img_name = 'audio-volume-high'
+                img_name = "audio-volume-high"
 
             self.drawer.ctx.set_source(self.surfaces[img_name])
             self.drawer.ctx.paint()
         elif self.emoji:
             if self.volume <= 0:
-                self.text = u'\U0001f507'
+                self.text = u"\U0001f507"
             elif self.volume <= 30:
-                self.text = u'\U0001f508'
+                self.text = u"\U0001f508"
             elif self.volume < 80:
-                self.text = u'\U0001f509'
+                self.text = u"\U0001f509"
             elif self.volume >= 80:
-                self.text = u'\U0001f50a'
+                self.text = u"\U0001f50a"
         else:
             if self.volume == -1:
-                self.text = 'M'
+                self.text = "M"
             else:
-                self.text = '{}%'.format(self.volume)
+                self.text = "{}%".format(self.volume)
 
     def setup_images(self):
         from libqtile import images
+
         names = (
-            'audio-volume-high',
-            'audio-volume-low',
-            'audio-volume-medium',
-            'audio-volume-muted',
+            "audio-volume-high",
+            "audio-volume-low",
+            "audio-volume-medium",
+            "audio-volume-muted",
         )
         d_images = images.Loader(self.theme_path)(*names)
         for name, img in d_images.items():
@@ -165,8 +177,7 @@ class Volume(base._TextBox):
 
     def get_volume(self):
         try:
-            get_volume_cmd = self.create_amixer_command('sget',
-                                                        self.channel)
+            get_volume_cmd = self.create_amixer_command("sget", self.channel)
 
             if self.get_volume_command:
                 get_volume_cmd = self.get_volume_command
@@ -175,7 +186,7 @@ class Volume(base._TextBox):
         except subprocess.CalledProcessError:
             return -1
 
-        if '[off]' in mixer_out:
+        if "[off]" in mixer_out:
             return -1
 
         volgroups = re_vol.search(mixer_out)
@@ -195,28 +206,23 @@ class Volume(base._TextBox):
         if self.volume_up_command is not None:
             subprocess.call(self.volume_up_command, shell=True)
         else:
-            subprocess.call(self.create_amixer_command('-q',
-                                                       'sset',
-                                                       self.channel,
-                                                       '{}%+'.format(self.step)))
+            subprocess.call(
+                self.create_amixer_command("-q", "sset", self.channel, "{}%+".format(self.step))
+            )
 
     def cmd_decrease_vol(self):
         if self.volume_down_command is not None:
             subprocess.call(self.volume_down_command, shell=True)
         else:
-            subprocess.call(self.create_amixer_command('-q',
-                                                       'sset',
-                                                       self.channel,
-                                                       '{}%-'.format(self.step)))
+            subprocess.call(
+                self.create_amixer_command("-q", "sset", self.channel, "{}%-".format(self.step))
+            )
 
     def cmd_mute(self):
         if self.mute_command is not None:
             subprocess.call(self.mute_command, shell=True)
         else:
-            subprocess.call(self.create_amixer_command('-q',
-                                                       'sset',
-                                                       self.channel,
-                                                       'toggle'))
+            subprocess.call(self.create_amixer_command("-q", "sset", self.channel, "toggle"))
 
     def cmd_run_app(self):
         if self.volume_app is not None:

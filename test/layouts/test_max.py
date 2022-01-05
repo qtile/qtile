@@ -39,11 +39,9 @@ class MaxConfig(Config):
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
         libqtile.config.Group("c"),
-        libqtile.config.Group("d")
+        libqtile.config.Group("d"),
     ]
-    layouts = [
-        layout.Max()
-    ]
+    layouts = [layout.Max()]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
@@ -94,9 +92,9 @@ def test_max_window_focus_cycle(manager):
     manager.test_window("three")
 
     # test preconditions
-    assert manager.c.layout.info()['clients'] == ['one', 'two', 'three']
+    assert manager.c.layout.info()["clients"] == ["one", "two", "three"]
     # last added window has focus
     assert_focused(manager, "three")
 
     # assert window focus cycle, according to order in layout
-    assert_focus_path(manager, 'float1', 'float2', 'one', 'two', 'three')
+    assert_focus_path(manager, "float1", "float2", "one", "two", "three")

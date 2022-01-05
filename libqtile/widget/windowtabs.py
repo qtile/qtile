@@ -29,22 +29,26 @@ from libqtile.widget import base
 
 class WindowTabs(base._TextBox):
     """
-        Displays the name of each window in the current group.
-        Contrary to TaskList this is not an interactive widget.
-        The window that currently has focus is highlighted.
+    Displays the name of each window in the current group.
+    Contrary to TaskList this is not an interactive widget.
+    The window that currently has focus is highlighted.
     """
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
         ("separator", " | ", "Task separator text."),
         ("selected", ("<b>", "</b>"), "Selected task indicator"),
-        ("parse_text", None, "Function to parse and modify window names. "
-         "e.g. function in config that removes excess "
-         "strings from window name: "
-         "def my_func(text)"
-         "    for string in [\" - Chromium\", \" - Firefox\"]:"
-         "        text = text.replace(string, \"\")"
-         "   return text"
-         "then set option parse_text=my_func"),
+        (
+            "parse_text",
+            None,
+            "Function to parse and modify window names. "
+            "e.g. function in config that removes excess "
+            "strings from window name: "
+            "def my_func(text)"
+            '    for string in [" - Chromium", " - Firefox"]:'
+            '        text = text.replace(string, "")'
+            "   return text"
+            "then set option parse_text=my_func",
+        ),
     ]
 
     def __init__(self, **config):
@@ -58,18 +62,18 @@ class WindowTabs(base._TextBox):
         hook.subscribe.client_name_updated(self.update)
         hook.subscribe.focus_change(self.update)
         hook.subscribe.float_change(self.update)
-        self.add_callbacks({'Button1': self.bar.screen.group.cmd_next_window})
+        self.add_callbacks({"Button1": self.bar.screen.group.cmd_next_window})
 
     def update(self, *args):
         names = []
         for w in self.bar.screen.group.windows:
-            state = ''
+            state = ""
             if w.maximized:
-                state = '[] '
+                state = "[] "
             elif w.minimized:
-                state = '_ '
+                state = "_ "
             elif w.floating:
-                state = 'V '
+                state = "V "
             task = "%s%s" % (state, w.name if w and w.name else " ")
             if w is self.bar.screen.group.current_window:
                 task = task.join(self.selected)

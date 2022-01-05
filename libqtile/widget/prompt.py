@@ -136,20 +136,20 @@ class QshCompleter(AbstractCompleter):
 
     def reset(self) -> None:
         self.lookup = None  # type: Optional[List[Tuple[str, str]]]
-        self.path = ''
+        self.path = ""
         self.offset = -1
 
     def complete(self, txt: str) -> str:
         txt = txt.lower()
         if self.lookup is None:
             self.lookup = []
-            path = txt.split('.')[:-1]
-            self.path = '.'.join(path)
-            term = txt.split('.')[-1]
+            path = txt.split(".")[:-1]
+            self.path = ".".join(path)
+            term = txt.split(".")[-1]
             if len(self.path) > 0:
-                self.path += '.'
+                self.path += "."
 
-            contains_cmd = 'self.client.%s_contains' % self.path
+            contains_cmd = "self.client.%s_contains" % self.path
             try:
                 contains = eval(contains_cmd)
             except AttributeError:
@@ -158,14 +158,14 @@ class QshCompleter(AbstractCompleter):
                 if obj.lower().startswith(term):
                     self.lookup.append((obj, obj))
 
-            commands_cmd = 'self.client.%scommands()' % self.path
+            commands_cmd = "self.client.%scommands()" % self.path
             try:
                 commands = eval(commands_cmd)
             except (CommandError, AttributeError):
                 commands = []
             for cmd in commands:
                 if cmd.lower().startswith(term):
-                    self.lookup.append((cmd + '()', cmd + '()'))
+                    self.lookup.append((cmd + "()", cmd + "()"))
 
             self.offset = -1
             self.lookup.append((term, term))
@@ -304,10 +304,7 @@ class CommandCompleter:
                         for cmd in glob.iglob(os.path.join(d, "%s*" % txt)):
                             if self.executable(cmd):
                                 self.lookup.append(
-                                    (
-                                        os.path.basename(cmd),
-                                        cmd
-                                    ),
+                                    (os.path.basename(cmd), cmd),
                                 )
                     except OSError:
                         pass
@@ -327,32 +324,33 @@ class Prompt(base._TextBox):
 
     Input should be started using the ``.start_input()`` method on this class.
     """
+
     completers = {
         "file": FileCompleter,
         "qshell": QshCompleter,
         "cmd": CommandCompleter,
         "group": GroupCompleter,
         "window": WindowCompleter,
-        None: NullCompleter
+        None: NullCompleter,
     }
-    orientations = base.ORIENTATION_HORIZONTAL
-    defaults = [("cursor", True, "Show a cursor"),
-                ("cursorblink", 0.5, "Cursor blink rate. 0 to disable."),
-                ("cursor_color", "bef098",
-                 "Color for the cursor and text over it."),
-                ("prompt", "{prompt}: ", "Text displayed at the prompt"),
-                ("record_history", True, "Keep a record of executed commands"),
-                ("max_history", 100,
-                 "Commands to keep in history. 0 for no limit."),
-                ("ignore_dups_history", False,
-                 "Don't store duplicates in history"),
-                ("bell_style", "audible",
-                 "Alert at the begin/end of the command history. " +
-                 "Possible values: 'audible' (X11 only), 'visual' and None."),
-                ("visual_bell_color", "ff0000",
-                 "Color for the visual bell (changes prompt background)."),
-                ("visual_bell_time", 0.2,
-                 "Visual bell duration (in seconds).")]
+
+    defaults = [
+        ("cursor", True, "Show a cursor"),
+        ("cursorblink", 0.5, "Cursor blink rate. 0 to disable."),
+        ("cursor_color", "bef098", "Color for the cursor and text over it."),
+        ("prompt", "{prompt}: ", "Text displayed at the prompt"),
+        ("record_history", True, "Keep a record of executed commands"),
+        ("max_history", 100, "Commands to keep in history. 0 for no limit."),
+        ("ignore_dups_history", False, "Don't store duplicates in history"),
+        (
+            "bell_style",
+            "audible",
+            "Alert at the begin/end of the command history. "
+            + "Possible values: 'audible' (X11 only), 'visual' and None.",
+        ),
+        ("visual_bell_color", "ff0000", "Color for the visual bell (changes prompt background)."),
+        ("visual_bell_time", 0.2, "Visual bell duration (in seconds)."),
+    ]
 
     def __init__(self, name="prompt", **config) -> None:
         base._TextBox.__init__(self, "", bar.CALCULATED, **config)
@@ -363,10 +361,9 @@ class Prompt(base._TextBox):
 
         # If history record is on, get saved history or create history record
         if self.record_history:
-            self.history_path = os.path.join(utils.get_cache_dir(),
-                                             'prompt_history')
+            self.history_path = os.path.join(utils.get_cache_dir(), "prompt_history")
             if os.path.exists(self.history_path):
-                with open(self.history_path, 'rb') as f:
+                with open(self.history_path, "rb") as f:
                     try:
                         self.history = pickle.load(f)
                         if self.ignore_dups_history:
@@ -375,22 +372,22 @@ class Prompt(base._TextBox):
                         # unfortunately, pickle doesn't wrap its errors, so we
                         # can't detect what's a pickle error and what's not.
                         logger.exception("failed to load prompt history")
-                        self.history = {x: deque(maxlen=self.max_history)
-                                        for x in self.completers}
+                        self.history = {
+                            x: deque(maxlen=self.max_history) for x in self.completers
+                        }
 
                     # self.history of size does not match.
                     if len(self.history) != len(self.completers):
-                        self.history = {x: deque(maxlen=self.max_history)
-                                        for x in self.completers}
+                        self.history = {
+                            x: deque(maxlen=self.max_history) for x in self.completers
+                        }
 
-                    if self.max_history != \
-                       self.history[list(self.history)[0]].maxlen:
-                        self.history = {x: deque(self.history[x],
-                                                 self.max_history)
-                                        for x in self.completers}
+                    if self.max_history != self.history[list(self.history)[0]].maxlen:
+                        self.history = {
+                            x: deque(self.history[x], self.max_history) for x in self.completers
+                        }
             else:
-                self.history = {x: deque(maxlen=self.max_history)
-                                for x in self.completers}
+                self.history = {x: deque(maxlen=self.max_history) for x in self.completers}
 
     def _configure(self, qtile, bar) -> None:
         self.markup = True
@@ -404,27 +401,24 @@ class Prompt(base._TextBox):
 
         # Define key handlers (action to do when a specific key is hit)
         keyhandlers = {
-            'Tab': self._trigger_complete,
-            'BackSpace': self._delete_char(),
-            'Delete': self._delete_char(False),
-            'KP_Delete': self._delete_char(False),
-            'Escape': self._unfocus,
-            'Return': self._send_cmd,
-            'KP_Enter': self._send_cmd,
-            'Up': self._get_prev_cmd,
-            'KP_Up': self._get_prev_cmd,
-            'Down': self._get_next_cmd,
-            'KP_Down': self._get_next_cmd,
-            'Left': self._move_cursor(),
-            'KP_Left': self._move_cursor(),
-            'Right': self._move_cursor("right"),
-            'KP_Right': self._move_cursor("right"),
+            "Tab": self._trigger_complete,
+            "BackSpace": self._delete_char(),
+            "Delete": self._delete_char(False),
+            "KP_Delete": self._delete_char(False),
+            "Escape": self._unfocus,
+            "Return": self._send_cmd,
+            "KP_Enter": self._send_cmd,
+            "Up": self._get_prev_cmd,
+            "KP_Up": self._get_prev_cmd,
+            "Down": self._get_next_cmd,
+            "KP_Down": self._get_next_cmd,
+            "Left": self._move_cursor(),
+            "KP_Left": self._move_cursor(),
+            "Right": self._move_cursor("right"),
+            "KP_Right": self._move_cursor("right"),
         }
-        self.keyhandlers = {
-            qtile.core.keysym_from_name(k): v for k, v in keyhandlers.items()
-        }
-        printables = {x: self._write_char for x in range(127) if
-                      chr(x) in string.printable}
+        self.keyhandlers = {qtile.core.keysym_from_name(k): v for k, v in keyhandlers.items()}
+        printables = {x: self._write_char for x in range(127) if chr(x) in string.printable}
         self.keyhandlers.update(printables)
         self.tab = qtile.core.keysym_from_name("Tab")
 
@@ -435,8 +429,9 @@ class Prompt(base._TextBox):
         if self.bell_style == "visual":
             self.original_background = self.background
 
-    def start_input(self, prompt, callback, complete=None,
-                    strict_completer=False, allow_empty_input=False) -> None:
+    def start_input(
+        self, prompt, callback, complete=None, strict_completer=False, allow_empty_input=False
+    ) -> None:
         """Run the prompt
 
         Displays a prompt and starts to take one line of keyboard input from
@@ -485,10 +480,7 @@ class Prompt(base._TextBox):
 
     def calculate_length(self) -> int:
         if self.text:
-            width = min(
-                self.layout.width,
-                self.bar.width
-            ) + self.actual_padding * 2
+            width = min(self.layout.width, self.bar.width) + self.actual_padding * 2
             return width
         else:
             return 0
@@ -503,7 +495,7 @@ class Prompt(base._TextBox):
         color = utils.hex(self.cursor_color)
         text = '<span foreground="{0}">{1}</span>'.format(color, text)
         if self.show_cursor:
-            text = '<u>{}</u>'.format(text)
+            text = "<u>{}</u>".format(text)
         return text
 
     def _update(self) -> None:
@@ -511,9 +503,9 @@ class Prompt(base._TextBox):
             self.text = self.archived_input or self.user_input
             cursor = pangocffi.markup_escape_text(" ")
             if self.cursor_position < len(self.text):
-                txt1 = self.text[:self.cursor_position]
+                txt1 = self.text[: self.cursor_position]
                 txt2 = self.text[self.cursor_position]
-                txt3 = self.text[self.cursor_position + 1:]
+                txt3 = self.text[self.cursor_position + 1 :]
                 for text in (txt1, txt2, txt3):
                     text = pangocffi.markup_escape_text(text)
                 txt2 = self._highlight_text(txt2)
@@ -542,8 +534,8 @@ class Prompt(base._TextBox):
 
     def _insert_before_cursor(self, charcode) -> None:
         # Insert a character (given their charcode) in input, before the cursor
-        txt1 = self.user_input[:self.cursor_position]
-        txt2 = self.user_input[self.cursor_position:]
+        txt1 = self.user_input[: self.cursor_position]
+        txt2 = self.user_input[self.cursor_position :]
         self.user_input = txt1 + chr(charcode) + txt2
         self.cursor_position += 1
 
@@ -556,13 +548,14 @@ class Prompt(base._TextBox):
             if not backspace and self.cursor_position == len(self.user_input):
                 self._alert()
             elif len(self.user_input) > 0 and self.cursor_position + step > -1:
-                txt1 = self.user_input[:self.cursor_position + step]
-                txt2 = self.user_input[self.cursor_position + step + 1:]
+                txt1 = self.user_input[: self.cursor_position + step]
+                txt2 = self.user_input[self.cursor_position + step + 1 :]
                 self.user_input = txt1 + txt2
                 if step:
                     self.cursor_position += step
             else:
                 self._alert()
+
         return f
 
     def _write_char(self):
@@ -597,7 +590,7 @@ class Prompt(base._TextBox):
                 if self.position < self.max_history:
                     self.position += 1
                 os.makedirs(os.path.dirname(self.history_path), exist_ok=True)
-                with open(self.history_path, mode='wb') as f:
+                with open(self.history_path, mode="wb") as f:
                     pickle.dump(self.history, f, protocol=2)
             self.callback(self.user_input)
 
@@ -693,8 +686,7 @@ class Prompt(base._TextBox):
             active=self.active,
         )
 
-    def cmd_exec_general(
-            self, prompt, object_name, cmd_name, selector=None, completer=None):
+    def cmd_exec_general(self, prompt, object_name, cmd_name, selector=None, completer=None):
         """
         Execute a cmd of any object. For example layout, group, window, widget
         , etc with a string that is obtained from start_input.
@@ -741,8 +733,7 @@ class Prompt(base._TextBox):
 
     def _dedup_history(self):
         """Filter the history deque, clearing all duplicate values."""
-        self.history = {x: self._dedup_deque(self.history[x])
-                        for x in self.completers}
+        self.history = {x: self._dedup_deque(self.history[x]) for x in self.completers}
 
     def _dedup_deque(self, dq):
         return deque(_LastUpdatedOrderedDict.fromkeys(dq))

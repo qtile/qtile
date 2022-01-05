@@ -26,11 +26,7 @@ from types import ModuleType
 
 import pytest
 
-from libqtile.bar import Bar
-
-
-def no_op(*args, **kwargs):
-    pass
+from test.widgets.conftest import FakeBar
 
 
 # Net widget only needs bytes_recv/sent attributes
@@ -42,7 +38,6 @@ class MockPsutil(ModuleType):
 
     @classmethod
     def net_io_counters(cls, pernic=False, _nowrap=True):
-
         class IOCounters:
             def __init__(self, up, down):
                 self.bytes_sent = up
@@ -52,10 +47,7 @@ class MockPsutil(ModuleType):
         cls.down += 1200000
 
         if pernic:
-            return {
-                "wlp58s0": IOCounters(cls.up, cls.down),
-                "lo": IOCounters(cls.up, cls.down)
-            }
+            return {"wlp58s0": IOCounters(cls.up, cls.down), "lo": IOCounters(cls.up, cls.down)}
         return IOCounters(cls.up, cls.down)
 
 
@@ -69,59 +61,55 @@ def patch_net(fake_qtile, monkeypatch, fake_window):
 
         # Reload fixes cases where psutil may have been imported previously
         reload(net)
-        widget = net.Net(
-                format='{interface}: U {up} D {down} T {total}',
-                **kwargs
-            )
-        fakebar = Bar([widget], 24)
-        fakebar.window = fake_window
-        fakebar.width = 10
-        fakebar.height = 10
-        fakebar.draw = no_op
+        widget = net.Net(format="{interface}: U {up} D {down} T {total}", **kwargs)
+        fakebar = FakeBar([widget], window=fake_window)
         widget._configure(fake_qtile, fakebar)
 
         return widget
+
     return build_widget
 
 
 def test_net_defaults(patch_net):
-    '''Default: widget shows `all` interfaces'''
+    """Default: widget shows `all` interfaces"""
     net1 = patch_net()
     assert net1.poll() == "all: U 40.00kB D  1.20MB T  1.24MB"
 
 
 def test_net_single_interface(patch_net):
-    '''Display single named interface'''
+    """Display single named interface"""
     net2 = patch_net(interface="wlp58s0")
     assert net2.poll() == "wlp58s0: U 40.00kB D  1.20MB T  1.24MB"
 
 
 def test_net_list_interface(patch_net):
-    '''Display multiple named interfaces'''
+    """Display multiple named interfaces"""
     net2 = patch_net(interface=["wlp58s0", "lo"])
-    assert net2.poll() == "wlp58s0: U 40.00kB D  1.20MB T  1.24MB lo: U 40.00kB D  1.20MB T  1.24MB"
+    assert (
+        net2.poll() == "wlp58s0: U 40.00kB D  1.20MB T  1.24MB lo: U 40.00kB D  1.20MB T  1.24MB"
+    )
 
 
 def test_net_invalid_interface(patch_net):
-    '''Pass an invalid interface value'''
+    """Pass an invalid interface value"""
     with pytest.raises(AttributeError):
         _ = patch_net(interface=12)
 
 
 def test_net_use_bits(patch_net):
-    '''Display all interfaces in bits rather than bytes'''
+    """Display all interfaces in bits rather than bytes"""
     net4 = patch_net(use_bits=True)
     assert net4.poll() == "all: U 320.0kb D  9.60Mb T  9.92Mb"
 
 
 def test_net_convert_zero_b(patch_net):
-    '''Zero bytes is a special case in `convert_b`'''
+    """Zero bytes is a special case in `convert_b`"""
     net5 = patch_net()
     assert net5.convert_b(0.0) == (0.0, "B")
 
 
 def test_net_use_prefix(patch_net):
-    '''Tests `prefix` configurable option'''
+    """Tests `prefix` configurable option"""
     net6 = patch_net(prefix="M")
     assert net6.poll() == "all: U  0.04MB D  1.20MB T  1.24MB"
 

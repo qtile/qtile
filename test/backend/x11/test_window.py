@@ -32,7 +32,7 @@ def test_kill_via_message(xmanager):
     conn = xcbq.Connection(xmanager.display)
     data = xcffib.xproto.ClientMessageData.synthetic([0, 0, 0, 0, 0], "IIIII")
     ev = xcffib.xproto.ClientMessageEvent.synthetic(
-        32, window_info["id"], conn.atoms['_NET_CLOSE_WINDOW'], data
+        32, window_info["id"], conn.atoms["_NET_CLOSE_WINDOW"], data
     )
     conn.default_screen.root.send_event(ev, mask=xcffib.xproto.EventMask.SubstructureRedirect)
     conn.xsync()
@@ -48,7 +48,7 @@ def test_change_state_via_message(xmanager):
 
     data = xcffib.xproto.ClientMessageData.synthetic([window.IconicState, 0, 0, 0, 0], "IIIII")
     ev = xcffib.xproto.ClientMessageEvent.synthetic(
-        32, window_info["id"], conn.atoms['WM_CHANGE_STATE'], data
+        32, window_info["id"], conn.atoms["WM_CHANGE_STATE"], data
     )
     conn.default_screen.root.send_event(ev, mask=xcffib.xproto.EventMask.SubstructureRedirect)
     conn.xsync()
@@ -56,7 +56,7 @@ def test_change_state_via_message(xmanager):
 
     data = xcffib.xproto.ClientMessageData.synthetic([window.NormalState, 0, 0, 0, 0], "IIIII")
     ev = xcffib.xproto.ClientMessageEvent.synthetic(
-        32, window_info["id"], conn.atoms['WM_CHANGE_STATE'], data
+        32, window_info["id"], conn.atoms["WM_CHANGE_STATE"], data
     )
     conn.default_screen.root.send_event(ev, mask=xcffib.xproto.EventMask.SubstructureRedirect)
     conn.xsync()
@@ -85,7 +85,7 @@ def test_default_float_hints(xmanager):
 
     try:
         xmanager.create_window(size_hints)
-        assert xmanager.c.window.info()['floating'] is True
+        assert xmanager.c.window.info()["floating"] is True
     finally:
         w.kill_client()
         conn.finalize()
@@ -107,19 +107,19 @@ def test_default_float_hints(xmanager):
 
     try:
         xmanager.create_window(size_hints)
-        assert xmanager.c.window.info()['floating'] is True
+        assert xmanager.c.window.info()["floating"] is True
         info = xmanager.c.window.info()
-        assert info['width'] == 10
-        assert info['height'] == 10
+        assert info["width"] == 10
+        assert info["height"] == 10
         xmanager.c.window.toggle_floating()
-        assert xmanager.c.window.info()['floating'] is False
+        assert xmanager.c.window.info()["floating"] is False
         info = xmanager.c.window.info()
-        assert info['width'] == 398
-        assert info['height'] == 578
+        assert info["width"] == 398
+        assert info["height"] == 578
         xmanager.c.window.toggle_fullscreen()
         info = xmanager.c.window.info()
-        assert info['width'] == 800
-        assert info['height'] == 600
+        assert info["width"] == 800
+        assert info["height"] == 600
     finally:
         w.kill_client()
         conn.finalize()
@@ -141,13 +141,14 @@ def test_user_position(xmanager):
         w.set_property("WM_NORMAL_HINTS", hints, type="WM_SIZE_HINTS", format=32)
         w.map()
         conn.conn.flush()
+
     try:
         xmanager.create_window(user_position_window)
-        assert xmanager.c.window.info()['floating'] is True
-        assert xmanager.c.window.info()['x'] == 5
-        assert xmanager.c.window.info()['y'] == 5
-        assert xmanager.c.window.info()['width'] == 10
-        assert xmanager.c.window.info()['height'] == 10
+        assert xmanager.c.window.info()["floating"] is True
+        assert xmanager.c.window.info()["x"] == 5
+        assert xmanager.c.window.info()["y"] == 5
+        assert xmanager.c.window.info()["width"] == 10
+        assert xmanager.c.window.info()["height"] == 10
     finally:
         w.kill_client()
         conn.finalize()
@@ -161,8 +162,10 @@ def wait_for_focus_events(conn):
         if not event:
             break
 
-        if (isinstance(event, xcffib.xproto.ClientMessageEvent) and
-                event.type != conn.atoms["WM_TAKE_FOCUS"]):
+        if (
+            isinstance(event, xcffib.xproto.ClientMessageEvent)
+            and event.type != conn.atoms["WM_TAKE_FOCUS"]
+        ):
             got_take_focus = True
 
         if isinstance(event, xcffib.xproto.FocusInEvent):
@@ -201,9 +204,10 @@ def test_only_one_focus(xmanager):
 
         w.map()
         conn.conn.flush()
+
     try:
         xmanager.create_window(both_wm_take_focus_and_input_hint)
-        assert xmanager.c.window.info()['floating'] is True
+        assert xmanager.c.window.info()["floating"] is True
         got_take_focus, got_focus_in = wait_for_focus_events(conn)
         assert not got_take_focus
         assert got_focus_in
@@ -242,9 +246,10 @@ def test_only_wm_protocols_focus(xmanager):
 
         w.map()
         conn.conn.flush()
+
     try:
         xmanager.create_window(only_wm_protocols_focus)
-        assert xmanager.c.window.info()['floating'] is True
+        assert xmanager.c.window.info()["floating"] is True
         got_take_focus, got_focus_in = wait_for_focus_events(conn)
         assert got_take_focus
         assert not got_focus_in
@@ -273,9 +278,10 @@ def test_only_input_hint_focus(xmanager):
 
         w.map()
         conn.conn.flush()
+
     try:
         xmanager.create_window(only_input_hint)
-        assert xmanager.c.window.info()['floating'] is True
+        assert xmanager.c.window.info()["floating"] is True
         got_take_focus, got_focus_in = wait_for_focus_events(conn)
         assert not got_take_focus
         assert got_focus_in
@@ -301,9 +307,10 @@ def test_no_focus(xmanager):
         w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
         w.map()
         conn.conn.flush()
+
     try:
         xmanager.create_window(no_focus)
-        assert xmanager.c.window.info()['floating'] is True
+        assert xmanager.c.window.info()["floating"] is True
         got_take_focus, got_focus_in = wait_for_focus_events(conn)
         assert not got_take_focus
         assert not got_focus_in
@@ -328,7 +335,7 @@ def test_hints_setting_unsetting(xmanager):
         # We default the input hint to true since some non-trivial number of
         # windows don't set it, and most of them want focus. The spec allows
         # WMs to assume "convenient" values.
-        assert xmanager.c.window.hints()['input']
+        assert xmanager.c.window.hints()["input"]
 
         # now try to "update" it, but don't really set an update (i.e. the
         # InputHint bit is 0, so the WM should not derive a new hint from the
@@ -338,21 +345,21 @@ def test_hints_setting_unsetting(xmanager):
         conn.flush()
 
         # should still have the hint
-        assert xmanager.c.window.hints()['input']
+        assert xmanager.c.window.hints()["input"]
 
         # now do an update: turn it off
         hints[0] = xcbq.HintsFlags["InputHint"]
         hints[1] = 0
         w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
         conn.flush()
-        assert not xmanager.c.window.hints()['input']
+        assert not xmanager.c.window.hints()["input"]
 
         # turn it back on
         hints[0] = xcbq.HintsFlags["InputHint"]
         hints[1] = 1
         w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
         conn.flush()
-        assert xmanager.c.window.hints()['input']
+        assert xmanager.c.window.hints()["input"]
 
     finally:
         w.kill_client()
@@ -389,23 +396,23 @@ def test_strut_handling(xmanager):
     def test_initial_state():
         while xmanager.c.screen.info()["index"] != 0:
             xmanager.c.next_screen()
-        assert xmanager.c.window.info()['width'] == 798
-        assert xmanager.c.window.info()['height'] == 578
-        assert xmanager.c.window.info()['x'] == 0
-        assert xmanager.c.window.info()['y'] == 0
+        assert xmanager.c.window.info()["width"] == 798
+        assert xmanager.c.window.info()["height"] == 578
+        assert xmanager.c.window.info()["x"] == 0
+        assert xmanager.c.window.info()["y"] == 0
         bar_id = xmanager.c.bar["bottom"].info()["window"]
         bar = xmanager.c.window[bar_id].info()
         assert bar["height"] == 20
         assert bar["y"] == 580
         xmanager.c.next_screen()
-        assert xmanager.c.window.info()['width'] == 638
-        assert xmanager.c.window.info()['height'] == 478
-        assert xmanager.c.window.info()['x'] == 800
-        assert xmanager.c.window.info()['y'] == 0
+        assert xmanager.c.window.info()["width"] == 638
+        assert xmanager.c.window.info()["height"] == 478
+        assert xmanager.c.window.info()["x"] == 800
+        assert xmanager.c.window.info()["y"] == 0
 
-    xmanager.test_window('one')
+    xmanager.test_window("one")
     xmanager.c.next_screen()
-    xmanager.test_window('two')
+    xmanager.test_window("two")
     test_initial_state()
 
     try:
@@ -413,10 +420,10 @@ def test_strut_handling(xmanager):
             xmanager.c.next_screen()
         xmanager.create_window(has_struts)
         xmanager.c.window.static(None, None, None, None, None)
-        assert xmanager.c.window.info()['width'] == 798
-        assert xmanager.c.window.info()['height'] == 568
-        assert xmanager.c.window.info()['x'] == 0
-        assert xmanager.c.window.info()['y'] == 0
+        assert xmanager.c.window.info()["width"] == 798
+        assert xmanager.c.window.info()["height"] == 568
+        assert xmanager.c.window.info()["x"] == 0
+        assert xmanager.c.window.info()["y"] == 0
         bar_id = xmanager.c.bar["bottom"].info()["window"]
         bar = xmanager.c.window[bar_id].info()
         assert bar["height"] == 20
@@ -427,10 +434,10 @@ def test_strut_handling(xmanager):
         xmanager.c.window.static(None, None, None, None, None)
         xmanager.create_window(with_gaps_left)
         xmanager.c.window.static(None, None, None, None, None)
-        assert xmanager.c.window.info()['width'] == 618
-        assert xmanager.c.window.info()['height'] == 468
-        assert xmanager.c.window.info()['x'] == 820
-        assert xmanager.c.window.info()['y'] == 0
+        assert xmanager.c.window.info()["width"] == 618
+        assert xmanager.c.window.info()["height"] == 468
+        assert xmanager.c.window.info()["x"] == 820
+        assert xmanager.c.window.info()["y"] == 0
     finally:
         for win in w:
             win.kill_client()
@@ -538,16 +545,16 @@ def test_min_size_hint(xmanager):
     try:
         xmanager.create_window(size_hints)
         xmanager.c.window.enable_floating()
-        assert xmanager.c.window.info()['width'] == 100
-        assert xmanager.c.window.info()['height'] == 100
+        assert xmanager.c.window.info()["width"] == 100
+        assert xmanager.c.window.info()["height"] == 100
 
         xmanager.c.window.set_size_floating(50, 50)
-        assert xmanager.c.window.info()['width'] == 100
-        assert xmanager.c.window.info()['height'] == 100
+        assert xmanager.c.window.info()["width"] == 100
+        assert xmanager.c.window.info()["height"] == 100
 
         xmanager.c.window.set_size_floating(200, 200)
-        assert xmanager.c.window.info()['width'] == 200
-        assert xmanager.c.window.info()['height'] == 200
+        assert xmanager.c.window.info()["width"] == 200
+        assert xmanager.c.window.info()["height"] == 200
     finally:
         w.kill_client()
         conn.finalize()
@@ -572,16 +579,16 @@ def test_min_size_hint_no_flag(xmanager):
     try:
         xmanager.create_window(size_hints)
         xmanager.c.window.enable_floating()
-        assert xmanager.c.window.info()['width'] == 100
-        assert xmanager.c.window.info()['height'] == 100
+        assert xmanager.c.window.info()["width"] == 100
+        assert xmanager.c.window.info()["height"] == 100
 
         xmanager.c.window.set_size_floating(50, 50)
-        assert xmanager.c.window.info()['width'] == 50
-        assert xmanager.c.window.info()['height'] == 50
+        assert xmanager.c.window.info()["width"] == 50
+        assert xmanager.c.window.info()["height"] == 50
 
         xmanager.c.window.set_size_floating(200, 200)
-        assert xmanager.c.window.info()['width'] == 200
-        assert xmanager.c.window.info()['height'] == 200
+        assert xmanager.c.window.info()["width"] == 200
+        assert xmanager.c.window.info()["height"] == 200
     finally:
         w.kill_client()
         conn.finalize()
@@ -607,16 +614,16 @@ def test_max_size_hint(xmanager):
     try:
         xmanager.create_window(size_hints)
         xmanager.c.window.enable_floating()
-        assert xmanager.c.window.info()['width'] == 100
-        assert xmanager.c.window.info()['height'] == 100
+        assert xmanager.c.window.info()["width"] == 100
+        assert xmanager.c.window.info()["height"] == 100
 
         xmanager.c.window.set_size_floating(50, 50)
-        assert xmanager.c.window.info()['width'] == 50
-        assert xmanager.c.window.info()['height'] == 50
+        assert xmanager.c.window.info()["width"] == 50
+        assert xmanager.c.window.info()["height"] == 50
 
         xmanager.c.window.set_size_floating(200, 200)
-        assert xmanager.c.window.info()['width'] == 100
-        assert xmanager.c.window.info()['height'] == 100
+        assert xmanager.c.window.info()["width"] == 100
+        assert xmanager.c.window.info()["height"] == 100
     finally:
         w.kill_client()
         conn.finalize()
@@ -641,16 +648,16 @@ def test_max_size_hint_no_flag(xmanager):
     try:
         xmanager.create_window(size_hints)
         xmanager.c.window.enable_floating()
-        assert xmanager.c.window.info()['width'] == 100
-        assert xmanager.c.window.info()['height'] == 100
+        assert xmanager.c.window.info()["width"] == 100
+        assert xmanager.c.window.info()["height"] == 100
 
         xmanager.c.window.set_size_floating(50, 50)
-        assert xmanager.c.window.info()['width'] == 50
-        assert xmanager.c.window.info()['height'] == 50
+        assert xmanager.c.window.info()["width"] == 50
+        assert xmanager.c.window.info()["height"] == 50
 
         xmanager.c.window.set_size_floating(200, 200)
-        assert xmanager.c.window.info()['width'] == 200
-        assert xmanager.c.window.info()['height'] == 200
+        assert xmanager.c.window.info()["width"] == 200
+        assert xmanager.c.window.info()["height"] == 200
     finally:
         w.kill_client()
         conn.finalize()
@@ -676,16 +683,16 @@ def test_both_size_hints(xmanager):
     try:
         xmanager.create_window(size_hints)
         xmanager.c.window.enable_floating()
-        assert xmanager.c.window.info()['width'] == 100
-        assert xmanager.c.window.info()['height'] == 100
+        assert xmanager.c.window.info()["width"] == 100
+        assert xmanager.c.window.info()["height"] == 100
 
         xmanager.c.window.set_size_floating(50, 50)
-        assert xmanager.c.window.info()['width'] == 100
-        assert xmanager.c.window.info()['height'] == 100
+        assert xmanager.c.window.info()["width"] == 100
+        assert xmanager.c.window.info()["height"] == 100
 
         xmanager.c.window.set_size_floating(200, 200)
-        assert xmanager.c.window.info()['width'] == 100
-        assert xmanager.c.window.info()['height'] == 100
+        assert xmanager.c.window.info()["width"] == 100
+        assert xmanager.c.window.info()["height"] == 100
     finally:
         w.kill_client()
         conn.finalize()
@@ -693,14 +700,14 @@ def test_both_size_hints(xmanager):
 
 @manager_config
 def test_inspect_window(xmanager):
-    xmanager.test_window('one')
+    xmanager.test_window("one")
     assert xmanager.c.window.inspect()["wm_class"]
 
 
 class MultipleBordersConfig(BareConfig):
     layouts = [
         layout.Stack(
-            border_focus=['#000000', '#111111', '#222222', '#333333', '#444444'],
+            border_focus=["#000000", "#111111", "#222222", "#333333", "#444444"],
             border_width=5,
         )
     ]
@@ -712,11 +719,11 @@ def test_multiple_borders(xmanager):
     xmanager.test_window("one")
     wid = xmanager.c.window.info()["id"]
 
-    name = os.path.join(tempfile.gettempdir(), 'test_multiple_borders.txt')
-    cmd = ["import", "-border", "-window", str(wid), "-crop", "5x1+0+4", '-depth', '8', name]
+    name = os.path.join(tempfile.gettempdir(), "test_multiple_borders.txt")
+    cmd = ["import", "-border", "-window", str(wid), "-crop", "5x1+0+4", "-depth", "8", name]
     subprocess.run(cmd, env={"DISPLAY": xmanager.display})
 
-    with open(name, 'r') as f:
+    with open(name, "r") as f:
         data = f.readlines()
     os.unlink(name)
 
@@ -744,12 +751,7 @@ def test_net_frame_extents(xmanager):
 
     def assert_frame(wid, frame):
         r = conn.conn.core.GetProperty(
-            False,
-            wid,
-            conn.atoms["_NET_FRAME_EXTENTS"],
-            conn.atoms["CARDINAL"],
-            0,
-            (2 ** 32) - 1
+            False, wid, conn.atoms["_NET_FRAME_EXTENTS"], conn.atoms["CARDINAL"], 0, (2 ** 32) - 1
         ).reply()
         assert r.value.to_atoms() == frame
 

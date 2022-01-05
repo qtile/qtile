@@ -5,37 +5,49 @@ import subprocess
 
 import pytest
 
-import libqtile.bar
 import libqtile.config
 import libqtile.confreader
 import libqtile.layout
+from libqtile.bar import Bar
+from libqtile.widget.base import ORIENTATION_HORIZONTAL
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def fake_bar():
-    from libqtile.bar import Bar
-    height = 24
-    b = Bar([], height)
-    b.height = height
-    return b
+    return FakeBar([])
+
+
+class FakeBar(Bar):
+    def __init__(self, widgets, size=24, width=100, window=None, **config):
+        Bar.__init__(self, widgets, size, **config)
+        self.height = size
+        self.width = width
+        self.window = window
+        self.horizontal = ORIENTATION_HORIZONTAL
+
+    def draw(self):
+        pass
 
 
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(os.path.dirname(TEST_DIR), 'data')
+DATA_DIR = os.path.join(os.path.dirname(TEST_DIR), "data")
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def svg_img_as_pypath():
     "Return the py.path object of a svg image"
     import py
+
     audio_volume_muted = os.path.join(
-        DATA_DIR, 'svg', 'audio-volume-muted.svg',
+        DATA_DIR,
+        "svg",
+        "audio-volume-muted.svg",
     )
     audio_volume_muted = py.path.local(audio_volume_muted)
     return audio_volume_muted
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def fake_qtile():
     import asyncio
 
@@ -65,7 +77,7 @@ def fake_qtile():
 # When used in a test, the function needs to receive a list of screens
 # (including bar and widgets) as an argument. This config can then be
 # passed to the manager to start.
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def minimal_conf_noscreen():
     class MinimalConf(libqtile.confreader.Config):
         auto_fullscreen = False
@@ -79,7 +91,7 @@ def minimal_conf_noscreen():
     return MinimalConf
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def dbus(monkeypatch):
     # for Github CI/Ubuntu, dbus-launch is provided by "dbus-x11" package
     launcher = shutil.which("dbus-launch")

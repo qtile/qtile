@@ -39,22 +39,23 @@ class Floating(Layout):
     """
     Floating layout, which does nothing with windows but handles focus order
     """
+
     default_float_rules = [
-        Match(wm_type='utility'),
-        Match(wm_type='notification'),
-        Match(wm_type='toolbar'),
-        Match(wm_type='splash'),
-        Match(wm_type='dialog'),
-        Match(wm_class='file_progress'),
-        Match(wm_class='confirm'),
-        Match(wm_class='dialog'),
-        Match(wm_class='download'),
-        Match(wm_class='error'),
-        Match(wm_class='notification'),
-        Match(wm_class='splash'),
-        Match(wm_class='toolbar'),
+        Match(wm_type="utility"),
+        Match(wm_type="notification"),
+        Match(wm_type="toolbar"),
+        Match(wm_type="splash"),
+        Match(wm_type="dialog"),
+        Match(wm_class="file_progress"),
+        Match(wm_class="confirm"),
+        Match(wm_class="dialog"),
+        Match(wm_class="download"),
+        Match(wm_class="error"),
+        Match(wm_class="notification"),
+        Match(wm_class="splash"),
+        Match(wm_class="toolbar"),
         Match(func=lambda c: c.has_fixed_size()),
-        Match(func=lambda c: c.has_fixed_ratio())
+        Match(func=lambda c: c.has_fixed_ratio()),
     ]
 
     defaults = [
@@ -65,7 +66,9 @@ class Floating(Layout):
         ("fullscreen_border_width", 0, "Border width for fullscreen."),
     ]
 
-    def __init__(self, float_rules: Optional[List[Match]] = None, no_reposition_rules=None, **config):
+    def __init__(
+        self, float_rules: Optional[List[Match]] = None, no_reposition_rules=None, **config
+    ):
         """
         If you have certain apps that you always want to float you can provide
         ``float_rules`` to do so. ``float_rules`` are a list of
@@ -193,8 +196,8 @@ class Floating(Layout):
         return True
 
     def compute_client_position(self, client, screen_rect):
-        """ recompute client.x and client.y, returning whether or not to place
-        this client above other windows or not """
+        """recompute client.x and client.y, returning whether or not to place
+        this client above other windows or not"""
         above = True
 
         if client.has_user_set_position() and not self.on_screen(client, screen_rect):
@@ -244,8 +247,8 @@ class Floating(Layout):
 
         # 'sun-awt-X11-XWindowPeer' is a dropdown used in Java application,
         # don't reposition it anywhere, let Java app to control it
-        cls = client.get_wm_class() or ''
-        is_java_dropdown = 'sun-awt-X11-XWindowPeer' in cls
+        cls = client.get_wm_class() or ""
+        is_java_dropdown = "sun-awt-X11-XWindowPeer" in cls
         if is_java_dropdown:
             client.paint_borders(bc, bw)
             client.cmd_bring_to_front()

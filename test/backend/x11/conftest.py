@@ -23,7 +23,7 @@ from test.helpers import (
 
 
 @Retry(ignore_exceptions=(xcffib.ConnectionException,), return_on_fail=True)
-def can_connect_x11(disp=':0', *, ok=None):
+def can_connect_x11(disp=":0", *, ok=None):
     if ok is not None and not ok():
         raise AssertionError()
 
@@ -54,9 +54,8 @@ class Xephyr:
     Set-up a Xephyr instance with the given parameters.  The Xephyr instance
     must be started, and then stopped.
     """
-    def __init__(self,
-                 outputs,
-                 xoffset=None):
+
+    def __init__(self, outputs, xoffset=None):
 
         self.outputs = outputs
         if xoffset is None:
@@ -101,8 +100,14 @@ class Xephyr:
             "{}x{}".format(WIDTH, HEIGHT),
         ]
         if self.outputs == 2:
-            args.extend(["-origin", "%s,0" % self.xoffset, "-screen",
-                         "%sx%s" % (SECOND_WIDTH, SECOND_HEIGHT)])
+            args.extend(
+                [
+                    "-origin",
+                    "%s,0" % self.xoffset,
+                    "-screen",
+                    "%sx%s" % (SECOND_WIDTH, SECOND_HEIGHT),
+                ]
+            )
             args.extend(["+xinerama"])
 
         self.proc = subprocess.Popen(args)
@@ -115,8 +120,7 @@ class Xephyr:
             raise AssertionError("Unable to connect to running Xephyr")
         else:
             raise AssertionError(
-                "Unable to start Xephyr, quit with return code "
-                f"{self.proc.returncode}"
+                "Unable to start Xephyr, quit with return code " f"{self.proc.returncode}"
             )
 
     def stop_xephyr(self):

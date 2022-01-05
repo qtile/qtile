@@ -27,9 +27,8 @@ from libqtile.widget import base
 
 class Pomodoro(base.ThreadPoolText):
     """Pomodoro technique widget"""
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
-        ("fmt", "{}", "fmt"),
         ("num_pomodori", 4, "Number of pomodori to do in a cycle"),
         ("length_pomodori", 25, "Length of one pomodori in minutes"),
         ("length_short_break", 5, "Length of a short break in minutes"),
@@ -43,8 +42,12 @@ class Pomodoro(base.ThreadPoolText):
         ("prefix_break", "B ", "Prefix during short break"),
         ("prefix_long_break", "LB ", "Prefix during long break"),
         ("prefix_paused", "PAUSE", "Prefix during pause"),
-        ("update_interval", 1, "Update interval in seconds, if none, the "
-            "widget updates whenever the event loop is idle."),
+        (
+            "update_interval",
+            1,
+            "Update interval in seconds, if none, the "
+            "widget updates whenever the event loop is idle.",
+        ),
     ]
 
     STATUS_START = "start"
@@ -64,17 +67,19 @@ class Pomodoro(base.ThreadPoolText):
         base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(Pomodoro.defaults)
         self.prefix = {
-            'inactive': self.prefix_inactive,
-            'active': self.prefix_active,
-            'break': self.prefix_break,
-            'long_break': self.prefix_long_break,
-            'paused': self.prefix_paused
+            "inactive": self.prefix_inactive,
+            "active": self.prefix_active,
+            "break": self.prefix_break,
+            "long_break": self.prefix_long_break,
+            "paused": self.prefix_paused,
         }
 
-        self.add_callbacks({
-            'Button1': self._toggle_break,
-            'Button3': self._toggle_active,
-        })
+        self.add_callbacks(
+            {
+                "Button1": self._toggle_break,
+                "Button3": self._toggle_active,
+            }
+        )
 
     def tick(self):
         self.update(self.poll())
@@ -93,7 +98,8 @@ class Pomodoro(base.ThreadPoolText):
             self.pomodoros = 1
             if self.notification_on:
                 self._send_notification(
-                    "normal", "Please take a long break! End Time: " + self.end_time.strftime("%H:%M")
+                    "normal",
+                    "Please take a long break! End Time: " + self.end_time.strftime("%H:%M"),
                 )
             return
 
@@ -103,7 +109,8 @@ class Pomodoro(base.ThreadPoolText):
             self.pomodoros += 1
             if self.notification_on:
                 self._send_notification(
-                    "normal", "Please take a short break! End Time: " + self.end_time.strftime("%H:%M")
+                    "normal",
+                    "Please take a short break! End Time: " + self.end_time.strftime("%H:%M"),
                 )
             return
 
@@ -111,7 +118,9 @@ class Pomodoro(base.ThreadPoolText):
         self.end_time = datetime.now() + timedelta(minutes=self.length_pomodori)
         if self.notification_on:
             self._send_notification(
-                "critical", "Please start with the next Pomodori! End Time: " + self.end_time.strftime("%H:%M")
+                "critical",
+                "Please start with the next Pomodori! End Time: "
+                + self.end_time.strftime("%H:%M"),
             )
 
         return
@@ -130,7 +139,11 @@ class Pomodoro(base.ThreadPoolText):
         else:
             self.layout.colour = self.color_break
 
-        time_string = "%i:%i:%s" % (time_left.seconds // 3600, time_left.seconds % 3600 // 60, time_left.seconds % 60)
+        time_string = "%i:%i:%s" % (
+            time_left.seconds // 3600,
+            time_left.seconds % 3600 // 60,
+            time_left.seconds % 60,
+        )
         return self.prefix[self.status] + time_string
 
     def _toggle_break(self):
@@ -143,27 +156,28 @@ class Pomodoro(base.ThreadPoolText):
             self.time_left = self.end_time - datetime.now()
             self.status = self.STATUS_PAUSED
             if self.notification_on:
-                self._send_notification('low', "Pomodoro has been paused")
+                self._send_notification("low", "Pomodoro has been paused")
         else:
             self.status = self.paused_status
             self.paused_status = None
             self.end_time = self.time_left + datetime.now()
             if self.notification_on:
                 if self.status == self.STATUS_ACTIVE:
-                    status = 'Pomodoro'
+                    status = "Pomodoro"
                 else:
-                    status = 'break'
+                    status = "break"
 
                 self._send_notification(
                     "normal",
-                    "Please continue on %s! End Time: " % status + self.end_time.strftime("%H:%M")
+                    "Please continue on %s! End Time: " % status
+                    + self.end_time.strftime("%H:%M"),
                 )
 
     def _toggle_active(self):
         if self.status != self.STATUS_INACTIVE:
             self.status = self.STATUS_INACTIVE
             if self.notification_on:
-                self._send_notification('critical', "Pomodoro has been suspended")
+                self._send_notification("critical", "Pomodoro has been suspended")
         else:
             self.status = self.STATUS_START
 
@@ -171,4 +185,4 @@ class Pomodoro(base.ThreadPoolText):
         send_notification("Pomodoro", message, urgent=urgent)
 
     def poll(self):
-        return self.fmt.format(self._get_text())
+        return self._get_text()

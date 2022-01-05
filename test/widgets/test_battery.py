@@ -2,15 +2,9 @@ import cairocffi
 import pytest
 
 from libqtile import images
-from libqtile.bar import Bar
 from libqtile.widget import battery
-from libqtile.widget.battery import (
-    Battery,
-    BatteryIcon,
-    BatteryState,
-    BatteryStatus,
-)
-from test.widgets.conftest import TEST_DIR
+from libqtile.widget.battery import Battery, BatteryIcon, BatteryState, BatteryStatus
+from test.widgets.conftest import TEST_DIR, FakeBar
 
 
 class DummyBattery:
@@ -40,7 +34,7 @@ def test_text_battery_charging(monkeypatch):
     loaded_bat = BatteryStatus(
         state=BatteryState.CHARGING,
         percent=0.5,
-        power=15.,
+        power=15.0,
         time=1729,
     )
 
@@ -56,7 +50,7 @@ def test_text_battery_discharging(monkeypatch):
     loaded_bat = BatteryStatus(
         state=BatteryState.DISCHARGING,
         percent=0.5,
-        power=15.,
+        power=15.0,
         time=1729,
     )
 
@@ -72,7 +66,7 @@ def test_text_battery_full(monkeypatch):
     loaded_bat = BatteryStatus(
         state=BatteryState.FULL,
         percent=0.5,
-        power=15.,
+        power=15.0,
         time=1729,
     )
 
@@ -95,7 +89,7 @@ def test_text_battery_empty(monkeypatch):
     loaded_bat = BatteryStatus(
         state=BatteryState.EMPTY,
         percent=0.5,
-        power=15.,
+        power=15.0,
         time=1729,
     )
 
@@ -115,8 +109,8 @@ def test_text_battery_empty(monkeypatch):
 
     loaded_bat = BatteryStatus(
         state=BatteryState.UNKNOWN,
-        percent=0.,
-        power=15.,
+        percent=0.0,
+        power=15.0,
         time=1729,
     )
 
@@ -132,7 +126,7 @@ def test_text_battery_unknown(monkeypatch):
     loaded_bat = BatteryStatus(
         state=BatteryState.UNKNOWN,
         percent=0.5,
-        power=15.,
+        power=15.0,
         time=1729,
     )
 
@@ -148,7 +142,7 @@ def test_text_battery_hidden(monkeypatch):
     loaded_bat = BatteryStatus(
         state=BatteryState.DISCHARGING,
         percent=0.5,
-        power=15.,
+        power=15.0,
         time=1729,
     )
 
@@ -192,7 +186,7 @@ def test_images_good(tmpdir, fake_bar, svg_img_as_pypath):
     This theme path does contain all of the required images.
     """
     for name in BatteryIcon.icon_names:
-        target = tmpdir.join(name + '.svg')
+        target = tmpdir.join(name + ".svg")
         svg_img_as_pypath.copy(target)
 
     batt = BatteryIcon(theme_path=str(tmpdir))
@@ -222,13 +216,13 @@ def test_battery_background(fake_qtile, fake_window, monkeypatch):
     ok = BatteryStatus(
         state=BatteryState.DISCHARGING,
         percent=0.5,
-        power=15.,
+        power=15.0,
         time=1729,
     )
     low = BatteryStatus(
         state=BatteryState.DISCHARGING,
         percent=0.1,
-        power=15.,
+        power=15.0,
         time=1729,
     )
 
@@ -237,15 +231,9 @@ def test_battery_background(fake_qtile, fake_window, monkeypatch):
 
     with monkeypatch.context() as manager:
         manager.setattr(battery, "load_battery", dummy_load_battery(ok))
-        batt = Battery(
-            low_percentage=0.2, low_background=low_background, background=background
-        )
+        batt = Battery(low_percentage=0.2, low_background=low_background, background=background)
 
-    fakebar = Bar([batt], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = lambda *a, **k: None
+    fakebar = FakeBar([batt], window=fake_window)
     batt._configure(fake_qtile, fakebar)
 
     assert batt.background == background

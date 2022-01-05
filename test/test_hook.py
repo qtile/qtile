@@ -97,7 +97,6 @@ def test_hook_calls_subscriber_async_co():
 
 @pytest.mark.usefixtures("hook_fixture")
 def test_hook_calls_subscriber_async_in_existing_loop():
-
     async def t():
         val = 0
 
@@ -142,9 +141,9 @@ def test_can_subscribe_to_startup_hooks(manager_nospawn):
             setattr(config, attr, getattr(default_config, attr))
     manager = manager_nospawn
 
-    manager.startup_once_calls = Value('i', 0)
-    manager.startup_calls = Value('i', 0)
-    manager.startup_complete_calls = Value('i', 0)
+    manager.startup_once_calls = Value("i", 0)
+    manager.startup_calls = Value("i", 0)
+    manager.startup_complete_calls = Value("i", 0)
 
     def inc_startup_once_calls():
         manager.startup_once_calls.value += 1
@@ -172,17 +171,17 @@ def test_can_subscribe_to_startup_hooks(manager_nospawn):
     assert manager.startup_complete_calls.value == 2
 
 
-@pytest.mark.usefixtures('hook_fixture')
+@pytest.mark.usefixtures("hook_fixture")
 def test_can_update_by_selection_change(manager):
     test = Call(0)
     hook.subscribe.selection_change(test)
-    hook.fire('selection_change', 'hello')
-    assert test.val == 'hello'
+    hook.fire("selection_change", "hello")
+    assert test.val == "hello"
 
 
-@pytest.mark.usefixtures('hook_fixture')
+@pytest.mark.usefixtures("hook_fixture")
 def test_can_call_by_selection_notify(manager):
     test = Call(0)
     hook.subscribe.selection_notify(test)
-    hook.fire('selection_notify', 'hello')
-    assert test.val == 'hello'
+    hook.fire("selection_notify", "hello")
+    assert test.val == "hello"

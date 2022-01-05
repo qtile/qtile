@@ -24,12 +24,8 @@ import sys
 from importlib import reload
 from types import ModuleType
 
-from libqtile.bar import Bar
 from libqtile.widget import gmail_checker
-
-
-def no_op(*args, **kwargs):
-    pass
+from test.widgets.conftest import FakeBar
 
 
 class FakeIMAP(ModuleType):
@@ -45,10 +41,7 @@ class FakeIMAP(ModuleType):
             if not (self.username and self.password):
                 return False, None
 
-            return (
-                "OK",
-                ['("{}" (MESSAGES 10 UNSEEN 2)'.format(path).encode()]
-            )
+            return ("OK", ['("{}" (MESSAGES 10 UNSEEN 2)'.format(path).encode()])
 
 
 def test_gmail_checker_valid_response(fake_qtile, monkeypatch, fake_window):
@@ -56,11 +49,7 @@ def test_gmail_checker_valid_response(fake_qtile, monkeypatch, fake_window):
     reload(gmail_checker)
 
     gmc = gmail_checker.GmailChecker(username="qtile", password="test")
-    fakebar = Bar([gmc], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([gmc], window=fake_window)
     gmc._configure(fake_qtile, fakebar)
     text = gmc.poll()
     assert text == "inbox[10],unseen[2]"
@@ -71,11 +60,7 @@ def test_gmail_checker_invalid_response(fake_qtile, monkeypatch, fake_window):
     reload(gmail_checker)
 
     gmc = gmail_checker.GmailChecker()
-    fakebar = Bar([gmc], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([gmc], window=fake_window)
     gmc._configure(fake_qtile, fakebar)
     text = gmc.poll()
     assert text == "UNKNOWN ERROR"
@@ -88,16 +73,9 @@ def test_gmail_checker_only_unseen(fake_qtile, monkeypatch, fake_window):
     reload(gmail_checker)
 
     gmc = gmail_checker.GmailChecker(
-        display_fmt="unseen[{0}]",
-        status_only_unseen=True,
-        username="qtile",
-        password="test"
+        display_fmt="unseen[{0}]", status_only_unseen=True, username="qtile", password="test"
     )
-    fakebar = Bar([gmc], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([gmc], window=fake_window)
     gmc._configure(fake_qtile, fakebar)
     text = gmc.poll()
     assert text == "unseen[2]"

@@ -39,16 +39,21 @@ class KeyboardKbdd(base.ThreadPoolText):
 
     .. _dbus-next: https://pypi.org/project/dbus-next/
     """
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
         ("update_interval", 1, "Update interval in seconds."),
-        ("configured_keyboards", ["us", "ir"],
-         "your predefined list of keyboard layouts."
-         "example: ['us', 'ir', 'es']"),
-        ("colours", None,
-         "foreground colour for each layout"
-         "either 'None' or a list of colours."
-         "example: ['ffffff', 'E6F0AF']. ")
+        (
+            "configured_keyboards",
+            ["us", "ir"],
+            "your predefined list of keyboard layouts." "example: ['us', 'ir', 'es']",
+        ),
+        (
+            "colours",
+            None,
+            "foreground colour for each layout"
+            "either 'None' or a list of colours."
+            "example: ['ffffff', 'E6F0AF']. ",
+        ),
     ]
 
     def __init__(self, **config):
@@ -74,10 +79,12 @@ class KeyboardKbdd(base.ThreadPoolText):
         return False
 
     async def _config_async(self):
-        subscribed = await add_signal_receiver(self._signal_received,
-                                               session_bus=True,
-                                               signal_name="layoutChanged",
-                                               dbus_interface="ru.gentoo.kbdd")
+        subscribed = await add_signal_receiver(
+            self._signal_received,
+            session_bus=True,
+            signal_name="layoutChanged",
+            dbus_interface="ru.gentoo.kbdd",
+        )
 
         if not subscribed:
             logger.warning("Could not subscribe to kbdd signal.")
@@ -103,8 +110,10 @@ class KeyboardKbdd(base.ThreadPoolText):
             except IndexError:
                 self._set_colour(index - 1)
         else:
-            logger.error('variable "colours" should be a list, to set a\
-                            colour for all layouts, use "foreground".')
+            logger.error(
+                'variable "colours" should be a list, to set a\
+                            colour for all layouts, use "foreground".'
+            )
 
     def poll(self):
         if not self.is_kbdd_running:

@@ -20,32 +20,38 @@
 
 # Widget specific tests
 
+import pytest
+
 import libqtile.bar
 import libqtile.config
-import libqtile.confreader
-import libqtile.layout
 from libqtile import widget
 
 
-def test_command_interface(manager_nospawn, minimal_conf_noscreen):
-    # Set a short interval and start so widget exits immediately
+@pytest.mark.parametrize("position", ["top", "bottom", "left", "right"])
+def test_text_box_bar_orientations(manager_nospawn, minimal_conf_noscreen, position):
+    """Text boxes are available on any bar position."""
     textbox = widget.TextBox(text="Testing")
 
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar([textbox], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(**{position: libqtile.bar.Bar([textbox], 10)})]
 
     manager_nospawn.start(config)
-    bar = manager_nospawn.c.bar["top"]
+    tbox = manager_nospawn.c.widget["textbox"]
 
-    w = bar.info()["widgets"][0]
-    assert w["text"] == "Testing"
+    assert tbox.info()["text"] == "Testing"
 
-    manager_nospawn.c.widget["textbox"].update("Updated")
-    w = bar.info()["widgets"][0]
-    assert w["text"] == "Updated"
+    tbox.update("Updated")
+    assert tbox.info()["text"] == "Updated"
 
-    assert manager_nospawn.c.widget["textbox"].get() == "Updated"
+
+def test_text_box_max_chars(manager_nospawn, minimal_conf_noscreen):
+    """Text boxes are available on any bar position."""
+    textbox = widget.TextBox(text="Testing", max_chars=4)
+
+    config = minimal_conf_noscreen
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([textbox], 10))]
+
+    manager_nospawn.start(config)
+    tbox = manager_nospawn.c.widget["textbox"]
+
+    assert tbox.info()["text"] == "Test…"

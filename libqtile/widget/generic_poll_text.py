@@ -11,6 +11,7 @@ try:
 
     def xmlparse(body):
         return xmltodict.parse(body)
+
 except ImportError:
     # TODO: we could implement a similar parser by hand, but i'm lazy, so let's
     # punt for now
@@ -20,9 +21,9 @@ except ImportError:
 
 class GenPollText(base.ThreadPoolText):
     """A generic text widget that polls using poll function to get the text"""
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
-        ('func', None, 'Poll Function'),
+        ("func", None, "Poll Function"),
     ]
 
     def __init__(self, **config):
@@ -37,15 +38,15 @@ class GenPollText(base.ThreadPoolText):
 
 class GenPollUrl(base.ThreadPoolText):
     """A generic text widget that polls an url and parses it using parse function"""
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
-        ('url', None, 'Url'),
-        ('data', None, 'Post Data'),
-        ('parse', None, 'Parse Function'),
-        ('json', True, 'Is Json?'),
-        ('user_agent', 'Qtile', 'Set the user agent'),
-        ('headers', {}, 'Extra Headers'),
-        ('xml', False, 'Is XML?'),
+        ("url", None, "Url"),
+        ("data", None, "Post Data"),
+        ("parse", None, "Parse Function"),
+        ("json", True, "Is Json?"),
+        ("user_agent", "Qtile", "Set the user agent"),
+        ("headers", {}, "Extra Headers"),
+        ("xml", False, "Is XML?"),
     ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, **config):
@@ -54,7 +55,7 @@ class GenPollUrl(base.ThreadPoolText):
 
         self.headers["User-agent"] = self.user_agent
         if self.json:
-            self.headers['Content-Type'] = 'application/json'
+            self.headers["Content-Type"] = "application/json"
 
         if self.data and not isinstance(self.data, str):
             self.data = json.dumps(self.data).encode()
@@ -87,7 +88,7 @@ class GenPollUrl(base.ThreadPoolText):
         try:
             text = self.parse(body)
         except Exception:
-            logger.exception('got exception polling widget')
+            logger.exception("got exception polling widget")
             text = "Can't parse"
 
         return text

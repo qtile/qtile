@@ -23,8 +23,8 @@ from typing import List
 
 import pytest
 
-from libqtile.bar import Bar
 from libqtile.widget import caps_num_lock_indicator
+from test.widgets.conftest import FakeBar
 
 
 class MockCapsNumLockIndicator:
@@ -58,11 +58,7 @@ class MockCapsNumLockIndicator:
     @classmethod
     def call_process(cls, cmd):
         if cls.is_error:
-            raise subprocess.CalledProcessError(
-                -1,
-                cmd=cmd,
-                output="Couldn't call xset."
-            )
+            raise subprocess.CalledProcessError(-1, cmd=cmd, output="Couldn't call xset.")
 
         if cmd[1:] == ["q"]:
             track = cls.info[cls.index]
@@ -77,22 +73,24 @@ def no_op(*args, **kwargs):
 @pytest.fixture
 def patched_cnli(monkeypatch):
     MockCapsNumLockIndicator.reset()
-    monkeypatch.setattr("libqtile.widget.caps_num_lock_indicator.subprocess", MockCapsNumLockIndicator)
-    monkeypatch.setattr("libqtile.widget.caps_num_lock_indicator.subprocess.CalledProcessError",
-                        subprocess.CalledProcessError)
+    monkeypatch.setattr(
+        "libqtile.widget.caps_num_lock_indicator.subprocess", MockCapsNumLockIndicator
+    )
+    monkeypatch.setattr(
+        "libqtile.widget.caps_num_lock_indicator.subprocess.CalledProcessError",
+        subprocess.CalledProcessError,
+    )
 
-    monkeypatch.setattr("libqtile.widget.caps_num_lock_indicator.base.ThreadPoolText.call_process",
-                        MockCapsNumLockIndicator.call_process)
+    monkeypatch.setattr(
+        "libqtile.widget.caps_num_lock_indicator.base.ThreadPoolText.call_process",
+        MockCapsNumLockIndicator.call_process,
+    )
     return caps_num_lock_indicator
 
 
 def test_cnli(fake_qtile, patched_cnli, fake_window):
     widget = patched_cnli.CapsNumLockIndicator()
-    fakebar = Bar([widget], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([widget], window=fake_window)
     widget._configure(fake_qtile, fakebar)
     text = widget.poll()
 
@@ -105,11 +103,7 @@ def test_cnli_caps_on(fake_qtile, patched_cnli, fake_window):
     # Simulate Caps on
     MockCapsNumLockIndicator.index = 1
 
-    fakebar = Bar([widget], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([widget], window=fake_window)
     widget._configure(fake_qtile, fakebar)
     text = widget.poll()
 
@@ -122,11 +116,7 @@ def test_cnli_error_handling(fake_qtile, patched_cnli, fake_window):
     # Simulate a CalledProcessError exception
     MockCapsNumLockIndicator.is_error = True
 
-    fakebar = Bar([widget], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([widget], window=fake_window)
     widget._configure(fake_qtile, fakebar)
     text = widget.poll()
 

@@ -34,10 +34,10 @@ from libqtile.widget import base
 
 def get_status(interface_name):
     interface = iwlib.get_iwconfig(interface_name)
-    if 'stats' not in interface:
+    if "stats" not in interface:
         return None, None
-    quality = interface['stats']['quality']
-    essid = bytes(interface['ESSID']).decode()
+    quality = interface["stats"]["quality"]
+    essid = bytes(interface["ESSID"]).decode()
     return essid, quality
 
 
@@ -52,18 +52,14 @@ class Wlan(base.InLoopPollText):
 
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('interface', 'wlan0', 'The interface to monitor'),
-        ('update_interval', 1, 'The update interval.'),
+        ("interface", "wlan0", "The interface to monitor"),
+        ("update_interval", 1, "The update interval."),
+        ("disconnected_message", "Disconnected", "String to show when the wlan is diconnected."),
         (
-            'disconnected_message',
-            'Disconnected',
-            'String to show when the wlan is diconnected.'
+            "format",
+            "{essid} {quality}/70",
+            'Display format. For percents you can use "{essid} {percent:2.0%}"',
         ),
-        (
-            'format',
-            '{essid} {quality}/70',
-            'Display format. For percents you can use "{essid} {percent:2.0%}"'
-        )
     ]
 
     def __init__(self, **config):
@@ -77,13 +73,10 @@ class Wlan(base.InLoopPollText):
             if disconnected:
                 return self.disconnected_message
 
-            return self.format.format(
-                essid=essid,
-                quality=quality,
-                percent=(quality / 70)
-            )
+            return self.format.format(essid=essid, quality=quality, percent=(quality / 70))
         except EnvironmentError:
             logger.error(
-                '%s: Probably your wlan device is switched off or '
-                ' otherwise not present in your system.',
-                self.__class__.__name__)
+                "%s: Probably your wlan device is switched off or "
+                " otherwise not present in your system.",
+                self.__class__.__name__,
+            )

@@ -26,12 +26,8 @@ from types import ModuleType
 
 import pytest
 
-from libqtile.bar import Bar
 from libqtile.widget import df
-
-
-def no_op(*args, **kwargs):
-    pass
+from test.widgets.conftest import FakeBar
 
 
 class FakeOS(ModuleType):
@@ -70,13 +66,9 @@ def patched_df(monkeypatch):
 
 @pytest.mark.usefixtures("patched_df")
 def test_df_no_warning(fake_qtile, fake_window):
-    ''' Test no text when free space over threshold '''
+    """Test no text when free space over threshold"""
     df1 = df.DF()
-    fakebar = Bar([df1], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([df1], window=fake_window)
     df1._configure(fake_qtile, fakebar)
     text = df1.poll()
     assert text == ""
@@ -87,13 +79,9 @@ def test_df_no_warning(fake_qtile, fake_window):
 
 @pytest.mark.usefixtures("patched_df")
 def test_df_always_visible(fake_qtile, fake_window):
-    ''' Test text is always displayed '''
+    """Test text is always displayed"""
     df2 = df.DF(visible_on_warn=False)
-    fakebar = Bar([df2], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([df2], window=fake_window)
     df2._configure(fake_qtile, fakebar)
     text = df2.poll()
 
@@ -106,16 +94,12 @@ def test_df_always_visible(fake_qtile, fake_window):
 
 @pytest.mark.usefixtures("patched_df")
 def test_df_warn_space(fake_qtile, fake_window):
-    '''
-        Test text is visible and colour changes when space
-        below threshold
-    '''
+    """
+    Test text is visible and colour changes when space
+    below threshold
+    """
     df3 = df.DF(warn_space=40)
-    fakebar = Bar([df3], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([df3], window=fake_window)
     df3._configure(fake_qtile, fakebar)
     text = df3.poll()
 

@@ -35,9 +35,7 @@ class Configurable:
         # value. If a mutable value were set and it were changed in one place
         # it would affect all other instances, since this is typically called
         # on __init__
-        self._variable_defaults.update(
-            (d[0], copy.copy(d[1])) for d in defaults
-        )
+        self._variable_defaults.update((d[0], copy.copy(d[1])) for d in defaults)
 
     def __getattr__(self, name):
         if name == "_variable_defaults":

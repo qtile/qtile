@@ -56,7 +56,7 @@ class Matrix(_SimpleLayoutBase):
     @property
     def row(self):
         """Calc row index of current client"""
-        return (self.clients.current_index // self.columns)
+        return self.clients.current_index // self.columns
 
     @property
     def column(self):
@@ -65,10 +65,7 @@ class Matrix(_SimpleLayoutBase):
 
     def info(self):
         d = _SimpleLayoutBase.info(self)
-        d["rows"] = [
-            [win.name for win in self.get_row(i)]
-            for i in range(self.rows)
-        ]
+        d["rows"] = [[win.name for win in self.get_row(i)] for i in range(self.rows)]
         d["current_window"] = self.column, self.row
         return d
 
@@ -80,17 +77,12 @@ class Matrix(_SimpleLayoutBase):
     def get_row(self, row):
         """Get all clients in given row"""
         assert row < self.rows
-        return self.clients[
-            row * self.columns: row * self.columns + self.columns
-        ]
+        return self.clients[row * self.columns : row * self.columns + self.columns]
 
     def get_column(self, column):
         """Get all clients in given column"""
         assert column < self.columns
-        return [
-            self.clients[i]
-            for i in range(column, len(self.clients), self.columns)
-        ]
+        return [self.clients[i] for i in range(column, len(self.clients), self.columns)]
 
     def add(self, client):
         """Add client to Layout.

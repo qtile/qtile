@@ -20,7 +20,7 @@ class LoopContext(contextlib.AbstractAsyncContextManager):
         self._signals = signals or {}
         self._stopped = False
 
-    async def __aenter__(self) -> 'LoopContext':
+    async def __aenter__(self) -> "LoopContext":
         self._stopped = False
         loop = asyncio.get_running_loop()
         loop.set_exception_handler(self._handle_exception)
@@ -41,10 +41,7 @@ class LoopContext(contextlib.AbstractAsyncContextManager):
     async def _cancel_all_tasks(self):
         # we don't want to cancel this task, so filter all_tasks
         # generator to filter in place
-        pending = (
-            task for task in asyncio.all_tasks()
-            if task is not asyncio.current_task()
-        )
+        pending = (task for task in asyncio.all_tasks() if task is not asyncio.current_task())
         for task in pending:
             task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
@@ -56,8 +53,8 @@ class LoopContext(contextlib.AbstractAsyncContextManager):
         context: dict,
     ) -> None:
         # message is always present, but we'd prefer the exception if available
-        if 'exception' in context:
-            exc = context['exception']
+        if "exception" in context:
+            exc = context["exception"]
             # CancelledErrors happen when we simply cancel the main task during
             # a normal restart procedure
             if not isinstance(exc, asyncio.CancelledError):

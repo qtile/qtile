@@ -32,7 +32,7 @@ sep = widget.Sep()
 
 parameters = [
     (libqtile.config.Screen(top=libqtile.bar.Bar([sep], 10)), "top", "width"),
-    (libqtile.config.Screen(left=libqtile.bar.Bar([sep], 10)), "left", "height")
+    (libqtile.config.Screen(left=libqtile.bar.Bar([sep], 10)), "left", "height"),
 ]
 
 

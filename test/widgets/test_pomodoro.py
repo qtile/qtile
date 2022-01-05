@@ -22,8 +22,8 @@ from importlib import reload
 
 import pytest
 
-from libqtile.bar import Bar
 from libqtile.widget import pomodoro
+from test.widgets.conftest import FakeBar
 
 COLOR_INACTIVE = "123456"
 COLOR_ACTIVE = "654321"
@@ -33,10 +33,6 @@ PREFIX_ACTIVE = "ACTIVE"
 PREFIX_BREAK = "BREAK"
 PREFIX_LONG_BREAK = "LONG BREAK"
 PREFIX_PAUSED = "PAUSING"
-
-
-def no_op(*args, **kwargs):
-    pass
 
 
 # Mock Datetime object that returns a set datetime but can
@@ -72,14 +68,10 @@ def test_pomodoro(fake_qtile, fake_window):
         prefix_active=PREFIX_ACTIVE,
         prefix_break=PREFIX_BREAK,
         prefix_long_break=PREFIX_LONG_BREAK,
-        prefix_paused=PREFIX_PAUSED
+        prefix_paused=PREFIX_PAUSED,
     )
 
-    fakebar = Bar([widget], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([widget], window=fake_window)
     widget._configure(fake_qtile, fakebar)
 
     # When we start, widget is inactive

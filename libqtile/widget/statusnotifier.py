@@ -32,6 +32,7 @@ from dbus_next.service import ServiceInterface, dbus_property, method, signal
 
 try:
     from xdg.IconTheme import getIconPath
+
     has_xdg = True
 except ImportError:
     has_xdg = False
@@ -45,17 +46,11 @@ from libqtile.widget import base
 # StatusNotifier seems to have two potential interface names.
 # While KDE appears to be the default, we should also listen
 # for items on freedesktop.
-BUS_NAMES = [
-    'org.kde.StatusNotifierWatcher',
-    'org.freedesktop.StatusNotifierWatcher'
-]
+BUS_NAMES = ["org.kde.StatusNotifierWatcher", "org.freedesktop.StatusNotifierWatcher"]
 
-ITEM_INTERFACES = [
-    'org.kde.StatusNotifierItem',
-    'org.freedesktop.StatusNotifierItem'
-]
+ITEM_INTERFACES = ["org.kde.StatusNotifierItem", "org.freedesktop.StatusNotifierItem"]
 
-STATUSNOTIFIER_PATH = '/StatusNotifierItem'
+STATUSNOTIFIER_PATH = "/StatusNotifierItem"
 PROTOCOL_VERSION = 0
 
 
@@ -66,14 +61,14 @@ class StatusNotifierItem:  # noqa: E303
     The item is responsible for interacting with the
     application.
     """
+
     icon_map = {
         "Icon": ("_icon", "get_icon_pixmap"),
         "Attention": ("_attention_icon", "get_attention_icon_pixmap"),
-        "Overlay": ("_overlay_icon", "get_overlay_icon_pixmap")
+        "Overlay": ("_overlay_icon", "get_overlay_icon_pixmap"),
     }
 
-    def __init__(self, bus, service, path=None,
-                 icon_theme=None):
+    def __init__(self, bus, service, path=None, icon_theme=None):
         self.bus = bus
         self.service = service
         self.surfaces = {}
@@ -97,17 +92,10 @@ class StatusNotifierItem:  # noqa: E303
 
     async def start(self):
         # Create a proxy object connecting for the item.
-        introspection = await self.bus.introspect(
-            self.service,
-            self.path
-        )
+        introspection = await self.bus.introspect(self.service, self.path)
 
         try:
-            obj = self.bus.get_proxy_object(
-                self.service,
-                self.path,
-                introspection
-            )
+            obj = self.bus.get_proxy_object(self.service, self.path, introspection)
         except InvalidBusNameError:
             return False
 
@@ -125,8 +113,7 @@ class StatusNotifierItem:  # noqa: E303
                 continue
 
         if not interface_found:
-            logger.warning(f"Unable to find StatusNotifierItem"
-                           f"interface on {self.service}")
+            logger.warning(f"Unable to find StatusNotifierItem" f"interface on {self.service}")
             return False
 
         # Default to XDG icon:
@@ -154,8 +141,9 @@ class StatusNotifierItem:  # noqa: E303
             self.item.on_new_overlay_icon(self._new_overlay_icon)
 
         if not self.has_icons:
-            logger.warning("Cannot find icon in current theme and "
-                           "no icon provided by StatusNotifierItem.")
+            logger.warning(
+                "Cannot find icon in current theme and " "no icon provided by StatusNotifierItem."
+            )
 
         return True
 
@@ -183,8 +171,7 @@ class StatusNotifierItem:  # noqa: E303
         if not has_xdg:
             return
 
-        path = getIconPath(icon_name, theme=self.icon_theme,
-                           extensions=['png', 'svg'])
+        path = getIconPath(icon_name, theme=self.icon_theme, extensions=["png", "svg"])
 
         if not path:
             return None
@@ -207,8 +194,7 @@ class StatusNotifierItem:  # noqa: E303
         # but Cairo expects little-endian so we need to
         # reorder them.
         self._pixmaps[icon_name] = {
-            size: self._reorder_bytes(icon_bytes)
-            for size, _, icon_bytes in icon_pixmap
+            size: self._reorder_bytes(icon_bytes) for size, _, icon_bytes in icon_pixmap
         }
 
     def _reorder_bytes(self, icon_bytes):
@@ -218,7 +204,7 @@ class StatusNotifierItem:  # noqa: E303
         """
         arr = bytearray(icon_bytes)
         for i in range(0, len(arr), 4):
-            arr[i:i+4] = arr[i:i+4][::-1]
+            arr[i : i + 4] = arr[i : i + 4][::-1]
 
         return arr
 
@@ -247,10 +233,7 @@ class StatusNotifierItem:  # noqa: E303
         for icon in self._pixmaps:
             if size in self._pixmaps[icon]:
                 srf = cairocffi.ImageSurface.create_for_data(
-                    self._pixmaps[icon][size],
-                    cairocffi.FORMAT_ARGB32,
-                    size,
-                    size
+                    self._pixmaps[icon][size], cairocffi.FORMAT_ARGB32, size, size
                 )
                 raw_surfaces[icon] = srf
         return raw_surfaces
@@ -266,11 +249,7 @@ class StatusNotifierItem:  # noqa: E303
             return self.surfaces[size]
 
         # Create a blank ImageSurface to hold the icon
-        icon = cairocffi.ImageSurface(
-            cairocffi.FORMAT_ARGB32,
-            size,
-            size
-        )
+        icon = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, size, size)
 
         if self.icon:
             base_icon = self.icon.surface
@@ -329,12 +308,7 @@ class StatusNotifierItem:  # noqa: E303
 
     @property
     def has_icons(self):
-        return (
-            any(
-                bool(icon) for icon in self._pixmaps.values()
-            )
-            or self.icon is not None
-        )
+        return any(bool(icon) for icon in self._pixmaps.values()) or self.icon is not None
 
 
 class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
@@ -343,6 +317,7 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
     on the bus and listens for applications wanting to register
     items.
     """
+
     def __init__(self, service: str):
         super().__init__(service)
         self._items: List[str] = []
@@ -357,7 +332,7 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
         # Set up and register the service on ths bus
         self.bus = await MessageBus().connect()
         self.bus.add_message_handler(self._message_handler)
-        self.bus.export('/StatusNotifierWatcher', self)
+        self.bus.export("/StatusNotifierWatcher", self)
         await self.bus.request_name(self.service)
 
         # We need to listen for interfaces being removed from
@@ -394,7 +369,7 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
             self._name_owner_changed,
             session_bus=True,
             signal_name="NameOwnerChanged",
-            dbus_interface="org.freedesktop.DBus"
+            dbus_interface="org.freedesktop.DBus",
         )
 
     def _name_owner_changed(self, message):
@@ -414,51 +389,51 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
             self.StatusNotifierHostUnregistered(name)
 
     @method()
-    def RegisterStatusNotifierItem(self, service: 's'):  # type: ignore  # noqa: F821, N802
+    def RegisterStatusNotifierItem(self, service: "s"):  # type: ignore  # noqa: F821, N802
         if service not in self._items:
             self._items.append(service)
             self.StatusNotifierItemRegistered(service)
 
     @method()
-    def RegisterStatusNotifierHost(self, service: 's'):  # type: ignore  # noqa: F821, N802
+    def RegisterStatusNotifierHost(self, service: "s"):  # type: ignore  # noqa: F821, N802
         if service not in self._hosts:
             self._hosts.append(service)
             self.StatusNotifierHostRegistered(service)
 
     @dbus_property(access=PropertyAccess.READ)
-    def RegisteredStatusNotifierItems(self) -> 'as':  # type: ignore  # noqa: F722, F821, N802
+    def RegisteredStatusNotifierItems(self) -> "as":  # type: ignore  # noqa: F722, F821, N802
         return self._items
 
     @dbus_property(access=PropertyAccess.READ)
-    def IsStatusNotifierHostRegistered(self) -> 'b':  # type: ignore  # noqa: F821, N802
+    def IsStatusNotifierHostRegistered(self) -> "b":  # type: ignore  # noqa: F821, N802
         # Note: applications may not register items unless this
         # returns True
         return len(self._hosts) > 0
 
     @dbus_property(access=PropertyAccess.READ)
-    def ProtocolVersion(self) -> 'i':  # type: ignore  # noqa: F821, N802
+    def ProtocolVersion(self) -> "i":  # type: ignore  # noqa: F821, N802
         return PROTOCOL_VERSION
 
     @signal()
-    def StatusNotifierItemRegistered(self, service) -> 's':  # type: ignore  # noqa: F821, N802
+    def StatusNotifierItemRegistered(self, service) -> "s":  # type: ignore  # noqa: F821, N802
         if self.on_item_added is not None:
             self.on_item_added(service)
         return service
 
     @signal()
-    def StatusNotifierItemUnregistered(self, service) -> 's':  # type: ignore  # noqa: F821, N802
+    def StatusNotifierItemUnregistered(self, service) -> "s":  # type: ignore  # noqa: F821, N802
         if self.on_item_removed is not None:
             self.on_item_removed(service)
         return service
 
     @signal()
-    def StatusNotifierHostRegistered(self, service) -> 's':  # type: ignore  # noqa: F821, N802
+    def StatusNotifierHostRegistered(self, service) -> "s":  # type: ignore  # noqa: F821, N802
         if self.on_host_added is not None:
             self.on_host_added(service)
         return service
 
     @signal()
-    def StatusNotifierHostUnregistered(self, service) -> 's':  # type: ignore  # noqa: F821, N802
+    def StatusNotifierHostUnregistered(self, service) -> "s":  # type: ignore  # noqa: F821, N802
         if self.on_host_removed is not None:
             self.on_host_removed(service)
         return service
@@ -471,17 +446,19 @@ class StatusNotifierHost:  # noqa: E303
     The Host collates items returned from multiple watcher interfaces and
     collates them into a single list for the widget to access.
     """
+
     def __init__(self):
         self.watchers: List[StatusNotifierWatcher] = []
         self.items: List[StatusNotifierItem] = []
         self.name = "qtile"
         self.icon_theme: str = None
 
-    async def start(self,
-                    on_item_added: Optional[Callable] = None,
-                    on_item_removed: Optional[Callable] = None,
-                    on_icon_changed: Optional[Callable] = None
-                    ):
+    async def start(
+        self,
+        on_item_added: Optional[Callable] = None,
+        on_item_removed: Optional[Callable] = None,
+        on_icon_changed: Optional[Callable] = None,
+    ):
         self.bus = await MessageBus().connect()
         self.on_item_added = on_item_added
         self.on_item_removed = on_item_removed
@@ -511,17 +488,11 @@ class StatusNotifierHost:  # noqa: E303
         Creates a StatusNotifierItem for the given service and tries to
         start it.
         """
-        item = StatusNotifierItem(
-            self.bus, service,
-            path=path,
-            icon_theme=self.icon_theme
-        )
+        item = StatusNotifierItem(self.bus, service, path=path, icon_theme=self.icon_theme)
         item.on_icon_changed = self.on_icon_changed
         if item not in self.items:
             task = asyncio.create_task(item.start())
-            task.add_done_callback(
-                partial(self.item_added, item, service)
-            )
+            task.add_done_callback(partial(self.item_added, item, service))
 
     def remove_item(self, interface):
         # Check if the interface is in out list of items and, if so,
@@ -561,9 +532,9 @@ class StatusNotifier(base._Widget):
     orientations = base.ORIENTATION_BOTH
 
     defaults = [
-        ('icon_size', 16, 'Icon width'),
-        ('icon_theme', None, 'Name of theme to use for app icons'),
-        ('padding', 5, 'Padding between icons'),
+        ("icon_size", 16, "Icon width"),
+        ("icon_theme", None, "Name of theme to use for app icons"),
+        ("padding", 3, "Padding between icons"),
     ]
 
     def __init__(self, **config):
@@ -584,15 +555,9 @@ class StatusNotifier(base._Widget):
         if not host.items:
             return 0
 
-        return (
-            len(self.available_icons) * (self.icon_size + self.padding)
-            + self.padding
-        )
+        return len(self.available_icons) * (self.icon_size + self.padding) + self.padding
 
     def _configure(self, qtile, bar):
-        if self.configured:
-            return
-
         if has_xdg and self.icon_theme:
             host.icon_theme = self.icon_theme
 
@@ -603,23 +568,21 @@ class StatusNotifier(base._Widget):
         def draw(x=None):
             self.bar.draw()
 
-        await host.start(
-            on_item_added=draw,
-            on_item_removed=draw,
-            on_icon_changed=draw
-        )
+        await host.start(on_item_added=draw, on_item_removed=draw, on_icon_changed=draw)
 
     def find_icon_at_pos(self, x, y):
         """returns StatusNotifierItem object for icon in given position"""
-        xoffset = self.padding
-        if x < xoffset:
+        offset = self.padding
+        val = x if self.bar.horizontal else y
+
+        if val < offset:
             return None
 
         for icon in self.available_icons:
-            xoffset += self.icon_size
-            if x < xoffset:
+            offset += self.icon_size
+            if val < offset:
                 return icon
-            xoffset += self.padding
+            offset += self.padding
 
         return None
 
@@ -627,7 +590,7 @@ class StatusNotifier(base._Widget):
         icon = self.find_icon_at_pos(x, y)
         self.selected_item = icon if icon else None
 
-        name = 'Button{0}'.format(button)
+        name = "Button{0}".format(button)
         if name in self.mouse_callbacks:
             self.mouse_callbacks[name]()
 

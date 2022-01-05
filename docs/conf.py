@@ -55,6 +55,7 @@ MOCK_MODULES = [
     'wlroots.util.region',
     'wlroots.wlr_types',
     'wlroots.wlr_types.cursor',
+    'wlroots.wlr_types.foreign_toplevel_management_v1',
     'wlroots.wlr_types.keyboard',
     'wlroots.wlr_types.layer_shell_v1',
     'wlroots.wlr_types.output_management_v1',

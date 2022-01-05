@@ -25,8 +25,8 @@ import subprocess
 import pytest
 
 import libqtile.config
-from libqtile.bar import Bar
 from libqtile.widget import cmus
+from test.widgets.conftest import FakeBar
 
 
 class MockCmusRemoteProcess:
@@ -44,7 +44,7 @@ class MockCmusRemoteProcess:
         "set shuffle false",
         "set softvol false",
         "set vol_left 100",
-        "set vol_right 100"
+        "set vol_right 100",
     ]
 
     info = {}
@@ -61,7 +61,7 @@ class MockCmusRemoteProcess:
                 "position 14",
                 "tag artist Rick Astley",
                 "tag album Whenever You Need Somebody",
-                "tag title Never Gonna Give You Up"
+                "tag title Never Gonna Give You Up",
             ],
             [
                 "status playing",
@@ -70,7 +70,7 @@ class MockCmusRemoteProcess:
                 "position 14",
                 "tag artist Neil Diamond",
                 "tag album Greatest Hits",
-                "tag title Sweet Caroline"
+                "tag title Sweet Caroline",
             ],
             [
                 "status stopped",
@@ -78,7 +78,7 @@ class MockCmusRemoteProcess:
                 "duration -1",
                 "position -9",
                 "tag title It's Not Unusual",
-                "stream tomjones"
+                "stream tomjones",
             ],
             [
                 "status playing",
@@ -87,7 +87,7 @@ class MockCmusRemoteProcess:
                 "position 14",
                 "tag artist Above & Beyond",
                 "tag album Anjunabeats 14",
-                "tag title Always - Tinlicker Extended Mix"
+                "tag title Always - Tinlicker Extended Mix",
             ],
         ]
         cls.index = 0
@@ -96,11 +96,7 @@ class MockCmusRemoteProcess:
     @classmethod
     def call_process(cls, cmd):
         if cls.is_error:
-            raise subprocess.CalledProcessError(
-                -1,
-                cmd=cmd,
-                output="Couldn't connect to cmus."
-            )
+            raise subprocess.CalledProcessError(-1, cmd=cmd, output="Couldn't connect to cmus.")
 
         if cmd[1:] == ["-C", "status"]:
             track = cls.info[cls.index]
@@ -137,18 +133,19 @@ def no_op(*args, **kwargs):
 def patched_cmus(monkeypatch):
     MockCmusRemoteProcess.reset()
     monkeypatch.setattr("libqtile.widget.cmus.subprocess", MockCmusRemoteProcess)
-    monkeypatch.setattr("libqtile.widget.cmus.subprocess.CalledProcessError", subprocess.CalledProcessError)
-    monkeypatch.setattr("libqtile.widget.cmus.base.ThreadPoolText.call_process", MockCmusRemoteProcess.call_process)
+    monkeypatch.setattr(
+        "libqtile.widget.cmus.subprocess.CalledProcessError", subprocess.CalledProcessError
+    )
+    monkeypatch.setattr(
+        "libqtile.widget.cmus.base.ThreadPoolText.call_process",
+        MockCmusRemoteProcess.call_process,
+    )
     return cmus
 
 
 def test_cmus(fake_qtile, patched_cmus, fake_window):
     widget = patched_cmus.Cmus()
-    fakebar = Bar([widget], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([widget], window=fake_window)
     widget._configure(fake_qtile, fakebar)
     text = widget.poll()
     assert text == "♫ Rick Astley - Never Gonna Give You Up"
@@ -165,11 +162,7 @@ def test_cmus_play_stopped(fake_qtile, patched_cmus, fake_window):
 
     # Set track to a stopped item
     MockCmusRemoteProcess.index = 2
-    fakebar = Bar([widget], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([widget], window=fake_window)
     widget._configure(fake_qtile, fakebar)
     text = widget.poll()
 
@@ -186,11 +179,7 @@ def test_cmus_play_stopped(fake_qtile, patched_cmus, fake_window):
 def test_cmus_buttons(minimal_conf_noscreen, manager_nospawn, patched_cmus):
     widget = patched_cmus.Cmus(update_interval=30)
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar([widget], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([widget], 10))]
     manager_nospawn.start(config)
     topbar = manager_nospawn.c.bar["top"]
 
@@ -219,11 +208,7 @@ def test_cmus_buttons(minimal_conf_noscreen, manager_nospawn, patched_cmus):
 def test_cmus_error_handling(fake_qtile, patched_cmus, fake_window):
     widget = patched_cmus.Cmus()
     MockCmusRemoteProcess.is_error = True
-    fakebar = Bar([widget], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([widget], window=fake_window)
     widget._configure(fake_qtile, fakebar)
     text = widget.poll()
 
@@ -237,11 +222,7 @@ def test_escape_text(fake_qtile, patched_cmus, fake_window):
 
     # Set track to a stopped item
     MockCmusRemoteProcess.index = 3
-    fakebar = Bar([widget], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([widget], window=fake_window)
     widget._configure(fake_qtile, fakebar)
     text = widget.poll()
 

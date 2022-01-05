@@ -29,7 +29,8 @@ xcursors_ffi.set_source("libqtile.backend.x11._ffi_xcursors", None)
 
 xcursors_ffi.include(xcffib_ffi)
 
-xcursors_ffi.cdef("""
+xcursors_ffi.cdef(
+    """
     typedef uint32_t xcb_cursor_t;
     typedef struct xcb_cursor_context_t xcb_cursor_context_t;
 
@@ -45,7 +46,8 @@ xcursors_ffi.cdef("""
         );
 
     void xcb_cursor_context_free(xcb_cursor_context_t *ctx);
-""")
+"""
+)
 
 if __name__ == "__main__":
     xcursors_ffi.compile()

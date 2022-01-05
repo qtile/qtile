@@ -33,11 +33,11 @@ class Cmus(base.ThreadPoolText):
 
     Cmus (https://cmus.github.io) should be installed.
     """
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
-        ('play_color', '00ff00', 'Text colour when playing.'),
-        ('noplay_color', 'cecece', 'Text colour when not playing.'),
-        ('update_interval', 0.5, 'Update Time in seconds.')
+        ("play_color", "00ff00", "Text colour when playing."),
+        ("noplay_color", "cecece", "Text colour when not playing."),
+        ("update_interval", 0.5, "Update Time in seconds."),
     ]
 
     def __init__(self, **config):
@@ -46,33 +46,37 @@ class Cmus(base.ThreadPoolText):
         self.status = ""
         self.local = None
 
-        self.add_callbacks({
-            'Button1': self.play,
-            'Button4': partial(subprocess.Popen, ['cmus-remote', '-n']),
-            'Button5': partial(subprocess.Popen, ['cmus-remote', '-r']),
-        })
+        self.add_callbacks(
+            {
+                "Button1": self.play,
+                "Button4": partial(subprocess.Popen, ["cmus-remote", "-n"]),
+                "Button5": partial(subprocess.Popen, ["cmus-remote", "-r"]),
+            }
+        )
 
     def get_info(self):
         """Return a dictionary with info about the current cmus status."""
         try:
-            output = self.call_process(['cmus-remote', '-C', 'status'])
+            output = self.call_process(["cmus-remote", "-C", "status"])
         except subprocess.CalledProcessError as err:
             output = err.output
         if output.startswith("status"):
             output = output.splitlines()
-            info = {'status': "",
-                    'file': "",
-                    'artist': "",
-                    'album': "",
-                    'title': "",
-                    'stream': ""}
+            info = {
+                "status": "",
+                "file": "",
+                "artist": "",
+                "album": "",
+                "title": "",
+                "stream": "",
+            }
 
             for line in output:
                 for data in info:
                     if data in line:
                         index = line.index(data)
                         if index < 5:
-                            info[data] = line[len(data) + index:].strip()
+                            info[data] = line[len(data) + index :].strip()
                             break
                     elif line.startswith("set"):
                         return info
@@ -83,21 +87,21 @@ class Cmus(base.ThreadPoolText):
         info = self.get_info()
         now_playing = ""
         if info:
-            status = info['status']
+            status = info["status"]
             if self.status != status:
                 self.status = status
                 if self.status == "playing":
                     self.layout.colour = self.play_color
                 else:
                     self.layout.colour = self.noplay_color
-            self.local = info['file'].startswith("/")
-            title = info['title']
+            self.local = info["file"].startswith("/")
+            title = info["title"]
             if self.local:
-                artist = info['artist']
+                artist = info["artist"]
                 now_playing = "{0} - {1}".format(artist, title)
             else:
-                if info['stream']:
-                    now_playing = info['stream']
+                if info["stream"]:
+                    now_playing = info["stream"]
                 else:
                     now_playing = title
             if now_playing:
@@ -106,10 +110,10 @@ class Cmus(base.ThreadPoolText):
 
     def play(self):
         """Play music if stopped, else toggle pause."""
-        if self.status in ('playing', 'paused'):
-            subprocess.Popen(['cmus-remote', '-u'])
-        elif self.status == 'stopped':
-            subprocess.Popen(['cmus-remote', '-p'])
+        if self.status in ("playing", "paused"):
+            subprocess.Popen(["cmus-remote", "-u"])
+        elif self.status == "stopped":
+            subprocess.Popen(["cmus-remote", "-p"])
 
     def poll(self):
         """Poll content for the text box."""

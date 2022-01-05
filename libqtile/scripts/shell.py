@@ -37,28 +37,29 @@ def qshell(args) -> None:
 
 
 def add_subcommand(subparsers, parents):
-    parser = subparsers.add_parser(
-        "shell",
-        parents=parents,
-        help="shell-like interface to qtile"
-    )
+    parser = subparsers.add_parser("shell", parents=parents, help="shell-like interface to qtile")
     parser.add_argument(
-        "-s", "--socket",
-        action="store", type=str,
+        "-s",
+        "--socket",
+        action="store",
+        type=str,
         default=None,
-        help='Use specified socket to connect to qtile.'
+        help="Use specified socket to connect to qtile.",
     )
     parser.add_argument(
-        "-c", "--command",
-        action="store", type=str,
+        "-c",
+        "--command",
+        action="store",
+        type=str,
         default=None,
-        help='Run the specified qshell command and exit.'
+        help="Run the specified qshell command and exit.",
     )
     parser.add_argument(
-        "-j", "--json",
+        "-j",
+        "--json",
         action="store_true",
         default=False,
         dest="is_json",
-        help='Use json in order to communicate with qtile server.'
+        help="Use json in order to communicate with qtile server.",
     )
     parser.set_defaults(func=qshell)

@@ -37,10 +37,8 @@ def test_change_screen(manager_nospawn, minimal_conf_noscreen):
 
     config = minimal_conf_noscreen
     config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar([cswidget], 10)
-        ),
-        libqtile.config.Screen()
+        libqtile.config.Screen(top=libqtile.bar.Bar([cswidget], 10)),
+        libqtile.config.Screen(),
     ]
 
     manager_nospawn.start(config)

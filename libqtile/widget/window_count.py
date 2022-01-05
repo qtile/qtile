@@ -29,7 +29,7 @@ class WindowCount(base._TextBox):
     A simple widget to display the number of windows in the
     current group of the screen on which the widget is.
     """
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
         ("font", "sans", "Text font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
@@ -37,7 +37,7 @@ class WindowCount(base._TextBox):
         ("padding", None, "Padding left and right. Calculated if None."),
         ("foreground", "#ffffff", "Foreground colour."),
         ("text_format", "{num}", "Format for message"),
-        ("show_zero", False, "Show window count when no windows")
+        ("show_zero", False, "Show window count when no windows"),
     ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -76,10 +76,7 @@ class WindowCount(base._TextBox):
 
     def calculate_length(self):
         if self.text and (self._count or self.show_zero):
-            return min(
-                self.layout.width,
-                self.bar.width
-            ) + self.actual_padding * 2
+            return min(self.layout.width, self.bar.width) + self.actual_padding * 2
         else:
             return 0
 

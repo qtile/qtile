@@ -1,23 +1,20 @@
 import pytest
 
-from libqtile import bar
-from libqtile.widget.nvidia_sensors import (
-    NvidiaSensors,
-    _all_sensors_names_correct,
-)
+from libqtile.widget.nvidia_sensors import NvidiaSensors, _all_sensors_names_correct
+from test.widgets.conftest import FakeBar
 
 
 def test_nvidia_sensors_input_regex():
     correct_sensors = NvidiaSensors(
-        format='temp:{temp}°C,fan{fan_speed}asd,performance{perf}fds'
+        format="temp:{temp}°C,fan{fan_speed}asd,performance{perf}fds"
     )._parse_format_string()
-    incorrect_sensors = {'tem', 'fan_speed', 'perf'}
-    assert correct_sensors == {'temp', 'fan_speed', 'perf'}
+    incorrect_sensors = {"tem", "fan_speed", "perf"}
+    assert correct_sensors == {"temp", "fan_speed", "perf"}
     assert _all_sensors_names_correct(correct_sensors)
     assert not _all_sensors_names_correct(incorrect_sensors)
 
 
-class MockNvidiaSMI():
+class MockNvidiaSMI:
     # nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader
     # outputs one number for temperature with one gpu.
     temperature = "20"
@@ -34,11 +31,7 @@ def fake_nvidia(fake_qtile, monkeypatch, fake_window):
     # on the test computer having the required hardware.
     monkeypatch.setattr(n, "call_process", MockNvidiaSMI.get_temperature)
     monkeypatch.setattr("libqtile.widget.moc.subprocess.Popen", MockNvidiaSMI.get_temperature)
-    fakebar = bar.Bar([n], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = None
+    fakebar = FakeBar([n], window=fake_window)
     n._configure(fake_qtile, fakebar)
     return n
 

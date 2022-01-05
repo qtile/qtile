@@ -83,6 +83,7 @@ widgets = {
     "TaskList": "tasklist",
     "TextBox": "textbox",
     "ThermalSensor": "sensors",
+    "ThermalZone": "thermal_zone",
     "Volume": "volume",
     "Wallpaper": "wallpaper",
     "WidgetBox": "widgetbox",
@@ -93,5 +94,4 @@ widgets = {
     "Wttr": "wttr",
 }
 
-__all__, __dir__, __getattr__ = lazify_imports(widgets, __package__,
-                                               fallback=make_error)
+__all__, __dir__, __getattr__ = lazify_imports(widgets, __package__, fallback=make_error)

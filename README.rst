@@ -2,7 +2,7 @@
 
 **A full-featured, hackable tiling window manager written and configured in Python**
 
-|website| |pypi| |ci| |rtd| |license|
+|website| |pypi| |ci| |rtd| |license| |black| |coverage|
 
 Features
 ========
@@ -27,12 +27,23 @@ don't hesitate to fire off an email to our mailing list or join us on IRC.
 :Mailing List: https://groups.google.com/group/qtile-dev
 :IRC: irc://irc.oftc.net:6667/qtile
 
+Example code
+============
+
+Check out the `qtile-examples`_ repo which contains examples of users' configurations,
+scripts and other useful links.
+
+.. _`qtile-examples`: https://github.com/qtile/qtile-examples
+
 Contributing
 ============
 
 Please report any suggestions, feature requests, bug reports, or annoyances to
 the GitHub `issue tracker`_. There are also a few `tips & tricks`_,
 and `guidelines`_ for contributing in the documentation.
+
+Please also consider submitting useful scripts etc. to the qtile-examples repo
+(see above).
 
 .. _`issue tracker`: https://github.com/qtile/qtile/issues
 .. _`tips & tricks`: https://docs.qtile.org/en/latest/manual/hacking.html
@@ -56,6 +67,12 @@ and `guidelines`_ for contributing in the documentation.
 .. |license| image:: https://img.shields.io/github/license/qtile/qtile.svg
     :alt: License
     :target: https://github.com/qtile/qtile/blob/master/LICENSE
+.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :alt: Codestyle
+    :target: https://github.com/psf/black
+.. |coverage| image:: https://coveralls.io/repos/github/qtile/qtile/badge.svg
+    :alt: Coverage
+    :target: https://coveralls.io/github/qtile/qtile
 
 
 Maintainers

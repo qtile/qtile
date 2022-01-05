@@ -26,11 +26,10 @@
 
 import locale
 
-from libqtile.widget import base
 from libqtile.widget.generic_poll_text import GenPollUrl
 
-_DEFAULT_CURRENCY = str(locale.localeconv()['int_curr_symbol'])
-_DEFAULT_SYMBOL = str(locale.localeconv()['currency_symbol'])
+_DEFAULT_CURRENCY = str(locale.localeconv()["int_curr_symbol"])
+_DEFAULT_SYMBOL = str(locale.localeconv()["currency_symbol"])
 
 
 class CryptoTicker(GenPollUrl):
@@ -53,17 +52,15 @@ class CryptoTicker(GenPollUrl):
 
     QUERY_URL = "https://api.coinbase.com/v2/prices/{}-{}/spot"
 
-    orientations = base.ORIENTATION_HORIZONTAL
-
     defaults = [
-        ('currency', _DEFAULT_CURRENCY.strip(),
-            'The baseline currency that the value of the crypto is displayed in.'),
-        ('symbol', _DEFAULT_SYMBOL,
-            'The symbol for the baseline currency.'),
-        ('crypto', 'BTC',
-            'The cryptocurrency to display.'),
-        ('format', '{crypto}: {symbol}{amount:.2f}',
-            'Display string formatting.'),
+        (
+            "currency",
+            _DEFAULT_CURRENCY.strip(),
+            "The baseline currency that the value of the crypto is displayed in.",
+        ),
+        ("symbol", _DEFAULT_SYMBOL, "The symbol for the baseline currency."),
+        ("crypto", "BTC", "The cryptocurrency to display."),
+        ("format", "{crypto}: {symbol}{amount:.2f}", "Display string formatting."),
     ]
 
     def __init__(self, **config):
@@ -72,10 +69,10 @@ class CryptoTicker(GenPollUrl):
 
         # set up USD as the currency if no locale is set
         if self.currency == "":
-            self.currency = 'USD'
+            self.currency = "USD"
         # set up $ as the symbol if no locale is set
         if self.symbol == "":
-            self.symbol = '$'
+            self.symbol = "$"
 
     @property
     def url(self):
@@ -83,8 +80,8 @@ class CryptoTicker(GenPollUrl):
 
     def parse(self, body):
         variables = dict()
-        variables['crypto'] = self.crypto
-        variables['symbol'] = self.symbol
-        variables['amount'] = float(body['data']['amount'])
+        variables["crypto"] = self.crypto
+        variables["symbol"] = self.symbol
+        variables["amount"] = float(body["data"]["amount"])
 
         return self.format.format(**variables)

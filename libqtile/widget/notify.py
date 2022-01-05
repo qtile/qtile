@@ -47,26 +47,24 @@ class Notify(base._TextBox):
     the ``action`` option to disable all action handling. Unfortunately we cannot
     specify the capability for exactly one action.
     """
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
         ("foreground_urgent", "ff0000", "Foreground urgent priority colour"),
         ("foreground_low", "dddddd", "Foreground low priority  colour"),
-        (
-            "default_timeout",
-            None,
-            "Default timeout (seconds) for notifications"
-        ),
+        ("default_timeout", None, "Default timeout (seconds) for notifications"),
         ("audiofile", None, "Audiofile played during notifications"),
         ("action", True, "Enable handling of default action upon right click"),
         (
-            "parse_text", None, "Function to parse and modify notifications. "
+            "parse_text",
+            None,
+            "Function to parse and modify notifications. "
             "e.g. function in config that removes line returns:"
             "def my_func(text)"
             "   return text.replace('\n', '')"
-            "then set option parse_text=my_func"
+            "then set option parse_text=my_func",
         ),
     ]
-    capabilities = {'body', 'actions'}
+    capabilities = {"body", "actions"}
 
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "", width, **config)
@@ -74,12 +72,12 @@ class Notify(base._TextBox):
         self.current_id = 0
 
         default_callbacks = {
-            'Button1': self.clear,
-            'Button4': self.prev,
-            'Button5': self.next,
+            "Button1": self.clear,
+            "Button4": self.prev,
+            "Button5": self.next,
         }
         if self.action:
-            default_callbacks['Button3'] = self.invoke
+            default_callbacks["Button3"] = self.invoke
         else:
             self.capabilities = Notify.capabilities.difference({"actions"})
         self.add_callbacks(default_callbacks)
@@ -87,12 +85,7 @@ class Notify(base._TextBox):
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         self.layout = self.drawer.textlayout(
-            self.text,
-            self.foreground,
-            self.font,
-            self.fontsize,
-            self.fontshadow,
-            markup=True
+            self.text, self.foreground, self.font, self.fontsize, self.fontshadow, markup=True
         )
 
     async def _config_async(self):
@@ -100,18 +93,16 @@ class Notify(base._TextBox):
 
     def set_notif_text(self, notif):
         self.text = pangocffi.markup_escape_text(notif.summary)
-        urgency = getattr(notif.hints.get('urgency'), "value", 1)
+        urgency = getattr(notif.hints.get("urgency"), "value", 1)
         if urgency != 1:
             self.text = '<span color="%s">%s</span>' % (
-                utils.hex(
-                    self.foreground_urgent if urgency == 2
-                    else self.foreground_low
-                ),
-                self.text
+                utils.hex(self.foreground_urgent if urgency == 2 else self.foreground_low),
+                self.text,
             )
         if notif.body:
             self.text = '<span weight="bold">%s</span> - %s' % (
-                self.text, pangocffi.markup_escape_text(notif.body)
+                self.text,
+                pangocffi.markup_escape_text(notif.body),
             )
         if callable(self.parse_text):
             try:
@@ -143,11 +134,8 @@ class Notify(base._TextBox):
         self.bar.draw()
 
     def clear(self, reason=ClosedReason.dismissed):
-        notifier._service.NotificationClosed(
-            notifier.notifications[self.current_id].id,
-            reason
-        )
-        self.text = ''
+        notifier._service.NotificationClosed(notifier.notifications[self.current_id].id, reason)
+        self.text = ""
         self.current_id = len(notifier.notifications) - 1
         self.bar.draw()
 
@@ -184,7 +172,7 @@ class Notify(base._TextBox):
 
     def cmd_toggle(self):
         """Toggle showing/clearing the notification"""
-        if self.text == '':
+        if self.text == "":
             self.display()
         else:
             self.clear()

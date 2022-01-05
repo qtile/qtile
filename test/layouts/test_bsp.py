@@ -31,7 +31,7 @@ class BspConfig(Config):
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
         libqtile.config.Group("c"),
-        libqtile.config.Group("d")
+        libqtile.config.Group("d"),
     ]
     layouts = [
         layout.Bsp(),
@@ -60,9 +60,9 @@ def test_bsp_window_focus_cycle(manager):
     manager.test_window("three")
 
     # test preconditions, columns adds clients at pos of current, in two stacks
-    assert manager.c.layout.info()['clients'] == ['one', 'three', 'two']
+    assert manager.c.layout.info()["clients"] == ["one", "three", "two"]
     # last added window has focus
     assert_focused(manager, "three")
 
     # assert window focus cycle, according to order in layout
-    assert_focus_path(manager, 'two', 'float1', 'float2', 'one', 'three')
+    assert_focus_path(manager, "two", "float1", "float2", "one", "three")

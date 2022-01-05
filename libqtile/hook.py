@@ -353,14 +353,14 @@ class Unsubscribe(Subscribe):
     This class mirrors subscribe, except the _subscribe member has been
     overridden to removed calls from hooks.
     """
+
     def _subscribe(self, event, func):
         lst = subscriptions.setdefault(event, [])
         try:
             lst.remove(func)
         except ValueError:
             raise utils.QtileError(
-                "Tried to unsubscribe a hook that was not"
-                " currently subscribed"
+                "Tried to unsubscribe a hook that was not" " currently subscribed"
             )
 
 

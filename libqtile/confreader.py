@@ -113,7 +113,7 @@ class Config:
 
     def validate(self) -> None:
         """
-            Validate the configuration against the core.
+        Validate the configuration against the core.
         """
         valid_keys = core.get_keys()
         valid_mods = core.get_modifiers()

@@ -53,8 +53,10 @@ class Single(Layout):
     def configure(self, window, screen_rect):
         if window is self.window:
             window.place(
-                screen_rect.x, screen_rect.y,
-                screen_rect.width, screen_rect.height,
+                screen_rect.x,
+                screen_rect.y,
+                screen_rect.width,
+                screen_rect.height,
                 0,
                 None,
             )
@@ -152,7 +154,7 @@ class Slice(Layout):
             {
                 self._slice: win,
                 self.fallback: sub,
-            }
+            },
         )
 
     def show(self, screen_rect):
@@ -170,13 +172,13 @@ class Slice(Layout):
         return self.fallback  # always
 
     def _get_screen_rects(self, screen):
-        if self.side == 'left':
+        if self.side == "left":
             win, sub = screen.hsplit(self.width)
-        elif self.side == 'right':
+        elif self.side == "right":
             sub, win = screen.hsplit(screen.width - self.width)
-        elif self.side == 'top':
+        elif self.side == "top":
             win, sub = screen.vsplit(self.width)
-        elif self.side == 'bottom':
+        elif self.side == "bottom":
             sub, win = screen.vsplit(screen.height - self.width)
         else:
             raise NotImplementedError(self.side)
@@ -254,7 +256,7 @@ class Slice(Layout):
         For ``cmd_``-methods that don't exist on the Slice class, this looks
         for an implementation on the active layout.
         """
-        if name.startswith('cmd_'):
+        if name.startswith("cmd_"):
             return getattr(self._get_active_layout(), name)
         return super().__getattr__(name)
 

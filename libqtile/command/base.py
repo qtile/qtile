@@ -39,9 +39,7 @@ class SelectError(Exception):
     """Error raised in resolving a command graph object"""
 
     def __init__(self, err_string: str, name: str, selectors: List[SelectorType]):
-        super().__init__("{}, name: {}, selectors: {}".format(err_string,
-                                                              name,
-                                                              selectors))
+        super().__init__("{}, name: {}, selectors: {}".format(err_string, name, selectors))
         self.name = name
         self.selectors = selectors
 
@@ -128,7 +126,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         Return None if no such object exists
         """
 
-    def command(self, name: str) -> Callable:
+    def command(self, name: str) -> Optional[Callable]:
         """Return the command with the given name
 
         Parameters
@@ -170,10 +168,11 @@ class CommandObject(metaclass=abc.ABCMeta):
         """
         if name in self.commands:
             command = self.command(name)
+            assert command
             signature = self._get_command_signature(command)
             spec = name + signature
             htext = inspect.getdoc(command) or ""
-            return spec + '\n' + htext
+            return spec + "\n" + htext
         raise CommandError("No such command: %s" % name)
 
     def _get_command_signature(self, command: Callable) -> str:

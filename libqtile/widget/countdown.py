@@ -28,13 +28,16 @@ from libqtile.widget import base
 
 class Countdown(base.InLoopPollText):
     """A simple countdown timer text widget"""
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
-        ('format', '{D}d {H}h {M}m {S}s',
-            'Format of the displayed text. Available variables:'
-            '{D} == days, {H} == hours, {M} == minutes, {S} seconds.'),
-        ('update_interval', 1., 'Update interval in seconds for the clock'),
-        ('date', datetime.now(), "The datetime for the end of the countdown"),
+        (
+            "format",
+            "{D}d {H}h {M}m {S}s",
+            "Format of the displayed text. Available variables:"
+            "{D} == days, {H} == hours, {M} == minutes, {S} seconds.",
+        ),
+        ("update_interval", 1.0, "Update interval in seconds for the clock"),
+        ("date", datetime.now(), "The datetime for the end of the countdown"),
     ]
 
     def __init__(self, **config):
@@ -51,9 +54,11 @@ class Countdown(base.InLoopPollText):
             hours, rem = divmod(delta.seconds, 3600)
             minutes, seconds = divmod(rem, 60)
 
-        data = {"D": "%02d" % days,
-                "H": "%02d" % hours,
-                "M": "%02d" % minutes,
-                "S": "%02d" % seconds}
+        data = {
+            "D": "%02d" % days,
+            "H": "%02d" % hours,
+            "M": "%02d" % minutes,
+            "S": "%02d" % seconds,
+        }
 
         return self.format.format(**data)

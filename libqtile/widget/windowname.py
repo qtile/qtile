@@ -31,19 +31,27 @@ from libqtile.widget import base
 
 class WindowName(base._TextBox):
     """Displays the name of the window that currently has focus"""
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
-        ('for_current_screen', False, 'instead of this bars screen use currently active screen'),
-        ('empty_group_string', ' ', 'string to display when no windows are focused on current group'),
-        ('format', '{state}{name}', 'format of the text'),
-        ('parse_text', None, 'Function to parse and modify window names. '
-         'e.g. function in config that removes excess '
-         'strings from window name: '
-         'def my_func(text)'
-         '    for string in [\" - Chromium\", \" - Firefox\"]:'
-         '        text = text.replace(string, \"\")'
-         '   return text'
-         'then set option parse_text=my_func'),
+        ("for_current_screen", False, "instead of this bars screen use currently active screen"),
+        (
+            "empty_group_string",
+            " ",
+            "string to display when no windows are focused on current group",
+        ),
+        ("format", "{state}{name}", "format of the text"),
+        (
+            "parse_text",
+            None,
+            "Function to parse and modify window names. "
+            "e.g. function in config that removes excess "
+            "strings from window name: "
+            "def my_func(text)"
+            '    for string in [" - Chromium", " - Firefox"]:'
+            '        text = text.replace(string, "")'
+            "   return text"
+            "then set option parse_text=my_func",
+        ),
     ]
 
     def __init__(self, width=bar.STRETCH, **config):
@@ -66,14 +74,14 @@ class WindowName(base._TextBox):
             w = self.qtile.current_screen.group.current_window
         else:
             w = self.bar.screen.group.current_window
-        state = ''
+        state = ""
         if w:
             if w.maximized:
-                state = '[] '
+                state = "[] "
             elif w.minimized:
-                state = '_ '
+                state = "_ "
             elif w.floating:
-                state = 'V '
+                state = "V "
             var = {}
             var["state"] = state
             var["name"] = w.name

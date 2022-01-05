@@ -1,6 +1,6 @@
 from urllib.parse import quote, urlencode
 
-from libqtile.widget import GenPollUrl, base
+from libqtile.widget import GenPollUrl
 
 
 class Wttr(GenPollUrl):
@@ -45,36 +45,39 @@ class Wttr(GenPollUrl):
     Cities will change randomly every update.
     """
 
-    orientation = base.ORIENTATION_HORIZONTAL
     defaults = [
         (
-            'format', '3',
+            "format",
+            "3",
             'Display text format. Choose presets in range 1-4 (Ex. ``"1"``) '
-            'or build your own custom output format, use the special '
-            '%-notation. See https://github.com/chubin/wttr.in#one-line-output'
+            "or build your own custom output format, use the special "
+            "%-notation. See https://github.com/chubin/wttr.in#one-line-output",
         ),
-        ('json', False, 'Is Json?'),
+        ("json", False, "Is Json?"),
         (
-            'lang', 'en',
-            'Display text language. List of supported languages '
-            'https://wttr.in/:translation'
-        ),
-        (
-            'location', None,
-            'Dictionary. Key is a city or place name, or GPS coordinates. '
-            'Value is a display name.'
+            "lang",
+            "en",
+            "Display text language. List of supported languages " "https://wttr.in/:translation",
         ),
         (
-            'units', 'm',
+            "location",
+            None,
+            "Dictionary. Key is a city or place name, or GPS coordinates. "
+            "Value is a display name.",
+        ),
+        (
+            "units",
+            "m",
             "``'m'`` - metric, ``'M'`` - show wind speed in m/s, "
-            "``'u'`` - United States units"
+            "``'u'`` - United States units",
         ),
         (
-            'update_interval', 600,
-            'Update interval in seconds. Recommendation: if you want to '
-            'display multiple locations alternately, maybe set a smaller '
-            'interval, ex. ``30``.'
-        )
+            "update_interval",
+            600,
+            "Update interval in seconds. Recommendation: if you want to "
+            "display multiple locations alternately, maybe set a smaller "
+            "interval, ex. ``30``.",
+        ),
     ]
 
     def __init__(self, **config):
@@ -87,13 +90,11 @@ class Wttr(GenPollUrl):
             return None
 
         params = {
-            'format': self.format,
-            'lang': self.lang,
+            "format": self.format,
+            "lang": self.lang,
         }
-        location = ':'.join(
-            quote(loc) for loc in self.location
-        )
-        url = f'https://wttr.in/{location}?{self.units}&{urlencode(params)}'
+        location = ":".join(quote(loc) for loc in self.location)
+        url = f"https://wttr.in/{location}?{self.units}&{urlencode(params)}"
         return url
 
     def parse(self, response):

@@ -1,5 +1,9 @@
 Qtile x.x.x, released xxxx-xx-xx:
     * features
+        - Add `place_right` option in the TreeTab layout to place the tab panel on the right side
+
+Qtile 0.19.0, released 2021-12-22:
+    * features
         - Add ability to draw borders to the Bar. Can customise size and colour per edge.
         - Add `StatusNotifier` widget implementing the `StatusNotifierItem` specification.
           NB Widget does not provide context menus.
@@ -22,6 +26,10 @@ Qtile x.x.x, released xxxx-xx-xx:
           `lazy.group.toscreen(toggle=True)`
         - Tile layout has new `margin_on_single` and `border_on_single` option to specify
           whether to draw margin and border when there is only one window.
+        - Thermal zone widget.
+        - Allow TextBox-based widgets to display in vertical bars.
+        - Added a focused attribute to `lazy.function.when` which can be used to Match on focused windows.
+        - Allow to update Image widget with update() function by giving a new path.
 
 Qtile 0.18.1, released 2021-09-16:
     * features

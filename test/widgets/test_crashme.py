@@ -34,11 +34,7 @@ def test_crashme_init(manager_nospawn, minimal_conf_noscreen):
     crash = _CrashMe()
 
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar([crash], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([crash], 10))]
 
     manager_nospawn.start(config)
 

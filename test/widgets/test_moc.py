@@ -25,8 +25,8 @@ import subprocess
 import pytest
 
 import libqtile.config
-from libqtile.bar import Bar
 from libqtile.widget import moc
+from test.widgets.conftest import FakeBar
 
 
 class MockMocpProcess:
@@ -38,53 +38,51 @@ class MockMocpProcess:
     def reset(cls):
         cls.info = [
             {
-                'State': "PLAY",
-                'File': "/playing/file/rickroll.mp3",
-                'SongTitle': "Never Gonna Give You Up",
-                'Artist': "Rick Astley",
-                'Album': "Whenever You Need Somebody"
-                },
+                "State": "PLAY",
+                "File": "/playing/file/rickroll.mp3",
+                "SongTitle": "Never Gonna Give You Up",
+                "Artist": "Rick Astley",
+                "Album": "Whenever You Need Somebody",
+            },
             {
-                'State': "PLAY",
-                'File': "/playing/file/sweetcaroline.mp3",
-                'SongTitle': "Sweet Caroline",
-                'Artist': "Neil Diamond",
-                'Album': "Greatest Hits"
-                },
+                "State": "PLAY",
+                "File": "/playing/file/sweetcaroline.mp3",
+                "SongTitle": "Sweet Caroline",
+                "Artist": "Neil Diamond",
+                "Album": "Greatest Hits",
+            },
             {
-                'State': "STOP",
-                'File': "/playing/file/itsnotunusual.mp3",
-                'SongTitle': "It's Not Unusual",
-                'Artist': "Tom Jones",
-                'Album': "Along Came Jones"
-                }
+                "State": "STOP",
+                "File": "/playing/file/itsnotunusual.mp3",
+                "SongTitle": "It's Not Unusual",
+                "Artist": "Tom Jones",
+                "Album": "Along Came Jones",
+            },
         ]
         cls.index = 0
 
     @classmethod
     def run(cls, cmd):
         if cls.is_error:
-            raise subprocess.CalledProcessError(
-                -1,
-                cmd=cmd,
-                output="Couldn't connect to moc."
-            )
+            raise subprocess.CalledProcessError(-1, cmd=cmd, output="Couldn't connect to moc.")
 
         arg = cmd[1]
 
         if arg == "-i":
-            output = "\n".join("{k}: {v}".format(k=k, v=v) for k, v in cls.info[cls.index].items())
+            output = "\n".join(
+                "{k}: {v}".format(k=k, v=v) for k, v in cls.info[cls.index].items()
+            )
             return output
 
         elif arg == "-p":
-            cls.info[cls.index]['State'] = "PLAY"
+            cls.info[cls.index]["State"] = "PLAY"
 
         elif arg == "-G":
-            if cls.info[cls.index]['State'] == "PLAY":
-                cls.info[cls.index]['State'] = "PAUSE"
+            if cls.info[cls.index]["State"] == "PLAY":
+                cls.info[cls.index]["State"] = "PAUSE"
 
-            elif cls.info[cls.index]['State'] == "PAUSE":
-                cls.info[cls.index]['State'] = "PLAY"
+            elif cls.info[cls.index]["State"] == "PAUSE":
+                cls.info[cls.index]["State"] = "PLAY"
 
         elif arg == "-f":
             cls.index = (cls.index + 1) % len(cls.info)
@@ -103,11 +101,7 @@ def patched_moc(fake_qtile, monkeypatch, fake_window):
     MockMocpProcess.reset()
     monkeypatch.setattr(widget, "call_process", MockMocpProcess.run)
     monkeypatch.setattr("libqtile.widget.moc.subprocess.Popen", MockMocpProcess.run)
-    fakebar = Bar([widget], 24)
-    fakebar.window = fake_window
-    fakebar.width = 10
-    fakebar.height = 10
-    fakebar.draw = no_op
+    fakebar = FakeBar([widget], window=fake_window)
     widget._configure(fake_qtile, fakebar)
     return widget
 
@@ -156,11 +150,7 @@ def test_moc_button_presses(manager_nospawn, minimal_conf_noscreen, monkeypatch)
     monkeypatch.setattr("libqtile.widget.moc.subprocess.Popen", MockMocpProcess.run)
 
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar([mocwidget], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([mocwidget], 10))]
 
     manager_nospawn.start(config)
 

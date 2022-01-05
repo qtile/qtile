@@ -1,0 +1,3 @@
+[tool.black]
+line-length = 98
+exclude = 'libqtile/_ffi.*\.py|libqtile/backend/x11/_ffi.*\.py|test/configs/syntaxerr.py'

@@ -7,10 +7,10 @@ from typing import Optional
 from libqtile.log_utils import logger
 
 __all__ = [
-    'lifecycle',
+    "lifecycle",
 ]
 
-Behavior = enum.Enum('Behavior', 'NONE TERMINATE RESTART')
+Behavior = enum.Enum("Behavior", "NONE TERMINATE RESTART")
 
 
 class LifeCycle:
@@ -26,16 +26,16 @@ class LifeCycle:
     def _atexit(self) -> None:
         if self.behavior is Behavior.RESTART:
             argv = [sys.executable] + sys.argv
-            if '--no-spawn' not in argv:
-                argv.append('--no-spawn')
-            argv = [s for s in argv if not s.startswith('--with-state')]
+            if "--no-spawn" not in argv:
+                argv.append("--no-spawn")
+            argv = [s for s in argv if not s.startswith("--with-state")]
             if self.state_file is not None:
-                argv.append('--with-state=' + self.state_file)
-            logger.warning('Restarting Qtile with os.execv(...)')
+                argv.append("--with-state=" + self.state_file)
+            logger.warning("Restarting Qtile with os.execv(...)")
             # No other code will execute after the following line does
             os.execv(sys.executable, argv)
         elif self.behavior is Behavior.TERMINATE:
-            logger.warning('Qtile will now terminate')
+            logger.warning("Qtile will now terminate")
         elif self.behavior is Behavior.NONE:
             pass
 

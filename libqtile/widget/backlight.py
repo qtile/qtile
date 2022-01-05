@@ -30,7 +30,7 @@ from typing import Dict
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
-BACKLIGHT_DIR = '/sys/class/backlight'
+BACKLIGHT_DIR = "/sys/class/backlight"
 
 
 @enum.unique
@@ -55,32 +55,36 @@ class Backlight(base.InLoopPollText):
     .. code-block: python
 
         from libqtile.widget import backlight
-        Key([], "XF86MonBrightnessUp", lazy.widget['backlight'].change_backlight(backlight.ChangeDirection.UP)),
-        Key([], "XF86MonBrightnessDown", lazy.widget['backlight'].change_backlight(backlight.ChangeDirection.DOWN)),
+        Key(
+            [],
+            "XF86MonBrightnessUp",
+            lazy.widget['backlight'].change_backlight(backlight.ChangeDirection.UP)
+        )
+        Key(
+            [],
+            "XF86MonBrightnessDown",
+            lazy.widget['backlight'].change_backlight(backlight.ChangeDirection.DOWN)
+        )
     """
 
     filenames = {}  # type: Dict
 
-    orientations = base.ORIENTATION_HORIZONTAL
-
     defaults = [
-        ('backlight_name', 'acpi_video0', 'ACPI name of a backlight device'),
+        ("backlight_name", "acpi_video0", "ACPI name of a backlight device"),
         (
-            'brightness_file',
-            'brightness',
-            'Name of file with the '
-            'current brightness in /sys/class/backlight/backlight_name'
+            "brightness_file",
+            "brightness",
+            "Name of file with the " "current brightness in /sys/class/backlight/backlight_name",
         ),
         (
-            'max_brightness_file',
-            'max_brightness',
-            'Name of file with the '
-            'maximum brightness in /sys/class/backlight/backlight_name'
+            "max_brightness_file",
+            "max_brightness",
+            "Name of file with the " "maximum brightness in /sys/class/backlight/backlight_name",
         ),
-        ('update_interval', .2, 'The delay in seconds between updates'),
-        ('step', 10, 'Percent of backlight every scroll changed'),
-        ('format', '{percent:2.0%}', 'Display format'),
-        ('change_command', 'xbacklight -set {0}', 'Execute command to change value')
+        ("update_interval", 0.2, "The delay in seconds between updates"),
+        ("step", 10, "Percent of backlight every scroll changed"),
+        ("format", "{percent:2.0%}", "Display format"),
+        ("change_command", "xbacklight -set {0}", "Execute command to change value"),
     ]
 
     def __init__(self, **config):
@@ -89,16 +93,22 @@ class Backlight(base.InLoopPollText):
         self._future = None
 
         self.brightness_file = os.path.join(
-            BACKLIGHT_DIR, self.backlight_name, self.brightness_file,
+            BACKLIGHT_DIR,
+            self.backlight_name,
+            self.brightness_file,
         )
         self.max_brightness_file = os.path.join(
-            BACKLIGHT_DIR, self.backlight_name, self.max_brightness_file,
+            BACKLIGHT_DIR,
+            self.backlight_name,
+            self.max_brightness_file,
         )
 
-        self.add_callbacks({
-            'Button4': partial(self.cmd_change_backlight, ChangeDirection.UP),
-            'Button5': partial(self.cmd_change_backlight, ChangeDirection.DOWN),
-        })
+        self.add_callbacks(
+            {
+                "Button4": partial(self.cmd_change_backlight, ChangeDirection.UP),
+                "Button5": partial(self.cmd_change_backlight, ChangeDirection.DOWN),
+            }
+        )
 
     def finalize(self):
         if self._future and not self._future.done():
@@ -107,13 +117,11 @@ class Backlight(base.InLoopPollText):
 
     def _load_file(self, path):
         try:
-            with open(path, 'r') as f:
+            with open(path, "r") as f:
                 return float(f.read().strip())
         except FileNotFoundError:
-            logger.debug('Failed to get %s' % path)
-            raise RuntimeError(
-                'Unable to read status for {}'.format(os.path.basename(path))
-            )
+            logger.debug("Failed to get %s" % path)
+            raise RuntimeError("Unable to read status for {}".format(os.path.basename(path)))
 
     def _get_info(self):
         brightness = self._load_file(self.brightness_file)
@@ -124,7 +132,7 @@ class Backlight(base.InLoopPollText):
         try:
             percent = self._get_info()
         except RuntimeError as e:
-            return 'Error: {}'.format(e)
+            return "Error: {}".format(e)
 
         return self.format.format(percent=percent)
 
@@ -132,11 +140,14 @@ class Backlight(base.InLoopPollText):
         if self.change_command is None:
             value = self._load_file(self.max_brightness_file) * value / 100
             try:
-                with open(self.brightness_file, 'w') as f:
+                with open(self.brightness_file, "w") as f:
                     f.write(str(round(value)))
             except PermissionError:
-                logger.warning("Cannot set brightness: no write permission for {0}"
-                               .format(self.brightness_file))
+                logger.warning(
+                    "Cannot set brightness: no write permission for {0}".format(
+                        self.brightness_file
+                    )
+                )
         else:
             self.call_process(shlex.split(self.change_command.format(value)))
 

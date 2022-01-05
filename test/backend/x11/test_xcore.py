@@ -6,7 +6,7 @@ from test.test_manager import ManagerConfig
 
 
 def test_get_core_x11(display):
-    get_core('x11', display).finalize()
+    get_core("x11", display).finalize()
 
 
 def test_keys(display):
@@ -20,7 +20,7 @@ def test_no_two_qtiles(xmanager):
 
 
 def test_color_pixel(xmanager):
-    (success, e) = xmanager.c.eval("self.core.conn.color_pixel(\"ffffff\")")
+    (success, e) = xmanager.c.eval('self.core.conn.color_pixel("ffffff")')
     assert success, e
 
 
@@ -29,7 +29,7 @@ def test_net_client_list(xmanager):
     conn = xcbq.Connection(xmanager.display)
 
     def assert_clients(number):
-        clients = conn.default_screen.root.get_property('_NET_CLIENT_LIST', unpack=int)
+        clients = conn.default_screen.root.get_property("_NET_CLIENT_LIST", unpack=int)
         assert len(clients) == number
 
     # ManagerConfig has a Bar, which should not appear in _NET_CLIENT_LIST
