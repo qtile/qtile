@@ -319,10 +319,15 @@ class Window(_Window, metaclass=ABCMeta):
         """Focus this window and optional warp the pointer to it."""
 
     @abstractmethod
-    def togroup(self, group_name: str | None = None, *, switch_group: bool = False) -> None:
+    def togroup(
+        self, group_name: str | None = None, *, switch_group: bool = False, toggle: bool = False
+    ) -> None:
         """Move window to a specified group
 
         Also switch to that group if switch_group is True.
+
+        If `toggle` is True and and the specified group is already on the screen,
+        use the last used group as target instead.
         """
 
     @property
@@ -429,10 +434,14 @@ class Window(_Window, metaclass=ABCMeta):
         group_name: str | None = None,
         groupName: str | None = None,  # Deprecated  # noqa: N803
         switch_group: bool = False,
+        toggle: bool = False,
     ) -> None:
         """Move window to a specified group
 
         Also switch to that group if `switch_group` is True.
+
+        If `toggle` is True and and the specified group is already on the screen,
+        use the last used group as target instead.
 
         `groupName` is deprecated and will be dropped soon. Please use `group_name`
         instead.
@@ -440,7 +449,7 @@ class Window(_Window, metaclass=ABCMeta):
         if groupName is not None:
             logger.warning("Window.cmd_togroup's groupName is deprecated; use group_name")
             group_name = groupName
-        self.togroup(group_name, switch_group=switch_group)
+        self.togroup(group_name, switch_group=switch_group, toggle=toggle)
 
     def cmd_toscreen(self, index: int | None = None) -> None:
         """Move window to a specified screen.
