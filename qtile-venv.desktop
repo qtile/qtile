@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Qtile(venv)
+Comment=Qtile Session Within Venv
+Exec=/home/kovas/qtile/qtile-venv-entry
+Type=Application
+Keywords=wm;tiling
+
+# Run this to install:
+# sudo cp qtile-venv.desktop /usr/share/xsessions/
