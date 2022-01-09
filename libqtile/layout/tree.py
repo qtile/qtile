@@ -475,6 +475,8 @@ class TreeTab(Layout):
             client.hide()
 
     def finalize(self):
+        if self._panel:
+            self._panel.kill()
         Layout.finalize(self)
         if self._drawer is not None:
             self._drawer.finalize()

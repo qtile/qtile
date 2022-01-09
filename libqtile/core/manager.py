@@ -281,8 +281,10 @@ class Qtile(CommandObject):
                 widget.finalize()
             self.widgets_map.clear()
 
-            for layout in self.config.layouts:
-                layout.finalize()
+            # For layouts we need to finalize each clone of a layout in each group
+            for group in self.groups:
+                for layout in group.layouts:
+                    layout.finalize()
 
             for screen in self.screens:
                 for gap in screen.gaps:
