@@ -87,17 +87,12 @@ class ScratchPadBaseConfic(Config):
 scratchpad_config = pytest.mark.parametrize("manager", [ScratchPadBaseConfic], indirect=True)
 
 
-@Retry(ignore_exceptions=(KeyError,))
-def is_spawned(manager, name, scratch_group="SCRATCHPAD"):
-    manager.c.group[scratch_group].dropdown_info(name)["windows"]
-    return True
-
-
 @Retry(ignore_exceptions=(ValueError,))
-def is_killed(manager, name):
-    if not manager.c.group["SCRATCHPAD"].dropdown_info(name).get("windows"):
+def has_windows(manager, name, scratchpad="SCRATCHPAD", n=None):
+    window_count = len(manager.c.group[scratchpad].dropdown_info(name).get("windows", ()))
+    if n is None and window_count or window_count == n:
         return True
-    raise ValueError("not yet killed")
+    raise ValueError("windows not killed or spawned yet")
 
 
 @scratchpad_config
@@ -110,7 +105,7 @@ def test_sratchpad_with_matcher(manager):
 
     # First toggling: wait for window
     manager.c.group["SCRATCHPAD"].dropdown_toggle("dd-e")
-    is_spawned(manager, "dd-e")
+    has_windows(manager, "dd-e")
 
     # assert window in current group "a"
     assert sorted(manager.c.group["a"].info()["windows"]) == ["dd-e", "one"]
@@ -139,8 +134,7 @@ def test_sratchpad_multi_window(manager):
 
     # First toggling: wait for window
     manager.c.group["SCRATCHPAD"].dropdown_toggle("dd-f")
-    is_spawned(manager, "dd-f")
-    assert len(manager.c.group["SCRATCHPAD"].dropdown_info("dd-f")["windows"]) == 2
+    has_windows(manager, "dd-f", n=2)
 
     # assert window in current group "a"
     assert sorted(manager.c.group["a"].info()["windows"]) == ["dd-f", "dd-f", "one"]
@@ -160,10 +154,10 @@ def test_sratchpad_multi_window(manager):
 
     # kill one window and check if the other exists
     manager.c.window.kill()
-    assert len(manager.c.group["SCRATCHPAD"].dropdown_info("dd-f")["windows"]) == 1
+    has_windows(manager, "dd-f", n=1)
     assert_focused(manager, "dd-f")
     manager.c.window.kill()
-    assert not manager.c.group["SCRATCHPAD"].dropdown_info("dd-f").get("windows")
+    has_windows(manager, "dd-f", n=0)
 
 
 @scratchpad_config
@@ -179,7 +173,7 @@ def test_toggling_single(manager):
 
     # First toggling: wait for window
     manager.c.group["SINGLE_SCRATCHPAD"].dropdown_toggle("dd-e")
-    is_spawned(manager, "dd-e", "SINGLE_SCRATCHPAD")
+    has_windows(manager, "dd-e", "SINGLE_SCRATCHPAD")
 
     # assert window in current group "a"
     assert sorted(manager.c.group["a"].info()["windows"]) == ["dd-e", "one"]
@@ -187,7 +181,7 @@ def test_toggling_single(manager):
 
     # toggle another window, this should hide the previous one.
     manager.c.group["SINGLE_SCRATCHPAD"].dropdown_toggle("dd-f")
-    is_spawned(manager, "dd-f", "SINGLE_SCRATCHPAD")
+    has_windows(manager, "dd-f", "SINGLE_SCRATCHPAD")
     assert sorted(manager.c.group["a"].info()["windows"]) == ["dd-f", "one"]
     assert_focused(manager, "dd-f")
     assert manager.c.group["SINGLE_SCRATCHPAD"].info()["windows"] == ["dd-e"]
@@ -208,7 +202,7 @@ def test_toggling(manager):
 
     # First toggling: wait for window
     manager.c.group["SCRATCHPAD"].dropdown_toggle("dd-a")
-    is_spawned(manager, "dd-a")
+    has_windows(manager, "dd-a")
 
     # assert window in current group "a"
     assert sorted(manager.c.group["a"].info()["windows"]) == ["dd-a", "one"]
@@ -237,7 +231,7 @@ def test_focus_cycle(manager):
     assert_focused(manager, "one")
 
     manager.c.group["SCRATCHPAD"].dropdown_toggle("dd-a")
-    is_spawned(manager, "dd-a")
+    has_windows(manager, "dd-a")
     assert_focused(manager, "dd-a")
 
     manager.test_window("two")
@@ -245,7 +239,7 @@ def test_focus_cycle(manager):
 
     # spawn dd-b by toggling
     manager.c.group["SCRATCHPAD"].dropdown_toggle("dd-b")
-    is_spawned(manager, "dd-b")
+    has_windows(manager, "dd-b")
     assert_focused(manager, "dd-b")
 
     # check all windows
@@ -264,7 +258,7 @@ def test_focus_lost_hide(manager):
 
     # spawn dd-c by toggling
     manager.c.group["SCRATCHPAD"].dropdown_toggle("dd-c")
-    is_spawned(manager, "dd-c")
+    has_windows(manager, "dd-c")
     assert_focused(manager, "dd-c")
     assert sorted(manager.c.group["a"].info()["windows"]) == ["dd-c", "one"]
 
@@ -276,7 +270,7 @@ def test_focus_lost_hide(manager):
 
     # spawn dd-b by toggling
     manager.c.group["SCRATCHPAD"].dropdown_toggle("dd-d")
-    is_spawned(manager, "dd-d")
+    has_windows(manager, "dd-d")
     assert_focused(manager, "dd-d")
 
     assert sorted(manager.c.group["a"].info()["windows"]) == ["dd-d", "one", "two"]
@@ -318,13 +312,13 @@ def test_kill(manager):
 
     # First toggling: wait for window
     manager.c.group["SCRATCHPAD"].dropdown_toggle("dd-a")
-    is_spawned(manager, "dd-a")
+    has_windows(manager, "dd-a")
     assert_focused(manager, "dd-a")
     assert manager.c.group["SCRATCHPAD"].dropdown_info("dd-a")["windows"][0]["name"] == "dd-a"
 
     # kill current window "dd-a"
     manager.c.window.kill()
-    is_killed(manager, "dd-a")
+    has_windows(manager, "dd-a", n=0)
     assert_focused(manager, "one")
     assert "windows" not in manager.c.group["SCRATCHPAD"].dropdown_info("dd-a")
 
@@ -340,7 +334,7 @@ def test_floating_toggle(manager):
     assert "windows" not in manager.c.group["SCRATCHPAD"].dropdown_info("dd-a")
     # First toggling: wait for window
     manager.c.group["SCRATCHPAD"].dropdown_toggle("dd-a")
-    is_spawned(manager, "dd-a")
+    has_windows(manager, "dd-a")
     assert_focused(manager, "dd-a")
 
     assert "windows" in manager.c.group["SCRATCHPAD"].dropdown_info("dd-a")
@@ -352,7 +346,7 @@ def test_floating_toggle(manager):
     assert sorted(manager.c.group["a"].info()["windows"]) == ["dd-a", "one"]
 
     manager.c.group["SCRATCHPAD"].dropdown_toggle("dd-a")
-    is_spawned(manager, "dd-a")
+    has_windows(manager, "dd-a")
     assert sorted(manager.c.group["a"].info()["windows"]) == ["dd-a", "dd-a", "one"]
 
 
