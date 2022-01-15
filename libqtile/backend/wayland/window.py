@@ -42,7 +42,7 @@ from libqtile.command.base import CommandError
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Dict, List, Optional, Tuple, Union
+    from typing import Dict, List, Optional, Set, Tuple, Union
 
     from wlroots.wlr_types.surface import SubSurface as WlrSubSurface
 
@@ -83,7 +83,7 @@ class Window(base.Window, HasListeners):
         self.y = 0
         self.bordercolor: List[ffi.CData] = [_rgb((0, 0, 0, 1))]
         self._opacity: float = 1.0
-        self._outputs: List[Output] = []
+        self._outputs: Set[Output] = set()
 
         # These become non-zero when being mapping for the first time
         self._width: int = 0
@@ -306,7 +306,7 @@ class Window(base.Window, HasListeners):
 
     def _find_outputs(self):
         """Find the outputs on which this window can be seen."""
-        self._outputs = [o for o in self.core.outputs if o.contains(self)]
+        self._outputs = set(o for o in self.core.outputs if o.contains(self))
 
     def damage(self) -> None:
         for output in self._outputs:
@@ -523,8 +523,10 @@ class Window(base.Window, HasListeners):
             self.core.mapped_windows.append(self)
             self.core.stack_windows()
 
+        prev_outputs = self._outputs.copy()
         self._find_outputs()
-        self.damage()
+        for output in self._outputs | prev_outputs:
+            output.damage()
 
     def _tweak_float(self, x=None, y=None, dx=0, dy=0, w=None, h=None, dw=0, dh=0):
         if x is None:
@@ -761,7 +763,7 @@ class Internal(base.Internal, Window):
         self._opacity: float = 1.0
         self._width: int = width
         self._height: int = height
-        self._outputs: List[Output] = []
+        self._outputs: Set[Output] = set()
         self._find_outputs()
         self._reset_texture()
         self._group = None
@@ -889,7 +891,7 @@ class Static(base.Static, Window):
         self.borderwidth: int = 0
         self.bordercolor: List[ffi.CData] = [_rgb((0, 0, 0, 1))]
         self.opacity: float = 1.0
-        self._outputs: List[Output] = []
+        self._outputs: Set[Output] = set()
         self._float_state = FloatStates.FLOATING
         self.is_layer = False
         self._app_id: Optional[str] = None  # Not used by layer-shell surfaces
@@ -906,7 +908,7 @@ class Static(base.Static, Window):
             self.output = core.output_from_wlr_output(surface.output)
             self.screen = self.output.screen
             self.mapped = True
-            self._outputs.append(self.output)
+            self._outputs.add(self.output)
         else:
             if surface.toplevel.title:
                 self.name = surface.toplevel.title
