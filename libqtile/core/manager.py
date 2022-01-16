@@ -336,8 +336,8 @@ class Qtile(CommandObject):
                 for grp in self.groups:
                     if not grp.screen:
                         break
-
-            scr._configure(self, i, x, y, w, h, grp)
+            reconfigure_gaps = (x, y, w, h) != (scr.x, scr.y, scr.width, scr.height)
+            scr._configure(self, i, x, y, w, h, grp, reconfigure_gaps=reconfigure_gaps)
             screens.append(scr)
 
         for screen in self.screens:
