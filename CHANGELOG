@@ -1,6 +1,9 @@
 Qtile x.x.x, released xxxx-xx-xx:
     * features
         - Add `place_right` option in the TreeTab layout to place the tab panel on the right side
+    * bugfixes
+        - Change timing of `screens_reconfigured` hook. Will now be called ONLY if `cmd_reconfigure_screens`
+          has been called and completed.
 
 Qtile 0.19.0, released 2021-12-22:
     * features
