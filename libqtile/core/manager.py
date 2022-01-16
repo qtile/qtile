@@ -365,6 +365,8 @@ class Qtile(CommandObject):
                 else:
                     group.hide()
 
+        hook.fire("screens_reconfigured")
+
     def paint_screen(self, screen: Screen, image_path: str, mode: Optional[str] = None) -> None:
         self.core.painter.paint(screen, image_path, mode)
 
