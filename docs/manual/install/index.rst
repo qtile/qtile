@@ -66,7 +66,7 @@ dbus-next_        --                  Sending notifications with dbus (optional)
 
 .. _CFFI: https://cffi.readthedocs.io/en/latest/installation.html
 .. _xcffib: https://github.com/tych0/xcffib#installation
-.. _wlroots: https://github.com/swaywm/wlroots
+.. _wlroots: https://gitlab.freedesktop.org/wlroots/wlroots
 .. _pywlroots: https://github.com/flacjacket/pywlroots
 .. _pywayland: https://pywayland.readthedocs.io/en/latest/install.html
 .. _python-xkbcommon: https://github.com/sde1000/python-xkbcommon
