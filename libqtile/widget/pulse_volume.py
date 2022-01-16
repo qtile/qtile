@@ -236,7 +236,7 @@ class PulseVolume(Volume):
             if not base:
                 return -1
             current = max(self.default_sink["values"])
-            return int(current * 100 / base)
+            return round(current * 100 / base)
         return -1
 
     def timer_setup(self):
