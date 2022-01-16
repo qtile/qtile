@@ -9,6 +9,7 @@ Qtile x.x.x, released xxxx-xx-xx:
         - Change timing of `screens_reconfigured` hook. Will now be called ONLY if `cmd_reconfigure_screens`
           has been called and completed.
         - Fix order of icons in Systray widget when restarting/reloading config.
+        - Fix rounding error in PulseVolume widget's reported volume.
 
 Qtile 0.19.0, released 2021-12-22:
     * features
