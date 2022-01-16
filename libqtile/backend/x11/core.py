@@ -721,7 +721,6 @@ class Core(base.Core):
 
     def handle_ScreenChangeNotify(self, event) -> None:  # noqa: N802
         hook.fire("screen_change", event)
-        hook.fire("screens_reconfigured")
 
     @contextlib.contextmanager
     def disable_unmap_events(self):

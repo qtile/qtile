@@ -305,10 +305,7 @@ class Subscribe:
         return self._subscribe("screen_change", func)
 
     def screens_reconfigured(self, func):
-        """Called when all ``screen_change`` hooks have fired.
-
-        This is primarily useful where you want a callback to be triggered once
-        ``qtile.cmd_reconfigure_screens`` has completed (e.g. if
+        """Called once ``qtile.cmd_reconfigure_screens`` has completed (e.g. if
         ``reconfigure_screens`` is set to ``True`` in your config).
 
         **Arguments**

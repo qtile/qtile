@@ -4,6 +4,9 @@ Qtile x.x.x, released xxxx-xx-xx:
     * bugfixes
         - Remove non-commandable windows from IPC. Fixes bug where IPC would fail when trying to get info
           on all windows but Systray has icons (which are non-commandable `_Window`s.)
+        - Fix bug where bars were not reconfigured correctly when screen layout changes.
+        - Change timing of `screens_reconfigured` hook. Will now be called ONLY if `cmd_reconfigure_screens`
+          has been called and completed.
 
 Qtile 0.19.0, released 2021-12-22:
     * features

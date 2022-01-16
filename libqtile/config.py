@@ -292,7 +292,7 @@ class Screen(CommandObject):
         self.width = width if width is not None else 0
         self.height = height if height is not None else 0
 
-    def _configure(self, qtile, index, x, y, width, height, group):
+    def _configure(self, qtile, index, x, y, width, height, group, reconfigure_gaps=False):
         self.qtile = qtile
         self.index = index
         self.x = x
@@ -301,6 +301,9 @@ class Screen(CommandObject):
         self.height = height
         self.set_group(group)
         for i in self.gaps:
+            if reconfigure_gaps:
+                i._configured = False
+                i._borders_drawn = False
             i._configure(qtile, self)
         if self.wallpaper:
             self.wallpaper = os.path.expanduser(self.wallpaper)

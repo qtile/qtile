@@ -249,6 +249,7 @@ class Bar(Gap, configurable.Configurable):
             # We get _configure()-ed with an existing window when screens are getting
             # reconfigured but this screen is present both before and after
             self.window.place(self.x, self.y, width, height, 0, None)
+
         else:
             # Whereas we won't have a window if we're startup up for the first time or
             # the window has been killed by us no longer using the bar's screen
@@ -273,10 +274,7 @@ class Bar(Gap, configurable.Configurable):
             self.window.opacity = self.opacity
             self.window.unhide()
 
-            self.drawer = self.window.create_drawer(width, height)
-            self.drawer.clear(self.background)
-
-            self.window.process_window_expose = self.draw
+            self.window.process_window_expose = self.process_window_expose
             self.window.process_button_click = self.process_button_click
             self.window.process_button_release = self.process_button_release
             self.window.process_pointer_enter = self.process_pointer_enter
@@ -284,13 +282,21 @@ class Bar(Gap, configurable.Configurable):
             self.window.process_pointer_motion = self.process_pointer_motion
             self.window.process_key_press = self.process_key_press
 
+        # We create a new drawer even if there's already a window to ensure the
+        # drawer is the right size.
+        self.drawer = self.window.create_drawer(width, height)
+        self.drawer.clear(self.background)
+
         self.crashed_widgets = []
         if self._configured:
             for i in self.widgets:
                 self._configure_widget(i)
         else:
             for idx, i in enumerate(self.widgets):
-                if i.configured:
+                # Create a mirror if this widget is being placed on a different bar
+                # We don't do isinstance(i, Mirror) because importing Mirror (at the top)
+                # would give a circular import as libqtile.widget.base imports lbqtile.bar
+                if i.configured and i.bar != self and i.__class__.__name__ != "Mirror":
                     i = i.create_mirror()
                     self.widgets[idx] = i
                 success = self._configure_widget(i)
@@ -446,6 +452,11 @@ class Bar(Gap, configurable.Configurable):
         return None
 
     def process_button_click(self, x: int, y: int, button: int) -> None:
+        # If we're clicking on a bar that's not on the current screen, focus that screen
+        if self.screen is not self.qtile.current_screen:
+            index = self.qtile.screens.index(self.screen)
+            self.qtile.focus_screen(index, warp=False)
+
         widget = self.get_widget_in_position(x, y)
         if widget:
             widget.button_press(
@@ -514,6 +525,13 @@ class Bar(Gap, configurable.Configurable):
         if self.saved_focus is not None:
             self.saved_focus.focus(False)
         self.has_keyboard = None
+
+    def process_window_expose(self):
+        """
+        If the window is being redrawn we need to redraw borders too.
+        """
+        self._borders_drawn = False
+        self.draw()
 
     def draw(self):
         if not self.widgets:

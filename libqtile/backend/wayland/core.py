@@ -431,7 +431,6 @@ class Core(base.Core, wlrq.HasListeners):
             config.send_failed()
         config.destroy()
         hook.fire("screen_change", None)
-        hook.fire("screens_reconfigured")
 
     def _process_cursor_motion(self, time_msec: int, cx: float, cy: float):
         assert self.qtile

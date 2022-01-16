@@ -44,7 +44,6 @@ import subprocess
 
 import dateutil.parser
 
-from libqtile import utils
 from libqtile.widget import base
 
 
@@ -112,7 +111,7 @@ class KhalCalendar(base.ThreadPoolText):
         data = "".join(filter(lambda x: x in string.printable, data))
         # colorize the event if it is within reminder time
         if (starttime - remtime <= now) and (endtime > now):
-            self.foreground = utils.hex(self.reminder_color)
+            self.foreground = self.reminder_color
         else:
             self.foreground = self.default_foreground
 
