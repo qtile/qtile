@@ -90,8 +90,12 @@ class Core(base.Core, wlrq.HasListeners):
 
         self.display = Display()
         self.event_loop = self.display.get_event_loop()
-        self.compositor, self.backend = wlroots_helper.build_compositor(self.display)
-        self.renderer = self.backend.renderer
+        (
+            self.compositor,
+            self._allocator,
+            self.renderer,
+            self.backend,
+        ) = wlroots_helper.build_compositor(self.display)
         self.socket = self.display.add_socket()
         self.fd = None
         self._hovered_internal: Optional[window.Internal] = None
@@ -236,6 +240,9 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_new_output(self, _listener, wlr_output: wlrOutput):
         logger.debug("Signal: backend new_output_event")
+
+        wlr_output.init_render(self._allocator, self.renderer)
+
         if wlr_output.modes != []:
             mode = wlr_output.preferred_mode()
             if mode is None:

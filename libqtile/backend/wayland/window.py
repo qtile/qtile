@@ -944,7 +944,7 @@ class Static(base.Static, Window):
         self._mapped = mapped
 
         if isinstance(self.surface, LayerSurfaceV1):
-            layer = self.output.layers[self.surface.client_pending.layer]
+            layer = self.output.layers[self.surface.pending.layer]
             if mapped:
                 layer.append(self)
             else:
@@ -998,7 +998,7 @@ class Static(base.Static, Window):
 
     def kill(self):
         if self.is_layer:
-            self.surface.close()
+            self.surface.destroy()
         else:
             self.surface.send_close()
 

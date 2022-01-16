@@ -9,11 +9,11 @@ jobs:
         runs-on: ubuntu-20.04
         name: "python ${{ matrix.python-version }}"
         env:
-          WAYLAND: 1.19.0
-          WAYLAND_PROTOCOLS: 1.21
-          WLROOTS: 0.14.0
-          SEATD: 0.5.0
-          LIBDRM: 2.4.105
+          WAYLAND: 1.20.0
+          WAYLAND_PROTOCOLS: 1.24
+          WLROOTS: 0.15.0
+          SEATD: 0.6.3
+          LIBDRM: 2.4.109
         strategy:
             matrix:
                 # if you change one of these, be sure to update
@@ -69,8 +69,8 @@ jobs:
                 sudo ninja -C build install
             - name: Build wlroots
               run: |
-                wget -q --no-check-certificate https://github.com/swaywm/wlroots/archive/$WLROOTS.tar.gz
-                tar -xzf $WLROOTS.tar.gz
+                wget -q --no-check-certificate https://gitlab.freedesktop.org/wlroots/wlroots/-/archive/$WLROOTS/wlroots-$WLROOTS.tar.gz
+                tar -xzf wlroots-$WLROOTS.tar.gz
                 cd wlroots-$WLROOTS
                 meson build -Dexamples=false --prefix=/usr
                 ninja -C build
