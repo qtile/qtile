@@ -47,14 +47,7 @@ class Icon(window._Window):
     def __init__(self, win, qtile, systray):
         window._Window.__init__(self, win, qtile)
         self.systray = systray
-        self.name = win.get_name()
         self.update_size()
-
-    def __eq__(self, other):
-        if not isinstance(other, Icon):
-            return False
-
-        return self.window.wid == other.window.wid
 
     def update_size(self):
         icon_size = self.systray.icon_size
@@ -85,9 +78,8 @@ class Icon(window._Window):
 
     def handle_DestroyNotify(self, event):  # noqa: N802
         wid = event.window
-        icon = self.qtile.windows_map[wid]
-        self.systray.tray_icons.remove(icon)
         del self.qtile.windows_map[wid]
+        del self.systray.icons[wid]
         self.systray.bar.draw()
         return False
 
@@ -120,17 +112,17 @@ class Systray(window._Window, base._Widget):
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(Systray.defaults)
-        self.tray_icons = []
+        self.icons = {}
         self.screen = 0
         self._name = config.get("name", "systray")
         self._wm_class: Optional[List[str]] = None
 
     def calculate_length(self):
         if self.bar.horizontal:
-            length = sum(i.width for i in self.tray_icons)
+            length = sum(i.width for i in self.icons.values())
         else:
-            length = sum(i.height for i in self.tray_icons)
-        length += self.padding * len(self.tray_icons)
+            length = sum(i.height for i in self.icons.values())
+        length += self.padding * len(self.icons)
         return length
 
     def _configure(self, qtile, bar):
@@ -197,10 +189,8 @@ class Systray(window._Window, base._Widget):
         if opcode == atoms["_NET_SYSTEM_TRAY_OPCODE"] and message == 0:
             w = window.XWindow(self.conn, wid)
             icon = Icon(w, self.qtile, self)
-            if icon not in self.tray_icons:
-                self.tray_icons.append(icon)
-                self.tray_icons.sort(key=lambda icon: icon.name)
-                self.qtile.windows_map[wid] = icon
+            self.icons[wid] = icon
+            self.qtile.windows_map[wid] = icon
 
             self.conn.conn.core.ChangeSaveSet(SetMode.Insert, wid)
             self.conn.conn.core.ReparentWindow(wid, parent.wid, 0, 0)
@@ -221,7 +211,7 @@ class Systray(window._Window, base._Widget):
         offset = self.padding
         self.drawer.clear(self.background or self.bar.background)
         self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
-        for pos, icon in enumerate(self.tray_icons):
+        for pos, icon in enumerate(self.icons.values()):
             icon.window.set_attribute(backpixmap=self.drawer.pixmap)
             if self.bar.horizontal:
                 xoffset = self.offsetx + offset
@@ -261,8 +251,8 @@ class Systray(window._Window, base._Widget):
         self.hide()
 
         root = self.qtile.core._root.wid
-        for icon in self.tray_icons:
-            self.conn.conn.core.ReparentWindow(icon.window.wid, root, 0, 0)
+        for wid in self.icons:
+            self.conn.conn.core.ReparentWindow(wid, root, 0, 0)
         self.conn.conn.flush()
 
         del self.qtile.windows_map[self.wid]
