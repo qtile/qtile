@@ -26,7 +26,7 @@ import typing
 import cairocffi
 import pywayland
 import wlroots.wlr_types.foreign_toplevel_management_v1 as ftm
-from wlroots import ffi
+from wlroots import ffi, xwayland
 from wlroots.util.box import Box
 from wlroots.util.edges import Edges
 from wlroots.wlr_types import Texture
@@ -65,8 +65,10 @@ def _rgb(color: ColorType) -> ffi.CData:
     return ffi.new("float[4]", utils.rgb(color))
 
 
-# Window manages XdgSurfaces, Static manages XdgSurfaces and LayerSurfaceV1s
-SurfaceType = typing.Union[XdgSurface, LayerSurfaceV1]
+# Window manages XdgSurface
+# Static manages XdgSurface, LayerSurfaceV1 and xwayland.Surface (override-redirect)
+# XWindow manages xwayland.Surface
+SurfaceType = typing.Union[XdgSurface, LayerSurfaceV1, xwayland.Surface]
 
 
 class Window(base.Window, HasListeners):
@@ -312,16 +314,16 @@ class Window(base.Window, HasListeners):
         for output in self._outputs:
             output.damage()
 
-    def hide(self):
+    def hide(self) -> None:
         if self.mapped:
             self.surface.unmap_event.emit()
 
-    def unhide(self):
+    def unhide(self) -> None:
         if not self.mapped:
             self.surface.map_event.emit()
 
-    def kill(self):
-        self.surface.send_close()
+    def kill(self) -> None:
+        self.surface.send_close()  # type: ignore
 
     def get_pid(self) -> int:
         pid = pywayland.ffi.new("pid_t *")
@@ -882,6 +884,7 @@ class Static(base.Static, Window):
         self.core = core
         self.qtile = qtile
         self.surface = surface
+        self.screen = qtile.current_screen
         self.subsurfaces: List[SubSurface] = []
         self._wid = wid
         self._mapped: bool = False
@@ -895,7 +898,7 @@ class Static(base.Static, Window):
         self._outputs: Set[Output] = set()
         self._float_state = FloatStates.FLOATING
         self.is_layer = False
-        self._app_id: Optional[str] = None  # Not used by layer-shell surfaces
+        self._app_id: Optional[str] = None
 
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
@@ -913,17 +916,22 @@ class Static(base.Static, Window):
             self.screen = self.output.screen
             self.mapped = True
             self._outputs.add(self.output)
-        else:
+
+        elif isinstance(surface, XdgSurface):
             if surface.toplevel.title:
                 self.name = surface.toplevel.title
             self._app_id = surface.toplevel.app_id
             self.add_listener(surface.toplevel.set_title_event, self._on_set_title)
             self.add_listener(surface.toplevel.set_app_id_event, self._on_set_app_id)
-            self.ftm_handle = surface.data
-            assert self.ftm_handle
-            self.add_listener(self.ftm_handle.request_close_event, self._on_foreign_request_close)
             self._find_outputs()
-            self.screen = qtile.current_screen
+
+        else:  # xwayland.Surface
+            self._app_id = surface.wm_class
+            self._find_outputs()
+
+        if surface.data:
+            self.ftm_handle = surface.data
+            self.add_listener(self.ftm_handle.request_close_event, self._on_foreign_request_close)
 
     def finalize(self):
         self.finalize_listeners()
@@ -1011,11 +1019,11 @@ class Static(base.Static, Window):
 
         hook.fire("client_focus", self)
 
-    def kill(self):
+    def kill(self) -> None:
         if self.is_layer:
-            self.surface.destroy()
+            self.surface.destroy()  # type: ignore
         else:
-            self.surface.send_close()
+            self.surface.send_close()  # type: ignore
 
     def place(
         self,
@@ -1036,7 +1044,10 @@ class Static(base.Static, Window):
         if self.is_layer:
             self.surface.configure(width, height)
         else:
-            self.surface.set_size(int(width), int(height))
+            if isinstance(self.surface, XdgSurface):
+                self.surface.set_size(int(width), int(height))
+            else:
+                self.surface.configure(x, y, self._width, self._height)
             self.paint_borders(bordercolor, borderwidth)
         self.damage()
 
@@ -1046,9 +1057,6 @@ class Static(base.Static, Window):
             self.core.mapped_windows.append(self)
             self.core.stack_windows()
             self.damage()
-
-
-WindowType = typing.Union[Window, Internal, Static]
 
 
 class XdgPopupWindow(HasListeners):
@@ -1138,3 +1146,247 @@ class SubSurface(HasListeners):
 
     def _on_new_subsurface(self, _listener, subsurface: WlrSubSurface):
         self.subsurfaces.append(SubSurface(self, subsurface))
+
+
+class XWindow(Window):
+    """
+    A client window connecting to the X server via XWayland.
+    """
+
+    def __init__(self, core: Core, qtile: Qtile, surface: SurfaceType):
+        assert isinstance(surface, xwayland.Surface)
+        base.Window.__init__(self)
+        self.core = core
+        self.qtile = qtile
+        self.surface = surface
+        self._group: Optional[_Group] = None
+        self._mapped: bool = False
+        self.x = 0
+        self.y = 0
+        self.bordercolor: List[ffi.CData] = [_rgb((0, 0, 0, 1))]
+        self._opacity: float = 1.0
+        self._outputs: Set[Output] = set()
+
+        self._app_id: Optional[str] = self.surface.wm_class
+        self.ftm_handle = core.foreign_toplevel_manager_v1.create_handle()
+        surface.data = self.ftm_handle
+
+        # These become non-zero when being mapping for the first time
+        self._width: int = 0
+        self._height: int = 0
+        self.float_x: Optional[int] = None
+        self.float_y: Optional[int] = None
+        self._float_width: int = 0
+        self._float_height: int = 0
+        self._float_state = FloatStates.NOT_FLOATING
+
+        self.add_listener(surface.map_event, self._on_map)
+        self.add_listener(surface.unmap_event, self._on_unmap)
+        self.add_listener(surface.destroy_event, self._on_destroy)
+
+    def finalize(self):
+        self.finalize_listeners()
+        self.ftm_handle.destroy()
+
+    def _on_map(self, _listener, _data):
+        logger.debug("Signal: xwindow map")
+
+        if self in self.core.pending_windows:
+            self.core.pending_windows.remove(self)
+            self._wid = self.core.new_wid()
+            logger.debug(f"Managing new XWayland window with window ID: {self.wid}")
+
+            # Make it static if it isn't a regular window
+            if self.surface.override_redirect:
+                self.cmd_static(
+                    None, self.surface.x, self.surface.y, self.surface.width, self.surface.height
+                )
+                return
+
+            # Save the client's desired geometry
+            self._width = self._float_width = self.surface.width
+            self._height = self._float_height = self.surface.height
+
+            # Get the client's name and class
+            title = self.surface.title
+            if title:
+                self.name = title
+                self.ftm_handle.set_title(self.name)
+            self._app_id = self.surface.wm_class
+            self.ftm_handle.set_app_id(self._app_id)
+
+            # Add event listeners
+            self.add_listener(self.surface.surface.commit_event, self._on_commit)
+            self.add_listener(self.surface.request_fullscreen_event, self._on_request_fullscreen)
+            self.add_listener(self.surface.request_configure_event, self._on_request_configure)
+            self.add_listener(self.surface.set_title_event, self._on_set_title)
+            self.add_listener(self.surface.set_class_event, self._on_set_class)
+            self.add_listener(
+                self.ftm_handle.request_maximize_event, self._on_foreign_request_maximize
+            )
+            self.add_listener(
+                self.ftm_handle.request_minimize_event, self._on_foreign_request_minimize
+            )
+            self.add_listener(
+                self.ftm_handle.request_activate_event, self._on_foreign_request_activate
+            )
+            self.add_listener(
+                self.ftm_handle.request_fullscreen_event, self._on_foreign_request_fullscreen
+            )
+            self.add_listener(self.ftm_handle.request_close_event, self._on_foreign_request_close)
+
+            self.qtile.manage(self)
+
+        if self.group.screen:
+            self.mapped = True
+            self.core.focus_window(self)
+
+    def _on_request_fullscreen(self, _listener, _data):
+        logger.debug("Signal: xwindow request_fullscreen")
+        if self.qtile.config.auto_fullscreen:
+            self.fullscreen = not self.fullscreen
+
+    def _on_request_configure(self, _listener, event: xwayland.SurfaceConfigureEvent):
+        logger.debug("Signal: xwindow request_configure")
+        self.surface.configure(event.x, event.y, event.width, event.height)  # type: ignore
+        self.floating = True
+
+    def _on_set_title(self, _listener, _data):
+        logger.debug("Signal: xwindow set_title")
+        title = self.surface.title
+        if title != self.name:
+            self.name = title
+            self.ftm_handle.set_title(title)
+            hook.fire("client_name_updated", self)
+
+    def _on_set_class(self, _listener, _data):
+        logger.debug("Signal: xwindow set_class")
+        self._app_id = self.surface.wm_class
+        self.ftm_handle.set_app_id(self._app_id)
+
+    def kill(self) -> None:
+        self.surface.close()  # type: ignore
+
+    def has_fixed_size(self) -> bool:
+        hints = self.surface.size_hints  # type: ignore
+        # TODO: Maybe consider these flags too:
+        # "PMinSize" in self.hints["flags"] and "PMaxSize" in self.hints["flags"]
+        return bool(
+            hints
+            and 0 < hints.min_width == hints.max_width
+            and 0 < hints.min_height == hints.max_height
+        )
+
+    def is_transient_for(self) -> Optional[base.WindowType]:
+        """What window is this window a transient window for?"""
+        parent = self.surface.parent  # type: ignore
+        if parent:
+            for win in self.qtile.windows_map.values():
+                if isinstance(win, XWindow) and win.surface == parent:
+                    return win
+        return None
+
+    def get_pid(self) -> int:
+        return self.surface.pid  # type: ignore
+
+    def get_wm_type(self) -> Optional[str]:
+        wm_type = self.surface.window_type  # type: ignore
+        if wm_type:
+            return self.core.xwayland_atoms[wm_type[0]]
+        return None
+
+    def get_wm_role(self) -> Optional[str]:
+        return self.surface.role  # type: ignore
+
+    def place(
+        self,
+        x,
+        y,
+        width,
+        height,
+        borderwidth,
+        bordercolor,
+        above=False,
+        margin=None,
+        respect_hints=False,
+    ):
+
+        # Adjust the placement to account for layout margins, if there are any.
+        if margin is not None:
+            if isinstance(margin, int):
+                margin = [margin] * 4
+            x += margin[3]
+            y += margin[0]
+            width -= margin[1] + margin[3]
+            height -= margin[0] + margin[2]
+
+        if respect_hints:
+            hints = self.surface.size_hints
+            width = max(width, hints.min_width)
+            height = max(height, hints.min_height)
+            if hints.max_width > 0:
+                width = min(width, hints.max_width)
+            if hints.max_height > 0:
+                height = min(height, hints.max_height)
+
+        # save x and y float offset
+        if self.group is not None and self.group.screen is not None:
+            self.float_x = x - self.group.screen.x
+            self.float_y = y - self.group.screen.y
+
+        self.x = x
+        self.y = y
+        self._width = int(width)
+        self._height = int(height)
+        self.surface.configure(x, y, self._width, self._height)
+        self.paint_borders(bordercolor, borderwidth)
+
+        if above and self._mapped:
+            self.core.mapped_windows.remove(self)
+            self.core.mapped_windows.append(self)
+            self.core.stack_windows()
+
+        prev_outputs = self._outputs.copy()
+        self._find_outputs()
+        for output in self._outputs | prev_outputs:
+            output.damage()
+
+    def cmd_static(
+        self,
+        screen: Optional[int] = None,
+        x: Optional[int] = None,
+        y: Optional[int] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+    ) -> None:
+        self.defunct = True
+        if self.group:
+            self.group.remove(self)
+        if x is None:
+            x = self.x + self.borderwidth
+        if y is None:
+            y = self.y + self.borderwidth
+        if width is None:
+            width = self.width
+        if height is None:
+            height = self.height
+
+        self.finalize_listeners()
+        win = Static(self.core, self.qtile, self.surface, self.wid)
+        if screen is not None:
+            win.screen = self.qtile.screens[screen]
+        win.place(x, y, width, height, 0, None)
+        self.qtile.windows_map[self.wid] = win
+
+        if self.mapped:
+            win._mapped = True
+            z = self.core.mapped_windows.index(self)
+            self.core.mapped_windows[z] = win
+            self.core.stack_windows()
+        else:
+            win.mapped = True
+
+        hook.fire("client_managed", win)
+
+
+WindowType = typing.Union[Window, Internal, Static, XWindow]

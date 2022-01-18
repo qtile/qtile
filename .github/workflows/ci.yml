@@ -32,7 +32,9 @@ jobs:
                   libdbus-1-dev libgirepository1.0-dev gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-gudev-1.0 graphviz \
                   imagemagick libpulse-dev git xserver-xephyr xterm xvfb ninja-build libegl1-mesa-dev \
                   libgles2-mesa-dev libgbm-dev libinput-dev libxkbcommon-dev libpixman-1-dev libpciaccess-dev \
-                  dbus-x11 libnotify-bin
+                  dbus-x11 libnotify-bin \
+                  xwayland libxcb-composite0-dev libxcb-icccm4-dev libxcb-res0-dev \
+                  libxcb-render0-dev libxcb-res0-dev libxcb-xfixes0-dev 
                 sudo pip -q install meson PyGObject
                 pip -q install "tox<4" tox-gh-actions 
             - name: Build wayland
@@ -72,7 +74,7 @@ jobs:
                 wget -q --no-check-certificate https://gitlab.freedesktop.org/wlroots/wlroots/-/archive/$WLROOTS/wlroots-$WLROOTS.tar.gz
                 tar -xzf wlroots-$WLROOTS.tar.gz
                 cd wlroots-$WLROOTS
-                meson build -Dexamples=false --prefix=/usr
+                meson build -Dexamples=false --prefix=/usr -Dxwayland=enabled
                 ninja -C build
                 sudo ninja -C build install
             - name: Run Tests

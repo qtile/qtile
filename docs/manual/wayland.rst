@@ -48,12 +48,9 @@ core's `set_keymap` command (see :ref:`wayland-cmds` below).
 Running X11-Only Programs
 =========================
 
-Qtile does not support XWayland directly and there are no plans to implement
-XWayland support. Instead, the recommended way to run any programs that do not
-support Wayland themselves is to run them inside the `cage
-<https://github.com/Hjdskes/cage>`_ Wayland compositor, which will contain the
-program inside a window that does support XWayland. Otherwise, you could find
-alternatives that support Wayland directly.
+Qtile _does_ support XWayland. This requires that `wlroots` and `pywlroots`
+were built with XWayland support, and that XWayland is installed on the system
+from startup. XWayland will be started the first time it is needed.
 
 
 .. _wayland-cmds:

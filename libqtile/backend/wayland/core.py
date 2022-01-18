@@ -29,6 +29,7 @@ import wlroots.helper as wlroots_helper
 from pywayland import lib
 from pywayland.protocol.wayland import WlSeat
 from pywayland.server import Display
+from wlroots import xwayland
 from wlroots.wlr_types import (
     Cursor,
     DataControlManagerV1,
@@ -70,7 +71,7 @@ from libqtile.backend.wayland.output import Output
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import List, Optional, Sequence, Set, Tuple, Union
+    from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 
     from wlroots.wlr_types import Output as wlrOutput
     from wlroots.wlr_types.data_device_manager import Drag
@@ -87,7 +88,10 @@ class Core(base.Core, wlrq.HasListeners):
         self.qtile: Optional[Qtile] = None
         self.desktops: int = 1
         self.current_desktop: int = 0
+        self._hovered_internal: Optional[window.Internal] = None
+        self.focused_internal: Optional[window.Internal] = None
 
+        self.fd = None
         self.display = Display()
         self.event_loop = self.display.get_event_loop()
         (
@@ -97,9 +101,8 @@ class Core(base.Core, wlrq.HasListeners):
             self.backend,
         ) = wlroots_helper.build_compositor(self.display)
         self.socket = self.display.add_socket()
-        self.fd = None
-        self._hovered_internal: Optional[window.Internal] = None
-        self.focused_internal: Optional[window.Internal] = None
+        os.environ["WAYLAND_DISPLAY"] = self.socket.decode()
+        logger.info("Starting core with WAYLAND_DISPLAY=" + self.socket.decode())
 
         # These windows have not been mapped yet; they'll get managed when mapped
         self.pending_windows: List[window.WindowType] = []
@@ -176,9 +179,17 @@ class Core(base.Core, wlrq.HasListeners):
         self._relative_pointer_manager_v1 = RelativePointerManagerV1(self.display)
         self.foreign_toplevel_manager_v1 = ForeignToplevelManagerV1.create(self.display)
 
-        # start
-        os.environ["WAYLAND_DISPLAY"] = self.socket.decode()
-        logger.info("Starting core with WAYLAND_DISPLAY=" + self.socket.decode())
+        # Set up XWayland
+        self._xwayland = xwayland.XWayland(self.display, self.compositor, True)
+        if self._xwayland:
+            os.environ["DISPLAY"] = self._xwayland.display_name
+            logger.info("Set up XWayland with DISPLAY=" + os.environ["DISPLAY"])
+            self.add_listener(self._xwayland.ready_event, self._on_xwayland_ready)
+            self.add_listener(self._xwayland.new_surface_event, self._on_xwayland_new_surface)
+        else:
+            logger.info("Failed to set up XWayland. Continuing without.")
+
+        # Start
         self.backend.start()
 
     @property
@@ -192,6 +203,8 @@ class Core(base.Core, wlrq.HasListeners):
             out.finalize()
 
         self.finalize_listeners()
+        if self._xwayland:
+            self._xwayland.destroy()
         self.cursor_manager.destroy()
         self.cursor.destroy()
         self.output_layout.destroy()
@@ -393,6 +406,18 @@ class Core(base.Core, wlrq.HasListeners):
     ):
         logger.debug("Signal: xdg_decoration new_top_level_decoration")
         decoration.set_mode(xdg_decoration_v1.XdgToplevelDecorationV1Mode.SERVER_SIDE)
+
+    def _on_xwayland_ready(self, _listener, _data):
+        logger.debug("Signal: xwayland ready")
+        assert self._xwayland is not None
+        self._xwayland.set_seat(self.seat)
+        self.xwayland_atoms: Dict[int, str] = wlrq.get_xwayland_atoms(self._xwayland)
+
+    def _on_xwayland_new_surface(self, _listener, surface: xwayland.Surface):
+        logger.debug("Signal: xwayland new_surface")
+        assert self.qtile is not None
+        win = window.XWindow(self, self.qtile, surface)
+        self.pending_windows.append(win)
 
     def _output_manager_reconfigure(self, config: OutputConfigurationV1, apply: bool) -> None:
         """
@@ -625,17 +650,29 @@ class Core(base.Core, wlrq.HasListeners):
             if not win.surface.current.keyboard_interactive:
                 return
 
+        if isinstance(win.surface, xwayland.Surface):
+            if not win.surface.or_surface_wants_focus():
+                return
+
         previous_surface = self.seat.keyboard_state.focused_surface
         if previous_surface == surface:
             return
 
-        if previous_surface is not None and previous_surface.is_xdg_surface:
+        if previous_surface is not None:
             # Deactivate the previously focused surface
-            previous_xdg_surface = XdgSurface.from_surface(previous_surface)
-            if not win or win.surface != previous_xdg_surface:
-                previous_xdg_surface.set_activated(False)
-                if previous_xdg_surface.data:
-                    previous_xdg_surface.data.set_activated(False)
+            if previous_surface.is_xdg_surface:
+                previous_xdg_surface = XdgSurface.from_surface(previous_surface)
+                if not win or win.surface != previous_xdg_surface:
+                    previous_xdg_surface.set_activated(False)
+                    if previous_xdg_surface.data:
+                        previous_xdg_surface.data.set_activated(False)
+
+            elif previous_surface.is_xwayland_surface:
+                prev_xwayland_surface = xwayland.Surface.from_wlr_surface(previous_surface)
+                if not win or win.surface != prev_xwayland_surface:
+                    prev_xwayland_surface.activate(False)
+                    if prev_xwayland_surface.data:
+                        prev_xwayland_surface.data.set_activated(False)
 
         if not win:
             self.seat.keyboard_clear_focus()
@@ -644,6 +681,10 @@ class Core(base.Core, wlrq.HasListeners):
         logger.debug("Focussing new window")
         if surface.is_xdg_surface and isinstance(win.surface, XdgSurface):
             win.surface.set_activated(True)
+            win.ftm_handle.set_activated(True)
+
+        elif surface.is_xwayland_surface and isinstance(win.surface, xwayland.Surface):
+            win.surface.activate(True)
             win.ftm_handle.set_activated(True)
 
         if enter and self.seat.keyboard._ptr:  # This pointer is NULL when headless
