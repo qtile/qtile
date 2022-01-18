@@ -710,7 +710,7 @@ class Match:
             elif property_name == "net_wm_pid":
                 value = client.get_pid()
             elif property_name == "wid":
-                value = client.window.wid
+                value = client.wid
             else:
                 value = client.get_wm_type()
 

@@ -35,7 +35,7 @@ from wlroots.wlr_types.layer_shell_v1 import (
     LayerSurfaceV1Anchor,
 )
 
-from libqtile.backend.wayland.window import Internal, Static
+from libqtile.backend.wayland.window import Internal, Static, XWindow
 from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
