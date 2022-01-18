@@ -39,9 +39,10 @@ from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 
 if TYPE_CHECKING:
-    from typing import Callable, List, Optional, Set
+    from typing import Callable, Dict, List, Optional, Set
 
     from pywayland.server import Signal
+    from wlroots import xwayland
     from wlroots.wlr_types import Box, data_device_manager
 
     from libqtile.backend.wayland.core import Core
@@ -305,3 +306,32 @@ class Dnd(HasListeners):
         self._outputs = {o for o in self.core.outputs if o.contains(self)}
         for output in self._outputs:
             output.damage()
+
+
+def get_xwayland_atoms(xwayland: xwayland.XWayland) -> Dict[int, str]:
+    """
+    These can be used when matching on XWayland clients with wm_type.
+    http://standards.freedesktop.org/wm-spec/latest/ar01s05.html#idm139870830002400
+    """
+    xwayland_wm_types = {
+        "_NET_WM_WINDOW_TYPE_DESKTOP": "desktop",
+        "_NET_WM_WINDOW_TYPE_DOCK": "dock",
+        "_NET_WM_WINDOW_TYPE_TOOLBAR": "toolbar",
+        "_NET_WM_WINDOW_TYPE_MENU": "menu",
+        "_NET_WM_WINDOW_TYPE_UTILITY": "utility",
+        "_NET_WM_WINDOW_TYPE_SPLASH": "splash",
+        "_NET_WM_WINDOW_TYPE_DIALOG": "dialog",
+        "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU": "dropdown",
+        "_NET_WM_WINDOW_TYPE_POPUP_MENU": "menu",
+        "_NET_WM_WINDOW_TYPE_TOOLTIP": "tooltip",
+        "_NET_WM_WINDOW_TYPE_NOTIFICATION": "notification",
+        "_NET_WM_WINDOW_TYPE_COMBO": "combo",
+        "_NET_WM_WINDOW_TYPE_DND": "dnd",
+        "_NET_WM_WINDOW_TYPE_NORMAL": "normal",
+    }
+
+    atoms = {}
+    for atom, name in xwayland_wm_types.items():
+        atoms[xwayland.get_atom(atom)] = name
+
+    return atoms
