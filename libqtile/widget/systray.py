@@ -33,6 +33,7 @@ from xcffib.xproto import ClientMessageData, ClientMessageEvent, EventMask, SetM
 
 from libqtile import bar
 from libqtile.backend.x11 import window
+from libqtile.confreader import ConfigError
 from libqtile.widget import base
 
 if TYPE_CHECKING:
@@ -99,6 +100,9 @@ class Systray(window._Window, base._Widget):
     """
     A widget that manages system tray.
 
+    Only one Systray widget is allowed. Adding additional Systray
+    widgets will result in a ConfigError.
+
     .. note::
         Icons will not render correctly where the bar/widget is
         drawn with a semi-transparent background. Instead, icons
@@ -108,6 +112,8 @@ class Systray(window._Window, base._Widget):
         a fully opaque background colour or a fully transparent
         one.
     """
+
+    _instances = 0
 
     _window_mask = EventMask.StructureNotify | EventMask.Exposure
 
@@ -136,6 +142,9 @@ class Systray(window._Window, base._Widget):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
+
+        if Systray._instances > 0:
+            raise ConfigError("Only one Systray can be used.")
 
         if self.configured:
             return
@@ -184,6 +193,17 @@ class Systray(window._Window, base._Widget):
             format=32, window=qtile.core._root.wid, type=atoms["MANAGER"], data=union
         )
         qtile.core._root.send_event(event, mask=EventMask.StructureNotify)
+
+        Systray._instances += 1
+
+    def create_mirror(self):
+        """
+        Systray cannot be mirrored as we do not use a Drawer object to render icons.
+
+        Return itself so that, when the bar tries to configure it again, a ConfigError
+        is raised.
+        """
+        return self
 
     def handle_ClientMessage(self, event):  # noqa: N802
         atoms = self.conn.atoms
@@ -268,3 +288,5 @@ class Systray(window._Window, base._Widget):
 
         del self.qtile.windows_map[self.wid]
         self.conn.conn.core.DestroyWindow(self.wid)
+
+        Systray._instances -= 1
