@@ -22,10 +22,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+import asyncio
 from typing import Any
 
 try:
+    from dbus_next import ReleaseNameReply
     from dbus_next.aio import MessageBus
     from dbus_next.service import ServiceInterface, method, signal
 
@@ -133,10 +134,10 @@ if has_dbus:
         async def service(self):
             if self._service is None:
                 try:
-                    bus = await MessageBus().connect()
+                    self.bus = await MessageBus().connect()
                     self._service = NotificationService(self)
-                    bus.export(SERVICE_PATH, self._service)
-                    await bus.request_name(BUS_NAME)
+                    self.bus.export(SERVICE_PATH, self._service)
+                    await self.bus.request_name(BUS_NAME)
                 except Exception:
                     logger.exception("Dbus connection failed")
                     self._service = None
@@ -154,6 +155,35 @@ if has_dbus:
                 self._service.register_capabilities(capabilities)
             if on_close:
                 self.close_callbacks.append(on_close)
+
+        def unregister(self, callback, on_close=None):
+            try:
+                self.callbacks.remove(callback)
+            except ValueError:
+                logger.error("Unable to remove notify callback. Unknown callback.")
+
+            if on_close:
+                try:
+                    self.close_callbacks.remove(on_close)
+                except ValueError:
+                    logger.error("Unable to remove notify on_close callback. Unknown callback.")
+
+            if not self.callbacks:
+                return asyncio.create_task(self._release())
+
+        async def _release(self):
+            """
+            If the manager has no more callbacks then we need to release the service name
+            from dbus and reset _service to None (to force subsequent calls to `register` to
+            re-register the name on dbus.)
+            """
+            reply = await self.bus.release_name(BUS_NAME)
+
+            if reply != ReleaseNameReply.RELEASED:
+                logger.error(f"Could not release {BUS_NAME}.")
+                return
+
+            self._service = None
 
         def add(self, notif):
             self.notifications.append(notif)

@@ -12,6 +12,8 @@ Qtile x.x.x, released xxxx-xx-xx:
         - Fix rounding error in PulseVolume widget's reported volume.
         - Remove ability to have multiple `Systray` widgets. Additional `Systray` widgets will result in a
           ConfigError.
+        - Release notification name from dbus when finalising `Notify` widget. This allows other notification
+          managers to request the name.
 
 Qtile 0.19.0, released 2021-12-22:
     * features
