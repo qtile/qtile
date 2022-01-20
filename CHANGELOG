@@ -10,6 +10,7 @@ Qtile x.x.x, released xxxx-xx-xx:
           has been called and completed.
         - Fix order of icons in Systray widget when restarting/reloading config.
         - Fix rounding error in PulseVolume widget's reported volume.
+        - Fix bug where Volume widget did not load images where `theme_path` had been set in `widget_defaults`.
         - Remove ability to have multiple `Systray` widgets. Additional `Systray` widgets will result in a
           ConfigError.
 
