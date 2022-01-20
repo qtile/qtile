@@ -339,9 +339,12 @@ class Battery(base.ThreadPoolText):
         self._battery = self._load_battery(**config)
         self._has_notified = False
 
+    def _configure(self, qtile, bar):
         if not self.low_background:
             self.low_background = self.background
         self.normal_background = self.background
+
+        base.ThreadPoolText._configure(self, qtile, bar)
 
     @staticmethod
     def _load_battery(**config):
