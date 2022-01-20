@@ -120,7 +120,7 @@ class WidgetBox(base._Widget):
                 # are separate _Window instances.
                 # Systray unhides icons when it draws so we only need to hide them.
                 if isinstance(widget, Systray):
-                    for icon in widget.icons.values():
+                    for icon in widget.tray_icons:
                         icon.hide()
 
             except ValueError:

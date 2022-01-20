@@ -11,6 +11,8 @@ Qtile x.x.x, released xxxx-xx-xx:
         - Fix order of icons in Systray widget when restarting/reloading config.
         - Fix rounding error in PulseVolume widget's reported volume.
         - Fix bug where Volume widget did not load images where `theme_path` had been set in `widget_defaults`.
+        - Remove ability to have multiple `Systray` widgets. Additional `Systray` widgets will result in a
+          ConfigError.
 
 Qtile 0.19.0, released 2021-12-22:
     * features
