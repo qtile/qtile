@@ -257,8 +257,8 @@ class Output(HasListeners):
                 assert isinstance(win.surface, LayerSurfaceV1)
                 state = win.surface.current
                 margin = state.margin
-                ww = state.desired_width
-                wh = state.desired_height
+                ww = win.desired_width = state.desired_width
+                wh = win.desired_height = state.desired_height
 
                 # Horizontal axis
                 if (state.anchor & LayerSurfaceV1Anchor.HORIZONTAL) and ww == 0:

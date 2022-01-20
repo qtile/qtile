@@ -7,6 +7,7 @@ Qtile x.x.x, released xxxx-xx-xx:
         - Remove non-commandable windows from IPC. Fixes bug where IPC would fail when trying to get info
           on all windows but Systray has icons (which are non-commandable `_Window`s.)
         - Fix bug where bars were not reconfigured correctly when screen layout changes.
+        - Fix a Wayland bug where layer-shell surface like dunst would freeze up and stop updating.
         - Change timing of `screens_reconfigured` hook. Will now be called ONLY if `cmd_reconfigure_screens`
           has been called and completed.
         - Fix order of icons in Systray widget when restarting/reloading config.
