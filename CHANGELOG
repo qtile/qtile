@@ -15,6 +15,7 @@ Qtile x.x.x, released xxxx-xx-xx:
           ConfigError.
         - Release notification name from dbus when finalising `Notify` widget. This allows other notification
           managers to request the name.
+        - Fix bug where `Battery` widget did not retrieve `background` from `widget_defaults`.
 
 Qtile 0.19.0, released 2021-12-22:
     * features
