@@ -30,7 +30,7 @@ from wlroots import ffi
 from wlroots.util.box import Box
 from wlroots.util.edges import Edges
 from wlroots.wlr_types import Texture
-from wlroots.wlr_types.layer_shell_v1 import LayerSurfaceV1
+from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1
 from wlroots.wlr_types.xdg_shell import XdgPopup, XdgSurface, XdgTopLevelSetFullscreenEvent
 
 from libqtile import config, hook, utils
@@ -904,6 +904,9 @@ class Static(base.Static, Window):
 
         if isinstance(surface, LayerSurfaceV1):
             self.is_layer = True
+            self._layer = LayerShellV1Layer.BACKGROUND
+            self.desired_width = 0
+            self.desired_height = 0
             if surface.output is None:
                 surface.output = core.output_layout.output_at(core.cursor.x, core.cursor.y)
             self.output = core.output_from_wlr_output(surface.output)
@@ -943,8 +946,9 @@ class Static(base.Static, Window):
             return
         self._mapped = mapped
 
-        if isinstance(self.surface, LayerSurfaceV1):
-            layer = self.output.layers[self.surface.pending.layer]
+        if self.is_layer:
+            self._layer = self.surface.pending.layer  # type: ignore
+            layer = self.output.layers[self._layer]
             if mapped:
                 layer.append(self)
             else:
@@ -980,6 +984,17 @@ class Static(base.Static, Window):
                 self.core.seat.keyboard_clear_focus()
         if self.is_layer:
             self.output.organise_layers()
+        self.damage()
+
+    def _on_commit(self, _listener, _data):
+        if self.is_layer:
+            current = self.surface.current
+            if (
+                self._layer != current.layer
+                or self.desired_width != current.desired_width
+                or self.desired_height != current.desired_height
+            ):
+                self.output.organise_layers()
         self.damage()
 
     def has_fixed_size(self) -> bool:
