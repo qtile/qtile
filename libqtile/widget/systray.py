@@ -50,6 +50,7 @@ class Icon(window._Window):
         # we need something in self.name in order to sort icons so we use the window's WID.
         self.name = win.get_name() or str(win.wid)
         self.update_size()
+        self._wm_class: list[str] | None = None
 
     def __eq__(self, other):
         if not isinstance(other, Icon):
