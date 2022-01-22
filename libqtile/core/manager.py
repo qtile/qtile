@@ -376,6 +376,8 @@ class Qtile(CommandObject):
             logger.debug(
                 "Ignoring unknown keysym: {keysym}, mask: {mask}".format(keysym=keysym, mask=mask)
             )
+            if self.chord_stack and self.chord_stack[-1].mode == "":
+                self.cmd_ungrab_chord()
             return
 
         if isinstance(key, KeyChord):
@@ -422,13 +424,19 @@ class Qtile(CommandObject):
             hook.fire("enter_chord", chord.mode)
 
         self.ungrab_keys()
+        self.core.grab_keyboard()
         for key in chord.submappings:
-            self.grab_key(key)
+            # TODO figure out how to do this without reaching into backend
+            # internals
+            keysym, mask_key = self.core.lookup_key(key)
+            mask_key &= self.core._valid_mask
+            self.keys_map[(keysym, mask_key)] = key
 
     def cmd_ungrab_chord(self) -> None:
         """Leave a chord mode"""
         hook.fire("leave_chord")
 
+        self.core.ungrab_keyboard()
         self.ungrab_keys()
         if not self.chord_stack:
             logger.debug("cmd_ungrab_chord was called when no chord mode was active")
@@ -449,6 +457,7 @@ class Qtile(CommandObject):
     def cmd_ungrab_all_chords(self) -> None:
         """Leave all chord modes and grab the root bindings"""
         hook.fire("leave_chord")
+        self.core.ungrab_keyboard()
         self.ungrab_keys()
         self.chord_stack.clear()
         for key in self.config.keys:

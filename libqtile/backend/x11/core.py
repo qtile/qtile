@@ -444,6 +444,18 @@ class Core(base.Core):
 
         return keysym, modmask
 
+    def grab_keyboard(self) -> None:
+        self.conn.conn.core.GrabKeyboard(
+            True,
+            self._root.wid,
+            xcffib.xproto.Time.CurrentTime,
+            xcffib.xproto.GrabMode.Async,
+            xcffib.xproto.GrabMode.Async,
+        )
+
+    def ungrab_keyboard(self) -> None:
+        self.conn.conn.core.UngrabKeyboard(xcffib.xproto.Time.CurrentTime)
+
     def grab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
         """Map the key to receive events on it"""
         keysym, modmask = self.lookup_key(key)
