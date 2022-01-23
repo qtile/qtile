@@ -95,6 +95,7 @@ class KeyChord:
         key: str,
         submappings: List[Union[Key, KeyChord]],
         mode: str = "",
+        grab_keyboard: bool = True,
     ):
         self.modifiers = modifiers
         self.key = key
@@ -102,6 +103,7 @@ class KeyChord:
         submappings.append(Key([], "Escape"))
         self.submappings = submappings
         self.mode = mode
+        self.grab_keyboard = grab_keyboard
 
     def __repr__(self):
         return "<KeyChord (%s, %s)>" % (self.modifiers, self.key)

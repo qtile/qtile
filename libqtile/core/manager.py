@@ -424,13 +424,10 @@ class Qtile(CommandObject):
             hook.fire("enter_chord", chord.mode)
 
         self.ungrab_keys()
-        self.core.grab_keyboard()
+        if chord.grab_keyboard:
+            self.core.grab_keyboard()
         for key in chord.submappings:
-            # TODO figure out how to do this without reaching into backend
-            # internals
-            keysym, mask_key = self.core.lookup_key(key)
-            mask_key &= self.core._valid_mask
-            self.keys_map[(keysym, mask_key)] = key
+            self.grab_key(key)
 
     def cmd_ungrab_chord(self) -> None:
         """Leave a chord mode"""
