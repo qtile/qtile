@@ -87,6 +87,11 @@ class KeyChord:
         A string with vim like mode name. If it's set, the chord mode will
         not be left after a keystroke (except for Esc which always leaves the
         current chord/mode).
+    grab_keyboard:
+        A boolean (default True) controlling whether Qtile grabs exclusive
+        control of the keyboard while this keychord is active. If False, keys
+        not bound in the keychord will pass through to the focused application
+        and leave the chord active.
     """
 
     def __init__(

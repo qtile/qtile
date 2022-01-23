@@ -89,12 +89,6 @@ the config file.
 
 The above code will launch xterm when the user presses Mod + z, followed by x.
 
-.. warning::
-    Users should note that key chords are aborted by pressing <escape>. In the
-    above example, if the user presses Mod + z, any following key presses will
-    still be sent to the currently focussed window. If <escape> has not been
-    pressed, the next press of x will launch xterm.
-
 Modes
 -----
 
@@ -124,6 +118,34 @@ shrink it etc. as many times as needed. To exit the mode, press <escape>.
     If using modes, users may also wish to use the Chord widget
     (:class:`libqtile.widget.chord.Chord`) as this will display the name of the
     currently active mode on the bar.
+
+Keyboard grabbing
+-----------------
+
+A KeyChord may specify the optional parameter `grab_keyboard`, which defaults to
+True:
+
+::
+
+    from libqtile.config import Key, KeyChord
+
+    keys = [
+        KeyChord([mod], "z", [
+            Key([], "g", lazy.spawn("xterm")),
+        ],
+        grab_keyboard=False,
+        mode="spawn")
+    ]
+
+If this is set to False, then keys not bound in the KeyChord will be passed
+through to the focused application and the chord will remain open. This can be
+useful for modes, in order to allow you to interact with an application normally
+while also issuing commands from the mode.
+
+If it is set to True (the default), then any key pressed while a KeyChord is
+active will be consumed by QTile and will not be passed to the application.
+Also, for chords which do not set a mode, any key (even one not bound in the
+chord) will cause the chord to deactivate and return to the main keymap.
 
 Chains
 ------
