@@ -110,6 +110,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.keyboards: List[keyboard.Keyboard] = []
         self.grabbed_keys: List[Tuple[int, int]] = []
         self.grabbed_buttons: List[Tuple[int, int]] = []
+        self.keyboard_grabbed: bool = False
         DataDeviceManager(self.display)
         self.live_dnd: Optional[wlrq.Dnd] = None
         DataControlManagerV1(self.display)
@@ -709,6 +710,12 @@ class Core(base.Core, wlrq.HasListeners):
     def get_screen_info(self) -> List[Tuple[int, int, int, int]]:
         """Get the screen information"""
         return [screen.get_geometry() for screen in self.outputs if screen.wlr_output.enabled]
+
+    def grab_keyboard(self) -> None:
+        self.keyboard_grabbed = True
+
+    def ungrab_keyboard(self) -> None:
+        self.keyboard_grabbed = False
 
     def grab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
         """Configure the backend to grab the key event"""

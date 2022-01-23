@@ -111,12 +111,15 @@ class Keyboard(HasListeners):
             keysyms = [xkb_keysym[0][i] for i in range(nsyms)]
             mods = self.keyboard.modifier
             for keysym in keysyms:
-                if (keysym, mods) in self.grabbed_keys:
+                if (keysym, mods) in self.grabbed_keys or self.core.keyboard_grabbed:
                     self.qtile.process_key_event(keysym, mods)
                     return
 
             if self.core.focused_internal:
                 self.core.focused_internal.process_key_press(keysym)
                 return
+
+        if self.core.keyboard_grabbed:
+            return
 
         self.seat.keyboard_notify_key(event)

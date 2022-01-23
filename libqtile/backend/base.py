@@ -62,6 +62,14 @@ class Core(CommandObject, metaclass=ABCMeta):
     def get_screen_info(self) -> List[Tuple[int, int, int, int]]:
         """Get the screen information"""
 
+    def grab_keyboard(self) -> None:
+        """Grab the entire keyboard, passing on all key events"""
+        raise NotImplementedError()
+
+    def ungrab_keyboard(self) -> None:
+        """Release the keyboard and process key events normally"""
+        raise NotImplementedError()
+
     @abstractmethod
     def grab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
         """Configure the backend to grab the key event"""
