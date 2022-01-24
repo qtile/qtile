@@ -1198,3 +1198,21 @@ def test_cmd_reload_config(manager_nospawn):
         assert manager_nospawn.c.eval("self.core.wmname") == (True, "LG3D")
     assert "dd" in manager_nospawn.c.groups()["S"]["windows"]  # First dropdown persists
     assert "dd" in manager_nospawn.c.groups()["1"]["windows"]  # Second orphans to group
+
+
+class CommandsConfig(Config):
+    screens = [
+        libqtile.config.Screen(
+            bottom=libqtile.bar.Bar([libqtile.widget.Systray()], 20),
+        )
+    ]
+
+
+@pytest.mark.parametrize("manager", [CommandsConfig], indirect=True)
+def test_windows_from_commands(manager):
+    manager.test_window("one")
+    assert len(manager.c.items("window")) == 2  # This command returns windows including bars
+    windows = manager.c.windows()  # Whereas this one is just regular windows
+    assert len(windows) == 1
+    # And the Systray is absent
+    assert "TestWindow" in windows[0]["wm_class"]

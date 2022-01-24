@@ -777,7 +777,11 @@ class Qtile(CommandObject):
             return False, [x.position for x in self.current_screen.gaps]
         elif name == "window":
             windows: list[str | int]
-            windows = [k for k, v in self.windows_map.items() if isinstance(v, CommandObject)]
+            windows = [
+                k
+                for k, v in self.windows_map.items()
+                if isinstance(v, CommandObject) and not isinstance(v, _Widget)
+            ]
             return True, windows
         elif name == "screen":
             return True, list(range(len(self.screens)))
@@ -806,7 +810,9 @@ class Qtile(CommandObject):
             else:
                 windows: dict[str | int, base._Window]
                 windows = {
-                    k: v for k, v in self.windows_map.items() if isinstance(v, CommandObject)
+                    k: v
+                    for k, v in self.windows_map.items()
+                    if isinstance(v, CommandObject) and not isinstance(v, _Widget)
                 }
                 return windows.get(sel)
         elif name == "screen":
@@ -1228,7 +1234,11 @@ class Qtile(CommandObject):
 
     def cmd_windows(self) -> list[dict[str, Any]]:
         """Return info for each client window"""
-        return [i.info() for i in self.windows_map.values() if not isinstance(i, base.Internal)]
+        return [
+            i.info()
+            for i in self.windows_map.values()
+            if not isinstance(i, (base.Internal, _Widget)) and isinstance(i, CommandObject)
+        ]
 
     def cmd_internal_windows(self) -> list[dict[str, Any]]:
         """Return info for each internal window (bars, for example)"""
