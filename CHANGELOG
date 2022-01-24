@@ -1,4 +1,6 @@
 Qtile x.x.x, released xxxx-xx-xx:
+
+Qtile 0.20.0, released 2021-01-24:
     * features
         - Add `place_right` option in the TreeTab layout to place the tab panel on the right side
         - X11: Add support for _NET_DESKTOP_VIEWPORT. E.g. can be used by rofi to map on current output.
