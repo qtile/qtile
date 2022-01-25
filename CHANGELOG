@@ -1,6 +1,8 @@
 Qtile x.x.x, released xxxx-xx-xx:
+    * features
+        - Add `lazy.window.center()` command to center a floating window on the screen.
 
-Qtile 0.20.0, released 2021-01-24:
+Qtile 0.20.0, released 2022-01-24:
     * features
         - Add `place_right` option in the TreeTab layout to place the tab panel on the right side
         - X11: Add support for _NET_DESKTOP_VIEWPORT. E.g. can be used by rofi to map on current output.
@@ -22,7 +24,6 @@ Qtile 0.20.0, released 2021-01-24:
           managers to request the name.
         - Fix bug where `Battery` widget did not retrieve `background` from `widget_defaults`.
         - Fix bug where widgets in a `WidgetBox` are rendered on top of bar borders.
-        - Add `lazy.window.center()` command to center a floating window on the screen.
 
 Qtile 0.19.0, released 2021-12-22:
     * features
