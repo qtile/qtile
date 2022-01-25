@@ -82,6 +82,8 @@ jobs:
                 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
                 tox
             - name: Upload coverage data to coveralls.io
+              # For speed purposes, we don't do coverage reporting on pypy 3.7
+              if: ${{ matrix.python-version != 'pypy-3.7' }}
               run: |
                 pip -q install coveralls
                 coveralls --service=github
