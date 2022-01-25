@@ -1203,6 +1203,7 @@ class XWindow(Window):
                 self.cmd_static(
                     None, self.surface.x, self.surface.y, self.surface.width, self.surface.height
                 )
+                self.core.focus_window(self.qtile.windows_map[self._wid])
                 return
 
             # Save the client's desired geometry
