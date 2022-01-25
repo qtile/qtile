@@ -1020,10 +1020,12 @@ class Static(base.Static, Window):
         hook.fire("client_focus", self)
 
     def kill(self) -> None:
-        if self.is_layer:
-            self.surface.destroy()  # type: ignore
+        if isinstance(self.surface, LayerSurfaceV1):
+            self.surface.destroy()
+        elif isinstance(self.surface, XdgSurface):
+            self.surface.send_close()
         else:
-            self.surface.send_close()  # type: ignore
+            self.surface.close()  # xwayland.Surface
 
     def place(
         self,
