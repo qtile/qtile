@@ -122,8 +122,8 @@ shrink it etc. as many times as needed. To exit the mode, press <escape>.
 Keyboard grabbing
 -----------------
 
-A KeyChord may specify the optional parameter `grab_keyboard`, which defaults to
-True:
+A KeyChord may specify the optional parameter ``grab_keyboard``, which defaults
+to True:
 
 ::
 
@@ -143,7 +143,7 @@ useful for modes, in order to allow you to interact with an application normally
 while also issuing commands from the mode.
 
 If it is set to True (the default), then any key pressed while a KeyChord is
-active will be consumed by QTile and will not be passed to the application.
+active will be consumed by Qtile and will not be passed to the application.
 Also, for chords which do not set a mode, any key (even one not bound in the
 chord) will cause the chord to deactivate and return to the main keymap.
 
