@@ -229,8 +229,9 @@ class Window(base.Window, HasListeners):
             logger.warning("Window destroyed before unmap event.")
             self.mapped = False
 
-        # Don't try to unmanage if we were never managed.
-        if self not in self.core.pending_windows:
+        if self in self.core.pending_windows:
+            self.core.pending_windows.remove(self)
+        else:
             self.qtile.unmanage(self.wid)
 
         self.finalize()
@@ -1163,6 +1164,7 @@ class XWindow(Window):
         self.surface = surface
         self._group: Optional[_Group] = None
         self._mapped: bool = False
+        self._unmapping: bool = False  # Whether the client or Qtile unmapped this
         self.x = 0
         self.y = 0
         self.bordercolor: List[ffi.CData] = [_rgb((0, 0, 0, 1))]
@@ -1244,6 +1246,34 @@ class XWindow(Window):
             self.mapped = True
             self.core.focus_window(self)
 
+    def _on_unmap(self, _listener, _data):
+        logger.debug("Signal: xwindow unmap")
+        self.mapped = False
+        self.damage()
+        seat = self.core.seat
+        if not seat.destroyed:
+            if self.surface.surface == seat.keyboard_state.focused_surface:
+                seat.keyboard_clear_focus()
+
+        if not self._unmapping:
+            self.qtile.unmanage(self.wid)
+            self.finalize()
+
+        self._unmapping = False
+
+    def _on_destroy(self, _listener, _data):
+        logger.debug("Signal: window destroy")
+        if self.mapped:
+            logger.warning("Window destroyed before unmap event.")
+            self.mapped = False
+
+        if self in self.core.pending_windows:
+            self.core.pending_windows.remove(self)
+        else:
+            self.qtile.unmanage(self.wid)
+
+        self.finalize()
+
     def _on_request_fullscreen(self, _listener, _data):
         logger.debug("Signal: xwindow request_fullscreen")
         if self.qtile.config.auto_fullscreen:
@@ -1266,6 +1296,11 @@ class XWindow(Window):
         logger.debug("Signal: xwindow set_class")
         self._app_id = self.surface.wm_class
         self.ftm_handle.set_app_id(self._app_id)
+
+    def hide(self) -> None:
+        if self.mapped:
+            self._unmapping = True
+            self.surface.unmap_event.emit()
 
     def kill(self) -> None:
         self.surface.close()  # type: ignore

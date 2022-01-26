@@ -105,7 +105,7 @@ class Core(base.Core, wlrq.HasListeners):
         logger.info("Starting core with WAYLAND_DISPLAY=" + self.socket.decode())
 
         # These windows have not been mapped yet; they'll get managed when mapped
-        self.pending_windows: List[window.WindowType] = []
+        self.pending_windows: Set[window.WindowType] = set()
 
         # mapped_windows contains just regular windows
         self.mapped_windows: List[window.WindowType] = []  # Ascending in Z
@@ -305,7 +305,7 @@ class Core(base.Core, wlrq.HasListeners):
         if surface.role == XdgSurfaceRole.TOPLEVEL:
             assert self.qtile is not None
             win = window.Window(self, self.qtile, surface)
-            self.pending_windows.append(win)
+            self.pending_windows.add(win)
 
     def _on_cursor_axis(self, _listener, event: pointer.PointerEventAxis):
         handled = False
@@ -417,7 +417,7 @@ class Core(base.Core, wlrq.HasListeners):
         logger.debug("Signal: xwayland new_surface")
         assert self.qtile is not None
         win = window.XWindow(self, self.qtile, surface)
-        self.pending_windows.append(win)
+        self.pending_windows.add(win)
 
     def _output_manager_reconfigure(self, config: OutputConfigurationV1, apply: bool) -> None:
         """
