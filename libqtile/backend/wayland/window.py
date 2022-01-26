@@ -186,7 +186,7 @@ class Window(base.Window, HasListeners):
                 self.name = surface.toplevel.title
                 self.ftm_handle.set_title(self.name)
             if self._app_id:
-                self.ftm_handle.set_app_id(self._app_id)
+                self.ftm_handle.set_app_id(self._app_id or "")
 
             # Add the toplevel's listeners
             self.add_listener(
@@ -254,7 +254,7 @@ class Window(base.Window, HasListeners):
     def _on_set_app_id(self, _listener, _data):
         logger.debug("Signal: window set_app_id")
         self._app_id = self.surface.toplevel.app_id
-        self.ftm_handle.set_app_id(self._app_id)
+        self.ftm_handle.set_app_id(self._app_id or "")
 
     def _on_commit(self, _listener, _data):
         self.damage()
@@ -1218,7 +1218,7 @@ class XWindow(Window):
                 self.name = title
                 self.ftm_handle.set_title(self.name)
             self._app_id = self.surface.wm_class
-            self.ftm_handle.set_app_id(self._app_id)
+            self.ftm_handle.set_app_id(self._app_id or "")
 
             # Add event listeners
             self.add_listener(self.surface.surface.commit_event, self._on_commit)
@@ -1295,7 +1295,7 @@ class XWindow(Window):
     def _on_set_class(self, _listener, _data):
         logger.debug("Signal: xwindow set_class")
         self._app_id = self.surface.wm_class
-        self.ftm_handle.set_app_id(self._app_id)
+        self.ftm_handle.set_app_id(self._app_id or "")
 
     def hide(self) -> None:
         if self.mapped:
