@@ -17,13 +17,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import pytest
+
 import libqtile.bar
 import libqtile.config
 from libqtile import widget
 
 
-def test_no_duplicates_multiple_instances(manager_nospawn, minimal_conf_noscreen):
+def test_no_duplicates_multiple_instances(manager_nospawn, minimal_conf_noscreen, backend_name):
     """Check only one instance of Systray widget."""
+    if backend_name == "wayland":
+        pytest.skip("Skipping test on Wayland.")
+
     assert not widget.Systray._instances
     config = minimal_conf_noscreen
     config.screens = [
@@ -37,8 +42,11 @@ def test_no_duplicates_multiple_instances(manager_nospawn, minimal_conf_noscreen
     assert widgets[1]["name"] == "configerrorwidget"
 
 
-def test_no_duplicates_mirror(manager_nospawn, minimal_conf_noscreen):
+def test_no_duplicates_mirror(manager_nospawn, minimal_conf_noscreen, backend_name):
     """Check systray is not mirrored."""
+    if backend_name == "wayland":
+        pytest.skip("Skipping test on Wayland.")
+
     assert not widget.Systray._instances
     systray = widget.Systray()
     config = minimal_conf_noscreen
@@ -65,3 +73,21 @@ def test_no_duplicates_mirror(manager_nospawn, minimal_conf_noscreen):
     widgets = manager_nospawn.c.screen[1].bar["top"].info()["widgets"]
     assert len(widgets) == 1
     assert widgets[0]["name"] == "configerrorwidget"
+
+
+def test_systray_reconfigure_screens(manager_nospawn, minimal_conf_noscreen, backend_name):
+    """Check systray does not crash when reconfiguring screens."""
+    if backend_name == "wayland":
+        pytest.skip("Skipping test on Wayland.")
+
+    assert not widget.Systray._instances
+    config = minimal_conf_noscreen
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([widget.Systray()], 10))]
+
+    manager_nospawn.start(config)
+
+    assert manager_nospawn.c.bar["top"].info()["widgets"][0]["name"] == "systray"
+
+    manager_nospawn.c.reconfigure_screens()
+
+    assert manager_nospawn.c.bar["top"].info()["widgets"][0]["name"] == "systray"
