@@ -143,11 +143,11 @@ class Systray(window._Window, base._Widget):
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
 
-        if Systray._instances > 0:
-            raise ConfigError("Only one Systray can be used.")
-
         if self.configured:
             return
+
+        if Systray._instances > 0:
+            raise ConfigError("Only one Systray can be used.")
 
         self.conn = conn = qtile.core.conn
         win = conn.create_window(-1, -1, 1, 1)
@@ -200,10 +200,10 @@ class Systray(window._Window, base._Widget):
         """
         Systray cannot be mirrored as we do not use a Drawer object to render icons.
 
-        Return itself so that, when the bar tries to configure it again, a ConfigError
-        is raised.
+        Return new, unconfigured instance so that, when the bar tries to configure it
+        again, a ConfigError is raised.
         """
-        return self
+        return Systray()
 
     def handle_ClientMessage(self, event):  # noqa: N802
         atoms = self.conn.atoms
