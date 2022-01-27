@@ -1,5 +1,7 @@
+import pytest
+
 import libqtile.config
-from libqtile.widget import TextBox, WidgetBox
+from libqtile.widget import Systray, TextBox, WidgetBox
 from test.widgets.conftest import FakeBar
 
 
@@ -79,3 +81,52 @@ def test_widgetbox_mouse_click(manager_nospawn, minimal_conf_noscreen):
 
     topbar.fake_button_press(0, "top", 0, 0, button=1)
     assert len(topbar.info()["widgets"]) == 1
+
+
+def test_widgetbox_with_systray_reconfigure_screens_box_open(
+    manager_nospawn, minimal_conf_noscreen, backend_name
+):
+    """Check that Systray does not crash when inside an open widgetbox."""
+    if backend_name == "wayland":
+        pytest.skip("Skipping test on Wayland.")
+
+    config = minimal_conf_noscreen
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([WidgetBox([Systray()])], 10))]
+
+    manager_nospawn.start(config)
+
+    topbar = manager_nospawn.c.bar["top"]
+    assert len(topbar.info()["widgets"]) == 1
+
+    manager_nospawn.c.widget["widgetbox"].toggle()
+    assert len(topbar.info()["widgets"]) == 2
+
+    manager_nospawn.c.reconfigure_screens()
+
+    assert len(topbar.info()["widgets"]) == 2
+    names = [w["name"] for w in topbar.info()["widgets"]]
+    assert names == ["widgetbox", "systray"]
+
+
+def test_widgetbox_with_systray_reconfigure_screens_box_closed(
+    manager_nospawn, minimal_conf_noscreen, backend_name
+):
+    """Check that Systray does not crash when inside a closed widgetbox."""
+    if backend_name == "wayland":
+        pytest.skip("Skipping test on Wayland.")
+
+    config = minimal_conf_noscreen
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([WidgetBox([Systray()])], 10))]
+
+    manager_nospawn.start(config)
+
+    topbar = manager_nospawn.c.bar["top"]
+    assert len(topbar.info()["widgets"]) == 1
+
+    manager_nospawn.c.reconfigure_screens()
+
+    assert len(topbar.info()["widgets"]) == 1
+
+    # Check that we've still got a Systray widget in the box.
+    _, name = manager_nospawn.c.widget["widgetbox"].eval("self.widgets[0].name")
+    assert name == "systray"

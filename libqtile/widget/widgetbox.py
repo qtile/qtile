@@ -79,13 +79,16 @@ class WidgetBox(base._Widget):
         base._Widget._configure(self, qtile, bar)
 
         self.layout = self.drawer.textlayout(
-            self.text_closed,
+            self.text_open if self.box_is_open else self.text_closed,
             self.foreground,
             self.font,
             self.fontsize,
             self.fontshadow,
             markup=False,
         )
+
+        if self.configured:
+            return
 
         for idx, w in enumerate(self.widgets):
             if w.configured:
@@ -99,6 +102,10 @@ class WidgetBox(base._Widget):
             # mirror can copy the surface but draw it off screen
             w.offsetx = self.bar.width
             self.qtile.call_soon(w.draw)
+
+            # Setting the configured flag for widgets was moved to Bar._configure so we need to
+            # set it here.
+            w.configured = True
 
         # Disable drawing of the widget's contents
         for w in self.widgets:
