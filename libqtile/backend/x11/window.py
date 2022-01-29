@@ -17,11 +17,13 @@ from libqtile.backend import base
 from libqtile.backend.base import FloatStates
 from libqtile.backend.x11 import xcbq
 from libqtile.backend.x11.drawer import Drawer
-from libqtile.command.base import CommandError, ItemT
+from libqtile.command.base import CommandError
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
     from typing import List
+
+    from libqtile.command.base import ItemT
 
 # ICCM Constants
 NoValue = 0x0000

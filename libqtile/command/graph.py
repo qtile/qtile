@@ -26,10 +26,12 @@ abstract command graph
 from __future__ import annotations
 
 import abc
-from typing import Dict, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING
 
-SelectorType = Tuple[str, Optional[str | int]]
-GraphType = Union["CommandGraphNode", "CommandGraphCall"]
+if TYPE_CHECKING:
+    from typing import Dict, List, Optional, Tuple, Type, Union
+
+    SelectorType = Tuple[str, Optional[str | int]]
 
 
 class CommandGraphNode(metaclass=abc.ABCMeta):
@@ -215,3 +217,6 @@ _COMMAND_GRAPH_MAP: Dict[str, Type[CommandGraphObject]] = {
     "screen": _ScreenGraphNode,
     "core": _CoreGraphNode,
 }
+
+
+GraphType = Union[CommandGraphNode, CommandGraphCall]

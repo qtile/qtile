@@ -26,10 +26,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from libqtile import hook, utils
 from libqtile.backend.base import FloatStates
-from libqtile.command.base import CommandObject, ItemT
+from libqtile.command.base import CommandObject
 from libqtile.log_utils import logger
+
+if TYPE_CHECKING:
+    from libqtile.command.base import ItemT
 
 
 class _Group(CommandObject):

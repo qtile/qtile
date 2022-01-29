@@ -33,14 +33,18 @@ from __future__ import annotations
 import contextlib
 import os.path
 import sys
-from typing import TYPE_CHECKING, Callable, List
+from typing import TYPE_CHECKING
 
 from libqtile import configurable, hook, utils
 from libqtile.backend import base
-from libqtile.bar import Bar, BarType
-from libqtile.command.base import CommandObject, ItemT
+from libqtile.bar import Bar
+from libqtile.command.base import CommandObject
 
 if TYPE_CHECKING:
+    from typing import Callable, List
+
+    from libqtile.bar import BarType
+    from libqtile.command.base import ItemT
     from libqtile.group import _Group
 
 

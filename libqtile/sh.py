@@ -21,6 +21,8 @@
     A command shell for Qtile.
 """
 
+from __future__ import annotations
+
 import fcntl
 import inspect
 import pprint
@@ -29,7 +31,7 @@ import struct
 import sys
 import termios
 from importlib import import_module
-from typing import Any, List, Tuple
+from typing import TYPE_CHECKING
 
 from libqtile.command.client import CommandClient
 from libqtile.command.interface import (
@@ -38,6 +40,9 @@ from libqtile.command.interface import (
     CommandInterface,
     format_selectors,
 )
+
+if TYPE_CHECKING:
+    from typing import Any, List, Tuple
 
 
 def terminal_width():

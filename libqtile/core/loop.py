@@ -3,11 +3,13 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import signal
-from typing import TYPE_CHECKING, Callable, Dict
+from typing import TYPE_CHECKING
 
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
+    from typing import Callable, Dict
+
     from libqtile.core.manager import Qtile
 
 

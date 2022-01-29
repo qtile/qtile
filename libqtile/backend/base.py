@@ -312,7 +312,7 @@ class Window(_Window, metaclass=ABCMeta):
         """Whether this window has user-defined geometry"""
         return False
 
-    def is_transient_for(self) -> "WindowType" | None:
+    def is_transient_for(self) -> WindowType | None:
         """What window is this window a transient window for?"""
         return None
 

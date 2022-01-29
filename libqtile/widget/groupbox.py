@@ -32,10 +32,13 @@
 
 import itertools
 from functools import partial
-from typing import Any, List, Tuple
+from typing import TYPE_CHECKING
 
 from libqtile import bar, hook
 from libqtile.widget import base
+
+if TYPE_CHECKING:
+    from typing import Any, List, Tuple
 
 
 class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):

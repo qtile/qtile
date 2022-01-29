@@ -26,7 +26,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from typing import TYPE_CHECKING
+from typing import List
 
 import xcffib
 from xcffib.xproto import ClientMessageData, ClientMessageEvent, EventMask, SetMode
@@ -36,8 +36,6 @@ from libqtile.backend.x11 import window
 from libqtile.confreader import ConfigError
 from libqtile.widget import base
 
-if TYPE_CHECKING:
-    from typing import List
 
 XEMBED_PROTOCOL_VERSION = 0
 

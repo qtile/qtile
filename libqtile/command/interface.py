@@ -22,14 +22,21 @@
 The interface to execute commands on the command graph
 """
 
+from __future__ import annotations
+
 import traceback
 from abc import ABCMeta, abstractmethod
-from typing import Any, Dict, List, Tuple
+from typing import TYPE_CHECKING
 
 from libqtile import ipc
 from libqtile.command.base import CommandError, CommandException, CommandObject, SelectError
-from libqtile.command.graph import CommandGraphCall, CommandGraphNode, SelectorType
+from libqtile.command.graph import CommandGraphCall, CommandGraphNode
 from libqtile.log_utils import logger
+
+if TYPE_CHECKING:
+    from typing import Any, Dict, List, Tuple
+
+    from libqtile.command.graph import SelectorType
 
 SUCCESS = 0
 ERROR = 1

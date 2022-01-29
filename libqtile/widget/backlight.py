@@ -67,7 +67,7 @@ class Backlight(base.InLoopPollText):
         )
     """
 
-    filenames = {}  # type: Dict
+    filenames: Dict = {}
 
     defaults = [
         ("backlight_name", "acpi_video0", "ACPI name of a backlight device"),

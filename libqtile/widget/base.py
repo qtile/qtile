@@ -29,18 +29,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import asyncio
 import copy
 import math
 import subprocess
-from typing import Any, List, Tuple
+from typing import TYPE_CHECKING
 
 from libqtile import bar, configurable, confreader
 from libqtile.command import interface
-from libqtile.command.base import CommandError, CommandObject, ItemT
+from libqtile.command.base import CommandError, CommandObject
 from libqtile.lazy import LazyCall
 from libqtile.log_utils import logger
 
+if TYPE_CHECKING:
+    from typing import Any, List, Tuple
+
+    from libqtile.command.base import ItemT
 
 # Each widget class must define which bar orientation(s) it supports by setting
 # these bits in an 'orientations' class attribute. Simply having the attribute

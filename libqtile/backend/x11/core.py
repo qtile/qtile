@@ -19,12 +19,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import asyncio
 import contextlib
 import os
 import signal
 import time
-from typing import TYPE_CHECKING, Callable, Dict, Iterator, List, Tuple
+from typing import TYPE_CHECKING
 
 import xcffib
 import xcffib.render
@@ -39,6 +41,8 @@ from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 
 if TYPE_CHECKING:
+    from typing import Callable, Dict, Iterator, List, Tuple
+
     from libqtile.core.manager import Qtile
 
 _IGNORED_EVENTS = {
