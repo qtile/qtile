@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import signal
-from typing import TYPE_CHECKING, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Callable, Dict
 
 from libqtile.log_utils import logger
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class LoopContext(contextlib.AbstractAsyncContextManager):
     def __init__(
         self,
-        signals: Optional[Dict[signal.Signals, Callable]] = None,
+        signals: Dict[signal.Signals, Callable] | None = None,
     ) -> None:
         super().__init__()
         self._signals = signals or {}

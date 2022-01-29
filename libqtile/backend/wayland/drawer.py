@@ -8,8 +8,6 @@ from libqtile import utils
 from libqtile.backend import base
 
 if TYPE_CHECKING:
-    from typing import Optional
-
     from libqtile.backend.wayland.window import Internal
     from libqtile.core.manager import Qtile
 
@@ -39,8 +37,8 @@ class Drawer(base.Drawer):
         self,
         offsetx: int = 0,
         offsety: int = 0,
-        width: Optional[int] = None,
-        height: Optional[int] = None,
+        width: int | None = None,
+        height: int | None = None,
     ):
         if offsetx > self._win.width:  # type: ignore
             return

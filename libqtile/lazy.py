@@ -26,7 +26,6 @@ if TYPE_CHECKING:
         Dict,
         Iterable,
         List,
-        Optional,
         Set,
         Tuple,
         Union,
@@ -55,7 +54,7 @@ class LazyCall:
         self._args = args
         self._kwargs = kwargs
 
-        self._focused: Optional[Match] = None
+        self._focused: Match | None = None
         self._layouts: Set[str] = set()
         self._when_floating = True
 
@@ -98,8 +97,8 @@ class LazyCall:
 
     def when(
         self,
-        focused: Optional[Match] = None,
-        layout: Optional[Union[Iterable[str], str]] = None,
+        focused: Match | None = None,
+        layout: Union[Iterable[str], str] | None = None,
         when_floating: bool = True,
     ) -> "LazyCall":
         """Enable call only for given layout(s) and floating state

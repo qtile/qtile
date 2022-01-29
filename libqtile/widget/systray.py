@@ -37,7 +37,7 @@ from libqtile.confreader import ConfigError
 from libqtile.widget import base
 
 if TYPE_CHECKING:
-    from typing import List, Optional
+    from typing import List
 
 XEMBED_PROTOCOL_VERSION = 0
 
@@ -130,7 +130,7 @@ class Systray(window._Window, base._Widget):
         self.tray_icons = []
         self.screen = 0
         self._name = config.get("name", "systray")
-        self._wm_class: Optional[List[str]] = None
+        self._wm_class: List[str] | None = None
 
     def calculate_length(self):
         if self.bar.horizontal:

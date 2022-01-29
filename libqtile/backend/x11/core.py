@@ -24,7 +24,7 @@ import contextlib
 import os
 import signal
 import time
-from typing import TYPE_CHECKING, Callable, Dict, Iterator, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Dict, Iterator, List, Tuple, Union
 
 import xcffib
 import xcffib.render
@@ -146,7 +146,7 @@ class Core(base.Core):
         # setup the default cursor
         self._root.set_cursor("left_ptr")
 
-        self.qtile = None  # type: Optional[Qtile]
+        self.qtile = None  # type: Qtile | None
         self._painter = None
 
         numlock_code = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])[0]
@@ -544,7 +544,7 @@ class Core(base.Core):
             i._reset_mask()
 
     def create_internal(
-        self, x: int, y: int, width: int, height: int, desired_depth: Optional[int] = 32
+        self, x: int, y: int, width: int, height: int, desired_depth: int | None = 32
     ) -> base.Internal:
         assert self.qtile is not None
 

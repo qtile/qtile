@@ -37,7 +37,7 @@ from abc import ABC, abstractclassmethod
 from enum import Enum, unique
 from pathlib import Path
 from subprocess import CalledProcessError, check_output
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple
+from typing import Any, Dict, List, NamedTuple, Tuple
 
 from libqtile import bar, configurable, images
 from libqtile.images import Img
@@ -214,7 +214,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
                 return bats[0]
         return "BAT0"
 
-    def _load_file(self, name) -> Optional[Tuple[str, str]]:
+    def _load_file(self, name) -> Tuple[str, str] | None:
         path = os.path.join(self.BAT_DIR, self.battery, name)
         if "energy" in name or "power" in name:
             value_type = "uW"
@@ -305,8 +305,8 @@ class _LinuxBattery(_Battery, configurable.Configurable):
 class Battery(base.ThreadPoolText):
     """A text-based battery monitoring widget currently supporting FreeBSD"""
 
-    background: Optional[ColorsType]
-    low_background: Optional[ColorsType]
+    background: ColorsType | None
+    low_background: ColorsType | None
 
     defaults = [
         ("charge_char", "^", "Character to indicate the battery is charging"),

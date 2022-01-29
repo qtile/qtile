@@ -28,7 +28,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import List, Optional
+from typing import List
 
 from libqtile.backend.base import Window
 from libqtile.config import Match
@@ -67,7 +67,7 @@ class Floating(Layout):
     ]
 
     def __init__(
-        self, float_rules: Optional[List[Match]] = None, no_reposition_rules=None, **config
+        self, float_rules: List[Match] | None = None, no_reposition_rules=None, **config
     ):
         """
         If you have certain apps that you always want to float you can provide
