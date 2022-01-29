@@ -54,7 +54,7 @@ from libqtile.utils import get_cache_dir, lget, send_notification
 from libqtile.widget.base import _Widget
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+    from typing import Any, Callable, Dict, List, Tuple, Union
 
     from typing_extensions import Literal
 
@@ -73,16 +73,16 @@ class Qtile(CommandObject):
         kore: base.Core,
         config,  # mypy doesn't like the config's dynamic attributes
         no_spawn: bool = False,
-        state: Optional[str] = None,
-        socket_path: Optional[str] = None,
+        state: str | None = None,
+        socket_path: str | None = None,
     ):
         self.core = kore
         self.config = config
         self.no_spawn = no_spawn
-        self._state: Optional[Union[QtileState, str]] = state
+        self._state: Union[QtileState, str] | None = state
         self.socket_path = socket_path
 
-        self._drag: Optional[Tuple] = None
+        self._drag: Tuple | None = None
         self.mouse_map: Dict[int, List[Union[Click, Drag]]] = {}
 
         self.windows_map: Dict[int, base.WindowType] = {}
@@ -97,7 +97,7 @@ class Qtile(CommandObject):
 
         libqtile.init(self)
 
-        self._stopped_event: Optional[asyncio.Event] = None
+        self._stopped_event: asyncio.Event | None = None
 
         self.server = IPCCommandServer(self)
 
@@ -176,7 +176,7 @@ class Qtile(CommandObject):
 
     def _prepare_socket_path(
         self,
-        socket_path: Optional[str] = None,
+        socket_path: str | None = None,
     ) -> str:
         if socket_path is None:
             socket_path = ipc.find_sockfile(self.core.display_name)
@@ -367,7 +367,7 @@ class Qtile(CommandObject):
 
         hook.fire("screens_reconfigured")
 
-    def paint_screen(self, screen: Screen, image_path: str, mode: Optional[str] = None) -> None:
+    def paint_screen(self, screen: Screen, image_path: str, mode: str | None = None) -> None:
         self.core.painter.paint(screen, image_path, mode)
 
     def process_key_event(self, keysym: int, mask: int) -> None:
@@ -481,9 +481,9 @@ class Qtile(CommandObject):
     def add_group(
         self,
         name: str,
-        layout: Optional[str] = None,
-        layouts: Optional[List[Layout]] = None,
-        label: Optional[str] = None,
+        layout: str | None = None,
+        layouts: List[Layout] | None = None,
+        label: str | None = None,
     ) -> bool:
         if name not in self.groups_map.keys():
             g = _Group(name, layout, label=label)
@@ -549,7 +549,7 @@ class Qtile(CommandObject):
         return self.current_screen.group
 
     @property
-    def current_window(self) -> Optional[base.Window]:
+    def current_window(self) -> base.Window | None:
         return self.current_screen.group.current_window
 
     def reserve_space(
@@ -619,7 +619,7 @@ class Qtile(CommandObject):
             del self.windows_map[wid]
             self.core.update_client_list(self.windows_map)
 
-    def find_screen(self, x: int, y: int) -> Optional[Screen]:
+    def find_screen(self, x: int, y: int) -> Screen | None:
         """Find a screen based on the x and y offset"""
         result = []
         for i in self.screens:
@@ -629,7 +629,7 @@ class Qtile(CommandObject):
             return result[0]
         return None
 
-    def find_closest_screen(self, x: int, y: int) -> Optional[Screen]:
+    def find_closest_screen(self, x: int, y: int) -> Screen | None:
         """
         If find_screen returns None, then this basically extends a
         screen vertically and horizontally and see if x,y lies in the
@@ -659,7 +659,7 @@ class Qtile(CommandObject):
 
     def _find_closest_closest(
         self, x: int, y: int, candidate_screens: List[Screen]
-    ) -> Optional[Screen]:
+    ) -> Screen | None:
         """
         if find_closest_screen can't determine one, we've got multiple
         screens, so figure out who is closer.  We'll calculate using
@@ -668,7 +668,7 @@ class Qtile(CommandObject):
         Note that this could return None if x, y is right/below all
         screens.
         """
-        closest_distance: Optional[float] = None  # because mypy only considers first value
+        closest_distance: float | None = None  # because mypy only considers first value
         if not candidate_screens:
             # try all screens
             candidate_screens = self.screens
@@ -784,7 +784,7 @@ class Qtile(CommandObject):
             return True, []
         return None
 
-    def _select(self, name: str, sel: Optional[Union[str, int]]) -> Optional[CommandObject]:
+    def _select(self, name: str, sel: Union[str, int] | None) -> CommandObject | None:
         if name == "group":
             if sel is None:
                 return self.current_group
@@ -987,7 +987,7 @@ class Qtile(CommandObject):
         """List of all addressible widget names"""
         return list(self.widgets_map.keys())
 
-    def cmd_to_layout_index(self, index: str, name: Optional[str] = None) -> None:
+    def cmd_to_layout_index(self, index: str, name: str | None = None) -> None:
         """Switch to the layout with the given index in self.layouts.
 
         Parameters
@@ -1003,7 +1003,7 @@ class Qtile(CommandObject):
             group = self.current_group
         group.use_layout(index)
 
-    def cmd_next_layout(self, name: Optional[str] = None) -> None:
+    def cmd_next_layout(self, name: str | None = None) -> None:
         """Switch to the next layout.
 
         Parameters
@@ -1017,7 +1017,7 @@ class Qtile(CommandObject):
             group = self.current_group
         group.use_next_layout()
 
-    def cmd_prev_layout(self, name: Optional[str] = None) -> None:
+    def cmd_prev_layout(self, name: str | None = None) -> None:
         """Switch to the previous layout.
 
         Parameters
@@ -1368,7 +1368,7 @@ class Qtile(CommandObject):
         command: str = "%s",
         complete: str = "cmd",
         shell: bool = True,
-        aliases: Optional[Dict[str, str]] = None,
+        aliases: Dict[str, str] | None = None,
     ) -> None:
         """Spawn a command using a prompt widget, with tab-completion.
 
@@ -1457,9 +1457,9 @@ class Qtile(CommandObject):
     def cmd_addgroup(
         self,
         group: str,
-        label: Optional[str] = None,
-        layout: Optional[str] = None,
-        layouts: Optional[List[Layout]] = None,
+        label: str | None = None,
+        layout: str | None = None,
+        layouts: List[Layout] | None = None,
     ) -> bool:
         """Add a group with the given name"""
         return self.add_group(name=group, layout=layout, layouts=layouts, label=label)

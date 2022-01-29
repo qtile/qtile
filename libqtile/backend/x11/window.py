@@ -21,7 +21,7 @@ from libqtile.command.base import CommandError, ItemT
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import List, Optional
+    from typing import List
 
 # ICCM Constants
 NoValue = 0x0000
@@ -502,8 +502,8 @@ class _Window:
             self._height = None
             self._depth = None
 
-        self.float_x: Optional[int] = None
-        self.float_y: Optional[int] = None
+        self.float_x: int | None = None
+        self.float_y: int | None = None
         self._float_width: int = self._width
         self._float_height: int = self._height
 
@@ -594,7 +594,7 @@ class _Window:
     def update_wm_class(self) -> None:
         self._wm_class = self.window.get_wm_class()
 
-    def get_wm_class(self) -> Optional[List[str]]:
+    def get_wm_class(self) -> List[str] | None:
         return self._wm_class
 
     def get_wm_type(self):
@@ -1159,7 +1159,7 @@ class Static(_Window, base.Static):
 
     def __init__(self, win, qtile, screen, x=None, y=None, width=None, height=None):
         _Window.__init__(self, win, qtile)
-        self._wm_class: Optional[List[str]] = None
+        self._wm_class: List[str] | None = None
         self.update_wm_class()
         self.update_name()
         self.conf_x = x
@@ -1253,7 +1253,7 @@ class Window(_Window, base.Window):
 
     def __init__(self, window, qtile):
         _Window.__init__(self, window, qtile)
-        self._wm_class: Optional[List[str]] = None
+        self._wm_class: List[str] | None = None
         self.update_wm_class()
         self.update_name()
         self.set_group()
@@ -1397,11 +1397,11 @@ class Window(_Window, base.Window):
 
     def cmd_static(
         self,
-        screen: Optional[int] = None,
-        x: Optional[int] = None,
-        y: Optional[int] = None,
-        width: Optional[int] = None,
-        height: Optional[int] = None,
+        screen: int | None = None,
+        x: int | None = None,
+        y: int | None = None,
+        width: int | None = None,
+        height: int | None = None,
     ) -> None:
         """Makes this window a static window, attached to a Screen
 

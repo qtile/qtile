@@ -42,7 +42,7 @@ from libqtile.command.base import CommandError
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Dict, List, Optional, Set, Tuple, Union
+    from typing import Dict, List, Set, Tuple, Union
 
     from wlroots.wlr_types.surface import SubSurface as WlrSubSurface
 
@@ -77,7 +77,7 @@ class Window(base.Window, HasListeners):
         self.core = core
         self.qtile = qtile
         self.surface = surface
-        self._group: Optional[_Group] = None
+        self._group: _Group | None = None
         self.popups: List[XdgPopupWindow] = []
         self.subsurfaces: List[SubSurface] = []
         self._mapped: bool = False
@@ -92,13 +92,13 @@ class Window(base.Window, HasListeners):
         self._height: int = 0
 
         assert isinstance(surface, XdgSurface)
-        self._app_id: Optional[str] = surface.toplevel.app_id
+        self._app_id: str | None = surface.toplevel.app_id
         self.ftm_handle = core.foreign_toplevel_manager_v1.create_handle()
         surface.data = self.ftm_handle
 
         self._float_state = FloatStates.NOT_FLOATING
-        self.float_x: Optional[int] = None
-        self.float_y: Optional[int] = None
+        self.float_x: int | None = None
+        self.float_y: int | None = None
         self._float_width: int = 0
         self._float_height: int = 0
 
@@ -141,11 +141,11 @@ class Window(base.Window, HasListeners):
         self._height = height
 
     @property
-    def group(self) -> Optional[_Group]:
+    def group(self) -> _Group | None:
         return self._group
 
     @group.setter
-    def group(self, group: Optional[_Group]) -> None:
+    def group(self, group: _Group | None) -> None:
         self._group = group
 
     @property
@@ -297,7 +297,7 @@ class Window(base.Window, HasListeners):
         state = self.surface.toplevel._ptr.current
         return 0 < state.min_width == state.max_width and 0 < state.min_height == state.max_height
 
-    def is_transient_for(self) -> Optional[base.WindowType]:
+    def is_transient_for(self) -> base.WindowType | None:
         """What window is this window a transient window for?"""
         assert isinstance(self.surface, XdgSurface)
         parent = self.surface.toplevel.parent
@@ -333,7 +333,7 @@ class Window(base.Window, HasListeners):
         )
         return pid[0]
 
-    def get_wm_class(self) -> Optional[List]:
+    def get_wm_class(self) -> List | None:
         if self._app_id:
             return [self._app_id]
         return None
@@ -712,11 +712,11 @@ class Window(base.Window, HasListeners):
 
     def cmd_static(
         self,
-        screen: Optional[int] = None,
-        x: Optional[int] = None,
-        y: Optional[int] = None,
-        width: Optional[int] = None,
-        height: Optional[int] = None,
+        screen: int | None = None,
+        x: int | None = None,
+        y: int | None = None,
+        width: int | None = None,
+        height: int | None = None,
     ) -> None:
         self.defunct = True
         if screen is None:
@@ -899,7 +899,7 @@ class Static(base.Static, Window):
         self._outputs: Set[Output] = set()
         self._float_state = FloatStates.FLOATING
         self.is_layer = False
-        self._app_id: Optional[str] = None
+        self._app_id: str | None = None
 
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
@@ -1162,7 +1162,7 @@ class XWindow(Window):
         self.core = core
         self.qtile = qtile
         self.surface = surface
-        self._group: Optional[_Group] = None
+        self._group: _Group | None = None
         self._mapped: bool = False
         self._unmapping: bool = False  # Whether the client or Qtile unmapped this
         self.x = 0
@@ -1171,15 +1171,15 @@ class XWindow(Window):
         self._opacity: float = 1.0
         self._outputs: Set[Output] = set()
 
-        self._app_id: Optional[str] = self.surface.wm_class
+        self._app_id: str | None = self.surface.wm_class
         self.ftm_handle = core.foreign_toplevel_manager_v1.create_handle()
         surface.data = self.ftm_handle
 
         # These become non-zero when being mapping for the first time
         self._width: int = 0
         self._height: int = 0
-        self.float_x: Optional[int] = None
-        self.float_y: Optional[int] = None
+        self.float_x: int | None = None
+        self.float_y: int | None = None
         self._float_width: int = 0
         self._float_height: int = 0
         self._float_state = FloatStates.NOT_FLOATING
@@ -1315,7 +1315,7 @@ class XWindow(Window):
             and 0 < hints.min_height == hints.max_height
         )
 
-    def is_transient_for(self) -> Optional[base.WindowType]:
+    def is_transient_for(self) -> base.WindowType | None:
         """What window is this window a transient window for?"""
         parent = self.surface.parent  # type: ignore
         if parent:
@@ -1327,13 +1327,13 @@ class XWindow(Window):
     def get_pid(self) -> int:
         return self.surface.pid  # type: ignore
 
-    def get_wm_type(self) -> Optional[str]:
+    def get_wm_type(self) -> str | None:
         wm_type = self.surface.window_type  # type: ignore
         if wm_type:
             return self.core.xwayland_atoms[wm_type[0]]
         return None
 
-    def get_wm_role(self) -> Optional[str]:
+    def get_wm_role(self) -> str | None:
         return self.surface.role  # type: ignore
 
     def place(
@@ -1391,11 +1391,11 @@ class XWindow(Window):
 
     def cmd_static(
         self,
-        screen: Optional[int] = None,
-        x: Optional[int] = None,
-        y: Optional[int] = None,
-        width: Optional[int] = None,
-        height: Optional[int] = None,
+        screen: int | None = None,
+        x: int | None = None,
+        y: int | None = None,
+        width: int | None = None,
+        height: int | None = None,
     ) -> None:
         self.defunct = True
         if self.group:

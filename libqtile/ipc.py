@@ -31,7 +31,7 @@ import marshal
 import os.path
 import socket
 import struct
-from typing import Any, Optional, Tuple
+from typing import Any, Tuple
 
 from libqtile.log_utils import logger
 from libqtile.utils import get_cache_dir
@@ -89,14 +89,14 @@ class _IPC:
     """A helper class to handle properly packing and unpacking messages"""
 
     @staticmethod
-    def unpack(data: bytes, *, is_json: Optional[bool] = None) -> Tuple[Any, bool]:
+    def unpack(data: bytes, *, is_json: bool | None = None) -> Tuple[Any, bool]:
         """Unpack the incoming message
 
         Parameters
         ----------
         data: bytes
             The incoming message to unpack
-        is_json: Optional[bool]
+        is_json: bool | None
             If the message should be unpacked as json.  By default, try to
             unpack json and fallback gracefully to marshalled bytes.
 
@@ -195,7 +195,7 @@ class Server:
     def __init__(self, socket_path: str, handler) -> None:
         self.socket_path = socket_path
         self.handler = handler
-        self.server = None  # type: Optional[asyncio.AbstractServer]
+        self.server = None  # type: asyncio.AbstractServer | None
 
         if os.path.exists(socket_path):
             os.unlink(socket_path)

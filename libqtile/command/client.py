@@ -29,7 +29,7 @@ clients to do this interaction.
 
 from __future__ import annotations
 
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Tuple, Union
 
 from libqtile.command.base import SelectError
 from libqtile.command.graph import (
@@ -47,7 +47,7 @@ class CommandClient:
     """The object that resolves the commands"""
 
     def __init__(
-        self, command: CommandInterface = None, *, current_node: Optional[CommandGraphNode] = None
+        self, command: CommandInterface = None, *, current_node: CommandGraphNode | None = None
     ) -> None:
         """A client that resolves calls through the command object interface
 
@@ -70,14 +70,14 @@ class CommandClient:
         self._command = command
         self._current_node = current_node if current_node is not None else CommandGraphRoot()
 
-    def navigate(self, name: str, selector: Optional[str]) -> CommandClient:
+    def navigate(self, name: str, selector: str | None) -> CommandClient:
         """Resolve the given object in the command graph
 
         Parameters
         ----------
         name: str
             The name of the command graph object to resolve.
-        selector: Optional[str]
+        selector: str | None
             If given, the selector to use to select the next object, and if
             None, then selects the default object.
 
@@ -285,7 +285,7 @@ class InteractiveCommandClient:
         return _normalize_item(object_type, item)
 
 
-def _normalize_item(object_type: Optional[str], item: str) -> Union[str, int]:
+def _normalize_item(object_type: str | None, item: str) -> Union[str, int]:
     if object_type in ["group", "widget", "bar"]:
         return str(item)
     elif object_type in ["layout", "window", "screen"]:

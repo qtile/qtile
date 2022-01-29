@@ -33,7 +33,7 @@ from __future__ import annotations
 import contextlib
 import os.path
 import sys
-from typing import TYPE_CHECKING, Callable, List, Optional, Union
+from typing import TYPE_CHECKING, Callable, List, Union
 
 from libqtile import configurable, hook, utils
 from libqtile.backend import base
@@ -266,16 +266,16 @@ class Screen(CommandObject):
 
     def __init__(
         self,
-        top: Optional[BarType] = None,
-        bottom: Optional[BarType] = None,
-        left: Optional[BarType] = None,
-        right: Optional[BarType] = None,
-        wallpaper: Optional[str] = None,
-        wallpaper_mode: Optional[str] = None,
-        x: Optional[int] = None,
-        y: Optional[int] = None,
-        width: Optional[int] = None,
-        height: Optional[int] = None,
+        top: BarType | None = None,
+        bottom: BarType | None = None,
+        left: BarType | None = None,
+        right: BarType | None = None,
+        wallpaper: str | None = None,
+        wallpaper_mode: str | None = None,
+        x: int | None = None,
+        y: int | None = None,
+        width: int | None = None,
+        height: int | None = None,
     ):
 
         self.top = top
@@ -528,7 +528,7 @@ class Group:
         layout_opts=None,
         screen_affinity=None,
         position=sys.maxsize,
-        label: Optional[str] = None,
+        label: str | None = None,
     ):
         self.name = name
         self.label = label

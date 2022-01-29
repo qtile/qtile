@@ -87,7 +87,7 @@ class CommandObject(metaclass=abc.ABCMeta):
             obj = maybe_obj
         return obj
 
-    def items(self, name: str) -> Tuple[bool, Optional[List[Union[str, int]]]]:
+    def items(self, name: str) -> Tuple[bool, List[Union[str, int]] | None]:
         """Build a list of contained items for the given item class
 
         Returns a tuple `(root, items)` for the specified item class, where:
@@ -114,7 +114,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def _select(self, name: str, sel: Optional[Union[str, int]]) -> Optional[CommandObject]:
+    def _select(self, name: str, sel: Union[str, int] | None) -> CommandObject | None:
         """Select the given item of the given item class
 
         This method is called with the following guarantees:
@@ -126,7 +126,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         Return None if no such object exists
         """
 
-    def command(self, name: str) -> Optional[Callable]:
+    def command(self, name: str) -> Callable | None:
         """Return the command with the given name
 
         Parameters
@@ -154,7 +154,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         """
         return self.commands
 
-    def cmd_items(self, name) -> Tuple[bool, Optional[List[Union[str, int]]]]:
+    def cmd_items(self, name) -> Tuple[bool, List[Union[str, int]] | None]:
         """Returns a list of contained items for the specified name
 
         Used by __qsh__ to allow navigation of the object graph.
@@ -184,7 +184,7 @@ class CommandObject(metaclass=abc.ABCMeta):
             signature = signature.replace(parameters=parameters)
         return str(signature)
 
-    def cmd_eval(self, code: str) -> Tuple[bool, Optional[str]]:
+    def cmd_eval(self, code: str) -> Tuple[bool, str | None]:
         """Evaluates code in the same context as this function
 
         Return value is tuple `(success, result)`, success being a boolean and

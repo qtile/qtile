@@ -39,7 +39,7 @@ from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 
 if TYPE_CHECKING:
-    from typing import Callable, Dict, List, Optional, Set
+    from typing import Callable, Dict, List, Set
 
     from pywayland.server import Signal
     from wlroots import xwayland
@@ -189,7 +189,7 @@ class PointerConstraint(HasListeners):
     def __init__(self, core: Core, wlr_constraint: PointerConstraintV1):
         self.core = core
         self.wlr_constraint = wlr_constraint
-        self.window: Optional[WindowType] = None
+        self.window: WindowType | None = None
         self._warp_target = (0, 0)
         self._needs_warp = False
 

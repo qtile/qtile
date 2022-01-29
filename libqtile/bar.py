@@ -440,7 +440,7 @@ class Bar(Gap, configurable.Configurable):
                 i.offsety = offset
                 offset += i.length
 
-    def get_widget_in_position(self, x: int, y: int) -> typing.Optional[_Widget]:
+    def get_widget_in_position(self, x: int, y: int) -> _Widget | None:
         if self.horizontal:
             for i in self.widgets:
                 if x < i.offsetx + i.length:

@@ -9,8 +9,6 @@ from libqtile import utils
 from libqtile.backend import base
 
 if TYPE_CHECKING:
-    from typing import Optional
-
     from libqtile.backend.base import Internal
     from libqtile.core.manager import Qtile
 
@@ -137,8 +135,8 @@ class Drawer(base.Drawer):
         self,
         offsetx: int = 0,
         offsety: int = 0,
-        width: Optional[int] = None,
-        height: Optional[int] = None,
+        width: int | None = None,
+        height: int | None = None,
     ):
 
         self.current_rect = (offsetx, offsety, width, height)

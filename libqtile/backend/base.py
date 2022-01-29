@@ -13,7 +13,7 @@ from libqtile.command.base import CommandError, CommandObject
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Any, Dict, List, Optional, Tuple, Union
+    from typing import Any, Dict, List, Tuple, Union
 
     from libqtile import config
     from libqtile.command.base import ItemT
@@ -140,7 +140,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
     def __init__(self):
         self.borderwidth: int = 0
         self.name: str = "<no name>"
-        self.reserved_space: Optional[Tuple[int, int, int, int]] = None
+        self.reserved_space: Tuple[int, int, int, int] | None = None
         # Window.cmd_static sets this in case it is hooked to client_new to stop the
         # Window object from being managed, now that a Static is being used instead
         self.defunct: bool = False
@@ -162,15 +162,15 @@ class _Window(CommandObject, metaclass=ABCMeta):
     def kill(self) -> None:
         """Kill the window"""
 
-    def get_wm_class(self) -> Optional[List]:
+    def get_wm_class(self) -> List | None:
         """Return the class(es) of the window"""
         return None
 
-    def get_wm_type(self) -> Optional[str]:
+    def get_wm_type(self) -> str | None:
         """Return the type of the window"""
         return None
 
-    def get_wm_role(self) -> Optional[str]:
+    def get_wm_role(self) -> str | None:
         """Return the role of the window"""
         return None
 
@@ -248,15 +248,15 @@ class Window(_Window, metaclass=ABCMeta):
     qtile: Qtile
 
     # If float_x or float_y are None, the window has never floated
-    float_x: Optional[int]
-    float_y: Optional[int]
+    float_x: int | None
+    float_y: int | None
 
     def __repr__(self):
         return "Window(name=%r, wid=%i)" % (self.name, self.wid)
 
     @property
     @abstractmethod
-    def group(self) -> Optional[_Group]:
+    def group(self) -> _Group | None:
         """The group to which this window belongs."""
 
     @property
@@ -298,7 +298,7 @@ class Window(_Window, metaclass=ABCMeta):
         """Focus this window and optional warp the pointer to it."""
 
     @abstractmethod
-    def togroup(self, group_name: Optional[str] = None, *, switch_group: bool = False) -> None:
+    def togroup(self, group_name: str | None = None, *, switch_group: bool = False) -> None:
         """Move window to a specified group
 
         Also switch to that group if switch_group is True.
@@ -312,7 +312,7 @@ class Window(_Window, metaclass=ABCMeta):
         """Whether this window has user-defined geometry"""
         return False
 
-    def is_transient_for(self) -> Optional["WindowType"]:
+    def is_transient_for(self) -> "WindowType" | None:
         """What window is this window a transient window for?"""
         return None
 
@@ -405,8 +405,8 @@ class Window(_Window, metaclass=ABCMeta):
 
     def cmd_togroup(
         self,
-        group_name: Optional[str] = None,
-        groupName: Optional[str] = None,  # Deprecated  # noqa: N803
+        group_name: str | None = None,
+        groupName: str | None = None,  # Deprecated  # noqa: N803
         switch_group: bool = False,
     ) -> None:
         """Move window to a specified group
@@ -421,7 +421,7 @@ class Window(_Window, metaclass=ABCMeta):
             group_name = groupName
         self.togroup(group_name, switch_group=switch_group)
 
-    def cmd_toscreen(self, index: Optional[int] = None) -> None:
+    def cmd_toscreen(self, index: int | None = None) -> None:
         """Move window to a specified screen.
 
         If index is not specified, we assume the current screen
@@ -480,11 +480,11 @@ class Window(_Window, metaclass=ABCMeta):
     @abstractmethod
     def cmd_static(
         self,
-        screen: Optional[int] = None,
-        x: Optional[int] = None,
-        y: Optional[int] = None,
-        width: Optional[int] = None,
-        height: Optional[int] = None,
+        screen: int | None = None,
+        x: int | None = None,
+        y: int | None = None,
+        width: int | None = None,
+        height: int | None = None,
     ) -> None:
         """Makes this window a static window, attached to a Screen.
 
@@ -585,8 +585,8 @@ class Drawer:
     """
 
     # We need to track extent of drawing to know when to redraw.
-    previous_rect: Tuple[int, int, Optional[int], Optional[int]]
-    current_rect: Tuple[int, int, Optional[int], Optional[int]]
+    previous_rect: Tuple[int, int, int | None, int | None]
+    current_rect: Tuple[int, int, int | None, int | None]
 
     def __init__(self, qtile: Qtile, win: Internal, width: int, height: int):
         self.qtile = qtile
@@ -723,8 +723,8 @@ class Drawer:
         self,
         offsetx: int = 0,
         offsety: int = 0,
-        width: Optional[int] = None,
-        height: Optional[int] = None,
+        width: int | None = None,
+        height: int | None = None,
     ):
         """
         A wrapper for the draw operation.
@@ -756,8 +756,8 @@ class Drawer:
         self,
         offsetx: int = 0,
         offsety: int = 0,
-        width: Optional[int] = None,
-        height: Optional[int] = None,
+        width: int | None = None,
+        height: int | None = None,
     ):
         """
         This draws our cached operations to the Internal window.

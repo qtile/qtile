@@ -21,6 +21,7 @@
 import asyncio
 import os
 from functools import partial
+# dbus_next is incompatible with deferred type evaluation
 from typing import Callable, List, Optional
 
 import cairocffi
