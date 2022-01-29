@@ -561,6 +561,50 @@ def test_wide_flip(manager):
 
 
 @monadtall_config
+def test_tall_set_and_reset(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 796, 596)
+
+    manager.test_window("two")
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 596)
+
+    manager.c.layout.set_ratio(0.75)
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 600, 0, 196, 596)
+
+    manager.c.layout.set_ratio(0.25)
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 200, 0, 596, 596)
+
+    manager.c.layout.reset()
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 596)
+
+
+@monadwide_config
+def test_wide_set_and_reset(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 796, 596)
+
+    manager.test_window("two")
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 0, 300, 796, 296)
+
+    manager.c.layout.set_ratio(0.75)
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 0, 450, 796, 146)
+
+    manager.c.layout.set_ratio(0.25)
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 0, 150, 796, 446)
+
+    manager.c.layout.reset()
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 0, 300, 796, 296)
+
+
+@monadtall_config
 def test_tall_shuffle(manager):
     manager.test_window("one")
     manager.test_window("two")
