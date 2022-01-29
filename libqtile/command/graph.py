@@ -28,7 +28,7 @@ from __future__ import annotations
 import abc
 from typing import Dict, List, Optional, Tuple, Type, Union
 
-SelectorType = Tuple[str, Optional[Union[str, int]]]
+SelectorType = Tuple[str, Optional[str | int]]
 GraphType = Union["CommandGraphNode", "CommandGraphCall"]
 
 
@@ -41,7 +41,7 @@ class CommandGraphNode(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def selector(self) -> Union[str, int] | None:
+    def selector(self) -> str | int | None:
         """The selector for the current node"""
 
     @property
@@ -59,7 +59,7 @@ class CommandGraphNode(metaclass=abc.ABCMeta):
     def children(self) -> List[str]:
         """The child objects that are contained within this object"""
 
-    def navigate(self, name: str, selector: Union[str, int] | None) -> CommandGraphNode:
+    def navigate(self, name: str, selector: str | int | None) -> CommandGraphNode:
         """Navigate from the current node to the specified child"""
         if name in self.children:
             return _COMMAND_GRAPH_MAP[name](selector, self)
@@ -135,7 +135,7 @@ class CommandGraphRoot(CommandGraphNode):
 class CommandGraphObject(CommandGraphNode, metaclass=abc.ABCMeta):
     """An object in the command graph that contains a collection of objects"""
 
-    def __init__(self, selector: Union[str, int] | None, parent: CommandGraphNode) -> None:
+    def __init__(self, selector: str | int | None, parent: CommandGraphNode) -> None:
         """A container object in the command graph
 
         Parameters
@@ -150,7 +150,7 @@ class CommandGraphObject(CommandGraphNode, metaclass=abc.ABCMeta):
         self._parent = parent
 
     @property
-    def selector(self) -> Union[str, int] | None:
+    def selector(self) -> str | int | None:
         """The selector for the current node"""
         return self._selector
 

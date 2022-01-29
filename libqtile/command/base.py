@@ -27,12 +27,12 @@ from __future__ import annotations
 import abc
 import inspect
 import traceback
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple
 
 from libqtile.command.graph import SelectorType
 from libqtile.log_utils import logger
 
-ItemT = Optional[Tuple[bool, List[Union[str, int]]]]
+ItemT = Optional[Tuple[bool, List[str | int]]]
 
 
 class SelectError(Exception):
@@ -87,7 +87,7 @@ class CommandObject(metaclass=abc.ABCMeta):
             obj = maybe_obj
         return obj
 
-    def items(self, name: str) -> Tuple[bool, List[Union[str, int]] | None]:
+    def items(self, name: str) -> Tuple[bool, List[str | int] | None]:
         """Build a list of contained items for the given item class
 
         Returns a tuple `(root, items)` for the specified item class, where:
@@ -114,7 +114,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def _select(self, name: str, sel: Union[str, int] | None) -> CommandObject | None:
+    def _select(self, name: str, sel: str | int | None) -> CommandObject | None:
         """Select the given item of the given item class
 
         This method is called with the following guarantees:
@@ -154,7 +154,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         """
         return self.commands
 
-    def cmd_items(self, name) -> Tuple[bool, List[Union[str, int]] | None]:
+    def cmd_items(self, name) -> Tuple[bool, List[str | int] | None]:
         """Returns a list of contained items for the specified name
 
         Used by __qsh__ to allow navigation of the object graph.

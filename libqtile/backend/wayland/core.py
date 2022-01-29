@@ -71,7 +71,7 @@ from libqtile.backend.wayland.output import Output
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Dict, List, Sequence, Set, Tuple, Union
+    from typing import Dict, List, Sequence, Set, Tuple
 
     from wlroots.wlr_types import Output as wlrOutput
     from wlroots.wlr_types.data_device_manager import Drag
@@ -758,14 +758,14 @@ class Core(base.Core, wlrq.HasListeners):
         """Get the screen information"""
         return [screen.get_geometry() for screen in self.outputs if screen.wlr_output.enabled]
 
-    def grab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
+    def grab_key(self, key: config.Key | config.KeyChord) -> Tuple[int, int]:
         """Configure the backend to grab the key event"""
         keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
         mask_key = wlrq.translate_masks(key.modifiers)
         self.grabbed_keys.append((keysym, mask_key))
         return keysym, mask_key
 
-    def ungrab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
+    def ungrab_key(self, key: config.Key | config.KeyChord) -> Tuple[int, int]:
         """Release the given key event"""
         keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
         mask_key = wlrq.translate_masks(key.modifiers)

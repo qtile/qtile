@@ -29,7 +29,7 @@ clients to do this interaction.
 
 from __future__ import annotations
 
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Tuple
 
 from libqtile.command.base import SelectError
 from libqtile.command.graph import (
@@ -137,7 +137,7 @@ class CommandClient:
         command_call = self._current_node.call("commands")
         return self._command.execute(command_call, (), {})
 
-    def items(self, name: str) -> Tuple[bool, List[Union[str, int]]]:
+    def items(self, name: str) -> Tuple[bool, List[str | int]]:
         """Get the available items"""
         items_call = self._current_node.call("items")
         return self._command.execute(items_call, (name,), {})
@@ -234,7 +234,7 @@ class InteractiveCommandClient:
         next_node = self._current_node.navigate(name, None)
         return self.__class__(self._command, current_node=next_node)
 
-    def __getitem__(self, name: Union[str, int]) -> InteractiveCommandClient:
+    def __getitem__(self, name: str | int) -> InteractiveCommandClient:
         """Get the selected element of the currently selected object
 
         From the current command graph object, select the instance with the
@@ -275,7 +275,7 @@ class InteractiveCommandClient:
         next_node = self._current_node.parent.navigate(self._current_node.object_type, name)
         return self.__class__(self._command, current_node=next_node)
 
-    def normalize_item(self, item: str) -> Union[str, int]:
+    def normalize_item(self, item: str) -> str | int:
         "Normalize the item according to Qtile._items()."
         object_type = (
             self._current_node.object_type
@@ -285,7 +285,7 @@ class InteractiveCommandClient:
         return _normalize_item(object_type, item)
 
 
-def _normalize_item(object_type: str | None, item: str) -> Union[str, int]:
+def _normalize_item(object_type: str | None, item: str) -> str | int:
     if object_type in ["group", "widget", "bar"]:
         return str(item)
     elif object_type in ["layout", "window", "screen"]:

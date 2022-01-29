@@ -24,7 +24,7 @@ The interface to execute commands on the command graph
 
 import traceback
 from abc import ABCMeta, abstractmethod
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple
 
 from libqtile import ipc
 from libqtile.command.base import CommandError, CommandException, CommandObject, SelectError
@@ -90,7 +90,7 @@ class CommandInterface(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def has_item(self, node: CommandGraphNode, object_type: str, item: Union[str, int]) -> bool:
+    def has_item(self, node: CommandGraphNode, object_type: str, item: str | int) -> bool:
         """Check if the given item exists
 
         Parameters
@@ -170,7 +170,7 @@ class QtileCommandInterface(CommandInterface):
         cmd = obj.command(command)
         return cmd is not None
 
-    def has_item(self, node: CommandGraphNode, object_type: str, item: Union[str, int]) -> bool:
+    def has_item(self, node: CommandGraphNode, object_type: str, item: str | int) -> bool:
         """Check if the given item exists
 
         Parameters
@@ -251,7 +251,7 @@ class IPCCommandInterface(CommandInterface):
         commands = self.execute(cmd_call, (), {})
         return command in commands
 
-    def has_item(self, node: CommandGraphNode, object_type: str, item: Union[str, int]) -> bool:
+    def has_item(self, node: CommandGraphNode, object_type: str, item: str | int) -> bool:
         """Check if the given item exists
 
         Resolves the available commands for the given command node of the given

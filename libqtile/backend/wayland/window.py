@@ -42,7 +42,7 @@ from libqtile.command.base import CommandError
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Dict, List, Set, Tuple, Union
+    from typing import Dict, List, Set, Tuple
 
     from wlroots.wlr_types.surface import SubSurface as WlrSubSurface
 
@@ -1065,12 +1065,12 @@ class Static(base.Static, Window):
 class XdgPopupWindow(HasListeners):
     """
     This represents a single `struct wlr_xdg_popup` object and is owned by a single
-    parent window (of `Union[WindowType, XdgPopupWindow]`). wlroots does most of the
+    parent window (of `WindowType | XdgPopupWindow`). wlroots does most of the
     work for us, but we need to listen to certain events so that we know when to render
     frames and we need to unconstrain the popups so they are completely visible.
     """
 
-    def __init__(self, parent: Union[WindowType, XdgPopupWindow], xdg_popup: XdgPopup):
+    def __init__(self, parent: WindowType | XdgPopupWindow, xdg_popup: XdgPopup):
         self.parent = parent
         self.xdg_popup = xdg_popup
         self.core: Core = parent.core
@@ -1123,11 +1123,11 @@ class XdgPopupWindow(HasListeners):
 class SubSurface(HasListeners):
     """
     This represents a single `struct wlr_subsurface` object and is owned by a single
-    parent window (of `Union[WindowType, SubSurface]`). We only need to track them so
+    parent window (of `WindowType | SubSurface`). We only need to track them so
     that we can listen to their commit events and render accordingly.
     """
 
-    def __init__(self, parent: Union[WindowType, SubSurface], subsurface: WlrSubSurface):
+    def __init__(self, parent: WindowType | SubSurface, subsurface: WlrSubSurface):
         self.parent = parent
         self.subsurfaces: List[SubSurface] = []
 

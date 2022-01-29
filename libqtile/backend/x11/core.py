@@ -24,7 +24,7 @@ import contextlib
 import os
 import signal
 import time
-from typing import TYPE_CHECKING, Callable, Dict, Iterator, List, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Dict, Iterator, List, Tuple
 
 import xcffib
 import xcffib.render
@@ -434,7 +434,7 @@ class Core(base.Core):
             viewport += [group.screen.x, group.screen.y] if group.screen else [0, 0]
         self._root.set_property("_NET_DESKTOP_VIEWPORT", viewport)
 
-    def lookup_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
+    def lookup_key(self, key: config.Key | config.KeyChord) -> Tuple[int, int]:
         """Find the keysym and the modifier mask for the given key"""
         try:
             keysym = xcbq.get_keysym(key.key)
@@ -444,7 +444,7 @@ class Core(base.Core):
 
         return keysym, modmask
 
-    def grab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
+    def grab_key(self, key: config.Key | config.KeyChord) -> Tuple[int, int]:
         """Map the key to receive events on it"""
         keysym, modmask = self.lookup_key(key)
         codes = self.conn.keysym_to_keycode(keysym)
@@ -464,7 +464,7 @@ class Core(base.Core):
                 )
         return keysym, modmask & self._valid_mask
 
-    def ungrab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
+    def ungrab_key(self, key: config.Key | config.KeyChord) -> Tuple[int, int]:
         """Ungrab the key corresponding to the given keysym and modifier mask"""
         keysym, modmask = self.lookup_key(key)
         codes = self.conn.keysym_to_keycode(keysym)

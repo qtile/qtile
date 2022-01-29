@@ -13,7 +13,7 @@ from libqtile.command.base import CommandError, CommandObject
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Any, Dict, List, Tuple, Union
+    from typing import Any, Dict, List, Tuple
 
     from libqtile import config
     from libqtile.command.base import ItemT
@@ -63,11 +63,11 @@ class Core(CommandObject, metaclass=ABCMeta):
         """Get the screen information"""
 
     @abstractmethod
-    def grab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
+    def grab_key(self, key: config.Key | config.KeyChord) -> Tuple[int, int]:
         """Configure the backend to grab the key event"""
 
     @abstractmethod
-    def ungrab_key(self, key: Union[config.Key, config.KeyChord]) -> Tuple[int, int]:
+    def ungrab_key(self, key: config.Key | config.KeyChord) -> Tuple[int, int]:
         """Release the given key event"""
 
     @abstractmethod
