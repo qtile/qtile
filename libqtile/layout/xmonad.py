@@ -47,7 +47,8 @@ class MonadTall(_SimpleLayoutBase):
     A main pane that contains a single window takes up a vertical portion of
     the screen_rect based on the ratio setting. This ratio can be adjusted with
     the ``cmd_grow_main`` and ``cmd_shrink_main`` or, while the main pane is in
-    focus, ``cmd_grow`` and ``cmd_shrink``.
+    focus, ``cmd_grow`` and ``cmd_shrink``. You may also set the ratio directly
+    with ``cmd_set_ratio``.
 
     ::
 
@@ -143,7 +144,6 @@ class MonadTall(_SimpleLayoutBase):
 
     _left = 0
     _right = 1
-    _med_ratio = 0.5
 
     defaults = [
         ("border_focus", "#ff0000", "Border colour(s) for the focused window."),
@@ -196,6 +196,7 @@ class MonadTall(_SimpleLayoutBase):
             self.single_margin = self.margin
         self.relative_sizes = []
         self.screen_rect = None
+        self.default_ratio = self.ratio
 
     @property
     def focused(self):
@@ -227,6 +228,12 @@ class MonadTall(_SimpleLayoutBase):
         self.do_normalize = True
         return self.clients.remove(client)
 
+    def cmd_set_ratio(self, ratio):
+        "Directly set the main pane ratio"
+        ratio = min(self.max_ratio, ratio)
+        self.ratio = max(self.min_ratio, ratio)
+        self.group.layout_all()
+
     def cmd_normalize(self, redraw=True):
         "Evenly distribute screen-space among secondary clients"
         n = len(self.clients) - 1  # exclude main client, 0
@@ -238,16 +245,16 @@ class MonadTall(_SimpleLayoutBase):
             self.group.layout_all()
         self.do_normalize = False
 
-    def cmd_reset(self, redraw=True):
+    def cmd_reset(self, ratio=None, redraw=True):
         "Reset Layout."
-        self.ratio = self._med_ratio
+        self.ratio = ratio or self.default_ratio
         if self.align == self._right:
             self.align = self._left
         self.cmd_normalize(redraw)
 
     def _maximize_main(self):
         "Toggle the main pane between min and max size"
-        if self.ratio <= self._med_ratio:
+        if self.ratio <= 0.5 * (self.max_ratio + self.min_ratio):
             self.ratio = self.max_ratio
         else:
             self.ratio = self.min_ratio
