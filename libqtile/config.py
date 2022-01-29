@@ -33,7 +33,7 @@ from __future__ import annotations
 import contextlib
 import os.path
 import sys
-from typing import TYPE_CHECKING, Callable, List, Union
+from typing import TYPE_CHECKING, Callable, List
 
 from libqtile import configurable, hook, utils
 from libqtile.backend import base
@@ -93,7 +93,7 @@ class KeyChord:
         self,
         modifiers: List[str],
         key: str,
-        submappings: List[Union[Key, KeyChord]],
+        submappings: List[Key | KeyChord],
         mode: str = "",
     ):
         self.modifiers = modifiers
@@ -520,7 +520,7 @@ class Group:
         name: str,
         matches: List[Match] = None,
         exclusive=False,
-        spawn: Union[str, List[str]] = None,
+        spawn: str | List[str] | None = None,
         layout: str = None,
         layouts: List = None,
         persist=True,

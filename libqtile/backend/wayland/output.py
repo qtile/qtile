@@ -40,7 +40,7 @@ from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import List, Tuple, Union
+    from typing import List, Tuple
 
     from wlroots.wlr_types import Surface
 
@@ -324,7 +324,7 @@ class Output(HasListeners):
 
         self.core.stack_windows()
 
-    def contains(self, rect: Union[WindowType, Dnd]) -> bool:
+    def contains(self, rect: WindowType | Dnd) -> bool:
         """Returns whether the given window is visible on this output."""
         if rect.x + rect.width < self.x:
             return False

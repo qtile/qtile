@@ -54,7 +54,7 @@ from libqtile.utils import get_cache_dir, lget, send_notification
 from libqtile.widget.base import _Widget
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, List, Tuple, Union
+    from typing import Any, Callable, Dict, List, Tuple
 
     from typing_extensions import Literal
 
@@ -79,18 +79,18 @@ class Qtile(CommandObject):
         self.core = kore
         self.config = config
         self.no_spawn = no_spawn
-        self._state: Union[QtileState, str] | None = state
+        self._state: QtileState | str | None = state
         self.socket_path = socket_path
 
         self._drag: Tuple | None = None
-        self.mouse_map: Dict[int, List[Union[Click, Drag]]] = {}
+        self.mouse_map: Dict[int, List[Click | Drag]] = {}
 
         self.windows_map: Dict[int, base.WindowType] = {}
         self.widgets_map: Dict[str, _Widget] = {}
         self.groups_map: Dict[str, _Group] = {}
         self.groups: List[_Group] = []
 
-        self.keys_map: Dict[Tuple[int, int], Union[Key, KeyChord]] = {}
+        self.keys_map: Dict[Tuple[int, int], Key | KeyChord] = {}
         self.chord_stack: List[KeyChord] = []
 
         self.screens: List[Screen] = []
@@ -401,12 +401,12 @@ class Qtile(CommandObject):
         for key in self.keys_map.values():
             self.grab_key(key)
 
-    def grab_key(self, key: Union[Key, KeyChord]) -> None:
+    def grab_key(self, key: Key | KeyChord) -> None:
         """Grab the given key event"""
         keysym, mask_key = self.core.grab_key(key)
         self.keys_map[(keysym, mask_key)] = key
 
-    def ungrab_key(self, key: Union[Key, KeyChord]) -> None:
+    def ungrab_key(self, key: Key | KeyChord) -> None:
         """Ungrab a given key event"""
         keysym, mask_key = self.core.ungrab_key(key)
         self.keys_map.pop((keysym, mask_key))
@@ -454,7 +454,7 @@ class Qtile(CommandObject):
         for key in self.config.keys:
             self.grab_key(key)
 
-    def grab_button(self, button: Union[Click, Drag]) -> None:
+    def grab_button(self, button: Click | Drag) -> None:
         """Grab the given mouse button event"""
         try:
             button.modmask = self.core.grab_button(button)
@@ -775,7 +775,7 @@ class Qtile(CommandObject):
         elif name == "bar":
             return False, [x.position for x in self.current_screen.gaps]
         elif name == "window":
-            windows: List[Union[str, int]]
+            windows: List[str | int]
             windows = [k for k, v in self.windows_map.items() if isinstance(v, CommandObject)]
             return True, windows
         elif name == "screen":
@@ -784,7 +784,7 @@ class Qtile(CommandObject):
             return True, []
         return None
 
-    def _select(self, name: str, sel: Union[str, int] | None) -> CommandObject | None:
+    def _select(self, name: str, sel: str | int | None) -> CommandObject | None:
         if name == "group":
             if sel is None:
                 return self.current_group
@@ -803,7 +803,7 @@ class Qtile(CommandObject):
             if sel is None:
                 return self.current_window
             else:
-                windows: Dict[Union[str, int], base._Window]
+                windows: Dict[str | int, base._Window]
                 windows = {
                     k: v for k, v in self.windows_map.items() if isinstance(v, CommandObject)
                 }
@@ -937,7 +937,7 @@ class Qtile(CommandObject):
         result.add([])
         rows = []
 
-        def walk_binding(k: Union[Key, KeyChord], mode: str) -> None:
+        def walk_binding(k: Key | KeyChord, mode: str) -> None:
             nonlocal rows
             modifiers, name = ", ".join(k.modifiers), k.key
             if isinstance(k, Key):
@@ -1097,7 +1097,7 @@ class Qtile(CommandObject):
             return
         self.restart()
 
-    def cmd_spawn(self, cmd: Union[str, List[str]], shell: bool = False) -> int:
+    def cmd_spawn(self, cmd: str | List[str], shell: bool = False) -> int:
         """Run cmd, in a shell or not (default).
 
         cmd may be a string or a list (similar to subprocess.Popen).
