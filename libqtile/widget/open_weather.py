@@ -21,10 +21,13 @@
 # SOFTWARE.
 
 import time
-from typing import Any, List, Tuple
+from typing import TYPE_CHECKING
 from urllib.parse import urlencode
 
 from libqtile.widget.generic_poll_text import GenPollUrl
+
+if TYPE_CHECKING:
+    from typing import Any, List, Tuple
 
 # See documentation: https://openweathermap.org/current
 QUERY_URL = "http://api.openweathermap.org/data/2.5/weather?"

@@ -21,19 +21,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from typing import (
-        Dict,
-        Iterable,
-        List,
-        Set,
-        Tuple,
-    )
-    from libqtile.config import Match
-
 from libqtile.command.client import InteractiveCommandClient
-from libqtile.command.graph import CommandGraphCall, CommandGraphNode, SelectorType
+from libqtile.command.graph import CommandGraphCall, CommandGraphNode
 from libqtile.command.interface import CommandInterface
+
+if TYPE_CHECKING:
+    from typing import Dict, Iterable, List, Set, Tuple
+
+    from libqtile.config import Match
+    from libqtile.command.graph import SelectorType
 
 
 class LazyCall:

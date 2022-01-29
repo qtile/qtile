@@ -24,11 +24,12 @@ import typing
 from collections import defaultdict
 
 from libqtile import configurable
-from libqtile.command.base import CommandObject, ItemT
+from libqtile.command.base import CommandObject
 from libqtile.log_utils import logger
 from libqtile.utils import has_transparency, rgb
 
 if typing.TYPE_CHECKING:
+    from libqtile.command.base import ItemT
     from libqtile.widget.base import _Widget
 
 

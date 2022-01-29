@@ -18,11 +18,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Dict, List
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from libqtile import config, group, hook
 from libqtile.backend.base import FloatStates
 from libqtile.config import Match
+
+if TYPE_CHECKING:
+    from typing import Dict, List
 
 
 class WindowVisibilityToggler:

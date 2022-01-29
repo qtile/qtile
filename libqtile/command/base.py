@@ -27,12 +27,16 @@ from __future__ import annotations
 import abc
 import inspect
 import traceback
-from typing import Callable, List, Optional, Tuple
+from typing import TYPE_CHECKING
 
-from libqtile.command.graph import SelectorType
 from libqtile.log_utils import logger
 
-ItemT = Optional[Tuple[bool, List[str | int]]]
+if TYPE_CHECKING:
+    from typing import Callable, List, Optional, Tuple
+
+    from libqtile.command.graph import SelectorType
+
+    ItemT = Optional[Tuple[bool, List[str | int]]]
 
 
 class SelectError(Exception):

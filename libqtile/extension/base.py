@@ -21,10 +21,13 @@
 import re
 import shlex
 from subprocess import PIPE, Popen
-from typing import Any, List, Tuple  # noqa: F401
+from typing import TYPE_CHECKING
 
 from libqtile import configurable
 from libqtile.log_utils import logger
+
+if TYPE_CHECKING:
+    from typing import Any, List, Tuple
 
 RGB = re.compile(r"^#?([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$")
 

@@ -31,13 +31,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import abc
 import glob
 import os
 import pickle
 import string
 from collections import deque
-from typing import List, Tuple
+from typing import TYPE_CHECKING
 
 from libqtile import bar, hook, pangocffi, utils
 from libqtile.command.base import CommandObject, SelectError
@@ -45,6 +47,9 @@ from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import CommandError, QtileCommandInterface
 from libqtile.log_utils import logger
 from libqtile.widget import base
+
+if TYPE_CHECKING:
+    from typing import List, Tuple
 
 
 class AbstractCompleter(metaclass=abc.ABCMeta):

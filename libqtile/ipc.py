@@ -24,6 +24,9 @@
     run the same Python version, and that clients must be trusted (as
     un-marshalling untrusted data can result in arbitrary code execution).
 """
+
+from __future__ import annotations
+
 import asyncio
 import fcntl
 import json
@@ -31,10 +34,13 @@ import marshal
 import os.path
 import socket
 import struct
-from typing import Any, Tuple
+from typing import TYPE_CHECKING
 
 from libqtile.log_utils import logger
 from libqtile.utils import get_cache_dir
+
+if TYPE_CHECKING:
+    from typing import Any, Tuple
 
 HDRFORMAT = "!L"
 HDRLEN = struct.calcsize(HDRFORMAT)

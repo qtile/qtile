@@ -36,7 +36,7 @@ import libqtile
 from libqtile import bar, hook, ipc, utils
 from libqtile.backend import base
 from libqtile.command import interface
-from libqtile.command.base import CommandError, CommandException, CommandObject, ItemT
+from libqtile.command.base import CommandError, CommandException, CommandObject
 from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import IPCCommandServer, QtileCommandInterface
 from libqtile.config import Click, Drag, Key, KeyChord, Match, Rule
@@ -58,6 +58,7 @@ if TYPE_CHECKING:
 
     from typing_extensions import Literal
 
+    from libqtile.command.base import ItemT
     from libqtile.layout.base import Layout
 
 
