@@ -1082,6 +1082,7 @@ class Static(base.Static, Window):
             else:
                 self.surface.configure(x, y, self._width, self._height)
             self.paint_borders(bordercolor, borderwidth)
+            self._find_outputs()
         self.damage()
 
     def cmd_bring_to_front(self) -> None:
