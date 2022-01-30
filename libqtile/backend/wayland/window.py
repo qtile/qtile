@@ -42,8 +42,6 @@ from libqtile.command.base import CommandError
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Dict, List, Set, Tuple
-
     from wlroots.wlr_types.surface import SubSurface as WlrSubSurface
 
     from libqtile.backend.wayland.core import Core
@@ -78,14 +76,14 @@ class Window(base.Window, HasListeners):
         self.qtile = qtile
         self.surface = surface
         self._group: _Group | None = None
-        self.popups: List[XdgPopupWindow] = []
-        self.subsurfaces: List[SubSurface] = []
+        self.popups: list[XdgPopupWindow] = []
+        self.subsurfaces: list[SubSurface] = []
         self._mapped: bool = False
         self.x = 0
         self.y = 0
-        self.bordercolor: List[ffi.CData] = [_rgb((0, 0, 0, 1))]
+        self.bordercolor: list[ffi.CData] = [_rgb((0, 0, 0, 1))]
         self._opacity: float = 1.0
-        self._outputs: Set[Output] = set()
+        self._outputs: set[Output] = set()
 
         # These become non-zero when being mapping for the first time
         self._width: int = 0
@@ -333,7 +331,7 @@ class Window(base.Window, HasListeners):
         )
         return pid[0]
 
-    def get_wm_class(self) -> List | None:
+    def get_wm_class(self) -> list | None:
         if self._app_id:
             return [self._app_id]
         return None
@@ -579,7 +577,7 @@ class Window(base.Window, HasListeners):
                 self.group.mark_floating(self, True)
             hook.fire("float_change")
 
-    def info(self) -> Dict:
+    def info(self) -> dict:
         """Return a dictionary of info."""
         float_info = {
             "x": self.float_x,
@@ -671,10 +669,10 @@ class Window(base.Window, HasListeners):
     def cmd_place(self, x, y, width, height, borderwidth, bordercolor, above=False, margin=None):
         self.place(x, y, width, height, borderwidth, bordercolor, above, margin)
 
-    def cmd_get_position(self) -> Tuple[int, int]:
+    def cmd_get_position(self) -> tuple[int, int]:
         return self.x, self.y
 
-    def cmd_get_size(self) -> Tuple[int, int]:
+    def cmd_get_size(self) -> tuple[int, int]:
         return self.width, self.height
 
     def cmd_toggle_floating(self) -> None:
@@ -767,7 +765,7 @@ class Internal(base.Internal, Window):
         self._opacity: float = 1.0
         self._width: int = width
         self._height: int = height
-        self._outputs: Set[Output] = set()
+        self._outputs: set[Output] = set()
         self._find_outputs()
         self._reset_texture()
         self._group = None
@@ -857,7 +855,7 @@ class Internal(base.Internal, Window):
         self._find_outputs()
         self.damage()
 
-    def info(self) -> Dict:
+    def info(self) -> dict:
         """Return a dictionary of info."""
         return dict(
             x=self.x,
@@ -886,7 +884,7 @@ class Static(base.Static, Window):
         self.qtile = qtile
         self.surface = surface
         self.screen = qtile.current_screen
-        self.subsurfaces: List[SubSurface] = []
+        self.subsurfaces: list[SubSurface] = []
         self._wid = wid
         self._mapped: bool = False
         self.x = 0
@@ -894,9 +892,9 @@ class Static(base.Static, Window):
         self._width = 0
         self._height = 0
         self.borderwidth: int = 0
-        self.bordercolor: List[ffi.CData] = [_rgb((0, 0, 0, 1))]
+        self.bordercolor: list[ffi.CData] = [_rgb((0, 0, 0, 1))]
         self.opacity: float = 1.0
-        self._outputs: Set[Output] = set()
+        self._outputs: set[Output] = set()
         self._float_state = FloatStates.FLOATING
         self.is_layer = False
         self._app_id: str | None = None
@@ -1074,7 +1072,7 @@ class XdgPopupWindow(HasListeners):
         self.parent = parent
         self.xdg_popup = xdg_popup
         self.core: Core = parent.core
-        self.popups: List[XdgPopupWindow] = []
+        self.popups: list[XdgPopupWindow] = []
 
         # Keep on output
         if isinstance(parent, XdgPopupWindow):
@@ -1129,7 +1127,7 @@ class SubSurface(HasListeners):
 
     def __init__(self, parent: WindowType | SubSurface, subsurface: WlrSubSurface):
         self.parent = parent
-        self.subsurfaces: List[SubSurface] = []
+        self.subsurfaces: list[SubSurface] = []
 
         self.add_listener(subsurface.destroy_event, self._on_destroy)
         self.add_listener(subsurface.surface.commit_event, parent._on_commit)
@@ -1167,9 +1165,9 @@ class XWindow(Window):
         self._unmapping: bool = False  # Whether the client or Qtile unmapped this
         self.x = 0
         self.y = 0
-        self.bordercolor: List[ffi.CData] = [_rgb((0, 0, 0, 1))]
+        self.bordercolor: list[ffi.CData] = [_rgb((0, 0, 0, 1))]
         self._opacity: float = 1.0
-        self._outputs: Set[Output] = set()
+        self._outputs: set[Output] = set()
 
         self._app_id: str | None = self.surface.wm_class
         self.ftm_handle = core.foreign_toplevel_manager_v1.create_handle()

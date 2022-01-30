@@ -34,7 +34,7 @@ from libqtile.command.graph import CommandGraphCall, CommandGraphNode
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List, Tuple
+    from typing import Any
 
     from libqtile.command.graph import SelectorType
 
@@ -43,7 +43,7 @@ ERROR = 1
 EXCEPTION = 2
 
 
-def format_selectors(selectors: List[SelectorType]) -> str:
+def format_selectors(selectors: list[SelectorType]) -> str:
     """Build the path to the selected command graph node"""
     path_elements = []
     for name, selector in selectors:
@@ -63,7 +63,7 @@ class CommandInterface(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def execute(self, call: CommandGraphCall, args: Tuple, kwargs: Dict) -> Any:
+    def execute(self, call: CommandGraphCall, args: tuple, kwargs: dict) -> Any:
         """Execute the given call, returning the result of the execution
 
         Perform the given command graph call, calling the function with the
@@ -130,7 +130,7 @@ class QtileCommandInterface(CommandInterface):
         """
         self._command_object = command_object
 
-    def execute(self, call: CommandGraphCall, args: Tuple, kwargs: Dict) -> Any:
+    def execute(self, call: CommandGraphCall, args: tuple, kwargs: dict) -> Any:
         """Execute the given call, returning the result of the execution
 
         Perform the given command graph call, calling the function with the
@@ -214,7 +214,7 @@ class IPCCommandInterface(CommandInterface):
         """
         self._client = ipc_client
 
-    def execute(self, call: CommandGraphCall, args: Tuple, kwargs: Dict) -> Any:
+    def execute(self, call: CommandGraphCall, args: tuple, kwargs: dict) -> Any:
         """Execute the given call, returning the result of the execution
 
         Executes the given command over the given IPC client.  Returns the
@@ -290,12 +290,12 @@ class IPCCommandServer:
     def __init__(self, qtile) -> None:
         """Wrapper around the ipc server for communitacing with the IPCCommandInterface
 
-        Sets up the IPC server such that it will receive and send messages to
+        sets up the IPC server such that it will receive and send messages to
         and from the IPCCommandInterface.
         """
         self.qtile = qtile
 
-    def call(self, data: Tuple[List[SelectorType], str, Tuple, Dict]) -> Tuple[int, Any]:
+    def call(self, data: tuple[list[SelectorType], str, tuple, dict]) -> tuple[int, Any]:
         """Receive and parse the given data"""
         selectors, name, args, kwargs = data
         try:

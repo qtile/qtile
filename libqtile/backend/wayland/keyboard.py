@@ -30,8 +30,6 @@ from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Dict, Tuple
-
     from wlroots.wlr_types import InputDevice
     from wlroots.wlr_types.keyboard import KeyboardKeyEvent
 
@@ -55,7 +53,7 @@ class Keyboard(HasListeners):
 
         self.keyboard.set_repeat_info(25, 600)
         self.xkb_context = xkb.Context()
-        self._keymaps: Dict[Tuple[str | None, str | None, str | None], xkb.Keymap] = {}
+        self._keymaps: dict[tuple[str | None, str | None, str | None], xkb.Keymap] = {}
         self.set_keymap(None, None, None)
 
         self.add_listener(self.keyboard.modifiers_event, self._on_modifier)

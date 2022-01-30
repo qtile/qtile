@@ -26,23 +26,23 @@ from libqtile.command.graph import CommandGraphCall, CommandGraphNode
 from libqtile.command.interface import CommandInterface
 
 if TYPE_CHECKING:
-    from typing import Dict, Iterable, List, Set, Tuple
+    from typing import Iterable
 
     from libqtile.command.graph import SelectorType
     from libqtile.config import Match
 
 
 class LazyCall:
-    def __init__(self, call: CommandGraphCall, args: Tuple, kwargs: Dict) -> None:
+    def __init__(self, call: CommandGraphCall, args: tuple, kwargs: dict) -> None:
         """The lazily evaluated command graph call
 
         Parameters
         ----------
         call: CommandGraphCall
             The call that is made
-        args: Tuple
+        args: tuple
             The args passed to the call when it is evaluated.
-        kwargs: Dict
+        kwargs: dict
             The kwargs passed to the call when it is evaluated.
         """
         self._call = call
@@ -50,7 +50,7 @@ class LazyCall:
         self._kwargs = kwargs
 
         self._focused: Match | None = None
-        self._layouts: Set[str] = set()
+        self._layouts: set[str] = set()
         self._when_floating = True
 
     def __call__(self, *args, **kwargs):
@@ -71,7 +71,7 @@ class LazyCall:
         return LazyCall(self._call, (*self._args, *args), {**self._kwargs, **kwargs})
 
     @property
-    def selectors(self) -> List[SelectorType]:
+    def selectors(self) -> list[SelectorType]:
         """The selectors for the given call"""
         return self._call.selectors
 
@@ -81,12 +81,12 @@ class LazyCall:
         return self._call.name
 
     @property
-    def args(self) -> Tuple:
+    def args(self) -> tuple:
         """The args to the given call"""
         return self._args
 
     @property
-    def kwargs(self) -> Dict:
+    def kwargs(self) -> dict:
         """The kwargs to the given call"""
         return self._kwargs
 
@@ -139,7 +139,7 @@ class LazyCommandInterface(CommandInterface):
     lazily evaluated commands.
     """
 
-    def execute(self, call: CommandGraphCall, args: Tuple, kwargs: Dict) -> LazyCall:
+    def execute(self, call: CommandGraphCall, args: tuple, kwargs: dict) -> LazyCall:
         """Lazily evaluate the given call"""
         return LazyCall(call, args, kwargs)
 

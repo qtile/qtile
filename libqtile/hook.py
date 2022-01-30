@@ -32,16 +32,12 @@
 
 import asyncio
 import contextlib
-from typing import TYPE_CHECKING
 
 from libqtile import utils
 from libqtile.log_utils import logger
 
-if TYPE_CHECKING:
-    from typing import Dict, Set
-
-subscriptions = {}  # type: Dict
-SKIPLOG = set()  # type: Set
+subscriptions = {}  # type: dict
+SKIPLOG = set()  # type: set
 
 
 def clear():

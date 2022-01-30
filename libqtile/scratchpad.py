@@ -20,14 +20,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from libqtile import config, group, hook
 from libqtile.backend.base import FloatStates
 from libqtile.config import Match
-
-if TYPE_CHECKING:
-    from typing import Dict, List
 
 
 class WindowVisibilityToggler:
@@ -221,13 +216,13 @@ class ScratchPad(group._Group):
     """
 
     def __init__(
-        self, name="scratchpad", dropdowns: List[config.DropDown] = None, label="", single=False
+        self, name="scratchpad", dropdowns: list[config.DropDown] = None, label="", single=False
     ):
         group._Group.__init__(self, name, label=label)
         self._dropdownconfig = {dd.name: dd for dd in dropdowns} if dropdowns is not None else {}
-        self.dropdowns: Dict[str, DropDownToggler] = {}
-        self._spawned: Dict[str, Match] = {}
-        self._to_hide: List[str] = []
+        self.dropdowns: dict[str, DropDownToggler] = {}
+        self._spawned: dict[str, Match] = {}
+        self._to_hide: list[str] = []
         self._single = single
 
     def _check_unsubscribe(self):

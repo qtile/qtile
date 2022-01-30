@@ -26,7 +26,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from typing import List
+
+from __future__ import annotations
 
 import xcffib
 from xcffib.xproto import ClientMessageData, ClientMessageEvent, EventMask, SetMode
@@ -127,7 +128,7 @@ class Systray(window._Window, base._Widget):
         self.tray_icons = []
         self.screen = 0
         self._name = config.get("name", "systray")
-        self._wm_class: List[str] | None = None
+        self._wm_class: list[str] | None = None
 
     def calculate_length(self):
         if self.bar.horizontal:
@@ -220,7 +221,7 @@ class Systray(window._Window, base._Widget):
                 self.tray_icons.sort(key=lambda icon: icon.name)
                 self.qtile.windows_map[wid] = icon
 
-            self.conn.conn.core.ChangeSaveSet(SetMode.Insert, wid)
+            self.conn.conn.core.ChangeSaveset(SetMode.Insert, wid)
             self.conn.conn.core.ReparentWindow(wid, parent.wid, 0, 0)
             self.conn.conn.flush()
 

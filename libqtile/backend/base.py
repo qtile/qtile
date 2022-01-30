@@ -13,7 +13,7 @@ from libqtile.command.base import CommandError, CommandObject
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Any, Dict, List, Tuple
+    from typing import Any
 
     from libqtile import config
     from libqtile.command.base import ItemT
@@ -55,19 +55,19 @@ class Core(CommandObject, metaclass=ABCMeta):
     def remove_listener(self) -> None:
         """Setup a listener for the given qtile instance"""
 
-    def update_desktops(self, groups: List[_Group], index: int) -> None:
+    def update_desktops(self, groups: list[_Group], index: int) -> None:
         """Set the current desktops of the window manager"""
 
     @abstractmethod
-    def get_screen_info(self) -> List[Tuple[int, int, int, int]]:
+    def get_screen_info(self) -> list[tuple[int, int, int, int]]:
         """Get the screen information"""
 
     @abstractmethod
-    def grab_key(self, key: config.Key | config.KeyChord) -> Tuple[int, int]:
+    def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
         """Configure the backend to grab the key event"""
 
     @abstractmethod
-    def ungrab_key(self, key: config.Key | config.KeyChord) -> Tuple[int, int]:
+    def ungrab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
         """Release the given key event"""
 
     @abstractmethod
@@ -96,7 +96,7 @@ class Core(CommandObject, metaclass=ABCMeta):
     def warp_pointer(self, x: int, y: int) -> None:
         """Warp the pointer to the given coordinates relative."""
 
-    def update_client_list(self, windows_map: Dict[int, WindowType]) -> None:
+    def update_client_list(self, windows_map: dict[int, WindowType]) -> None:
         """Update the list of windows being managed"""
 
     @contextlib.contextmanager
@@ -114,14 +114,14 @@ class Core(CommandObject, metaclass=ABCMeta):
     def graceful_shutdown(self):
         """Try to close windows gracefully before exiting"""
 
-    def simulate_keypress(self, modifiers: List[str], key: str) -> None:
+    def simulate_keypress(self, modifiers: list[str], key: str) -> None:
         """Simulate a keypress with given modifiers"""
 
     def keysym_from_name(self, name: str) -> int:
         """Get the keysym for a key from its name"""
         raise NotImplementedError
 
-    def cmd_info(self) -> Dict:
+    def cmd_info(self) -> dict:
         """Get basic information about the running backend."""
         return {"backend": self.name, "display_name": self.display_name}
 
@@ -140,7 +140,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
     def __init__(self):
         self.borderwidth: int = 0
         self.name: str = "<no name>"
-        self.reserved_space: Tuple[int, int, int, int] | None = None
+        self.reserved_space: tuple[int, int, int, int] | None = None
         # Window.cmd_static sets this in case it is hooked to client_new to stop the
         # Window object from being managed, now that a Static is being used instead
         self.defunct: bool = False
@@ -162,7 +162,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
     def kill(self) -> None:
         """Kill the window"""
 
-    def get_wm_class(self) -> List | None:
+    def get_wm_class(self) -> list | None:
         """Return the class(es) of the window"""
         return None
 
@@ -214,7 +214,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
         return None
 
     @abstractmethod
-    def info(self) -> Dict[str, Any]:
+    def info(self) -> dict[str, Any]:
         """
         Return information on this window.
 
@@ -231,7 +231,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
         """
         return {}
 
-    def cmd_info(self) -> Dict:
+    def cmd_info(self) -> dict:
         """Return a dictionary of info."""
         return self.info()
 
@@ -331,11 +331,11 @@ class Window(_Window, metaclass=ABCMeta):
         return self.match(*args, **kwargs)
 
     @abstractmethod
-    def cmd_get_position(self) -> Tuple[int, int]:
+    def cmd_get_position(self) -> tuple[int, int]:
         """Get the (x, y) of the window"""
 
     @abstractmethod
-    def cmd_get_size(self) -> Tuple[int, int]:
+    def cmd_get_size(self) -> tuple[int, int]:
         """Get the (width, height) of the window"""
 
     @abstractmethod
@@ -561,7 +561,7 @@ class Static(_Window, metaclass=ABCMeta):
     def __repr__(self):
         return "Static(name=%r, wid=%s)" % (self.name, self.wid)
 
-    def info(self) -> Dict:
+    def info(self) -> dict:
         """Return a dictionary of info."""
         return dict(
             name=self.name,
@@ -585,8 +585,8 @@ class Drawer:
     """
 
     # We need to track extent of drawing to know when to redraw.
-    previous_rect: Tuple[int, int, int | None, int | None]
-    current_rect: Tuple[int, int, int | None, int | None]
+    previous_rect: tuple[int, int, int | None, int | None]
+    current_rect: tuple[int, int, int | None, int | None]
 
     def __init__(self, qtile: Qtile, win: Internal, width: int, height: int):
         self.qtile = qtile
@@ -598,7 +598,7 @@ class Drawer:
         self.ctx: cairocffi.Context
         self._reset_surface()
 
-        self.mirrors: Dict[Drawer, bool] = {}
+        self.mirrors: dict[Drawer, bool] = {}
 
         self.current_rect = (0, 0, 0, 0)
         self.previous_rect = (-1, -1, -1, -1)

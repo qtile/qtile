@@ -24,9 +24,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import mailbox
 import os.path
-from typing import Dict
 
 from libqtile.widget import base
 
@@ -103,12 +104,12 @@ class Maildir(base.ThreadPoolText):
 
         return s.join(('<span foreground="{}">'.format(color), "</span>"))
 
-    def format_text(self, state: Dict[str, int]) -> str:
+    def format_text(self, state: dict[str, int]) -> str:
         """Converts the state of the subfolders to a string
 
         Parameters
         ==========
-        state: Dict[str, int]
+        state: dict[str, int]
             a dictionary mapping subfolder labels to new mail values
 
         Returns

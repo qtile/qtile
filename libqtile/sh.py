@@ -42,7 +42,7 @@ from libqtile.command.interface import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, List, Tuple
+    from typing import Any
 
 
 def terminal_width():
@@ -74,7 +74,7 @@ class QSh:
             return completers[state]
         return None
 
-    def _complete(self, buf, arg) -> List[str]:
+    def _complete(self, buf, arg) -> list[str]:
         if not re.search(r" |\(", buf) or buf.startswith("help "):
             options = self._builtins + self._command_client.commands
             lst = [i for i in options if i.startswith(arg)]
@@ -121,7 +121,7 @@ class QSh:
                 ret.append("  ".join(sl))
         return "\n".join(ret)
 
-    def _ls(self, client: CommandClient, object_type: str | None) -> Tuple[List[str], List[str]]:
+    def _ls(self, client: CommandClient, object_type: str | None) -> tuple[list[str], list[str]]:
         if object_type is not None:
             allow_root, items = client.items(object_type)
             str_items = [str(i) for i in items]
@@ -133,7 +133,7 @@ class QSh:
         else:
             return client.children, []
 
-    def _find_path(self, path: str) -> Tuple[CommandClient | None, str | None]:
+    def _find_path(self, path: str) -> tuple[CommandClient | None, str | None]:
         """Find an object relative to the current node
 
         Finds and returns the command graph node that is defined relative to
@@ -145,7 +145,7 @@ class QSh:
 
     def _find_node(
         self, src: CommandClient, *paths: str
-    ) -> Tuple[CommandClient | None, str | None]:
+    ) -> tuple[CommandClient | None, str | None]:
         """Find an object in the command graph
 
         Return the object in the command graph at the specified path relative

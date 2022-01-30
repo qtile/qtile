@@ -33,10 +33,10 @@ from shutil import which
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import List, Tuple, Union
+    from typing import Union
 
-    ColorType = Union[str, Tuple[int, int, int], Tuple[int, int, int, float]]
-    ColorsType = Union[ColorType, List[ColorType]]
+    ColorType = Union[str, tuple[int, int, int], tuple[int, int, int, float]]
+    ColorsType = Union[ColorType, list[ColorType]]
 
 try:
     from dbus_next import Message, Variant
@@ -75,7 +75,7 @@ def shuffle_down(lst):
         lst.append(c)
 
 
-def rgb(x: ColorType) -> Tuple[float, float, float, float]:
+def rgb(x: ColorType) -> tuple[float, float, float, float]:
     """
     Returns a valid RGBA tuple.
 

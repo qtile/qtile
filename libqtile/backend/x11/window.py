@@ -21,8 +21,6 @@ from libqtile.command.base import CommandError
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import List
-
     from libqtile.command.base import ItemT
 
 # ICCM Constants
@@ -596,7 +594,7 @@ class _Window:
     def update_wm_class(self) -> None:
         self._wm_class = self.window.get_wm_class()
 
-    def get_wm_class(self) -> List[str] | None:
+    def get_wm_class(self) -> list[str] | None:
         return self._wm_class
 
     def get_wm_type(self):
@@ -1161,7 +1159,7 @@ class Static(_Window, base.Static):
 
     def __init__(self, win, qtile, screen, x=None, y=None, width=None, height=None):
         _Window.__init__(self, win, qtile)
-        self._wm_class: List[str] | None = None
+        self._wm_class: list[str] | None = None
         self.update_wm_class()
         self.update_name()
         self.conf_x = x
@@ -1255,7 +1253,7 @@ class Window(_Window, base.Window):
 
     def __init__(self, window, qtile):
         _Window.__init__(self, window, qtile)
-        self._wm_class: List[str] | None = None
+        self._wm_class: list[str] | None = None
         self.update_wm_class()
         self.update_name()
         self.set_group()

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import Callable, Dict
+    from typing import Callable
 
     from libqtile.core.manager import Qtile
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class LoopContext(contextlib.AbstractAsyncContextManager):
     def __init__(
         self,
-        signals: Dict[signal.Signals, Callable] | None = None,
+        signals: dict[signal.Signals, Callable] | None = None,
     ) -> None:
         super().__init__()
         self._signals = signals or {}

@@ -29,9 +29,9 @@ import abc
 from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
-    from typing import Dict, List, Optional, Tuple, Type
+    from typing import Optional, Type
 
-    SelectorType = Tuple[str, Optional[str | int]]
+    SelectorType = tuple[str, Optional[str | int]]
 
 
 class CommandGraphNode(metaclass=abc.ABCMeta):
@@ -48,7 +48,7 @@ class CommandGraphNode(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def selectors(self) -> List[SelectorType]:
+    def selectors(self) -> list[SelectorType]:
         """The selectors resolving the location of the node in the command graph"""
 
     @property
@@ -58,7 +58,7 @@ class CommandGraphNode(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def children(self) -> List[str]:
+    def children(self) -> list[str]:
         """The child objects that are contained within this object"""
 
     def navigate(self, name: str, selector: str | int | None) -> CommandGraphNode:
@@ -97,7 +97,7 @@ class CommandGraphCall:
         return self._name
 
     @property
-    def selectors(self) -> List[SelectorType]:
+    def selectors(self) -> list[SelectorType]:
         """The selectors resolving the location of the node in the command graph"""
         return self.parent.selectors
 
@@ -119,7 +119,7 @@ class CommandGraphRoot(CommandGraphNode):
         return None
 
     @property
-    def selectors(self) -> List[SelectorType]:
+    def selectors(self) -> list[SelectorType]:
         """The selectors resolving the location of the node in the command graph"""
         return []
 
@@ -129,7 +129,7 @@ class CommandGraphRoot(CommandGraphNode):
         return None
 
     @property
-    def children(self) -> List[str]:
+    def children(self) -> list[str]:
         """All of the child elements in the root of the command graph"""
         return ["bar", "group", "layout", "screen", "widget", "window", "core"]
 
@@ -157,7 +157,7 @@ class CommandGraphObject(CommandGraphNode, metaclass=abc.ABCMeta):
         return self._selector
 
     @property
-    def selectors(self) -> List[SelectorType]:
+    def selectors(self) -> list[SelectorType]:
         """The selectors resolving the location of the node in the command graph"""
         selectors = self.parent.selectors + [(self.object_type, self.selector)]
         return selectors
@@ -205,10 +205,10 @@ class _WindowGraphNode(CommandGraphObject):
 
 class _CoreGraphNode(CommandGraphObject):
     object_type = "core"
-    children: List[str] = []
+    children: list[str] = []
 
 
-_COMMAND_GRAPH_MAP: Dict[str, Type[CommandGraphObject]] = {
+_COMMAND_GRAPH_MAP: dict[str, Type[CommandGraphObject]] = {
     "bar": _BarGraphNode,
     "group": _GroupGraphNode,
     "layout": _LayoutGraphNode,

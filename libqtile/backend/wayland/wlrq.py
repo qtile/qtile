@@ -39,7 +39,7 @@ from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 
 if TYPE_CHECKING:
-    from typing import Callable, Dict, List, Set
+    from typing import Callable
 
     from pywayland.server import Signal
     from wlroots import xwayland
@@ -94,7 +94,7 @@ buttons = [
 DRM_FORMAT_ARGB8888 = 875713089
 
 
-def translate_masks(modifiers: List[str]) -> int:
+def translate_masks(modifiers: list[str]) -> int:
     """
     Translate a modifier mask specified as a list of strings into an or-ed
     bit representation.
@@ -261,7 +261,7 @@ class Dnd(HasListeners):
     def __init__(self, core: Core, wlr_drag: data_device_manager.Drag):
         self.core = core
         self.wlr_drag = wlr_drag
-        self._outputs: Set[Output] = set()
+        self._outputs: set[Output] = set()
 
         self.x: float = core.cursor.x
         self.y: float = core.cursor.y
@@ -308,7 +308,7 @@ class Dnd(HasListeners):
             output.damage()
 
 
-def get_xwayland_atoms(xwayland: xwayland.XWayland) -> Dict[int, str]:
+def get_xwayland_atoms(xwayland: xwayland.XWayland) -> dict[int, str]:
     """
     These can be used when matching on XWayland clients with wm_type.
     http://standards.freedesktop.org/wm-spec/latest/ar01s05.html#idm139870830002400

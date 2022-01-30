@@ -39,7 +39,6 @@ import os
 import pickle
 import string
 from collections import deque
-from typing import TYPE_CHECKING
 
 from libqtile import bar, hook, pangocffi, utils
 from libqtile.command.base import CommandObject, SelectError
@@ -47,9 +46,6 @@ from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import CommandError, QtileCommandInterface
 from libqtile.log_utils import logger
 from libqtile.widget import base
-
-if TYPE_CHECKING:
-    from typing import List, Tuple
 
 
 class AbstractCompleter(metaclass=abc.ABCMeta):
@@ -90,7 +86,7 @@ class FileCompleter(AbstractCompleter):
         self._testing = _testing
         self.qtile = qtile
         self.thisfinal = None  # type: str | None
-        self.lookup = None  # type: List[Tuple[str, str]] | None
+        self.lookup = None  # type: list[tuple[str, str]] | None
         self.reset()
 
     def actual(self) -> str | None:
@@ -140,7 +136,7 @@ class QshCompleter(AbstractCompleter):
         return self.thisfinal
 
     def reset(self) -> None:
-        self.lookup = None  # type: List[Tuple[str, str]] | None
+        self.lookup = None  # type: list[tuple[str, str]] | None
         self.path = ""
         self.offset = -1
 
@@ -187,7 +183,7 @@ class GroupCompleter(AbstractCompleter):
     def __init__(self, qtile: CommandObject) -> None:
         self.qtile = qtile
         self.thisfinal = None  # type: str | None
-        self.lookup = None  # type: List[Tuple[str, str]] | None
+        self.lookup = None  # type: list[tuple[str, str]] | None
         self.offset = -1
 
     def actual(self) -> str | None:
@@ -223,7 +219,7 @@ class WindowCompleter(AbstractCompleter):
     def __init__(self, qtile: CommandObject) -> None:
         self.qtile = qtile
         self.thisfinal = None  # type: str | None
-        self.lookup = None  # type: List[Tuple[str, str]] | None
+        self.lookup = None  # type: list[tuple[str, str]] | None
         self.offset = -1
 
     def actual(self) -> str | None:
@@ -265,7 +261,7 @@ class CommandCompleter:
     DEFAULTPATH = "/bin:/usr/bin:/usr/local/bin"
 
     def __init__(self, qtile, _testing=False):
-        self.lookup = None  # type: List[Tuple[str, str]] | None
+        self.lookup = None  # type: list[tuple[str, str]] | None
         self.offset = -1
         self.thisfinal = None  # type: str | None
         self._testing = _testing
@@ -741,10 +737,10 @@ class Prompt(base._TextBox):
         self.history = {x: self._dedup_deque(self.history[x]) for x in self.completers}
 
     def _dedup_deque(self, dq):
-        return deque(_LastUpdatedOrderedDict.fromkeys(dq))
+        return deque(_LastUpdatedOrdereddict.fromkeys(dq))
 
 
-class _LastUpdatedOrderedDict(dict):
+class _LastUpdatedOrdereddict(dict):
     """Store items in the order the keys were last added."""
 
     def __setitem__(self, key, value):
