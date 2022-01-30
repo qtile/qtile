@@ -95,7 +95,7 @@ class Net(base.ThreadPoolText):
         else:
             power = self.allowed_prefixes.index(self.prefix)
 
-        converted_bytes = num_bytes / self.factor ** power
+        converted_bytes = num_bytes / self.factor**power
         unit = self.units[power]
 
         return converted_bytes, unit

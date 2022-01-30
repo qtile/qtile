@@ -36,7 +36,6 @@ from libqtile.backend.x11 import window
 from libqtile.confreader import ConfigError
 from libqtile.widget import base
 
-
 XEMBED_PROTOCOL_VERSION = 0
 
 

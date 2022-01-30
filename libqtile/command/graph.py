@@ -26,10 +26,10 @@ abstract command graph
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
-    from typing import Dict, List, Optional, Tuple, Type, Union
+    from typing import Dict, List, Optional, Tuple, Type
 
     SelectorType = Tuple[str, Optional[str | int]]
 

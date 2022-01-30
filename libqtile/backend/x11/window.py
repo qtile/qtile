@@ -379,7 +379,7 @@ class XWindow:
                 self.conn.atoms[prop] if isinstance(prop, str) else prop,
                 self.conn.atoms[type] if isinstance(type, str) else type,
                 0,
-                (2 ** 32) - 1,
+                (2**32) - 1,
             ).reply()
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             logger.debug("X error in GetProperty (wid=%r, prop=%r), ignoring", self.wid, prop)

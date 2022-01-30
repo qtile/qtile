@@ -751,7 +751,7 @@ def test_net_frame_extents(xmanager):
 
     def assert_frame(wid, frame):
         r = conn.conn.core.GetProperty(
-            False, wid, conn.atoms["_NET_FRAME_EXTENTS"], conn.atoms["CARDINAL"], 0, (2 ** 32) - 1
+            False, wid, conn.atoms["_NET_FRAME_EXTENTS"], conn.atoms["CARDINAL"], 0, (2**32) - 1
         ).reply()
         assert r.value.to_atoms() == frame
 

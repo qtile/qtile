@@ -28,8 +28,8 @@ from libqtile.command.interface import CommandInterface
 if TYPE_CHECKING:
     from typing import Dict, Iterable, List, Set, Tuple
 
-    from libqtile.config import Match
     from libqtile.command.graph import SelectorType
+    from libqtile.config import Match
 
 
 class LazyCall:
