@@ -32,7 +32,7 @@
 from libqtile import hook
 from libqtile.layout.base import Layout
 
-to_superscript = dict(zip(map(ord, u"0123456789"), map(ord, u"⁰¹²³⁴⁵⁶⁷⁸⁹")))
+to_superscript = dict(zip(map(ord, "0123456789"), map(ord, "⁰¹²³⁴⁵⁶⁷⁸⁹")))
 
 
 class TreeNode:

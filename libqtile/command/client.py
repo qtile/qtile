@@ -44,8 +44,8 @@ from libqtile.ipc import Client, find_sockfile
 if TYPE_CHECKING:
     from typing import Any, List, Tuple
 
-    from libqtile.command.interface import SelectorType
     from libqtile.command.graph import GraphType
+    from libqtile.command.interface import SelectorType
 
 
 class CommandClient:

@@ -68,6 +68,8 @@ if TYPE_CHECKING:
 # | ORIENTATION_BOTH       | Widget displayed   | Widget displayed   |
 # |                        | horizontally       | vertically         |
 # +------------------------+--------------------+--------------------+
+
+
 class _Orientations(int):
     def __new__(cls, value, doc):
         return super().__new__(cls, value)

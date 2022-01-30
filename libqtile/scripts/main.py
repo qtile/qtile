@@ -7,7 +7,7 @@ from libqtile.scripts import check, cmd_obj, migrate, run_cmd, shell, start, top
 
 try:
     # Python>3.7 can get the version from importlib
-    from importlib.metadata import distribution  # type: ignore
+    from importlib.metadata import distribution
 
     VERSION = distribution("qtile").version
 except ModuleNotFoundError:
