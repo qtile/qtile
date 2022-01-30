@@ -3,6 +3,7 @@ Qtile x.x.x, released xxxx-xx-xx:
         - Add `lazy.window.center()` command to center a floating window on the screen.
     * bugfixes
         - Fix `Systray` crash on `reconfigure_screens`.
+        - Fix bug where widgets can't be mirrored in same bar.
 
 Qtile 0.20.0, released 2022-01-24:
     * features

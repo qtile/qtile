@@ -294,10 +294,10 @@ class Bar(Gap, configurable.Configurable):
                 self._configure_widget(i)
         else:
             for idx, i in enumerate(self.widgets):
-                # Create a mirror if this widget is being placed on a different bar
+                # Create a mirror if this widget is already configured but isn't a Mirror
                 # We don't do isinstance(i, Mirror) because importing Mirror (at the top)
                 # would give a circular import as libqtile.widget.base imports lbqtile.bar
-                if i.configured and i.bar != self and i.__class__.__name__ != "Mirror":
+                if i.configured and i.__class__.__name__ != "Mirror":
                     i = i.create_mirror()
                     self.widgets[idx] = i
                 success = self._configure_widget(i)
