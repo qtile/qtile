@@ -168,7 +168,7 @@ class KeyboardLayout(base.InLoopPollText):
         self.backend.set_keyboard(self.configured_keyboards[0], self.option)
 
     def next_keyboard(self):
-        """Set the next layout in the list of configured keyboard layouts as
+        """set the next layout in the list of configured keyboard layouts as
         new current layout in use
 
         If the current keyboard layout is not in the list, it will set as new

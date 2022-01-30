@@ -34,13 +34,10 @@ import marshal
 import os.path
 import socket
 import struct
-from typing import TYPE_CHECKING
+from typing import Any
 
 from libqtile.log_utils import logger
 from libqtile.utils import get_cache_dir
-
-if TYPE_CHECKING:
-    from typing import Any, Tuple
 
 HDRFORMAT = "!L"
 HDRLEN = struct.calcsize(HDRFORMAT)
@@ -95,7 +92,7 @@ class _IPC:
     """A helper class to handle properly packing and unpacking messages"""
 
     @staticmethod
-    def unpack(data: bytes, *, is_json: bool | None = None) -> Tuple[Any, bool]:
+    def unpack(data: bytes, *, is_json: bool | None = None) -> tuple[Any, bool]:
         """Unpack the incoming message
 
         Parameters
@@ -108,7 +105,7 @@ class _IPC:
 
         Returns
         -------
-        Tuple[Any, bool]
+        tuple[Any, bool]
             A tuple of the unpacked object and a boolean denoting if the
             message was deserialized using json.  If True, the return message
             should be packed as json.

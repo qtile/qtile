@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING
 from libqtile.backend.x11 import core
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List
+    from typing import Any
 
     from typing_extensions import Literal
 
@@ -44,7 +44,7 @@ class ConfigError(Exception):
 
 
 config_pyi_header = """
-from typing import Any, Dict, List
+from typing import Any
 from typing_extensions import Literal
 from libqtile.config import Group, Key, Mouse, Rule, Screen
 from libqtile.layout.base import Layout
@@ -54,20 +54,20 @@ from libqtile.layout.base import Layout
 
 class Config:
     # All configuration options
-    keys: List[Key]
-    mouse: List[Mouse]
-    groups: List[Group]
+    keys: list[Key]
+    mouse: list[Mouse]
+    groups: list[Group]
     dgroups_key_binder: Any
-    dgroups_app_rules: List[Rule]
+    dgroups_app_rules: list[Rule]
     follow_mouse_focus: bool
     focus_on_window_activation: Literal["focus", "smart", "urgent", "never"]
     cursor_warp: bool
-    layouts: List[Layout]
+    layouts: list[Layout]
     floating_layout: Layout
-    screens: List[Screen]
+    screens: list[Screen]
     auto_fullscreen: bool
-    widget_defaults: Dict[str, Any]
-    extension_defaults: Dict[str, Any]
+    widget_defaults: dict[str, Any]
+    extension_defaults: dict[str, Any]
     bring_front_click: bool | Literal["floating_only"]
     reconfigure_screens: bool
     wmname: str

@@ -40,8 +40,6 @@ from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import List, Tuple
-
     from wlroots.wlr_types import Surface
 
     from libqtile.backend.wayland.core import Core
@@ -66,7 +64,7 @@ class Output(HasListeners):
         self.add_listener(self._damage.frame_event, self._on_frame)
 
         # The layers enum indexes into this list to get a list of surfaces
-        self.layers: List[List[Static]] = [[] for _ in range(len(LayerShellV1Layer))]
+        self.layers: list[list[Static]] = [[] for _ in range(len(LayerShellV1Layer))]
 
         # This is run during tests, when we want to fix the output's geometry
         if wlr_output.is_headless and "PYTEST_CURRENT_TEST" in os.environ:
@@ -167,7 +165,7 @@ class Output(HasListeners):
                 wlr_output.render_software_cursors(damage=damage)
                 renderer.end()
 
-    def _render_surface(self, surface: Surface, sx: int, sy: int, rdata: Tuple) -> None:
+    def _render_surface(self, surface: Surface, sx: int, sy: int, rdata: tuple) -> None:
         texture = surface.get_texture()
         if texture is None:
             return
@@ -243,7 +241,7 @@ class Output(HasListeners):
                 self.renderer.render_texture_with_matrix(texture, matrix, 1)
                 icon.surface.send_frame_done(now)
 
-    def get_geometry(self) -> Tuple[int, int, int, int]:
+    def get_geometry(self) -> tuple[int, int, int, int]:
         width, height = self.wlr_output.effective_resolution()
         return int(self.x), int(self.y), width, height
 
@@ -313,7 +311,7 @@ class Output(HasListeners):
                         elif state.anchor == LayerSurfaceV1Anchor.RIGHT:
                             space[1] = state.exclusive_zone
 
-                    to_reserve: Tuple[int, int, int, int] = tuple(space)  # type: ignore
+                    to_reserve: tuple[int, int, int, int] = tuple(space)  # type: ignore
                     if win.reserved_space != to_reserve:
                         # Don't reserve more space if it's already been reserved
                         assert self.core.qtile is not None

@@ -21,13 +21,10 @@
 # SOFTWARE.
 
 import time
-from typing import TYPE_CHECKING
+from typing import Any
 from urllib.parse import urlencode
 
 from libqtile.widget.generic_poll_text import GenPollUrl
-
-if TYPE_CHECKING:
-    from typing import Any, List, Tuple
 
 # See documentation: https://openweathermap.org/current
 QUERY_URL = "http://api.openweathermap.org/data/2.5/weather?"
@@ -258,7 +255,7 @@ class OpenWeather(GenPollUrl):
             dict(),
             "Dictionary of weather symbols. Can be used to override default symbols.",
         ),
-    ]  # type: List[Tuple[str, Any, str]]
+    ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, **config):
         GenPollUrl.__init__(self, **config)

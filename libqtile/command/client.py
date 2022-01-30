@@ -42,7 +42,7 @@ from libqtile.command.interface import CommandInterface, IPCCommandInterface
 from libqtile.ipc import Client, find_sockfile
 
 if TYPE_CHECKING:
-    from typing import Any, List, Tuple
+    from typing import Any
 
     from libqtile.command.graph import GraphType
     from libqtile.command.interface import SelectorType
@@ -128,21 +128,21 @@ class CommandClient:
         return self._command.execute(call, args, kwargs)
 
     @property
-    def children(self) -> List[str]:
+    def children(self) -> list[str]:
         """Get the children of the current location in the command graph"""
         return self._current_node.children
 
     @property
-    def selectors(self) -> List[SelectorType]:
+    def selectors(self) -> list[SelectorType]:
         return self._current_node.selectors
 
     @property
-    def commands(self) -> List[str]:
+    def commands(self) -> list[str]:
         """Get the commands available on the current object"""
         command_call = self._current_node.call("commands")
         return self._command.execute(command_call, (), {})
 
-    def items(self, name: str) -> Tuple[bool, List[str | int]]:
+    def items(self, name: str) -> tuple[bool, list[str | int]]:
         """Get the available items"""
         items_call = self._current_node.call("items")
         return self._command.execute(items_call, (name,), {})

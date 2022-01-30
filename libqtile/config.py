@@ -41,7 +41,7 @@ from libqtile.bar import Bar
 from libqtile.command.base import CommandObject
 
 if TYPE_CHECKING:
-    from typing import Callable, List
+    from typing import Callable
 
     from libqtile.bar import BarType
     from libqtile.command.base import ItemT
@@ -65,7 +65,7 @@ class Key:
         description to be added to the key binding
     """
 
-    def __init__(self, modifiers: List[str], key: str, *commands, desc: str = ""):
+    def __init__(self, modifiers: list[str], key: str, *commands, desc: str = ""):
         self.modifiers = modifiers
         self.key = key
         self.commands = commands
@@ -95,9 +95,9 @@ class KeyChord:
 
     def __init__(
         self,
-        modifiers: List[str],
+        modifiers: list[str],
         key: str,
-        submappings: List[Key | KeyChord],
+        submappings: list[Key | KeyChord],
         mode: str = "",
     ):
         self.modifiers = modifiers
@@ -112,7 +112,7 @@ class KeyChord:
 
 
 class Mouse:
-    def __init__(self, modifiers: List[str], button: str, *commands, **kwargs):
+    def __init__(self, modifiers: list[str], button: str, *commands, **kwargs):
         self.modifiers = modifiers
         self.button = button
         self.commands = commands
@@ -522,11 +522,11 @@ class Group:
     def __init__(
         self,
         name: str,
-        matches: List[Match] = None,
+        matches: list[Match] = None,
         exclusive=False,
-        spawn: str | List[str] | None = None,
+        spawn: str | list[str] | None = None,
         layout: str = None,
-        layouts: List = None,
+        layouts: list = None,
         persist=True,
         init=True,
         layout_opts=None,

@@ -30,8 +30,6 @@
 
 from __future__ import annotations
 
-from typing import List
-
 from libqtile.backend.base import Window
 from libqtile.config import Match
 from libqtile.layout.base import Layout
@@ -69,7 +67,7 @@ class Floating(Layout):
     ]
 
     def __init__(
-        self, float_rules: List[Match] | None = None, no_reposition_rules=None, **config
+        self, float_rules: list[Match] | None = None, no_reposition_rules=None, **config
     ):
         """
         If you have certain apps that you always want to float you can provide
@@ -100,7 +98,7 @@ class Floating(Layout):
         correct location on the screen.
         """
         Layout.__init__(self, **config)
-        self.clients: List[Window] = []
+        self.clients: list[Window] = []
         self.focused = None
         self.group = None
 
