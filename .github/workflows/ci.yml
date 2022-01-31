@@ -36,7 +36,7 @@ jobs:
                   libgles2-mesa-dev libgbm-dev libinput-dev libxkbcommon-dev libpixman-1-dev libpciaccess-dev \
                   dbus-x11 libnotify-bin \
                   xwayland libxcb-composite0-dev libxcb-icccm4-dev libxcb-res0-dev \
-                  libxcb-render0-dev libxcb-res0-dev libxcb-xfixes0-dev 
+                  libxcb-render0-dev libxcb-res0-dev libxcb-xfixes0-dev vlc volumeicon-alsa
                 sudo pip -q install meson PyGObject
                 pip -q install "tox<4" tox-gh-actions 
             - name: Build wayland
