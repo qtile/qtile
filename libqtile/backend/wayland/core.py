@@ -60,11 +60,7 @@ from wlroots.wlr_types.server_decoration import (
     ServerDecorationManager,
     ServerDecorationManagerMode,
 )
-from wlroots.wlr_types.output_power_management_v1 import (
-    OutputPowerManagerV1,
-    OutputPowerV1SetModeEvent,
-    OutputPowerManagementV1Mode,
-)
+from wlroots.wlr_types.output_power_management_v1 import OutputPowerManagerV1, OutputPowerV1SetModeEvent, OutputPowerManagementV1Mode
 from wlroots.wlr_types.virtual_keyboard_v1 import VirtualKeyboardManagerV1, VirtualKeyboardV1
 from wlroots.wlr_types.xdg_shell import XdgShell, XdgSurface, XdgSurfaceRole
 from xkbcommon import xkb
@@ -231,7 +227,9 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_request_start_drag(self, _listener, event: seat.RequestStartDragEvent):
         logger.debug("Signal: seat request_start_drag")
 
-        if not self.live_dnd and self.seat.validate_pointer_grab_serial(event.origin, event.serial):
+        if not self.live_dnd and self.seat.validate_pointer_grab_serial(
+            event.origin, event.serial
+        ):
             self.seat.start_pointer_drag(event.drag, event.serial)
         else:
             event.drag.source.destroy()
@@ -366,7 +364,9 @@ class Core(base.Core, wlrq.HasListeners):
         )
 
         if self.active_pointer_constraint:
-            if not self.active_pointer_constraint.rect.contains_point(self.cursor.x + dx, self.cursor.y + dy):
+            if not self.active_pointer_constraint.rect.contains_point(
+                self.cursor.x + dx, self.cursor.y + dy
+            ):
                 return
 
         self.cursor.move(dx, dy, input_device=event.device)
@@ -410,7 +410,9 @@ class Core(base.Core, wlrq.HasListeners):
         logger.info(f"Managing new layer_shell window with window ID: {wid}")
         self.qtile.manage(win)
 
-    def _on_new_toplevel_decoration(self, _listener, decoration: xdg_decoration_v1.XdgToplevelDecorationV1):
+    def _on_new_toplevel_decoration(
+        self, _listener, decoration: xdg_decoration_v1.XdgToplevelDecorationV1
+    ):
         logger.debug("Signal: xdg_decoration new_top_level_decoration")
         decoration.set_mode(xdg_decoration_v1.XdgToplevelDecorationV1Mode.SERVER_SIDE)
 
@@ -637,7 +639,9 @@ class Core(base.Core, wlrq.HasListeners):
         assert self.qtile is not None
         return max(self.qtile.windows_map.keys(), default=0) + 1
 
-    def focus_window(self, win: window.WindowType, surface: Surface = None, enter: bool = True) -> None:
+    def focus_window(
+        self, win: window.WindowType, surface: Surface = None, enter: bool = True
+    ) -> None:
         if self.seat.destroyed:
             return
 
