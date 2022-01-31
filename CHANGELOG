@@ -1,6 +1,7 @@
 Qtile x.x.x, released xxxx-xx-xx:
     * features
         - Add `lazy.window.center()` command to center a floating window on the screen.
+        - Wayland: added power-output-management-v1 protocol support
     * bugfixes
         - Fix `Systray` crash on `reconfigure_screens`.
 
