@@ -221,7 +221,7 @@ class Systray(window._Window, base._Widget):
                 self.tray_icons.sort(key=lambda icon: icon.name)
                 self.qtile.windows_map[wid] = icon
 
-            self.conn.conn.core.ChangeSaveset(SetMode.Insert, wid)
+            self.conn.conn.core.ChangeSaveSet(SetMode.Insert, wid)
             self.conn.conn.core.ReparentWindow(wid, parent.wid, 0, 0)
             self.conn.conn.flush()
 
