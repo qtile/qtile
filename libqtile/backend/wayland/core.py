@@ -60,6 +60,7 @@ from wlroots.wlr_types.server_decoration import (
     ServerDecorationManager,
     ServerDecorationManagerMode,
 )
+from wlroots.wlr_types.output_power_management_v1 import OutputPowerManagerV1, OutputPowerV1SetModeEvent, OutputPowerManagementV1Mode
 from wlroots.wlr_types.virtual_keyboard_v1 import VirtualKeyboardManagerV1, VirtualKeyboardV1
 from wlroots.wlr_types.xdg_shell import XdgShell, XdgSurface, XdgSurfaceRole
 from xkbcommon import xkb
@@ -155,6 +156,8 @@ class Core(base.Core, wlrq.HasListeners):
         XdgOutputManagerV1(self.display, self.output_layout)
         ScreencopyManagerV1(self.display)
         GammaControlManagerV1(self.display)
+        self._output_power_manager = OutputPowerManagerV1(self.display)
+        self.add_listener(self._output_power_manager.set_mode_event, self._on_output_power_manager_set_mode)
         PrimarySelectionV1DeviceManager(self.display)
         self._virtual_keyboard_manager_v1 = VirtualKeyboardManagerV1(self.display)
         self.add_listener(
@@ -391,6 +394,12 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_new_virtual_keyboard(self, _listener, virtual_keyboard: VirtualKeyboardV1):
         self._add_new_keyboard(virtual_keyboard.input_device)
+
+    def _on_output_power_manager_set_mode(self, _listener, mode: OutputPowerV1SetModeEvent):
+        logger.debug("Signal: output_power_manager set_mode_event")
+        wlr_output = mode.output
+        wlr_output.enable(enable=True if mode.mode == OutputPowerManagementV1Mode.ON else False)
+        wlr_output.commit()
 
     def _on_new_layer_surface(self, _listener, layer_surface: LayerSurfaceV1):
         logger.debug("Signal: layer_shell new_surface_event")
