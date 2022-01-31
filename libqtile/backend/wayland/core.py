@@ -60,7 +60,11 @@ from wlroots.wlr_types.server_decoration import (
     ServerDecorationManager,
     ServerDecorationManagerMode,
 )
-from wlroots.wlr_types.output_power_management_v1 import OutputPowerManagerV1, OutputPowerV1SetModeEvent, OutputPowerManagementV1Mode
+from wlroots.wlr_types.output_power_management_v1 import (
+    OutputPowerManagerV1,
+    OutputPowerV1SetModeEvent,
+    OutputPowerManagementV1Mode,
+)
 from wlroots.wlr_types.virtual_keyboard_v1 import VirtualKeyboardManagerV1, VirtualKeyboardV1
 from wlroots.wlr_types.xdg_shell import XdgShell, XdgSurface, XdgSurfaceRole
 from xkbcommon import xkb
@@ -157,7 +161,9 @@ class Core(base.Core, wlrq.HasListeners):
         ScreencopyManagerV1(self.display)
         GammaControlManagerV1(self.display)
         output_power_manager = OutputPowerManagerV1(self.display)
-        self.add_listener(output_power_manager.set_mode_event, self._on_output_power_manager_set_mode)
+        self.add_listener(
+            output_power_manager.set_mode_event, self._on_output_power_manager_set_mode
+        )
         PrimarySelectionV1DeviceManager(self.display)
         self._virtual_keyboard_manager_v1 = VirtualKeyboardManagerV1(self.display)
         self.add_listener(
