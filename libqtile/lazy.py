@@ -47,7 +47,7 @@ class LazyCall:
         self._kwargs = kwargs
 
         self._layouts: Set[str] = set()
-        self._when_floating = None
+        self._when_floating: Optional[bool] = None
 
     def __call__(self, *args, **kwargs):
         """Convenience method to allow users to pass arguments to
