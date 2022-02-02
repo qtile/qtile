@@ -55,15 +55,15 @@ from wlroots.wlr_types.output_management_v1 import (
     OutputConfigurationV1,
     OutputManagerV1,
 )
+from wlroots.wlr_types.output_power_management_v1 import (
+    OutputPowerManagementV1Mode,
+    OutputPowerManagerV1,
+    OutputPowerV1SetModeEvent,
+)
 from wlroots.wlr_types.pointer_constraints_v1 import PointerConstraintsV1, PointerConstraintV1
 from wlroots.wlr_types.server_decoration import (
     ServerDecorationManager,
     ServerDecorationManagerMode,
-)
-from wlroots.wlr_types.output_power_management_v1 import (
-    OutputPowerManagerV1,
-    OutputPowerV1SetModeEvent,
-    OutputPowerManagementV1Mode,
 )
 from wlroots.wlr_types.virtual_keyboard_v1 import VirtualKeyboardManagerV1, VirtualKeyboardV1
 from wlroots.wlr_types.xdg_shell import XdgShell, XdgSurface, XdgSurfaceRole
