@@ -115,4 +115,5 @@ class Keyboard(HasListeners):
                 self.core.focused_internal.process_key_press(keysym)
                 return
 
+        self.core.idle.notify_activity(self.seat)
         self.seat.keyboard_notify_key(event)

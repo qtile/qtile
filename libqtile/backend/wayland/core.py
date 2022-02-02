@@ -49,6 +49,7 @@ from wlroots.wlr_types import (
     xdg_decoration_v1,
 )
 from wlroots.wlr_types.cursor import WarpMode
+from wlroots.wlr_types.idle import Idle
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1, LayerShellV1Layer, LayerSurfaceV1
 from wlroots.wlr_types.output_management_v1 import (
     OutputConfigurationHeadV1,
@@ -164,6 +165,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(
             output_power_manager.set_mode_event, self._on_output_power_manager_set_mode
         )
+        self.idle = Idle(self.display)
         PrimarySelectionV1DeviceManager(self.display)
         self._virtual_keyboard_manager_v1 = VirtualKeyboardManagerV1(self.display)
         self.add_listener(
@@ -339,6 +341,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_cursor_button(self, _listener, event: pointer.PointerEventButton):
         assert self.qtile is not None
+        self.idle.notify_activity(self.seat)
         pressed = event.button_state == input_device.ButtonState.PRESSED
         if pressed:
             self._focus_by_click()
@@ -354,6 +357,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_cursor_motion(self, _listener, event: pointer.PointerEventMotion):
         assert self.qtile is not None
+        self.idle.notify_activity(self.seat)
 
         dx = event.delta_x
         dy = event.delta_y
@@ -380,6 +384,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_cursor_motion_absolute(self, _listener, event: pointer.PointerEventMotionAbsolute):
         assert self.qtile is not None
+        self.idle.notify_activity(self.seat)
         self.cursor.warp(
             WarpMode.AbsoluteClosest,
             event.x,
