@@ -2,9 +2,4 @@
 Installing on Fedora
 ====================
 
-Stable versions of Qtile are currently packaged for current versions of Fedora.
-To install this package, run:
-
-.. code-block:: bash
-
-    dnf -y install qtile
+Stable versions of Qtile are not currently packaged for the current version of Fedora. Users are advised to follow the instructions of :ref:`installing-from-source`.
