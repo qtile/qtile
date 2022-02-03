@@ -167,8 +167,8 @@ class Core(base.Core, wlrq.HasListeners):
             output_power_manager.set_mode_event, self._on_output_power_manager_set_mode
         )
         self.idle = Idle(self.display)
-        _idle_ihibitor_manager = IdleInhibitorManagerV1(self.display)
-        self.add_listener(_idle_ihibitor_manager.new_inhibitor_event, self._on_new_inhibitor)
+        idle_ihibitor_manager = IdleInhibitorManagerV1(self.display)
+        self.add_listener(idle_ihibitor_manager.new_inhibitor_event, self._on_new_inhibitor)
         PrimarySelectionV1DeviceManager(self.display)
         self._virtual_keyboard_manager_v1 = VirtualKeyboardManagerV1(self.display)
         self.add_listener(
@@ -416,6 +416,8 @@ class Core(base.Core, wlrq.HasListeners):
             return
 
         for win in self.qtile.windows_map.values():
+            if isinstance(win, (window.Internal, window.Static)):
+                continue
             if isinstance(win, window.Window):
                 win.surface.for_each_surface(win.add_idle_inhibitor, idle_inhibitor)
                 if idle_inhibitor.data:
@@ -795,13 +797,14 @@ class Core(base.Core, wlrq.HasListeners):
         and if so inhibits idle
         """
 
-        idle_inhibited = any(
-            win.is_idle_inhibited
-            for win in self.mapped_windows
-            if isinstance(win, window.Window)
-            and not isinstance(win, (window.Internal, window.Static))
-        )
-        self.idle.set_enabled(self.seat, not idle_inhibited)
+        for win in self.mapped_windows:
+            if isinstance(win, (window.Internal, window.Static)):
+                continue
+            if isinstance(win, window.Window) and win.is_idle_inhibited:
+                self.idle.set_enabled(self.seat, False)
+                break
+        else:
+            self.idle.set_enabled(self.seat, True)
 
     def get_screen_info(self) -> list[tuple[int, int, int, int]]:
         """Get the screen information"""

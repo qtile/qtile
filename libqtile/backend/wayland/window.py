@@ -386,8 +386,10 @@ class Window(base.Window, HasListeners):
         self.borderwidth = width
 
     def add_idle_inhibitor(
-        self, surface: surface.Surface, _x: int, _y: int, inhibitor: IdleInhibitorV1
+        self, surface: surface.Surface, _x: int, _y: int, inhibitor: IdleInhibitorV1 | None
     ) -> None:
+        if inhibitor is None:
+            return
         if surface == inhibitor.surface:
             self._idle_inhibitors_count += 1
             inhibitor.data = self
