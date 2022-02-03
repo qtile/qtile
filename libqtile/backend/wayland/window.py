@@ -1441,7 +1441,13 @@ class XWindow(Window):
             height = self.height
 
         self.finalize_listeners()
-        win = Static(self.core, self.qtile, self.surface, self.wid)
+        win = Static(
+            self.core,
+            self.qtile,
+            self.surface,
+            self.wid,
+            idle_inhibitor_count=self._idle_inhibitors_count,
+        )
         if screen is not None:
             win.screen = self.qtile.screens[screen]
         win.place(x, y, width, height, 0, None)
