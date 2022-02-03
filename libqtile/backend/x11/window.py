@@ -1256,6 +1256,9 @@ class Static(_Window, base.Static):
         if name == "_NET_WM_STRUT_PARTIAL":
             self.update_strut()
 
+    def cmd_bring_to_front(self):
+        self.window.configure(stackmode=StackMode.Above)
+
 
 class Window(_Window, base.Window):
     _window_mask = (

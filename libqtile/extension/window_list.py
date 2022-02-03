@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from libqtile.backend import base
 from libqtile.extension.dmenu import Dmenu
 from libqtile.scratchpad import ScratchPad
 
@@ -46,7 +47,7 @@ class WindowList(Dmenu):
         self.item_to_win = {}
 
         if self.all_groups:
-            windows = self.qtile.windows_map.values()
+            windows = [w for w in self.qtile.windows_map.values() if isinstance(w, base.Window)]
         else:
             windows = self.qtile.current_group.windows
 
