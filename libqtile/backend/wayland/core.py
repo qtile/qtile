@@ -412,15 +412,14 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_new_inhibitor(self, _listener, idle_inhibitor: IdleInhibitorV1):
         logger.debug("Signal: idle_inhibitor new_inhibitor")
 
-        for win in self.qtile.windows_map.values():
-            if isinstance(win, (window.Internal, window.Static)):
-                continue
-            assert isinstance(win, window.Window)
+        if self.qtile is None:
+            return
 
-            if win.surface.surface == idle_inhibitor.surface:
-                logger.error(str(win))
-                win.add_idle_inhibitor(idle_inhibitor)
-                break
+        for win in self.qtile.windows_map.values():
+            if isinstance(win, window.Window):
+                win.surface.for_each_surface(win.add_idle_inhibitor, idle_inhibitor)
+                if idle_inhibitor.data:
+                    break
 
     def _on_output_power_manager_set_mode(self, _listener, mode: OutputPowerV1SetModeEvent):
         logger.debug("Signal: output_power_manager set_mode_event")
@@ -799,7 +798,8 @@ class Core(base.Core, wlrq.HasListeners):
         idle_inhibited = any(
             win.is_idle_inhibited
             for win in self.mapped_windows
-            if isinstance(win, window.Window) and not isinstance(win, (window.Internal, window.Static))
+            if isinstance(win, window.Window)
+            and not isinstance(win, (window.Internal, window.Static))
         )
         self.idle.set_enabled(self.seat, not idle_inhibited)
 
