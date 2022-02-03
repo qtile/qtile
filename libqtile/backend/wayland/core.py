@@ -416,9 +416,7 @@ class Core(base.Core, wlrq.HasListeners):
             return
 
         for win in self.qtile.windows_map.values():
-            if isinstance(win, (window.Internal, window.Static)):
-                continue
-            if isinstance(win, window.Window):
+            if isinstance(win, window.Window) and not isinstance(win, window.Internal):
                 win.surface.for_each_surface(win.add_idle_inhibitor, idle_inhibitor)
                 if idle_inhibitor.data:
                     break
@@ -796,10 +794,7 @@ class Core(base.Core, wlrq.HasListeners):
         Checks if any window that is currently mapped has idle inhibitor
         and if so inhibits idle
         """
-
         for win in self.mapped_windows:
-            if isinstance(win, (window.Internal, window.Static)):
-                continue
             if isinstance(win, window.Window) and win.is_idle_inhibited:
                 self.idle.set_enabled(self.seat, False)
                 break
