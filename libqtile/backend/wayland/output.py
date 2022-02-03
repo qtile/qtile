@@ -29,13 +29,9 @@ from wlroots.util.region import PixmanRegion32
 from wlroots.wlr_types import Matrix
 from wlroots.wlr_types import Output as wlrOutput
 from wlroots.wlr_types import OutputDamage
-from wlroots.wlr_types.layer_shell_v1 import (
-    LayerShellV1Layer,
-    LayerSurfaceV1,
-    LayerSurfaceV1Anchor,
-)
+from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1Anchor
 
-from libqtile.backend.wayland.window import Internal, Static
+from libqtile.backend.wayland.window import Internal, LayerStatic
 from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
@@ -63,7 +59,7 @@ class Output(HasListeners):
         self.add_listener(self._damage.frame_event, self._on_frame)
 
         # The layers enum indexes into this list to get a list of surfaces
-        self.layers: list[list[Static]] = [[] for _ in range(len(LayerShellV1Layer))]
+        self.layers: list[list[LayerStatic]] = [[] for _ in range(len(LayerShellV1Layer))]
 
         # This is run during tests, when we want to fix the output's geometry
         if wlr_output.is_headless and "PYTEST_CURRENT_TEST" in os.environ:
@@ -97,70 +93,73 @@ class Output(HasListeners):
         self.finalize()
 
     def _on_frame(self, _listener, _data):
-        wlr_output = self.wlr_output
-
         with PixmanRegion32() as damage:
-            if not self._damage.attach_render(damage):
-                # no new frame needed
-                wlr_output.rollback()
+            try:
+                if not self._damage.attach_render(damage):
+                    # No new frame needed.
+                    self.wlr_output.rollback()
+                    return
+            except RuntimeError:
+                # Failed to attach render; skip.
                 return
 
-            with wlr_output:
+            with self.wlr_output as wlr_output:
                 if not damage.not_empty():
-                    # No damage, only buffer swap needed
+                    # No damage, only buffer swap needed.
                     return
 
                 now = Timespec.get_monotonic_time()
-                renderer = self.renderer
-                renderer.begin(wlr_output._ptr.width, wlr_output._ptr.height)
                 scale = wlr_output.scale
                 transform_matrix = wlr_output.transform_matrix
 
-                if self.wallpaper:
-                    width, height = wlr_output.effective_resolution()
-                    box = Box(0, 0, int(width * scale), int(height * scale))
-                    matrix = Matrix.project_box(box, 0, 0, transform_matrix)
-                    renderer.render_texture_with_matrix(self.wallpaper, matrix, 1)
-                else:
-                    renderer.clear([0, 0, 0, 1])
+                with self.renderer.render(
+                    wlr_output._ptr.width, wlr_output._ptr.height
+                ) as renderer:
 
-                mapped = (
-                    self.layers[LayerShellV1Layer.BACKGROUND]
-                    + self.layers[LayerShellV1Layer.BOTTOM]
-                    + self.core.mapped_windows
-                    + self.layers[LayerShellV1Layer.TOP]
-                    + self.layers[LayerShellV1Layer.OVERLAY]
-                )
-
-                for window in mapped:
-                    if isinstance(window, Internal):
-                        box = Box(
-                            int((window.x - self.x) * scale),
-                            int((window.y - self.y) * scale),
-                            int(window.width * scale),
-                            int(window.height * scale),
-                        )
+                    if self.wallpaper:
+                        width, height = wlr_output.effective_resolution()
+                        box = Box(0, 0, int(width * scale), int(height * scale))
                         matrix = Matrix.project_box(box, 0, 0, transform_matrix)
-                        renderer.render_texture_with_matrix(
-                            window.texture, matrix, window.opacity
-                        )
+                        renderer.render_texture_with_matrix(self.wallpaper, matrix, 1)
                     else:
-                        rdata = (
-                            now,
-                            window,
-                            window.x - self.x,  # layout coordinates -> output coordinates
-                            window.y - self.y,
-                            window.opacity,
-                            scale,
-                            transform_matrix,
-                        )
-                        window.surface.for_each_surface(self._render_surface, rdata)
+                        renderer.clear([0, 0, 0, 1])
 
-                if self.core.live_dnd:
-                    self._render_dnd_icon(self.core.live_dnd, now, scale, transform_matrix)
+                    mapped = (
+                        self.layers[LayerShellV1Layer.BACKGROUND]
+                        + self.layers[LayerShellV1Layer.BOTTOM]
+                        + self.core.mapped_windows
+                        + self.layers[LayerShellV1Layer.TOP]
+                        + self.layers[LayerShellV1Layer.OVERLAY]
+                    )
 
-                wlr_output.render_software_cursors(damage=damage)
-                renderer.end()
+                    for window in mapped:
+                        if isinstance(window, Internal):
+                            box = Box(
+                                int((window.x - self.x) * scale),
+                                int((window.y - self.y) * scale),
+                                int(window.width * scale),
+                                int(window.height * scale),
+                            )
+                            matrix = Matrix.project_box(box, 0, 0, transform_matrix)
+                            renderer.render_texture_with_matrix(
+                                window.texture, matrix, window.opacity
+                            )
+                        else:
+                            rdata = (
+                                now,
+                                window,
+                                window.x - self.x,  # layout coordinates -> output coordinates
+                                window.y - self.y,
+                                window.opacity,
+                                scale,
+                                transform_matrix,
+                            )
+                            window.surface.for_each_surface(self._render_surface, rdata)
+
+                    if self.core.live_dnd:
+                        self._render_dnd_icon(self.core.live_dnd, now, scale, transform_matrix)
+
+                    wlr_output.render_software_cursors(damage=damage)
 
     def _render_surface(self, surface: Surface, sx: int, sy: int, rdata: tuple) -> None:
         texture = surface.get_texture()
@@ -247,7 +246,6 @@ class Output(HasListeners):
 
         for layer in self.layers:
             for win in layer:
-                assert isinstance(win.surface, LayerSurfaceV1)
                 state = win.surface.current
                 margin = state.margin
                 ww = win.desired_width = state.desired_width

@@ -323,7 +323,7 @@ class Core(base.Core, wlrq.HasListeners):
         logger.debug("Signal: xdg_shell new_surface_event")
         if surface.role == XdgSurfaceRole.TOPLEVEL:
             assert self.qtile is not None
-            win = window.Window(self, self.qtile, surface)
+            win = window.XdgWindow(self, self.qtile, surface)
             self.pending_windows.add(win)
 
     def _on_cursor_axis(self, _listener, event: pointer.PointerEventAxis):
@@ -421,7 +421,7 @@ class Core(base.Core, wlrq.HasListeners):
             return
 
         for win in self.qtile.windows_map.values():
-            if isinstance(win, window.Window) and not isinstance(win, window.Internal):
+            if isinstance(win, (window.Window, window.Static)):
                 win.surface.for_each_surface(win.add_idle_inhibitor, idle_inhibitor)
                 if idle_inhibitor.data:
                     break
@@ -437,7 +437,7 @@ class Core(base.Core, wlrq.HasListeners):
         assert self.qtile is not None
 
         wid = self.new_wid()
-        win = window.Static(self, self.qtile, layer_surface, wid)
+        win = window.LayerStatic(self, self.qtile, layer_surface, wid)
         logger.info(f"Managing new layer_shell window with window ID: {wid}")
         self.qtile.manage(win)
 
@@ -641,11 +641,10 @@ class Core(base.Core, wlrq.HasListeners):
         assert self.qtile is not None
 
         for win in self.qtile.windows_map.values():
-            if isinstance(win, (window.Internal, window.Static)):
+            if not isinstance(win, window.Window):
                 continue
 
             group = None
-            assert isinstance(win, window.Window)
             if win.group:
                 if win.group.name in self.qtile.groups_map:
                     # Put window on group with same name as its old group if one exists
@@ -681,21 +680,22 @@ class Core(base.Core, wlrq.HasListeners):
         if self.seat.destroyed:
             return
 
+        if isinstance(win, base.Internal):
+            self.focused_internal = win
+            self.seat.keyboard_clear_focus()
+            return
+
         if surface is None and win is not None:
-            if isinstance(win, base.Internal):
-                self.focused_internal = win
-                self.seat.keyboard_clear_focus()
-                return
             surface = win.surface.surface
 
         if self.focused_internal:
             self.focused_internal = None
 
-        if isinstance(win.surface, LayerSurfaceV1):
+        if isinstance(win, window.LayerStatic):
             if not win.surface.current.keyboard_interactive:
                 return
 
-        if isinstance(win.surface, xwayland.Surface):
+        if isinstance(win, (window.XWindow, window.XStatic)):
             if not win.surface.or_surface_wants_focus():
                 return
 
@@ -745,18 +745,19 @@ class Core(base.Core, wlrq.HasListeners):
             if self.qtile.config.bring_front_click is True:
                 win.cmd_bring_to_front()
             elif self.qtile.config.bring_front_click == "floating_only":
-                if not isinstance(win, base.Internal) and win.floating:
+                if isinstance(win, base.Window) and win.floating:
+                    win.cmd_bring_to_front()
+                elif isinstance(win, base.Static):
                     win.cmd_bring_to_front()
 
-            if not isinstance(win, base.Internal):
-                if isinstance(win, window.Static):
-                    if win.screen is not self.qtile.current_screen:
-                        self.qtile.focus_screen(win.screen.index, warp=False)
-                    win.focus(False)
-                else:
-                    if win.group and win.group.screen is not self.qtile.current_screen:
-                        self.qtile.focus_screen(win.group.screen.index, warp=False)
-                    self.qtile.current_group.focus(win, False)
+            if isinstance(win, window.Static):
+                if win.screen is not self.qtile.current_screen:
+                    self.qtile.focus_screen(win.screen.index, warp=False)
+                win.focus(False)
+            elif isinstance(win, window.Window):
+                if win.group and win.group.screen is not self.qtile.current_screen:
+                    self.qtile.focus_screen(win.group.screen.index, warp=False)
+                self.qtile.current_group.focus(win, False)
 
         else:
             screen = self.qtile.find_screen(self.cursor.x, self.cursor.y)
@@ -805,7 +806,7 @@ class Core(base.Core, wlrq.HasListeners):
         and if so inhibits idle
         """
         for win in self.mapped_windows:
-            if win.is_idle_inhibited:
+            if isinstance(win, (window.Window, window.Static)) and win.is_idle_inhibited:
                 self.idle.set_enabled(self.seat, False)
                 break
         else:

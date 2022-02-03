@@ -192,6 +192,16 @@ class _Window(CommandObject, metaclass=ABCMeta):
         """Whether this window urgently wants focus"""
         return False
 
+    @property
+    def opacity(self) -> float:
+        """The opacity of this window from 0 (transparent) to 1 (opaque)."""
+        return self._opacity
+
+    @opacity.setter
+    def opacity(self, opacity: float) -> None:
+        """Opacity setter."""
+        self._opacity = opacity
+
     @abstractmethod
     def place(
         self,
@@ -264,30 +274,41 @@ class Window(_Window, metaclass=ABCMeta):
         """Whether this window is floating."""
         return False
 
+    @floating.setter
+    def floating(self, do_float: bool) -> None:
+        raise NotImplementedError
+
     @property
     def maximized(self) -> bool:
         """Whether this window is maximized."""
         return False
+
+    @maximized.setter
+    def maximized(self, do_maximize: bool) -> None:
+        raise NotImplementedError
+
+    @property
+    def minimized(self) -> bool:
+        """Whether this window is minimized."""
+        return False
+
+    @minimized.setter
+    def minimized(self, do_minimize: bool) -> None:
+        raise NotImplementedError
 
     @property
     def fullscreen(self) -> bool:
         """Whether this window is fullscreened."""
         return False
 
+    @fullscreen.setter
+    def fullscreen(self, do_full: bool) -> None:
+        raise NotImplementedError
+
     @property
     def wants_to_fullscreen(self) -> bool:
         """Does this window want to be fullscreen?"""
         return False
-
-    @property
-    def opacity(self) -> float:
-        """The opacity of this window from 0 (transparent) to 1 (opaque)."""
-        return self._opacity
-
-    @opacity.setter
-    def opacity(self, opacity: float) -> None:
-        """Opacity setter."""
-        self._opacity = opacity
 
     def match(self, match: config.Match) -> bool:
         """Compare this window against a Match instance."""
@@ -572,6 +593,10 @@ class Static(_Window, metaclass=ABCMeta):
             height=self.height,
             id=self.wid,
         )
+
+    @abstractmethod
+    def cmd_bring_to_front(self) -> None:
+        """Bring the window to the front"""
 
 
 WindowType = typing.Union[Window, Internal, Static]
