@@ -30,7 +30,9 @@ from wlroots import ffi, xwayland
 from wlroots.util.box import Box
 from wlroots.util.edges import Edges
 from wlroots.wlr_types import Texture
+from wlroots.wlr_types.idle_inhibit_v1 import IdleInhibitorV1
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1
+from wlroots.wlr_types import surface
 from wlroots.wlr_types.xdg_shell import XdgPopup, XdgSurface, XdgTopLevelSetFullscreenEvent
 
 from libqtile import config, hook, utils
@@ -77,6 +79,7 @@ class Window(base.Window, HasListeners):
         self.surface = surface
         self._group: _Group | None = None
         self.popups: list[XdgPopupWindow] = []
+        self._idle_inhibitors: list[IdleInhibitorV1] = []
         self.subsurfaces: list[SubSurface] = []
         self._mapped: bool = False
         self.x = 0
@@ -161,6 +164,8 @@ class Window(base.Window, HasListeners):
         else:
             self.core.mapped_windows.remove(self)
         self.core.stack_windows()
+        if hasattr(self, "_idle_inhibitors") and len(self._idle_inhibitors) > 0:
+            self.core.check_idle_inhibitor()
 
     def _on_map(self, _listener, _data):
         logger.debug("Signal: window map")
@@ -290,6 +295,14 @@ class Window(base.Window, HasListeners):
         logger.debug("Signal: foreign_toplevel_management request_close")
         self.kill()
 
+    def _on_inhibitor_destroy(self, _listener, surface: surface.Surface):
+        # We don't have reference to the inhibitor, but it doesn't really
+        # matter we only need to keep count of how many inhibitors there are
+        self._idle_inhibitors.pop()
+        _listener.remove()
+        if len(self._idle_inhibitors) == 0:
+            self.core.check_idle_inhibitor()
+
     def has_fixed_size(self) -> bool:
         assert isinstance(self.surface, XdgSurface)
         state = self.surface.toplevel._ptr.current
@@ -371,6 +384,16 @@ class Window(base.Window, HasListeners):
             else:
                 self.bordercolor = [_rgb(color)]
         self.borderwidth = width
+
+    def add_idle_inhibitor(self, inhibitor: IdleInhibitorV1) -> None:
+        self._idle_inhibitors.append(inhibitor)
+        self.add_listener(inhibitor.destroy_event, self._on_inhibitor_destroy)
+        if len(self._idle_inhibitors) == 1:
+            self.core.check_idle_inhibitor()
+
+    @property
+    def is_idle_inhibited(self) -> bool:
+        return len(self._idle_inhibitors) > 0
 
     @property
     def floating(self):
