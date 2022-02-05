@@ -619,6 +619,9 @@ class _Window:
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             return
 
+        width_inc = self.hints["width_inc"]
+        height_inc = self.hints["height_inc"]
+
         if normh:
             self.hints.update(normh)
 
@@ -633,9 +636,12 @@ class _Window:
         if h and "InputHint" in h["flags"]:
             self.hints["input"] = h["input"]
 
-        if getattr(self, "group", None):
-            if self.group.floating_layout.match(self):
-                self.floating = True
+        if (
+            self.group
+            and self.floating
+            and width_inc != self.hints["width_inc"]
+            and height_inc != self.hints["height_inc"]
+        ):
             self.group.layout_all()
 
         return
