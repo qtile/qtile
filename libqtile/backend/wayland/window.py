@@ -26,10 +26,12 @@ import typing
 import cairocffi
 import pywayland
 import wlroots.wlr_types.foreign_toplevel_management_v1 as ftm
+from pywayland.server import Listener
 from wlroots import ffi, xwayland
 from wlroots.util.box import Box
 from wlroots.util.edges import Edges
-from wlroots.wlr_types import Texture
+from wlroots.wlr_types import Texture, surface
+from wlroots.wlr_types.idle_inhibit_v1 import IdleInhibitorV1
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1
 from wlroots.wlr_types.xdg_shell import XdgPopup, XdgSurface, XdgTopLevelSetFullscreenEvent
 
@@ -77,6 +79,7 @@ class Window(base.Window, HasListeners):
         self.surface = surface
         self._group: _Group | None = None
         self.popups: list[XdgPopupWindow] = []
+        self._idle_inhibitors_count: int = 0
         self.subsurfaces: list[SubSurface] = []
         self._mapped: bool = False
         self.x = 0
@@ -161,6 +164,8 @@ class Window(base.Window, HasListeners):
         else:
             self.core.mapped_windows.remove(self)
         self.core.stack_windows()
+        if self._idle_inhibitors_count > 0:
+            self.core.check_idle_inhibitor()
 
     def _on_map(self, _listener, _data):
         logger.debug("Signal: window map")
@@ -290,6 +295,14 @@ class Window(base.Window, HasListeners):
         logger.debug("Signal: foreign_toplevel_management request_close")
         self.kill()
 
+    def _on_inhibitor_destroy(self, listener: Listener, surface: surface.Surface):
+        # We don't have reference to the inhibitor, but it doesn't really
+        # matter we only need to keep count of how many inhibitors there are
+        self._idle_inhibitors_count -= 1
+        listener.remove()
+        if self._idle_inhibitors_count == 0:
+            self.core.check_idle_inhibitor()
+
     def has_fixed_size(self) -> bool:
         assert isinstance(self.surface, XdgSurface)
         state = self.surface.toplevel._ptr.current
@@ -371,6 +384,22 @@ class Window(base.Window, HasListeners):
             else:
                 self.bordercolor = [_rgb(color)]
         self.borderwidth = width
+
+    def add_idle_inhibitor(
+        self, surface: surface.Surface, _x: int, _y: int, inhibitor: IdleInhibitorV1 | None
+    ) -> None:
+        if inhibitor is None:
+            return
+        if surface == inhibitor.surface:
+            self._idle_inhibitors_count += 1
+            inhibitor.data = self
+            self.add_listener(inhibitor.destroy_event, self._on_inhibitor_destroy)
+            if self._idle_inhibitors_count == 1:
+                self.core.check_idle_inhibitor()
+
+    @property
+    def is_idle_inhibited(self) -> bool:
+        return self._idle_inhibitors_count > 0
 
     @property
     def floating(self):
@@ -758,6 +787,7 @@ class Internal(base.Internal, Window):
     def __init__(self, core: Core, qtile: Qtile, x: int, y: int, width: int, height: int):
         self.core = core
         self.qtile = qtile
+        self._idle_inhibitors_count: int = 0
         self._mapped: bool = False
         self._wid: int = self.core.new_wid()
         self.x: int = x
@@ -878,12 +908,14 @@ class Static(base.Static, Window):
         qtile: Qtile,
         surface: SurfaceType,
         wid: int,
+        idle_inhibitor_count: int = 0,
     ):
         base.Static.__init__(self)
         self.core = core
         self.qtile = qtile
         self.surface = surface
         self.screen = qtile.current_screen
+        self._idle_inhibitors_count = idle_inhibitor_count
         self.subsurfaces: list[SubSurface] = []
         self._wid = wid
         self._mapped: bool = False
@@ -1168,6 +1200,7 @@ class XWindow(Window):
         self.bordercolor: list[ffi.CData] = [_rgb((0, 0, 0, 1))]
         self._opacity: float = 1.0
         self._outputs: set[Output] = set()
+        self._idle_inhibitors_count: int = 0
 
         self._app_id: str | None = self.surface.wm_class
         self.ftm_handle = core.foreign_toplevel_manager_v1.create_handle()
@@ -1408,7 +1441,13 @@ class XWindow(Window):
             height = self.height
 
         self.finalize_listeners()
-        win = Static(self.core, self.qtile, self.surface, self.wid)
+        win = Static(
+            self.core,
+            self.qtile,
+            self.surface,
+            self.wid,
+            idle_inhibitor_count=self._idle_inhibitors_count,
+        )
         if screen is not None:
             win.screen = self.qtile.screens[screen]
         win.place(x, y, width, height, 0, None)
