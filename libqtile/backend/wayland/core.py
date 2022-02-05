@@ -795,7 +795,7 @@ class Core(base.Core, wlrq.HasListeners):
         and if so inhibits idle
         """
         for win in self.mapped_windows:
-            if isinstance(win, window.Window) and win.is_idle_inhibited:
+            if win.is_idle_inhibited:
                 self.idle.set_enabled(self.seat, False)
                 break
         else:
