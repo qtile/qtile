@@ -166,8 +166,9 @@ class CurrentLayoutIcon(base._TextBox):
         # We allow user to override icon search path
         self.icon_paths.extend(self.custom_icon_paths)
 
-        # We also look in ~/.icons/
+        # We also look in ~/.icons/ and ~/.local/share/icons
         self.icon_paths.append(os.path.expanduser("~/.icons"))
+        self.icon_paths.append(os.path.expanduser("~/.local/share/icons"))
 
         # Default icons are in libqtile/resources/layout-icons.
         # If using default config without any custom icons,
