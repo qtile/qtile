@@ -77,8 +77,8 @@ class Output(HasListeners):
                 wlr_output.set_custom_mode(640, 480, 0)
             wlr_output.commit()
 
-    def finalize(self):
-        self.core.outputs.remove(self)
+    def finalize(self) -> None:
+        self.core.remove_output(self)
         self.finalize_listeners()
 
     @property

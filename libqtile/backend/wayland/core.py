@@ -882,6 +882,12 @@ class Core(base.Core, wlrq.HasListeners):
         assert len(matched) == 1
         return matched[0]
 
+    def remove_output(self, output: Output) -> None:
+        self.outputs.remove(output)
+        if output is self._current_output:
+            self._current_output = self.outputs[0] if self.outputs else None
+            self.stack_windows()
+
     def keysym_from_name(self, name: str) -> int:
         """Get the keysym for a key from its name"""
         return xkb.keysym_from_name(name, case_insensitive=True)
