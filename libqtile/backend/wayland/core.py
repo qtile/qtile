@@ -873,15 +873,6 @@ class Core(base.Core, wlrq.HasListeners):
     def painter(self):
         return wlrq.Painter(self)
 
-    def output_from_wlr_output(self, wlr_output: wlrOutput) -> Output:
-        matched = []
-        for output in self.outputs:
-            if output.wlr_output == wlr_output:
-                matched.append(output)
-
-        assert len(matched) == 1
-        return matched[0]
-
     def remove_output(self, output: Output) -> None:
         self.outputs.remove(output)
         if output is self._current_output:

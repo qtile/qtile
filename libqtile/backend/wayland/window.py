@@ -943,8 +943,12 @@ class Static(base.Static, Window):
             self.desired_height = 0
             if surface.output is None:
                 surface.output = core.output_layout.output_at(core.cursor.x, core.cursor.y)
-            self.output = core.output_from_wlr_output(surface.output)
-            self.screen = self.output.screen
+
+            output = surface.output.data
+            if output:
+                self.output = output
+                self.screen = self.output.screen
+
             self.mapped = True
             self._outputs.add(self.output)
 
