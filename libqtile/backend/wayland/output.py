@@ -247,7 +247,7 @@ class Output(HasListeners):
 
     def organise_layers(self) -> None:
         """Organise the positioning of layer shell surfaces."""
-        logger.info("Output: organising layers")
+        logger.debug("Output: organising layers")
         ow, oh = self.wlr_output.effective_resolution()
 
         for layer in self.layers:
