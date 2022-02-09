@@ -57,7 +57,6 @@ class Output(HasListeners):
         self.output_layout = self.core.output_layout
         self._damage: OutputDamage = OutputDamage(wlr_output)
         self.wallpaper = None
-        self.transform_matrix = wlr_output.transform_matrix
         self.x, self.y = self.output_layout.output_coords(wlr_output)
 
         self.add_listener(wlr_output.destroy_event, self._on_destroy)
@@ -115,13 +114,12 @@ class Output(HasListeners):
                 renderer = self.renderer
                 renderer.begin(wlr_output._ptr.width, wlr_output._ptr.height)
                 scale = wlr_output.scale
+                transform_matrix = wlr_output.transform_matrix
 
                 if self.wallpaper:
                     width, height = wlr_output.effective_resolution()
                     box = Box(0, 0, int(width * scale), int(height * scale))
-                    matrix = Matrix.project_box(
-                        box, wlr_output.transform, 0, wlr_output.transform_matrix
-                    )
+                    matrix = Matrix.project_box(box, 0, 0, transform_matrix)
                     renderer.render_texture_with_matrix(self.wallpaper, matrix, 1)
                 else:
                     renderer.clear([0, 0, 0, 1])
@@ -142,9 +140,7 @@ class Output(HasListeners):
                             int(window.width * scale),
                             int(window.height * scale),
                         )
-                        matrix = Matrix.project_box(
-                            box, wlr_output.transform, 0, wlr_output.transform_matrix
-                        )
+                        matrix = Matrix.project_box(box, 0, 0, transform_matrix)
                         renderer.render_texture_with_matrix(
                             window.texture, matrix, window.opacity
                         )
@@ -155,12 +151,13 @@ class Output(HasListeners):
                             window.x - self.x,  # layout coordinates -> output coordinates
                             window.y - self.y,
                             window.opacity,
-                            wlr_output.scale,
+                            scale,
+                            transform_matrix,
                         )
                         window.surface.for_each_surface(self._render_surface, rdata)
 
                 if self.core.live_dnd:
-                    self._render_dnd_icon(now)
+                    self._render_dnd_icon(self.core.live_dnd, now, scale, transform_matrix)
 
                 wlr_output.render_software_cursors(damage=damage)
                 renderer.end()
@@ -170,12 +167,11 @@ class Output(HasListeners):
         if texture is None:
             return
 
-        now, window, wx, wy, opacity, scale = rdata
+        now, window, wx, wy, opacity, scale, transform_matrix = rdata
         x = (wx + sx) * scale
         y = (wy + sy) * scale
         width = surface.current.width * scale
         height = surface.current.height * scale
-        transform_matrix = self.transform_matrix
 
         if window.borderwidth:
             bw = int(window.borderwidth * scale)
@@ -221,15 +217,14 @@ class Output(HasListeners):
         self.renderer.render_texture_with_matrix(texture, matrix, opacity)
         surface.send_frame_done(now)
 
-    def _render_dnd_icon(self, now: Timespec) -> None:
+    def _render_dnd_icon(
+        self, dnd: Dnd, now: Timespec, scale: float, transform_matrix: Matrix
+    ) -> None:
         """Render the drag-n-drop icon if there is one."""
-        dnd = self.core.live_dnd
-        assert dnd
         icon = dnd.wlr_drag.icon
         if icon.mapped:
             texture = icon.surface.get_texture()
             if texture:
-                scale = self.wlr_output.scale
                 box = Box(
                     int((dnd.x - self.x) * scale),
                     int((dnd.y - self.y) * scale),
@@ -237,7 +232,7 @@ class Output(HasListeners):
                     int(icon.surface.current.height * scale),
                 )
                 inverse = wlrOutput.transform_invert(icon.surface.current.transform)
-                matrix = Matrix.project_box(box, inverse, 0, self.transform_matrix)
+                matrix = Matrix.project_box(box, inverse, 0, transform_matrix)
                 self.renderer.render_texture_with_matrix(texture, matrix, 1)
                 icon.surface.send_frame_done(now)
 
