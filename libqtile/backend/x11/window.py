@@ -1313,6 +1313,7 @@ class Window(_Window, base.Window):
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
                 self._float_state = FloatStates.FLOATING
         elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
+            self.update_fullscreen_wm_state(False)
             if self._float_state == FloatStates.FLOATING:
                 # store last size
                 self._float_width = self.width
@@ -1332,19 +1333,25 @@ class Window(_Window, base.Window):
     def toggle_floating(self):
         self.floating = not self.floating
 
+    def set_wm_state(self, old_state, new_state):
+        if new_state != old_state:
+            self.window.set_property("_NET_WM_STATE", list(new_state))
+
+    def update_fullscreen_wm_state(self, do_full):
+        atom = set([self.qtile.core.conn.atoms["_NET_WM_STATE_FULLSCREEN"]])
+        prev_state = set(self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
+
+        if do_full:
+            self.set_wm_state(prev_state, prev_state | atom)
+        else:
+            self.set_wm_state(prev_state, prev_state - atom)
+
     @property
     def fullscreen(self):
         return self._float_state == FloatStates.FULLSCREEN
 
     @fullscreen.setter
     def fullscreen(self, do_full):
-        atom = set([self.qtile.core.conn.atoms["_NET_WM_STATE_FULLSCREEN"]])
-        prev_state = set(self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
-
-        def set_state(old_state, new_state):
-            if new_state != old_state:
-                self.window.set_property("_NET_WM_STATE", list(new_state))
-
         if do_full:
             screen = self.group.screen or self.qtile.find_closest_screen(self.x, self.y)
 
@@ -1356,13 +1363,9 @@ class Window(_Window, base.Window):
                 screen.height - 2 * bw,
                 new_float_state=FloatStates.FULLSCREEN,
             )
-            set_state(prev_state, prev_state | atom)
             return
 
         if self._float_state == FloatStates.FULLSCREEN:
-            # The order of calling set_state() and then
-            # setting self.floating = False is important
-            set_state(prev_state, prev_state - atom)
             self.floating = False
             return
 
@@ -1475,6 +1478,7 @@ class Window(_Window, base.Window):
         return (self.x, self.y)
 
     def _reconfigure_floating(self, new_float_state=FloatStates.FLOATING):
+        self.update_fullscreen_wm_state(new_float_state == FloatStates.FULLSCREEN)
         if new_float_state == FloatStates.MINIMIZED:
             self.state = IconicState
             self.hide()

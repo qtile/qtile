@@ -423,6 +423,7 @@ class Window(base.Window, HasListeners):
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
                 self._float_state = FloatStates.FLOATING
         elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
+            self.update_fullscreen(False)
             if self._float_state == FloatStates.FLOATING:
                 # store last size
                 self._float_width = self.width
@@ -431,13 +432,16 @@ class Window(base.Window, HasListeners):
             self.group.mark_floating(self, False)
             hook.fire("float_change")
 
+    def update_fullscreen(self, do_full):
+        self.surface.set_fullscreen(do_full)
+        self.ftm_handle.set_fullscreen(do_full)
+
     @property
     def fullscreen(self):
         return self._float_state == FloatStates.FULLSCREEN
 
     @fullscreen.setter
     def fullscreen(self, do_full):
-        self.surface.set_fullscreen(do_full)
         if do_full:
             screen = self.group.screen or self.qtile.find_closest_screen(self.x, self.y)
             bw = self.group.floating_layout.fullscreen_border_width
@@ -450,8 +454,6 @@ class Window(base.Window, HasListeners):
             )
         elif self._float_state == FloatStates.FULLSCREEN:
             self.floating = False
-
-        self.ftm_handle.set_fullscreen(do_full)
 
     @property
     def maximized(self):
@@ -594,6 +596,7 @@ class Window(base.Window, HasListeners):
         self._reconfigure_floating(x, y, w, h, new_float_state)
 
     def _reconfigure_floating(self, x, y, w, h, new_float_state=FloatStates.FLOATING):
+        self.update_fullscreen(new_float_state == FloatStates.FULLSCREEN)
         if new_float_state == FloatStates.MINIMIZED:
             self.hide()
         else:
