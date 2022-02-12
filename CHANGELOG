@@ -6,6 +6,7 @@ Qtile x.x.x, released xxxx-xx-xx:
         - Add MonadThreeCol layout based on XMonad's ThreeColumns.
         - Add `lazy.screen.set_wallpaper` command.
         - Added ability to scale the battery icon's size
+        - Add Spiral layout
     * bugfixes
         - Fix `Systray` crash on `reconfigure_screens`.
         - Fix bug where widgets can't be mirrored in same bar.
