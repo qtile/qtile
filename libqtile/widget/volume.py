@@ -73,7 +73,11 @@ class Volume(base._TextBox):
         ("volume_down_command", None, "Volume down command"),
         ("get_volume_command", None, "Command to get the current volume"),
         ("check_mute_command", None, "Command to check mute status"),
-        ("check_mute_string", "[off]", "String to look for to check muted status in the output of ``check_mute_command``."),
+        (
+            "check_mute_string",
+            "[off]",
+            "String to look for to check muted status in the output of ``check_mute_command``."
+        ),
         (
             "step",
             2,
@@ -194,7 +198,7 @@ class Volume(base._TextBox):
         check_mute = mixer_out
         if self.check_mute_command:
             check_mute = subprocess.getoutput(self.check_mute_command)
-        
+
         if self.check_mute_string in check_mute:
             return -1
 
