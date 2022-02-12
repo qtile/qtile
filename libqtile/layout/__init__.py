@@ -31,6 +31,7 @@ from libqtile.layout.matrix import Matrix
 from libqtile.layout.max import Max
 from libqtile.layout.ratiotile import RatioTile
 from libqtile.layout.slice import Slice
+from libqtile.layout.spiral import Spiral
 from libqtile.layout.stack import Stack
 from libqtile.layout.tile import Tile
 from libqtile.layout.tree import TreeTab
