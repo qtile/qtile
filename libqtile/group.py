@@ -252,9 +252,9 @@ class _Group(CommandObject):
         win.group = self
         if self.qtile.config.auto_fullscreen and win.wants_to_fullscreen:
             win._float_state = FloatStates.FULLSCREEN
-        elif self.floating_layout.match(win):
+        elif self.floating_layout.match(win) and not win.fullscreen:
             win._float_state = FloatStates.FLOATING
-        if win.floating:
+        if win.floating and not win.fullscreen:
             self.floating_layout.add(win)
         if not win.floating or win.fullscreen:
             self.tiled_windows.add(win)
@@ -292,7 +292,8 @@ class _Group(CommandObject):
                 or self.layout.focus_first()
             )
 
-            self.tiled_windows.remove(win)
+            if win in self.tiled_windows:
+                self.tiled_windows.remove(win)
 
         # a notification may not have focus
         if hadfocus:
@@ -317,9 +318,9 @@ class _Group(CommandObject):
                         i.remove(win)
                         if win is self.current_window:
                             i.blur()
-                self.floating_layout.add(win)
-                if win is self.current_window:
-                    self.floating_layout.focus(win)
+                    self.floating_layout.add(win)
+                    if win is self.current_window:
+                        self.floating_layout.focus(win)
         else:
             self.floating_layout.remove(win)
             self.floating_layout.blur()
