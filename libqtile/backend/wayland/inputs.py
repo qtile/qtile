@@ -340,4 +340,4 @@ def configure_device(device: InputDevice, configs: dict[str, InputConfig]) -> No
     elif device.device_type == input_device.InputDeviceType.KEYBOARD:
         _configure_keyboard(device, conf)
     else:
-        logger.warning("Device not configured. Type '{}' not recognised.", device.device_type)
+        logger.warning("Device not configured. Type '%s' not recognised.", device.device_type)
