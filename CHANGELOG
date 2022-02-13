@@ -7,6 +7,7 @@ Qtile x.x.x, released xxxx-xx-xx:
     * bugfixes
         - Fix `Systray` crash on `reconfigure_screens`.
         - Fix bug where widgets can't be mirrored in same bar.
+        - Fix various issues with setting fullscreen windows floating and vice versa.
 
 Qtile 0.20.0, released 2022-01-24:
     * features
