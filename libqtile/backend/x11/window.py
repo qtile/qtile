@@ -1330,6 +1330,11 @@ class Window(_Window, base.Window):
             self.window.set_property("_NET_WM_STATE", list(new_state))
 
     def update_fullscreen_wm_state(self, do_full):
+        # already done updating previously
+        if do_full == self.fullscreen:
+            return
+
+        # update fullscreen _NET_WM_STATE
         atom = set([self.qtile.core.conn.atoms["_NET_WM_STATE_FULLSCREEN"]])
         prev_state = set(self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
 
