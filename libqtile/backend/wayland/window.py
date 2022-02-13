@@ -433,6 +433,11 @@ class Window(base.Window, HasListeners):
             hook.fire("float_change")
 
     def update_fullscreen(self, do_full):
+        # already done updating previously
+        if do_full == self.fullscreen:
+            return
+
+        # update surface fullscreen and ftm
         self.surface.set_fullscreen(do_full)
         self.ftm_handle.set_fullscreen(do_full)
 
