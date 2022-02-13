@@ -866,9 +866,12 @@ class XWindow(Window[xwayland.Surface]):
                 self.core.focus_window(win)
                 return
 
-            # Save the client's desired geometry
-            self._width = self._float_width = self.surface.width
-            self._height = self._float_height = self.surface.height
+            # Save the client's desired geometry. xterm seems to have these set to 1, so
+            # let's ignore 1 or below. The float sizes will be fetched when it is floated.
+            if self.surface.width > 1:
+                self._width = self._float_width = self.surface.width
+            if self.surface.height > 1:
+                self._height = self._float_height = self.surface.height
 
             # Get the client's name and class
             title = self.surface.title
