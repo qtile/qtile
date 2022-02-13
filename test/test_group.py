@@ -69,47 +69,6 @@ def test_window_order(manager):
 
 
 @group_config
-def test_tiled_window_set(manager):
-    # Add windows
-    one = manager.test_window("one")
-    two = manager.test_window("two")
-    tofloat = manager.test_window("tofloat")
-    tofullscreen = manager.test_window("tofullscreen")
-
-    # All windows are tiled in the beginning
-    assert manager.c.group.info()["tiled_windows"] == {"one", "two", "tofloat", "tofullscreen"}
-
-    # Set floating
-    manager.c.group.focus_by_name("tofloat")
-    manager.c.window.toggle_floating()
-
-    # Now it does not contain the window that is floating
-    assert manager.c.group.info()["tiled_windows"] == {"one", "two", "tofullscreen"}
-
-    # Fullscreen windows are still tiled in the group
-    manager.c.group.focus_by_name("tofullscreen")
-    manager.c.window.toggle_fullscreen()
-    assert manager.c.group.info()["tiled_windows"] == {"one", "two", "tofullscreen"}
-
-    # Disabling fullscreen is also the same
-    manager.c.window.toggle_fullscreen()
-    assert manager.c.group.info()["tiled_windows"] == {"one", "two", "tofullscreen"}
-
-    # The floating window is tiled again
-    # The set ontains the floating window again
-    manager.c.group.focus_by_name("tofloat")
-    manager.c.window.toggle_floating()
-    assert manager.c.group.info()["tiled_windows"] == {"one", "two", "tofloat", "tofullscreen"}
-
-    # Removing windows
-    manager.kill_window(one)
-    manager.kill_window(two)
-    manager.kill_window(tofullscreen)
-    manager.kill_window(tofloat)
-    assert manager.c.group.info()["tiled_windows"] == set()
-
-
-@group_config
 def test_toscreen_toggle(manager):
     assert manager.c.group.info()["name"] == "a"  # Start on "a"
     manager.c.group["b"].toscreen()
