@@ -95,8 +95,7 @@ def type_check_config_args(config_file):
     if shutil.which("mypy") is None:
         print("mypy not found, can't type check config file" "install it and try again")
         return
-    ver = sys.version_info
-    if (ver.major < 3) or (ver.major == 3 and ver.minor < 8):
+    if  sys.version_info.minor < 8:  # < 3.8
         print(
             "mypy check not supported for the current version of python, "
             + "please update python to at least 3.8 and try again"
