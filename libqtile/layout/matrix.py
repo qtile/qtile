@@ -24,9 +24,12 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
+
 import math
 
 from libqtile.layout.base import _SimpleLayoutBase
+from libqtile.log_utils import logger
 
 
 class Matrix(_SimpleLayoutBase):
@@ -40,13 +43,19 @@ class Matrix(_SimpleLayoutBase):
         ("border_focus", "#0000ff", "Border colour(s) for the focused window."),
         ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
         ("border_width", 1, "Border width."),
+        ("columns", 2, "Number of columns"),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])"),
     ]
 
-    def __init__(self, columns=2, **config):
+    def __init__(self, _columns: int | None = None, **config):
         _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(Matrix.defaults)
-        self.columns = columns
+        if _columns:
+            logger.warning(
+                "The use of a positional argument in Matrix is deprecated. "
+                "Please update your config to use columns=..."
+            )
+            self.columns = _columns
 
     @property
     def rows(self):
