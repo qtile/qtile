@@ -17,12 +17,16 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from libqtile import bar
 from libqtile.log_utils import logger
 from libqtile.widget import Systray, base
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 class WidgetBox(base._Widget):
@@ -62,14 +66,21 @@ class WidgetBox(base._Widget):
         ),
         ("text_closed", "[<]", "Text when box is closed"),
         ("text_open", "[>]", "Text when box is open"),
-    ]
+        ("widgets", list(), "A list of widgets to include in the box"),
+    ]  # type: list[tuple[str, Any, str]]
 
-    def __init__(self, widgets: list | None = None, **config):
+    def __init__(self, _widgets: list[base._Widget] | None = None, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(WidgetBox.defaults)
         self.box_is_open = False
-        self.widgets = widgets if widgets is not None else []
         self.add_callbacks({"Button1": self.cmd_toggle})
+
+        if _widgets:
+            logger.warning(
+                "The use of a positional argument in WidgetBox is deprecated. "
+                "Please update your config to use widgets=[...]."
+            )
+            self.widgets = _widgets
 
         self.close_button_location: str
         if self.close_button_location not in ["left", "right"]:
