@@ -763,3 +763,26 @@ def test_net_frame_extents(xmanager):
     xmanager.c.window.enable_floating()
     assert_frame(wid, (6, 6, 6, 6))
     xmanager.kill_window(pid)
+
+
+def test_net_wm_state_focused(xmanager):
+    conn = xcbq.Connection(xmanager.display)
+    atom = conn.atoms["_NET_WM_STATE_FOCUSED"]
+
+    def assert_state_focused(wid, has_state):
+        r = conn.conn.core.GetProperty(
+            False, wid, conn.atoms["_NET_WM_STATE"], conn.atoms["ATOM"], 0, (2**32) - 1
+        ).reply()
+        assert (atom in r.value.to_atoms()) == has_state
+
+    one = xmanager.test_window("one")
+    wid1 = xmanager.c.window.info()["id"]
+    assert_state_focused(wid1, True)
+
+    two = xmanager.test_window("two")
+    wid2 = xmanager.c.window.info()["id"]
+    assert_state_focused(wid1, False)
+    assert_state_focused(wid2, True)
+    xmanager.kill_window(two)
+    assert_state_focused(wid1, True)
+    xmanager.kill_window(one)
