@@ -999,15 +999,19 @@ class _Window:
         if warp and self.qtile.config.cursor_warp:
             self.window.warp_pointer(self.width // 2, self.height // 2)
 
+        # update net wm state
+        state = list(self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
+        state_focused = self.qtile.core.conn.atoms["_NET_WM_STATE_FOCUSED"]
+        state.append(state_focused)
+
         if self.urgent:
             self.urgent = False
-
             atom = self.qtile.core.conn.atoms["_NET_WM_STATE_DEMANDS_ATTENTION"]
-            state = list(self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
 
             if atom in state:
                 state.remove(atom)
-                self.window.set_property("_NET_WM_STATE", state)
+
+        self.window.set_property("_NET_WM_STATE", state)
 
         # re-grab button events on the previously focussed window
         old = self.qtile.core._root.get_property("_NET_ACTIVE_WINDOW", "WINDOW", unpack=int)
@@ -1015,6 +1019,10 @@ class _Window:
             old_win = self.qtile.windows_map[old[0]]
             if not isinstance(old_win, base.Internal):
                 old_win._grab_click()
+                state = list(old_win.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
+                if state_focused in state:
+                    state.remove(state_focused)
+                    old_win.window.set_property("_NET_WM_STATE", state)
         self.qtile.core._root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
         self._ungrab_click()
 
