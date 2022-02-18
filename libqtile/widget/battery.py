@@ -330,6 +330,7 @@ class Battery(base.ThreadPoolText):
         ("update_interval", 60, "Seconds between status updates"),
         ("battery", 0, "Which battery should be monitored (battery number or name)"),
         ("notify_below", None, "Send a notification below this battery level."),
+        ("notification_timeout", 10, "Time in seconds to display notification. 0 for no expiry."),
     ]
 
     def __init__(self, **config) -> None:
@@ -345,6 +346,7 @@ class Battery(base.ThreadPoolText):
 
         self._battery = self._load_battery(**config)
         self._has_notified = False
+        self.timeout = int(self.notification_timeout * 1000)
 
     def _configure(self, qtile, bar):
         if not self.low_background:
@@ -378,7 +380,12 @@ class Battery(base.ThreadPoolText):
             percent = int(status.percent * 100)
             if percent < self.notify_below:
                 if not self._has_notified:
-                    send_notification("Warning", "Battery at {0}%".format(percent), urgent=True)
+                    send_notification(
+                        "Warning",
+                        "Battery at {0}%".format(percent),
+                        urgent=True,
+                        timeout=self.timeout,
+                    )
                     self._has_notified = True
             elif self._has_notified:
                 self._has_notified = False
