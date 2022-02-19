@@ -192,8 +192,8 @@ class Core(base.Core, wlrq.HasListeners):
             pointer_constraints_v1.new_constraint_event,
             self._on_new_pointer_constraint,
         )
-        self.pointer_constraints: set[wlrq.PointerConstraint] = set()
-        self.active_pointer_constraint: wlrq.PointerConstraint | None = None
+        self.pointer_constraints: set[window.PointerConstraint] = set()
+        self.active_pointer_constraint: window.PointerConstraint | None = None
         self._relative_pointer_manager_v1 = RelativePointerManagerV1(self.display)
         self.foreign_toplevel_manager_v1 = ForeignToplevelManagerV1.create(self.display)
 
@@ -416,7 +416,7 @@ class Core(base.Core, wlrq.HasListeners):
         self, _listener: Listener, wlr_constraint: PointerConstraintV1
     ) -> None:
         logger.debug("Signal: pointer_constraints new_constraint")
-        constraint = wlrq.PointerConstraint(self, wlr_constraint)
+        constraint = window.PointerConstraint(self, wlr_constraint)
         self.pointer_constraints.add(constraint)
 
         if self.seat.pointer_state.focused_surface == wlr_constraint.surface:
@@ -877,7 +877,7 @@ class Core(base.Core, wlrq.HasListeners):
     def ungrab_pointer(self) -> None:
         """Release grabbed pointer events"""
 
-    def warp_pointer(self, x: int, y: int) -> None:
+    def warp_pointer(self, x: float, y: float) -> None:
         """Warp the pointer to the coordinates in relative to the output layout"""
         self.cursor.warp(WarpMode.LayoutClosest, x, y)
 

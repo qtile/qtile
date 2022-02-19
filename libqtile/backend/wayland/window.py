@@ -34,6 +34,10 @@ from wlroots.util.edges import Edges
 from wlroots.wlr_types import Texture
 from wlroots.wlr_types.idle_inhibit_v1 import IdleInhibitorV1
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1
+from wlroots.wlr_types.pointer_constraints_v1 import (
+    PointerConstraintV1,
+    PointerConstraintV1StateField,
+)
 from wlroots.wlr_types.xdg_shell import XdgPopup, XdgSurface, XdgTopLevelSetFullscreenEvent
 
 from libqtile import config, hook, utils
@@ -234,8 +238,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
         if warp and self.qtile.config.cursor_warp:
             self.core.warp_pointer(
-                self.x + self.width // 2,
-                self.y + self.height // 2,
+                self.x + self.width / 2,
+                self.y + self.height / 2,
             )
 
         if self.group:
@@ -1179,8 +1183,8 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
 
         if warp and self.qtile.config.cursor_warp:
             self.core.warp_pointer(
-                self.x + self.width // 2,
-                self.y + self.height // 2,
+                self.x + self.width / 2,
+                self.y + self.height / 2,
             )
 
         hook.fire("client_focus", self)
@@ -1756,3 +1760,81 @@ class SubSurface(HasListeners):
 
     def _on_new_subsurface(self, _listener: Listener, subsurface: WlrSubSurface) -> None:
         self.subsurfaces.append(SubSurface(self, subsurface))
+
+
+class PointerConstraint(HasListeners):
+    """
+    A small object to listen to signals on `struct wlr_pointer_constraint_v1` instances.
+    """
+
+    rect: Box
+
+    def __init__(self, core: Core, wlr_constraint: PointerConstraintV1):
+        self.core = core
+        self.wlr_constraint = wlr_constraint
+        self._warp_target: tuple[float, float] = (0, 0)
+        self._needs_warp: bool = False
+
+        self.add_listener(wlr_constraint.set_region_event, self._on_set_region)
+        self.add_listener(wlr_constraint.destroy_event, self._on_destroy)
+
+        owner = None
+
+        if core.qtile and core.qtile.windows_map:
+            for win in core.qtile.windows_map.values():
+                if isinstance(win, (XdgWindow, XdgStatic)):
+                    if win.surface.surface == self.wlr_constraint.surface:
+                        owner = win
+                        break
+
+        if owner is None:
+            logger.error("No window found for pointer constraints. Please report.")
+            raise RuntimeError
+
+        self.window: XdgWindow | XdgStatic = owner
+
+    def finalize(self) -> None:
+        if self.core.active_pointer_constraint is self:
+            self.disable()
+        self.finalize_listeners()
+        self.core.pointer_constraints.remove(self)
+
+    def _on_set_region(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: wlr_pointer_constraint_v1 set_region")
+        self._get_region()
+
+    def _on_destroy(self, _listener: Listener, wlr_constraint: PointerConstraintV1) -> None:
+        logger.debug("Signal: wlr_pointer_constraint_v1 destroy")
+        self.finalize()
+
+    def _on_commit(self, _listener: Listener, _data: Any) -> None:
+        if self._needs_warp:
+            # Warp in case the pointer is not inside the rect
+            if not self.rect.contains_point(self.core.cursor.x, self.core.cursor.y):
+                self.core.warp_pointer(*self._warp_target)
+            self._needs_warp = False
+
+    def _get_region(self) -> None:
+        rect = self.wlr_constraint.region.rectangles_as_boxes()[0]
+        rect.x += self.window.x + self.window.borderwidth
+        rect.y += self.window.y + self.window.borderwidth
+        self._warp_target = (rect.x + rect.width / 2, rect.y + rect.height / 2)
+        self.rect = rect
+        self._needs_warp = True
+
+    def enable(self) -> None:
+        logger.debug("Enabling pointer constraints.")
+        self.core.active_pointer_constraint = self
+        self._get_region()
+        self.add_listener(self.wlr_constraint.surface.commit_event, self._on_commit)
+        self.wlr_constraint.send_activated()
+
+    def disable(self) -> None:
+        logger.debug("Disabling pointer constraints.")
+
+        if self.wlr_constraint.current.committed & PointerConstraintV1StateField.CURSOR_HINT:
+            x, y = self.wlr_constraint.current.cursor_hint
+            self.core.warp_pointer(x + self.window.x, y + self.window.y)
+
+        self.core.active_pointer_constraint = None
+        self.wlr_constraint.send_deactivated()
