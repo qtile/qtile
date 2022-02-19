@@ -317,7 +317,7 @@ class Output(HasListeners):
                         self.core.qtile.reserve_space(to_reserve, self.screen)
                         win.reserved_space = to_reserve
 
-                win.place(x + self.x, y + self.y, ww, wh, 0, None)
+                win.place(int(x + self.x), int(y + self.y), int(ww), int(wh), 0, None)
 
         self.core.stack_windows()
 
