@@ -21,8 +21,9 @@
 from __future__ import annotations
 
 import os
-import typing
+from typing import TYPE_CHECKING
 
+from pywayland.protocol.wayland.wl_output import WlOutput
 from wlroots.util.box import Box
 from wlroots.util.clock import Timespec
 from wlroots.util.region import PixmanRegion32
@@ -35,13 +36,18 @@ from libqtile.backend.wayland.window import Internal, LayerStatic
 from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
-if typing.TYPE_CHECKING:
-    from wlroots.wlr_types import Surface
+if TYPE_CHECKING:
+    from typing import Any, Sequence
+
+    from pywayland.server import Listener
+    from wlroots.wlr_types import Surface, Texture
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.window import WindowType
     from libqtile.backend.wayland.wlrq import Dnd
     from libqtile.config import Screen
+
+no_transform = WlOutput.transform.normal
 
 
 class Output(HasListeners):
@@ -52,7 +58,7 @@ class Output(HasListeners):
         wlr_output.data = self
         self.output_layout = self.core.output_layout
         self._damage: OutputDamage = OutputDamage(wlr_output)
-        self.wallpaper = None
+        self.wallpaper: Texture | None = None
         self.x, self.y = self.output_layout.output_coords(wlr_output)
 
         self.add_listener(wlr_output.destroy_event, self._on_destroy)
@@ -88,11 +94,11 @@ class Output(HasListeners):
                         return screen
         return self.core.qtile.current_screen
 
-    def _on_destroy(self, _listener, _data):
+    def _on_destroy(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: output destroy")
         self.finalize()
 
-    def _on_frame(self, _listener, _data):
+    def _on_frame(self, _listener: Listener, _data: Any) -> None:
         with PixmanRegion32() as damage:
             try:
                 if not self._damage.attach_render(damage):
@@ -119,15 +125,15 @@ class Output(HasListeners):
                     if self.wallpaper:
                         width, height = wlr_output.effective_resolution()
                         box = Box(0, 0, int(width * scale), int(height * scale))
-                        matrix = Matrix.project_box(box, 0, 0, transform_matrix)
+                        matrix = Matrix.project_box(box, no_transform, 0, transform_matrix)
                         renderer.render_texture_with_matrix(self.wallpaper, matrix, 1)
                     else:
                         renderer.clear([0, 0, 0, 1])
 
-                    mapped = (
+                    mapped: Sequence[WindowType] = (
                         self.layers[LayerShellV1Layer.BACKGROUND]
                         + self.layers[LayerShellV1Layer.BOTTOM]
-                        + self.core.mapped_windows
+                        + self.core.mapped_windows  # type: ignore
                         + self.layers[LayerShellV1Layer.TOP]
                         + self.layers[LayerShellV1Layer.OVERLAY]
                     )
@@ -140,7 +146,7 @@ class Output(HasListeners):
                                 int(window.width * scale),
                                 int(window.height * scale),
                             )
-                            matrix = Matrix.project_box(box, 0, 0, transform_matrix)
+                            matrix = Matrix.project_box(box, no_transform, 0, transform_matrix)
                             renderer.render_texture_with_matrix(
                                 window.texture, matrix, window.opacity
                             )
