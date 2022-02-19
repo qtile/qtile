@@ -98,3 +98,26 @@ def test_no_scale(manager_nospawn, minimal_conf_noscreen):
 
     info = bar.info()
     assert info["widgets"][0]["width"] == 24
+
+
+def test_no_image(manager_nospawn, minimal_conf_noscreen, logger):
+    img = widget.Image()
+
+    config = minimal_conf_noscreen
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([img], 40))]
+
+    manager_nospawn.start(config)
+
+    assert "Image filename not set!" in logger.text
+
+
+def test_invalid_path(manager_nospawn, minimal_conf_noscreen, logger):
+    filename = "/made/up/file.png"
+    img = widget.Image(filename=filename)
+
+    config = minimal_conf_noscreen
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([img], 40))]
+
+    manager_nospawn.start(config)
+
+    assert f"Image does not exist: {filename}" in logger.text
