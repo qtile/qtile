@@ -49,7 +49,7 @@ class IPCError(Exception):
     pass
 
 
-def find_sockfile(display: str = None):
+def find_sockfile(display: str | None = None):
     """
     Finds the appropriate socket file for the given display.
 

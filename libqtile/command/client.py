@@ -52,7 +52,10 @@ class CommandClient:
     """The object that resolves the commands"""
 
     def __init__(
-        self, command: CommandInterface = None, *, current_node: CommandGraphNode | None = None
+        self,
+        command: CommandInterface | None = None,
+        *,
+        current_node: CommandGraphNode | None = None,
     ) -> None:
         """A client that resolves calls through the command object interface
 
@@ -166,7 +169,7 @@ class InteractiveCommandClient:
     """
 
     def __init__(
-        self, command: CommandInterface = None, *, current_node: GraphType = None
+        self, command: CommandInterface | None = None, *, current_node: GraphType | None = None
     ) -> None:
         """An interactive client that resolves calls through the gives client
 

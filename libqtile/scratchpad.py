@@ -216,7 +216,11 @@ class ScratchPad(group._Group):
     """
 
     def __init__(
-        self, name="scratchpad", dropdowns: list[config.DropDown] = None, label="", single=False
+        self,
+        name="scratchpad",
+        dropdowns: list[config.DropDown] | None = None,
+        label="",
+        single=False,
     ):
         group._Group.__init__(self, name, label=label)
         self._dropdownconfig = {dd.name: dd for dd in dropdowns} if dropdowns is not None else {}
