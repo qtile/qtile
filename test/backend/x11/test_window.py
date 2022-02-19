@@ -26,25 +26,22 @@ manager_config = pytest.mark.parametrize("xmanager", [ManagerConfig], indirect=T
 
 
 @manager_config
-def test_kill_via_message(xmanager):
+def test_kill_via_message(xmanager, conn):
     xmanager.test_window("one")
     window_info = xmanager.c.window.info()
-    conn = xcbq.Connection(xmanager.display)
     data = xcffib.xproto.ClientMessageData.synthetic([0, 0, 0, 0, 0], "IIIII")
     ev = xcffib.xproto.ClientMessageEvent.synthetic(
         32, window_info["id"], conn.atoms["_NET_CLOSE_WINDOW"], data
     )
     conn.default_screen.root.send_event(ev, mask=xcffib.xproto.EventMask.SubstructureRedirect)
     conn.xsync()
-    conn.finalize()
     assert_window_died(xmanager.c, window_info)
 
 
 @manager_config
-def test_change_state_via_message(xmanager):
+def test_change_state_via_message(xmanager, conn):
     xmanager.test_window("one")
     window_info = xmanager.c.window.info()
-    conn = xcbq.Connection(xmanager.display)
 
     data = xcffib.xproto.ClientMessageData.synthetic([window.IconicState, 0, 0, 0, 0], "IIIII")
     ev = xcffib.xproto.ClientMessageEvent.synthetic(
@@ -62,14 +59,11 @@ def test_change_state_via_message(xmanager):
     conn.xsync()
     assert not xmanager.c.window.info()["minimized"]
 
-    conn.finalize()
-
 
 @manager_config
-def test_default_float_hints(xmanager):
+def test_default_float_hints(xmanager, conn):
     xmanager.c.next_layout()
     w = None
-    conn = xcbq.Connection(xmanager.display)
 
     def size_hints():
         nonlocal w
@@ -81,14 +75,13 @@ def test_default_float_hints(xmanager):
         hints[5] = hints[6] = hints[7] = hints[8] = 10
         w.set_property("WM_NORMAL_HINTS", hints, type="WM_SIZE_HINTS", format=32)
         w.map()
-        conn.conn.flush()
+        conn.xsync()
 
     try:
         xmanager.create_window(size_hints)
         assert xmanager.c.window.info()["floating"] is True
     finally:
         w.kill_client()
-        conn.finalize()
 
     w = None
     conn = xcbq.Connection(xmanager.display)
@@ -126,9 +119,8 @@ def test_default_float_hints(xmanager):
 
 
 @manager_config
-def test_user_position(xmanager):
+def test_user_position(xmanager, conn):
     w = None
-    conn = xcbq.Connection(xmanager.display)
 
     def user_position_window():
         nonlocal w
@@ -151,7 +143,6 @@ def test_user_position(xmanager):
         assert xmanager.c.window.info()["height"] == 10
     finally:
         w.kill_client()
-        conn.finalize()
 
 
 def wait_for_focus_events(conn):
@@ -174,9 +165,8 @@ def wait_for_focus_events(conn):
 
 
 @manager_config
-def test_only_one_focus(xmanager):
+def test_only_one_focus(xmanager, conn):
     w = None
-    conn = xcbq.Connection(xmanager.display)
 
     def both_wm_take_focus_and_input_hint():
         nonlocal w
@@ -213,13 +203,11 @@ def test_only_one_focus(xmanager):
         assert got_focus_in
     finally:
         w.kill_client()
-        conn.finalize()
 
 
 @manager_config
-def test_only_wm_protocols_focus(xmanager):
+def test_only_wm_protocols_focus(xmanager, conn):
     w = None
-    conn = xcbq.Connection(xmanager.display)
 
     def only_wm_protocols_focus():
         nonlocal w
@@ -255,13 +243,11 @@ def test_only_wm_protocols_focus(xmanager):
         assert not got_focus_in
     finally:
         w.kill_client()
-        conn.finalize()
 
 
 @manager_config
-def test_only_input_hint_focus(xmanager):
+def test_only_input_hint_focus(xmanager, conn):
     w = None
-    conn = xcbq.Connection(xmanager.display)
 
     def only_input_hint():
         nonlocal w
@@ -287,13 +273,11 @@ def test_only_input_hint_focus(xmanager):
         assert got_focus_in
     finally:
         w.kill_client()
-        conn.finalize()
 
 
 @manager_config
-def test_no_focus(xmanager):
+def test_no_focus(xmanager, conn):
     w = None
-    conn = xcbq.Connection(xmanager.display)
 
     def no_focus():
         nonlocal w
@@ -316,13 +300,11 @@ def test_no_focus(xmanager):
         assert not got_focus_in
     finally:
         w.kill_client()
-        conn.finalize()
 
 
 @manager_config
-def test_hints_setting_unsetting(xmanager):
+def test_hints_setting_unsetting(xmanager, conn):
     w = None
-    conn = xcbq.Connection(xmanager.display)
 
     def no_input_hint():
         nonlocal w
@@ -363,14 +345,12 @@ def test_hints_setting_unsetting(xmanager):
 
     finally:
         w.kill_client()
-        conn.finalize()
 
 
 @dualmonitor
 @manager_config
-def test_strut_handling(xmanager):
+def test_strut_handling(xmanager, conn):
     w = []
-    conn = xcbq.Connection(xmanager.display)
 
     def has_struts():
         nonlocal w
@@ -441,7 +421,7 @@ def test_strut_handling(xmanager):
     finally:
         for win in w:
             win.kill_client()
-        conn.finalize()
+        conn.conn.flush()
 
     test_initial_state()
 
@@ -474,8 +454,7 @@ class CursorWarpConfig(ManagerConfig):
     [CursorWarpConfig],
     indirect=True,
 )
-def test_cursor_warp(xmanager):
-    conn = xcbq.Connection(xmanager.display)
+def test_cursor_warp(xmanager, conn):
     root = conn.default_screen.root.wid
 
     assert xmanager.c.screen.info()["index"] == 0
@@ -526,9 +505,8 @@ def test_click_focus_screen(xmanager):
 
 
 @bare_config
-def test_min_size_hint(xmanager):
+def test_min_size_hint(xmanager, conn):
     w = None
-    conn = xcbq.Connection(xmanager.display)
 
     def size_hints():
         nonlocal w
@@ -557,13 +535,11 @@ def test_min_size_hint(xmanager):
         assert xmanager.c.window.info()["height"] == 200
     finally:
         w.kill_client()
-        conn.finalize()
 
 
 @bare_config
-def test_min_size_hint_no_flag(xmanager):
+def test_min_size_hint_no_flag(xmanager, conn):
     w = None
-    conn = xcbq.Connection(xmanager.display)
 
     def size_hints():
         nonlocal w
@@ -591,13 +567,11 @@ def test_min_size_hint_no_flag(xmanager):
         assert xmanager.c.window.info()["height"] == 200
     finally:
         w.kill_client()
-        conn.finalize()
 
 
 @bare_config
-def test_max_size_hint(xmanager):
+def test_max_size_hint(xmanager, conn):
     w = None
-    conn = xcbq.Connection(xmanager.display)
 
     def size_hints():
         nonlocal w
@@ -626,13 +600,11 @@ def test_max_size_hint(xmanager):
         assert xmanager.c.window.info()["height"] == 100
     finally:
         w.kill_client()
-        conn.finalize()
 
 
 @bare_config
-def test_max_size_hint_no_flag(xmanager):
+def test_max_size_hint_no_flag(xmanager, conn):
     w = None
-    conn = xcbq.Connection(xmanager.display)
 
     def size_hints():
         nonlocal w
@@ -660,13 +632,11 @@ def test_max_size_hint_no_flag(xmanager):
         assert xmanager.c.window.info()["height"] == 200
     finally:
         w.kill_client()
-        conn.finalize()
 
 
 @bare_config
-def test_both_size_hints(xmanager):
+def test_both_size_hints(xmanager, conn):
     w = None
-    conn = xcbq.Connection(xmanager.display)
 
     def size_hints():
         nonlocal w
@@ -695,7 +665,6 @@ def test_both_size_hints(xmanager):
         assert xmanager.c.window.info()["height"] == 100
     finally:
         w.kill_client()
-        conn.finalize()
 
 
 @manager_config
@@ -746,9 +715,7 @@ class NetFrameExtentsConfig(BareConfig):
 
 
 @pytest.mark.parametrize("xmanager", [NetFrameExtentsConfig], indirect=True)
-def test_net_frame_extents(xmanager):
-    conn = xcbq.Connection(xmanager.display)
-
+def test_net_frame_extents(xmanager, conn):
     def assert_frame(wid, frame):
         r = conn.conn.core.GetProperty(
             False, wid, conn.atoms["_NET_FRAME_EXTENTS"], conn.atoms["CARDINAL"], 0, (2**32) - 1
@@ -765,8 +732,7 @@ def test_net_frame_extents(xmanager):
     xmanager.kill_window(pid)
 
 
-def test_net_wm_state_focused(xmanager):
-    conn = xcbq.Connection(xmanager.display)
+def test_net_wm_state_focused(xmanager, conn):
     atom = conn.atoms["_NET_WM_STATE_FOCUSED"]
 
     def assert_state_focused(wid, has_state):

@@ -170,6 +170,13 @@ def xmanager(request, xephyr):
         yield manager
 
 
+@pytest.fixture(scope="function")
+def conn(xmanager):
+    conn = Connection(xmanager.display)
+    yield conn
+    conn.finalize()
+
+
 class XBackend(Backend):
     name = "x11"
 
