@@ -45,6 +45,7 @@ MOCK_MODULES = [
     'psutil',
     'pywayland',
     'pywayland.protocol.wayland',
+    'pywayland.protocol.wayland.wl_output',
     'pywayland.server',
     'wlroots',
     'wlroots.helper',
