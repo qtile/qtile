@@ -129,12 +129,19 @@ class _IPC:
     def pack(msg: Any, *, is_json: bool = False) -> bytes:
         """Pack the object into a message to pass"""
         if is_json:
-            json_obj = json.dumps(msg)
+            json_obj = json.dumps(msg, default=_IPC._json_encoder)
             return json_obj.encode()
 
         msg_bytes = marshal.dumps(msg)
         size = struct.pack(HDRFORMAT, len(msg_bytes))
         return size + msg_bytes
+
+    @staticmethod
+    def _json_encoder(field: Any) -> Any:
+        """Convert non-serializable types to ones understood by stdlib json module"""
+        if isinstance(field, set):
+            return list(field)
+        raise ValueError(f"Tried to JSON serialize unsupported type {type(field)}: {field}")
 
 
 class Client:
