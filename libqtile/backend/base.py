@@ -803,7 +803,7 @@ class Drawer:
     def new_ctx(self):
         return pangocffi.patch_cairo_context(cairocffi.Context(self.surface))
 
-    def set_source_rgb(self, colour: ColorsType, ctx: cairocffi.Context = None):
+    def set_source_rgb(self, colour: ColorsType, ctx: cairocffi.Context | None = None):
         # If an alternate context is not provided then we draw to the
         # drawer's default context
         if ctx is None:

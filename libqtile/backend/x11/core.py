@@ -69,7 +69,7 @@ class ExistingWMException(Exception):
 
 
 class Core(base.Core):
-    def __init__(self, display_name: str = None) -> None:
+    def __init__(self, display_name: str | None = None) -> None:
         """Setup the X11 core backend
 
         :param display_name:

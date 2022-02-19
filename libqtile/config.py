@@ -25,9 +25,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-#
-# required for lazy type annotations
-# can be removed when python 3.7...3.9 support is dropped (see PEP 563)
 from __future__ import annotations
 
 import contextlib
@@ -519,11 +516,11 @@ class Group:
     def __init__(
         self,
         name: str,
-        matches: list[Match] = None,
+        matches: list[Match] | None = None,
         exclusive=False,
         spawn: str | list[str] | None = None,
-        layout: str = None,
-        layouts: list = None,
+        layout: str | None = None,
+        layouts: list | None = None,
         persist=True,
         init=True,
         layout_opts=None,
@@ -644,7 +641,7 @@ class Match:
         wm_type=None,
         wm_instance_class=None,
         net_wm_pid=None,
-        func: Callable[[base.WindowType], bool] = None,
+        func: Callable[[base.WindowType], bool] | None = None,
         wid=None,
     ):
         self._rules = {}

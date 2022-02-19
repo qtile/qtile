@@ -675,7 +675,7 @@ class Core(base.Core, wlrq.HasListeners):
         return max(self.qtile.windows_map.keys(), default=0) + 1
 
     def focus_window(
-        self, win: window.WindowType, surface: Surface = None, enter: bool = True
+        self, win: window.WindowType, surface: Surface | None = None, enter: bool = True
     ) -> None:
         if self.seat.destroyed:
             return

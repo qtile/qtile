@@ -17,6 +17,9 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
+from __future__ import annotations
+
 from libqtile import bar
 from libqtile.log_utils import logger
 from libqtile.widget import Systray, base
@@ -61,7 +64,7 @@ class WidgetBox(base._Widget):
         ("text_open", "[>]", "Text when box is open"),
     ]
 
-    def __init__(self, widgets: list = None, **config):
+    def __init__(self, widgets: list | None = None, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(WidgetBox.defaults)
         self.box_is_open = False
