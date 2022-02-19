@@ -10,6 +10,7 @@ from libqtile.backend import base
 if TYPE_CHECKING:
     from libqtile.backend.wayland.window import Internal
     from libqtile.core.manager import Qtile
+    from libqtile.utils import ColorsType
 
 
 class Drawer(base.Drawer):
@@ -39,7 +40,7 @@ class Drawer(base.Drawer):
         offsety: int = 0,
         width: int | None = None,
         height: int | None = None,
-    ):
+    ) -> None:
         if offsetx > self._win.width:  # type: ignore
             return
 
@@ -79,7 +80,7 @@ class Drawer(base.Drawer):
         )
         self._win.damage()  # type: ignore
 
-    def clear(self, colour):
+    def clear(self, colour: ColorsType) -> None:
         # Draw background straight to ImageSurface
         ctx = cairocffi.Context(self._source)
         ctx.save()
