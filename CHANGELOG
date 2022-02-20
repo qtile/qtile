@@ -8,6 +8,9 @@ Qtile x.x.x, released xxxx-xx-xx:
         - Fix `Systray` crash on `reconfigure_screens`.
         - Fix bug where widgets can't be mirrored in same bar.
         - Fix various issues with setting fullscreen windows floating and vice versa.
+        - Fix a bug where a .when() check for lazy functions errors out when matching
+          on focused windows when none is focused. By default we do not match on focused windows,
+          to change this set `if_no_focused` to True.
 
 Qtile 0.20.0, released 2022-01-24:
     * features
