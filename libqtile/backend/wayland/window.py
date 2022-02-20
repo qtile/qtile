@@ -216,7 +216,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         # We don't have reference to the inhibitor, but it doesn't really
         # matter we only need to keep count of how many inhibitors there are
         self._idle_inhibitors_count -= 1
-        listener.remove()
+        self._listeners.remove(listener)
         if self._idle_inhibitors_count == 0:
             self.core.check_idle_inhibitor()
 
@@ -1239,7 +1239,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         # We don't have reference to the inhibitor, but it doesn't really
         # matter we only need to keep count of how many inhibitors there are
         self._idle_inhibitors_count -= 1
-        listener.remove()
+        self._listeners.remove(listener)
         if self._idle_inhibitors_count == 0:
             self.core.check_idle_inhibitor()
 
