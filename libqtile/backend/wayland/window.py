@@ -915,7 +915,6 @@ class XWindow(Window[xwayland.Surface]):
             # Add event listeners
             self.add_listener(self.surface.surface.commit_event, self._on_commit)
             self.add_listener(self.surface.request_fullscreen_event, self._on_request_fullscreen)
-            self.add_listener(self.surface.request_configure_event, self._on_request_configure)
             self.add_listener(self.surface.set_title_event, self._on_set_title)
             self.add_listener(self.surface.set_class_event, self._on_set_class)
             self.add_listener(
@@ -957,13 +956,6 @@ class XWindow(Window[xwayland.Surface]):
         logger.debug("Signal: xwindow request_fullscreen")
         if self.qtile.config.auto_fullscreen:
             self.fullscreen = not self.fullscreen
-
-    def _on_request_configure(
-        self, _listener: Listener, event: xwayland.SurfaceConfigureEvent
-    ) -> None:
-        logger.debug("Signal: xwindow request_configure")
-        self.surface.configure(event.x, event.y, event.width, event.height)
-        self.floating = True
 
     def _on_set_title(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xwindow set_title")
