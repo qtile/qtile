@@ -475,6 +475,10 @@ class Screen(CommandObject):
         group = self.qtile.groups_map.get(group_name)
         self.toggle_group(group, warp=warp)
 
+    def cmd_set_wallpaper(self, path, mode=None):
+        """Set the wallpaper to the given file."""
+        self.paint(path, mode)
+
 
 class Group:
     """Represents a "dynamic" group
