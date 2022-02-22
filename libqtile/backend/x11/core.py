@@ -37,6 +37,7 @@ from libqtile import config, hook, utils
 from libqtile.backend import base
 from libqtile.backend.x11 import window, xcbq
 from libqtile.backend.x11.xkeysyms import keysyms
+from libqtile.core.lifecycle import lifecycle
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 
@@ -322,7 +323,11 @@ class Core(base.Core):
                 pass
             except Exception:
                 error_code = self.conn.conn.has_error()
-                if error_code:
+                if lifecycle.behavior == lifecycle.behavior.TERMINATE:
+                    # We're already shutting down so we don't need to do anything here
+                    # and flooding the log with ConnectionExceptions isn't helpful
+                    return
+                elif error_code:
                     error_string = xcbq.XCB_CONN_ERRORS[error_code]
                     logger.exception(
                         "Shutting down due to X connection error {error_string} ({error_code})".format(
