@@ -215,9 +215,9 @@ class Core(base.Core, wlrq.HasListeners):
         return "wayland"
 
     def finalize(self) -> None:
-        for kb in self.keyboards:
+        for kb in self.keyboards.copy():
             kb.finalize()
-        for out in self.outputs:
+        for out in self.outputs.copy():
             out.finalize()
 
         self.finalize_listeners()
