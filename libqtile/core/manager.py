@@ -88,6 +88,7 @@ class Qtile(CommandObject):
 
         self.windows_map: dict[int, base.WindowType] = {}
         self.widgets_map: dict[str, _Widget] = {}
+        self.renamed_widgets: list[str]
         self.groups_map: dict[str, _Group] = {}
         self.groups: list[_Group] = []
 
@@ -546,29 +547,12 @@ class Qtile(CommandObject):
         # Find unoccupied name by appending numeric suffixes
         name = w.name
         i = 0
-        bars = set()
-        screens = set()
         while name in self.widgets_map:
-            bars.add(self.widgets_map[name].bar)
-            screens.add(self.widgets_map[name].bar.screen)
-
             i += 1
             name = f"{w.name}_{i}"
 
         if name != w.name:
-            msg = (
-                f"Widget was renamed to {name} in qtile.widgets_map. "
-                f"To bind commands, rename the widget or use lazy.widget['{name}']."
-            )
-
-            if w.bar in bars or w.bar.screen in screens:
-                msg += (
-                    " A duplicate widget was also found in the same bar or screen. "
-                    "If you wish to access the widget via lazy.bar[position].widget or lazy.screen.widget, "
-                    "you should rename the widget in your config."
-                )
-
-            logger.warning(msg)
+            self.renamed_widgets.append(name)
 
         self.widgets_map[name] = w
 

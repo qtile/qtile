@@ -294,6 +294,7 @@ class Bar(Gap, configurable.Configurable):
         self.drawer.clear(self.background)
 
         self.crashed_widgets = []
+        self.qtile.renamed_widgets = []
         if self._configured:
             for i in self.widgets:
                 self._configure_widget(i)
@@ -308,6 +309,15 @@ class Bar(Gap, configurable.Configurable):
                 success = self._configure_widget(i)
                 if success:
                     qtile.register_widget(i)
+
+        # Alert the user that we've renamed some widgets
+        if self.qtile.renamed_widgets:
+            logger.info(
+                "The following widgets were renamed in qtile.widgets_map: %s "
+                "To bind commands, rename the widget or use lazy.widget[new_name].",
+                ", ".join(self.qtile.renamed_widgets),
+            )
+            self.qtile.renamed_widgets.clear()
 
         self._remove_crashed_widgets()
         self.draw()
