@@ -1276,20 +1276,12 @@ def test_widget_duplicate_warnings(logger, manager):
     records = logger.get_records("setup")
 
     # We need to filter out other potential log messages here
-    records = [r for r in records if r.msg.startswith("Widget was renamed")]
+    records = [r for r in records if r.msg.startswith("The following widgets")]
 
-    # Check that there's a warning about each renamed widget
-    assert all(
-        [
-            any(
-                [
-                    f"Widget was renamed to {w}" in r.msg
-                    for w in ["prompt_1", "prompt_2", "groupbox_1", "groupbox_2", "foo_1"]
-                ]
-            )
-            for r in records
-        ]
-    )
+    assert len(records) == 1
 
-    # Check these were warnings
-    assert all([r.levelno == logging.WARNING for r in records])
+    for w in ["prompt_1", "prompt_2", "groupbox_1", "groupbox_2", "foo_1"]:
+        assert w in records[0].msg
+
+    # Check this message level was info
+    assert all([r.levelno == logging.INFO for r in records])
