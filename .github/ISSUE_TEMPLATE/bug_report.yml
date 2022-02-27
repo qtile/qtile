@@ -21,6 +21,7 @@ body:
       render: markdown
   - type: checkboxes
     attributes:
+      label: "Required:"
       options:
         - label: I have searched past issues to see if this bug has already been reported.
           required: true
