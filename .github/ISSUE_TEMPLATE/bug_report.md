@@ -8,8 +8,8 @@ assignees: ''
 ---
 
 **Metadata (please complete the following information)**
-- Your Qtile version (`qtile --version`).
-- [ ] I have searched past issues to see if this bug has already been reported.
+Version: e.g. v0.20.0 run `qtile --version` to get the version
+- [ ] Not a duplicate: I have searched past issues to see if this bug has already been reported.
 
 **Describe the bug**
 I wanted to do X, but Y happened, and I expected Z. I think this is a bug.
