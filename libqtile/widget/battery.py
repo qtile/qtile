@@ -455,6 +455,7 @@ class BatteryIcon(base._Widget):
         ("battery", 0, "Which battery should be monitored"),
         ("update_interval", 60, "Seconds between status updates"),
         ("theme_path", default_icon_path(), "Path of the icons"),
+        ("scale", 1, "Scale factor relative to the bar height.  " "Defaults to 1"),
     ]  # type: list[tuple[str, Any, str]]
 
     icon_names = (
@@ -480,6 +481,7 @@ class BatteryIcon(base._Widget):
 
         base._Widget.__init__(self, length=bar.CALCULATED, **config)
         self.add_defaults(self.defaults)
+        self.scale = 1.0 / self.scale
 
         self.length_type = bar.STATIC
         self.length = 0
@@ -510,7 +512,8 @@ class BatteryIcon(base._Widget):
 
     def setup_images(self) -> None:
         d_imgs = images.Loader(self.theme_path)(*self.icon_names)
-        new_height = self.bar.height - self.image_padding
+
+        new_height = self.bar.height * self.scale - self.image_padding
         for key, img in d_imgs.items():
             img.resize(height=new_height)
             if img.width > self.length:
