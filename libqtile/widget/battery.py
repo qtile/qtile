@@ -481,7 +481,7 @@ class BatteryIcon(base._Widget):
 
         base._Widget.__init__(self, length=bar.CALCULATED, **config)
         self.add_defaults(self.defaults)
-        self.scale = 1.0 / self.scale
+        self.scale = 1.0 / self.scale  # type: float
 
         self.length_type = bar.STATIC
         self.length = 0
