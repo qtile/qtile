@@ -99,6 +99,20 @@ class Config:
                 value = getattr(self, key, default[key])
             setattr(self, key, value)
 
+    def _reload_config_submodules(self, path: Path) -> None:
+        """Reloads python files from same folder as config file."""
+        folder = path.parent
+        for module in sys.modules.copy().values():
+
+            # Skip built-ins and anything with no filepath.
+            if hasattr(module, "__file__") and module.__file__ is not None:
+                subpath = Path(module.__file__)
+
+                # Check if the module is in the config folder or subfolder
+                # if so, reload it
+                if folder in subpath.parents:
+                    importlib.reload(module)
+
     def load(self):
         if not self.file_path:
             return
@@ -108,6 +122,7 @@ class Config:
         sys.path.insert(0, path.parent.as_posix())
 
         if name in sys.modules:
+            self._reload_config_submodules(path)
             config = importlib.reload(sys.modules[name])
         else:
             config = importlib.import_module(name)
