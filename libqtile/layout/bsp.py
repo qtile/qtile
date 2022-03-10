@@ -152,6 +152,7 @@ class Bsp(Layout):
         ("border_focus", "#881111", "Border colour(s) for the focused window."),
         ("border_normal", "#220000", "Border colour(s) for un-focused windows."),
         ("border_width", 2, "Border width."),
+        ("border_on_single", False, "Draw border when there is only one window."),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])."),
         ("ratio", 1.6, "Width/height ratio that defines the partition direction."),
         ("grow_amount", 10, "Amount by which to grow a window/column."),
@@ -207,7 +208,7 @@ class Bsp(Layout):
         self.root.calc_geom(screen_rect.x, screen_rect.y, screen_rect.width, screen_rect.height)
         node = self.get_node(client)
         color = self.border_focus if client.has_focus else self.border_normal
-        border = 0 if node is self.root else self.border_width
+        border = 0 if node is self.root and not self.border_on_single else self.border_width
         if node is not None:
             client.place(
                 node.x,
