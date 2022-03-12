@@ -1063,6 +1063,15 @@ class MonadThreeCol(MonadTall):
 
     defaults = [
         ("main_centered", True, "Place the main pane at the center of the screen"),
+        (
+            "new_client_position",
+            "top",
+            "Place new windows: "
+            " after_current - after the active window."
+            " before_current - before the active window,"
+            " top - at the top of the stack,"
+            " bottom - at the bottom of the stack,",
+        ),
     ]
 
     __column = namedtuple("__column", "name count start end")
@@ -1070,7 +1079,6 @@ class MonadThreeCol(MonadTall):
     def __init__(self, **config):
         MonadTall.__init__(self, **config)
         self.add_defaults(MonadThreeCol.defaults)
-        self.new_client_position = "top"
 
     def _configure_specific(self, client, screen_rect, border_color, index):
         """Specific configuration for xmonad three columns."""
