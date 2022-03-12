@@ -26,7 +26,7 @@ from functools import partial
 from typing import Callable, List, Optional
 
 import cairocffi
-from dbus_next import InterfaceNotFoundError, InvalidBusNameError
+from dbus_next import InterfaceNotFoundError, InvalidBusNameError, InvalidObjectPathError
 from dbus_next.aio import MessageBus
 from dbus_next.constants import PropertyAccess
 from dbus_next.errors import DBusError
@@ -94,7 +94,24 @@ class StatusNotifierItem:  # noqa: E303
 
     async def start(self):
         # Create a proxy object connecting for the item.
-        introspection = await self.bus.introspect(self.service, self.path)
+        # Some apps provide the incorrect path to the StatusNotifier object
+        # We can try falling back to the default if that fails.
+        # See: https://github.com/qtile/qtile/issues/3418
+        # Note: this loop will run a maximum of two times and returns False
+        # if the no object is available.
+        found_path = False
+
+        while not found_path:
+            try:
+                introspection = await self.bus.introspect(self.service, self.path)
+                found_path = True
+            except InvalidObjectPathError:
+                logger.info(f"Cannot find {self.path} path on {self.service}.")
+                if self.path == STATUSNOTIFIER_PATH:
+                    return False
+
+                # Try the default ('/StatusNotifierItem')
+                self.path = STATUSNOTIFIER_PATH
 
         try:
             obj = self.bus.get_proxy_object(self.service, self.path, introspection)
