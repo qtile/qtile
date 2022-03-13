@@ -31,6 +31,7 @@ import contextlib
 import os.path
 import sys
 from typing import TYPE_CHECKING
+import re
 
 from libqtile import configurable, hook, utils
 from libqtile.backend import base
@@ -728,6 +729,14 @@ class Match:
             return False
         return True
 
+    def find_matching(self, clients):
+        """finds the first matching client from a list of clients"""
+        for client in clients:
+            if self.compare(client):
+                return client
+
+        return None
+
     def map(self, callback, clients):
         """Apply callback to each client that matches this Match"""
         for c in clients:
@@ -736,6 +745,23 @@ class Match:
 
     def __repr__(self):
         return "<Match %s>" % self._rules
+
+    @staticmethod
+    def _resolve_config_field_predicate(config, field_name):
+        regex_field_name = field_name + "_regex"
+        if regex_field_name in config:
+            return re.compile(config[regex_field_name])
+        else:
+            return config.get(field_name, None)
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(
+            title=cls._resolve_config_field_predicate(config, "wm_name"),
+            wm_class=cls._resolve_config_field_predicate(config, "wm_class"),
+            role=cls._resolve_config_field_predicate(config, "wm_role"),
+            wm_type=cls._resolve_config_field_predicate(config, "wm_type"),
+        )
 
 
 class Rule:

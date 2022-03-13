@@ -16,7 +16,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from libqtile.layout.base import Layout, _ClientList
+from libqtile.layout.serialize import SerializedLayout, serialize_window
 from libqtile.log_utils import logger
+from libqtile.config import Match
 
 
 class _Column(_ClientList):
@@ -516,3 +518,69 @@ class Columns(Layout):
         src = self.current
         dst = src + 1 if src < len(self.columns) - 1 else 0
         self.swap_column(src, dst)
+
+    def cmd_save_layout(self, name):
+        serialized_layout = SerializedLayout(self.name)
+        serialized_layout["columns"] = serialized_columns = []
+
+        for column in self.columns:
+            serialized_windows = []
+            serialized_column = {"width": column.width, "windows": serialized_windows}
+            serialized_columns.append(serialized_column)
+
+            for window in column.clients:
+                serialized_window = serialize_window(
+                    window, column is self.cc and window is column.cw
+                )
+                serialized_windows.append(serialized_window)
+
+        serialized_layout.save_to(name)
+
+    def cmd_load_layout(self, name):
+        serialized_layout = SerializedLayout.load_from(name, check_layout_name=self.name)
+        if serialized_layout is None:
+            return
+
+        windows = self.get_windows()
+        self.columns = []
+
+        focus_window = None
+
+        try:
+            # layout windows according to config
+            for (col_index, serialized_column) in enumerate(serialized_layout["columns"]):
+                column = None
+
+                for serialized_window in serialized_column["windows"]:
+                    window = Match.from_config(serialized_window).find_matching(windows)
+                    if window is None:
+                        logger.warning(
+                            f"Window not found when loading layout {name}: {serialized_window}"
+                        )
+                        continue
+
+                    if serialized_window.get("focus", False):
+                        focus_window = window
+
+                    # defer creating columns to after matching a window to avoid having potentially empty columns
+                    column = column or self.add_column()
+                    column.width = serialized_column["width"]
+
+                    windows.remove(window)
+                    column.add(window)
+
+        except Exception as e:
+            logger.error(f"Failed to load layout {name}")
+            logger.exception(e)
+
+        # put unmatched windows in the first column
+        for window in windows:
+            if len(self.columns) == 0:
+                self.add_column()
+            self.columns[0].add(window)
+
+        self.group.layout_all()
+
+        # restore focus
+        if focus_window is not None:
+            self.group.focus(focus_window)
