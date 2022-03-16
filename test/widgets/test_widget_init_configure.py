@@ -27,7 +27,7 @@ import libqtile.config
 import libqtile.confreader
 import libqtile.layout
 import libqtile.widget as widgets
-from libqtile.widget.base import ORIENTATION_VERTICAL
+from libqtile.widget.base import ORIENTATION_BOTH, ORIENTATION_VERTICAL
 from libqtile.widget.clock import Clock
 from libqtile.widget.crashme import _CrashMe
 from test.widgets.conftest import FakeBar
@@ -107,6 +107,40 @@ def test_widget_init_config(manager_nospawn, minimal_conf_noscreen, widget_class
     manager_nospawn.start(config)
 
     i = manager_nospawn.c.bar["top"].info()
+
+    # Check widget is registered by checking names of widgets in bar
+    assert i["widgets"][0]["name"] == widget.name
+
+
+@pytest.mark.parametrize(
+    "widget_class,kwargs",
+    [
+        param
+        for param in parameters
+        if param[0]().orientations in [ORIENTATION_BOTH, ORIENTATION_VERTICAL]
+    ],
+)
+def test_widget_init_config_vertical_bar(
+    manager_nospawn, minimal_conf_noscreen, widget_class, kwargs
+):
+    if widget_class in exclusive_backend:
+        if exclusive_backend[widget_class] != manager_nospawn.backend.name:
+            pytest.skip("Unsupported backend")
+
+    widget = widget_class(**kwargs)
+    widget.draw = no_op
+
+    # If widget inits ok then kwargs will now be attributes
+    for k, v in kwargs.items():
+        assert getattr(widget, k) == v
+
+    # Test configuration
+    config = minimal_conf_noscreen
+    config.screens = [libqtile.config.Screen(left=libqtile.bar.Bar([widget], 10))]
+
+    manager_nospawn.start(config)
+
+    i = manager_nospawn.c.bar["left"].info()
 
     # Check widget is registered by checking names of widgets in bar
     assert i["widgets"][0]["name"] == widget.name
