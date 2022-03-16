@@ -40,4 +40,3 @@ repository can be used, see :ref:`installing-from-source`:
 .. code-block:: bash
 
    pip install qtile
-
