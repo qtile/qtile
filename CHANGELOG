@@ -8,6 +8,7 @@ Qtile x.x.x, released xxxx-xx-xx:
         - Added ability to scale the battery icon's size
         - Add Spiral layout
         - Add `toggle` argument to `Window.togroup` with the same functionality as in `Group.toscreen`.
+        - Added `margin_on_single` and `border_on_single` to Bsp layout
     * bugfixes
         - Fix `Systray` crash on `reconfigure_screens`.
         - Fix bug where widgets can't be mirrored in same bar.
