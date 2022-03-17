@@ -361,8 +361,11 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
         if message.sender == message.body[0]:
             return False
 
-        self._items.append(message.sender)
-        self.on_item_added(message.sender, message.body[0])
+        if message.sender not in self._items:
+            self._items.append(message.sender)
+            if self.on_item_added is not None:
+                self.on_item_added(message.sender, message.body[0])
+            self.StatusNotifierItemRegistered(message.sender)
         return False
 
     async def _setup_listeners(self):
@@ -397,6 +400,8 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
     def RegisterStatusNotifierItem(self, service: "s"):  # type: ignore  # noqa: F821, N802
         if service not in self._items:
             self._items.append(service)
+            if self.on_item_added is not None:
+                self.on_item_added(service)
             self.StatusNotifierItemRegistered(service)
 
     @method()
@@ -421,8 +426,6 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
 
     @signal()
     def StatusNotifierItemRegistered(self, service) -> "s":  # type: ignore  # noqa: F821, N802
-        if self.on_item_added is not None:
-            self.on_item_added(service)
         return service
 
     @signal()
