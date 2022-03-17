@@ -15,6 +15,7 @@ Qtile x.x.x, released xxxx-xx-xx:
           to change this set `if_no_focused` to True.
         - Widget with duplicate names will be automatically renamed by appending numeric suffixes
         - Fix resizing of wallpaper when screen scale changes (X11)
+        - Two small bugfixes for `StatusNotifier` - better handling of Ayatana indicators
 
 Qtile 0.20.0, released 2022-01-24:
     * features
