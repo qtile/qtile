@@ -349,6 +349,9 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
         Ayatana indicators seem to register themselves by passing their object
         path rather than the service providing that object. We therefore need
         to identify the sender of the message in order to register the service.
+
+        Returning False so senders receieve a reply (returning True prevents
+        reply being sent)
         """
         if message.member != "RegisterStatusNotifierItem":
             return False
@@ -360,7 +363,7 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
 
         self._items.append(message.sender)
         self.on_item_added(message.sender, message.body[0])
-        return True
+        return False
 
     async def _setup_listeners(self):
         """
