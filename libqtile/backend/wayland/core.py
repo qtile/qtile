@@ -145,6 +145,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.output_manager = OutputManagerV1(self.display)
         self.add_listener(self.output_manager.apply_event, self._on_output_manager_apply)
         self.add_listener(self.output_manager.test_event, self._on_output_manager_test)
+        self._blanked_outputs: set[Output] = set()
 
         # set up cursor
         self.cursor = Cursor(self.output_layout)
@@ -444,10 +445,28 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_output_power_manager_set_mode(
         self, _listener: Listener, mode: OutputPowerV1SetModeEvent
     ) -> None:
+        """
+        Blank/unblank outputs via the output power management protocol.
+
+        `_blanked_outputs` keeps track of those that were blanked because we don't want
+        to unblank outputs that were already disabled due to not being part of the
+        user-configured layout.
+        """
         logger.debug("Signal: output_power_manager set_mode_event")
         wlr_output = mode.output
-        wlr_output.enable(enable=True if mode.mode == OutputPowerManagementV1Mode.ON else False)
-        wlr_output.commit()
+        assert wlr_output.data
+
+        if mode.mode == OutputPowerManagementV1Mode.ON:
+            if wlr_output.data in self._blanked_outputs:
+                wlr_output.enable(enable=True)
+                wlr_output.commit()
+                self._blanked_outputs.remove(wlr_output.data)
+
+        else:
+            if wlr_output.enabled:
+                wlr_output.enable(enable=False)
+                wlr_output.commit()
+                self._blanked_outputs.add(wlr_output.data)
 
     def _on_new_layer_surface(self, _listener: Listener, layer_surface: LayerSurfaceV1) -> None:
         logger.debug("Signal: layer_shell new_surface_event")
