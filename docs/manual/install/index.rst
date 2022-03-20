@@ -95,7 +95,7 @@ With the dependencies in place, you can now install qtile:
 
 .. code-block:: bash
 
-    git clone git://github.com/qtile/qtile.git
+    git clone https://github.com/qtile/qtile.git
     cd qtile
     pip install .
 
