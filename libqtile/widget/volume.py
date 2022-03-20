@@ -72,7 +72,12 @@ class Volume(base._TextBox):
         ("volume_app", None, "App to control volume"),
         ("volume_up_command", None, "Volume up command"),
         ("volume_down_command", None, "Volume down command"),
-        ("get_volume_command", None, "Command to get the current volume"),
+        (
+            "get_volume_command",
+            None, 
+            "Command to get the current volume."
+            "The expected output should include 1-3 numbers and a ``%`` sign.",
+        ),
         ("check_mute_command", None, "Command to check mute status"),
         (
             "check_mute_string",
