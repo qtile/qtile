@@ -43,6 +43,7 @@ __all__ = [
 
 re_vol = re.compile(r"(\d?\d?\d?)%")
 
+
 class Volume(base._TextBox):
     """Widget that display and change volume
 
@@ -76,7 +77,7 @@ class Volume(base._TextBox):
         (
             "check_mute_string",
             "[off]",
-            "String to look for to check muted status in the output of ``check_mute_command``."
+            "String to look for to check muted status in the output of ``check_mute_command``.",
         ),
         (
             "step",
