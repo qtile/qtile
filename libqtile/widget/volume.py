@@ -74,7 +74,7 @@ class Volume(base._TextBox):
         ("volume_down_command", None, "Volume down command"),
         (
             "get_volume_command",
-            None, 
+            None,
             "Command to get the current volume."
             "The expected output should include 1-3 numbers and a ``%`` sign.",
         ),
