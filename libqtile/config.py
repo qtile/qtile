@@ -31,7 +31,6 @@ import contextlib
 import os.path
 import sys
 from typing import TYPE_CHECKING
-import re
 
 from libqtile import configurable, hook, utils
 from libqtile.backend import base
@@ -745,23 +744,6 @@ class Match:
 
     def __repr__(self):
         return "<Match %s>" % self._rules
-
-    @staticmethod
-    def _resolve_config_field_predicate(config, field_name):
-        regex_field_name = field_name + "_regex"
-        if regex_field_name in config:
-            return re.compile(config[regex_field_name])
-        else:
-            return config.get(field_name, None)
-
-    @classmethod
-    def from_config(cls, config):
-        return cls(
-            title=cls._resolve_config_field_predicate(config, "wm_name"),
-            wm_class=cls._resolve_config_field_predicate(config, "wm_class"),
-            role=cls._resolve_config_field_predicate(config, "wm_role"),
-            wm_type=cls._resolve_config_field_predicate(config, "wm_type"),
-        )
 
 
 class Rule:

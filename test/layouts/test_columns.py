@@ -168,3 +168,51 @@ def test_columns_margins_single(manager):
     assert info["y"] == 10
     assert info["width"] == WIDTH - 60
     assert info["height"] == HEIGHT - 40
+
+
+def get_column_width(col_index, manager):
+    return int(manager.c.layout.eval(f"self.columns[{col_index}].width")[1])
+
+
+@columns_config
+def test_columns_serdes(manager):
+    # setup windows
+    manager.test_window("1")
+    manager.test_window("2")
+    manager.test_window("3")
+    manager.test_window("4")
+
+    manager.c.layout.shuffle_left()
+    manager.c.layout.shuffle_left()
+    manager.c.layout.grow_right()
+    manager.c.layout.grow_down()
+    manager.c.layout.toggle_split()
+
+    # serialize layout
+    data = manager.c.layout.eval("self.serialize()")[1]
+
+    # change layout
+    manager.c.layout.toggle_split()
+    manager.c.layout.grow_up()
+    manager.c.layout.grow_left()
+    manager.c.layout.shuffle_right()
+    manager.c.layout.shuffle_right()
+    manager.c.layout.left()
+
+    # deserialize layout
+    manager.c.layout.eval(f"self.deserialize({data})")
+
+    # check
+    columns = manager.c.layout.info()["columns"]
+
+    assert columns[0]["clients"] == ["4", "1"]
+    assert columns[0]["heights"] == [110, 90]
+    assert columns[1]["clients"] == ["2"]
+    assert columns[2]["clients"] == ["3"]
+
+    assert get_column_width(0, manager) == 110
+    assert get_column_width(1, manager) == 90
+
+    assert not columns[0]["split"]
+
+    assert_focused(manager, "4")

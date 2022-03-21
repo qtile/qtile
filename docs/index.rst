@@ -63,5 +63,6 @@ Tips & Tricks
 
     manual/howto/widget
     manual/howto/git
+    manual/howto/save-load-layout
 
 * :ref:`genindex`

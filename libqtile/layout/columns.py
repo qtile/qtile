@@ -15,10 +15,19 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
+
+from typing import List, Optional, Tuple, TypedDict, cast
+
+from libqtile.backend.base import WindowType
 from libqtile.layout.base import Layout, _ClientList
-from libqtile.layout.serialize import SerializedLayout, serialize_window
+from libqtile.layout.serialize import (
+    LayoutSerDes,
+    SerializedLayout,
+    SerializedWindow,
+    WindowSerDes,
+)
 from libqtile.log_utils import logger
-from libqtile.config import Match
 
 
 class _Column(_ClientList):
@@ -519,68 +528,147 @@ class Columns(Layout):
         dst = src + 1 if src < len(self.columns) - 1 else 0
         self.swap_column(src, dst)
 
-    def cmd_save_layout(self, name):
-        serialized_layout = SerializedLayout(self.name)
-        serialized_layout["columns"] = serialized_columns = []
+    def serialize(self) -> SerializedLayout:
+        return _ColumnsLayoutSerDes.serialize(self)
 
-        for column in self.columns:
-            serialized_windows = []
-            serialized_column = {"width": column.width, "windows": serialized_windows}
-            serialized_columns.append(serialized_column)
+    def cmd_save_layout(self, name: str) -> None:
+        LayoutSerDes.save_to(self.serialize(), name)
 
-            for window in column.clients:
-                serialized_window = serialize_window(
-                    window, column is self.cc and window is column.cw
-                )
-                serialized_windows.append(serialized_window)
+    def deserialize(self, serialized_layout: _SerializedColumnsLayout) -> None:
+        _ColumnsLayoutSerDes.deserialize_to(serialized_layout, self)
 
-        serialized_layout.save_to(name)
+    def cmd_load_layout(self, name: str) -> None:
+        self.deserialize(
+            cast(
+                _SerializedColumnsLayout,
+                LayoutSerDes.load_from(name, check_layout_name=self.name),
+            )
+        )
 
-    def cmd_load_layout(self, name):
-        serialized_layout = SerializedLayout.load_from(name, check_layout_name=self.name)
-        if serialized_layout is None:
-            return
 
-        windows = self.get_windows()
-        self.columns = []
+class _SerializedColumn(TypedDict):
+    split: bool
+    insert_position: int
+    width: float
+    windows: List[SerializedWindow]
+    heights: List[int]
+    current: int
 
+
+class _ColumnSerDes:
+    @staticmethod
+    def serialize(column: _Column, focus_window: WindowType) -> _SerializedColumn:
+        return _SerializedColumn(
+            split=column.split,
+            insert_position=column.insert_position,
+            width=column.width,
+            windows=[
+                WindowSerDes.serialize(window, focus=focus_window is window)
+                for window in column.clients
+            ],
+            heights=[column.heights[window] for window in column.clients],
+            current=column.current,  # type: ignore
+        )
+
+    @staticmethod
+    def deserialize(
+        serialized_column: _SerializedColumn,
+        windows: List[WindowType],
+    ) -> Tuple[Optional[_Column], Optional[WindowType]]:
+        """
+        returns (restored_column, focused_window)
+        restored_column can be None if there's no matching windows for the column
+        focused_window can be None if restored_column is None, or if column does not have focus window
+        """
+
+        column_windows_heights = []
         focus_window = None
 
+        for i in range(len(serialized_column["windows"])):
+            serialized_window = serialized_column["windows"][i]
+            height = serialized_column["heights"][i]
+
+            window = WindowSerDes.to_match(serialized_window).find_matching(windows)
+            if window is None:
+                logger.warning(f"Window not found when loading column: {serialized_window}")
+                continue
+
+            if serialized_window.get("focus", False):
+                focus_window = window
+
+            windows.remove(window)
+            column_windows_heights.append((window, height))
+
+        if len(column_windows_heights) != 0:
+            insert_position = serialized_column["insert_position"]
+
+            column = _Column(serialized_column["split"], insert_position)
+            column.width = serialized_column["width"]
+
+            if insert_position == 0:
+                column_windows_heights = column_windows_heights[::-1]
+
+            for (window, height) in column_windows_heights:
+                column.add(window)
+                column.heights[window] = height
+
+            current = serialized_column["current"]
+            if current < len(column_windows_heights):
+                column.focus(column.clients[current])
+
+            return column, focus_window
+        else:
+            return None, None
+
+
+class _SerializedColumnsLayout(SerializedLayout):
+    columns: List[_SerializedColumn]
+
+
+class _ColumnsLayoutSerDes:
+    @staticmethod
+    def serialize(columns_layout: Columns) -> _SerializedColumnsLayout:
+        return _SerializedColumnsLayout(
+            name=columns_layout.name,
+            columns=[
+                _ColumnSerDes.serialize(column, columns_layout.cc.cw)
+                for column in columns_layout.columns
+            ],
+        )
+
+    @staticmethod
+    def deserialize_to(
+        serialized_layout: _SerializedColumnsLayout, columns_layout: Columns
+    ) -> None:
+        windows = columns_layout.get_windows()
+        columns_layout.columns = columns = []
+
+        focus_window = None if len(windows) == 0 else windows[0]
+
         try:
-            # layout windows according to config
-            for (col_index, serialized_column) in enumerate(serialized_layout["columns"]):
-                column = None
+            for serialized_column in serialized_layout["columns"]:
+                column, column_focus_window = _ColumnSerDes.deserialize(
+                    serialized_column, windows
+                )
 
-                for serialized_window in serialized_column["windows"]:
-                    window = Match.from_config(serialized_window).find_matching(windows)
-                    if window is None:
-                        logger.warning(
-                            f"Window not found when loading layout {name}: {serialized_window}"
-                        )
-                        continue
+                if column is not None:
+                    columns.append(column)
 
-                    if serialized_window.get("focus", False):
-                        focus_window = window
-
-                    # defer creating columns to after matching a window to avoid having potentially empty columns
-                    column = column or self.add_column()
-                    column.width = serialized_column["width"]
-
-                    windows.remove(window)
-                    column.add(window)
+                if column_focus_window is not None:
+                    focus_window = column_focus_window
 
         except Exception as e:
-            logger.error(f"Failed to load layout {name}")
+            logger.error(f"Failed to restore layout {serialized_layout}")
             logger.exception(e)
 
         # put unmatched windows in the first column
         for window in windows:
-            if len(self.columns) == 0:
-                self.add_column()
-            self.columns[0].add(window)
+            if len(columns_layout.columns) == 0:
+                columns_layout.add_column()
+            columns_layout.columns[0].add(window)  # type: ignore
 
-        self.group.layout_all()
+        columns_layout.group.layout_all()
 
         # restore focus
         if focus_window is not None:
-            self.group.focus(focus_window)
+            columns_layout.group.focus(focus_window)
