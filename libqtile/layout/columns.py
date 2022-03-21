@@ -17,7 +17,8 @@
 # SOFTWARE.
 from __future__ import annotations
 
-from typing import List, Optional, Tuple, TypedDict, cast
+import sys
+from typing import List, Optional, Tuple, cast
 
 from libqtile.backend.base import WindowType
 from libqtile.layout.base import Layout, _ClientList
@@ -28,6 +29,11 @@ from libqtile.layout.serialize import (
     WindowSerDes,
 )
 from libqtile.log_utils import logger
+
+if sys.version_info < (3, 8):
+    from typing_extensions import TypedDict
+else:
+    from typing import TypedDict
 
 
 class _Column(_ClientList):

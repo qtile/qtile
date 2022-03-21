@@ -3,12 +3,18 @@ from __future__ import annotations
 import json
 import os.path
 import re
+import sys
 from os import getenv
 from pathlib import Path
-from typing import Optional, Pattern, TypedDict, cast
+from typing import Optional, Pattern, cast
 
 from libqtile.backend.base import Window, WindowType
 from libqtile.config import Match
+
+if sys.version_info < (3, 8):
+    from typing_extensions import TypedDict
+else:
+    from typing import TypedDict
 
 
 class SerializedLayout(TypedDict):

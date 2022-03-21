@@ -69,7 +69,7 @@ def test_save_serialized_layout(serialized_layout, name):
         LayoutSerDes.save_to(serialized_layout, name)
 
         saved_json = json.loads(
-            "\n".join([call.args[0] for call in mock_file().write.call_args_list])
+            "\n".join([call[0][0] for call in mock_file().write.call_args_list])
         )
         assert serialized_layout == saved_json
 
@@ -121,7 +121,7 @@ def test_serialized_window_to_match(mock_match):
 
     assert mock_match.call_count == 1
 
-    call_kwargs = mock_match.call_args.kwargs
+    call_kwargs = mock_match.call_args[1]
     assert call_kwargs["title"] == kwargs["title"]
     assert call_kwargs.get("wm_instance_class", None) is None
     assert call_kwargs["wm_class"] == re.compile(kwargs["wm_class_regex"])
