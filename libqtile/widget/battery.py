@@ -29,6 +29,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import os
 import platform
 import re
@@ -37,13 +39,18 @@ from abc import ABC, abstractclassmethod
 from enum import Enum, unique
 from pathlib import Path
 from subprocess import CalledProcessError, check_output
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple
+from typing import TYPE_CHECKING, NamedTuple
 
 from libqtile import bar, configurable, images
 from libqtile.images import Img
 from libqtile.log_utils import logger
-from libqtile.utils import ColorsType, send_notification
+from libqtile.utils import send_notification
 from libqtile.widget import base
+
+if TYPE_CHECKING:
+    from typing import Any
+
+    from libqtile.utils import ColorsType
 
 
 @unique
@@ -185,7 +192,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         ),
     ]
 
-    filenames = {}  # type: Dict
+    filenames = {}  # type: dict
 
     BAT_DIR = "/sys/class/power_supply"
 
@@ -214,7 +221,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
                 return bats[0]
         return "BAT0"
 
-    def _load_file(self, name) -> Optional[Tuple[str, str]]:
+    def _load_file(self, name) -> tuple[str, str] | None:
         path = os.path.join(self.BAT_DIR, self.battery, name)
         if "energy" in name or "power" in name:
             value_type = "uW"
@@ -237,7 +244,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
             # See https://github.com/qtile/qtile/pull/1516 for rationale
             return "-1", "N/A"
 
-    def _get_param(self, name) -> Tuple[str, str]:
+    def _get_param(self, name) -> tuple[str, str]:
         if name in self.filenames and self.filenames[name]:
             result = self._load_file(self.filenames[name])
             if result is not None:
@@ -305,8 +312,8 @@ class _LinuxBattery(_Battery, configurable.Configurable):
 class Battery(base.ThreadPoolText):
     """A text-based battery monitoring widget currently supporting FreeBSD"""
 
-    background: Optional[ColorsType]
-    low_background: Optional[ColorsType]
+    background: ColorsType | None
+    low_background: ColorsType | None
 
     defaults = [
         ("charge_char", "^", "Character to indicate the battery is charging"),
@@ -323,6 +330,7 @@ class Battery(base.ThreadPoolText):
         ("update_interval", 60, "Seconds between status updates"),
         ("battery", 0, "Which battery should be monitored (battery number or name)"),
         ("notify_below", None, "Send a notification below this battery level."),
+        ("notification_timeout", 10, "Time in seconds to display notification. 0 for no expiry."),
     ]
 
     def __init__(self, **config) -> None:
@@ -338,10 +346,14 @@ class Battery(base.ThreadPoolText):
 
         self._battery = self._load_battery(**config)
         self._has_notified = False
+        self.timeout = int(self.notification_timeout * 1000)
 
+    def _configure(self, qtile, bar):
         if not self.low_background:
             self.low_background = self.background
         self.normal_background = self.background
+
+        base.ThreadPoolText._configure(self, qtile, bar)
 
     @staticmethod
     def _load_battery(**config):
@@ -368,7 +380,12 @@ class Battery(base.ThreadPoolText):
             percent = int(status.percent * 100)
             if percent < self.notify_below:
                 if not self._has_notified:
-                    send_notification("Warning", "Battery at {0}%".format(percent), urgent=True)
+                    send_notification(
+                        "Warning",
+                        "Battery at {0}%".format(percent),
+                        urgent=True,
+                        timeout=self.timeout,
+                    )
                     self._has_notified = True
             elif self._has_notified:
                 self._has_notified = False
@@ -438,7 +455,8 @@ class BatteryIcon(base._Widget):
         ("battery", 0, "Which battery should be monitored"),
         ("update_interval", 60, "Seconds between status updates"),
         ("theme_path", default_icon_path(), "Path of the icons"),
-    ]  # type: List[Tuple[str, Any, str]]
+        ("scale", 1, "Scale factor relative to the bar height.  " "Defaults to 1"),
+    ]  # type: list[tuple[str, Any, str]]
 
     icon_names = (
         "battery-missing",
@@ -463,11 +481,12 @@ class BatteryIcon(base._Widget):
 
         base._Widget.__init__(self, length=bar.CALCULATED, **config)
         self.add_defaults(self.defaults)
+        self.scale = 1.0 / self.scale  # type: float
 
         self.length_type = bar.STATIC
         self.length = 0
         self.image_padding = 0
-        self.surfaces = {}  # type: Dict[str, Img]
+        self.surfaces = {}  # type: dict[str, Img]
         self.current_icon = "battery-missing"
 
         self._battery = self._load_battery(**config)
@@ -493,7 +512,8 @@ class BatteryIcon(base._Widget):
 
     def setup_images(self) -> None:
         d_imgs = images.Loader(self.theme_path)(*self.icon_names)
-        new_height = self.bar.height - self.image_padding
+
+        new_height = self.bar.height * self.scale - self.image_padding
         for key, img in d_imgs.items():
             img.resize(height=new_height)
             if img.width > self.length:

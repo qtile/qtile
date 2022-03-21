@@ -16,3 +16,5 @@ class CairoError(Exception):
     def __init__(self, message: Any, status: Any) -> None: ...
 Error = CairoError
 STATUS_TO_EXCEPTION: Any
+
+OPERATOR_SOURCE: Any

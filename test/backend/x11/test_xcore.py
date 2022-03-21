@@ -1,7 +1,7 @@
 import pytest
 
 from libqtile.backend import get_core
-from libqtile.backend.x11 import core, xcbq
+from libqtile.backend.x11 import core
 from test.test_manager import ManagerConfig
 
 
@@ -25,9 +25,7 @@ def test_color_pixel(xmanager):
 
 
 @pytest.mark.parametrize("xmanager", [ManagerConfig], indirect=True)
-def test_net_client_list(xmanager):
-    conn = xcbq.Connection(xmanager.display)
-
+def test_net_client_list(xmanager, conn):
     def assert_clients(number):
         clients = conn.default_screen.root.get_property("_NET_CLIENT_LIST", unpack=int)
         assert len(clients) == number

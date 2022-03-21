@@ -45,6 +45,7 @@ MOCK_MODULES = [
     'psutil',
     'pywayland',
     'pywayland.protocol.wayland',
+    'pywayland.protocol.wayland.wl_output',
     'pywayland.server',
     'wlroots',
     'wlroots.helper',
@@ -56,10 +57,13 @@ MOCK_MODULES = [
     'wlroots.wlr_types',
     'wlroots.wlr_types.cursor',
     'wlroots.wlr_types.foreign_toplevel_management_v1',
+    'wlroots.wlr_types.idle',
+    'wlroots.wlr_types.idle_inhibit_v1',
     'wlroots.wlr_types.keyboard',
     'wlroots.wlr_types.layer_shell_v1',
     'wlroots.wlr_types.output_management_v1',
     'wlroots.wlr_types.pointer_constraints_v1',
+    'wlroots.wlr_types.output_power_management_v1',
     'wlroots.wlr_types.server_decoration',
     'wlroots.wlr_types.virtual_keyboard_v1',
     'wlroots.wlr_types.xdg_shell',
@@ -200,6 +204,8 @@ html_favicon = '_static/favicon.ico'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+html_extra_path = ['_static/screenshots']
+
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
 #html_last_updated_fmt = '%b %d, %Y'
@@ -332,3 +338,4 @@ graphviz_dot_args = ['-Lg']
 # A workaround for the responsive tables always having annoying scrollbars.
 def setup(app):
     app.add_css_file("no_scrollbars.css")
+    app.add_css_file("split_code.css")

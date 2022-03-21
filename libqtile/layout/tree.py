@@ -32,7 +32,7 @@
 from libqtile import hook
 from libqtile.layout.base import Layout
 
-to_superscript = dict(zip(map(ord, u"0123456789"), map(ord, u"⁰¹²³⁴⁵⁶⁷⁸⁹")))
+to_superscript = dict(zip(map(ord, "0123456789"), map(ord, "⁰¹²³⁴⁵⁶⁷⁸⁹")))
 
 
 class TreeNode:
@@ -475,6 +475,8 @@ class TreeTab(Layout):
             client.hide()
 
     def finalize(self):
+        if self._panel:
+            self._panel.kill()
         Layout.finalize(self)
         if self._drawer is not None:
             self._drawer.finalize()

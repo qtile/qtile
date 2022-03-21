@@ -26,7 +26,21 @@ from libqtile.widget import base
 
 
 class CheckUpdates(base.ThreadPoolText):
-    """Shows number of pending updates in different unix systems"""
+    """
+    Shows number of pending updates in different unix systems.
+
+    .. note::
+
+        It is common for package managers to return a non-zero code when there are no
+        updates. As a result, the widget will treat *any* error as if there are no updates.
+        If you are using a custom commmand/script, you should therefore ensure that it
+        returns zero when it completes if you wish to see the output of your command.
+
+        In addition, as no errors are recorded to the log, if the widget is showing no
+        updates and you believe that to be incorrect, you should run the appropriate
+        command in a terminal to view any error messages.
+
+    """
 
     defaults = [
         ("distro", "Arch", "Name of your distribution"),

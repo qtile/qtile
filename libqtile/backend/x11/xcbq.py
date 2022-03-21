@@ -34,9 +34,11 @@
     A minimal EWMH-aware OO layer over xcffib. This is NOT intended to be
     complete - it only implements the subset of functionalty needed by qtile.
 """
+
+from __future__ import annotations
+
 import functools
 import operator
-import typing
 from itertools import chain, repeat
 
 import cairocffi
@@ -164,6 +166,7 @@ PropertyMap = {
     "_NET_NUMBER_OF_DESKTOPS": ("CARDINAL", 32),
     "_NET_CURRENT_DESKTOP": ("CARDINAL", 32),
     "_NET_DESKTOP_NAMES": ("UTF8_STRING", 8),
+    "_NET_DESKTOP_VIEWPORT": ("CARDINAL", 32),
     "_NET_WORKAREA": ("CARDINAL", 32),
     "_NET_ACTIVE_WINDOW": ("WINDOW", 32),
     "_NET_WM_DESKTOP": ("CARDINAL", 32),
@@ -192,6 +195,7 @@ SUPPORTED_ATOMS = [
     "_NET_CLIENT_LIST",
     "_NET_CLIENT_LIST_STACKING",
     "_NET_CURRENT_DESKTOP",
+    "_NET_DESKTOP_VIEWPORT",
     "_NET_ACTIVE_WINDOW",
     "_NET_SUPPORTING_WM_CHECK",
     # From http://standards.freedesktop.org/wm-spec/latest/ar01s05.html
@@ -682,6 +686,8 @@ class Painter:
         self.default_screen = self.screens[self.conn.pref_screen]
         self.conn.core.SetCloseDownMode(xcffib.xproto.CloseDown.RetainPermanent)
         self.atoms = AtomCache(self)
+        self.width = -1
+        self.height = -1
 
     def paint(self, screen, image_path, mode=None):
         try:
@@ -691,6 +697,14 @@ class Painter:
             logger.error("Wallpaper: %s" % e)
             return
 
+        # Querying the screen dimensions via the xcffib connection does not
+        # take account of any screen scaling. We can therefore work out the
+        # necessary size of the root window by looking at the
+        # pseudoscreens attribute and calculating the max x and y extents.
+        root_windows = screen.qtile.core.conn.pseudoscreens
+        width = max((win.x + win.width for win in root_windows))
+        height = max((win.y + win.height for win in root_windows))
+
         root_pixmap = self.default_screen.root.get_property(
             "_XROOTPMAP_ID", xcffib.xproto.Atom.PIXMAP, int
         )
@@ -698,16 +712,18 @@ class Painter:
             root_pixmap = self.default_screen.root.get_property(
                 "ESETROOT_PMAP_ID", xcffib.xproto.Atom.PIXMAP, int
             )
-        if root_pixmap:
+        if root_pixmap and (self.width == width and self.height == height):
             root_pixmap = root_pixmap[0]
         else:
+            self.width = width
+            self.height = height
             root_pixmap = self.conn.generate_id()
             self.conn.core.CreatePixmap(
                 self.default_screen.root_depth,
                 root_pixmap,
                 self.default_screen.root.wid,
-                self.default_screen.width_in_pixels,
-                self.default_screen.height_in_pixels,
+                self.width,
+                self.height,
             )
 
         for depth in self.default_screen.allowed_depths:
@@ -717,11 +733,7 @@ class Painter:
                     break
 
         surface = cairocffi.xcb.XCBSurface(
-            self.conn,
-            root_pixmap,
-            root_visual,
-            self.default_screen.width_in_pixels,
-            self.default_screen.height_in_pixels,
+            self.conn, root_pixmap, root_visual, self.width, self.height
         )
 
         context = cairocffi.Context(surface)
@@ -768,14 +780,7 @@ class Painter:
         self.conn.core.ChangeWindowAttributes(
             self.default_screen.root.wid, CW.BackPixmap, [root_pixmap]
         )
-        self.conn.core.ClearArea(
-            0,
-            self.default_screen.root.wid,
-            0,
-            0,
-            self.default_screen.width_in_pixels,
-            self.default_screen.height_in_pixels,
-        )
+        self.conn.core.ClearArea(0, self.default_screen.root.wid, 0, 0, self.width, self.height)
         self.conn.flush()
 
     def __del__(self):
@@ -789,7 +794,7 @@ def get_keysym(key: str) -> int:
     return keysym
 
 
-def translate_modifiers(mask: int) -> typing.List[str]:
+def translate_modifiers(mask: int) -> list[str]:
     r = []
     for k, v in ModMasks.items():
         if mask & v:
@@ -797,7 +802,7 @@ def translate_modifiers(mask: int) -> typing.List[str]:
     return r
 
 
-def translate_masks(modifiers: typing.List[str]) -> int:
+def translate_masks(modifiers: list[str]) -> int:
     """
     Translate a modifier mask specified as a list of strings into an or-ed
     bit representation.

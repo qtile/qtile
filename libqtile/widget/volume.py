@@ -83,9 +83,6 @@ class Volume(base._TextBox):
     def __init__(self, **config):
         base._TextBox.__init__(self, "0", width=bar.CALCULATED, **config)
         self.add_defaults(Volume.defaults)
-        if self.theme_path:
-            self.length_type = bar.STATIC
-            self.length = 0
         self.surfaces = {}
         self.volume = None
 
@@ -97,6 +94,12 @@ class Volume(base._TextBox):
                 "Button5": self.cmd_decrease_vol,
             }
         )
+
+    def _configure(self, qtile, parent_bar):
+        if self.theme_path:
+            self.length_type = bar.STATIC
+            self.length = 0
+        base._TextBox._configure(self, qtile, parent_bar)
 
     def timer_setup(self):
         self.timeout_add(self.update_interval, self.update)
@@ -145,13 +148,13 @@ class Volume(base._TextBox):
             self.drawer.ctx.paint()
         elif self.emoji:
             if self.volume <= 0:
-                self.text = u"\U0001f507"
+                self.text = "\U0001f507"
             elif self.volume <= 30:
-                self.text = u"\U0001f508"
+                self.text = "\U0001f508"
             elif self.volume < 80:
-                self.text = u"\U0001f509"
+                self.text = "\U0001f509"
             elif self.volume >= 80:
-                self.text = u"\U0001f50a"
+                self.text = "\U0001f50a"
         else:
             if self.volume == -1:
                 self.text = "M"

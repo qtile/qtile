@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import libqtile.config
+from libqtile.widget import TextBox
 from libqtile.widget.base import _Widget
 
 
@@ -68,3 +69,41 @@ def test_multiple_timers(minimal_conf_noscreen, manager_nospawn):
     # Verify that `finalize()` cancels all timers.
     manager_nospawn.c.widget["timerwidget"].eval("self.finalize()")
     assert manager_nospawn.c.widget["timerwidget"].get_active_timers() == 0
+
+
+def test_mirrors_same_bar(minimal_conf_noscreen, manager_nospawn):
+    """Verify that mirror created when widget reused in same bar."""
+    config = minimal_conf_noscreen
+    tbox = TextBox("Testing Mirrors")
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([tbox, tbox], 10))]
+
+    manager_nospawn.start(config)
+    info = manager_nospawn.c.bar["top"].info()["widgets"]
+
+    # First instance is retained, second is replaced by mirror
+    assert len(info) == 2
+    assert [w["name"] for w in info] == ["textbox", "mirror"]
+
+
+def test_mirrors_different_bar(minimal_conf_noscreen, manager_nospawn):
+    """Verify that mirror created when widget reused in different bar."""
+    config = minimal_conf_noscreen
+    tbox = TextBox("Testing Mirrors")
+    config.fake_screens = [
+        libqtile.config.Screen(top=libqtile.bar.Bar([tbox], 10), x=0, y=0, width=400, height=600),
+        libqtile.config.Screen(
+            top=libqtile.bar.Bar([tbox], 10), x=400, y=0, width=400, height=600
+        ),
+    ]
+
+    manager_nospawn.start(config)
+    screen0 = manager_nospawn.c.screen[0].bar["top"].info()["widgets"]
+    screen1 = manager_nospawn.c.screen[1].bar["top"].info()["widgets"]
+
+    # Original widget should be in the first screen
+    assert len(screen0) == 1
+    assert [w["name"] for w in screen0] == ["textbox"]
+
+    # Widget is replaced with a mirror on the second screen
+    assert len(screen1) == 1
+    assert [w["name"] for w in screen1] == ["mirror"]

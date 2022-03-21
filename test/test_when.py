@@ -19,7 +19,7 @@
 # SOFTWARE.
 import pytest
 
-from libqtile import config
+from libqtile import config, layout
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
 
@@ -35,14 +35,27 @@ class WhenConfig(Config):
         config.Key(
             ["control"],
             "j",
-            lazy.window.toggle_floating().when(config.Match(wm_class="TestWindow")),
+            lazy.window.toggle_floating().when(focused=config.Match(wm_class="TestWindow")),
         ),
         config.Key(
             ["control"],
             "h",
-            lazy.window.toggle_floating().when(config.Match(wm_class="idonotexist")),
+            lazy.window.toggle_floating().when(focused=config.Match(wm_class="idonotexist")),
+        ),
+        config.Key(
+            ["control"],
+            "n",
+            lazy.next_layout().when(focused=config.Match(wm_class="TestWindow")),
+        ),
+        config.Key(
+            ["control"],
+            "m",
+            lazy.next_layout().when(
+                focused=config.Match(wm_class="TestWindow"), if_no_focused=True
+            ),
         ),
     ]
+    layouts = [layout.MonadWide(), layout.MonadTall()]
 
 
 when_config = pytest.mark.parametrize("manager", [WhenConfig], indirect=True)
@@ -51,7 +64,7 @@ when_config = pytest.mark.parametrize("manager", [WhenConfig], indirect=True)
 @when_config
 def test_when(manager):
     # Check if the test window is alive and tiled
-    manager.test_window("one")
+    one = manager.test_window("one")
     assert not manager.c.window.info()["floating"]
 
     # This sets the window to floating as there is no when
@@ -65,3 +78,15 @@ def test_when(manager):
     # This sets the window tiled as the class does match
     manager.c.simulate_keypress(["control"], "j")
     assert not manager.c.window.info()["floating"]
+
+    # Kill the window to create an empty group
+    manager.kill_window(one)
+    prev_layout_info = manager.c.layout.info()
+
+    # This does not go to the next layout as empty is not matched
+    manager.c.simulate_keypress(["control"], "n")
+    assert manager.c.layout.info() == prev_layout_info
+
+    # This does go to the next layout as empty is matched
+    manager.c.simulate_keypress(["control"], "m")
+    assert manager.c.layout.info() != prev_layout_info

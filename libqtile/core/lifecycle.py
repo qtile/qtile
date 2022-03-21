@@ -2,7 +2,6 @@ import atexit
 import enum
 import os
 import sys
-from typing import Optional
 
 from libqtile.log_utils import logger
 
@@ -20,7 +19,7 @@ class LifeCycle:
     # referenced here when atexit fires will NOT be finalized properly.
     def __init__(self) -> None:
         self.behavior = Behavior.NONE
-        self.state_file: Optional[str] = None
+        self.state_file: str | None = None
         atexit.register(self._atexit)
 
     def _atexit(self) -> None:

@@ -26,10 +26,12 @@ abstract command graph
 from __future__ import annotations
 
 import abc
-from typing import Dict, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Union
 
-SelectorType = Tuple[str, Optional[Union[str, int]]]
-GraphType = Union["CommandGraphNode", "CommandGraphCall"]
+if TYPE_CHECKING:
+    from typing import Optional, Type
+
+    SelectorType = tuple[str, Optional[str | int]]
 
 
 class CommandGraphNode(metaclass=abc.ABCMeta):
@@ -41,25 +43,25 @@ class CommandGraphNode(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def selector(self) -> Optional[Union[str, int]]:
+    def selector(self) -> str | int | None:
         """The selector for the current node"""
 
     @property
     @abc.abstractmethod
-    def selectors(self) -> List[SelectorType]:
+    def selectors(self) -> list[SelectorType]:
         """The selectors resolving the location of the node in the command graph"""
 
     @property
     @abc.abstractmethod
-    def parent(self) -> Optional[CommandGraphNode]:
+    def parent(self) -> CommandGraphNode | None:
         """The parent of the current node"""
 
     @property
     @abc.abstractmethod
-    def children(self) -> List[str]:
+    def children(self) -> list[str]:
         """The child objects that are contained within this object"""
 
-    def navigate(self, name: str, selector: Optional[Union[str, int]]) -> CommandGraphNode:
+    def navigate(self, name: str, selector: str | int | None) -> CommandGraphNode:
         """Navigate from the current node to the specified child"""
         if name in self.children:
             return _COMMAND_GRAPH_MAP[name](selector, self)
@@ -95,7 +97,7 @@ class CommandGraphCall:
         return self._name
 
     @property
-    def selectors(self) -> List[SelectorType]:
+    def selectors(self) -> list[SelectorType]:
         """The selectors resolving the location of the node in the command graph"""
         return self.parent.selectors
 
@@ -117,7 +119,7 @@ class CommandGraphRoot(CommandGraphNode):
         return None
 
     @property
-    def selectors(self) -> List[SelectorType]:
+    def selectors(self) -> list[SelectorType]:
         """The selectors resolving the location of the node in the command graph"""
         return []
 
@@ -127,7 +129,7 @@ class CommandGraphRoot(CommandGraphNode):
         return None
 
     @property
-    def children(self) -> List[str]:
+    def children(self) -> list[str]:
         """All of the child elements in the root of the command graph"""
         return ["bar", "group", "layout", "screen", "widget", "window", "core"]
 
@@ -135,12 +137,12 @@ class CommandGraphRoot(CommandGraphNode):
 class CommandGraphObject(CommandGraphNode, metaclass=abc.ABCMeta):
     """An object in the command graph that contains a collection of objects"""
 
-    def __init__(self, selector: Optional[Union[str, int]], parent: CommandGraphNode) -> None:
+    def __init__(self, selector: str | int | None, parent: CommandGraphNode) -> None:
         """A container object in the command graph
 
         Parameters
         ----------
-        selector: Optional[str]
+        selector: str | None
             The name of the selected element within the command graph.  If not
             given, corresponds to the default selection of this type of object.
         parent: CommandGraphNode
@@ -150,12 +152,12 @@ class CommandGraphObject(CommandGraphNode, metaclass=abc.ABCMeta):
         self._parent = parent
 
     @property
-    def selector(self) -> Optional[Union[str, int]]:
+    def selector(self) -> str | int | None:
         """The selector for the current node"""
         return self._selector
 
     @property
-    def selectors(self) -> List[SelectorType]:
+    def selectors(self) -> list[SelectorType]:
         """The selectors resolving the location of the node in the command graph"""
         selectors = self.parent.selectors + [(self.object_type, self.selector)]
         return selectors
@@ -203,10 +205,10 @@ class _WindowGraphNode(CommandGraphObject):
 
 class _CoreGraphNode(CommandGraphObject):
     object_type = "core"
-    children: List[str] = []
+    children: list[str] = []
 
 
-_COMMAND_GRAPH_MAP: Dict[str, Type[CommandGraphObject]] = {
+_COMMAND_GRAPH_MAP: dict[str, Type[CommandGraphObject]] = {
     "bar": _BarGraphNode,
     "group": _GroupGraphNode,
     "layout": _LayoutGraphNode,
@@ -215,3 +217,6 @@ _COMMAND_GRAPH_MAP: Dict[str, Type[CommandGraphObject]] = {
     "screen": _ScreenGraphNode,
     "core": _CoreGraphNode,
 }
+
+
+GraphType = Union[CommandGraphNode, CommandGraphCall]

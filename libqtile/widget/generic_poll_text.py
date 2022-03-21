@@ -1,5 +1,5 @@
 import json
-from typing import Any, List, Tuple
+from typing import Any
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -47,7 +47,7 @@ class GenPollUrl(base.ThreadPoolText):
         ("user_agent", "Qtile", "Set the user agent"),
         ("headers", {}, "Extra Headers"),
         ("xml", False, "Is XML?"),
-    ]  # type: List[Tuple[str, Any, str]]
+    ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, **config):
         base.ThreadPoolText.__init__(self, "", **config)

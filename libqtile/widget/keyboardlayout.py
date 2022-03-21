@@ -34,8 +34,6 @@ from libqtile.log_utils import logger
 from libqtile.widget import base
 
 if TYPE_CHECKING:
-    from typing import Optional
-
     from libqtile.core.manager import Qtile
 
 
@@ -54,7 +52,7 @@ class _BaseLayoutBackend(metaclass=ABCMeta):
         Examples: "us", "us dvorak".  In case of error returns "unknown".
         """
 
-    def set_keyboard(self, layout: str, options: Optional[str]) -> None:
+    def set_keyboard(self, layout: str, options: str | None) -> None:
         """
         Set the keyboard layout with specified options.
         """
@@ -85,7 +83,7 @@ class _X11LayoutBackend(_BaseLayoutBackend):
             keyboard += " " + match_variant.group("variant")
         return keyboard
 
-    def set_keyboard(self, layout: str, options: Optional[str]) -> None:
+    def set_keyboard(self, layout: str, options: str | None) -> None:
         command = ["setxkbmap"]
         command.extend(layout.split(" "))
         if options:
@@ -106,8 +104,8 @@ class _WaylandLayoutBackend(_BaseLayoutBackend):
     def get_keyboard(self) -> str:
         return self._layout
 
-    def set_keyboard(self, layout: str, options: Optional[str]) -> None:
-        maybe_variant: Optional[str] = None
+    def set_keyboard(self, layout: str, options: str | None) -> None:
+        maybe_variant: str | None = None
         if " " in layout:
             layout_name, maybe_variant = layout.split(" ", maxsplit=1)
         else:
@@ -170,7 +168,7 @@ class KeyboardLayout(base.InLoopPollText):
         self.backend.set_keyboard(self.configured_keyboards[0], self.option)
 
     def next_keyboard(self):
-        """Set the next layout in the list of configured keyboard layouts as
+        """set the next layout in the list of configured keyboard layouts as
         new current layout in use
 
         If the current keyboard layout is not in the list, it will set as new

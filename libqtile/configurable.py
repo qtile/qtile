@@ -19,11 +19,10 @@
 # SOFTWARE.
 
 import copy
-from typing import Dict
 
 
 class Configurable:
-    global_defaults = {}  # type: Dict
+    global_defaults = {}  # type: dict
 
     def __init__(self, **config):
         self._variable_defaults = {}

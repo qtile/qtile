@@ -110,6 +110,19 @@ Window functions
     * - ``lazy.window.toggle_fullscreen()``
       - Put the focused window to/from fullscreen mode
 
+Screen functions
+----------------
+
+.. list-table::
+    :widths: 20 80
+    :header-rows: 1
+
+    * - function
+      - description
+    * - ``lazy.screen.set_wallpaper(path, mode=None)``
+      - Set the wallpaper to the specificied image. Possible modes: ``None`` no resizing,
+        ``'fill'`` centre and resize to fill screen, ``'stretch'`` stretch to fill screen.
+
 ScratchPad DropDown functions
 -----------------------------
 

@@ -9,15 +9,19 @@ jobs:
         runs-on: ubuntu-20.04
         name: "python ${{ matrix.python-version }}"
         env:
-          WAYLAND: 1.19.0
-          WAYLAND_PROTOCOLS: 1.21
-          WLROOTS: 0.14.0
-          SEATD: 0.5.0
-          LIBDRM: 2.4.105
+          WAYLAND: 1.20.0
+          WAYLAND_PROTOCOLS: 1.24
+          WLROOTS: 0.15.0
+          SEATD: 0.6.3
+          LIBDRM: 2.4.109
         strategy:
             matrix:
-                # if you change one of these, be sure to update
-                # /tox.ini:[gh-actions] as well
+                # If you change one of these, be sure to update:
+                # - /tox.ini:[gh-actions]
+                # - /setup.cfg:[mypy]
+                # - /libqtile/scripts/check.py mypy argument
+                # If adding new python versions, consider also updating
+                # python version in .readthedocs.yaml
                 python-version: [pypy-3.7, 3.7, 3.8, 3.9, '3.10']
         steps:
             - uses: actions/checkout@v2
@@ -32,7 +36,9 @@ jobs:
                   libdbus-1-dev libgirepository1.0-dev gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-gudev-1.0 graphviz \
                   imagemagick libpulse-dev git xserver-xephyr xterm xvfb ninja-build libegl1-mesa-dev \
                   libgles2-mesa-dev libgbm-dev libinput-dev libxkbcommon-dev libpixman-1-dev libpciaccess-dev \
-                  dbus-x11 libnotify-bin
+                  dbus-x11 libnotify-bin \
+                  xwayland libxcb-composite0-dev libxcb-icccm4-dev libxcb-res0-dev \
+                  libxcb-render0-dev libxcb-res0-dev libxcb-xfixes0-dev vlc volumeicon-alsa
                 sudo pip -q install meson PyGObject
                 pip -q install "tox<4" tox-gh-actions 
             - name: Build wayland
@@ -69,10 +75,10 @@ jobs:
                 sudo ninja -C build install
             - name: Build wlroots
               run: |
-                wget -q --no-check-certificate https://github.com/swaywm/wlroots/archive/$WLROOTS.tar.gz
-                tar -xzf $WLROOTS.tar.gz
+                wget -q --no-check-certificate https://gitlab.freedesktop.org/wlroots/wlroots/-/archive/$WLROOTS/wlroots-$WLROOTS.tar.gz
+                tar -xzf wlroots-$WLROOTS.tar.gz
                 cd wlroots-$WLROOTS
-                meson build -Dexamples=false --prefix=/usr
+                meson build -Dexamples=false --prefix=/usr -Dxwayland=enabled
                 ninja -C build
                 sudo ninja -C build install
             - name: Run Tests
@@ -80,6 +86,8 @@ jobs:
                 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
                 tox
             - name: Upload coverage data to coveralls.io
+              # For speed purposes, we don't do coverage reporting on pypy 3.7
+              if: ${{ matrix.python-version != 'pypy-3.7' }}
               run: |
                 pip -q install coveralls
                 coveralls --service=github

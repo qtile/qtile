@@ -26,7 +26,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+import asyncio
 from os import path
 
 from libqtile import bar, pangocffi, utils
@@ -189,3 +189,17 @@ class Notify(base._TextBox):
         """Invoke the notification's default action"""
         if self.action:
             self.invoke()
+
+    def finalize(self):
+        asyncio.create_task(self._finalize())
+
+    async def _finalize(self):
+        task = notifier.unregister(self.update)
+
+        # If the notifier has no more callbacks then it needs to be stopped.
+        # The returned task will handle the release of the service name from
+        # dbus. We await it here to make sure it's finished before we
+        # complete the finalisation of this widget.
+        if task:
+            await task
+        base._TextBox.finalize(self)

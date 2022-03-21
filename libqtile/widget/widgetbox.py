@@ -17,6 +17,9 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
+from __future__ import annotations
+
 from libqtile import bar
 from libqtile.log_utils import logger
 from libqtile.widget import Systray, base
@@ -61,7 +64,7 @@ class WidgetBox(base._Widget):
         ("text_open", "[>]", "Text when box is open"),
     ]
 
-    def __init__(self, widgets: list = None, **config):
+    def __init__(self, widgets: list | None = None, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(WidgetBox.defaults)
         self.box_is_open = False
@@ -79,7 +82,7 @@ class WidgetBox(base._Widget):
         base._Widget._configure(self, qtile, bar)
 
         self.layout = self.drawer.textlayout(
-            self.text_closed,
+            self.text_open if self.box_is_open else self.text_closed,
             self.foreground,
             self.font,
             self.fontsize,
@@ -87,17 +90,25 @@ class WidgetBox(base._Widget):
             markup=False,
         )
 
+        if self.configured:
+            return
+
         for idx, w in enumerate(self.widgets):
             if w.configured:
                 w = w.create_mirror()
                 self.widgets[idx] = w
             self.qtile.register_widget(w)
             w._configure(self.qtile, self.bar)
+            w.offsety = self.bar.border_width[0]
 
             # In case the widget is mirrored, we need to draw it once so the
             # mirror can copy the surface but draw it off screen
             w.offsetx = self.bar.width
             self.qtile.call_soon(w.draw)
+
+            # Setting the configured flag for widgets was moved to Bar._configure so we need to
+            # set it here.
+            w.configured = True
 
         # Disable drawing of the widget's contents
         for w in self.widgets:
@@ -120,7 +131,7 @@ class WidgetBox(base._Widget):
                 # are separate _Window instances.
                 # Systray unhides icons when it draws so we only need to hide them.
                 if isinstance(widget, Systray):
-                    for icon in widget.icons.values():
+                    for icon in widget.tray_icons:
                         icon.hide()
 
             except ValueError:

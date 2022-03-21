@@ -139,7 +139,7 @@ class Popup(configurable.Configurable):
     def clear(self) -> None:
         self.drawer.clear(self.background)
 
-    def draw_text(self, x: int = None, y: int = None) -> None:
+    def draw_text(self, x: int | None = None, y: int | None = None) -> None:
         self.layout.draw(
             x or self.horizontal_padding,
             y or self.vertical_padding,

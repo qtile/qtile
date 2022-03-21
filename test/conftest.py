@@ -20,6 +20,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import logging
+import multiprocessing
 
 import pytest
 
@@ -103,8 +105,30 @@ def backend(request, backend_name, xephyr, wayland_session):
 
 
 @pytest.fixture(scope="function")
-def manager_nospawn(request, backend):
+def log_queue():
+    """Creates a new Queue for logging messages run in a backend process."""
+    yield multiprocessing.Queue(-1)
+
+
+@pytest.fixture(scope="function")
+def logger(caplog, log_queue):
+    """
+    Connects logging messages in the backend to a logger in the main thread
+    and returns a caplog fixture  which can access those messages.
+    """
+    root = logging.getLogger()
+    listener = logging.handlers.QueueListener(log_queue, *root.handlers)
+    listener.start()
+
+    yield caplog
+
+    listener.stop()
+
+
+@pytest.fixture(scope="function")
+def manager_nospawn(request, backend, log_queue):
     with TestManager(backend, request.config.getoption("--debuglog")) as manager:
+        manager.log_queue = log_queue
         yield manager
 
 

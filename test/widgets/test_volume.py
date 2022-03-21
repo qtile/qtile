@@ -1,7 +1,7 @@
 import cairocffi
 import pytest
 
-from libqtile import images
+from libqtile import bar, images
 from libqtile.widget import Volume
 from test.widgets.conftest import TEST_DIR
 
@@ -25,6 +25,8 @@ def test_images_good(tmpdir, fake_bar, svg_img_as_pypath):
 
     vol = Volume(theme_path=str(tmpdir))
     vol.bar = fake_bar
+    vol.length_type = bar.STATIC
+    vol.length = 0
     vol.setup_images()
     assert len(vol.surfaces) == len(names)
     for name, surfpat in vol.surfaces.items():

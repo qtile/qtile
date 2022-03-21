@@ -36,7 +36,7 @@ class GroupConfig(Config):
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
     ]
-    layouts = [layout.Max()]
+    layouts = [layout.MonadTall()]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []

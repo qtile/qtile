@@ -19,6 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import asyncio
 import glob
 import importlib
@@ -28,7 +30,13 @@ from collections import defaultdict
 from collections.abc import Sequence
 from random import randint
 from shutil import which
-from typing import List, Tuple, Union
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Union
+
+    ColorType = Union[str, tuple[int, int, int], tuple[int, int, int, float]]
+    ColorsType = Union[ColorType, list[ColorType]]
 
 try:
     from dbus_next import Message, Variant
@@ -67,11 +75,7 @@ def shuffle_down(lst):
         lst.append(c)
 
 
-ColorType = Union[str, Tuple[int, int, int], Tuple[int, int, int, float]]
-ColorsType = Union[ColorType, List[ColorType]]
-
-
-def rgb(x: ColorType) -> Tuple[float, float, float, float]:
+def rgb(x: ColorType) -> tuple[float, float, float, float]:
     """
     Returns a valid RGBA tuple.
 
