@@ -111,7 +111,7 @@ class LaunchBar(base._Widget):
                         "cmd": prog[1],
                         "comment": prog[2] if len(prog) > 2 else None,
                     }
-                    for prog in config["progs"]
+                    for prog in config.get("progs", list())
                 ]
             )
         )
