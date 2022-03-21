@@ -21,6 +21,8 @@
     A command shell for Qtile.
 """
 
+from __future__ import annotations
+
 import fcntl
 import inspect
 import pprint
@@ -29,7 +31,7 @@ import struct
 import sys
 import termios
 from importlib import import_module
-from typing import Any, List, Optional, Tuple
+from typing import TYPE_CHECKING
 
 from libqtile.command.client import CommandClient
 from libqtile.command.interface import (
@@ -38,6 +40,9 @@ from libqtile.command.interface import (
     CommandInterface,
     format_selectors,
 )
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 def terminal_width():
@@ -62,14 +67,14 @@ class QSh:
         self._completekey = completekey
         self._builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
 
-    def complete(self, arg, state) -> Optional[str]:
+    def complete(self, arg, state) -> str | None:
         buf = self.readline.get_line_buffer()
         completers = self._complete(buf, arg)
         if completers and state < len(completers):
             return completers[state]
         return None
 
-    def _complete(self, buf, arg) -> List[str]:
+    def _complete(self, buf, arg) -> list[str]:
         if not re.search(r" |\(", buf) or buf.startswith("help "):
             options = self._builtins + self._command_client.commands
             lst = [i for i in options if i.startswith(arg)]
@@ -116,9 +121,7 @@ class QSh:
                 ret.append("  ".join(sl))
         return "\n".join(ret)
 
-    def _ls(
-        self, client: CommandClient, object_type: Optional[str]
-    ) -> Tuple[List[str], List[str]]:
+    def _ls(self, client: CommandClient, object_type: str | None) -> tuple[list[str], list[str]]:
         if object_type is not None:
             allow_root, items = client.items(object_type)
             str_items = [str(i) for i in items]
@@ -130,7 +133,7 @@ class QSh:
         else:
             return client.children, []
 
-    def _find_path(self, path: str) -> Tuple[Optional[CommandClient], Optional[str]]:
+    def _find_path(self, path: str) -> tuple[CommandClient | None, str | None]:
         """Find an object relative to the current node
 
         Finds and returns the command graph node that is defined relative to
@@ -142,7 +145,7 @@ class QSh:
 
     def _find_node(
         self, src: CommandClient, *paths: str
-    ) -> Tuple[Optional[CommandClient], Optional[str]]:
+    ) -> tuple[CommandClient | None, str | None]:
         """Find an object in the command graph
 
         Return the object in the command graph at the specified path relative
@@ -181,7 +184,7 @@ class QSh:
         next_node = src.navigate(path, None)
         return self._find_node(next_node, *next_path)
 
-    def do_cd(self, arg: Optional[str]) -> str:
+    def do_cd(self, arg: str | None) -> str:
         """Change to another path.
 
         Examples
@@ -209,7 +212,7 @@ class QSh:
 
         return format_selectors(self._command_client.selectors) or "/"
 
-    def do_ls(self, arg: Optional[str]) -> str:
+    def do_ls(self, arg: str | None) -> str:
         """List contained items on a node.
 
         Examples
@@ -254,7 +257,7 @@ class QSh:
         """
         return format_selectors(self._command_client.selectors) or "/"
 
-    def do_help(self, arg: Optional[str]) -> str:
+    def do_help(self, arg: str | None) -> str:
         """Give help on commands and builtins
 
         When invoked without arguments, provides an overview of all commands. When

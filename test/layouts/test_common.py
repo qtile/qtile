@@ -122,18 +122,21 @@ class AllLayoutsConfigEvents(AllLayoutsConfig):
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         # TODO: Test more events
 
         @libqtile.hook.subscribe.startup
         def _():
             libqtile.qtile.test_data = {
                 "focus_change": 0,
+                "config_name": self.__class__.__name__,
             }
 
         @libqtile.hook.subscribe.focus_change
         def _():
-            libqtile.qtile.test_data["focus_change"] += 1
+            if hasattr(libqtile.qtile, "test_data"):
+                # focus_change can fire before during startup
+                libqtile.qtile.test_data["focus_change"] += 1
 
 
 each_layout_config = pytest.mark.parametrize(
@@ -146,6 +149,29 @@ each_layout_config_events = pytest.mark.parametrize(
 each_delegate_layout_config = pytest.mark.parametrize(
     "manager", AllDelegateLayoutsConfig.generate(), indirect=True
 )
+
+
+@each_layout_config
+def test_window_order_fullscreen(manager):
+    # Add a window to fullscreen
+    manager.test_window("tofullscreen")
+
+    # windows to add after the fullscreen window
+    windows_after = ["two", "three"]
+
+    # Add some windows before
+    for win in windows_after:
+        manager.test_window(win)
+
+    windows_order = manager.c.layout.info()["clients"]
+
+    # Focus window and toggle fullscreen
+    manager.c.group.focus_by_name("tofullscreen")
+    manager.c.window.toggle_fullscreen()
+    manager.c.window.toggle_fullscreen()
+
+    # Windows must be sorted in the same order as they were created
+    assert windows_order == manager.c.layout.info()["clients"]
 
 
 @each_layout_config
@@ -228,9 +254,11 @@ def test_focus_change_event(manager):
     # In short, this test prevents layouts from influencing each other in
     # unexpected ways.
 
-    assert manager.c.get_test_data()["focus_change"] == 0
+    # Ensure we are in fact using the right layout
+    assert manager.c.get_test_data()["config_name"].lower() == manager.c.layout.info()["name"]
 
     # Spawning a window must fire only 1 focus_change event
+    assert manager.c.get_test_data()["focus_change"] == 0
     one = manager.test_window("one")
     assert manager.c.get_test_data()["focus_change"] == 1
     two = manager.test_window("two")

@@ -8,10 +8,9 @@ from libqtile import utils
 from libqtile.backend import base
 
 if TYPE_CHECKING:
-    from typing import Optional
-
     from libqtile.backend.wayland.window import Internal
     from libqtile.core.manager import Qtile
+    from libqtile.utils import ColorsType
 
 
 class Drawer(base.Drawer):
@@ -39,9 +38,9 @@ class Drawer(base.Drawer):
         self,
         offsetx: int = 0,
         offsety: int = 0,
-        width: Optional[int] = None,
-        height: Optional[int] = None,
-    ):
+        width: int | None = None,
+        height: int | None = None,
+    ) -> None:
         if offsetx > self._win.width:  # type: ignore
             return
 
@@ -81,7 +80,7 @@ class Drawer(base.Drawer):
         )
         self._win.damage()  # type: ignore
 
-    def clear(self, colour):
+    def clear(self, colour: ColorsType) -> None:
         # Draw background straight to ImageSurface
         ctx = cairocffi.Context(self._source)
         ctx.save()

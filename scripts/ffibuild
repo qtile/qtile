@@ -5,3 +5,5 @@ echo "building xcursors"
 python3 ./libqtile/backend/x11/xcursors_ffi_build.py
 echo "building pulseaudio volume control"
 python3 ./libqtile/widget/pulseaudio_ffi.py
+echo "building Wayland libinput interface"
+python3 ./libqtile/backend/wayland/libinput_ffi_build.py

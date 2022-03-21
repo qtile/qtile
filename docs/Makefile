@@ -14,7 +14,7 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 # the i18n builder cannot share the environment and doctrees with the others
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
-.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext coverage genkeyimg
+.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext coverage genkeyimg genwidgetscreenshots
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
@@ -167,3 +167,10 @@ genkeyimg:
 	sed -i '/^\.\. END_LS_PNG/e find _static/keybindings/* | awk '"'"'{ print length, $$0 }'"'"' | sort -n | cut -d" " -f2- | awk '"'"'{print ".. image:: /" $$1}'"'"'' manual/commands/keybindings.rst
 	@echo
 	@echo "Keybinding images have been generated."
+
+genwidgetscreenshots:
+	rm -rf screenshots/widgets
+	@echo "Generating screenshots for widgets using pytest fixtures."
+	pytest -o python_files="ss_*.py" -o python_functions="ss_*" --backend x11 ../test
+	@echo
+	@echo "Generated widget screenshots"

@@ -63,13 +63,13 @@ RESPONSE = {
 
 
 def test_stock_ticker_methods():
-    wttr = widget.StockTicker(symbol="QTIL")
+    ticker = widget.StockTicker(symbol="QTIL")
 
-    assert wttr.url == (
+    assert ticker.url == (
         "https://www.alphavantage.co/query?interval=1min&outputsize=compact&"
         "function=TIME_SERIES_INTRADAY&symbol=QTIL"
     )
 
     # We don't know what locale is on the testing system but we can just use
     # whatever the widget is using.
-    assert wttr.parse(RESPONSE) == f"QTIL: {wttr.sign}140.98"
+    assert ticker.parse(RESPONSE) == f"QTIL: {ticker.sign}140.98"

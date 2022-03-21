@@ -51,7 +51,10 @@ from libqtile.widget import base
 
 
 class LaunchBar(base._Widget):
-    """A widget that display icons to launch the associated command
+    """
+    A widget that display icons to launch the associated command.
+
+    Text will displayed when no icon is found.
 
     Widget requirements: pyxdg_.
 
@@ -72,9 +75,13 @@ class LaunchBar(base._Widget):
         ("padding", 2, "Padding between icons"),
         (
             "default_icon",
-            "/usr/share/icons/oxygen/256x256/mimetypes/" "application-x-executable.png",
+            "/usr/share/icons/oxygen/256x256/mimetypes/application-x-executable.png",
             "Default icon not found",
         ),
+        ("font", "sans", "Text font"),
+        ("fontsize", None, "Font pixel size. Calculated if None."),
+        ("fontshadow", None, "Font shadow color, default is None (no shadow)"),
+        ("foreground", "#ffffff", "Text colour."),
     ]
 
     def __init__(self, progs=None, width=bar.CALCULATED, **config):
@@ -124,10 +131,10 @@ class LaunchBar(base._Widget):
                 textbox._configure(self.qtile, self.bar)
                 textbox.layout = self.drawer.textlayout(
                     textbox.text,
-                    textbox.foreground,
-                    textbox.font,
-                    textbox.fontsize,
-                    textbox.fontshadow,
+                    self.foreground,
+                    self.font,
+                    self.fontsize,
+                    self.fontshadow,
                     markup=textbox.markup,
                 )
                 # the name will be displayed

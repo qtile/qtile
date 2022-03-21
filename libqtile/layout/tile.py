@@ -30,6 +30,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from libqtile.config import Match
 from libqtile.layout.base import _SimpleLayoutBase
 
 
@@ -88,7 +89,12 @@ class Tile(_SimpleLayoutBase):
             "Allow to shift windows within the layout. If False, the layout "
             "will be rotated instead.",
         ),
-        ("master_match", None, "A Match object defining which window(s) should be kept masters."),
+        (
+            "master_match",
+            None,
+            "A Match object defining which window(s) should be kept masters (single or a list "
+            "of Match-objects).",
+        ),
     ]
 
     def __init__(self, **config):
@@ -129,9 +135,15 @@ class Tile(_SimpleLayoutBase):
     def reset_master(self, match=None):
         if not match and not self.master_match:
             return
-        match = match or self.master_match
         if self.clients:
-            masters = [c for c in self.clients if match.compare(c)]
+            master_match = match or self.master_match
+            if isinstance(master_match, Match):
+                master_match = [master_match]
+            masters = []
+            for c in self.clients:
+                for match in master_match:
+                    if match.compare(c):
+                        masters.append(c)
             for client in reversed(masters):
                 self.clients.remove(client)
                 self.clients.append_head(client)

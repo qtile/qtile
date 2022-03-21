@@ -561,6 +561,50 @@ def test_wide_flip(manager):
 
 
 @monadtall_config
+def test_tall_set_and_reset(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 796, 596)
+
+    manager.test_window("two")
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 596)
+
+    manager.c.layout.set_ratio(0.75)
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 600, 0, 196, 596)
+
+    manager.c.layout.set_ratio(0.25)
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 200, 0, 596, 596)
+
+    manager.c.layout.reset()
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 596)
+
+
+@monadwide_config
+def test_wide_set_and_reset(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 796, 596)
+
+    manager.test_window("two")
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 0, 300, 796, 296)
+
+    manager.c.layout.set_ratio(0.75)
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 0, 450, 796, 146)
+
+    manager.c.layout.set_ratio(0.25)
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 0, 150, 796, 446)
+
+    manager.c.layout.reset()
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 0, 300, 796, 296)
+
+
+@monadtall_config
 def test_tall_shuffle(manager):
     manager.test_window("one")
     manager.test_window("two")
@@ -767,3 +811,139 @@ def test_wide_window_focus_cycle(manager):
 
     # assert window focus cycle, according to order in layout
     assert_focus_path(manager, "float1", "float2", "one", "two", "three")
+
+
+# MonadThreeCol
+class MonadThreeColConfig(Config):
+    auto_fullscreen = True
+    groups = [libqtile.config.Group("a")]
+    layouts = [layout.MonadThreeCol()]
+    floating_layout = libqtile.resources.default_config.floating_layout
+    keys = []
+    mouse = []
+    screens = []
+    follow_mouse_focus = False
+
+
+monadthreecol_config = pytest.mark.parametrize("manager", [MonadThreeColConfig], indirect=True)
+
+
+@monadthreecol_config
+def test_three_col_add_clients(manager):
+    manager.test_window("one")
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == dict(left=[], right=[])
+
+    manager.test_window("two")
+    assert manager.c.layout.info()["main"] == "two"
+    assert manager.c.layout.info()["secondary"] == dict(left=["one"], right=[])
+    assert_focused(manager, "two")
+
+    manager.test_window("three")
+    assert manager.c.layout.info()["main"] == "three"
+    assert manager.c.layout.info()["secondary"] == dict(left=["two"], right=["one"])
+    assert_focused(manager, "three")
+
+    manager.test_window("four")
+    assert manager.c.layout.info()["main"] == "four"
+    assert manager.c.layout.info()["secondary"] == dict(left=["three", "two"], right=["one"])
+    assert_focused(manager, "four")
+
+    manager.test_window("five")
+    assert manager.c.layout.info()["main"] == "five"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["four", "three"], right=["two", "one"]
+    )
+    assert_focused(manager, "five")
+
+    manager.c.layout.next()
+    assert_focused(manager, "four")
+    manager.c.layout.next()
+    assert_focused(manager, "three")
+    manager.c.layout.next()
+    assert_focused(manager, "two")
+    manager.c.layout.next()
+    assert_focused(manager, "one")
+
+
+@monadthreecol_config
+def test_three_col_shuffle(manager):
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
+    manager.test_window("four")
+    manager.test_window("five")
+
+    manager.c.layout.shuffle_right()
+    assert manager.c.layout.info()["main"] == "two"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["four", "three"], right=["five", "one"]
+    )
+    assert_focused(manager, "five")
+
+    manager.c.layout.shuffle_down()
+    assert manager.c.layout.info()["main"] == "two"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["four", "three"], right=["one", "five"]
+    )
+    assert_focused(manager, "five")
+
+    manager.c.layout.shuffle_left()
+    assert manager.c.layout.info()["main"] == "five"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["four", "three"], right=["one", "two"]
+    )
+    assert_focused(manager, "five")
+
+    manager.c.layout.shuffle_left()
+    assert manager.c.layout.info()["main"] == "four"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["five", "three"], right=["one", "two"]
+    )
+    assert_focused(manager, "five")
+
+    manager.c.layout.shuffle_down()
+    assert manager.c.layout.info()["main"] == "four"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["three", "five"], right=["one", "two"]
+    )
+    assert_focused(manager, "five")
+
+    manager.c.layout.shuffle_up()
+    assert manager.c.layout.info()["main"] == "four"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["five", "three"], right=["one", "two"]
+    )
+    assert_focused(manager, "five")
+
+    manager.c.layout.shuffle_right()
+    assert manager.c.layout.info()["main"] == "five"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["four", "three"], right=["one", "two"]
+    )
+    assert_focused(manager, "five")
+
+
+@monadthreecol_config
+def test_three_col_swap_main(manager):
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
+    manager.test_window("four")
+    manager.test_window("five")
+
+    manager.c.layout.next()
+    manager.c.layout.swap_main()
+    assert manager.c.layout.info()["main"] == "four"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["five", "three"], right=["two", "one"]
+    )
+    assert_focused(manager, "four")
+
+    manager.c.layout.next()
+    manager.c.layout.swap_main()
+    assert manager.c.layout.info()["main"] == "five"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["four", "three"], right=["two", "one"]
+    )
+    assert_focused(manager, "five")

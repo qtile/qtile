@@ -25,7 +25,6 @@ import enum
 import os
 import shlex
 from functools import partial
-from typing import Dict
 
 from libqtile.log_utils import logger
 from libqtile.widget import base
@@ -67,7 +66,7 @@ class Backlight(base.InLoopPollText):
         )
     """
 
-    filenames = {}  # type: Dict
+    filenames: dict = {}
 
     defaults = [
         ("backlight_name", "acpi_video0", "ACPI name of a backlight device"),

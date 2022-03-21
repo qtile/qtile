@@ -19,18 +19,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import copy
 from abc import ABCMeta, abstractmethod
-from typing import Any, List, Tuple
+from typing import TYPE_CHECKING
 
 from libqtile import configurable
-from libqtile.command.base import CommandObject, ItemT
+from libqtile.command.base import CommandObject
+
+if TYPE_CHECKING:
+    from typing import Any
+
+    from libqtile.command.base import ItemT
 
 
 class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
     """This class defines the API that should be exposed by all layouts"""
 
-    defaults = []  # type: List[Tuple[str, Any, str]]
+    defaults = []  # type: list[tuple[str, Any, str]]
 
     def __init__(self, **config):
         # name is a little odd; we can't resolve it until the class is defined

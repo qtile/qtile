@@ -85,6 +85,17 @@ def get_cffi_modules():
             cffi_modules.append(
                 'libqtile/widget/pulseaudio_ffi.py:pulseaudio_ffi'
             )
+    try:
+        import wlroots.ffi_build
+        cffi_modules.append(
+            'libqtile/backend/wayland/libinput_ffi_build.py:libinput_ffi',
+        )
+    except ImportError:
+        print(
+            "Failed to find pywlroots. "
+            "Wayland backend libinput configuration will be unavailable."
+        )
+        pass
     return cffi_modules
 
 

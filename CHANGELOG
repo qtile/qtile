@@ -1,6 +1,46 @@
 Qtile x.x.x, released xxxx-xx-xx:
     * features
+        - Add `lazy.window.center()` command to center a floating window on the screen.
+        - Wayland: added power-output-management-v1 protocol support, added idle protocol,
+          added idle inhibit protocol
+        - Add MonadThreeCol layout based on XMonad's ThreeColumns.
+        - Add `lazy.screen.set_wallpaper` command.
+        - Added ability to scale the battery icon's size
+        - Add Spiral layout
+    * bugfixes
+        - Fix `Systray` crash on `reconfigure_screens`.
+        - Fix bug where widgets can't be mirrored in same bar.
+        - Fix various issues with setting fullscreen windows floating and vice versa.
+        - Fix a bug where a .when() check for lazy functions errors out when matching
+          on focused windows when none is focused. By default we do not match on focused windows,
+          to change this set `if_no_focused` to True.
+        - Widget with duplicate names will be automatically renamed by appending numeric suffixes
+        - Fix resizing of wallpaper when screen scale changes (X11)
+        - Two small bugfixes for `StatusNotifier` - better handling of Ayatana indicators
+        - Fix bug where StatusNotifierItem crashes due to invalid object paths (e.g. Zoom)
+
+Qtile 0.20.0, released 2022-01-24:
+    * features
         - Add `place_right` option in the TreeTab layout to place the tab panel on the right side
+        - X11: Add support for _NET_DESKTOP_VIEWPORT. E.g. can be used by rofi to map on current output.
+        - Wayland: Bump wlroots version. 0.15.x wlroots and 0.15.2+ pywlroots are required.
+        - Add XWayland support to the Wayland backend. XWayland will start up as needed, if it is installed.
+    * bugfixes
+        - Remove non-commandable windows from IPC. Fixes bug where IPC would fail when trying to get info
+          on all windows but Systray has icons (which are non-commandable `_Window`s.)
+        - Fix bug where bars were not reconfigured correctly when screen layout changes.
+        - Fix a Wayland bug where layer-shell surface like dunst would freeze up and stop updating.
+        - Change timing of `screens_reconfigured` hook. Will now be called ONLY if `cmd_reconfigure_screens`
+          has been called and completed.
+        - Fix order of icons in Systray widget when restarting/reloading config.
+        - Fix rounding error in PulseVolume widget's reported volume.
+        - Fix bug where Volume widget did not load images where `theme_path` had been set in `widget_defaults`.
+        - Remove ability to have multiple `Systray` widgets. Additional `Systray` widgets will result in a
+          ConfigError.
+        - Release notification name from dbus when finalising `Notify` widget. This allows other notification
+          managers to request the name.
+        - Fix bug where `Battery` widget did not retrieve `background` from `widget_defaults`.
+        - Fix bug where widgets in a `WidgetBox` are rendered on top of bar borders.
 
 Qtile 0.19.0, released 2021-12-22:
     * features
@@ -30,6 +70,8 @@ Qtile 0.19.0, released 2021-12-22:
         - Allow TextBox-based widgets to display in vertical bars.
         - Added a focused attribute to `lazy.function.when` which can be used to Match on focused windows.
         - Allow to update Image widget with update() function by giving a new path.
+    * bugfixes
+        - Windows are now properly re-ordered in the layouts when toggled on and off fullscreen
 
 Qtile 0.18.1, released 2021-09-16:
     * features

@@ -21,10 +21,12 @@
 import asyncio
 import os
 from functools import partial
+
+# dbus_next is incompatible with deferred type evaluation
 from typing import Callable, List, Optional
 
 import cairocffi
-from dbus_next import InterfaceNotFoundError, InvalidBusNameError
+from dbus_next import InterfaceNotFoundError, InvalidBusNameError, InvalidObjectPathError
 from dbus_next.aio import MessageBus
 from dbus_next.constants import PropertyAccess
 from dbus_next.errors import DBusError
@@ -92,7 +94,24 @@ class StatusNotifierItem:  # noqa: E303
 
     async def start(self):
         # Create a proxy object connecting for the item.
-        introspection = await self.bus.introspect(self.service, self.path)
+        # Some apps provide the incorrect path to the StatusNotifier object
+        # We can try falling back to the default if that fails.
+        # See: https://github.com/qtile/qtile/issues/3418
+        # Note: this loop will run a maximum of two times and returns False
+        # if the no object is available.
+        found_path = False
+
+        while not found_path:
+            try:
+                introspection = await self.bus.introspect(self.service, self.path)
+                found_path = True
+            except InvalidObjectPathError:
+                logger.info(f"Cannot find {self.path} path on {self.service}.")
+                if self.path == STATUSNOTIFIER_PATH:
+                    return False
+
+                # Try the default ('/StatusNotifierItem')
+                self.path = STATUSNOTIFIER_PATH
 
         try:
             obj = self.bus.get_proxy_object(self.service, self.path, introspection)
@@ -347,6 +366,9 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
         Ayatana indicators seem to register themselves by passing their object
         path rather than the service providing that object. We therefore need
         to identify the sender of the message in order to register the service.
+
+        Returning False so senders receieve a reply (returning True prevents
+        reply being sent)
         """
         if message.member != "RegisterStatusNotifierItem":
             return False
@@ -356,9 +378,12 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
         if message.sender == message.body[0]:
             return False
 
-        self._items.append(message.sender)
-        self.on_item_added(message.sender, message.body[0])
-        return True
+        if message.sender not in self._items:
+            self._items.append(message.sender)
+            if self.on_item_added is not None:
+                self.on_item_added(message.sender, message.body[0])
+            self.StatusNotifierItemRegistered(message.sender)
+        return False
 
     async def _setup_listeners(self):
         """
@@ -392,6 +417,8 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
     def RegisterStatusNotifierItem(self, service: "s"):  # type: ignore  # noqa: F821, N802
         if service not in self._items:
             self._items.append(service)
+            if self.on_item_added is not None:
+                self.on_item_added(service)
             self.StatusNotifierItemRegistered(service)
 
     @method()
@@ -416,8 +443,6 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
 
     @signal()
     def StatusNotifierItemRegistered(self, service) -> "s":  # type: ignore  # noqa: F821, N802
-        if self.on_item_added is not None:
-            self.on_item_added(service)
         return service
 
     @signal()

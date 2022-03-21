@@ -31,13 +31,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import abc
 import glob
 import os
 import pickle
 import string
 from collections import deque
-from typing import List, Optional, Tuple
 
 from libqtile import bar, hook, pangocffi, utils
 from libqtile.command.base import CommandObject, SelectError
@@ -53,7 +54,7 @@ class AbstractCompleter(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def actual(self) -> Optional[str]:
+    def actual(self) -> str | None:
         pass
 
     @abc.abstractmethod
@@ -84,11 +85,11 @@ class FileCompleter(AbstractCompleter):
     def __init__(self, qtile, _testing=False) -> None:
         self._testing = _testing
         self.qtile = qtile
-        self.thisfinal = None  # type: Optional[str]
-        self.lookup = None  # type: Optional[List[Tuple[str, str]]]
+        self.thisfinal = None  # type: str | None
+        self.lookup = None  # type: list[tuple[str, str]] | None
         self.reset()
 
-    def actual(self) -> Optional[str]:
+    def actual(self) -> str | None:
         return self.thisfinal
 
     def reset(self) -> None:
@@ -128,14 +129,14 @@ class QshCompleter(AbstractCompleter):
     def __init__(self, qtile: CommandObject) -> None:
         q = QtileCommandInterface(qtile)
         self.client = InteractiveCommandClient(q)
-        self.thisfinal = None  # type: Optional[str]
+        self.thisfinal = None  # type: str | None
         self.reset()
 
-    def actual(self) -> Optional[str]:
+    def actual(self) -> str | None:
         return self.thisfinal
 
     def reset(self) -> None:
-        self.lookup = None  # type: Optional[List[Tuple[str, str]]]
+        self.lookup = None  # type: list[tuple[str, str]] | None
         self.path = ""
         self.offset = -1
 
@@ -181,11 +182,11 @@ class QshCompleter(AbstractCompleter):
 class GroupCompleter(AbstractCompleter):
     def __init__(self, qtile: CommandObject) -> None:
         self.qtile = qtile
-        self.thisfinal = None  # type: Optional[str]
-        self.lookup = None  # type: Optional[List[Tuple[str, str]]]
+        self.thisfinal = None  # type: str | None
+        self.lookup = None  # type: list[tuple[str, str]] | None
         self.offset = -1
 
-    def actual(self) -> Optional[str]:
+    def actual(self) -> str | None:
         """Returns the current actual value"""
         return self.thisfinal
 
@@ -217,11 +218,11 @@ class GroupCompleter(AbstractCompleter):
 class WindowCompleter(AbstractCompleter):
     def __init__(self, qtile: CommandObject) -> None:
         self.qtile = qtile
-        self.thisfinal = None  # type: Optional[str]
-        self.lookup = None  # type: Optional[List[Tuple[str, str]]]
+        self.thisfinal = None  # type: str | None
+        self.lookup = None  # type: list[tuple[str, str]] | None
         self.offset = -1
 
-    def actual(self) -> Optional[str]:
+    def actual(self) -> str | None:
         """Returns the current actual value"""
         return self.thisfinal
 
@@ -260,12 +261,12 @@ class CommandCompleter:
     DEFAULTPATH = "/bin:/usr/bin:/usr/local/bin"
 
     def __init__(self, qtile, _testing=False):
-        self.lookup = None  # type: Optional[List[Tuple[str, str]]]
+        self.lookup = None  # type: list[tuple[str, str]] | None
         self.offset = -1
-        self.thisfinal = None  # type: Optional[str]
+        self.thisfinal = None  # type: str | None
         self._testing = _testing
 
-    def actual(self) -> Optional[str]:
+    def actual(self) -> str | None:
         """Returns the current actual value"""
         return self.thisfinal
 
@@ -357,7 +358,7 @@ class Prompt(base._TextBox):
         self.add_defaults(Prompt.defaults)
         self.name = name
         self.active = False
-        self.completer = None  # type: Optional[AbstractCompleter]
+        self.completer = None  # type: AbstractCompleter | None
 
         # If history record is on, get saved history or create history record
         if self.record_history:
@@ -736,10 +737,10 @@ class Prompt(base._TextBox):
         self.history = {x: self._dedup_deque(self.history[x]) for x in self.completers}
 
     def _dedup_deque(self, dq):
-        return deque(_LastUpdatedOrderedDict.fromkeys(dq))
+        return deque(_LastUpdatedOrdereddict.fromkeys(dq))
 
 
-class _LastUpdatedOrderedDict(dict):
+class _LastUpdatedOrdereddict(dict):
     """Store items in the order the keys were last added."""
 
     def __setitem__(self, key, value):

@@ -25,12 +25,13 @@
     This can be used standalone or in other shell scripts.
 """
 
+from __future__ import annotations
+
 import argparse
 import itertools
 import pprint
 import sys
 import textwrap
-from typing import List
 
 from libqtile.command.base import CommandError, CommandException, SelectError
 from libqtile.command.client import CommandClient
@@ -88,7 +89,7 @@ def print_commands(prefix: str, obj: CommandClient) -> None:
         print(formatting.format(line[0], line[1]))
 
 
-def get_object(client: CommandClient, argv: List[str]) -> CommandClient:
+def get_object(client: CommandClient, argv: list[str]) -> CommandClient:
     """
     Constructs a path to object and returns given object (if it exists).
     """
@@ -125,7 +126,7 @@ def get_object(client: CommandClient, argv: List[str]) -> CommandClient:
     return client
 
 
-def run_function(client: CommandClient, funcname: str, args: List[str]) -> str:
+def run_function(client: CommandClient, funcname: str, args: list[str]) -> str:
     "Run command with specified args on given object."
     try:
         ret = client.call(funcname, *args)

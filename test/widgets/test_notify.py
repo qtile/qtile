@@ -21,7 +21,7 @@
 # NOTE: This test only tests the functionality of the widget and parts of the manager
 # The notification service (in libqtile/notify.py) is tested separately
 # TO DO: notification service test ;)
-
+import asyncio
 import shutil
 import subprocess
 import textwrap
@@ -30,6 +30,7 @@ import pytest
 
 import libqtile.config
 from libqtile.bar import Bar
+from libqtile.notify import notifier
 from libqtile.widget import notify
 
 
@@ -320,3 +321,30 @@ def test_parse_text(manager_nospawn, minimal_conf_noscreen):
     notif_1.extend(NOTIFICATION_1)
     subprocess.run(notif_1)
     assert obj.info()["text"] == f"TEST:{MESSAGE_1}"
+
+
+@pytest.mark.usefixtures("dbus")
+def test_unregister():
+    """Short test to check if notifier deregisters correctly."""
+
+    async def deregister():
+        def no_op(*args, **kwargs):
+            pass
+
+        do_nothing = no_op
+
+        await notifier.register(no_op)
+        await notifier.register(do_nothing)
+
+        # Remove one callback: service will not be stopped
+        task = notifier.unregister(no_op)
+        assert task is None
+        assert notifier._service
+
+        # Remove last callback: service will now be stopped
+        task = notifier.unregister(do_nothing)
+        assert task
+        await task
+        assert notifier._service is None
+
+    asyncio.run(deregister())

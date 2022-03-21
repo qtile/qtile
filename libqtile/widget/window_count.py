@@ -18,7 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Any, List, Tuple
+from __future__ import annotations
+
+from typing import Any
 
 from libqtile import bar, hook
 from libqtile.widget import base
@@ -38,7 +40,7 @@ class WindowCount(base._TextBox):
         ("foreground", "#ffffff", "Foreground colour."),
         ("text_format", "{num}", "Format for message"),
         ("show_zero", False, "Show window count when no windows"),
-    ]  # type: List[Tuple[str, Any, str]]
+    ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, text=text, width=width, **config)

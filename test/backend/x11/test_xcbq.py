@@ -1,5 +1,3 @@
-import os
-
 import pytest
 import xcffib
 import xcffib.testing
@@ -7,14 +5,7 @@ import xcffib.testing
 from libqtile.backend.x11 import window, xcbq
 
 
-@pytest.fixture(scope="function", autouse=True)
-def xdisplay(request):
-    with xcffib.testing.XvfbTest(width=1280, height=720):
-        yield os.environ["DISPLAY"]
-
-
-def test_new_window(xdisplay):
-    conn = xcbq.Connection(xdisplay)
+def test_new_window(conn):
     win = conn.create_window(1, 2, 640, 480)
     assert isinstance(win, window.XWindow)
     geom = win.get_geometry()

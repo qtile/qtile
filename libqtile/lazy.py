@@ -21,42 +21,37 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from typing import (
-        Dict,
-        Iterable,
-        List,
-        Optional,
-        Set,
-        Tuple,
-        Union,
-    )
-    from libqtile.config import Match
-
 from libqtile.command.client import InteractiveCommandClient
-from libqtile.command.graph import CommandGraphCall, CommandGraphNode, SelectorType
+from libqtile.command.graph import CommandGraphCall, CommandGraphNode
 from libqtile.command.interface import CommandInterface
+
+if TYPE_CHECKING:
+    from typing import Iterable
+
+    from libqtile.command.graph import SelectorType
+    from libqtile.config import Match
 
 
 class LazyCall:
-    def __init__(self, call: CommandGraphCall, args: Tuple, kwargs: Dict) -> None:
+    def __init__(self, call: CommandGraphCall, args: tuple, kwargs: dict) -> None:
         """The lazily evaluated command graph call
 
         Parameters
         ----------
         call: CommandGraphCall
             The call that is made
-        args: Tuple
+        args: tuple
             The args passed to the call when it is evaluated.
-        kwargs: Dict
+        kwargs: dict
             The kwargs passed to the call when it is evaluated.
         """
         self._call = call
         self._args = args
         self._kwargs = kwargs
 
-        self._focused: Optional[Match] = None
-        self._layouts: Set[str] = set()
+        self._focused: Match | None = None
+        self._if_no_focused: bool = False
+        self._layouts: set[str] = set()
         self._when_floating = True
 
     def __call__(self, *args, **kwargs):
@@ -77,7 +72,7 @@ class LazyCall:
         return LazyCall(self._call, (*self._args, *args), {**self._kwargs, **kwargs})
 
     @property
-    def selectors(self) -> List[SelectorType]:
+    def selectors(self) -> list[SelectorType]:
         """The selectors for the given call"""
         return self._call.selectors
 
@@ -87,19 +82,20 @@ class LazyCall:
         return self._call.name
 
     @property
-    def args(self) -> Tuple:
+    def args(self) -> tuple:
         """The args to the given call"""
         return self._args
 
     @property
-    def kwargs(self) -> Dict:
+    def kwargs(self) -> dict:
         """The kwargs to the given call"""
         return self._kwargs
 
     def when(
         self,
-        focused: Optional[Match] = None,
-        layout: Optional[Union[Iterable[str], str]] = None,
+        focused: Match | None = None,
+        if_no_focused: bool = False,
+        layout: Iterable[str] | str | None = None,
         when_floating: bool = True,
     ) -> "LazyCall":
         """Enable call only for given layout(s) and floating state
@@ -107,15 +103,24 @@ class LazyCall:
         Parameters
         ----------
         focused: Match or None
-            Match criteria to enable call for the current window
+            Match criteria to enable call for the current window.
+        if_no_focused: bool
+            Whether or not the `focused` attribute should also
+            match when there is no focused window.
+            This is useful when the `focused` attribute is e.g. set
+            to a regex that should also match when there is
+            no focused window.
+            By default this is set to `False` so that the focused
+            attribute only matches when there is actually a focused window.
         layout: str, Iterable[str], or None
             Restrict call to one or more layouts.
             If None, enable the call for all layouts.
         when_floating: bool
             Enable call when the current window is floating.
         """
-        if focused is not None:
-            self._focused = focused
+        self._focused = focused
+
+        self._if_no_focused = if_no_focused
 
         if layout is not None:
             self._layouts = {layout} if isinstance(layout, str) else set(layout)
@@ -126,8 +131,12 @@ class LazyCall:
     def check(self, q) -> bool:
         cur_win_floating = q.current_window and q.current_window.floating
 
-        if self._focused and not self._focused.compare(q.current_window):
-            return False
+        if self._focused:
+            if q.current_window and not self._focused.compare(q.current_window):
+                return False
+
+            if not q.current_window and not self._if_no_focused:
+                return False
 
         if cur_win_floating and not self._when_floating:
             return False
@@ -145,7 +154,7 @@ class LazyCommandInterface(CommandInterface):
     lazily evaluated commands.
     """
 
-    def execute(self, call: CommandGraphCall, args: Tuple, kwargs: Dict) -> LazyCall:
+    def execute(self, call: CommandGraphCall, args: tuple, kwargs: dict) -> LazyCall:
         """Lazily evaluate the given call"""
         return LazyCall(call, args, kwargs)
 
@@ -153,7 +162,7 @@ class LazyCommandInterface(CommandInterface):
         """Lazily resolve the given command"""
         return True
 
-    def has_item(self, node: CommandGraphNode, object_type: str, item: Union[str, int]) -> bool:
+    def has_item(self, node: CommandGraphNode, object_type: str, item: str | int) -> bool:
         """Lazily resolve the given item"""
         return True
 

@@ -1,17 +1,11 @@
-name: "Issue template"
-description: Required
+name: "Report an issue"
+description: "Our tracker for bugs and other issues with the core project"
 labels: ["unconfirmed"]
 body:
   - type: markdown
     attributes:
      value: |
        Please note that this tracker is only for bugs or other issues with the core project.
-
-       Have a **general question**?
-       There are [community contact](https://github.com/qtile/qtile#community) options for that, or ask at [Q&A](https://github.com/qtile/qtile/discussions/categories/q-a).
-
-       Have a **feature idea**?
-       Please post it on the discussions board as an [idea](https://github.com/qtile/qtile/discussions/categories/ideas).
   - type: markdown
     attributes:
      value: |
@@ -21,12 +15,13 @@ body:
        - If relevant, the problematic part of your config.
   - type: textarea
     attributes:
-      label: "The bug:"
+      label: "The issue:"
       value: I wanted to do X, but Y happened, and I expected Z. I think this is a bug.
     validations:
       render: markdown
   - type: checkboxes
     attributes:
+      label: "Required:"
       options:
         - label: I have searched past issues to see if this bug has already been reported.
           required: true

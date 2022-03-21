@@ -26,11 +26,15 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
+from __future__ import annotations
+
 import xcffib
 from xcffib.xproto import ClientMessageData, ClientMessageEvent, EventMask, SetMode
 
 from libqtile import bar
 from libqtile.backend.x11 import window
+from libqtile.confreader import ConfigError
 from libqtile.widget import base
 
 XEMBED_PROTOCOL_VERSION = 0
@@ -42,7 +46,17 @@ class Icon(window._Window):
     def __init__(self, win, qtile, systray):
         window._Window.__init__(self, win, qtile)
         self.systray = systray
+        # win.get_name() may return None when apps provide a temporary window before the icon window
+        # we need something in self.name in order to sort icons so we use the window's WID.
+        self.name = win.get_name() or str(win.wid)
         self.update_size()
+        self._wm_class: list[str] | None = None
+
+    def __eq__(self, other):
+        if not isinstance(other, Icon):
+            return False
+
+        return self.window.wid == other.window.wid
 
     def update_size(self):
         icon_size = self.systray.icon_size
@@ -73,8 +87,8 @@ class Icon(window._Window):
 
     def handle_DestroyNotify(self, event):  # noqa: N802
         wid = event.window
-        del self.qtile.windows_map[wid]
-        del self.systray.icons[wid]
+        icon = self.qtile.windows_map.pop(wid)
+        self.systray.tray_icons.remove(icon)
         self.systray.bar.draw()
         return False
 
@@ -85,6 +99,9 @@ class Systray(window._Window, base._Widget):
     """
     A widget that manages system tray.
 
+    Only one Systray widget is allowed. Adding additional Systray
+    widgets will result in a ConfigError.
+
     .. note::
         Icons will not render correctly where the bar/widget is
         drawn with a semi-transparent background. Instead, icons
@@ -94,6 +111,8 @@ class Systray(window._Window, base._Widget):
         a fully opaque background colour or a fully transparent
         one.
     """
+
+    _instances = 0
 
     _window_mask = EventMask.StructureNotify | EventMask.Exposure
 
@@ -107,16 +126,17 @@ class Systray(window._Window, base._Widget):
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(Systray.defaults)
-        self.icons = {}
+        self.tray_icons = []
         self.screen = 0
         self._name = config.get("name", "systray")
+        self._wm_class: list[str] | None = None
 
     def calculate_length(self):
         if self.bar.horizontal:
-            length = sum(i.width for i in self.icons.values())
+            length = sum(i.width for i in self.tray_icons)
         else:
-            length = sum(i.height for i in self.icons.values())
-        length += self.padding * len(self.icons)
+            length = sum(i.height for i in self.tray_icons)
+        length += self.padding * len(self.tray_icons)
         return length
 
     def _configure(self, qtile, bar):
@@ -124,6 +144,9 @@ class Systray(window._Window, base._Widget):
 
         if self.configured:
             return
+
+        if Systray._instances > 0:
+            raise ConfigError("Only one Systray can be used.")
 
         self.conn = conn = qtile.core.conn
         win = conn.create_window(-1, -1, 1, 1)
@@ -170,6 +193,17 @@ class Systray(window._Window, base._Widget):
         )
         qtile.core._root.send_event(event, mask=EventMask.StructureNotify)
 
+        Systray._instances += 1
+
+    def create_mirror(self):
+        """
+        Systray cannot be mirrored as we do not use a Drawer object to render icons.
+
+        Return new, unconfigured instance so that, when the bar tries to configure it
+        again, a ConfigError is raised.
+        """
+        return Systray()
+
     def handle_ClientMessage(self, event):  # noqa: N802
         atoms = self.conn.atoms
 
@@ -183,8 +217,10 @@ class Systray(window._Window, base._Widget):
         if opcode == atoms["_NET_SYSTEM_TRAY_OPCODE"] and message == 0:
             w = window.XWindow(self.conn, wid)
             icon = Icon(w, self.qtile, self)
-            self.icons[wid] = icon
-            self.qtile.windows_map[wid] = icon
+            if icon not in self.tray_icons:
+                self.tray_icons.append(icon)
+                self.tray_icons.sort(key=lambda icon: icon.name)
+                self.qtile.windows_map[wid] = icon
 
             self.conn.conn.core.ChangeSaveSet(SetMode.Insert, wid)
             self.conn.conn.core.ReparentWindow(wid, parent.wid, 0, 0)
@@ -205,7 +241,7 @@ class Systray(window._Window, base._Widget):
         offset = self.padding
         self.drawer.clear(self.background or self.bar.background)
         self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
-        for pos, icon in enumerate(self.icons.values()):
+        for pos, icon in enumerate(self.tray_icons):
             icon.window.set_attribute(backpixmap=self.drawer.pixmap)
             if self.bar.horizontal:
                 xoffset = self.offsetx + offset
@@ -245,9 +281,16 @@ class Systray(window._Window, base._Widget):
         self.hide()
 
         root = self.qtile.core._root.wid
-        for wid in self.icons:
-            self.conn.conn.core.ReparentWindow(wid, root, 0, 0)
+        for icon in self.tray_icons:
+            self.conn.conn.core.ReparentWindow(icon.window.wid, root, 0, 0)
         self.conn.conn.flush()
 
         del self.qtile.windows_map[self.wid]
         self.conn.conn.core.DestroyWindow(self.wid)
+
+        Systray._instances -= 1
+
+    def info(self):
+        info = window._Window.info(self)
+        info["widget"] = base._Widget.info(self)
+        return info

@@ -17,8 +17,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
+from __future__ import annotations
+
 from math import log
-from typing import Tuple
 
 import psutil
 
@@ -76,12 +78,11 @@ class Net(base.ThreadPoolText):
                 self.interface = [self.interface]
             else:
                 raise AttributeError(
-                    "Invalid Argument passed: %s\nAllowed Types: List, String, None"
-                    % self.interface
+                    "Invalid Argument passed: %s\nAllowed Types: list, str, None" % self.interface
                 )
         self.stats = self.get_stats()
 
-    def convert_b(self, num_bytes: float) -> Tuple[float, str]:
+    def convert_b(self, num_bytes: float) -> tuple[float, str]:
         """Converts the number of bytes to the correct unit"""
 
         num_bytes *= self.byte_multiplier
@@ -95,7 +96,7 @@ class Net(base.ThreadPoolText):
         else:
             power = self.allowed_prefixes.index(self.prefix)
 
-        converted_bytes = num_bytes / self.factor ** power
+        converted_bytes = num_bytes / self.factor**power
         unit = self.units[power]
 
         return converted_bytes, unit

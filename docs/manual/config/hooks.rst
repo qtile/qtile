@@ -75,3 +75,15 @@ it can be imported into your config:
 .. code-block:: python
 
     from libqtile import qtile
+
+Async hooks
+-----------
+
+Hooks can also be defined as coroutine functions using ``async def``, which
+will run them asynchronously in the event loop:
+
+.. code-block:: python
+
+    @hook.subscribe.focus_change
+    async def _():
+        ...

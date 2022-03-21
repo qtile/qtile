@@ -29,7 +29,7 @@ clients to do this interaction.
 
 from __future__ import annotations
 
-from typing import Any, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 from libqtile.command.base import SelectError
 from libqtile.command.graph import (
@@ -37,17 +37,25 @@ from libqtile.command.graph import (
     CommandGraphNode,
     CommandGraphObject,
     CommandGraphRoot,
-    GraphType,
 )
-from libqtile.command.interface import CommandInterface, IPCCommandInterface, SelectorType
+from libqtile.command.interface import CommandInterface, IPCCommandInterface
 from libqtile.ipc import Client, find_sockfile
+
+if TYPE_CHECKING:
+    from typing import Any
+
+    from libqtile.command.graph import GraphType
+    from libqtile.command.interface import SelectorType
 
 
 class CommandClient:
     """The object that resolves the commands"""
 
     def __init__(
-        self, command: CommandInterface = None, *, current_node: Optional[CommandGraphNode] = None
+        self,
+        command: CommandInterface | None = None,
+        *,
+        current_node: CommandGraphNode | None = None,
     ) -> None:
         """A client that resolves calls through the command object interface
 
@@ -70,14 +78,14 @@ class CommandClient:
         self._command = command
         self._current_node = current_node if current_node is not None else CommandGraphRoot()
 
-    def navigate(self, name: str, selector: Optional[str]) -> CommandClient:
+    def navigate(self, name: str, selector: str | None) -> CommandClient:
         """Resolve the given object in the command graph
 
         Parameters
         ----------
         name: str
             The name of the command graph object to resolve.
-        selector: Optional[str]
+        selector: str | None
             If given, the selector to use to select the next object, and if
             None, then selects the default object.
 
@@ -123,21 +131,21 @@ class CommandClient:
         return self._command.execute(call, args, kwargs)
 
     @property
-    def children(self) -> List[str]:
+    def children(self) -> list[str]:
         """Get the children of the current location in the command graph"""
         return self._current_node.children
 
     @property
-    def selectors(self) -> List[SelectorType]:
+    def selectors(self) -> list[SelectorType]:
         return self._current_node.selectors
 
     @property
-    def commands(self) -> List[str]:
+    def commands(self) -> list[str]:
         """Get the commands available on the current object"""
         command_call = self._current_node.call("commands")
         return self._command.execute(command_call, (), {})
 
-    def items(self, name: str) -> Tuple[bool, List[Union[str, int]]]:
+    def items(self, name: str) -> tuple[bool, list[str | int]]:
         """Get the available items"""
         items_call = self._current_node.call("items")
         return self._command.execute(items_call, (name,), {})
@@ -161,7 +169,7 @@ class InteractiveCommandClient:
     """
 
     def __init__(
-        self, command: CommandInterface = None, *, current_node: GraphType = None
+        self, command: CommandInterface | None = None, *, current_node: GraphType | None = None
     ) -> None:
         """An interactive client that resolves calls through the gives client
 
@@ -234,7 +242,7 @@ class InteractiveCommandClient:
         next_node = self._current_node.navigate(name, None)
         return self.__class__(self._command, current_node=next_node)
 
-    def __getitem__(self, name: Union[str, int]) -> InteractiveCommandClient:
+    def __getitem__(self, name: str | int) -> InteractiveCommandClient:
         """Get the selected element of the currently selected object
 
         From the current command graph object, select the instance with the
@@ -275,7 +283,7 @@ class InteractiveCommandClient:
         next_node = self._current_node.parent.navigate(self._current_node.object_type, name)
         return self.__class__(self._command, current_node=next_node)
 
-    def normalize_item(self, item: str) -> Union[str, int]:
+    def normalize_item(self, item: str) -> str | int:
         "Normalize the item according to Qtile._items()."
         object_type = (
             self._current_node.object_type
@@ -285,7 +293,7 @@ class InteractiveCommandClient:
         return _normalize_item(object_type, item)
 
 
-def _normalize_item(object_type: Optional[str], item: str) -> Union[str, int]:
+def _normalize_item(object_type: str | None, item: str) -> str | int:
     if object_type in ["group", "widget", "bar"]:
         return str(item)
     elif object_type in ["layout", "window", "screen"]:

@@ -29,18 +29,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import asyncio
 import copy
 import math
 import subprocess
-from typing import Any, List, Tuple
+from typing import TYPE_CHECKING
 
 from libqtile import bar, configurable, confreader
 from libqtile.command import interface
-from libqtile.command.base import CommandError, CommandObject, ItemT
+from libqtile.command.base import CommandError, CommandObject
 from libqtile.lazy import LazyCall
 from libqtile.log_utils import logger
 
+if TYPE_CHECKING:
+    from typing import Any
+
+    from libqtile.command.base import ItemT
 
 # Each widget class must define which bar orientation(s) it supports by setting
 # these bits in an 'orientations' class attribute. Simply having the attribute
@@ -62,6 +68,8 @@ from libqtile.log_utils import logger
 # | ORIENTATION_BOTH       | Widget displayed   | Widget displayed   |
 # |                        | horizontally       | vertically         |
 # +------------------------+--------------------+--------------------+
+
+
 class _Orientations(int):
     def __new__(cls, value, doc):
         return super().__new__(cls, value)
@@ -132,7 +140,7 @@ class _Widget(CommandObject, configurable.Configurable):
             {},
             "Dict of mouse button press callback functions. Acceps functions and ``lazy`` calls.",
         ),
-    ]  # type: List[Tuple[str, Any, str]]
+    ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, length, **config):
         """
@@ -156,7 +164,7 @@ class _Widget(CommandObject, configurable.Configurable):
             raise confreader.ConfigError("Widget width must be an int")
 
         self.configured = False
-        self._futures: List[asyncio.TimerHandle] = []
+        self._futures: list[asyncio.TimerHandle] = []
 
     @property
     def length(self):
@@ -375,7 +383,7 @@ class _TextBox(_Widget):
         ("markup", True, "Whether or not to use pango markup"),
         ("fmt", "{}", "How to format the text"),
         ("max_chars", 0, "Maximum number of characters to display in widget."),
-    ]  # type: List[Tuple[str, Any, str]]
+    ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
         self.layout = None
@@ -545,7 +553,7 @@ class InLoopPollText(_TextBox):
             "Update interval in seconds, if none, the "
             "widget updates whenever the event loop is idle.",
         ),
-    ]  # type: List[Tuple[str, Any, str]]
+    ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, default_text="N/A", width=bar.CALCULATED, **config):
         _TextBox.__init__(self, default_text, width, **config)
@@ -600,7 +608,7 @@ class ThreadPoolText(_TextBox):
             600,
             "Update interval in seconds, if none, the " "widget updates whenever it's done.",
         ),
-    ]  # type: List[Tuple[str, Any, str]]
+    ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, text, **config):
         super().__init__(text, width=bar.CALCULATED, **config)
@@ -650,7 +658,7 @@ class PaddingMixin(configurable.Configurable):
         ("padding", 3, "Padding inside the box"),
         ("padding_x", None, "X Padding. Overrides 'padding' if set"),
         ("padding_y", None, "Y Padding. Overrides 'padding' if set"),
-    ]  # type: List[Tuple[str, Any, str]]
+    ]  # type: list[tuple[str, Any, str]]
 
     padding_x = configurable.ExtraFallback("padding_x", "padding")
     padding_y = configurable.ExtraFallback("padding_y", "padding")
@@ -668,7 +676,7 @@ class MarginMixin(configurable.Configurable):
         ("margin", 3, "Margin inside the box"),
         ("margin_x", None, "X Margin. Overrides 'margin' if set"),
         ("margin_y", None, "Y Margin. Overrides 'margin' if set"),
-    ]  # type: List[Tuple[str, Any, str]]
+    ]  # type: list[tuple[str, Any, str]]
 
     margin_x = configurable.ExtraFallback("margin_x", "margin")
     margin_y = configurable.ExtraFallback("margin_y", "margin")

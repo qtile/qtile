@@ -95,10 +95,14 @@ def type_check_config_args(config_file):
     if shutil.which("mypy") is None:
         print("mypy not found, can't type check config file" "install it and try again")
         return
+    if sys.version_info.minor < 8:  # < 3.8
+        print(
+            "mypy check not supported for the current version of python, "
+            + "please update python to at least 3.8 and try again"
+        )
+        return
     try:
-        # we want to use Literal, which is in 3.8. If people have a mypy that
-        # is too old, they can upgrade; this is an optional check anyways.
-        subprocess.check_call(["mypy", "--python-version=3.8", config_file])
+        subprocess.check_call(["mypy", config_file])
         print("config file type checking succeeded")
     except subprocess.CalledProcessError as e:
         print("config file type checking failed: {}".format(e))

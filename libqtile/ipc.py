@@ -24,6 +24,9 @@
     run the same Python version, and that clients must be trusted (as
     un-marshalling untrusted data can result in arbitrary code execution).
 """
+
+from __future__ import annotations
+
 import asyncio
 import fcntl
 import json
@@ -31,7 +34,7 @@ import marshal
 import os.path
 import socket
 import struct
-from typing import Any, Optional, Tuple
+from typing import Any
 
 from libqtile.log_utils import logger
 from libqtile.utils import get_cache_dir
@@ -46,7 +49,7 @@ class IPCError(Exception):
     pass
 
 
-def find_sockfile(display: str = None):
+def find_sockfile(display: str | None = None):
     """
     Finds the appropriate socket file for the given display.
 
@@ -89,20 +92,20 @@ class _IPC:
     """A helper class to handle properly packing and unpacking messages"""
 
     @staticmethod
-    def unpack(data: bytes, *, is_json: Optional[bool] = None) -> Tuple[Any, bool]:
+    def unpack(data: bytes, *, is_json: bool | None = None) -> tuple[Any, bool]:
         """Unpack the incoming message
 
         Parameters
         ----------
         data: bytes
             The incoming message to unpack
-        is_json: Optional[bool]
+        is_json: bool | None
             If the message should be unpacked as json.  By default, try to
             unpack json and fallback gracefully to marshalled bytes.
 
         Returns
         -------
-        Tuple[Any, bool]
+        tuple[Any, bool]
             A tuple of the unpacked object and a boolean denoting if the
             message was deserialized using json.  If True, the return message
             should be packed as json.
@@ -126,12 +129,19 @@ class _IPC:
     def pack(msg: Any, *, is_json: bool = False) -> bytes:
         """Pack the object into a message to pass"""
         if is_json:
-            json_obj = json.dumps(msg)
+            json_obj = json.dumps(msg, default=_IPC._json_encoder)
             return json_obj.encode()
 
         msg_bytes = marshal.dumps(msg)
         size = struct.pack(HDRFORMAT, len(msg_bytes))
         return size + msg_bytes
+
+    @staticmethod
+    def _json_encoder(field: Any) -> Any:
+        """Convert non-serializable types to ones understood by stdlib json module"""
+        if isinstance(field, set):
+            return list(field)
+        raise ValueError(f"Tried to JSON serialize unsupported type {type(field)}: {field}")
 
 
 class Client:
@@ -195,7 +205,7 @@ class Server:
     def __init__(self, socket_path: str, handler) -> None:
         self.socket_path = socket_path
         self.handler = handler
-        self.server = None  # type: Optional[asyncio.AbstractServer]
+        self.server = None  # type: asyncio.AbstractServer | None
 
         if os.path.exists(socket_path):
             os.unlink(socket_path)

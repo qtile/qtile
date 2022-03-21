@@ -21,7 +21,7 @@
 import re
 import shlex
 from subprocess import PIPE, Popen
-from typing import Any, List, Tuple  # noqa: F401
+from typing import Any
 
 from libqtile import configurable
 from libqtile.log_utils import logger
@@ -32,7 +32,7 @@ RGB = re.compile(r"^#?([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$")
 class _Extension(configurable.Configurable):
     """Base Extension class"""
 
-    installed_extensions = []  # type: List
+    installed_extensions = []  # type: list
 
     defaults = [
         ("font", "sans", "defines the font name to be used"),
@@ -101,7 +101,7 @@ class RunCommand(_Extension):
         #       modified it, all the other objects would see the modified list;
         #       use a string or a tuple instead, which are immutable
         ("command", None, "the command to be launched (string or list with arguments)"),
-    ]  # type: List[Tuple[str, Any, str]]
+    ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, **config):
         _Extension.__init__(self, **config)
