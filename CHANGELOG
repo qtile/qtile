@@ -1,4 +1,4 @@
-Qtile x.x.x, released xxxx-xx-xx:
+Qtile 0.21.0, released 2022-03-23:
     * features
         - Add `lazy.window.center()` command to center a floating window on the screen.
         - Wayland: added power-output-management-v1 protocol support, added idle protocol,
