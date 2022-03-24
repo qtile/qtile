@@ -96,14 +96,6 @@ def test_scrub_to_utf8():
     assert utils.scrub_to_utf8(b"foo") == "foo"
 
 
-def test_shuffle():
-    test_l = list(range(3))
-    utils.shuffle_up(test_l)
-    assert test_l != list(range(3))
-    utils.shuffle_down(test_l)
-    assert test_l == list(range(3))
-
-
 def test_guess_terminal_accepts_a_preference(path):
     term = "shitty"
     Path(path, term).touch(mode=0o777)

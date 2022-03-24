@@ -813,7 +813,7 @@ class Qtile(CommandObject):
             if sel is None:
                 return self.current_group.layout
             else:
-                return utils.lget(self.current_group.layouts, sel)
+                return lget(self.current_group.layouts, int(sel))
         elif name == "widget":
             return self.widgets_map.get(sel)  # type: ignore
         elif name == "bar":
@@ -833,7 +833,7 @@ class Qtile(CommandObject):
             if sel is None:
                 return self.current_screen
             else:
-                return utils.lget(self.screens, sel)
+                return lget(self.screens, int(sel))
         elif name == "core":
             return self.core
         return None

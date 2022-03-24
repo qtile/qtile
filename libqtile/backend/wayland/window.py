@@ -490,7 +490,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             if sel is None:
                 return self.group.layout if self.group else None
             else:
-                return utils.lget(self.group.layouts, sel) if self.group else None
+                return utils.lget(self.group.layouts, int(sel)) if self.group else None
         elif name == "screen":
             return self.group.screen if self.group else None
         return None

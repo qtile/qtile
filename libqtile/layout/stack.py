@@ -17,7 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from libqtile import utils
 from libqtile.layout.base import Layout, _ClientList
 
 
@@ -293,7 +292,8 @@ class Stack(Layout):
 
     def cmd_rotate(self):
         """Rotate order of the stacks"""
-        utils.shuffle_up(self.stacks)
+        if self.stacks:
+            self.stacks.insert(0, self.stacks.pop())
         self.group.layout_all()
 
     def cmd_next(self):
