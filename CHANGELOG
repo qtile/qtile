@@ -1,4 +1,7 @@
 Qtile x.xx.x, released XXXX-XX-XX:
+    !!! Config breakage !!!
+        - lazy.qtile.display_kb() no longer receives any arguments. If you passed it any arguments
+          (which were ignored previously), remove them.
     * features
         - Add ability to draw borders and add margins to the `Max` layout.
     * bugfixes

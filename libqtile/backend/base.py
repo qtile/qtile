@@ -269,6 +269,10 @@ class Window(_Window, metaclass=ABCMeta):
     def group(self) -> _Group | None:
         """The group to which this window belongs."""
 
+    @group.setter
+    def group(self, group: _Group | None) -> None:
+        """Set the group."""
+
     @property
     def floating(self) -> bool:
         """Whether this window is floating."""
