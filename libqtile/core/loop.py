@@ -22,7 +22,7 @@ class LoopContext(contextlib.AbstractAsyncContextManager):
         self._signals = signals or {}
         self._stopped = False
 
-    async def __aenter__(self) -> "LoopContext":
+    async def __aenter__(self) -> LoopContext:
         self._stopped = False
         loop = asyncio.get_running_loop()
         loop.set_exception_handler(self._handle_exception)
@@ -31,7 +31,7 @@ class LoopContext(contextlib.AbstractAsyncContextManager):
 
         return self
 
-    async def __aexit__(self, *args) -> None:
+    async def __aexit__(self, *args) -> None:  # type: ignore
         self._stopped = True
 
         await self._cancel_all_tasks()
@@ -40,7 +40,7 @@ class LoopContext(contextlib.AbstractAsyncContextManager):
         map(loop.remove_signal_handler, self._signals.keys())
         loop.set_exception_handler(None)
 
-    async def _cancel_all_tasks(self):
+    async def _cancel_all_tasks(self) -> None:
         # we don't want to cancel this task, so filter all_tasks
         # generator to filter in place
         pending = (task for task in asyncio.all_tasks() if task is not asyncio.current_task())

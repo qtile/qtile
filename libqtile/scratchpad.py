@@ -20,9 +20,14 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from libqtile import config, group, hook
 from libqtile.backend.base import FloatStates
 from libqtile.config import Match
+
+if TYPE_CHECKING:
+    from libqtile.backend.base import Window
 
 
 class WindowVisibilityToggler:
@@ -36,7 +41,7 @@ class WindowVisibilityToggler:
     By default, the window is also hidden if it loses focus.
     """
 
-    def __init__(self, scratchpad_name, window, on_focus_lost_hide, warp_pointer):
+    def __init__(self, scratchpad_name, window: Window, on_focus_lost_hide, warp_pointer):
         """
         Initiliaze the  WindowVisibilityToggler.
 
@@ -365,7 +370,7 @@ class ScratchPad(group._Group):
             state.append((name, client_wid, dd.visible))
         return state
 
-    def restore_state(self, state, restart: bool):
+    def restore_state(self, state, restart: bool) -> list[int]:
         """
         Restore the state of existing dropdown windows. Used for restoring state across
         Qtile restarts (`restart` == True) or config reloads (`restart` == False).

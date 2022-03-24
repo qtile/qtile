@@ -18,9 +18,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from libqtile import hook
+from libqtile.backend.base import Window
 from libqtile.scratchpad import ScratchPad
+
+if TYPE_CHECKING:
+    from libqtile.backend.base import Static
+    from libqtile.core.manager import Qtile
 
 
 class QtileState:
@@ -33,12 +41,12 @@ class QtileState:
     ScratchPad groups are saved for both reloading and restarting.
     """
 
-    def __init__(self, qtile, restart=True):
+    def __init__(self, qtile: Qtile, restart: bool = True) -> None:
         self.groups = []
         self.screens = {}
         self.current_screen = 0
         self.scratchpads = {}
-        self.orphans = []
+        self.orphans: list[int] = []
         self.restart = restart  # True when restarting, False when config reloading
 
         for group in qtile.groups:
@@ -52,7 +60,7 @@ class QtileState:
             if screen == qtile.current_screen:
                 self.current_screen = index
 
-    def apply(self, qtile):
+    def apply(self, qtile: Qtile) -> None:
         """
         Rearrange the windows in the specified Qtile object according to this
         QtileState.
@@ -83,17 +91,20 @@ class QtileState:
                 hook.subscribe.client_new(self.handle_orphan_dropdowns)
             else:
                 for wid in self.orphans:
-                    qtile.windows_map[wid].group = qtile.current_group
+                    win = qtile.windows_map[wid]
+                    if isinstance(win, Window):
+                        win.group = qtile.current_group
 
         qtile.focus_screen(self.current_screen)
 
-    def handle_orphan_dropdowns(self, client):
+    def handle_orphan_dropdowns(self, client: Window | Static) -> None:
         """
         Remove any windows from now non-existent scratchpad groups.
         """
         client_wid = client.wid
         if client_wid in self.orphans:
             self.orphans.remove(client_wid)
-            client.group = None
+            if isinstance(client, Window):
+                client.group = None
             if not self.orphans:
                 hook.unsubscribe.client_new(self.handle_orphan_dropdowns)
