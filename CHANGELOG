@@ -10,6 +10,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Widgets that are incompatible with a backend (e.g. Systray on Wayland) will no longer show 
           as a ConfigError in the bar. Instead the widget is silently removed from the bar and a message
           included in the logs.
+        - Reduce error messages in `StatusNotifier` widget from certain apps.
 
 Qtile 0.21.0, released 2022-03-23:
     * features

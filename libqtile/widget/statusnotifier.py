@@ -105,6 +105,10 @@ class StatusNotifierItem:  # noqa: E303
             try:
                 introspection = await self.bus.introspect(self.service, self.path)
                 found_path = True
+            except InvalidBusNameError:
+                # This is probably an Ayatana indicator which doesn't provide the service name.
+                # We'll pick it up via the message handler so we can ignore this.
+                return False
             except InvalidObjectPathError:
                 logger.info(f"Cannot find {self.path} path on {self.service}.")
                 if self.path == STATUSNOTIFIER_PATH:
@@ -507,6 +511,14 @@ class StatusNotifierHost:  # noqa: E303
             self.items.append(item)
             if self.on_item_added:
                 self.on_item_added(item)
+
+        # It's an invalid item so let's remove it from the watchers
+        else:
+            for w in self.watchers:
+                try:
+                    w._items.remove(service)
+                except ValueError:
+                    pass
 
     def add_item(self, service, path=None):
         """
