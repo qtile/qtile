@@ -135,8 +135,6 @@ def has_transparency(colour: ColorsType):
     elif isinstance(colour, list):
         return any([has_transparency(c) for c in colour])
 
-    return False
-
 
 def remove_transparency(colour: ColorsType):
     """
@@ -152,8 +150,6 @@ def remove_transparency(colour: ColorsType):
 
     elif isinstance(colour, list):
         return [remove_transparency(c) for c in colour]
-
-    return (0, 0, 0)
 
 
 def scrub_to_utf8(text):
