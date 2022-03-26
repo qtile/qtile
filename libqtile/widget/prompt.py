@@ -40,7 +40,7 @@ import pickle
 import string
 from collections import deque
 
-from libqtile import bar, hook, pangocffi, utils
+from libqtile import hook, pangocffi, utils
 from libqtile.command.base import CommandObject, SelectError
 from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import CommandError, QtileCommandInterface
@@ -354,7 +354,7 @@ class Prompt(base._TextBox):
     ]
 
     def __init__(self, **config) -> None:
-        base._TextBox.__init__(self, "", bar.CALCULATED, **config)
+        base._TextBox.__init__(self, "", **config)
         self.add_defaults(Prompt.defaults)
         self.active = False
         self.completer = None  # type: AbstractCompleter | None

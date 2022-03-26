@@ -52,7 +52,8 @@ class WindowTabs(base._TextBox):
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, width=bar.STRETCH, **config)
+        width = config.pop("width", bar.STRETCH)
+        base._TextBox.__init__(self, width=width, **config)
         self.add_defaults(WindowTabs.defaults)
         if not isinstance(self.selected, (tuple, list)):
             self.selected = (self.selected, self.selected)
