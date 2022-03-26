@@ -146,6 +146,12 @@ def test_widget_init_config_vertical_bar(
     assert i["widgets"][0]["name"] == widget.name
 
 
+@pytest.mark.parametrize("widget_class,kwargs", parameters)
+def test_widget_init_config_set_width(widget_class, kwargs):
+    widget = widget_class(width=50)
+    assert widget
+
+
 def test_incompatible_orientation(fake_qtile, fake_window):
     clk1 = Clock()
     clk1.orientations = ORIENTATION_VERTICAL

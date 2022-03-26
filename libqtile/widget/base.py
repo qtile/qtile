@@ -395,6 +395,29 @@ class _TextBox(_Widget):
              of the widget (if it has one)",
         ),
         ("max_chars", 0, "Maximum number of characters to display in widget."),
+        (
+            "scroll",
+            False,
+            "Whether text should be scrolled. When True, you must set the widget's ``width``.",
+        ),
+        (
+            "scroll_repeat",
+            True,
+            "Whether text should restart scrolling once the text has ended",
+        ),
+        (
+            "scroll_delay",
+            2,
+            "Number of seconds to pause before starting scrolling and restarting/clearing text at end",
+        ),
+        ("scroll_step", 1, "Number of pixels to scroll with each step"),
+        ("scroll_interval", 0.1, "Time in seconds before next scrolling step"),
+        (
+            "scroll_clear",
+            False,
+            "Whether text should scroll completely away (True) or stop when the end of the text is shown (False)",
+        ),
+        ("scroll_hide", False, "Whether the widget should hide when scrolling has finished"),
     ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -402,6 +425,12 @@ class _TextBox(_Widget):
         _Widget.__init__(self, width, **config)
         self.add_defaults(_TextBox.defaults)
         self.text = text
+        self._is_scrolling = False
+        self._should_scroll = False
+        self._scroll_offset = 0
+        self._scroll_queued = False
+        self._scroll_timer = None
+        self._scroll_width = width
 
     @property
     def text(self):
@@ -414,6 +443,9 @@ class _TextBox(_Widget):
         self._text = value
         if self.layout:
             self.layout.text = self.formatted_text
+            if self.scroll:
+                self.check_width()
+                self.reset_scroll()
 
     @property
     def formatted_text(self):
@@ -468,6 +500,26 @@ class _TextBox(_Widget):
             self.fontshadow,
             markup=self.markup,
         )
+        if not isinstance(self._scroll_width, int) and self.scroll:
+            logger.warning("%s: You must specify a width when enabling scrolling.", self.name)
+            self.scroll = False
+
+        if self.scroll:
+            self.check_width()
+
+    def check_width(self):
+        """
+        Check whether the widget needs to have calculated or fixed width
+        and whether the text should be scrolled.
+        """
+        if self.layout.width > self._scroll_width:
+            self.length_type = bar.STATIC
+            self.length = self._scroll_width
+            self._is_scrolling = True
+            self._should_scroll = True
+        else:
+            self.length_type = bar.CALCULATED
+            self._should_scroll = False
 
     def calculate_length(self):
         if self.text:
@@ -488,15 +540,11 @@ class _TextBox(_Widget):
         if not self.can_draw():
             return
         self.drawer.clear(self.background or self.bar.background)
-        if self.bar.horizontal:
-            self.layout.draw(
-                self.actual_padding or 0,
-                int(self.bar.height / 2.0 - self.layout.height / 2.0) + 1,
-            )
-        else:
-            # We need to do some transformations for vertical bars.
-            self.drawer.ctx.save()
 
+        # size = self.bar.height if self.bar.horizontal else self.bar.width
+        self.drawer.ctx.save()
+
+        if not self.bar.horizontal:
             # Left bar reads bottom to top
             if self.bar.screen.left is self.bar:
                 self.drawer.ctx.rotate(-90 * math.pi / 180.0)
@@ -507,12 +555,79 @@ class _TextBox(_Widget):
                 self.drawer.ctx.translate(self.bar.width, 0)
                 self.drawer.ctx.rotate(90 * math.pi / 180.0)
 
-            self.layout.draw(
-                self.actual_padding or 0, int(self.bar.width / 2.0 - self.layout.height / 2.0) + 1
+        # If we're scrolling, we clip the context to the scroll width less the padding
+        # Move the text layout position (and we only see the clipped portion)
+        if self._should_scroll:
+            self.drawer.ctx.rectangle(
+                self.actual_padding,
+                0,
+                self._scroll_width - 2 * self.actual_padding,
+                self.bar.size,
             )
-            self.drawer.ctx.restore()
+            self.drawer.ctx.clip()
 
-        self.drawer.draw(offsetx=self.offsetx, offsety=self.offsety, width=self.width)
+        self.layout.draw(
+            (self.actual_padding or 0) - self._scroll_offset,
+            int(self.bar.size / 2.0 - self.layout.height / 2.0) + 1,
+        )
+        self.drawer.ctx.restore()
+
+        self.drawer.draw(
+            offsetx=self.offsetx, offsety=self.offsety, width=self.width, height=self.height
+        )
+
+        # We only want to scroll if:
+        # - User has asked us to scroll and the scroll width is smaller than the layout (should_scroll=True)
+        # - We are still scrolling (is_scrolling=True)
+        # - We haven't already queued the next scroll (scroll_queued=False)
+        if self._should_scroll and self._is_scrolling and not self._scroll_queued:
+            self._scroll_queued = True
+            if self._scroll_offset == 0:
+                interval = self.scroll_delay
+            else:
+                interval = self.scroll_interval
+            self._scroll_timer = self.timeout_add(interval, self.do_scroll)
+
+    def do_scroll(self):
+        # Allow the next scroll tick to be queued
+        self._scroll_queued = False
+
+        # If we're still scrolling, adjust the next offset
+        if self._is_scrolling:
+            self._scroll_offset += self.scroll_step
+
+        # Check whether we need to stop scrolling when:
+        # - we've scrolled all the text off the widget (scroll_clear = True)
+        # - the final pixel is visible (scroll_clear = False)
+        if (self.scroll_clear and self._scroll_offset > self.layout.width) or (
+            not self.scroll_clear
+            and (self.layout.width - self._scroll_offset)
+            < (self._scroll_width - 2 * self.actual_padding)
+        ):
+            self._is_scrolling = False
+
+        # We've reached the end of the scroll so what next?
+        if not self._is_scrolling:
+            if self.scroll_repeat:
+                # Pause and restart scrolling
+                self._scroll_timer = self.timeout_add(self.scroll_delay, self.reset_scroll)
+            elif self.scroll_hide:
+                # Clear the text
+                self._scroll_timer = self.timeout_add(self.scroll_delay, self.hide_scroll)
+            # If neither of these options then the text is no longer updated.
+
+        self.draw()
+
+    def reset_scroll(self):
+        self._scroll_offset = 0
+        self._is_scrolling = True
+        self._scroll_queued = False
+        if self._scroll_timer:
+            self._scroll_timer.cancel()
+        self.draw()
+
+    def hide_scroll(self):
+        self.update("")
 
     def cmd_set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED, fontshadow=UNSPECIFIED):
         """
@@ -567,8 +682,8 @@ class InLoopPollText(_TextBox):
         ),
     ]  # type: list[tuple[str, Any, str]]
 
-    def __init__(self, default_text="N/A", width=bar.CALCULATED, **config):
-        _TextBox.__init__(self, default_text, width, **config)
+    def __init__(self, default_text="N/A", **config):
+        _TextBox.__init__(self, default_text, **config)
         self.add_defaults(InLoopPollText.defaults)
 
     def timer_setup(self):
@@ -623,7 +738,7 @@ class ThreadPoolText(_TextBox):
     ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, text, **config):
-        super().__init__(text, width=bar.CALCULATED, **config)
+        super().__init__(text, **config)
         self.add_defaults(ThreadPoolText.defaults)
 
     def timer_setup(self):
