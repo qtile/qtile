@@ -38,7 +38,7 @@ qtile_class_template = Template(
         Only available on the following backends: {{ ", ".join(obj.supported_backends) }}
         {% endif %}
     {% endif %}
-    {% if is_widget and screen_shots %}
+    {% if screen_shots %}
     .. raw:: html
 
         <table class="docutils">
@@ -81,6 +81,5 @@ qtile_class_template = Template(
 
     Click to view the available commands for :py:class:`{{ class_name }} <{{ obj.__module__ }}.{{ class_name }}>`
     {% endif %}
-
 """
 )

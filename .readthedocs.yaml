@@ -21,6 +21,9 @@ build:
     - xvfb
     - dbus-x11
     - libnotify-bin
+    - scrot
+    - imagemagick
+
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
