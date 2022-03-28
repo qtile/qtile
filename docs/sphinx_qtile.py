@@ -21,6 +21,7 @@
 
 import builtins
 import functools
+import html
 import importlib
 import inspect
 import json
@@ -35,7 +36,7 @@ from docutils.statemachine import ViewList
 from jinja2 import Template
 from sphinx.util.nodes import nested_parse_with_titles
 
-from libqtile import command, configurable, widget
+from libqtile import command, configurable, widget, layout
 from libqtile.utils import import_class
 
 qtile_module_template = Template('''
@@ -59,7 +60,7 @@ qtile_class_template = Template('''
         Only available on the following backends: {{ ", ".join(obj.supported_backends) }}
         {% endif %}
     {% endif %}
-    {% if is_widget and screen_shots %}
+    {% if screen_shots %}
     .. raw:: html
 
         <table class="docutils">
@@ -158,20 +159,30 @@ class QtileClass(SimpleDirectiveMixin, Directive):
             is_configurable = False
 
         is_widget = issubclass(obj, widget.base._Widget)
+        is_layout = issubclass(obj, layout.base.Layout)
 
         if is_widget:
             index = Path(__file__).parent / "_static" / "screenshots" / "widgets" / "shots.json"
             try:
                 with open(index, "r") as f:
                     shots = json.load(f)
-            except json.JSONDecodeError:
+            except (FileNotFoundError, json.JSONDecodeError):
                 shots = {}
 
-            widget_shots = shots.get(class_name.lower(), dict())
-        else:
-            widget_shots = {}
+            screen_shots = shots.get(class_name.lower(), dict())
+            screen_shots = {f"../../widgets/{class_name.lower()}/{k}.png": html.escape(v) for k, v in screen_shots.items()}
+        elif is_layout:
+            index = Path(__file__).parent / "_static" / "screenshots" / "layouts" / "shots.json"
+            try:
+                with open(index, "r") as f:
+                    shots = json.load(f)
+            except (FileNotFoundError, json.JSONDecodeError):
+                shots = {}
 
-        widget_shots = {f"../../widgets/{class_name.lower()}/{k}.png": v for k, v in widget_shots.items()}
+            screen_shots = shots.get(class_name.lower(), dict())
+            screen_shots = {f"../../layouts/{class_name.lower()}/{k}.gif": html.escape(v) for k, v in screen_shots.items()}
+        else:
+            screen_shots = {}
 
         context = {
             'module': module,
@@ -183,7 +194,7 @@ class QtileClass(SimpleDirectiveMixin, Directive):
             'commandable': is_commandable and issubclass(obj, command.base.CommandObject),
             'is_widget': is_widget,
             'extra_arguments': arguments,
-            'screen_shots': widget_shots,
+            'screen_shots': screen_shots,
             'supported_backends': is_widget and obj.supported_backends
         }
         if context['commandable']:

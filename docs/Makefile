@@ -169,8 +169,7 @@ genkeyimg:
 	@echo "Keybinding images have been generated."
 
 genwidgetscreenshots:
-	rm -rf screenshots/widgets
-	@echo "Generating screenshots for widgets using pytest fixtures."
+	@echo "Generating screenshots for widgets and layouts using pytest fixtures."
 	pytest -o python_files="ss_*.py" -o python_functions="ss_*" --backend x11 ../test
 	@echo
-	@echo "Generated widget screenshots"
+	@echo "Generated widget and layout screenshots"

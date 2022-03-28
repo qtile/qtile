@@ -120,6 +120,15 @@ if __name__ == "__main__":
     # Check if we want to export a StatusNotifierItem interface
     sni = "export_sni_interface" in sys.argv
 
+    win_number = 0
+
+    if "layout_screenshot" in sys.argv:
+        try:
+            win_number = int(sys.argv[sys.argv.index("layout_screenshot") + 1])
+        except ValueError:
+            print("PASSED")
+            pass
+
     win = Gtk.Window(title=title)
     win.connect("destroy", Gtk.main_quit)
     win.connect("key-press-event", Gtk.main_quit)
@@ -163,6 +172,33 @@ if __name__ == "__main__":
                 body=[bus.unique_name],
             )
         )
+
+    # This is to make the windows more beautiful for our layout screenshots
+    if win_number:
+
+        # Gtk windows are styled with CSS
+        style = Gtk.CssProvider()
+        style.load_from_data(
+            b"""
+        /* ReadTheDocs blue! */
+        .rtd {
+            background-color: #2980b9;
+            color: #ffffff;
+            font-size: 100px;
+            font-style: italic;
+        }
+        """
+        )
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(), style, Gtk.STYLE_PROVIDER_PRIORITY_USER
+        )
+
+        # Create a label with the window number and style it
+        label = Gtk.Label(label=f"{win_number}")
+        label.get_style_context().add_class("rtd")
+
+        # Place the label (fills the window)
+        win.add(label)
 
     win.show_all()
     Gtk.main()
