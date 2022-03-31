@@ -369,7 +369,7 @@ class TreeTab(Layout):
         ("section_padding", 4, "Bottom of margin section label"),
         ("section_left", 4, "Left margin of section label"),
         ("panel_width", 150, "Width of the left panel"),
-        ("sections", ["Default"], "Foreground color of inactive tab"),
+        ("sections", ["Default"], "Titles of section instances"),
         ("previous_on_rm", False, "Focus previous window on close instead of first."),
         ("place_right", False, "Place the tab panel on the right side"),
     ]
