@@ -3,4 +3,4 @@
 source ~/.bashrc
 source ~/.xinitrc
 source ~/.virtualenvs/qtile/bin/activate
-python ~/qtile/bin/qtile start
+python ~/.virtualenvs/qtile/bin/qtile start
