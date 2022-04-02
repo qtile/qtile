@@ -209,16 +209,3 @@ if has_dbus:
                     logger.exception("Exception in notifier close callback")
 
     notifier = NotificationManager()
-
-else:
-
-    class FakeManager:
-        def __init__(self):
-            logger.warning(
-                "dbus-next is not installed. Notification service and widget are unavailable."
-            )
-
-        async def register(self, *args, **kwargs):
-            pass
-
-    notifier = FakeManager()
