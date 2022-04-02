@@ -353,10 +353,9 @@ class Prompt(base._TextBox):
         ("visual_bell_time", 0.2, "Visual bell duration (in seconds)."),
     ]
 
-    def __init__(self, name="prompt", **config) -> None:
+    def __init__(self, **config) -> None:
         base._TextBox.__init__(self, "", bar.CALCULATED, **config)
         self.add_defaults(Prompt.defaults)
-        self.name = name
         self.active = False
         self.completer = None  # type: AbstractCompleter | None
 

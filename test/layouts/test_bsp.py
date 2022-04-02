@@ -33,9 +33,7 @@ class BspConfig(Config):
         libqtile.config.Group("c"),
         libqtile.config.Group("d"),
     ]
-    layouts = [
-        layout.Bsp(),
-    ]
+    layouts = [layout.Bsp(), layout.Bsp(margin_on_single=10)]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
@@ -66,3 +64,22 @@ def test_bsp_window_focus_cycle(manager):
 
     # assert window focus cycle, according to order in layout
     assert_focus_path(manager, "two", "float1", "float2", "one", "three")
+
+
+@bsp_config
+def test_bsp_margin_on_single(manager):
+    manager.test_window("one")
+
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+
+    manager.c.next_layout()
+    info = manager.c.window.info()
+    assert info["x"] == 10
+    assert info["y"] == 10
+
+    manager.test_window("two")
+    # No longer single window so margin reverts to "margin" which is 0
+    info = manager.c.window.info()
+    assert info["x"] == 0

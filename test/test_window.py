@@ -66,6 +66,39 @@ def test_no_size_hint(manager):
     assert manager.c.window.info()["height"] == 200
 
 
+@bare_config
+def test_togroup_toggle(manager):
+    manager.test_window("one")
+    assert manager.c.group.info()["name"] == "a"  # Start on "a"
+    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.groups()["b"]["focus"] is None
+    manager.c.window.togroup("b", switch_group=True)
+    assert manager.c.group.info()["name"] == "b"  # Move the window and switch to "b"
+    assert manager.c.groups()["a"]["focus"] is None
+    assert manager.c.groups()["b"]["focus"] == "one"
+    manager.c.window.togroup("b", switch_group=True)
+    assert manager.c.group.info()["name"] == "b"  # Does not toggle by default
+    assert manager.c.groups()["a"]["focus"] is None
+    assert manager.c.groups()["b"]["focus"] == "one"
+    manager.c.window.togroup("b", switch_group=True, toggle=True)
+    assert (
+        manager.c.group.info()["name"] == "a"
+    )  # Explicitly toggling moves the window and switches to "a"
+    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.groups()["b"]["focus"] is None
+    manager.c.window.togroup("b", switch_group=True, toggle=True)
+    manager.c.window.togroup("b", switch_group=True, toggle=True)
+    assert manager.c.group.info()["name"] == "a"  # Toggling twice roundtrips between the two
+    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.groups()["b"]["focus"] is None
+    manager.c.window.togroup("b", toggle=True)
+    assert (
+        manager.c.group.info()["name"] == "a"
+    )  # Toggling without switching only moves the window
+    assert manager.c.groups()["a"]["focus"] is None
+    assert manager.c.groups()["b"]["focus"] == "one"
+
+
 class BringFrontClickConfig(ManagerConfig):
     bring_front_click = True
 

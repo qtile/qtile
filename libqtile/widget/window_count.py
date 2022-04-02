@@ -42,8 +42,8 @@ class WindowCount(base._TextBox):
         ("show_zero", False, "Show window count when no windows"),
     ]  # type: list[tuple[str, Any, str]]
 
-    def __init__(self, text=" ", width=bar.CALCULATED, **config):
-        base._TextBox.__init__(self, text=text, width=width, **config)
+    def __init__(self, width=bar.CALCULATED, **config):
+        base._TextBox.__init__(self, width=width, **config)
         self.add_defaults(WindowCount.defaults)
         self._count = 0
 

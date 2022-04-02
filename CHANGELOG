@@ -1,4 +1,12 @@
-Qtile x.x.x, released xxxx-xx-xx:
+Qtile x.xx.x, released XXXX-XX-XX:
+    * features
+        - Add ability to draw borders and add margins to the `Max` layout.
+    * bugfixes
+        - Widgets that are incompatible with a backend (e.g. Systray on Wayland) will no longer show 
+          as a ConfigError in the bar. Instead the widget is silently removed from the bar and a message
+          included in the logs.
+
+Qtile 0.21.0, released 2022-03-23:
     * features
         - Add `lazy.window.center()` command to center a floating window on the screen.
         - Wayland: added power-output-management-v1 protocol support, added idle protocol,
@@ -7,6 +15,8 @@ Qtile x.x.x, released xxxx-xx-xx:
         - Add `lazy.screen.set_wallpaper` command.
         - Added ability to scale the battery icon's size
         - Add Spiral layout
+        - Add `toggle` argument to `Window.togroup` with the same functionality as in `Group.toscreen`.
+        - Added `margin_on_single` and `border_on_single` to Bsp layout
     * bugfixes
         - Fix `Systray` crash on `reconfigure_screens`.
         - Fix bug where widgets can't be mirrored in same bar.

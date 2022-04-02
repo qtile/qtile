@@ -40,12 +40,15 @@ To execute a python command in qtile, begin with by 'qshell:'
 
 
 """
+from __future__ import annotations
+
 import os.path
 
 import cairocffi
 from xdg.IconTheme import getIconPath
 
 from libqtile import bar
+from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
@@ -59,15 +62,6 @@ class LaunchBar(base._Widget):
     Widget requirements: pyxdg_.
 
     .. _pyxdg: https://freedesktop.org/wiki/Software/pyxdg/
-
-    Parameters
-    ==========
-    progs :
-        a list of tuples ``(software_name, command_to_execute, comment)``, for
-        example::
-
-            ('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode')
-            ('logout', 'qshell:self.qtile.cmd_shutdown()', 'logout from qtile')
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
@@ -82,17 +76,32 @@ class LaunchBar(base._Widget):
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("fontshadow", None, "Font shadow color, default is None (no shadow)"),
         ("foreground", "#ffffff", "Text colour."),
+        (
+            "progs",
+            [],
+            "A list of tuples (software_name, command_to_execute, comment), for example:"
+            " [('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode'), "
+            " ('logout', 'qshell:self.qtile.cmd_shutdown()', 'logout from qtile')]",
+        ),
     ]
 
-    def __init__(self, progs=None, width=bar.CALCULATED, **config):
+    def __init__(
+        self, _progs: list[tuple[str, str, str]] | None = None, width=bar.CALCULATED, **config
+    ):
         base._Widget.__init__(self, width, **config)
-        if progs is None:
-            progs = []
         self.add_defaults(LaunchBar.defaults)
-        self.surfaces = {}
-        self.icons_files = {}
-        self.icons_widths = {}
-        self.icons_offsets = {}
+        self.surfaces: dict[str, Img | base._TextBox] = {}
+        self.icons_files: dict[str, str | None] = {}
+        self.icons_widths: dict[str, int] = {}
+        self.icons_offsets: dict[str, int] = {}
+
+        if _progs:
+            logger.warning(
+                "The use of a positional argument in LaunchBar is deprecated. "
+                "Please update your config to use progs=[...]."
+            )
+            config["progs"] = _progs
+
         # For now, ignore the comments but may be one day it will be useful
         self.progs = dict(
             enumerate(
@@ -102,7 +111,7 @@ class LaunchBar(base._Widget):
                         "cmd": prog[1],
                         "comment": prog[2] if len(prog) > 2 else None,
                     }
-                    for prog in progs
+                    for prog in config.get("progs", list())
                 ]
             )
         )

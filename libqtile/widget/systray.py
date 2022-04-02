@@ -118,6 +118,8 @@ class Systray(window._Window, base._Widget):
 
     orientations = base.ORIENTATION_BOTH
 
+    supported_backends = {"x11"}
+
     defaults = [
         ("icon_size", 20, "Icon width"),
         ("padding", 5, "Padding between icons"),

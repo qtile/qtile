@@ -131,6 +131,11 @@ class _Widget(CommandObject, configurable.Configurable):
     """
 
     orientations = ORIENTATION_BOTH
+
+    # Default (empty set) is for all backends to be supported. Widgets can override this
+    # to explicitly confirm which backends are supported
+    supported_backends: set[str] = set()
+
     offsetx: int = 0
     offsety: int = 0
     defaults = [

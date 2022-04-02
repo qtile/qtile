@@ -247,11 +247,16 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
         hook.fire("client_focus", self)
 
-    def togroup(self, group_name: str | None = None, *, switch_group: bool = False) -> None:
+    def togroup(
+        self, group_name: str | None = None, *, switch_group: bool = False, toggle: bool = False
+    ) -> None:
         """
         Move window to a specified group
 
         Also switch to that group if switch_group is True.
+
+        If `toggle` is True and and the specified group is already on the screen,
+        use the last used group as target instead.
         """
         if group_name is None:
             group = self.qtile.current_group
@@ -260,19 +265,24 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
                 raise CommandError("No such group: %s" % group_name)
             group = self.qtile.groups_map[group_name]
 
-        if self.group is not group:
-            self.hide()
-            if self.group:
-                if self.group.screen:
-                    # for floats remove window offset
-                    self.x -= self.group.screen.x
-                self.group.remove(self)
+        if self.group is group:
+            if toggle and hasattr(self.group.screen, "previous_group"):
+                group = self.group.screen.previous_group
+            else:
+                return
 
-            if group.screen and self.x < group.screen.x:
-                self.x += group.screen.x
-            group.add(self)
-            if switch_group:
-                group.cmd_toscreen(toggle=False)
+        self.hide()
+        if self.group:
+            if self.group.screen:
+                # for floats remove window offset
+                self.x -= self.group.screen.x
+            self.group.remove(self)
+
+        if group.screen and self.x < group.screen.x:
+            self.x += group.screen.x
+        group.add(self)
+        if switch_group:
+            group.cmd_toscreen(toggle=toggle)
 
     def paint_borders(self, color: ColorsType | None, width: int) -> None:
         if color:

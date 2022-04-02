@@ -327,6 +327,15 @@ class Bar(Gap, configurable.Configurable):
 
     def _configure_widget(self, widget):
         configured = True
+
+        if widget.supported_backends and (self.qtile.core.name not in widget.supported_backends):
+            logger.warning(
+                f"Widget removed: {widget.__class__.__name__} does not support "
+                f"{self.qtile.core.name}."
+            )
+            self.crashed_widgets.append(widget)
+            return False
+
         try:
             widget._configure(self.qtile, self)
 
@@ -352,13 +361,19 @@ class Bar(Gap, configurable.Configurable):
 
         for i in self.crashed_widgets:
             index = self.widgets.index(i)
-            crash = ConfigErrorWidget(widget=i)
-            crash._configure(self.qtile, self)
-            if self.horizontal:
-                crash.offsety = self.border_width[0]
-            else:
-                crash.offsetx = self.border_width[3]
-            self.widgets.insert(index, crash)
+
+            # Widgets that aren't available on the current backend should not
+            # be shown as "crashed" as the behaviour is expected. Only notify
+            # for genuine crashes.
+            if not i.supported_backends or (self.qtile.core.name in i.supported_backends):
+                crash = ConfigErrorWidget(widget=i)
+                crash._configure(self.qtile, self)
+                if self.horizontal:
+                    crash.offsety = self.border_width[0]
+                else:
+                    crash.offsetx = self.border_width[3]
+                self.widgets.insert(index, crash)
+
             self.widgets.remove(i)
 
     def _items(self, name: str) -> ItemT:
