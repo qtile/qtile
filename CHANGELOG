@@ -17,6 +17,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
           included in the logs.
         - Reduce error messages in `StatusNotifier` widget from certain apps.
         - Reset colours in `Chord` widget
+        - Prevent crash in `LaunchBar` when using SVG icons
 
 Qtile 0.21.0, released 2022-03-23:
     * features
