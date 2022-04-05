@@ -154,20 +154,20 @@ class LaunchBar(base._Widget):
                 continue
             else:
                 try:
-                    img = cairocffi.ImageSurface.create_from_png(iconfile)
+                    img = Img.from_path(iconfile)
                 except cairocffi.Error:
                     logger.exception(
                         'Error loading icon for application "%s" (%s)', img_name, iconfile
                     )
                     return
 
-            input_width = img.get_width()
-            input_height = img.get_height()
+            input_width = img.width
+            input_height = img.height
 
             sp = input_height / (self.bar.height - 4)
             width = int(input_width / sp)
 
-            imgpat = cairocffi.SurfacePattern(img)
+            imgpat = cairocffi.SurfacePattern(img.surface)
             scaler = cairocffi.Matrix()
             scaler.scale(sp, sp)
             scaler.translate(self.padding * -1, -2)
