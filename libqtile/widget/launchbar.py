@@ -83,6 +83,7 @@ class LaunchBar(base._Widget):
             " [('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode'), "
             " ('logout', 'qshell:self.qtile.cmd_shutdown()', 'logout from qtile')]",
         ),
+        ("text_only", False, "Don't use any icons."),
     ]
 
     def __init__(
@@ -128,12 +129,14 @@ class LaunchBar(base._Widget):
     def setup_images(self):
         """Create image structures for each icon files."""
         for img_name, iconfile in self.icons_files.items():
-            if iconfile is None:
-                logger.warning(
-                    'No icon found for application "%s" (%s) switch to text mode',
-                    img_name,
-                    iconfile,
-                )
+            if iconfile is None or self.text_only:
+                # Only warn the user that there's no icon if they haven't set text only mode
+                if not self.text_only:
+                    logger.warning(
+                        'No icon found for application "%s" (%s) switch to text mode',
+                        img_name,
+                        iconfile,
+                    )
                 # if no icon is found and no default icon was set, we just
                 # print the name, based on a textbox.
                 textbox = base._TextBox()
