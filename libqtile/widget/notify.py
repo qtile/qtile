@@ -26,7 +26,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import asyncio
 from os import path
 
 from libqtile import bar, pangocffi, utils
@@ -89,6 +88,7 @@ class Notify(base._TextBox):
         )
 
     async def _config_async(self):
+        logger.debug("Registering notify widget")
         await notifier.register(self.update, self.capabilities, on_close=self.on_close)
 
     def set_notif_text(self, notif):
@@ -191,7 +191,14 @@ class Notify(base._TextBox):
             self.invoke()
 
     def finalize(self):
-        asyncio.create_task(self._finalize())
+        # We may need some async calls as part of the finalize call
+        # We run this with `call_soon_threadsafe` as this waits for
+        # the job to finish before continuing. This is important as,
+        # if the config is just reloading, we need to finish deregistering
+        # the notification server before the new Notify widget instance
+        # registers and creates a new server.
+        self.qtile.call_soon_threadsafe(self._finalize)
+        base._TextBox.finalize(self)
 
     async def _finalize(self):
         task = notifier.unregister(self.update)
@@ -202,4 +209,3 @@ class Notify(base._TextBox):
         # complete the finalisation of this widget.
         if task:
             await task
-        base._TextBox.finalize(self)
