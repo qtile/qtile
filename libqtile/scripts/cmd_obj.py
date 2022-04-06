@@ -40,6 +40,15 @@ from libqtile.command.interface import IPCCommandInterface
 from libqtile.ipc import Client, find_sockfile
 
 
+def kwarg(value):
+    """Checks if argument is a key=value pair and returns (key, value)."""
+    key, _, val = value.partition("=")
+    if key and val:
+        return (key, val)
+
+    raise argparse.ArgumentTypeError("kwarg should be in key=value format.")
+
+
 def get_formated_info(obj: CommandClient, cmd: str, args=True, short=True) -> str:
     """Get documentation for command/function and format it.
 
@@ -126,10 +135,12 @@ def get_object(client: CommandClient, argv: list[str]) -> CommandClient:
     return client
 
 
-def run_function(client: CommandClient, funcname: str, args: list[str]) -> str:
+def run_function(
+    client: CommandClient, funcname: str, args: list[str], kwargs: dict[str, str]
+) -> str:
     "Run command with specified args on given object."
     try:
-        ret = client.call(funcname, *args)
+        ret = client.call(funcname, *args, **kwargs)
     except SelectError:
         print("error: Sorry no function ", funcname)
         sys.exit(1)
@@ -179,7 +190,7 @@ def cmd_obj(args) -> None:
         elif args.info:
             print(args.function + get_formated_info(obj, args.function, args=True, short=False))
         else:
-            ret = run_function(obj, args.function, args.args)
+            ret = run_function(obj, args.function, args.args, dict(args.kwargs))
             if ret is not None:
                 pprint.pprint(ret)
     else:
@@ -219,6 +230,14 @@ def add_subcommand(subparsers, parents):
     parser.add_argument("--function", "-f", default="help", help="Select function to execute.")
     parser.add_argument(
         "--args", "-a", nargs="+", default=[], help="Set arguments supplied to function."
+    )
+    parser.add_argument(
+        "--kwargs",
+        "-k",
+        nargs="+",
+        default=[],
+        type=kwarg,
+        help="Set keyword arguments supplied to function (use 'key=value').",
     )
     parser.add_argument(
         "--info",

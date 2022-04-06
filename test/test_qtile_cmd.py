@@ -30,6 +30,47 @@ import libqtile.layout
 import libqtile.widget
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
+from libqtile.widget.base import _Widget
+from test.helpers import BareConfig
+
+
+class ArgWidget(_Widget):
+    def __init__(self):
+        _Widget.__init__(self, 10)
+        self.cmd_reset()
+
+    def cmd_reset(self):
+        self.args = []
+        self.kwargs = {}
+
+    def draw(self):
+        pass
+
+    def cmd_just_args(self, *args):
+        self.args = args
+
+    def cmd_just_kwargs(self, **kwargs):
+        self.kwargs = kwargs
+
+    def cmd_args_and_kwargs(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
+    def cmd_info(self):
+        return {"args": self.args, "kwargs": self.kwargs}
+
+
+class ArgConfig(BareConfig):
+    screens = [
+        libqtile.config.Screen(
+            bottom=libqtile.bar.Bar(
+                [
+                    ArgWidget(),
+                ],
+                20,
+            ),
+        )
+    ]
 
 
 class ServerConfig(Config):
@@ -87,6 +128,7 @@ class ServerConfig(Config):
 
 
 server_config = pytest.mark.parametrize("manager", [ServerConfig], indirect=True)
+arg_config = pytest.mark.parametrize("manager", [ArgConfig], indirect=True)
 
 
 def run_qtile_cmd(args):
@@ -95,7 +137,9 @@ def run_qtile_cmd(args):
     argv.extend(args.split())
     pipe = subprocess.Popen(argv, stdout=subprocess.PIPE)
     output, _ = pipe.communicate()
-    return eval(output.decode())  # as returned by pprint.pprint
+    if output:
+        return eval(output.decode())  # as returned by pprint.pprint
+    return None
 
 
 @server_config
@@ -156,3 +200,25 @@ def test_display_kb(manager):
     assert re.search(r"(?m)^named\s{3,}b\s{9,}togroup\('b'\)\s*$", table)
     assert re.search(r"(?m)^named>_\s{3,}a\s{9,}togroup\('a'\)\s*$", table)
     assert re.search(r"(?m)^<root>\s{3,}y\s{9,}\s*$", table) is None
+
+
+@arg_config
+def test_cmd_obj_args(manager):
+    run_qtile_cmd(f"-s {manager.sockfile} -o widget argwidget -f just_args -a 10 20")
+    assert manager.c.widget["argwidget"].info() == {"args": ("10", "20"), "kwargs": {}}
+
+    manager.c.widget["argwidget"].reset()
+    run_qtile_cmd(f"-s {manager.sockfile} -o widget argwidget -f just_kwargs -k one=1 two=2")
+    assert manager.c.widget["argwidget"].info() == {
+        "args": [],
+        "kwargs": {"one": "1", "two": "2"},
+    }
+
+    manager.c.widget["argwidget"].reset()
+    run_qtile_cmd(
+        f"-s {manager.sockfile} -o widget argwidget -f args_and_kwargs -a 10 20 -k one=1 two=2"
+    )
+    assert manager.c.widget["argwidget"].info() == {
+        "args": ("10", "20"),
+        "kwargs": {"one": "1", "two": "2"},
+    }
