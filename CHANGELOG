@@ -18,6 +18,8 @@ Qtile x.xx.x, released XXXX-XX-XX:
       - `Window.getsize` has been renamed `Window.get_size` (i.e. merged with the get_size command).
       - `Window.getposition` has been renamed `Window.get_position` (i.e. merged with the get_position command).
       - The `StockTicker` widget `function` option is being deprecated: rename it to `func`.
+      - The formatting of `NetWidget` has changed, if you use the `format` parameter in your config include 
+        `up_suffix`, `total_suffix` and `down_suffix` to display the respective units.
     * features
         - Add ability to set icon size in `LaunchBar` widget.
         - Add 'warp_pointer' option to `Drag` that when set will warp the pointer to the bottom right of
@@ -31,6 +33,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Add ability to spawn the `WidgetBox` widget opened.
         - Add ability to swap focused window based on index, and change the order of windows inside current group
         - Add `move_to_slice` command to move current window to single layout in `Slice` layout
+        - Made the `NetWidget` text formattable.
     * bugfixes
         - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
         - Fix `Notify` bug when apps close notifications.
