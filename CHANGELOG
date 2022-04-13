@@ -32,6 +32,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
     * bugfixes
         - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
         - Fix `Notify` bug when apps close notifications.
+        - Fix `CPU` precision bug with specific version of `psutil`
     * python version support
         - We have added support for python 3.11 and pypy 3.9.
         - python 3.7, 3.8 and pypy 3.7 are not longer supported.
