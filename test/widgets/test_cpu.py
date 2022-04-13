@@ -31,6 +31,8 @@ from libqtile.bar import Bar
 
 
 class MockPsutil(ModuleType):
+    __version__ = "5.8.0"
+
     @classmethod
     def cpu_percent(cls):
         return 2.6
