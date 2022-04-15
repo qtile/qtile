@@ -75,7 +75,7 @@ def init_log(
     log_path=True,
     log_size=10000000,
     log_numbackups=1,
-    log_color=True,
+    log_color=False,
 ):
     for handler in logger.handlers:
         logger.removeHandler(handler)
