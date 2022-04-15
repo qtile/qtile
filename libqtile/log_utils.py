@@ -73,7 +73,6 @@ class ColorFormatter(Formatter):
 def init_log(
     log_level=WARNING,
     log_path=True,
-    log_truncate=False,
     log_size=10000000,
     log_numbackups=1,
     log_color=True,
@@ -113,9 +112,6 @@ def init_log(
         except TypeError:  # Happens if log_path doesn't contain formatters.
             pass
         log_path = os.path.expanduser(log_path)
-        if log_truncate:
-            with open(log_path, "w"):
-                pass
         file_handler = RotatingFileHandler(
             log_path, maxBytes=log_size, backupCount=log_numbackups
         )
