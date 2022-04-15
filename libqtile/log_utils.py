@@ -2,6 +2,7 @@
 # Copyright (c) 2013-2014 Tao Sauvage
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 roger
+# Copyright (c) 2022 Matt Colligan
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +22,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import os
 import sys
+import typing
 import warnings
 from logging import WARNING, Formatter, StreamHandler, captureWarnings, getLogger
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+
+if typing.TYPE_CHECKING:
+    from logging import LogRecord
 
 logger = getLogger(__package__)
 
@@ -53,7 +60,7 @@ class ColorFormatter(Formatter):
     color_seq = "\033[%dm"
     bold_seq = "\033[1m"
 
-    def format(self, record):
+    def format(self, record: LogRecord) -> str:
         """Format the record with colors."""
         color = self.color_seq % (30 + self.colors[record.levelname])
         message = Formatter.format(self, record)
@@ -85,10 +92,10 @@ def get_default_log() -> Path:
 
 
 def init_log(
-    log_level=WARNING,
+    log_level: int = WARNING,
     log_path: Path | None = None,
-    log_size=10000000,
-    log_numbackups=1,
+    log_size: int = 10000000,
+    log_numbackups: int = 1,
 ) -> None:
     for handler in logger.handlers:
         logger.removeHandler(handler)
@@ -96,7 +103,7 @@ def init_log(
     if log_path is None or os.getenv("QTILE_XEPHYR"):
         # During tests or interactive xephyr development, log to stdout.
         handler = StreamHandler(sys.stdout)
-        formatter = ColorFormatter(
+        formatter: Formatter = ColorFormatter(
             "$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s "
             "%(filename)s:%(funcName)s():L%(lineno)d $RESET %(message)s"
         )
