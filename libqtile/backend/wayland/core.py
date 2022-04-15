@@ -25,10 +25,10 @@ import os
 import time
 import typing
 
+import pywayland
+import pywayland.server
 import wlroots.helper as wlroots_helper
-from pywayland import lib
 from pywayland.protocol.wayland import WlSeat
-from pywayland.server import Display
 from wlroots import xwayland
 from wlroots.wlr_types import (
     Cursor,
@@ -71,7 +71,7 @@ from wlroots.wlr_types.virtual_keyboard_v1 import VirtualKeyboardManagerV1, Virt
 from wlroots.wlr_types.xdg_shell import XdgShell, XdgSurface, XdgSurfaceRole
 from xkbcommon import xkb
 
-from libqtile import hook
+from libqtile import hook, log_utils
 from libqtile.backend import base
 from libqtile.backend.wayland import inputs, window, wlrq
 from libqtile.backend.wayland.output import Output
@@ -99,8 +99,15 @@ class Core(base.Core, wlrq.HasListeners):
         self._hovered_internal: window.Internal | None = None
         self.focused_internal: window.Internal | None = None
 
+        # Log exceptions that are raised in Wayland callback functions.
+        log_utils.init_log(
+            logger.level,
+            log_path=log_utils.get_default_log(),
+            logger=pywayland.server.listener.logger,
+        )
+
         self.fd: int | None = None
-        self.display = Display()
+        self.display = pywayland.server.Display()
         self.event_loop = self.display.get_event_loop()
         (
             self.compositor,
@@ -672,7 +679,7 @@ class Core(base.Core, wlrq.HasListeners):
         """Setup a listener for the given qtile instance"""
         logger.debug("Adding io watch")
         self.qtile = qtile
-        self.fd = lib.wl_event_loop_get_fd(self.event_loop._ptr)
+        self.fd = pywayland.lib.wl_event_loop_get_fd(self.event_loop._ptr)
         if self.fd:
             asyncio.get_running_loop().add_reader(self.fd, self._poll)
         else:
