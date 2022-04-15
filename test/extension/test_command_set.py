@@ -36,7 +36,7 @@ def fake_qtile():
 
 @pytest.fixture
 def log_extension_output(monkeypatch):
-    init_log(logging.WARNING)
+    init_log()
 
     def fake_popen(cmd, *args, **kwargs):
         class PopenObj:

@@ -42,7 +42,7 @@ def no_op(*args, **kwargs):
 
 @pytest.fixture
 def patched_lifecycle(monkeypatch):
-    init_log(logging.WARNING)
+    init_log()
     monkeypatch.setattr("libqtile.core.lifecycle.sys.executable", "python")
     monkeypatch.setattr("libqtile.core.lifecycle.sys.argv", ["arg1", "arg2"])
     monkeypatch.setattr("libqtile.core.lifecycle.atexit.register", no_op)
