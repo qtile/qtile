@@ -26,6 +26,7 @@ import sys
 import warnings
 from logging import WARNING, Formatter, StreamHandler, captureWarnings, getLogger
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
 logger = getLogger(__package__)
 
@@ -70,58 +71,52 @@ class ColorFormatter(Formatter):
         return message + self.reset_seq
 
 
+def get_default_log() -> Path:
+    data_directory = os.path.expandvars("$XDG_DATA_HOME")
+    if data_directory == "$XDG_DATA_HOME":
+        # if variable wasn't set
+        data_directory = os.path.expanduser("~/.local/share")
+
+    qtile_directory = Path(data_directory) / "qtile"
+    if not qtile_directory.exists():
+        qtile_directory.mkdir(parents=True)
+
+    return qtile_directory / "qtile.log"
+
+
 def init_log(
     log_level=WARNING,
-    log_path=True,
+    log_path: Path | None = None,
     log_size=10000000,
     log_numbackups=1,
-    log_color=False,
-):
+) -> None:
     for handler in logger.handlers:
         logger.removeHandler(handler)
-    formatter = Formatter(
-        "%(asctime)s %(levelname)s %(name)s "
-        "%(filename)s:%(funcName)s():L%(lineno)d %(message)s"
-    )
 
-    # We'll always use a stream handler
-    stream_handler = StreamHandler(sys.stdout)
-    if log_color:
-        color_formatter = ColorFormatter(
+    if log_path is None or os.getenv("QTILE_XEPHYR"):
+        # During tests or interactive xephyr development, log to stdout.
+        handler = StreamHandler(sys.stdout)
+        formatter = ColorFormatter(
             "$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s "
             "%(filename)s:%(funcName)s():L%(lineno)d $RESET %(message)s"
         )
-        stream_handler.setFormatter(color_formatter)
-    else:
-        stream_handler.setFormatter(formatter)
-    logger.addHandler(stream_handler)
 
-    # If we have a log path, we'll also setup a log file
-    if log_path:
-        if not isinstance(log_path, str):
-            data_directory = os.path.expandvars("$XDG_DATA_HOME")
-            if data_directory == "$XDG_DATA_HOME":
-                # if variable wasn't set
-                data_directory = os.path.expanduser("~/.local/share")
-            data_directory = os.path.join(data_directory, "qtile")
-            if not os.path.exists(data_directory):
-                os.makedirs(data_directory)
-            log_path = os.path.join(data_directory, "%s.log")
-        try:
-            log_path %= "qtile"
-        except TypeError:  # Happens if log_path doesn't contain formatters.
-            pass
-        log_path = os.path.expanduser(log_path)
-        file_handler = RotatingFileHandler(
-            log_path, maxBytes=log_size, backupCount=log_numbackups
+    else:
+        # Otherwise during normal usage, log to file.
+        handler = RotatingFileHandler(
+            log_path,
+            maxBytes=log_size,
+            backupCount=log_numbackups,
+        )
+        formatter = Formatter(
+            "%(asctime)s %(levelname)s %(name)s "
+            "%(filename)s:%(funcName)s():L%(lineno)d %(message)s"
         )
 
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
     logger.setLevel(log_level)
     # Capture everything from the warnings module.
     captureWarnings(True)
     warnings.simplefilter("always")
     logger.debug("Starting logging for Qtile")
-    return logger

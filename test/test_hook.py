@@ -47,7 +47,7 @@ class Call:
 
 @pytest.fixture
 def hook_fixture():
-    libqtile.log_utils.init_log(logging.CRITICAL, log_path=None)
+    libqtile.log_utils.init_log(logging.CRITICAL)
 
     yield
 
