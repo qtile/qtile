@@ -174,7 +174,7 @@ class TestManager:
                 os.environ.pop("WAYLAND_DISPLAY", None)
                 kore = self.backend.create()
                 os.environ.update(self.backend.env)
-                logger = init_log(self.log_level, log_path=None, log_color=False)
+                logger = init_log(self.log_level, log_path=None)
                 if hasattr(self, "log_queue"):
                     logger.addHandler(logging.handlers.QueueHandler(self.log_queue))
                 Qtile(
@@ -209,7 +209,7 @@ class TestManager:
         an error and the returned manager should not be started, otherwise this
         will likely block the thread.
         """
-        init_log(self.log_level, log_path=None, log_color=False)
+        init_log(self.log_level, log_path=None)
         kore = self.backend.create()
         config = config_class()
         for attr in dir(default_config):
