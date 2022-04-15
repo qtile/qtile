@@ -2,6 +2,8 @@ Qtile x.xx.x, released XXXX-XX-XX:
     !!! Config breakage !!!
         - lazy.qtile.display_kb() no longer receives any arguments. If you passed it any arguments
           (which were ignored previously), remove them.
+        - If you have a custom startup Python script that you use instead of `qtile start` and run init_log
+          manually, the signature has changed. Please check the source for the updated arguments.
     * features
         - Add ability to draw borders and add margins to the `Max` layout.
         - The default XWayland cursor is now set at startup to left_ptr, so an xsetroot call is not needed to
