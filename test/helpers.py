@@ -209,7 +209,7 @@ class TestManager:
         an error and the returned manager should not be started, otherwise this
         will likely block the thread.
         """
-        init_log(self.log_level, log_path=None)
+        init_log(self.log_level)
         kore = self.backend.create()
         config = config_class()
         for attr in dir(default_config):
