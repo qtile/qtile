@@ -117,7 +117,7 @@ class Core(base.Core, wlrq.HasListeners):
         ) = wlroots_helper.build_compositor(self.display)
         self.socket = self.display.add_socket()
         os.environ["WAYLAND_DISPLAY"] = self.socket.decode()
-        logger.info("Starting core with WAYLAND_DISPLAY=" + self.socket.decode())
+        logger.info("Starting core with WAYLAND_DISPLAY=%s", self.socket.decode())
 
         # These windows have not been mapped yet; they'll get managed when mapped
         self.pending_windows: set[window.WindowType] = set()
@@ -209,7 +209,7 @@ class Core(base.Core, wlrq.HasListeners):
         self._xwayland = xwayland.XWayland(self.display, self.compositor, True)
         if self._xwayland:
             os.environ["DISPLAY"] = self._xwayland.display_name or ""
-            logger.info("Set up XWayland with DISPLAY=" + os.environ["DISPLAY"])
+            logger.info("Set up XWayland with DISPLAY=%s", os.environ["DISPLAY"])
             self.add_listener(self._xwayland.ready_event, self._on_xwayland_ready)
             self.add_listener(self._xwayland.new_surface_event, self._on_xwayland_new_surface)
         else:
@@ -277,7 +277,7 @@ class Core(base.Core, wlrq.HasListeners):
             capabilities |= WlSeat.capability.keyboard
         self.seat.set_capabilities(capabilities)
 
-        logger.info(f"New {device.device_type.name}: {device.name}")
+        logger.info("New %s: %s", device.device_type.name, device.name)
         if self.qtile:
             inputs.configure_device(device, self.qtile.config.wl_input_rules)
         else:
@@ -481,7 +481,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         wid = self.new_wid()
         win = window.LayerStatic(self, self.qtile, layer_surface, wid)
-        logger.info(f"Managing new layer_shell window with window ID: {wid}")
+        logger.info("Managing new layer_shell window with window ID: %s", wid)
         self.qtile.manage(win)
 
     def _on_new_toplevel_decoration(
@@ -996,5 +996,5 @@ class Core(base.Core, wlrq.HasListeners):
         """Change virtual terminal to that specified"""
         success = self.backend.get_session().change_vt(vt)
         if not success:
-            logger.warning(f"Could not change VT to: {vt}")
+            logger.warning("Could not change VT to: %s", vt)
         return success

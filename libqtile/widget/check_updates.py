@@ -98,11 +98,9 @@ class CheckUpdates(base.ThreadPoolText):
             except KeyError:
                 distros = sorted(self.cmd_dict.keys())
                 logger.error(
-                    self.distro
-                    + " is not a valid distro name. "
-                    + "Use one of the list: "
-                    + str(distros)
-                    + "."
+                    "%s is not a valid distro name. Use one of the list: %s.",
+                    self.distro,
+                    str(distros),
                 )
                 self.cmd = None
 

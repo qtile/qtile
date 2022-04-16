@@ -110,7 +110,7 @@ class StatusNotifierItem:  # noqa: E303
                 # We'll pick it up via the message handler so we can ignore this.
                 return False
             except InvalidObjectPathError:
-                logger.info(f"Cannot find {self.path} path on {self.service}.")
+                logger.info("Cannot find %s path on %s.", self.path, self.service)
                 if self.path == STATUSNOTIFIER_PATH:
                     return False
 
@@ -136,7 +136,7 @@ class StatusNotifierItem:  # noqa: E303
                 continue
 
         if not interface_found:
-            logger.warning(f"Unable to find StatusNotifierItem" f"interface on {self.service}")
+            logger.warning("Unable to find StatusNotifierItem interface on %s", self.service)
             return False
 
         # Default to XDG icon:

@@ -258,7 +258,7 @@ class Qtile(CommandObject):
         try:
             self.config.load()
         except Exception as error:
-            logger.error("Configuration error: {}".format(error))
+            logger.error("Configuration error: %s", error)
             send_notification("Configuration error", str(error))
             return
 
@@ -331,7 +331,7 @@ class Qtile(CommandObject):
             if len(self.groups) < i + 1:
                 name = f"autogen_{i + 1}"
                 self.add_group(name)
-                logger.warning(f"Too few groups in config. Added group: {name}")
+                logger.warning("Too few groups in config. Added group: %s", name)
 
             if i < len(current_groups):
                 grp = current_groups[i]
@@ -376,9 +376,7 @@ class Qtile(CommandObject):
     def process_key_event(self, keysym: int, mask: int) -> None:
         key = self.keys_map.get((keysym, mask), None)
         if key is None:
-            logger.debug(
-                "Ignoring unknown keysym: {keysym}, mask: {mask}".format(keysym=keysym, mask=mask)
-            )
+            logger.debug("Ignoring unknown keysym: %s, mask: %s", keysym, mask)
             return
 
         if isinstance(key, KeyChord):
@@ -390,7 +388,7 @@ class Qtile(CommandObject):
                         (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
-                        logger.error("KB command error %s: %s" % (cmd.name, val))
+                        logger.error("KB command error %s: %s", cmd.name, val)
             if self.chord_stack and (self.chord_stack[-1].mode == "" or key.key == "Escape"):
                 self.cmd_ungrab_chord()
             return
@@ -462,7 +460,7 @@ class Qtile(CommandObject):
         try:
             button.modmask = self.core.grab_button(button)
         except utils.QtileError:
-            logger.warning(f"Unknown modifier(s): {button.modifiers}")
+            logger.warning("Unknown modifier(s): %s", button.modifiers)
             return
         if button.button_code not in self.mouse_map:
             self.mouse_map[button.button_code] = []
@@ -713,14 +711,14 @@ class Qtile(CommandObject):
                     if i.check(self):
                         status, val = self.server.call((i.selectors, i.name, i.args, i.kwargs))
                         if status in (interface.ERROR, interface.EXCEPTION):
-                            logger.error("Mouse command error %s: %s" % (i.name, val))
+                            logger.error("Mouse command error %s: %s", i.name, val)
                         handled = True
             elif isinstance(m, Drag):
                 if m.start:
                     i = m.start
                     status, val = self.server.call((i.selectors, i.name, i.args, i.kwargs))
                     if status in (interface.ERROR, interface.EXCEPTION):
-                        logger.error("Mouse command error %s: %s" % (i.name, val))
+                        logger.error("Mouse command error %s: %s", i.name, val)
                         continue
                 else:
                     val = (0, 0)
@@ -752,7 +750,7 @@ class Qtile(CommandObject):
                         (i.selectors, i.name, i.args + (rx + dx, ry + dy), i.kwargs)
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
-                        logger.error("Mouse command error %s: %s" % (i.name, val))
+                        logger.error("Mouse command error %s: %s", i.name, val)
 
     def warp_to_screen(self) -> None:
         if self.current_screen:
@@ -1113,7 +1111,7 @@ class Qtile(CommandObject):
         try:
             self.config.load()
         except Exception as error:
-            logger.error("Preventing restart because of a configuration error: {}".format(error))
+            logger.error("Preventing restart because of a configuration error: %s", error)
             send_notification("Configuration error", str(error))
             return
         self.restart()
@@ -1141,7 +1139,7 @@ class Qtile(CommandObject):
             args = ["/bin/sh", "-c", cmd]
 
         if shutil.which(to_lookup) is None:
-            logger.error("couldn't find `{}`".format(to_lookup))
+            logger.error("couldn't find `%s`", to_lookup)
             return -1
 
         r, w = os.pipe()
@@ -1301,7 +1299,7 @@ class Qtile(CommandObject):
         """
         mb = self.widgets_map.get(widget)
         if not mb:
-            logger.error("No widget named '{0:s}' present.".format(widget))
+            logger.error("No widget named '%s' present.", widget)
             return
 
         mb.start_input(prompt, self.find_window, "window", strict_completer=True)
@@ -1336,7 +1334,7 @@ class Qtile(CommandObject):
 
         mb = self.widgets_map.get(widget)
         if not mb:
-            logger.error("No widget named '{0:s}' present.".format(widget))
+            logger.error("No widget named '%s' present.", widget)
             return
 
         mb.start_input(prompt, self.move_to_group, "group", strict_completer=True)
@@ -1357,11 +1355,11 @@ class Qtile(CommandObject):
                 try:
                     self.groups_map[group].cmd_toscreen()
                 except KeyError:
-                    logger.warning("No group named '{0:s}' present.".format(group))
+                    logger.warning("No group named '%s' present.", group)
 
         mb = self.widgets_map.get(widget)
         if not mb:
-            logger.error("No widget named '{0:s}' present.".format(widget))
+            logger.error("No widget named '%s' present.", widget)
             return
 
         mb.start_input(prompt, f, "group", strict_completer=True)
@@ -1384,7 +1382,7 @@ class Qtile(CommandObject):
             mb = self.widgets_map[widget]
             mb.start_input(prompt, f, allow_empty_input=True)
         except KeyError:
-            logger.error("No widget named '{0:s}' present.".format(widget))
+            logger.error("No widget named '%s' present.", widget)
 
     def cmd_spawncmd(
         self,
@@ -1424,7 +1422,7 @@ class Qtile(CommandObject):
             mb = self.widgets_map[widget]
             mb.start_input(prompt, f, complete)
         except KeyError:
-            logger.error("No widget named '{0:s}' present.".format(widget))
+            logger.error("No widget named '%s' present.", widget)
 
     def cmd_qtilecmd(
         self,
@@ -1475,7 +1473,7 @@ class Qtile(CommandObject):
 
         mb = self.widgets_map[widget]
         if not mb:
-            logger.error("No widget named {0:s} present.".format(widget))
+            logger.error("No widget named %s present.", widget)
             return
         mb.start_input(prompt, f, "qshell")
 
@@ -1539,7 +1537,7 @@ class Qtile(CommandObject):
                 bar.show(not bar.is_show())
                 self.current_group.layout_all()
             else:
-                logger.warning("Not found bar in position '%s' for hide/show." % position)
+                logger.warning("Not found bar in position '%s' for hide/show.", position)
         elif position == "all":
             screen = self.current_screen
             is_show = None
@@ -1553,15 +1551,14 @@ class Qtile(CommandObject):
             else:
                 logger.warning("Not found bar for hide/show.")
         else:
-            logger.warning("Invalid position value:{0:s}".format(position))
+            logger.warning("Invalid position value:%s", position)
 
     def cmd_get_state(self) -> str:
         """Get pickled state for restarting qtile"""
         buf = io.BytesIO()
         self.dump_state(buf)
         state = buf.getvalue().decode(errors="backslashreplace")
-        logger.debug("State = ")
-        logger.debug("".join(state.split("\n")))
+        logger.debug("State = %s", state)
         return state
 
     def cmd_tracemalloc_toggle(self) -> None:

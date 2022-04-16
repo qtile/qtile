@@ -143,7 +143,7 @@ class CurrentLayoutIcon(base._TextBox):
             try:
                 surface = self.surfaces[self.current_layout]
             except KeyError:
-                logger.error("No icon for layout {}".format(self.current_layout))
+                logger.error("No icon for layout %s", self.current_layout)
             else:
                 self.drawer.clear(self.background or self.bar.background)
                 self.drawer.ctx.set_source(surface)
@@ -190,7 +190,7 @@ class CurrentLayoutIcon(base._TextBox):
         for layout_name in self._get_layout_names():
             icon_file_path = self.find_icon_file_path(layout_name)
             if icon_file_path is None:
-                logger.warning('No icon found for layout "{}"'.format(layout_name))
+                logger.warning('No icon found for layout "%s"', layout_name)
                 icon_file_path = self.find_icon_file_path("unknown")
 
             try:
@@ -201,8 +201,7 @@ class CurrentLayoutIcon(base._TextBox):
                 # an invalid image or is not readable.
                 self.icons_loaded = False
                 logger.exception(
-                    'Failed to load icon from file "{}", '
-                    "error was: {}".format(icon_file_path, e.message)
+                    'Failed to load icon from file "%s", error was: %s', icon_file_path, e.message
                 )
                 return
 

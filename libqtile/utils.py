@@ -274,7 +274,7 @@ async def _notify(
     )
 
     if msg and msg.message_type == MessageType.ERROR:
-        logger.warning("Unable to send notification. " "Is a notification server running?")
+        logger.warning("Unable to send notification. Is a notification server running?")
 
     # a new bus connection is made each time a notification is sent so
     # we disconnect when the notification is done
@@ -312,11 +312,11 @@ def guess_terminal(preference: str | Sequence | None = None) -> str | None:
     ]
 
     for terminal in test_terminals:
-        logger.debug("Guessing terminal: {}".format(terminal))
+        logger.debug("Guessing terminal: %s", terminal)
         if not which(terminal, os.X_OK):
             continue
 
-        logger.info("Terminal found: {}".format(terminal))
+        logger.info("Terminal found: %s", terminal)
         return terminal
 
     logger.error("Default terminal has not been found.")
@@ -399,7 +399,7 @@ async def add_signal_receiver(
     Returns True if subscription is successful.
     """
     if not has_dbus:
-        logger.warning("dbus-next is not installed. " "Unable to subscribe to signals")
+        logger.warning("dbus-next is not installed. Unable to subscribe to signals")
         return False
 
     match_args = {

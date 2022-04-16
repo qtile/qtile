@@ -85,8 +85,7 @@ class WidgetBox(base._Widget):
         self.close_button_location: str
         if self.close_button_location not in ["left", "right"]:
             val = self.close_button_location
-            msg = "Invalid value for 'close_button_location': {}".format(val)
-            logger.warning(msg)
+            logger.warning("Invalid value for 'close_button_location': %s", val)
             self.close_button_location = "left"
 
     def _configure(self, qtile, bar):

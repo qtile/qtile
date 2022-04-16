@@ -272,7 +272,7 @@ class _Widget(CommandObject, configurable.Configurable):
                         (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
-                        logger.error("Mouse callback command error %s: %s" % (cmd.name, val))
+                        logger.error("Mouse callback command error %s: %s", cmd.name, val)
             else:
                 cmd()
 

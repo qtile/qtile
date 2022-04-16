@@ -241,7 +241,7 @@ def _configure_pointer(device: InputDevice, conf: InputConfig, name: str) -> Non
     """Applies ``InputConfig`` rules to a pointer device"""
     handle = device.libinput_get_device_handle()
     if handle is None:
-        logger.debug(f"Device not handled by libinput: {name}")
+        logger.debug("Device not handled by libinput: %s", name)
         return
 
     if libinput is None:

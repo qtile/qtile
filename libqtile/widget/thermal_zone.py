@@ -33,7 +33,7 @@ class ThermalZone(base.ThreadPoolText):
             with open(self.zone) as f:
                 value = round(int(f.read().rstrip()) / 1000)
         except OSError:
-            logger.exception("{} does not exist".format(self.zone))
+            logger.exception("%s does not exist", self.zone)
             return "err!"
 
         variables = dict()
