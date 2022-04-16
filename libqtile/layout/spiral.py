@@ -123,7 +123,9 @@ class Spiral(_SimpleLayoutBase):
         self.initial_main_pane_ratio = self.main_pane_ratio
         self.main_pane = self.main_pane.lower()
         if self.main_pane not in ["top", "left", "bottom", "right"]:
-            logger.warning(f"Unknown main_pane location: {self.main_pane}. Defaulting to 'left'.")
+            logger.warning(
+                "Unknown main_pane location: %s. Defaulting to 'left'.", self.main_pane
+            )
             self.main_pane = "left"
 
         # Calculate the order of transformations required based on position of main pane
@@ -349,11 +351,13 @@ class Spiral(_SimpleLayoutBase):
             try:
                 value = float(value)
             except ValueError:
-                logger.error(f"Invalid ratio value: {value}")
+                logger.error("Invalid ratio value: %s", value)
                 return
 
         if not (0 <= value <= 1):
-            logger.warning(f"Invalid value for {prop}: {value}. Value must be between 0 and 1.")
+            logger.warning(
+                "Invalid value for %s: %s. Value must be between 0 and 1.", prop, value
+            )
             return
 
         setattr(self, prop, value)

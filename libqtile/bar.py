@@ -331,8 +331,9 @@ class Bar(Gap, configurable.Configurable):
 
         if widget.supported_backends and (self.qtile.core.name not in widget.supported_backends):
             logger.warning(
-                f"Widget removed: {widget.__class__.__name__} does not support "
-                f"{self.qtile.core.name}."
+                "Widget removed: %s does not support %s.",
+                widget.__class__.__name__,
+                self.qtile.core,
             )
             self.crashed_widgets.append(widget)
             return False
@@ -348,8 +349,7 @@ class Bar(Gap, configurable.Configurable):
             widget.configured = True
         except Exception as e:
             logger.error(
-                "{} widget crashed during _configure with "
-                "error: {}".format(widget.__class__.__name__, repr(e))
+                "%s widget crashed during _configure with error: %s", widget.__class__.__name__, e
             )
             self.crashed_widgets.append(widget)
             configured = False

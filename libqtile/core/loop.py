@@ -62,7 +62,7 @@ class LoopContext(contextlib.AbstractAsyncContextManager):
             if not isinstance(exc, asyncio.CancelledError):
                 logger.exception(exc)
         else:
-            logger.error(f'unhandled error in event loop: {context["msg"]}')
+            logger.error("unhandled error in event loop: %s", context["msg"])
 
 
 class QtileEventLoopPolicy(asyncio.DefaultEventLoopPolicy):  # type: ignore
