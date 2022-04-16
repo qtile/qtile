@@ -4,6 +4,8 @@ Qtile x.xx.x, released XXXX-XX-XX:
           (which were ignored previously), remove them.
     * features
         - Add ability to draw borders and add margins to the `Max` layout.
+        - The default XWayland cursor is now set at startup to left_ptr, so an xsetroot call is not needed to
+          avoid the ugly X cursor.
     * bugfixes
         - Widgets that are incompatible with a backend (e.g. Systray on Wayland) will no longer show 
           as a ConfigError in the bar. Instead the widget is silently removed from the bar and a message

@@ -489,6 +489,20 @@ class Core(base.Core, wlrq.HasListeners):
         self._xwayland.set_seat(self.seat)
         self.xwayland_atoms: dict[int, str] = wlrq.get_xwayland_atoms(self._xwayland)
 
+        # Set the default XWayland cursor
+        xcursor = self.cursor_manager.get_xcursor("left_ptr")
+        if xcursor:
+            image = next(xcursor.images, None)
+            if image:
+                self._xwayland.set_cursor(
+                    image._ptr.buffer,
+                    image._ptr.width * 4,
+                    image._ptr.width,
+                    image._ptr.height,
+                    image._ptr.hotspot_x,
+                    image._ptr.hotspot_y,
+                )
+
     def _on_xwayland_new_surface(self, _listener: Listener, surface: xwayland.Surface) -> None:
         logger.debug("Signal: xwayland new_surface")
         assert self.qtile is not None
