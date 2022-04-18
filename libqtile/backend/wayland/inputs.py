@@ -318,7 +318,7 @@ def _configure_pointer(device: InputDevice, conf: InputConfig, name: str) -> Non
                 )
 
 
-def configure_device(device: InputDevice, configs: dict[str, InputConfig]) -> None:
+def configure_device(device: InputDevice, configs: dict[str, InputConfig] | None) -> None:
     if not configs:
         return
 

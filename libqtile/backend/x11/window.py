@@ -772,22 +772,23 @@ class _Window:
         self.window.set_attribute(eventmask=self._window_mask)
 
     def _grab_click(self):
-        # Grab button 1 to focus upon click when unfocussed
+        # Grab buttons 1 - 3  to focus upon click when unfocussed
         for amask in self.qtile.core._auto_modmasks():
-            self.qtile.core.conn.conn.core.GrabButton(
-                True,
-                self.window.wid,
-                EventMask.ButtonPress,
-                xcffib.xproto.GrabMode.Sync,
-                xcffib.xproto.GrabMode.Async,
-                xcffib.xproto.Atom._None,
-                xcffib.xproto.Atom._None,
-                1,
-                amask,
-            )
+            for i in range(1, 4):
+                self.qtile.core.conn.conn.core.GrabButton(
+                    True,
+                    self.window.wid,
+                    EventMask.ButtonPress,
+                    xcffib.xproto.GrabMode.Sync,
+                    xcffib.xproto.GrabMode.Async,
+                    xcffib.xproto.Atom._None,
+                    xcffib.xproto.Atom._None,
+                    i,
+                    amask,
+                )
 
     def _ungrab_click(self):
-        # Ungrab button 1 when focussed
+        # Ungrab buttons 1 - 3 when focussed
         self.qtile.core.conn.conn.core.UngrabButton(
             xcffib.xproto.Atom.Any,
             self.window.wid,
@@ -1134,6 +1135,8 @@ class Internal(_Window, base.Internal):
 
     def handle_ButtonRelease(self, e):  # noqa: N802
         self.process_button_release(e.event_x, e.event_y, e.detail)
+        # return True to ensure Core also processes the release
+        return True
 
     def handle_EnterNotify(self, e):  # noqa: N802
         self.process_pointer_enter(e.event_x, e.event_y)

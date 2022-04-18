@@ -490,7 +490,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             if sel is None:
                 return self.group.layout if self.group else None
             else:
-                return utils.lget(self.group.layouts, sel) if self.group else None
+                return utils.lget(self.group.layouts, int(sel)) if self.group else None
         elif name == "screen":
             return self.group.screen if self.group else None
         return None
@@ -1698,9 +1698,13 @@ class XdgPopupWindow(HasListeners):
             box = xdg_popup.base.get_geometry()
             lx, ly = self.core.output_layout.closest_point(parent.x + box.x, parent.y + box.y)
             wlr_output = self.core.output_layout.output_at(lx, ly)
-            assert wlr_output and isinstance(wlr_output.data, Output)
-            self.output = wlr_output.data
-            box = Box(*self.output.get_geometry())
+            if wlr_output and wlr_output.data:
+                output = wlr_output.data
+            else:
+                logger.warning("Failed to find output at for xdg_popup. Please report.")
+                output = self.core.outputs[0]
+            self.output = output
+            box = Box(*output.get_geometry())
             box.x = round(box.x - lx)
             box.y = round(box.y - ly)
             self.output_box = box

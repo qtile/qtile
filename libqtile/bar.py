@@ -179,6 +179,7 @@ class Bar(Gap, configurable.Configurable):
         self.window = None
         self.size_calculated = 0
         self._configured = False
+        self.has_keyboard: _Widget | None = None
 
         if isinstance(self.margin, int):
             self.margin = [self.margin] * 4

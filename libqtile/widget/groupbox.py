@@ -52,7 +52,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
 
     def box_width(self, groups):
         width, _ = self.drawer.max_layout_size(
-            [i.label for i in groups], self.font, self.fontsize
+            [self.fmt.format(i.label) for i in groups], self.font, self.fontsize
         )
         return width + self.padding_x * 2 + self.borderwidth * 2
 
@@ -93,7 +93,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         line=False,
         highlighted=False,
     ):
-        self.layout.text = text
+        self.layout.text = self.fmt.format(text)
         self.layout.font_family = self.font
         self.layout.font_size = self.fontsize
         self.layout.colour = textcolor

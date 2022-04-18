@@ -33,10 +33,12 @@ from shutil import which
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Union
+    from typing import Any, Callable, TypeVar, Union
 
     ColorType = Union[str, tuple[int, int, int], tuple[int, int, int, float]]
     ColorsType = Union[ColorType, list[ColorType]]
+
+    T = TypeVar("T")
 
 try:
     from dbus_next import Message, Variant
@@ -54,25 +56,11 @@ class QtileError(Exception):
     pass
 
 
-def lget(o, v):
+def lget(o: list[T], v: int) -> T | None:
     try:
         return o[v]
     except (IndexError, TypeError):
         return None
-
-
-def shuffle_up(lst):
-    if len(lst) > 1:
-        c = lst[-1]
-        lst.remove(c)
-        lst.insert(0, c)
-
-
-def shuffle_down(lst):
-    if len(lst) > 1:
-        c = lst[0]
-        lst.remove(c)
-        lst.append(c)
 
 
 def rgb(x: ColorType) -> tuple[float, float, float, float]:
@@ -113,50 +101,33 @@ def rgb(x: ColorType) -> tuple[float, float, float, float]:
     raise ValueError("Invalid RGB specifier.")
 
 
-def hex(x):
+def hex(x: ColorType) -> str:
     r, g, b, _ = rgb(x)
     return "#%02x%02x%02x" % (int(r * 255), int(g * 255), int(b * 255))
 
 
-def has_transparency(colour: ColorsType):
+def has_transparency(colour: ColorsType) -> bool:
     """
     Returns True if the colour is not fully opaque.
 
     Where a list of colours is passed, returns True if any
     colour is not fully opaque.
     """
-
-    def has_alpha(col):
-        return rgb(col)[3] < 1
-
     if isinstance(colour, (str, tuple)):
-        return has_alpha(colour)
-
-    elif isinstance(colour, list):
-        return any([has_transparency(c) for c in colour])
-
-    return False
+        return rgb(colour)[3] < 1
+    return any(has_transparency(c) for c in colour)
 
 
-def remove_transparency(colour: ColorsType):
+def remove_transparency(colour: ColorsType):  # type: ignore
     """
     Returns a tuple of (r, g, b) with no alpha.
     """
-
-    def remove_alpha(col):
-        stripped = tuple(x * 255.0 for x in rgb(col)[:3])
-        return stripped
-
     if isinstance(colour, (str, tuple)):
-        return remove_alpha(colour)
-
-    elif isinstance(colour, list):
-        return [remove_transparency(c) for c in colour]
-
-    return (0, 0, 0)
+        return tuple(x * 255.0 for x in rgb(colour)[:3])
+    return [remove_transparency(c) for c in colour]
 
 
-def scrub_to_utf8(text):
+def scrub_to_utf8(text: str | bytes) -> str:
     if not text:
         return ""
     elif isinstance(text, str):
@@ -165,7 +136,7 @@ def scrub_to_utf8(text):
         return text.decode("utf-8", "ignore")
 
 
-def get_cache_dir():
+def get_cache_dir() -> str:
     """
     Returns the cache directory and create if it doesn't exists
     """
@@ -180,7 +151,7 @@ def get_cache_dir():
     return cache_directory
 
 
-def describe_attributes(obj, attrs, func=lambda x: x):
+def describe_attributes(obj: Any, attrs: list[str], func: Callable = lambda x: x) -> str:
     """
     Helper for __repr__ functions to list attributes with truthy values only
     (or values that return a truthy value by func)
@@ -196,7 +167,11 @@ def describe_attributes(obj, attrs, func=lambda x: x):
     return ", ".join(pairs)
 
 
-def import_class(module_path, class_name, fallback=None):
+def import_class(
+    module_path: str,
+    class_name: str,
+    fallback: Callable | None = None,
+) -> Any:
     """Import a class safely
 
     Try to import the class module, and if it fails because of an ImporError
@@ -213,7 +188,11 @@ def import_class(module_path, class_name, fallback=None):
         raise
 
 
-def lazify_imports(registry, package, fallback=None):
+def lazify_imports(
+    registry: dict[str, str],
+    package: str,
+    fallback: Callable | None = None,
+) -> tuple[tuple[str, ...], Callable, Callable]:
     """Leverage PEP 562 to make imports lazy in an __init__.py
 
     The registry must be a dictionary with the items to import as keys and the
@@ -221,10 +200,10 @@ def lazify_imports(registry, package, fallback=None):
     """
     __all__ = tuple(registry.keys())
 
-    def __dir__():
+    def __dir__() -> tuple[str, ...]:
         return __all__
 
-    def __getattr__(name):
+    def __getattr__(name: str) -> Any:
         if name not in registry:
             raise AttributeError
         module_path = "{}.{}".format(package, registry[name])
@@ -233,11 +212,17 @@ def lazify_imports(registry, package, fallback=None):
     return __all__, __dir__, __getattr__
 
 
-def send_notification(title, message, urgent=False, timeout=10000, id=None):
+def send_notification(
+    title: str,
+    message: str,
+    urgent: bool = False,
+    timeout: int = 10000,
+    id_: int | None = None,
+) -> int:
     """
     Send a notification.
 
-    The id argument, if passed, requests the notification server to replace a visible
+    The id_ argument, if passed, requests the notification server to replace a visible
     notification with the same ID. An ID is returned for each call; this would then be
     passed when calling this function again to replace that notification. See:
     https://developer.gnome.org/notification-spec/
@@ -246,7 +231,7 @@ def send_notification(title, message, urgent=False, timeout=10000, id=None):
         logger.warning("dbus-next is not installed. Unable to send notifications.")
         return -1
 
-    id = randint(10, 1000) if id is None else id
+    id_ = randint(10, 1000) if id_ is None else id_
     urgency = 2 if urgent else 1
 
     try:
@@ -254,15 +239,21 @@ def send_notification(title, message, urgent=False, timeout=10000, id=None):
     except RuntimeError:
         logger.warning("Eventloop has not started. Cannot send notification.")
     else:
-        loop.create_task(_notify(title, message, urgency, timeout, id))
+        loop.create_task(_notify(title, message, urgency, timeout, id_))
 
-    return id
+    return id_
 
 
-async def _notify(title, message, urgency, timeout, id):
+async def _notify(
+    title: str,
+    message: str,
+    urgency: int,
+    timeout: int,
+    id_: int,
+) -> None:
     notification = [
         "qtile",  # Application name
-        id,  # id
+        id_,  # id
         "",  # icon
         title,  # summary
         message,  # body
@@ -282,7 +273,7 @@ async def _notify(title, message, urgency, timeout, id):
         notification,
     )
 
-    if msg.message_type == MessageType.ERROR:
+    if msg and msg.message_type == MessageType.ERROR:
         logger.warning("Unable to send notification. " "Is a notification server running?")
 
     # a new bus connection is made each time a notification is sent so
@@ -290,7 +281,7 @@ async def _notify(title, message, urgency, timeout, id):
     bus.disconnect()
 
 
-def guess_terminal(preference=None):
+def guess_terminal(preference: str | Sequence | None = None) -> str | None:
     """Try to guess terminal."""
     test_terminals = []
     if isinstance(preference, str):
@@ -329,9 +320,10 @@ def guess_terminal(preference=None):
         return terminal
 
     logger.error("Default terminal has not been found.")
+    return None
 
 
-def scan_files(dirpath, *names):
+def scan_files(dirpath: str, *names: str) -> defaultdict[str, list[str]]:
     """
     Search a folder recursively for files matching those passed as arguments, with
     globbing. Returns a dict with keys equal to entries in names, and values a list of
@@ -353,8 +345,15 @@ def scan_files(dirpath, *names):
 
 
 async def _send_dbus_message(
-    session_bus, message_type, destination, interface, path, member, signature, body
-):
+    session_bus: bool,
+    message_type: MessageType,
+    destination: str,
+    interface: str,
+    path: str,
+    member: str,
+    signature: str,
+    body: Any,
+) -> tuple[MessageBus, Message | None]:
     """
     Private method to send messages to dbus via dbus_next.
 
@@ -386,8 +385,13 @@ async def _send_dbus_message(
 
 
 async def add_signal_receiver(
-    callback, session_bus=False, signal_name=None, dbus_interface=None, bus_name=None, path=None
-):
+    callback: Callable,
+    session_bus: bool = False,
+    signal_name: str | None = None,
+    dbus_interface: str | None = None,
+    bus_name: str | None = None,
+    path: str | None = None,
+) -> bool:
     """
     Helper function which aims to recreate python-dbus's add_signal_receiver
     method in dbus_next with asyncio calls.
@@ -420,7 +424,7 @@ async def add_signal_receiver(
     )
 
     # Check if message sent successfully
-    if msg.message_type == MessageType.METHOD_RETURN:
+    if msg and msg.message_type == MessageType.METHOD_RETURN:
         bus.add_message_handler(callback)
         return True
 
