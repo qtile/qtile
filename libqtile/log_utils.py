@@ -33,7 +33,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 if typing.TYPE_CHECKING:
-    from logging import LogRecord
+    from logging import Logger, LogRecord
 
 logger = getLogger(__package__)
 
@@ -96,7 +96,7 @@ def init_log(
     log_path: Path | None = None,
     log_size: int = 10000000,
     log_numbackups: int = 1,
-    logger=logger,
+    logger: Logger = logger,
 ) -> None:
     for handler in logger.handlers:
         logger.removeHandler(handler)
