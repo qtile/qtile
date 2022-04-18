@@ -195,6 +195,8 @@ wrong.
 See :ref:`Hacking Qtile <hacking>` for more information on using
 Xephyr.
 
+.. _starting-qtile:
+
 Starting Qtile
 ==============
 

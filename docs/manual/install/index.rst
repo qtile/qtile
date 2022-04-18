@@ -18,6 +18,8 @@ running something else, please see `Installing From Source`_.
     Slackware <slackware>
     FreeBSD <freebsd>
 
+Note: Also see :ref:`Starting Qtile <starting-qtile>`
+
 .. _installing-from-source:
 
 
