@@ -1135,6 +1135,8 @@ class Internal(_Window, base.Internal):
 
     def handle_ButtonRelease(self, e):  # noqa: N802
         self.process_button_release(e.event_x, e.event_y, e.detail)
+        # return True to ensure Core also processes the release
+        return True
 
     def handle_EnterNotify(self, e):  # noqa: N802
         self.process_pointer_enter(e.event_x, e.event_y)
