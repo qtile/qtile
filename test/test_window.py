@@ -1,6 +1,7 @@
 import pytest
 
 from test.conftest import BareConfig
+from test.layouts.layout_utils import assert_focused
 from test.test_manager import ManagerConfig
 
 bare_config = pytest.mark.parametrize("manager", [BareConfig], indirect=True)
@@ -22,6 +23,43 @@ def test_info(manager):
     assert "width" in info
     assert "height" in info
     assert "id" in info
+
+
+@bare_config
+def test_is_visible_hidden(manager):
+    """
+    Test Window#is_visible() with "hidden" (aka layout calls client.hide())
+    windows.
+    """
+    manager.test_window("one")
+    assert_focused(manager, "one")
+
+    assert manager.c.window.is_visible()
+    manager.c.window.toggle_minimize()
+    assert not manager.c.window.is_visible()
+    manager.c.window.toggle_minimize()
+    assert manager.c.window.is_visible()
+
+
+@bare_config
+def test_is_visible_minimized(manager):
+    """
+    Test Window#is_visible() with "minized" (aka floating or other
+    minimization).
+    """
+    manager.test_window("one")
+    one_id = manager.c.window.info()["id"]
+    manager.test_window("two")
+    two_id = manager.c.window.info()["id"]
+
+    assert_focused(manager, "two")
+    assert manager.c.window.is_visible()
+    assert not manager.c.window[one_id].is_visible()
+
+    manager.c.layout.up()
+    assert_focused(manager, "one")
+    assert manager.c.window.is_visible()
+    assert not manager.c.window[two_id].is_visible()
 
 
 @bare_config

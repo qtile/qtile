@@ -45,6 +45,7 @@ class Icon(window._Window):
 
     def __init__(self, win, qtile, systray):
         window._Window.__init__(self, win, qtile)
+        self.hidden = True
         self.systray = systray
         # win.get_name() may return None when apps provide a temporary window before the icon window
         # we need something in self.name in order to sort icons so we use the window's WID.

@@ -745,6 +745,9 @@ class XdgWindow(Window[XdgSurface]):
         if not self.mapped:
             self.surface.map_event.emit()
 
+    def cmd_is_visible(self) -> bool:
+        return self._mapped
+
     def kill(self) -> None:
         self.surface.send_close()
 
