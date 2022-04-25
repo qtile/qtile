@@ -158,6 +158,10 @@ class _Window(CommandObject, metaclass=ABCMeta):
     def unhide(self) -> None:
         """Unhide the window"""
 
+    def cmd_is_visible(self) -> bool:
+        """Is this window visible (i.e. not hidden)?"""
+        return False
+
     @abstractmethod
     def kill(self) -> None:
         """Kill the window"""
