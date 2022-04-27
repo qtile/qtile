@@ -148,6 +148,21 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         self.add_defaults(TaskList.defaults)
         self.add_defaults(base.PaddingMixin.defaults)
         self.add_defaults(base.MarginMixin.defaults)
+
+        if "border" in config:
+            logger.warning(
+                'The "border" argument is obsolete and deprecated.',
+                'As a substitute, you may use "border_color" argument instead.',
+            )
+            self.border_color = config["border"]
+
+        if "borderwidth" in config:
+            logger.warning(
+                'The "borderwidth" argument is obsolete and deprecated.',
+                'As a substitute, you may use "border_width" argument instead.',
+            )
+            self.border_width = config["borderwidth"]
+
         self._icons_cache = {}
         self._box_end_positions = []
         self.markup = False

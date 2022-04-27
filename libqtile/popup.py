@@ -23,6 +23,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from libqtile import configurable, pangocffi
+from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
     from typing import Any
@@ -66,6 +67,13 @@ class Popup(configurable.Configurable):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(Popup.defaults)
         self.qtile = qtile
+
+        if "border" in config:
+            logger.warning(
+                'The "border" argument is obsolete and deprecated.',
+                'As a substitute, you may use "border_color" argument instead.',
+            )
+            self.border_color = config["border"]
 
         self.win: Any = qtile.core.create_internal(
             x, y, width, height

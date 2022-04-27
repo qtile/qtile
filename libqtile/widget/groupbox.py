@@ -50,6 +50,13 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         self.add_defaults(base.PaddingMixin.defaults)
         self.add_defaults(base.MarginMixin.defaults)
 
+        if "borderwidth" in config:
+            logger.warning(
+                'The "borderwidth" argument is obsolete and deprecated.',
+                'As a substitute, you may use "border_width" argument instead.',
+            )
+            self.border_width = config["borderwidth"]
+
     def box_width(self, groups):
         width, _ = self.drawer.max_layout_size(
             [self.fmt.format(i.label) for i in groups], self.font, self.fontsize
@@ -143,6 +150,13 @@ class AGroupBox(_GroupBase):
     def __init__(self, **config):
         _GroupBase.__init__(self, **config)
         self.add_defaults(AGroupBox.defaults)
+
+        if "border" in config:
+            logger.warning(
+                'The "border" argument is obsolete and deprecated.',
+                'As a substitute, you may use "border_color" argument instead.',
+            )
+            self.border_color = config["border"]
 
     def _configure(self, qtile, bar):
         _GroupBase._configure(self, qtile, bar)
