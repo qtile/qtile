@@ -58,6 +58,14 @@ def pacman_to_checkupdates(query):
     return query.select_class("Pacman").rename("CheckUpdates")
 
 
+def borderwidth_to_border_width(query):
+    return query.select_attribute("borderwidth").rename("border_width")
+
+
+def border_to_border_color(query):
+    return query.select_attribute("border").rename("border_color")
+
+
 def reset_format(node, capture, filename):
     args = capture.get("class_arguments")
     if args:
@@ -130,6 +138,8 @@ MIGRATIONS = [
     tile_master_windows_rename,
     threaded_poll_text_rename,
     pacman_to_checkupdates,
+    border_to_border_color,
+    borderwidth_to_border_width,
     bitcoin_to_crypto,
     hook_main_function,
     new_at_current_to_new_client_position,
