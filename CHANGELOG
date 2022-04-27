@@ -2,6 +2,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
     !!! Config breakage !!!
         - lazy.qtile.display_kb() no longer receives any arguments. If you passed it any arguments
           (which were ignored previously), remove them.
+        - To maintain consistency with other widgets, all of the instances of `border` parameter are renamed to `border_color` and `borderwidth` parameter to `border_width`. To easily to replace the deprecated parameter names, `qtile migrate` may be ran to replace instances of both of these parameters.
     * features
         - Add ability to draw borders and add margins to the `Max` layout.
     * bugfixes
