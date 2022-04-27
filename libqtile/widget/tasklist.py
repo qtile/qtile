@@ -45,8 +45,8 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         ("fontsize", None, "Font size. Calculated if None."),
         ("foreground", "ffffff", "Foreground colour"),
         ("fontshadow", None, "font shadow color, default is None(no shadow)"),
-        ("borderwidth", 2, "Current group border width"),
-        ("border", "215578", "Border colour"),
+        ("border_width", 2, "Current group border width"),
+        ("border_color", "215578", "Border colour"),
         ("rounded", True, "To round or not to round borders"),
         (
             "highlight_method",
@@ -165,7 +165,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if self.markup:
             text = re.sub("<[^<]+?>", "", text)
         width, _ = self.drawer.max_layout_size([text], self.font, self.fontsize)
-        width = width + 2 * (self.padding_x + self.borderwidth)
+        width = width + 2 * (self.padding_x + self.border_width)
         return width
 
     def get_taskname(self, window):
@@ -294,10 +294,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             logger.warning("TaskList icons not supported in Wayland.")
 
         if self.icon_size is None:
-            self.icon_size = self.bar.height - 2 * (self.borderwidth + self.margin_y)
+            self.icon_size = self.bar.height - 2 * (self.border_width + self.margin_y)
 
         if self.fontsize is None:
-            calc = self.bar.height - self.margin_y * 2 - self.borderwidth * 2 - self.padding_y * 2
+            calc = (
+                self.bar.height - self.margin_y * 2 - self.border_width * 2 - self.padding_y * 2
+            )
             self.fontsize = max(calc, 1)
         self.layout = self.drawer.textlayout(
             "", "ffffff", self.font, self.fontsize, self.fontshadow, wrap=False
@@ -361,7 +363,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             border_width = 0
             framecolor = self.background or self.bar.background
         else:
-            border_width = self.borderwidth
+            border_width = self.border_width
             framecolor = bordercolor
 
         framed = self.layout.framed(border_width, framecolor, padding_x, self.padding_y)
@@ -434,8 +436,8 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if not surface:
             return
 
-        x = offset + self.borderwidth + self.padding_x
-        y = self.padding_y + self.borderwidth
+        x = offset + self.border_width + self.padding_x
+        y = self.padding_y + self.border_width
 
         self.drawer.ctx.save()
         self.drawer.ctx.translate(x, y)
@@ -455,7 +457,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 border = self.urgent_border
                 text_color = border
             elif w is w.group.current_window:
-                border = self.border
+                border = self.border_color
                 text_color = border
             else:
                 border = self.unfocused_border or None

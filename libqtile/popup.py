@@ -43,7 +43,7 @@ class Popup(configurable.Configurable):
         ("opacity", 1.0, "Opacity of notifications."),
         ("foreground", "#ffffff", "Colour of text."),
         ("background", "#111111", "Background colour."),
-        ("border", "#111111", "Border colour."),
+        ("border_color", "#111111", "Border colour."),
         ("border_width", 0, "Line width of drawn borders."),
         ("font", "sans", "Font used in notifications."),
         ("font_size", 14, "Size of font."),
@@ -87,8 +87,8 @@ class Popup(configurable.Configurable):
         )
         self.layout.layout.set_alignment(pangocffi.ALIGNMENTS[self.text_alignment])
 
-        if self.border_width and self.border:
-            self.win.paint_borders(self.border, self.border_width)
+        if self.border_width and self.border_color:
+            self.win.paint_borders(self.border_color, self.border_width)
 
         self.x = self.win.x
         self.y = self.win.y
@@ -150,7 +150,13 @@ class Popup(configurable.Configurable):
 
     def place(self) -> None:
         self.win.place(
-            self.x, self.y, self.width, self.height, self.border_width, self.border, above=True
+            self.x,
+            self.y,
+            self.width,
+            self.height,
+            self.border_width,
+            self.border_color,
+            above=True,
         )
 
     def unhide(self) -> None:

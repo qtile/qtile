@@ -40,7 +40,7 @@ from libqtile.widget import base
 
 class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
     defaults = [
-        ("borderwidth", 3, "Current group border width"),
+        ("border_width", 3, "Current group border width"),
         ("center_aligned", True, "center-aligned group box"),
     ]  # type: list[tuple[str, Any, str]]
 
@@ -54,13 +54,15 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         width, _ = self.drawer.max_layout_size(
             [self.fmt.format(i.label) for i in groups], self.font, self.fontsize
         )
-        return width + self.padding_x * 2 + self.borderwidth * 2
+        return width + self.padding_x * 2 + self.border_width * 2
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
 
         if self.fontsize is None:
-            calc = self.bar.height - self.margin_y * 2 - self.borderwidth * 2 - self.padding_y * 2
+            calc = (
+                self.bar.height - self.margin_y * 2 - self.border_width * 2 - self.padding_y * 2
+            )
             self.fontsize = max(calc, 1)
 
         self.layout = self.drawer.textlayout(
@@ -101,8 +103,8 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
             self.layout.width = width
         if line:
             pad_y = [
-                (self.bar.height - self.layout.height - self.borderwidth) / 2,
-                (self.bar.height - self.layout.height + self.borderwidth) / 2,
+                (self.bar.height - self.layout.height - self.border_width) / 2,
+                (self.bar.height - self.layout.height + self.border_width) / 2,
             ]
         else:
             pad_y = self.padding_y
@@ -114,7 +116,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
             border_width = 0
             framecolor = self.background or self.bar.background
         else:
-            border_width = self.borderwidth
+            border_width = self.border_width
             framecolor = bordercolor
 
         framed = self.layout.framed(border_width, framecolor, 0, pad_y, highlight_color)
@@ -136,7 +138,7 @@ class AGroupBox(_GroupBase):
     """A widget that graphically displays the current group"""
 
     orientations = base.ORIENTATION_HORIZONTAL
-    defaults = [("border", "000000", "group box border color")]
+    defaults = [("border_color", "000000", "group box border color")]
 
     def __init__(self, **config):
         _GroupBase.__init__(self, **config)
