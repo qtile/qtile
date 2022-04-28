@@ -35,8 +35,8 @@ from functools import partial
 from typing import Any
 
 from libqtile import bar, hook
-from libqtile.widget import base
 from libqtile.log_utils import logger
+from libqtile.widget import base
 
 
 class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
