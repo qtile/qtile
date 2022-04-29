@@ -70,8 +70,8 @@ class Popup(configurable.Configurable):
 
         if "border" in config:
             logger.warning(
-                'The "border" argument is obsolete and deprecated.',
-                'As a substitute, you may use "border_color" argument instead.',
+                'The "border" argument is obsolete and deprecated. '
+                'As a substitute, you should use "border_color" argument instead.'
             )
             self.border_color = config["border"]
 
