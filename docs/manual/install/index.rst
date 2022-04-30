@@ -17,6 +17,7 @@ running something else, please see `Installing From Source`_.
     Ubuntu/Debian <ubuntu>
     Slackware <slackware>
     FreeBSD <freebsd>
+    NixOS <nixos>
 
 Note: Also see :ref:`Starting Qtile <starting-qtile>`
 
