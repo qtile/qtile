@@ -154,14 +154,15 @@ class StatusNotifierItem:  # noqa: E303
             for icon in ["Icon", "Attention", "Overlay"]:
                 await self._get_icon(icon)
 
-            # Attach listeners for when the icon is updated
-            self.item.on_new_icon(self._new_icon)
-            self.item.on_new_attention_icon(self._new_attention_icon)
-            self.item.on_new_overlay_icon(self._new_overlay_icon)
+            if self.has_icons:
+                # Attach listeners for when the icon is updated
+                self.item.on_new_icon(self._new_icon)
+                self.item.on_new_attention_icon(self._new_attention_icon)
+                self.item.on_new_overlay_icon(self._new_overlay_icon)
 
         if not self.has_icons:
             logger.warning(
-                "Cannot find icon in current theme and " "no icon provided by StatusNotifierItem."
+                "Cannot find icon in current theme and no icon provided by StatusNotifierItem."
             )
 
         return True
@@ -203,7 +204,9 @@ class StatusNotifierItem:  # noqa: E303
         adds to an internal dictionary for later retrieval.
         """
         attr, method = self.icon_map[icon_name]
-        pixmap = getattr(self.item, method)
+        pixmap = getattr(self.item, method, None)
+        if pixmap is None:
+            return
         icon_pixmap = await pixmap()
 
         # Items can present multiple pixmaps for different
