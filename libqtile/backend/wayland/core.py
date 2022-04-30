@@ -763,6 +763,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         if isinstance(win, (window.XWindow, window.XStatic)):
             if not win.surface.or_surface_wants_focus():
+                win.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
                 return
 
         previous_surface = self.seat.keyboard_state.focused_surface
