@@ -49,6 +49,7 @@ try:
 except ImportError:
     has_dbus = False
 
+from libqtile import hook
 from libqtile.log_utils import logger
 
 
@@ -471,8 +472,35 @@ async def find_dbus_service(service: str, session_bus: bool) -> bool:
         return False
 
     bus.disconnect()
-    del bus
 
     names = msg.body[0]
 
     return service in names
+
+
+def subscribe_for_resume_events() -> None:
+    task = asyncio.create_task(
+        add_signal_receiver(
+            on_resume,
+            session_bus=False,
+            dbus_interface="org.freedesktop.login1.Manager",
+            bus_name="org.freedesktop.login1",
+            signal_name="PrepareForSleep",
+            check_service=True,
+        )
+    )
+    task.add_done_callback(_resume_callback)
+
+
+def _resume_callback(task: asyncio.Task) -> None:
+    if not task.result():
+        logger.warning("Unable to subscribe to system resume events")
+
+
+# We need to ignore typing here. msg is a dbus_next.Message object but dbus_next may not be installed
+def on_resume(msg):  # type: ignore
+    sleeping = msg.body[0]
+
+    # Value is False when the event is over i.e. the machine has woken up
+    if not sleeping:
+        hook.fire("resume")

@@ -10,6 +10,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
           avoid the ugly X cursor.
         - Wayland: primary clipboard should now behave same way as with X after selecting something it
           should be copied into clipboard
+        - Add `resume` hook when computer resumes from sleep/suspend/hibernate.
     * bugfixes
         - Widgets that are incompatible with a backend (e.g. Systray on Wayland) will no longer show 
           as a ConfigError in the bar. Instead the widget is silently removed from the bar and a message
