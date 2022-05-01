@@ -135,7 +135,6 @@ class Core(base.Core, wlrq.HasListeners):
         self._pointers: list[inputs.Pointer] = []
         self.grabbed_keys: list[tuple[int, int]] = []
         self.grabbed_buttons: list[tuple[int, int]] = []
-        self._multilang_mapping = MultilanguageMapping()
         DataDeviceManager(self.display)
         self.live_dnd: wlrq.Dnd | None = None
         DataControlManagerV1(self.display)
@@ -1014,7 +1013,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def grab_key(self, key: config.Key | config.KeyChord) -> tuple[tuple[int, ...], int]:
         """Configure the backend to grab the key event"""
-        keysyms = self._multilang_mapping.get_keysyms(key)
+        keysyms = inputs.Keyboard.get_keysyms(key)
         mask_key = wlrq.translate_masks(key.modifiers)
         for keysym in keysyms:
             self.grabbed_keys.append((keysym, mask_key))
@@ -1022,7 +1021,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def ungrab_key(self, key: config.Key | config.KeyChord) -> tuple[tuple[int, ...], int]:
         """Release the given key event"""
-        keysyms = self._multilang_mapping.get_keysyms(key)
+        keysyms = inputs.Keyboard.get_keysyms(key)
         mask_key = wlrq.translate_masks(key.modifiers)
         for keysym in keysyms:
             self.grabbed_keys.remove((keysym, mask_key))

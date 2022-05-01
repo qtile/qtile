@@ -46,6 +46,7 @@ if TYPE_CHECKING:
     from wlroots.wlr_types.keyboard import KeyboardKeyEvent
 
     from libqtile.backend.wayland.core import Core
+    from libqtile.config import Key, KeyChord
 
 KEY_PRESSED = WlKeyboard.key_state.pressed
 KEY_RELEASED = WlKeyboard.key_state.released
@@ -283,22 +284,22 @@ class Keyboard(_Device):
             self.keyboard.set_repeat_info(config.kb_repeat_rate, config.kb_repeat_delay)
             self.set_keymap(config.kb_layout, config.kb_options, config.kb_variant)
 
+    @staticmethod
+    def get_keysyms(key: Key | KeyChord) -> tuple[int, ...]:
+        keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
+        keymap = xkb.Context().keymap_new_from_names()
 
-class MultilanguageMapping:
-    def __init__(self):
-        ctx = xkb.Context()
-        keymap = ctx.keymap_new_from_names()
-        self.mapping = {}
         for keycode in keymap:
             layouts = keymap.num_layouts_for_key(keycode)
             if layouts > 1:
-                keysyms = tuple(keymap.key_get_syms_by_level(keycode, layout, 0)[0] for layout in range(layouts))
-                for keysym in keysyms:
-                    self.mapping[keysym] = keysyms
+                keysyms = tuple(
+                    keymap.key_get_syms_by_level(keycode, layout, 0)[0]
+                    for layout in range(layouts)
+                )
+                if keysym in keysyms:
+                    return keysyms
 
-    def get_keysyms(self, key: Union[config.Key, config.KeyChord]) -> tuple[int, ...]:
-        keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
-        self.mapping.get(keysym, (keysym, ))
+        return (keysym,)
 
 
 class Pointer(_Device):

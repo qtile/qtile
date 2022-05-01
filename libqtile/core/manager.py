@@ -446,7 +446,7 @@ class Qtile(CommandObject):
     def ungrab_key(self, key: Key | KeyChord) -> None:
         """Ungrab a given key event"""
         keysyms, mask_key = self.core.ungrab_key(key)
-        if isinstance(keysym, tuple):
+        if isinstance(keysyms, tuple):
             for keysym in keysyms:
                 self.keys_map.pop((keysym, mask_key))
         else:
