@@ -453,7 +453,7 @@ class Core(base.Core):
 
         return keysym, modmask
 
-    def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
+    def grab_key(self, key: config.Key | config.KeyChord) -> tuple[tuple[int, ...], int]:
         """Map the key to receive events on it"""
         keysym, modmask = self.lookup_key(key)
         codes = self.conn.keysym_to_keycode(keysym)
@@ -471,9 +471,9 @@ class Core(base.Core):
                     xcffib.xproto.GrabMode.Async,
                     xcffib.xproto.GrabMode.Async,
                 )
-        return keysym, modmask & self._valid_mask
+        return (keysym,), modmask & self._valid_mask
 
-    def ungrab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
+    def ungrab_key(self, key: config.Key | config.KeyChord) -> tuple[tuple[int, ...], int]:
         """Ungrab the key corresponding to the given keysym and modifier mask"""
         keysym, modmask = self.lookup_key(key)
         codes = self.conn.keysym_to_keycode(keysym)
@@ -482,7 +482,7 @@ class Core(base.Core):
             for amask in self._auto_modmasks():
                 self.conn.conn.core.UngrabKey(code, self._root.wid, modmask | amask)
 
-        return keysym, modmask & self._valid_mask
+        return (keysym,), modmask & self._valid_mask
 
     def ungrab_keys(self) -> None:
         """Ungrab all of the key events"""

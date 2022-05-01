@@ -63,11 +63,11 @@ class Core(CommandObject, metaclass=ABCMeta):
         """Get the screen information"""
 
     @abstractmethod
-    def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
+    def grab_key(self, key: config.Key | config.KeyChord) -> tuple[tuple[int, ...], int]:
         """Configure the backend to grab the key event"""
 
     @abstractmethod
-    def ungrab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
+    def ungrab_key(self, key: config.Key | config.KeyChord) -> tuple[tuple[int, ...], int]:
         """Release the given key event"""
 
     @abstractmethod
