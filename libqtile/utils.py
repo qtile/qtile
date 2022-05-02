@@ -52,6 +52,8 @@ except ImportError:
 
 from libqtile.log_utils import logger
 
+dbus_bus_connections = set()
+
 # Create a list to collect references to tasks so they're not garbage collected
 # before they've run
 TASKS: list[asyncio.Task[None]] = []
@@ -424,25 +426,32 @@ async def _send_dbus_message(
     signature: str,
     body: Any,
     negotiate_unix_fd: bool = False,
+    bus: MessageBus | None = None,
 ) -> tuple[MessageBus | None, Message | None]:
     """
     Private method to send messages to dbus via dbus_next.
 
+    An existing bus connection can be passed, if left empty, a new
+    bus connection will be created.
+
     Returns a tuple of the bus object and message response.
     """
-    if session_bus:
-        bus_type = BusType.SESSION
-    else:
-        bus_type = BusType.SYSTEM
+    if bus is None:
+        if session_bus:
+            bus_type = BusType.SESSION
+        else:
+            bus_type = BusType.SYSTEM
+
+        try:
+            bus = await MessageBus(
+                bus_type=bus_type, negotiate_unix_fd=negotiate_unix_fd
+            ).connect()
+        except (AuthError, Exception):
+            logger.warning("Unable to connect to dbus.")
+            return None, None
 
     if isinstance(body, str):
         body = [body]
-
-    try:
-        bus = await MessageBus(bus_type=bus_type, negotiate_unix_fd=negotiate_unix_fd).connect()
-    except (AuthError, Exception):
-        logger.warning("Unable to connect to dbus.")
-        return None, None
 
     # Ignore types here: dbus-next has default values of `None` for certain
     # parameters but the signature is `str` so passing `None` results in an
@@ -458,6 +467,11 @@ async def _send_dbus_message(
             body=body,
         )
     )
+
+    # Keep details of bus connections so we can close them on exit
+    # dbus_bus_connetions is a set so we don't need to worry about
+    # duplicates
+    dbus_bus_connections.add(bus)
 
     return bus, msg
 
@@ -503,6 +517,8 @@ async def add_signal_receiver(
 
     rule = ",".join("{}='{}'".format(k, v) for k, v in match_args.items() if v)
 
+    logger.debug("Adding dbus match rule: %s", rule)
+
     bus, msg = await _send_dbus_message(
         session_bus,
         MessageType.METHOD_CALL,
@@ -511,7 +527,7 @@ async def add_signal_receiver(
         "/org/freedesktop/DBus",
         "AddMatch",
         "s",
-        rule,
+        [rule],
     )
 
     # Check if message sent successfully
@@ -548,3 +564,18 @@ async def find_dbus_service(service: str, session_bus: bool) -> bool:
     names = msg.body[0]
 
     return service in names
+
+
+def remove_dbus_rules() -> None:
+    # Disconnecting the bus connections is enough to remove the match rules.
+    while dbus_bus_connections:
+        bus = dbus_bus_connections.pop()
+        try:
+            bus.disconnect()
+        except OSError:
+            # Socket has already shut down
+            pass
+
+        # We need to manually close the socket until https://github.com/altdesktop/python-dbus-next/pull/148
+        # gets merged. There's no error on multiple calls to 'close()'.
+        bus._sock.close()
