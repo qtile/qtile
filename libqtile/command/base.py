@@ -63,6 +63,15 @@ class CommandObject(metaclass=abc.ABCMeta):
     A CommandObject should also implement `._items()` and `._select()` methods
     (c.f. docstring for `.items()` and `.select()`).
     """
+    @property
+    def c(self):  # type: ignore
+        """Expose an interactive command client for the current object."""
+        # TODO: Fix this!
+        # The imports are called here to prevent circular imports
+        from libqtile.command.client import InteractiveCommandClient
+        from libqtile.command.interface import QtileCommandInterface
+
+        return InteractiveCommandClient(QtileCommandInterface(self))
 
     def select(self, selectors: list[SelectorType]) -> CommandObject:
         """Return a selected object
