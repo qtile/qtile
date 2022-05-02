@@ -22,7 +22,6 @@
 # SOFTWARE.
 
 import asyncio
-import logging
 from multiprocessing import Value
 
 import pytest
