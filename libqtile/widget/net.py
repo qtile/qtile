@@ -163,5 +163,5 @@ class Net(base.ThreadPoolText):
                 )
 
             return " ".join(ret_stat)
-        except Exception as excp:
-            logger.error("%s: Caught Exception:\n%s", self.__class__.__name__, excp)
+        except Exception:
+            logger.exception("Net widget errored while polling:")
