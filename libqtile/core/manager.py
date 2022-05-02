@@ -55,7 +55,7 @@ from libqtile.log_utils import logger
 from libqtile.resources.sleep import inhibitor
 from libqtile.scratchpad import ScratchPad
 from libqtile.scripts.main import VERSION
-from libqtile.utils import cancel_tasks, get_cache_dir, lget, send_notification
+from libqtile.utils import cancel_tasks, get_cache_dir, lget, remove_dbus_rules, send_notification
 from libqtile.widget.base import _Widget
 
 if TYPE_CHECKING:
@@ -298,6 +298,7 @@ class Qtile(CommandObject):
         self.groups_map.clear()
         self.groups.clear()
         self.screens.clear()
+        remove_dbus_rules()
         self.load_config()
 
     def _finalize_configurables(self) -> None:
@@ -324,6 +325,7 @@ class Qtile(CommandObject):
 
     def finalize(self) -> None:
         self._finalize_configurables()
+        remove_dbus_rules()
         inhibitor.stop()
         cancel_tasks()
         self.core.finalize()
