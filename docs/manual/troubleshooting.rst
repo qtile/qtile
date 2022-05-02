@@ -24,8 +24,8 @@ within libqtile by using the ``logger``:
 
    try:
        # some changes here that might error
-   raise Exception as e:
-       logger.exception(e)
+   except Exception:
+       logger.exception("Uh oh!")
 
 ``logger.warning`` is convenient because its messages will always be visibile
 in the log. ``logger.exception`` is helpful because it will print the full
@@ -35,8 +35,8 @@ internals.
 
 .. _capturing-an-xtrace:
 
-Capturing an ``xtrace``
-=======================
+X11: Capturing an ``xtrace``
+============================
 
 Occasionally, a bug will be low level enough to require an ``xtrace`` of
 Qtile's conversations with the X server. To capture one of these, create an
@@ -50,3 +50,28 @@ This will put the xtrace output in Qtile's logfile as well. You can then
 demonstrate the bug, and paste the contents of this file into the bug report.
 
 Note that xtrace may be named ``x11trace`` on some platforms, for example, on Fedora.
+
+.. _debugging-wayland:
+
+Debugging in Wayland
+=====================
+
+To get incredibly verbose output of communications between clients and the
+server, you can set ``WAYLAND_DEBUG=1`` in the environment before starting the
+process. This applies to the server itself, so be aware that running ``qtile``
+with this set will generate lots of output for Qtile **and** all clients that
+it launches. If you're including this output with a bug report please try to
+cut out just the relevant portions.
+
+If you're hacking on Qtile and would like this debug log output for it rather
+than any clients, it can be helpful to run the helper script at
+``scripts/wephyr`` in the source from an existing session. You can then run
+clients from another terminal using the ``WAYLAND_DISPLAY`` value printed by
+Qtile, so that the debug logs printed by Qtile are only the server's.
+
+If you suspect a client may be responsible for a bug, it can be helpful to look
+at the issue trackers for other compositors, such as `sway
+<https://github.com/swaywm/sway/issues`_. Similarly if you're hacking on
+Qtile's internals and think you've found an unexpected quirk it may be helpful
+to search the issue tracker for `wlroots
+<https://gitlab.freedesktop.org/wlroots/wlroots/-/issues>`_.

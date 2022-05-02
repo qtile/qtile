@@ -4,10 +4,10 @@ Running Qtile as a Wayland Compositor
 
 .. _wayland:
 
-
 Some functionality may not yet be implemented in the Wayland compositor. Please
 see the discussion `here <https://github.com/qtile/qtile/discussions/2409>`_ to
-see the current state of development.
+see the current state of development. Also see :ref:`troubleshooting
+<debugging-wayland>`.
 
 Backend-Specific Configuration
 ==============================
