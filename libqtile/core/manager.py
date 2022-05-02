@@ -258,7 +258,7 @@ class Qtile(CommandObject):
         try:
             self.config.load()
         except Exception as error:
-            logger.error("Configuration error: %s", error)
+            logger.exception("Configuration error:")
             send_notification("Configuration error", str(error))
             return
 
@@ -1111,7 +1111,7 @@ class Qtile(CommandObject):
         try:
             self.config.load()
         except Exception as error:
-            logger.error("Preventing restart because of a configuration error: %s", error)
+            logger.exception("Preventing restart because of a configuration error:")
             send_notification("Configuration error", str(error))
             return
         self.restart()
@@ -1460,8 +1460,8 @@ class Qtile(CommandObject):
                     return
                 try:
                     result = eval("c.{0:s}".format(cmd))
-                except (CommandError, CommandException, AttributeError) as err:
-                    logger.error(err)
+                except (CommandError, CommandException, AttributeError):
+                    logger.exception("Command errored:")
                     result = None
                 if result is not None:
                     from pprint import pformat

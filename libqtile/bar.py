@@ -347,9 +347,9 @@ class Bar(Gap, configurable.Configurable):
                 widget.offsetx = self.border_width[3]
 
             widget.configured = True
-        except Exception as e:
-            logger.error(
-                "%s widget crashed during _configure with error: %s", widget.__class__.__name__, e
+        except Exception:
+            logger.exception(
+                "%s widget crashed during _configure with error:", widget.__class__.__name__
             )
             self.crashed_widgets.append(widget)
             configured = False

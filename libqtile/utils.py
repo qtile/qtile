@@ -180,8 +180,8 @@ def import_class(
     try:
         module = importlib.import_module(module_path, __package__)
         return getattr(module, class_name)
-    except ImportError as error:
-        logger.warning("Unmet dependencies for '%s.%s': %s", module_path, class_name, error)
+    except ImportError:
+        logger.exception("Unmet dependencies for '%s.%s':", module_path, class_name)
         if fallback:
             logger.debug("%s", traceback.format_exc())
             return fallback(module_path, class_name)
