@@ -2,7 +2,7 @@ import argparse
 import logging
 import sys
 
-from libqtile.log_utils import init_log
+from libqtile.log_utils import get_default_log, init_log
 from libqtile.scripts import check, cmd_obj, migrate, run_cmd, shell, start, top
 
 try:
@@ -62,7 +62,7 @@ def main():
     options = main_parser.parse_args()
     try:
         log_level = getattr(logging, options.log_level)
-        init_log(log_level=log_level, log_color=sys.stdout.isatty())
+        init_log(log_level, log_path=get_default_log())
         options.func(options)
     except AttributeError:
         main_parser.print_usage()

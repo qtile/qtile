@@ -21,7 +21,7 @@ from libqtile import command, config, ipc, layout
 from libqtile.confreader import Config
 from libqtile.core.manager import Qtile
 from libqtile.lazy import lazy
-from libqtile.log_utils import init_log
+from libqtile.log_utils import init_log, logger
 from libqtile.resources import default_config
 
 # the sizes for outputs
@@ -174,7 +174,7 @@ class TestManager:
                 os.environ.pop("WAYLAND_DISPLAY", None)
                 kore = self.backend.create()
                 os.environ.update(self.backend.env)
-                logger = init_log(self.log_level, log_path=None, log_color=False)
+                init_log(self.log_level)
                 if hasattr(self, "log_queue"):
                     logger.addHandler(logging.handlers.QueueHandler(self.log_queue))
                 Qtile(
@@ -209,7 +209,7 @@ class TestManager:
         an error and the returned manager should not be started, otherwise this
         will likely block the thread.
         """
-        init_log(self.log_level, log_path=None, log_color=False)
+        init_log(self.log_level)
         kore = self.backend.create()
         config = config_class()
         for attr in dir(default_config):

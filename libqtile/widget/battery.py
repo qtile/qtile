@@ -236,7 +236,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
             with open(path, "r") as f:
                 return f.read().strip(), value_type
         except OSError as e:
-            logger.debug("Failed to read '{}': {}".format(path, e))
+            logger.exception("Failed to read '%s':", path)
             if isinstance(e, FileNotFoundError):
                 # Let's try another file if this one doesn't exist
                 return None

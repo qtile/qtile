@@ -125,7 +125,7 @@ class _Group(CommandObject):
                 hook.fire("layout_change", self.layouts[self.current_layout], self)
                 self.layout_all()
                 return
-        logger.error("No such layout: {}".format(layout))
+        logger.error("No such layout: %s", layout)
 
     def use_layout(self, index):
         assert -len(self.layouts) <= index < len(self.layouts), "layout index out of bounds"

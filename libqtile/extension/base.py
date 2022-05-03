@@ -64,7 +64,7 @@ class _Extension(configurable.Configurable):
 
             if not isinstance(col, str) or not RGB.match(col):
                 logger.warning(
-                    f"Invalid extension '{c}' color: {col}. " f"Must be #RGB or #RRGGBB string."
+                    "Invalid extension '%s' color: %s. Must be #RGB or #RRGGBB string.", c, col
                 )
                 setattr(self, c, None)
                 continue

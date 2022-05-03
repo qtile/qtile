@@ -22,7 +22,6 @@
 # SOFTWARE.
 
 import asyncio
-import logging
 from multiprocessing import Value
 
 import pytest
@@ -47,7 +46,7 @@ class Call:
 
 @pytest.fixture
 def hook_fixture():
-    libqtile.log_utils.init_log(logging.CRITICAL, log_path=None, log_color=False)
+    libqtile.log_utils.init_log()
 
     yield
 

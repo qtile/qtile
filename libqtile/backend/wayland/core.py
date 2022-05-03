@@ -25,10 +25,10 @@ import os
 import time
 import typing
 
+import pywayland
+import pywayland.server
 import wlroots.helper as wlroots_helper
-from pywayland import lib
 from pywayland.protocol.wayland import WlSeat
-from pywayland.server import Display
 from wlroots import xwayland
 from wlroots.wlr_types import (
     Cursor,
@@ -71,7 +71,7 @@ from wlroots.wlr_types.virtual_keyboard_v1 import VirtualKeyboardManagerV1, Virt
 from wlroots.wlr_types.xdg_shell import XdgShell, XdgSurface, XdgSurfaceRole
 from xkbcommon import xkb
 
-from libqtile import hook
+from libqtile import hook, log_utils
 from libqtile.backend import base
 from libqtile.backend.wayland import inputs, window, wlrq
 from libqtile.backend.wayland.output import Output
@@ -99,8 +99,15 @@ class Core(base.Core, wlrq.HasListeners):
         self._hovered_internal: window.Internal | None = None
         self.focused_internal: window.Internal | None = None
 
+        # Log exceptions that are raised in Wayland callback functions.
+        log_utils.init_log(
+            logger.level,
+            log_path=log_utils.get_default_log(),
+            logger=pywayland.server.listener.logger,
+        )
+
         self.fd: int | None = None
-        self.display = Display()
+        self.display = pywayland.server.Display()
         self.event_loop = self.display.get_event_loop()
         (
             self.compositor,
@@ -110,7 +117,7 @@ class Core(base.Core, wlrq.HasListeners):
         ) = wlroots_helper.build_compositor(self.display)
         self.socket = self.display.add_socket()
         os.environ["WAYLAND_DISPLAY"] = self.socket.decode()
-        logger.info("Starting core with WAYLAND_DISPLAY=" + self.socket.decode())
+        logger.info("Starting core with WAYLAND_DISPLAY=%s", self.socket.decode())
 
         # These windows have not been mapped yet; they'll get managed when mapped
         self.pending_windows: set[window.WindowType] = set()
@@ -202,7 +209,7 @@ class Core(base.Core, wlrq.HasListeners):
         self._xwayland = xwayland.XWayland(self.display, self.compositor, True)
         if self._xwayland:
             os.environ["DISPLAY"] = self._xwayland.display_name or ""
-            logger.info("Set up XWayland with DISPLAY=" + os.environ["DISPLAY"])
+            logger.info("Set up XWayland with DISPLAY=%s", os.environ["DISPLAY"])
             self.add_listener(self._xwayland.ready_event, self._on_xwayland_ready)
             self.add_listener(self._xwayland.new_surface_event, self._on_xwayland_new_surface)
         else:
@@ -270,7 +277,7 @@ class Core(base.Core, wlrq.HasListeners):
             capabilities |= WlSeat.capability.keyboard
         self.seat.set_capabilities(capabilities)
 
-        logger.info(f"New {device.device_type.name}: {device.name}")
+        logger.info("New %s: %s", device.device_type.name, device.name)
         if self.qtile:
             inputs.configure_device(device, self.qtile.config.wl_input_rules)
         else:
@@ -474,7 +481,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         wid = self.new_wid()
         win = window.LayerStatic(self, self.qtile, layer_surface, wid)
-        logger.info(f"Managing new layer_shell window with window ID: {wid}")
+        logger.info("Managing new layer_shell window with window ID: %s", wid)
         self.qtile.manage(win)
 
     def _on_new_toplevel_decoration(
@@ -488,6 +495,20 @@ class Core(base.Core, wlrq.HasListeners):
         assert self._xwayland is not None
         self._xwayland.set_seat(self.seat)
         self.xwayland_atoms: dict[int, str] = wlrq.get_xwayland_atoms(self._xwayland)
+
+        # Set the default XWayland cursor
+        xcursor = self.cursor_manager.get_xcursor("left_ptr")
+        if xcursor:
+            image = next(xcursor.images, None)
+            if image:
+                self._xwayland.set_cursor(
+                    image._ptr.buffer,
+                    image._ptr.width * 4,
+                    image._ptr.width,
+                    image._ptr.height,
+                    image._ptr.hotspot_x,
+                    image._ptr.hotspot_y,
+                )
 
     def _on_xwayland_new_surface(self, _listener: Listener, surface: xwayland.Surface) -> None:
         logger.debug("Signal: xwayland new_surface")
@@ -658,7 +679,7 @@ class Core(base.Core, wlrq.HasListeners):
         """Setup a listener for the given qtile instance"""
         logger.debug("Adding io watch")
         self.qtile = qtile
-        self.fd = lib.wl_event_loop_get_fd(self.event_loop._ptr)
+        self.fd = pywayland.lib.wl_event_loop_get_fd(self.event_loop._ptr)
         if self.fd:
             asyncio.get_running_loop().add_reader(self.fd, self._poll)
         else:
@@ -975,5 +996,5 @@ class Core(base.Core, wlrq.HasListeners):
         """Change virtual terminal to that specified"""
         success = self.backend.get_session().change_vt(vt)
         if not success:
-            logger.warning(f"Could not change VT to: {vt}")
+            logger.warning("Could not change VT to: %s", vt)
         return success
