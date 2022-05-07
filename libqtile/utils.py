@@ -41,7 +41,7 @@ if TYPE_CHECKING:
     T = TypeVar("T")
 
 try:
-    from dbus_next import Message, Variant
+    from dbus_next import AuthError, Message, Variant
     from dbus_next.aio import MessageBus
     from dbus_next.constants import BusType, MessageType
 
@@ -282,7 +282,8 @@ async def _notify(
 
     # a new bus connection is made each time a notification is sent so
     # we disconnect when the notification is done
-    bus.disconnect()
+    if bus:
+        bus.disconnect()
 
 
 def guess_terminal(preference: str | Sequence | None = None) -> str | None:
@@ -357,7 +358,7 @@ async def _send_dbus_message(
     member: str,
     signature: str,
     body: Any,
-) -> tuple[MessageBus, Message | None]:
+) -> tuple[MessageBus | None, Message | None]:
     """
     Private method to send messages to dbus via dbus_next.
 
@@ -371,7 +372,11 @@ async def _send_dbus_message(
     if isinstance(body, str):
         body = [body]
 
-    bus = await MessageBus(bus_type=bus_type).connect()
+    try:
+        bus = await MessageBus(bus_type=bus_type).connect()
+    except (AuthError, Exception):
+        logger.warning("Unable to connect to dbus.")
+        return None, None
 
     msg = await bus.call(
         Message(
@@ -395,16 +400,29 @@ async def add_signal_receiver(
     dbus_interface: str | None = None,
     bus_name: str | None = None,
     path: str | None = None,
+    check_service: bool = False,
 ) -> bool:
     """
     Helper function which aims to recreate python-dbus's add_signal_receiver
     method in dbus_next with asyncio calls.
+
+    If check_service is `True` the method will raise a wanrning and return False
+    if the service is not visible on the bus. If the `bus_name` is None, no
+    check will be performed.
 
     Returns True if subscription is successful.
     """
     if not has_dbus:
         logger.warning("dbus-next is not installed. Unable to subscribe to signals")
         return False
+
+    if bus_name and check_service:
+        found = await find_dbus_service(bus_name, session_bus)
+        if not found:
+            logger.warning(
+                "The %s name was not found on the bus. No callback will be attached.", bus_name
+            )
+            return False
 
     match_args = {
         "type": "signal",
@@ -428,9 +446,37 @@ async def add_signal_receiver(
     )
 
     # Check if message sent successfully
-    if msg and msg.message_type == MessageType.METHOD_RETURN:
+    if bus and msg and msg.message_type == MessageType.METHOD_RETURN:
         bus.add_message_handler(callback)
         return True
 
     else:
         return False
+
+
+async def find_dbus_service(service: str, session_bus: bool) -> bool:
+    """Looks up service name to see if it is currently available on dbus."""
+
+    # We're using low level interface here to reduce unnecessary calls for
+    # introspection etc.
+    bus, msg = await _send_dbus_message(
+        session_bus,
+        MessageType.METHOD_CALL,
+        "org.freedesktop.DBus",
+        "org.freedesktop.DBus",
+        "/org/freedesktop/DBus",
+        "ListNames",
+        "",
+        [],
+    )
+
+    if bus is None or msg is None or (msg and msg.message_type != MessageType.METHOD_RETURN):
+        logger.warning("Unable to send lookup call to dbus.")
+        return False
+
+    bus.disconnect()
+    del bus
+
+    names = msg.body[0]
+
+    return service in names
