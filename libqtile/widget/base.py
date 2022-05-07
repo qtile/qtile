@@ -386,7 +386,12 @@ class _TextBox(_Widget):
         ("foreground", "ffffff", "Foreground colour"),
         ("fontshadow", None, "font shadow color, default is None(no shadow)"),
         ("markup", True, "Whether or not to use pango markup"),
-        ("fmt", "{}", "How to format the text"),
+        (
+            "fmt",
+            "{}",
+            "Final formatting to be added to text widgets. "
+            "Useful when widgets do not provide a separate option to configure their output.",
+        ),
         ("max_chars", 0, "Maximum number of characters to display in widget."),
     ]  # type: list[tuple[str, Any, str]]
 
