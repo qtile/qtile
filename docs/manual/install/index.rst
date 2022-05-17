@@ -50,20 +50,34 @@ Here are Qtile's core runtime dependencies and where available the package name
 that provides them in Ubuntu. Note that Qtile can run with one of two backends
 -- X11 and Wayland -- so only the dependencies of one of these is required.
 
-================= =================== ==========================================
-Dependency        Ubuntu Package      Needed for
-================= =================== ==========================================
-CFFI_             python3-cffi        Both backends, bars and popups
-X server          xserver-xorg        X11 backend
-xcffib_           python3-xcffib      X11 backend
-wlroots_          libwlroots-dev      Wayland backend (see below)
-pywlroots_        --                  Wayland backend
-pywayland_        --                  Wayland backend
-python-xkbcommon_ --                  Wayland backend
-cairocffi_        python3-cairocffi   Drawing on bars and popups (see below)
-libpangocairo     libpangocairo-1.0-0 Writing on bars and popups
-dbus-next_        --                  Sending notifications with dbus (optional)
-================= =================== ==========================================
+============== ========================= ====================================
+Dependency          Ubuntu Package       Needed for
+============== ========================= ====================================
+CFFI_                python3-cffi         Bars and popups
+cairocffi_           python3-cairocffi    Drawing on bars and popups (if using X11 install xcffib BEFORE installing cairocffi, see below)
+libpangocairo        libpangocairo-1.0-0 Writing on bars and popups
+dbus-next_           --                  Sending notifications with dbus (optional)
+============== ========================= ====================================
+
++-------------------+-----------------+-----------------------------------------+
+| Dependency        | Ubuntu Package  |  Needed for                             |
++===================+=================+=========================================+
+|                       **X11**                                                 |
++-------------------+-----------------+-----------------------------------------+
+| X server          | xserver-xorg    |  X11 backends                           |
++-------------------+-----------------+-----------------------------------------+
+| xcffib_           | python3-xcffib  |  required for X11 backend               |
++-------------------+-----------------+-----------------------------------------+
+|                      **Wayland**                                              |
++-------------------+-----------------+-----------------------------------------+
+| wlroots_          | libwlroots-dev  |  Wayland backend (see below)            |
++-------------------+-----------------+-----------------------------------------+
+| pywlroots_        | --              |  python bindings for the wlroots library|
++-------------------+-----------------+-----------------------------------------+
+| pywayland_        | --              |  python bindings for the wayland library|
++-------------------+-----------------+-----------------------------------------+
+| python-xkbcommon_ | --              |  required for wayland backeds           |
++-------------------+-----------------+-----------------------------------------+
 
 .. _CFFI: https://cffi.readthedocs.io/en/latest/installation.html
 .. _xcffib: https://github.com/tych0/xcffib#installation
@@ -92,19 +106,20 @@ use the latest version on PyPI:
 Qtile
 -----
 
-With the dependencies in place, you can now install qtile:
+With the dependencies in place, you can now install the stable version of qtile from PyPI:
+
+.. code-block:: bash
+
+   pip install qtile
+
+
+Or install qtile-git with:
 
 .. code-block:: bash
 
     git clone https://github.com/qtile/qtile.git
     cd qtile
     pip install .
-
-Stable versions of Qtile can be installed from PyPI:
-
-.. code-block:: bash
-
-    pip install qtile
 
 As long as the necessary libraries are in place, this can be done at any point,
 however, it is recommended that you first install xcffib to ensure the
