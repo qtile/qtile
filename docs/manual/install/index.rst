@@ -19,8 +19,6 @@ running something else, please see `Installing From Source`_.
     FreeBSD <freebsd>
     NixOS <nixos>
 
-Note: Also see :ref:`Starting Qtile <starting-qtile>`
-
 .. _installing-from-source:
 
 
@@ -112,6 +110,47 @@ As long as the necessary libraries are in place, this can be done at any point,
 however, it is recommended that you first install xcffib to ensure the
 cairo-xcb bindings are built (X11 only) (see above).
 
+
+.. _starting-qtile:
+
+Starting Qtile
+==============
+
+There are several ways to start Qtile. The most common way is via an entry in
+your X session manager's menu. The default Qtile behavior can be invoked by
+creating a `qtile.desktop
+<https://github.com/qtile/qtile/blob/master/resources/qtile.desktop>`_ file in
+``/usr/share/xsessions``.
+
+A second way to start Qtile is a custom X session. This way allows you to
+invoke Qtile with custom arguments, and also allows you to do any setup you
+want (e.g. special keyboard bindings like mapping caps lock to control, setting
+your desktop background, etc.) before Qtile starts. If you're using an X
+session manager, you still may need to create a ``custom.desktop`` file similar
+to the ``qtile.desktop`` file above, but with ``Exec=/etc/X11/xsession``. Then,
+create your own ``~/.xsession``. There are several examples of user defined
+``xsession`` s in the `qtile-examples
+<https://github.com/qtile/qtile-examples>`_ repository.
+
+If there is no display manager such as SDDM, LightDM or other and there is need
+to start Qtile directly from ``~/.xinitrc`` do that by adding 
+``exec qtile start`` at the end.
+
+In very special cases, ex. Qtile crashing during session, then suggestion would
+be to start through a loop to save running applications::
+
+    while true; do
+        qtile
+    done
+
+Finally, if you're a gnome user, you can start integrate Qtile into Gnome's
+session manager and use gnome as usual.
+
+.. toctree::
+    :maxdepth: 1
+
+    without-dm
+    gnome
 
 Wayland
 =======
