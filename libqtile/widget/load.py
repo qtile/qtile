@@ -26,14 +26,10 @@ class Load(base.ThreadPoolText):
     """A small widget to show the load averages of the system."""
 
     defaults = [
-            ("update_interval", 1.0, "The update interval for the widget"),
-            (
-                "format",
-                "Load({time}):{load}",
-                "The format in which to display the results."
-            ),
-            ]
-    times = ['1m', '5m', '15m']
+        ("update_interval", 1.0, "The update interval for the widget"),
+        ("format", "Load({time}):{load}", "The format in which to display the results."),
+    ]
+    times = ["1m", "5m", "15m"]
 
     def __init__(self, **config):
         super().__init__("", **config)
@@ -43,13 +39,13 @@ class Load(base.ThreadPoolText):
         self.next_load()
 
     def next_load(self):
-        print("In function")
         self.time = next(self.cycled_times)
 
     def poll(self):
         loads = {}
         uptime = subprocess.check_output("uptime").decode("utf-8").strip()
-        loads['1m'], loads['5m'], loads['15m'] = eval(uptime[uptime.index('load')+13:]) # Gets the load averages as a dictionary.
+        loads["1m"], loads["5m"], loads["15m"] = eval(
+            uptime[uptime.index("load") + 13 :]
+        )  # Gets the load averages as a dictionary.
         load = loads[self.time]
         return self.format.format(time=self.time, load=load)
-        
