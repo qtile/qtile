@@ -77,6 +77,16 @@ Build the documentation with ``make html``.
 
 Check the result by opening ``_build/html/index.html`` in your browser.
 
+.. note::
+
+  To speed up local testing, screenshots are not generated each time the documentation
+  is built.
+
+  You can enable screenshots by setting the ``QTILE_BUILD_SCREENSHOTS`` environmental
+  variable at build time e.g. ``QTILE_BUILD_SCREENSHOTS=1 make html``. You can also
+  export the variable so it will apply to all local builds ``export QTILE_BUILD_SCREENSHOTS=1``
+  (but remember to unset it if you want to skip building screenshots).
+
 Development and testing
 =======================
 
