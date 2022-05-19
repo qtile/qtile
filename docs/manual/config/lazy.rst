@@ -4,10 +4,10 @@
 Lazy objects
 ============
 
-The ``lazy.lazy`` object is a special helper object to specify a command for
-later execution. This object acts like the root of the object graph, which
-means that we can specify a key binding command with the same syntax used to
-call the command through a script or through :ref:`qtile-shell`.
+The :data:`lazy.lazy` object is a special helper object to specify a command
+for later execution. This object acts like the root of the object graph, which
+means that we can specify a command with the same syntax used to call the
+command through a script or through :ref:`qtile-shell`.
 
 Example
 -------
@@ -15,7 +15,7 @@ Example
 ::
 
     from libqtile.config import Key
-    from libqtile.command import lazy
+    from libqtile.lazy import lazy
 
     keys = [
         Key(
@@ -161,7 +161,7 @@ Examples
 ::
 
     from libqtile.config import Key
-    from libqtile.command import lazy
+    from libqtile.lazy import lazy
 
     @lazy.function
     def my_function(qtile):
@@ -183,7 +183,7 @@ Arguments can be added to the ``lazy.function`` call.
 ::
 
     from libqtile.config import Key
-    from libqtile.command import lazy
+    from libqtile.lazy import lazy
     from libqtile.log_utils import logger
 
     def multiply(qtile, value, multiplier=10):
@@ -203,7 +203,7 @@ Arguments can also be passed to the decorated function.
 ::
 
     from libqtile.config import Key
-    from libqtile.command import lazy
+    from libqtile.lazy import lazy
     from libqtile.log_utils import logger
 
     @lazy.function

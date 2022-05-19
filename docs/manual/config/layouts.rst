@@ -21,6 +21,7 @@ Example
 ::
 
     from libqtile import layout
+
     layouts = [
         layout.Max(),
         layout.Stack(stacks=2)
