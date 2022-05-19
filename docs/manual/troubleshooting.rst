@@ -71,7 +71,7 @@ Qtile, so that the debug logs printed by Qtile are only the server's.
 
 If you suspect a client may be responsible for a bug, it can be helpful to look
 at the issue trackers for other compositors, such as `sway
-<https://github.com/swaywm/sway/issues`_. Similarly if you're hacking on
+<https://github.com/swaywm/sway/issues>`_. Similarly if you're hacking on
 Qtile's internals and think you've found an unexpected quirk it may be helpful
 to search the issue tracker for `wlroots
 <https://gitlab.freedesktop.org/wlroots/wlroots/-/issues>`_.
