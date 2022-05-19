@@ -79,6 +79,8 @@ to search the issue tracker for `wlroots
 Common Issues
 =============
 
+.. _cairo-errors:
+
 Cairo errors
 ------------
 

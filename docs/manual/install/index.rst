@@ -156,7 +156,9 @@ to start Qtile directly from ``~/.xinitrc`` do that by adding
 ``exec qtile start`` at the end.
 
 In very special cases, ex. Qtile crashing during session, then suggestion would
-be to start through a loop to save running applications::
+be to start through a loop to save running applications:
+
+.. code-block:: bash
 
     while true; do
         qtile

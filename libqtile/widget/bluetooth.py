@@ -36,7 +36,7 @@ class Bluetooth(base._TextBox):
 
     (For example your bluetooth headphones.)
 
-    Uses dbus to communicate with the system bus.
+    Uses dbus-next to communicate with the system bus.
 
     Widget requirements: dbus-next_.
 
