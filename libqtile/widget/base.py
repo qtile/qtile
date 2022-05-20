@@ -647,6 +647,10 @@ class ThreadPoolText(_TextBox):
     def poll(self):
         pass
 
+    def cmd_force_update(self):
+        """Immediately poll the widget. Existing timers are unaffected."""
+        self.update(self.poll())
+
 
 # these two classes below look SUSPICIOUSLY similar
 
