@@ -59,7 +59,7 @@ class Image(base._Widget, base.MarginMixin):
         self.filename = os.path.expanduser(self.filename)
 
         if not os.path.exists(self.filename):
-            logger.warning("Image does not exist: {}".format(self.filename))
+            logger.warning("Image does not exist: %s", self.filename)
             return
 
         img = Img.from_path(self.filename)

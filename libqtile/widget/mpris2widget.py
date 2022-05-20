@@ -86,8 +86,7 @@ class Mpris2(base._TextBox):
         )
 
         if not subscribe:
-            msg = "Unable to add signal receiver for {}.".format(self.objname)
-            logger.warning(msg)
+            logger.warning("Unable to add signal receiver for %s.", self.objname)
 
     def message(self, message):
         if message.message_type != MessageType.SIGNAL:

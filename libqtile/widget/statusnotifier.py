@@ -105,8 +105,12 @@ class StatusNotifierItem:  # noqa: E303
             try:
                 introspection = await self.bus.introspect(self.service, self.path)
                 found_path = True
+            except InvalidBusNameError:
+                # This is probably an Ayatana indicator which doesn't provide the service name.
+                # We'll pick it up via the message handler so we can ignore this.
+                return False
             except InvalidObjectPathError:
-                logger.info(f"Cannot find {self.path} path on {self.service}.")
+                logger.info("Cannot find %s path on %s.", self.path, self.service)
                 if self.path == STATUSNOTIFIER_PATH:
                     return False
 
@@ -132,7 +136,7 @@ class StatusNotifierItem:  # noqa: E303
                 continue
 
         if not interface_found:
-            logger.warning(f"Unable to find StatusNotifierItem" f"interface on {self.service}")
+            logger.warning("Unable to find StatusNotifierItem interface on %s", self.service)
             return False
 
         # Default to XDG icon:
@@ -154,14 +158,15 @@ class StatusNotifierItem:  # noqa: E303
             for icon in ["Icon", "Attention", "Overlay"]:
                 await self._get_icon(icon)
 
-            # Attach listeners for when the icon is updated
-            self.item.on_new_icon(self._new_icon)
-            self.item.on_new_attention_icon(self._new_attention_icon)
-            self.item.on_new_overlay_icon(self._new_overlay_icon)
+            if self.has_icons:
+                # Attach listeners for when the icon is updated
+                self.item.on_new_icon(self._new_icon)
+                self.item.on_new_attention_icon(self._new_attention_icon)
+                self.item.on_new_overlay_icon(self._new_overlay_icon)
 
         if not self.has_icons:
             logger.warning(
-                "Cannot find icon in current theme and " "no icon provided by StatusNotifierItem."
+                "Cannot find icon in current theme and no icon provided by StatusNotifierItem."
             )
 
         return True
@@ -203,7 +208,9 @@ class StatusNotifierItem:  # noqa: E303
         adds to an internal dictionary for later retrieval.
         """
         attr, method = self.icon_map[icon_name]
-        pixmap = getattr(self.item, method)
+        pixmap = getattr(self.item, method, None)
+        if pixmap is None:
+            return
         icon_pixmap = await pixmap()
 
         # Items can present multiple pixmaps for different
@@ -507,6 +514,14 @@ class StatusNotifierHost:  # noqa: E303
             self.items.append(item)
             if self.on_item_added:
                 self.on_item_added(item)
+
+        # It's an invalid item so let's remove it from the watchers
+        else:
+            for w in self.watchers:
+                try:
+                    w._items.remove(service)
+                except ValueError:
+                    pass
 
     def add_item(self, service, path=None):
         """

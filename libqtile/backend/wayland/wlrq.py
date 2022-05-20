@@ -113,8 +113,8 @@ class Painter:
         try:
             with open(image_path, "rb") as f:
                 image, _ = cairocffi.pixbuf.decode_to_image_surface(f.read())
-        except IOError as e:
-            logger.error("Wallpaper: %s" % e)
+        except IOError:
+            logger.exception("Could not load wallpaper:")
             return
 
         surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, screen.width, screen.height)

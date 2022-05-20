@@ -66,11 +66,11 @@ class _X11LayoutBackend(_BaseLayoutBackend):
         try:
             command = "setxkbmap -verbose 10 -query"
             setxkbmap_output = check_output(command.split(" ")).decode()
-        except CalledProcessError as e:
-            logger.error("Can not get the keyboard layout: {0}".format(e))
+        except CalledProcessError:
+            logger.exception("Can not get the keyboard layout:")
             return "unknown"
-        except OSError as e:
-            logger.error("Please, check that xset is available: {0}".format(e))
+        except OSError:
+            logger.exception("Please, check that xset is available:")
             return "unknown"
 
         match_layout = self.kb_layout_regex.search(setxkbmap_output)
@@ -90,10 +90,10 @@ class _X11LayoutBackend(_BaseLayoutBackend):
             command.extend(["-option", options])
         try:
             check_output(command)
-        except CalledProcessError as e:
-            logger.error("Can not change the keyboard layout: {0}".format(e))
-        except OSError as e:
-            logger.error("Please, check that setxkbmap is available: {0}".format(e))
+        except CalledProcessError:
+            logger.error("Can not change the keyboard layout:")
+        except OSError:
+            logger.error("Please, check that setxkbmap is available:")
 
 
 class _WaylandLayoutBackend(_BaseLayoutBackend):

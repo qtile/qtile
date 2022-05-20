@@ -100,7 +100,7 @@ class Core(base.Core):
                 "_NET_WM_NAME", "UTF8_STRING", unpack=str
             )
             if existing_wmname:
-                logger.error("not starting; existing window manager {}".format(existing_wmname))
+                logger.error("not starting; existing window manager %s", existing_wmname)
                 raise ExistingWMException(existing_wmname)
 
         self.eventmask = (
@@ -298,7 +298,7 @@ class Core(base.Core):
                     event_type = event_type[:-5]
 
                 targets = self._get_target_chain(event_type, event)
-                logger.debug(f"X11 event: {event_type} (targets: {len(targets)})")
+                logger.debug("X11 event: %s (targets: %s)", event_type, targets)
                 for target in targets:
                     ret = target(event)
                     if not ret:
@@ -325,9 +325,9 @@ class Core(base.Core):
                 if error_code:
                     error_string = xcbq.XCB_CONN_ERRORS[error_code]
                     logger.exception(
-                        "Shutting down due to X connection error {error_string} ({error_code})".format(
-                            error_string=error_string, error_code=error_code
-                        )
+                        "Shutting down due to X connection error %s (%s)",
+                        error_string,
+                        error_code,
                     )
                     self.remove_listener()
                     self.qtile.stop()
@@ -455,7 +455,7 @@ class Core(base.Core):
 
         for code in codes:
             if code == 0:
-                logger.warning(f"Can't grab {key} (unknown keysym: {hex(keysym)})")
+                logger.warning("Can't grab %s (unknown keysym: %02x)", key, keysym)
                 continue
             for amask in self._auto_modmasks():
                 self.conn.conn.core.GrabKey(
@@ -602,7 +602,7 @@ class Core(base.Core):
             try:
                 self.qtile.groups[index].cmd_toscreen()
             except IndexError:
-                logger.debug("Invalid desktop index: %s" % index)
+                logger.debug("Invalid desktop index: %s", index)
 
     def handle_KeyPress(self, event) -> None:  # noqa: N802
         assert self.qtile is not None

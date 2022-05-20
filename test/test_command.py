@@ -416,7 +416,7 @@ def test_lazy_arguments(manager_nospawn):
 
 
 def test_deprecated_modules(caplog):
-    libqtile.log_utils.init_log(logging.WARNING, log_path=None, log_color=False)
+    libqtile.log_utils.init_log()
 
     from libqtile.command_client import InteractiveCommandClient  # noqa: F401
 

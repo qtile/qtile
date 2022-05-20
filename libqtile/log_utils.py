@@ -2,6 +2,7 @@
 # Copyright (c) 2013-2014 Tao Sauvage
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 roger
+# Copyright (c) 2022 Matt Colligan
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,11 +22,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import os
 import sys
+import typing
 import warnings
 from logging import WARNING, Formatter, StreamHandler, captureWarnings, getLogger
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
+
+if typing.TYPE_CHECKING:
+    from logging import Logger, LogRecord
 
 logger = getLogger(__package__)
 
@@ -52,7 +60,7 @@ class ColorFormatter(Formatter):
     color_seq = "\033[%dm"
     bold_seq = "\033[1m"
 
-    def format(self, record):
+    def format(self, record: LogRecord) -> str:
         """Format the record with colors."""
         color = self.color_seq % (30 + self.colors[record.levelname])
         message = Formatter.format(self, record)
@@ -70,62 +78,53 @@ class ColorFormatter(Formatter):
         return message + self.reset_seq
 
 
+def get_default_log() -> Path:
+    data_directory = os.path.expandvars("$XDG_DATA_HOME")
+    if data_directory == "$XDG_DATA_HOME":
+        # if variable wasn't set
+        data_directory = os.path.expanduser("~/.local/share")
+
+    qtile_directory = Path(data_directory) / "qtile"
+    if not qtile_directory.exists():
+        qtile_directory.mkdir(parents=True)
+
+    return qtile_directory / "qtile.log"
+
+
 def init_log(
-    log_level=WARNING,
-    log_path=True,
-    log_truncate=False,
-    log_size=10000000,
-    log_numbackups=1,
-    log_color=True,
-):
+    log_level: int = WARNING,
+    log_path: Path | None = None,
+    log_size: int = 10000000,
+    log_numbackups: int = 1,
+    logger: Logger = logger,
+) -> None:
     for handler in logger.handlers:
         logger.removeHandler(handler)
-    formatter = Formatter(
-        "%(asctime)s %(levelname)s %(name)s "
-        "%(filename)s:%(funcName)s():L%(lineno)d %(message)s"
-    )
 
-    # We'll always use a stream handler
-    stream_handler = StreamHandler(sys.stdout)
-    if log_color:
-        color_formatter = ColorFormatter(
+    if log_path is None or os.getenv("QTILE_XEPHYR"):
+        # During tests or interactive xephyr development, log to stdout.
+        handler = StreamHandler(sys.stdout)
+        formatter: Formatter = ColorFormatter(
             "$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s "
             "%(filename)s:%(funcName)s():L%(lineno)d $RESET %(message)s"
         )
-        stream_handler.setFormatter(color_formatter)
-    else:
-        stream_handler.setFormatter(formatter)
-    logger.addHandler(stream_handler)
 
-    # If we have a log path, we'll also setup a log file
-    if log_path:
-        if not isinstance(log_path, str):
-            data_directory = os.path.expandvars("$XDG_DATA_HOME")
-            if data_directory == "$XDG_DATA_HOME":
-                # if variable wasn't set
-                data_directory = os.path.expanduser("~/.local/share")
-            data_directory = os.path.join(data_directory, "qtile")
-            if not os.path.exists(data_directory):
-                os.makedirs(data_directory)
-            log_path = os.path.join(data_directory, "%s.log")
-        try:
-            log_path %= "qtile"
-        except TypeError:  # Happens if log_path doesn't contain formatters.
-            pass
-        log_path = os.path.expanduser(log_path)
-        if log_truncate:
-            with open(log_path, "w"):
-                pass
-        file_handler = RotatingFileHandler(
-            log_path, maxBytes=log_size, backupCount=log_numbackups
+    else:
+        # Otherwise during normal usage, log to file.
+        handler = RotatingFileHandler(
+            log_path,
+            maxBytes=log_size,
+            backupCount=log_numbackups,
+        )
+        formatter = Formatter(
+            "%(asctime)s %(levelname)s %(name)s "
+            "%(filename)s:%(funcName)s():L%(lineno)d %(message)s"
         )
 
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
     logger.setLevel(log_level)
     # Capture everything from the warnings module.
     captureWarnings(True)
     warnings.simplefilter("always")
     logger.debug("Starting logging for Qtile")
-    return logger
