@@ -143,7 +143,7 @@ class _Widget(CommandObject, configurable.Configurable):
         (
             "mouse_callbacks",
             {},
-            "Dict of mouse button press callback functions. Acceps functions and ``lazy`` calls.",
+            "Dict of mouse button press callback functions. Accepts functions and ``lazy`` calls.",
         ),
     ]  # type: list[tuple[str, Any, str]]
 
@@ -272,7 +272,7 @@ class _Widget(CommandObject, configurable.Configurable):
                         (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
-                        logger.error("Mouse callback command error %s: %s" % (cmd.name, val))
+                        logger.error("Mouse callback command error %s: %s", cmd.name, val)
             else:
                 cmd()
 
@@ -646,6 +646,10 @@ class ThreadPoolText(_TextBox):
 
     def poll(self):
         pass
+
+    def cmd_force_update(self):
+        """Immediately poll the widget. Existing timers are unaffected."""
+        self.update(self.poll())
 
 
 # these two classes below look SUSPICIOUSLY similar

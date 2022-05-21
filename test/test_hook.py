@@ -22,7 +22,6 @@
 # SOFTWARE.
 
 import asyncio
-import logging
 from multiprocessing import Value
 
 import pytest
@@ -45,9 +44,14 @@ class Call:
         self.val = val
 
 
+class NoArgCall(Call):
+    def __call__(self):
+        self.val += 1
+
+
 @pytest.fixture
 def hook_fixture():
-    libqtile.log_utils.init_log(logging.CRITICAL, log_path=None, log_color=False)
+    libqtile.log_utils.init_log()
 
     yield
 
@@ -185,3 +189,11 @@ def test_can_call_by_selection_notify(manager):
     hook.subscribe.selection_notify(test)
     hook.fire("selection_notify", "hello")
     assert test.val == "hello"
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_resume_hook(manager):
+    test = NoArgCall(0)
+    hook.subscribe.resume(test)
+    hook.fire("resume")
+    assert test.val == 1

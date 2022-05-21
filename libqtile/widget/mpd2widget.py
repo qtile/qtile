@@ -239,7 +239,7 @@ class Mpd2(base.ThreadPoolText):
                 err = err1.format(Class=type(context).__name__, attr=attr_name)
             else:
                 err = err2.format(Class=type(context).__name__, attr=attr_name)
-            logger.exception(err + " {}".format(e.args[0]))
+            logger.exception("%s %s", err, e.args[0])
 
     def toggle(self):
         """toggle play/pause."""

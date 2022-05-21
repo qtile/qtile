@@ -10,7 +10,7 @@ check: ## Run the test suite
 
 .PHONY: lint
 lint: ## Check the source code
-	TOXENV=format,pep8,vulture,mypy tox
+	TOXENV=codestyle,pep8,vulture,mypy tox
 
 .PHONY: clean
 clean: ## Clean generated files

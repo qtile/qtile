@@ -336,8 +336,9 @@ class Screen(_Wrapper):
             return desired_depth, self._visuals[desired_depth]
 
         logger.info(
-            f"{desired_depth} bit colour depth not available. "
-            f"Falling back to root depth: {self.root_depth}."
+            "%s bit colour depth not available. Falling back to root depth: %s.",
+            desired_depth,
+            self.root_depth,
         )
         return self.root_depth, self._visuals[self.root_depth]
 
@@ -351,7 +352,7 @@ class Screen(_Wrapper):
         """
         allowed = screen.allowed_depths
         if depth not in [x.depth for x in allowed]:
-            logger.warning(f"Unsupported colour depth: {depth}.")
+            logger.warning("Unsupported colour depth: %s", depth)
             return
 
         for i in allowed:
@@ -693,8 +694,8 @@ class Painter:
         try:
             with open(image_path, "rb") as f:
                 image, _ = cairocffi.pixbuf.decode_to_image_surface(f.read())
-        except IOError as e:
-            logger.error("Wallpaper: %s" % e)
+        except IOError:
+            logger.exception("Could not load wallpaper:")
             return
 
         # Querying the screen dimensions via the xcffib connection does not

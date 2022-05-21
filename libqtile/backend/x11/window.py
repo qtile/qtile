@@ -1711,7 +1711,7 @@ class Window(_Window, base.Window):
                     logger.debug("Ignoring focus request")
                 else:
                     logger.debug(
-                        "Invalid value for focus_on_window_activation: {}".format(focus_behavior)
+                        "Invalid value for focus_on_window_activation: %s", focus_behavior
                     )
         elif atoms["_NET_CLOSE_WINDOW"] == opcode:
             self.kill()

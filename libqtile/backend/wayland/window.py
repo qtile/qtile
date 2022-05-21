@@ -657,7 +657,7 @@ class XdgWindow(Window[XdgSurface]):
         if self in self.core.pending_windows:
             self.core.pending_windows.remove(self)
             self._wid = self.core.new_wid()
-            logger.debug(f"Managing new top-level window with window ID: {self.wid}")
+            logger.debug("Managing new top-level window with window ID: %s", self._wid)
 
             # Save the client's desired geometry
             surface = self.surface
@@ -895,7 +895,7 @@ class XWindow(Window[xwayland.Surface]):
         if self in self.core.pending_windows:
             self.core.pending_windows.remove(self)
             self._wid = self.core.new_wid()
-            logger.debug(f"Managing new XWayland window with window ID: {self.wid}")
+            logger.debug("Managing new XWayland window with window ID: %s", self._wid)
 
             # Make it static if it isn't a regular window
             if self.surface.override_redirect:

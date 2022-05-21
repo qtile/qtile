@@ -60,10 +60,8 @@ def make_qtile(options):
             )
             copyfile(default_config_path, options.configfile)
             logger.info("Copied default_config.py to %s", options.configfile)
-        except Exception as e:
-            logger.exception(
-                "Failed to copy default_config.py to %s: (%s)", options.configfile, e
-            )
+        except Exception:
+            logger.exception("Failed to copy default_config.py to %s:", options.configfile)
 
     config = confreader.Config(options.configfile)
 
