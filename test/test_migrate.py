@@ -197,11 +197,8 @@ def test_border_width():
         from libqtile import bar
         from libqtile.widget import GroupBox
 
-        bar.Bar(
-            [GroupBox(borderwidth=10)],
-            30,
-        )
-        """
+        bar.Bar([GroupBox(borderwidth=10)], 30)
+    """
     )
 
     expected = textwrap.dedent(
@@ -209,11 +206,8 @@ def test_border_width():
         from libqtile import bar
         from libqtile.widget import GroupBox
 
-        bar.Bar(
-            [GroupBox(border_width=10)],
-            30,
-        )
-        """
+        bar.Bar([GroupBox(border_width=10)], 30)
+    """
     )
 
     check_migrate(orig, expected)
@@ -225,11 +219,8 @@ def test_border_color():
         from libqtile import bar
         from libqtile.widget import AGroupBox
 
-        bar.Bar(
-            [AGroupBox(border="#8aaef8")],
-            30,
-        )
-        """
+        bar.Bar([AGroupBox(border="#8aaef8")], 30)
+    """
     )
 
     expected = textwrap.dedent(
@@ -237,11 +228,8 @@ def test_border_color():
         from libqtile import bar
         from libqtile.widget import AGroupBox
 
-        bar.Bar(
-            [AGroupBox(border_color="#8aaef8")],
-            30,
-        )
-        """
+        bar.Bar([AGroupBox(border_color="#8aaef8")], 30)
+    """
     )
 
     check_migrate(orig, expected)
