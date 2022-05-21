@@ -43,8 +43,8 @@ class ThermalSensor(base.InLoopPollText):
     """
 
     defaults = [
+        ("format", "{temp:.1f}{unit}", "Display string formatting"),
         ("metric", True, "True to use metric/C, False to use imperial/F"),
-        ("show_tag", False, "Show tag sensor"),
         ("update_interval", 2, "Update interval in seconds"),
         ("tag_sensor", None, 'Tag of the temperature sensor. For example: "temp1" or "Core 0"'),
         (
@@ -79,7 +79,6 @@ class ThermalSensor(base.InLoopPollText):
 
         temperature_list = {}
         temps = psutil.sensors_temperatures(fahrenheit=not self.metric)
-        unit = "°C" if self.metric else "°F"
         empty_index = 0
         for kernel_module in temps:
             for sensor in temps[kernel_module]:
@@ -89,7 +88,7 @@ class ThermalSensor(base.InLoopPollText):
                         kernel_module if kernel_module else "UNKNOWN", str(empty_index)
                     )
                     empty_index += 1
-                temperature_list[label] = (str(round(sensor.current, 1)), unit)
+                temperature_list[label] = sensor.current
 
         return temperature_list
 
@@ -97,13 +96,16 @@ class ThermalSensor(base.InLoopPollText):
         temp_values = self.get_temp_sensors()
         if temp_values is None:
             return False
-        text = ""
-        if self.show_tag and self.tag_sensor is not None:
-            text = self.tag_sensor + ": "
-        text += "".join(temp_values.get(self.tag_sensor, ["N/A"]))
-        temp_value = float(temp_values.get(self.tag_sensor, [0])[0])
+        temp_value = temp_values.get(self.tag_sensor, float("nan"))
         if temp_value > self.threshold:
             self.layout.colour = self.foreground_alert
         else:
             self.layout.colour = self.foreground_normal
-        return text
+        unit = "°C" if self.metric else "°F"
+
+        val = dict(
+            temp=temp_value,
+            tag=self.tag_sensor,
+            unit=unit
+        )
+        return self.format.format(**val)
