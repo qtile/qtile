@@ -43,7 +43,14 @@ class ThermalSensor(base.InLoopPollText):
     """
 
     defaults = [
-        ("format", "{temp:.1f}{unit}", "Display string formatting"),
+        (
+            "format",
+            "{temp:.1f}{unit}",
+            "Display string format. Three options available: "
+            "``{temp}`` - temperature, "
+            "``{tag}`` - tag of the temperature sensor, and "
+            "``{unit}`` - °C or °F",
+        ),
         ("metric", True, "True to use metric/C, False to use imperial/F"),
         ("update_interval", 2, "Update interval in seconds"),
         ("tag_sensor", None, 'Tag of the temperature sensor. For example: "temp1" or "Core 0"'),
@@ -71,6 +78,10 @@ class ThermalSensor(base.InLoopPollText):
                 self.tag_sensor = k
                 break
 
+    def _configure(self, qtile, bar):
+        self.unit = "°C" if self.metric else "°F"
+        base.InLoopPollText._configure(self, qtile, bar)
+
     def get_temp_sensors(self):
         """
         Reads temperatures from sys-fs via psutil.
@@ -94,18 +105,20 @@ class ThermalSensor(base.InLoopPollText):
 
     def poll(self):
         temp_values = self.get_temp_sensors()
-        if temp_values is None:
-            return False
-        temp_value = temp_values.get(self.tag_sensor, float("nan"))
+        
+        # Temperature not available
+        if (temp_values is None) or (self.tag_sensor not in temp_values):
+            return "N/A"
+
+        temp_value = temp_values.get(self.tag_sensor)
         if temp_value > self.threshold:
             self.layout.colour = self.foreground_alert
         else:
             self.layout.colour = self.foreground_normal
-        unit = "°C" if self.metric else "°F"
 
         val = dict(
             temp=temp_value,
             tag=self.tag_sensor,
-            unit=unit
+            unit=self.unit
         )
         return self.format.format(**val)
