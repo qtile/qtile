@@ -135,6 +135,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     def finalize(self) -> None:
         self.finalize_listeners()
         self.ftm_handle.destroy()
+        self.core.remove_pointer_constraints(self)
 
     @property
     def wid(self) -> int:
@@ -647,10 +648,6 @@ class XdgWindow(Window[XdgSurface]):
         for subsurface in self.subsurfaces:
             subsurface.finalize()
 
-        for pc in self.core.pointer_constraints.copy():
-            if pc.window is self:
-                pc.finalize()
-
     def _on_map(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow map")
 
@@ -869,7 +866,6 @@ class XdgWindow(Window[XdgSurface]):
         for pc in self.core.pointer_constraints.copy():
             if pc.window is self:
                 pc.window = win
-                break
 
         hook.fire("client_managed", win)
 
@@ -1154,6 +1150,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
 
     def finalize(self) -> None:
         self.finalize_listeners()
+        self.core.remove_pointer_constraints(self)
 
     @property
     def wid(self) -> int:
@@ -1302,10 +1299,6 @@ class XdgStatic(Static[XdgSurface]):
         Static.finalize(self)
         for subsurface in self.subsurfaces:
             subsurface.finalize()
-
-        for pc in self.core.pointer_constraints.copy():
-            if pc.window is self:
-                pc.finalize()
 
     def kill(self) -> None:
         self.surface.send_close()
@@ -1460,10 +1453,6 @@ class LayerStatic(Static[LayerSurfaceV1]):
         Static.finalize(self)
         for subsurface in self.subsurfaces:
             subsurface.finalize()
-
-        for pc in self.core.pointer_constraints.copy():
-            if pc.window is self:
-                pc.finalize()
 
     @property
     def mapped(self) -> bool:
@@ -1784,23 +1773,23 @@ class PointerConstraint(HasListeners):
         self._warp_target: tuple[float, float] = (0, 0)
         self._needs_warp: bool = False
 
-        self.add_listener(wlr_constraint.set_region_event, self._on_set_region)
-        self.add_listener(wlr_constraint.destroy_event, self._on_destroy)
-
+        assert core.qtile is not None
         owner = None
 
-        if core.qtile and core.qtile.windows_map:
-            for win in core.qtile.windows_map.values():
-                if isinstance(win, (XdgWindow, XdgStatic)):
-                    if win.surface.surface == self.wlr_constraint.surface:
-                        owner = win
-                        break
+        for win in core.qtile.windows_map.values():
+            if isinstance(win, (Window | Static)):
+                if win.surface.surface == self.wlr_constraint.surface:
+                    owner = win
+                    break
 
         if owner is None:
             logger.error("No window found for pointer constraints. Please report.")
             raise RuntimeError
 
-        self.window: XdgWindow | XdgStatic = owner
+        self.window: Window | Static = owner
+
+        self.add_listener(wlr_constraint.set_region_event, self._on_set_region)
+        self.add_listener(wlr_constraint.destroy_event, self._on_destroy)
 
     def finalize(self) -> None:
         if self.core.active_pointer_constraint is self:

@@ -967,6 +967,11 @@ class Core(base.Core, wlrq.HasListeners):
             self._current_output = self.outputs[0] if self.outputs else None
             self.stack_windows()
 
+    def remove_pointer_constraints(self, window: window.Window | window.Static) -> None:
+        for pc in self.pointer_constraints.copy():
+            if pc.window is window:
+                pc.finalize()
+
     def keysym_from_name(self, name: str) -> int:
         """Get the keysym for a key from its name"""
         return xkb.keysym_from_name(name, case_insensitive=True)
