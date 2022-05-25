@@ -20,7 +20,7 @@ has two qualities:
 
 2. **Specific.** Do not write an essay about the problem. Be specific and to the
    point. Try to summarize the problem in minimum words yet in effective way.
-   Do not combine multiple problems even they seem to be similar. Write
+   Do not combine multiple problems even if they seem to be similar. Write
    different reports for each problem.
 
 Ensure to include any appropriate log entries from
