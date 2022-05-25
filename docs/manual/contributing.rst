@@ -18,7 +18,7 @@ has two qualities:
    skip any reproducing step. Describe the issue, step-by-step, so that it is
    easy to reproduce and fix.
 
-2. **Specific.** Do not write an essay about the problem. Be Specific and to the
+2. **Specific.** Do not write an essay about the problem. Be specific and to the
    point. Try to summarize the problem in minimum words yet in effective way.
    Do not combine multiple problems even they seem to be similar. Write
    different reports for each problem.
