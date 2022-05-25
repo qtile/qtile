@@ -15,7 +15,7 @@ has two qualities:
 
 1. **Reproducible.** If your bug is not reproducible it will never get fixed.
    You should clearly mention the steps to reproduce the bug. Do not assume or
-   skip any reproducing step. Described the issue, step-by-step, so that it is
+   skip any reproducing step. Describe the issue, step-by-step, so that it is
    easy to reproduce and fix.
 
 2. **Specific.** Do not write an essay about the problem. Be Specific and to the
