@@ -45,9 +45,9 @@ PyPy and has better compatibility for external libraries.
 Core Dependencies
 -----------------
 
-Here are Qtile's core runtime dependencies and where available the package name
-that provides them in Ubuntu. Note that Qtile can run with one of two backends
--- X11 and Wayland -- so only the dependencies of one of these is required.
+Here are Qtile's core runtime dependencies and the package names that provide them 
+in Ubuntu. Note that Qtile can run with one of two backends -- X11 and Wayland -- so 
+only the dependencies of one of these is required.
 
 ================= =================== ==========================================
 Dependency        Ubuntu Package      Needed for
@@ -79,7 +79,7 @@ cairocffi
 
 Qtile uses cairocffi_ for drawing on status bars and popup windows. Under X11,
 cairocffi requires XCB support via xcffib, which you should be sure to have
-installed **before** installing cairocffi, otherwise the needed cairo-xcb
+installed **before** installing cairocffi, otherwise, the needed cairo-xcb
 bindings will not be built. Once you've got the dependencies installed, you can
 use the latest version on PyPI:
 
