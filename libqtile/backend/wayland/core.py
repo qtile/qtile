@@ -28,6 +28,7 @@ import typing
 import pywayland
 import pywayland.server
 import wlroots.helper as wlroots_helper
+import wlroots.wlr_types.virtual_pointer_v1 as vpointer
 from pywayland.protocol.wayland import WlSeat
 from wlroots import xwayland
 from wlroots.wlr_types import (
@@ -189,6 +190,11 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(
             self._virtual_keyboard_manager_v1.new_virtual_keyboard_event,
             self._on_new_virtual_keyboard,
+        )
+        virtual_pointer_manager_v1 = vpointer.VirtualPointerManagerV1(self.display)
+        self.add_listener(
+            virtual_pointer_manager_v1.new_virtual_pointer_event,
+            self._on_new_virtual_pointer,
         )
         xdg_decoration_manager_v1 = xdg_decoration_v1.XdgDecorationManagerV1.create(self.display)
         self.add_listener(
@@ -445,6 +451,11 @@ class Core(base.Core, wlrq.HasListeners):
         self, _listener: Listener, virtual_keyboard: VirtualKeyboardV1
     ) -> None:
         self._add_new_keyboard(virtual_keyboard.input_device)
+
+    def _on_new_virtual_pointer(
+        self, _listener: Listener, new_pointer_event: vpointer.VirtualPointerV1NewPointerEvent
+    ) -> None:
+        self._add_new_pointer(new_pointer_event.new_pointer.input_device)
 
     def _on_new_inhibitor(self, _listener: Listener, idle_inhibitor: IdleInhibitorV1) -> None:
         logger.debug("Signal: idle_inhibitor new_inhibitor")
