@@ -79,7 +79,7 @@ cairocffi
 
 Qtile uses cairocffi_ for drawing on status bars and popup windows. Under X11,
 cairocffi requires XCB support via xcffib, which you should be sure to have
-installed **before** installing cairocffi, otherwise, the needed cairo-xcb
+installed **before** installing cairocffi; otherwise, the needed cairo-xcb
 bindings will not be built. Once you've got the dependencies installed, you can
 use the latest version on PyPI:
 
