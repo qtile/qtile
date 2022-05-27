@@ -156,7 +156,7 @@ class TextFrame:
         else:
             self.pad_top = self.pad_bottom = pad_y
 
-    def draw(self, x, y, rounded=True, fill=False, line=False, highlight=False):
+    def draw(self, x, y, rounded=True, fill=False, line=False, invert=False, highlight=False):
         self.drawer.set_source_rgb(self.border_color)
         opts = [
             x,
@@ -171,8 +171,9 @@ class TextFrame:
                 self.drawer.fillrect(*opts)
                 self.drawer.set_source_rgb(self.border_color)
 
-            # change to only fill in bottom line
-            opts[1] = self.height - self.border_width  # y
+            if not invert:
+                # change to only fill in bottom line
+                opts[1] = self.height - self.border_width  # y
             opts[3] = self.border_width  # height
 
             self.drawer.fillrect(*opts)
@@ -192,8 +193,8 @@ class TextFrame:
     def draw_fill(self, x, y, rounded=True):
         self.draw(x, y, rounded=rounded, fill=True)
 
-    def draw_line(self, x, y, highlighted):
-        self.draw(x, y, line=True, highlight=highlighted)
+    def draw_line(self, x, y, invert, highlighted):
+        self.draw(x, y, line=True, invert=invert, highlight=highlighted)
 
     @property
     def height(self):

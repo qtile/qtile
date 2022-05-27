@@ -91,6 +91,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         rounded=False,
         block=False,
         line=False,
+        invert_line=False,
         highlighted=False,
     ):
         self.layout.text = self.fmt.format(text)
@@ -104,6 +105,8 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
                 (self.bar.height - self.layout.height - self.borderwidth) / 2,
                 (self.bar.height - self.layout.height + self.borderwidth) / 2,
             ]
+            if highlighted:
+                invert_line = False
         else:
             pad_y = self.padding_y
 
@@ -127,7 +130,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         if block and bordercolor is not None:
             framed.draw_fill(offset, y, rounded)
         elif line:
-            framed.draw_line(offset, y, highlighted)
+            framed.draw_line(offset, y, invert_line, highlighted)
         else:
             framed.draw(offset, y, rounded)
 
@@ -224,6 +227,7 @@ class GroupBox(_GroupBase):
             "Hide groups that have no windows and that are not displayed on any screen.",
         ),
         ("spacing", None, "Spacing between groups" "(if set to None, will be equal to margin_x)"),
+        ("invert_line", False, "Invert visibility when 'line' highlight method is not highlighted."),
     ]
 
     def __init__(self, **config):
@@ -365,6 +369,7 @@ class GroupBox(_GroupBase):
                             to_highlight = True
                         else:
                             border = self.this_screen_border
+                            to_highlight = True
                     else:
                         if self.qtile.current_screen == g.screen:
                             border = self.other_current_screen_border
@@ -393,6 +398,7 @@ class GroupBox(_GroupBase):
                 rounded=self.rounded,
                 block=is_block,
                 line=is_line,
+                invert_line=self.invert_line,
                 highlighted=to_highlight,
             )
             offset += bw + self.spacing
