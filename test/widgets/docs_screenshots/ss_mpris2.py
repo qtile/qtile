@@ -40,8 +40,7 @@ def widget(monkeypatch, patched_module):  # noqa: F811
 )
 def ss_mpris2(screenshot_manager):
     widget = screenshot_manager.c.widget["mpris2"]
-    widget.eval("self.message(self.PLAYING)")
-    widget.eval("self.scroll_text()")
+    widget.eval("self.parse_message(*self.PLAYING.body)")
     screenshot_manager.take_screenshot()
 
 
@@ -50,6 +49,5 @@ def ss_mpris2(screenshot_manager):
 )
 def ss_mpris2_paused(screenshot_manager):
     widget = screenshot_manager.c.widget["mpris2"]
-    widget.eval("self.message(self.PAUSED)")
-    widget.eval("self.scroll_text()")
+    widget.eval("self.parse_message(*self.PAUSED.body)")
     screenshot_manager.take_screenshot()
