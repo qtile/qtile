@@ -28,6 +28,7 @@ import typing
 import pywayland
 import pywayland.server
 import wlroots.helper as wlroots_helper
+import wlroots.wlr_types.virtual_keyboard_v1 as vkeyboard
 import wlroots.wlr_types.virtual_pointer_v1 as vpointer
 from pywayland.protocol.wayland import WlSeat
 from wlroots import xwayland
@@ -68,7 +69,6 @@ from wlroots.wlr_types.server_decoration import (
     ServerDecorationManager,
     ServerDecorationManagerMode,
 )
-from wlroots.wlr_types.virtual_keyboard_v1 import VirtualKeyboardManagerV1, VirtualKeyboardV1
 from wlroots.wlr_types.xdg_shell import XdgShell, XdgSurface, XdgSurfaceRole
 from xkbcommon import xkb
 
@@ -186,9 +186,9 @@ class Core(base.Core, wlrq.HasListeners):
         idle_ihibitor_manager = IdleInhibitorManagerV1(self.display)
         self.add_listener(idle_ihibitor_manager.new_inhibitor_event, self._on_new_inhibitor)
         PrimarySelectionV1DeviceManager(self.display)
-        self._virtual_keyboard_manager_v1 = VirtualKeyboardManagerV1(self.display)
+        virtual_keyboard_manager_v1 = vkeyboard.VirtualKeyboardManagerV1(self.display)
         self.add_listener(
-            self._virtual_keyboard_manager_v1.new_virtual_keyboard_event,
+            virtual_keyboard_manager_v1.new_virtual_keyboard_event,
             self._on_new_virtual_keyboard,
         )
         virtual_pointer_manager_v1 = vpointer.VirtualPointerManagerV1(self.display)
@@ -448,7 +448,7 @@ class Core(base.Core, wlrq.HasListeners):
             constraint.enable()
 
     def _on_new_virtual_keyboard(
-        self, _listener: Listener, virtual_keyboard: VirtualKeyboardV1
+        self, _listener: Listener, virtual_keyboard: vkeyboard.VirtualKeyboardV1
     ) -> None:
         self._add_new_keyboard(virtual_keyboard.input_device)
 

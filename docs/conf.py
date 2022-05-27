@@ -66,6 +66,7 @@ MOCK_MODULES = [
     'wlroots.wlr_types.output_power_management_v1',
     'wlroots.wlr_types.server_decoration',
     'wlroots.wlr_types.virtual_keyboard_v1',
+    'wlroots.wlr_types.virtual_pointer_v1',
     'wlroots.wlr_types.xdg_shell',
     'xcffib',
     'xcffib.randr',
