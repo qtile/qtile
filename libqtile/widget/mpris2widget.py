@@ -21,12 +21,25 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
 
+import asyncio
+from typing import TYPE_CHECKING
+
+from dbus_next import Message, Variant
 from dbus_next.constants import MessageType
 
 from libqtile.log_utils import logger
-from libqtile.utils import add_signal_receiver
+from libqtile.utils import _send_dbus_message, add_signal_receiver
 from libqtile.widget import base
+
+if TYPE_CHECKING:
+    from typing import Any
+
+MPRIS_PATH = "/org/mpris/MediaPlayer2"
+MPRIS_OBJECT = "org.mpris.MediaPlayer2"
+MPRIS_PLAYER = "org.mpris.MediaPlayer2.Player"
+PROPERTIES_INTERFACE = "org.freedesktop.DBus.Properties"
 
 
 class Mpris2(base._TextBox):
@@ -35,6 +48,9 @@ class Mpris2(base._TextBox):
     A widget which displays the current track/artist of your favorite MPRIS
     player. This widget scrolls the text if neccessary and information that
     is displayed is configurable.
+
+    Basic mouse controls are also available: button 1 = play/pause,
+    scroll up = next track, scroll down = previous track.
 
     Widget requirements: dbus-next_.
 
@@ -45,11 +61,12 @@ class Mpris2(base._TextBox):
         ("name", "audacious", "Name of the MPRIS widget."),
         (
             "objname",
-            "org.mpris.MediaPlayer2.audacious",
+            None,
             "DBUS MPRIS 2 compatible player identifier"
             "- Find it out with dbus-monitor - "
             "Also see: http://specifications.freedesktop.org/"
-            "mpris-spec/latest/#Bus-Name-Policy",
+            "mpris-spec/latest/#Bus-Name-Policy. "
+            "``None`` will listen for notifications from all MPRIS2 compatible players.",
         ),
         (
             "display_metadata",
@@ -58,22 +75,64 @@ class Mpris2(base._TextBox):
             "See http://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata/#index5h3 "
             "for available values",
         ),
-        ("scroll_chars", 30, "How many chars at once to display."),
-        ("scroll_interval", 0.5, "Scroll delay interval."),
-        ("scroll_wait_intervals", 8, "Wait x scroll_interval before" "scrolling/removing text"),
-        ("stop_pause_text", None, "Optional text to display when in the stopped/paused state"),
+        ("scroll", True, "Whether text should scroll."),
+        ("playing_text", "{track}", "Text to show when playing"),
+        ("paused_text", "Paused: {track}", "Text to show when paused"),
+        ("stopped_text", "", "Text to show when stopped"),
+        (
+            "stop_pause_text",
+            None,
+            "(Deprecated) Optional text to display when in the stopped/paused state",
+        ),
+        (
+            "no_metadata_text",
+            "No metadata for current track",
+            "Text to show when track has no metadata",
+        ),
     ]
 
     def __init__(self, **config):
         base._TextBox.__init__(self, "", **config)
         self.add_defaults(Mpris2.defaults)
-
-        self.scrolltext = None
-        self.displaytext = ""
         self.is_playing = False
-        self.scroll_timer = None
-        self.scroll_counter = None
         self.count = 0
+        self.displaytext = ""
+        self.track_info = ""
+        self.status = "{track}"
+        self.add_callbacks(
+            {
+                "Button1": self.cmd_play_pause,
+                "Button4": self.cmd_next,
+                "Button5": self.cmd_previous,
+            }
+        )
+        paused = ""
+        stopped = ""
+        if "stop_pause_text" in config:
+            logger.warning(
+                "The use of 'stop_pause_text' is deprecated. Please use 'paused_text' and 'stopped_text' instead."
+            )
+            if "paused_text" not in config:
+                paused = self.stop_pause_text
+
+            if "stopped_text" not in config:
+                stopped = self.stop_pause_text
+
+        self.prefixes = {
+            "Playing": self.playing_text,
+            "Paused": paused or self.paused_text,
+            "Stopped": stopped or self.stopped_text,
+        }
+
+        self._current_player: str | None = None
+        self.player_names: dict[str, str] = {}
+
+    @property
+    def player(self) -> str:
+        if self._current_player is None:
+            return "None"
+        else:
+            return self.player_names.get(self._current_player, "Unknown")
 
     async def _config_async(self):
         subscribe = await add_signal_receiver(
@@ -86,97 +145,148 @@ class Mpris2(base._TextBox):
         )
 
         if not subscribe:
-            logger.warning("Unable to add signal receiver for %s.", self.objname)
+            logger.warning("Unable to add signal receiver for Mpris2 players")
 
     def message(self, message):
         if message.message_type != MessageType.SIGNAL:
             return
 
-        self.update(*message.body)
+        asyncio.create_task(self.process_message(message))
 
-    def update(self, interface_name, changed_properties, _invalidated_properties):
+    async def process_message(self, message):
+        current_player = message.sender
+
+        if current_player not in self.player_names:
+            self.player_names[current_player] = await self.get_player_name(current_player)
+
+        self._current_player = current_player
+
+        self.parse_message(*message.body)
+
+    async def get_player_name(self, player):
+        bus, message = await _send_dbus_message(
+            True,
+            MessageType.METHOD_CALL,
+            player,
+            PROPERTIES_INTERFACE,
+            MPRIS_PATH,
+            "Get",
+            "ss",
+            [MPRIS_OBJECT, "Identity"],
+        )
+
+        if bus:
+            bus.disconnect()
+
+        if message.message_type != MessageType.METHOD_RETURN:
+            logger.warning("Could not retrieve identity of player on %s.", player)
+            return ""
+
+        return message.body[0].value
+
+    def parse_message(
+        self,
+        _interface_name: str,
+        changed_properties: dict[str, Any],
+        _invalidated_properties: list[str],
+    ) -> None:
         """
         http://specifications.freedesktop.org/mpris-spec/latest/Track_List_Interface.html#Mapping:Metadata_Map
         """
         if not self.configured:
-            return True
-        olddisplaytext = self.displaytext
+            return
+
+        if "Metadata" not in changed_properties and "PlaybackStatus" not in changed_properties:
+            return
+
         self.displaytext = ""
 
         metadata = changed_properties.get("Metadata")
         if metadata:
-            metadata = metadata.value
-            self.is_playing = True
-
-            meta_list = []
-            for key in self.display_metadata:
-                val = getattr(metadata.get(key), "value", None)
-                if isinstance(val, str):
-                    meta_list.append(val)
-                elif isinstance(val, list):
-                    val = " - ".join((y for y in val if isinstance(y, str)))
-                    meta_list.append(val)
-
-            self.displaytext = " - ".join(meta_list)
-            self.displaytext.replace("\n", "")
+            self.track_info = self.get_track_info(metadata.value)
 
         playbackstatus = getattr(changed_properties.get("PlaybackStatus"), "value", None)
-        if playbackstatus == "Paused":
-            if self.stop_pause_text is not None:
-                self.is_playing = False
-                self.displaytext = self.stop_pause_text
-            elif self.displaytext:
-                self.is_playing = False
-                self.displaytext = "Paused: {}".format(self.displaytext)
-            else:
-                self.is_playing = False
-                self.displaytext = "Paused"
-        elif playbackstatus == "Playing":
-            if not self.displaytext and olddisplaytext:
-                self.is_playing = True
-                self.displaytext = olddisplaytext.replace("Paused: ", "")
-            elif not self.displaytext and not olddisplaytext:
-                self.is_playing = True
-                self.displaytext = "No metadata for current track"
-            elif self.displaytext:
-                # Players might send more than one "Playing" message.
-                pass
-        elif playbackstatus:
-            self.is_playing = False
-            self.displaytext = ""
+        if playbackstatus:
+            self.is_playing = playbackstatus == "Playing"
+            self.status = self.prefixes.get(playbackstatus, "{track}")
 
-        if self.scroll_chars and self.scroll_interval:
-            if self.scroll_timer:
-                self.scroll_timer.cancel()
-            self.scrolltext = self.displaytext
-            self.scroll_counter = self.scroll_wait_intervals
-            self.scroll_timer = self.timeout_add(self.scroll_interval, self.scroll_text)
-            return
+        if not self.track_info:
+            self.track_info = self.no_metadata_text
+
+        self.displaytext = self.status.format(track=self.track_info)
+
         if self.text != self.displaytext:
-            self.text = self.displaytext
-            self.bar.draw()
+            self.update(self.displaytext)
 
-    def scroll_text(self):
-        if self.text != self.scrolltext[: self.scroll_chars]:
-            self.text = self.scrolltext[: self.scroll_chars]
-            self.bar.draw()
-        if self.scroll_counter:
-            self.scroll_counter -= 1
-            if self.scroll_counter:
-                self.timeout_add(self.scroll_interval, self.scroll_text)
-                return
-        if len(self.scrolltext) >= self.scroll_chars:
-            self.scrolltext = self.scrolltext[1:]
-            if len(self.scrolltext) == self.scroll_chars:
-                self.scroll_counter += self.scroll_wait_intervals
-            self.timeout_add(self.scroll_interval, self.scroll_text)
+    def get_track_info(self, metadata: dict[str, Variant]) -> str:
+        meta_list = []
+        for key in self.display_metadata:
+            val = getattr(metadata.get(key), "value", None)
+            if isinstance(val, str):
+                meta_list.append(val)
+            elif isinstance(val, list):
+                val = " - ".join((y for y in val if isinstance(y, str)))
+                meta_list.append(val)
+
+        text = " - ".join(meta_list)
+        text.replace("\n", "")
+
+        return text
+
+    def cmd_info(self) -> dict[str, Any]:
+        info = base._TextBox.info(self)
+        info["isplaying"] = self.is_playing
+        info["player"] = self.player
+
+        return info
+
+    def _player_cmd(self, cmd: str) -> None:
+        if self._current_player is None:
             return
-        self.text = ""
-        self.bar.draw()
 
-    def cmd_info(self):
-        """What's the current state of the widget?"""
-        return dict(
-            displaytext=self.displaytext,
-            isplaying=self.is_playing,
+        task = asyncio.create_task(self._send_player_cmd(cmd))
+        task.add_done_callback(self._task_callback)
+
+    async def _send_player_cmd(self, cmd: str) -> Message | None:
+        bus, message = await _send_dbus_message(
+            True,
+            MessageType.METHOD_CALL,
+            self._current_player,
+            MPRIS_PLAYER,
+            MPRIS_PATH,
+            cmd,
+            "",
+            [],
         )
+
+        if bus:
+            bus.disconnect()
+
+        return message
+
+    def _task_callback(self, task: asyncio.Task) -> None:
+        message = task.result()
+
+        # This happens if we can't connect to dbus. Logger call is made
+        # elsewhere so we don't need to do any more here.
+        if message is None:
+            return
+
+        if message.message_type != MessageType.METHOD_RETURN:
+            logger.warning("Unable to send command to player.")
+
+    def cmd_play_pause(self) -> None:
+        """Toggle the playback status."""
+        self._player_cmd("PlayPause")
+
+    def cmd_next(self) -> None:
+        """Play the next track."""
+        self._player_cmd("Next")
+
+    def cmd_previous(self) -> None:
+        """Play the previous track."""
+        self._player_cmd("Previous")
+
+    def cmd_stop(self) -> None:
+        """Stop playback."""
+        self._player_cmd("Stop")
