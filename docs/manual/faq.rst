@@ -73,7 +73,7 @@ LibreOffice menus don't appear or don't stay visible
 ====================================================
 
 A workaround for problem with the mouse in libreoffice is setting the environment variable »SAL_USE_VCLPLUGIN=gen«.
-It is dependet on your system configuration where to do this. e.g. ArchLinux with libreoffice-fresh in /etc/profile.d/libreoffice-fresh.sh.
+It is dependent on your system configuration as to where to do this. e.g. ArchLinux with libreoffice-fresh in /etc/profile.d/libreoffice-fresh.sh.
 
 How can I get my groups to stick to screens?
 ============================================
