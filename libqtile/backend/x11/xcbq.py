@@ -86,6 +86,7 @@ ModMasks = {
 AllButtonsMask = 0b11111 << 8
 ButtonMotionMask = 1 << 13
 ButtonReleaseMask = 1 << 3
+PointerMotionHintMask = 1 << 7
 
 NormalHintsFlags = {
     "USPosition": 1,  # User-specified x, y
