@@ -70,8 +70,6 @@ class WindowCount(base._TextBox):
     def _win_killed(self, window):
         try:
             self._count = len(self.bar.screen.group.windows)
-            if window.group == self.bar.screen.group:
-                self._count -= 1
         except AttributeError:
             self._count = 0
 
