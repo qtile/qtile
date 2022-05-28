@@ -628,7 +628,6 @@ class Qtile(CommandObject):
     def unmanage(self, wid: int) -> None:
         c = self.windows_map.get(wid)
         if c:
-            hook.fire("client_killed", c)
             if isinstance(c, base.Static):
                 if c.reserved_space:
                     self.free_reserved_space(c.reserved_space, c.screen)
@@ -637,6 +636,7 @@ class Qtile(CommandObject):
                     c.group.remove(c)
             del self.windows_map[wid]
             self.core.update_client_list(self.windows_map)
+            hook.fire("client_killed", c)
 
     def find_screen(self, x: int, y: int) -> Screen | None:
         """Find a screen based on the x and y offset"""
