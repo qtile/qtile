@@ -15,8 +15,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 from itertools import cycle
+
 from psutil import getloadavg
 
 from libqtile.widget import base
@@ -37,12 +37,16 @@ class Load(base.ThreadPoolText):
     def __init__(self, **config):
         super().__init__("", **config)
         self.add_defaults(Load.defaults)
-        self.add_callbacks({"Button1": self.next_load})
+        self.add_callbacks({"Button1": self.cmd_next_load})
         self.cycled_times = cycle(Load.times)
-        self.next_load()
+        self.set_time()
 
-    def next_load(self):
+    def set_time(self):
         self.time = next(self.cycled_times)
+
+    def cmd_next_load(self):
+        self.set_time()
+        self.update(self.poll())
 
     def poll(self):
         loads = {}
