@@ -43,8 +43,15 @@ class ThermalSensor(base.InLoopPollText):
     """
 
     defaults = [
+        (
+            "format",
+            "{temp:.1f}{unit}",
+            "Display string format. Three options available: "
+            "``{temp}`` - temperature, "
+            "``{tag}`` - tag of the temperature sensor, and "
+            "``{unit}`` - °C or °F",
+        ),
         ("metric", True, "True to use metric/C, False to use imperial/F"),
-        ("show_tag", False, "Show tag sensor"),
         ("update_interval", 2, "Update interval in seconds"),
         ("tag_sensor", None, 'Tag of the temperature sensor. For example: "temp1" or "Core 0"'),
         (
@@ -71,6 +78,10 @@ class ThermalSensor(base.InLoopPollText):
                 self.tag_sensor = k
                 break
 
+    def _configure(self, qtile, bar):
+        self.unit = "°C" if self.metric else "°F"
+        base.InLoopPollText._configure(self, qtile, bar)
+
     def get_temp_sensors(self):
         """
         Reads temperatures from sys-fs via psutil.
@@ -79,7 +90,6 @@ class ThermalSensor(base.InLoopPollText):
 
         temperature_list = {}
         temps = psutil.sensors_temperatures(fahrenheit=not self.metric)
-        unit = "°C" if self.metric else "°F"
         empty_index = 0
         for kernel_module in temps:
             for sensor in temps[kernel_module]:
@@ -89,21 +99,22 @@ class ThermalSensor(base.InLoopPollText):
                         kernel_module if kernel_module else "UNKNOWN", str(empty_index)
                     )
                     empty_index += 1
-                temperature_list[label] = (str(round(sensor.current, 1)), unit)
+                temperature_list[label] = sensor.current
 
         return temperature_list
 
     def poll(self):
         temp_values = self.get_temp_sensors()
-        if temp_values is None:
-            return False
-        text = ""
-        if self.show_tag and self.tag_sensor is not None:
-            text = self.tag_sensor + ": "
-        text += "".join(temp_values.get(self.tag_sensor, ["N/A"]))
-        temp_value = float(temp_values.get(self.tag_sensor, [0])[0])
+
+        # Temperature not available
+        if (temp_values is None) or (self.tag_sensor not in temp_values):
+            return "N/A"
+
+        temp_value = temp_values.get(self.tag_sensor)
         if temp_value > self.threshold:
             self.layout.colour = self.foreground_alert
         else:
             self.layout.colour = self.foreground_normal
-        return text
+
+        val = dict(temp=temp_value, tag=self.tag_sensor, unit=self.unit)
+        return self.format.format(**val)
