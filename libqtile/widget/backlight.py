@@ -84,6 +84,7 @@ class Backlight(base.InLoopPollText):
         ("step", 10, "Percent of backlight every scroll changed"),
         ("format", "{percent:2.0%}", "Display format"),
         ("change_command", "xbacklight -set {0}", "Execute command to change value"),
+        ("invert_mouse_wheel", False, "invert mouse wheel actions"),
     ]
 
     def __init__(self, **config):
@@ -102,12 +103,17 @@ class Backlight(base.InLoopPollText):
             self.max_brightness_file,
         )
 
-        self.add_callbacks(
-            {
+        if self.invert_mouse_wheel:
+            callbacks = {
+                "Button4": partial(self.cmd_change_backlight, ChangeDirection.DOWN),
+                "Button5": partial(self.cmd_change_backlight, ChangeDirection.UP),
+            }
+        else:
+            callbacks = {
                 "Button4": partial(self.cmd_change_backlight, ChangeDirection.UP),
                 "Button5": partial(self.cmd_change_backlight, ChangeDirection.DOWN),
             }
-        )
+        self.add_callbacks(callbacks)
 
     def finalize(self):
         if self._future and not self._future.done():
