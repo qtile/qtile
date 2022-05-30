@@ -105,7 +105,7 @@ class ThermalSensor(base.InLoopPollText):
 
     def poll(self):
         temp_values = self.get_temp_sensors()
-        
+
         # Temperature not available
         if (temp_values is None) or (self.tag_sensor not in temp_values):
             return "N/A"
@@ -116,9 +116,5 @@ class ThermalSensor(base.InLoopPollText):
         else:
             self.layout.colour = self.foreground_normal
 
-        val = dict(
-            temp=temp_value,
-            tag=self.tag_sensor,
-            unit=self.unit
-        )
+        val = dict(temp=temp_value, tag=self.tag_sensor, unit=self.unit)
         return self.format.format(**val)
