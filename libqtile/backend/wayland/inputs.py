@@ -116,7 +116,7 @@ class InputConfig(configurable.Configurable):
         ("kb_repeat_delay", 600, "Keyboard delay in milliseconds before repeating"),
     ]
 
-    def __init__(self, **config: dict[str, Any]) -> None:
+    def __init__(self, **config: Any) -> None:
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(InputConfig.defaults)
 

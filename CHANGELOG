@@ -8,11 +8,18 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Add ability to draw borders and add margins to the `Max` layout.
         - The default XWayland cursor is now set at startup to left_ptr, so an xsetroot call is not needed to
           avoid the ugly X cursor.
+        - Wayland: primary clipboard should now behave same way as with X after selecting something it
+          should be copied into clipboard
+        - Add `resume` hook when computer resumes from sleep/suspend/hibernate.
+        - Add `text_only` option for `LaunchBar` widget.
+        - Add `force_update` command to `ThreadPoolText` widgets to simplify updating from key bindings
     * bugfixes
         - Widgets that are incompatible with a backend (e.g. Systray on Wayland) will no longer show 
           as a ConfigError in the bar. Instead the widget is silently removed from the bar and a message
           included in the logs.
         - Reduce error messages in `StatusNotifier` widget from certain apps.
+        - Reset colours in `Chord` widget
+        - Prevent crash in `LaunchBar` when using SVG icons
 
 Qtile 0.21.0, released 2022-03-23:
     * features

@@ -44,6 +44,11 @@ class Call:
         self.val = val
 
 
+class NoArgCall(Call):
+    def __call__(self):
+        self.val += 1
+
+
 @pytest.fixture
 def hook_fixture():
     libqtile.log_utils.init_log()
@@ -184,3 +189,11 @@ def test_can_call_by_selection_notify(manager):
     hook.subscribe.selection_notify(test)
     hook.fire("selection_notify", "hello")
     assert test.val == "hello"
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_resume_hook(manager):
+    test = NoArgCall(0)
+    hook.subscribe.resume(test)
+    hook.fire("resume")
+    assert test.val == 1

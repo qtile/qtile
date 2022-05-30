@@ -77,6 +77,16 @@ Build the documentation with ``make html``.
 
 Check the result by opening ``_build/html/index.html`` in your browser.
 
+.. note::
+
+  To speed up local testing, screenshots are not generated each time the documentation
+  is built.
+
+  You can enable screenshots by setting the ``QTILE_BUILD_SCREENSHOTS`` environmental
+  variable at build time e.g. ``QTILE_BUILD_SCREENSHOTS=1 make html``. You can also
+  export the variable so it will apply to all local builds ``export QTILE_BUILD_SCREENSHOTS=1``
+  (but remember to unset it if you want to skip building screenshots).
+
 Development and testing
 =======================
 
@@ -284,69 +294,3 @@ Here are a number of resources that may come in handy:
 * `Inter-Client Conventions Manual <https://tronche.com/gui/x/icccm/>`_
 * `Extended Window Manager Hints <https://specifications.freedesktop.org/wm-spec/wm-spec-latest.html>`_
 * `A reasonable basic Xlib Manual <https://tronche.com/gui/x/xlib/>`_
-
-
-Troubleshoot
-============
-
-Cairo errors
-------------
-
-When running the Xephyr script (``./scripts/xephyr``), you might see tracebacks
-with attribute errors like the following or similar::
-
-    AttributeError: cffi library 'libcairo.so.2' has no function, constant or global variable named 'cairo_xcb_surface_create'
-
-If it happens, it might be because the ``cairocffi`` and ``xcffib`` dependencies
-were installed in the wrong order.
-
-To fix this:
-
-1. uninstall them from your environment: with ``pip uninstall cairocffi xcffib``
-   if using a virtualenv, or with your system package-manager if you installed
-   the development version of Qtile system-wide.
-#. re-install them sequentially (again, with pip or with your package-manager)::
-
-    pip install xcffib
-    pip install --no-cache-dir cairocffi
-
-See `this issue comment`_ for more information.
-
-.. _`this issue comment`: https://github.com/qtile/qtile/issues/994#issuecomment-497984551
-
-If you are using your system package-manager and the issue still happens,
-the packaging of ``cairocffi`` might be broken for your distribution.
-Try to contact the persons responsible for ``cairocffi``'s packaging
-on your distribution, or to install it from the sources with ``xcffib``
-available.
-
-Fonts errors
-------------
-
-When running the test suite or the Xephyr script (``./scripts/xephyr``),
-you might see errors in the output like the following or similar:
-
-* Xephyr script::
-
-    xterm: cannot load font "-Misc-Fixed-medium-R-*-*-13-120-75-75-C-120-ISO10646-1"
-    xterm: cannot load font "-misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1"
-
-* ``pytest``::
-
-    ---------- Captured stderr call ----------
-    Warning: Cannot convert string "8x13" to type FontStruct
-    Warning: Unable to load any usable ISO8859 font
-    Warning: Unable to load any usable ISO8859 font
-    Error: Aborting: no font found
-
-    -------- Captured stderr teardown --------
-    Qtile exited with exitcode: -9
-
-If it happens, it might be because you're missing fonts on your system.
-
-On ArchLinux, you can fix this by installing ``xorg-fonts-misc``::
-
-    sudo pacman -S xorg-fonts-misc
-
-Try to search for "xorg fonts misc" with your distribution name on the internet
-to find how to install them.

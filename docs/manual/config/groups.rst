@@ -5,9 +5,9 @@ Groups
 A group is a container for a bunch of windows, analogous to workspaces in other
 window managers. Each client window managed by the window manager belongs to
 exactly one group. The ``groups`` config file variable should be initialized to
-a list of :class:`~libqtile.dgroups.DGroup` objects.
+a list of :class:`~libqtile.config.Group` objects.
 
-:class:`~libqtile.dgroups.DGroup` objects provide several options for group
+:class:`~libqtile.config.Group` objects provide several options for group
 configuration. Groups can be configured to show and hide themselves when
 they're not empty, spawn applications for them when they start, automatically
 acquire certain groups, and various other options.
@@ -18,6 +18,7 @@ Example
 ::
 
     from libqtile.config import Group, Match
+
     groups = [
         Group("a"),
         Group("b"),
@@ -27,6 +28,7 @@ Example
     # allow mod3+1 through mod3+0 to bind to groups; if you bind your groups
     # by hand in your config, you don't need to do this.
     from libqtile.dgroups import simple_key_binder
+
     dgroups_key_binder = simple_key_binder("mod3")
 
 
@@ -53,16 +55,15 @@ ScratchPad and DropDown
 
 :class:`~libqtile.config.ScratchPad` is a special - by default invisible -
 group which acts as a container for :class:`~libqtile.config.DropDown`
-configurations. A `DropDown` can be configured to spawn a defined process and
-bind thats process' window to it. The associated window can then be shown and
-hidden by the lazy command ``dropdown_toggle()``
-(see :ref:`lazy`) from the ScratchPad group.
-Thus - for example - your favorite terminal emulator turns into a quake-like
-terminal by the control of Qtile.
+configurations. A :class:`~libqtile.config.DropDown` can be configured to spawn
+a defined process and bind thats process' window to it. The associated window
+can then be shown and hidden by the lazy command :meth:`dropdown_toggle` (see
+:ref:`lazy`) from the ScratchPad group.  Thus - for example - your favorite
+terminal emulator turns into a quake-like terminal by the control of Qtile.
 
 If the DropDown window turns visible it is placed as a floating window on top
-of the current group.
-If the DropDown is hidden, it is simply switched back to the ScratchPad group.
+of the current group. If the DropDown is hidden, it is simply switched back to
+the ScratchPad group.
 
 Example
 -------
@@ -70,7 +71,8 @@ Example
 ::
 
   from libqtile.config import Group, ScratchPad, DropDown, Key
-  from libqtile.command import lazy
+  from libqtile.lazy import lazy
+
   groups = [
       ScratchPad("scratchpad", [
           # define a drop down terminal.
@@ -97,8 +99,9 @@ visible.
 Some programs run in a server-like mode where the spawned process does not
 directly own the window that is created, which is instead created by a
 background process. In this case, the window may not be correctly caught in the
-scratchpad group. To work around this, you can pass a ``config.Match`` object
-to the corresponding ``Dropdown``. See below.
+scratchpad group. To work around this, you can pass a
+:class:`~libqtile.config.Match` object to the corresponding
+:class:`~libqtile.config.DropDown`. See below.
 
 Reference
 ---------

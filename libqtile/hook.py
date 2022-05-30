@@ -340,6 +340,21 @@ class Subscribe:
         """
         return self._subscribe("leave_chord", func)
 
+    def resume(self, func):
+        """
+        Called when system wakes up from sleep, suspend or hibernate.
+
+        Relies on systemd's inhibitor dbus interface, via the dbus-next package.
+
+        Note: the hook is not fired when resuming from shutdown/reboot events.
+        Use the "startup" hooks for those scenarios.
+
+        **Arguments**
+
+        None
+        """
+        return self._subscribe("resume", func)
+
 
 subscribe = Subscribe()
 
@@ -356,7 +371,7 @@ class Unsubscribe(Subscribe):
             lst.remove(func)
         except ValueError:
             raise utils.QtileError(
-                "Tried to unsubscribe a hook that was not" " currently subscribed"
+                "Tried to unsubscribe a hook that was not currently subscribed"
             )
 
 

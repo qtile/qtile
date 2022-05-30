@@ -63,6 +63,22 @@ def test_rgb_from_base10_tuple_with_alpha():
     assert utils.rgb([255, 255, 0, 0.5]) == (1, 1, 0, 0.5)
 
 
+def test_rgb_from_3_digit_hex_number():
+    assert utils.rgb("f0f") == (1, 0, 1, 1)
+
+
+def test_rgb_from_3_digit_hex_string():
+    assert utils.rgb("#f0f") == (1, 0, 1, 1)
+
+
+def test_rgb_from_3_digit_hex_number_with_alpha():
+    assert utils.rgb("f0f.5") == (1, 0, 1, 0.5)
+
+
+def test_rgb_from_3_digit_hex_string_with_alpha():
+    assert utils.rgb("#f0f.5") == (1, 0, 1, 0.5)
+
+
 def test_has_transparency():
     colours = [
         ("#00000000", True),

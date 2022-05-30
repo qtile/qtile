@@ -137,6 +137,9 @@ class Core(base.Core, wlrq.HasListeners):
         DataControlManagerV1(self.display)
         self.seat = seat.Seat(self.display, "seat0")
         self.add_listener(self.seat.request_set_selection_event, self._on_request_set_selection)
+        self.add_listener(
+            self.seat.request_set_primary_selection_event, self._on_request_set_primary_selection
+        )
         self.add_listener(self.seat.request_start_drag_event, self._on_request_start_drag)
         self.add_listener(self.seat.start_drag_event, self._on_start_drag)
         self.add_listener(self.backend.new_input_event, self._on_new_input)
@@ -248,6 +251,12 @@ class Core(base.Core, wlrq.HasListeners):
     ) -> None:
         self.seat.set_selection(event._ptr.source, event.serial)
         logger.debug("Signal: seat request_set_selection")
+
+    def _on_request_set_primary_selection(
+        self, _listener: Listener, event: seat.RequestSetPrimarySelectionEvent
+    ) -> None:
+        self.seat.set_primary_selection(event._ptr.source, event.serial)
+        logger.debug("Signal: seat request_set_primary_selection")
 
     def _on_request_start_drag(
         self, _listener: Listener, event: seat.RequestStartDragEvent
@@ -957,6 +966,11 @@ class Core(base.Core, wlrq.HasListeners):
         if output is self._current_output:
             self._current_output = self.outputs[0] if self.outputs else None
             self.stack_windows()
+
+    def remove_pointer_constraints(self, window: window.Window | window.Static) -> None:
+        for pc in self.pointer_constraints.copy():
+            if pc.window is window:
+                pc.finalize()
 
     def keysym_from_name(self, name: str) -> int:
         """Get the keysym for a key from its name"""

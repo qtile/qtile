@@ -26,7 +26,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import asyncio
 from os import path
 
 from libqtile import bar, pangocffi, utils
@@ -87,8 +86,13 @@ class Notify(base._TextBox):
         self.layout = self.drawer.textlayout(
             self.text, self.foreground, self.font, self.fontsize, self.fontshadow, markup=True
         )
+        if notifier is None:
+            logger.warning("You must install dbus-next to use the Notify widget.")
 
     async def _config_async(self):
+        if notifier is None:
+            return
+
         await notifier.register(self.update, self.capabilities, on_close=self.on_close)
 
     def set_notif_text(self, notif):
@@ -130,10 +134,16 @@ class Notify(base._TextBox):
         return True
 
     def display(self):
+        if notifier is None:
+            return
+
         self.set_notif_text(notifier.notifications[self.current_id])
         self.bar.draw()
 
     def clear(self, reason=ClosedReason.dismissed):
+        if notifier is None:
+            return
+
         notifier._service.NotificationClosed(notifier.notifications[self.current_id].id, reason)
         self.text = ""
         self.current_id = len(notifier.notifications) - 1
@@ -151,6 +161,9 @@ class Notify(base._TextBox):
         self.display()
 
     def next(self):
+        if notifier is None:
+            return
+
         if self.current_id < len(notifier.notifications) - 1:
             self.current_id += 1
             self.display()
@@ -191,15 +204,23 @@ class Notify(base._TextBox):
             self.invoke()
 
     def finalize(self):
-        asyncio.create_task(self._finalize())
+        # We may need some async calls as part of the finalize call
+        # We run this with `call_soon_threadsafe` as this waits for
+        # the job to finish before continuing. This is important as,
+        # if the config is just reloading, we need to finish deregistering
+        # the notification server before the new Notify widget instance
+        # registers and creates a new server.
+        self.qtile.call_soon_threadsafe(self._finalize)
+        base._TextBox.finalize(self)
 
     async def _finalize(self):
-        task = notifier.unregister(self.update)
+        if notifier is not None:
+            task = notifier.unregister(self.update)
 
-        # If the notifier has no more callbacks then it needs to be stopped.
-        # The returned task will handle the release of the service name from
-        # dbus. We await it here to make sure it's finished before we
-        # complete the finalisation of this widget.
-        if task:
-            await task
+            # If the notifier has no more callbacks then it needs to be stopped.
+            # The returned task will handle the release of the service name from
+            # dbus. We await it here to make sure it's finished before we
+            # complete the finalisation of this widget.
+            if task:
+                await task
         base._TextBox.finalize(self)
