@@ -50,7 +50,7 @@ from libqtile.extension.base import _Extension
 from libqtile.group import _Group
 from libqtile.log_utils import logger
 from libqtile.scratchpad import ScratchPad
-from libqtile.utils import get_cache_dir, lget, send_notification
+from libqtile.utils import get_cache_dir, lget, send_notification, subscribe_for_resume_events
 from libqtile.widget.base import _Widget
 
 if TYPE_CHECKING:
@@ -173,6 +173,10 @@ class Qtile(CommandObject):
 
         if self.config.reconfigure_screens:
             hook.subscribe.screen_change(self.cmd_reconfigure_screens)
+
+        # If user wants resume hooks we need to add a dbus rule
+        if "resume" in hook.subscriptions:
+            subscribe_for_resume_events()
 
         if initial:
             hook.fire("startup_complete")

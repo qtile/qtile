@@ -41,3 +41,6 @@ Reference
 
 .. qtile_class:: libqtile.config.Drag
    :no-commands:
+
+.. qtile_class:: libqtile.config.EzClick
+   :no-commands:

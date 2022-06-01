@@ -73,7 +73,7 @@ LibreOffice menus don't appear or don't stay visible
 ====================================================
 
 A workaround for problem with the mouse in libreoffice is setting the environment variable »SAL_USE_VCLPLUGIN=gen«.
-It is dependet on your system configuration where to do this. e.g. ArchLinux with libreoffice-fresh in /etc/profile.d/libreoffice-fresh.sh.
+It is dependent on your system configuration as to where to do this. e.g. ArchLinux with libreoffice-fresh in /etc/profile.d/libreoffice-fresh.sh.
 
 How can I get my groups to stick to screens?
 ============================================
@@ -131,3 +131,13 @@ Please visit our `qtile-examples`_ repo which contains examples of users' config
 scripts and other useful links.
 
 .. _`qtile-examples`: https://github.com/qtile/qtile-examples
+
+Where are the log files for Qtile?
+==================================
+
+The log files for qtile are at ``~/.local/share/qtile/qtile.log``.
+
+I get ``AttributeError: cffi library 'libcairo.so.2' has no function, constant or global variable named 'cairo_xcb_surface_create'``
+====================================================================================================================================
+
+See :ref:`Cairo Error <cairo-errors>`

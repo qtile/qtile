@@ -481,7 +481,7 @@ class _Window:
     def __init__(self, window, qtile):
         base.Window.__init__(self)
         self.window, self.qtile = window, qtile
-        self.hidden = True
+        self.hidden = False
         self.icons = {}
         window.set_attribute(eventmask=self._window_mask)
         self._group = None
@@ -1422,6 +1422,9 @@ class Window(_Window, base.Window):
 
     def toggle_minimize(self):
         self.minimized = not self.minimized
+
+    def cmd_is_visible(self) -> bool:
+        return not self.hidden and not self.minimized
 
     def cmd_static(
         self,

@@ -19,7 +19,7 @@
 # SOFTWARE.
 import libqtile.config
 from libqtile.widget import TextBox
-from libqtile.widget.base import _Widget
+from libqtile.widget.base import ThreadPoolText, _Widget
 
 
 class TimerWidget(_Widget):
@@ -38,6 +38,14 @@ class TimerWidget(_Widget):
     def cmd_get_active_timers(self):
         active = [x for x in self._futures if x._scheduled]
         return len(active)
+
+
+class PollingWidget(ThreadPoolText):
+    poll_count = 0
+
+    def poll(self):
+        self.poll_count += 1
+        return f"Poll count: {self.poll_count}"
 
 
 def test_multiple_timers(minimal_conf_noscreen, manager_nospawn):
@@ -107,3 +115,20 @@ def test_mirrors_different_bar(minimal_conf_noscreen, manager_nospawn):
     # Widget is replaced with a mirror on the second screen
     assert len(screen1) == 1
     assert [w["name"] for w in screen1] == ["mirror"]
+
+
+def test_threadpolltext_force_update(minimal_conf_noscreen, manager_nospawn):
+    """Check that widget can be polled instantly via command interface."""
+    config = minimal_conf_noscreen
+    tpoll = PollingWidget("Not polled")
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([tpoll], 10))]
+
+    manager_nospawn.start(config)
+    widget = manager_nospawn.c.widget["pollingwidget"]
+
+    # Widget is polled immediately when configured
+    assert widget.info()["text"] == "Poll count: 1"
+
+    # Default update_imterval is 600 seconds so the widget won't poll during test unless forced
+    widget.force_update()
+    assert widget.info()["text"] == "Poll count: 2"
