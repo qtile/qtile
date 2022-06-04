@@ -1014,7 +1014,8 @@ class Core(base.Core, wlrq.HasListeners):
         identical to those accepted by the env variables.
         """
         if self.keyboards:
-            self.keyboards[-1].set_keymap(layout, options, variant)
+            for keyboard in self.keyboards:
+                keyboard.set_keymap(layout, options, variant)
         else:
             logger.warning("Could not set keymap: no keyboards set up.")
 
