@@ -698,6 +698,34 @@ class MarginMixin(configurable.Configurable):
     margin_y = configurable.ExtraFallback("margin_y", "margin")
 
 
+class InvertScrollMixin(configurable.Configurable):
+    """
+    Mixin that provides the option to invert mouse scroll callbacks.
+
+    Should only be used where widgets have hard coded callbacks for scroll
+    events as user-defined callbacks should be considered to be oriented
+    correctly.
+
+    To use the mixin, add the following line *after* the mouse callbacks
+    have been defined.
+
+        InvertScrollMixin.__init__(self)
+    """
+
+    defaults = [
+        ("invert_scroll", False, "Reverse scroll direction for callbacks.")
+    ]  # type: list[tuple[str, Any, str]]
+
+    def __init__(self):
+        self.add_defaults(InvertScrollMixin.defaults)
+
+        if self.invert_scroll and "Button4" in self.mouse_callbacks and "Button5" in self.mouse_callbacks:
+            self.mouse_callbacks["Button4"], self.mouse_callbacks["Button5"] = (
+                self.mouse_callbacks["Button5"],
+                self.mouse_callbacks["Button4"],
+            )
+
+
 class Mirror(_Widget):
     """
     A widget for showing the same widget content in more than one place, for

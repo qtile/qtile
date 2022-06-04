@@ -38,7 +38,7 @@ class ChangeDirection(enum.Enum):
     DOWN = 1
 
 
-class Backlight(base.InLoopPollText):
+class Backlight(base.InLoopPollText, base.InvertScrollMixin):
     """A simple widget to show the current brightness of a monitor.
 
     If the change_command parameter is set to None, the widget will attempt to
@@ -108,6 +108,8 @@ class Backlight(base.InLoopPollText):
                 "Button5": partial(self.cmd_change_backlight, ChangeDirection.DOWN),
             }
         )
+
+        base.InvertScrollMixin.__init__(self)
 
     def finalize(self):
         if self._future and not self._future.done():
