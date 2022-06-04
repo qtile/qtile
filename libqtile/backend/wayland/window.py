@@ -888,6 +888,18 @@ class XWindow(Window[xwayland.Surface]):
         self.add_listener(surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
 
+    @property
+    def mapped(self) -> bool:
+        return self._mapped
+
+    @mapped.setter
+    def mapped(self, mapped: bool) -> None:
+        """XWindows also need to restack in the X server's Z stack."""
+        if mapped != self._mapped:
+            if mapped:
+                self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
+            Window.mapped.fset(self, mapped)  # type: ignore
+
     def _on_map(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xwindow map")
 
@@ -1101,6 +1113,13 @@ class XWindow(Window[xwayland.Surface]):
         self._find_outputs()
         for output in self._outputs | prev_outputs:
             output.damage()
+
+    def cmd_bring_to_front(self) -> None:
+        if self.mapped:
+            self.core.mapped_windows.remove(self)
+            self.core.mapped_windows.append(self)
+            self.core.stack_windows()
+            self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
 
     def cmd_static(
         self,
