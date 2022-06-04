@@ -772,7 +772,6 @@ class Core(base.Core, wlrq.HasListeners):
 
         if isinstance(win, (window.XWindow, window.XStatic)):
             if not win.surface.or_surface_wants_focus():
-                win.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
                 return
 
         previous_surface = self.seat.keyboard_state.focused_surface
@@ -806,7 +805,6 @@ class Core(base.Core, wlrq.HasListeners):
 
         elif surface.is_xwayland_surface and isinstance(win.surface, xwayland.Surface):
             win.surface.activate(True)
-            win.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
             win.ftm_handle.set_activated(True)
 
         if enter and self.seat.keyboard._ptr:  # This pointer is NULL when headless
