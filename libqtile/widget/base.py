@@ -566,9 +566,11 @@ class _TextBox(_Widget):
             )
             self.drawer.ctx.clip()
 
+        size = self.bar.height if self.bar.horizontal else self.bar.width
+
         self.layout.draw(
             (self.actual_padding or 0) - self._scroll_offset,
-            int(self.bar.size / 2.0 - self.layout.height / 2.0) + 1,
+            int(size / 2.0 - self.layout.height / 2.0) + 1,
         )
         self.drawer.ctx.restore()
 
