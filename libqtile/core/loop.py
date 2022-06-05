@@ -65,7 +65,7 @@ class LoopContext(contextlib.AbstractAsyncContextManager):
             logger.error("unhandled error in event loop: %s", context["msg"])
 
 
-class QtileEventLoopPolicy(asyncio.DefaultEventLoopPolicy):  # type: ignore
+class QtileEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
     """
     Asyncio policy to ensure the main event loop is accessible
     even if `get_event_loop()` is called from a different thread.
