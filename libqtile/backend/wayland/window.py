@@ -1370,6 +1370,11 @@ class XStatic(Static[xwayland.Surface]):
         self.add_listener(surface.set_title_event, self._on_set_title)
         self.add_listener(surface.set_class_event, self._on_set_class)
 
+        # Checks to see if the user manually created the XStatic surface.
+        # In which case override_redirect would be false.
+        if surface.override_redirect:
+            self.add_listener(surface.set_geometry_event, self._on_set_geometry)
+
     def kill(self) -> None:
         self.surface.close()
 
@@ -1414,6 +1419,12 @@ class XStatic(Static[xwayland.Surface]):
         logger.debug("Signal: xstatic set_class")
         self._wm_class = self.surface.wm_class
         self.ftm_handle.set_app_id(self._wm_class or "")
+
+    def _on_set_geometry(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: xstatic set_geometry")
+        self.place(
+            self.surface.x, self.surface.y, self.surface.width, self.surface.height, 0, None
+        )
 
 
 class LayerStatic(Static[LayerSurfaceV1]):
