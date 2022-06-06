@@ -36,6 +36,7 @@ from wlroots.wlr_types import (
     Cursor,
     DataControlManagerV1,
     DataDeviceManager,
+    ExportDmabufManagerV1,
     ForeignToplevelManagerV1,
     GammaControlManagerV1,
     OutputLayout,
@@ -175,6 +176,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(self.layer_shell.new_surface_event, self._on_new_layer_surface)
 
         # Add support for additional protocols
+        ExportDmabufManagerV1(self.display)
         XdgOutputManagerV1(self.display, self.output_layout)
         ScreencopyManagerV1(self.display)
         GammaControlManagerV1(self.display)
