@@ -69,7 +69,7 @@ class Volume(base._TextBox):
         ),
         (
             "emoji_list",
-            None,
+            ["\U0001f507", "\U0001f508", "\U0001f509", "\U0001f50a"],
             "List of emojis/font-symbols to display volume states, only if ``emoji`` is set."
             "List contains 4 symbols, from lowest volume to highest.",
         ),
@@ -153,24 +153,14 @@ class Volume(base._TextBox):
             self.drawer.ctx.set_source(self.surfaces[img_name])
             self.drawer.ctx.paint()
         elif self.emoji:
-            if self.emoji_list:
-                if self.volume <= 0:
-                    self.text = self.emoji_list[0]
-                elif self.volume <= 30:
-                    self.text = self.emoji_list[1]
-                elif self.volume < 80:
-                    self.text = self.emoji_list[2]
-                elif self.volume >= 80:
-                    self.text = self.emoji_list[3]
-            else:
-                if self.volume <= 0:
-                    self.text = "\U0001f507"
-                elif self.volume <= 30:
-                    self.text = "\U0001f508"
-                elif self.volume < 80:
-                    self.text = "\U0001f509"
-                elif self.volume >= 80:
-                    self.text = "\U0001f50a"
+            if self.volume <= 0:
+                self.text = self.emoji_list[0]
+            elif self.volume <= 30:
+                self.text = self.emoji_list[1]
+            elif self.volume < 80:
+                self.text = self.emoji_list[2]
+            elif self.volume >= 80:
+                self.text = self.emoji_list[3]
         else:
             if self.volume == -1:
                 self.text = "M"
@@ -217,7 +207,8 @@ class Volume(base._TextBox):
 
     def draw(self):
         if self.theme_path:
-            self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
+            self.drawer.draw(offsetx=self.offset,
+                             offsety=self.offsety, width=self.length)
         else:
             base._TextBox.draw(self)
 
@@ -226,7 +217,8 @@ class Volume(base._TextBox):
             subprocess.call(self.volume_up_command, shell=True)
         else:
             subprocess.call(
-                self.create_amixer_command("-q", "sset", self.channel, "{}%+".format(self.step))
+                self.create_amixer_command(
+                    "-q", "sset", self.channel, "{}%+".format(self.step))
             )
 
     def cmd_decrease_vol(self):
@@ -234,14 +226,16 @@ class Volume(base._TextBox):
             subprocess.call(self.volume_down_command, shell=True)
         else:
             subprocess.call(
-                self.create_amixer_command("-q", "sset", self.channel, "{}%-".format(self.step))
+                self.create_amixer_command(
+                    "-q", "sset", self.channel, "{}%-".format(self.step))
             )
 
     def cmd_mute(self):
         if self.mute_command is not None:
             subprocess.call(self.mute_command, shell=True)
         else:
-            subprocess.call(self.create_amixer_command("-q", "sset", self.channel, "toggle"))
+            subprocess.call(self.create_amixer_command(
+                "-q", "sset", self.channel, "toggle"))
 
     def cmd_run_app(self):
         if self.volume_app is not None:
