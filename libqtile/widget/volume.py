@@ -67,6 +67,12 @@ class Volume(base._TextBox):
             "Use emoji to display volume states, only if ``theme_path`` is not set."
             "The specified font needs to contain the correct unicode characters.",
         ),
+        (
+            "emoji_list",
+            None,
+            "List of emojis/font-symbols to display volume states, only if ``emoji`` is set."
+            "List contains 4 symbols, from lowest volume to highest.",
+        ),
         ("mute_command", None, "Mute command"),
         ("volume_app", None, "App to control volume"),
         ("volume_up_command", None, "Volume up command"),
@@ -147,14 +153,24 @@ class Volume(base._TextBox):
             self.drawer.ctx.set_source(self.surfaces[img_name])
             self.drawer.ctx.paint()
         elif self.emoji:
-            if self.volume <= 0:
-                self.text = "\U0001f507"
-            elif self.volume <= 30:
-                self.text = "\U0001f508"
-            elif self.volume < 80:
-                self.text = "\U0001f509"
-            elif self.volume >= 80:
-                self.text = "\U0001f50a"
+            if self.emoji_list:
+                if self.volume <= 0:
+                    self.text = self.emoji_list[0]
+                elif self.volume <= 30:
+                    self.text = self.emoji_list[1]
+                elif self.volume < 80:
+                    self.text = self.emoji_list[2]
+                elif self.volume >= 80:
+                    self.text = self.emoji_list[3]
+            else:
+                if self.volume <= 0:
+                    self.text = "\U0001f507"
+                elif self.volume <= 30:
+                    self.text = "\U0001f508"
+                elif self.volume < 80:
+                    self.text = "\U0001f509"
+                elif self.volume >= 80:
+                    self.text = "\U0001f50a"
         else:
             if self.volume == -1:
                 self.text = "M"
