@@ -72,7 +72,7 @@ class Volume(base._TextBox):
             ["\U0001f507", "\U0001f508", "\U0001f509", "\U0001f50a"],
             "List of emojis/font-symbols to display volume states, only if ``emoji`` is set."
             "List contains 4 symbols, from lowest volume to highest.",
-        ), 
+        ),
         ("mute_command", None, "Mute command"),
         ("volume_app", None, "App to control volume"),
         ("volume_up_command", None, "Volume up command"),
@@ -153,6 +153,9 @@ class Volume(base._TextBox):
             self.drawer.ctx.set_source(self.surfaces[img_name])
             self.drawer.ctx.paint()
         elif self.emoji:
+            if len(self.emoji_list) < 4:
+                self.emoji_list = ["\U0001f507", "\U0001f508", "\U0001f509", "\U0001f50a"]
+
             if self.volume <= 0:
                 self.text = self.emoji_list[0]
             elif self.volume <= 30:
