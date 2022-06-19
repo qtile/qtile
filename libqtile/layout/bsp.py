@@ -246,23 +246,21 @@ class Bsp(Layout):
         clients = list(self.root.clients())
         if client in clients:
             idx = clients.index(client)
-            if idx + 1 < len(clients):
-                return clients[idx + 1]
+            return clients[(idx + 1) % len(clients)]
 
     def focus_previous(self, client):
         clients = list(self.root.clients())
         if client in clients:
             idx = clients.index(client)
-            if idx > 0:
-                return clients[idx - 1]
+            return clients[(idx - 1) % len(clients)]
 
     def cmd_next(self):
-        client = self.focus_next(self.current)
+        client = self.focus_next(self.current.client)
         if client:
             self.group.focus(client, True)
 
     def cmd_previous(self):
-        client = self.focus_previous(self.current)
+        client = self.focus_previous(self.current.client)
         if client:
             self.group.focus(client, True)
 
