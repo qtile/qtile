@@ -357,7 +357,7 @@ Updating the widget
 ===================
 
 Widgets will usually need to update their content periodically. There are numerous ways
-that this can be done. Some of the most common are summarised below.
+that this can be done. Some of the most common ones are summarised below.
 
 Timers
 ------
@@ -402,7 +402,7 @@ Using dbus
 Qtile uses ``dbus-next`` for interacting with dbus.
 
 If you just want to listen for signals then Qtile provides a helper method called
-``add_signal_receiver`` which can subscribe to a signal and trigegr a callback
+``add_signal_receiver`` which can subscribe to a signal and trigger a callback
 whenever that signal is broadcast.
 
 .. note::
@@ -410,7 +410,7 @@ whenever that signal is broadcast.
     must make sure, where necessary, calls to dbus are made via coroutines.
 
     There is a ``_config_async`` coroutine in the base widget class which can
-    be overriden to provide an entry point for asyncio calls in your widget.
+    be overridden to provide an entry point for asyncio calls in your widget.
 
 For example, the Mpris2 widget uses the following code:
 
