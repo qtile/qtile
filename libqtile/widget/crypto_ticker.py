@@ -26,6 +26,7 @@
 
 import locale
 
+from libqtile.log_utils import logger
 from libqtile.widget.generic_poll_text import GenPollUrl
 
 _DEFAULT_CURRENCY = str(locale.localeconv()["int_curr_symbol"])
@@ -48,9 +49,15 @@ class CryptoTicker(GenPollUrl):
 
         # change the currency symbol:
         widget.CryptoTicker(currency="EUR", symbol="€")
+
+        # display from Binance API
+        widget.CryptoTicker(api="binance", currency="USDT")
     """
 
-    QUERY_URL = "https://api.coinbase.com/v2/prices/{}-{}/spot"
+    QUERY_URL_DICT = {
+        "coinbase": "https://api.coinbase.com/v2/prices/{}-{}/spot",
+        "binance": "https://api.binance.com/api/v3/ticker/price?symbol={}{}",
+    }
 
     defaults = [
         (
@@ -61,6 +68,7 @@ class CryptoTicker(GenPollUrl):
         ("symbol", _DEFAULT_SYMBOL, "The symbol for the baseline currency."),
         ("crypto", "BTC", "The cryptocurrency to display."),
         ("format", "{crypto}: {symbol}{amount:.2f}", "Display string formatting."),
+        ("api", "coinbase", "API that provides the data."),
     ]
 
     def __init__(self, **config):
@@ -74,14 +82,36 @@ class CryptoTicker(GenPollUrl):
         if self.symbol == "":
             self.symbol = "$"
 
+        if self.api in self.QUERY_URL_DICT:
+            self.query_url = self.QUERY_URL_DICT[self.api]
+        else:
+            apis = sorted(self.QUERY_URL_DICT.keys())
+            logger.error(
+                "%s is not a valid API. Use one of the list: %s.",
+                self.api,
+                str(apis),
+            )
+
     @property
     def url(self):
-        return self.QUERY_URL.format(self.crypto, self.currency)
+        return self.query_url.format(self.crypto, self.currency)
 
     def parse(self, body):
+        if self.api not in self.QUERY_URL_DICT:
+            return "Invalid API"
+
         variables = dict()
         variables["crypto"] = self.crypto
         variables["symbol"] = self.symbol
-        variables["amount"] = float(body["data"]["amount"])
+        variables["amount"] = self.getAmountFromBodyResponse(body)
 
         return self.format.format(**variables)
+
+    def getAmountFromBodyResponse(self, body):
+        if (self.api == "binance"):
+            return float(body["price"])
+        
+        if (self.api == "coinbase"):
+            return float(body["data"]["amount"])
+
+        return 0.0
