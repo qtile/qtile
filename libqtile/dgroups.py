@@ -37,11 +37,17 @@ from libqtile.log_utils import logger
 def simple_key_binder(mod, keynames=None):
     """Bind keys to mod+group position or to the keys specified as second argument"""
 
+    def _graceful_fail_call(func, param):
+        try:
+            func(param)
+        except KeyError:
+            logger.warning('Key not found in dgroup keys: "%s"', str(param))
+
     def func(dgroup):
         # unbind all
         for key in dgroup.keys[:]:
-            dgroup.qtile.ungrab_key(key)
-            dgroup.keys.remove(key)
+            _graceful_fail_call(dgroup.qtile.ungrab_key, key)
+            _graceful_fail_call(dgroup.keys.remove, key)
 
         if keynames:
             keys = keynames
