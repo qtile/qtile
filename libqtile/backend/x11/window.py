@@ -486,6 +486,9 @@ class _Window:
         window.set_attribute(eventmask=self._window_mask)
         self._group = None
 
+        # Keep managed windows below override-redirect windows
+        qtile.core.raise_window(self.window)
+
         try:
             g = self.window.get_geometry()
             self._x = g.x
@@ -900,7 +903,8 @@ class _Window:
             height=height,
         )
         if above:
-            kwarg["stackmode"] = StackMode.Above
+            kwarg["stackmode"] = StackMode.Below
+            kwarg["sibling"] = self.qtile.core.stack_window.wid
 
         self.window.configure(**kwarg)
         self.paint_borders(bordercolor, borderwidth)
@@ -1260,7 +1264,7 @@ class Static(_Window, base.Static):
             self.update_strut()
 
     def cmd_bring_to_front(self):
-        self.window.configure(stackmode=StackMode.Above)
+        self.qtile.core.raise_window(self.window)
 
 
 class Window(_Window, base.Window):
@@ -1851,7 +1855,7 @@ class Window(_Window, base.Window):
 
     def cmd_bring_to_front(self):
         if self.floating:
-            self.window.configure(stackmode=StackMode.Above)
+            self.qtile.core.raise_window(self.window)
         else:
             self._reconfigure_floating()  # atomatically above
 

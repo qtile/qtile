@@ -162,6 +162,8 @@ class Core(base.Core):
             | xcbq.PointerMotionHintMask
         )
 
+        self.stack_window = None
+
     @property
     def name(self):
         return "x11"
@@ -233,9 +235,16 @@ class Core(base.Core):
                     win.set_group()
             return
 
+        if not self.stack_window:
+            self.stack_window = self.conn.create_window(-1, -1, 1, 1)
+        self.stack_window.map()
+        self.stack_window.configure(stackmode=StackMode.Below)
+
         # Qtile just started - scan for clients
         _, _, children = self._root.query_tree()
         for item in children:
+            if item.wid == self.stack_window.wid:
+                continue
             try:
                 attrs = item.get_attributes()
                 state = item.get_wm_state()
@@ -256,6 +265,9 @@ class Core(base.Core):
             if item.wid in self.qtile.windows_map:
                 win = self.qtile.windows_map[item.wid]
                 win.unhide()
+                # This window was created before distribute_windows() was
+                # called (e.g. a bar); push it below self.stack_window
+                self.raise_window(win.window)
                 return
 
             if internal:
@@ -761,6 +773,10 @@ class Core(base.Core):
         d.state = modmasks
         self.handle_KeyPress(d)
 
+    def raise_window(self, window):
+        if self.stack_window:
+            window.configure(sibling=self.stack_window.wid, stackmode=StackMode.Below)
+
     def focus_by_click(self, e, window=None):
         """Bring a window to the front
 
@@ -777,9 +793,7 @@ class Core(base.Core):
                 qtile.config.bring_front_click != "floating_only"
                 or getattr(window, "floating", False)
             ):
-                self.conn.conn.core.ConfigureWindow(
-                    window.wid, xcffib.xproto.ConfigWindow.StackMode, [StackMode.Above]
-                )
+                self.raise_window(window.window)
 
             try:
                 if window.group.screen is not qtile.current_screen:
