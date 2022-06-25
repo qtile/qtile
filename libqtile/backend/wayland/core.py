@@ -168,6 +168,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(self.cursor.button_event, self._on_cursor_button)
         self.add_listener(self.cursor.motion_event, self._on_cursor_motion)
         self.add_listener(self.cursor.motion_absolute_event, self._on_cursor_motion_absolute)
+        self._cursor_state = wlrq.CursorState()
 
         # set up shell
         self.xdg_shell = XdgShell(self.display)
@@ -351,7 +352,11 @@ class Core(base.Core, wlrq.HasListeners):
         self, _listener: Listener, event: seat.PointerRequestSetCursorEvent
     ) -> None:
         logger.debug("Signal: seat request_set_cursor_event")
-        self.cursor.set_surface(event.surface, event.hotspot)
+        self._cursor_state.surface = event.surface
+        self._cursor_state.hotspot = event.hotspot
+
+        if not self._cursor_state.hidden:
+            self.cursor.set_surface(event.surface, event.hotspot)
 
     def _on_new_xdg_surface(self, _listener: Listener, surface: XdgSurface) -> None:
         logger.debug("Signal: xdg_shell new_surface_event")
@@ -1025,3 +1030,18 @@ class Core(base.Core, wlrq.HasListeners):
         if not success:
             logger.warning("Could not change VT to: %s", vt)
         return success
+
+    def cmd_hide_cursor(self) -> None:
+        """Hide the cursor."""
+        if not self._cursor_state.hidden:
+            self.cursor.set_surface(None, self._cursor_state.hotspot)
+            self._cursor_state.hidden = True
+
+    def cmd_unhide_cursor(self) -> None:
+        """Unhide the cursor."""
+        if self._cursor_state.hidden:
+            self.cursor.set_surface(
+                self._cursor_state.surface,
+                self._cursor_state.hotspot,
+            )
+            self._cursor_state.hidden = False

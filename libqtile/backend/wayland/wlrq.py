@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import functools
 import operator
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import cairocffi
@@ -37,7 +38,7 @@ if TYPE_CHECKING:
 
     from pywayland.server import Signal
     from wlroots import xwayland
-    from wlroots.wlr_types import data_device_manager
+    from wlroots.wlr_types import Surface, data_device_manager
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.output import Output
@@ -256,3 +257,15 @@ def get_xwayland_atoms(xwayland: xwayland.XWayland) -> dict[int, str]:
         atoms[xwayland.get_atom(atom)] = name
 
     return atoms
+
+
+@dataclass()
+class CursorState:
+    """
+    The surface and hotspot state of the cursor. This is tracked directly by the core so
+    that the cursor can be hidden and later restored to this state at will.
+    """
+
+    surface: Surface | None = None
+    hotspot: tuple[int, int] = (0, 0)
+    hidden: bool = False
