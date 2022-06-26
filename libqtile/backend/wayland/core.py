@@ -39,6 +39,7 @@ from wlroots.wlr_types import (
     ExportDmabufManagerV1,
     ForeignToplevelManagerV1,
     GammaControlManagerV1,
+    InputInhibitManager,
     OutputLayout,
     PrimarySelectionV1DeviceManager,
     RelativePointerManagerV1,
@@ -149,6 +150,15 @@ class Core(base.Core, wlrq.HasListeners):
         self._pending_input_devices: list[input_device.InputDevice] = []
         hook.subscribe.startup_complete(self._configure_pending_inputs)
 
+        self._input_inhibit_manager = InputInhibitManager(self.display)
+        self.add_listener(
+            self._input_inhibit_manager.activate_event, self._on_input_inhibitor_activate
+        )
+        self.add_listener(
+            self._input_inhibit_manager.deactivate_event, self._on_input_inhibitor_deactivate
+        )
+        self.exclusive_client: pywayland.server.Client | None = None
+
         # set up outputs
         self.outputs: list[Output] = []
         self.add_listener(self.backend.new_output_event, self._on_new_output)
@@ -187,7 +197,7 @@ class Core(base.Core, wlrq.HasListeners):
         )
         self.idle = Idle(self.display)
         idle_ihibitor_manager = IdleInhibitorManagerV1(self.display)
-        self.add_listener(idle_ihibitor_manager.new_inhibitor_event, self._on_new_inhibitor)
+        self.add_listener(idle_ihibitor_manager.new_inhibitor_event, self._on_new_idle_inhibitor)
         PrimarySelectionV1DeviceManager(self.display)
         virtual_keyboard_manager_v1 = vkeyboard.VirtualKeyboardManagerV1(self.display)
         self.add_listener(
@@ -367,7 +377,9 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_cursor_axis(self, _listener: Listener, event: pointer.PointerEventAxis) -> None:
         handled = False
-        if event.delta != 0:
+
+        if event.delta != 0 and not self.exclusive_client:
+            # If we have a client who exclusively gets input, button bindings are disallowed.
             if event.orientation == pointer.AxisOrientation.VERTICAL:
                 button = 5 if 0 < event.delta else 4
             else:
@@ -395,7 +407,8 @@ class Core(base.Core, wlrq.HasListeners):
 
         handled = False
 
-        if event.button in wlrq.buttons:
+        if not self.exclusive_client and event.button in wlrq.buttons:
+            # If we have a client who exclusively gets input, button bindings are disallowed.
             button = wlrq.buttons.index(event.button) + 1
             handled = self._process_cursor_button(button, pressed)
 
@@ -464,7 +477,9 @@ class Core(base.Core, wlrq.HasListeners):
     ) -> None:
         self._add_new_pointer(new_pointer_event.new_pointer.input_device)
 
-    def _on_new_inhibitor(self, _listener: Listener, idle_inhibitor: IdleInhibitorV1) -> None:
+    def _on_new_idle_inhibitor(
+        self, _listener: Listener, idle_inhibitor: IdleInhibitorV1
+    ) -> None:
         logger.debug("Signal: idle_inhibitor new_inhibitor")
 
         if self.qtile is None:
@@ -475,6 +490,36 @@ class Core(base.Core, wlrq.HasListeners):
                 win.surface.for_each_surface(win.add_idle_inhibitor, idle_inhibitor)
                 if idle_inhibitor.data:
                     break
+
+    def _on_input_inhibitor_activate(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: input_inhibitor activate")
+        assert self.qtile is not None
+        self.exclusive_client = self._input_inhibit_manager.active_client
+
+        # If another client has keyboard focus, unfocus it.
+        if (
+            self.qtile.current_window
+            and not self.qtile.current_window.belongs_to_client(  # type: ignore
+                self.exclusive_client
+            )
+        ):
+            self.focus_window(None)
+
+        # If another client has pointer focus, unfocus that too.
+        found = self._under_pointer()
+        if found:
+            win, _, _, _ = found
+
+            # If we have a client who exclusively gets input, no other client's
+            # surfaces are allowed to get pointer input.
+            if isinstance(win, base.Internal) or not win.belongs_to_client(self.exclusive_client):
+                self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                self.seat.pointer_notify_clear_focus()
+                return
+
+    def _on_input_inhibitor_deactivate(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: input_inhibitor deactivate")
+        self.exclusive_client = None
 
     def _on_output_power_manager_set_mode(
         self, _listener: Listener, mode: OutputPowerV1SetModeEvent
@@ -592,7 +637,11 @@ class Core(base.Core, wlrq.HasListeners):
         assert self.qtile
         cx_int = int(cx)
         cy_int = int(cy)
-        self.qtile.process_button_motion(cx_int, cy_int)
+
+        if not self.exclusive_client:
+            # If we have a client who exclusively gets input, button bindings are
+            # disallowed, so process_button_motion doesn't need to be updated.
+            self.qtile.process_button_motion(cx_int, cy_int)
 
         if len(self.outputs) > 1:
             current_wlr_output = self.output_layout.output_at(cx, cy)
@@ -609,6 +658,20 @@ class Core(base.Core, wlrq.HasListeners):
 
         if found:
             win, surface, sx, sy = found
+
+            if self.exclusive_client:
+                # If we have a client who exclusively gets input, no other client's
+                # surfaces are allowed to get pointer input.
+                if isinstance(win, base.Internal) or not win.belongs_to_client(
+                    self.exclusive_client
+                ):
+                    logger.debug(
+                        "Pointer focus withheld from window not owned by exclusive client."
+                    )
+                    self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                    self.seat.pointer_notify_clear_focus()
+                    return
+
             if isinstance(win, window.Internal):
                 if self._hovered_internal is win:
                     win.process_pointer_motion(
@@ -768,10 +831,21 @@ class Core(base.Core, wlrq.HasListeners):
         return max(self.qtile.windows_map.keys(), default=0) + 1
 
     def focus_window(
-        self, win: window.WindowType, surface: Surface | None = None, enter: bool = True
+        self, win: window.WindowType | None, surface: Surface | None = None, enter: bool = True
     ) -> None:
         if self.seat.destroyed:
             return
+
+        if self.exclusive_client:
+            # If we have a client who exclusively gets input, no other client's surfaces
+            # are allowed to get keyboard input.
+            if not win:
+                self.seat.keyboard_clear_focus()
+                return
+            if isinstance(win, base.Internal) or not win.belongs_to_client(self.exclusive_client):
+                logger.debug("Keyboard focus withheld from window not owned by exclusive client.")
+                # We can't focus surfaces belonging to other clients.
+                return
 
         if isinstance(win, base.Internal):
             self.focused_internal = win
@@ -834,6 +908,15 @@ class Core(base.Core, wlrq.HasListeners):
 
         if found:
             win, _, _, _ = found
+
+            if self.exclusive_client:
+                # If we have a client who exclusively gets input, no other client's
+                # surfaces are allowed to get focus.
+                if isinstance(win, base.Internal) or not win.belongs_to_client(
+                    self.exclusive_client
+                ):
+                    logger.debug("Focus withheld from window not owned by exclusive client.")
+                    return
 
             if self.qtile.config.bring_front_click is True:
                 win.cmd_bring_to_front()

@@ -26,7 +26,7 @@ import typing
 
 import cairocffi
 import wlroots.wlr_types.foreign_toplevel_management_v1 as ftm
-from pywayland.server import Listener
+from pywayland.server import Client, Listener
 from wlroots import PtrHasData, ffi
 from wlroots.util.box import Box
 from wlroots.wlr_types import Texture
@@ -225,6 +225,9 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         if self._wm_class:
             return [self._wm_class]
         return None
+
+    def belongs_to_client(self, other: Client) -> bool:
+        return other == Client.from_resource(self.surface.surface._ptr.resource)  # type: ignore
 
     def focus(self, warp: bool) -> None:
         self.core.focus_window(self)
@@ -759,6 +762,9 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
     @property
     def is_idle_inhibited(self) -> bool:
         return self._idle_inhibitors_count > 0
+
+    def belongs_to_client(self, other: Client) -> bool:
+        return other == Client.from_resource(self.surface.surface._ptr.resource)  # type: ignore
 
     def cmd_bring_to_front(self) -> None:
         if self.mapped:
