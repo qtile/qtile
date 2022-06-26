@@ -96,7 +96,7 @@ def translate_masks(modifiers: list[str]) -> int:
     masks = []
     for i in modifiers:
         try:
-            masks.append(ModMasks[i])
+            masks.append(ModMasks[i.lower()])
         except KeyError as e:
             raise WlrQError("Unknown modifier: %s" % i) from e
     if masks:

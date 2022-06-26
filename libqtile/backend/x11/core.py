@@ -153,7 +153,7 @@ class Core(base.Core):
         self.qtile = None  # type: Qtile | None
         self._painter = None
 
-        numlock_code = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])[0]
+        numlock_code = self.conn.keysym_to_keycode(xcbq.keysyms["num_lock"])[0]
         self._numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(numlock_code), 0)
         self._valid_mask = ~(
             self._numlock_mask
@@ -751,7 +751,7 @@ class Core(base.Core):
         """Simulates a keypress on the focused window."""
         # FIXME: This needs to be done with sendevent, once we have that fixed.
         modmasks = xcbq.translate_masks(modifiers)
-        keysym = xcbq.keysyms.get(key)
+        keysym = xcbq.keysyms.get(key.lower())
 
         class DummyEv:
             pass
@@ -851,4 +851,4 @@ class Core(base.Core):
 
     def keysym_from_name(self, name: str) -> int:
         """Get the keysym for a key from its name"""
-        return keysyms[name]
+        return keysyms[name.lower()]

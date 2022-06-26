@@ -2205,3 +2205,4 @@ keysyms = {
     "braille_dots_2345678": 0x10028FE,
     "braille_dots_12345678": 0x10028FF,
 }
+keysyms = {k.lower(): v for k, v in keysyms.items()}
