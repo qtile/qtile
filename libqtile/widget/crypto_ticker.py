@@ -26,6 +26,7 @@
 
 import locale
 
+from libqtile.confreader import ConfigError
 from libqtile.log_utils import logger
 from libqtile.widget.generic_poll_text import GenPollUrl
 
@@ -35,8 +36,8 @@ _DEFAULT_SYMBOL = str(locale.localeconv()["currency_symbol"])
 
 class CryptoTicker(GenPollUrl):
     """
-    A cryptocurrency ticker widget, data provided by the coinbase.com API. Defaults to
-    displaying currency in whatever the current locale is. Examples:
+    A cryptocurrency ticker widget, data provided by the coinbase.com or the binance.com
+    API. Defaults to displaying currency in whatever the current locale is. Examples:
 
         # display the average price of bitcoin in local currency
         widget.CryptoTicker()
@@ -55,8 +56,14 @@ class CryptoTicker(GenPollUrl):
     """
 
     QUERY_URL_DICT = {
-        "coinbase": "https://api.coinbase.com/v2/prices/{}-{}/spot",
-        "binance": "https://api.binance.com/api/v3/ticker/price?symbol={}{}",
+        "coinbase": (
+            "https://api.coinbase.com/v2/prices/{}-{}/spot",
+            lambda x: float(x["data"]["amount"]),
+        ),
+        "binance": (
+            "https://api.binance.com/api/v3/ticker/price?symbol={}{}",
+            lambda x: float(x["price"]),
+        ),
     }
 
     defaults = [
@@ -82,36 +89,27 @@ class CryptoTicker(GenPollUrl):
         if self.symbol == "":
             self.symbol = "$"
 
-        if self.api in self.QUERY_URL_DICT:
-            self.query_url = self.QUERY_URL_DICT[self.api]
-        else:
+    def _configure(self, qtile, bar):
+        try:
+            GenPollUrl._configure(self, qtile, bar)
+            self.query_url = self.QUERY_URL_DICT[self.api][0]
+        except KeyError:
             apis = sorted(self.QUERY_URL_DICT.keys())
             logger.error(
                 "%s is not a valid API. Use one of the list: %s.",
                 self.api,
-                str(apis),
+                apis,
             )
+            raise ConfigError("Unknown provider passed as 'api' to CryptoTicker")
 
     @property
     def url(self):
         return self.query_url.format(self.crypto, self.currency)
 
     def parse(self, body):
-        if self.api not in self.QUERY_URL_DICT:
-            return "Invalid API"
-
         variables = dict()
         variables["crypto"] = self.crypto
         variables["symbol"] = self.symbol
-        variables["amount"] = self.getAmountFromBodyResponse(body)
+        variables["amount"] = self.QUERY_URL_DICT[self.api][1](body)
 
         return self.format.format(**variables)
-
-    def getAmountFromBodyResponse(self, body):
-        if (self.api == "binance"):
-            return float(body["price"])
-        
-        if (self.api == "coinbase"):
-            return float(body["data"]["amount"])
-
-        return 0.0
