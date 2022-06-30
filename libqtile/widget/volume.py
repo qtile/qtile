@@ -81,7 +81,7 @@ class Volume(base._TextBox):
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, "0", width=bar.CALCULATED, **config)
+        base._TextBox.__init__(self, "0", **config)
         self.add_defaults(Volume.defaults)
         self.surfaces = {}
         self.volume = None

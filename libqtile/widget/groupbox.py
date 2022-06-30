@@ -34,7 +34,7 @@ import itertools
 from functools import partial
 from typing import Any
 
-from libqtile import bar, hook
+from libqtile import hook
 from libqtile.widget import base
 
 
@@ -45,7 +45,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
     ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, width=bar.CALCULATED, **config)
+        base._TextBox.__init__(self, **config)
         self.add_defaults(_GroupBase.defaults)
         self.add_defaults(base.PaddingMixin.defaults)
         self.add_defaults(base.MarginMixin.defaults)

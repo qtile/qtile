@@ -17,8 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-from libqtile import bar
 from libqtile.widget import base
 
 
@@ -35,8 +33,8 @@ class QuickExit(base._TextBox):
         ("countdown_start", 5, "Time to accept the second pushing."),
     ]
 
-    def __init__(self, widget=bar.CALCULATED, **config):
-        base._TextBox.__init__(self, "", widget, **config)
+    def __init__(self, **config):
+        base._TextBox.__init__(self, "", **config)
         self.add_defaults(QuickExit.defaults)
 
         self.is_counting = False

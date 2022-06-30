@@ -888,6 +888,18 @@ class XWindow(Window[xwayland.Surface]):
         self.add_listener(surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
 
+    @property
+    def mapped(self) -> bool:
+        return self._mapped
+
+    @mapped.setter
+    def mapped(self, mapped: bool) -> None:
+        """XWindows also need to restack in the X server's Z stack."""
+        if mapped != self._mapped:
+            if mapped:
+                self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
+            Window.mapped.fset(self, mapped)  # type: ignore
+
     def _on_map(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xwindow map")
 
@@ -1014,9 +1026,9 @@ class XWindow(Window[xwayland.Surface]):
         return self.surface.pid
 
     def get_wm_type(self) -> str | None:
-        wm_type = self.surface.window_type
-        if wm_type:
-            return self.core.xwayland_atoms[wm_type[0]]
+        for wm_type in self.surface.window_type:
+            if wm_type in self.core.xwayland_atoms:
+                return self.core.xwayland_atoms[wm_type]
         return None
 
     def get_wm_role(self) -> str | None:
@@ -1101,6 +1113,13 @@ class XWindow(Window[xwayland.Surface]):
         self._find_outputs()
         for output in self._outputs | prev_outputs:
             output.damage()
+
+    def cmd_bring_to_front(self) -> None:
+        if self.mapped:
+            self.core.mapped_windows.remove(self)
+            self.core.mapped_windows.append(self)
+            self.core.stack_windows()
+            self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
 
     def cmd_static(
         self,
@@ -1370,6 +1389,11 @@ class XStatic(Static[xwayland.Surface]):
         self.add_listener(surface.set_title_event, self._on_set_title)
         self.add_listener(surface.set_class_event, self._on_set_class)
 
+        # Checks to see if the user manually created the XStatic surface.
+        # In which case override_redirect would be false.
+        if surface.override_redirect:
+            self.add_listener(surface.set_geometry_event, self._on_set_geometry)
+
     def kill(self) -> None:
         self.surface.close()
 
@@ -1414,6 +1438,12 @@ class XStatic(Static[xwayland.Surface]):
         logger.debug("Signal: xstatic set_class")
         self._wm_class = self.surface.wm_class
         self.ftm_handle.set_app_id(self._wm_class or "")
+
+    def _on_set_geometry(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: xstatic set_geometry")
+        self.place(
+            self.surface.x, self.surface.y, self.surface.width, self.surface.height, 0, None
+        )
 
 
 class LayerStatic(Static[LayerSurfaceV1]):

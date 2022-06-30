@@ -554,7 +554,7 @@ class StatusNotifier(base._Widget):
     As per the specification, app icons are first retrieved from the
     user's current theme. If this is not available then the app may
     provide its own icon. In order to use this functionality, users
-    are recommended to install the `xdg`_ module to support retrieving
+    are recommended to install the `pyxdg`_ module to support retrieving
     icons from the selected theme.
 
     Letf-clicking an icon will trigger an activate event.
@@ -566,7 +566,7 @@ class StatusNotifier(base._Widget):
         support is available from elParaguayo's `qtile-extras
         <https://github.com/elParaguayo/qtile-extras>`_ repo.
 
-    .. _xdg: https://pypi.org/project/xdg/
+    .. _pyxdg: https://pypi.org/project/pyxdg/
     """
 
     orientations = base.ORIENTATION_BOTH

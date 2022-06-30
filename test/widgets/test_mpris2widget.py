@@ -17,9 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-# Widget specific tests
-
 import sys
 from importlib import reload
 from types import ModuleType
@@ -119,7 +116,7 @@ def patched_module(monkeypatch):
 
 
 def test_mpris2_signal_handling(fake_qtile, patched_module, fake_window):
-    mp = patched_module.Mpris2(scroll_chars=20, scroll_wait_intervals=5)
+    mp = patched_module.Mpris2()
     fakebar = FakeBar([mp], window=fake_window)
     mp.timeout_add = fake_timer
     mp._configure(fake_qtile, fakebar)
@@ -127,80 +124,36 @@ def test_mpris2_signal_handling(fake_qtile, patched_module, fake_window):
     assert mp.displaytext == ""
 
     # No text will be displayed if widget is not configured
-    mp.message(METADATA_PLAYING)
+    mp.parse_message(*METADATA_PLAYING.body)
     assert mp.displaytext == ""
 
     # Set configured flag, create a message with the metadata and playback status
     mp.configured = True
-    mp.message(METADATA_PLAYING)
-    assert mp.displaytext == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"
-    assert mp.text == ""
+    mp.parse_message(*METADATA_PLAYING.body)
+    assert mp.text == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"
 
-    # Text is displayed after first run of scroll_text
-    mp.scroll_text()
-    assert (
-        mp.text
-        == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[: mp.scroll_chars]
-    )
-
-    # Text is scrolled 1 character after `scroll_wait_intervals`runs of scroll_text
-    for _ in range(mp.scroll_wait_intervals):
-        mp.scroll_text()
-    assert (
-        mp.text
-        == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[
-            1 : mp.scroll_chars + 1
-        ]
-    )
-
-    # Non-signal type message will be ignored
-    mp.message(NON_SIGNAL)
-    assert (
-        mp.text
-        == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[
-            1 : mp.scroll_chars + 1
-        ]
-    )
-
-    # If widget receives "paused" signal with no metadata then default message is "Paused"
-    mp.message(STATUS_PAUSED)
-    assert mp.displaytext == "Paused"
+    # If widget receives "paused" signal it prefixes track with "Paused: "
+    mp.parse_message(*STATUS_PAUSED.body)
+    assert mp.text == "Paused: Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"
 
     # If widget receives "stopped" signal with no metadata then widget is blank
-    mp.message(STATUS_STOPPED)
+    mp.parse_message(*STATUS_STOPPED.body)
     assert mp.displaytext == ""
 
     # Reset to playing + metadata
-    mp.message(METADATA_PLAYING)
-    mp.scroll_text()
-    assert (
-        mp.text
-        == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[: mp.scroll_chars]
-    )
+    mp.parse_message(*METADATA_PLAYING.body)
+    assert mp.text == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"
 
     # If widget receives "paused" signal with metadata then message is "Paused: {metadata}"
-    mp.message(METADATA_PAUSED)
-    mp.scroll_text()
-    assert (
-        mp.text
-        == "Paused: Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[
-            : mp.scroll_chars
-        ]
-    )
+    mp.parse_message(*METADATA_PAUSED.body)
+    assert mp.text == "Paused: Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"
 
     # If widget now receives "playing" signal with no metadata, "paused" word is removed
-    mp.message(STATUS_PLAYING)
-    mp.scroll_text()
-    assert (
-        mp.text
-        == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"[: mp.scroll_chars]
-    )
+    mp.parse_message(*STATUS_PLAYING.body)
+    assert mp.text == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"
 
     info = mp.cmd_info()
-    assert (
-        info["displaytext"]
-        == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"
-    )
+    assert info["text"] == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"
     assert info["isplaying"]
 
 
@@ -211,25 +164,23 @@ def test_mpris2_custom_stop_text(fake_qtile, patched_module, fake_window):
     mp._configure(fake_qtile, fakebar)
     mp.configured = True
 
-    mp.message(METADATA_PLAYING)
-    assert mp.displaytext == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"
-    assert mp.text == ""
-    mp.scroll_text()
+    mp.parse_message(*METADATA_PLAYING.body)
+    assert mp.text == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"
 
     # Check our custom paused wording is shown
-    mp.message(STATUS_PAUSED)
-    assert mp.displaytext == "Test Paused"
+    mp.parse_message(*STATUS_PAUSED.body)
+    assert mp.text == "Test Paused"
 
 
 def test_mpris2_no_metadata(fake_qtile, patched_module, fake_window):
-    mp = patched_module.Mpris2(stop_pause_text="Test Paused")
+    mp = patched_module.Mpris2()
     fakebar = FakeBar([mp], window=fake_window)
     mp.timeout_add = fake_timer
     mp._configure(fake_qtile, fakebar)
     mp.configured = True
 
-    mp.message(STATUS_PLAYING)
-    assert mp.displaytext == "No metadata for current track"
+    mp.parse_message(*STATUS_PLAYING.body)
+    assert mp.text == "No metadata for current track"
 
 
 def test_mpris2_no_scroll(fake_qtile, patched_module, fake_window):
@@ -241,31 +192,8 @@ def test_mpris2_no_scroll(fake_qtile, patched_module, fake_window):
     mp._configure(fake_qtile, fakebar)
     mp.configured = True
 
-    mp.message(METADATA_PLAYING)
+    mp.parse_message(*METADATA_PLAYING.body)
     assert mp.text == "Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"
 
-    mp.message(METADATA_PAUSED)
+    mp.parse_message(*METADATA_PAUSED.body)
     assert mp.text == "Paused: Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"
-
-
-def test_mpris2_clear_after_scroll(fake_qtile, patched_module, fake_window):
-    mp = patched_module.Mpris2(scroll_chars=60, scroll_wait_intervals=2)
-    fakebar = FakeBar([mp], window=fake_window)
-    mp.timeout_add = fake_timer
-    mp._configure(fake_qtile, fakebar)
-    mp.configured = True
-
-    mp.message(METADATA_PLAYING)
-
-    # After 10 loops, text should be cleared as scroll reaches end of text.
-    # 2 loops before starting scroll
-    # 6 loops to loop over remaining text in dispay
-    # 1 additional loop at end of text (so total 2 loops on that display)
-    # 1 loop to clear.
-    for i in range(10):
-        mp.scroll_text()
-    assert mp.text == ""
-
-
-# TO DO: untested lines
-# 85-86: Logging when unable to subscribe to dbus signal. Needs `caplog`

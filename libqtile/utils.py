@@ -353,10 +353,10 @@ def scan_files(dirpath: str, *names: str) -> defaultdict[str, list[str]]:
 async def _send_dbus_message(
     session_bus: bool,
     message_type: MessageType,
-    destination: str,
-    interface: str,
-    path: str,
-    member: str,
+    destination: str | None,
+    interface: str | None,
+    path: str | None,
+    member: str | None,
     signature: str,
     body: Any,
 ) -> tuple[MessageBus | None, Message | None]:
@@ -379,13 +379,16 @@ async def _send_dbus_message(
         logger.warning("Unable to connect to dbus.")
         return None, None
 
+    # Ignore types here: dbus-next has default values of `None` for certain
+    # parameters but the signature is `str` so passing `None` results in an
+    # error in mypy.
     msg = await bus.call(
         Message(
             message_type=message_type,
-            destination=destination,
-            interface=interface,
-            path=path,
-            member=member,
+            destination=destination,  # type: ignore
+            interface=interface,  # type: ignore
+            path=path,  # type: ignore
+            member=member,  # type: ignore
             signature=signature,
             body=body,
         )

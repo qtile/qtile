@@ -24,7 +24,6 @@ import os
 import random
 import subprocess
 
-from libqtile import bar
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
@@ -54,7 +53,7 @@ class Wallpaper(base._TextBox):
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, "empty", width=bar.CALCULATED, **config)
+        base._TextBox.__init__(self, "empty", **config)
         self.add_defaults(Wallpaper.defaults)
         self.index = 0
         self.images = []
