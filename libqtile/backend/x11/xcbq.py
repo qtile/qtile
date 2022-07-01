@@ -566,8 +566,13 @@ class Connection:
 
         assert len(q.keysyms) % q.keysyms_per_keycode == 0
         for i in range(len(q.keysyms) // q.keysyms_per_keycode):
+            # self.code_to_syms[first + i] = q.keysyms[
+            #     i * q.keysyms_per_keycode : (i + 1) * q.keysyms_per_keycode
+            # ]
+            # JDR: this prevents "b" and "n" being both reported as keysyms in a
+            # "dvorak," dual layout
             self.code_to_syms[first + i] = q.keysyms[
-                i * q.keysyms_per_keycode : (i + 1) * q.keysyms_per_keycode
+                i * q.keysyms_per_keycode : i * q.keysyms_per_keycode + 2
             ]
 
         sym_to_codes = {}
