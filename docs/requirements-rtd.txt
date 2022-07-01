@@ -1,0 +1,5 @@
+# ReadTheDocs currently builds on Ubuntu 20.04 which
+# seems to have some mismatch of the libffi library
+# and the latest release of cffi.
+# We can pin the version here for the docs build.
+cffi<=1.15.0
