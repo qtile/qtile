@@ -59,9 +59,7 @@ class LaunchBar(base._Widget):
 
     Text will displayed when no icon is found.
 
-    Widget requirements: pyxdg_.
-
-    .. _pyxdg: https://freedesktop.org/wiki/Software/pyxdg/
+    Widget requirements: `pyxdg <https://pypi.org/project/pyxdg/>`__.
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
