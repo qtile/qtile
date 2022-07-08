@@ -33,7 +33,7 @@ if typing.TYPE_CHECKING:
     from libqtile.widget.base import _Widget
 
 
-class Gap(CommandObject):
+class Gap:
     """A gap placed along one of the edges of the screen
 
     If a gap has been defined, Qtile will avoid covering it with windows. The
@@ -108,29 +108,11 @@ class Gap(CommandObject):
     def geometry(self):
         return (self.x, self.y, self.width, self.height)
 
-    def _items(self, name: str) -> ItemT:
-        if name == "screen" and self.screen is not None:
-            return True, []
-        return None
-
-    def _select(self, name, sel):
-        if name == "screen":
-            return self.screen
-
     @property
     def position(self):
         for i in ["top", "bottom", "left", "right"]:
             if getattr(self.screen, i) is self:
                 return i
-
-    def info(self):
-        return dict(position=self.position)
-
-    def cmd_info(self):
-        """
-        Info for this object.
-        """
-        return self.info()
 
 
 class Obj:
@@ -149,7 +131,7 @@ CALCULATED = Obj("CALCULATED")
 STATIC = Obj("STATIC")
 
 
-class Bar(Gap, configurable.Configurable):
+class Bar(Gap, configurable.Configurable, CommandObject):
     """A bar, which can contain widgets
 
     Parameters
@@ -680,6 +662,12 @@ class Bar(Gap, configurable.Configurable):
         :position One of "top", "bottom", "left", or "right"
         """
         self.process_button_click(x, y, button)
+
+    def cmd_info(self):
+        """
+        Info for this object.
+        """
+        return self.info()
 
 
 BarType = typing.Union[Bar, Gap]
