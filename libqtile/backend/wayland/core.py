@@ -76,7 +76,7 @@ from xkbcommon import xkb
 
 from libqtile import hook, log_utils
 from libqtile.backend import base
-from libqtile.backend.wayland import inputs, window, wlrq
+from libqtile.backend.wayland import inputs, window, wlrq, xwindow
 from libqtile.backend.wayland.output import Output
 from libqtile.log_utils import logger
 
@@ -541,7 +541,7 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_xwayland_new_surface(self, _listener: Listener, surface: xwayland.Surface) -> None:
         logger.debug("Signal: xwayland new_surface")
         assert self.qtile is not None
-        win = window.XWindow(self, self.qtile, surface)
+        win = xwindow.XWindow(self, self.qtile, surface)
         self.pending_windows.add(win)
 
     def _output_manager_reconfigure(self, config: OutputConfigurationV1, apply: bool) -> None:
@@ -789,7 +789,7 @@ class Core(base.Core, wlrq.HasListeners):
             if not win.surface.current.keyboard_interactive:
                 return
 
-        if isinstance(win, (window.XWindow, window.XStatic)):
+        if isinstance(win, (xwindow.XWindow, xwindow.XStatic)):
             if not win.surface.or_surface_wants_focus():
                 return
 
