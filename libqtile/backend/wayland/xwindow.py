@@ -28,8 +28,8 @@ from wlroots import xwayland
 from libqtile import hook
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
-from libqtile.log_utils import logger
 from libqtile.backend.wayland.window import Static, Window
+from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
     from typing import Any
@@ -37,6 +37,7 @@ if typing.TYPE_CHECKING:
     from libqtile.backend.wayland.core import Core
     from libqtile.core.manager import Qtile
     from libqtile.utils import ColorsType
+
 
 class XWindow(Window[xwayland.Surface]):
     """An X11 client connecting via XWayland."""
@@ -297,7 +298,6 @@ class XWindow(Window[xwayland.Surface]):
 
     def _to_static(self) -> XStatic:
         return XStatic(self.core, self.qtile, self.surface, self.wid, self._idle_inhibitors_count)
-
 
 
 class XStatic(Static[xwayland.Surface]):

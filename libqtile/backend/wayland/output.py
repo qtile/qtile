@@ -32,7 +32,8 @@ from wlroots.wlr_types import Output as wlrOutput
 from wlroots.wlr_types import OutputDamage
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1Anchor
 
-from libqtile.backend.wayland.window import Internal, LayerStatic
+from libqtile.backend.wayland.layer import LayerStatic
+from libqtile.backend.wayland.window import Internal
 from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
