@@ -26,26 +26,27 @@ import time
 import typing
 
 import pywayland
+from pywayland import lib as wllib
 import pywayland.server
 import wlroots.helper as wlroots_helper
 import wlroots.wlr_types.virtual_keyboard_v1 as vkeyboard
 import wlroots.wlr_types.virtual_pointer_v1 as vpointer
-from pywayland.protocol.wayland import WlSeat
+from pywayland.protocol.wayland.wl_seat import WlSeat
 from wlroots import xwayland
+from wlroots.wlr_types.cursor import Cursor
+from wlroots.wlr_types.data_control_v1 import DataControlManagerV1
+from wlroots.wlr_types.data_device_manager import DataDeviceManager
+from wlroots.wlr_types.export_dmabuf_v1 import ExportDmabufManagerV1
+from wlroots.wlr_types.foreign_toplevel_management_v1 import ForeignToplevelManagerV1
+from wlroots.wlr_types.gamma_control_v1 import GammaControlManagerV1
+from wlroots.wlr_types.output_layout import OutputLayout
+from wlroots.wlr_types.primary_selection_v1 import PrimarySelectionV1DeviceManager
+from wlroots.wlr_types.relative_pointer_manager_v1 import RelativePointerManagerV1
+from wlroots.wlr_types.screencopy_v1 import ScreencopyManagerV1
+from wlroots.wlr_types.surface import Surface
+from wlroots.wlr_types.xcursor_manager import XCursorManager
+from wlroots.wlr_types.xdg_output_v1 import XdgOutputManagerV1
 from wlroots.wlr_types import (
-    Cursor,
-    DataControlManagerV1,
-    DataDeviceManager,
-    ExportDmabufManagerV1,
-    ForeignToplevelManagerV1,
-    GammaControlManagerV1,
-    OutputLayout,
-    PrimarySelectionV1DeviceManager,
-    RelativePointerManagerV1,
-    ScreencopyManagerV1,
-    Surface,
-    XCursorManager,
-    XdgOutputManagerV1,
     input_device,
     pointer,
     seat,
@@ -82,8 +83,8 @@ from libqtile.log_utils import logger
 if typing.TYPE_CHECKING:
     from typing import Any, Sequence
 
-    from pywayland.server import Listener
-    from wlroots.wlr_types import Output as wlrOutput
+    from pywayland.server.listener import Listener
+    from wlroots.wlr_types.output import Output as wlrOutput
     from wlroots.wlr_types.data_device_manager import Drag
 
     from libqtile import config
@@ -109,7 +110,7 @@ class Core(base.Core, wlrq.HasListeners):
         )
 
         self.fd: int | None = None
-        self.display = pywayland.server.Display()
+        self.display = pywayland.server.display.Display()
         self.event_loop = self.display.get_event_loop()
         (
             self.compositor,
@@ -706,7 +707,7 @@ class Core(base.Core, wlrq.HasListeners):
         """Setup a listener for the given qtile instance"""
         logger.debug("Adding io watch")
         self.qtile = qtile
-        self.fd = pywayland.lib.wl_event_loop_get_fd(self.event_loop._ptr)
+        self.fd = wllib.wl_event_loop_get_fd(self.event_loop._ptr)
         if self.fd:
             asyncio.get_running_loop().add_reader(self.fd, self._poll)
         else:
@@ -812,11 +813,11 @@ class Core(base.Core, wlrq.HasListeners):
                     if prev_xwayland_surface.data:
                         prev_xwayland_surface.data.set_activated(False)
 
-        if not win:
+        if not win or not surface:
             self.seat.keyboard_clear_focus()
             return
 
-        logger.debug("Focussing new window")
+        logger.debug("Focusing new window")
         if surface.is_xdg_surface and isinstance(win.surface, XdgSurface):
             win.surface.set_activated(True)
             win.ftm_handle.set_activated(True)
@@ -833,7 +834,7 @@ class Core(base.Core, wlrq.HasListeners):
         found = self._under_pointer()
 
         if found:
-            win, surface, _, _ = found
+            win, _, _, _ = found
 
             if self.qtile.config.bring_front_click is True:
                 win.cmd_bring_to_front()
