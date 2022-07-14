@@ -27,11 +27,11 @@ import typing
 import cairocffi
 import pywayland
 import wlroots.wlr_types.foreign_toplevel_management_v1 as ftm
-from pywayland.server import Listener
 from wlroots import PtrHasData, ffi, xwayland
 from wlroots.util.box import Box
 from wlroots.util.edges import Edges
-from wlroots.wlr_types import Texture
+from wlroots.wlr_types.texture import Texture
+from pywayland.server.listener import Listener
 from wlroots.wlr_types.idle_inhibit_v1 import IdleInhibitorV1
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1
 from wlroots.wlr_types.pointer_constraints_v1 import (
