@@ -76,6 +76,9 @@ class XdgWindow(Window[XdgSurface]):
     def _on_map(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow map")
 
+        if not self._wm_class == self.surface.toplevel.app_id:
+            self._wm_class = self.surface.toplevel.app_id
+
         if self in self.core.pending_windows:
             self.core.pending_windows.remove(self)
             self._wid = self.core.new_wid()
