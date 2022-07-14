@@ -21,17 +21,20 @@
 from __future__ import annotations
 
 import typing
-from pywayland import lib as wllib, ffi as wlffi
-from pywayland.server.listener import Listener
 
+from pywayland import ffi as wlffi
+from pywayland import lib as wllib
+from pywayland.server import Listener
 from wlroots import ffi
 from wlroots.util.box import Box
+from wlroots.util.edges import Edges
 from wlroots.wlr_types.xdg_shell import XdgPopup, XdgSurface, XdgTopLevelSetFullscreenEvent
 
 from libqtile import hook
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
-from libqtile.backend.wayland.window import EDGES_TILED, Static, SubSurface, Window
+from libqtile.backend.wayland.layer import SubSurface
+from libqtile.backend.wayland.window import Static, Window
 from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
@@ -44,6 +47,9 @@ if typing.TYPE_CHECKING:
     from libqtile.backend.wayland.output import Output
     from libqtile.core.manager import Qtile
     from libqtile.utils import ColorsType
+
+EDGES_TILED = Edges.TOP | Edges.BOTTOM | Edges.LEFT | Edges.RIGHT
+
 
 class XdgWindow(Window[XdgSurface]):
     """An Wayland client connecting via the xdg shell."""
@@ -73,7 +79,11 @@ class XdgWindow(Window[XdgSurface]):
         if self in self.core.pending_windows:
             self.core.pending_windows.remove(self)
             self._wid = self.core.new_wid()
-            logger.debug("Managing new top-level window with window ID: %s, app_id: %s", self._wid, self._wm_class)
+            logger.debug(
+                "Managing new top-level window with window ID: %s, app_id: %s",
+                self._wid,
+                self._wm_class,
+            )
 
             # Save the client's desired geometry
             surface = self.surface

@@ -26,33 +26,32 @@ import time
 import typing
 
 import pywayland
-from pywayland import lib as wllib
 import pywayland.server
 import wlroots.helper as wlroots_helper
 import wlroots.wlr_types.virtual_keyboard_v1 as vkeyboard
 import wlroots.wlr_types.virtual_pointer_v1 as vpointer
-from pywayland.protocol.wayland.wl_seat import WlSeat
+from pywayland import lib as wllib
+from pywayland.protocol.wayland import WlSeat
 from wlroots import xwayland
-from wlroots.wlr_types.cursor import Cursor
-from wlroots.wlr_types.data_control_v1 import DataControlManagerV1
-from wlroots.wlr_types.data_device_manager import DataDeviceManager
-from wlroots.wlr_types.export_dmabuf_v1 import ExportDmabufManagerV1
-from wlroots.wlr_types.foreign_toplevel_management_v1 import ForeignToplevelManagerV1
-from wlroots.wlr_types.gamma_control_v1 import GammaControlManagerV1
-from wlroots.wlr_types.output_layout import OutputLayout
-from wlroots.wlr_types.primary_selection_v1 import PrimarySelectionV1DeviceManager
-from wlroots.wlr_types.relative_pointer_manager_v1 import RelativePointerManagerV1
-from wlroots.wlr_types.screencopy_v1 import ScreencopyManagerV1
-from wlroots.wlr_types.surface import Surface
-from wlroots.wlr_types.xcursor_manager import XCursorManager
-from wlroots.wlr_types.xdg_output_v1 import XdgOutputManagerV1
 from wlroots.wlr_types import (
+    DataControlManagerV1,
+    DataDeviceManager,
+    ExportDmabufManagerV1,
+    ForeignToplevelManagerV1,
+    GammaControlManagerV1,
+    OutputLayout,
+    PrimarySelectionV1DeviceManager,
+    RelativePointerManagerV1,
+    ScreencopyManagerV1,
+    Surface,
+    XCursorManager,
+    XdgOutputManagerV1,
     input_device,
     pointer,
     seat,
     xdg_decoration_v1,
 )
-from wlroots.wlr_types.cursor import WarpMode
+from wlroots.wlr_types.cursor import Cursor, WarpMode
 from wlroots.wlr_types.idle import Idle
 from wlroots.wlr_types.idle_inhibit_v1 import IdleInhibitorManagerV1, IdleInhibitorV1
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1, LayerShellV1Layer, LayerSurfaceV1
@@ -76,15 +75,15 @@ from xkbcommon import xkb
 
 from libqtile import hook, log_utils
 from libqtile.backend import base
-from libqtile.backend.wayland import inputs, window, wlrq, xdgwindow, xwindow
+from libqtile.backend.wayland import inputs, layer, window, wlrq, xdgwindow, xwindow
 from libqtile.backend.wayland.output import Output
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
     from typing import Any, Sequence
 
-    from pywayland.server.listener import Listener
-    from wlroots.wlr_types.output import Output as wlrOutput
+    from pywayland.server import Listener
+    from wlroots.wlr_types import Output as wlrOutput
     from wlroots.wlr_types.data_device_manager import Drag
 
     from libqtile import config
@@ -508,7 +507,7 @@ class Core(base.Core, wlrq.HasListeners):
         assert self.qtile is not None
 
         wid = self.new_wid()
-        win = window.LayerStatic(self, self.qtile, layer_surface, wid)
+        win = layer.LayerStatic(self, self.qtile, layer_surface, wid)
         logger.info("Managing new layer_shell window with window ID: %s", wid)
         self.qtile.manage(win)
 
@@ -785,7 +784,7 @@ class Core(base.Core, wlrq.HasListeners):
         if self.focused_internal:
             self.focused_internal = None
 
-        if isinstance(win, window.LayerStatic):
+        if isinstance(win, layer.LayerStatic):
             if not win.surface.current.keyboard_interactive:
                 return
 
