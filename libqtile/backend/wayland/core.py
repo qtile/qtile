@@ -76,7 +76,7 @@ from xkbcommon import xkb
 
 from libqtile import hook, log_utils
 from libqtile.backend import base
-from libqtile.backend.wayland import inputs, window, wlrq, xwindow
+from libqtile.backend.wayland import inputs, window, wlrq, xdgwindow, xwindow
 from libqtile.backend.wayland.output import Output
 from libqtile.log_utils import logger
 
@@ -363,7 +363,7 @@ class Core(base.Core, wlrq.HasListeners):
         logger.debug("Signal: xdg_shell new_surface_event")
         if surface.role == XdgSurfaceRole.TOPLEVEL:
             assert self.qtile is not None
-            win = window.XdgWindow(self, self.qtile, surface)
+            win = xdgwindow.XdgWindow(self, self.qtile, surface)
             self.pending_windows.add(win)
 
     def _on_cursor_axis(self, _listener: Listener, event: pointer.PointerEventAxis) -> None:
