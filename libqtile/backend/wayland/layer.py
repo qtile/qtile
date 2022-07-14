@@ -25,17 +25,14 @@ import typing
 from pywayland.server import Listener
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1
 
+from libqtile.backend.wayland.subsurface import SubSurface
 from libqtile.backend.wayland.window import Static
-from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
     from typing import Any
 
-    from wlroots.wlr_types.surface import SubSurface as WlrSubSurface
-
     from libqtile.backend.wayland.core import Core
-    from libqtile.backend.wayland.xdgwindow import XdgWindow
     from libqtile.core.manager import Qtile
     from libqtile.utils import ColorsType
 
@@ -161,34 +158,3 @@ class LayerStatic(Static[LayerSurfaceV1]):
 
     def cmd_bring_to_front(self) -> None:
         pass
-
-
-class SubSurface(HasListeners):
-    """
-    This represents a single `struct wlr_subsurface` object and is owned by a single
-    parent window (of `WindowType | SubSurface`). We only need to track them so
-    that we can listen to their commit events and render accordingly.
-    """
-
-    def __init__(self, parent: XdgWindow | SubSurface, subsurface: WlrSubSurface):
-        self.parent = parent
-        self.subsurfaces: list[SubSurface] = []
-
-        self.add_listener(subsurface.destroy_event, self._on_destroy)
-        self.add_listener(subsurface.surface.commit_event, parent._on_commit)
-        self.add_listener(subsurface.surface.new_subsurface_event, self._on_new_subsurface)
-
-    def finalize(self) -> None:
-        self.finalize_listeners()
-        for subsurface in self.subsurfaces:
-            subsurface.finalize()
-        self.parent.subsurfaces.remove(self)
-
-    def _on_destroy(self, _listener: Listener, _data: Any) -> None:
-        self.finalize()
-
-    def _on_commit(self, listener: Listener, _data: Any) -> None:
-        self.parent._on_commit(listener, None)
-
-    def _on_new_subsurface(self, _listener: Listener, subsurface: WlrSubSurface) -> None:
-        self.subsurfaces.append(SubSurface(self, subsurface))

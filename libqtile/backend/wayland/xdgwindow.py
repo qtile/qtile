@@ -33,7 +33,7 @@ from wlroots.wlr_types.xdg_shell import XdgPopup, XdgSurface, XdgTopLevelSetFull
 from libqtile import hook
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
-from libqtile.backend.wayland.layer import SubSurface
+from libqtile.backend.wayland.subsurface import SubSurface
 from libqtile.backend.wayland.window import Static, Window
 from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
