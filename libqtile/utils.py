@@ -313,6 +313,7 @@ def guess_terminal(preference: str | Sequence | None = None) -> str | None:
         "eterm",
         "st",
         "urxvt",
+        "wezterm",
         "xterm",
         "x-terminal-emulator",
     ]
