@@ -116,11 +116,11 @@ request that git commit messages follow the
 Some common linting errors and how to resolve them:
 
 ==================================================== =======================================================
-Lint Error                                           Verbose Diff Command
+Lint Error                                           Fix
 ==================================================== =======================================================
-``I001 isort found an import in the wrong position`` ``python -m flake8 ./libqtile/ --isort-show-traceback``
-``I005 isort found an unexpected missing import``    ``python -m flake8 ./libqtile/ --isort-show-traceback``
-``BLK100 Black would make changes.``                 ``python -m black --diff ./libqtile/``
+``I001 isort found an import in the wrong position`` ``python -m isort ./libqtile/``
+``I005 isort found an unexpected missing import``    ``python -m isort ./libqtile/``
+``BLK100 Black would make changes.``                 ``python -m black ./libqtile/``
 ==================================================== =======================================================
 
 Logging
