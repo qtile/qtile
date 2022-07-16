@@ -88,6 +88,8 @@ class VerticalTile(_SimpleLayoutBase):
         ("border_normal", "#FFFFFF", "Border color(s) for un-focused windows."),
         ("border_width", 1, "Border width."),
         ("margin", 0, "Border margin (int or list of ints [N E S W])."),
+        ("single_border_width", 0, "Border width for single window"),
+        ("single_margin", None, "Margin size for single window"),
     ]
 
     ratio = 0.75
@@ -120,7 +122,13 @@ class VerticalTile(_SimpleLayoutBase):
             if n > 1:
                 border_width = self.border_width
             else:
-                border_width = 0
+                border_width = self.single_border_width
+
+            # margin
+            if n == 1 and self.single_margin is not None:
+                margin = self.single_margin
+            else:
+                margin = self.margin
 
             if window.has_focus:
                 border_color = self.border_focus
@@ -166,7 +174,7 @@ class VerticalTile(_SimpleLayoutBase):
                         y = y - sec_pane_height + main_pane_height
 
             window.place(
-                screen_rect.x, y, width, height, border_width, border_color, margin=self.margin
+                screen_rect.x, y, width, height, border_width, border_color, margin=margin
             )
             window.unhide()
         else:
