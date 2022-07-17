@@ -50,6 +50,16 @@ class VerticalTileConfig(Config):
 
 verticaltile_config = pytest.mark.parametrize("manager", [VerticalTileConfig], indirect=True)
 
+class VerticalTileMarginsConfig(VerticalTileConfig):
+    layouts = [layout.VerticalTile(), layout.VerticalTile(single_margin=10)]
+
+verticaltile_margins_config = pytest.mark.parametrize("manager", [VerticalTileMarginsConfig], indirect=True)
+
+class VerticalTileBordersConfig(VerticalTileConfig):
+    layouts = [layout.VerticalTile(), layout.VerticalTile(single_border_width=10)]
+
+verticaltile_borders_config = pytest.mark.parametrize("manager", [VerticalTileBordersConfig], indirect=True)
+
 
 @verticaltile_config
 def test_verticaltile_simple(manager):
@@ -90,3 +100,39 @@ def test_verticaltile_window_focus_cycle(manager):
 
     # assert window focus cycle, according to order in layout
     assert_focus_path(manager, "float1", "float2", "one", "two", "three")
+
+@verticaltile_margins_config
+def test_verticaltile_single_margin(manager):
+    manager.test_window("one")
+
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+
+    manager.c.next_layout()
+    info = manager.c.window.info()
+    assert info["x"] == 10
+    assert info["y"] == 10
+
+    manager.test_window("two")
+    # No longer single window so margin reverts to "margin" which is 0
+    info = manager.c.window.info()
+    assert info["x"] == 0
+
+@verticaltile_borders_config
+def test_verticaltile_single_border(manager):
+    manager.test_window("one")
+
+    info = manager.c.window.info()
+    assert info["width"] == 800
+    assert info["height"] == 600
+
+    manager.c.next_layout()
+    info = manager.c.window.info()
+    assert info["width"] == 780
+    assert info["height"] == 580
+
+    manager.test_window("two")
+    info = manager.c.window.info()
+    assert info["width"] == 798
+    assert info["height"] == 298
