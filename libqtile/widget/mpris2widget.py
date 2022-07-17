@@ -24,6 +24,8 @@
 from __future__ import annotations
 
 import asyncio
+import re
+import string
 from typing import TYPE_CHECKING
 
 from dbus_next import Message, Variant
@@ -41,6 +43,49 @@ MPRIS_PATH = "/org/mpris/MediaPlayer2"
 MPRIS_OBJECT = "org.mpris.MediaPlayer2"
 MPRIS_PLAYER = "org.mpris.MediaPlayer2.Player"
 PROPERTIES_INTERFACE = "org.freedesktop.DBus.Properties"
+MPRIS_REGEX = re.compile(r"(\{(.*?):(.*?)(:.*?)?\})")
+
+
+class Mpris2Formatter(string.Formatter):
+    """
+    Custom string formatter for MPRIS2 metadata.
+
+    Keys have a colon (e.g. "xesam:title") which causes issues with python's string
+    formatting as the colon splits the identifier from the format specification.
+
+    This formatter handles this issue by changing the first colon to an underscore and
+    then formatting the incoming kwargs to match.
+
+    Additionally, a default value is returned when an identifier is not provided by the
+    kwarg data.
+    """
+
+    def __init__(self, default=""):
+        string.Formatter.__init__(self)
+        self._default = default
+
+    def get_value(self, key, args, kwargs):
+        """
+        Replaces colon in kwarg keys with an underscore before getting value.
+
+        Missing identifiers are replaced with the default value.
+        """
+        kwargs = {k.replace(":", "_"): v for k, v in kwargs.items()}
+        try:
+            return string.Formatter.get_value(self, key, args, kwargs)
+        except (IndexError, KeyError):
+            return self._default
+
+    def parse(self, format_string):
+        """
+        Replaces first colon in format string with an underscore.
+
+        This will cause issues if any identifier is provided that does not
+        contain a colon. This should not happen according to the MPRIS2
+        specification!
+        """
+        format_string = MPRIS_REGEX.sub(r"{\2_\3\4}", format_string)
+        return string.Formatter.parse(self, format_string)
 
 
 class Mpris2(base._TextBox):
@@ -75,11 +120,17 @@ class Mpris2(base._TextBox):
             "``None`` will listen for notifications from all MPRIS2 compatible players.",
         ),
         (
-            "display_metadata",
-            ["xesam:title", "xesam:album", "xesam:artist"],
-            "Which metadata identifiers to display. "
+            "format",
+            "{xesam:title} - {xesam:album} - {xesam:artist}",
+            "Format string for displaying metadata. "
             "See http://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata/#index5h3 "
             "for available values",
+        ),
+        ("separator", ", ", "Separator for metadata fields that are a list."),
+        (
+            "display_metadata",
+            ["xesam:title", "xesam:album", "xesam:artist"],
+            "(Deprecated) Which metadata identifiers to display. ",
         ),
         ("scroll", True, "Whether text should scroll."),
         ("playing_text", "{track}", "Text to show when playing"),
@@ -95,7 +146,11 @@ class Mpris2(base._TextBox):
             "No metadata for current track",
             "Text to show when track has no metadata",
         ),
-        ("poll_interval", 0, "Periodic background polling interval of player (0 to disable polling)."),
+        (
+            "poll_interval",
+            0,
+            "Periodic background polling interval of player (0 to disable polling).",
+        ),
     ]
 
     def __init__(self, **config):
@@ -124,6 +179,14 @@ class Mpris2(base._TextBox):
 
             if "stopped_text" not in config:
                 stopped = self.stop_pause_text
+
+        if "display_metadata" in config:
+            logger.warning(
+                "The use of `display_metadata is deprecated. Please use `format` instead."
+            )
+            self.format = " - ".join(config["display_metadata"])
+
+        self._formatter = Mpris2Formatter()
 
         self.prefixes = {
             "Playing": self.playing_text,
@@ -293,19 +356,18 @@ class Mpris2(base._TextBox):
             self._set_background_poll()
 
     def get_track_info(self, metadata: dict[str, Variant]) -> str:
-        meta_list = []
-        for key in self.display_metadata:
+        self.metadata = {}
+        for key in metadata:
+            new_key = key
             val = getattr(metadata.get(key), "value", None)
             if isinstance(val, str):
-                meta_list.append(val)
+                self.metadata[new_key] = val
             elif isinstance(val, list):
-                val = " - ".join((y for y in val if isinstance(y, str)))
-                meta_list.append(val)
+                self.metadata[new_key] = self.separator.join(
+                    (y for y in val if isinstance(y, str))
+                )
 
-        text = " - ".join(meta_list)
-        text.replace("\n", "")
-
-        return text
+        return self._formatter.format(self.format, **self.metadata).replace("\n", "")
 
     def _player_cmd(self, cmd: str) -> None:
         if self._current_player is None:
