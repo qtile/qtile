@@ -136,10 +136,7 @@ class VerticalTile(_SimpleLayoutBase):
                 border_color = self.border_normal
 
             # width
-            if n > 1:
-                width = screen_rect.width - self.border_width * 2
-            else:
-                width = screen_rect.width
+            width = screen_rect.width - border_width * 2
 
             # height
             if n > 1:
@@ -158,7 +155,7 @@ class VerticalTile(_SimpleLayoutBase):
                 else:
                     height = normal_pane_height
             else:
-                height = screen_rect.height
+                height = screen_rect.height - border_width * 2
 
             # y
             y = screen_rect.y
