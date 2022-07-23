@@ -1222,86 +1222,26 @@ class Qtile(CommandObject):
             cmd = subprocess.list2cmdline(args)
 
         to_lookup = args[0]
-        if shell:
-            args = ["/bin/sh", "-c", cmd]
 
         if shutil.which(to_lookup) is None:
             logger.error("couldn't find `%s`", to_lookup)
             return -1
 
-        r, w = os.pipe()
-        pid = os.fork()
-        if pid < 0:
-            os.close(r)
-            os.close(w)
-            return pid
+        env = os.environ.copy()
+        try:
+            env.pop("VIRTUAL_ENV")
+        except KeyError:
+            pass
 
-        if pid == 0:
-            os.close(r)
-
-            # close qtile's stdin, stdout, stderr so the called process doesn't
-            # pollute our xsession-errors.
-            os.close(0)
-            os.close(1)
-            os.close(2)
-
-            pid2 = os.fork()
-            if pid2 == 0:
-                os.close(w)
-                try:
-                    # if qtile was installed in a virutal env, we don't
-                    # necessarily want to propagate that to children
-                    # applications, since it may change e.g. the behavior
-                    # of shells that spawn python applications
-                    del os.environ["VIRTUAL_ENV"]
-                except KeyError:
-                    pass
-
-                # Open /dev/null as stdin, stdout, stderr
-                try:
-                    fd = os.open(os.devnull, os.O_RDWR)
-                except OSError:
-                    # This shouldn't happen, catch it just in case
-                    pass
-                else:
-                    # For Python >=3.4, need to set file descriptor to inheritable
-                    try:
-                        os.set_inheritable(fd, True)
-                    except AttributeError:
-                        pass
-
-                    # Again, this shouldn't happen, but we should just check
-                    if fd > 0:
-                        os.dup2(fd, 0)
-
-                    os.dup2(fd, 1)
-                    os.dup2(fd, 2)
-
-                try:
-                    os.execvp(args[0], args)
-                except OSError:
-                    # can't log here since we forked :(
-                    pass
-
-                os._exit(1)
-            else:
-                # Here it doesn't matter if fork failed or not, we just write
-                # its return code and exit.
-                os.write(w, str(pid2).encode())
-                os.close(w)
-
-                # sys.exit raises SystemExit, which will then be caught by our
-                # top level catchall and we'll end up with two qtiles; os._exit
-                # actually calls exit.
-                os._exit(0)
-        else:
-            os.close(w)
-            os.waitpid(pid, 0)
-
-            # 1024 bytes should be enough for any pid. :)
-            pid = int(os.read(r, 1024))
-            os.close(r)
-            return pid
+        proc = subprocess.Popen(
+            args,
+            stdout=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            shell=shell,
+            env=env,
+        )
+        return proc.pid
 
     @expose_command()
     def status(self) -> Literal["OK"]:
