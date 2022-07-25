@@ -1205,8 +1205,8 @@ class Static(_Window, base.Static):
             self.height = e.height
 
         self.place(
-            self.screen.x + self.x,
-            self.screen.y + self.y,
+            self.x,
+            self.y,
             self.width,
             self.height,
             self.borderwidth,
