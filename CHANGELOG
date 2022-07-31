@@ -19,6 +19,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Add player controls (via mouse callbacks) to `Mpris2` widget.
         - Wayland: input inhibitor protocol support added (pywayland>=0.4.14 & pywlroots>=0.15.19)
         - Add commands to control Pomodoro widget.
+        - Add icon theme support to `TaskList` widget (available on X11 and Wayland backends).
     * bugfixes
         - Widgets that are incompatible with a backend (e.g. Systray on Wayland) will no longer show 
           as a ConfigError in the bar. Instead the widget is silently removed from the bar and a message

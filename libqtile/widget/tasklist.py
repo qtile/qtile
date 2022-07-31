@@ -27,7 +27,15 @@ import re
 
 import cairocffi
 
+try:
+    from xdg.IconTheme import getIconPath
+
+    has_xdg = True
+except ImportError:
+    has_xdg = False
+
 from libqtile import bar, hook, pangocffi
+from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
@@ -37,6 +45,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
     Contrary to WindowTabs this is an interactive widget.  The window that
     currently has focus is highlighted.
+
+    Optional requirements: `pyxdg <https://pypi.org/project/pyxdg/>`__ is needed
+    to use theme icons and to display icons on Wayland.
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
@@ -140,6 +151,18 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             "icon_size",
             None,
             "Icon size. " "(Calculated if set to None. Icons are hidden if set to 0.)",
+        ),
+        (
+            "theme_mode",
+            None,
+            "When to use theme icons. `None` = never, `preferred` = use if available, "
+            "`fallback` = use if app does not provide icon directly. "
+            "`preferred` and `fallback` have identical behaviour on Wayland.",
+        ),
+        (
+            "theme_path",
+            None,
+            "Path to icon theme to be used by pyxdg for icons. ``None`` will use default icon theme.",
         ),
     ]
 
@@ -288,10 +311,19 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
 
-        if qtile.core.name == "wayland" and self.icon_size != 0:
+        if not has_xdg and self.theme_mode is not None:
+            logger.warning("You must install pyxdg to use theme icons.")
+            self.theme_mode = None
+
+        if self.theme_mode and self.theme_mode not in ["preferred", "fallback"]:
+            logger.warning(
+                "Unexpected theme_mode (%s). Theme icons will be disabled.", self.theme_mode
+            )
+            self.theme_mode = None
+
+        if qtile.core.name == "wayland" and self.theme_mode is None and self.icon_size != 0:
             # Disable icons
             self.icon_size = 0
-            logger.warning("TaskList icons not supported in Wayland.")
 
         if self.icon_size is None:
             self.icon_size = self.bar.height - 2 * (self.borderwidth + self.margin_y)
@@ -398,13 +430,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             else:
                 window.cmd_toggle_minimize()
 
-    def get_window_icon(self, window):
-        if not window.icons:
+    def _get_class_icon(self, window):
+        if not getattr(window, "icons", False):
             return None
-
-        cache = self._icons_cache.get(window.wid)
-        if cache:
-            return cache
 
         icons = sorted(
             iter(window.icons.items()),
@@ -417,16 +445,63 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             icon[1], cairocffi.FORMAT_ARGB32, width, height
         )
 
-        surface = cairocffi.SurfacePattern(img)
+        return img
 
-        scaler = cairocffi.Matrix()
+    def _get_theme_icon(self, window):
+        classes = window.get_wm_class()
 
-        if height != self.icon_size:
-            sp = height / self.icon_size
-            height = self.icon_size
-            width /= sp
-            scaler.scale(sp, sp)
-        surface.set_matrix(scaler)
+        if not classes:
+            return None
+
+        icon = None
+
+        for cl in classes:
+            for app in set([cl, cl.lower()]):
+                icon = getIconPath(app, theme=self.theme_path)
+                if icon is not None:
+                    break
+            else:
+                continue
+            break
+
+        if not icon:
+            return None
+
+        img = Img.from_path(icon)
+
+        return img.surface
+
+    def get_window_icon(self, window):
+        if not getattr(window, "icons", False) and self.theme_mode is None:
+            return None
+
+        cache = self._icons_cache.get(window.wid)
+        if cache:
+            return cache
+
+        surface = None
+        img = None
+
+        if self.qtile.core.name == "x11":
+            img = self._get_class_icon(window)
+
+        if self.theme_mode == "preferred" or (self.theme_mode == "fallback" and img is None):
+            xdg_img = self._get_theme_icon(window)
+            if xdg_img:
+                img = xdg_img
+
+        if img is not None:
+            surface = cairocffi.SurfacePattern(img)
+            height = img.get_height()
+            width = img.get_width()
+            scaler = cairocffi.Matrix()
+            if height != self.icon_size:
+                sp = height / self.icon_size
+                height = self.icon_size
+                width /= sp
+                scaler.scale(sp, sp)
+            surface.set_matrix(scaler)
+
         self._icons_cache[window.wid] = surface
         return surface
 
