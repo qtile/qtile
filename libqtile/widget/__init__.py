@@ -57,6 +57,7 @@ widgets = {
     "KeyboardLayout": "keyboardlayout",
     "KhalCalendar": "khal_calendar",
     "LaunchBar": "launchbar",
+    "Load": "load",
     "Maildir": "maildir",
     "Memory": "memory",
     "MemoryGraph": "graph",

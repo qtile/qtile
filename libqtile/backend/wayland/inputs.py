@@ -70,7 +70,7 @@ class InputConfig(configurable.Configurable):
         wl_input_rules = {
             "1267:12377:ELAN1300:00 04F3:3059 Touchpad": InputConfig(left_handed=True),
             "*": InputConfig(left_handed=True, pointer_accel=True),
-            "type:keyboard": InputConfig(xkb_options="caps:swapescape"),
+            "type:keyboard": InputConfig(kb_options="ctrl:nocaps,compose:ralt"),
         }
 
     When a input device is being configured, the most specific matching key in the
@@ -116,7 +116,7 @@ class InputConfig(configurable.Configurable):
         ("kb_repeat_delay", 600, "Keyboard delay in milliseconds before repeating"),
     ]
 
-    def __init__(self, **config: dict[str, Any]) -> None:
+    def __init__(self, **config: Any) -> None:
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(InputConfig.defaults)
 

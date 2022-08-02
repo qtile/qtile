@@ -32,9 +32,11 @@ BLUEZ_PROPERTIES = "org.freedesktop.DBus.Properties"
 
 class Bluetooth(base._TextBox):
     """
-    Displays bluetooth status or connected device.
+    Displays bluetooth status for a particular connected device.
 
-    Uses dbus to communicate with the system bus.
+    (For example your bluetooth headphones.)
+
+    Uses dbus-next to communicate with the system bus.
 
     Widget requirements: dbus-next_.
 

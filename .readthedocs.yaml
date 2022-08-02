@@ -32,5 +32,7 @@ formats:
 # Optionally set the version of Python and requirements required to build your docs
 python:
   install:
+  # This first requirements file installs a pinned version of cffi as latest version causes crashes
+  - requirements: docs/requirements-rtd.txt
   - requirements: docs/requirements.txt
   - requirements: requirements.txt

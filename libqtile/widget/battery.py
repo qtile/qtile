@@ -35,7 +35,7 @@ import os
 import platform
 import re
 import warnings
-from abc import ABC, abstractclassmethod
+from abc import ABC, abstractmethod
 from enum import Enum, unique
 from pathlib import Path
 from subprocess import CalledProcessError, check_output
@@ -79,7 +79,7 @@ class _Battery(ABC):
     battery implementation should provide.
     """
 
-    @abstractclassmethod
+    @abstractmethod
     def update_status(self) -> BatteryStatus:
         """Read the battery status
 
@@ -236,7 +236,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
             with open(path, "r") as f:
                 return f.read().strip(), value_type
         except OSError as e:
-            logger.exception("Failed to read '%s':", path)
+            logger.debug("Failed to read '%s':", path, exc_info=True)
             if isinstance(e, FileNotFoundError):
                 # Let's try another file if this one doesn't exist
                 return None

@@ -18,8 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Set the locale before any widgets or anything are imported, so any widget
-# whose defaults depend on a reasonable locale sees something reasonable.
 import shutil
 import subprocess
 import sys
@@ -30,10 +28,6 @@ from libqtile import confreader
 
 
 def type_check_config_vars(tempdir, config_name):
-    if shutil.which("stubtest") is None:
-        print("stubtest not found, can't type check config file\n" "install it and try again")
-        return
-
     # write a .pyi file to tempdir:
     f = open(path.join(tempdir, config_name + ".pyi"), "w")
     f.write(confreader.config_pyi_header)
@@ -92,25 +86,37 @@ def type_check_config_vars(tempdir, config_name):
 
 
 def type_check_config_args(config_file):
-    if shutil.which("mypy") is None:
-        print("mypy not found, can't type check config file" "install it and try again")
-        return
-    if sys.version_info.minor < 8:  # < 3.8
-        print(
-            "mypy check not supported for the current version of python, "
-            + "please update python to at least 3.8 and try again"
-        )
-        return
     try:
         subprocess.check_call(["mypy", config_file])
-        print("config file type checking succeeded")
+        print("Config file type checking succeeded!")
     except subprocess.CalledProcessError as e:
-        print("config file type checking failed: {}".format(e))
+        print("Config file type checking failed: {}".format(e))
+        sys.exit(1)
+
+
+def check_deps() -> None:
+    ok = True
+
+    if sys.version_info.minor < 8:  # < 3.8
+        print(
+            "mypy check is not supported for the current version of Python, "
+            "please update to at least 3.8 and try again."
+        )
+        ok = False
+
+    for dep in ["mypy", "stubtest"]:
+        if shutil.which(dep) is None:
+            print(f"{dep} was not found. Please install it and try again.")
+            ok = False
+
+    if not ok:
         sys.exit(1)
 
 
 def check_config(args):
-    print("checking qtile config file {}".format(args.configfile))
+    check_deps()
+
+    print("Checking Qtile config at: {}".format(args.configfile))
 
     # need to do all the checking in a tempdir because we need to write stuff
     # for stubtest
@@ -129,7 +135,7 @@ def check_config(args):
     config = confreader.Config(args.configfile)
     config.load()
     config.validate()
-    print("config file can be loaded by qtile")
+    print("Your config can be loaded by Qtile.")
 
 
 def add_subcommand(subparsers, parents):

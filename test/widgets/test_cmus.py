@@ -89,6 +89,12 @@ class MockCmusRemoteProcess:
                 "tag album Anjunabeats 14",
                 "tag title Always - Tinlicker Extended Mix",
             ],
+            [
+                "status playing",
+                "file /playing/file/always.mp3",
+                "duration 222",
+                "position 14",
+            ],
         ]
         cls.index = 0
         cls.is_error = False
@@ -228,3 +234,16 @@ def test_escape_text(fake_qtile, patched_cmus, fake_window):
 
     # It's stopped so colour should reflect this
     assert text == "♫ Above &amp; Beyond - Always - Tinlicker Extended Mix"
+
+
+def test_missing_metadata(fake_qtile, patched_cmus, fake_window):
+    widget = patched_cmus.Cmus()
+
+    # Set track to one that's missing Title and Artist metadata
+    MockCmusRemoteProcess.index = 4
+    fakebar = FakeBar([widget], window=fake_window)
+    widget._configure(fake_qtile, fakebar)
+    text = widget.poll()
+
+    # Displayed text should default to the name of the file
+    assert text == "♫ always.mp3"

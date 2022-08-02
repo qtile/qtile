@@ -28,12 +28,15 @@ import typing
 import pywayland
 import pywayland.server
 import wlroots.helper as wlroots_helper
+import wlroots.wlr_types.virtual_keyboard_v1 as vkeyboard
+import wlroots.wlr_types.virtual_pointer_v1 as vpointer
+from pywayland import lib as wllib
 from pywayland.protocol.wayland import WlSeat
 from wlroots import xwayland
 from wlroots.wlr_types import (
-    Cursor,
     DataControlManagerV1,
     DataDeviceManager,
+    ExportDmabufManagerV1,
     ForeignToplevelManagerV1,
     GammaControlManagerV1,
     OutputLayout,
@@ -48,7 +51,7 @@ from wlroots.wlr_types import (
     seat,
     xdg_decoration_v1,
 )
-from wlroots.wlr_types.cursor import WarpMode
+from wlroots.wlr_types.cursor import Cursor, WarpMode
 from wlroots.wlr_types.idle import Idle
 from wlroots.wlr_types.idle_inhibit_v1 import IdleInhibitorManagerV1, IdleInhibitorV1
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1, LayerShellV1Layer, LayerSurfaceV1
@@ -67,13 +70,12 @@ from wlroots.wlr_types.server_decoration import (
     ServerDecorationManager,
     ServerDecorationManagerMode,
 )
-from wlroots.wlr_types.virtual_keyboard_v1 import VirtualKeyboardManagerV1, VirtualKeyboardV1
 from wlroots.wlr_types.xdg_shell import XdgShell, XdgSurface, XdgSurfaceRole
 from xkbcommon import xkb
 
 from libqtile import hook, log_utils
 from libqtile.backend import base
-from libqtile.backend.wayland import inputs, window, wlrq
+from libqtile.backend.wayland import inputs, layer, window, wlrq, xdgwindow, xwindow
 from libqtile.backend.wayland.output import Output
 from libqtile.log_utils import logger
 
@@ -107,7 +109,7 @@ class Core(base.Core, wlrq.HasListeners):
         )
 
         self.fd: int | None = None
-        self.display = pywayland.server.Display()
+        self.display = pywayland.server.display.Display()
         self.event_loop = self.display.get_event_loop()
         (
             self.compositor,
@@ -166,6 +168,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(self.cursor.button_event, self._on_cursor_button)
         self.add_listener(self.cursor.motion_event, self._on_cursor_motion)
         self.add_listener(self.cursor.motion_absolute_event, self._on_cursor_motion_absolute)
+        self._cursor_state = wlrq.CursorState()
 
         # set up shell
         self.xdg_shell = XdgShell(self.display)
@@ -174,6 +177,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(self.layer_shell.new_surface_event, self._on_new_layer_surface)
 
         # Add support for additional protocols
+        ExportDmabufManagerV1(self.display)
         XdgOutputManagerV1(self.display, self.output_layout)
         ScreencopyManagerV1(self.display)
         GammaControlManagerV1(self.display)
@@ -185,10 +189,15 @@ class Core(base.Core, wlrq.HasListeners):
         idle_ihibitor_manager = IdleInhibitorManagerV1(self.display)
         self.add_listener(idle_ihibitor_manager.new_inhibitor_event, self._on_new_inhibitor)
         PrimarySelectionV1DeviceManager(self.display)
-        self._virtual_keyboard_manager_v1 = VirtualKeyboardManagerV1(self.display)
+        virtual_keyboard_manager_v1 = vkeyboard.VirtualKeyboardManagerV1(self.display)
         self.add_listener(
-            self._virtual_keyboard_manager_v1.new_virtual_keyboard_event,
+            virtual_keyboard_manager_v1.new_virtual_keyboard_event,
             self._on_new_virtual_keyboard,
+        )
+        virtual_pointer_manager_v1 = vpointer.VirtualPointerManagerV1(self.display)
+        self.add_listener(
+            virtual_pointer_manager_v1.new_virtual_pointer_event,
+            self._on_new_virtual_pointer,
         )
         xdg_decoration_manager_v1 = xdg_decoration_v1.XdgDecorationManagerV1.create(self.display)
         self.add_listener(
@@ -343,13 +352,17 @@ class Core(base.Core, wlrq.HasListeners):
         self, _listener: Listener, event: seat.PointerRequestSetCursorEvent
     ) -> None:
         logger.debug("Signal: seat request_set_cursor_event")
-        self.cursor.set_surface(event.surface, event.hotspot)
+        self._cursor_state.surface = event.surface
+        self._cursor_state.hotspot = event.hotspot
+
+        if not self._cursor_state.hidden:
+            self.cursor.set_surface(event.surface, event.hotspot)
 
     def _on_new_xdg_surface(self, _listener: Listener, surface: XdgSurface) -> None:
         logger.debug("Signal: xdg_shell new_surface_event")
         if surface.role == XdgSurfaceRole.TOPLEVEL:
             assert self.qtile is not None
-            win = window.XdgWindow(self, self.qtile, surface)
+            win = xdgwindow.XdgWindow(self, self.qtile, surface)
             self.pending_windows.add(win)
 
     def _on_cursor_axis(self, _listener: Listener, event: pointer.PointerEventAxis) -> None:
@@ -442,9 +455,14 @@ class Core(base.Core, wlrq.HasListeners):
             constraint.enable()
 
     def _on_new_virtual_keyboard(
-        self, _listener: Listener, virtual_keyboard: VirtualKeyboardV1
+        self, _listener: Listener, virtual_keyboard: vkeyboard.VirtualKeyboardV1
     ) -> None:
         self._add_new_keyboard(virtual_keyboard.input_device)
+
+    def _on_new_virtual_pointer(
+        self, _listener: Listener, new_pointer_event: vpointer.VirtualPointerV1NewPointerEvent
+    ) -> None:
+        self._add_new_pointer(new_pointer_event.new_pointer.input_device)
 
     def _on_new_inhibitor(self, _listener: Listener, idle_inhibitor: IdleInhibitorV1) -> None:
         logger.debug("Signal: idle_inhibitor new_inhibitor")
@@ -489,7 +507,7 @@ class Core(base.Core, wlrq.HasListeners):
         assert self.qtile is not None
 
         wid = self.new_wid()
-        win = window.LayerStatic(self, self.qtile, layer_surface, wid)
+        win = layer.LayerStatic(self, self.qtile, layer_surface, wid)
         logger.info("Managing new layer_shell window with window ID: %s", wid)
         self.qtile.manage(win)
 
@@ -522,7 +540,7 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_xwayland_new_surface(self, _listener: Listener, surface: xwayland.Surface) -> None:
         logger.debug("Signal: xwayland new_surface")
         assert self.qtile is not None
-        win = window.XWindow(self, self.qtile, surface)
+        win = xwindow.XWindow(self, self.qtile, surface)
         self.pending_windows.add(win)
 
     def _output_manager_reconfigure(self, config: OutputConfigurationV1, apply: bool) -> None:
@@ -688,7 +706,7 @@ class Core(base.Core, wlrq.HasListeners):
         """Setup a listener for the given qtile instance"""
         logger.debug("Adding io watch")
         self.qtile = qtile
-        self.fd = pywayland.lib.wl_event_loop_get_fd(self.event_loop._ptr)
+        self.fd = wllib.wl_event_loop_get_fd(self.event_loop._ptr)
         if self.fd:
             asyncio.get_running_loop().add_reader(self.fd, self._poll)
         else:
@@ -766,13 +784,12 @@ class Core(base.Core, wlrq.HasListeners):
         if self.focused_internal:
             self.focused_internal = None
 
-        if isinstance(win, window.LayerStatic):
+        if isinstance(win, layer.LayerStatic):
             if not win.surface.current.keyboard_interactive:
                 return
 
-        if isinstance(win, (window.XWindow, window.XStatic)):
+        if isinstance(win, (xwindow.XWindow, xwindow.XStatic)):
             if not win.surface.or_surface_wants_focus():
-                win.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
                 return
 
         previous_surface = self.seat.keyboard_state.focused_surface
@@ -795,18 +812,17 @@ class Core(base.Core, wlrq.HasListeners):
                     if prev_xwayland_surface.data:
                         prev_xwayland_surface.data.set_activated(False)
 
-        if not win:
+        if not win or not surface:
             self.seat.keyboard_clear_focus()
             return
 
-        logger.debug("Focussing new window")
+        logger.debug("Focusing new window")
         if surface.is_xdg_surface and isinstance(win.surface, XdgSurface):
             win.surface.set_activated(True)
             win.ftm_handle.set_activated(True)
 
         elif surface.is_xwayland_surface and isinstance(win.surface, xwayland.Surface):
             win.surface.activate(True)
-            win.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
             win.ftm_handle.set_activated(True)
 
         if enter and self.seat.keyboard._ptr:  # This pointer is NULL when headless
@@ -817,7 +833,7 @@ class Core(base.Core, wlrq.HasListeners):
         found = self._under_pointer()
 
         if found:
-            win, surface, _, _ = found
+            win, _, _, _ = found
 
             if self.qtile.config.bring_front_click is True:
                 win.cmd_bring_to_front()
@@ -967,6 +983,11 @@ class Core(base.Core, wlrq.HasListeners):
             self._current_output = self.outputs[0] if self.outputs else None
             self.stack_windows()
 
+    def remove_pointer_constraints(self, window: window.Window | window.Static) -> None:
+        for pc in self.pointer_constraints.copy():
+            if pc.window is window:
+                pc.finalize()
+
     def keysym_from_name(self, name: str) -> int:
         """Get the keysym for a key from its name"""
         return xkb.keysym_from_name(name, case_insensitive=True)
@@ -998,7 +1019,8 @@ class Core(base.Core, wlrq.HasListeners):
         identical to those accepted by the env variables.
         """
         if self.keyboards:
-            self.keyboards[-1].set_keymap(layout, options, variant)
+            for keyboard in self.keyboards:
+                keyboard.set_keymap(layout, options, variant)
         else:
             logger.warning("Could not set keymap: no keyboards set up.")
 
@@ -1008,3 +1030,18 @@ class Core(base.Core, wlrq.HasListeners):
         if not success:
             logger.warning("Could not change VT to: %s", vt)
         return success
+
+    def cmd_hide_cursor(self) -> None:
+        """Hide the cursor."""
+        if not self._cursor_state.hidden:
+            self.cursor.set_surface(None, self._cursor_state.hotspot)
+            self._cursor_state.hidden = True
+
+    def cmd_unhide_cursor(self) -> None:
+        """Unhide the cursor."""
+        if self._cursor_state.hidden:
+            self.cursor.set_surface(
+                self._cursor_state.surface,
+                self._cursor_state.hotspot,
+            )
+            self._cursor_state.hidden = False

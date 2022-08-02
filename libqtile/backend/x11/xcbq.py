@@ -62,15 +62,6 @@ class XCBQError(QtileError):
     pass
 
 
-def rdict(d):
-    r = {}
-    for k, v in d.items():
-        r.setdefault(v, []).append(k)
-    return r
-
-
-rkeysyms = rdict(keysyms)
-
 # Keyboard modifiers bitmask values from X Protocol
 ModMasks = {
     "shift": 1 << 0,
@@ -86,6 +77,7 @@ ModMasks = {
 AllButtonsMask = 0b11111 << 8
 ButtonMotionMask = 1 << 13
 ButtonReleaseMask = 1 << 3
+PointerMotionHintMask = 1 << 7
 
 NormalHintsFlags = {
     "USPosition": 1,  # User-specified x, y
@@ -789,7 +781,7 @@ class Painter:
 
 
 def get_keysym(key: str) -> int:
-    keysym = keysyms.get(key)
+    keysym = keysyms.get(key.lower())
     if not keysym:
         raise XCBQError("Unknown key: %s" % key)
     return keysym
@@ -811,7 +803,7 @@ def translate_masks(modifiers: list[str]) -> int:
     masks = []
     for i in modifiers:
         try:
-            masks.append(ModMasks[i])
+            masks.append(ModMasks[i.lower()])
         except KeyError as e:
             raise XCBQError("Unknown modifier: %s" % i) from e
     if masks:

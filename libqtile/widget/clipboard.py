@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import bar, hook
+from libqtile import bar, hook, pangocffi
 from libqtile.backend.x11 import xcbq
 from libqtile.widget import base
 
@@ -92,7 +92,7 @@ class Clipboard(base._TextBox):
                 if self.max_width is not None and len(text) > self.max_width:
                     text = text[: self.max_width] + "..."
 
-            self.text = text
+            self.text = pangocffi.markup_escape_text(text)
 
             if self.timeout_id:
                 self.timeout_id.cancel()
