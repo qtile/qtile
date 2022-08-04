@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 import asyncio
+import concurrent
 import io
 import logging
 import os
@@ -1219,7 +1220,6 @@ class Qtile(CommandObject):
             args = shlex.split(cmd)
         else:
             args = list(cmd)
-            cmd = subprocess.list2cmdline(args)
 
         to_lookup = args[0]
 
@@ -1233,15 +1233,50 @@ class Qtile(CommandObject):
         except KeyError:
             pass
 
-        proc = subprocess.Popen(
-            args,
-            stdout=subprocess.DEVNULL,
-            stdin=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            shell=shell,
-            env=env,
-        )
-        return proc.pid
+        # future = concurrent.futures.Future()
+
+        # self._eventloop.call_soon_threadsafe(asyncio.create_task, self._async_spawn(args, shell, env, future))
+        # pid = future.result()
+        # task = asyncio.run_coroutine_threadsafe(self._async_spawn(args, shell, env), self._eventloop)
+        task = asyncio.create_task(self._async_spawn(args, shell, env))
+        task.add_done_callback(self._dcb)
+        import time
+        while not task.done():
+            logger.warning("Waiting for PID")
+            time.sleep(1)
+        pid = task.result()
+        return pid
+        # logger.warning(f"DONE: {pid}")
+        # return pid
+        # spawn = self.call_soon_threadsafe(self._async_spawn, (args, shell, env))
+        # return spawn.result()
+
+    def _dcb(self, task):
+        logger.warning(f"CB: {task.result()=}")
+
+    async def _async_spawn(self, args, shell, env):
+        return 10
+        # logger.warning("IN ASYNC SPAWN")
+        # if shell:
+        #     logger.warning("SHELL")
+        #     cmd = subprocess.list2cmdline(args)
+        #     proc = await asyncio.create_subprocess_shell(
+        #         cmd, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL, env=env
+        #     )
+        # else:
+        #     logger.warning("NO SHELL")
+        #     cmd = args.pop(0)
+        #     logger.warning(f"{cmd=} {args=}")
+        #     proc = await asyncio.create_subprocess_exec(
+        #         cmd, *args, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL, env=env
+        #     )
+
+        # # asyncio.create_task(self._wait_proc(proc))
+        # logger.warning(f"{proc.pid=}")
+        # return proc.pid
+
+    async def _wait_proc(self, proc):
+        await proc.wait()
 
     @expose_command()
     def status(self) -> Literal["OK"]:
