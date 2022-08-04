@@ -81,6 +81,12 @@ class CheckUpdates(base.ThreadPoolText):
             (lambda x: x),
             "Lambda function to modify line count from custom_command",
         ),
+        (
+            "initial_text",
+            "",
+            "Draw the widget immediately with an initial text, "
+            "useful if it takes time to check system updates.",
+        ),
         ("update_interval", 60, "Update interval in seconds."),
         ("execute", None, "Command to execute on click"),
         ("display_format", "Updates: {updates}", "Display format if updates available"),
@@ -91,7 +97,7 @@ class CheckUpdates(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.ThreadPoolText.__init__(self, config.pop("initial_text", ""), **config)
         self.add_defaults(CheckUpdates.defaults)
 
         # Helpful to have this as a variable as we can shorten it for testing
