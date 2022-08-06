@@ -26,8 +26,9 @@ don't hesitate to fire off an email to our mailing list or join us on IRC. You
 can also ask questions on the discussions board.
 
 :Mailing List: https://groups.google.com/group/qtile-dev
-:IRC: irc://irc.oftc.net:6667/qtile
 :Q&A: https://github.com/qtile/qtile/discussions/categories/q-a
+:IRC: irc://irc.oftc.net:6667/qtile
+:Discord: https://discord.gg/ehh233wCrC (Bridged with IRC)
 
 Example code
 ============
