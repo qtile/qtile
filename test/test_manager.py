@@ -1285,3 +1285,52 @@ def test_widget_duplicate_warnings(logger, manager):
 
     # Check this message level was info
     assert all([r.levelno == logging.INFO for r in records])
+
+
+@manager_config
+def test_tidy_groups_defaults(manager):
+    """Moves windows to leftmost group. Preserves focus and layouts."""
+    manager.c.group["b"].toscreen()
+    manager.test_window("one")
+    manager.c.group.setlayout("max")
+    manager.c.group["d"].toscreen()
+    manager.test_window("two")
+    manager.c.group.setlayout("tile")
+
+    manager.c.tidy_groups()
+
+    info_a = manager.c.group["a"].info()
+    info_b = manager.c.group["b"].info()
+
+    assert info_a["windows"] == ["one"]
+    assert info_a["layout"] == "max"
+
+    assert info_b["windows"] == ["two"]
+    assert info_b["layout"] == "tile"
+
+    assert manager.c.group.info()["name"] == "b"
+
+
+@manager_config
+def test_tidy_groups_no_defaults(manager):
+    """Moves window to leftmost groups. Don't preserve focus or layouts."""
+    assert manager.c.group["a"].info()["layout"] == "stack"
+    manager.c.group["b"].toscreen()
+    manager.test_window("one")
+    manager.c.group.setlayout("max")
+    manager.c.group["d"].toscreen()
+    manager.test_window("two")
+    manager.c.group.setlayout("tile")
+
+    manager.c.tidy_groups(False, False)
+
+    info_a = manager.c.group["a"].info()
+    info_b = manager.c.group["b"].info()
+
+    assert info_a["windows"] == ["one"]
+    assert info_a["layout"] == "stack"
+
+    assert info_b["windows"] == ["two"]
+    assert info_b["layout"] == "max"
+
+    assert manager.c.group.info()["name"] == "d"
