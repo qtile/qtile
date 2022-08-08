@@ -151,7 +151,7 @@ class MonadTall(_SimpleLayoutBase):
         ("border_width", 2, "Border width."),
         ("single_border_width", None, "Border width for single window"),
         ("single_margin", None, "Margin size for single window"),
-        ("margin", 0, "Margin of the layout"),
+        ("margin", 0, "Margin of the layout (int or list of ints [N E S W])"),
         (
             "ratio",
             0.5,
@@ -336,6 +336,11 @@ class MonadTall(_SimpleLayoutBase):
         width_main = int(self.screen_rect.width * self.ratio)
         width_shared = self.screen_rect.width - width_main
 
+        if isinstance(self.margin, int):
+            margin = [self.margin] * 4
+        else:
+            margin = self.margin
+
         # calculate client's x offset
         if self.align == self._left:  # left or up orientation
             if cidx == 0:
@@ -347,7 +352,7 @@ class MonadTall(_SimpleLayoutBase):
         else:  # right or down orientation
             if cidx == 0:
                 # main client
-                xpos = self.screen_rect.x + width_shared - self.margin
+                xpos = self.screen_rect.x + width_shared - 2 * self.border_width
             else:
                 # secondary client
                 xpos = self.screen_rect.x
@@ -364,8 +369,25 @@ class MonadTall(_SimpleLayoutBase):
             height = self._get_absolute_size_from_relative(self.relative_sizes[cidx - 1])
             # fix double margin
             if cidx > 1:
-                ypos -= self.margin
-                height += self.margin
+                ypos -= min(margin[0], margin[2])
+                height += min(margin[0], margin[2])
+
+            # margin list
+            if self.align == self._left:
+                margin = [
+                    margin[0],
+                    margin[1],
+                    margin[2],
+                    max(margin[1], margin[3]),
+                ]
+            else:
+                margin = [
+                    margin[0],
+                    max(margin[1], margin[3]),
+                    margin[2],
+                    margin[3],
+                ]
+
             # place client based on calculated dimensions
             client.place(
                 xpos,
@@ -374,10 +396,27 @@ class MonadTall(_SimpleLayoutBase):
                 height - 2 * self.border_width,
                 self.border_width,
                 px,
-                margin=self.margin,
+                margin=margin,
             )
         else:
             # main client
+
+            # margin list
+            if self.align == self._left:
+                margin = [
+                    margin[0],
+                    2 * self.border_width,
+                    margin[2] + 2 * self.border_width,
+                    margin[3],
+                ]
+            else:
+                margin = [
+                    margin[0],
+                    margin[1],
+                    margin[2] + 2 * self.border_width,
+                    2 * self.border_width,
+                ]
+
             client.place(
                 xpos,
                 self.screen_rect.y,
@@ -385,12 +424,7 @@ class MonadTall(_SimpleLayoutBase):
                 self.screen_rect.height,
                 self.border_width,
                 px,
-                margin=[
-                    self.margin,
-                    2 * self.border_width,
-                    self.margin + 2 * self.border_width,
-                    self.margin,
-                ],
+                margin=margin,
             )
 
     def info(self):
@@ -888,6 +922,11 @@ class MonadWide(MonadTall):
         height_main = int(self.screen_rect.height * self.ratio)
         height_shared = self.screen_rect.height - height_main
 
+        if isinstance(self.margin, int):
+            margin = [self.margin] * 4
+        else:
+            margin = self.margin
+
         # calculate client's x offset
         if self.align == self._up:  # up orientation
             if cidx == 0:
@@ -899,7 +938,7 @@ class MonadWide(MonadTall):
         else:  # right or down orientation
             if cidx == 0:
                 # main client
-                ypos = self.screen_rect.y + height_shared - self.margin
+                ypos = self.screen_rect.y + height_shared - 2 * self.border_width
             else:
                 # secondary client
                 ypos = self.screen_rect.y
@@ -916,8 +955,25 @@ class MonadWide(MonadTall):
             width = self._get_absolute_size_from_relative(self.relative_sizes[cidx - 1])
             # fix double margin
             if cidx > 1:
-                xpos -= self.margin
-                width += self.margin
+                xpos -= min(margin[1], margin[3])
+                width += min(margin[1], margin[3])
+
+            # margin list
+            if self.align == self._up:
+                margin = [
+                    max(margin[0], margin[2]),
+                    margin[1],
+                    margin[2],
+                    margin[3],
+                ]
+            else:
+                margin = [
+                    margin[0],
+                    margin[1],
+                    max(margin[0], margin[2]),
+                    margin[3],
+                ]
+
             # place client based on calculated dimensions
             client.place(
                 xpos,
@@ -926,10 +982,27 @@ class MonadWide(MonadTall):
                 height,
                 self.border_width,
                 px,
-                margin=self.margin,
+                margin=margin,
             )
         else:
             # main client
+
+            # margin list
+            if self.align == self._up:
+                margin = [
+                    margin[0],
+                    margin[1] + 2 * self.border_width,
+                    2 * self.border_width,
+                    margin[3],
+                ]
+            else:
+                margin = [
+                    2 * self.border_width,
+                    margin[1] + 2 * self.border_width,
+                    margin[2],
+                    margin[3],
+                ]
+
             client.place(
                 self.screen_rect.x,
                 ypos,
@@ -937,12 +1010,7 @@ class MonadWide(MonadTall):
                 height_main,
                 self.border_width,
                 px,
-                margin=[
-                    self.margin,
-                    self.margin + 2 * self.border_width,
-                    2 * self.border_width,
-                    self.margin,
-                ],
+                margin=margin,
             )
 
     def _shrink_secondary(self, amt):
@@ -1158,11 +1226,14 @@ class MonadThreeCol(MonadTall):
         """
         rightmost = left + width - self.screen_rect.x >= self.screen_rect.width
         bottommost = top + height - self.screen_rect.y >= self.screen_rect.height
-        margin = [self.margin] * 4
+        if isinstance(self.margin, int):
+            margin = [self.margin] * 4
+        else:
+            margin = self.margin.copy()
         if not rightmost:
-            margin[1] = 0
+            margin[1] = max(margin[1], margin[3]) - margin[3]
         if not bottommost:
-            margin[2] = 0
+            margin[2] = max(margin[0], margin[2]) - margin[0]
 
         client.place(
             left,
