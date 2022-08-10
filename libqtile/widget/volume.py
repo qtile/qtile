@@ -32,9 +32,11 @@
 
 import re
 import subprocess
+from copy import deepcopy
 
 from libqtile import bar
 from libqtile.widget import base
+from libqtile.log_utils import logger
 
 __all__ = [
     "Volume",
@@ -85,6 +87,17 @@ class Volume(base._TextBox):
         self.add_defaults(Volume.defaults)
         self.surfaces = {}
         self.volume = None
+        self.mute = ""
+        self.mixer_out = ""
+        self.mutedtext = "[off]"
+        self.unmutedtext = "[on]"
+
+        if "muteicon" in config:
+            self.mutedtext = config["mutetext"]
+
+        if "unmuteicon" in config:
+            self.unmutedtext = config["unmutetext"]
+
 
         self.add_callbacks(
             {
@@ -124,14 +137,16 @@ class Volume(base._TextBox):
 
     def update(self):
         vol = self.get_volume()
-        if vol != self.volume:
+        prevMute = deepcopy(self.mute)
+    
+        self.check_mute()
+        if vol != self.volume or self.mute != prevMute:
             self.volume = vol
             # Update the underlying canvas size before actually attempting
             # to figure out how big it is and draw it.
             self._update_drawer()
             self.bar.draw()
         self.timeout_add(self.update_interval, self.update)
-
     def _update_drawer(self):
         if self.theme_path:
             self.drawer.clear(self.background or self.bar.background)
@@ -156,11 +171,7 @@ class Volume(base._TextBox):
             elif self.volume >= 80:
                 self.text = "\U0001f50a"
         else:
-            if self.volume == -1:
-                self.text = "M"
-            else:
-                self.text = "{}%".format(self.volume)
-
+            self.text = "{}% {}".format(self.volume, self.mute)
     def setup_images(self):
         from libqtile import images
 
@@ -178,6 +189,7 @@ class Volume(base._TextBox):
                 self.length = img.width + self.actual_padding * 2
             self.surfaces[name] = img.pattern
 
+    
     def get_volume(self):
         try:
             get_volume_cmd = self.create_amixer_command("sget", self.channel)
@@ -185,19 +197,20 @@ class Volume(base._TextBox):
             if self.get_volume_command:
                 get_volume_cmd = self.get_volume_command
 
-            mixer_out = self.call_process(get_volume_cmd)
+            self.mixer_out = self.call_process(get_volume_cmd)
         except subprocess.CalledProcessError:
             return -1
 
-        if "[off]" in mixer_out:
-            return -1
+        volgroups = re.compile(r"\[(\d?\d?\d?)%\]").search(self.mixer_out)
 
-        volgroups = re_vol.search(mixer_out)
         if volgroups:
             return int(volgroups.groups()[0])
         else:
             # this shouldn't happen
             return -1
+
+    def check_mute(self):
+        self.mute = self.mutedtext if "[off]" in self.mixer_out else self.unmutedtext
 
     def draw(self):
         if self.theme_path:
