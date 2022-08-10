@@ -32,11 +32,9 @@
 
 import re
 import subprocess
-from copy import deepcopy
 
 from libqtile import bar
 from libqtile.widget import base
-from libqtile.log_utils import logger
 
 __all__ = [
     "Volume",
@@ -92,10 +90,10 @@ class Volume(base._TextBox):
         self.mutedtext = "[off]"
         self.unmutedtext = "[on]"
 
-        if "muteicon" in config:
+        if "mutetext" in config:
             self.mutedtext = config["mutetext"]
 
-        if "unmuteicon" in config:
+        if "unmutetext" in config:
             self.unmutedtext = config["unmutetext"]
 
 
@@ -137,11 +135,11 @@ class Volume(base._TextBox):
 
     def update(self):
         vol = self.get_volume()
-        prevMute = deepcopy(self.mute)
-    
-        self.check_mute()
-        if vol != self.volume or self.mute != prevMute:
+        nMute = self.get_mute()
+
+        if vol != self.volume or self.mute != nMute:
             self.volume = vol
+            self.mute = nMute
             # Update the underlying canvas size before actually attempting
             # to figure out how big it is and draw it.
             self._update_drawer()
@@ -209,8 +207,8 @@ class Volume(base._TextBox):
             # this shouldn't happen
             return -1
 
-    def check_mute(self):
-        self.mute = self.mutedtext if "[off]" in self.mixer_out else self.unmutedtext
+    def get_mute(self):
+        return self.mutedtext if "[off]" in self.mixer_out else self.unmutedtext
 
     def draw(self):
         if self.theme_path:
