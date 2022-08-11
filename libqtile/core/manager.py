@@ -109,6 +109,7 @@ class Qtile(CommandObject):
             self.config.load()
             self.config.validate()
         except Exception as e:
+            logger.exception("Configuration error:")
             send_notification("Configuration error", str(e))
 
         if hasattr(self.core, "wmname"):
