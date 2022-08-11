@@ -78,6 +78,8 @@ class Volume(base._TextBox):
             "Volume change for up an down commands in percentage."
             "Only used if ``volume_up_command`` and ``volume_down_command`` are not set.",
         ),
+        ("unmute_text", "[on]", "Text displayed when the volume is unmuted"),
+        ("mute_text", "[off]", "Text displayed when the volume is muted"),
     ]
 
     def __init__(self, **config):
@@ -87,15 +89,6 @@ class Volume(base._TextBox):
         self.volume = None
         self.mute = ""
         self.mixer_out = ""
-        self.mutedtext = "[off]"
-        self.unmutedtext = "[on]"
-
-        if "mutetext" in config:
-            self.mutedtext = config["mutetext"]
-
-        if "unmutetext" in config:
-            self.unmutedtext = config["unmutetext"]
-
 
         self.add_callbacks(
             {
@@ -135,11 +128,11 @@ class Volume(base._TextBox):
 
     def update(self):
         vol = self.get_volume()
-        nMute = self.get_mute()
+        next_mute = self.get_mute()
 
-        if vol != self.volume or self.mute != nMute:
+        if vol != self.volume or self.mute != next_mute:
             self.volume = vol
-            self.mute = nMute
+            self.mute = next_mute
             # Update the underlying canvas size before actually attempting
             # to figure out how big it is and draw it.
             self._update_drawer()
@@ -208,7 +201,7 @@ class Volume(base._TextBox):
             return -1
 
     def get_mute(self):
-        return self.mutedtext if "[off]" in self.mixer_out else self.unmutedtext
+        return self.mute_text if "[off]" in self.mixer_out else self.unmute_text
 
     def draw(self):
         if self.theme_path:
