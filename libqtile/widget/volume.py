@@ -143,7 +143,7 @@ class Volume(base._TextBox):
     def _update_drawer(self):
         if self.theme_path:
             self.drawer.clear(self.background or self.bar.background)
-            if self.volume <= 0:
+            if self.volume <= 0 or self.mute == self.mute_text:
                 img_name = "audio-volume-muted"
             elif self.volume <= 30:
                 img_name = "audio-volume-low"
@@ -155,7 +155,7 @@ class Volume(base._TextBox):
             self.drawer.ctx.set_source(self.surfaces[img_name])
             self.drawer.ctx.paint()
         elif self.emoji:
-            if self.volume <= 0:
+            if self.volume <= 0 or self.mute == self.mute_text:
                 self.text = "\U0001f507"
             elif self.volume <= 30:
                 self.text = "\U0001f508"
