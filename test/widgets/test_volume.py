@@ -55,10 +55,13 @@ def test_emoji():
 def test_text():
     fmt = "Volume: {}"
     vol = Volume(fmt=fmt)
-    vol.volume = -1
+    vol.volume = 80
     vol._update_drawer()
-    assert vol.text == "M"
+    assert vol.text == "80%"
 
+    format = "Volume: {volume}% {mute}"
+    vol = Volume(format=format)
     vol.volume = 50
+    vol.mute = "[on]"
     vol._update_drawer()
-    assert vol.text == "50%"
+    assert vol.text == "Volume: 50% [on]"

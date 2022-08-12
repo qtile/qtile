@@ -78,8 +78,9 @@ class Volume(base._TextBox):
             "Volume change for up an down commands in percentage."
             "Only used if ``volume_up_command`` and ``volume_down_command`` are not set.",
         ),
-        ("unmute_text", "[on]", "Text displayed when the volume is unmuted"),
-        ("mute_text", "[off]", "Text displayed when the volume is muted"),
+        ("unmute_text", "[on]", "Text displayed when the volume is unmuted and 'mute' field is included in ``format``"),
+	    ("mute_text", "[off]", "Text displayed when the volume is muted and 'mute' field is included in ``format``"),
+	    ("format", "{volume}%", "Format of text to display. Available fields: 'volume' and 'mute'"),
     ]
 
     def __init__(self, **config):
@@ -128,7 +129,7 @@ class Volume(base._TextBox):
 
     def update(self):
         vol = self.get_volume()
-        next_mute = self.get_mute()
+        next_mute = self.mute_text if "[off]" in self.mixer_out else self.unmute_text
 
         if vol != self.volume or self.mute != next_mute:
             self.volume = vol
@@ -138,6 +139,7 @@ class Volume(base._TextBox):
             self._update_drawer()
             self.bar.draw()
         self.timeout_add(self.update_interval, self.update)
+
     def _update_drawer(self):
         if self.theme_path:
             self.drawer.clear(self.background or self.bar.background)
@@ -162,7 +164,8 @@ class Volume(base._TextBox):
             elif self.volume >= 80:
                 self.text = "\U0001f50a"
         else:
-            self.text = "{}% {}".format(self.volume, self.mute)
+            self.text = self.format.format(volume=self.volume, mute=self.mute)
+
     def setup_images(self):
         from libqtile import images
 
@@ -179,7 +182,6 @@ class Volume(base._TextBox):
             if img.width > self.length:
                 self.length = img.width + self.actual_padding * 2
             self.surfaces[name] = img.pattern
-
     
     def get_volume(self):
         try:
@@ -192,16 +194,13 @@ class Volume(base._TextBox):
         except subprocess.CalledProcessError:
             return -1
 
-        volgroups = re.compile(r"\[(\d?\d?\d?)%\]").search(self.mixer_out)
+        volgroups = re_vol.search(self.mixer_out)
 
         if volgroups:
             return int(volgroups.groups()[0])
         else:
             # this shouldn't happen
             return -1
-
-    def get_mute(self):
-        return self.mute_text if "[off]" in self.mixer_out else self.unmute_text
 
     def draw(self):
         if self.theme_path:
