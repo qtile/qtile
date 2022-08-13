@@ -63,6 +63,8 @@ def test_text():
     vol._update_drawer()
     assert vol.text == "80%"
 
+
+def test_format():
     format = "Volume: {volume}% {mute}"
     vol = Volume(format=format)
     vol.volume = 50
