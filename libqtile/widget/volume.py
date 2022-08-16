@@ -37,199 +37,199 @@ from libqtile import bar
 from libqtile.widget import base
 
 __all__ = [
-	"Volume",
+    "Volume",
 ]
 
 re_vol = re.compile(r"\[(\d?\d?\d?)%\]")
 
 
 class Volume(base._TextBox):
-	"""Widget that display and change volume
+    """Widget that display and change volume
 
-	By default, this widget uses ``amixer`` to get and set the volume so users
-	will need to make sure this is installed. Alternatively, users may set the
-	relevant parameters for the widget to use a different application.
+    By default, this widget uses ``amixer`` to get and set the volume so users
+    will need to make sure this is installed. Alternatively, users may set the
+    relevant parameters for the widget to use a different application.
 
-	If theme_path is set it draw widget as icons.
-	"""
+    If theme_path is set it draw widget as icons.
+    """
 
-	orientations = base.ORIENTATION_HORIZONTAL
-	defaults = [
-		("cardid", None, "Card Id"),
-		("device", "default", "Device Name"),
-		("channel", "Master", "Channel"),
-		("padding", 3, "Padding left and right. Calculated if None."),
-		("update_interval", 0.2, "Update time in seconds."),
-		("theme_path", None, "Path of the icons"),
-		(
-			"emoji",
-			False,
-			"Use emoji to display volume states, only if ``theme_path`` is not set."
-			"The specified font needs to contain the correct unicode characters.",
-		),
-		("mute_command", None, "Mute command"),
-		("volume_app", None, "App to control volume"),
-		("volume_up_command", None, "Volume up command"),
-		("volume_down_command", None, "Volume down command"),
-		("get_volume_command", None, "Command to get the current volume"),
-		(
-			"step",
-			2,
-			"Volume change for up an down commands in percentage."
-			"Only used if ``volume_up_command`` and ``volume_down_command`` are not set.",
-		),
-		("unmute_text", "[on]", "Text displayed when the volume is unmuted and 'mute' field is included in ``format``"),
-		("mute_text", "[off]", "Text displayed when the volume is muted and 'mute' field is included in ``format``"),
-		("format", "{volume}%", "Format of text to display. Available fields: 'volume' and 'mute'"),
-	]
+    orientations = base.ORIENTATION_HORIZONTAL
+    defaults = [
+        ("cardid", None, "Card Id"),
+        ("device", "default", "Device Name"),
+        ("channel", "Master", "Channel"),
+        ("padding", 3, "Padding left and right. Calculated if None."),
+        ("update_interval", 0.2, "Update time in seconds."),
+        ("theme_path", None, "Path of the icons"),
+        (
+            "emoji",
+            False,
+            "Use emoji to display volume states, only if ``theme_path`` is not set."
+            "The specified font needs to contain the correct unicode characters.",
+        ),
+        ("mute_command", None, "Mute command"),
+        ("volume_app", None, "App to control volume"),
+        ("volume_up_command", None, "Volume up command"),
+        ("volume_down_command", None, "Volume down command"),
+        ("get_volume_command", None, "Command to get the current volume"),
+        (
+            "step",
+            2,
+            "Volume change for up an down commands in percentage."
+            "Only used if ``volume_up_command`` and ``volume_down_command`` are not set.",
+        ),
+        ("unmute_text", "[on]", "Text displayed when the volume is unmuted and 'mute' field is included in ``format``"),
+        ("mute_text", "[off]", "Text displayed when the volume is muted and 'mute' field is included in ``format``"),
+        ("format", "{volume}%", "Format of text to display. Available fields: 'volume' and 'mute'"),
+    ]
 
-	def __init__(self, **config):
-		base._TextBox.__init__(self, "0", **config)
-		self.add_defaults(Volume.defaults)
-		self.surfaces = {}
-		self.volume = None
-		self.mute = ""
-		self.mixer_out = ""
+    def __init__(self, **config):
+        base._TextBox.__init__(self, "0", **config)
+        self.add_defaults(Volume.defaults)
+        self.surfaces = {}
+        self.volume = None
+        self.mute = ""
+        self.mixer_out = ""
 
-		self.add_callbacks(
-			{
-				"Button1": self.cmd_mute,
-				"Button3": self.cmd_run_app,
-				"Button4": self.cmd_increase_vol,
-				"Button5": self.cmd_decrease_vol,
-			}
-		)
+        self.add_callbacks(
+            {
+                "Button1": self.cmd_mute,
+                "Button3": self.cmd_run_app,
+                "Button4": self.cmd_increase_vol,
+                "Button5": self.cmd_decrease_vol,
+            }
+        )
 
-	def _configure(self, qtile, parent_bar):
-		if self.theme_path:
-			self.length_type = bar.STATIC
-			self.length = 0
-		base._TextBox._configure(self, qtile, parent_bar)
+    def _configure(self, qtile, parent_bar):
+        if self.theme_path:
+            self.length_type = bar.STATIC
+            self.length = 0
+        base._TextBox._configure(self, qtile, parent_bar)
 
-	def timer_setup(self):
-		self.timeout_add(self.update_interval, self.update)
-		if self.theme_path:
-			self.setup_images()
+    def timer_setup(self):
+        self.timeout_add(self.update_interval, self.update)
+        if self.theme_path:
+            self.setup_images()
 
-	def create_amixer_command(self, *args):
-		cmd = ["amixer"]
+    def create_amixer_command(self, *args):
+        cmd = ["amixer"]
 
-		if self.cardid is not None:
-			cmd.extend(["-c", str(self.cardid)])
+        if self.cardid is not None:
+            cmd.extend(["-c", str(self.cardid)])
 
-		if self.device is not None:
-			cmd.extend(["-D", str(self.device)])
+        if self.device is not None:
+            cmd.extend(["-D", str(self.device)])
 
-		cmd.extend([x for x in args])
-		return cmd
+        cmd.extend([x for x in args])
+        return cmd
 
-	def button_press(self, x, y, button):
-		base._TextBox.button_press(self, x, y, button)
-		self.draw()
+    def button_press(self, x, y, button):
+        base._TextBox.button_press(self, x, y, button)
+        self.draw()
 
-	def update(self):
-		vol = self.get_volume()
-		next_mute = self.mute_text if "[off]" in self.mixer_out else self.unmute_text
+    def update(self):
+        vol = self.get_volume()
+        next_mute = self.mute_text if "[off]" in self.mixer_out else self.unmute_text
 
-		if vol != self.volume or self.mute != next_mute:
-			self.volume = vol
-			self.mute = next_mute
-			# Update the underlying canvas size before actually attempting
-			# to figure out how big it is and draw it.
-			self._update_drawer()
-			self.bar.draw()
-		self.timeout_add(self.update_interval, self.update)
+        if vol != self.volume or self.mute != next_mute:
+            self.volume = vol
+            self.mute = next_mute
+            # Update the underlying canvas size before actually attempting
+            # to figure out how big it is and draw it.
+            self._update_drawer()
+            self.bar.draw()
+        self.timeout_add(self.update_interval, self.update)
 
-	def _update_drawer(self):
-		if self.theme_path:
-			self.drawer.clear(self.background or self.bar.background)
-			if self.volume <= 0 or self.mute == self.mute_text:
-				img_name = "audio-volume-muted"
-			elif self.volume <= 30:
-				img_name = "audio-volume-low"
-			elif self.volume < 80:
-				img_name = "audio-volume-medium"
-			else:  # self.volume >= 80:
-				img_name = "audio-volume-high"
+    def _update_drawer(self):
+        if self.theme_path:
+            self.drawer.clear(self.background or self.bar.background)
+            if self.volume <= 0 or self.mute == self.mute_text:
+                img_name = "audio-volume-muted"
+            elif self.volume <= 30:
+                img_name = "audio-volume-low"
+            elif self.volume < 80:
+                img_name = "audio-volume-medium"
+            else:  # self.volume >= 80:
+                img_name = "audio-volume-high"
 
-			self.drawer.ctx.set_source(self.surfaces[img_name])
-			self.drawer.ctx.paint()
-		elif self.emoji:
-			if self.volume <= 0 or self.mute == self.mute_text:
-				self.text = "\U0001f507"
-			elif self.volume <= 30:
-				self.text = "\U0001f508"
-			elif self.volume < 80:
-				self.text = "\U0001f509"
-			elif self.volume >= 80:
-				self.text = "\U0001f50a"
-		else:
-			self.text = self.format.format(volume=self.volume, mute=self.mute)
+            self.drawer.ctx.set_source(self.surfaces[img_name])
+            self.drawer.ctx.paint()
+        elif self.emoji:
+            if self.volume <= 0 or self.mute == self.mute_text:
+                self.text = "\U0001f507"
+            elif self.volume <= 30:
+                self.text = "\U0001f508"
+            elif self.volume < 80:
+                self.text = "\U0001f509"
+            elif self.volume >= 80:
+                self.text = "\U0001f50a"
+        else:
+            self.text = self.format.format(volume=self.volume, mute=self.mute)
 
-	def setup_images(self):
-		from libqtile import images
+    def setup_images(self):
+        from libqtile import images
 
-		names = (
-			"audio-volume-high",
-			"audio-volume-low",
-			"audio-volume-medium",
-			"audio-volume-muted",
-		)
-		d_images = images.Loader(self.theme_path)(*names)
-		for name, img in d_images.items():
-			new_height = self.bar.height - 1
-			img.resize(height=new_height)
-			if img.width > self.length:
-				self.length = img.width + self.actual_padding * 2
-			self.surfaces[name] = img.pattern
+        names = (
+            "audio-volume-high",
+            "audio-volume-low",
+            "audio-volume-medium",
+            "audio-volume-muted",
+        )
+        d_images = images.Loader(self.theme_path)(*names)
+        for name, img in d_images.items():
+            new_height = self.bar.height - 1
+            img.resize(height=new_height)
+            if img.width > self.length:
+                self.length = img.width + self.actual_padding * 2
+            self.surfaces[name] = img.pattern
 
-	def get_volume(self):
-		try:
-			get_volume_cmd = self.create_amixer_command("sget", self.channel)
+    def get_volume(self):
+        try:
+            get_volume_cmd = self.create_amixer_command("sget", self.channel)
 
-			if self.get_volume_command:
-				get_volume_cmd = self.get_volume_command
+            if self.get_volume_command:
+                get_volume_cmd = self.get_volume_command
 
-			self.mixer_out = self.call_process(get_volume_cmd)
-		except subprocess.CalledProcessError:
-			return -1
+            self.mixer_out = self.call_process(get_volume_cmd)
+        except subprocess.CalledProcessError:
+            return -1
 
-		volgroups = re_vol.search(self.mixer_out)
+        volgroups = re_vol.search(self.mixer_out)
 
-		if volgroups:
-			return int(volgroups.groups()[0])
-		else:
-			# this shouldn't happen
-			return -1
+        if volgroups:
+            return int(volgroups.groups()[0])
+        else:
+            # this shouldn't happen
+            return -1
 
-	def draw(self):
-		if self.theme_path:
-			self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
-		else:
-			base._TextBox.draw(self)
+    def draw(self):
+        if self.theme_path:
+            self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
+        else:
+            base._TextBox.draw(self)
 
-	def cmd_increase_vol(self):
-		if self.volume_up_command is not None:
-			subprocess.call(self.volume_up_command, shell=True)
-		else:
-			subprocess.call(
-				self.create_amixer_command("-q", "sset", self.channel, "{}%+".format(self.step))
-			)
+    def cmd_increase_vol(self):
+        if self.volume_up_command is not None:
+            subprocess.call(self.volume_up_command, shell=True)
+        else:
+            subprocess.call(
+                self.create_amixer_command("-q", "sset", self.channel, "{}%+".format(self.step))
+            )
 
-	def cmd_decrease_vol(self):
-		if self.volume_down_command is not None:
-			subprocess.call(self.volume_down_command, shell=True)
-		else:
-			subprocess.call(
-				self.create_amixer_command("-q", "sset", self.channel, "{}%-".format(self.step))
-			)
+    def cmd_decrease_vol(self):
+        if self.volume_down_command is not None:
+            subprocess.call(self.volume_down_command, shell=True)
+        else:
+            subprocess.call(
+                self.create_amixer_command("-q", "sset", self.channel, "{}%-".format(self.step))
+            )
 
-	def cmd_mute(self):
-		if self.mute_command is not None:
-			subprocess.call(self.mute_command, shell=True)
-		else:
-			subprocess.call(self.create_amixer_command("-q", "sset", self.channel, "toggle"))
+    def cmd_mute(self):
+        if self.mute_command is not None:
+            subprocess.call(self.mute_command, shell=True)
+        else:
+            subprocess.call(self.create_amixer_command("-q", "sset", self.channel, "toggle"))
 
-	def cmd_run_app(self):
-		if self.volume_app is not None:
-			subprocess.Popen(self.volume_app, shell=True)
+    def cmd_run_app(self):
+        if self.volume_app is not None:
+            subprocess.Popen(self.volume_app, shell=True)
