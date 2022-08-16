@@ -78,9 +78,21 @@ class Volume(base._TextBox):
             "Volume change for up an down commands in percentage."
             "Only used if ``volume_up_command`` and ``volume_down_command`` are not set.",
         ),
-        ("unmute_text", "[on]", "Text displayed when the volume is unmuted and 'mute' field is included in ``format``"),
-        ("mute_text", "[off]", "Text displayed when the volume is muted and 'mute' field is included in ``format``"),
-        ("format", "{volume}%", "Format of text to display. Available fields: 'volume' and 'mute'"),
+        (
+            "unmute_text",
+            "[on]",
+            "Text displayed when the volume is unmuted and 'mute' field is included in ``format``",
+        ),
+        (
+            "mute_text",
+            "[off]",
+            "Text displayed when the volume is muted and 'mute' field is included in ``format``",
+        ),
+        (
+            "format",
+            "{volume}%",
+            "Format of text to display. Available fields: 'volume' and 'mute'",
+        ),
     ]
 
     def __init__(self, **config):
