@@ -50,7 +50,8 @@ class CheckCairoXcb(install):
                 textwrap.dedent(
                     """
 
-            It looks like your cairocffi was not built with xcffib support.  To fix this:
+            It looks like your cairocffi was not built with xcffib support. If you want
+            to use Qtile's X11 backend, you'll need to fix this as follows:
 
               - Ensure a recent xcffib is installed (pip install 'xcffib>=0.5.0')
               - The pip cache is cleared (remove ~/.cache/pip, if it exists)
@@ -65,7 +66,6 @@ class CheckCairoXcb(install):
                 )
             )
 
-            sys.exit(1)
         install.finalize_options(self)
 
 

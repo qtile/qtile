@@ -2,6 +2,15 @@
 Installation
 ============
 
+TL;DR:
+
+.. code-block:: sh
+   # X11? Install an X server then:
+   pip install qtile[x11]
+   # Or Wayland? Install wlroots then:
+   pip install qtile[wayland]
+
+
 Distro Guides
 =============
 
@@ -110,11 +119,14 @@ use the latest version on PyPI:
 Qtile
 -----
 
-With the dependencies in place, you can now install the stable version of qtile from PyPI:
+You can install the stable version of Qtile from PyPI with one of these
+commands:
 
 .. code-block:: bash
 
    pip install qtile
+   pip install qtile[x11]  # Also install X11 backend Python dependencies
+   pip install qtile[wayland]  # Or Wayland backend Python dependencies
 
 
 Or install qtile-git with:
