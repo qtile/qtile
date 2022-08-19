@@ -28,7 +28,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from libqtile.backend.x11 import core
+from libqtile.backend.x11.xkeysyms import keysyms
 
 if TYPE_CHECKING:
     from typing import Any
@@ -140,8 +140,17 @@ class Config:
         """
         Validate the configuration against the core.
         """
-        valid_keys = core.get_keys()
-        valid_mods = core.get_modifiers()
+        valid_keys = keysyms.keys()
+        valid_mods = [
+            "shift",
+            "lock",
+            "control",
+            "mod1",
+            "mod2",
+            "mod3",
+            "mod4",
+            "mod5",
+        ]
         # we explicitly do not want to set self.keys and self.mouse above,
         # because they are dynamically resolved from the default_config. so we
         # need to ignore the errors here about missing attributes.

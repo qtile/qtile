@@ -56,14 +56,6 @@ _IGNORED_EVENTS = {
 }
 
 
-def get_keys() -> list[str]:
-    return list(xcbq.keysyms.keys())
-
-
-def get_modifiers() -> list[str]:
-    return list(xcbq.ModMasks.keys())
-
-
 class ExistingWMException(Exception):
     pass
 
