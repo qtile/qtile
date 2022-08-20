@@ -581,6 +581,7 @@ class Core(base.Core, wlrq.HasListeners):
                     image._ptr.hotspot_x,
                     image._ptr.hotspot_y,
                 )
+        hook.fire("xwayland_ready")
 
     def _on_xwayland_new_surface(self, _listener: Listener, surface: xwayland.Surface) -> None:
         logger.debug("Signal: xwayland new_surface")

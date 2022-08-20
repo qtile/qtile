@@ -355,6 +355,18 @@ class Subscribe:
         """
         return self._subscribe("resume", func)
 
+    def xwayland_ready(self, func):
+        """
+        Called when xwayland is started and ready and "DISPLAY" is set in os.environ.
+
+        Note: only the wayland backend fires this.
+
+        **Arguments**
+
+        None
+        """
+        return self._subscribe("xwayland_ready", func)
+
 
 subscribe = Subscribe()
 
