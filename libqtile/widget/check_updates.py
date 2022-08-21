@@ -24,10 +24,35 @@ from subprocess import CalledProcessError, Popen
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
+# format: "Distro": ("cmd", "number of lines to subtract from output")
+CMD_DICT = {
+    "Arch": ("pacman -Qu", 0),
+    "Arch_checkupdates": ("checkupdates", 0),
+    "Arch_Sup": ("pacman -Sup", 0),
+    "Arch_paru": ("paru -Qu", 0),
+    "Arch_paru_Sup": ("paru -Sup", 0),
+    "Arch_yay": ("yay -Qu", 0),
+    "Debian": ("apt-show-versions -u -b", 0),
+    "Gentoo_eix": ("EIX_LIMIT=0 eix -u# --world", 0),
+    "Ubuntu": ("aptitude search ~U", 0),
+    "Fedora": ("dnf list updates -q", 1),
+    "FreeBSD": ("pkg_version -I -l '<'", 0),
+    "Mandriva": ("urpmq --auto-select", 0),
+}
+
+# We need the spaces here to ensure the indentation is correct in the docstring
+CMD_DOC_COMMANDS = "\n".join(f"    * ``'{k}'`` runs ``{v}``" for k, v in CMD_DICT.items())
+
 
 class CheckUpdates(base.ThreadPoolText):
-    """
+    # The docstring includes some dynamic content so we need to compile that content
+    # first and then set the docstring to that content.
+    doc = f"""
     Shows number of pending updates in different unix systems.
+
+    The following built-in options are available via the ``distro`` parameter:
+
+{CMD_DOC_COMMANDS}
 
     .. note::
 
@@ -41,6 +66,8 @@ class CheckUpdates(base.ThreadPoolText):
         command in a terminal to view any error messages.
 
     """
+
+    __doc__ = doc
 
     defaults = [
         ("distro", "Arch", "Name of your distribution"),
@@ -70,22 +97,6 @@ class CheckUpdates(base.ThreadPoolText):
         # Helpful to have this as a variable as we can shorten it for testing
         self.execute_polling_interval = 1
 
-        # format: "Distro": ("cmd", "number of lines to subtract from output")
-        self.cmd_dict = {
-            "Arch": ("pacman -Qu", 0),
-            "Arch_checkupdates": ("checkupdates", 0),
-            "Arch_Sup": ("pacman -Sup", 0),
-            "Arch_paru": ("paru -Qu", 0),
-            "Arch_paru_Sup": ("paru -Sup", 0),
-            "Arch_yay": ("yay -Qu", 0),
-            "Debian": ("apt-show-versions -u -b", 0),
-            "Gentoo_eix": ("EIX_LIMIT=0 eix -u# --world", 0),
-            "Ubuntu": ("aptitude search ~U", 0),
-            "Fedora": ("dnf list updates -q", 1),
-            "FreeBSD": ("pkg_version -I -l '<'", 0),
-            "Mandriva": ("urpmq --auto-select", 0),
-        }
-
         if self.custom_command:
             # Use custom_command
             self.cmd = self.custom_command
@@ -93,10 +104,10 @@ class CheckUpdates(base.ThreadPoolText):
         else:
             # Check if distro name is valid.
             try:
-                self.cmd = self.cmd_dict[self.distro][0]
-                self.custom_command_modify = lambda x: x - self.cmd_dict[self.distro][1]
+                self.cmd = CMD_DICT[self.distro][0]
+                self.custom_command_modify = lambda x: x - CMD_DICT[self.distro][1]
             except KeyError:
-                distros = sorted(self.cmd_dict.keys())
+                distros = sorted(CMD_DICT.keys())
                 logger.error(
                     "%s is not a valid distro name. Use one of the list: %s.",
                     self.distro,
