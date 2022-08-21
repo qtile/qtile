@@ -2,6 +2,8 @@ Qtile x.xx.x, released XXXX-XX-XX:
     * features
       - Change how `tox` runs tests. See https://docs.qtile.org/en/latest/manual/contributing.html#running-tests-locally
       for more information on how to run tests locally.
+      - Add `ScreenSplit` layout which allows multiple layouts per screen. Also adds `ScreenSplit`
+        widget to display name of active split.
     * bugfixes
 
 Qtile 0.23.0, released 2023-09-24:
