@@ -85,7 +85,7 @@ class Volume(base._TextBox):
         ),
         (
             "mute_format",
-            "{volume}% M",
+            "M",
             "Format of text to display when the volume is muted. Available fields: 'volume'",
         ),
     ]

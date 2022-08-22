@@ -235,7 +235,6 @@ class PulseVolume(Volume):
         if self.default_sink:
             if self.default_sink["muted"]:
                 self.mute = True
-                return 0
             base = self.default_sink["base_volume"]
             if not base:
                 return -1
