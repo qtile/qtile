@@ -844,6 +844,8 @@ class Mirror(_Widget):
         reflection.draw = self.hook(reflection.draw)
         self.reflects = reflection
         self._length = 0
+        if self.reflects.length_type == bar.STRETCH:
+            self.length_type = bar.STRETCH
 
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
@@ -854,7 +856,9 @@ class Mirror(_Widget):
 
     @property
     def length(self):
-        return self.reflects.length
+        if self.length_type != bar.STRETCH:
+            return self.reflects.length
+        return self._length
 
     @length.setter
     def length(self, value):
@@ -863,21 +867,20 @@ class Mirror(_Widget):
     def hook(self, draw):
         def _():
             draw()
-            self.draw()
+            if self.length_type == bar.STRETCH:
+                self.bar.draw()
+            else:
+                self.draw()
 
         return _
 
     def draw(self):
-        if self._length != self.reflects.length:
+        if self.length_type != bar.STRETCH and self._length != self.reflects.length:
             self._length = self.length
             self.bar.draw()
         else:
-            # We only update the mirror's drawer if the parent widget has
-            # contents in its RecordingSurface. If this is False then the widget
-            # wil just show the existing drawer contents.
-            if self.reflects.drawer.needs_update:
-                self.drawer.clear(self.background or self.bar.background)
-                self.reflects.drawer.paint_to(self.drawer)
+            self.drawer.clear(self.reflects.background or self.bar.background)
+            self.reflects.drawer.paint_to(self.drawer)
             self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
 
     def button_press(self, x, y, button):
