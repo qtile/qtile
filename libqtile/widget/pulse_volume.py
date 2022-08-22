@@ -231,10 +231,10 @@ class PulseVolume(Volume):
             self.bar.draw()
 
     def get_volume(self):
-        self.mute = self.unmute_text
+        self.mute = False
         if self.default_sink:
             if self.default_sink["muted"]:
-                self.mute = self.mute_text
+                self.mute = True
                 return 0
             base = self.default_sink["base_volume"]
             if not base:

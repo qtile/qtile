@@ -51,10 +51,6 @@ def test_emoji():
     vol._update_drawer()
     assert vol.text == "\U0001f50a"
 
-    vol.mute = "[off]"
-    vol._update_drawer()
-    assert vol.text == "\U0001f507"
-
 
 def test_text():
     fmt = "Volume: {}"
@@ -64,10 +60,14 @@ def test_text():
     assert vol.text == "80%"
 
 
-def test_format():
-    format = "Volume: {volume}% {mute}"
-    vol = Volume(format=format)
+def test_formats():
+    format = "Volume: {volume}%"
+    mute_format = "Volume: M"
+    vol = Volume(unmute_format=format, mute_format=mute_format)
     vol.volume = 50
-    vol.mute = "[on]"
     vol._update_drawer()
-    assert vol.text == "Volume: 50% [on]"
+    assert vol.text == "Volume: 50%"
+
+    vol.mute = True
+    vol._update_drawer()
+    assert vol.text == "Volume: M"

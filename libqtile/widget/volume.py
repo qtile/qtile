@@ -79,19 +79,14 @@ class Volume(base._TextBox):
             "Only used if ``volume_up_command`` and ``volume_down_command`` are not set.",
         ),
         (
-            "unmute_text",
-            "[on]",
-            "Text displayed when the volume is unmuted and 'mute' field is included in ``format``",
-        ),
-        (
-            "mute_text",
-            "[off]",
-            "Text displayed when the volume is muted and 'mute' field is included in ``format``",
-        ),
-        (
-            "format",
+            "unmute_format",
             "{volume}%",
-            "Format of text to display. Available fields: 'volume' and 'mute'",
+            "Format of text to display. Available fields: 'volume'",
+        ),
+        (
+            "mute_format",
+            "{volume}% M",
+            "Format of text to display when the volume is muted. Available fields: 'volume'",
         ),
     ]
 
@@ -100,7 +95,7 @@ class Volume(base._TextBox):
         self.add_defaults(Volume.defaults)
         self.surfaces = {}
         self.volume = None
-        self.mute = ""
+        self.mute = False
         self.mixer_out = ""
 
         self.add_callbacks(
@@ -141,7 +136,7 @@ class Volume(base._TextBox):
 
     def update(self):
         vol = self.get_volume()
-        next_mute = self.mute_text if "[off]" in self.mixer_out else self.unmute_text
+        next_mute = "[off]" in self.mixer_out
 
         if vol != self.volume or self.mute != next_mute:
             self.volume = vol
@@ -155,7 +150,7 @@ class Volume(base._TextBox):
     def _update_drawer(self):
         if self.theme_path:
             self.drawer.clear(self.background or self.bar.background)
-            if self.volume <= 0 or self.mute == self.mute_text:
+            if self.volume <= 0 or self.mute:
                 img_name = "audio-volume-muted"
             elif self.volume <= 30:
                 img_name = "audio-volume-low"
@@ -167,7 +162,7 @@ class Volume(base._TextBox):
             self.drawer.ctx.set_source(self.surfaces[img_name])
             self.drawer.ctx.paint()
         elif self.emoji:
-            if self.volume <= 0 or self.mute == self.mute_text:
+            if self.volume <= 0 or self.mute:
                 self.text = "\U0001f507"
             elif self.volume <= 30:
                 self.text = "\U0001f508"
@@ -176,7 +171,9 @@ class Volume(base._TextBox):
             elif self.volume >= 80:
                 self.text = "\U0001f50a"
         else:
-            self.text = self.format.format(volume=self.volume, mute=self.mute)
+            self.text = (self.mute_format if self.mute else self.unmute_format).format(
+                volume=self.volume
+            )
 
     def setup_images(self):
         from libqtile import images
