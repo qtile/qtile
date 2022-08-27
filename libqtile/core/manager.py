@@ -162,7 +162,7 @@ class Qtile(CommandObject):
             else:
                 self._state.apply(self)
 
-        self.core.distribute_windows(initial)
+        self.core.on_config_load(initial)
 
         if self._state:
             for screen in self.screens:

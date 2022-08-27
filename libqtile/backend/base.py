@@ -90,8 +90,10 @@ class Core(CommandObject, metaclass=ABCMeta):
     def ungrab_pointer(self) -> None:
         """Release grabbed pointer events"""
 
-    def distribute_windows(self, initial: bool) -> None:
-        """Distribute windows to groups. `initial` will be `True` if Qtile just started."""
+    def on_config_load(self, initial: bool) -> None:
+        """
+        Respond to config loading. `initial` will be `True` if Qtile just started.
+        """
 
     def warp_pointer(self, x: int, y: int) -> None:
         """Warp the pointer to the given coordinates relative."""

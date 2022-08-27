@@ -805,7 +805,7 @@ class Core(base.Core, wlrq.HasListeners):
             self.event_loop.dispatch(0)
             self.display.flush_clients()
 
-    def distribute_windows(self, initial: bool) -> None:
+    def on_config_load(self, initial: bool) -> None:
         if initial:
             # This backend does not support restarting
             return
@@ -840,6 +840,11 @@ class Core(base.Core, wlrq.HasListeners):
                 win.unhide()
             else:
                 win.hide()
+
+        # Apply input device configuration
+        if self.qtile.config.wl_input_rules:
+            for device in [*self.keyboards, *self._pointers]:
+                device.configure(self.qtile.config.wl_input_rules)
 
     def new_wid(self) -> int:
         """Get a new unique window ID"""
