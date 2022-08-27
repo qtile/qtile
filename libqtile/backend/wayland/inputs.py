@@ -70,7 +70,7 @@ class InputConfig(configurable.Configurable):
         wl_input_rules = {
             "1267:12377:ELAN1300:00 04F3:3059 Touchpad": InputConfig(left_handed=True),
             "*": InputConfig(left_handed=True, pointer_accel=True),
-            "type:keyboard": InputConfig(xkb_options="caps:swapescape"),
+            "type:keyboard": InputConfig(kb_options="ctrl:nocaps,compose:ralt"),
         }
 
     When a input device is being configured, the most specific matching key in the
@@ -200,7 +200,7 @@ class Keyboard(HasListeners):
 
         self.core.idle.notify_activity(self.seat)
 
-        if event.state == KEY_PRESSED:
+        if event.state == KEY_PRESSED and not self.core.exclusive_client:
             # translate libinput keycode -> xkbcommon
             keycode = event.keycode + 8
             layout_index = lib.xkb_state_key_get_layout(self.keyboard._ptr.xkb_state, keycode)

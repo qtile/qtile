@@ -496,7 +496,7 @@ class Screen(CommandObject):
         elif name == "window" and self.group is not None:
             return True, [i.wid for i in self.group.windows]
         elif name == "bar":
-            return False, [x.position for x in self.gaps]
+            return False, [x.position for x in self.gaps if isinstance(x, Bar)]
         elif name == "widget":
             bars = (g for g in self.gaps if isinstance(g, Bar))
             return False, [w.name for b in bars for w in b.widgets]
@@ -520,7 +520,10 @@ class Screen(CommandObject):
                         return i
         elif name == "bar":
             assert isinstance(sel, str)
-            return getattr(self, sel)
+            bar = getattr(self, sel)
+            if isinstance(bar, Bar):
+                return bar
+
         elif name == "widget":
             for gap in self.gaps:
                 if not isinstance(gap, Bar):

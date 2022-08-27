@@ -99,6 +99,10 @@ class Cmus(base.ThreadPoolText):
             if self.local:
                 artist = info["artist"]
                 now_playing = "{0} - {1}".format(artist, title)
+                if now_playing == " - ":
+                    file_path = info["file"]
+                    file_path = file_path.split("/")[-1]
+                    now_playing = file_path
             else:
                 if info["stream"]:
                     now_playing = info["stream"]
