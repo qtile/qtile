@@ -222,7 +222,7 @@ class Core(base.Core):
             loop.remove_reader(self.fd)
             self.fd = None
 
-    def distribute_windows(self, initial) -> None:
+    def on_config_load(self, initial) -> None:
         """Assign windows to groups"""
         assert self.qtile is not None
 
