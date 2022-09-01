@@ -885,3 +885,9 @@ class Mirror(_Widget):
 
     def button_press(self, x, y, button):
         self.reflects.button_press(x, y, button)
+
+    def mouse_enter(self, x, y):
+        self.reflects.mouse_enter(x, y)
+
+    def mouse_leave(self, x, y):
+        self.reflects.mouse_leave(x, y)
