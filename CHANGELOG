@@ -16,6 +16,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Add scrolling ability to `_TextBox`-based widgets.
         - Add player controls (via mouse callbacks) to `Mpris2` widget.
         - Wayland: input inhibitor protocol support added (pywayland>=0.4.14 & pywlroots>=0.15.19)
+        - Add commands to control Pomodoro widget.
     * bugfixes
         - Widgets that are incompatible with a backend (e.g. Systray on Wayland) will no longer show 
           as a ConfigError in the bar. Instead the widget is silently removed from the bar and a message
