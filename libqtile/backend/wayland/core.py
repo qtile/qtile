@@ -243,12 +243,13 @@ class Core(base.Core, wlrq.HasListeners):
         return "wayland"
 
     def finalize(self) -> None:
+        self.finalize_listeners()
+        self._poll()
         for kb in self.keyboards.copy():
             kb.finalize()
         for out in self.outputs.copy():
             out.finalize()
 
-        self.finalize_listeners()
         if self._xwayland:
             self._xwayland.destroy()
         self.cursor_manager.destroy()
@@ -313,20 +314,15 @@ class Core(base.Core, wlrq.HasListeners):
         logger.debug("Signal: backend new_output_event")
 
         wlr_output.init_render(self._allocator, self.renderer)
-
-        if wlr_output.modes != []:
-            mode = wlr_output.preferred_mode()
-            if mode is None:
-                logger.error("New output has no output mode")
-                return
-            wlr_output.set_mode(mode)
-            wlr_output.enable()
-            wlr_output.commit()
+        wlr_output.set_mode(wlr_output.preferred_mode())
+        wlr_output.enable()
+        wlr_output.commit()
 
         self.outputs.append(Output(self, wlr_output))
         # Put new output at far right
         layout_geo = self.output_layout.get_box()
-        self.output_layout.add(wlr_output, layout_geo.width, 0)
+        x = layout_geo.width if layout_geo else 0
+        self.output_layout.add(wlr_output, x, 0)
 
         if not self._current_output:
             self._current_output = self.outputs[0]
@@ -336,12 +332,13 @@ class Core(base.Core, wlrq.HasListeners):
         config = OutputConfigurationV1()
 
         for output in self.outputs:
-            box = self.output_layout.get_box(output.wlr_output)
             head = OutputConfigurationHeadV1.create(config, output.wlr_output)
-            head.state.x = output.x = box.x
-            head.state.y = output.y = box.y
-            head.state.enabled = output.wlr_output.enabled
-            head.state.mode = output.wlr_output.current_mode
+            mode = output.wlr_output.current_mode
+            head.state.mode = mode
+            head.state.enabled = mode is not None and output.wlr_output.enabled
+            box = self.output_layout.get_box(output.wlr_output)
+            head.state.x = output.x = box.x if box else 0
+            head.state.y = output.y = box.y if box else 0
 
         self.output_manager.set_configuration(config)
         self.outputs.sort(key=lambda o: (o.x, o.y))
@@ -598,7 +595,8 @@ class Core(base.Core, wlrq.HasListeners):
             wlr_output = state.output
 
             if state.enabled:
-                wlr_output.enable()
+                if not wlr_output.enabled:
+                    wlr_output.enable()
                 if state.mode:
                     wlr_output.set_mode(state.mode)
                 else:
@@ -608,11 +606,15 @@ class Core(base.Core, wlrq.HasListeners):
                         state.custom_mode.refresh,
                     )
 
-                self.output_layout.move(wlr_output, state.x, state.y)
+                # `add` will add outputs that have been removed. Any other outputs that
+                # are already in the layout are just moved as if we had used `move`.
+                self.output_layout.add(wlr_output, state.x, state.y)
                 wlr_output.set_transform(state.transform)
                 wlr_output.set_scale(state.scale)
             else:
-                wlr_output.enable(enable=False)
+                if wlr_output.enabled:
+                    wlr_output.enable(enable=False)
+                self.output_layout.remove(wlr_output)
 
             ok = wlr_output.test()
             if not ok:
@@ -1060,6 +1062,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def remove_output(self, output: Output) -> None:
         self.outputs.remove(output)
+        self.output_layout.remove(output.wlr_output)
         if output is self._current_output:
             self._current_output = self.outputs[0] if self.outputs else None
             self.stack_windows()
