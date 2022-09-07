@@ -80,8 +80,8 @@ class Output(HasListeners):
             wlr_output.commit()
 
     def finalize(self) -> None:
-        self.core.remove_output(self)
         self.finalize_listeners()
+        self.core.remove_output(self)
 
     @property
     def screen(self) -> Screen:
