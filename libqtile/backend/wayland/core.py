@@ -97,8 +97,6 @@ class Core(base.Core, wlrq.HasListeners):
     def __init__(self) -> None:
         """Setup the Wayland core backend"""
         self.qtile: Qtile | None = None
-        self.desktops: int = 1
-        self.current_desktop: int = 0
         self._hovered_internal: window.Internal | None = None
         self.focused_internal: window.Internal | None = None
 
