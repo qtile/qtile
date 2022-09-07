@@ -27,7 +27,6 @@
 #
 from __future__ import annotations
 
-import contextlib
 import os.path
 import sys
 from typing import TYPE_CHECKING
@@ -38,7 +37,7 @@ from libqtile.command.base import CommandObject
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, ContextManager, Iterable
+    from typing import Any, Callable, Iterable
 
     from libqtile.backend import base
     from libqtile.bar import BarType
@@ -359,7 +358,6 @@ class Screen(CommandObject):
     """
 
     group: _Group
-    previous_group: _Group
     index: int
 
     def __init__(
@@ -389,6 +387,7 @@ class Screen(CommandObject):
         self.y = y if y is not None else 0
         self.width = width if width is not None else 0
         self.height = height if height is not None else 0
+        self.previous_group: _Group | None = None
 
     def _configure(
         self,
@@ -407,6 +406,7 @@ class Screen(CommandObject):
         self.y = y
         self.width = width
         self.height = height
+
         self.set_group(group)
         for i in self.gaps:
             i._configure(qtile, self, reconfigure=reconfigure_gaps)
@@ -461,7 +461,9 @@ class Screen(CommandObject):
         if new_group.screen == self:
             return
 
-        if save_prev and hasattr(self, "group"):
+        if save_prev and new_group is not self.group:
+            # new_group can be self.group only if the screen is getting configured for
+            # the first time
             self.previous_group = self.group
 
         if new_group.screen:
@@ -479,20 +481,17 @@ class Screen(CommandObject):
             s1.group = g2
             g2.set_screen(s1, warp)
         else:
-            if hasattr(self, "group"):
-                old_group = self.group
-                assert self.qtile is not None
-                ctx: ContextManager = self.qtile.core.masked()
-            else:
-                old_group = None
-                ctx = contextlib.nullcontext()
+            assert self.qtile is not None
+            old_group = self.group
             self.group = new_group
-            with ctx:
+            with self.qtile.core.masked():
                 # display clients of the new group and then hide from old group
                 # to remove the screen flickering
                 new_group.set_screen(self, warp)
 
-                if old_group is not None:
+                # Can be the same group only if the screen just got configured for the
+                # first time - see `Qtile._process_screens`.
+                if old_group is not new_group:
                     old_group.set_screen(None, warp)
 
         hook.fire("setgroup")
@@ -501,7 +500,7 @@ class Screen(CommandObject):
 
     def toggle_group(self, group: _Group | None = None, warp: bool = True) -> None:
         """Switch to the selected group or to the previously active one"""
-        if group in (self.group, None) and hasattr(self, "previous_group"):
+        if group in (self.group, None) and self.previous_group:
             group = self.previous_group
         self.set_group(group, warp=warp)
 
