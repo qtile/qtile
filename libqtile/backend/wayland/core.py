@@ -356,7 +356,6 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_request_cursor(
         self, _listener: Listener, event: seat.PointerRequestSetCursorEvent
     ) -> None:
-        logger.debug("Signal: seat request_set_cursor_event")
         self._cursor_state.surface = event.surface
         self._cursor_state.hotspot = event.hotspot
 
