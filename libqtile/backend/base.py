@@ -266,7 +266,7 @@ class Window(_Window, metaclass=ABCMeta):
     float_y: int | None
 
     def __repr__(self):
-        return "Window(name=%r, wid=%i)" % (self.name, self.wid)
+        return "%s(name=%r, wid=%i)" % (self.__class__.__name__, self.name, self.wid)
 
     @property
     @abstractmethod
@@ -597,7 +597,7 @@ class Static(_Window, metaclass=ABCMeta):
     height: Any
 
     def __repr__(self):
-        return "Static(name=%r, wid=%s)" % (self.name, self.wid)
+        return "%s(name=%r, wid=%i)" % (self.__class__.__name__, self.name, self.wid)
 
     def info(self) -> dict:
         """Return a dictionary of info."""
