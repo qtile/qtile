@@ -267,7 +267,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             group = self.qtile.groups_map[group_name]
 
         if self.group is group:
-            if toggle and hasattr(self.group.screen, "previous_group"):
+            if toggle and self.group.screen.previous_group:
                 group = self.group.screen.previous_group
             else:
                 return

@@ -306,7 +306,7 @@ class Qtile(CommandObject):
         self.core.finalize()
 
     def _process_screens(self, reloading: bool = False) -> None:
-        current_groups = [s.group for s in self.screens if hasattr(s, "group")]
+        current_groups = [s.group for s in self.screens]
         screens = []
 
         if hasattr(self.config, "fake_screens"):
@@ -344,7 +344,18 @@ class Qtile(CommandObject):
                 for grp in self.groups:
                     if not grp.screen:
                         break
+
             reconfigure_gaps = (x, y, w, h) != (scr.x, scr.y, scr.width, scr.height)
+
+            if not hasattr(scr, "group"):
+                # Ensure that this screen actually *has* a group, as it won't get
+                # assigned one during `__init__` because they are created in the config,
+                # where the groups also are. This lets us type `Screen.group` as
+                # `_Group` rather than `_Group | None` which would need lots of other
+                # changes to check for `None`s, and conceptually all screens should have
+                # a group anyway.
+                scr.group = grp
+
             scr._configure(self, i, x, y, w, h, grp, reconfigure_gaps=reconfigure_gaps)
             screens.append(scr)
 
@@ -511,7 +522,7 @@ class Qtile(CommandObject):
             raise ValueError("Can't delete all groups.")
         if name in self.groups_map.keys():
             group = self.groups_map[name]
-            if group.screen and hasattr(group.screen, "previous_group"):
+            if group.screen and group.screen.previous_group:
                 target = group.screen.previous_group
             else:
                 target = group.get_previous_group()
