@@ -114,6 +114,11 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self._wm_class: str | None = None
         self._idle_inhibitors_count: int = 0
 
+        # This is a placeholder to be set properly when the window maps for the first
+        # time (and therefore exposed to the user). We need the attribute to exist so
+        # that __repr__ doesn't AttributeError.
+        self._wid: int = -1
+
         self._width: int = 0
         self._height: int = 0
         self.float_x: int | None = None
