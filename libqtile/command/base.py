@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import abc
 import inspect
+import sys
 import traceback
 from typing import TYPE_CHECKING
 
@@ -189,17 +190,18 @@ class CommandObject(metaclass=abc.ABCMeta):
         return str(signature)
 
     def cmd_eval(self, code: str) -> tuple[bool, str | None]:
-        """Evaluates code in the same context as this function
+        """Evaluates code in the module namespace of the command object
 
         Return value is tuple `(success, result)`, success being a boolean and
         result being a string representing the return value of eval, or None if
         exec was used instead.
         """
         try:
+            globals_ = vars(sys.modules[self.__module__])
             try:
-                return True, str(eval(code))
+                return True, str(eval(code, globals_, locals()))
             except SyntaxError:
-                exec(code)
+                exec(code, globals_, locals())
                 return True, None
         except Exception:
             error = traceback.format_exc().strip().split("\n")[-1]

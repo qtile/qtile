@@ -33,5 +33,5 @@ def widget():
     indirect=True,
 )
 def ss_chord(screenshot_manager):
-    screenshot_manager.c.eval("from libqtile import hook;hook.fire('enter_chord', 'vim mode')")
+    screenshot_manager.c.eval("hook.fire('enter_chord', 'vim mode')")
     screenshot_manager.take_screenshot()
