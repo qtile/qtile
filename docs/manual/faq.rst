@@ -137,7 +137,11 @@ Where are the log files for Qtile?
 
 The log files for qtile are at ``~/.local/share/qtile/qtile.log``.
 
-I get ``AttributeError: cffi library 'libcairo.so.2' has no function, constant or global variable named 'cairo_xcb_surface_create'``
-====================================================================================================================================
+Why do I get an ``AttributeError`` when building Qtile?
+=======================================================
 
-See :ref:`Cairo Error <cairo-errors>`
+If you see this message:
+``AttributeError: cffi library 'libcairo.so.2' has no function, constant or global variable named 'cairo_xcb_surface_create'``
+when building Qtile then your Cairo version lacks XCB support.
+
+See :ref:`Cairo Error <cairo-errors>` for further information.
