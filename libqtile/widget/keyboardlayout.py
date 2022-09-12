@@ -24,6 +24,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 from abc import ABCMeta, abstractmethod
 from subprocess import CalledProcessError, check_output
@@ -94,6 +95,8 @@ class _X11LayoutBackend(_BaseLayoutBackend):
             logger.error("Can not change the keyboard layout:")
         except OSError:
             logger.error("Please, check that setxkbmap is available:")
+        else:
+            os.system("xmodmap $HOME/.Xmodmap")
 
 
 class _WaylandLayoutBackend(_BaseLayoutBackend):
