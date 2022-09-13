@@ -24,7 +24,6 @@
 
 from __future__ import annotations
 
-import os
 import re
 from abc import ABCMeta, abstractmethod
 from subprocess import CalledProcessError, check_output
@@ -96,7 +95,12 @@ class _X11LayoutBackend(_BaseLayoutBackend):
         except OSError:
             logger.error("Please, check that setxkbmap is available:")
         else:
-            os.system("xmodmap $HOME/.Xmodmap")
+            try:
+                check_output("xmodmap $HOME/.Xmodmap", shell=True)
+            except CalledProcessError:
+                logger.error("Can not load ~/.Xmodmap:")
+            except OSError:
+                logger.error("Please, check that xmodmap is available:")
 
 
 class _WaylandLayoutBackend(_BaseLayoutBackend):
