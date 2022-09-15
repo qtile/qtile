@@ -329,19 +329,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_output_layout_change(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: output_layout change_event")
-        config = OutputConfigurationV1()
-
-        for output in self.outputs:
-            head = OutputConfigurationHeadV1.create(config, output.wlr_output)
-            mode = output.wlr_output.current_mode
-            head.state.mode = mode
-            head.state.enabled = mode is not None and output.wlr_output.enabled
-            box = self.output_layout.get_box(output.wlr_output)
-            head.state.x = output.x = box.x if box else 0
-            head.state.y = output.y = box.y if box else 0
-
-        self.output_manager.set_configuration(config)
-        self.outputs.sort(key=lambda o: (o.x, o.y))
+        self._update_output_manager_config()
 
     def _on_output_manager_apply(
         self, _listener: Listener, config: OutputConfigurationV1
@@ -582,6 +570,22 @@ class Core(base.Core, wlrq.HasListeners):
         win = xwindow.XWindow(self, self.qtile, surface)
         self.pending_windows.add(win)
 
+    def _update_output_manager_config(self) -> None:
+        config = OutputConfigurationV1()
+
+        for output in self.outputs:
+            head = OutputConfigurationHeadV1.create(config, output.wlr_output)
+            mode = output.wlr_output.current_mode
+            head.state.mode = mode
+            head.state.enabled = mode is not None and output.wlr_output.enabled
+            box = self.output_layout.get_box(output.wlr_output)
+            head.state.x = output.x = box.x if box else 0
+            head.state.y = output.y = box.y if box else 0
+
+        self.output_manager.set_configuration(config)
+        self.outputs.sort(key=lambda o: (o.x, o.y))
+        hook.fire("screen_change", None)
+
     def _output_manager_reconfigure(self, config: OutputConfigurationV1, apply: bool) -> None:
         """
         See if an output configuration would be accepted by the backend, and apply it if
@@ -627,10 +631,10 @@ class Core(base.Core, wlrq.HasListeners):
 
         if ok:
             config.send_succeeded()
+            self._update_output_manager_config()
         else:
             config.send_failed()
         config.destroy()
-        hook.fire("screen_change", None)
 
     def _process_cursor_motion(self, time_msec: int, cx: float, cy: float) -> None:
         assert self.qtile
