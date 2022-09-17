@@ -156,7 +156,9 @@ class Volume(base._TextBox):
         elif self.emoji:
             if len(self.emoji_list) < 4:
                 self.emoji_list = ["\U0001f507", "\U0001f508", "\U0001f509", "\U0001f50a"]
-                logger.warning("Emoji list given has less than 4 items. Falling back to default emojis.")
+                logger.warning(
+                    "Emoji list given has less than 4 items. Falling back to default emojis."
+                )
 
             if self.volume <= 0:
                 self.text = self.emoji_list[0]
