@@ -145,3 +145,24 @@ If you see this message:
 when building Qtile then your Cairo version lacks XCB support.
 
 See :ref:`Cairo Error <cairo-errors>` for further information.
+
+How can I match the bar with picom?
+===================================
+
+You can use ``"QTILE_INTERNAL:32c = 1"`` in your picom.conf to match the bar.
+This will match all internal Qtile windows, so if you want to avoid that or to
+target bars individually, you can set a custom property and match that:
+
+.. code-block:: python
+
+   mybar = Bar(...)
+
+   @hook.subscribe.startup
+   def _():
+       mybar.window.window.set_property("QTILE_BAR", 1, "CARDINAL", 32)
+
+This would enable matching on ``mybar``'s window using ``"QTILE_BAR:32c = 1"``.
+See `2526`_ and `1515`_ for more discussion.
+
+.. _`2526`: https://github.com/qtile/qtile/issues/2526
+.. _`1515`: https://github.com/qtile/qtile/issues/1515
