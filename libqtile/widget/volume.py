@@ -34,8 +34,8 @@ import re
 import subprocess
 
 from libqtile import bar
-from libqtile.widget import base
 from libqtile.log_utils import logger
+from libqtile.widget import base
 
 __all__ = [
     "Volume",
