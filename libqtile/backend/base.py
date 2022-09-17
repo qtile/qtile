@@ -643,7 +643,7 @@ class Drawer:
         self.ctx: cairocffi.Context
         self._reset_surface()
 
-        self.mirrors: set[Drawer] = set()
+        self._has_mirrors = False
 
         self.current_rect = (0, 0, 0, 0)
         self.previous_rect = (-1, -1, -1, -1)
@@ -654,9 +654,16 @@ class Drawer:
         self.surface = None
         self.ctx = None
 
-    def add_mirror(self, mirror: Drawer):
-        """Keep details of other drawers that are mirroring this one."""
-        self.mirrors.add(mirror)
+    @property
+    def has_mirrors(self):
+        return self._has_mirrors
+
+    @has_mirrors.setter
+    def has_mirrors(self, value):
+        if value and not self._has_mirrors:
+            self._create_last_surface()
+
+        self._has_mirrors = value
 
     @property
     def width(self) -> int:
@@ -681,6 +688,10 @@ class Drawer:
             None,
         )
         self.ctx = self.new_ctx()
+
+    def _create_last_surface(self):
+        """Creates a separate RecordingSurface for mirrors to access."""
+        self.last_surface = cairocffi.RecordingSurface(cairocffi.CONTENT_COLOR_ALPHA, None)
 
     @property
     def needs_update(self) -> bool:
@@ -771,9 +782,8 @@ class Drawer:
         """
         if self._enabled:
             self._draw(offsetx, offsety, width, height)
-            if self.mirrors:
-                # mypy is tripping over CONTENT_COLOR_ALPHA here despite it working earlier in this file!
-                self.last_surface = cairocffi.RecordingSurface(cairocffi.CONTENT_COLOR_ALPHA, None)  # type: ignore
+            if self.has_mirrors:
+                self._create_last_surface()
                 ctx = cairocffi.Context(self.last_surface)
                 ctx.set_source_surface(self.surface)
                 ctx.paint()

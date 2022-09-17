@@ -63,11 +63,13 @@ class WindowName(base._TextBox):
         hook.subscribe.client_name_updated(self.hook_response)
         hook.subscribe.focus_change(self.hook_response)
         hook.subscribe.float_change(self.hook_response)
+        hook.subscribe.current_screen_change(self.hook_response_current_screen)
 
-        @hook.subscribe.current_screen_change
-        def on_screen_changed():
-            if self.for_current_screen:
-                self.hook_response()
+    def remove_hooks(self):
+        hook.unsubscribe.client_name_updated(self.hook_response)
+        hook.unsubscribe.focus_change(self.hook_response)
+        hook.unsubscribe.float_change(self.hook_response)
+        hook.unsubscribe.current_screen_change(self.hook_response_current_screen)
 
     def hook_response(self, *args):
         if self.for_current_screen:
@@ -96,3 +98,11 @@ class WindowName(base._TextBox):
         else:
             unescaped = self.empty_group_string
         self.update(pangocffi.markup_escape_text(unescaped))
+
+    def hook_response_current_screen(self, *args):
+        if self.for_current_screen:
+            self.hook_response()
+
+    def finalize(self):
+        self.remove_hooks()
+        base._TextBox.finalize(self)

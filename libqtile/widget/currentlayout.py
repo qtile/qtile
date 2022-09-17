@@ -56,13 +56,20 @@ class CurrentLayout(base._TextBox):
             }
         )
 
-    def setup_hooks(self):
-        def hook_response(layout, group):
-            if group.screen is not None and group.screen == self.bar.screen:
-                self.text = layout.name
-                self.bar.draw()
+    def hook_response(self, layout, group):
+        if group.screen is not None and group.screen == self.bar.screen:
+            self.text = layout.name
+            self.bar.draw()
 
-        hook.subscribe.layout_change(hook_response)
+    def setup_hooks(self):
+        hook.subscribe.layout_change(self.hook_response)
+
+    def remove_hooks(self):
+        hook.unsubscribe.layout_change(self.hook_response)
+
+    def finalize(self):
+        self.remove_hooks()
+        base._TextBox.finalize(self)
 
 
 class CurrentLayoutIcon(base._TextBox):
@@ -126,17 +133,22 @@ class CurrentLayoutIcon(base._TextBox):
             }
         )
 
+    def hook_response(self, layout, group):
+        if group.screen is not None and group.screen == self.bar.screen:
+            self.current_layout = layout.name
+            self.bar.draw()
+
     def _setup_hooks(self):
         """
         Listens for layout change and performs a redraw when it occurs.
         """
+        hook.subscribe.layout_change(self.hook_response)
 
-        def hook_response(layout, group):
-            if group.screen is not None and group.screen == self.bar.screen:
-                self.current_layout = layout.name
-                self.bar.draw()
-
-        hook.subscribe.layout_change(hook_response)
+    def _remove_hooks(self):
+        """
+        Listens for layout change and performs a redraw when it occurs.
+        """
+        hook.unsubscribe.layout_change(self.hook_response)
 
     def draw(self):
         if self.icons_loaded:
@@ -241,3 +253,7 @@ class CurrentLayoutIcon(base._TextBox):
             self.surfaces[layout_name] = imgpat
 
         self.icons_loaded = True
+
+    def finalize(self):
+        self._remove_hooks()
+        base._TextBox.finalize(self)

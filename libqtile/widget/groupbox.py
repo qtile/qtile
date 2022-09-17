@@ -68,17 +68,26 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         )
         self.setup_hooks()
 
-    def setup_hooks(self):
-        def hook_response(*args, **kwargs):
-            self.bar.draw()
+    def _hook_response(self, *args, **kwargs):
+        self.bar.draw()
 
-        hook.subscribe.client_managed(hook_response)
-        hook.subscribe.client_urgent_hint_changed(hook_response)
-        hook.subscribe.client_killed(hook_response)
-        hook.subscribe.setgroup(hook_response)
-        hook.subscribe.group_window_add(hook_response)
-        hook.subscribe.current_screen_change(hook_response)
-        hook.subscribe.changegroup(hook_response)
+    def setup_hooks(self):
+        hook.subscribe.client_managed(self._hook_response)
+        hook.subscribe.client_urgent_hint_changed(self._hook_response)
+        hook.subscribe.client_killed(self._hook_response)
+        hook.subscribe.setgroup(self._hook_response)
+        hook.subscribe.group_window_add(self._hook_response)
+        hook.subscribe.current_screen_change(self._hook_response)
+        hook.subscribe.changegroup(self._hook_response)
+
+    def remove_hooks(self):
+        hook.unsubscribe.client_managed(self._hook_response)
+        hook.unsubscribe.client_urgent_hint_changed(self._hook_response)
+        hook.unsubscribe.client_killed(self._hook_response)
+        hook.unsubscribe.setgroup(self._hook_response)
+        hook.unsubscribe.group_window_add(self._hook_response)
+        hook.unsubscribe.current_screen_change(self._hook_response)
+        hook.unsubscribe.changegroup(self._hook_response)
 
     def drawbox(
         self,
@@ -130,6 +139,10 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
             framed.draw_line(offset, y, highlighted)
         else:
             framed.draw(offset, y, rounded)
+
+    def finalize(self):
+        self.remove_hooks()
+        base._TextBox.finalize(self)
 
 
 class AGroupBox(_GroupBase):

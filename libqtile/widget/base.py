@@ -170,6 +170,7 @@ class _Widget(CommandObject, configurable.Configurable):
 
         self.configured = False
         self._futures: list[asyncio.TimerHandle] = []
+        self._mirrors: set[_Widget] = set()
 
     @property
     def length(self):
@@ -368,6 +369,43 @@ class _Widget(CommandObject, configurable.Configurable):
 
     def mouse_leave(self, x, y):
         pass
+
+    def _draw_with_mirrors(self) -> None:
+        self._old_draw()
+        for mirror in self._mirrors:
+            if not mirror.configured:
+                continue
+
+            # If the widget and mirror are on the same bar then we could have an
+            # infinite loop when we call bar.draw(). mirror.draw() will trigger a resize
+            # if it's the wrong size.
+            if mirror.length_type == bar.CALCULATED and mirror.bar is not self.bar:
+                mirror.bar.draw()
+            else:
+                mirror.draw()
+
+    def add_mirror(self, widget: _Widget):
+        if not self._mirrors:
+            self._old_draw = self.draw
+            self.draw = self._draw_with_mirrors  # type: ignore
+
+        self._mirrors.add(widget)
+        if not self.drawer.has_mirrors:
+            self.drawer.has_mirrors = True
+
+    def remove_mirror(self, widget: _Widget):
+        try:
+            self._mirrors.remove(widget)
+        except KeyError:
+            pass
+
+        if not self._mirrors:
+            self.drawer.has_mirrors = False
+
+            if hasattr(self, "_old_draw"):
+                # Deletes the reference to draw and falls back to the original
+                del self.draw
+                del self._old_draw
 
 
 UNSPECIFIED = bar.Obj("UNSPECIFIED")
@@ -841,7 +879,6 @@ class Mirror(_Widget):
 
     def __init__(self, reflection, **config):
         _Widget.__init__(self, reflection.length, **config)
-        reflection.draw = self.hook(reflection.draw)
         self.reflects = reflection
         self._length = 0
         if self.reflects.length_type == bar.STRETCH:
@@ -849,7 +886,7 @@ class Mirror(_Widget):
 
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
-        self.reflects.drawer.add_mirror(self.drawer)
+        self.reflects.add_mirror(self)
         # We need to fill the background once before `draw` is called so, if
         # there's no reflection, the mirror matches its parent bar.
         self.drawer.clear(self.background or self.bar.background)
@@ -863,16 +900,6 @@ class Mirror(_Widget):
     @length.setter
     def length(self, value):
         self._length = value
-
-    def hook(self, draw):
-        def _():
-            draw()
-            if self.length_type == bar.STRETCH:
-                self.bar.draw()
-            else:
-                self.draw()
-
-        return _
 
     def draw(self):
         if self.length_type != bar.STRETCH and self._length != self.reflects.length:
@@ -891,3 +918,7 @@ class Mirror(_Widget):
 
     def mouse_leave(self, x, y):
         self.reflects.mouse_leave(x, y)
+
+    def finalize(self):
+        self.reflects.remove_mirror(self)
+        _Widget.finalize(self)

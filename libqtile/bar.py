@@ -383,6 +383,10 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
     def kill_window(self):
         """Kill the window when the bar's screen is no longer being used."""
+        for name, w in self.qtile.widgets_map.copy().items():
+            if w in self.widgets:
+                w.finalize()
+                del self.qtile.widgets_map[name]
         self.drawer.finalize()
         self.window.kill()
         self.window = None
