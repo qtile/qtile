@@ -6,7 +6,9 @@ help: ## Show this help
 
 .PHONY: check
 check: ## Run the test suite
-	TOXENV=py38 tox
+	@PY=`python --version | sed 's/.*\.\([0-9]*\)\..*/py3\1/'`; \
+		echo TOXENV=$$PY tox; \
+		TOXENV=$$PY tox
 
 .PHONY: lint
 lint: ## Check the source code
