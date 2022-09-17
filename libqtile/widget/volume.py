@@ -72,7 +72,7 @@ class Volume(base._TextBox):
             "emoji_list",
             ["\U0001f507", "\U0001f508", "\U0001f509", "\U0001f50a"],
             "List of emojis/font-symbols to display volume states, only if ``emoji`` is set."
-            "List contains 4 symbols, from lowest volume to highest.",
+            " List contains 4 symbols, from lowest volume to highest.",
         ),
         ("mute_command", None, "Mute command"),
         ("volume_app", None, "App to control volume"),
