@@ -98,7 +98,10 @@ class Core(base.Core, wlrq.HasListeners):
     def __init__(self) -> None:
         """Setup the Wayland core backend"""
         self.qtile: Qtile | None = None
-        self._hovered_internal: window.Internal | None = None
+
+        # This is the window under the pointer
+        self._hovered_window: window.WindowType | None = None
+        # but this Internal receives keyboard input, e.g. via the Prompt widget.
         self.focused_internal: window.Internal | None = None
 
         # Log exceptions that are raised in Wayland callback functions.
@@ -366,6 +369,10 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_request_cursor(
         self, _listener: Listener, event: seat.PointerRequestSetCursorEvent
     ) -> None:
+        if event._ptr.seat_client != self.seat.pointer_state._ptr.focused_client:
+            # The request came from a cheeky window that doesn't have the pointer
+            return
+
         self._cursor_state.surface = event.surface
         self._cursor_state.hotspot = event.hotspot
 
@@ -672,36 +679,50 @@ class Core(base.Core, wlrq.HasListeners):
                 if isinstance(win, base.Internal) or not win.belongs_to_client(
                     self.exclusive_client
                 ):
-                    logger.debug(
-                        "Pointer focus withheld from window not owned by exclusive client."
-                    )
-                    self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
-                    self.seat.pointer_notify_clear_focus()
+                    # Moved to an internal or unrelated window
+                    if self._hovered_window is not win:
+                        logger.debug(
+                            "Pointer focus withheld from window not owned by exclusive client."
+                        )
+                        self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                        self.seat.pointer_notify_clear_focus()
+                        self._hovered_window = win
                     return
 
             if isinstance(win, window.Internal):
-                if self._hovered_internal is win:
+                if self._hovered_window is win:
+                    # movement remained within the same Internal window
                     win.process_pointer_motion(
-                        cx_int - self._hovered_internal.x,
-                        cy_int - self._hovered_internal.y,
+                        cx_int - self._hovered_window.x,
+                        cy_int - self._hovered_window.y,
                     )
                 else:
-                    if self._hovered_internal:
-                        self._hovered_internal.process_pointer_leave(
-                            cx_int - self._hovered_internal.x,
-                            cy_int - self._hovered_internal.y,
-                        )
-                    self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
-                    self.seat.pointer_notify_clear_focus()
+                    if self._hovered_window:
+                        if isinstance(self._hovered_window, window.Internal):
+                            # moved from an Internal to a different Internal
+                            self._hovered_window.process_pointer_leave(
+                                cx_int - self._hovered_window.x,
+                                cy_int - self._hovered_window.y,
+                            )
+                        else:
+                            # moved from a Window or Static to an Internal
+                            if self.seat.pointer_state.focused_surface:
+                                self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                                self.seat.pointer_notify_clear_focus()
                     win.process_pointer_enter(cx_int, cy_int)
-                    self._hovered_internal = win
+                    self._hovered_window = win
                 return
 
             if surface:
+                # The pointer is in a client's surface
                 self.seat.pointer_notify_enter(surface, sx, sy)
                 self.seat.pointer_notify_motion(time_msec, sx, sy)
             else:
-                self.seat.pointer_notify_clear_focus()
+                # The pointer is on the border of a client's window
+                if self.seat.pointer_state.focused_surface:
+                    # We just moved out of a client's surface
+                    self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                    self.seat.pointer_notify_clear_focus()
 
             if win is not self.qtile.current_window:
                 hook.fire("client_mouse_enter", win)
@@ -719,18 +740,22 @@ class Core(base.Core, wlrq.HasListeners):
                         ):
                             self.qtile.focus_screen(win.group.screen.index, False)
 
-            if self._hovered_internal:
-                self._hovered_internal = None
+            self._hovered_window = win
 
         else:
-            self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
-            self.seat.pointer_notify_clear_focus()
-            if self._hovered_internal:
-                self._hovered_internal.process_pointer_leave(
-                    cx_int - self._hovered_internal.x,
-                    cy_int - self._hovered_internal.y,
-                )
-                self._hovered_internal = None
+            # There is no window under the pointer
+            if self._hovered_window:
+                if isinstance(self._hovered_window, window.Internal):
+                    # We just moved out of an Internal
+                    self._hovered_window.process_pointer_leave(
+                        cx_int - self._hovered_window.x,
+                        cy_int - self._hovered_window.y,
+                    )
+                else:
+                    # We just moved out of a Window or Static
+                    self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                    self.seat.pointer_notify_clear_focus()
+                self._hovered_window = None
 
     def _process_cursor_button(self, button: int, pressed: bool) -> bool:
         assert self.qtile is not None
@@ -740,19 +765,19 @@ class Core(base.Core, wlrq.HasListeners):
                 button, self.seat.keyboard.modifier, int(self.cursor.x), int(self.cursor.y)
             )
 
-            if self._hovered_internal:
-                self._hovered_internal.process_button_click(
-                    int(self.cursor.x - self._hovered_internal.x),
-                    int(self.cursor.y - self._hovered_internal.y),
+            if isinstance(self._hovered_window, window.Internal):
+                self._hovered_window.process_button_click(
+                    int(self.cursor.x - self._hovered_window.x),
+                    int(self.cursor.y - self._hovered_window.y),
                     button,
                 )
         else:
             handled = self.qtile.process_button_release(button, self.seat.keyboard.modifier)
 
-            if self._hovered_internal:
-                self._hovered_internal.process_button_release(
-                    int(self.cursor.x - self._hovered_internal.x),
-                    int(self.cursor.y - self._hovered_internal.y),
+            if isinstance(self._hovered_window, window.Internal):
+                self._hovered_window.process_button_release(
+                    int(self.cursor.x - self._hovered_window.x),
+                    int(self.cursor.y - self._hovered_window.y),
                     button,
                 )
 
@@ -762,6 +787,7 @@ class Core(base.Core, wlrq.HasListeners):
         device = inputs.Pointer(self, wlr_device)
         self._pointers.append(device)
         self.cursor.attach_input_device(wlr_device)
+        self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
         return device
 
     def _add_new_keyboard(self, wlr_device: input_device.InputDevice) -> inputs.Keyboard:
