@@ -1205,8 +1205,8 @@ class Static(_Window, base.Static):
             self.height = e.height
 
         self.place(
-            self.screen.x + self.x,
-            self.screen.y + self.y,
+            self.x,
+            self.y,
             self.width,
             self.height,
             self.borderwidth,
@@ -1555,7 +1555,7 @@ class Window(_Window, base.Window):
                 raise CommandError("No such group: %s" % group_name)
 
         if self.group is group:
-            if toggle and hasattr(self.group.screen, "previous_group"):
+            if toggle and self.group.screen.previous_group:
                 group = self.group.screen.previous_group
             else:
                 return

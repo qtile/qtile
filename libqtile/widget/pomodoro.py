@@ -76,8 +76,8 @@ class Pomodoro(base.ThreadPoolText):
 
         self.add_callbacks(
             {
-                "Button1": self._toggle_break,
-                "Button3": self._toggle_active,
+                "Button1": self.cmd_toggle_break,
+                "Button3": self.cmd_toggle_active,
             }
         )
 
@@ -146,7 +146,7 @@ class Pomodoro(base.ThreadPoolText):
         )
         return self.prefix[self.status] + time_string
 
-    def _toggle_break(self):
+    def cmd_toggle_break(self):
         if self.status == self.STATUS_INACTIVE:
             self.status = self.STATUS_START
             return
@@ -173,7 +173,7 @@ class Pomodoro(base.ThreadPoolText):
                     + self.end_time.strftime("%H:%M"),
                 )
 
-    def _toggle_active(self):
+    def cmd_toggle_active(self):
         if self.status != self.STATUS_INACTIVE:
             self.status = self.STATUS_INACTIVE
             if self.notification_on:

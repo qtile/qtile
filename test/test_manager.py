@@ -41,6 +41,7 @@ from libqtile.command.client import SelectError
 from libqtile.command.interface import CommandError, CommandException
 from libqtile.config import Match
 from libqtile.confreader import Config
+from libqtile.group import _Group
 from libqtile.lazy import lazy
 from test.conftest import dualmonitor, multimonitor
 from test.helpers import BareConfig, Retry, assert_window_died
@@ -1013,6 +1014,8 @@ def test_unmap_noscreen(manager):
 
 
 class TScreen(libqtile.config.Screen):
+    group = _Group("")
+
     def set_group(self, x, save_prev=True):
         pass
 

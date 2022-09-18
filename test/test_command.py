@@ -173,6 +173,11 @@ def test_cmd_commands(manager):
 
 
 @server_config
+def test_cmd_eval_namespace(manager):
+    assert manager.c.eval("__name__") == (True, "libqtile.core.manager")
+
+
+@server_config
 def test_call_unknown(manager):
     with pytest.raises(libqtile.command.client.SelectError, match="Not valid child or command"):
         manager.c.nonexistent

@@ -39,6 +39,7 @@ from wlroots.wlr_types import (
     ExportDmabufManagerV1,
     ForeignToplevelManagerV1,
     GammaControlManagerV1,
+    InputInhibitManager,
     OutputLayout,
     PrimarySelectionV1DeviceManager,
     RelativePointerManagerV1,
@@ -96,8 +97,6 @@ class Core(base.Core, wlrq.HasListeners):
     def __init__(self) -> None:
         """Setup the Wayland core backend"""
         self.qtile: Qtile | None = None
-        self.desktops: int = 1
-        self.current_desktop: int = 0
         self._hovered_internal: window.Internal | None = None
         self.focused_internal: window.Internal | None = None
 
@@ -132,6 +131,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         # set up inputs
         self.keyboards: list[inputs.Keyboard] = []
+        self._pointers: list[inputs.Pointer] = []
         self.grabbed_keys: list[tuple[int, int]] = []
         self.grabbed_buttons: list[tuple[int, int]] = []
         DataDeviceManager(self.display)
@@ -146,8 +146,17 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(self.seat.start_drag_event, self._on_start_drag)
         self.add_listener(self.backend.new_input_event, self._on_new_input)
         # Some devices are added early, so we need to remember to configure them
-        self._pending_input_devices: list[input_device.InputDevice] = []
+        self._pending_input_devices: list[inputs._Device] = []
         hook.subscribe.startup_complete(self._configure_pending_inputs)
+
+        self._input_inhibit_manager = InputInhibitManager(self.display)
+        self.add_listener(
+            self._input_inhibit_manager.activate_event, self._on_input_inhibitor_activate
+        )
+        self.add_listener(
+            self._input_inhibit_manager.deactivate_event, self._on_input_inhibitor_deactivate
+        )
+        self.exclusive_client: pywayland.server.Client | None = None
 
         # set up outputs
         self.outputs: list[Output] = []
@@ -187,7 +196,7 @@ class Core(base.Core, wlrq.HasListeners):
         )
         self.idle = Idle(self.display)
         idle_ihibitor_manager = IdleInhibitorManagerV1(self.display)
-        self.add_listener(idle_ihibitor_manager.new_inhibitor_event, self._on_new_inhibitor)
+        self.add_listener(idle_ihibitor_manager.new_inhibitor_event, self._on_new_idle_inhibitor)
         PrimarySelectionV1DeviceManager(self.display)
         virtual_keyboard_manager_v1 = vkeyboard.VirtualKeyboardManagerV1(self.display)
         self.add_listener(
@@ -235,12 +244,15 @@ class Core(base.Core, wlrq.HasListeners):
         return "wayland"
 
     def finalize(self) -> None:
+        self.finalize_listeners()
+        self._poll()
         for kb in self.keyboards.copy():
             kb.finalize()
+        for pt in self._pointers.copy():
+            pt.finalize()
         for out in self.outputs.copy():
             out.finalize()
 
-        self.finalize_listeners()
         if self._xwayland:
             self._xwayland.destroy()
         self.cursor_manager.destroy()
@@ -283,21 +295,27 @@ class Core(base.Core, wlrq.HasListeners):
         logger.debug("Signal: seat start_drag")
         self.live_dnd = wlrq.Dnd(self, event)
 
-    def _on_new_input(self, _listener: Listener, device: input_device.InputDevice) -> None:
+    def _on_new_input(self, _listener: Listener, wlr_device: input_device.InputDevice) -> None:
         logger.debug("Signal: backend new_input_event")
-        if device.device_type == input_device.InputDeviceType.POINTER:
-            self._add_new_pointer(device)
-        elif device.device_type == input_device.InputDeviceType.KEYBOARD:
-            self._add_new_keyboard(device)
+
+        device: inputs._Device
+        if wlr_device.device_type == input_device.InputDeviceType.POINTER:
+            device = self._add_new_pointer(wlr_device)
+        elif wlr_device.device_type == input_device.InputDeviceType.KEYBOARD:
+            device = self._add_new_keyboard(wlr_device)
+        else:
+            logger.info("New %s device", wlr_device.device_type.name)
+            return
 
         capabilities = WlSeat.capability.pointer
         if self.keyboards:
             capabilities |= WlSeat.capability.keyboard
         self.seat.set_capabilities(capabilities)
 
-        logger.info("New %s: %s", device.device_type.name, device.name)
+        logger.info("New device: %s %s", *device.get_info())
         if self.qtile:
-            inputs.configure_device(device, self.qtile.config.wl_input_rules)
+            if self.qtile.config.wl_input_rules:
+                device.configure(self.qtile.config.wl_input_rules)
         else:
             self._pending_input_devices.append(device)
 
@@ -305,20 +323,15 @@ class Core(base.Core, wlrq.HasListeners):
         logger.debug("Signal: backend new_output_event")
 
         wlr_output.init_render(self._allocator, self.renderer)
-
-        if wlr_output.modes != []:
-            mode = wlr_output.preferred_mode()
-            if mode is None:
-                logger.error("New output has no output mode")
-                return
-            wlr_output.set_mode(mode)
-            wlr_output.enable()
-            wlr_output.commit()
+        wlr_output.set_mode(wlr_output.preferred_mode())
+        wlr_output.enable()
+        wlr_output.commit()
 
         self.outputs.append(Output(self, wlr_output))
         # Put new output at far right
         layout_geo = self.output_layout.get_box()
-        self.output_layout.add(wlr_output, layout_geo.width, 0)
+        x = layout_geo.width if layout_geo else 0
+        self.output_layout.add(wlr_output, x, 0)
 
         if not self._current_output:
             self._current_output = self.outputs[0]
@@ -328,12 +341,13 @@ class Core(base.Core, wlrq.HasListeners):
         config = OutputConfigurationV1()
 
         for output in self.outputs:
-            box = self.output_layout.get_box(output.wlr_output)
             head = OutputConfigurationHeadV1.create(config, output.wlr_output)
-            head.state.x = output.x = box.x
-            head.state.y = output.y = box.y
-            head.state.enabled = output.wlr_output.enabled
-            head.state.mode = output.wlr_output.current_mode
+            mode = output.wlr_output.current_mode
+            head.state.mode = mode
+            head.state.enabled = mode is not None and output.wlr_output.enabled
+            box = self.output_layout.get_box(output.wlr_output)
+            head.state.x = output.x = box.x if box else 0
+            head.state.y = output.y = box.y if box else 0
 
         self.output_manager.set_configuration(config)
         self.outputs.sort(key=lambda o: (o.x, o.y))
@@ -351,7 +365,6 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_request_cursor(
         self, _listener: Listener, event: seat.PointerRequestSetCursorEvent
     ) -> None:
-        logger.debug("Signal: seat request_set_cursor_event")
         self._cursor_state.surface = event.surface
         self._cursor_state.hotspot = event.hotspot
 
@@ -367,7 +380,9 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_cursor_axis(self, _listener: Listener, event: pointer.PointerEventAxis) -> None:
         handled = False
-        if event.delta != 0:
+
+        if event.delta != 0 and not self.exclusive_client:
+            # If we have a client who exclusively gets input, button bindings are disallowed.
             if event.orientation == pointer.AxisOrientation.VERTICAL:
                 button = 5 if 0 < event.delta else 4
             else:
@@ -395,7 +410,8 @@ class Core(base.Core, wlrq.HasListeners):
 
         handled = False
 
-        if event.button in wlrq.buttons:
+        if not self.exclusive_client and event.button in wlrq.buttons:
+            # If we have a client who exclusively gets input, button bindings are disallowed.
             button = wlrq.buttons.index(event.button) + 1
             handled = self._process_cursor_button(button, pressed)
 
@@ -462,9 +478,12 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_new_virtual_pointer(
         self, _listener: Listener, new_pointer_event: vpointer.VirtualPointerV1NewPointerEvent
     ) -> None:
-        self._add_new_pointer(new_pointer_event.new_pointer.input_device)
+        device = self._add_new_pointer(new_pointer_event.new_pointer.input_device)
+        logger.info("New virtual pointer: %s %s", *device.get_info())
 
-    def _on_new_inhibitor(self, _listener: Listener, idle_inhibitor: IdleInhibitorV1) -> None:
+    def _on_new_idle_inhibitor(
+        self, _listener: Listener, idle_inhibitor: IdleInhibitorV1
+    ) -> None:
         logger.debug("Signal: idle_inhibitor new_inhibitor")
 
         if self.qtile is None:
@@ -475,6 +494,36 @@ class Core(base.Core, wlrq.HasListeners):
                 win.surface.for_each_surface(win.add_idle_inhibitor, idle_inhibitor)
                 if idle_inhibitor.data:
                     break
+
+    def _on_input_inhibitor_activate(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: input_inhibitor activate")
+        assert self.qtile is not None
+        self.exclusive_client = self._input_inhibit_manager.active_client
+
+        # If another client has keyboard focus, unfocus it.
+        if (
+            self.qtile.current_window
+            and not self.qtile.current_window.belongs_to_client(  # type: ignore
+                self.exclusive_client
+            )
+        ):
+            self.focus_window(None)
+
+        # If another client has pointer focus, unfocus that too.
+        found = self._under_pointer()
+        if found:
+            win, _, _, _ = found
+
+            # If we have a client who exclusively gets input, no other client's
+            # surfaces are allowed to get pointer input.
+            if isinstance(win, base.Internal) or not win.belongs_to_client(self.exclusive_client):
+                self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                self.seat.pointer_notify_clear_focus()
+                return
+
+    def _on_input_inhibitor_deactivate(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: input_inhibitor deactivate")
+        self.exclusive_client = None
 
     def _on_output_power_manager_set_mode(
         self, _listener: Listener, mode: OutputPowerV1SetModeEvent
@@ -555,7 +604,8 @@ class Core(base.Core, wlrq.HasListeners):
             wlr_output = state.output
 
             if state.enabled:
-                wlr_output.enable()
+                if not wlr_output.enabled:
+                    wlr_output.enable()
                 if state.mode:
                     wlr_output.set_mode(state.mode)
                 else:
@@ -565,11 +615,15 @@ class Core(base.Core, wlrq.HasListeners):
                         state.custom_mode.refresh,
                     )
 
-                self.output_layout.move(wlr_output, state.x, state.y)
+                # `add` will add outputs that have been removed. Any other outputs that
+                # are already in the layout are just moved as if we had used `move`.
+                self.output_layout.add(wlr_output, state.x, state.y)
                 wlr_output.set_transform(state.transform)
                 wlr_output.set_scale(state.scale)
             else:
-                wlr_output.enable(enable=False)
+                if wlr_output.enabled:
+                    wlr_output.enable(enable=False)
+                self.output_layout.remove(wlr_output)
 
             ok = wlr_output.test()
             if not ok:
@@ -592,7 +646,11 @@ class Core(base.Core, wlrq.HasListeners):
         assert self.qtile
         cx_int = int(cx)
         cy_int = int(cy)
-        self.qtile.process_button_motion(cx_int, cy_int)
+
+        if not self.exclusive_client:
+            # If we have a client who exclusively gets input, button bindings are
+            # disallowed, so process_button_motion doesn't need to be updated.
+            self.qtile.process_button_motion(cx_int, cy_int)
 
         if len(self.outputs) > 1:
             current_wlr_output = self.output_layout.output_at(cx, cy)
@@ -609,6 +667,20 @@ class Core(base.Core, wlrq.HasListeners):
 
         if found:
             win, surface, sx, sy = found
+
+            if self.exclusive_client:
+                # If we have a client who exclusively gets input, no other client's
+                # surfaces are allowed to get pointer input.
+                if isinstance(win, base.Internal) or not win.belongs_to_client(
+                    self.exclusive_client
+                ):
+                    logger.debug(
+                        "Pointer focus withheld from window not owned by exclusive client."
+                    )
+                    self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                    self.seat.pointer_notify_clear_focus()
+                    return
+
             if isinstance(win, window.Internal):
                 if self._hovered_internal is win:
                     win.process_pointer_motion(
@@ -688,19 +760,26 @@ class Core(base.Core, wlrq.HasListeners):
 
         return handled
 
-    def _add_new_pointer(self, device: input_device.InputDevice) -> None:
-        self.cursor.attach_input_device(device)
+    def _add_new_pointer(self, wlr_device: input_device.InputDevice) -> inputs.Pointer:
+        device = inputs.Pointer(self, wlr_device)
+        self._pointers.append(device)
+        self.cursor.attach_input_device(wlr_device)
+        return device
 
-    def _add_new_keyboard(self, device: input_device.InputDevice) -> None:
-        self.keyboards.append(inputs.Keyboard(self, device))
-        self.seat.set_keyboard(device)
+    def _add_new_keyboard(self, wlr_device: input_device.InputDevice) -> inputs.Keyboard:
+        device = inputs.Keyboard(self, wlr_device)
+        self.keyboards.append(device)
+        self.seat.set_keyboard(wlr_device)
+        return device
 
     def _configure_pending_inputs(self) -> None:
         """Configure inputs that were detected before the config was loaded."""
-        if self.qtile:
+        assert self.qtile is not None
+
+        if self.qtile.config.wl_input_rules:
             for device in self._pending_input_devices:
-                inputs.configure_device(device, self.qtile.config.wl_input_rules)
-            self._pending_input_devices.clear()
+                device.configure(self.qtile.config.wl_input_rules)
+        self._pending_input_devices.clear()
 
     def setup_listener(self, qtile: Qtile) -> None:
         """Setup a listener for the given qtile instance"""
@@ -726,7 +805,7 @@ class Core(base.Core, wlrq.HasListeners):
             self.event_loop.dispatch(0)
             self.display.flush_clients()
 
-    def distribute_windows(self, initial: bool) -> None:
+    def on_config_load(self, initial: bool) -> None:
         if initial:
             # This backend does not support restarting
             return
@@ -762,16 +841,32 @@ class Core(base.Core, wlrq.HasListeners):
             else:
                 win.hide()
 
+        # Apply input device configuration
+        if self.qtile.config.wl_input_rules:
+            for device in [*self.keyboards, *self._pointers]:
+                device.configure(self.qtile.config.wl_input_rules)
+
     def new_wid(self) -> int:
         """Get a new unique window ID"""
         assert self.qtile is not None
         return max(self.qtile.windows_map.keys(), default=0) + 1
 
     def focus_window(
-        self, win: window.WindowType, surface: Surface | None = None, enter: bool = True
+        self, win: window.WindowType | None, surface: Surface | None = None, enter: bool = True
     ) -> None:
         if self.seat.destroyed:
             return
+
+        if self.exclusive_client:
+            # If we have a client who exclusively gets input, no other client's surfaces
+            # are allowed to get keyboard input.
+            if not win:
+                self.seat.keyboard_clear_focus()
+                return
+            if isinstance(win, base.Internal) or not win.belongs_to_client(self.exclusive_client):
+                logger.debug("Keyboard focus withheld from window not owned by exclusive client.")
+                # We can't focus surfaces belonging to other clients.
+                return
 
         if isinstance(win, base.Internal):
             self.focused_internal = win
@@ -834,6 +929,15 @@ class Core(base.Core, wlrq.HasListeners):
 
         if found:
             win, _, _, _ = found
+
+            if self.exclusive_client:
+                # If we have a client who exclusively gets input, no other client's
+                # surfaces are allowed to get focus.
+                if isinstance(win, base.Internal) or not win.belongs_to_client(
+                    self.exclusive_client
+                ):
+                    logger.debug("Focus withheld from window not owned by exclusive client.")
+                    return
 
             if self.qtile.config.bring_front_click is True:
                 win.cmd_bring_to_front()
@@ -979,6 +1083,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def remove_output(self, output: Output) -> None:
         self.outputs.remove(output)
+        self.output_layout.remove(output.wlr_output)
         if output is self._current_output:
             self._current_output = self.outputs[0] if self.outputs else None
             self.stack_windows()
@@ -1045,3 +1150,26 @@ class Core(base.Core, wlrq.HasListeners):
                 self._cursor_state.hotspot,
             )
             self._cursor_state.hidden = False
+
+    def cmd_get_inputs(self) -> dict[str, list[dict[str, str]]]:
+        """Get information on all input devices."""
+        info = {}
+        device_lists: dict[str, list[inputs._Device]] = {
+            "type:keyboard": self.keyboards,  # type: ignore
+            "type:pointer": self._pointers,  # type: ignore
+        }
+
+        for type_key, devices in device_lists.items():
+            type_info = []
+
+            for dev in devices:
+                type_info.append(
+                    dict(
+                        name=dev.wlr_device.name,
+                        identifier=dev.get_info()[1],
+                    )
+                )
+
+            info[type_key] = type_info
+
+        return info

@@ -163,6 +163,11 @@ class Bsp(Layout):
         ("grow_amount", 10, "Amount by which to grow a window/column."),
         ("lower_right", True, "New client occupies lower or right subspace."),
         ("fair", True, "New clients are inserted in the shortest branch."),
+        (
+            "wrap_clients",
+            False,
+            "Whether client list should be wrapped when using ``next`` and ``previous`` commands.",
+        ),
     ]
 
     def __init__(self, **config):
@@ -242,27 +247,31 @@ class Bsp(Layout):
         clients = list(self.root.clients())
         return clients[-1] if len(clients) else None
 
-    def focus_next(self, client):
+    def focus_next(self, client, wrap=False):
         clients = list(self.root.clients())
         if client in clients:
             idx = clients.index(client)
-            if idx + 1 < len(clients):
-                return clients[idx + 1]
+            if not wrap and idx + 1 < len(clients):
+                return clients[(idx + 1)]
+            elif wrap:
+                return clients[(idx + 1) % len(clients)]
 
-    def focus_previous(self, client):
+    def focus_previous(self, client, wrap=False):
         clients = list(self.root.clients())
         if client in clients:
             idx = clients.index(client)
-            if idx > 0:
-                return clients[idx - 1]
+            if not wrap and idx > 0:
+                return clients[(idx - 1)]
+            elif wrap:
+                return clients[(idx - 1) % len(clients)]
 
     def cmd_next(self):
-        client = self.focus_next(self.current)
+        client = self.focus_next(self.current.client, wrap=self.wrap_clients)
         if client:
             self.group.focus(client, True)
 
     def cmd_previous(self):
-        client = self.focus_previous(self.current)
+        client = self.focus_previous(self.current.client, wrap=self.wrap_clients)
         if client:
             self.group.focus(client, True)
 

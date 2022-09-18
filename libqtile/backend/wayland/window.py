@@ -26,7 +26,7 @@ import typing
 
 import cairocffi
 import wlroots.wlr_types.foreign_toplevel_management_v1 as ftm
-from pywayland.server import Listener
+from pywayland.server import Client, Listener
 from wlroots import PtrHasData, ffi
 from wlroots.util.box import Box
 from wlroots.wlr_types import Texture
@@ -113,6 +113,11 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self._outputs: set[Output] = set()
         self._wm_class: str | None = None
         self._idle_inhibitors_count: int = 0
+
+        # This is a placeholder to be set properly when the window maps for the first
+        # time (and therefore exposed to the user). We need the attribute to exist so
+        # that __repr__ doesn't AttributeError.
+        self._wid: int = -1
 
         self._width: int = 0
         self._height: int = 0
@@ -226,6 +231,9 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             return [self._wm_class]
         return None
 
+    def belongs_to_client(self, other: Client) -> bool:
+        return other == Client.from_resource(self.surface.surface._ptr.resource)  # type: ignore
+
     def focus(self, warp: bool) -> None:
         self.core.focus_window(self)
 
@@ -259,7 +267,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             group = self.qtile.groups_map[group_name]
 
         if self.group is group:
-            if toggle and hasattr(self.group.screen, "previous_group"):
+            if toggle and self.group.screen.previous_group:
                 group = self.group.screen.previous_group
             else:
                 return
@@ -759,6 +767,9 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
     @property
     def is_idle_inhibited(self) -> bool:
         return self._idle_inhibitors_count > 0
+
+    def belongs_to_client(self, other: Client) -> bool:
+        return other == Client.from_resource(self.surface.surface._ptr.resource)  # type: ignore
 
     def cmd_bring_to_front(self) -> None:
         if self.mapped:

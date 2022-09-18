@@ -32,6 +32,11 @@ Qtile _does_ support XWayland. This requires that `wlroots` and `pywlroots`
 were built with XWayland support, and that XWayland is installed on the system
 from startup. XWayland will be started the first time it is needed.
 
+XWayland windows sometimes don't receive mouse events
+-----------------------------------------------------
+
+There is currently a known bug (https://github.com/qtile/qtile/issues/3675) which causes pointer events (hover/click/scroll) to propagate to the wrong window when switching focus.
+
 Input Device Configuration
 ==========================
 

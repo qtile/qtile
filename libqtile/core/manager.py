@@ -109,6 +109,7 @@ class Qtile(CommandObject):
             self.config.load()
             self.config.validate()
         except Exception as e:
+            logger.exception("Configuration error:")
             send_notification("Configuration error", str(e))
 
         if hasattr(self.core, "wmname"):
@@ -161,7 +162,7 @@ class Qtile(CommandObject):
             else:
                 self._state.apply(self)
 
-        self.core.distribute_windows(initial)
+        self.core.on_config_load(initial)
 
         if self._state:
             for screen in self.screens:
@@ -305,7 +306,7 @@ class Qtile(CommandObject):
         self.core.finalize()
 
     def _process_screens(self, reloading: bool = False) -> None:
-        current_groups = [s.group for s in self.screens if hasattr(s, "group")]
+        current_groups = [s.group for s in self.screens]
         screens = []
 
         if hasattr(self.config, "fake_screens"):
@@ -343,7 +344,18 @@ class Qtile(CommandObject):
                 for grp in self.groups:
                     if not grp.screen:
                         break
+
             reconfigure_gaps = (x, y, w, h) != (scr.x, scr.y, scr.width, scr.height)
+
+            if not hasattr(scr, "group"):
+                # Ensure that this screen actually *has* a group, as it won't get
+                # assigned one during `__init__` because they are created in the config,
+                # where the groups also are. This lets us type `Screen.group` as
+                # `_Group` rather than `_Group | None` which would need lots of other
+                # changes to check for `None`s, and conceptually all screens should have
+                # a group anyway.
+                scr.group = grp
+
             scr._configure(self, i, x, y, w, h, grp, reconfigure_gaps=reconfigure_gaps)
             screens.append(scr)
 
@@ -393,7 +405,7 @@ class Qtile(CommandObject):
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("KB command error %s: %s", cmd.name, val)
-            if self.chord_stack and (self.chord_stack[-1].mode == "" or key.key == "Escape"):
+            if self.chord_stack and (not self.chord_stack[-1].mode or key.key == "Escape"):
                 self.cmd_ungrab_chord()
             return
 
@@ -424,7 +436,7 @@ class Qtile(CommandObject):
     def grab_chord(self, chord: KeyChord) -> None:
         self.chord_stack.append(chord)
         if self.chord_stack:
-            hook.fire("enter_chord", chord.mode)
+            hook.fire("enter_chord", chord.name)
 
         self.ungrab_keys()
         for key in chord.submappings:
@@ -510,7 +522,7 @@ class Qtile(CommandObject):
             raise ValueError("Can't delete all groups.")
         if name in self.groups_map.keys():
             group = self.groups_map[name]
-            if group.screen and hasattr(group.screen, "previous_group"):
+            if group.screen and group.screen.previous_group:
                 target = group.screen.previous_group
             else:
                 target = group.get_previous_group()
@@ -989,11 +1001,11 @@ class Qtile(CommandObject):
                 )
                 return
             if isinstance(k, KeyChord):
-                new_mode_s = k.mode if k.mode else "<unnamed>"
+                new_mode_s = k.name if k.name else "<unnamed>"
                 new_mode = (
-                    k.mode
+                    k.name
                     if mode == "<root>"
-                    else "{}>{}".format(mode, k.mode if k.mode else "_")
+                    else "{}>{}".format(mode, k.name if k.name else "_")
                 )
                 rows.append([mode, name, modifiers, "", "Enter {:s} mode".format(new_mode_s)])
                 for s in k.submappings:

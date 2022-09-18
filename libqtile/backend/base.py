@@ -90,8 +90,10 @@ class Core(CommandObject, metaclass=ABCMeta):
     def ungrab_pointer(self) -> None:
         """Release grabbed pointer events"""
 
-    def distribute_windows(self, initial: bool) -> None:
-        """Distribute windows to groups. `initial` will be `True` if Qtile just started."""
+    def on_config_load(self, initial: bool) -> None:
+        """
+        Respond to config loading. `initial` will be `True` if Qtile just started.
+        """
 
     def warp_pointer(self, x: int, y: int) -> None:
         """Warp the pointer to the given coordinates relative."""
@@ -266,7 +268,7 @@ class Window(_Window, metaclass=ABCMeta):
     float_y: int | None
 
     def __repr__(self):
-        return "Window(name=%r, wid=%i)" % (self.name, self.wid)
+        return "%s(name=%r, wid=%i)" % (self.__class__.__name__, self.name, self.wid)
 
     @property
     @abstractmethod
@@ -597,7 +599,7 @@ class Static(_Window, metaclass=ABCMeta):
     height: Any
 
     def __repr__(self):
-        return "Static(name=%r, wid=%s)" % (self.name, self.wid)
+        return "%s(name=%r, wid=%i)" % (self.__class__.__name__, self.name, self.wid)
 
     def info(self) -> dict:
         """Return a dictionary of info."""
@@ -637,10 +639,11 @@ class Drawer:
         self._height = height
 
         self.surface: cairocffi.RecordingSurface
+        self.last_surface: cairocffi.RecordingSurface
         self.ctx: cairocffi.Context
         self._reset_surface()
 
-        self.mirrors: dict[Drawer, bool] = {}
+        self.mirrors: set[Drawer] = set()
 
         self.current_rect = (0, 0, 0, 0)
         self.previous_rect = (-1, -1, -1, -1)
@@ -653,16 +656,7 @@ class Drawer:
 
     def add_mirror(self, mirror: Drawer):
         """Keep details of other drawers that are mirroring this one."""
-        self.mirrors[mirror] = False
-
-    def reset_mirrors(self):
-        """Reset the drawn status of mirrors."""
-        self.mirrors = {m: False for m in self.mirrors}
-
-    @property
-    def mirrors_drawn(self) -> bool:
-        """Returns True if all mirrors have been drawn with the current surface."""
-        return all(v for v in self.mirrors.values())
+        self.mirrors.add(mirror)
 
     @property
     def width(self) -> int:
@@ -688,14 +682,6 @@ class Drawer:
         )
         self.ctx = self.new_ctx()
 
-    def _check_surface_reset(self):
-        """
-        Checks to see if the widget is not being reflected and
-        then clears RecordingSurface of operations.
-        """
-        if not self.mirrors:
-            self._reset_surface()
-
     @property
     def needs_update(self) -> bool:
         # We can't test for the surface's ink_extents here on its own as a completely
@@ -710,13 +696,8 @@ class Drawer:
         return ink_changed or rect_changed
 
     def paint_to(self, drawer: Drawer) -> None:
-        drawer.ctx.set_source_surface(self.surface)
+        drawer.ctx.set_source_surface(self.last_surface)
         drawer.ctx.paint()
-        self.mirrors[drawer] = True
-
-        if self.mirrors_drawn:
-            self._reset_surface()
-            self.reset_mirrors()
 
     def _rounded_rect(self, x, y, width, height, linewidth):
         aspect = 1.0
@@ -790,9 +771,14 @@ class Drawer:
         """
         if self._enabled:
             self._draw(offsetx, offsety, width, height)
+            if self.mirrors:
+                # mypy is tripping over CONTENT_COLOR_ALPHA here despite it working earlier in this file!
+                self.last_surface = cairocffi.RecordingSurface(cairocffi.CONTENT_COLOR_ALPHA, None)  # type: ignore
+                ctx = cairocffi.Context(self.last_surface)
+                ctx.set_source_surface(self.surface)
+                ctx.paint()
 
-        # Check to see if RecordingSurface can be cleared.
-        self._check_surface_reset()
+        self._reset_surface()
 
     def _draw(
         self,
