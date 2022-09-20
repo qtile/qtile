@@ -177,11 +177,14 @@ class Mpd2(base.ThreadPoolText):
         super().__init__("", **config)
 
         self.add_defaults(Mpd2.defaults)
+        if self.color_progress:
+            self.color_progress = utils.hex(self.color_progress)
+
+    def _configure(self, qtile, bar):
+        super()._configure(qtile, bar)
         self.client = MPDClient()
         self.client.timeout = self.timeout
         self.client.idletimeout = self.idletimeout
-        if self.color_progress:
-            self.color_progress = utils.hex(self.color_progress)
 
     @property
     def connected(self):
