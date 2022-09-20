@@ -51,6 +51,8 @@ class PulseVolume(Volume):
         self.handle = ffi.new_handle(self)
         self.client_name = ffi.new("char[]", b"Qtile-pulse")
 
+    def _configure(self, qtile, bar):
+        Volume._configure(self, qtile, bar)
         self.connect()
 
     def finalize(self):
