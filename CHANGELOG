@@ -1,4 +1,8 @@
 Qtile x.xx.x, released XXXX-XX-XX:
+    * features
+    * bugfixes
+
+Qtile 0.22.0, released 2022-09-22:
     !!! Config breakage !!!
         - lazy.qtile.display_kb() no longer receives any arguments. If you passed it any arguments
           (which were ignored previously), remove them.
