@@ -239,11 +239,11 @@ class LaunchBar(base._Widget):
         self.drawer.clear(self.background or self.bar.background)
         xoffset = 0
         for i in sorted(self.progs.keys()):
+            self.drawer.ctx.save()
+            self.drawer.ctx.translate(xoffset, 0)
             self.icons_offsets[i] = xoffset + self.padding
             name = self.progs[i]["name"]
             icon_width = self.icons_widths[name]
-            self.drawer.ctx.move_to(self.offset + xoffset, icon_width)
-            self.drawer.clear(self.background or self.bar.background)
             if isinstance(self.surfaces[name], base._TextBox):
                 # display the name if no icon was found and no default icon
                 textbox = self.surfaces[name]
@@ -258,16 +258,18 @@ class LaunchBar(base._Widget):
                 self.drawer.ctx.set_source(self.surfaces[name])
                 self.drawer.ctx.paint()
                 self.drawer.ctx.restore()
+
+            self.drawer.ctx.restore()
+
             self.drawer.draw(
                 offsetx=self.offset + xoffset,
                 offsety=self.offsety,
                 width=icon_width + self.padding,
             )
+
             xoffset += icon_width + self.padding
-        if self.padding:
-            self.drawer.draw(
-                offsetx=self.offset + xoffset, offsety=self.offsety, width=self.padding
-            )
+
+        self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
 
     def calculate_length(self):
         """Compute the width of the widget according to each icon width."""
