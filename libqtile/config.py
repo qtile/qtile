@@ -160,6 +160,9 @@ class Drag(Mouse):
         A list :class:`LazyCall` objects to evaluate in sequence upon drag.
     start:
         A :class:`LazyCall` object to be evaluated when dragging begins. (Optional)
+    warp_cursor:
+        A :class:`bool` indicating if the cursor should be warped to the bottom right of the window
+        at the start of dragging. (Default: `False`)
 
     """
 
@@ -169,9 +172,11 @@ class Drag(Mouse):
         button: str,
         *commands: LazyCall,
         start: LazyCall | None = None,
+        warp_cursor: bool = False,
     ) -> None:
         super().__init__(modifiers, button, *commands)
         self.start = start
+        self.warp_cursor = warp_cursor
 
     def __repr__(self) -> str:
         return "<Drag (%s, %s)>" % (self.modifiers, self.button)
