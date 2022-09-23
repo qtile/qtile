@@ -756,6 +756,14 @@ class Qtile(CommandObject):
                         continue
                 else:
                     val = (0, 0)
+
+                if m.warp_cursor:
+                    win_size = self.current_window.cmd_get_size()
+                    win_pos = self.current_window.cmd_get_position()
+                    x = win_size[0] + win_pos[0]
+                    y = win_size[1] + win_pos[1]
+                    self.core.warp_pointer(x, y)
+
                 self._drag = (x, y, val[0], val[1], m.commands)
                 self.core.grab_pointer()
                 handled = True
