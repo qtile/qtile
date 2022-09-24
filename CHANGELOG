@@ -1,5 +1,6 @@
 Qtile x.xx.x, released XXXX-XX-XX:
     * features
+        - Add ability to set icon size in `LaunchBar` widget.
     * bugfixes
 
 Qtile 0.22.0, released 2022-09-22:
