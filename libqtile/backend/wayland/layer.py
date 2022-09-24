@@ -152,9 +152,9 @@ class LayerStatic(Static[LayerSurfaceV1]):
     ) -> None:
         self.x = x
         self.y = y
-        self._width = int(width)
-        self._height = int(height)
-        self.surface.configure(self._width, self._height)
+        self._width = width
+        self._height = height
+        self.surface.configure(width, height)
         self.damage()
 
     @expose_command()

@@ -240,8 +240,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
         if warp and self.qtile.config.cursor_warp:
             self.core.warp_pointer(
-                self.x + self.width / 2,
-                self.y + self.height / 2,
+                self.x + self._width / 2,
+                self.y + self._height / 2,
             )
 
         if self.group:
@@ -306,8 +306,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             if self.group and self.group.screen:
                 screen = self.group.screen
                 if not self._float_width:  # These might start as 0
-                    self._float_width = self.width
-                    self._float_height = self.height
+                    self._float_width = self._width
+                    self._float_height = self._height
                 self._reconfigure_floating(
                     screen.x + self.float_x,
                     screen.y + self.float_y,
@@ -321,8 +321,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             self._update_fullscreen(False)
             if self._float_state == FloatStates.FLOATING:
                 # store last size
-                self._float_width = self.width
-                self._float_height = self.height
+                self._float_width = self._width
+                self._float_height = self._height
             self._float_state = FloatStates.NOT_FLOATING
             if self.group:
                 self.group.mark_floating(self, False)
@@ -391,11 +391,11 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         y += dy
 
         if w is None:
-            w = self.width
+            w = self._width
         w += dw
 
         if h is None:
-            h = self.height
+            h = self._height
         h += dh
 
         if h < 0:
@@ -445,8 +445,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             name=self.name,
             x=self.x,
             y=self.y,
-            width=self.width,
-            height=self.height,
+            width=self._width,
+            height=self._height,
             group=self.group.name if self.group else None,
             id=self.wid,
             wm_class=self.get_wm_class(),
@@ -544,7 +544,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
     @expose_command()
     def get_size(self) -> tuple[int, int]:
-        return self.width, self.height
+        return self._width, self._height
 
     @expose_command()
     def toggle_floating(self) -> None:
@@ -602,9 +602,9 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         if y is None:
             y = self.y + self.borderwidth
         if width is None:
-            width = self.width
+            width = self._width
         if height is None:
-            height = self.height
+            height = self._height
 
         self.finalize_listeners()
         win = self._to_static()
@@ -695,8 +695,8 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
 
         if warp and self.qtile.config.cursor_warp:
             self.core.warp_pointer(
-                self.x + self.width / 2,
-                self.y + self.height / 2,
+                self.x + self._width / 2,
+                self.y + self._height / 2,
             )
 
         hook.fire("client_focus", self)
@@ -801,7 +801,7 @@ class Internal(_Base, base.Internal):
         self.hide()
 
     def _new_texture(self) -> Texture:
-        clear = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, self.width, self.height)
+        clear = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, self._width, self._height)
         with cairocffi.Context(clear) as context:
             context.set_source_rgba(0, 0, 0, 0)
             context.paint()
@@ -809,9 +809,9 @@ class Internal(_Base, base.Internal):
         return Texture.from_pixels(
             self.core.renderer,
             DRM_FORMAT_ARGB8888,
-            cairocffi.ImageSurface.format_stride_for_width(cairocffi.FORMAT_ARGB32, self.width),
-            self.width,
-            self.height,
+            cairocffi.ImageSurface.format_stride_for_width(cairocffi.FORMAT_ARGB32, self._width),
+            self._width,
+            self._height,
             cairocffi.cairo.cairo_image_surface_get_data(clear._pointer),
         )
 
@@ -878,7 +878,7 @@ class Internal(_Base, base.Internal):
 
         self.x = x
         self.y = y
-        needs_reset = width != self.width or height != self.height
+        needs_reset = width != self._width or height != self._height
         self._width = width
         self._height = height
 
@@ -894,8 +894,8 @@ class Internal(_Base, base.Internal):
         return dict(
             x=self.x,
             y=self.y,
-            width=self.width,
-            height=self.height,
+            width=self._width,
+            height=self._height,
             id=self.wid,
         )
 
