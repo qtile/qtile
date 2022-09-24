@@ -267,9 +267,9 @@ class XWindow(Window[xwayland.Surface]):
 
         self.x = x
         self.y = y
-        self._width = int(width)
-        self._height = int(height)
-        self.surface.configure(x, y, self._width, self._height)
+        self._width = width
+        self._height = height
+        self.surface.configure(x, y, width, height)
         self.paint_borders(bordercolor, borderwidth)
 
         if above:

@@ -264,9 +264,9 @@ class XdgWindow(Window[XdgSurface]):
 
         self.x = x
         self.y = y
-        self._width = int(width)
-        self._height = int(height)
-        self.surface.set_size(self._width, self._height)
+        self._width = width
+        self._height = height
+        self.surface.set_size(width, height)
         self.paint_borders(bordercolor, borderwidth)
 
         if above:
@@ -364,7 +364,7 @@ class XdgStatic(Static[XdgSurface]):
         self.y = y
         self._width = width
         self._height = height
-        self.surface.set_size(self._width, self._height)
+        self.surface.set_size(width, height)
         self.paint_borders(bordercolor, borderwidth)
         self._find_outputs()
         self.damage()
