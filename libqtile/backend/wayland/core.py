@@ -243,6 +243,10 @@ class Core(base.Core, wlrq.HasListeners):
         # Start
         self.backend.start()
 
+        # Place cursor
+        self.warp_pointer(0, 0)
+        self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+
     @property
     def name(self) -> str:
         return "wayland"
