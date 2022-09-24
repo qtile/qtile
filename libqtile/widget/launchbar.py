@@ -82,6 +82,8 @@ class LaunchBar(base._Widget):
             " ('logout', 'qshell:self.qtile.cmd_shutdown()', 'logout from qtile')]",
         ),
         ("text_only", False, "Don't use any icons."),
+        ("icon_size", None, "Size of icons. ``None`` to fit to bar."),
+        ("padding_y", 0, "Vertical adjustment for icons."),
     ]
 
     def __init__(
@@ -126,6 +128,9 @@ class LaunchBar(base._Widget):
 
     def setup_images(self):
         """Create image structures for each icon files."""
+        self._icon_size = self.icon_size if self.icon_size is not None else self.bar.height - 4
+        self._icon_padding = (self.bar.height - self._icon_size) // 2
+
         for img_name, iconfile in self.icons_files.items():
             if iconfile is None or self.text_only:
                 # Only warn the user that there's no icon if they haven't set text only mode
@@ -165,7 +170,7 @@ class LaunchBar(base._Widget):
             input_width = img.width
             input_height = img.height
 
-            sp = input_height / (self.bar.height - 4)
+            sp = input_height / (self._icon_size)
             width = int(input_width / sp)
 
             imgpat = cairocffi.SurfacePattern(img.surface)
@@ -248,8 +253,11 @@ class LaunchBar(base._Widget):
                 )
             else:
                 # display an icon
+                self.drawer.ctx.save()
+                self.drawer.ctx.translate(0, self._icon_padding + self.padding_y)
                 self.drawer.ctx.set_source(self.surfaces[name])
                 self.drawer.ctx.paint()
+                self.drawer.ctx.restore()
             self.drawer.draw(
                 offsetx=self.offset + xoffset,
                 offsety=self.offsety,
