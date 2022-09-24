@@ -158,9 +158,10 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self._mapped = mapped
         if mapped:
             self.core.mapped_windows.append(self)
+            self.core.stack_windows()
         else:
             self.core.mapped_windows.remove(self)
-        self.core.stack_windows()
+            self.core.stacked_windows.remove(self)
         if self._idle_inhibitors_count > 0:
             self.core.check_idle_inhibitor()
 
@@ -580,9 +581,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     @expose_command()
     def bring_to_front(self) -> None:
         if self.mapped:
-            self.core.mapped_windows.remove(self)
-            self.core.mapped_windows.append(self)
-            self.core.stack_windows()
+            self.core.stack_windows(restack=self)
 
     @expose_command()
     def static(
@@ -614,9 +613,9 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         win.mapped = True
         win.place(x, y, width, height, 0, None)
         self.qtile.windows_map[self.wid] = win
-        if self in self.core.mapped_windows:
+        if self.mapped:
             self.core.mapped_windows.remove(self)
-        self.core.stack_windows()
+            self.core.stacked_windows.remove(self)
 
     @expose_command()
     def is_visible(self) -> bool:
@@ -679,10 +678,10 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
 
         if mapped:
             self.core.mapped_windows.append(self)
+            self.core.stack_windows()
         else:
             self.core.mapped_windows.remove(self)
-
-        self.core.stack_windows()
+            self.core.stacked_windows.remove(self)
 
     def _find_outputs(self) -> None:
         self._outputs = set(o for o in self.core.outputs if o.contains(self))
@@ -776,9 +775,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
     @expose_command()
     def bring_to_front(self) -> None:
         if self.mapped:
-            self.core.mapped_windows.remove(self)
-            self.core.mapped_windows.append(self)
-            self.core.stack_windows()
+            self.core.stack_windows(restack=self)
             self.damage()
 
 
@@ -834,9 +831,10 @@ class Internal(_Base, base.Internal):
         self._mapped = mapped
         if mapped:
             self.core.mapped_windows.append(self)
+            self.core.stack_windows()
         else:
             self.core.mapped_windows.remove(self)
-        self.core.stack_windows()
+            self.core.stacked_windows.remove(self)
 
     def hide(self) -> None:
         self.mapped = False
@@ -876,9 +874,7 @@ class Internal(_Base, base.Internal):
         respect_hints: bool = False,
     ) -> None:
         if above and self._mapped:
-            self.core.mapped_windows.remove(self)
-            self.core.mapped_windows.append(self)
-            self.core.stack_windows()
+            self.core.stack_windows(restack=self)
 
         self.x = x
         self.y = y
@@ -906,9 +902,7 @@ class Internal(_Base, base.Internal):
     @expose_command()
     def bring_to_front(self) -> None:
         if self.mapped:
-            self.core.mapped_windows.remove(self)
-            self.core.mapped_windows.append(self)
-            self.core.stack_windows()
+            self.core.stack_windows(restack=self)
 
 
 WindowType = typing.Union[Window, Static, Internal]

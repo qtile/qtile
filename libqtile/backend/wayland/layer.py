@@ -87,17 +87,17 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self._mapped = mapped
 
         self._layer = self.surface.pending.layer
-        layer = self.output.layers[self._layer]
         if mapped:
-            layer.append(self)
+            self.output.layers[self._layer].append(self)
+            self.core.stack_windows()
         else:
-            layer.remove(self)
+            self.output.layers[self._layer].remove(self)
+            self.core.stacked_windows.remove(self)
 
             if self.reserved_space:
                 self.qtile.free_reserved_space(self.reserved_space, self.screen)
-        self.output.organise_layers()
 
-        self.core.stack_windows()
+        self.output.organise_layers()
 
     def _on_map(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: layerstatic map")

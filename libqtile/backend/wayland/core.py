@@ -82,7 +82,7 @@ from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Any, Sequence
+    from typing import Any
 
     from pywayland.server import Listener
     from wlroots.wlr_types import Output as wlrOutput
@@ -130,7 +130,7 @@ class Core(base.Core, wlrq.HasListeners):
         # mapped_windows contains just regular windows
         self.mapped_windows: list[window.WindowType] = []  # Ascending in Z
         # stacked_windows also contains layer_shell windows from the current output
-        self.stacked_windows: Sequence[window.WindowType] = []  # Ascending in Z
+        self.stacked_windows: list[window.WindowType] = []  # Ascending in Z
         self._current_output: Output | None = None
 
         # set up inputs
@@ -1007,8 +1007,16 @@ class Core(base.Core, wlrq.HasListeners):
                             return win, None, 0, 0
         return None
 
-    def stack_windows(self) -> None:
-        """Put all windows of all types in a Z-ordered list."""
+    def stack_windows(self, restack: window.WindowType | None = None) -> None:
+        """
+        Put all windows of all types in a Z-ordered list.
+
+        A (non-layer_shell) window passed as 'restack' will bubble up the Z order.
+        """
+        if restack:
+            self.mapped_windows.remove(restack)
+            self.mapped_windows.append(restack)
+
         if self._current_output:
             layers = self._current_output.layers
             self.stacked_windows = (
@@ -1019,7 +1027,7 @@ class Core(base.Core, wlrq.HasListeners):
                 + layers[LayerShellV1Layer.OVERLAY]
             )
         else:
-            self.stacked_windows = self.mapped_windows
+            self.stacked_windows = self.mapped_windows.copy()
 
     def check_idle_inhibitor(self) -> None:
         """

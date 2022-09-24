@@ -283,9 +283,7 @@ class XWindow(Window[xwayland.Surface]):
     @expose_command()
     def bring_to_front(self) -> None:
         if self.mapped:
-            self.core.mapped_windows.remove(self)
-            self.core.mapped_windows.append(self)
-            self.core.stack_windows()
+            self.core.stack_windows(restack=self)
             self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
 
     @expose_command()
