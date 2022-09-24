@@ -20,6 +20,8 @@ Qtile x.xx.x, released XXXX-XX-XX:
       - The `StockTicker` widget `function` option is being deprecated: rename it to `func`.
     * features
         - Add ability to set icon size in `LaunchBar` widget.
+        - Add 'warp_cursor' option to `Drag` that when set will warp the cursor to the bottom right of
+          the window when dragging begins.
     * bugfixes
 
 Qtile 0.22.0, released 2022-09-22:
