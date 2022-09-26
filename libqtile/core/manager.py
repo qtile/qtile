@@ -757,7 +757,7 @@ class Qtile(CommandObject):
                 else:
                     val = (0, 0)
 
-                if m.warp_pointer:
+                if m.warp_pointer and self.current_window is not None:
                     win_size = self.current_window.cmd_get_size()
                     win_pos = self.current_window.cmd_get_position()
                     x = win_size[0] + win_pos[0]
