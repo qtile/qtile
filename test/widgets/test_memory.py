@@ -89,4 +89,5 @@ def test_memory_units(manager_nospawn, minimal_conf_noscreen, patched_memory, un
     config = minimal_conf_noscreen
     config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([widget], 10))]
     manager_nospawn.start(config)
+    manager_nospawn.c.widget["memory"].eval("self.update(self.poll())")
     assert manager_nospawn.c.widget["memory"].info()["text"] == expects

@@ -3,6 +3,7 @@ source = libqtile
 concurrency = multiprocessing
 parallel = true
 sigterm = true
+dynamic_context = test_function
 
 [report]
 omit =
