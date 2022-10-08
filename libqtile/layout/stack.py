@@ -55,6 +55,10 @@ class Stack(Layout):
     defaults = [
         ("border_focus", "#0000ff", "Border colour(s) for the focused window."),
         ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
+        ("border_focus_stack", "#881111",
+         "Border colour(s) for the focused stacked window."),
+        ("border_normal_stack", "#220000",
+         "Border colour(s) for un-focused stacked windows."),
         ("border_width", 1, "Border width."),
         ("autosplit", False, "Auto split all new stacks."),
         ("num_stacks", 2, "Number of stacks."),
@@ -206,9 +210,9 @@ class Stack(Layout):
             return
 
         if client.has_focus:
-            px = self.border_focus
+            px = self.border_focus if s.split else self.border_focus_stack
         else:
-            px = self.border_normal
+            px = self.border_normal if s.split else self.border_normal_stack
 
         column_width = int(screen_rect.width / len(self.stacks))
         xoffset = screen_rect.x + i * column_width
