@@ -45,6 +45,7 @@ if TYPE_CHECKING:
     from libqtile.core.manager import Qtile
     from libqtile.group import _Group
     from libqtile.lazy import LazyCall
+    from libqtile.layout.base import Layout
 
 
 class Key:
@@ -662,7 +663,7 @@ class Group:
         exclusive: bool = False,
         spawn: str | list[str] | None = None,
         layout: str | None = None,
-        layouts: list[str] | None = None,
+        layouts: list[Layout] | None = None,
         persist: bool = True,
         init: bool = True,
         layout_opts: dict[str, Any] | None = None,
