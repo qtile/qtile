@@ -31,7 +31,7 @@ import os.path
 import sys
 from typing import TYPE_CHECKING
 
-from libqtile import configurable, hook, utils
+from libqtile import configurable, hook, utils, layout
 from libqtile.bar import Bar
 from libqtile.command.base import CommandObject
 from libqtile.log_utils import logger
@@ -739,7 +739,7 @@ class ScratchPad(Group):
             self,
             name,
             layout="floating",
-            layouts=["floating"],
+            layouts=[layout.Floating()],
             init=False,
             position=position,
             label=label,
