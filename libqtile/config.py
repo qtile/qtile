@@ -44,6 +44,7 @@ if TYPE_CHECKING:
     from libqtile.command.base import ItemT
     from libqtile.core.manager import Qtile
     from libqtile.group import _Group
+    from libqtile.layout.base import Layout
     from libqtile.lazy import LazyCall
 
 
@@ -658,7 +659,7 @@ class Group:
         exclusive: bool = False,
         spawn: str | list[str] | None = None,
         layout: str | None = None,
-        layouts: list[str] | None = None,
+        layouts: list[Layout] | None = None,
         persist: bool = True,
         init: bool = True,
         layout_opts: dict[str, Any] | None = None,
@@ -734,7 +735,6 @@ class ScratchPad(Group):
             self,
             name,
             layout="floating",
-            layouts=["floating"],
             init=False,
             position=position,
             label=label,
