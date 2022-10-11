@@ -510,6 +510,9 @@ class StatusNotifierHost:  # noqa: E303
             self._on_icon_changed.append(on_icon_changed)
 
         if self.started:
+            if on_item_added:
+                for item in self.items:
+                    on_item_added(item)
             return
 
         self.bus = await MessageBus().connect()
