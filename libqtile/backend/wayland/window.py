@@ -450,6 +450,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             group=self.group.name if self.group else None,
             id=self.wid,
             wm_class=self.get_wm_class(),
+            shell="XDG" if self.__class__.__name__ == "XdgWindow" else "XWayland",
             float_info=float_info,
             floating=self._float_state != FloatStates.NOT_FLOATING,
             maximized=self._float_state == FloatStates.MAXIMIZED,
@@ -777,6 +778,19 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         if self.mapped:
             self.core.stack_windows(restack=self)
             self.damage()
+
+    @expose_command()
+    def info(self) -> dict:
+        """Return a dictionary of info."""
+        info = base.Static.info(self)
+        cls_name = self.__class__.__name__
+        if cls_name == "XdgStatic":
+            info["shell"] = "XDG"
+        elif cls_name == "XStatic":
+            info["shell"] = "XWayland"
+        else:
+            info["shell"] = "layer"
+        return info
 
 
 class Internal(_Base, base.Internal):
