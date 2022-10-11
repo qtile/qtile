@@ -77,6 +77,7 @@ widgets = {
     "Sep": "sep",
     "She": "she",
     "Spacer": "spacer",
+    "Spotify": "spotify",
     "StatusNotifier": "statusnotifier",
     "StockTicker": "stock_ticker",
     "SwapGraph": "graph",
