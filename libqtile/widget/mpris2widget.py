@@ -50,6 +50,11 @@ class Mpris2(base._TextBox):
     player. This widget scrolls the text if neccessary and information that
     is displayed is configurable.
 
+    The widget relies on players broadcasting signals when the metadata or playback
+    status changes. If you are getting inconsistent results then you can enable background
+    polling of the player by setting the `poll_interval` parameter. This is disabled by
+    default.
+
     Basic mouse controls are also available: button 1 = play/pause,
     scroll up = next track, scroll down = previous track.
 
@@ -90,6 +95,7 @@ class Mpris2(base._TextBox):
             "No metadata for current track",
             "Text to show when track has no metadata",
         ),
+        ("poll_interval", 0, "Periodic background polling interval of player (0 to disable polling)."),
     ]
 
     def __init__(self, **config):
@@ -127,6 +133,7 @@ class Mpris2(base._TextBox):
 
         self._current_player: str | None = None
         self.player_names: dict[str, str] = {}
+        self._background_poll: asyncio.TimerHandle | None = None
 
     @property
     def player(self) -> str:
@@ -136,6 +143,15 @@ class Mpris2(base._TextBox):
             return self.player_names.get(self._current_player, "Unknown")
 
     async def _config_async(self):
+        # Set up a listener for NameOwner changes so we can remove players when they close
+        await add_signal_receiver(
+            self._name_owner_changed,
+            session_bus=True,
+            signal_name="NameOwnerChanged",
+            dbus_interface="org.freedesktop.DBus",
+        )
+
+        # Listen out for signals from any Mpris2 compatible player
         subscribe = await add_signal_receiver(
             self.message,
             session_bus=True,
@@ -147,6 +163,24 @@ class Mpris2(base._TextBox):
 
         if not subscribe:
             logger.warning("Unable to add signal receiver for Mpris2 players")
+
+        # If the user has specified a player to be monitored, we can poll it now.
+        if self.objname is not None:
+            await self._check_player()
+
+    def _name_owner_changed(self, message):
+        # We need to track when an interface has been removed from the bus
+        # We use the NameOwnerChanged signal and check if the new owner is
+        # empty.
+        name, _, new_owner = message.body
+
+        # Check if the current player has closed
+        if new_owner == "" and name == self._current_player:
+            self._current_player = None
+            self.update("")
+
+            # Cancel any scheduled background poll
+            self._set_background_poll(False)
 
     def message(self, message):
         if message.message_type != MessageType.SIGNAL:
@@ -163,6 +197,42 @@ class Mpris2(base._TextBox):
         self._current_player = current_player
 
         self.parse_message(*message.body)
+
+    async def _check_player(self):
+        """Check for player at startup and retrieve metadata."""
+        if not (self.objname or self._current_player):
+            return
+
+        bus, message = await _send_dbus_message(
+            True,
+            MessageType.METHOD_CALL,
+            self.objname if self.objname else self._current_player,
+            PROPERTIES_INTERFACE,
+            MPRIS_PATH,
+            "GetAll",
+            "s",
+            [MPRIS_PLAYER],
+        )
+
+        if bus:
+            bus.disconnect()
+
+        # If we get an error here it will be because the player object doesn't exist
+        if message.message_type != MessageType.METHOD_RETURN:
+            self._current_player = None
+            self.update("")
+            return
+
+        if message.body:
+            self._current_player = message.sender
+            self.parse_message(self.objname, message.body[0], [])
+
+    def _set_background_poll(self, poll=True):
+        if self._background_poll is not None:
+            self._background_poll.cancel()
+
+        if poll:
+            self._background_poll = self.timeout_add(self.poll_interval, self._check_player)
 
     async def get_player_name(self, player):
         bus, message = await _send_dbus_message(
@@ -218,6 +288,9 @@ class Mpris2(base._TextBox):
 
         if self.text != self.displaytext:
             self.update(self.displaytext)
+
+        if self.poll_interval:
+            self._set_background_poll()
 
     def get_track_info(self, metadata: dict[str, Variant]) -> str:
         meta_list = []
