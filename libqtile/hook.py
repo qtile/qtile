@@ -386,7 +386,7 @@ def _fire_async_event(co):
     if loop is None:
         asyncio.run(co)
     else:
-        asyncio.ensure_future(co)
+        asyncio.create_task(co)
 
 
 def fire(event, *args, **kwargs):

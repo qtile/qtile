@@ -350,7 +350,12 @@ class _Widget(CommandObject, configurable.Configurable):
     def _wrapper(self, method, *method_args):
         self._remove_dead_timers()
         try:
-            method(*method_args)
+            if asyncio.iscoroutinefunction(method):
+                asyncio.create_task(method(*method_args))
+            elif asyncio.iscoroutine(method):
+                asyncio.create_task(method)
+            else:
+                method(*method_args)
         except:  # noqa: E722
             logger.exception("got exception from widget timer")
 
