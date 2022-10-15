@@ -99,6 +99,10 @@ class KeyChord:
     name:
         A string to name the chord. The name will be displayed in the Chord
         widget.
+    desc:
+        A string to describe the chord. This attribute is not directly used by Qtile
+        but users may want to access this when creating scripts to show configured
+        keybindings.
     """
 
     def __init__(
@@ -108,6 +112,7 @@ class KeyChord:
         submappings: list[Key | KeyChord],
         mode: bool | str = False,
         name: str = "",
+        desc: str = "",
     ):
         self.modifiers = modifiers
         self.key = key
@@ -116,6 +121,7 @@ class KeyChord:
         self.submappings = submappings
         self.mode = mode
         self.name = name
+        self.desc = desc
 
         if isinstance(mode, str):
             logger.warning(
