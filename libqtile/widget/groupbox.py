@@ -237,6 +237,7 @@ class GroupBox(_GroupBase):
             "Hide groups that have no windows and that are not displayed on any screen.",
         ),
         ("spacing", None, "Spacing between groups" "(if set to None, will be equal to margin_x)"),
+        ("toggle", True, "Enable toggling of group when clicking on same group name"),
     ]
 
     def __init__(self, **config):
@@ -325,7 +326,7 @@ class GroupBox(_GroupBase):
 
     def go_to_group(self, group):
         if group:
-            if self.bar.screen.group != group or not self.disable_drag:
+            if self.bar.screen.group != group or not self.disable_drag or not self.toggle:
                 self.bar.screen.set_group(group, warp=False)
             else:
                 self.bar.screen.toggle_group(group, warp=False)

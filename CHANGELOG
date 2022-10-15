@@ -22,6 +22,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Add ability to set icon size in `LaunchBar` widget.
         - Add 'warp_pointer' option to `Drag` that when set will warp the pointer to the bottom right of
           the window when dragging begins.
+        - Add ability to disable group toggling in `GroupBox` widget
     * bugfixes
 
 Qtile 0.22.0, released 2022-09-22:
