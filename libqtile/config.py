@@ -37,6 +37,7 @@ from libqtile.command.base import CommandObject, expose_command
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
+    import re
     from typing import Any, Callable, Iterable
 
     from libqtile.backend import base
@@ -753,11 +754,9 @@ class Match:
     """
     Match for dynamic groups or auto-floating windows.
 
-    It can match by title, wm_class, role, wm_type, wm_instance_class or net_wm_pid.
-
-    :class:`Match` supports both regular expression objects (i.e. the result of
-    ``re.compile()``) or strings (match as an "include"-match). If a window matches all
-    specified values, it is considered a match.
+    For some properties, :class:`Match` supports both regular expression objects (i.e.
+    the result of ``re.compile()``) or strings (match as an "include"-match). If a
+    window matches all specified values, it is considered a match.
 
     Parameters
     ==========
@@ -783,11 +782,11 @@ class Match:
 
     def __init__(
         self,
-        title: str | None = None,
-        wm_class: str | None = None,
-        role: str | None = None,
-        wm_type: str | None = None,
-        wm_instance_class: str | None = None,
+        title: str | re.Pattern | None = None,
+        wm_class: str | re.Pattern | None = None,
+        role: str | re.Pattern | None = None,
+        wm_type: str | re.Pattern | None = None,
+        wm_instance_class: str | re.Pattern | None = None,
         net_wm_pid: int | None = None,
         func: Callable[[base.Window], bool] | None = None,
         wid: int | None = None,
