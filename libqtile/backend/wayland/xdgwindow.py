@@ -68,6 +68,7 @@ class XdgWindow(Window[XdgSurface]):
         self.add_listener(surface.new_popup_event, self._on_new_popup)
         self.add_listener(surface.surface.commit_event, self._on_commit)
         self.add_listener(surface.surface.new_subsurface_event, self._on_new_subsurface)
+        self.add_listener(surface.toplevel.request_fullscreen_event, self._on_request_fullscreen)
 
     def finalize(self) -> None:
         Window.finalize(self)
@@ -106,9 +107,6 @@ class XdgWindow(Window[XdgSurface]):
                 self.ftm_handle.set_app_id(self._wm_class or "")
 
             # Add the toplevel's listeners
-            self.add_listener(
-                surface.toplevel.request_fullscreen_event, self._on_request_fullscreen
-            )
             self.add_listener(surface.toplevel.set_title_event, self._on_set_title)
             self.add_listener(surface.toplevel.set_app_id_event, self._on_set_app_id)
             self.add_listener(
