@@ -86,7 +86,10 @@ class MonadTallNewCLientPositionBottomConfig(Config):
 class MonadTallMarginsConfig(Config):
     auto_fullscreen = True
     groups = [libqtile.config.Group("a")]
-    layouts = [layout.MonadTall(margin=4)]
+    layouts = [
+        layout.MonadTall(margin=4),
+        layout.MonadTall(margin=[2, 4, 6, 8]),
+    ]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
@@ -127,12 +130,20 @@ class MonadWideNewClientPositionTopConfig(Config):
 class MonadWideMarginsConfig(Config):
     auto_fullscreen = True
     groups = [libqtile.config.Group("a")]
-    layouts = [layout.MonadWide(margin=4)]
+    layouts = [
+        layout.MonadWide(margin=4),
+        layout.MonadWide(margin=[2, 4, 6, 8]),
+    ]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
     follow_mouse_focus = False
+
+
+monadwidemargins_config = pytest.mark.parametrize(
+    "manager", [MonadWideMarginsConfig], indirect=True
+)
 
 
 @monadtall_config
@@ -255,8 +266,30 @@ def test_tall_margins(manager):
     assert_focused(manager, "one")
     assert_dimensions(manager, 4, 4, 392, 588)
 
+    manager.test_window("three")
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 404, 4, 388, 288)
 
-@pytest.mark.parametrize("manager", [MonadWideMarginsConfig], indirect=True)
+    manager.c.layout.next()
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 404, 300, 388, 292)
+
+    manager.c.next_layout()
+
+    # x = screen_width * 0.5 + margin[3]
+    # y = screen_height / 2
+    # width = screen_width * 0.5 - margin[1] - margin[3] - 2 * border
+    # height = screen_height / 2 - margin[0] - margin[2] - 2 * border
+    #            + min(margin[0], margin[2]) # Combine top margin
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 408, 300, 384, 290)
+
+    manager.c.layout.previous()
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 408, 2, 384, 288)
+
+
+@monadwidemargins_config
 def test_wide_margins(manager):
     manager.test_window("one")
     assert_dimensions(manager, 4, 4, 788, 588)
@@ -268,6 +301,29 @@ def test_wide_margins(manager):
     manager.c.layout.previous()
     assert_focused(manager, "one")
     assert_dimensions(manager, 4, 4, 788, 292)
+
+    manager.test_window("three")
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 4, 304, 388, 288)
+
+    manager.c.layout.next()
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 304, 392, 288)
+
+    manager.c.next_layout()
+
+    # x = screen_width / 2 + margin[3] - min(margin[1], margin[3])
+    # y = screen_height * 0.5 + max(margin[0], margin[2])
+    # width = screen_width / 2 - margin[1] - margin[3] - 2 * border
+    #            + min(margin[1], margin[3]) # Combine left margin
+    # height = screen_height * 0.5 - margin[2] - 2 * border
+    #            - max(margin[0], margin[2]) # Combine top margin
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 404, 306, 388, 284)
+
+    manager.c.layout.previous()
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 8, 306, 384, 284)
 
 
 @monadtall_config
