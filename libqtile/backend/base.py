@@ -544,8 +544,8 @@ class Window(_Window, metaclass=ABCMeta):
 
         screen = self.group.screen
 
-        x = (screen.width - self.width) // 2
-        y = (screen.height - self.height) // 2
+        x = screen.x + (screen.width - self.width) // 2
+        y = screen.y + (screen.height - self.height) // 2
 
         self.place(
             x,
