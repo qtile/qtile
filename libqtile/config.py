@@ -62,7 +62,8 @@ class Key:
     key:
         A key specification, e.g. ``"a"``, ``"Tab"``, ``"Return"``, ``"space"``.
     commands:
-        A list :class:`LazyCall` objects to evaluate in sequence upon keypress.
+        One or more :class:`LazyCall` objects to evaluate in sequence upon keypress. Multiple
+        commands should be separated by commas.
     desc:
         Description to be added to the key binding. (Optional)
 
