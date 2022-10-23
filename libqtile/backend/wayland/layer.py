@@ -92,7 +92,8 @@ class LayerStatic(Static[LayerSurfaceV1]):
             self.core.stack_windows()
         else:
             self.output.layers[self._layer].remove(self)
-            self.core.stacked_windows.remove(self)
+            if self in self.core.stacked_windows:
+                self.core.stacked_windows.remove(self)
 
             if self.reserved_space:
                 self.qtile.free_reserved_space(self.reserved_space, self.screen)
@@ -118,12 +119,27 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self.damage()
 
     def _on_commit(self, _listener: Listener, _data: Any) -> None:
+        output = self.surface.output and self.surface.output.data
+        if output and self.output != output:
+            prev_output = self.output
+            self.output = output
+            self._outputs.remove(prev_output)
+            self._outputs.add(output)
+            if self._mapped:
+                prev_output.layers[self._layer].remove(self)
+                self.output.layers[self._layer].append(self)
+
         current = self.surface.current
         if (
             self._layer != current.layer
             or self.desired_width != current.desired_width
             or self.desired_height != current.desired_height
         ):
+            if self._mapped:
+                self.output.layers[self._layer].remove(self)
+                self._layer = current.layer
+                self.output.layers[self._layer].append(self)
+                self.core.stack_windows()
             self.output.organise_layers()
         self.damage()
 
