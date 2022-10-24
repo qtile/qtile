@@ -698,9 +698,13 @@ class Painter:
         width = max((win.x + win.width for win in root_windows))
         height = max((win.y + win.height for win in root_windows))
 
-        root_pixmap = self.default_screen.root.get_property(
-            "_XROOTPMAP_ID", xcffib.xproto.Atom.PIXMAP, int
-        )
+        try:
+            root_pixmap = self.default_screen.root.get_property(
+                "_XROOTPMAP_ID", xcffib.xproto.Atom.PIXMAP, int
+            )
+        except xcffib.ConnectionException:
+            root_pixmap = None
+
         if not root_pixmap:
             root_pixmap = self.default_screen.root.get_property(
                 "ESETROOT_PMAP_ID", xcffib.xproto.Atom.PIXMAP, int
