@@ -61,6 +61,7 @@ if TYPE_CHECKING:
     from libqtile.command.base import ItemT
     from libqtile.confreader import Config
     from libqtile.layout.base import Layout
+    from libqtile.lazy import LazyCall
 
 
 class Qtile(CommandObject):
@@ -416,11 +417,7 @@ class Qtile(CommandObject):
         else:
             for cmd in key.commands:
                 if cmd.check(self):
-                    status, val = self.server.call(
-                        (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
-                    )
-                    if status in (interface.ERROR, interface.EXCEPTION):
-                        logger.error("KB command error %s: %s", cmd.name, val)
+                    self.run_lazy(cmd)
             if self.chord_stack and (not self.chord_stack[-1].mode or key.key == "Escape"):
                 self.ungrab_chord()
             return
@@ -912,6 +909,13 @@ class Qtile(CommandObject):
         """A wrapper for running a function in the event loop's default
         executor."""
         return self._eventloop.run_in_executor(None, func, *args)
+
+    def run_lazy(self, lazycommand: LazyCall) -> None:
+        status, val = self.server.call(
+            (lazycommand.selectors, lazycommand.name, lazycommand.args, lazycommand.kwargs)
+        )
+        if status in (interface.ERROR, interface.EXCEPTION):
+            logger.error("KB command error %s: %s", lazycommand.name, val)
 
     @expose_command()
     def debug(self) -> None:

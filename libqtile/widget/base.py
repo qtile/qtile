@@ -38,7 +38,6 @@ import subprocess
 from typing import TYPE_CHECKING
 
 from libqtile import bar, configurable, confreader
-from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandObject, expose_command
 from libqtile.lazy import LazyCall
 from libqtile.log_utils import logger
@@ -270,12 +269,7 @@ class _Widget(CommandObject, configurable.Configurable):
         if name in self.mouse_callbacks:
             cmd = self.mouse_callbacks[name]
             if isinstance(cmd, LazyCall):
-                if cmd.check(self.qtile):
-                    status, val = self.qtile.server.call(
-                        (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
-                    )
-                    if status in (interface.ERROR, interface.EXCEPTION):
-                        logger.error("Mouse callback command error %s: %s", cmd.name, val)
+                self.qtile.run_lazy(cmd)
             else:
                 cmd()
 
