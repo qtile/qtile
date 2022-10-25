@@ -132,7 +132,8 @@ class Core(base.Core, wlrq.HasListeners):
 
         # set up inputs
         self.keyboards: list[inputs.Keyboard] = []
-        self._pointers: list[inputs.Pointer] = []
+        self.pointers: list[inputs.Pointer] = []
+        self.touch_devices: list[inputs.Touch] = []
         self.grabbed_keys: list[tuple[int, int]] = []
         self.grabbed_buttons: list[tuple[int, int]] = []
         DataDeviceManager(self.display)
@@ -249,8 +250,10 @@ class Core(base.Core, wlrq.HasListeners):
         self._poll()
         for kb in self.keyboards.copy():
             kb.finalize()
-        for pt in self._pointers.copy():
+        for pt in self.pointers.copy():
             pt.finalize()
+        for tc in self.touch_devices.copy():
+            tc.finalize()
         for out in self.outputs.copy():
             out.finalize()
 
@@ -304,14 +307,11 @@ class Core(base.Core, wlrq.HasListeners):
             device = self._add_new_pointer(wlr_device)
         elif wlr_device.device_type == input_device.InputDeviceType.KEYBOARD:
             device = self._add_new_keyboard(wlr_device)
+        elif wlr_device.device_type == input_device.InputDeviceType.TOUCH:
+            device = self._add_new_touch(wlr_device)
         else:
             logger.info("New %s device", wlr_device.device_type.name)
             return
-
-        capabilities = WlSeat.capability.pointer
-        if self.keyboards:
-            capabilities |= WlSeat.capability.keyboard
-        self.seat.set_capabilities(capabilities)
 
         logger.info("New device: %s %s", *device.get_info())
         if self.qtile:
@@ -319,6 +319,8 @@ class Core(base.Core, wlrq.HasListeners):
                 device.configure(self.qtile.config.wl_input_rules)
         else:
             self._pending_input_devices.append(device)
+
+        self.update_capabilities()
 
     def _on_new_output(self, _listener: Listener, wlr_output: wlrOutput) -> None:
         logger.debug("Signal: backend new_output_event")
@@ -760,7 +762,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _add_new_pointer(self, wlr_device: input_device.InputDevice) -> inputs.Pointer:
         device = inputs.Pointer(self, wlr_device)
-        self._pointers.append(device)
+        self.pointers.append(device)
         self.cursor.attach_input_device(wlr_device)
         return device
 
@@ -769,6 +771,20 @@ class Core(base.Core, wlrq.HasListeners):
         self.keyboards.append(device)
         self.seat.set_keyboard(wlr_device)
         return device
+
+    def _add_new_touch(self, wlr_device: input_device.InputDevice) -> inputs.Touch:
+        device = inputs.Touch(self, wlr_device)
+        self.cursor.attach_input_device(wlr_device)
+        self.touch_devices.append(device)
+        return device
+
+    def update_capabilities(self) -> None:
+        capabilities = WlSeat.capability.pointer
+        if self.keyboards:
+            capabilities |= WlSeat.capability.keyboard
+        if self.touch_devices:
+            capabilities |= WlSeat.capability.touch
+        self.seat.set_capabilities(capabilities)
 
     def _configure_pending_inputs(self) -> None:
         """Configure inputs that were detected before the config was loaded."""
@@ -841,7 +857,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         # Apply input device configuration
         if self.qtile.config.wl_input_rules:
-            for device in [*self.keyboards, *self._pointers]:
+            for device in [*self.keyboards, *self.pointers, *self.touch_devices]:
                 device.configure(self.qtile.config.wl_input_rules)
 
     def new_wid(self) -> int:
@@ -1159,7 +1175,8 @@ class Core(base.Core, wlrq.HasListeners):
         info = {}
         device_lists: dict[str, list[inputs._Device]] = {
             "type:keyboard": self.keyboards,  # type: ignore
-            "type:pointer": self._pointers,  # type: ignore
+            "type:pointer": self.pointers,  # type: ignore
+            "type:touch": self.touch_devices,  # type: ignore
         }
 
         for type_key, devices in device_lists.items():

@@ -221,6 +221,7 @@ class Keyboard(_Device):
         self.core.keyboards.remove(self)
         if self.core.keyboards and self.core.seat.keyboard.destroyed:
             self.seat.set_keyboard(self.core.keyboards[-1].wlr_device)
+        self.core.update_capabilities()
 
     def set_keymap(self, layout: str | None, options: str | None, variant: str | None) -> None:
         """
@@ -294,7 +295,8 @@ class Pointer(_Device):
 
     def finalize(self) -> None:
         super().finalize()
-        self.core._pointers.remove(self)
+        self.core.pointers.remove(self)
+        self.core.update_capabilities()
 
     def _on_destroy(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: pointer destroy")
@@ -383,3 +385,14 @@ class Pointer(_Device):
                     libinput.libinput_device_config_tap_set_button_map(
                         handle, TAP_MAPS.get(config.tap_button_map)
                     )
+
+
+class Touch(Pointer):
+    def finalize(self) -> None:
+        super().finalize()
+        self.core.touch_devices.remove(self)
+        self.core.update_capabilities()
+
+    def _on_destroy(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: touch_device destroy")
+        self.finalize()
