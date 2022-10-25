@@ -22,7 +22,7 @@ jobs:
                 # - /libqtile/scripts/check.py mypy argument
                 # If adding new python versions, consider also updating
                 # python version in .readthedocs.yaml
-                python-version: [pypy-3.7, 3.7, 3.8, 3.9, '3.10']
+                python-version: [pypy-3.9, 3.8, 3.9, '3.10', '3.11']
         steps:
             - uses: actions/checkout@v2
             - name: Set up python ${{ matrix.python-version }}
@@ -86,8 +86,8 @@ jobs:
                 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
                 tox
             - name: Upload coverage data to coveralls.io
-              # For speed purposes, we don't do coverage reporting on pypy 3.7
-              if: ${{ matrix.python-version != 'pypy-3.7' }}
+              # For speed purposes, we don't do coverage reporting on pypy 3.9
+              if: ${{ matrix.python-version != 'pypy-3.9' }}
               run: |
                 pip -q install coveralls
                 coveralls --service=github
