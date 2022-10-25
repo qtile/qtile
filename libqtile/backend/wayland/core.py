@@ -241,14 +241,16 @@ class Core(base.Core, wlrq.HasListeners):
         self.foreign_toplevel_manager_v1 = ForeignToplevelManagerV1.create(self.display)
 
         # Set up XWayland
-        self._xwayland = xwayland.XWayland(self.display, self.compositor, True)
-        if self._xwayland:
+        self._xwayland: xwayland.XWayland | None = None
+        try:
+            self._xwayland = xwayland.XWayland(self.display, self.compositor, True)
+        except RuntimeError:
+            logger.info("Failed to set up XWayland. Continuing without.")
+        else:
             os.environ["DISPLAY"] = self._xwayland.display_name or ""
             logger.info("Set up XWayland with DISPLAY=%s", os.environ["DISPLAY"])
             self.add_listener(self._xwayland.ready_event, self._on_xwayland_ready)
             self.add_listener(self._xwayland.new_surface_event, self._on_xwayland_new_surface)
-        else:
-            logger.info("Failed to set up XWayland. Continuing without.")
 
         # Start
         self.backend.start()
