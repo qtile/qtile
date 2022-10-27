@@ -41,6 +41,7 @@ from wlroots.wlr_types import (
     GammaControlManagerV1,
     InputInhibitManager,
     OutputLayout,
+    PointerGesturesV1,
     PrimarySelectionV1DeviceManager,
     RelativePointerManagerV1,
     ScreencopyManagerV1,
@@ -175,12 +176,21 @@ class Core(base.Core, wlrq.HasListeners):
         # set up cursor
         self.cursor = Cursor(self.output_layout)
         self.cursor_manager = XCursorManager(24)
+        self._gestures = PointerGesturesV1(self.display)
         self.add_listener(self.seat.request_set_cursor_event, self._on_request_cursor)
         self.add_listener(self.cursor.axis_event, self._on_cursor_axis)
         self.add_listener(self.cursor.frame_event, self._on_cursor_frame)
         self.add_listener(self.cursor.button_event, self._on_cursor_button)
         self.add_listener(self.cursor.motion_event, self._on_cursor_motion)
         self.add_listener(self.cursor.motion_absolute_event, self._on_cursor_motion_absolute)
+        self.add_listener(self.cursor.pinch_begin, self._on_cursor_pinch_begin)
+        self.add_listener(self.cursor.pinch_update, self._on_cursor_pinch_update)
+        self.add_listener(self.cursor.pinch_end, self._on_cursor_pinch_end)
+        self.add_listener(self.cursor.swipe_begin, self._on_cursor_swipe_begin)
+        self.add_listener(self.cursor.swipe_update, self._on_cursor_swipe_update)
+        self.add_listener(self.cursor.swipe_end, self._on_cursor_swipe_end)
+        self.add_listener(self.cursor.hold_begin, self._on_cursor_hold_begin)
+        self.add_listener(self.cursor.hold_end, self._on_cursor_hold_end)
         self._cursor_state = wlrq.CursorState()
 
         # set up shell
@@ -469,6 +479,70 @@ class Core(base.Core, wlrq.HasListeners):
             input_device=event.device,
         )
         self._process_cursor_motion(event.time_msec, self.cursor.x, self.cursor.y)
+
+    def _on_cursor_pinch_begin(
+        self,
+        _listener: Listener,
+        event: pointer.PointerEventPinchBegin,
+    ) -> None:
+        self.idle.notify_activity(self.seat)
+        self._gestures.send_pinch_begin(self.seat, event.time_msec, event.fingers)
+
+    def _on_cursor_pinch_update(
+        self,
+        _listener: Listener,
+        event: pointer.PointerEventPinchUpdate,
+    ) -> None:
+        self._gestures.send_pinch_update(
+            self.seat, event.time_msec, event.dx, event.dy, event.scale, event.rotation
+        )
+
+    def _on_cursor_pinch_end(
+        self,
+        _listener: Listener,
+        event: pointer.PointerEventPinchEnd,
+    ) -> None:
+        self.idle.notify_activity(self.seat)
+        self._gestures.send_pinch_end(self.seat, event.time_msec, event.cancelled)
+
+    def _on_cursor_swipe_begin(
+        self,
+        _listener: Listener,
+        event: pointer.PointerEventSwipeBegin,
+    ) -> None:
+        self.idle.notify_activity(self.seat)
+        self._gestures.send_swipe_begin(self.seat, event.time_msec, event.fingers)
+
+    def _on_cursor_swipe_update(
+        self,
+        _listener: Listener,
+        event: pointer.PointerEventSwipeUpdate,
+    ) -> None:
+        self._gestures.send_swipe_update(self.seat, event.time_msec, event.dx, event.dy)
+
+    def _on_cursor_swipe_end(
+        self,
+        _listener: Listener,
+        event: pointer.PointerEventSwipeEnd,
+    ) -> None:
+        self.idle.notify_activity(self.seat)
+        self._gestures.send_swipe_end(self.seat, event.time_msec, event.cancelled)
+
+    def _on_cursor_hold_begin(
+        self,
+        _listener: Listener,
+        event: pointer.PointerEventHoldBegin,
+    ) -> None:
+        self.idle.notify_activity(self.seat)
+        self._gestures.send_hold_begin(self.seat, event.time_msec, event.fingers)
+
+    def _on_cursor_hold_end(
+        self,
+        _listener: Listener,
+        event: pointer.PointerEventHoldEnd,
+    ) -> None:
+        self.idle.notify_activity(self.seat)
+        self._gestures.send_hold_end(self.seat, event.time_msec, event.cancelled)
 
     def _on_new_pointer_constraint(
         self, _listener: Listener, wlr_constraint: PointerConstraintV1
