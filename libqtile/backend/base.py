@@ -78,15 +78,12 @@ class Core(CommandObject, metaclass=ABCMeta):
     def grab_button(self, mouse: config.Mouse) -> int:
         """Configure the backend to grab the mouse event"""
 
-    @abstractmethod
     def ungrab_buttons(self) -> None:
         """Release the grabbed button events"""
 
-    @abstractmethod
     def grab_pointer(self) -> None:
         """Configure the backend to grab mouse events"""
 
-    @abstractmethod
     def ungrab_pointer(self) -> None:
         """Release grabbed pointer events"""
 

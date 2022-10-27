@@ -138,7 +138,6 @@ class Core(base.Core, wlrq.HasListeners):
         self.keyboards: list[inputs.Keyboard] = []
         self._pointers: list[inputs.Pointer] = []
         self.grabbed_keys: list[tuple[int, int]] = []
-        self.grabbed_buttons: list[tuple[int, int]] = []
         DataDeviceManager(self.display)
         self.live_dnd: wlrq.Dnd | None = None
         DataControlManagerV1(self.display)
@@ -1151,20 +1150,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def grab_button(self, mouse: config.Mouse) -> int:
         """Configure the backend to grab the mouse event"""
-        keysym = wlrq.buttons[mouse.button_code]
-        mask_key = wlrq.translate_masks(mouse.modifiers)
-        self.grabbed_buttons.append((keysym, mask_key))
-        return mask_key
-
-    def ungrab_buttons(self) -> None:
-        """Release the grabbed button events"""
-        self.grabbed_buttons.clear()
-
-    def grab_pointer(self) -> None:
-        """Configure the backend to grab mouse events"""
-
-    def ungrab_pointer(self) -> None:
-        """Release grabbed pointer events"""
+        return wlrq.translate_masks(mouse.modifiers)
 
     def warp_pointer(self, x: float, y: float) -> None:
         """Warp the pointer to the coordinates in relative to the output layout"""
