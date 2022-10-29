@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import typing
 
-from pywayland.server import Listener
 from wlroots import xwayland
 
 from libqtile import hook
@@ -34,6 +33,9 @@ from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
     from typing import Any
+
+    import wlroots.wlr_types.foreign_toplevel_management_v1 as ftm
+    from pywayland.server import Listener
 
     from libqtile.backend.wayland.core import Core
     from libqtile.core.manager import Qtile
@@ -72,12 +74,11 @@ class XWindow(Window[xwayland.Surface]):
             self.core.pending_windows.remove(self)
             self._wid = self.core.new_wid()
             logger.debug("Managing new XWayland window with window ID: %s", self._wid)
+            surface = self.surface
 
             # Make it static if it isn't a regular window
-            if self.surface.override_redirect:
-                self.static(
-                    None, self.surface.x, self.surface.y, self.surface.width, self.surface.height
-                )
+            if surface.override_redirect:
+                self.static(None, surface.x, surface.y, surface.width, surface.height)
                 win = self.qtile.windows_map[self._wid]
                 assert isinstance(win, XStatic)
                 self.core.focus_window(win)
@@ -85,24 +86,25 @@ class XWindow(Window[xwayland.Surface]):
 
             # Save the client's desired geometry. xterm seems to have these set to 1, so
             # let's ignore 1 or below. The float sizes will be fetched when it is floated.
-            if self.surface.width > 1:
-                self._width = self._float_width = self.surface.width
+            if surface.width > 1:
+                self._width = self._float_width = surface.width
             if self.surface.height > 1:
-                self._height = self._float_height = self.surface.height
+                self._height = self._float_height = surface.height
 
+            surface.data = self.ftm_handle = self.core.foreign_toplevel_manager_v1.create_handle()
             # Get the client's name and class
-            title = self.surface.title
+            title = surface.title
             if title:
                 self.name = title
                 self.ftm_handle.set_title(self.name)
-            self._wm_class = self.surface.wm_class
+            self._wm_class = surface.wm_class
             self.ftm_handle.set_app_id(self._wm_class or "")
 
             # Add event listeners
-            self.add_listener(self.surface.surface.commit_event, self._on_commit)
-            self.add_listener(self.surface.request_fullscreen_event, self._on_request_fullscreen)
-            self.add_listener(self.surface.set_title_event, self._on_set_title)
-            self.add_listener(self.surface.set_class_event, self._on_set_class)
+            self.add_listener(surface.surface.commit_event, self._on_commit)
+            self.add_listener(surface.request_fullscreen_event, self._on_request_fullscreen)
+            self.add_listener(surface.set_title_event, self._on_set_title)
+            self.add_listener(surface.set_class_event, self._on_set_class)
             self.add_listener(
                 self.ftm_handle.request_maximize_event, self._on_foreign_request_maximize
             )
@@ -133,8 +135,15 @@ class XWindow(Window[xwayland.Surface]):
                 seat.keyboard_clear_focus()
 
         if not self._unmapping:
+            # Client unmapped X11 windows return to a pending state, where we don't
+            # manage them, but clients can re-use them.
             self.qtile.unmanage(self.wid)
             self.finalize()
+            self.add_listener(self.surface.map_event, self._on_map)
+            self.add_listener(self.surface.unmap_event, self._on_unmap)
+            self.add_listener(self.surface.destroy_event, self._on_destroy)
+            self.core.pending_windows.add(self)
+            self._wid = -1
 
         self._unmapping = False
 
@@ -148,13 +157,15 @@ class XWindow(Window[xwayland.Surface]):
         title = self.surface.title
         if title and title != self.name:
             self.name = title
-            self.ftm_handle.set_title(title)
+            if self.ftm_handle:
+                self.ftm_handle.set_title(title)
             hook.fire("client_name_updated", self)
 
     def _on_set_class(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xwindow set_class")
         self._wm_class = self.surface.wm_class
-        self.ftm_handle.set_app_id(self._wm_class or "")
+        if self.ftm_handle:
+            self.ftm_handle.set_app_id(self._wm_class or "")
 
     def hide(self) -> None:
         if self.mapped:
@@ -203,7 +214,8 @@ class XWindow(Window[xwayland.Surface]):
     def _update_fullscreen(self, do_full: bool) -> None:
         if do_full != (self._float_state == FloatStates.FULLSCREEN):
             self.surface.set_fullscreen(do_full)
-            self.ftm_handle.set_fullscreen(do_full)
+            if self.ftm_handle:
+                self.ftm_handle.set_fullscreen(do_full)
 
     @property
     def fullscreen(self) -> bool:
@@ -227,7 +239,8 @@ class XWindow(Window[xwayland.Surface]):
         elif self._float_state == FloatStates.FULLSCREEN:
             self.floating = False
 
-        self.ftm_handle.set_fullscreen(do_full)
+        if self.ftm_handle:
+            self.ftm_handle.set_fullscreen(do_full)
 
     def place(
         self,
@@ -333,6 +346,8 @@ class XStatic(Static[xwayland.Surface]):
         if surface.override_redirect:
             self.add_listener(surface.set_geometry_event, self._on_set_geometry)
 
+        self.ftm_handle: ftm.ForeignToplevelHandleV1 | None = None
+
     @expose_command()
     def kill(self) -> None:
         self.surface.close()
@@ -371,13 +386,15 @@ class XStatic(Static[xwayland.Surface]):
         title = self.surface.title
         if title and title != self.name:
             self.name = title
-            self.ftm_handle.set_title(title)
+            if self.ftm_handle:
+                self.ftm_handle.set_title(title)
             hook.fire("client_name_updated", self)
 
     def _on_set_class(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xstatic set_class")
         self._wm_class = self.surface.wm_class
-        self.ftm_handle.set_app_id(self._wm_class or "")
+        if self.ftm_handle:
+            self.ftm_handle.set_app_id(self._wm_class or "")
 
     def _on_set_geometry(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xstatic set_geometry")
