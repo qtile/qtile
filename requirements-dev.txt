@@ -7,4 +7,4 @@ types-pytz
 types-pkg_resources
 pep8-naming
 psutil
-pytest-cov <= 3.0.0
+coverage
