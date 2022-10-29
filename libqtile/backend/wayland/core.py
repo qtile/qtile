@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
 import time
 import typing
@@ -83,7 +84,7 @@ from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Generator
 
     from pywayland.server import Listener
     from wlroots.wlr_types import Output as wlrOutput
@@ -745,6 +746,10 @@ class Core(base.Core, wlrq.HasListeners):
         if self.live_dnd:
             self.live_dnd.position(cx, cy)
 
+        self._focus_pointer(cx_int, cy_int, motion=time_msec)
+
+    def _focus_pointer(self, cx: int, cy: int, motion: int | None = None) -> None:
+        assert self.qtile is not None
         found = self._under_pointer()
 
         if found:
@@ -768,32 +773,35 @@ class Core(base.Core, wlrq.HasListeners):
 
             if isinstance(win, window.Internal):
                 if self._hovered_window is win:
-                    # movement remained within the same Internal window
-                    win.process_pointer_motion(
-                        cx_int - self._hovered_window.x,
-                        cy_int - self._hovered_window.y,
-                    )
+                    # pointer remained within the same Internal window
+                    if motion is not None:
+                        win.process_pointer_motion(
+                            cx - self._hovered_window.x,
+                            cy - self._hovered_window.y,
+                        )
                 else:
                     if self._hovered_window:
                         if isinstance(self._hovered_window, window.Internal):
-                            # moved from an Internal to a different Internal
-                            self._hovered_window.process_pointer_leave(
-                                cx_int - self._hovered_window.x,
-                                cy_int - self._hovered_window.y,
-                            )
+                            if motion is not None:
+                                # moved from an Internal to a different Internal
+                                self._hovered_window.process_pointer_leave(
+                                    cx - self._hovered_window.x,
+                                    cy - self._hovered_window.y,
+                                )
                         else:
                             # moved from a Window or Static to an Internal
                             if self.seat.pointer_state.focused_surface:
                                 self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
                                 self.seat.pointer_notify_clear_focus()
-                    win.process_pointer_enter(cx_int, cy_int)
+                    win.process_pointer_enter(cx, cy)
                     self._hovered_window = win
                 return
 
             if surface:
                 # The pointer is in a client's surface
                 self.seat.pointer_notify_enter(surface, sx, sy)
-                self.seat.pointer_notify_motion(time_msec, sx, sy)
+                if motion is not None:
+                    self.seat.pointer_notify_motion(motion, sx, sy)
             else:
                 # The pointer is on the border of a client's window
                 if self.seat.pointer_state.focused_surface:
@@ -809,13 +817,13 @@ class Core(base.Core, wlrq.HasListeners):
                         # self._hovered_window.
                         hook.fire("client_mouse_enter", win)
 
-                        if self.qtile.config.follow_mouse_focus:
-                            self.qtile.focus_screen(win.screen.index, False)
+                    if motion is not None and self.qtile.config.follow_mouse_focus:
+                        self.qtile.focus_screen(win.screen.index, False)
 
                 else:
                     hook.fire("client_mouse_enter", win)
 
-                    if self.qtile.config.follow_mouse_focus:
+                    if motion is not None and self.qtile.config.follow_mouse_focus:
                         if win.group and win.group.current_window != win:
                             win.group.focus(win, False)
                         if (
@@ -833,8 +841,8 @@ class Core(base.Core, wlrq.HasListeners):
                 if isinstance(self._hovered_window, window.Internal):
                     # We just moved out of an Internal
                     self._hovered_window.process_pointer_leave(
-                        cx_int - self._hovered_window.x,
-                        cy_int - self._hovered_window.y,
+                        cx - self._hovered_window.x,
+                        cy - self._hovered_window.y,
                     )
                 else:
                     # We just moved out of a Window or Static
@@ -1155,6 +1163,11 @@ class Core(base.Core, wlrq.HasListeners):
     def warp_pointer(self, x: float, y: float) -> None:
         """Warp the pointer to the coordinates in relative to the output layout"""
         self.cursor.warp(WarpMode.LayoutClosest, x, y)
+
+    @contextlib.contextmanager
+    def masked(self) -> Generator:
+        yield
+        self._focus_pointer(int(self.cursor.x), int(self.cursor.y))
 
     def flush(self) -> None:
         self._poll()
