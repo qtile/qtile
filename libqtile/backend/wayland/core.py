@@ -1001,7 +1001,7 @@ class Core(base.Core, wlrq.HasListeners):
                 return
 
         if isinstance(win, (xwindow.XWindow, xwindow.XStatic)):
-            if not win.surface.or_surface_wants_focus():
+            if win.surface.override_redirect and not win.surface.or_surface_wants_focus():
                 return
 
         previous_surface = self.seat.keyboard_state.focused_surface
@@ -1031,11 +1031,13 @@ class Core(base.Core, wlrq.HasListeners):
         logger.debug("Focusing new window")
         if surface.is_xdg_surface and isinstance(win.surface, XdgSurface):
             win.surface.set_activated(True)
-            win.ftm_handle.set_activated(True)
+            if win.ftm_handle:
+                win.ftm_handle.set_activated(True)
 
         elif surface.is_xwayland_surface and isinstance(win.surface, xwayland.Surface):
             win.surface.activate(True)
-            win.ftm_handle.set_activated(True)
+            if win.ftm_handle:
+                win.ftm_handle.set_activated(True)
 
         if enter and self.seat.keyboard._ptr:  # This pointer is NULL when headless
             self.seat.keyboard_notify_enter(surface, self.seat.keyboard)

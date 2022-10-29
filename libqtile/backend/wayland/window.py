@@ -126,12 +126,14 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self._float_width: int = 0
         self._float_height: int = 0
         self._float_state = FloatStates.NOT_FLOATING
-
-        surface.data = self.ftm_handle = core.foreign_toplevel_manager_v1.create_handle()
+        self.ftm_handle: ftm.ForeignToplevelHandleV1 | None = None
 
     def finalize(self) -> None:
         self.finalize_listeners()
-        self.ftm_handle.destroy()
+        if self.ftm_handle:
+            self.ftm_handle.destroy()
+            self.ftm_handle = None
+            self.surface.data = None
         self.core.remove_pointer_constraints(self)
 
     @property
@@ -354,7 +356,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             if self._float_state == FloatStates.MAXIMIZED:
                 self.floating = False
 
-        self.ftm_handle.set_maximized(do_maximize)
+        if self.ftm_handle:
+            self.ftm_handle.set_maximized(do_maximize)
 
     @property
     def minimized(self) -> bool:
@@ -369,7 +372,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             if self._float_state == FloatStates.MINIMIZED:
                 self.floating = False
 
-        self.ftm_handle.set_minimized(do_minimize)
+        if self.ftm_handle:
+            self.ftm_handle.set_minimized(do_minimize)
 
     def _tweak_float(
         self,
