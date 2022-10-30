@@ -383,7 +383,12 @@ class Colormap:
             def x8to16(i):
                 return 0xFFFF * (i & 0xFF) // 0xFF
 
-            color = hex(color)
+            try:
+                color = hex(color)
+            except ValueError:
+                logger.error("Colormap failed to allocate %s", color)
+                color = "#ff0000"
+
             r = x8to16(int(color[-6] + color[-5], 16))
             g = x8to16(int(color[-4] + color[-3], 16))
             b = x8to16(int(color[-2] + color[-1], 16))
