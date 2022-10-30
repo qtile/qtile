@@ -1000,8 +1000,10 @@ class Core(base.Core, wlrq.HasListeners):
             if not win.surface.current.keyboard_interactive:
                 return
 
-        if isinstance(win, (xwindow.XWindow, xwindow.XStatic)):
+        if isinstance(win, xwindow.XStatic):
             if win.surface.override_redirect and not win.surface.or_surface_wants_focus():
+                return
+            if win.surface.icccm_input_model() == xwayland.ICCCMInputModel.NONE:
                 return
 
         previous_surface = self.seat.keyboard_state.focused_surface
