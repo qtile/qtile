@@ -27,6 +27,7 @@ from pywayland import lib as wllib
 from pywayland.server import Listener
 from wlroots import ffi
 from wlroots.util.box import Box
+from wlroots.util.clock import Timespec
 from wlroots.util.edges import Edges
 from wlroots.wlr_types.xdg_shell import XdgPopup, XdgSurface, XdgTopLevelSetFullscreenEvent
 
@@ -128,6 +129,10 @@ class XdgWindow(Window[XdgSurface]):
             self.add_listener(self.ftm_handle.request_close_event, self._on_foreign_request_close)
 
             self.qtile.manage(self)
+
+            # Send a frame done event to provide an opportunity to redraw even if we
+            # aren't going to map (i.e. because the window was opened on a hidden group)
+            surface.surface.send_frame_done(Timespec.get_monotonic_time())
 
         if self.group and self.group.screen:
             self.mapped = True
