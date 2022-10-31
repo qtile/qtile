@@ -224,7 +224,7 @@ class Stack(Layout):
                 if s.split:
                     px = self.border_normal
                 else:
-                    px = self.border_normal_stack 
+                    px = self.border_normal_stack
             else:
                 px = self.border_normal
 
