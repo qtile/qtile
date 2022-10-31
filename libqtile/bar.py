@@ -24,7 +24,7 @@ import typing
 from collections import defaultdict
 
 from libqtile import configurable
-from libqtile.command.base import CommandObject
+from libqtile.command.base import CommandObject, expose_command
 from libqtile.log_utils import logger
 from libqtile.utils import has_transparency, rgb
 
@@ -113,6 +113,13 @@ class Gap:
         for i in ["top", "bottom", "left", "right"]:
             if getattr(self.screen, i) is self:
                 return i
+
+    @expose_command()
+    def info(self):
+        """
+        Info for this object.
+        """
+        return dict(position=self.position)
 
 
 class Obj:
@@ -622,6 +629,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             else:
                 self.drawer.draw(offsety=end, height=self.length - end)
 
+    @expose_command()
     def info(self):
         return dict(
             size=self.size,
@@ -657,7 +665,8 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
         self._add_strut = True
 
-    def cmd_fake_button_press(self, screen, position, x, y, button=1):
+    @expose_command()
+    def fake_button_press(self, screen, position, x, y, button=1):
         """
         Fake a mouse-button-press on the bar. Co-ordinates are relative
         to the top-left corner of the bar.
@@ -666,12 +675,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         :position One of "top", "bottom", "left", or "right"
         """
         self.process_button_click(x, y, button)
-
-    def cmd_info(self):
-        """
-        Info for this object.
-        """
-        return self.info()
 
 
 BarType = typing.Union[Bar, Gap]

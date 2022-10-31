@@ -294,6 +294,9 @@ class Mpd2(base.ThreadPoolText):
             elapsed = float(song_info["elapsed"]) if song_info["elapsed"] != default else 0.0
             song_info["remaining"] = "{:.2f}".format(float(total - elapsed))
 
+        if "song" in self.status_format and song_info["song"] != default:
+            song_info["currentsong"] = str(int(song_info["song"]) + 1)
+
         # mpd serializes tags containing commas as lists.
         for key in song_info:
             if isinstance(song_info[key], list):

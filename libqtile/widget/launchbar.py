@@ -36,7 +36,7 @@ displayed instead.
 To execute a software:
  - ('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode')
 To execute a python command in qtile, begin with by 'qshell:'
- - ('logout', 'qshell:self.qtile.cmd_shutdown()', 'logout from qtile')
+ - ('logout', 'qshell:self.qtile.shutdown()', 'logout from qtile')
 
 
 """
@@ -79,7 +79,7 @@ class LaunchBar(base._Widget):
             [],
             "A list of tuples (software_name, command_to_execute, comment), for example:"
             " [('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode'), "
-            " ('logout', 'qshell:self.qtile.cmd_shutdown()', 'logout from qtile')]",
+            " ('logout', 'qshell:self.qtile.shutdown()', 'logout from qtile')]",
         ),
         ("text_only", False, "Don't use any icons."),
         ("icon_size", None, "Size of icons. ``None`` to fit to bar."),
@@ -231,7 +231,7 @@ class LaunchBar(base._Widget):
                 if cmd.startswith("qshell:"):
                     exec(cmd[7:].lstrip())
                 else:
-                    self.qtile.cmd_spawn(cmd)
+                    self.qtile.spawn(cmd)
             self.draw()
 
     def draw(self):

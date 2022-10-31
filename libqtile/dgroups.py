@@ -127,7 +127,7 @@ class DGroups:
                 else:
                     spawns = group.spawn
                 for spawn in spawns:
-                    pid = self.qtile.cmd_spawn(spawn)
+                    pid = self.qtile.spawn(spawn)
                     self.add_rule(Rule(Match(net_wm_pid=pid), group.name))
 
     def _setup_hooks(self):
@@ -189,7 +189,7 @@ class DGroups:
                             self.qtile.screens[affinity].set_group(group_obj)
 
                 if rule.float:
-                    client.cmd_enable_floating()
+                    client.enable_floating()
 
                 if rule.intrusive:
                     intrusive = rule.intrusive

@@ -1,7 +1,30 @@
 Qtile x.xx.x, released XXXX-XX-XX:
+    !!! config breakage/changes !!!
+      - The `cmd_` prefix has been dropped from all commands (this means command names are common when accessed
+        via the command interface or internal python objects).
+      - Custom widgets should now expose command methods with the `@expose_command` decorator (available via
+        `from libqtile.command.base import expose_command`).
+      - Some commands have been renamed (in addition to dropping the 'cmd_' prefix):
+          `hints` -> `get_hints`
+          `groups` -> `get_groups`
+          `screens` -> `get_screens`
+      - Layouts need to rename some methods:
+        - `add` to `add_client`
+        - `cmd_next` to `next`
+        - `cmd_previous` to `previous`
+      - Layouts or widgets that redefine the `commands` property need to update the signature:
+          `@expose_command()`
+          `def commands(self) -> list[str]:`
+      - `Window.getsize` has been renamed `Window.get_size` (i.e. merged with the get_size command).
+      - `Window.getposition` has been renamed `Window.get_position` (i.e. merged with the get_position command).
+      - The `StockTicker` widget `function` option is being deprecated: rename it to `func`.
     * features
         - Add ability to set icon size in `LaunchBar` widget.
+        - Add 'warp_pointer' option to `Drag` that when set will warp the pointer to the bottom right of
+          the window when dragging begins.
+        - Add ability to disable group toggling in `GroupBox` widget
     * bugfixes
+        - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
 
 Qtile 0.22.0, released 2022-09-22:
     !!! Config breakage !!!

@@ -383,7 +383,12 @@ class Colormap:
             def x8to16(i):
                 return 0xFFFF * (i & 0xFF) // 0xFF
 
-            color = hex(color)
+            try:
+                color = hex(color)
+            except ValueError:
+                logger.error("Colormap failed to allocate %s", color)
+                color = "#ff0000"
+
             r = x8to16(int(color[-6] + color[-5], 16))
             g = x8to16(int(color[-4] + color[-3], 16))
             b = x8to16(int(color[-2] + color[-1], 16))
@@ -698,9 +703,13 @@ class Painter:
         width = max((win.x + win.width for win in root_windows))
         height = max((win.y + win.height for win in root_windows))
 
-        root_pixmap = self.default_screen.root.get_property(
-            "_XROOTPMAP_ID", xcffib.xproto.Atom.PIXMAP, int
-        )
+        try:
+            root_pixmap = self.default_screen.root.get_property(
+                "_XROOTPMAP_ID", xcffib.xproto.Atom.PIXMAP, int
+            )
+        except xcffib.ConnectionException:
+            root_pixmap = None
+
         if not root_pixmap:
             root_pixmap = self.default_screen.root.get_property(
                 "ESETROOT_PMAP_ID", xcffib.xproto.Atom.PIXMAP, int

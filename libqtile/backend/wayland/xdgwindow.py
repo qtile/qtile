@@ -36,6 +36,7 @@ from libqtile.backend.base import FloatStates
 from libqtile.backend.wayland.subsurface import SubSurface
 from libqtile.backend.wayland.window import Static, Window
 from libqtile.backend.wayland.wlrq import HasListeners
+from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -174,9 +175,7 @@ class XdgWindow(Window[XdgSurface]):
         if not self.mapped:
             self.surface.map_event.emit()
 
-    def cmd_is_visible(self) -> bool:
-        return self._mapped
-
+    @expose_command()
     def kill(self) -> None:
         self.surface.send_close()
 
@@ -273,14 +272,15 @@ class XdgWindow(Window[XdgSurface]):
         self.paint_borders(bordercolor, borderwidth)
 
         if above:
-            self.cmd_bring_to_front()
+            self.bring_to_front()
 
         prev_outputs = self._outputs.copy()
         self._find_outputs()
         for output in self._outputs | prev_outputs:
             output.damage()
 
-    def cmd_static(
+    @expose_command()
+    def static(
         self,
         screen: int | None = None,
         x: int | None = None,
@@ -288,7 +288,7 @@ class XdgWindow(Window[XdgSurface]):
         width: int | None = None,
         height: int | None = None,
     ) -> None:
-        Window.cmd_static(self, screen, x, y, width, height)
+        Window.static(self, screen, x, y, width, height)
         win = self.qtile.windows_map[self._wid]
         assert isinstance(win, XdgStatic)
         win.subsurfaces = self.subsurfaces
@@ -338,6 +338,7 @@ class XdgStatic(Static[XdgSurface]):
         for subsurface in self.subsurfaces:
             subsurface.finalize()
 
+    @expose_command()
     def kill(self) -> None:
         self.surface.send_close()
 

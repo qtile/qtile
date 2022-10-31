@@ -28,7 +28,7 @@ from libqtile.log_utils import init_log, logger
 @pytest.fixture
 def fake_qtile():
     class FakeQtile:
-        def cmd_spawn(self, value):
+        def spawn(self, value):
             logger.warning(value)
 
     yield FakeQtile()

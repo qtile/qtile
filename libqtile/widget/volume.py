@@ -34,6 +34,7 @@ import re
 import subprocess
 
 from libqtile import bar
+from libqtile.command.base import expose_command
 from libqtile.widget import base
 
 __all__ = [
@@ -88,10 +89,10 @@ class Volume(base._TextBox):
 
         self.add_callbacks(
             {
-                "Button1": self.cmd_mute,
-                "Button3": self.cmd_run_app,
-                "Button4": self.cmd_increase_vol,
-                "Button5": self.cmd_decrease_vol,
+                "Button1": self.mute,
+                "Button3": self.run_app,
+                "Button4": self.increase_vol,
+                "Button5": self.decrease_vol,
             }
         )
 
@@ -205,7 +206,8 @@ class Volume(base._TextBox):
         else:
             base._TextBox.draw(self)
 
-    def cmd_increase_vol(self):
+    @expose_command()
+    def increase_vol(self):
         if self.volume_up_command is not None:
             subprocess.call(self.volume_up_command, shell=True)
         else:
@@ -213,7 +215,8 @@ class Volume(base._TextBox):
                 self.create_amixer_command("-q", "sset", self.channel, "{}%+".format(self.step))
             )
 
-    def cmd_decrease_vol(self):
+    @expose_command()
+    def decrease_vol(self):
         if self.volume_down_command is not None:
             subprocess.call(self.volume_down_command, shell=True)
         else:
@@ -221,12 +224,14 @@ class Volume(base._TextBox):
                 self.create_amixer_command("-q", "sset", self.channel, "{}%-".format(self.step))
             )
 
-    def cmd_mute(self):
+    @expose_command()
+    def mute(self):
         if self.mute_command is not None:
             subprocess.call(self.mute_command, shell=True)
         else:
             subprocess.call(self.create_amixer_command("-q", "sset", self.channel, "toggle"))
 
-    def cmd_run_app(self):
+    @expose_command()
+    def run_app(self):
         if self.volume_app is not None:
             subprocess.Popen(self.volume_app, shell=True)

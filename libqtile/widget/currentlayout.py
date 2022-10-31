@@ -51,8 +51,8 @@ class CurrentLayout(base._TextBox):
 
         self.add_callbacks(
             {
-                "Button1": qtile.cmd_next_layout,
-                "Button2": qtile.cmd_prev_layout,
+                "Button1": qtile.next_layout,
+                "Button2": qtile.prev_layout,
             }
         )
 
@@ -128,8 +128,8 @@ class CurrentLayoutIcon(base._TextBox):
 
         self.add_callbacks(
             {
-                "Button1": qtile.cmd_next_layout,
-                "Button2": qtile.cmd_prev_layout,
+                "Button1": qtile.next_layout,
+                "Button2": qtile.prev_layout,
             }
         )
 

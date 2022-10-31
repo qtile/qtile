@@ -317,7 +317,7 @@ def test_hints_setting_unsetting(xmanager, conn):
         # We default the input hint to true since some non-trivial number of
         # windows don't set it, and most of them want focus. The spec allows
         # WMs to assume "convenient" values.
-        assert xmanager.c.window.hints()["input"]
+        assert xmanager.c.window.get_hints()["input"]
 
         # now try to "update" it, but don't really set an update (i.e. the
         # InputHint bit is 0, so the WM should not derive a new hint from the
@@ -327,21 +327,21 @@ def test_hints_setting_unsetting(xmanager, conn):
         conn.flush()
 
         # should still have the hint
-        assert xmanager.c.window.hints()["input"]
+        assert xmanager.c.window.get_hints()["input"]
 
         # now do an update: turn it off
         hints[0] = xcbq.HintsFlags["InputHint"]
         hints[1] = 0
         w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
         conn.flush()
-        assert not xmanager.c.window.hints()["input"]
+        assert not xmanager.c.window.get_hints()["input"]
 
         # turn it back on
         hints[0] = xcbq.HintsFlags["InputHint"]
         hints[1] = 1
         w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
         conn.flush()
-        assert xmanager.c.window.hints()["input"]
+        assert xmanager.c.window.get_hints()["input"]
 
     finally:
         w.kill_client()

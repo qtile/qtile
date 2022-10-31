@@ -19,6 +19,7 @@ from itertools import cycle
 
 from psutil import getloadavg
 
+from libqtile.command.base import expose_command
 from libqtile.widget import base
 
 
@@ -44,7 +45,8 @@ class Load(base.ThreadPoolText):
     def set_time(self):
         self.time = next(self.cycled_times)
 
-    def cmd_next_load(self):
+    @expose_command()
+    def next_load(self):
         self.set_time()
         self.update(self.poll())
 

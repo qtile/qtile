@@ -39,7 +39,7 @@ from typing import TYPE_CHECKING
 
 from libqtile import bar, configurable, confreader
 from libqtile.command import interface
-from libqtile.command.base import CommandError, CommandObject
+from libqtile.command.base import CommandError, CommandObject, expose_command
 from libqtile.lazy import LazyCall
 from libqtile.log_utils import logger
 
@@ -117,7 +117,7 @@ class _Widget(CommandObject, configurable.Configurable):
         from libqtile import qtile
 
         def open_calendar():
-            qtile.cmd_spawn('gsimplecal next_month')
+            qtile.spawn('gsimplecal next_month')
 
         clock = widget.Clock(
             mouse_callbacks={
@@ -249,7 +249,9 @@ class _Widget(CommandObject, configurable.Configurable):
         self.drawer.set_source_rgb(self.bar.background)
         self.drawer.fillrect(self.offsetx, self.offsety, self.width, self.height)
 
+    @expose_command()
     def info(self):
+        """Info for this object."""
         return dict(
             name=self.name,
             offset=self.offset,
@@ -301,12 +303,6 @@ class _Widget(CommandObject, configurable.Configurable):
             return self.bar
         elif name == "screen":
             return self.bar.screen
-
-    def cmd_info(self):
-        """
-        Info for this object.
-        """
-        return self.info()
 
     def draw(self):
         """
@@ -669,7 +665,8 @@ class _TextBox(_Widget):
     def hide_scroll(self):
         self.update("")
 
-    def cmd_set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED, fontshadow=UNSPECIFIED):
+    @expose_command()
+    def set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED, fontshadow=UNSPECIFIED):
         """
         Change the font used by this widget. If font is None, the current
         font is used.
@@ -682,6 +679,7 @@ class _TextBox(_Widget):
             self.fontshadow = fontshadow
         self.bar.draw()
 
+    @expose_command()
     def info(self):
         d = _Widget.info(self)
         d["foreground"] = self.foreground
@@ -689,6 +687,7 @@ class _TextBox(_Widget):
         return d
 
     def update(self, text):
+        """Update the widget text."""
         if self.text == text:
             return
         if text is None:
@@ -809,7 +808,8 @@ class ThreadPoolText(_TextBox):
     def poll(self):
         pass
 
-    def cmd_force_update(self):
+    @expose_command()
+    def force_update(self):
         """Immediately poll the widget. Existing timers are unaffected."""
         self.update(self.poll())
 

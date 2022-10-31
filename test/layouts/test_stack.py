@@ -79,7 +79,7 @@ def test_stack_commands(manager):
 
     manager.c.layout.delete()
     assert _stacks(manager) == [["one", "three", "two"]]
-    info = manager.c.groups()["a"]
+    info = manager.c.get_groups()["a"]
     assert info["focus"] == "one"
     manager.c.layout.delete()
     assert len(_stacks(manager)) == 1
@@ -92,7 +92,7 @@ def test_stack_commands(manager):
 
 
 @stack_config
-def test_stack_cmd_down(manager):
+def test_stack_down(manager):
     manager.c.layout.down()
 
 
@@ -139,35 +139,35 @@ def test_stack_nextprev(manager):
     two = manager.test_window("two")
     three = manager.test_window("three")
 
-    assert manager.c.groups()["a"]["focus"] == "three"
+    assert manager.c.get_groups()["a"]["focus"] == "three"
     manager.c.layout.next()
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
 
     manager.c.layout.previous()
-    assert manager.c.groups()["a"]["focus"] == "three"
+    assert manager.c.get_groups()["a"]["focus"] == "three"
     manager.c.layout.previous()
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
 
     manager.c.layout.next()
     manager.c.layout.next()
     manager.c.layout.next()
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
 
     manager.kill_window(three)
     manager.c.layout.next()
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
     manager.c.layout.previous()
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
     manager.c.layout.next()
     manager.kill_window(two)
     manager.c.layout.next()
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
 
     manager.kill_window(one)
     manager.c.layout.next()
-    assert manager.c.groups()["a"]["focus"] is None
+    assert manager.c.get_groups()["a"]["focus"] is None
     manager.c.layout.previous()
-    assert manager.c.groups()["a"]["focus"] is None
+    assert manager.c.get_groups()["a"]["focus"] is None
 
 
 @stack_config

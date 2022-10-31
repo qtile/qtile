@@ -47,7 +47,7 @@ CMD_DOC_COMMANDS = "\n".join(f"    * ``'{k}'`` runs ``{v}``" for k, v in CMD_DIC
 class CheckUpdates(base.ThreadPoolText):
     # The docstring includes some dynamic content so we need to compile that content
     # first and then set the docstring to that content.
-    doc = f"""
+    _doc = f"""
     Shows number of pending updates in different unix systems.
 
     The following built-in options are available via the ``distro`` parameter:
@@ -67,7 +67,7 @@ class CheckUpdates(base.ThreadPoolText):
 
     """
 
-    __doc__ = doc
+    __doc__ = _doc
 
     defaults = [
         ("distro", "Arch", "Name of your distribution"),

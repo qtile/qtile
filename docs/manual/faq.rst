@@ -88,15 +88,15 @@ of binding keys to ``lazy.group[name].toscreen()``, use this:
     def go_to_group(name: str) -> Callable:
         def _inner(qtile: Qtile) -> None:
             if len(qtile.screens) == 1:
-                qtile.groups_map[name].cmd_toscreen()
+                qtile.groups_map[name].toscreen()
                 return
 
             if name in '123':
                 qtile.focus_screen(0)
-                qtile.groups_map[name].cmd_toscreen()
+                qtile.groups_map[name].toscreen()
             else:
                 qtile.focus_screen(1)
-                qtile.groups_map[name].cmd_toscreen()
+                qtile.groups_map[name].toscreen()
 
         return _inner
 

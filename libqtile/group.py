@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING
 
 from libqtile import hook, utils
 from libqtile.backend.base import FloatStates
-from libqtile.command.base import CommandObject
+from libqtile.command.base import CommandObject, expose_command
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
@@ -231,7 +231,9 @@ class _Group(CommandObject):
             hook.fire("focus_change")
             self.layout_all(warp)
 
+    @expose_command()
     def info(self):
+        """Returns a dictionary of info for this group"""
         return dict(
             name=self.name,
             label=self.label,
@@ -255,11 +257,11 @@ class _Group(CommandObject):
         elif self.floating_layout.match(win) and not win.fullscreen:
             win._float_state = FloatStates.FLOATING
         if win.floating and not win.fullscreen:
-            self.floating_layout.add(win)
+            self.floating_layout.add_client(win)
         if not win.floating or win.fullscreen:
             self.tiled_windows.add(win)
             for i in self.layouts:
-                i.add(win)
+                i.add_client(win)
         if focus:
             self.focus(win, warp=True, force=force)
 
@@ -318,7 +320,7 @@ class _Group(CommandObject):
                         i.remove(win)
                         if win is self.current_window:
                             i.blur()
-                    self.floating_layout.add(win)
+                    self.floating_layout.add_client(win)
                     if win is self.current_window:
                         self.floating_layout.focus(win)
         else:
@@ -327,7 +329,7 @@ class _Group(CommandObject):
             # A window that was fullscreen should only be added if it was not a tiled window
             if win not in self.tiled_windows:
                 for i in self.layouts:
-                    i.add(win)
+                    i.add_client(win)
                 self.tiled_windows.add(win)
             if win is self.current_window:
                 for i in self.layouts:
@@ -358,14 +360,12 @@ class _Group(CommandObject):
                     return i
         raise RuntimeError("Invalid selection: {}".format(name))
 
-    def cmd_setlayout(self, layout):
+    @expose_command()
+    def setlayout(self, layout):
         self.layout = layout
 
-    def cmd_info(self):
-        """Returns a dictionary of info for this group"""
-        return self.info()
-
-    def cmd_toscreen(self, screen=None, toggle=False):
+    @expose_command()
+    def toscreen(self, screen=None, toggle=False):
         """Pull a group to a specified screen.
 
         Parameters
@@ -431,13 +431,15 @@ class _Group(CommandObject):
     def get_next_group(self, skip_empty=False, skip_managed=False):
         return self._get_group(1, skip_empty, skip_managed)
 
-    def cmd_unminimize_all(self):
+    @expose_command()
+    def unminimize_all(self):
         """Unminimise all windows in this group"""
         for win in self.windows:
             win.minimized = False
         self.layout_all()
 
-    def cmd_next_window(self):
+    @expose_command()
+    def next_window(self):
         """
         Focus the next window in group.
 
@@ -461,7 +463,8 @@ class _Group(CommandObject):
             )
         self.focus(nxt, True)
 
-    def cmd_prev_window(self):
+    @expose_command()
+    def prev_window(self):
         """
         Focus the previous window in group.
 
@@ -485,7 +488,8 @@ class _Group(CommandObject):
             )
         self.focus(nxt, True)
 
-    def cmd_focus_back(self):
+    @expose_command()
+    def focus_back(self):
         """
         Focus the window that had focus before the current one got it.
 
@@ -500,7 +504,8 @@ class _Group(CommandObject):
         else:
             self.focus(win)
 
-    def cmd_focus_by_name(self, name):
+    @expose_command()
+    def focus_by_name(self, name):
         """
         Focus the first window with the given name. Do nothing if the name is
         not found.
@@ -510,7 +515,8 @@ class _Group(CommandObject):
                 self.focus(win)
                 break
 
-    def cmd_info_by_name(self, name):
+    @expose_command()
+    def info_by_name(self, name):
         """
         Get the info for the first window with the given name without giving it
         focus. Do nothing if the name is not found.
@@ -519,11 +525,13 @@ class _Group(CommandObject):
             if win.name == name:
                 return win.info()
 
-    def cmd_switch_groups(self, name):
+    @expose_command()
+    def switch_groups(self, name):
         """Switch position of current group with name"""
-        self.qtile.cmd_switch_groups(self.name, name)
+        self.qtile.switch_groups(self.name, name)
 
-    def cmd_set_label(self, label):
+    @expose_command()
+    def set_label(self, label):
         """
         Set the display name of current group to be used in GroupBox widget.
         If label is None, the name of the group is used as display name.
