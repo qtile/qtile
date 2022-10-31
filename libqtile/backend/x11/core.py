@@ -176,8 +176,12 @@ class Core(base.Core):
         modmap_keycodes = modmap_reply.keycodes.raw
         keycodes_per_modifier = modmap_reply.keycodes_per_modifier
         n_modifiers = modmap_reply.length
-        assert len(modmap_keycodes) >= n_modifiers * keycodes_per_modifier
-        ks_to_mask: Dict[int, int] = {}
+        ks_to_mask: dict[int, int] = {}
+
+        if not len(modmap_keycodes) >= n_modifiers * keycodes_per_modifier:
+            logger.error("Couldn't create keysym->modmask mapping dict. Please report.")
+            return ks_to_mask
+
         for mod_num in range(n_modifiers):  # usually 8
             for i_keycode in range(keycodes_per_modifier):  # usually 4
                 kc = modmap_keycodes[keycodes_per_modifier * mod_num + i_keycode]
