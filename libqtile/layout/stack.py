@@ -58,9 +58,11 @@ class Stack(Layout):
         ("border_focus", "#0000ff", "Border colour(s) for the focused window."),
         ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
         ("border_focus_stack", None,
-         "Border colour(s) for the focused stacked window. If 'None' will default to border_focus."),
+         "Border colour(s) for the focused stacked window. If 'None' will \
+         default to border_focus."),
         ("border_normal_stack", None,
-         "Border colour(s) for un-focused stacked windows. If 'None' will default to border_normal."),
+         "Border colour(s) for un-focused stacked windows. If 'None' will \
+         default to border_normal."),
         ("border_width", 1, "Border width."),
         ("autosplit", False, "Auto split all new stacks."),
         ("num_stacks", 2, "Number of stacks."),
