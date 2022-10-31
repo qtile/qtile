@@ -210,7 +210,10 @@ class Stack(Layout):
             return
 
         if client.has_focus:
-            px = self.border_focus if s.split else self.border_focus_stack
+            if s.split and self.border_focus_stack:
+                px = self.border_focus_stack
+            else:
+                px = self.border_focus
         else:
             px = self.border_normal if s.split else self.border_normal_stack
 
