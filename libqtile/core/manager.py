@@ -93,7 +93,7 @@ class Qtile(CommandObject):
         self.groups_map: dict[str, _Group] = {}
         self.groups: list[_Group] = []
 
-        self.keys_map: dict[tuple[int, int], Key | KeyChord] = {}
+        self.keys_map: dict[tuple[int, int, bool], Key | KeyChord] = {}
         self.chord_stack: list[KeyChord] = []
         self.last_key_mask = 0x0
 
@@ -410,7 +410,7 @@ class Qtile(CommandObject):
         self, keysym: int, mask: int, is_release: bool = False, key_as_modifier: int = 0
     ) -> None:
         last_key_mask, self.last_key_mask = self.last_key_mask, mask
-        key = self.keys_map.get((keysym, mask), None)
+        key = self.keys_map.get((keysym, mask, is_release), None)
         if key is None:
             logger.debug("Ignoring unknown keysym: %s, mask: %s", keysym, mask)
             return
@@ -418,9 +418,7 @@ class Qtile(CommandObject):
         if isinstance(key, KeyChord):
             self.grab_chord(key)
         else:
-            if key.on_release != is_release:
-                return
-            if key_as_modifier and key.on_release and last_key_mask & key_as_modifier:
+            if is_release and last_key_mask & key_as_modifier:
                 # quick fix for on_release keys:
                 # When using a modifier key like Super_L as a regular key,
                 # it should not be triggered when released as the last key of a
@@ -435,7 +433,6 @@ class Qtile(CommandObject):
                         logger.error("KB command error %s: %s", cmd.name, val)
             if self.chord_stack and (not self.chord_stack[-1].mode or key.key == "Escape"):
                 self.ungrab_chord()
-            return
 
     def grab_keys(self) -> None:
         """Re-grab all of the keys configured in the key map
@@ -449,12 +446,12 @@ class Qtile(CommandObject):
     def grab_key(self, key: Key | KeyChord) -> None:
         """Grab the given key event"""
         keysym, mask_key = self.core.grab_key(key)
-        self.keys_map[(keysym, mask_key)] = key
+        self.keys_map[(keysym, mask_key, key.on_release)] = key
 
     def ungrab_key(self, key: Key | KeyChord) -> None:
         """Ungrab a given key event"""
         keysym, mask_key = self.core.ungrab_key(key)
-        self.keys_map.pop((keysym, mask_key))
+        self.keys_map.pop((keysym, mask_key, key.on_release))
 
     def ungrab_keys(self) -> None:
         """Ungrab all key events"""
