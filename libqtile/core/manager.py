@@ -473,7 +473,7 @@ class Qtile(CommandObject):
         # Find another named mode or load the root keybindings:
         while self.chord_stack:
             chord = self.chord_stack.pop()
-            if chord.mode != "":
+            if chord.mode:
                 self.grab_chord(chord)
                 break
         else:
