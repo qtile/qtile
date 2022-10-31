@@ -123,8 +123,6 @@ def test_toggling_single(manager):
     # adjust command for current display
     manager.c.group["SINGLE_SCRATCHPAD"].dropdown_reconfigure("dd-e")
     manager.c.group["SINGLE_SCRATCHPAD"].dropdown_reconfigure("dd-f")
-    manager.c.group["SINGLE_SCRATCHPAD"].dropdown_reconfigure("dd-g")
-    manager.c.group["SINGLE_SCRATCHPAD"].dropdown_reconfigure("dd-h")
 
     manager.test_window("one")
     assert manager.c.group["a"].info()["windows"] == ["one"]
@@ -320,3 +318,64 @@ def test_stepping_between_groups_should_skip_scratchpads(manager):
     manager.c.screen.prev_group()
     # we should be on b group
     assert manager.c.group.info()["name"] == "b"
+
+
+@scratchpad_config
+def test_show_hide_single(manager):
+    # adjust command for current display
+    manager.c.group["SINGLE_SCRATCHPAD"].dropdown_reconfigure("dd-e")
+    manager.c.group["SINGLE_SCRATCHPAD"].dropdown_reconfigure("dd-f")
+
+    manager.test_window("one")
+    assert manager.c.group["a"].info()["windows"] == ["one"]
+
+    # First show: wait for window
+    manager.c.group["SINGLE_SCRATCHPAD"].dropdown_show("dd-e")
+    is_spawned(manager, "dd-e", "SINGLE_SCRATCHPAD")
+
+    # assert window in current group "a"
+    assert sorted(manager.c.group["a"].info()["windows"]) == ["dd-e", "one"]
+    assert_focused(manager, "dd-e")
+
+    # show another window, this should hide the previous one.
+    manager.c.group["SINGLE_SCRATCHPAD"].dropdown_show("dd-f")
+    is_spawned(manager, "dd-f", "SINGLE_SCRATCHPAD")
+    assert sorted(manager.c.group["a"].info()["windows"]) == ["dd-f", "one"]
+    assert_focused(manager, "dd-f")
+    assert manager.c.group["SINGLE_SCRATCHPAD"].info()["windows"] == ["dd-e"]
+
+    # hide the scratchpad that is now visible.
+    manager.c.group["SINGLE_SCRATCHPAD"].dropdown_hide("dd-f")
+    assert sorted(manager.c.group["a"].info()["windows"]) == ["one"]
+    assert_focused(manager, "one")
+    assert sorted(manager.c.group["SINGLE_SCRATCHPAD"].info()["windows"]) == ["dd-e", "dd-f"]
+
+
+@scratchpad_config
+def test_show_hide(manager):
+    manager.c.group["SCRATCHPAD"].dropdown_reconfigure("dd-a")
+    manager.c.group["SCRATCHPAD"].dropdown_reconfigure("dd-b")
+
+    manager.test_window("one")
+    assert manager.c.group["a"].info()["windows"] == ["one"]
+
+    # First show: wait for window
+    manager.c.group["SCRATCHPAD"].dropdown_show("dd-a")
+    is_spawned(manager, "dd-a", "SCRATCHPAD")
+
+    # assert window in current group "a"
+    assert sorted(manager.c.group["a"].info()["windows"]) == ["dd-a", "one"]
+    assert_focused(manager, "dd-a")
+
+    # show another window
+    manager.c.group["SCRATCHPAD"].dropdown_show("dd-b")
+    is_spawned(manager, "dd-b", "SCRATCHPAD")
+    assert sorted(manager.c.group["a"].info()["windows"]) == ["dd-a", "dd-b", "one"]
+    assert_focused(manager, "dd-b")
+    assert manager.c.group["SCRATCHPAD"].info()["windows"] == []
+
+    # hide the first scratchpad that is visible
+    manager.c.group["SCRATCHPAD"].dropdown_hide("dd-a")
+    assert sorted(manager.c.group["a"].info()["windows"]) == ["dd-b", "one"]
+    assert_focused(manager, "dd-b")
+    assert sorted(manager.c.group["SCRATCHPAD"].info()["windows"]) == ["dd-a"]

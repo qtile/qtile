@@ -273,9 +273,7 @@ class ScratchPad(group._Group):
                 hook.unsubscribe.client_new(self.on_client_new)
             self.dropdowns[name] = DropDownToggler(client, self.name, self._dropdownconfig[name])
             if self._single:
-                for n, d in self.dropdowns.items():
-                    if n != name:
-                        d.hide()
+                self._hide_all_except(name)
             if name in self._to_hide:
                 self.dropdowns[name].hide()
                 self._to_hide.remove(name)
@@ -312,20 +310,47 @@ class ScratchPad(group._Group):
                     break
         self._check_unsubscribe()
 
+    def _hide_all_except(self, name: str) -> None:
+        """
+        Hide all dropdowns except the one with the given name.
+        """
+        for n, d in self.dropdowns.items():
+            if n != name:
+                d.hide()
+
     @expose_command()
     def dropdown_toggle(self, name):
         """
         Toggle visibility of named DropDown.
         """
         if self._single:
-            for n, d in self.dropdowns.items():
-                if n != name:
-                    d.hide()
+            self._hide_all_except(name)
         if name in self.dropdowns:
             self.dropdowns[name].toggle()
         else:
             if name in self._dropdownconfig:
                 self._spawn(self._dropdownconfig[name])
+
+    @expose_command()
+    def dropdown_show(self, name):
+        """
+        Show named DropDown if it is hidden.
+        """
+        if self._single:
+            self._hide_all_except(name)
+        if name in self.dropdowns:
+            self.dropdowns[name].show()
+        else:
+            if name in self._dropdownconfig:
+                self._spawn(self._dropdownconfig[name])
+
+    @expose_command()
+    def dropdown_hide(self, name):
+        """
+        Hide named DropDown if it is visible.
+        """
+        if name in self.dropdowns:
+            self.dropdowns[name].hide()
 
     @expose_command()
     def hide_all(self):
