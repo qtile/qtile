@@ -106,7 +106,7 @@ class GenPollCommand(base.ThreadPoolText):
 
     def __init__(self, **config):
         base.ThreadPoolText.__init__(self, "", **config)
-        self.add_defaults(Output.defaults)
+        self.add_defaults(GenPollCommand.defaults)
 
     def _configure(self, qtile, bar):
         base.ThreadPoolText._configure(self, qtile, bar)
