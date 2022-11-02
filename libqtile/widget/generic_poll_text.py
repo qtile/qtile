@@ -1,4 +1,5 @@
 import json
+import subprocess
 from typing import Any
 from urllib.error import URLError
 from urllib.request import Request, urlopen
@@ -93,16 +94,14 @@ class GenPollUrl(base.ThreadPoolText):
 
         return text
 
-    
+
 class GenPollCommand(base.ThreadPoolText):
     """A generic text widget to display output from scripts or shell commands"""
 
     defaults = [
-        ("update_interval", 60,"update time in seconds"),
-        ("cmd", "date", "command line as a string or list of arguments to execute"),
-        ("shell", True, "run command through a shell to enable piping and shell expansion"),
-        ("text_before", "", "additional text to display before command output"),
-        ("text_after", "", "additional text to display after command output"),
+        ("update_interval", 60, "update time in seconds"),
+        ("cmd", None, "command line as a string or list of arguments to execute"),
+        ("shell", False, "run command through shell to enable piping and shell expansion"),
     ]
 
     def __init__(self, **config):
@@ -112,16 +111,12 @@ class GenPollCommand(base.ThreadPoolText):
     def _configure(self, qtile, bar):
         base.ThreadPoolText._configure(self, qtile, bar)
 
-        self.text_before = str(self.text_before)
-        self.text_after = str(self.text_after)
-
         self.add_callbacks({
-            "Button1": self.cmd_force_update,
+            "Button1": self.force_update,
         })
 
     def poll(self):
-        self.run_process()
-        return self.get_output()
+        return self.run_process().stdout.strip()
 
     def run_process(self):
         self.completed_process = subprocess.run(
@@ -131,8 +126,3 @@ class GenPollCommand(base.ThreadPoolText):
             shell=self.shell,
         )
         return self.completed_process
-
-    def get_output(self):
-        output = self.completed_process.stdout.strip()
-        output = self.text_before + output + self.text_after
-        return str(output)
