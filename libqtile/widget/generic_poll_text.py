@@ -110,19 +110,13 @@ class GenPollCommand(base.ThreadPoolText):
 
     def _configure(self, qtile, bar):
         base.ThreadPoolText._configure(self, qtile, bar)
-
-        self.add_callbacks({
-            "Button1": self.force_update,
-        })
+        self.add_callbacks({"Button1": self.force_update})
 
     def poll(self):
-        return self.run_process().stdout.strip()
-
-    def run_process(self):
-        self.completed_process = subprocess.run(
+        process = subprocess.run(
             self.cmd,
             capture_output=True,
             text=True,
             shell=self.shell,
         )
-        return self.completed_process
+        return process.stdout.strip()
