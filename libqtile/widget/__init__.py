@@ -46,6 +46,7 @@ widgets = {
     "DF": "df",
     "GenPollText": "generic_poll_text",
     "GenPollUrl": "generic_poll_text",
+    "GenPollCommand": "generic_poll_text",
     "GmailChecker": "gmail_checker",
     "GroupBox": "groupbox",
     "HDDBusyGraph": "graph",
