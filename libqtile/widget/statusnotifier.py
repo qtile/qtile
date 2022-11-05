@@ -139,21 +139,13 @@ class StatusNotifierItem:  # noqa: E303
             logger.warning("Unable to find StatusNotifierItem interface on %s", self.service)
             return False
 
-        # Default to XDG icon:
-        icon_name = await self.item.get_icon_name()
-
-        try:
-            icon_path = await self.item.get_icon_theme_path()
-            self.icon = self._get_custom_icon(icon_name, icon_path)
-        except (AttributeError, DBusError):
-            pass
-
-        if not self.icon:
-            self.icon = self._get_xdg_icon(icon_name)
+        await self._get_local_icon()
 
         # If there's no XDG icon, try to use icon provided by application
-        if self.icon is None:
+        if self.icon:
+            self.item.on_new_icon(self._update_local_icon)
 
+        else:
             # Get initial application icons:
             for icon in ["Icon", "Attention", "Overlay"]:
                 await self._get_icon(icon)
@@ -170,6 +162,24 @@ class StatusNotifierItem:  # noqa: E303
             )
 
         return True
+
+    async def _get_local_icon(self):
+        # Default to XDG icon:
+        icon_name = await self.item.get_icon_name()
+
+        try:
+            icon_path = await self.item.get_icon_theme_path()
+            self.icon = self._get_custom_icon(icon_name, icon_path)
+        except (AttributeError, DBusError):
+            pass
+
+        if not self.icon:
+            self.icon = self._get_xdg_icon(icon_name)
+
+    def _update_local_icon(self):
+        self.icon = None
+        task = asyncio.create_task(self._get_local_icon())
+        task.add_done_callback(self._redraw)
 
     def _new_icon(self):
         task = asyncio.create_task(self._get_icon("Icon"))
