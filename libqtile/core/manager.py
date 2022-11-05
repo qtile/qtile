@@ -30,6 +30,7 @@ import shutil
 import signal
 import subprocess
 import tempfile
+from collections import defaultdict
 from typing import TYPE_CHECKING
 
 import libqtile
@@ -85,7 +86,7 @@ class Qtile(CommandObject):
         self.socket_path = socket_path
 
         self._drag: tuple | None = None
-        self.mouse_map: dict[int, list[Mouse]] = {}
+        self._mouse_map: defaultdict[int, list[Mouse]] = defaultdict(list)
 
         self.windows_map: dict[int, base.WindowType] = {}
         self.widgets_map: dict[str, _Widget] = {}
@@ -288,7 +289,7 @@ class Qtile(CommandObject):
         self.ungrab_keys()
         self.chord_stack.clear()
         self.core.ungrab_buttons()
-        self.mouse_map.clear()
+        self._mouse_map.clear()
         self.groups_map.clear()
         self.groups.clear()
         self.screens.clear()
@@ -496,9 +497,7 @@ class Qtile(CommandObject):
         except utils.QtileError:
             logger.warning("Unknown modifier(s): %s", button.modifiers)
             return
-        if button.button_code not in self.mouse_map:
-            self.mouse_map[button.button_code] = []
-        self.mouse_map[button.button_code].append(button)
+        self._mouse_map[button.button_code].append(button)
 
     def update_desktops(self) -> None:
         try:
@@ -741,7 +740,7 @@ class Qtile(CommandObject):
 
     def process_button_click(self, button_code: int, modmask: int, x: int, y: int) -> bool:
         handled = False
-        for m in self.mouse_map.get(button_code, []):
+        for m in self._mouse_map[button_code]:
             if not m.modmask == modmask:
                 continue
 
@@ -777,7 +776,7 @@ class Qtile(CommandObject):
 
     def process_button_release(self, button_code: int, modmask: int) -> bool:
         if self._drag is not None:
-            for m in self.mouse_map.get(button_code, []):
+            for m in self._mouse_map[button_code]:
                 if isinstance(m, Drag):
                     self._drag = None
                     self.core.ungrab_pointer()
