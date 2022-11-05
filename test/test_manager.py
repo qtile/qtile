@@ -1147,7 +1147,7 @@ def test_reload_config(manager_nospawn):
 
     # Original config
     assert manager_nospawn.c.eval("len(self.keys_map)") == (True, "1")
-    assert manager_nospawn.c.eval("len(self.mouse_map)") == (True, "1")
+    assert manager_nospawn.c.eval("len(self._mouse_map)") == (True, "1")
     assert "".join(manager_nospawn.c.get_groups().keys()) == "12345S"
     assert len(manager_nospawn.c.group.info()["layouts"]) == 1
     assert manager_nospawn.c.widget["clock"].eval("self.background") == (True, "None")
@@ -1172,7 +1172,7 @@ def test_reload_config(manager_nospawn):
     # should be readed twice (check+read), but no more
     assert manager_nospawn.c.eval("self.test_data_config_evaluations") == (True, "2")
     assert manager_nospawn.c.eval("len(self.keys_map)") == (True, "2")
-    assert manager_nospawn.c.eval("len(self.mouse_map)") == (True, "2")
+    assert manager_nospawn.c.eval("len(self._mouse_map)") == (True, "2")
     assert "".join(manager_nospawn.c.get_groups().keys()) == "123456789S"
     assert len(manager_nospawn.c.group.info()["layouts"]) == 2
     assert manager_nospawn.c.widget["currentlayout"].eval("self.background") == (True, "#ff0000")
@@ -1198,7 +1198,7 @@ def test_reload_config(manager_nospawn):
     manager_nospawn.c.eval("del self.test_data_config_evaluations")
     manager_nospawn.c.reload_config()
     assert manager_nospawn.c.eval("len(self.keys_map)") == (True, "1")
-    assert manager_nospawn.c.eval("len(self.mouse_map)") == (True, "1")
+    assert manager_nospawn.c.eval("len(self._mouse_map)") == (True, "1")
     # The last four groups persist within QtileState
     assert "".join(manager_nospawn.c.get_groups().keys()) == "12345S"
     assert len(manager_nospawn.c.group.info()["layouts"]) == 1
