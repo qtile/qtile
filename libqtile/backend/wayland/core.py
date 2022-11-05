@@ -177,6 +177,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.cursor = Cursor(self.output_layout)
         self.cursor_manager = XCursorManager(24)
         self._gestures = PointerGesturesV1(self.display)
+        self._gesture_position = (0.0, 0.0)
         self.add_listener(self.seat.request_set_cursor_event, self._on_request_cursor)
         self.add_listener(self.cursor.axis_event, self._on_cursor_axis)
         self.add_listener(self.cursor.frame_event, self._on_cursor_frame)
@@ -516,23 +517,52 @@ class Core(base.Core, wlrq.HasListeners):
         _listener: Listener,
         event: pointer.PointerEventSwipeBegin,
     ) -> None:
+        assert self.qtile is not None
         self.idle.notify_activity(self.seat)
-        self._gestures.send_swipe_begin(self.seat, event.time_msec, event.fingers)
+        self._gesture_position = (self.cursor.x, self.cursor.y)
+
+        handled = self.qtile.process_button_click(
+            event.fingers,
+            self.seat.keyboard.modifier,
+            int(self.cursor.x),
+            int(self.cursor.y),
+            gesture=True,
+        )
+
+        if not handled:
+            self._gestures.send_swipe_begin(self.seat, event.time_msec, event.fingers)
 
     def _on_cursor_swipe_update(
         self,
         _listener: Listener,
         event: pointer.PointerEventSwipeUpdate,
     ) -> None:
+        assert self.qtile is not None
+        x, y = self._gesture_position
+        x += event.dx
+        y += event.dy
+
+        self.qtile.process_button_motion(int(x), int(y))
         self._gestures.send_swipe_update(self.seat, event.time_msec, event.dx, event.dy)
+        self._gesture_position = (x, y)
 
     def _on_cursor_swipe_end(
         self,
         _listener: Listener,
         event: pointer.PointerEventSwipeEnd,
     ) -> None:
+        assert self.qtile is not None
         self.idle.notify_activity(self.seat)
-        self._gestures.send_swipe_end(self.seat, event.time_msec, event.cancelled)
+        self._gesture_position = (0.0, 0.0)
+
+        handled = self.qtile.process_button_release(
+            0,
+            self.seat.keyboard.modifier,
+            gesture=True,
+        )
+
+        if not handled:
+            self._gestures.send_swipe_end(self.seat, event.time_msec, event.cancelled)
 
     def _on_cursor_hold_begin(
         self,

@@ -40,9 +40,9 @@ from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandException, CommandObject, expose_command
 from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import IPCCommandServer, QtileCommandInterface
-from libqtile.config import Click, Drag, Key, KeyChord, Match, Mouse, Rule
+from libqtile.config import Click, Drag, Key, KeyChord, Match, Mouse, Pinch, Rule
 from libqtile.config import ScratchPad as ScratchPadConfig
-from libqtile.config import Screen
+from libqtile.config import Screen, Swipe
 from libqtile.core.lifecycle import lifecycle
 from libqtile.core.loop import LoopContext, QtileEventLoopPolicy
 from libqtile.core.state import QtileState
@@ -87,6 +87,7 @@ class Qtile(CommandObject):
 
         self._drag: tuple | None = None
         self._mouse_map: defaultdict[int, list[Mouse]] = defaultdict(list)
+        self._gesture_map: defaultdict[int, list[Swipe | Pinch]] = defaultdict(list)
 
         self.windows_map: dict[int, base.WindowType] = {}
         self.widgets_map: dict[str, _Widget] = {}
@@ -290,6 +291,7 @@ class Qtile(CommandObject):
         self.chord_stack.clear()
         self.core.ungrab_buttons()
         self._mouse_map.clear()
+        self._gesture_map.clear()
         self.groups_map.clear()
         self.groups.clear()
         self.screens.clear()
@@ -497,7 +499,14 @@ class Qtile(CommandObject):
         except utils.QtileError:
             logger.warning("Unknown modifier(s): %s", button.modifiers)
             return
-        self._mouse_map[button.button_code].append(button)
+
+        if isinstance(button, (Swipe, Pinch)):
+            if button.fingers not in (3, 4):
+                logger.warning("%s gesture must use 3 or 4 fingers.", button)
+                return
+            self._gesture_map[button.fingers].append(button)
+        else:
+            self._mouse_map[button.button_code].append(button)
 
     def update_desktops(self) -> None:
         try:
@@ -738,9 +747,17 @@ class Qtile(CommandObject):
                 closest_screen = s
         return closest_screen or self.screens[0]
 
-    def process_button_click(self, button_code: int, modmask: int, x: int, y: int) -> bool:
+    def process_button_click(
+        self, button_code: int, modmask: int, x: int, y: int, gesture: bool = False
+    ) -> bool:
         handled = False
-        for m in self._mouse_map[button_code]:
+
+        if gesture:
+            actions = self._gesture_map[button_code]
+        else:
+            actions = self._mouse_map[button_code]  # type: ignore
+
+        for m in actions:
             if not m.modmask == modmask:
                 continue
 
@@ -774,8 +791,15 @@ class Qtile(CommandObject):
 
         return handled
 
-    def process_button_release(self, button_code: int, modmask: int) -> bool:
+    def process_button_release(
+        self, button_code: int, modmask: int, gesture: bool = False
+    ) -> bool:
         if self._drag is not None:
+            if gesture:
+                self._drag = None
+                self.core.ungrab_pointer()
+                return True
+
             for m in self._mouse_map[button_code]:
                 if isinstance(m, Drag):
                     self._drag = None
@@ -790,10 +814,12 @@ class Qtile(CommandObject):
         dx = x - ox
         dy = y - oy
         if dx or dy:
+            dx += rx
+            dy += ry
             for i in cmd:
                 if i.check(self):
                     status, val = self.server.call(
-                        (i.selectors, i.name, i.args + (rx + dx, ry + dy), i.kwargs)
+                        (i.selectors, i.name, i.args + (dx, dy), i.kwargs)
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("Mouse command error %s: %s", i.name, val)

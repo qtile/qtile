@@ -169,8 +169,8 @@ class Drag(Mouse):
     start:
         A :class:`LazyCall` object to be evaluated when dragging begins. (Optional)
     warp_pointer:
-        A :class:`bool` indicating if the pointer should be warped to the bottom right of the window
-        at the start of dragging. (Default: `False`)
+        A :class:`bool` indicating if the pointer should be warped to the bottom right
+        of the current window at the start of dragging. (Default: `False`)
 
     """
 
@@ -209,6 +209,81 @@ class Click(Mouse):
 
     def __repr__(self) -> str:
         return "<Click (%s, %s)>" % (self.modifiers, self.button)
+
+
+class Swipe(Drag):
+    """
+    Bind commands to a touchpad swiping action (Wayland only).
+
+    On each motion event the bound commands are executed with two additional parameters
+    specifying the x and y offset from the previous position.
+
+    Parameters
+    ==========
+    modifiers:
+        A list of modifier specifications. Modifier specifications are one of:
+        ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
+        ``"mod4"``, ``"mod5"``.
+    fingers:
+        The number of fingers used in the swipe.
+    commands:
+        A list :class:`LazyCall` objects to evaluate in sequence upon movement.
+    start:
+        A :class:`LazyCall` object to be evaluated when swiping begins. (Optional)
+    warp_pointer:
+        A :class:`bool` indicating if the pointer should be warped to the bottom right
+        of the current window at the start of swiping. (Default: `False`)
+
+    """
+
+    def __init__(
+        self,
+        modifiers: list[str],
+        fingers: int,
+        *commands: LazyCall,
+        start: LazyCall | None = None,
+        warp_pointer: bool = False,
+    ) -> None:
+        self.modifiers = modifiers
+        self.fingers = fingers
+        self.commands = commands
+        self.start = start
+        self.warp_pointer = warp_pointer
+        self.button_code: int = 0  # So we can use the same `Qtile` handlers as `Mouse`
+        self.modmask: int = 0
+
+    def __repr__(self) -> str:
+        return "<Swipe (%s, %s)>" % (self.modifiers, self.fingers)
+
+
+class Pinch(Swipe):
+    """
+    Bind commands to a touchpad pinching action (Wayland only).
+
+    On each motion event the bound commands are executed with four additional
+    parameters: the x and y offset from the previous position, and the scale and
+    rotation relative to the start of the pinch.
+
+    Parameters
+    ==========
+    modifiers:
+        A list of modifier specifications. Modifier specifications are one of:
+        ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
+        ``"mod4"``, ``"mod5"``.
+    fingers:
+        The number of fingers used in the pinch.
+    commands:
+        A list :class:`LazyCall` objects to evaluate in sequence upon movement.
+    start:
+        A :class:`LazyCall` object to be evaluated when pinching begins. (Optional)
+    warp_pointer:
+        A :class:`bool` indicating if the pointer should be warped to the bottom right
+        of the current window at the start of pinching. (Default: `False`)
+
+    """
+
+    def __repr__(self) -> str:
+        return "<Pinch (%s, %s)>" % (self.modifiers, self.fingers)
 
 
 class EzConfig:
