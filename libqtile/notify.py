@@ -200,11 +200,9 @@ if has_dbus:
             return (notif, self.add(notif))
 
         def close(self, nid):
-            notif = self.notifications[nid]
-
             for callback in self.close_callbacks:
                 try:
-                    callback(notif)
+                    callback(nid)
                 except Exception:
                     logger.exception("Exception in notifier close callback")
 
