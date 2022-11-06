@@ -63,6 +63,8 @@ class Notify(base._TextBox):
             "   return text.replace('\n', '')"
             "then set option parse_text=my_func",
         ),
+        ("background_urgent", "440000", "Background urgent priority colour"),
+        ("background_low", "444444", "Background low priority colour"),
     ]
     capabilities = {"body", "actions"}
 
@@ -81,6 +83,8 @@ class Notify(base._TextBox):
         else:
             self.capabilities = Notify.capabilities.difference({"actions"})
         self.add_callbacks(default_callbacks)
+
+        self.background_normal = self.background
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
@@ -104,6 +108,10 @@ class Notify(base._TextBox):
                 utils.hex(self.foreground_urgent if urgency == 2 else self.foreground_low),
                 self.text,
             )
+            self.background = self.background_urgent if urgency == 2 else self.background_low
+        else:
+            self.background = self.background_normal
+
         if notif.body:
             self.text = '<span weight="bold">%s</span> - %s' % (
                 self.text,
@@ -148,6 +156,7 @@ class Notify(base._TextBox):
 
         notifier._service.NotificationClosed(notifier.notifications[self.current_id].id, reason)
         self.text = ""
+        self.background = self.background_normal
         self.current_id = len(notifier.notifications) - 1
         self.bar.draw()
 

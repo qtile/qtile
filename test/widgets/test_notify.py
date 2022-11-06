@@ -71,6 +71,11 @@ def notification(subject, body, urgency=None, timeout=None):
 # for Github CI/Ubuntu, "notify-send" is provided by libnotify-bin package
 NS = shutil.which("notify-send")
 
+BACKGROUND_NORMAL = "111111"
+BACKGROUND_URGENT = "222222"
+BACKGROUND_LOW = "333333"
+
+
 URGENT = "#ff00ff"
 LOW = "#cccccc"
 DEFAULT_TIMEOUT = 3.0
@@ -85,9 +90,18 @@ MESSAGE_3, NOTIFICATION_3 = notification("Low priority", "Windows closed unexpec
 @pytest.mark.skipif(shutil.which("notify-send") is None, reason="notify-send not installed.")
 @pytest.mark.usefixtures("dbus")
 def test_notifications(manager_nospawn, minimal_conf_noscreen):
+    def background(obj):
+        _, bground = obj.eval("self.background")
+        return bground
+
     notify.Notify.timeout_add = log_timeout
     widget = notify.Notify(
-        foreground_urgent=URGENT, foreground_low=LOW, default_timeout=DEFAULT_TIMEOUT
+        foreground_urgent=URGENT,
+        foreground_low=LOW,
+        default_timeout=DEFAULT_TIMEOUT,
+        background=BACKGROUND_NORMAL,
+        background_urgent=BACKGROUND_URGENT,
+        background_low=BACKGROUND_LOW,
     )
     config = minimal_conf_noscreen
     config.screens = [libqtile.config.Screen(top=Bar([widget], 10))]
@@ -100,6 +114,7 @@ def test_notifications(manager_nospawn, minimal_conf_noscreen):
     notif_1.extend(NOTIFICATION_1)
     subprocess.run(notif_1)
     assert obj.info()["text"] == MESSAGE_1
+    assert background(obj) == BACKGROUND_NORMAL
 
     _, timeout = obj.eval("self.delay")
     assert timeout == "5.0"
@@ -109,6 +124,7 @@ def test_notifications(manager_nospawn, minimal_conf_noscreen):
     notif_2.extend(NOTIFICATION_2)
     subprocess.run(notif_2)
     assert obj.info()["text"] == MESSAGE_2.format(colour=URGENT)
+    assert background(obj) == BACKGROUND_URGENT
 
     _, timeout = obj.eval("self.delay")
     assert timeout == "10.0"
@@ -118,6 +134,7 @@ def test_notifications(manager_nospawn, minimal_conf_noscreen):
     notif_3.extend(NOTIFICATION_3)
     subprocess.run(notif_3)
     assert obj.info()["text"] == MESSAGE_3.format(colour=LOW)
+    assert background(obj) == BACKGROUND_LOW
 
     _, timeout = obj.eval("self.delay")
     assert timeout == str(DEFAULT_TIMEOUT)
@@ -127,38 +144,47 @@ def test_notifications(manager_nospawn, minimal_conf_noscreen):
     # Hitting next while on last message should not change display
     obj.next()
     assert obj.info()["text"] == MESSAGE_3.format(colour=LOW)
+    assert background(obj) == BACKGROUND_LOW
 
     # Show previous
     obj.prev()
     assert obj.info()["text"] == MESSAGE_2.format(colour=URGENT)
+    assert background(obj) == BACKGROUND_URGENT
 
     # Show previous
     obj.prev()
     assert obj.info()["text"] == MESSAGE_1
+    assert background(obj) == BACKGROUND_NORMAL
 
     # Show previous while on first message should stay on first
     obj.prev()
     assert obj.info()["text"] == MESSAGE_1
+    assert background(obj) == BACKGROUND_NORMAL
 
     # Show next
     obj.next()
     assert obj.info()["text"] == MESSAGE_2.format(colour=URGENT)
+    assert background(obj) == BACKGROUND_URGENT
 
     # Toggle display (clear)
     obj.toggle()
     assert obj.info()["text"] == ""
+    assert background(obj) == BACKGROUND_NORMAL
 
     # Toggle display - restoring display shows last notification
     obj.toggle()
     assert obj.info()["text"] == MESSAGE_3.format(colour=LOW)
+    assert background(obj) == BACKGROUND_LOW
 
     # Clear the dispay
     obj.clear()
     assert obj.info()["text"] == ""
+    assert background(obj) == BACKGROUND_NORMAL
 
     # Show the display
     obj.display()
     assert obj.info()["text"] == MESSAGE_3.format(colour=LOW)
+    assert background(obj) == BACKGROUND_LOW
 
 
 def test_capabilities():
