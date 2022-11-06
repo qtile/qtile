@@ -23,9 +23,11 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import math
 import os
 import signal
 import time
+from itertools import chain
 from typing import TYPE_CHECKING
 
 import xcffib
@@ -37,6 +39,7 @@ from libqtile import config, hook, utils
 from libqtile.backend import base
 from libqtile.backend.x11 import window, xcbq
 from libqtile.backend.x11.xkeysyms import keysyms
+from libqtile.command.base import CommandError
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 
@@ -44,6 +47,7 @@ if TYPE_CHECKING:
     from typing import Callable, Iterator
 
     from libqtile.core.manager import Qtile
+    from libqtile.group import _Group
 
 _IGNORED_EVENTS = {
     xcffib.xproto.CreateNotifyEvent,
@@ -152,6 +156,7 @@ class Core(base.Core):
 
         self.qtile = None  # type: Qtile | None
         self._painter = None
+        self._slide_state: xcbq.SlideState | None = None
 
         numlock_code = self.conn.keysym_to_keycode(xcbq.keysyms["num_lock"])[0]
         self._numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(numlock_code), 0)
@@ -506,6 +511,8 @@ class Core(base.Core):
     def ungrab_pointer(self) -> None:
         """Ungrab the focus for pointer events"""
         self.conn.conn.core.UngrabPointer(xcffib.xproto.Atom._None)
+        if self._slide_state:
+            self._finish_group_slide()
 
     def grab_button(self, mouse: config.Mouse) -> int:
         """Grab the given mouse button for events"""
@@ -852,3 +859,117 @@ class Core(base.Core):
     def keysym_from_name(self, name: str) -> int:
         """Get the keysym for a key from its name"""
         return keysyms[name.lower()]
+
+    def start_slide_into_group(
+        self,
+        screen: config.Screen,
+        next_group: _Group,
+        prev_group: _Group,
+        scale: float,
+    ) -> None:
+        if not screen.group:
+            # This shouldn't be reached during normal usage.
+            raise CommandError("Cannot slide groups when screen has no group.")
+
+        self._slide_state = xcbq.SlideState(
+            screen,
+            next_group,
+            prev_group,
+            screen.width,
+            scale,
+        )
+
+        for win in prev_group.windows:
+            x = win.x - screen.width
+            win.window.configure(x=x)
+            win.x = x
+        for win in next_group.windows:
+            x = win.x + screen.width
+            win.window.configure(x=x)
+            win.x = x
+
+    def slide_to_group(self, dx: int, _dy: int, interactive: bool = True) -> None:
+        slide = self._slide_state
+        if not slide:
+            return
+
+        if interactive:
+            dx = int(dx * slide.scale)
+
+        # Don't go beyond the other two groups
+        if dx < -slide.width:
+            dx = -slide.width
+        elif dx > slide.width:
+            dx = slide.width
+
+        adjustment = slide.dx - dx
+        slide.dx = dx
+
+        # Move windows
+        for win in chain(
+            slide.screen.group.windows,
+            slide.next_group.windows,
+            slide.prev_group.windows,
+        ):
+            x = win.x - adjustment
+            win.window.configure(x=x)
+            win.x = x
+
+        if not interactive:
+            self._finish_group_slide()
+
+    def _finish_group_slide(self) -> None:
+        if not self._slide_state or not self.qtile:
+            # Probably exiting Qtile
+            return
+
+        slide = self._slide_state
+        dx = slide.dx
+        width = slide.width
+
+        # Change group if we slid more than half way
+        if not slide.result:
+            if abs(dx) > width / 2:
+                if dx < 0:
+                    slide.result = slide.next_group
+                    slide.target_dx = -width
+                else:
+                    slide.result = slide.prev_group
+                    slide.target_dx = width
+            else:
+                slide.result = slide.screen.group
+
+        if dx != slide.target_dx:
+            # We have finished with interactivity but are still between groups, so let's
+            # smoothly move to the result group. 0.017 ms updates is ~60 Hz.
+            ddx = (slide.target_dx - dx) * 0.2
+            if abs(ddx) < 1:
+                if ddx < 0:
+                    ddx = math.floor(ddx)
+                else:
+                    ddx = math.ceil(ddx)
+            self.qtile.call_later(0.017, self.slide_to_group, int(dx + ddx), 0, False)  # type: ignore
+            return
+
+        # Restore normal state
+        for win in slide.screen.group.windows:
+            win.x -= dx
+            win.window.configure(x=win.x)
+        for win in slide.prev_group.windows:
+            win.x = win.x - dx + width
+            win.window.configure(x=win.x)
+        for win in slide.next_group.windows:
+            win.x = win.x - dx - width
+            win.window.configure(x=win.x)
+
+        slide.next_group.set_screen(None, warp=False)
+        slide.prev_group.set_screen(None, warp=False)
+
+        # Change or reset the group
+        if slide.result is slide.screen.group:
+            slide.screen.group.layout_all()
+        else:
+            slide.screen.set_group(slide.result)
+
+        # End sequence
+        self._slide_state = None

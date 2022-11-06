@@ -39,7 +39,9 @@ from __future__ import annotations
 
 import functools
 import operator
+from dataclasses import dataclass
 from itertools import chain, repeat
+from typing import TYPE_CHECKING
 
 import cairocffi
 import cairocffi.pixbuf
@@ -56,6 +58,9 @@ from libqtile.backend.x11.xcursors import Cursors
 from libqtile.backend.x11.xkeysyms import keysyms
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError, hex
+
+if TYPE_CHECKING:
+    from libqtile.group import _Group
 
 
 class XCBQError(QtileError):
@@ -819,3 +824,21 @@ def translate_masks(modifiers: list[str]) -> int:
         return functools.reduce(operator.or_, masks)
     else:
         return 0
+
+
+@dataclass()
+class SlideState:
+    """
+    The state of an ongoing slide between groups. Used by the core when the
+    `screen.start_slide_into_group` command is used. At the end of a group slide,
+    `Core.ungrab_pointer` can consume this data and discard it.
+    """
+
+    screen: config.Screen
+    next_group: _Group
+    prev_group: _Group
+    width: int
+    scale: float = 1.0
+    dx: int = 0
+    result: _Group | None = None
+    target_dx: int = 0
