@@ -42,7 +42,9 @@ if TYPE_CHECKING:
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.output import Output
+    from libqtile.backend.wayland.window import Window
     from libqtile.config import Screen
+    from libqtile.group import _Group
 
 
 class WlrQError(QtileError):
@@ -272,3 +274,21 @@ class CursorState:
     surface: Surface | None = None
     hotspot: tuple[int, int] = (0, 0)
     hidden: bool = False
+
+
+@dataclass()
+class SlideState:
+    """
+    The state of an ongoing slide between groups. Used by the core when the
+    `screen.start_slide_into_group` command is used. At the end of a group slide,
+    `Core.ungrab_pointer` can consume this data and discard it.
+    """
+
+    screen: Screen
+    next_group: _Group
+    prev_group: _Group
+    width: int
+    scale: float = 1.0
+    dx: int = 0
+    result: _Group | None = None
+    target_dx: int = 0

@@ -45,7 +45,7 @@ if TYPE_CHECKING:
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.window import WindowType
-    from libqtile.backend.wayland.wlrq import Dnd
+    from libqtile.backend.wayland.wlrq import Dnd, SlideState
     from libqtile.config import Screen
 
 no_transform = WlOutput.transform.normal
@@ -61,6 +61,7 @@ class Output(HasListeners):
         self._damage: OutputDamage = OutputDamage(wlr_output)
         self.wallpaper: Texture | None = None
         self.x, self.y = self.output_layout.output_coords(wlr_output)
+        self.slide_state: SlideState | None = None
 
         self.add_listener(wlr_output.destroy_event, self._on_destroy)
         self.add_listener(self._damage.frame_event, self._on_frame)
@@ -126,8 +127,33 @@ class Output(HasListeners):
                     if self.wallpaper:
                         width, height = wlr_output.effective_resolution()
                         box = Box(0, 0, int(width * scale), int(height * scale))
-                        matrix = Matrix.project_box(box, no_transform, 0, transform_matrix)
-                        renderer.render_texture_with_matrix(self.wallpaper, matrix, 1)
+                        if self.slide_state:
+                            # Slide wallpaper
+                            box.x += self.slide_state.dx
+                            renderer.render_texture_with_matrix(
+                                self.wallpaper,
+                                Matrix.project_box(box, no_transform, 0, transform_matrix),
+                                1,
+                            )
+                            box.x -= width
+                            renderer.render_texture_with_matrix(
+                                self.wallpaper,
+                                Matrix.project_box(box, no_transform, 0, transform_matrix),
+                                1,
+                            )
+                            box.x += width * 2
+                            renderer.render_texture_with_matrix(
+                                self.wallpaper,
+                                Matrix.project_box(box, no_transform, 0, transform_matrix),
+                                1,
+                            )
+                        else:
+                            renderer.render_texture_with_matrix(
+                                self.wallpaper,
+                                Matrix.project_box(box, no_transform, 0, transform_matrix),
+                                1,
+                            )
+
                     else:
                         renderer.clear([0, 0, 0, 1])
 
