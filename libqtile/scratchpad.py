@@ -291,7 +291,6 @@ class ScratchPad(group._Group):
         name = None
         for name, dd in self.dropdowns.items():
             if dd.window is client:
-                dd.unsubscribe()
                 del self.dropdowns[name]
                 break
         self._check_unsubscribe()
