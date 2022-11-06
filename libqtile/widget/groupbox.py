@@ -269,7 +269,7 @@ class GroupBox(_GroupBase):
         groups = filter(lambda g: g.label, self.qtile.groups)
 
         if self.hide_unused:
-            groups = filter(lambda g: g.windows or g.screen, groups)
+            groups = filter(lambda g: g.windows or (g.screen and g.screen.group is g), groups)
 
         if self.visible_groups:
             groups = filter(lambda g: g.name in self.visible_groups, groups)
@@ -361,7 +361,7 @@ class GroupBox(_GroupBase):
             else:
                 text_color = self.inactive
 
-            if g.screen:
+            if g.screen and g.screen.group is g:
                 if self.highlight_method == "text":
                     border = None
                     text_color = self.this_current_screen_border

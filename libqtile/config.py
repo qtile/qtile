@@ -33,7 +33,7 @@ from typing import TYPE_CHECKING
 
 from libqtile import configurable, hook, utils
 from libqtile.bar import Bar
-from libqtile.command.base import CommandObject, expose_command
+from libqtile.command.base import CommandError, CommandObject, expose_command
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
@@ -691,6 +691,99 @@ class Screen(CommandObject):
         assert self.qtile is not None
         group = self.qtile.groups_map.get(group_name if group_name else "")
         self._toggle_group(group, warp=warp)
+
+    @expose_command()
+    def start_slide_to_group(
+        self,
+        skip_empty: bool = False,
+        next: str | None = None,
+        prev: str | None = None,
+        scale: float = 1.0,
+    ) -> tuple[int, int]:
+        """
+        Start a mac-like slide between groups.
+
+        The next and previous groups will appear to the right and left of the current
+        group, respectively. Group names can be passed to specify exactly which groups
+        should be involved, otherwise sane defaults are chosen. Neither group can
+        already be on a screen.
+
+        Examples
+        --------
+
+        ::
+
+            Drag(
+                [mod],
+                "Button1",
+                lazy.screen.slide_to_group(),
+                start=lazy.screen.start_slide_to_group(scale=2.0),
+            ),
+
+
+            # In Wayland, we can use interactive swipe touchpad gestures
+            Swipe(
+                [],
+                4,
+                lazy.screen.slide_to_group(),
+                start=lazy.screen.start_slide_to_group(),
+            ),
+
+        Parameters
+        ==========
+        skip_empty:
+            Whether to skip empty groups. Not applicable when group names are explicitly
+            passed. (Optional, default ``False``)
+        next:
+            The name of the 'next' group. It must not be visible. (Optional)
+        prev:
+            The name of the 'previous' group. It must not be visible. (Optional)
+        scale:
+            A float multipler used to scale distance travelled, used to adjust the
+            sensitivity of drag/swipe input. E.g. ``2.0`` will move things twice as much
+            per distance swiped.
+
+        """
+        assert self.qtile is not None
+
+        if next is None:
+            next_group = self.group.get_next_group(skip_empty, skip_managed=True)
+        else:
+            next_group = self.qtile.groups_map[next]
+            if next_group.screen:
+                raise CommandError("Cannot slide with a visible group.")
+        if prev is None:
+            prev_group = self.group.get_previous_group(skip_empty, skip_managed=True)
+        else:
+            prev_group = self.qtile.groups_map[prev]
+            if prev_group.screen:
+                raise CommandError("Cannot slide with a visible group.")
+
+        # How this works:
+        # 1. Set the two potential target groups to use this screen. This creates an
+        # unusual state where 3 groups have the same screen, but self.group points to
+        # the original. Unrelated code can check that `group == group.screen.group`
+        # (e.g. GroupBox) to account for this, and can check `qtile._drag` and abort if
+        # it wants to modify group state.
+        # 2. `Qtile.process_button_release` calls `Core.ungrab_pointer` at the end of
+        # the slide, which must `group.set_screen(None, warp=False)` on these 2 groups
+        # to undo this state. Then, it can do `screen.set_group(target_group)` on
+        # whichever group is the desired end state.
+        next_group.set_screen(self, warp=False)
+        prev_group.set_screen(self, warp=False)
+
+        # Inform the backend so that it can prepare
+        self.qtile.core.start_slide_into_group(self, next_group, prev_group, scale)
+
+        # For use by drags, we just return some 0s which will be modified and passed to
+        # `slide_to_group` below.
+        return (0, 0)
+
+    @expose_command()
+    def slide_to_group(self, dx: int, dy: int) -> None:
+        """Used during interactive use of ``slide_to_group``."""
+        assert self.qtile is not None
+        self.qtile.core.slide_to_group(dx, dy)
 
     @expose_command()
     def set_wallpaper(self, path: str, mode: str | None = None) -> None:

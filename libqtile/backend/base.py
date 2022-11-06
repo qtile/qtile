@@ -87,6 +87,18 @@ class Core(CommandObject, metaclass=ABCMeta):
     def ungrab_pointer(self) -> None:
         """Release grabbed pointer events"""
 
+    def start_slide_into_group(
+        self,
+        screen: config.Screen,
+        next_group: _Group,
+        prev_group: _Group,
+        scale: float,
+    ) -> None:
+        """Start a slide between groups, if supported."""
+
+    def slide_to_group(self, dx: int, dy: int) -> None:
+        """Continue a slide between groups, if supported."""
+
     def on_config_load(self, initial: bool) -> None:
         """
         Respond to config loading. `initial` will be `True` if Qtile just started.
