@@ -22,7 +22,7 @@ import pytest
 import libqtile.bar
 import libqtile.config
 from libqtile.command.base import expose_command
-from libqtile.widget import TextBox
+from libqtile.widget import Spacer, TextBox
 from libqtile.widget.base import ThreadPoolText, _Widget
 from test.helpers import BareConfig, Retry
 
@@ -125,6 +125,30 @@ def test_mirrors_different_bar(minimal_conf_noscreen, manager_nospawn):
     # Widget is replaced with a mirror on the second screen
     assert len(screen1) == 1
     assert [w["name"] for w in screen1] == ["mirror"]
+
+
+def test_mirrors_stretch(minimal_conf_noscreen, manager_nospawn):
+    """Verify that mirror widgets stretch according to their own bar"""
+    config = minimal_conf_noscreen
+    tbox = TextBox("Testing Mirrors")
+    stretch = Spacer()
+    config.fake_screens = [
+        libqtile.config.Screen(
+            top=libqtile.bar.Bar([stretch, tbox], 10), x=0, y=0, width=600, height=600
+        ),
+        libqtile.config.Screen(
+            top=libqtile.bar.Bar([stretch, tbox], 10), x=600, y=0, width=200, height=600
+        ),
+    ]
+
+    manager_nospawn.start(config)
+    screen0 = manager_nospawn.c.screen[0].bar["top"].info()["widgets"]
+    screen1 = manager_nospawn.c.screen[1].bar["top"].info()["widgets"]
+
+    # Spacer is the first widget in each bar. This should be stretched according to its own bar
+    # so check its length is equal to the bar length minus the length of the text box.
+    assert screen0[0]["length"] == 600 - screen0[1]["length"]
+    assert screen1[0]["length"] == 200 - screen1[1]["length"]
 
 
 def test_threadpolltext_force_update(minimal_conf_noscreen, manager_nospawn):
