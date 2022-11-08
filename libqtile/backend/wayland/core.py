@@ -253,8 +253,14 @@ class Core(base.Core, wlrq.HasListeners):
         # Start
         self.backend.start()
 
-        # Place cursor
-        self.warp_pointer(0, 0)
+        # Place cursor in middle of centre output
+        x = y = 0
+        if box := self.output_layout.get_box():
+            if output := self.output_layout.output_at(box.width / 2, box.height / 2):
+                if box := self.output_layout.get_box(reference=output):
+                    x = box.x + box.width / 2
+                    y = box.y + box.height / 2
+        self.warp_pointer(x, y)
         self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
 
     @property
