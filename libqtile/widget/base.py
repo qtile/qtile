@@ -881,8 +881,7 @@ class Mirror(_Widget):
         _Widget.__init__(self, reflection.length, **config)
         self.reflects = reflection
         self._length = 0
-        if self.reflects.length_type == bar.STRETCH:
-            self.length_type = bar.STRETCH
+        self.length_type = self.reflects.length_type
 
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
@@ -890,6 +889,9 @@ class Mirror(_Widget):
         # We need to fill the background once before `draw` is called so, if
         # there's no reflection, the mirror matches its parent bar.
         self.drawer.clear(self.background or self.bar.background)
+
+    def calculate_length(self):
+        return self.reflects.calculate_length()
 
     @property
     def length(self):
@@ -902,13 +904,9 @@ class Mirror(_Widget):
         self._length = value
 
     def draw(self):
-        if self.length_type != bar.STRETCH and self._length != self.reflects.length:
-            self._length = self.length
-            self.bar.draw()
-        else:
-            self.drawer.clear(self.reflects.background or self.bar.background)
-            self.reflects.drawer.paint_to(self.drawer)
-            self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
+        self.drawer.clear(self.reflects.background or self.bar.background)
+        self.reflects.drawer.paint_to(self.drawer)
+        self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
 
     def button_press(self, x, y, button):
         self.reflects.button_press(x, y, button)
