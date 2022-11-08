@@ -794,11 +794,10 @@ class Core(base.Core, wlrq.HasListeners):
                                     cx - self._hovered_window.x,
                                     cy - self._hovered_window.y,
                                 )
-                        else:
+                        elif self.seat.pointer_state.focused_surface:
                             # moved from a Window or Static to an Internal
-                            if self.seat.pointer_state.focused_surface:
-                                self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
-                                self.seat.pointer_notify_clear_focus()
+                            self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                            self.seat.pointer_notify_clear_focus()
                     win.process_pointer_enter(cx, cy)
                     self._hovered_window = win
                 return
