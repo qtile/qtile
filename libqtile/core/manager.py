@@ -1172,9 +1172,15 @@ class Qtile(CommandObject):
     @expose_command()
     def spawn(self, cmd: str | list[str], shell: bool = False) -> int:
         """
-        Run cmd, in a shell or not (default).
+        Spawn a new process.
 
-        cmd may be a string or a list (similar to subprocess.Popen).
+        Parameters
+        ==========
+        cmd:
+            The command to execute either as a single string or list of strings.
+        shell:
+            Whether to execute the command in a new shell by prepending it with "/bin/sh
+            -c". This enables the use of shell syntax within the command (e.g. pipes).
 
         Examples
         ========
@@ -1182,6 +1188,8 @@ class Qtile(CommandObject):
             spawn("firefox")
 
             spawn(["xterm", "-T", "Temporary terminal"])
+
+            spawn("screenshot | xclip", shell=True)
         """
         if isinstance(cmd, str):
             args = shlex.split(cmd)
