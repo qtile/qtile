@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+from __future__ import annotations
+
 import logging
 
 from libqtile.command.base import expose_command
@@ -163,11 +164,19 @@ class PulseVolume(Volume):
             self.wait_for_operation(op)
 
     @expose_command()
-    def mute(self):
+    def mute(self, muted: bool | None = None):
+        is_muted = self.default_sink["muted"]
+        if muted is None:
+            # Toggle
+            muted = not is_muted
+        elif muted is is_muted:
+            # Skip if already at desired state
+            return
+
         op = lib.pa_context_set_sink_mute_by_index(
             self.context,
             self.default_sink["index"],
-            not self.default_sink["muted"],
+            muted,
             ffi.NULL,
             ffi.NULL,
         )
