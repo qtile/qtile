@@ -1468,5 +1468,4 @@ class Core(base.Core, wlrq.HasListeners):
         # End sequence
         if self._current_output:
             self._current_output.slide_state = None
-            # self._current_output.damage()
         self._slide_state = None

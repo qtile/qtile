@@ -780,9 +780,12 @@ class Screen(CommandObject):
         return (0, 0)
 
     @expose_command()
-    def slide_to_group(self, dx: int, dy: int) -> None:
+    def slide_to_group(self, dx: int, dy: int, invert: bool = False) -> None:
         """Used during interactive use of ``slide_to_group``."""
         assert self.qtile is not None
+        if invert:
+            dx = - dx
+            dy = - dy
         self.qtile.core.slide_to_group(dx, dy)
 
     @expose_command()
