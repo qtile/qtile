@@ -103,7 +103,7 @@ class LayerStatic(Static[LayerSurfaceV1]):
         logger.debug("Signal: layerstatic map")
         self.mapped = True
         self.output.organise_layers()
-        self.focus(True)
+        self.focus(False)
 
     def _on_unmap(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: layerstatic unmap")
