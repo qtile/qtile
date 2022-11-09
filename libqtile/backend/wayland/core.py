@@ -282,6 +282,10 @@ class Core(base.Core, wlrq.HasListeners):
         for out in self.outputs.copy():
             out.finalize()
 
+        if slide := self._slide_state:
+            if slide.future:
+                slide.future.cancel()
+
         if self._xwayland:
             self._xwayland.destroy()
         self.cursor_manager.destroy()
@@ -1357,34 +1361,40 @@ class Core(base.Core, wlrq.HasListeners):
 
         return info
 
-    def start_slide_into_group(
+    def start_group_slide(
         self,
         screen: config.Screen,
-        next_group: _Group,
-        prev_group: _Group,
+        groups: list[_Group],
         scale: float,
     ) -> None:
         if not self._current_output:
             raise CommandError("Cannot slide groups with no outputs connected.")
-        if not screen.group:
-            # This shouldn't be reached during normal usage.
-            raise CommandError("Cannot slide groups when screen has no group.")
+
+        # Track state
+        index = groups.index(screen.group)
+        prev_group = groups[index - 1]
+        next_group = groups[(index + 1) % len(groups)]
 
         self._slide_state = wlrq.SlideState(
             screen,
-            next_group,
-            prev_group,
+            groups,
+            (prev_group, screen.group, next_group),
             screen.width,
+            index,
             scale,
         )
         self._current_output.slide_state = self._slide_state
 
-        for win in prev_group.windows:
-            win.x -= screen.width
-        for win in next_group.windows:
-            win.x += screen.width
+        with self.masked():
+            next_group.set_screen(screen, warp=False)
+            prev_group.set_screen(screen, warp=False)
 
-    def slide_to_group(self, dx: int, _dy: int, interactive: bool = True) -> None:
+            for win in prev_group.windows:
+                win.x -= screen.width
+            for win in next_group.windows:
+                win.x += screen.width
+
+    def group_slide(self, dx: int, _dy: int, interactive: bool = True) -> None:
         slide = self._slide_state
         if not slide:
             return
@@ -1398,16 +1408,14 @@ class Core(base.Core, wlrq.HasListeners):
         elif dx > slide.width:
             dx = slide.width
 
-        adjustment = slide.dx - dx
-        slide.dx = dx
+        prev_group, group, next_group = slide.active_groups
 
         # Move windows
-        for win in chain(
-            slide.screen.group.windows,
-            slide.next_group.windows,
-            slide.prev_group.windows,
-        ):
+        adjustment = slide.dx - dx
+        for win in chain(prev_group.windows, group.windows, next_group.windows):
             win.x -= adjustment
+
+        slide.dx = dx
 
         if self._current_output:
             self._current_output.damage()
@@ -1416,25 +1424,27 @@ class Core(base.Core, wlrq.HasListeners):
             self._finish_group_slide()
 
     def _finish_group_slide(self) -> None:
-        if not self._slide_state or not self.qtile:
-            # Probably exiting Qtile
+        assert self.qtile is not None
+        slide = self._slide_state
+
+        if slide is None:
             return
 
-        slide = self._slide_state
         dx = slide.dx
         width = slide.width
+        prev_group, group, next_group = slide.active_groups
 
         # Change group if we slid more than half way
         if not slide.result:
             if abs(dx) > width / 2:
                 if dx < 0:
-                    slide.result = slide.next_group
+                    slide.result = next_group
                     slide.target_dx = -width
                 else:
-                    slide.result = slide.prev_group
+                    slide.result = prev_group
                     slide.target_dx = width
             else:
-                slide.result = slide.screen.group
+                slide.result = group
 
         if dx != slide.target_dx:
             # We have finished with interactivity but are still between groups, so let's
@@ -1445,23 +1455,23 @@ class Core(base.Core, wlrq.HasListeners):
                     ddx = math.floor(ddx)
                 else:
                     ddx = math.ceil(ddx)
-            self.qtile.call_later(0.017, self.slide_to_group, int(dx + ddx), 0, False)  # type: ignore
+            self.qtile.call_later(0.017, self.group_slide, int(dx + ddx), 0, False)  # type: ignore
             return
 
         # Restore normal state
-        for win in slide.screen.group.windows:
+        for win in group.windows:
             win.x -= dx
-        for win in slide.prev_group.windows:
+        for win in prev_group.windows:
             win.x = win.x - dx + width
-        for win in slide.next_group.windows:
+        for win in next_group.windows:
             win.x = win.x - dx - width
 
-        slide.next_group.set_screen(None, warp=False)
-        slide.prev_group.set_screen(None, warp=False)
+        next_group.set_screen(None, warp=False)
+        prev_group.set_screen(None, warp=False)
 
         # Change or reset the group
-        if slide.result is slide.screen.group:
-            slide.screen.group.layout_all()
+        if slide.result is group:
+            group.layout_all()
         else:
             slide.screen.set_group(slide.result)
 

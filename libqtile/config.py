@@ -693,11 +693,9 @@ class Screen(CommandObject):
         self._toggle_group(group, warp=warp)
 
     @expose_command()
-    def start_slide_to_group(
+    def start_group_slide(
         self,
-        skip_empty: bool = False,
-        next: str | None = None,
-        prev: str | None = None,
+        groups: list[_Group] | None = None,
         scale: float = 1.0,
     ) -> tuple[int, int]:
         """
@@ -716,8 +714,8 @@ class Screen(CommandObject):
             Drag(
                 [mod],
                 "Button1",
-                lazy.screen.slide_to_group(),
-                start=lazy.screen.start_slide_to_group(scale=2.0),
+                lazy.screen.group_slide(),
+                start=lazy.screen.start_group_slide(scale=2.0),
             ),
 
 
@@ -725,8 +723,8 @@ class Screen(CommandObject):
             Swipe(
                 [],
                 4,
-                lazy.screen.slide_to_group(),
-                start=lazy.screen.start_slide_to_group(),
+                lazy.screen.group_slide(),
+                start=lazy.screen.start_group_slide(),
             ),
 
         Parameters
@@ -746,18 +744,11 @@ class Screen(CommandObject):
         """
         assert self.qtile is not None
 
-        if next is None:
-            next_group = self.group.get_next_group(skip_empty, skip_managed=True)
-        else:
-            next_group = self.qtile.groups_map[next]
-            if next_group.screen:
-                raise CommandError("Cannot slide with a visible group.")
-        if prev is None:
-            prev_group = self.group.get_previous_group(skip_empty, skip_managed=True)
-        else:
-            prev_group = self.qtile.groups_map[prev]
-            if prev_group.screen:
-                raise CommandError("Cannot slide with a visible group.")
+        if not groups:
+            groups = self.qtile.groups
+
+        # Remove groups visible on other screens
+        groups = list(filter(lambda g: g.screen in (None, self), groups))
 
         # How this works:
         # 1. Set the two potential target groups to use this screen. This creates an
@@ -769,25 +760,22 @@ class Screen(CommandObject):
         # the slide, which must `group.set_screen(None, warp=False)` on these 2 groups
         # to undo this state. Then, it can do `screen.set_group(target_group)` on
         # whichever group is the desired end state.
-        with self.qtile.core.masked():
-            next_group.set_screen(self, warp=False)
-            prev_group.set_screen(self, warp=False)
 
-            # Inform the backend so that it can prepare
-            self.qtile.core.start_slide_into_group(self, next_group, prev_group, scale)
+        # Leave implementation up to the backend
+        self.qtile.core.start_group_slide(self, groups, scale)
 
         # For use by drags, we just return some 0s which will be modified and passed to
-        # `slide_to_group` below.
+        # `group_slide` below.
         return (0, 0)
 
     @expose_command()
-    def slide_to_group(self, dx: int, dy: int, invert: bool = False) -> None:
-        """Used during interactive use of ``slide_to_group``."""
+    def group_slide(self, dx: int, dy: int, invert: bool = False) -> None:
+        """Used during interactive use of ``group_slide``."""
         assert self.qtile is not None
         if invert:
-            dx = - dx
-            dy = - dy
-        self.qtile.core.slide_to_group(dx, dy)
+            dx = -dx
+            dy = -dy
+        self.qtile.core.group_slide(dx, dy)
 
     @expose_command()
     def set_wallpaper(self, path: str, mode: str | None = None) -> None:

@@ -34,6 +34,7 @@ from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 
 if TYPE_CHECKING:
+    import asyncio
     from typing import Any, Callable
 
     from pywayland.server import Signal
@@ -280,15 +281,17 @@ class CursorState:
 class SlideState:
     """
     The state of an ongoing slide between groups. Used by the core when the
-    `screen.start_slide_into_group` command is used. At the end of a group slide,
+    `screen.start_group_slide` command is used. At the end of a group slide,
     `Core.ungrab_pointer` can consume this data and discard it.
     """
 
     screen: Screen
-    next_group: _Group
-    prev_group: _Group
+    groups: list[_Group]
+    active_groups: tuple[_Group, _Group, _Group]
     width: int
-    scale: float = 1.0
+    index: int
+    scale: float
     dx: int = 0
     result: _Group | None = None
     target_dx: int = 0
+    future: asyncio.TimerHandle | None = None
