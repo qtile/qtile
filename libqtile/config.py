@@ -769,11 +769,12 @@ class Screen(CommandObject):
         # the slide, which must `group.set_screen(None, warp=False)` on these 2 groups
         # to undo this state. Then, it can do `screen.set_group(target_group)` on
         # whichever group is the desired end state.
-        next_group.set_screen(self, warp=False)
-        prev_group.set_screen(self, warp=False)
+        with self.qtile.core.masked():
+            next_group.set_screen(self, warp=False)
+            prev_group.set_screen(self, warp=False)
 
-        # Inform the backend so that it can prepare
-        self.qtile.core.start_slide_into_group(self, next_group, prev_group, scale)
+            # Inform the backend so that it can prepare
+            self.qtile.core.start_slide_into_group(self, next_group, prev_group, scale)
 
         # For use by drags, we just return some 0s which will be modified and passed to
         # `slide_to_group` below.
