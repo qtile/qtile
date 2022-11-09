@@ -45,7 +45,7 @@ if TYPE_CHECKING:
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.window import WindowType
-    from libqtile.backend.wayland.wlrq import Dnd, SlideState
+    from libqtile.backend.wayland.wlrq import Dnd, GroupSlide
     from libqtile.config import Screen
 
 no_transform = WlOutput.transform.normal
@@ -61,7 +61,7 @@ class Output(HasListeners):
         self._damage: OutputDamage = OutputDamage(wlr_output)
         self.wallpaper: Texture | None = None
         self.x, self.y = self.output_layout.output_coords(wlr_output)
-        self.slide_state: SlideState | None = None
+        self.slide_state: GroupSlide | None = None
 
         self.add_listener(wlr_output.destroy_event, self._on_destroy)
         self.add_listener(self._damage.frame_event, self._on_frame)
@@ -83,6 +83,10 @@ class Output(HasListeners):
     def finalize(self) -> None:
         self.finalize_listeners()
         self.core.remove_output(self)
+
+        if slide := self.slide_state:
+            if slide.future:
+                slide.future.cancel()
 
     @property
     def screen(self) -> Screen:

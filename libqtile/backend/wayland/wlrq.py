@@ -21,8 +21,10 @@
 from __future__ import annotations
 
 import functools
+import math
 import operator
 from dataclasses import dataclass
+from itertools import chain
 from typing import TYPE_CHECKING
 
 import cairocffi
@@ -277,21 +279,134 @@ class CursorState:
     hidden: bool = False
 
 
-@dataclass()
-class SlideState:
+class GroupSlide:
     """
-    The state of an ongoing slide between groups. Used by the core when the
+    Handler for interactive sliding between groups. Used by the core when the
     `screen.start_group_slide` command is used. At the end of a group slide,
-    `Core.ungrab_pointer` can consume this data and discard it.
+    `Core.ungrab_pointer` stops interactivity and starts an animation to restore normal
+    state.
     """
 
-    screen: Screen
-    groups: list[_Group]
-    active_groups: tuple[_Group, _Group, _Group]
-    width: int
-    index: int
-    scale: float
-    dx: int = 0
-    result: _Group | None = None
-    target_dx: int = 0
-    future: asyncio.TimerHandle | None = None
+    def __init__(
+        self,
+        screen: Screen,
+        output: Output,
+        groups: list[_Group],
+        scale: float,
+    ) -> None:
+        # Settings
+        self._screen = screen
+        self._output: Output | None = output
+        self._groups = groups
+        self._scale = scale
+        self._width: int = screen.width
+
+        # Results
+        self._target_dx: int = 0
+        self.result: _Group | None = None
+        self.future: asyncio.TimerHandle | None = None
+
+        # Current (starting) state
+        self.dx: int = 0
+        self._index = groups.index(screen.group)
+        prev_group = groups[self._index - 1]
+        next_group = groups[(self._index + 1) % len(groups)]
+        self._active_groups = (prev_group, screen.group, next_group)
+
+        # Setup
+        next_group.set_screen(screen, warp=False)
+        prev_group.set_screen(screen, warp=False)
+
+        for win in prev_group.windows:
+            win.x -= screen.width
+        for win in next_group.windows:
+            win.x += screen.width
+
+    def step(self, dx: int, interactive: bool = True) -> None:
+        """
+        Called for every step of the slide.
+        """
+        if interactive:
+            dx = int(dx * self._scale)
+
+        # Don't go beyond the other two groups
+        if dx < -self._width:
+            dx = -self._width
+        elif dx > self._width:
+            dx = self._width
+
+        prev_group, group, next_group = self._active_groups
+
+        # Move windows
+        adjustment = self.dx - dx
+        for win in chain(prev_group.windows, group.windows, next_group.windows):
+            win.x -= adjustment
+
+        self.dx = dx
+
+        if self._output:
+            self._output.damage()
+
+        if not interactive:
+            self.finish()
+
+    def finish(self) -> None:
+        dx = self.dx
+        width = self._width
+        prev_group, group, next_group = self._active_groups
+
+        # Change group if we slid more than half way
+        if not self.result:
+            if abs(dx) > width / 2:
+                if dx < 0:
+                    self.result = next_group
+                    self._target_dx = -width
+                else:
+                    self.result = prev_group
+                    self._target_dx = width
+            else:
+                self.result = group
+            logger.info("Ending group slide interactivity")
+
+        if dx != self._target_dx:
+            # We have finished with interactivity but are still between groups, so let's
+            # smoothly move to the result group. 0.017 ms updates is ~60 Hz.
+            ddx = (self._target_dx - dx) * 0.2
+            if abs(ddx) < 1:
+                if ddx < 0:
+                    ddx = math.floor(ddx)
+                else:
+                    ddx = math.ceil(ddx)
+            assert self._screen.qtile
+            self.future = self._screen.qtile.call_later(
+                0.017,  # type: ignore
+                self.step,
+                int(dx + ddx),
+                False,
+            )
+            return
+
+        # Restore normal state
+        for win in group.windows:
+            win.x -= dx
+        for win in prev_group.windows:
+            win.x = win.x - dx + width
+        for win in next_group.windows:
+            win.x = win.x - dx - width
+
+        next_group.set_screen(None, warp=False)
+        prev_group.set_screen(None, warp=False)
+
+        # Change or reset the group
+        if self.result is group:
+            logger.info("Ending group slide without changing group")
+            group.layout_all()
+        else:
+            logger.info("Ending group slide and changing group")
+            self._screen.set_group(self.result)
+
+        # End sequence
+        if self._output:
+            self._output.slide_state = None
+            self._output.damage()
+        self._output = None

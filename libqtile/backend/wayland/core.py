@@ -22,11 +22,9 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import math
 import os
 import time
 import typing
-from itertools import chain
 
 import pywayland
 import pywayland.server
@@ -181,7 +179,6 @@ class Core(base.Core, wlrq.HasListeners):
         self.cursor_manager = XCursorManager(24)
         self._gestures = PointerGesturesV1(self.display)
         self._gesture_position = (0.0, 0.0)
-        self._slide_state: wlrq.SlideState | None = None
         self.add_listener(self.seat.request_set_cursor_event, self._on_request_cursor)
         self.add_listener(self.cursor.axis_event, self._on_cursor_axis)
         self.add_listener(self.cursor.frame_event, self._on_cursor_frame)
@@ -281,10 +278,6 @@ class Core(base.Core, wlrq.HasListeners):
             pt.finalize()
         for out in self.outputs.copy():
             out.finalize()
-
-        if slide := self._slide_state:
-            if slide.future:
-                slide.future.cancel()
 
         if self._xwayland:
             self._xwayland.destroy()
@@ -528,7 +521,11 @@ class Core(base.Core, wlrq.HasListeners):
         assert self.qtile is not None
         self.idle.notify_activity(self.seat)
 
-        if self._slide_state and self._slide_state.result:
+        if (
+            self._current_output
+            and self._current_output.slide_state
+            and self._current_output.slide_state.result
+        ):
             # Ignore any gestures when we're finishing off a group slide
             return
 
@@ -552,7 +549,12 @@ class Core(base.Core, wlrq.HasListeners):
     ) -> None:
         assert self.qtile is not None
 
-        if self._slide_state and self._slide_state.result:
+        if (
+            self._current_output
+            and self._current_output.slide_state
+            and self._current_output.slide_state.result
+        ):
+            # Ignore any gestures when we're finishing off a group slide
             return
 
         x, y = self._gesture_position
@@ -571,7 +573,12 @@ class Core(base.Core, wlrq.HasListeners):
         assert self.qtile is not None
         self.idle.notify_activity(self.seat)
 
-        if self._slide_state and self._slide_state.result:
+        if (
+            self._current_output
+            and self._current_output.slide_state
+            and self._current_output.slide_state.result
+        ):
+            # Ignore any gestures when we're finishing off a group slide
             return
 
         self._gesture_position = (0.0, 0.0)
@@ -797,6 +804,8 @@ class Core(base.Core, wlrq.HasListeners):
             if current_wlr_output:
                 current_output = current_wlr_output.data
                 if self._current_output is not current_output:
+                    # if current_output.slide_state:
+                    #     current_output.slide_state.finish()
                     self._current_output = current_output
                     self.stack_windows()
 
@@ -1222,8 +1231,8 @@ class Core(base.Core, wlrq.HasListeners):
 
     def ungrab_pointer(self) -> None:
         """Release grabbed pointer events"""
-        if self._slide_state:
-            self._finish_group_slide()
+        if self._current_output and self._current_output.slide_state:
+            self._current_output.slide_state.finish()
 
     def warp_pointer(self, x: float, y: float) -> None:
         """Warp the pointer to the coordinates in relative to the output layout"""
@@ -1370,112 +1379,19 @@ class Core(base.Core, wlrq.HasListeners):
         if not self._current_output:
             raise CommandError("Cannot slide groups with no outputs connected.")
 
-        # Track state
-        index = groups.index(screen.group)
-        prev_group = groups[index - 1]
-        next_group = groups[(index + 1) % len(groups)]
-
-        self._slide_state = wlrq.SlideState(
-            screen,
-            groups,
-            (prev_group, screen.group, next_group),
-            screen.width,
-            index,
-            scale,
-        )
-        self._current_output.slide_state = self._slide_state
-
         with self.masked():
-            next_group.set_screen(screen, warp=False)
-            prev_group.set_screen(screen, warp=False)
+            self._current_output.slide_state = wlrq.GroupSlide(
+                screen,
+                self._current_output,
+                groups,
+                scale,
+            )
 
-            for win in prev_group.windows:
-                win.x -= screen.width
-            for win in next_group.windows:
-                win.x += screen.width
+        logger.info("Starting group slide")
 
-    def group_slide(self, dx: int, _dy: int, interactive: bool = True) -> None:
-        slide = self._slide_state
-        if not slide:
-            return
+    def group_slide(self, dx: int, _dy: int) -> None:
+        if not self._current_output:
+            raise CommandError("Cannot slide groups with no outputs connected.")
 
-        if interactive:
-            dx = int(dx * slide.scale)
-
-        # Don't go beyond the other two groups
-        if dx < -slide.width:
-            dx = -slide.width
-        elif dx > slide.width:
-            dx = slide.width
-
-        prev_group, group, next_group = slide.active_groups
-
-        # Move windows
-        adjustment = slide.dx - dx
-        for win in chain(prev_group.windows, group.windows, next_group.windows):
-            win.x -= adjustment
-
-        slide.dx = dx
-
-        if self._current_output:
-            self._current_output.damage()
-
-        if not interactive:
-            self._finish_group_slide()
-
-    def _finish_group_slide(self) -> None:
-        assert self.qtile is not None
-        slide = self._slide_state
-
-        if slide is None:
-            return
-
-        dx = slide.dx
-        width = slide.width
-        prev_group, group, next_group = slide.active_groups
-
-        # Change group if we slid more than half way
-        if not slide.result:
-            if abs(dx) > width / 2:
-                if dx < 0:
-                    slide.result = next_group
-                    slide.target_dx = -width
-                else:
-                    slide.result = prev_group
-                    slide.target_dx = width
-            else:
-                slide.result = group
-
-        if dx != slide.target_dx:
-            # We have finished with interactivity but are still between groups, so let's
-            # smoothly move to the result group. 0.017 ms updates is ~60 Hz.
-            ddx = (slide.target_dx - dx) * 0.2
-            if abs(ddx) < 1:
-                if ddx < 0:
-                    ddx = math.floor(ddx)
-                else:
-                    ddx = math.ceil(ddx)
-            self.qtile.call_later(0.017, self.group_slide, int(dx + ddx), 0, False)  # type: ignore
-            return
-
-        # Restore normal state
-        for win in group.windows:
-            win.x -= dx
-        for win in prev_group.windows:
-            win.x = win.x - dx + width
-        for win in next_group.windows:
-            win.x = win.x - dx - width
-
-        next_group.set_screen(None, warp=False)
-        prev_group.set_screen(None, warp=False)
-
-        # Change or reset the group
-        if slide.result is group:
-            group.layout_all()
-        else:
-            slide.screen.set_group(slide.result)
-
-        # End sequence
-        if self._current_output:
-            self._current_output.slide_state = None
-        self._slide_state = None
+        if slide := self._current_output.slide_state:
+            slide.step(dx)
