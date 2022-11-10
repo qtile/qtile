@@ -59,7 +59,7 @@ class CommandSet(Dmenu):
 
         if self.pre_commands:
             for cmd in self.pre_commands:
-                self.qtile.cmd_spawn(cmd)
+                self.qtile.spawn(cmd)
 
         out = super(CommandSet, self).run(items=self.commands.keys())
 
@@ -74,4 +74,4 @@ class CommandSet(Dmenu):
         if sout not in self.commands:
             return
 
-        self.qtile.cmd_spawn(self.commands[sout])
+        self.qtile.spawn(self.commands[sout])

@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING
 
 from libqtile import config, group, hook
 from libqtile.backend.base import FloatStates
+from libqtile.command.base import expose_command
 from libqtile.config import Match
 
 if TYPE_CHECKING:
@@ -114,7 +115,7 @@ class WindowVisibilityToggler:
             win._float_state = FloatStates.TOP
             # add to group and bring it to front.
             win.togroup()
-            win.cmd_bring_to_front()
+            win.bring_to_front()
             # toggle internal flag of visibility
             self.shown = True
 
@@ -251,8 +252,7 @@ class ScratchPad(group._Group):
         if name not in self._spawned:
             if not self._spawned:
                 hook.subscribe.client_new(self.on_client_new)
-
-            pid = self.qtile.cmd_spawn(ddconfig.command)
+            pid = self.qtile.spawn(ddconfig.command)
             self._spawned[name] = ddconfig.match or Match(net_wm_pid=pid)
 
     def on_client_new(self, client, *args, **kwargs):
@@ -291,7 +291,6 @@ class ScratchPad(group._Group):
         name = None
         for name, dd in self.dropdowns.items():
             if dd.window is client:
-                dd.unsubscribe()
                 del self.dropdowns[name]
                 break
         self._check_unsubscribe()
@@ -312,7 +311,8 @@ class ScratchPad(group._Group):
                     break
         self._check_unsubscribe()
 
-    def cmd_dropdown_toggle(self, name):
+    @expose_command()
+    def dropdown_toggle(self, name):
         """
         Toggle visibility of named DropDown.
         """
@@ -326,14 +326,16 @@ class ScratchPad(group._Group):
             if name in self._dropdownconfig:
                 self._spawn(self._dropdownconfig[name])
 
-    def cmd_hide_all(self):
+    @expose_command()
+    def hide_all(self):
         """
         Hide all scratchpads.
         """
         for d in self.dropdowns.values():
             d.hide()
 
-    def cmd_dropdown_reconfigure(self, name, **kwargs):
+    @expose_command()
+    def dropdown_reconfigure(self, name, **kwargs):
         """
         reconfigure the named DropDown configuration.
         Note that changed attributes only have an effect on spawning the window.
@@ -345,7 +347,8 @@ class ScratchPad(group._Group):
             if hasattr(dd, attr):
                 setattr(dd, attr, value)
 
-    def cmd_dropdown_info(self, name=None):
+    @expose_command()
+    def dropdown_info(self, name=None):
         """
         Get information on configured or currently active DropDowns.
         If name is None, a list of all dropdown names is returned.

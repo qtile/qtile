@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
+from libqtile.command.base import expose_command
 from libqtile.widget._pulse_audio import ffi, lib
 from libqtile.widget.volume import Volume
 
@@ -51,6 +52,8 @@ class PulseVolume(Volume):
         self.handle = ffi.new_handle(self)
         self.client_name = ffi.new("char[]", b"Qtile-pulse")
 
+    def _configure(self, qtile, bar):
+        Volume._configure(self, qtile, bar)
         self.connect()
 
     def finalize(self):
@@ -159,7 +162,8 @@ class PulseVolume(Volume):
         if op:
             self.wait_for_operation(op)
 
-    def cmd_mute(self):
+    @expose_command()
+    def mute(self):
         op = lib.pa_context_set_sink_mute_by_index(
             self.context,
             self.default_sink["index"],
@@ -170,7 +174,8 @@ class PulseVolume(Volume):
         if op:
             self.wait_for_operation(op)
 
-    def cmd_increase_vol(self, value=None):
+    @expose_command()
+    def increase_vol(self, value=None):
         if value is None:
             value = self.step
         base = self.default_sink["base_volume"]
@@ -190,7 +195,8 @@ class PulseVolume(Volume):
             volume.values = [(i if i <= base else base) for i in volume.values]
         self.change_volume(volume)
 
-    def cmd_decrease_vol(self, value=None):
+    @expose_command()
+    def decrease_vol(self, value=None):
         if value is None:
             value = self.step
         volume_level = int(value * self.default_sink["base_volume"] / 100)

@@ -326,7 +326,8 @@ class StatusNotifierItem:  # noqa: E303
         return icon
 
     def activate(self):
-        asyncio.create_task(self._activate())
+        if hasattr(self, "call_activate"):
+            asyncio.create_task(self._activate())
 
     async def _activate(self):
         # Call Activate method and pass window position hints
@@ -510,6 +511,9 @@ class StatusNotifierHost:  # noqa: E303
             self._on_icon_changed.append(on_icon_changed)
 
         if self.started:
+            if on_item_added:
+                for item in self.items:
+                    on_item_added(item)
             return
 
         self.bus = await MessageBus().connect()

@@ -23,6 +23,7 @@ from __future__ import annotations
 from typing import Any
 
 from libqtile import bar, hook
+from libqtile.command.base import expose_command
 from libqtile.widget import base
 
 
@@ -69,8 +70,6 @@ class WindowCount(base._TextBox):
     def _win_killed(self, window):
         try:
             self._count = len(self.bar.screen.group.windows)
-            if window.group == self.bar.screen.group:
-                self._count -= 1
         except AttributeError:
             self._count = 0
 
@@ -82,6 +81,7 @@ class WindowCount(base._TextBox):
         else:
             return 0
 
-    def cmd_get(self):
+    @expose_command()
+    def get(self):
         """Retrieve the current text."""
         return self.text

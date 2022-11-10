@@ -33,10 +33,11 @@ from typing import TYPE_CHECKING
 
 from libqtile import configurable, hook, utils
 from libqtile.bar import Bar
-from libqtile.command.base import CommandObject
+from libqtile.command.base import CommandObject, expose_command
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
+    import re
     from typing import Any, Callable, Iterable
 
     from libqtile.backend import base
@@ -44,6 +45,7 @@ if TYPE_CHECKING:
     from libqtile.command.base import ItemT
     from libqtile.core.manager import Qtile
     from libqtile.group import _Group
+    from libqtile.layout.base import Layout
     from libqtile.lazy import LazyCall
 
 
@@ -60,7 +62,8 @@ class Key:
     key:
         A key specification, e.g. ``"a"``, ``"Tab"``, ``"Return"``, ``"space"``.
     commands:
-        A list :class:`LazyCall` objects to evaluate in sequence upon keypress.
+        One or more :class:`LazyCall` objects to evaluate in sequence upon keypress. Multiple
+        commands should be separated by commas.
     desc:
         Description to be added to the key binding. (Optional)
 
@@ -99,6 +102,10 @@ class KeyChord:
     name:
         A string to name the chord. The name will be displayed in the Chord
         widget.
+    desc:
+        A string to describe the chord. This attribute is not directly used by Qtile
+        but users may want to access this when creating scripts to show configured
+        keybindings.
     """
 
     def __init__(
@@ -108,6 +115,7 @@ class KeyChord:
         submappings: list[Key | KeyChord],
         mode: bool | str = False,
         name: str = "",
+        desc: str = "",
     ):
         self.modifiers = modifiers
         self.key = key
@@ -116,6 +124,7 @@ class KeyChord:
         self.submappings = submappings
         self.mode = mode
         self.name = name
+        self.desc = desc
 
         if isinstance(mode, str):
             logger.warning(
@@ -159,6 +168,9 @@ class Drag(Mouse):
         A list :class:`LazyCall` objects to evaluate in sequence upon drag.
     start:
         A :class:`LazyCall` object to be evaluated when dragging begins. (Optional)
+    warp_pointer:
+        A :class:`bool` indicating if the pointer should be warped to the bottom right of the window
+        at the start of dragging. (Default: `False`)
 
     """
 
@@ -168,9 +180,11 @@ class Drag(Mouse):
         button: str,
         *commands: LazyCall,
         start: LazyCall | None = None,
+        warp_pointer: bool = False,
     ) -> None:
         super().__init__(modifiers, button, *commands)
         self.start = start
+        self.warp_pointer = warp_pointer
 
     def __repr__(self) -> str:
         return "<Drag (%s, %s)>" % (self.modifiers, self.button)
@@ -498,7 +512,7 @@ class Screen(CommandObject):
         hook.fire("focus_change")
         hook.fire("layout_change", self.group.layouts[self.group.current_layout], self.group)
 
-    def toggle_group(self, group: _Group | None = None, warp: bool = True) -> None:
+    def _toggle_group(self, group: _Group | None = None, warp: bool = True) -> None:
         """Switch to the selected group or to the previously active one"""
         if group in (self.group, None) and self.previous_group:
             group = self.previous_group
@@ -552,6 +566,7 @@ class Screen(CommandObject):
                 return self.group if sel == self.group.name else None
         return None
 
+    @expose_command
     def resize(
         self,
         x: int | None = None,
@@ -574,27 +589,20 @@ class Screen(CommandObject):
                 bar.draw()
         self.qtile.call_soon(self.group.layout_all)
 
-    def cmd_info(self) -> dict[str, int]:
+    @expose_command()
+    def info(self) -> dict[str, int]:
         """Returns a dictionary of info for this screen."""
         return dict(index=self.index, width=self.width, height=self.height, x=self.x, y=self.y)
 
-    def cmd_resize(
-        self,
-        x: int | None = None,
-        y: int | None = None,
-        w: int | None = None,
-        h: int | None = None,
-    ) -> None:
-        """Resize the screen"""
-        self.resize(x, y, w, h)
-
-    def cmd_next_group(self, skip_empty: bool = False, skip_managed: bool = False) -> None:
+    @expose_command()
+    def next_group(self, skip_empty: bool = False, skip_managed: bool = False) -> None:
         """Switch to the next group"""
         n = self.group.get_next_group(skip_empty, skip_managed)
         self.set_group(n)
         return n.name
 
-    def cmd_prev_group(
+    @expose_command()
+    def prev_group(
         self, skip_empty: bool = False, skip_managed: bool = False, warp: bool = True
     ) -> None:
         """Switch to the previous group"""
@@ -602,13 +610,15 @@ class Screen(CommandObject):
         self.set_group(n, warp=warp)
         return n.name
 
-    def cmd_toggle_group(self, group_name: str | None = None, warp: bool = True) -> None:
+    @expose_command()
+    def toggle_group(self, group_name: str | None = None, warp: bool = True) -> None:
         """Switch to the selected group or to the previously active one"""
         assert self.qtile is not None
         group = self.qtile.groups_map.get(group_name if group_name else "")
-        self.toggle_group(group, warp=warp)
+        self._toggle_group(group, warp=warp)
 
-    def cmd_set_wallpaper(self, path: str, mode: str | None = None) -> None:
+    @expose_command()
+    def set_wallpaper(self, path: str, mode: str | None = None) -> None:
         """Set the wallpaper to the given file."""
         self.paint(path, mode)
 
@@ -662,7 +672,7 @@ class Group:
         exclusive: bool = False,
         spawn: str | list[str] | None = None,
         layout: str | None = None,
-        layouts: list[str] | None = None,
+        layouts: list[Layout] | None = None,
         persist: bool = True,
         init: bool = True,
         layout_opts: dict[str, Any] | None = None,
@@ -738,7 +748,6 @@ class ScratchPad(Group):
             self,
             name,
             layout="floating",
-            layouts=["floating"],
             init=False,
             position=position,
             label=label,
@@ -757,11 +766,9 @@ class Match:
     """
     Match for dynamic groups or auto-floating windows.
 
-    It can match by title, wm_class, role, wm_type, wm_instance_class or net_wm_pid.
-
-    :class:`Match` supports both regular expression objects (i.e. the result of
-    ``re.compile()``) or strings (match as an "include"-match). If a window matches all
-    specified values, it is considered a match.
+    For some properties, :class:`Match` supports both regular expression objects (i.e.
+    the result of ``re.compile()``) or strings (match as an "include"-match). If a
+    window matches all specified values, it is considered a match.
 
     Parameters
     ==========
@@ -787,11 +794,11 @@ class Match:
 
     def __init__(
         self,
-        title: str | None = None,
-        wm_class: str | None = None,
-        role: str | None = None,
-        wm_type: str | None = None,
-        wm_instance_class: str | None = None,
+        title: str | re.Pattern | None = None,
+        wm_class: str | re.Pattern | None = None,
+        role: str | re.Pattern | None = None,
+        wm_type: str | re.Pattern | None = None,
+        wm_instance_class: str | re.Pattern | None = None,
         net_wm_pid: int | None = None,
         func: Callable[[base.Window], bool] | None = None,
         wid: int | None = None,

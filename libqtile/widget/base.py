@@ -39,7 +39,7 @@ from typing import TYPE_CHECKING
 
 from libqtile import bar, configurable, confreader
 from libqtile.command import interface
-from libqtile.command.base import CommandError, CommandObject
+from libqtile.command.base import CommandError, CommandObject, expose_command
 from libqtile.lazy import LazyCall
 from libqtile.log_utils import logger
 
@@ -117,7 +117,7 @@ class _Widget(CommandObject, configurable.Configurable):
         from libqtile import qtile
 
         def open_calendar():
-            qtile.cmd_spawn('gsimplecal next_month')
+            qtile.spawn('gsimplecal next_month')
 
         clock = widget.Clock(
             mouse_callbacks={
@@ -170,6 +170,7 @@ class _Widget(CommandObject, configurable.Configurable):
 
         self.configured = False
         self._futures: list[asyncio.TimerHandle] = []
+        self._mirrors: set[_Widget] = set()
 
     @property
     def length(self):
@@ -248,7 +249,9 @@ class _Widget(CommandObject, configurable.Configurable):
         self.drawer.set_source_rgb(self.bar.background)
         self.drawer.fillrect(self.offsetx, self.offsety, self.width, self.height)
 
+    @expose_command()
     def info(self):
+        """Info for this object."""
         return dict(
             name=self.name,
             offset=self.offset,
@@ -300,12 +303,6 @@ class _Widget(CommandObject, configurable.Configurable):
             return self.bar
         elif name == "screen":
             return self.bar.screen
-
-    def cmd_info(self):
-        """
-        Info for this object.
-        """
-        return self.info()
 
     def draw(self):
         """
@@ -368,6 +365,43 @@ class _Widget(CommandObject, configurable.Configurable):
 
     def mouse_leave(self, x, y):
         pass
+
+    def _draw_with_mirrors(self) -> None:
+        self._old_draw()
+        for mirror in self._mirrors:
+            if not mirror.configured:
+                continue
+
+            # If the widget and mirror are on the same bar then we could have an
+            # infinite loop when we call bar.draw(). mirror.draw() will trigger a resize
+            # if it's the wrong size.
+            if mirror.length_type == bar.CALCULATED and mirror.bar is not self.bar:
+                mirror.bar.draw()
+            else:
+                mirror.draw()
+
+    def add_mirror(self, widget: _Widget):
+        if not self._mirrors:
+            self._old_draw = self.draw
+            self.draw = self._draw_with_mirrors  # type: ignore
+
+        self._mirrors.add(widget)
+        if not self.drawer.has_mirrors:
+            self.drawer.has_mirrors = True
+
+    def remove_mirror(self, widget: _Widget):
+        try:
+            self._mirrors.remove(widget)
+        except KeyError:
+            pass
+
+        if not self._mirrors:
+            self.drawer.has_mirrors = False
+
+            if hasattr(self, "_old_draw"):
+                # Deletes the reference to draw and falls back to the original
+                del self.draw
+                del self._old_draw
 
 
 UNSPECIFIED = bar.Obj("UNSPECIFIED")
@@ -631,7 +665,8 @@ class _TextBox(_Widget):
     def hide_scroll(self):
         self.update("")
 
-    def cmd_set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED, fontshadow=UNSPECIFIED):
+    @expose_command()
+    def set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED, fontshadow=UNSPECIFIED):
         """
         Change the font used by this widget. If font is None, the current
         font is used.
@@ -644,6 +679,7 @@ class _TextBox(_Widget):
             self.fontshadow = fontshadow
         self.bar.draw()
 
+    @expose_command()
     def info(self):
         d = _Widget.info(self)
         d["foreground"] = self.foreground
@@ -651,6 +687,7 @@ class _TextBox(_Widget):
         return d
 
     def update(self, text):
+        """Update the widget text."""
         if self.text == text:
             return
         if text is None:
@@ -771,7 +808,8 @@ class ThreadPoolText(_TextBox):
     def poll(self):
         pass
 
-    def cmd_force_update(self):
+    @expose_command()
+    def force_update(self):
         """Immediately poll the widget. Existing timers are unaffected."""
         self.update(self.poll())
 
@@ -841,18 +879,19 @@ class Mirror(_Widget):
 
     def __init__(self, reflection, **config):
         _Widget.__init__(self, reflection.length, **config)
-        reflection.draw = self.hook(reflection.draw)
         self.reflects = reflection
         self._length = 0
-        if self.reflects.length_type == bar.STRETCH:
-            self.length_type = bar.STRETCH
+        self.length_type = self.reflects.length_type
 
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
-        self.reflects.drawer.add_mirror(self.drawer)
+        self.reflects.add_mirror(self)
         # We need to fill the background once before `draw` is called so, if
         # there's no reflection, the mirror matches its parent bar.
         self.drawer.clear(self.background or self.bar.background)
+
+    def calculate_length(self):
+        return self.reflects.calculate_length()
 
     @property
     def length(self):
@@ -864,24 +903,10 @@ class Mirror(_Widget):
     def length(self, value):
         self._length = value
 
-    def hook(self, draw):
-        def _():
-            draw()
-            if self.length_type == bar.STRETCH:
-                self.bar.draw()
-            else:
-                self.draw()
-
-        return _
-
     def draw(self):
-        if self.length_type != bar.STRETCH and self._length != self.reflects.length:
-            self._length = self.length
-            self.bar.draw()
-        else:
-            self.drawer.clear(self.reflects.background or self.bar.background)
-            self.reflects.drawer.paint_to(self.drawer)
-            self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
+        self.drawer.clear(self.reflects.background or self.bar.background)
+        self.reflects.drawer.paint_to(self.drawer)
+        self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
 
     def button_press(self, x, y, button):
         self.reflects.button_press(x, y, button)
@@ -891,3 +916,7 @@ class Mirror(_Widget):
 
     def mouse_leave(self, x, y):
         self.reflects.mouse_leave(x, y)
+
+    def finalize(self):
+        self.reflects.remove_mirror(self)
+        _Widget.finalize(self)

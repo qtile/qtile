@@ -191,7 +191,7 @@ class Subscribe:
                 if c.name == "xterm":
                     c.togroup("a")
                 elif c.name == "dzen":
-                    c.cmd_static(0)
+                    c.static(0)
         """
         return self._subscribe("client_new", func)
 
@@ -304,7 +304,7 @@ class Subscribe:
         return self._subscribe("screen_change", func)
 
     def screens_reconfigured(self, func):
-        """Called once ``qtile.cmd_reconfigure_screens`` has completed (e.g. if
+        """Called once ``qtile.reconfigure_screens`` has completed (e.g. if
         ``reconfigure_screens`` is set to ``True`` in your config).
 
         **Arguments**

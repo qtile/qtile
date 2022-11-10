@@ -531,7 +531,7 @@ class AllLayoutsMultipleBorders(AllLayoutsConfig):
     """
 
     layouts = [
-        layout_cls(border_focus=["#000" "#111", "#222", "#333", "#444"])
+        layout_cls(border_focus=["#000", "#111", "#222", "#333", "#444"])
         for layout_name, layout_cls in AllLayoutsConfig.iter_layouts()
     ]
 

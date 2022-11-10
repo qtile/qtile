@@ -26,6 +26,7 @@
 from typing import Any
 
 from libqtile import bar
+from libqtile.command.base import expose_command
 from libqtile.widget import base
 
 
@@ -43,10 +44,11 @@ class TextBox(base._TextBox):
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, text=text, width=width, **config)
 
-    def cmd_update(self, text):
-        """Update the text in a TextBox widget"""
-        self.update(text)
-
-    def cmd_get(self):
+    @expose_command()
+    def get(self):
         """Retrieve the text in a TextBox widget"""
         return self.text
+
+    @expose_command()
+    def update(self, text):
+        base._TextBox.update(self, text)

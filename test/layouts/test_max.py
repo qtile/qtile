@@ -71,9 +71,9 @@ def test_max_updown(manager):
     manager.test_window("three")
     assert manager.c.layout.info()["clients"] == ["one", "two", "three"]
     manager.c.layout.up()
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
     manager.c.layout.down()
-    assert manager.c.groups()["a"]["focus"] == "three"
+    assert manager.c.get_groups()["a"]["focus"] == "three"
 
 
 @max_config

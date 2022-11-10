@@ -29,6 +29,7 @@ from abc import ABCMeta, abstractmethod
 from subprocess import CalledProcessError, check_output
 from typing import TYPE_CHECKING
 
+from libqtile.command.base import expose_command
 from libqtile.confreader import ConfigError
 from libqtile.log_utils import logger
 from libqtile.widget import base
@@ -98,7 +99,7 @@ class _X11LayoutBackend(_BaseLayoutBackend):
 
 class _WaylandLayoutBackend(_BaseLayoutBackend):
     def __init__(self, qtile: Qtile) -> None:
-        self.set_keymap = qtile.core.cmd_set_keymap  # type: ignore
+        self.set_keymap = qtile.core.set_keymap
         self._layout: str = ""
 
     def get_keyboard(self) -> str:
@@ -167,6 +168,7 @@ class KeyboardLayout(base.InLoopPollText):
         self.backend = layout_backends[qtile.core.name](qtile)
         self.backend.set_keyboard(self.configured_keyboards[0], self.option)
 
+    @expose_command()
     def next_keyboard(self):
         """set the next layout in the list of configured keyboard layouts as
         new current layout in use
@@ -194,7 +196,3 @@ class KeyboardLayout(base.InLoopPollText):
         if keyboard in self.display_map.keys():
             return self.display_map[keyboard]
         return keyboard.upper()
-
-    def cmd_next_keyboard(self):
-        """Select next keyboard layout"""
-        self.next_keyboard()

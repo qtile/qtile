@@ -68,17 +68,26 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         )
         self.setup_hooks()
 
-    def setup_hooks(self):
-        def hook_response(*args, **kwargs):
-            self.bar.draw()
+    def _hook_response(self, *args, **kwargs):
+        self.bar.draw()
 
-        hook.subscribe.client_managed(hook_response)
-        hook.subscribe.client_urgent_hint_changed(hook_response)
-        hook.subscribe.client_killed(hook_response)
-        hook.subscribe.setgroup(hook_response)
-        hook.subscribe.group_window_add(hook_response)
-        hook.subscribe.current_screen_change(hook_response)
-        hook.subscribe.changegroup(hook_response)
+    def setup_hooks(self):
+        hook.subscribe.client_managed(self._hook_response)
+        hook.subscribe.client_urgent_hint_changed(self._hook_response)
+        hook.subscribe.client_killed(self._hook_response)
+        hook.subscribe.setgroup(self._hook_response)
+        hook.subscribe.group_window_add(self._hook_response)
+        hook.subscribe.current_screen_change(self._hook_response)
+        hook.subscribe.changegroup(self._hook_response)
+
+    def remove_hooks(self):
+        hook.unsubscribe.client_managed(self._hook_response)
+        hook.unsubscribe.client_urgent_hint_changed(self._hook_response)
+        hook.unsubscribe.client_killed(self._hook_response)
+        hook.unsubscribe.setgroup(self._hook_response)
+        hook.unsubscribe.group_window_add(self._hook_response)
+        hook.unsubscribe.current_screen_change(self._hook_response)
+        hook.unsubscribe.changegroup(self._hook_response)
 
     def drawbox(
         self,
@@ -131,6 +140,10 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         else:
             framed.draw(offset, y, rounded)
 
+    def finalize(self):
+        self.remove_hooks()
+        base._TextBox.finalize(self)
+
 
 class AGroupBox(_GroupBase):
     """A widget that graphically displays the current group"""
@@ -144,7 +157,7 @@ class AGroupBox(_GroupBase):
 
     def _configure(self, qtile, bar):
         _GroupBase._configure(self, qtile, bar)
-        self.add_callbacks({"Button1": partial(self.bar.screen.cmd_next_group, warp=False)})
+        self.add_callbacks({"Button1": partial(self.bar.screen.next_group, warp=False)})
 
     def calculate_length(self):
         return self.box_width(self.qtile.groups) + self.margin_x * 2
@@ -224,6 +237,7 @@ class GroupBox(_GroupBase):
             "Hide groups that have no windows and that are not displayed on any screen.",
         ),
         ("spacing", None, "Spacing between groups" "(if set to None, will be equal to margin_x)"),
+        ("toggle", True, "Enable toggling of group when clicking on same group name"),
     ]
 
     def __init__(self, **config):
@@ -312,7 +326,7 @@ class GroupBox(_GroupBase):
 
     def go_to_group(self, group):
         if group:
-            if self.bar.screen.group != group or not self.disable_drag:
+            if self.bar.screen.group != group or not self.disable_drag or not self.toggle:
                 self.bar.screen.set_group(group, warp=False)
             else:
                 self.bar.screen.toggle_group(group, warp=False)
@@ -322,7 +336,7 @@ class GroupBox(_GroupBase):
         if button not in (5, 4):
             group = self.get_clicked_group()
             if group and self.clicked:
-                group.cmd_switch_groups(self.clicked.name)
+                group.switch_groups(self.clicked.name)
                 self.clicked = None
 
     def calculate_length(self):
