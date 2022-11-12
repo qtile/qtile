@@ -203,10 +203,9 @@ class XdgWindow(Window[XdgSurface]):
 
     def is_transient_for(self) -> base.WindowType | None:
         """What window is this window a transient window for?"""
-        parent = self.surface.toplevel.parent
-        if parent:
+        if parent := self.surface.toplevel.parent:
             for win in self.qtile.windows_map.values():
-                if isinstance(win, XdgWindow) and win.surface == parent:
+                if isinstance(win, XdgWindow) and win.surface.toplevel == parent:
                     return win
         return None
 
