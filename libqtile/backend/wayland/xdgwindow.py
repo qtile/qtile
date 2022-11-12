@@ -29,7 +29,7 @@ from wlroots import ffi
 from wlroots.util.box import Box
 from wlroots.util.clock import Timespec
 from wlroots.util.edges import Edges
-from wlroots.wlr_types.xdg_shell import XdgPopup, XdgSurface, XdgTopLevelSetFullscreenEvent
+from wlroots.wlr_types.xdg_shell import XdgPopup, XdgSurface
 
 from libqtile import hook
 from libqtile.backend import base
@@ -154,12 +154,10 @@ class XdgWindow(Window[XdgSurface]):
     def _on_new_subsurface(self, _listener: Listener, subsurface: WlrSubSurface) -> None:
         self.subsurfaces.append(SubSurface(self, subsurface))
 
-    def _on_request_fullscreen(
-        self, _listener: Listener, event: XdgTopLevelSetFullscreenEvent
-    ) -> None:
+    def _on_request_fullscreen(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow request_fullscreen")
         if self.qtile.config.auto_fullscreen:
-            self.fullscreen = event.fullscreen
+            self.fullscreen = self.surface.toplevel.requested.fullscreen
 
     def _on_set_title(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow set_title")
