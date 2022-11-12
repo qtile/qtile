@@ -123,6 +123,7 @@ class Core(base.Core, wlrq.HasListeners):
             self._allocator,
             self.renderer,
             self.backend,
+            self._subcompositor,
         ) = wlroots_helper.build_compositor(self.display)
         self.socket = self.display.add_socket()
         os.environ["WAYLAND_DISPLAY"] = self.socket.decode()
