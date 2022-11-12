@@ -47,7 +47,7 @@ from libqtile.log_utils import logger
 if typing.TYPE_CHECKING:
     from typing import Any
 
-    from wlroots.wlr_types.surface import Surface
+    from wlroots.wlr_types import Surface
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.output import Output
