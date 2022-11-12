@@ -58,6 +58,7 @@ from wlroots.wlr_types import (
 from wlroots.wlr_types.cursor import Cursor, WarpMode
 from wlroots.wlr_types.idle import Idle
 from wlroots.wlr_types.idle_inhibit_v1 import IdleInhibitorManagerV1, IdleInhibitorV1
+from wlroots.wlr_types.keyboard import Keyboard
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1, LayerShellV1Layer, LayerSurfaceV1
 from wlroots.wlr_types.output_management_v1 import (
     OutputConfigurationHeadV1,
@@ -326,12 +327,12 @@ class Core(base.Core, wlrq.HasListeners):
         logger.debug("Signal: backend new_input_event")
 
         device: inputs._Device
-        if wlr_device.device_type == input_device.InputDeviceType.POINTER:
+        if wlr_device.type == input_device.InputDeviceType.POINTER:
             device = self._add_new_pointer(wlr_device)
-        elif wlr_device.device_type == input_device.InputDeviceType.KEYBOARD:
+        elif wlr_device.type == input_device.InputDeviceType.KEYBOARD:
             device = self._add_new_keyboard(wlr_device)
         else:
-            logger.info("New %s device", wlr_device.device_type.name)
+            logger.info("New %s device", wlr_device.type.name)
             return
 
         capabilities = WlSeat.capability.pointer
@@ -448,7 +449,7 @@ class Core(base.Core, wlrq.HasListeners):
         if not handled:
             self.seat.pointer_notify_button(event.time_msec, event.button, event.button_state)
 
-    def _on_cursor_motion(self, _listener: Listener, event: pointer.PointerEventMotion) -> None:
+    def _on_cursor_motion(self, _listener: Listener, event: pointer.PointerMotionEvent) -> None:
         assert self.qtile is not None
         self.idle.notify_activity(self.seat)
 
@@ -472,11 +473,11 @@ class Core(base.Core, wlrq.HasListeners):
             ):
                 return
 
-        self.cursor.move(dx, dy, input_device=event.device)
+        self.cursor.move(dx, dy)
         self._process_cursor_motion(event.time_msec, self.cursor.x, self.cursor.y)
 
     def _on_cursor_motion_absolute(
-        self, _listener: Listener, event: pointer.PointerEventMotionAbsolute
+        self, _listener: Listener, event: pointer.PointerMotionAbsoluteEvent
     ) -> None:
         assert self.qtile is not None
         self.idle.notify_activity(self.seat)
@@ -484,14 +485,13 @@ class Core(base.Core, wlrq.HasListeners):
             WarpMode.AbsoluteClosest,
             event.x,
             event.y,
-            input_device=event.device,
         )
         self._process_cursor_motion(event.time_msec, self.cursor.x, self.cursor.y)
 
     def _on_cursor_pinch_begin(
         self,
         _listener: Listener,
-        event: pointer.PointerEventPinchBegin,
+        event: pointer.PointerPinchBeginEvent,
     ) -> None:
         self.idle.notify_activity(self.seat)
         self._gestures.send_pinch_begin(self.seat, event.time_msec, event.fingers)
@@ -499,7 +499,7 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_cursor_pinch_update(
         self,
         _listener: Listener,
-        event: pointer.PointerEventPinchUpdate,
+        event: pointer.PointerPinchUpdateEvent,
     ) -> None:
         self._gestures.send_pinch_update(
             self.seat, event.time_msec, event.dx, event.dy, event.scale, event.rotation
@@ -508,7 +508,7 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_cursor_pinch_end(
         self,
         _listener: Listener,
-        event: pointer.PointerEventPinchEnd,
+        event: pointer.PointerPinchEndEvent,
     ) -> None:
         self.idle.notify_activity(self.seat)
         self._gestures.send_pinch_end(self.seat, event.time_msec, event.cancelled)
@@ -516,7 +516,7 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_cursor_swipe_begin(
         self,
         _listener: Listener,
-        event: pointer.PointerEventSwipeBegin,
+        event: pointer.PointerSwipeBeginEvent,
     ) -> None:
         self.idle.notify_activity(self.seat)
         self._gestures.send_swipe_begin(self.seat, event.time_msec, event.fingers)
@@ -524,14 +524,14 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_cursor_swipe_update(
         self,
         _listener: Listener,
-        event: pointer.PointerEventSwipeUpdate,
+        event: pointer.PointerSwipeUpdateEvent,
     ) -> None:
         self._gestures.send_swipe_update(self.seat, event.time_msec, event.dx, event.dy)
 
     def _on_cursor_swipe_end(
         self,
         _listener: Listener,
-        event: pointer.PointerEventSwipeEnd,
+        event: pointer.PointerSwipeEndEvent,
     ) -> None:
         self.idle.notify_activity(self.seat)
         self._gestures.send_swipe_end(self.seat, event.time_msec, event.cancelled)
@@ -539,7 +539,7 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_cursor_hold_begin(
         self,
         _listener: Listener,
-        event: pointer.PointerEventHoldBegin,
+        event: pointer.PointerHoldBeginEvent,
     ) -> None:
         self.idle.notify_activity(self.seat)
         self._gestures.send_hold_begin(self.seat, event.time_msec, event.fingers)
@@ -547,7 +547,7 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_cursor_hold_end(
         self,
         _listener: Listener,
-        event: pointer.PointerEventHoldEnd,
+        event: pointer.PointerHoldEndEvent,
     ) -> None:
         self.idle.notify_activity(self.seat)
         self._gestures.send_hold_end(self.seat, event.time_msec, event.cancelled)
@@ -891,9 +891,10 @@ class Core(base.Core, wlrq.HasListeners):
         return device
 
     def _add_new_keyboard(self, wlr_device: input_device.InputDevice) -> inputs.Keyboard:
-        device = inputs.Keyboard(self, wlr_device)
+        keyboard = Keyboard.from_input_device(wlr_device)
+        device = inputs.Keyboard(self, wlr_device, keyboard)
         self.keyboards.append(device)
-        self.seat.set_keyboard(wlr_device)
+        self.seat.set_keyboard(keyboard)
         return device
 
     def _configure_pending_inputs(self) -> None:
