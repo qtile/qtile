@@ -278,7 +278,7 @@ class CommandObject(metaclass=abc.ABCMeta):
                 # This is not a bound method so we need to pass 'self'
                 return partial(self.command(cmd), self)
 
-        raise AttributeError
+        raise AttributeError(f"{self.__class__} has no attribute {name}")
 
     @expose_command()
     def commands(self) -> list[str]:
