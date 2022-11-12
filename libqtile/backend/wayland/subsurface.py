@@ -29,7 +29,7 @@ from libqtile.backend.wayland.wlrq import HasListeners
 if typing.TYPE_CHECKING:
     from typing import Any
 
-    from wlroots.wlr_types.surface import SubSurface as WlrSubSurface
+    from wlroots.wlr_types.compositor import SubSurface as WlrSubSurface
 
     from libqtile.backend.wayland.xdgwindow import XdgWindow
 
