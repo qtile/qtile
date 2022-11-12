@@ -29,7 +29,7 @@ from wlroots import ffi
 from wlroots.util.box import Box
 from wlroots.util.clock import Timespec
 from wlroots.util.edges import Edges
-from wlroots.wlr_types.xdg_shell import XdgPopup, XdgSurface
+from wlroots.wlr_types.xdg_shell import XdgPopup, XdgSurface, XdgTopLevelWMCapabilities
 
 from libqtile import hook
 from libqtile.backend import base
@@ -63,12 +63,19 @@ class XdgWindow(Window[XdgSurface]):
         self.popups: list[XdgPopupWindow] = []
         self.subsurfaces: list[SubSurface] = []
 
+        surface.set_wm_capabilities(
+            XdgTopLevelWMCapabilities.MAXIMIZE
+            | XdgTopLevelWMCapabilities.FULLSCREEN
+            | XdgTopLevelWMCapabilities.MINIMIZE
+        )
+
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
         self.add_listener(surface.new_popup_event, self._on_new_popup)
         self.add_listener(surface.surface.commit_event, self._on_commit)
         self.add_listener(surface.surface.new_subsurface_event, self._on_new_subsurface)
+        self.add_listener(surface.toplevel.request_maximize_event, self._on_request_maximize)
         self.add_listener(surface.toplevel.request_fullscreen_event, self._on_request_fullscreen)
 
         surface.data = self.ftm_handle = core.foreign_toplevel_manager_v1.create_handle()
@@ -158,6 +165,10 @@ class XdgWindow(Window[XdgSurface]):
         logger.debug("Signal: xdgwindow request_fullscreen")
         if self.qtile.config.auto_fullscreen:
             self.fullscreen = self.surface.toplevel.requested.fullscreen
+
+    def _on_request_maximize(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: xdgwindow request_maximize")
+        self.fullscreen = self.surface.toplevel.requested.maximized
 
     def _on_set_title(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow set_title")
@@ -278,6 +289,7 @@ class XdgWindow(Window[XdgSurface]):
         self._width = width
         self._height = height
         self.surface.set_size(width, height)
+        self.surface.set_bounds(width, height)
         self.paint_borders(bordercolor, borderwidth)
 
         if above:
@@ -376,6 +388,7 @@ class XdgStatic(Static[XdgSurface]):
         self._width = width
         self._height = height
         self.surface.set_size(width, height)
+        self.surface.set_bounds(width, height)
         self.paint_borders(bordercolor, borderwidth)
         self._find_outputs()
         self.damage()
