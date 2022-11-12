@@ -43,6 +43,7 @@ if TYPE_CHECKING:
 
     from pywayland.server import Listener
     from wlroots.wlr_types import InputDevice
+    from wlroots.wlr_types.keyboard import Keyboard as WlrKeyboard
     from wlroots.wlr_types.keyboard import KeyboardKeyEvent
 
     from libqtile.backend.wayland.core import Core
@@ -166,7 +167,7 @@ class _Device(ABC, HasListeners):
         name = device.name
         if name == " " or not name.isprintable():
             name = "_"
-        type_key = "type:" + device.device_type.name.lower()
+        type_key = "type:" + device.type.name.lower()
         identifier = "%d:%d:%s" % (device.vendor, device.product, name)
 
         if type_key == "type:pointer" and libinput is not None:
@@ -199,11 +200,11 @@ class _Device(ABC, HasListeners):
 
 
 class Keyboard(_Device):
-    def __init__(self, core: Core, wlr_device: InputDevice):
+    def __init__(self, core: Core, wlr_device: InputDevice, keyboard: WlrKeyboard):
         super().__init__(core, wlr_device)
         self.qtile = core.qtile
         self.seat = core.seat
-        self.keyboard = wlr_device.keyboard
+        self.keyboard = keyboard
         self.keyboard.data = self
         self.grabbed_keys = core.grabbed_keys
 
@@ -214,13 +215,12 @@ class Keyboard(_Device):
 
         self.add_listener(self.keyboard.modifiers_event, self._on_modifier)
         self.add_listener(self.keyboard.key_event, self._on_key)
-        self.add_listener(self.keyboard.destroy_event, self._on_destroy)
 
     def finalize(self) -> None:
         super().finalize()
         self.core.keyboards.remove(self)
         if self.core.keyboards and self.core.seat.keyboard.destroyed:
-            self.seat.set_keyboard(self.core.keyboards[-1].wlr_device)
+            self.seat.set_keyboard(self.core.keyboards[-1].keyboard)
 
     def set_keymap(self, layout: str | None, options: str | None, variant: str | None) -> None:
         """
@@ -235,12 +235,8 @@ class Keyboard(_Device):
             self._keymaps[(layout, options, variant)] = keymap
         self.keyboard.set_keymap(keymap)
 
-    def _on_destroy(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: keyboard destroy")
-        self.finalize()
-
     def _on_modifier(self, _listener: Listener, _data: Any) -> None:
-        self.seat.set_keyboard(self.wlr_device)
+        self.seat.set_keyboard(self.keyboard)
         self.seat.keyboard_notify_modifiers(self.keyboard.modifiers)
 
     def _on_key(self, _listener: Listener, event: KeyboardKeyEvent) -> None:
