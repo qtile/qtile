@@ -744,11 +744,17 @@ class Screen(CommandObject):
         """
         assert self.qtile is not None
 
+        # TODO: deal with this circular import
+        from libqtile.scratchpad import ScratchPad
+
         if not groups:
             groups = self.qtile.groups
 
         # Remove groups visible on other screens
-        groups = list(filter(lambda g: g.screen in (None, self), groups))
+        groups = filter(lambda g: g.screen in (None, self), groups)
+
+        # Remove any scratchpads (which may be present in self.qtile.groups)
+        groups = list(filter(lambda g: not isinstance(g, ScratchPad), groups))
 
         # How this works:
         # 1. Set the two potential target groups to use this screen. This creates an
