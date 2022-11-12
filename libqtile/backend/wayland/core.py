@@ -258,11 +258,11 @@ class Core(base.Core, wlrq.HasListeners):
 
         # Place cursor in middle of centre output
         x = y = 0
-        if box := self.output_layout.get_box():
-            if output := self.output_layout.output_at(box.width / 2, box.height / 2):
-                if box := self.output_layout.get_box(reference=output):
-                    x = box.x + box.width / 2
-                    y = box.y + box.height / 2
+        box = self.output_layout.get_box()
+        if output := self.output_layout.output_at(box.width / 2, box.height / 2):
+            box = self.output_layout.get_box(reference=output, dest_box=box)
+            x = box.x + box.width / 2
+            y = box.y + box.height / 2
         self.warp_pointer(x, y)
         self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
 
@@ -356,8 +356,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         self.outputs.append(Output(self, wlr_output))
         # Put new output at far right
-        layout_geo = self.output_layout.get_box()
-        x = layout_geo.width if layout_geo else 0
+        x = self.output_layout.get_box().width
         self.output_layout.add(wlr_output, x, 0)
 
         if not self._current_output:
@@ -373,8 +372,8 @@ class Core(base.Core, wlrq.HasListeners):
             head.state.mode = mode
             head.state.enabled = mode is not None and output.wlr_output.enabled
             box = self.output_layout.get_box(output.wlr_output)
-            head.state.x = output.x = box.x if box else 0
-            head.state.y = output.y = box.y if box else 0
+            head.state.x = output.x = box.x
+            head.state.y = output.y = box.y
 
         self.output_manager.set_configuration(config)
         self.outputs.sort(key=lambda o: (o.x, o.y))
