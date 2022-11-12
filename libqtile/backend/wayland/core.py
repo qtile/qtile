@@ -35,6 +35,7 @@ import wlroots.wlr_types.virtual_pointer_v1 as vpointer
 from pywayland import lib as wllib
 from pywayland.protocol.wayland import WlSeat
 from wlroots import xwayland
+from wlroots.util import log as wlr_log
 from wlroots.wlr_types import (
     DataControlManagerV1,
     DataDeviceManager,
@@ -113,6 +114,12 @@ class Core(base.Core, wlrq.HasListeners):
             logger.level,
             log_path=log_utils.get_default_log(),
             logger=pywayland.server.listener.logger,
+        )
+        wlr_log.log_init(logger.level)
+        log_utils.init_log(
+            logger.level,
+            log_path=log_utils.get_default_log(),
+            logger=wlr_log.logger,
         )
 
         self.fd: int | None = None
