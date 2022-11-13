@@ -125,14 +125,10 @@ class VerticalTile(_SimpleLayoutBase):
 
             # border
             border_width = self.border_width if n > 1 else self.single_border_width
+            border_color = self.border_focus if window.has_focus else self.border_normal
 
             # margin
             margin = self.margin if n > 1 else self.single_margin
-
-            if window.has_focus:
-                border_color = self.border_focus
-            else:
-                border_color = self.border_normal
 
             # width
             width = screen_rect.width - (self.border_width if n > 1 else self.single_border_width) * 2
