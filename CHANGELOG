@@ -25,6 +25,8 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Add ability to disable group toggling in `GroupBox` widget
         - Add ability to have different border color when windows are stacked in Stack layout. Requires 
           setting `border_focus_stack` and `border_normal_stack` variables.
+        - Add ability to have different border_width and margin when VerticalTile layout only contains 1 window.
+          Requires setting 'single_border_width' and 'single_margin'.
         - New widget: GenPollCommand
     * bugfixes
         - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
