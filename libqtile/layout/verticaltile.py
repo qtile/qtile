@@ -137,6 +137,9 @@ class VerticalTile(_SimpleLayoutBase):
             # width
             width = screen_rect.width - (self.border_width if n > 1 else self.single_border_width) * 2
 
+            # y
+            y = screen_rect.y
+
             # height
             if n > 1:
                 main_area_height = int(screen_rect.height * self.ratio)
@@ -147,26 +150,18 @@ class VerticalTile(_SimpleLayoutBase):
                 normal_pane_height = (screen_rect.height // n) - (border_width * 2)
 
                 if self.maximized:
+                    y += (index * sec_pane_height) + (border_width * 2 * index)
                     if window is self.maximized:
                         height = main_pane_height
                     else:
                         height = sec_pane_height
+                        if index > self.clients.index(self.maximized):
+                            y = y - sec_pane_height + main_pane_height
                 else:
                     height = normal_pane_height
+                    y += (index * normal_pane_height) + (border_width * 2 * index)
             else:
                 height = screen_rect.height - 2 * border_width
-            # y
-            y = screen_rect.y
-
-            if n > 1:
-                if self.maximized:
-                    y += (index * sec_pane_height) + (border_width * 2 * index)
-                else:
-                    y += (index * normal_pane_height) + (border_width * 2 * index)
-
-                if self.maximized and window is not self.maximized:
-                    if index > self.clients.index(self.maximized):
-                        y = y - sec_pane_height + main_pane_height
 
             window.place(
                 screen_rect.x, y, width, height, border_width, border_color, margin=margin
