@@ -41,20 +41,31 @@ class VerticalTileConfig(Config):
         libqtile.config.Group("c"),
         libqtile.config.Group("d"),
     ]
-    layouts = [layout.VerticalTile(columns=2)]
+    # default border and margin
+    layouts = [layout.VerticalTile(columns=2, border_width=1, margin=0)]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
 
 
+class VerticalTileSingleBorderConfig(VerticalTileConfig):
+    layouts = [layout.VerticalTile(columns=2, single_border_width=2, border_width=8, single_margin=0, margin=0)]
+
+
+class VerticalTileSingleMarginConfig(VerticalTileConfig):
+    layouts = [layout.VerticalTile(columns=2, single_margin=2, margin=8, single_border_width=0, border_width=0)]
+
+
 verticaltile_config = pytest.mark.parametrize("manager", [VerticalTileConfig], indirect=True)
+verticaltile_single_border_config = pytest.mark.parametrize("manager", [VerticalTileSingleBorderConfig], indirect=True)
+verticaltile_single_margin_config = pytest.mark.parametrize("manager", [VerticalTileSingleMarginConfig], indirect=True)
 
 
 @verticaltile_config
 def test_verticaltile_simple(manager):
     manager.test_window("one")
-    assert_dimensions(manager, 0, 0, 800, 600)
+    assert_dimensions(manager, 0, 0, 798, 598)
     manager.test_window("two")
     assert_dimensions(manager, 0, 300, 798, 298)
     manager.test_window("three")
@@ -64,7 +75,7 @@ def test_verticaltile_simple(manager):
 @verticaltile_config
 def test_verticaltile_maximize(manager):
     manager.test_window("one")
-    assert_dimensions(manager, 0, 0, 800, 600)
+    assert_dimensions(manager, 0, 0, 798, 598)
     manager.test_window("two")
     assert_dimensions(manager, 0, 300, 798, 298)
     # Maximize the bottom layout, taking 75% of space
@@ -90,3 +101,19 @@ def test_verticaltile_window_focus_cycle(manager):
 
     # assert window focus cycle, according to order in layout
     assert_focus_path(manager, "float1", "float2", "one", "two", "three")
+
+
+@verticaltile_single_border_config
+def test_verticaltile_single_border(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 796, 596)
+    manager.test_window("two")
+    assert_dimensions(manager, 0, 300, 784, 284)
+
+
+@verticaltile_single_margin_config
+def test_verticaltile_single_margin(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 2, 2, 796, 596)
+    manager.test_window("two")
+    assert_dimensions(manager, 8, 308, 784, 284)
