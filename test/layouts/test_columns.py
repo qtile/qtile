@@ -55,8 +55,12 @@ class ColumnsSingleBorderEnabledConfig(ColumnsConfig):
 
 
 columns_config = pytest.mark.parametrize("manager", [ColumnsConfig], indirect=True)
-columns_single_border_disabled_config = pytest.mark.parametrize("manager", [ColumnsSingleBorderDisabledConfig], indirect=True)
-columns_single_border_enabled_config = pytest.mark.parametrize("manager", [ColumnsSingleBorderEnabledConfig], indirect=True)
+columns_single_border_disabled_config = pytest.mark.parametrize(
+    "manager", [ColumnsSingleBorderDisabledConfig], indirect=True
+)
+columns_single_border_enabled_config = pytest.mark.parametrize(
+    "manager", [ColumnsSingleBorderEnabledConfig], indirect=True
+)
 
 
 # This currently only tests the window focus cycle

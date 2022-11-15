@@ -262,7 +262,11 @@ class Columns(Layout):
             color = self.border_normal if col.split else self.border_normal_stack
 
         is_single = len(self.columns) == 1 and (len(col) == 1 or not col.split)
-        border = 0 if (is_single and not self.border_on_single) else (self.single_border_width if is_single else self.border_width)
+        border = (
+            0
+            if (is_single and not self.border_on_single)
+            else (self.single_border_width if is_single else self.border_width)
+        )
         margin_size = self.margin_on_single if is_single else self.margin
 
         width = int(0.5 + col.width * screen_rect.width * 0.01 / len(self.columns))
@@ -277,13 +281,7 @@ class Columns(Layout):
             height = int(0.5 + col.heights[client] * screen_rect.height * 0.01 / len(col))
             y = screen_rect.y + int(0.5 + pos * screen_rect.height * 0.01 / len(col))
             client.place(
-                x,
-                y,
-                width - 2 * border,
-                height - 2 * border,
-                border,
-                color,
-                margin=margin_size
+                x, y, width - 2 * border, height - 2 * border, border, color, margin=margin_size
             )
             client.unhide()
         elif client == col.cw:
