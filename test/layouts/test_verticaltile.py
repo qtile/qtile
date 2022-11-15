@@ -58,8 +58,12 @@ class VerticalTileSingleMarginConfig(VerticalTileConfig):
 
 
 verticaltile_config = pytest.mark.parametrize("manager", [VerticalTileConfig], indirect=True)
-verticaltile_single_border_config = pytest.mark.parametrize("manager", [VerticalTileSingleBorderConfig], indirect=True)
-verticaltile_single_margin_config = pytest.mark.parametrize("manager", [VerticalTileSingleMarginConfig], indirect=True)
+verticaltile_single_border_config = pytest.mark.parametrize(
+    "manager", [VerticalTileSingleBorderConfig], indirect=True
+)
+verticaltile_single_margin_config = pytest.mark.parametrize(
+    "manager", [VerticalTileSingleMarginConfig], indirect=True
+)
 
 
 @verticaltile_config
