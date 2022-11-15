@@ -120,11 +120,19 @@ class VerticalTile(_SimpleLayoutBase):
             index = self.clients.index(window)
 
             # border
-            border_width = self.border_width if n > 1 else (self.single_border_width if self.single_border_width is not None else 0)
+            border_width = (
+                self.border_width
+                if n > 1
+                else (self.single_border_width if self.single_border_width is not None else 0)
+            )
             border_color = self.border_focus if window.has_focus else self.border_normal
 
             # margin
-            margin = self.margin if n > 1 else (self.single_margin if self.single_margin is not None else 0)
+            margin = (
+                self.margin
+                if n > 1
+                else (self.single_margin if self.single_margin is not None else 0)
+            )
 
             # width
             width = screen_rect.width - border_width * 2
