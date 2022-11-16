@@ -157,8 +157,11 @@ class Columns(Layout):
     def __init__(self, **config):
         Layout.__init__(self, **config)
         self.add_defaults(Columns.defaults)
-        if self.single_border_width is None:
+        if not self.border_on_single:
+            self.single_border_width = 0
+        elif self.single_border_width is None:
             self.single_border_width = self.border_width
+
         if self.margin_on_single is None:
             self.margin_on_single = self.margin
         self.columns = [_Column(self.split, self.insert_position)]
@@ -262,11 +265,7 @@ class Columns(Layout):
             color = self.border_normal if col.split else self.border_normal_stack
 
         is_single = len(self.columns) == 1 and (len(col) == 1 or not col.split)
-        border = (
-            0
-            if (is_single and not self.border_on_single)
-            else (self.single_border_width if is_single else self.border_width)
-        )
+        border = self.single_border_width if is_single else self.border_width
         margin_size = self.margin_on_single if is_single else self.margin
 
         width = int(0.5 + col.width * screen_rect.width * 0.01 / len(self.columns))
