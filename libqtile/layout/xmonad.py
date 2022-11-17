@@ -1042,6 +1042,19 @@ class MonadWide(MonadTall):
         elif self.align == self._down:
             self.swap_left()
 
+    @expose_command()
+    def grow_up(self):
+        """Grow/shrink main pane by moving it up
+
+        Logic corresponds to `MonadTall.grow_left()`
+        """
+        self.grow_left()
+
+    @expose_command()
+    def grow_down(self):
+        """Grow/shrink main pane by moving it down"""
+        self.grow_right()
+
 
 class MonadThreeCol(MonadTall):
     """Emulate the behavior of XMonad's ThreeColumns layout.

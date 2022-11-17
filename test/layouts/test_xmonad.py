@@ -537,6 +537,35 @@ def test_tall_growrightleft_multiplesecondary_flip(manager):
 
 
 @monadwide_config
+def test_wide_growupdown_multiplesecondary(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 796, 596)
+
+    manager.test_window("two")
+    manager.test_window("three")
+    manager.c.layout.previous()
+    manager.c.layout.previous()
+    assert_focused(manager, "one")
+
+    assert_dimensions(manager, 0, 0, 796, 296)
+    manager.c.layout.grow_down()
+    # Grows 5% of 600 = 30 pixels
+    assert_dimensions(manager, 0, 0, 796, 326)
+    manager.c.layout.grow_up()
+    assert_dimensions(manager, 0, 0, 796, 296)
+
+    # Max width is 75% of 600 = 450 pixels
+    for _ in range(10):
+        manager.c.layout.grow_down()
+    assert_dimensions(manager, 0, 0, 796, 446)
+
+    # Min width is 25% of 600 = 150 pixels
+    for _ in range(10):
+        manager.c.layout.grow_up()
+    assert_dimensions(manager, 0, 0, 796, 146)
+
+
+@monadwide_config
 def test_wide_growsecondary_multiplesecondary(manager):
     manager.test_window("one")
     assert_dimensions(manager, 0, 0, 796, 596)
