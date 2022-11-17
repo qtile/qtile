@@ -23,9 +23,7 @@ class Client:
 
     def __init__(self):
         self.color = 0
-        self.client = InteractiveCommandClient(
-            IPCCommandInterface(IPCClient(find_sockfile()))
-        )
+        self.client = InteractiveCommandClient(IPCCommandInterface(IPCClient(find_sockfile())))
 
     def current_group(self):
         return self.client.group[self.client.group.info().get("name")]
@@ -120,14 +118,13 @@ class Screenshooter:
             "--force",
             "--output",
             file_path,
-            file_path
+            file_path,
         ]
 
         try:
             subprocess.call(compress_command)
         except FileNotFoundError:
             pass
-
 
     def animate(self, delays=None, clear=False):
         # TODO: use delays to build animation with custom delay between each frame

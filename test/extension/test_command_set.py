@@ -98,7 +98,11 @@ def test_command_set_inside_command_set_valid_command(caplog, fake_qtile):
 
     assert caplog.record_tuples == [
         ("libqtile", logging.WARNING, "run pre-command"),
-        ("libqtile", logging.WARNING, "run inner pre-command"),  # pre-command of the inside_command
+        (
+            "libqtile",
+            logging.WARNING,
+            "run inner pre-command",
+        ),  # pre-command of the inside_command
         ("libqtile", logging.WARNING, "run testcommand"),
     ]
 
@@ -136,5 +140,9 @@ def test_command_set_inside_command_set_invalid_command(caplog, fake_qtile):
 
     assert caplog.record_tuples == [
         ("libqtile", logging.WARNING, "run pre-command"),
-        ("libqtile", logging.WARNING, "run inner pre-command"),  # pre-command of the inside_command
+        (
+            "libqtile",
+            logging.WARNING,
+            "run inner pre-command",
+        ),  # pre-command of the inside_command
     ]
