@@ -42,6 +42,22 @@ class CommandSet(Dmenu):
             pre_commands=['[ $(mocp -i | wc -l) -lt 1 ] && mocp -S'],
             **Theme.dmenu))),
 
+
+    ex. CommandSet inside another CommandSet
+
+    .. code-block:: python
+        CommandSet(
+            commands={
+                "Hello": CommandSet(
+                    commands={
+                        "World": "echo 'Hello, World!'"
+                    },
+                    **Theme.dmenu
+                )
+            },
+        **Theme.dmenu
+        )
+
     """
 
     defaults = [
@@ -74,4 +90,9 @@ class CommandSet(Dmenu):
         if sout not in self.commands:
             return
 
-        self.qtile.spawn(self.commands[sout])
+        command = self.commands[sout]
+
+        if isinstance(command, str):
+            self.qtile.spawn(command)
+        elif isinstance(command, CommandSet):
+            command.run()

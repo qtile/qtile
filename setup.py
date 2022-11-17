@@ -37,6 +37,7 @@ class CheckCairoXcb(install):
     def cairo_xcb_check(self):
         try:
             from cairocffi import cairo
+
             cairo.cairo_xcb_surface_create
             return True
         except AttributeError:
@@ -45,7 +46,9 @@ class CheckCairoXcb(install):
     def finalize_options(self):
         if not self.cairo_xcb_check():
 
-            print(textwrap.dedent("""
+            print(
+                textwrap.dedent(
+                    """
 
             It looks like your cairocffi was not built with xcffib support.  To fix this:
 
@@ -58,7 +61,9 @@ class CheckCairoXcb(install):
                 or
 
                   pip uninstall cairocffi && pip install cairocffi
-            """))
+            """
+                )
+            )
 
             sys.exit(1)
         install.finalize_options(self)
@@ -66,29 +71,27 @@ class CheckCairoXcb(install):
 
 def get_cffi_modules():
     cffi_modules = [
-        'libqtile/pango_ffi_build.py:pango_ffi',
-        'libqtile/backend/x11/xcursors_ffi_build.py:xcursors_ffi',
+        "libqtile/pango_ffi_build.py:pango_ffi",
+        "libqtile/backend/x11/xcursors_ffi_build.py:xcursors_ffi",
     ]
     try:
         from cffi.error import PkgConfigError
         from cffi.pkgconfig import call
     except ImportError:
         # technically all ffi defined above wont be built
-        print('CFFI package is missing')
+        print("CFFI package is missing")
     else:
         try:
-            call('libpulse', '--libs')
+            call("libpulse", "--libs")
         except PkgConfigError:
-            print('Failed to find pulseaudio headers. '
-                  'PulseVolume widget will be unavailable')
+            print("Failed to find pulseaudio headers. " "PulseVolume widget will be unavailable")
         else:
-            cffi_modules.append(
-                'libqtile/widget/pulseaudio_ffi.py:pulseaudio_ffi'
-            )
+            cffi_modules.append("libqtile/widget/pulseaudio_ffi.py:pulseaudio_ffi")
     try:
         import wlroots.ffi_build
+
         cffi_modules.append(
-            'libqtile/backend/wayland/libinput_ffi_build.py:libinput_ffi',
+            "libqtile/backend/wayland/libinput_ffi_build.py:libinput_ffi",
         )
     except ImportError:
         print(
@@ -100,7 +103,7 @@ def get_cffi_modules():
 
 
 setup(
-    cmdclass={'install': CheckCairoXcb},
+    cmdclass={"install": CheckCairoXcb},
     use_scm_version=True,
     cffi_modules=get_cffi_modules(),
     include_package_data=True,
