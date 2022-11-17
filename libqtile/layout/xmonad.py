@@ -585,6 +585,24 @@ class MonadTall(_SimpleLayoutBase):
         self._shrink_main(self.change_ratio)
         self.group.layout_all()
 
+    @expose_command()
+    def grow_right(self):
+        """Grow/shrink main pane by moving it to the right"""
+        if self.align == self._left:
+            self._grow_main(self.change_ratio)
+        else:
+            self._shrink_main(self.change_ratio)
+        self.group.layout_all()
+
+    @expose_command()
+    def grow_left(self):
+        """Grow/shrink main pane by moving it to the left"""
+        if self.align == self._right:
+            self._grow_main(self.change_ratio)
+        else:
+            self._shrink_main(self.change_ratio)
+        self.group.layout_all()
+
     def _grow(self, cidx, amt):
         "Grow secondary client by specified amount"
         self.relative_sizes[cidx] += self._get_relative_size_from_absolute(amt)

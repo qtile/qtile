@@ -462,6 +462,80 @@ def test_tall_growsecondary_multiplesecondary(manager):
     assert_dimensions(manager, 400, 0, 396, 85)
 
 
+@monadtall_config
+def test_tall_growrightleft_multiplesecondary_focused(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 796, 596)
+
+    manager.test_window("two")
+    manager.test_window("three")
+    manager.c.layout.previous()
+    manager.c.layout.previous()
+    assert_focused(manager, "one")
+
+    assert_dimensions(manager, 0, 0, 396, 596)
+    manager.c.layout.grow_right()
+    # Grows 5% of 800 = 40 pixels
+    assert_dimensions(manager, 0, 0, 436, 596)
+    manager.c.layout.grow_left()
+    assert_dimensions(manager, 0, 0, 396, 596)
+
+    # Max width is 75% of 800 = 600 pixels
+    for _ in range(10):
+        manager.c.layout.grow_right()
+    assert_dimensions(manager, 0, 0, 596, 596)
+
+    # Min width is 25% of 800 = 200 pixels
+    for _ in range(10):
+        manager.c.layout.grow_left()
+    assert_dimensions(manager, 0, 0, 196, 596)
+
+
+@monadtall_config
+def test_tall_growrightleft_multiplesecondary_unfocused(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 796, 596)
+
+    manager.test_window("two")
+    manager.test_window("three")
+    manager.c.layout.previous()
+    manager.c.layout.previous()
+    assert_focused(manager, "one")
+
+    assert_dimensions(manager, 0, 0, 396, 596)
+    # switch focus and go back
+    manager.c.layout.next()
+    manager.c.layout.grow_right()
+    manager.c.layout.previous()
+    # Grows 5% of 800 = 40 pixels
+    assert_dimensions(manager, 0, 0, 436, 596)
+    manager.c.layout.next()
+    manager.c.layout.grow_left()
+    manager.c.layout.previous()
+    assert_dimensions(manager, 0, 0, 396, 596)
+
+
+@monadtall_config
+def test_tall_growrightleft_multiplesecondary_flip(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 796, 596)
+
+    manager.test_window("two")
+    manager.test_window("three")
+    manager.c.layout.previous()
+    manager.c.layout.previous()
+
+    manager.c.layout.flip()
+    assert_focused(manager, "one")
+
+    assert_dimensions(manager, 400, 0, 396, 596)
+    manager.c.layout.grow_left()
+    # Grows 5% of 800 = 40 pixels to the left
+    assert_dimensions(manager, 360, 0, 436, 596)
+    manager.c.layout.grow_right()
+    assert_dimensions(manager, 400, 0, 396, 596)
+
+
 @monadwide_config
 def test_wide_growsecondary_multiplesecondary(manager):
     manager.test_window("one")
