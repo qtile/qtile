@@ -68,6 +68,7 @@ class Volume(base._TextBox):
             "Use emoji to display volume states, only if ``theme_path`` is not set."
             "The specified font needs to contain the correct unicode characters.",
         ),
+        ("mute_text", "M", "Text to display when muted"),
         ("mute_command", None, "Mute command"),
         ("volume_app", None, "App to control volume"),
         ("volume_up_command", None, "Volume up command"),
@@ -158,7 +159,7 @@ class Volume(base._TextBox):
                 self.text = "\U0001f50a"
         else:
             if self.volume == -1:
-                self.text = "M"
+                self.text = self.mute_text
             else:
                 self.text = "{}%".format(self.volume)
 
