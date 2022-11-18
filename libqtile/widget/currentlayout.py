@@ -179,7 +179,7 @@ class CurrentLayoutIcon(base._TextBox):
         self.icon_paths = []
 
         # We allow user to override icon search path
-        self.icon_paths.extend(self.custom_icon_paths)
+        self.icon_paths.extend(os.path.expanduser(path) for path in self.custom_icon_paths)
 
         # We also look in ~/.icons/ and ~/.local/share/icons
         self.icon_paths.append(os.path.expanduser("~/.icons"))
