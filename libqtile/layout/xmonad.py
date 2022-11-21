@@ -1048,12 +1048,18 @@ class MonadWide(MonadTall):
 
         Logic corresponds to `MonadTall.grow_left()`
         """
-        self.grow_left()
+        super().grow_left()
 
     @expose_command()
     def grow_down(self):
         """Grow/shrink main pane by moving it down"""
-        self.grow_right()
+        super().grow_right()
+
+    def grow_left(self):
+        pass
+    
+    def grow_right(self):
+        pass
 
 
 class MonadThreeCol(MonadTall):
@@ -1334,6 +1340,12 @@ class MonadThreeCol(MonadTall):
                 end=clients[0] + clients[1],
             ),
         )
+
+    def grow_left(self):
+        pass
+
+    def grow_right(self):
+        pass
 
     def info(self):
         left, right = self._get_columns()
