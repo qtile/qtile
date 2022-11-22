@@ -86,6 +86,20 @@ def expose_command(name: Callable | str | list[str] | None = None) -> Callable:
     return wrapper
 
 
+def hide_command(func: Callable) -> Callable:
+    """
+    Decorator to hide a previously exposed command.
+
+    This should be used when an object inherits from an existing
+    CommandObject but does not implement certain methods.
+
+    The decorator should be used by creating a method with the same name
+    and decorating it with `@hide_command`.
+    """
+    setattr(func, "_hide_cmd", True)
+    return func
+
+
 class SelectError(Exception):
     """Error raised in resolving a command graph object"""
 
@@ -137,6 +151,10 @@ class CommandObject(metaclass=abc.ABCMeta):
                 method = getattr(c, method_name, None)
 
                 if method is None:
+                    continue
+
+                if hasattr(method, "_hide_cmd") and method_name in commands:
+                    del commands[method_name]
                     continue
 
                 # If the command has been exposed, add it to our dictionary

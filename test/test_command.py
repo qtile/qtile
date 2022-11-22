@@ -31,7 +31,7 @@ import libqtile.confreader
 import libqtile.layout
 import libqtile.log_utils
 import libqtile.widget
-from libqtile.command.base import CommandObject, expose_command
+from libqtile.command.base import CommandObject, expose_command, hide_command
 from libqtile.command.interface import CommandError
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
@@ -113,6 +113,12 @@ class FakeCommandObject(CommandObject):
         return None
 
 
+class HiddenCommandObject(FakeCommandObject):
+    @hide_command
+    def two(self):
+        pass
+
+
 def test_doc():
     c = FakeCommandObject()
     assert "one()" in c.doc("one")
@@ -130,6 +136,11 @@ def test_command():
     c = FakeCommandObject()
     assert c.command("one")
     assert not c.command("nonexistent")
+
+
+def test_hidden_commands():
+    c = HiddenCommandObject()
+    assert len(c.commands()) == 8
 
 
 class DecoratedTextBox(libqtile.widget.TextBox):
