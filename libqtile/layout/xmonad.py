@@ -1057,7 +1057,7 @@ class MonadWide(MonadTall):
 
     def grow_left(self):
         pass
-    
+
     def grow_right(self):
         pass
 
