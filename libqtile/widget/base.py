@@ -800,7 +800,7 @@ class ThreadPoolText(_TextBox):
                 except Exception:
                     logger.exception("Failed to reschedule.")
             else:
-                logger.warning("poll() returned None, not rescheduling")
+                logger.warning("%s's poll() returned None, not rescheduling", self.name)
 
         self.future = self.qtile.run_in_executor(self.poll)
         self.future.add_done_callback(on_done)
