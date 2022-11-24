@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
     """This class defines the API that should be exposed by all layouts"""
 
-    defaults = []  # type: list[tuple[str, Any, str]]
+    defaults: list[tuple[str, Any, str]] = []
 
     def __init__(self, **config):
         # name is a little odd; we can't resolve it until the class is defined

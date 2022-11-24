@@ -33,7 +33,7 @@ class WindowCount(base._TextBox):
     current group of the screen on which the widget is.
     """
 
-    defaults = [
+    defaults: list[tuple[str, Any, str]] = [
         ("font", "sans", "Text font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("fontshadow", None, "font shadow color, default is None(no shadow)"),
@@ -41,7 +41,7 @@ class WindowCount(base._TextBox):
         ("foreground", "#ffffff", "Foreground colour."),
         ("text_format", "{num}", "Format for message"),
         ("show_zero", False, "Show window count when no windows"),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, width=width, **config)

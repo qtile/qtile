@@ -48,8 +48,6 @@ from libqtile.utils import send_notification
 from libqtile.widget import base
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from libqtile.utils import ColorsType
 
 
@@ -456,7 +454,7 @@ class BatteryIcon(base._Widget):
         ("update_interval", 60, "Seconds between status updates"),
         ("theme_path", default_icon_path(), "Path of the icons"),
         ("scale", 1, "Scale factor relative to the bar height.  " "Defaults to 1"),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     icon_names = (
         "battery-missing",
@@ -486,7 +484,7 @@ class BatteryIcon(base._Widget):
         self.length_type = bar.STATIC
         self.length = 0
         self.image_padding = 0
-        self.surfaces = {}  # type: dict[str, Img]
+        self.surfaces: dict[str, Img] = {}
         self.current_icon = "battery-missing"
 
         self._battery = self._load_battery(**config)

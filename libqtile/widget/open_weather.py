@@ -21,7 +21,6 @@
 # SOFTWARE.
 
 import time
-from typing import Any
 from urllib.parse import urlencode
 
 from libqtile.widget.generic_poll_text import GenPollUrl
@@ -255,7 +254,7 @@ class OpenWeather(GenPollUrl):
             dict(),
             "Dictionary of weather symbols. Can be used to override default symbols.",
         ),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     def __init__(self, **config):
         GenPollUrl.__init__(self, **config)

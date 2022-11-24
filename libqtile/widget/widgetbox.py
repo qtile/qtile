@@ -19,15 +19,10 @@
 # SOFTWARE.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from libqtile import bar
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 from libqtile.widget import Systray, base
-
-if TYPE_CHECKING:
-    from typing import Any
 
 
 class WidgetBox(base._Widget):
@@ -68,7 +63,7 @@ class WidgetBox(base._Widget):
         ("text_closed", "[<]", "Text when box is closed"),
         ("text_open", "[>]", "Text when box is open"),
         ("widgets", list(), "A list of widgets to include in the box"),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     def __init__(self, _widgets: list[base._Widget] | None = None, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)

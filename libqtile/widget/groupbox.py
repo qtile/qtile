@@ -32,7 +32,6 @@
 
 import itertools
 from functools import partial
-from typing import Any
 
 from libqtile import hook
 from libqtile.widget import base
@@ -42,7 +41,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
     defaults = [
         ("borderwidth", 3, "Current group border width"),
         ("center_aligned", True, "center-aligned group box"),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     def __init__(self, **config):
         base._TextBox.__init__(self, **config)

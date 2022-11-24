@@ -138,14 +138,14 @@ class _Widget(CommandObject, configurable.Configurable):
 
     offsetx: int = 0
     offsety: int = 0
-    defaults = [
+    defaults: list[tuple[str, Any, str]] = [
         ("background", None, "Widget background color"),
         (
             "mouse_callbacks",
             {},
             "Dict of mouse button press callback functions. Accepts functions and ``lazy`` calls.",
         ),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     def __init__(self, length, **config):
         """
