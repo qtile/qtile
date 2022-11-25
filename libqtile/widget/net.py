@@ -53,6 +53,31 @@ class Net(base.ThreadPoolText):
         ("update_interval", 1, "The update interval."),
         ("use_bits", False, "Use bits instead of bytes per second?"),
         ("prefix", None, "Use a specific prefix for the unit of the speed."),
+        (
+            "min_length",
+            5,
+            "Minimum length of down-, up- and total-digits (decinal point included).",
+        ),
+        (
+            "max_length",
+            99999,
+            "Maximum length of down-, up- and total-digits (decinal point included). Trumps min_legth.",
+        ),
+        (
+            "precision_down",
+            2,
+            "The number of digits displayed after the decimal point for down.",
+        ),
+        (
+            "precision_up",
+            2,
+            "The number of digits displayed after the decimal point for up.",
+        ),
+        (
+            "precision_total",
+            2,
+            "The number of digits displayed after the decimal point for total.",
+        ),
     ]
 
     def __init__(self, **config):
@@ -124,13 +149,22 @@ class Net(base.ThreadPoolText):
             return interfaces
 
     def _format(self, down, down_letter, up, up_letter, total, total_letter):
-        max_len_down = 7 - len(down_letter)
-        max_len_up = 7 - len(up_letter)
-        max_len_total = 7 - len(total_letter)
-        down = "{val:{max_len}.2f}".format(val=down, max_len=max_len_down)
-        up = "{val:{max_len}.2f}".format(val=up, max_len=max_len_up)
-        total = "{val:{max_len}.2f}".format(val=total, max_len=max_len_total)
-        return down[:max_len_down], up[:max_len_up], total[:max_len_total]
+        down = (
+            "{val:.{precision}f}".format(val=down, precision=self.precision_down)
+            .strip()
+            .rjust(self.min_length)[-self.max_length :]
+        )
+        up = (
+            "{val:.{precision}f}".format(val=up, precision=self.precision_up)
+            .strip()
+            .rjust(self.min_length)[-self.max_length :]
+        )
+        total = (
+            "{val:.{precision}f}".format(val=total, precision=self.precision_total)
+            .strip()
+            .rjust(self.min_length)[-self.max_length :]
+        )
+        return down, up, total
 
     def poll(self):
         ret_stat = []
