@@ -594,7 +594,7 @@ class StatusNotifier(base._Widget):
     are recommended to install the `pyxdg <https://pypi.org/project/pyxdg/>`__
     module to support retrieving icons from the selected theme.
 
-    Letf-clicking an icon will trigger an activate event.
+    Left-clicking an icon will trigger an activate event.
 
     .. note::
 
