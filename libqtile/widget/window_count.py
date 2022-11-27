@@ -20,8 +20,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from libqtile import bar, hook
 from libqtile.command.base import expose_command
 from libqtile.widget import base
@@ -33,7 +31,7 @@ class WindowCount(base._TextBox):
     current group of the screen on which the widget is.
     """
 
-    defaults: list[tuple[str, Any, str]] = [
+    defaults = [
         ("font", "sans", "Text font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("fontshadow", None, "font shadow color, default is None(no shadow)"),

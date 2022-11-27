@@ -21,7 +21,6 @@
 import re
 import shlex
 from subprocess import PIPE, Popen
-from typing import Any
 
 from libqtile import configurable
 from libqtile.log_utils import logger
@@ -95,7 +94,7 @@ class RunCommand(_Extension):
     `client <http://docs.qtile.org/en/latest/manual/commands/scripting.html>`_.
     """
 
-    defaults: list[tuple[str, Any, str]] = [
+    defaults = [
         # NOTE: Do not use a list as a default value, since it would be shared
         #       among all the objects inheriting this class, and if one of them
         #       modified it, all the other objects would see the modified list;

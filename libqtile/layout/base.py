@@ -29,15 +29,13 @@ from libqtile import configurable
 from libqtile.command.base import CommandObject, expose_command
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from libqtile.command.base import ItemT
 
 
 class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
     """This class defines the API that should be exposed by all layouts"""
 
-    defaults: list[tuple[str, Any, str]] = []
+    defaults = []
 
     def __init__(self, **config):
         # name is a little odd; we can't resolve it until the class is defined

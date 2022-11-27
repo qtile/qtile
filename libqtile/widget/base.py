@@ -44,8 +44,6 @@ from libqtile.lazy import LazyCall
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from libqtile.command.base import ItemT
 
 # Each widget class must define which bar orientation(s) it supports by setting
@@ -138,7 +136,7 @@ class _Widget(CommandObject, configurable.Configurable):
 
     offsetx: int = 0
     offsety: int = 0
-    defaults: list[tuple[str, Any, str]] = [
+    defaults = [
         ("background", None, "Widget background color"),
         (
             "mouse_callbacks",
@@ -452,7 +450,7 @@ class _TextBox(_Widget):
             "Whether text should scroll completely away (True) or stop when the end of the text is shown (False)",
         ),
         ("scroll_hide", False, "Whether the widget should hide when scrolling has finished"),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
         self.layout = None
@@ -719,7 +717,7 @@ class InLoopPollText(_TextBox):
             "Update interval in seconds, if none, the "
             "widget updates whenever the event loop is idle.",
         ),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     def __init__(self, default_text="N/A", **config):
         _TextBox.__init__(self, default_text, **config)
@@ -774,7 +772,7 @@ class ThreadPoolText(_TextBox):
             600,
             "Update interval in seconds, if none, the " "widget updates whenever it's done.",
         ),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     def __init__(self, text, **config):
         super().__init__(text, **config)
@@ -829,7 +827,7 @@ class PaddingMixin(configurable.Configurable):
         ("padding", 3, "Padding inside the box"),
         ("padding_x", None, "X Padding. Overrides 'padding' if set"),
         ("padding_y", None, "Y Padding. Overrides 'padding' if set"),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     padding_x = configurable.ExtraFallback("padding_x", "padding")
     padding_y = configurable.ExtraFallback("padding_y", "padding")
@@ -847,7 +845,7 @@ class MarginMixin(configurable.Configurable):
         ("margin", 3, "Margin inside the box"),
         ("margin_x", None, "X Margin. Overrides 'margin' if set"),
         ("margin_y", None, "Y Margin. Overrides 'margin' if set"),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     margin_x = configurable.ExtraFallback("margin_x", "margin")
     margin_y = configurable.ExtraFallback("margin_y", "margin")
