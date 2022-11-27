@@ -120,6 +120,10 @@ class Core(CommandObject, metaclass=ABCMeta):
         """Get the keysym for a key from its name"""
         raise NotImplementedError
 
+    def get_mouse_position(self) -> tuple[int, int]:
+        """Get mouse coordinates."""
+        raise NotImplementedError
+
     @expose_command()
     def info(self) -> dict[str, Any]:
         """Get basic information about the running backend."""
