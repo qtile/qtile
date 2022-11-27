@@ -1304,3 +1304,7 @@ class Core(base.Core, wlrq.HasListeners):
             info[type_key] = type_info
 
         return info
+
+    def get_mouse_position(self) -> tuple[int, int]:
+        """Get mouse coordinates."""
+        return int(self.cursor.x), int(self.cursor.y)
