@@ -31,7 +31,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Fix `Notify` bug when apps close notifications.
     * python version support
         - We have added support for python 3.11 and pypy 3.9.
-        - python 3.7 and pypy 3.7 are not longer supported.
+        - python 3.7, 3.8 and pypy 3.7 are not longer supported.
         - Fix bug where `StatusNotifier` does not update icons
 
 Qtile 0.22.0, released 2022-09-22:
