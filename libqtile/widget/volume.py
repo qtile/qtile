@@ -82,9 +82,9 @@ class Volume(base._TextBox):
         (
             "check_mute_string",
             "[off]",
-            """String expected from check_mute_command when volume is
-            muted. When the output of the command matches this string, the
-            audio source is treated as muted.""",
+            "String expected from check_mute_command when volume is muted."
+            "When the output of the command matches this string, the"
+            "audio source is treated as muted.",
         ),
         (
             "step",
