@@ -22,7 +22,7 @@ jobs:
                 # - /libqtile/scripts/check.py mypy argument
                 # If adding new python versions, consider also updating
                 # python version in .readthedocs.yaml
-                python-version: [pypy-3.9, 3.8, 3.9, '3.10', '3.11']
+                python-version: [pypy-3.9, 3.9, '3.10', '3.11']
         steps:
             - uses: actions/checkout@v2
             - name: Set up python ${{ matrix.python-version }}
