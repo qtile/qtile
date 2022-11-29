@@ -192,7 +192,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         ),
     ]
 
-    filenames = {}  # type: dict
+    filenames: dict = {}
 
     BAT_DIR = "/sys/class/power_supply"
 
@@ -451,12 +451,12 @@ class BatteryIcon(base._Widget):
     """Battery life indicator widget."""
 
     orientations = base.ORIENTATION_HORIZONTAL
-    defaults = [
+    defaults: list[tuple[str, Any, str]] = [
         ("battery", 0, "Which battery should be monitored"),
         ("update_interval", 60, "Seconds between status updates"),
         ("theme_path", default_icon_path(), "Path of the icons"),
         ("scale", 1, "Scale factor relative to the bar height.  " "Defaults to 1"),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     icon_names = (
         "battery-missing",
@@ -481,12 +481,12 @@ class BatteryIcon(base._Widget):
 
         base._Widget.__init__(self, length=bar.CALCULATED, **config)
         self.add_defaults(self.defaults)
-        self.scale = 1.0 / self.scale  # type: float
+        self.scale: float = 1.0 / self.scale
 
         self.length_type = bar.STATIC
         self.length = 0
         self.image_padding = 0
-        self.surfaces = {}  # type: dict[str, Img]
+        self.surfaces: dict[str, Img] = {}
         self.current_icon = "battery-missing"
 
         self._battery = self._load_battery(**config)
