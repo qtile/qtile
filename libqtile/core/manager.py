@@ -436,8 +436,10 @@ class Qtile(CommandObject):
 
     def grab_key(self, key: Key | KeyChord) -> None:
         """Grab the given key event"""
-        keysym, mask_key = self.core.grab_key(key)
-        self.keys_map[(keysym, mask_key)] = key
+        syms = self.core.grab_key(key)
+        if syms in self.keys_map:
+            logger.warning("Key spec duplicated, overriding previous: %s", key)
+        self.keys_map[syms] = key
 
     def ungrab_key(self, key: Key | KeyChord) -> None:
         """Ungrab a given key event"""
