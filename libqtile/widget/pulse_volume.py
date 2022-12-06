@@ -246,8 +246,8 @@ class PulseVolume(Volume):
         return -1
 
     def timer_setup(self):
+        if self.theme_path:
+            self.setup_images()
         self.poll()
         if self.update_interval is not None:
             self.timeout_add(self.update_interval, self.timer_setup)
-        if self.theme_path:
-            self.setup_images()
