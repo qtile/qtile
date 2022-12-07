@@ -93,7 +93,7 @@ def get_object(client: CommandClient, argv: list[str]) -> CommandClient:
     """
     Constructs a path to object and returns given object (if it exists).
     """
-    if argv[0] == "cmd":
+    if argv[0] in ("cmd", "root"):
         argv = argv[1:]
 
     # flag noting if we have consumed arg1 as the selector, eg screen[0]
@@ -189,15 +189,16 @@ def cmd_obj(args) -> None:
 
 def add_subcommand(subparsers, parents):
     epilog = textwrap.dedent(
-        """
-        Examples:
-         qtile cmd-obj
-         qtile cmd-obj -o cmd
-         qtile cmd-obj -o cmd -f prev_layout -i
-         qtile cmd-obj -o cmd -f prev_layout -a 3 # prev_layout on group 3
-         qtile cmd-obj -o group 3 -f focus_back
-         qtile cmd-obj -o cmd -f restart # restart qtile
-        """
+        """\
+    Examples:
+     qtile cmd-obj
+     qtile cmd-obj -o root
+     qtile cmd-obj -o root -f prev_layout -a 3 # prev_layout on group 3
+     qtile cmd-obj -o group 3 -f focus_back
+     qtile cmd-obj -o root -f restart # restart qtile
+    The graph traversal recurses:
+     qtile cmd-obj -o screen 0 -o bar bottom -f root -o screen -o group -o window -o root -f status
+     """
     )
     description = "Access the command interface from a shell."
     parser = subparsers.add_parser(
@@ -212,9 +213,10 @@ def add_subcommand(subparsers, parents):
         "-o",
         dest="obj_spec",
         nargs="+",
+        default="root",
         help="Specify path to object (space separated).  "
         "If no --function flag display available commands.  "
-        "Use `cmd` to specify root command.",
+        "Use `root` to specify the root node.",
     )
     parser.add_argument("--function", "-f", default="help", help="Select function to execute.")
     parser.add_argument(
