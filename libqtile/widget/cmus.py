@@ -35,6 +35,7 @@ class Cmus(base.ThreadPoolText):
     """
 
     defaults = [
+        ("icon", True, "Whether to display icon"),
         ("play_color", "00ff00", "Text colour when playing."),
         ("noplay_color", "cecece", "Text colour when not playing."),
         ("update_interval", 0.5, "Update Time in seconds."),
@@ -108,8 +109,10 @@ class Cmus(base.ThreadPoolText):
                     now_playing = info["stream"]
                 else:
                     now_playing = title
-            if now_playing:
+            if now_playing and self.icon:
                 now_playing = "♫ {0}".format(now_playing)
+            elif now_playing:
+                now_playing = "{0}".format(now_playing)
         return pangocffi.markup_escape_text(now_playing)
 
     def play(self):
