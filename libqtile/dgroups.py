@@ -41,6 +41,7 @@ def simple_key_binder(mod, keynames=None):
         # unbind all
         for key in dgroup.keys[:]:
             dgroup.qtile.ungrab_key(key)
+            dgroup.qtile.config.keys.remove(key)
             dgroup.keys.remove(key)
 
         if keynames:
@@ -55,9 +56,8 @@ def simple_key_binder(mod, keynames=None):
             key = Key([mod], keyname, lazy.group[name].toscreen())
             key_s = Key([mod, "shift"], keyname, lazy.window.togroup(name))
             key_c = Key([mod, "control"], keyname, lazy.group.switch_groups(name))
-            dgroup.keys.append(key)
-            dgroup.keys.append(key_s)
-            dgroup.keys.append(key_c)
+            dgroup.keys.extend([key, key_s, key_c])
+            dgroup.qtile.config.keys.extend([key, key_s, key_c])
             dgroup.qtile.grab_key(key)
             dgroup.qtile.grab_key(key_s)
             dgroup.qtile.grab_key(key_c)
