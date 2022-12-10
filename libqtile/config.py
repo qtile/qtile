@@ -640,8 +640,8 @@ class Group:
     exclusive:
         When other apps are started in this group, should we allow them here or not?
     spawn:
-        This will be ``exec()`` d when the group is created. Tou can pass either a
-        program name or a list of programs to ``exec()``
+        This will be executed (via ``qtile.spawn()``) when the group is created. You can pass either a
+        program name or a list of programs to ``exec()``.
     layout:
         The name of default layout for this group (e.g. ``"max"``). This is the name
         specified for a particular layout in ``config.py`` or if not defined it defaults
