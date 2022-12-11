@@ -520,6 +520,16 @@ def test_adddelgroup(manager):
 
 
 @manager_config
+def test_addgroupat(manager):
+    manager.test_window("one")
+    group_count = len(manager.c.get_groups())
+    manager.c.addgroup("aa", index=1)
+
+    assert len(manager.c.get_groups()) == group_count + 1
+    assert list(manager.c.get_groups())[1] == "aa"
+
+
+@manager_config
 def test_delgroup(manager):
     manager.test_window("one")
     for i in ["a", "d", "c"]:

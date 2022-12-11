@@ -519,10 +519,15 @@ class Qtile(CommandObject):
         layout: str | None = None,
         layouts: list[Layout] | None = None,
         label: str | None = None,
+        index: int | None = None,
     ) -> bool:
         if name not in self.groups_map.keys():
             g = _Group(name, layout, label=label)
-            self.groups.append(g)
+            if index is None:
+                self.groups.append(g)
+            else:
+                self.groups.insert(index, g)
+
             if not layouts:
                 layouts = self.config.layouts
             g._configure(layouts, self.config.floating_layout, self)
@@ -1564,9 +1569,12 @@ class Qtile(CommandObject):
         label: str | None = None,
         layout: str | None = None,
         layouts: list[Layout] | None = None,
+        index: int | None = None,
     ) -> bool:
         """Add a group with the given name"""
-        return self.add_group(name=group, layout=layout, layouts=layouts, label=label)
+        return self.add_group(
+            name=group, layout=layout, layouts=layouts, label=label, index=index
+        )
 
     @expose_command()
     def delgroup(self, group: str) -> None:
