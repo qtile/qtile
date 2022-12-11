@@ -24,7 +24,7 @@ from libqtile.widget import base
 class Cmus(base.ThreadPoolText):
     """A simple Cmus widget.
 
-    Show the artist and album of now listening song and allow basic mouse
+    Show the metadata of now listening song and allow basic mouse
     control from the bar:
 
         - toggle pause (or play if stopped) on left click;
@@ -35,8 +35,9 @@ class Cmus(base.ThreadPoolText):
     """
 
     defaults = [
-        ("icon", True, "Whether to display icon"),
+        ("play_icon", "♫", "Icon to display, if chosen."),
         ("play_color", "00ff00", "Text colour when playing."),
+        ("play_format", "i r - T", "Format of playback info."),
         ("noplay_color", "cecece", "Text colour when not playing."),
         ("update_interval", 0.5, "Update Time in seconds."),
     ]
@@ -64,12 +65,20 @@ class Cmus(base.ThreadPoolText):
         if output.startswith("status"):
             output = output.splitlines()
             info = {
-                "status": "",
-                "file": "",
-                "artist": "",
-                "album": "",
-                "title": "",
-                "stream": "",
+                "status ": "",
+                "file ": "",
+                "artist ": "",
+                "album ": "",
+                "albumartist ": "",
+                "composer ": "",
+                "comment ": "",
+                "date ": "",
+                "discnumber ": "",
+                "genre ": "",
+                "title ": "",
+                "tracknumber ": "",
+                "stream ": "",
+                "icon": self.play_icon,
             }
 
             for line in output:
@@ -84,35 +93,48 @@ class Cmus(base.ThreadPoolText):
             return info
 
     def now_playing(self):
-        """Return a string with the now playing info (Artist - Song Title)."""
+        """Return a string with the now playing info."""
+        play_fmt = {
+                "a": "album ",
+                "C": "composer ",
+                "c": "comment ",
+                "D": "date ",
+                "d": "discnumber ",
+                "g": "genre ",
+                "i": "icon",
+                "R": "albumartist ",
+                "r": "artist ",
+                "T": "title ",
+                "t": "tracknumber ",
+        }
+
         info = self.get_info()
         now_playing = ""
         if info:
-            status = info["status"]
+            status = info["status "]
             if self.status != status:
                 self.status = status
                 if self.status == "playing":
                     self.layout.colour = self.play_color
                 else:
                     self.layout.colour = self.noplay_color
-            self.local = info["file"].startswith("/")
-            title = info["title"]
+            self.local = info["file "].startswith("/")
+            title = info["title "]
             if self.local:
-                artist = info["artist"]
-                now_playing = "{0} - {1}".format(artist, title)
-                if now_playing == " - ":
-                    file_path = info["file"]
+                for i in self.play_format:
+                    if i not in play_fmt:
+                        now_playing += i
+                    else:
+                        now_playing += info[play_fmt[i]]
+                if not info["artist "] and not info["title "]:
+                    file_path = info["file "]
                     file_path = file_path.split("/")[-1]
                     now_playing = file_path
             else:
-                if info["stream"]:
-                    now_playing = info["stream"]
+                if info["stream "]:
+                    now_playing = info["stream "]
                 else:
                     now_playing = title
-            if now_playing and self.icon:
-                now_playing = "♫ {0}".format(now_playing)
-            elif now_playing:
-                now_playing = "{0}".format(now_playing)
         return pangocffi.markup_escape_text(now_playing)
 
     def play(self):
