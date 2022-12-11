@@ -76,9 +76,7 @@ def test_widgetbox_start_opened(manager_nospawn, minimal_conf_noscreen):
     config = minimal_conf_noscreen
     tbox = TextBox(text="Text Box")
     widget_box = WidgetBox(widgets=[tbox], start_opened=True)
-    config.screens = [
-        libqtile.config.Screen(top=libqtile.bar.Bar([widget_box], 10))
-    ]
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([widget_box], 10))]
 
     manager_nospawn.start(config)
 
