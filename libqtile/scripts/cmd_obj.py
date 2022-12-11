@@ -192,12 +192,12 @@ def add_subcommand(subparsers, parents):
         """\
     Examples:
      qtile cmd-obj
-     qtile cmd-obj -o root
+     qtile cmd-obj -o root # same as above
      qtile cmd-obj -o root -f prev_layout -a 3 # prev_layout on group 3
      qtile cmd-obj -o group 3 -f focus_back
      qtile cmd-obj -o root -f restart # restart qtile
     The graph traversal recurses:
-     qtile cmd-obj -o screen 0 -o bar bottom -f root -o screen -o group -o window -o root -f status
+     qtile cmd-obj -o screen 0 bar bottom screen group window -f info
      """
     )
     description = "Access the command interface from a shell."
@@ -213,10 +213,10 @@ def add_subcommand(subparsers, parents):
         "-o",
         dest="obj_spec",
         nargs="+",
-        default="root",
+        default=["root"],
         help="Specify path to object (space separated).  "
         "If no --function flag display available commands.  "
-        "Use `root` to specify the root node.",
+        "The root node is selected by default or you can pass `root` explicitly.",
     )
     parser.add_argument("--function", "-f", default="help", help="Select function to execute.")
     parser.add_argument(
