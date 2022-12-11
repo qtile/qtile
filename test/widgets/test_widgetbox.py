@@ -72,6 +72,19 @@ def test_widgetbox_widget(fake_qtile, fake_window):
     assert fakebar.widgets == [tb_one, tb_two, widget_box]
 
 
+def test_widgetbox_start_opened(manager_nospawn, minimal_conf_noscreen):
+    config = minimal_conf_noscreen
+    tbox = TextBox(text="Text Box")
+    widget_box = WidgetBox(widgets=[tbox], start_opened=True)
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([widget_box], 10))]
+
+    manager_nospawn.start(config)
+
+    topbar = manager_nospawn.c.bar["top"]
+    widgets = [w["name"] for w in topbar.info()["widgets"]]
+    assert widgets == ["widgetbox", "textbox"]
+
+
 def test_widgetbox_mirror(manager_nospawn, minimal_conf_noscreen):
     config = minimal_conf_noscreen
     tbox = TextBox(text="Text Box")
