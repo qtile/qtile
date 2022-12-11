@@ -10,15 +10,16 @@ from typing import TYPE_CHECKING
 import xcffib
 import xcffib.xproto
 from xcffib.wrappers import GContextID, PixmapID
-from xcffib.xproto import EventMask, SetMode, StackMode
+from xcffib.xproto import EventMask, SetMode
 
-from libqtile import hook, utils
+from libqtile import bar, hook, utils
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
 from libqtile.backend.x11 import xcbq
 from libqtile.backend.x11.drawer import Drawer
 from libqtile.command.base import CommandError, expose_command
 from libqtile.log_utils import logger
+from libqtile.scratchpad import ScratchPad
 
 if TYPE_CHECKING:
     from libqtile.command.base import ItemT
@@ -412,14 +413,7 @@ class XWindow:
         return self.conn.conn.core.GetWindowAttributes(self.wid).reply()
 
     def query_tree(self):
-        q = self.conn.conn.core.QueryTree(self.wid).reply()
-        root = None
-        parent = None
-        if q.root:
-            root = XWindow(self.conn, q.root)
-        if q.parent:
-            parent = XWindow(self.conn, q.parent)
-        return root, parent, [XWindow(self.conn, i) for i in q.children]
+        return self.conn.conn.core.QueryTree(self.wid).reply().children
 
     def paint_borders(self, depth, colors, borderwidth, width, height):
         """
@@ -506,6 +500,13 @@ class _Window:
         self.float_y: int | None = None
         self._float_width: int = self._width
         self._float_height: int = self._height
+
+        # We use `previous_layer` to see if a window has moved up or down a "layer"
+        # The layers are defined in the spec:
+        # https://specifications.freedesktop.org/wm-spec/1.3/ar01s07.html#STACKINGORDER
+        # We assume a window starts off in the layer for "normal" windows, i.e. ones that
+        # don't match the requirements to be in any of the other layers.
+        self.previous_layer = (False, False, True, False, False, False)
 
         self.bordercolor = None
         self.state = NormalState
@@ -662,7 +663,10 @@ class _Window:
             self._reconfigure_floating(new_float_state=FloatStates.FULLSCREEN)
 
         for s in triggered:
-            setattr(self, s, (s in state))
+            attr = s
+            val = s in state
+            if getattr(self, attr) != val:
+                setattr(self, attr, val)
 
     @property
     def urgent(self):
@@ -903,20 +907,255 @@ class _Window:
         self.width = width
         self.height = height
 
-        kwarg = dict(
-            x=x,
-            y=y,
-            width=width,
-            height=height,
-        )
-        if above:
-            kwarg["stackmode"] = StackMode.Above
+        self.window.configure(x=x, y=y, width=width, height=height)
 
-        self.window.configure(**kwarg)
+        if above:
+            self.change_layer(up=True)
+
         self.paint_borders(bordercolor, borderwidth)
 
         if send_notify:
             self.send_configure_notify(x, y, width, height)
+
+    def get_layering_information(self) -> tuple[bool, bool, bool, bool, bool, bool]:
+        """
+        Get layer-related EMWH-flags
+        https://specifications.freedesktop.org/wm-spec/1.3/ar01s07.html#STACKINGORDER
+
+        Copied here:
+
+         To obtain good interoperability between different Desktop Environments,
+         the following layered stacking order is recommended, from the bottom:
+
+            - windows of type _NET_WM_TYPE_DESKTOP
+            - windows having state _NET_WM_STATE_BELOW
+            - windows not belonging in any other layer
+            - windows of type _NET_WM_TYPE_DOCK (unless they have state
+              _NET_WM_TYPE_BELOW) and windows having state _NET_WM_STATE_ABOVE
+            - focused windows having state _NET_WM_STATE_FULLSCREEN
+
+        Windows that are transient for another window should be kept above this window.
+
+        The window manager may choose to put some windows in different stacking positions,
+        for example to allow the user to bring currently a active window to the top and return
+        it back when the window loses focus. To this end, qtile adds an additional layer so that
+        scratchpad windows are placed above all others, always.
+        """
+        state = self.window.get_net_wm_state()
+        _type = self.window.get_wm_type() or ""
+
+        # Check if this window is focused
+        active_window = self.qtile.core._root.get_property(
+            "_NET_ACTIVE_WINDOW", "WINDOW", unpack=int
+        )
+        if active_window and active_window[0] == self.window.wid:
+            focus = True
+        else:
+            focus = False
+
+        desktop = _type == "desktop"
+        below = "_NET_WM_STATE_BELOW" in state
+        dock = _type == "dock"
+        above = "_NET_WM_STATE_ABOVE" in state
+        full = (
+            "fullscreen" in state
+        )  # get_net_wm_state translates this state so we don't use _NET_WM name
+        is_scratchpad = isinstance(self.qtile.groups_map.get(self.group), ScratchPad)
+
+        # sort the flags from bottom to top, True meaning further below than False at each step
+        states = [desktop, below, above or (dock and not below), full and focus, is_scratchpad]
+        other = not any(states)
+        states.insert(2, other)
+
+        # If we're a desktop, this should always be the lowest layer...
+        if desktop:
+            # mypy can't work out that this gives us tuple[bool, bool, bool, bool, bool, bool]...
+            # (True, False, False, False, False, False)
+            return tuple(not i for i in range(6))  # type: ignore
+
+        # ...otherwise, we set to the highest matching layer.
+        # Look for the highest matching level and then set all other levels to False
+        highest = max(i for i, state in enumerate(states) if state)
+
+        # mypy can't work out that this gives us tuple[bool, bool, bool, bool, bool, bool]...
+        return tuple(i == highest for i in range(6))  # type: ignore
+
+    def change_layer(self, up=True, top_bottom=False):
+        """Raise a window above its peers or move it below them, depending on 'up'.
+        Raising a normal window will not lift it above pinned windows etc.
+
+        There are a few important things to take note of when relaying windows:
+        1. If a window has a defined parent, it should not be moved underneath it.
+           In case children are blocking, this could leave an application in an unusable state.
+        2. If a window has children, they should be moved along with it.
+        3. If a window has a defined parent, either move the parent or do nothing at all.
+        4. EMWH-flags follow strict layering rules:
+           https://specifications.freedesktop.org/wm-spec/1.3/ar01s07.html#STACKINGORDER
+        """
+        if len(self.qtile.windows_map) < 2:
+            return
+
+        if self.group is None:
+            return
+
+        parent = self.window.get_wm_transient_for()
+        if parent is not None and not up:
+            return
+
+        layering = self.get_layering_information()
+
+        # Comparison of layer states: -1 if window is now in a lower state group,
+        # 0 if it's in the same group and 1 if it's in a higher group
+        moved = (self.previous_layer > layering) - (layering > self.previous_layer)
+        self.previous_layer = layering
+
+        stack = list(self.qtile.core._root.query_tree())
+        if self.wid not in stack or len(stack) < 2:
+            return
+
+        group_windows = self.group.windows
+        if self.group.screen is not None:
+            group_bars = [gap for gap in self.group.screen.gaps if isinstance(gap, bar.Bar)]
+        else:
+            group_bars = []
+
+        # Get list of windows that are in the stack and managed by qtile
+        # List of tuples (XWindow object, transient_for, layering_information)
+        windows = list(
+            map(
+                lambda w: (
+                    w.window,
+                    w.window.get_wm_transient_for(),
+                    w.get_layering_information(),
+                ),
+                group_windows,
+            )
+        )
+
+        # Sort this list to match stacking order reported by server
+        windows.sort(key=lambda w: stack.index(w[0].wid))
+
+        # Get lists of windows on lower, higher or same "layer" as window
+        lower = [w[0].wid for w in windows if w[1] is None and w[2] > layering]
+        higher = [w[0].wid for w in windows if w[1] is None and w[2] < layering]
+        same = [w[0].wid for w in windows if w[1] is None and w[2] == layering]
+
+        # We now need to identify the new position in the stack
+
+        # If the window has a parent, the window should just be put above it
+        if parent:
+            sibling = parent
+            above = True
+
+        # Now we just check whether the window has changed layer.
+
+        # If we're forcing to top or bottom of current layer...
+        elif top_bottom:
+            if up:
+                sibling = same[-1]
+                above = True
+            else:
+                sibling = same[0]
+                above = False
+
+        # There are no windows in the desired layer (should never happen) or
+        # we've moved to a new layer and are the only window in that layer
+        elif not same or (len(same) == 1 and moved != 0):
+            # Try to put it above the last window in the lower layers
+            if lower:
+                sibling = lower[-1]
+                above = True
+
+            # Or below the first window in the higher layers
+            elif higher:
+                sibling = higher[0]
+                above = False
+
+            # Don't think we should end up here but, if we do...
+            else:
+                # Put the window above the highest window if we're raising it
+                if up:
+                    sibling = stack[-1]
+                    above = True
+
+                # or below the lowest window if we're lowering the window
+                else:
+                    sibling = stack[0]
+                    above = False
+
+        else:
+            # Window has moved to a lower layer state
+            if moved < 0:
+                if self.kept_below:
+                    sibling = same[0]
+                    above = False
+                else:
+                    sibling = same[-1]
+                    above = True
+
+            # Window is in same layer state
+            elif moved == 0:
+                try:
+                    pos = same.index(self.wid)
+                except ValueError:
+                    pos = len(same) if up else 0
+                if not up:
+                    pos = max(0, pos - 1)
+                else:
+                    pos = min(pos + 1, len(same) - 1)
+                sibling = same[pos]
+                above = up
+
+            # Window is in a higher layer
+            else:
+                if self.kept_above:
+                    sibling = same[-1]
+                    above = True
+                else:
+                    sibling = same[0]
+                    above = False
+
+        # If the sibling is the current window then we just check if any windows in lower/higher layers are
+        # stacked incorrectly and, if so, restack them. However, we don't need to configure stacking for this
+        # window
+        if sibling == self.wid:
+            index = stack.index(self.wid)
+
+            # We need to make sure the bars are included so add them now
+            if group_bars:
+                for group_bar in group_bars:
+                    bar_layer = group_bar.window.get_layering_information()
+                    if bar_layer > layering:
+                        lower.append(group_bar.window.wid)
+                    elif bar_layer < layering:
+                        higher.append(group_bar.window.wid)
+
+                # Sort the list to match the server's stacking order
+                lower.sort(key=lambda wid: stack.index(wid))
+                higher.sort(key=lambda wid: stack.index(wid))
+
+            for wid in [w for w in lower if stack.index(w) > index]:
+                self.qtile.windows_map[wid].window.configure(
+                    stackmode=xcffib.xproto.StackMode.Below, sibling=same[0]
+                )
+
+            # We reverse higher as each window will be placed above the last item in the current layer
+            # this means the last item we stack will be just above the current layer.
+            for wid in [w for w in higher[::-1] if stack.index(w) < index]:
+                self.qtile.windows_map[wid].window.configure(
+                    stackmode=xcffib.xproto.StackMode.Above, sibling=same[-1]
+                )
+
+            return
+
+        # Window needs new stacking info. We tell the server to stack the window
+        # above or below a given "sibling"
+        self.window.configure(
+            stackmode=xcffib.xproto.StackMode.Above if above else xcffib.xproto.StackMode.Below,
+            sibling=sibling,
+        )
+        # TODO: also move our children if we were moved upwards
+        self.qtile.core.update_client_lists()
 
     def paint_borders(self, color, width):
         self.borderwidth = width
@@ -1004,9 +1243,6 @@ class _Window:
         did_focus = self._do_focus()
         if not did_focus:
             return
-        if isinstance(self, base.Internal):
-            # self._do_focus is enough for internal windows
-            return
 
         # now, do all the other WM stuff since the focus actually changed
         if warp and self.qtile.config.cursor_warp:
@@ -1041,6 +1277,15 @@ class _Window:
 
         if self.group:
             self.group.current_window = self
+
+        # See https://github.com/qtile/qtile/pull/3409#discussion_r1117952134 for discussion
+        # on mypy error here
+        if self.fullscreen and not self.previous_layer[4]:  # type: ignore
+            self.change_layer()
+
+        # Check if we need to restack a previously focused fullscreen window
+        self.qtile.core.check_stacking(self)
+
         hook.fire("client_focus", self)
 
     @expose_command()
@@ -1101,6 +1346,98 @@ class _Window:
             state=state,
             float_info=float_info,
         )
+
+    @expose_command()
+    def keep_above(self, enable: bool | None = None):
+        if enable is None:
+            self.kept_above = not self.kept_above
+        else:
+            self.kept_above = enable
+
+        self.change_layer(top_bottom=True, up=True)
+
+    @expose_command()
+    def keep_below(self, enable: bool | None = None):
+        if enable is None:
+            self.kept_below = not self.kept_below
+        else:
+            self.kept_below = enable
+
+        self.change_layer(top_bottom=True, up=False)
+
+    @expose_command()
+    def move_up(self, force=False):
+        if self.kept_below and force:
+            self.kept_below = False
+        with self.qtile.core.masked():
+            # Disable masks so that moving windows along the Z axis doesn't trigger
+            # focus change events (i.e. due to `follow_mouse_focus`)
+            self.change_layer()
+
+    @expose_command()
+    def move_down(self, force=False):
+        if self.kept_above and force:
+            self.kept_above = False
+        with self.qtile.core.masked():
+            self.change_layer(up=False)
+
+    @expose_command()
+    def move_to_top(self, force=False):
+        if self.kept_below and force:
+            self.kept_below = False
+        with self.qtile.core.masked():
+            self.change_layer(top_bottom=True)
+
+    @expose_command()
+    def move_to_bottom(self, force=False):
+        if self.kept_above and force:
+            self.kept_above = False
+        with self.qtile.core.masked():
+            self.change_layer(up=False, top_bottom=True)
+
+    @property
+    def kept_above(self):
+        reply = list(self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
+        atom = self.qtile.core.conn.atoms["_NET_WM_STATE_ABOVE"]
+        return atom in reply
+
+    @kept_above.setter
+    def kept_above(self, value):
+        reply = list(self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
+        atom = self.qtile.core.conn.atoms["_NET_WM_STATE_ABOVE"]
+        if value and atom not in reply:
+            reply.append(atom)
+        elif not value and atom in reply:
+            reply.remove(atom)
+        else:
+            return
+        atom = self.qtile.core.conn.atoms["_NET_WM_STATE_BELOW"]
+        if atom in reply:
+            reply.remove(atom)
+        self.window.set_property("_NET_WM_STATE", reply)
+        self.change_layer()
+
+    @property
+    def kept_below(self):
+        reply = list(self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
+        atom = self.qtile.core.conn.atoms["_NET_WM_STATE_BELOW"]
+        return atom in reply
+
+    @kept_below.setter
+    def kept_below(self, value):
+        reply = list(self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
+        atom = self.qtile.core.conn.atoms["_NET_WM_STATE_BELOW"]
+        if value and atom not in reply:
+            reply.append(atom)
+        elif not value and atom in reply:
+            reply.remove(atom)
+        else:
+            return
+        atom = self.qtile.core.conn.atoms["_NET_WM_STATE_ABOVE"]
+        if atom in reply:
+            reply.remove(atom)
+        self.window.set_property("_NET_WM_STATE", reply)
+        self.change_layer(up=False)
 
 
 class Internal(_Window, base.Internal):
@@ -1170,6 +1507,11 @@ class Internal(_Window, base.Internal):
             height=self.height,
             id=self.window.wid,
         )
+
+    @expose_command()
+    def focus(self, warp: bool = True) -> None:
+        """Focuses the window."""
+        self._do_focus()
 
 
 class Static(_Window, base.Static):
@@ -1270,7 +1612,8 @@ class Static(_Window, base.Static):
 
     @expose_command()
     def bring_to_front(self):
-        self.window.configure(stackmode=StackMode.Above)
+        if self.get_wm_type() != "desktop":
+            self.window.configure(stackmode=xcffib.xproto.StackMode.Above)
 
 
 class Window(_Window, base.Window):
@@ -1316,6 +1659,9 @@ class Window(_Window, base.Window):
 
     @floating.setter
     def floating(self, do_float):
+        stack = self.qtile.core._root.query_tree()
+        tiled = [win.window.wid for win in (self.group.tiled_windows if self.group else [])]
+        tiled_stack = [wid for wid in stack if wid in tiled and wid != self.window.wid]
         if do_float and self._float_state == FloatStates.NOT_FLOATING:
             if self.group and self.group.screen:
                 screen = self.group.screen
@@ -1325,9 +1671,21 @@ class Window(_Window, base.Window):
                     self._float_width,
                     self._float_height,
                 )
+
+                # Make sure floating window is placed above tiled windows
+                if tiled_stack and (not self.kept_above or self.qtile.config.floats_kept_above):
+                    stack_list = list(stack)
+                    highest_tile = tiled_stack[-1]
+                    if stack_list.index(self.window.wid) < stack_list.index(highest_tile):
+                        self.window.configure(
+                            stackmode=xcffib.xproto.StackMode.Above, sibling=highest_tile
+                        )
             else:
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
                 self._float_state = FloatStates.FLOATING
+            if not self.kept_above and self.qtile.config.floats_kept_above:
+                self.keep_above(enable=True)
+
         elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
             self.update_fullscreen_wm_state(False)
             if self._float_state == FloatStates.FLOATING:
@@ -1336,6 +1694,10 @@ class Window(_Window, base.Window):
                 self._float_height = self.height
             self._float_state = FloatStates.NOT_FLOATING
             self.group.mark_floating(self, False)
+            if tiled_stack:
+                self.window.configure(
+                    stackmode=xcffib.xproto.StackMode.Above, sibling=tiled_stack[-1]
+                )
             hook.fire("float_change")
 
     @property
@@ -1375,6 +1737,7 @@ class Window(_Window, base.Window):
     @fullscreen.setter
     def fullscreen(self, do_full):
         if do_full:
+            needs_change = self._float_state != FloatStates.FULLSCREEN
             screen = self.group.screen or self.qtile.find_closest_screen(self.x, self.y)
 
             bw = self.group.floating_layout.fullscreen_border_width
@@ -1385,10 +1748,14 @@ class Window(_Window, base.Window):
                 screen.height - 2 * bw,
                 new_float_state=FloatStates.FULLSCREEN,
             )
+            # Only restack layers if floating state has changed
+            if needs_change:
+                self.change_layer()
             return
 
         if self._float_state == FloatStates.FULLSCREEN:
             self.floating = False
+            self.change_layer()
             return
 
     @property
@@ -1458,7 +1825,7 @@ class Window(_Window, base.Window):
             self.group.remove(self)
         s = Static(self.window, self.qtile, screen, x, y, width, height)
         self.qtile.windows_map[self.window.wid] = s
-        self.qtile.core.update_client_list(self.qtile.windows_map)
+        self.qtile.core.update_client_lists()
         hook.fire("client_managed", s)
 
     def tweak_float(self, x=None, y=None, dx=0, dy=0, w=None, h=None, dw=0, dh=0):
@@ -1514,13 +1881,18 @@ class Window(_Window, base.Window):
                 self.height,
                 self.borderwidth,
                 self.bordercolor,
-                above=True,
+                above=False,
                 respect_hints=True,
             )
         if self._float_state != new_float_state:
             self._float_state = new_float_state
             if self.group:  # may be not, if it's called from hook
                 self.group.mark_floating(self, True)
+            if new_float_state == FloatStates.FLOATING:
+                if self.qtile.config.floats_kept_above:
+                    self.keep_above(enable=True)
+            elif new_float_state == FloatStates.MAXIMIZED:
+                self.move_to_top()
             hook.fire("float_change")
 
     def _enablefloating(
@@ -1851,10 +2223,8 @@ class Window(_Window, base.Window):
 
     @expose_command()
     def bring_to_front(self):
-        if self.floating:
-            self.window.configure(stackmode=StackMode.Above)
-        else:
-            self._reconfigure_floating()  # atomatically above
+        if self.get_wm_type() != "desktop":
+            self.window.configure(stackmode=xcffib.xproto.StackMode.Above)
 
     def _is_in_window(self, x, y, window):
         return window.edges[0] <= x <= window.edges[2] and window.edges[1] <= y <= window.edges[3]

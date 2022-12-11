@@ -95,9 +95,6 @@ class Core(CommandObject, metaclass=ABCMeta):
     def warp_pointer(self, x: int, y: int) -> None:
         """Warp the pointer to the given coordinates relative."""
 
-    def update_client_list(self, windows_map: dict[int, WindowType]) -> None:
-        """Update the list of windows being managed"""
-
     @contextlib.contextmanager
     def masked(self):
         """A context manager to suppress window events while operating on many windows."""
@@ -252,6 +249,60 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
         """
         return {}
+
+    @expose_command()
+    def keep_above(self, enable: bool | None = None):
+        """Keep this window above all others"""
+
+    @expose_command()
+    def keep_below(self, enable: bool | None = None):
+        """Keep this window below all others"""
+
+    @expose_command()
+    def move_up(self, force: bool = False) -> None:
+        """
+        Move this window above the next window along the z axis.
+
+        Will not raise a "normal" window (i.e. one that is not "kept_above/below")
+        above a window that is marked as "kept_above".
+
+        Will not raise a window where "keep_below" is True unless
+        force is set to True.
+        """
+
+    @expose_command()
+    def move_down(self, force: bool = False) -> None:
+        """
+        Move this window below the previous window along the z axis.
+
+        Will not lower a "normal" window (i.e. one that is not "kept_above/below")
+        below a window that is marked as "kept_below".
+
+        Will not lower a window where "keep_above" is True unless
+        force is set to True.
+        """
+
+    @expose_command()
+    def move_to_top(self) -> None:
+        """
+        Move this window above all windows in the current layer
+        e.g. if you have 3 windows all with "keep_above" set, calling
+        this method will move the window to the top of those three windows.
+
+        Calling this on a "normal" window will not raise it above a "kept_above"
+        window.
+        """
+
+    @expose_command()
+    def move_to_bottom(self) -> None:
+        """
+        Move this window below all windows in the current layer
+        e.g. if you have 3 windows all with "keep_above" set, calling
+        this method will move the window to the bottom of those three windows.
+
+        Calling this on a "normal" window will not raise it below a "kept_below"
+        window.
+        """
 
 
 class Window(_Window, metaclass=ABCMeta):

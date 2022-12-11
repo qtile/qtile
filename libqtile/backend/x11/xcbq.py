@@ -448,42 +448,6 @@ class XFixes:
         self.conn.xfixes.ext.SelectSelectionInput(window.wid, _selection, self.selection_mask)
 
 
-class NetWmState:
-    """NetWmState is a descriptor for _NET_WM_STATE_* properties"""
-
-    def __init__(self, prop_name):
-        self.prop_name = prop_name
-
-    def __get__(self, xcbq_win, cls):
-        try:
-            atom = self.atom
-        except AttributeError:
-            atom = xcbq_win.conn.atoms[self.prop_name]
-            self.atom = atom
-        reply = xcbq_win.get_property("_NET_WM_STATE", "ATOM", unpack=int)
-        if atom in reply:
-            return True
-        return False
-
-    def __set__(self, xcbq_win, value):
-        try:
-            atom = self.atom
-        except AttributeError:
-            atom = xcbq_win.conn.atoms[self.prop_name]
-            self.atom = atom
-
-        value = bool(value)
-        reply = list(xcbq_win.get_property("_NET_WM_STATE", "ATOM", unpack=int))
-        is_set = atom in reply
-        if is_set and not value:
-            reply.remove(atom)
-            xcbq_win.set_property("_NET_WM_STATE", reply)
-        elif value and not is_set:
-            reply.append(atom)
-            xcbq_win.set_property("_NET_WM_STATE", reply)
-        return
-
-
 class Connection:
     _extmap = {
         "xinerama": Xinerama,

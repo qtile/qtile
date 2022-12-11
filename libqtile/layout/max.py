@@ -37,6 +37,7 @@ class Max(_SimpleLayoutBase):
         ("border_focus", "#0000ff", "Border colour(s) for the window when focused"),
         ("border_normal", "#000000", "Border colour(s) for the window when not focused"),
         ("border_width", 0, "Border width."),
+        ("only_focused", True, "Only draw the focused window"),
     ]
 
     def __init__(self, **config):
@@ -47,7 +48,7 @@ class Max(_SimpleLayoutBase):
         return super().add_client(client, 1)
 
     def configure(self, client, screen_rect):
-        if self.clients and client is self.clients.current_client:
+        if not self.only_focused or (self.clients and client is self.clients.current_client):
             client.place(
                 screen_rect.x,
                 screen_rect.y,
@@ -58,6 +59,13 @@ class Max(_SimpleLayoutBase):
                 margin=self.margin,
             )
             client.unhide()
+            if (
+                not self.only_focused
+                and self.clients
+                and client is self.clients.current_client
+                and len(self.clients) > 1
+            ):
+                client.move_to_top()
         else:
             client.hide()
 
