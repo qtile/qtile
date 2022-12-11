@@ -67,13 +67,13 @@ class WidgetBox(base._Widget):
         ),
         ("text_closed", "[<]", "Text when box is closed"),
         ("text_open", "[>]", "Text when box is open"),
+        ("box_is_open", False, "Default box state"),
         ("widgets", list(), "A list of widgets to include in the box"),
     ]
 
     def __init__(self, _widgets: list[base._Widget] | None = None, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(WidgetBox.defaults)
-        self.box_is_open = False
         self.add_callbacks({"Button1": self.toggle})
 
         if _widgets:
@@ -124,6 +124,10 @@ class WidgetBox(base._Widget):
         # Disable drawing of the widget's contents
         for w in self.widgets:
             w.drawer.disable()
+
+        if self.box_is_open:
+            self.box_is_open = False
+            self.toggle()
 
     def calculate_length(self):
         return self.layout.width
