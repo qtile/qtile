@@ -22,6 +22,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Add ability to set icon size in `LaunchBar` widget.
         - Add 'warp_pointer' option to `Drag` that when set will warp the pointer to the bottom right of
           the window when dragging begins.
+        - Add `currentsong` status to `Mpd2` widget.
         - Add ability to disable group toggling in `GroupBox` widget
         - Add ability to have different border color when windows are stacked in Stack layout. Requires 
           setting `border_focus_stack` and `border_normal_stack` variables.
