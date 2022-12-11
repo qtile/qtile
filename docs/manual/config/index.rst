@@ -106,6 +106,9 @@ configuration variables that control specific aspects of Qtile's behavior:
         custom floating rules among other things if you wish.
 
         See the configuration file for the default `float_rules`.
+    * - ``floats_kept_above``
+      - ``True``
+      - Floating windows are kept above tiled windows (Currently x11 only. Wayland support coming soon.)
     * - ``focus_on_window_activation``
       - ``'smart'``
       - Behavior of the _NET_ACTIVATE_WINDOW message sent by applications

@@ -675,7 +675,7 @@ class Qtile(CommandObject):
             # Window may have been bound to a group in the hook.
             if not win.group and self.current_screen.group:
                 self.current_screen.group.add(win, focus=win.can_steal_focus)
-        self.core.update_client_list(self.windows_map)
+
         hook.fire("client_managed", win)
 
     def unmanage(self, wid: int) -> None:
@@ -690,7 +690,7 @@ class Qtile(CommandObject):
                     group = c.group
                     c.group.remove(c)
             del self.windows_map[wid]
-            self.core.update_client_list(self.windows_map)
+
             if isinstance(c, base.Window):
                 # Put the group back on the window so hooked functions can access it.
                 c.group = group

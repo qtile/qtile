@@ -256,6 +256,8 @@ class _Group(CommandObject):
             win._float_state = FloatStates.FULLSCREEN
         elif self.floating_layout.match(win) and not win.fullscreen:
             win._float_state = FloatStates.FLOATING
+            if self.qtile.config.floats_kept_above:
+                win.keep_above(enable=True)
         if win.floating and not win.fullscreen:
             self.floating_layout.add_client(win)
         if not win.floating or win.fullscreen:

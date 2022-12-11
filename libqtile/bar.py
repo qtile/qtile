@@ -23,7 +23,7 @@ from __future__ import annotations
 import typing
 from collections import defaultdict
 
-from libqtile import configurable
+from libqtile import configurable, hook
 from libqtile.command.base import CommandObject, expose_command
 from libqtile.log_utils import logger
 from libqtile.utils import has_transparency, rgb
@@ -307,6 +307,9 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 ", ".join(self.qtile.renamed_widgets),
             )
             self.qtile.renamed_widgets.clear()
+
+        hook.subscribe.setgroup(self.keep_below)
+        hook.subscribe.startup_complete(self.keep_below)
 
         self._remove_crashed_widgets()
         self.draw()
@@ -677,6 +680,9 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             width of a vertical bar.
         """
         self.process_button_click(x, y, button)
+
+    def keep_below(self):
+        self.window.keep_below(enable=True)
 
 
 BarType = typing.Union[Bar, Gap]

@@ -31,6 +31,7 @@ def test_net_client_list(xmanager, conn):
         assert len(clients) == number
 
     # ManagerConfig has a Bar, which should not appear in _NET_CLIENT_LIST
+    xmanager.c.eval("self.core.update_client_lists()")
     assert_clients(0)
     one = xmanager.test_window("one")
     assert_clients(1)

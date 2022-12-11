@@ -124,6 +124,23 @@ Window functions
       - Put the focused window to/from floating mode
     * - ``lazy.window.toggle_fullscreen()``
       - Put the focused window to/from fullscreen mode
+    * - ``lazy.window.move_up()``
+      - Move the window above the next window in the stack.
+    * - ``lazy.window.move_down()``
+      - Move the window below the previous window in the stack.
+    * - ``lazy.window.move_to_top()``
+      - Move the window above all other windows with similar priority
+        (i.e. a "normal" window will not be moved above a ``kept_above`` window).
+    * - ``lazy.window.move_to_bottom()``
+      - Move the window below all other windows with similar priority
+        (i.e. a "normal" window will not be moved below a ``kept_below`` window).
+    * - ``lazy.window.keep_above()``
+      - Keep window above other windows.
+    * - ``lazy.window.keep_below()``
+      - Keep window below other windows.
+    * - ``lazy.window.bring_to_front()``
+      - Bring window above all other windows. Ignores ``kept_above`` priority.
+
 
 Screen functions
 ----------------

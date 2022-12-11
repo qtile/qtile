@@ -53,6 +53,12 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Add ability to set custom "Undefined" status key value to `Mpd2Widget`.
         - `Mpd2Widget` now searches for artist name in all similar keys (i.e `albumartist`, `performer`, etc.).
         - Add svg support to `CustomLayoutIcon`
+        - added layering controls for X11 (Wayland support coming soon!):
+          - `lazy.window.keep_above()/keep_below()` marks windows to be kept above/below other windows permanently.
+             Calling the functions with no arguments toggles the state, otherwise pass `enable=True` or `enable=False`.
+          - `lazy.window.move_up()/move_down()` moves windows up and down the z axis.
+          - added `only_focused` setting to Max layout, allowing to draw multiple clients on top of each other when
+            set to False
     * bugfixes
         - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
         - Fix `Notify` bug when apps close notifications.

@@ -32,7 +32,7 @@ import xcffib
 import xcffib.render
 import xcffib.xproto
 import xcffib.xtest
-from xcffib.xproto import EventMask, StackMode
+from xcffib.xproto import EventMask
 
 from libqtile import config, hook, utils
 from libqtile.backend import base
@@ -167,6 +167,8 @@ class Core(base.Core):
         # The last motion notify event that we still need to handle
         self._motion_notify: xcffib.Event | None = None
 
+        self.last_focused: base.Window | None = None
+
     @property
     def name(self):
         return "x11"
@@ -232,6 +234,9 @@ class Core(base.Core):
         """Assign windows to groups"""
         assert self.qtile is not None
 
+        # Ensure that properties are initialised at startup
+        self.update_client_lists()
+
         if not initial:
             # We are just reloading config
             for win in self.qtile.windows_map.values():
@@ -240,8 +245,8 @@ class Core(base.Core):
             return
 
         # Qtile just started - scan for clients
-        _, _, children = self._root.query_tree()
-        for item in children:
+        for wid in self._root.query_tree():
+            item = window.XWindow(self.conn, wid)
             try:
                 attrs = item.get_attributes()
                 state = item.get_wm_state()
@@ -275,6 +280,9 @@ class Core(base.Core):
                     continue
 
             self.qtile.manage(win)
+
+            self.update_client_lists()
+            win.change_layer()
 
     def warp_pointer(self, x, y):
         self._root.warp_pointer(x, y)
@@ -441,17 +449,28 @@ class Core(base.Core):
         """The name of the connected display"""
         return self._display_name
 
-    def update_client_list(self, windows_map: dict[int, base.WindowType]) -> None:
-        """Updates the client stack list
+    def update_client_lists(self) -> None:
+        """Updates the _NET_CLIENT_LIST and _NET_CLIENT_LIST_STACKING properties
 
         This is needed for third party tasklists and drag and drop of tabs in
         chrome
         """
+        assert self.qtile
         # Regular top-level managed windows, i.e. excluding Static, Internal and Systray Icons
-        wids = [wid for wid, c in windows_map.items() if isinstance(c, window.Window)]
+        wids = [wid for wid, c in self.qtile.windows_map.items() if isinstance(c, window.Window)]
         self._root.set_property("_NET_CLIENT_LIST", wids)
-        # TODO: check stack order
-        self._root.set_property("_NET_CLIENT_LIST_STACKING", wids)
+
+        # We rely on the stacking order from the X server
+        stacked_wids = []
+        for wid in self._root.query_tree():
+            win = self.qtile.windows_map.get(wid)
+            if not win:
+                continue
+
+            if isinstance(win, window.Window) and win.group:
+                stacked_wids.append(wid)
+
+        self._root.set_property("_NET_CLIENT_LIST_STACKING", stacked_wids)
 
     def update_desktops(self, groups, index: int) -> None:
         """Set the current desktops of the window manager
@@ -738,11 +757,14 @@ class Core(base.Core):
             if not win.group or not win.group.screen:
                 return
             win.unhide()
+            self.update_client_lists()
+            win.change_layer()
 
     def handle_DestroyNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
         self.qtile.unmanage(event.window)
+        self.update_client_lists()
         if self.qtile.current_window is None:
             self.conn.fixup_focus()
 
@@ -769,6 +791,7 @@ class Core(base.Core):
                 win.wid, win.window.conn.atoms["_NET_WM_DESKTOP"]
             )
         self.qtile.unmanage(event.window)
+        self.update_client_lists()
         if self.qtile.current_window is None:
             self.conn.fixup_focus()
 
@@ -837,9 +860,7 @@ class Core(base.Core):
                 qtile.config.bring_front_click != "floating_only"
                 or getattr(window, "floating", False)
             ):
-                self.conn.conn.core.ConfigureWindow(
-                    window.wid, xcffib.xproto.ConfigWindow.StackMode, [StackMode.Above]
-                )
+                window.bring_to_front()
 
             try:
                 if window.group.screen is not qtile.current_screen:
@@ -908,3 +929,13 @@ class Core(base.Core):
     def keysym_from_name(self, name: str) -> int:
         """Get the keysym for a key from its name"""
         return keysyms[name.lower()]
+
+    def check_stacking(self, win: base.Window) -> None:
+        """Triggers restacking if a fullscreen window loses focus."""
+        if win is self.last_focused:
+            return
+
+        if self.last_focused and self.last_focused.fullscreen:
+            self.last_focused.change_layer()
+
+        self.last_focused = win
