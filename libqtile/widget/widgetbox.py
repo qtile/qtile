@@ -179,6 +179,3 @@ class WidgetBox(base._Widget):
         self.toggle_widgets()
         self.set_box_label()
         self.bar.draw()
-
-    def finalize(self):
-        base._Widget.finalize(self)
