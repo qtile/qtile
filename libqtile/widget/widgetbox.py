@@ -91,7 +91,7 @@ class WidgetBox(base._Widget):
             self.close_button_location = "left"
 
         if self.start_opened:
-            hook.subscribe.startup(self.toggle)
+            hook.subscribe.startup_once(self.toggle)
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
@@ -181,6 +181,4 @@ class WidgetBox(base._Widget):
         self.bar.draw()
 
     def finalize(self):
-        if self.start_opened:
-            hook.unsubscribe.startup(self.toggle)
         base._Widget.finalize(self)
