@@ -26,7 +26,8 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Add ability to have different border color when windows are stacked in Stack layout. Requires 
           setting `border_focus_stack` and `border_normal_stack` variables.
         - New widget: GenPollCommand
-        - Add ability to add a group at a specified index
+		- Add ability to add a group at a specified index
+		- Add ability to open the `WidgetBox` widgets at startup.
     * bugfixes
         - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
         - Fix `Notify` bug when apps close notifications.
