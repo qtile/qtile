@@ -24,7 +24,7 @@ from libqtile.widget import base
 
 
 class YandexDisk(base.InLoopPollText):
-    """A simple widget to show YandexDisk folder sync status.
+    """A simple widget to show YandexDisk client folder sync status.
 
     Yandex.Disk_ is a service that lets you store files on Yandex servers.
 
