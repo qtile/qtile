@@ -22,6 +22,7 @@ import os
 
 from libqtile.widget import base
 
+
 class YandexDisk(base.InLoopPollText):
     """A simple widget to show YandexDisk folder sync status.
 
@@ -30,7 +31,7 @@ class YandexDisk(base.InLoopPollText):
     .. _Yandex.Disk: http://disk.yandex.com/
 
     """
-    
+
     defaults = [
         ("sync_folder", "~/Yandex.Disk/", "Yandex.Disk folder path"),
         ("update_interval", 10, "The delay in seconds between updates"),
@@ -41,11 +42,13 @@ class YandexDisk(base.InLoopPollText):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(YandexDisk.defaults)
 
-        self.sync_folder = os.path.expanduser(os.path.join(
-            self.sync_folder,
-            ".sync",
-            "status",
-        ))
+        self.sync_folder = os.path.expanduser(
+            os.path.join(
+                self.sync_folder,
+                ".sync",
+                "status",
+            )
+        )
 
     def _get_status(self):
         with open(self.sync_folder, "r") as file:
