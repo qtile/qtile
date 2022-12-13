@@ -19,9 +19,9 @@
 # SOFTWARE.
 import os
 
-from libqtile import widget
-
 import pytest
+
+from libqtile import widget
 
 
 @pytest.fixture
@@ -39,5 +39,5 @@ def yandexdisk_folder():
 
 
 def test_yandexdisk(yandexdisk_folder):
-    YandexDisk = widget.YandexDisk(sync_folder=yandexdisk_folder)
-    assert YandexDisk.poll() == "idle"
+    yandexdisk = widget.YandexDisk(sync_folder=yandexdisk_folder)
+    assert yandexdisk.poll() == "idle"
