@@ -94,6 +94,7 @@ widgets = {
     "WindowTabs": "windowtabs",
     "Wlan": "wlan",
     "Wttr": "wttr",
+    "YandexDisk": "yandexdisk",
 }
 
 __all__, __dir__, __getattr__ = lazify_imports(widgets, __package__, fallback=make_error)
