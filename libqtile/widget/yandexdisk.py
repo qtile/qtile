@@ -20,6 +20,7 @@
 
 import os
 
+from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
@@ -57,7 +58,7 @@ class YandexDisk(base.InLoopPollText):
     def poll(self):
         try:
             status = self._get_status()
-        except Exception as e:
+        except Exception:
             logger.exception("Error getting status for yandex.disk")
             return "Error"
 
