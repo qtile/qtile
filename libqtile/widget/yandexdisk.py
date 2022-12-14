@@ -58,6 +58,7 @@ class YandexDisk(base.InLoopPollText):
         try:
             status = self._get_status()
         except Exception as e:
-            return f"Error: {e}"
+            logger.exception("Error getting status for yandex.disk")
+            return "Error"
 
         return self.format.format(status=status)
