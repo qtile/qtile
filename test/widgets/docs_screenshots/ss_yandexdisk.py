@@ -25,10 +25,14 @@ from test.widgets.test_yandexdisk import yandexdisk_folder
 
 @pytest.fixture
 def widget(monkeypatch):
-    def result(self):
+    def get_status(self):
         yield yandexdisk_folder
 
-    monkeypatch.setattr("libqtile.widget.yandexdisk.YandexDisk._get_status", result)
+    def get_latest_log(self):
+        return "21214-142356.408", "DIGEST", ['"random.dat"', "9", "/", "10"]
+
+    monkeypatch.setattr("libqtile.widget.yandexdisk.YandexDisk._get_status", get_status)
+    monkeypatch.setattr("libqtile.widget.yandexdisk.YandexDisk._get_latest_log", get_latest_log)
     yield yandexdisk.YandexDisk
 
 
