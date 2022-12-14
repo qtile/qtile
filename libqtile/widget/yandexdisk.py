@@ -46,7 +46,7 @@ class YandexDisk(base.InLoopPollText):
     defaults = [
         ("sync_folder", "~/Yandex.Disk/", "Yandex.Disk folder path"),
         ("status_mapping", status_mapping, "Sync status mapping"),
-        ("update_interval", 1, "The delay in seconds between updates"),
+        ("update_interval", 5, "The delay in seconds between updates"),
         ("format", "{status}{progress}", "Display format"),
         ("progress_format", " ({filename} {percentage}%)", "Progress format"),
     ]
