@@ -17,6 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import os
+
 import pytest
 
 from libqtile.widget import yandexdisk
@@ -28,6 +30,9 @@ from test.widgets.test_yandexdisk import yandexdisk_folder
     yandexdisk.YandexDisk, [{"sync_folder": yandexdisk_folder}], indirect=True
 )
 def widget():
+    status_file = os.path.join(yandexdisk_folder, ".sync", "status")
+    with open(status_file, "w") as file:
+        file.write("99999\nindex")
     yield yandexdisk.YandexDisk
 
 
