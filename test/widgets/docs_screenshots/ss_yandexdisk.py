@@ -25,10 +25,13 @@ from test.widgets.test_yandexdisk import yandexdisk_folder
 
 @pytest.fixture
 def widget(monkeypatch):
-    monkeypatch.setattr("libqtile.widget.yandexdisk.YandexDisk.sync_folder", yandexdisk_folder)
+    def result(self):
+        yield yandexdisk_folder
+
+    monkeypatch.setattr("libqtile.widget.yandexdisk.YandexDisk._get_status", result)
     yield yandexdisk.YandexDisk
 
 
-@pytest.mark.parametrize("screenshot_manager", indirect=True)
+@pytest.mark.parametrize("screenshot_manager", [{}], indirect=True)
 def ss_yandexdisk(screenshot_manager):
     screenshot_manager.take_screenshot()
