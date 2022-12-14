@@ -30,11 +30,20 @@ def yandexdisk_folder():
     with tempfile.TemporaryDirectory() as tmp:
         sync_folder = os.path.join(tmp, "Yandex.Disk")
 
+        corelog_file = os.path.join(
+            sync_folder,
+            ".sync",
+            "core.log",
+        )
+
         status_file = os.path.join(sync_folder, ".sync", "status")
         os.makedirs(os.path.dirname(status_file), exist_ok=True)
 
         with open(status_file, "w") as f:
             f.write("99999\nidle")
+
+        with open(corelog_file, "w") as f:
+            f.write('21214-142356.408 DIGEST "random.dat" 9 / 10\n')
 
         yield sync_folder
 
@@ -54,7 +63,6 @@ def test_yandexdisk_stopped(yandexdisk_folder):
 
 
 def test_yandexdisk_mapping(yandexdisk_folder):
-
     status_mapping = {"idle": "-.-"}
 
     yandexdisk = widget.YandexDisk(sync_folder=yandexdisk_folder, status_mapping=status_mapping)
@@ -63,20 +71,10 @@ def test_yandexdisk_mapping(yandexdisk_folder):
 
 
 def test_yandexdisk_progress(yandexdisk_folder):
-
-    corelog_folder = os.path.join(
-        yandexdisk_folder,
-        ".sync",
-        "core.log",
-    )
-
     status_file = os.path.join(yandexdisk_folder, ".sync", "status")
 
     with open(status_file, "w") as f:
         f.write("99999\nindex")
-
-    with open(corelog_folder, "w") as f:
-        f.write('21214-142356.408 DIGEST "random.dat" 9 / 10\n')
 
     yandexdisk = widget.YandexDisk(sync_folder=yandexdisk_folder)
 
