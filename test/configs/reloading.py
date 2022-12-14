@@ -88,4 +88,6 @@ if hasattr(qtile, "test_data"):
     floating_layout = layout.Floating()
     wmname = "TEST"
 
+    qtile.test_data_config_evaluations += 1
+
 groups.append(ScratchPad("S", dropdowns))
