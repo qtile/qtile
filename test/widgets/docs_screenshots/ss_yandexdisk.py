@@ -24,11 +24,8 @@ from test.widgets.test_yandexdisk import yandexdisk_folder
 
 
 @pytest.fixture
-def widget(monkeypatch):
-    def result(self):
-        yield yandexdisk_folder
-
-    monkeypatch.setattr("libqtile.widget.yandexdisk.YandexDisk._get_status", result)
+@pytest.mark.parametrize(yandexdisk.YandexDisk, [{"sync_folder": yandexdisk_folder}], indirect=True)
+def widget():
     yield yandexdisk.YandexDisk
 
 
