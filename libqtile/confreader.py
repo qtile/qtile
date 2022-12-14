@@ -108,6 +108,14 @@ class Config:
             if hasattr(module, "__file__") and module.__file__ is not None:
                 subpath = Path(module.__file__)
 
+                if subpath == path:
+                    # do not reevaluate config itself here, we want only
+                    # reload all submodules. Also we cant reevaluate config
+                    # here, because it will cache all current modules before they
+                    # are reloaded. Thus, config file should be reloaded after
+                    # this routine.
+                    continue
+
                 # Check if the module is in the config folder or subfolder
                 # if so, reload it
                 if folder in subpath.parents:
