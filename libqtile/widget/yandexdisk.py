@@ -26,6 +26,7 @@ from libqtile.widget import base
 status_mapping = {
     "idle": "IDLE",
     "stopped": "STOPPED",
+    "paused": "PAUSED",
     "busy": "BUSY",
     "index": "INDEX",
 }
