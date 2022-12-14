@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import os
+import tempfile
 
 import pytest
 
@@ -26,16 +27,16 @@ from libqtile import widget
 
 @pytest.fixture
 def yandexdisk_folder():
-    tmp = "/var/tmp/qtile/test/widgets/yandexdisk"
-    sync_folder = os.path.join(tmp, "Yandex.Disk")
+    with tempfile.TemporaryDirectory() as tmp:
+        sync_folder = os.path.join(tmp, "Yandex.Disk")
 
-    status_file = os.path.join(sync_folder, ".sync", "status")
-    os.makedirs(os.path.dirname(status_file), exist_ok=True)
+        status_file = os.path.join(sync_folder, ".sync", "status")
+        os.makedirs(os.path.dirname(status_file), exist_ok=True)
 
-    with open(status_file, "w") as f:
-        f.write("99999\nidle")
+        with open(status_file, "w") as f:
+            f.write("99999\nidle")
 
-    yield sync_folder
+        yield sync_folder
 
 
 def test_yandexdisk(yandexdisk_folder):
