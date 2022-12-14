@@ -110,13 +110,13 @@ class YandexDisk(base.InLoopPollText):
 
     @staticmethod
     def _get_progress_log_dict(log_data):
-        file_size = int(log_data.pop(-1))
+        total_size = int(log_data.pop(-1))
         log_data.pop(-1)
         synced_size = int(log_data.pop(-1))
         filename = " ".join(log_data)
         return {
             "filename": filename,
             "synced_size": synced_size,
-            "file_size": file_size,
-            "percentage": int((synced_size / file_size) * 100),
+            "total_size": total_size,
+            "percentage": int((synced_size / total_size) * 100),
         }
