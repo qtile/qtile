@@ -34,7 +34,9 @@ status_mapping = {
 class YandexDisk(base.InLoopPollText):
     """A simple widget to show YandexDisk client folder sync status.
 
-    Yandex.Disk_ is a service that lets you store files on Yandex servers.
+    Yandex.Disk_ is a cloud service created by Yandex that lets users store
+    files on "cloud" servers and share them with others online.
+    The service is based on syncing data between different devices.
 
     .. _Yandex.Disk: http://disk.yandex.com/
 
