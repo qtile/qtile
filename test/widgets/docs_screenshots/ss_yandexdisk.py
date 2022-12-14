@@ -24,7 +24,9 @@ from test.widgets.test_yandexdisk import yandexdisk_folder
 
 
 @pytest.fixture
-@pytest.mark.parametrize(yandexdisk.YandexDisk, [{"sync_folder": yandexdisk_folder}], indirect=True)
+@pytest.mark.parametrize(
+    yandexdisk.YandexDisk, [{"sync_folder": yandexdisk_folder}], indirect=True
+)
 def widget():
     yield yandexdisk.YandexDisk
 
