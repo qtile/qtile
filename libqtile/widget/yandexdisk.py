@@ -35,6 +35,11 @@ class YandexDisk(base.InLoopPollText):
 
     defaults = [
         ("sync_folder", "~/Yandex.Disk/", "Yandex.Disk folder path"),
+        (
+            "daemon_stopped",
+            "Error: daemon not started",
+            "Text when Yandex.Disk daemon is stopped",
+        ),
         ("update_interval", 10, "The delay in seconds between updates"),
         ("format", "{status}", "Display format"),
     ]
@@ -59,7 +64,7 @@ class YandexDisk(base.InLoopPollText):
         try:
             status = self._get_status()
         except FileNotFoundError:
-            return "Error: daemon not started"
+            return self.daemon_stopped
         except Exception:
             logger.exception("Error getting status for yandex.disk")
             return "Error"

@@ -45,9 +45,10 @@ def test_yandexdisk_idle(yandexdisk_folder):
 
 
 def test_yandexdisk_stopped(yandexdisk_folder):
-    yandexdisk = widget.YandexDisk(sync_folder=yandexdisk_folder)
+    yandexdisk = widget.YandexDisk(sync_folder=yandexdisk_folder, daemon_stopped="stopped")
+    assert yandexdisk.daemon_stopped == "stopped"
 
     status_file = os.path.join(yandexdisk_folder, ".sync", "status")
     os.remove(status_file)
 
-    assert yandexdisk.poll() == "Error: daemon not started"
+    assert yandexdisk.poll() == yandexdisk.daemon_stopped
