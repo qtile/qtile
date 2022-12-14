@@ -58,6 +58,8 @@ class YandexDisk(base.InLoopPollText):
     def poll(self):
         try:
             status = self._get_status()
+        except FileNotFoundError:
+            return "Error: daemon not started"
         except Exception:
             logger.exception("Error getting status for yandex.disk")
             return "Error"
