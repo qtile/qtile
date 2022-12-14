@@ -60,3 +60,24 @@ def test_yandexdisk_mapping(yandexdisk_folder):
     yandexdisk = widget.YandexDisk(sync_folder=yandexdisk_folder, status_mapping=status_mapping)
 
     assert yandexdisk.poll() == "-.-"
+
+
+def test_yandexdisk_progress(yandexdisk_folder):
+
+    corelog_folder = os.path.join(
+        yandexdisk_folder,
+        ".sync",
+        "core.log",
+    )
+
+    status_file = os.path.join(yandexdisk_folder, ".sync", "status")
+
+    with open(status_file, "w") as f:
+        f.write("99999\nindex")
+
+    with open(corelog_folder, "w") as f:
+        f.write('21214-142356.408 DIGEST "random.dat" 9 / 10\n')
+
+    yandexdisk = widget.YandexDisk(sync_folder=yandexdisk_folder)
+
+    assert yandexdisk.poll() == 'INDEX ("random.dat" 90%)'

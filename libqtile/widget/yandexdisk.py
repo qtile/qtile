@@ -46,8 +46,9 @@ class YandexDisk(base.InLoopPollText):
     defaults = [
         ("sync_folder", "~/Yandex.Disk/", "Yandex.Disk folder path"),
         ("status_mapping", status_mapping, "Sync status mapping"),
-        ("update_interval", 10, "The delay in seconds between updates"),
-        ("format", "{status}", "Display format"),
+        ("update_interval", 1, "The delay in seconds between updates"),
+        ("format", "{status}{progress}", "Display format"),
+        ("progress_format", " ({filename} {percentage}%)", "Progress format"),
     ]
 
     def __init__(self, **config):
@@ -58,14 +59,25 @@ class YandexDisk(base.InLoopPollText):
             os.path.join(
                 self.sync_folder,
                 ".sync",
-                "status",
             )
         )
 
+        self.status_file = os.path.join(self.sync_folder, "status")
+        self.core_log_file = os.path.join(self.sync_folder, "core.log")
+
     def _get_status(self):
-        with open(self.sync_folder, "r") as file:
+        with open(self.status_file, "r") as file:
             status = file.read().split("\n")[-1]
             return status
+
+    def _get_latest_log(self):
+        with open(self.core_log_file, "r") as file:
+            latest_log = file.read().split("\n")[-2]
+            log_line = latest_log.split()
+            if log_line:
+                log_time = log_line.pop(0)
+                log_type = log_line.pop(0)
+                return log_time, log_type, log_line
 
     def poll(self):
         try:
@@ -76,6 +88,35 @@ class YandexDisk(base.InLoopPollText):
             logger.exception("Error getting status for yandex.disk")
             return "Error"
 
+        progress = ""
+
+        try:
+            if status in ["busy", "index"]:
+                log = self._get_latest_log()
+                if log:
+                    _, log_type, log_data = log
+                    if log_type in ["DIGEST", "PUT"]:
+                        keys = self._get_progress_log_dict(log_data)
+                        progress = self.progress_format.format(**keys)
+        except FileNotFoundError:
+            pass
+        except Exception:
+            logger.exception("Error getting information from core.log for yandex.disk")
+            return "Error"
+
         status = self.status_mapping.get(status, status)
 
-        return self.format.format(status=status)
+        return self.format.format(status=status, progress=progress)
+
+    @staticmethod
+    def _get_progress_log_dict(log_data):
+        file_size = int(log_data.pop(-1))
+        log_data.pop(-1)
+        synced_size = int(log_data.pop(-1))
+        filename = " ".join(log_data)
+        return {
+            "filename": filename,
+            "synced_size": synced_size,
+            "file_size": file_size,
+            "percentage": int((synced_size / file_size) * 100),
+        }
