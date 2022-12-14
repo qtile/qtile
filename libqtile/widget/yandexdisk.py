@@ -23,6 +23,13 @@ import os
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
+status_mapping = {
+    "idle": "IDLE",
+    "stopped": "STOPPED",
+    "busy": "BUSY",
+    "index": "INDEX",
+}
+
 
 class YandexDisk(base.InLoopPollText):
     """A simple widget to show YandexDisk client folder sync status.
@@ -35,11 +42,7 @@ class YandexDisk(base.InLoopPollText):
 
     defaults = [
         ("sync_folder", "~/Yandex.Disk/", "Yandex.Disk folder path"),
-        (
-            "daemon_stopped",
-            "Error: daemon not started",
-            "Text when Yandex.Disk daemon is stopped",
-        ),
+        ("status_mapping", status_mapping, "Sync status mapping"),
         ("update_interval", 10, "The delay in seconds between updates"),
         ("format", "{status}", "Display format"),
     ]
@@ -58,15 +61,18 @@ class YandexDisk(base.InLoopPollText):
 
     def _get_status(self):
         with open(self.sync_folder, "r") as file:
-            return file.read().split("\n")[-1]
+            status = file.read().split("\n")[-1]
+            return status
 
     def poll(self):
         try:
             status = self._get_status()
         except FileNotFoundError:
-            return self.daemon_stopped
+            status = "stopped"
         except Exception:
             logger.exception("Error getting status for yandex.disk")
             return "Error"
+
+        status = self.status_mapping.get(status, status)
 
         return self.format.format(status=status)

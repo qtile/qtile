@@ -41,14 +41,22 @@ def yandexdisk_folder():
 
 def test_yandexdisk_idle(yandexdisk_folder):
     yandexdisk = widget.YandexDisk(sync_folder=yandexdisk_folder)
-    assert yandexdisk.poll() == "idle"
+    assert yandexdisk.poll() == "IDLE"
 
 
 def test_yandexdisk_stopped(yandexdisk_folder):
-    yandexdisk = widget.YandexDisk(sync_folder=yandexdisk_folder, daemon_stopped="stopped")
-    assert yandexdisk.daemon_stopped == "stopped"
+    yandexdisk = widget.YandexDisk(sync_folder=yandexdisk_folder)
 
     status_file = os.path.join(yandexdisk_folder, ".sync", "status")
     os.remove(status_file)
 
-    assert yandexdisk.poll() == yandexdisk.daemon_stopped
+    assert yandexdisk.poll() == "STOPPED"
+
+
+def test_yandexdisk_mapping(yandexdisk_folder):
+
+    status_mapping = {"idle": "-.-"}
+
+    yandexdisk = widget.YandexDisk(sync_folder=yandexdisk_folder, status_mapping=status_mapping)
+
+    assert yandexdisk.poll() == "-.-"
