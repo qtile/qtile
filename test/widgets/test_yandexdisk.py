@@ -78,4 +78,4 @@ def test_yandexdisk_progress(yandexdisk_folder):
 
     yandexdisk = widget.YandexDisk(sync_folder=yandexdisk_folder)
 
-    assert yandexdisk.poll() == 'INDEX ("random.dat" 90.0%)'
+    assert yandexdisk.poll() == "INDEX (random.dat 90.0%)"

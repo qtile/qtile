@@ -19,6 +19,7 @@
 # SOFTWARE.
 
 import os
+import shlex
 
 from libqtile.log_utils import logger
 from libqtile.widget import base
@@ -48,7 +49,7 @@ class YandexDisk(base.InLoopPollText):
         ("status_mapping", status_mapping, "Sync status mapping"),
         ("update_interval", 5, "The delay in seconds between updates"),
         ("format", "{status}{progress}", "Display format"),
-        ("progress_format", " ({filename} {percentage:.1%}%)", "Progress format"),
+        ("progress_format", " ({filename} {percentage:.1%})", "Progress format"),
     ]
 
     def __init__(self, **config):
@@ -73,11 +74,12 @@ class YandexDisk(base.InLoopPollText):
     def _get_latest_log(self):
         with open(self.core_log_file, "r") as file:
             latest_log = file.read().split("\n")[-2]
-            log_line = latest_log.split()
+            log_line = shlex.split(latest_log)
             if log_line:
                 log_time = log_line.pop(0)
                 log_type = log_line.pop(0)
-                return log_time, log_type, log_line
+                log_data = log_line
+                return log_time, log_type, log_data
 
     def poll(self):
         try:
@@ -110,13 +112,13 @@ class YandexDisk(base.InLoopPollText):
 
     @staticmethod
     def _get_progress_log_dict(log_data):
-        if log_data[-1].isdigit():
-            total_size = int(log_data.pop(-1))
-            log_data.pop(-1)
-            synced_size = int(log_data.pop(-1))
-            filename = " ".join(log_data)
+
+        if len(log_data) == 4:
+            synced_size = int(log_data[1])
+            total_size = int(log_data[3])
+
             return {
-                "filename": filename,
+                "filename": log_data[0],
                 "synced_size": synced_size,
                 "total_size": total_size,
                 "percentage": synced_size / total_size,
