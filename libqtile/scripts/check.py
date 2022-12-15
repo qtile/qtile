@@ -99,7 +99,7 @@ def check_deps() -> None:
 
     for dep in ["mypy", "stubtest"]:
         if shutil.which(dep) is None:
-            print(f"{dep} was not found. Please install it and try again.")
+            print(f"{dep} was not found in PATH. Please install it, add to PATH and try again.")
             ok = False
 
     if not ok:
