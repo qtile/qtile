@@ -49,7 +49,7 @@ class YandexDisk(base.InLoopPollText):
         ("status_mapping", status_mapping, "Sync status mapping"),
         ("update_interval", 5, "The delay in seconds between updates"),
         ("format", "{status}{progress}", "Display format"),
-        ("progress_format", " ({filename} {percentage:.1%})", "Progress format"),
+        ("progress_format", " ({file_name} {percentage:.1%})", "Progress format"),
     ]
 
     def __init__(self, **config):
@@ -117,8 +117,11 @@ class YandexDisk(base.InLoopPollText):
             synced_size = int(log_data[1])
             total_size = int(log_data[3])
 
+            file_path = log_data[0]
+
             return {
-                "filename": log_data[0],
+                "file_name": os.path.basename(file_path),
+                "file_path": file_path,
                 "synced_size": synced_size,
                 "total_size": total_size,
                 "percentage": synced_size / total_size,
