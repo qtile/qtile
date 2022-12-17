@@ -170,10 +170,13 @@ class Core(base.Core):
         return "x11"
 
     def finalize(self) -> None:
-        self.conn.conn.core.DeletePropertyChecked(
-            self._root.wid,
-            self.conn.atoms["_NET_SUPPORTING_WM_CHECK"],
-        ).check()
+        try:
+            self.conn.conn.core.DeletePropertyChecked(
+                self._root.wid,
+                self.conn.atoms["_NET_SUPPORTING_WM_CHECK"],
+            ).check()
+        except xcffib.ConnectionException:
+            pass
         self.qtile = None
         self.conn.finalize()
 
@@ -331,12 +334,7 @@ class Core(base.Core):
             except Exception:
                 error_code = self.conn.conn.has_error()
                 if error_code:
-                    error_string = xcbq.XCB_CONN_ERRORS[error_code]
-                    logger.exception(
-                        "Shutting down due to X connection error %s (%s)",
-                        error_string,
-                        error_code,
-                    )
+                    logger.warning("Shutting down due to disconnection from X server")
                     self.remove_listener()
                     self.qtile.stop()
                     return
@@ -813,19 +811,15 @@ class Core(base.Core):
     def graceful_shutdown(self):
         """Try to close windows gracefully before exiting"""
 
-        def get_interesting_pid(win):
-            # We don't need to kill Internal or Static windows, they're qtile
-            # managed and don't have any state.
-            if not isinstance(win, base.Window):
-                return None
-            try:
-                return win.window.get_net_wm_pid()
-            except Exception:
-                logger.exception("Got an exception in getting the window pid")
-                return None
-
-        pids = map(get_interesting_pid, self.qtile.windows_map.values())
-        pids = list(filter(lambda x: x is not None, pids))
+        try:
+            pids = [
+                pid
+                for win in self.qtile.windows_map.values()
+                if not isinstance(win, base.Internal) and (pid := win.get_pid())
+            ]
+        except xcffib.ConnectionException:
+            logger.warning("Server disconnected, couldn't close windows gracefully.")
+            return
 
         # Give the windows a chance to shut down nicely.
         for pid in pids:
