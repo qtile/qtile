@@ -37,6 +37,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Add ability to update the widget only once if `update_interval` is None.
         - Add `move_to_slice` command to move current window to single layout in `Slice` layout
         - Made the `NetWidget` text formattable.
+        - Qtile no longer floods the log following X server disconnection, instead handling those errors.
     * bugfixes
         - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
         - Fix `Notify` bug when apps close notifications.

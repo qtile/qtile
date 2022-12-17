@@ -83,7 +83,11 @@ class Drawer(base.Drawer):
 
     def _free_gc(self):
         if self._gc is not None:
-            self.qtile.core.conn.conn.core.FreeGC(self._gc)
+            try:
+                self.qtile.core.conn.conn.core.FreeGC(self._gc)
+            except xcffib.ConnectionException:
+                # Qtile got disconnected from the X server
+                pass
             self._gc = None
 
     def _create_xcb_surface(self):
@@ -114,7 +118,11 @@ class Drawer(base.Drawer):
 
     def _free_pixmap(self):
         if self._pixmap is not None:
-            self.qtile.core.conn.conn.core.FreePixmap(self._pixmap)
+            try:
+                self.qtile.core.conn.conn.core.FreePixmap(self._pixmap)
+            except xcffib.ConnectionException:
+                # Qtile got disconnected from the X server
+                pass
             self._pixmap = None
 
     def _check_xcb(self):

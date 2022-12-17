@@ -1126,7 +1126,11 @@ class Internal(_Window, base.Internal):
         if self.window.wid in self.qtile.windows_map:
             # It will be present during config reloads; absent during shutdown as this
             # will follow graceful_shutdown
-            self.qtile.core.conn.conn.core.DestroyWindow(self.window.wid)
+            try:
+                self.qtile.core.conn.conn.core.DestroyWindow(self.window.wid)
+            except xcffib.ConnectionException:
+                # Qtile disconnected from the X server
+                pass
 
     def handle_Expose(self, e):  # noqa: N802
         self.process_window_expose()
