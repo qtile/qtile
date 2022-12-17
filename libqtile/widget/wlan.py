@@ -32,7 +32,7 @@ from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
-def get_status(interface_name):
+def wifi_get_status(interface_name):
     interface = iwlib.get_iwconfig(interface_name)
     if "stats" not in interface:
         return None, None
@@ -41,9 +41,30 @@ def get_status(interface_name):
     return essid, quality
 
 
+def eth_get_status(interface_name):
+    # From kernel docs https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-net:
+    # Carrier:
+    # == =====================
+    # 0  physical link is down
+    # 1  physical link is up
+    # == =====================
+    # Operstate
+    # Possible values are:
+    # "unknown", "notpresent", "down", "lowerlayerdown", "testing",
+    # "dormant", "up".
+    try:
+        with open("/sys/class/net/" + interface_name + "/carrier") as fcarrier:
+            cable_status = fcarrier.readline().rstrip("\n")
+        with open("/sys/class/net/" + interface_name + "/operstate") as fstate:
+            link_status = fstate.readline().rstrip("\n")
+    except FileNotFoundError:
+        return None, None
+    return cable_status, link_status
+
+
 class Wlan(base.InLoopPollText):
     """
-    Displays Wifi SSID and quality.
+    Displays Wifi SSID and quality. If `show_eth` is True, also shows Ethernet information.
 
     Widget requirements: iwlib_.
 
@@ -52,13 +73,40 @@ class Wlan(base.InLoopPollText):
 
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("interface", "wlan0", "The interface to monitor"),
+        ("show_wifi", True, "Show WiFi information."),
+        ("wifi_interface", "wlan0", "The wifi interface to monitor"),
         ("update_interval", 1, "The update interval."),
-        ("disconnected_message", "Disconnected", "String to show when the wlan is diconnected."),
+        ("wifi_disc_msg", "Disconnected", "String to show when the wlan is diconnected."),
         (
-            "format",
+            "format_wifi",
             "{essid} {quality}/70",
-            'Display format. For percents you can use "{essid} {percent:2.0%}"',
+            'Display format for wifi_interface. For percents you can use "{essid} {percent:2.0%}"',
+        ),
+        (
+            "show_eth",
+            False,
+            'Show Ethernet information. It\'ll be displayed alongside the WiFi with a "separator" if "show_wifi" is also set.',
+        ),
+        ("eth_interface", "eth0", "The eth interface to monitor"),
+        (
+            "separator",
+            " | ",
+            "Separator between Ethernet and WiFi information (if show_eth is True).",
+        ),
+        (
+            "eth_disc_msg",
+            "Disconnected",
+            "String to show when the eth is disconnected (cable not connected).",
+        ),
+        (
+            "eth_cable_con_msg",
+            "1",
+            "String to show when the Ethernet is connected. The default is '1' for connected.",
+        ),
+        (
+            "format_eth",
+            "{cable_status} {link_status}",
+            "Display format for eth interface.",
         ),
     ]
 
@@ -67,16 +115,77 @@ class Wlan(base.InLoopPollText):
         self.add_defaults(Wlan.defaults)
 
     def poll(self):
+        data = {
+            "essid": None,
+            "quality": None,
+            "cable_status": None,
+            "link_status": None,
+        }
         try:
-            essid, quality = get_status(self.interface)
-            disconnected = essid is None
-            if disconnected:
-                return self.disconnected_message
-
-            return self.format.format(essid=essid, quality=quality, percent=(quality / 70))
+            essid, quality = wifi_get_status(self.wifi_interface)
+            if essid is not None:
+                data["essid"] = essid
+                data["quality"] = quality
         except EnvironmentError:
             logger.error(
                 "%s: Probably your wlan device is switched off or "
                 " otherwise not present in your system.",
                 self.__class__.__name__,
             )
+        try:
+            cable_status, link_status = eth_get_status(self.eth_interface)
+            if cable_status is not None:
+                data["cable_status"] = cable_status
+                data["link_status"] = link_status
+        except EnvironmentError:
+            logger.error(
+                "%s: Probably your wlan device is switched off or "
+                " otherwise not present in your system.",
+                self.__class__.__name__,
+            )
+        return self.build_string(data)
+
+    def build_string(self, data):
+        full_msg = ""
+
+        # Case show both interfaces
+        if self.show_wifi and self.show_eth:
+            if data["essid"] is None:
+                full_msg += self.wifi_disc_msg
+            else:
+                full_msg += self.format_wifi.format(
+                    essid=data["essid"], quality=data["quality"], percent=(data["quality"] / 70)
+                )
+
+            if (data["cable_status"] is None) or (data["cable_status"] == "0"):
+                full_msg += self.separator + self.eth_disc_msg
+            else:
+                full_msg += self.separator + self.format_eth.format(
+                    cable_status=self.eth_cable_con_msg, link_status=data["link_status"]
+                )
+
+            return full_msg
+
+        # Case show only WiFi interface
+        elif self.show_wifi and not self.show_eth:
+            if data["essid"] is None:
+                full_msg += self.wifi_disc_msg
+            else:
+                full_msg += self.format_wifi.format(
+                    essid=data["essid"], quality=data["quality"], percent=(data["quality"] / 70)
+                )
+
+            return full_msg
+
+        # Case show only Ethernet interface
+        elif not self.show_wifi and self.show_eth:
+            if (data["cable_status"] is None) or (data["cable_status"] == "0"):
+                full_msg += self.eth_disc_msg
+            else:
+                full_msg += self.format_eth.format(
+                    cable_status=self.eth_cable_con_msg, link_status=data["link_status"]
+                )
+
+            return full_msg
+
+        return "Both show_eth and show_wifi are disabled."

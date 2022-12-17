@@ -48,8 +48,8 @@ class MockIwlib(ModuleType):
     }
 
     @classmethod
-    def get_iwconfig(cls, interface):
-        return cls.DATA.get(interface, dict())
+    def get_iwconfig(cls, wifi_interface):
+        return cls.DATA.get(wifi_interface, dict())
 
 
 # Patch the widget with our mock iwlib module.
@@ -68,8 +68,8 @@ def patched_wlan(monkeypatch):
     "kwargs,expected",
     [
         ({}, "QtileNet 49/70"),
-        ({"format": "{essid} {percent:2.0%}"}, "QtileNet 70%"),
-        ({"interface": "wlan1"}, "Disconnected"),
+        ({"format_wifi": "{essid} {percent:2.0%}"}, "QtileNet 70%"),
+        ({"wifi_interface": "wlan1"}, "Disconnected"),
     ],
 )
 def test_wlan_display(minimal_conf_noscreen, manager_nospawn, patched_wlan, kwargs, expected):
