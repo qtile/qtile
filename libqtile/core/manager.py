@@ -432,7 +432,7 @@ class Qtile(CommandObject):
         """
         self.core.ungrab_keys()
         for key in self.keys_map.values():
-            self.grab_key(key)
+            self.core.grab_key(key)
 
     def grab_key(self, key: Key | KeyChord) -> None:
         """Grab the given key event"""
