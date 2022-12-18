@@ -810,11 +810,11 @@ class Core(base.Core):
         """Try to close windows gracefully before exiting"""
 
         try:
-            pids = [
-                pid
-                for win in self.qtile.windows_map.values()
-                if not isinstance(win, base.Internal) and (pid := win.get_pid())
-            ]
+            pids = []
+            for win in self.qtile.windows_map.values():
+                if not isinstance(win, base.Internal):
+                    if pid := win.get_pid():
+                        pids.append(pid)
         except xcffib.ConnectionException:
             logger.warning("Server disconnected, couldn't close windows gracefully.")
             return
