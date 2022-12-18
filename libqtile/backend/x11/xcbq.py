@@ -37,6 +37,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import functools
 import operator
 from itertools import chain, repeat
@@ -632,10 +633,8 @@ class Connection:
         return window.XWindow(self, wid)
 
     def disconnect(self):
-        try:
+        with contextlib.suppress(xcffib.ConnectionException):
             self.conn.disconnect()
-        except xcffib.ConnectionException:
-            logger.error("Failed to disconnect, connection already failed?")
         self._connected = False
 
     def flush(self):

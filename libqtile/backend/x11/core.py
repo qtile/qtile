@@ -170,13 +170,11 @@ class Core(base.Core):
         return "x11"
 
     def finalize(self) -> None:
-        try:
+        with contextlib.suppress(xcffib.ConnectionException):
             self.conn.conn.core.DeletePropertyChecked(
                 self._root.wid,
                 self.conn.atoms["_NET_SUPPORTING_WM_CHECK"],
             ).check()
-        except xcffib.ConnectionException:
-            pass
         self.qtile = None
         self.conn.finalize()
 
