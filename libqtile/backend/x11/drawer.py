@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from typing import TYPE_CHECKING
 
 import cairocffi
@@ -83,11 +84,8 @@ class Drawer(base.Drawer):
 
     def _free_gc(self):
         if self._gc is not None:
-            try:
+            with contextlib.suppress(xcffib.ConnectionException):
                 self.qtile.core.conn.conn.core.FreeGC(self._gc)
-            except xcffib.ConnectionException:
-                # Qtile got disconnected from the X server
-                pass
             self._gc = None
 
     def _create_xcb_surface(self):
@@ -118,11 +116,8 @@ class Drawer(base.Drawer):
 
     def _free_pixmap(self):
         if self._pixmap is not None:
-            try:
+            with contextlib.suppress(xcffib.ConnectionException):
                 self.qtile.core.conn.conn.core.FreePixmap(self._pixmap)
-            except xcffib.ConnectionException:
-                # Qtile got disconnected from the X server
-                pass
             self._pixmap = None
 
     def _check_xcb(self):
