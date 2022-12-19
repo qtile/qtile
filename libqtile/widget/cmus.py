@@ -119,6 +119,8 @@ class Cmus(base.ThreadPoolText):
                     now_playing = stream_title.format(**info)
                 else:
                     now_playing = title.format(**info)
+        if now_playing == self.play_icon:
+            now_playing = ""
         return pangocffi.markup_escape_text(now_playing)
 
     def play(self):
