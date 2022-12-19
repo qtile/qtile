@@ -195,3 +195,76 @@ class Drawer(base.Drawer):
             colour = utils.remove_transparency(colour)
 
         base.Drawer.set_source_rgb(self, colour, ctx)
+
+    def add_pseudo_transparency(self):
+        print("Adding pseudo transparency")
+        print(f"Root: {self.qtile.core.conn.default_screen.root}")
+        gc = self.qtile.core.conn.conn.generate_id()
+        self.qtile.core.conn.conn.core.CreateGC(
+            gc,
+            self._win.wid,
+            xcffib.xproto.GC.SubwindowMode,
+            [xcffib.xproto.SubwindowMode().IncludeInferiors]
+        )
+
+        surf_bar = self._create_xcb_surface()
+
+        root_win = self.qtile.core.conn.default_screen.root
+
+        try:
+            root_pixmap = root_win.get_property(
+                "_XROOTPMAP_ID", xcffib.xproto.Atom.PIXMAP, int
+            )
+        except xcffib.ConnectionException:
+            root_pixmap = None
+
+        if not root_pixmap:
+            root_pixmap = root_win.get_property(
+                "ESETROOT_PMAP_ID", xcffib.xproto.Atom.PIXMAP, int
+            )
+        if root_pixmap:
+            root_pixmap = root_pixmap[0]
+        else:
+            return
+
+        pix_root = self.qtile.core.conn.conn.generate_id()
+        self.qtile.core.conn.conn.core.CreatePixmap(
+            self._depth,
+            pix_root,
+            self._win.wid,
+            self.width,
+            self.height
+        )
+        self.qtile.core.conn.conn.core.CopyArea(
+            root_pixmap,
+            pix_root,
+            gc,
+            0,
+            700,
+            0,
+            0,
+            self.width,
+            self.height
+        )
+        
+        surf_root = cairocffi.XCBSurface(self.qtile.core.conn.conn, pix_root, self._visual, self.width, self.height)
+
+        ctx = cairocffi.Context(surf_root)
+        # ctx.set_source_surface(surf_bar)
+        ctx.set_source_rgba(1,0,0,0.4)
+        ctx.paint()
+
+        print(f"{self.width=} {self.height=}")
+
+        self.qtile.core.conn.conn.core.CopyArea(
+            pix_root,
+            self._win.wid,
+            gc,
+            0,
+            0,  # srcx, srcy
+            0,
+            0,  # dstx, dsty
+            self.width,
+            self.height,
+        ) 
+        self.qtile.core.conn.conn.flush()

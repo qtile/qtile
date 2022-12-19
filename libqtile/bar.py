@@ -156,6 +156,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         ("margin", 0, "Space around bar as int or list of ints [N E S W]."),
         ("border_color", "#000000", "Border colour as str or list of str [N E S W]"),
         ("border_width", 0, "Width of border as int of list of ints [N E S W]"),
+        ("fake_transparency", False, "(x11 only) Enable pseudo-transparency.")
     ]
 
     def __init__(self, widgets, size, **config):
@@ -256,7 +257,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             if self.qtile.core.name == "x11":
                 depth = (
                     32
-                    if has_transparency(self.background)
+                    if (has_transparency(self.background) and not self.fake_transparency)
                     else self.qtile.core.conn.default_screen.root_depth
                 )
 
@@ -628,6 +629,9 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 self.drawer.draw(offsetx=end, width=self.length - end)
             else:
                 self.drawer.draw(offsety=end, height=self.length - end)
+        
+        if self.fake_transparency:
+            self.drawer.add_pseudo_transparency()
 
     @expose_command()
     def info(self):
