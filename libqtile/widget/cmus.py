@@ -106,18 +106,19 @@ class Cmus(base.ThreadPoolText):
                 else:
                     self.layout.colour = self.noplay_color
             self.local = info["file"].startswith("/")
-            title = info["title"]
+            title = "{play_icon}" + info["title"]
             if self.local:
                 now_playing = self.format.format(**info)
                 if not info["artist"] and not info["title"]:
                     file_path = info["file"]
-                    file_path = file_path.split("/")[-1]
-                    now_playing = file_path
+                    file_path = "{play_icon}" + file_path.split("/")[-1]
+                    now_playing = file_path.format(**info)
             else:
                 if info["stream"]:
-                    now_playing = info["stream"]
+                    stream_title = "{play_icon}" + info["stream"]
+                    now_playing = stream_title.format(**info)
                 else:
-                    now_playing = title
+                    now_playing = title.format(**info)
         return pangocffi.markup_escape_text(now_playing)
 
     def play(self):
