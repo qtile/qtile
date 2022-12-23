@@ -176,7 +176,7 @@ class PulseVolume(Volume):
 
     @expose_command()
     def increase_vol(self, value=None):
-        if value is None:
+        if not value:
             value = self.step
         base = self.default_sink["base_volume"]
         volume = ffi.new(
@@ -197,7 +197,7 @@ class PulseVolume(Volume):
 
     @expose_command()
     def decrease_vol(self, value=None):
-        if value is None:
+        if not value:
             value = self.step
         volume_level = int(value * self.default_sink["base_volume"] / 100)
         if not volume_level and max(self.default_sink["values"]) == 0:
@@ -249,5 +249,5 @@ class PulseVolume(Volume):
         if self.theme_path:
             self.setup_images()
         self.poll()
-        if self.update_interval is not None:
+        if self.update_interval:
             self.timeout_add(self.update_interval, self.timer_setup)
