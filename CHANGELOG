@@ -30,6 +30,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Add ability to add a group at a specified index
         - Add ability to open the `WidgetBox` widgets at startup.
         - Add ability to swap focused window based on index, and change the order of windows inside current group
+        - Add ability to update the widget only once if `update_interval` is None.
     * bugfixes
         - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
         - Fix `Notify` bug when apps close notifications.
