@@ -38,6 +38,12 @@ def qtile_on_sink_update(context, event_type, sink_index, userdata):
 
 class PulseVolume(Volume):
     defaults = [
+        (
+            "update_interval",
+            None,
+            "Update time in seconds."
+            " If set to None, update only on pulse audio server events.",
+        ),
         ("limit_max_volume", False, "Limit maximum volume to 100%"),
     ]
 
