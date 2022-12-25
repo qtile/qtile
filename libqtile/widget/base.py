@@ -721,8 +721,7 @@ class InLoopPollText(_TextBox):
         (
             "update_interval",
             600,
-            "Update interval in seconds, if none, the "
-            "widget updates whenever the event loop is idle.",
+            "Update interval in seconds, if none, the widget updates only once.",
         ),
     ]  # type: list[tuple[str, Any, str]]
 
@@ -777,7 +776,7 @@ class ThreadPoolText(_TextBox):
         (
             "update_interval",
             600,
-            "Update interval in seconds, if none, the " "widget updates whenever it's done.",
+            "Update interval in seconds, if none, the widget updates only once.",
         ),
     ]  # type: list[tuple[str, Any, str]]
 
@@ -799,8 +798,6 @@ class ThreadPoolText(_TextBox):
 
                     if self.update_interval is not None:
                         self.timeout_add(self.update_interval, self.timer_setup)
-                    else:
-                        self.timer_setup()
 
                 except Exception:
                     logger.exception("Failed to reschedule.")
