@@ -199,13 +199,13 @@ class Volume(base._TextBox):
             if self.get_volume_command:
                 get_volume_cmd = self.get_volume_command
 
-            mixer_out = subprocess.getoutput(get_volume_cmd)
+            mixer_out = self.call_process(get_volume_cmd)
         except subprocess.CalledProcessError:
             return -1
 
         check_mute = mixer_out
         if self.check_mute_command:
-            check_mute = subprocess.getoutput(self.check_mute_command)
+            check_mute = self.call_process(self.check_mute_command)
 
         if self.check_mute_string in check_mute:
             return -1
