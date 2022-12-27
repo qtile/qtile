@@ -107,7 +107,7 @@ def load_battery(**config) -> _Battery:
     """
     system = platform.system()
     if system == "FreeBSD":
-        return _FreeBSDBattery(str(config["battery"]))
+        return _FreeBSDBattery(str(config.get("battery", 0)))
     elif system == "Linux":
         return _LinuxBattery(**config)
     else:
