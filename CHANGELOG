@@ -31,6 +31,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Add ability to spawn the `WidgetBox` widget opened.
         - Add ability to swap focused window based on index, and change the order of windows inside current group
         - Add `move_to_slice` command to move current window to single layout in `Slice` layout
+        - Add ability to force update a `OpenWeather` widget on `Button1` mouse callback.
     * bugfixes
         - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
         - Fix `Notify` bug when apps close notifications.

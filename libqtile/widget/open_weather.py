@@ -260,6 +260,7 @@ class OpenWeather(GenPollUrl):
     def __init__(self, **config):
         GenPollUrl.__init__(self, **config)
         self.add_defaults(OpenWeather.defaults)
+        self.add_callbacks({"Button1": self.force_update})
         self.symbols.update(self.weather_symbols)
 
     @property
