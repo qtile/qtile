@@ -38,6 +38,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Fix config being reevaluated twice during reload (e.g. all hooks from config were doubled)
         - Fix `PulseVolume` high CPU usage when update_interval set to 0.
         - Fix `Battery` widget on FreeBSD without explicit `battery` index given.
+        - Fix laggy resize in X11 by limiting the MotionNotify fps to a default of 60. This is configurable per screen with the x11_drag_polling_rate variable.
     * python version support
         - We have added support for python 3.11 and pypy 3.9.
         - python 3.7, 3.8 and pypy 3.7 are not longer supported.
