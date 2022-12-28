@@ -60,7 +60,7 @@ from libqtile.utils import (
 from libqtile.widget.base import _Widget
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
+    from typing import Any, Callable, Optional, Tuple, Union
 
     from typing_extensions import Literal
 
