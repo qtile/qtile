@@ -162,6 +162,9 @@ class Core(base.Core):
             | xcbq.PointerMotionHintMask
         )
 
+        # The last time we were handling a MotionNotify event
+        self._last_motion_time = 0
+
     @property
     def name(self):
         return "x11"
@@ -637,6 +640,12 @@ class Core(base.Core):
     def handle_MotionNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
+        # Limit the motion notify events from happening too frequently
+        # Here we limit it to the config value
+        resize_fps = self.qtile.current_screen.x11_drag_polling_rate
+        if (event.time - self._last_motion_time) <= (1000 / resize_fps):
+            return
+        self._last_motion_time = event.time
         self.qtile.process_button_motion(event.event_x, event.event_y)
 
     def handle_ConfigureRequest(self, event):  # noqa: N802
