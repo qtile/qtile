@@ -612,14 +612,38 @@ class Core(base.Core):
     def fake_KeyPress(self, event) -> None:
         xtest = self.conn.conn(xcffib.xtest.key)
         # First release the key as it is possibly already pressed
-        xtest.FakeInput(3, event.detail, xcffib.xproto.Time.CurrentTime, event.root, event.root_x, event.root_y, 0)
+        xtest.FakeInput(
+            3,
+            event.detail,
+            xcffib.xproto.Time.CurrentTime,
+            event.root,
+            event.root_x,
+            event.root_y,
+            0,
+        )
         self.flush()
         # Fake input by...
         # Presssing the key
-        xtest.FakeInput(2, event.detail, xcffib.xproto.Time.CurrentTime, event.root, event.root_x, event.root_y, 0)
+        xtest.FakeInput(
+            2,
+            event.detail,
+            xcffib.xproto.Time.CurrentTime,
+            event.root,
+            event.root_x,
+            event.root_y,
+            0,
+        )
         self.flush()
         # And then releasing again
-        xtest.FakeInput(3, event.detail, xcffib.xproto.Time.CurrentTime, event.root, event.root_x, event.root_y, 0)
+        xtest.FakeInput(
+            3,
+            event.detail,
+            xcffib.xproto.Time.CurrentTime,
+            event.root,
+            event.root_x,
+            event.root_y,
+            0,
+        )
         self.flush()
 
     def handle_KeyPress(self, event, *, simulated=False) -> None:  # noqa: N802

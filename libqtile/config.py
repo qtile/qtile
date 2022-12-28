@@ -70,7 +70,15 @@ class Key:
         Configures when we swallow the key binding. (Optional)
         Setting it to False will forward the key binding to the focused window after the commands have been executed.
     """
-    def __init__(self, modifiers: list[str], key: str, *commands: LazyCall, desc: str = "", swallow: bool = True) -> None:
+
+    def __init__(
+        self,
+        modifiers: list[str],
+        key: str,
+        *commands: LazyCall,
+        desc: str = "",
+        swallow: bool = True,
+    ) -> None:
         self.modifiers = modifiers
         self.key = key
         self.commands = commands
@@ -110,6 +118,7 @@ class KeyChord:
         Configures when we swallow the key binding of the chord. (Optional)
         Setting it to False will forward the key binding to the focused window after the commands have been executed.
     """
+
     def __init__(
         self,
         modifiers: list[str],
@@ -145,7 +154,9 @@ class KeyChord:
 
 
 class Mouse:
-    def __init__(self, modifiers: list[str], button: str, *commands: LazyCall, swallow: bool = True):
+    def __init__(
+        self, modifiers: list[str], button: str, *commands: LazyCall, swallow: bool = True
+    ):
         self.modifiers = modifiers
         self.button = button
         self.commands = commands
