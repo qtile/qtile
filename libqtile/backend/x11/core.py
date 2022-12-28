@@ -166,6 +166,8 @@ class Core(base.Core):
 
         # The last motion notify event that we still need to handle
         self._motion_notify: xcffib.Event | None = None
+        # The last time we were handling a MotionNotify event
+        self._last_motion_time = 0
 
     @property
     def name(self):
@@ -677,6 +679,15 @@ class Core(base.Core):
     def handle_MotionNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
+        # Limit the motion notify events from happening too frequently
+        # As we already handle motion notify events "later", the default is None
+        # So we also need to check if this has to be done in the first place
+        resize_fps = self.qtile.current_screen.x11_drag_polling_rate
+        if resize_fps is not None and (event.time - self._last_motion_time) <= (
+            1000 / resize_fps
+        ):
+            return
+        self._last_motion_time = event.time
         self.qtile.process_button_motion(event.event_x, event.event_y)
 
     def handle_ConfigureRequest(self, event):  # noqa: N802

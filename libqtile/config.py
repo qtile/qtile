@@ -418,6 +418,8 @@ class Screen(CommandObject):
     resized to fill it. If the mode is ``"stretch"``, the image is stretched to fit all
     of it into the screen.
 
+    The ``x11_drag_polling_rate`` parameter specifies the rate for drag events in the X11 backend. By default this is set to None, indicating no limit. Because in the X11 backend we already handle motion notify events later, the performance should already be okay. However, to limit these events further you can use this variable and e.g. set it to your monitor refresh rate. 60 would mean that we handle a drag event 60 times per second.
+
     """
 
     group: _Group
@@ -431,6 +433,7 @@ class Screen(CommandObject):
         right: BarType | None = None,
         wallpaper: str | None = None,
         wallpaper_mode: str | None = None,
+        x11_drag_polling_rate: int | None = None,
         x: int | None = None,
         y: int | None = None,
         width: int | None = None,
@@ -442,6 +445,7 @@ class Screen(CommandObject):
         self.right = right
         self.wallpaper = wallpaper
         self.wallpaper_mode = wallpaper_mode
+        self.x11_drag_polling_rate = x11_drag_polling_rate
         self.qtile: Qtile | None = None
         # x position of upper left corner can be > 0
         # if one screen is "right" of the other
