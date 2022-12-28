@@ -784,6 +784,7 @@ class ThreadPoolText(_TextBox):
     def __init__(self, text, **config):
         super().__init__(text, **config)
         self.add_defaults(ThreadPoolText.defaults)
+        self.add_callbacks({"Button1": self.force_update})
 
     def timer_setup(self):
         def on_done(future):

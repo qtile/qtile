@@ -61,10 +61,6 @@ class GenPollUrl(base.ThreadPoolText):
         if self.data and not isinstance(self.data, str):
             self.data = json.dumps(self.data).encode()
 
-    def _configure(self, qtile, bar):
-        base.ThreadPoolText._configure(self, qtile, bar)
-        self.add_callbacks({"Button1": self.force_update})
-
     def fetch(self):
         req = Request(self.url, self.data, self.headers)
         res = urlopen(req)
@@ -111,10 +107,6 @@ class GenPollCommand(base.ThreadPoolText):
     def __init__(self, **config):
         base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(GenPollCommand.defaults)
-
-    def _configure(self, qtile, bar):
-        base.ThreadPoolText._configure(self, qtile, bar)
-        self.add_callbacks({"Button1": self.force_update})
 
     def poll(self):
         process = subprocess.run(
