@@ -37,22 +37,13 @@ class SwallowConfig(Config):
             "k",
             lazy.function(swallow_nop),
         ),
-        config.Key(
-            ["control"],
-            "j",
-            lazy.function(swallow_nop),
-            swallow=False
-        ),
-        config.Key(
-            ["control"],
-            "i",
-            lazy.function(swallow_nop).when(layout='idonotexist')
-        ),
+        config.Key(["control"], "j", lazy.function(swallow_nop), swallow=False),
+        config.Key(["control"], "i", lazy.function(swallow_nop).when(layout="idonotexist")),
         config.Key(
             ["control"],
             "o",
-            lazy.function(swallow_nop).when(layout='idonotexist'),
-            lazy.function(swallow_nop)
+            lazy.function(swallow_nop).when(layout="idonotexist"),
+            lazy.function(swallow_nop),
         ),
     ]
 
@@ -62,22 +53,13 @@ class SwallowConfig(Config):
             "Button1",
             lazy.function(swallow_nop),
         ),
-        config.Click(
-            ["control"],
-            "Button3",
-            lazy.function(swallow_nop),
-            swallow=False
-        ),
-        config.Click(
-            ["mod4"],
-            "Button3",
-            lazy.function(swallow_nop).when(layout='idonotexist')
-        ),
+        config.Click(["control"], "Button3", lazy.function(swallow_nop), swallow=False),
+        config.Click(["mod4"], "Button3", lazy.function(swallow_nop).when(layout="idonotexist")),
         config.Click(
             [],
             "Button3",
-            lazy.function(swallow_nop).when(layout='idonotexist'),
-            lazy.function(swallow_nop)
+            lazy.function(swallow_nop).when(layout="idonotexist"),
+            lazy.function(swallow_nop),
         ),
     ]
 
@@ -90,18 +72,20 @@ def send_process_key_event(manager, key):
     # Assert if eval successful
     assert output[0]
     # Convert the string to a bool
-    return output[1] == 'True'
+    return output[1] == "True"
 
 
 # Helper to send process_button_click to the core manager
 # It also looks up the button code and mask to pass to it
 def send_process_button_click(manager, mouse):
     modmask = xcbq.translate_masks(mouse.modifiers)
-    output = manager.c.eval(f"self.process_button_click({mouse.button_code}, {modmask}, {0}, {0})")
+    output = manager.c.eval(
+        f"self.process_button_click({mouse.button_code}, {modmask}, {0}, {0})"
+    )
     # Assert if eval successful
     assert output[0]
     # Convert the string to a bool
-    return output[1] == 'True'
+    return output[1] == "True"
 
 
 def test_swallow(manager_nospawn):
