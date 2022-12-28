@@ -25,6 +25,7 @@ import contextlib
 import os
 import time
 import typing
+from collections import defaultdict
 
 import pywayland
 import pywayland.server
@@ -1286,26 +1287,18 @@ class Core(base.Core, wlrq.HasListeners):
     @expose_command()
     def get_inputs(self) -> dict[str, list[dict[str, str]]]:
         """Get information on all input devices."""
-        info = {}
-        device_lists: dict[str, list[inputs._Device]] = {
-            "type:keyboard": self.keyboards,  # type: ignore
-            "type:pointer": self._pointers,  # type: ignore
-        }
+        info: defaultdict[str, list[dict]] = defaultdict(list)
+        devices: list[inputs._Device] = self.keyboards + self._pointers  # type: ignore
 
-        for type_key, devices in device_lists.items():
-            type_info = []
+        for dev in devices:
+            type_key, identifier = dev.get_info()
+            type_info = dict(
+                name=dev.wlr_device.name,
+                identifier=identifier,
+            )
+            info[type_key].append(type_info)
 
-            for dev in devices:
-                type_info.append(
-                    dict(
-                        name=dev.wlr_device.name,
-                        identifier=dev.get_info()[1],
-                    )
-                )
-
-            info[type_key] = type_info
-
-        return info
+        return dict(info)
 
     def get_mouse_position(self) -> tuple[int, int]:
         """Get mouse coordinates."""
