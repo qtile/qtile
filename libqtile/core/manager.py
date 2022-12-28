@@ -1663,7 +1663,7 @@ class Qtile(CommandObject):
             screen = self.current_screen
             is_show = None
             for bar in [screen.left, screen.right, screen.top, screen.bottom]:
-                if bar:
+                if isinstance(bar, libqtile.bar.Bar):
                     if is_show is None:
                         is_show = not bar.is_show()
                     bar.show(is_show)
