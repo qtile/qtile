@@ -130,7 +130,7 @@ class Volume(base._TextBox):
             cmd.extend(["-D", str(self.device)])
 
         cmd.extend([x for x in args])
-        # Escape existing quotation marks and construct the command with adequate qutation marks
+        # Escape existing quotation marks and construct the command with adequate quotation marks
         return " ".join(map(lambda x: r'"' + x.replace(r'"', r'\"') + r'"', cmd))
 
     def button_press(self, x, y, button):
