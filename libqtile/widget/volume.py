@@ -130,7 +130,8 @@ class Volume(base._TextBox):
             cmd.extend(["-D", str(self.device)])
 
         cmd.extend([x for x in args])
-        return cmd
+        # Escape existing quotation marks and construct the command with adequate qutation marks
+        return " ".join(map(lambda x: r'"' + x.replace(r'"', r'\"') + r'"', cmd))
 
     def button_press(self, x, y, button):
         base._TextBox.button_press(self, x, y, button)
@@ -199,13 +200,13 @@ class Volume(base._TextBox):
             if self.get_volume_command:
                 get_volume_cmd = self.get_volume_command
 
-            mixer_out = self.call_process(get_volume_cmd)
+            mixer_out = subprocess.getoutput(get_volume_cmd)
         except subprocess.CalledProcessError:
             return -1
 
         check_mute = mixer_out
         if self.check_mute_command:
-            check_mute = self.call_process(self.check_mute_command)
+            check_mute = subprocess.getoutput(self.check_mute_command)
 
         if self.check_mute_string in check_mute:
             return -1
@@ -229,7 +230,7 @@ class Volume(base._TextBox):
             subprocess.call(self.volume_up_command, shell=True)
         else:
             subprocess.call(
-                self.create_amixer_command("-q", "sset", self.channel, "{}%+".format(self.step))
+                self.create_amixer_command("-q", "sset", self.channel, "{}%+".format(self.step)), shell=True
             )
 
     @expose_command()
@@ -238,7 +239,7 @@ class Volume(base._TextBox):
             subprocess.call(self.volume_down_command, shell=True)
         else:
             subprocess.call(
-                self.create_amixer_command("-q", "sset", self.channel, "{}%-".format(self.step))
+                self.create_amixer_command("-q", "sset", self.channel, "{}%-".format(self.step)), shell=True
             )
 
     @expose_command()
@@ -246,7 +247,7 @@ class Volume(base._TextBox):
         if self.mute_command is not None:
             subprocess.call(self.mute_command, shell=True)
         else:
-            subprocess.call(self.create_amixer_command("-q", "sset", self.channel, "toggle"))
+            subprocess.call(self.create_amixer_command("-q", "sset", self.channel, "toggle"), shell=True) 
 
     @expose_command()
     def run_app(self):
