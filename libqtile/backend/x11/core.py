@@ -609,42 +609,27 @@ class Core(base.Core):
             except IndexError:
                 logger.debug("Invalid desktop index: %s", index)
 
+    def fake_xtest(self, xtest, event, input_type) -> None:
+        xtest.FakeInput(
+            input_type,
+            event.detail,
+            xcffib.xproto.Time.CurrentTime,
+            event.root,
+            event.root_x,
+            event.root_y,
+            0,
+        )
+        self.flush()
+
     def fake_KeyPress(self, event) -> None:
         xtest = self.conn.conn(xcffib.xtest.key)
         # First release the key as it is possibly already pressed
-        xtest.FakeInput(
-            3,
-            event.detail,
-            xcffib.xproto.Time.CurrentTime,
-            event.root,
-            event.root_x,
-            event.root_y,
-            0,
-        )
-        self.flush()
+        self.fake_xtest(xtest, event, 3)
         # Fake input by...
         # Presssing the key
-        xtest.FakeInput(
-            2,
-            event.detail,
-            xcffib.xproto.Time.CurrentTime,
-            event.root,
-            event.root_x,
-            event.root_y,
-            0,
-        )
-        self.flush()
+        self.fake_xtest(xtest, event, 2)
         # And then releasing again
-        xtest.FakeInput(
-            3,
-            event.detail,
-            xcffib.xproto.Time.CurrentTime,
-            event.root,
-            event.root_x,
-            event.root_y,
-            0,
-        )
-        self.flush()
+        self.fake_xtest(xtest, event, 3)
 
     def handle_KeyPress(self, event, *, simulated=False) -> None:  # noqa: N802
         assert self.qtile is not None
