@@ -773,7 +773,7 @@ class Qtile(CommandObject):
                         status, val = self.server.call((i.selectors, i.name, i.args, i.kwargs))
                         if status in (interface.ERROR, interface.EXCEPTION):
                             logger.error("Mouse command error %s: %s", i.name, val)
-                        handled = m.swallow
+                        handled = True
             elif isinstance(m, Drag):
                 if m.start:
                     i = m.start
@@ -793,7 +793,7 @@ class Qtile(CommandObject):
 
                 self._drag = (x, y, val[0], val[1], m.commands)
                 self.core.grab_pointer()
-                handled = m.swallow
+                handled = True
 
         return handled
 

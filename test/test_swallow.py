@@ -47,22 +47,6 @@ class SwallowConfig(Config):
         ),
     ]
 
-    mouse = [
-        config.Click(
-            [],
-            "Button1",
-            lazy.function(swallow_nop),
-        ),
-        config.Click(["control"], "Button3", lazy.function(swallow_nop), swallow=False),
-        config.Click(["mod4"], "Button3", lazy.function(swallow_nop).when(layout="idonotexist")),
-        config.Click(
-            [],
-            "Button3",
-            lazy.function(swallow_nop).when(layout="idonotexist"),
-            lazy.function(swallow_nop),
-        ),
-    ]
-
 
 # Helper to send process_key_event to the core manager
 # It also looks up the keysym and mask to pass to it
@@ -102,24 +86,11 @@ def test_swallow(manager_nospawn):
     for index, key in enumerate(SwallowConfig.keys):
         assert send_process_key_event(manager, key) == expectedswallow[index]
 
-    # Loop over all the mouse bindings in the config and assert
-    for index, binding in enumerate(SwallowConfig.mouse):
-        assert send_process_button_click(manager, binding) == expectedswallow[index]
-
     not_used_key = config.Key(
         ["control"],
         "h",
         lazy.function(swallow_nop),
     )
 
-    not_used_mouse = config.Click(
-        [],
-        "Button2",
-        lazy.function(swallow_nop),
-    )
-
     # This key is not defined in the config so it should not be handled
     assert not send_process_key_event(manager, not_used_key)
-
-    # This mouse binding is not defined in the config so it should not be handled
-    assert not send_process_button_click(manager, not_used_mouse)

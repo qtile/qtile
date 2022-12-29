@@ -520,7 +520,7 @@ class Core(base.Core):
                 True,
                 self._root.wid,
                 eventmask,
-                xcffib.xproto.GrabMode.Sync,
+                xcffib.xproto.GrabMode.Async,
                 xcffib.xproto.GrabMode.Async,
                 xcffib.xproto.Atom._None,
                 xcffib.xproto.Atom._None,
@@ -658,26 +658,12 @@ class Core(base.Core):
 
         button_code = event.detail
         state = event.state & self._valid_mask
-        root = False
 
         if not event.child:  # The client's handle_ButtonPress will focus it
-            root = True
             self.focus_by_click(event)
 
-        handled = self.qtile.process_button_click(
-            button_code, state, event.event_x, event.event_y
-        )
-
-        # Prevent double clicks on the root window if handled was False
-        if root:
-            handled = True
-
-        if handled:
-            # Swallow the event
-            self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.SyncPointer, event.time)
-        else:
-            # Forward the event to any focused client
-            self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, event.time)
+        self.qtile.process_button_click(button_code, state, event.event_x, event.event_y)
+        self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, event.time)
 
     def handle_ButtonRelease(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
