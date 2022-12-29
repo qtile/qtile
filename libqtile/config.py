@@ -369,7 +369,10 @@ class Screen(CommandObject):
     resized to fill it. If the mode is ``"stretch"``, the image is stretched to fit all
     of it into the screen.
 
-    The ``x11_drag_polling_rate`` parameter specifies the rate for drag events in the X11 backend. By default this is set to 60, but if you prefer it you can set it to your monitor's refresh rate. 60 would mean that we handle a drag event 60 times per second.
+    The ``x11_drag_polling_rate`` parameter specifies the rate for drag events in the X11
+    backend. By default this is set to 120, but if you prefer it you can set it lower for
+    better performance or higher if you have a high refresh rate monitor. 120 would mean
+    that we handle a drag event 120 times per second.
 
     """
 
@@ -384,7 +387,7 @@ class Screen(CommandObject):
         right: BarType | None = None,
         wallpaper: str | None = None,
         wallpaper_mode: str | None = None,
-        x11_drag_polling_rate: int = 60,
+        x11_drag_polling_rate: int = 120,
         x: int | None = None,
         y: int | None = None,
         width: int | None = None,
