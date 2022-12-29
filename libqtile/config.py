@@ -154,15 +154,12 @@ class KeyChord:
 
 
 class Mouse:
-    def __init__(
-        self, modifiers: list[str], button: str, *commands: LazyCall, swallow: bool = True
-    ):
+    def __init__(self, modifiers: list[str], button: str, *commands: LazyCall) -> None:
         self.modifiers = modifiers
         self.button = button
         self.commands = commands
         self.button_code = int(self.button.replace("Button", ""))
         self.modmask: int = 0
-        self.swallow = swallow
 
 
 class Drag(Mouse):
