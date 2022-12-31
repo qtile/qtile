@@ -1379,7 +1379,7 @@ class Window(_Window, base.Window):
             )
             return
 
-        if self._float_state == FloatStates.FULLSCREEN:
+        if self._float_state == FloatStates.FULLSCREEN and self.qtile.config.auto_minimize:
             self.floating = False
             return
 
