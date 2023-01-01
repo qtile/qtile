@@ -1276,6 +1276,7 @@ class Window(_Window, base.Window):
     def __init__(self, window, qtile):
         _Window.__init__(self, window, qtile)
         self._wm_class: list[str] | None = None
+        self.ignored_minimize = False
         self.update_wm_class()
         self.update_name()
         self.set_group()
@@ -1379,7 +1380,7 @@ class Window(_Window, base.Window):
             )
             return
 
-        if self._float_state == FloatStates.FULLSCREEN and self.qtile.config.auto_minimize:
+        if self._float_state == FloatStates.FULLSCREEN and self.ignored_minimize:
             self.floating = False
             return
 
@@ -1727,8 +1728,12 @@ class Window(_Window, base.Window):
             state = data.data32[0]
             if state == NormalState:
                 self.minimized = False
-            elif state == IconicState and self.qtile.config.auto_minimize:
-                self.minimized = True
+                self.ignored_minimize = False
+            elif state == IconicState:
+                if self.qtile.config.auto_minimize:
+                    self.minimized = True
+                else:
+                    self.ignored_minimize = True
         else:
             logger.debug("Unhandled client message: %s", atoms.get_name(opcode))
 
