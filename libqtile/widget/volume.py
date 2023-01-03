@@ -228,7 +228,9 @@ class Volume(base._TextBox):
         if self.volume_up_command is not None:
             volume_up_cmd = self.volume_up_command
         else:
-            volume_up_cmd = self.create_amixer_command("-q", "sset", self.channel, "{}%+".format(self.step))
+            volume_up_cmd = self.create_amixer_command(
+                "-q", "sset", self.channel, "{}%+".format(self.step)
+            )
 
         subprocess.call(volume_up_cmd, shell=True)
 
@@ -237,7 +239,9 @@ class Volume(base._TextBox):
         if self.volume_down_command is not None:
             volume_down_cmd = self.volume_down_command
         else:
-            volume_down_cmd = self.create_amixer_command("-q", "sset", self.channel, "{}%-".format(self.step))
+            volume_down_cmd = self.create_amixer_command(
+                "-q", "sset", self.channel, "{}%-".format(self.step)
+            )
 
         subprocess.call(volume_down_cmd, shell=True)
 
