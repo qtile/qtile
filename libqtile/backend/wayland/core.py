@@ -24,8 +24,8 @@ import asyncio
 import contextlib
 import os
 import time
-import typing
 from collections import defaultdict
+from typing import TYPE_CHECKING, cast
 
 import pywayland
 import pywayland.server
@@ -72,6 +72,7 @@ from wlroots.wlr_types.output_power_management_v1 import (
     OutputPowerV1SetModeEvent,
 )
 from wlroots.wlr_types.pointer_constraints_v1 import PointerConstraintsV1, PointerConstraintV1
+from wlroots.wlr_types.scene import Scene, SceneBuffer, SceneNodeType, SceneSurface, SceneTree
 from wlroots.wlr_types.server_decoration import (
     ServerDecorationManager,
     ServerDecorationManagerMode,
@@ -86,7 +87,7 @@ from libqtile.backend.wayland.output import Output
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from typing import Any, Generator
 
     from pywayland.server import Listener
@@ -139,12 +140,6 @@ class Core(base.Core, wlrq.HasListeners):
         # These windows have not been mapped yet; they'll get managed when mapped
         self.pending_windows: set[window.WindowType] = set()
 
-        # mapped_windows contains just regular windows
-        self.mapped_windows: list[window.WindowType] = []  # Ascending in Z
-        # stacked_windows also contains layer_shell windows from the current output
-        self.stacked_windows: list[window.WindowType] = []  # Ascending in Z
-        self._current_output: Output | None = None
-
         # set up inputs
         self.keyboards: list[inputs.Keyboard] = []
         self._pointers: list[inputs.Pointer] = []
@@ -175,6 +170,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         # set up outputs
         self.outputs: list[Output] = []
+        self._current_output: Output | None = None
         self.add_listener(self.backend.new_output_event, self._on_new_output)
         self.output_layout = OutputLayout()
         self.add_listener(self.output_layout.change_event, self._on_output_layout_change)
@@ -208,6 +204,8 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(self.xdg_shell.new_surface_event, self._on_new_xdg_surface)
         self.layer_shell = LayerShellV1(self.display)
         self.add_listener(self.layer_shell.new_surface_event, self._on_new_layer_surface)
+        self.scene = Scene(self.output_layout)
+        self._node = self.scene.tree.node
 
         # Add support for additional protocols
         ExportDmabufManagerV1(self.display)
@@ -357,19 +355,21 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_new_output(self, _listener: Listener, wlr_output: wlrOutput) -> None:
         logger.debug("Signal: backend new_output_event")
-
-        wlr_output.init_render(self._allocator, self.renderer)
-        wlr_output.set_mode(wlr_output.preferred_mode())
-        wlr_output.enable()
-        wlr_output.commit()
-
-        self.outputs.append(Output(self, wlr_output))
-        # Put new output at far right
-        x = self.output_layout.get_box().width
-        self.output_layout.add(wlr_output, x, 0)
+        output = Output(self, wlr_output)
+        self.outputs.append(output)
 
         if not self._current_output:
-            self._current_output = self.outputs[0]
+            self._current_output = output
+
+        # This is run during tests, when we want to fix the output's geometry
+        if wlr_output.is_headless and "PYTEST_CURRENT_TEST" in os.environ:
+            if len(self.outputs) == 1:
+                # First test output
+                wlr_output.set_custom_mode(800, 600, 0)
+            else:
+                # Second test output
+                wlr_output.set_custom_mode(640, 480, 0)
+            wlr_output.commit()
 
     def _on_output_layout_change(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: output_layout change_event")
@@ -410,12 +410,28 @@ class Core(base.Core, wlrq.HasListeners):
         if not self._cursor_state.hidden:
             self.cursor.set_surface(event.surface, event.hotspot)
 
-    def _on_new_xdg_surface(self, _listener: Listener, surface: XdgSurface) -> None:
+    def _on_new_xdg_surface(self, _listener: Listener, xdg_surface: XdgSurface) -> None:
         logger.debug("Signal: xdg_shell new_surface_event")
-        if surface.role == XdgSurfaceRole.TOPLEVEL:
-            assert self.qtile is not None
-            win = xdgwindow.XdgWindow(self, self.qtile, surface)
-            self.pending_windows.add(win)
+
+        if xdg_surface.role == XdgSurfaceRole.POPUP:
+            # We must add xdg popups to the scene graph so they get rendered. The
+            # wlroots scene graph provides a helper for this, but to use it we must
+            # provide the proper parent scene node of the xdg popup. To enable this, we
+            # always set the user data field of xdg_surfaces to the corresponding scene
+            # node.
+            parent_xdg_surface = XdgSurface.from_surface(xdg_surface.popup.parent)
+            parent_scene_tree = cast(SceneTree, parent_xdg_surface.data)
+            xdg_surface.data = self.scene.xdg_surface_create(parent_scene_tree, xdg_surface)
+            return
+
+        if xdg_surface.role != XdgSurfaceRole.TOPLEVEL:
+            logger.warning("XDG shell surface did not have role set. Ignoring.")
+            return
+
+        assert self.qtile is not None
+        scene_tree = self.scene.xdg_surface_create(self.scene.tree, xdg_surface)
+        win = xdgwindow.XdgWindow(self, self.qtile, xdg_surface, scene_tree)
+        self.pending_windows.add(win)
 
     def _on_cursor_axis(self, _listener: Listener, event: pointer.PointerEventAxis) -> None:
         handled = False
@@ -757,7 +773,6 @@ class Core(base.Core, wlrq.HasListeners):
                 current_output = current_wlr_output.data
                 if self._current_output is not current_output:
                     self._current_output = current_output
-                    self.stack_windows()
 
         if self.live_dnd:
             self.live_dnd.position(cx, cy)
@@ -1101,54 +1116,36 @@ class Core(base.Core, wlrq.HasListeners):
     def _under_pointer(self) -> tuple[window.WindowType, Surface | None, float, float] | None:
         assert self.qtile is not None
 
-        cx = self.cursor.x
-        cy = self.cursor.y
+        if maybe_node := self._node.node_at(self.cursor.x, self.cursor.y):
+            node, sx, sy = maybe_node
 
-        for win in reversed(self.stacked_windows):
-            if isinstance(win, window.Internal):
-                if win.x <= cx <= win.x + win.width and win.y <= cy <= win.y + win.height:
-                    return win, None, 0, 0
-            else:
-                bw = win.borderwidth
-                surface, sx, sy = win.surface.surface_at(cx - win.x - bw, cy - win.y - bw)
-                if surface:
-                    return win, surface, sx, sy
-                if bw:
-                    if win.x <= cx and win.y <= cy:
-                        bw *= 2
-                        if cx <= win.x + win.width + bw and cy <= win.y + win.height + bw:
-                            return win, None, 0, 0
+            if node.type == SceneNodeType.BUFFER:
+                if scene_buffer := SceneBuffer.from_node(node):
+                    if scene_surface := SceneSurface.from_buffer(scene_buffer):
+                        surface = scene_surface.surface
+                        tree = node.parent
+
+                        # Find the node corresponding to the window at the root of this tree
+                        while tree.node.data is None:
+                            tree = tree.node.parent
+                        return tree.node.data, surface, sx, sy
+
+        # TODO: account for borders, returning: win, None, sx, sy
         return None
-
-    def stack_windows(self, restack: window.WindowType | None = None) -> None:
-        """
-        Put all windows of all types in a Z-ordered list.
-
-        A (non-layer_shell) window passed as 'restack' will bubble up the Z order.
-        """
-        if restack:
-            self.mapped_windows.remove(restack)
-            self.mapped_windows.append(restack)
-
-        if self._current_output:
-            layers = self._current_output.layers
-            self.stacked_windows = (
-                layers[LayerShellV1Layer.BACKGROUND]
-                + layers[LayerShellV1Layer.BOTTOM]
-                + self.mapped_windows  # type: ignore
-                + layers[LayerShellV1Layer.TOP]
-                + layers[LayerShellV1Layer.OVERLAY]
-            )
-        else:
-            self.stacked_windows = self.mapped_windows.copy()
 
     def check_idle_inhibitor(self) -> None:
         """
         Checks if any window that is currently mapped has idle inhibitor
         and if so inhibits idle
         """
-        for win in self.mapped_windows:
-            if isinstance(win, (window.Window, window.Static)) and win.is_idle_inhibited:
+        assert self.qtile is not None
+
+        for win in self.qtile.windows_map.values():
+            if (
+                isinstance(win, (window.Window, window.Static))
+                and win.mapped
+                and win.is_idle_inhibited
+            ):
                 self.idle.set_enabled(self.seat, False)
                 break
         else:
@@ -1223,7 +1220,6 @@ class Core(base.Core, wlrq.HasListeners):
         self.output_layout.remove(output.wlr_output)
         if output is self._current_output:
             self._current_output = self.outputs[0] if self.outputs else None
-            self.stack_windows()
 
     def remove_pointer_constraints(self, window: window.Window | window.Static) -> None:
         for pc in self.pointer_constraints.copy():

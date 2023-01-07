@@ -92,8 +92,7 @@ class LayerStatic(Static[LayerSurfaceV1]):
             self.core.stack_windows()
         else:
             self.output.layers[self._layer].remove(self)
-            if self in self.core.stacked_windows:
-                self.core.stacked_windows.remove(self)
+            # TODO remove from scene
 
             if self.reserved_space:
                 self.qtile.free_reserved_space(self.reserved_space, self.screen)
