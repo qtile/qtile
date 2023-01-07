@@ -23,11 +23,11 @@ from __future__ import annotations
 import functools
 import operator
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import cairocffi
 from pywayland.server import Listener
-from wlroots.wlr_types import Texture
+from wlroots.wlr_types import SceneTree, Texture, data_device_manager
 from wlroots.wlr_types.keyboard import KeyboardModifier
 
 from libqtile.log_utils import logger
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 
     from pywayland.server import Signal
     from wlroots import xwayland
-    from wlroots.wlr_types import Surface, data_device_manager
+    from wlroots.wlr_types import Surface
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.output import Output
@@ -183,20 +183,21 @@ class Dnd(HasListeners):
     def __init__(self, core: Core, wlr_drag: data_device_manager.Drag):
         self.core = core
         self.wlr_drag = wlr_drag
-        self._outputs: set[Output] = set()
-
         self.x: float = core.cursor.x
         self.y: float = core.cursor.y
         self.width: int = 0  # Set upon surface commit
         self.height: int = 0
 
+        self.icon = cast(data_device_manager.DragIcon, wlr_drag.icon)
         self.add_listener(wlr_drag.destroy_event, self._on_destroy)
-        self.icon = icon = wlr_drag.icon
-        if icon is not None:
-            self.add_listener(icon.map_event, self._on_icon_map)
-            self.add_listener(icon.unmap_event, self._on_icon_unmap)
-            self.add_listener(icon.destroy_event, self._on_icon_destroy)
-            self.add_listener(icon.surface.commit_event, self._on_icon_commit)
+        self.add_listener(self.icon.map_event, self._on_icon_map)
+        self.add_listener(self.icon.unmap_event, self._on_icon_unmap)
+        self.add_listener(self.icon.destroy_event, self._on_icon_destroy)
+        self.add_listener(self.icon.surface.commit_event, self._on_icon_commit)
+
+        tree = SceneTree.subsurface_tree_create(core.layer_trees[4], self.icon.surface)
+        self.node = tree.node
+        self.icon.data = tree
 
     def finalize(self) -> None:
         self.finalize_listeners()
@@ -208,29 +209,25 @@ class Dnd(HasListeners):
 
     def _on_icon_map(self, _listener: Listener, _event: Any) -> None:
         logger.debug("Signal: wlr_drag_icon map")
-        for output in self._outputs:
-            output.damage()
+        # TODO: remove?
 
     def _on_icon_unmap(self, _listener: Listener, _event: Any) -> None:
         logger.debug("Signal: wlr_drag_icon unmap")
-        for output in self._outputs:
-            output.damage()
+        # TODO: remove?
 
     def _on_icon_destroy(self, _listener: Listener, _event: Any) -> None:
         logger.debug("Signal: wlr_drag_icon destroy")
+        # TODO: remove?
 
     def _on_icon_commit(self, _listener: Listener, _event: Any) -> None:
-        if self.icon is not None:
-            self.width = self.icon.surface.current.width
-            self.height = self.icon.surface.current.height
-            self.position(self.core.cursor.x, self.core.cursor.y)
+        self.width = self.icon.surface.current.width
+        self.height = self.icon.surface.current.height
+        self.position(self.core.cursor.x, self.core.cursor.y)
 
     def position(self, cx: float, cy: float) -> None:
         self.x = cx
         self.y = cy
-        self._outputs = {o for o in self.core.outputs if o.contains(self)}
-        for output in self._outputs:
-            output.damage()
+        self.node.set_position(int(cx), int(cy))
 
 
 def get_xwayland_atoms(xwayland: xwayland.XWayland) -> dict[int, str]:
