@@ -206,6 +206,16 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(self.layer_shell.new_surface_event, self._on_new_layer_surface)
         self.scene = Scene(self.output_layout)
         self._node = self.scene.tree.node
+        # Each tree is created above the existing trees
+        self.layer_trees = [
+            SceneTree.create(self.scene.tree),  # Background
+            SceneTree.create(self.scene.tree),  # Bottom
+            SceneTree.create(self.scene.tree),  # Regular windows
+            SceneTree.create(self.scene.tree),  # Top
+            SceneTree.create(self.scene.tree),  # Overlay
+            SceneTree.create(self.scene.tree),  # DragIcon
+        ]
+        self.window_tree = self.layer_trees.pop(2)
 
         # Add support for additional protocols
         ExportDmabufManagerV1(self.display)
@@ -429,7 +439,7 @@ class Core(base.Core, wlrq.HasListeners):
             return
 
         assert self.qtile is not None
-        scene_tree = self.scene.xdg_surface_create(self.scene.tree, xdg_surface)
+        scene_tree = self.scene.xdg_surface_create(self.window_tree, xdg_surface)
         win = xdgwindow.XdgWindow(self, self.qtile, xdg_surface, scene_tree)
         self.pending_windows.add(win)
 

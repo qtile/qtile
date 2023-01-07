@@ -128,7 +128,6 @@ class XWindow(Window[xwayland.Surface]):
     def _on_unmap(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xwindow unmap")
         self.mapped = False
-        self.damage()
         seat = self.core.seat
         if not seat.destroyed:
             if self.surface.surface == seat.keyboard_state.focused_surface:
@@ -288,11 +287,6 @@ class XWindow(Window[xwayland.Surface]):
         if above:
             self.bring_to_front()
 
-        prev_outputs = self._outputs.copy()
-        self._find_outputs()
-        for output in self._outputs | prev_outputs:
-            output.damage()
-
     @expose_command()
     def bring_to_front(self) -> None:
         if self.mapped:
@@ -378,8 +372,6 @@ class XStatic(Static[xwayland.Surface]):
         self._height = height
         self.surface.configure(x, y, self._width, self._height)
         self.paint_borders(bordercolor, borderwidth)
-        self._find_outputs()
-        self.damage()
 
     def _on_set_title(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xstatic set_title")
