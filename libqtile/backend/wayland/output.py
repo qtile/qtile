@@ -124,8 +124,6 @@ class Output(HasListeners):
             # Arrange non-exclusive surface from top to bottom
             self._organise_layer(LayerShellV1Layer(i), full_area, full_area, exclusive=False)
 
-        print(self.layers)
-
     def _organise_layer(
         self,
         layer: LayerShellV1Layer,
