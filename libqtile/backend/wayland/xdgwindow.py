@@ -29,6 +29,7 @@ from wlroots import ffi
 from wlroots.util.box import Box
 from wlroots.util.clock import Timespec
 from wlroots.util.edges import Edges
+from wlroots.wlr_types import SceneTree
 from wlroots.wlr_types.xdg_shell import XdgPopup, XdgSurface, XdgTopLevelWMCapabilities
 
 from libqtile import hook
@@ -43,7 +44,6 @@ from libqtile.log_utils import logger
 if typing.TYPE_CHECKING:
     from typing import Any
 
-    from wlroots.wlr_types.scene import SceneTree
     from wlroots.wlr_types.surface import SubSurface as WlrSubSurface
 
     from libqtile.backend.wayland.core import Core
@@ -62,13 +62,22 @@ WM_CAPABILITIES = (
 class XdgWindow(Window[XdgSurface]):
     """An Wayland client connecting via the xdg shell."""
 
-    def __init__(self, core: Core, qtile: Qtile, surface: XdgSurface, scene_tree: SceneTree):
-        Window.__init__(self, core, qtile, surface, scene_tree)
+    def __init__(self, core: Core, qtile: Qtile, surface: XdgSurface):
+        Window.__init__(self, core, qtile, surface)
 
         self._wm_class = surface.toplevel.app_id
         self.popups: list[XdgPopupWindow] = []
         self.subsurfaces: list[SubSurface] = []
         surface.set_wm_capabilities(WM_CAPABILITIES)
+
+        # Store this object on the scene node for finding the window under the pointer.
+        self.node = core.scene.xdg_surface_create(core.window_tree, surface).node
+        self.node.data = self
+        # Make a new scene tree for this window and its borders, within
+        # `Core.windows_tree`. The window's position within this tree is the same as the
+        # border width (in each of x and y).
+        self.tree = SceneTree.create(self.node.parent)
+        self.node.reparent(self.tree)
 
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
@@ -317,7 +326,10 @@ class XdgWindow(Window[XdgSurface]):
 
     def _to_static(self) -> XdgStatic:
         return XdgStatic(
-            self.core, self.qtile, self.surface, self.wid, self._idle_inhibitors_count
+            self.core,
+            self.qtile,
+            self,
+            self._idle_inhibitors_count,
         )
 
 
@@ -328,12 +340,12 @@ class XdgStatic(Static[XdgSurface]):
         self,
         core: Core,
         qtile: Qtile,
-        surface: XdgSurface,
-        wid: int,
+        win: XdgWindow,
         idle_inhibitor_count: int,
     ):
+        surface = win.surface
         Static.__init__(
-            self, core, qtile, surface, wid, idle_inhibitor_count=idle_inhibitor_count
+            self, core, qtile, surface, win.wid, idle_inhibitor_count=idle_inhibitor_count
         )
         self.subsurfaces: list[SubSurface] = []
 
@@ -347,6 +359,11 @@ class XdgStatic(Static[XdgSurface]):
         self.add_listener(surface.surface.commit_event, self._on_commit)
         self.add_listener(surface.toplevel.set_title_event, self._on_set_title)
         self.add_listener(surface.toplevel.set_app_id_event, self._on_set_app_id)
+
+        # Take control of the scene node and tree
+        self.node = win.node
+        self.tree = win.tree
+        self.node.data = self
 
     def finalize(self) -> None:
         Static.finalize(self)
