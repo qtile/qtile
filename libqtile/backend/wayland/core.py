@@ -437,12 +437,11 @@ class Core(base.Core, wlrq.HasListeners):
             return
 
         if xdg_surface.role != XdgSurfaceRole.TOPLEVEL:
-            logger.warning("XDG shell surface did not have role set. Ignoring.")
+            logger.warning("XDG shell surface did not have role set. Bad client.")
             return
 
         assert self.qtile is not None
-        scene_tree = self.scene.xdg_surface_create(self.window_tree, xdg_surface)
-        win = xdgwindow.XdgWindow(self, self.qtile, xdg_surface, scene_tree)
+        win = xdgwindow.XdgWindow(self, self.qtile, xdg_surface)
         self.pending_windows.add(win)
 
     def _on_cursor_axis(self, _listener: Listener, event: pointer.PointerEventAxis) -> None:

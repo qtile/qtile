@@ -100,7 +100,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     concrete classes are responsible for implementing a few others.
     """
 
-    def __init__(self, core: Core, qtile: Qtile, surface: S, scene_tree: SceneTree):
+    def __init__(self, core: Core, qtile: Qtile, surface: S):
         base.Window.__init__(self)
         self.core = core
         self.qtile = qtile
@@ -133,19 +133,14 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self._borders: list[list[SceneRect]] = []
         self.bordercolor = "000000"
 
-        # Store this object on the scene node for finding the window under the pointer.
-        self.node = scene_tree.node
-        self.node.data = self
-        # Make a new scene tree for this window and its borders, within
-        # `Core.windows_tree`. The window's position within this tree is the same as the
-        # border width (in each of x and y).
-        self.tree = SceneTree.create(scene_tree.node.parent)
-        self.node.reparent(self.tree)
-
     def finalize(self) -> None:
         self.finalize_listeners()
-        self.node.data = None
-        self.tree.node.destroy()
+        if self.node.data:
+            # self.node.data will be None if the X client unmapped itself, in which case
+            # we weren't sure if it might re-map this window, and so we finalized it in
+            # case it was destroying itself.
+            self.node.data = None
+            self.tree.node.destroy()
         if self.ftm_handle:
             self.ftm_handle.destroy()
             self.ftm_handle = None
@@ -651,7 +646,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         width: int | None = None,
         height: int | None = None,
     ) -> None:
-        # The concrete Window type must fire the client_managed hook after it's
+        # The concrete Window class must fire the client_managed hook after it's
         # completed any custom logic.
         self.defunct = True
         if self.group:
@@ -672,7 +667,6 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         win.mapped = True
         win.place(x, y, width, height, 0, None)
         self.qtile.windows_map[self.wid] = win
-        # TODO: pass scene node to new Static object
 
     @expose_command()
     def is_visible(self) -> bool:
@@ -691,7 +685,6 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         qtile: Qtile,
         surface: S,
         wid: int,
-        scene_tree: SceneTree,
         idle_inhibitor_count: int = 0,
     ):
         base.Static.__init__(self)
@@ -714,13 +707,6 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         if surface.data:
             self.ftm_handle = surface.data
             self.add_listener(self.ftm_handle.request_close_event, self._on_foreign_request_close)
-
-        # Store this object on the scene node for finding the window under the pointer.
-        self.node = scene_tree.node
-        self.node.data = self
-        # Make a new scene tree for this window and any popups.
-        self.tree = SceneTree.create(core.scene.tree)
-        self.node.reparent(self.tree)
 
     def finalize(self) -> None:
         self.finalize_listeners()
