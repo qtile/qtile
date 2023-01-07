@@ -335,9 +335,11 @@ class Core(base.Core, wlrq.HasListeners):
         else:
             event.drag.source.destroy()
 
-    def _on_start_drag(self, _listener: Listener, event: Drag) -> None:
+    def _on_start_drag(self, _listener: Listener, wlr_drag: Drag) -> None:
         logger.debug("Signal: seat start_drag")
-        self.live_dnd = wlrq.Dnd(self, event)
+        if not wlr_drag.icon:
+            return
+        self.live_dnd = wlrq.Dnd(self, wlr_drag)
 
     def _on_new_input(self, _listener: Listener, wlr_device: input_device.InputDevice) -> None:
         logger.debug("Signal: backend new_input_event")
