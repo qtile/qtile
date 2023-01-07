@@ -33,6 +33,8 @@ from libqtile.log_utils import logger
 if typing.TYPE_CHECKING:
     from typing import Any
 
+    from wlroots.wlr_types.scene import SceneLayerSurfaceV1
+
     from libqtile.backend.wayland.core import Core
     from libqtile.core.manager import Qtile
     from libqtile.utils import ColorsType
@@ -48,7 +50,9 @@ class LayerStatic(Static[LayerSurfaceV1]):
         surface: LayerSurfaceV1,
         wid: int,
     ):
-        Static.__init__(self, core, qtile, surface, wid)
+        tree = core.layer_trees[surface.pending.layer]
+        self.scene_layer = core.scene.layer_surface_v1_create(tree, surface)
+        Static.__init__(self, core, qtile, surface, wid, self.scene_layer.tree)
         self.subsurfaces: list[SubSurface] = []
 
         self.add_listener(surface.map_event, self._on_map)
@@ -56,7 +60,6 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self.add_listener(surface.destroy_event, self._on_destroy)
         self.add_listener(surface.surface.commit_event, self._on_commit)
 
-        self._layer = LayerShellV1Layer.BACKGROUND
         self.desired_width = 0
         self.desired_height = 0
         if surface.output is None:
@@ -68,8 +71,15 @@ class LayerStatic(Static[LayerSurfaceV1]):
                 self.output = output
                 self.screen = self.output.screen
 
+        # Temporarily set the layer's current state to pending so that we can easily
+        # arrange it.
+        self._layer = surface.pending.layer
+        old_state = surface.current
+        surface.current = surface.pending
         self.mapped = True
-        self._outputs.add(self.output)
+        self.output.organise_layers()
+        surface.current = old_state
+        self.node.reparent(core.layer_trees[old_state.layer])
 
     def finalize(self) -> None:
         Static.finalize(self)
@@ -85,14 +95,11 @@ class LayerStatic(Static[LayerSurfaceV1]):
         if mapped == self._mapped:
             return
         self._mapped = mapped
-
-        self._layer = self.surface.pending.layer
+        self.node.set_enabled(enabled=mapped)
         if mapped:
             self.output.layers[self._layer].append(self)
-            self.core.stack_windows()
         else:
             self.output.layers[self._layer].remove(self)
-            # TODO remove from scene
 
             if self.reserved_space:
                 self.qtile.free_reserved_space(self.reserved_space, self.screen)
@@ -115,32 +122,27 @@ class LayerStatic(Static[LayerSurfaceV1]):
             else:
                 self.core.seat.keyboard_clear_focus()
         self.output.organise_layers()
-        self.damage()
 
     def _on_commit(self, _listener: Listener, _data: Any) -> None:
         output = self.surface.output and self.surface.output.data
         if output and self.output != output:
             prev_output = self.output
             self.output = output
-            self._outputs.remove(prev_output)
-            self._outputs.add(output)
             if self._mapped:
                 prev_output.layers[self._layer].remove(self)
                 self.output.layers[self._layer].append(self)
 
-        current = self.surface.current
+        pending = self.surface.pending
         if (
-            self._layer != current.layer
-            or self.desired_width != current.desired_width
-            or self.desired_height != current.desired_height
+            self._layer != pending.layer
+            or self._width != pending.desired_width
+            or self._height != pending.desired_height
         ):
-            if self._mapped:
-                self.output.layers[self._layer].remove(self)
-                self._layer = current.layer
-                self.output.layers[self._layer].append(self)
-                self.core.stack_windows()
+            self.output.layers[self._layer].remove(self)
+            self._layer = pending.layer
+            self.output.layers[self._layer].append(self)
+            self.node.reparent(self.core.layer_trees[self._layer])
             self.output.organise_layers()
-        self.damage()
 
     def kill(self) -> None:
         self.surface.destroy()
@@ -169,8 +171,6 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self.y = y
         self._width = width
         self._height = height
-        self.surface.configure(width, height)
-        self.damage()
 
     @expose_command()
     def bring_to_front(self) -> None:
