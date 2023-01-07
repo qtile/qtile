@@ -43,6 +43,7 @@ from libqtile.log_utils import logger
 if typing.TYPE_CHECKING:
     from typing import Any
 
+    from wlroots.wlr_types.scene import SceneTree
     from wlroots.wlr_types.surface import SubSurface as WlrSubSurface
 
     from libqtile.backend.wayland.core import Core
@@ -56,8 +57,8 @@ EDGES_TILED = Edges.TOP | Edges.BOTTOM | Edges.LEFT | Edges.RIGHT
 class XdgWindow(Window[XdgSurface]):
     """An Wayland client connecting via the xdg shell."""
 
-    def __init__(self, core: Core, qtile: Qtile, surface: XdgSurface):
-        Window.__init__(self, core, qtile, surface)
+    def __init__(self, core: Core, qtile: Qtile, surface: XdgSurface, scene_tree: SceneTree):
+        Window.__init__(self, core, qtile, surface, scene_tree)
 
         self._wm_class = surface.toplevel.app_id
         self.popups: list[XdgPopupWindow] = []
@@ -285,6 +286,7 @@ class XdgWindow(Window[XdgSurface]):
 
         self.x = x
         self.y = y
+        self.tree.node.set_position(x, y)
         self._width = width
         self._height = height
         self.surface.set_size(width, height)

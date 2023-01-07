@@ -35,6 +35,7 @@ from wlroots.wlr_types.pointer_constraints_v1 import (
     PointerConstraintV1,
     PointerConstraintV1StateField,
 )
+from wlroots.wlr_types.scene import SceneRect, SceneTree
 
 from libqtile import config, hook, utils
 from libqtile.backend import base
@@ -99,7 +100,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     concrete classes are responsible for implementing a few others.
     """
 
-    def __init__(self, core: Core, qtile: Qtile, surface: S):
+    def __init__(self, core: Core, qtile: Qtile, surface: S, scene_tree: SceneTree):
         base.Window.__init__(self)
         self.core = core
         self.qtile = qtile
@@ -108,7 +109,6 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self._mapped: bool = False
         self.x = 0
         self.y = 0
-        self.bordercolor: list[ffi.CData] = [_rgb((0, 0, 0, 1))]
         self._opacity: float = 1.0
         self._outputs: set[Output] = set()
         self._wm_class: str | None = None
@@ -128,8 +128,24 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self._float_state = FloatStates.NOT_FLOATING
         self.ftm_handle: ftm.ForeignToplevelHandleV1 | None = None
 
+        # The borders are wlr_scene_rects.
+        # Inner list: N, E, S, W edges
+        # Outer list: outside-in borders i.e. multiple for multiple borders
+        self._borders: list[list[SceneRect]] = []
+        self.bordercolor = "000000"
+
+        # Store this object on the scene node for finding the window under the pointer.
+        self.node = scene_tree.node
+        self.node.data = self
+        # Make a new scene tree for this window and its borders. The window's position
+        # within this tree is the same as the border width (in each of x and y).
+        self.tree = SceneTree.create(core.scene.tree)
+        self.node.reparent(self.tree)
+
     def finalize(self) -> None:
         self.finalize_listeners()
+        self.node.data = None
+        self.tree.node.destroy()
         if self.ftm_handle:
             self.ftm_handle.destroy()
             self.ftm_handle = None
@@ -158,12 +174,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         if mapped == self._mapped:
             return
         self._mapped = mapped
-        if mapped:
-            self.core.mapped_windows.append(self)
-            self.core.stack_windows()
-        else:
-            self.core.mapped_windows.remove(self)
-            self.core.stacked_windows.remove(self)
+        self.tree.node.set_enabled(enabled=mapped)
         if self._idle_inhibitors_count > 0:
             self.core.check_idle_inhibitor()
 
@@ -288,15 +299,70 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         if switch_group:
             group.toscreen(toggle=toggle)
 
-    def paint_borders(self, color: ColorsType | None, width: int) -> None:
-        if color:
-            if isinstance(color, list):
-                if len(color) > width:
-                    color = color[:width]
-                self.bordercolor = [_rgb(c) for c in color]
+    def paint_borders(self, colors: ColorsType | None, width: int) -> None:
+        if not colors:
+            return
+
+        if not isinstance(colors, list):
+            colors = [colors]
+
+        self.node.set_position(width, width)
+
+        if width == 0:
+            for rects in self._borders:
+                for rect in rects:
+                    rect.node.destroy()
+            self._borders.clear()
+            return
+
+        if len(colors) > width:
+            colors = colors[:width]
+
+        num = len(colors)
+        old_borders = self._borders
+        new_borders = []
+        widths = [width // num] * num
+        for i in range(width % num):
+            widths[i] += 1
+
+        outer_w = self.width + width * 2
+        outer_h = self.height + width * 2
+        coord = 0
+
+        for i, color in enumerate(colors):
+            color_ = _rgb(color)
+            bw = widths[i]
+
+            # [x, y, width, height] for N, E, S, W
+            geometries = (
+                (coord, coord, outer_w - coord * 2, bw),
+                (outer_w - bw - coord, bw + coord, bw, outer_h - bw * 2 - coord * 2),
+                (coord, outer_h - bw - coord, outer_w - coord * 2, bw),
+                (coord, bw + coord, bw, outer_h - bw * 2 - coord * 2),
+            )
+
+            if old_borders:
+                rects = old_borders.pop(0)
+                for (x, y, w, h), rect in zip(geometries, rects):
+                    rect.set_color(color_)
+                    rect.set_size(w, h)
+                    rect.node.set_position(x, y)
+
             else:
-                self.bordercolor = [_rgb(color)]
-        self.borderwidth = width
+                rects = []
+                for x, y, w, h in geometries:
+                    rect = SceneRect(self.tree, w, h, color_)
+                    rect.node.set_position(x, y)
+                    rects.append(rect)
+
+            new_borders.append(rects)
+            coord += bw
+
+        for rects in old_borders:
+            for rect in rects:
+                rect.node.destroy()
+
+        self._borders = new_borders
 
     @property
     def floating(self) -> bool:
@@ -586,7 +652,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     @expose_command()
     def bring_to_front(self) -> None:
         if self.mapped:
-            self.core.stack_windows(restack=self)
+            # TODO: raise to front
+            pass
 
     @expose_command()
     def static(
@@ -618,9 +685,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         win.mapped = True
         win.place(x, y, width, height, 0, None)
         self.qtile.windows_map[self.wid] = win
-        if self.mapped:
-            self.core.mapped_windows.remove(self)
-            self.core.stacked_windows.remove(self)
+        # TODO: pass scene node to new Static object
 
     @expose_command()
     def is_visible(self) -> bool:
@@ -680,13 +745,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         if mapped == self._mapped:
             return
         self._mapped = mapped
-
-        if mapped:
-            self.core.mapped_windows.append(self)
-            self.core.stack_windows()
-        else:
-            self.core.mapped_windows.remove(self)
-            self.core.stacked_windows.remove(self)
+        self.tree.node.set_enabled(enabled=mapped)
 
     def _find_outputs(self) -> None:
         self._outputs = set(o for o in self.core.outputs if o.contains(self))
@@ -780,8 +839,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
     @expose_command()
     def bring_to_front(self) -> None:
         if self.mapped:
-            self.core.stack_windows(restack=self)
-            self.damage()
+            self.node.raise_to_top()
 
     @expose_command()
     def info(self) -> dict:
@@ -847,12 +905,7 @@ class Internal(_Base, base.Internal):
         if mapped == self._mapped:
             return
         self._mapped = mapped
-        if mapped:
-            self.core.mapped_windows.append(self)
-            self.core.stack_windows()
-        else:
-            self.core.mapped_windows.remove(self)
-            self.core.stacked_windows.remove(self)
+        self.tree.node.set_enabled(enabled=mapped)
 
     def hide(self) -> None:
         self.mapped = False
@@ -891,8 +944,8 @@ class Internal(_Base, base.Internal):
         margin: int | list[int] | None = None,
         respect_hints: bool = False,
     ) -> None:
-        if above and self._mapped:
-            self.core.stack_windows(restack=self)
+        if above:
+            self.bring_to_front()
 
         self.x = x
         self.y = y
@@ -920,7 +973,8 @@ class Internal(_Base, base.Internal):
     @expose_command()
     def bring_to_front(self) -> None:
         if self.mapped:
-            self.core.stack_windows(restack=self)
+            # TODO: raise to front
+            pass
 
 
 WindowType = typing.Union[Window, Static, Internal]
