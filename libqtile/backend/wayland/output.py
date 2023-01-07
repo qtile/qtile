@@ -33,22 +33,19 @@ from wlroots.wlr_types import OutputDamage, SceneOutput
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1Anchor
 
 from libqtile.backend.wayland.layer import LayerStatic
-from libqtile.backend.wayland.window import Internal
 from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from typing import Any
 
     from pywayland.server import Listener
-    from wlroots.wlr_types import Surface, Texture
+    from wlroots.wlr_types import Texture
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.window import WindowType
     from libqtile.backend.wayland.wlrq import Dnd
     from libqtile.config import Screen
-
-no_transform = WlOutput.transform.normal
 
 
 class Output(HasListeners):
@@ -112,77 +109,72 @@ class Output(HasListeners):
 
     def organise_layers(self) -> None:
         """Organise the positioning of layer shell surfaces."""
+        if not self.wlr_output.enabled:
+            return
+
         logger.debug("Output: organising layers")
         ow, oh = self.wlr_output.effective_resolution()
+        full_area = Box(int(self.x), int(self.y), ow, oh)
 
-        for layer in self.layers:
-            for win in layer:
-                state = win.surface.current
-                margin = state.margin
-                ww = win.desired_width = state.desired_width
-                wh = win.desired_height = state.desired_height
+        for i in range(3, -1, -1):
+            # Arrange exclusive surface from top to bottom
+            self._organise_layer(LayerShellV1Layer(i), full_area, full_area, exclusive=True)
 
-                # Horizontal axis
-                if (state.anchor & LayerSurfaceV1Anchor.HORIZONTAL) and ww == 0:
-                    x = margin.left
-                    ww = ow - margin.left - margin.right
-                elif state.anchor & LayerSurfaceV1Anchor.LEFT:
-                    x = margin.left
-                elif state.anchor & LayerSurfaceV1Anchor.RIGHT:
-                    x = ow - ww - margin.right
-                else:
-                    x = int(ow / 2 - ww / 2)
+        for i in range(3, -1, -1):
+            # Arrange non-exclusive surface from top to bottom
+            self._organise_layer(LayerShellV1Layer(i), full_area, full_area, exclusive=False)
 
-                # Vertical axis
-                if (state.anchor & LayerSurfaceV1Anchor.VERTICAL) and wh == 0:
-                    y = margin.top
-                    wh = oh - margin.top - margin.bottom
-                elif state.anchor & LayerSurfaceV1Anchor.TOP:
-                    y = margin.top
+        print(self.layers)
+
+    def _organise_layer(
+        self,
+        layer: LayerShellV1Layer,
+        usable_area: Box,
+        full_area: Box,
+        *,
+        exclusive: bool,
+    ) -> None:
+        for win in self.layers[layer]:
+            state = win.surface.current
+
+            if exclusive != (0 < state.exclusive_zone):
+                continue
+
+            # Reserve space if:
+            #    - layer is anchored to an edge and both perpendicular edges, or
+            #    - layer is anchored to a single edge only.
+            space = [0, 0, 0, 0]
+
+            if state.anchor & LayerSurfaceV1Anchor.HORIZONTAL:
+                if state.anchor & LayerSurfaceV1Anchor.TOP:
+                    space[2] = state.exclusive_zone
                 elif state.anchor & LayerSurfaceV1Anchor.BOTTOM:
-                    y = oh - wh - margin.bottom
-                else:
-                    y = int(oh / 2 - wh / 2)
+                    space[3] = state.exclusive_zone
+            elif state.anchor & LayerSurfaceV1Anchor.VERTICAL:
+                if state.anchor & LayerSurfaceV1Anchor.LEFT:
+                    space[0] = state.exclusive_zone
+                elif state.anchor & LayerSurfaceV1Anchor.RIGHT:
+                    space[1] = state.exclusive_zone
+            else:
+                # Single edge only
+                if state.anchor == LayerSurfaceV1Anchor.TOP:
+                    space[2] = state.exclusive_zone
+                elif state.anchor == LayerSurfaceV1Anchor.BOTTOM:
+                    space[3] = state.exclusive_zone
+                if state.anchor == LayerSurfaceV1Anchor.LEFT:
+                    space[0] = state.exclusive_zone
+                elif state.anchor == LayerSurfaceV1Anchor.RIGHT:
+                    space[1] = state.exclusive_zone
 
-                if ww <= 0 or wh <= 0:
-                    win.kill()
-                    continue
+            to_reserve: tuple[int, int, int, int] = tuple(space)  # type: ignore
+            if win.reserved_space != to_reserve:
+                # Don't reserve more space if it's already been reserved
+                assert self.core.qtile is not None
+                self.core.qtile.reserve_space(to_reserve, self.screen)
+                win.reserved_space = to_reserve
 
-                if 0 < state.exclusive_zone:
-                    # Reserve space if:
-                    #    - layer is anchored to an edge and both perpendicular edges, or
-                    #    - layer is anchored to a single edge only.
-                    space = [0, 0, 0, 0]
-
-                    if state.anchor & LayerSurfaceV1Anchor.HORIZONTAL:
-                        if state.anchor & LayerSurfaceV1Anchor.TOP:
-                            space[2] = state.exclusive_zone
-                        elif state.anchor & LayerSurfaceV1Anchor.BOTTOM:
-                            space[3] = state.exclusive_zone
-                    elif state.anchor & LayerSurfaceV1Anchor.VERTICAL:
-                        if state.anchor & LayerSurfaceV1Anchor.LEFT:
-                            space[0] = state.exclusive_zone
-                        elif state.anchor & LayerSurfaceV1Anchor.RIGHT:
-                            space[1] = state.exclusive_zone
-                    else:
-                        # Single edge only
-                        if state.anchor == LayerSurfaceV1Anchor.TOP:
-                            space[2] = state.exclusive_zone
-                        elif state.anchor == LayerSurfaceV1Anchor.BOTTOM:
-                            space[3] = state.exclusive_zone
-                        if state.anchor == LayerSurfaceV1Anchor.LEFT:
-                            space[0] = state.exclusive_zone
-                        elif state.anchor == LayerSurfaceV1Anchor.RIGHT:
-                            space[1] = state.exclusive_zone
-
-                    to_reserve: tuple[int, int, int, int] = tuple(space)  # type: ignore
-                    if win.reserved_space != to_reserve:
-                        # Don't reserve more space if it's already been reserved
-                        assert self.core.qtile is not None
-                        self.core.qtile.reserve_space(to_reserve, self.screen)
-                        win.reserved_space = to_reserve
-
-                win.place(int(x + self.x), int(y + self.y), int(ww), int(wh), 0, None)
+            win.scene_layer.configure(full_area, usable_area)
+            win.place(win.node.x, win.node.y, state.desired_width, state.desired_height, 0, None)
 
     def contains(self, rect: WindowType | Dnd) -> bool:
         """Returns whether the given window is visible on this output."""
@@ -198,7 +190,3 @@ class Output(HasListeners):
             return False
 
         return True
-
-    def damage(self) -> None:
-        """Damage this output so it gets re-rendered."""
-        pass

@@ -110,7 +110,6 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self.x = 0
         self.y = 0
         self._opacity: float = 1.0
-        self._outputs: set[Output] = set()
         self._wm_class: str | None = None
         self._idle_inhibitors_count: int = 0
 
@@ -137,9 +136,10 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         # Store this object on the scene node for finding the window under the pointer.
         self.node = scene_tree.node
         self.node.data = self
-        # Make a new scene tree for this window and its borders. The window's position
-        # within this tree is the same as the border width (in each of x and y).
-        self.tree = SceneTree.create(core.scene.tree)
+        # Make a new scene tree for this window and its borders, within
+        # `Core.windows_tree`. The window's position within this tree is the same as the
+        # border width (in each of x and y).
+        self.tree = SceneTree.create(scene_tree.node.parent)
         self.node.reparent(self.tree)
 
     def finalize(self) -> None:
@@ -192,7 +192,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self.finalize()
 
     def _on_commit(self, _listener: Listener, _data: Any) -> None:
-        self.damage()
+        pass
 
     def _on_foreign_request_maximize(
         self, _listener: Listener, event: ftm.ForeignToplevelHandleV1MaximizedEvent
@@ -231,14 +231,6 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         listener.remove()
         if self._idle_inhibitors_count == 0:
             self.core.check_idle_inhibitor()
-
-    def _find_outputs(self) -> None:
-        """Find the outputs on which this window can be seen."""
-        self._outputs = set(o for o in self.core.outputs if o.contains(self))
-
-    def damage(self) -> None:
-        for output in self._outputs:
-            output.damage()
 
     def get_wm_class(self) -> list | None:
         if self._wm_class:
@@ -699,6 +691,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         qtile: Qtile,
         surface: S,
         wid: int,
+        scene_tree: SceneTree,
         idle_inhibitor_count: int = 0,
     ):
         base.Static.__init__(self)
@@ -715,7 +708,6 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         self.borderwidth: int = 0
         self.bordercolor: list[ffi.CData] = [_rgb((0, 0, 0, 1))]
         self.opacity: float = 1.0
-        self._outputs: set[Output] = set()
         self._wm_class: str | None = None
         self._idle_inhibitors_count = idle_inhibitor_count
 
@@ -723,8 +715,17 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
             self.ftm_handle = surface.data
             self.add_listener(self.ftm_handle.request_close_event, self._on_foreign_request_close)
 
+        # Store this object on the scene node for finding the window under the pointer.
+        self.node = scene_tree.node
+        self.node.data = self
+        # Make a new scene tree for this window and any popups.
+        self.tree = SceneTree.create(core.scene.tree)
+        self.node.reparent(self.tree)
+
     def finalize(self) -> None:
         self.finalize_listeners()
+        self.node.data = None
+        self.tree.node.destroy()
         self.core.remove_pointer_constraints(self)
 
     @property
@@ -742,13 +743,6 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         self._mapped = mapped
         self.tree.node.set_enabled(enabled=mapped)
 
-    def _find_outputs(self) -> None:
-        self._outputs = set(o for o in self.core.outputs if o.contains(self))
-
-    def damage(self) -> None:
-        for output in self._outputs:
-            output.damage()
-
     def focus(self, warp: bool = True) -> None:
         self.core.focus_window(self)
 
@@ -761,14 +755,8 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         hook.fire("client_focus", self)
 
     def paint_borders(self, color: ColorsType | None, width: int) -> None:
-        if color:
-            if isinstance(color, list):
-                if len(color) > width:
-                    color = color[:width]
-                self.bordercolor = [_rgb(c) for c in color]
-            else:
-                self.bordercolor = [_rgb(color)]
-        self.borderwidth = width
+        # TODO: remove this method completely. Statics aren't bordered.
+        logger.warning("Static.paint_borders() called by %s", self)
 
     def _on_map(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: static map")
@@ -784,7 +772,6 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
                 group.focus(group.current_window, warp=self.qtile.config.cursor_warp)
             else:
                 self.core.seat.keyboard_clear_focus()
-        self.damage()
 
     def _on_destroy(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: static destroy")
@@ -800,7 +787,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         self.finalize()
 
     def _on_commit(self, _listener: Listener, _data: Any) -> None:
-        self.damage()
+        pass
 
     def _on_foreign_request_close(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: foreign_toplevel_management static request_close")
@@ -865,7 +852,6 @@ class Internal(_Base, base.Internal):
         self._width: int = width
         self._height: int = height
         self._opacity: float = 1.0
-        self._outputs: set[Output] = set(o for o in self.core.outputs if o.contains(self))
         self.texture: Texture = self._new_texture()
 
     def finalize(self) -> None:
@@ -904,11 +890,9 @@ class Internal(_Base, base.Internal):
 
     def hide(self) -> None:
         self.mapped = False
-        self.damage()
 
     def unhide(self) -> None:
         self.mapped = True
-        self.damage()
 
     @expose_command()
     def focus(self, warp: bool = True) -> None:
@@ -921,10 +905,6 @@ class Internal(_Base, base.Internal):
             # It will be present during config reloads; absent during shutdown as this
             # will follow graceful_shutdown
             del self.qtile.windows_map[self.wid]
-
-    def damage(self) -> None:
-        for output in self._outputs:
-            output.damage()
 
     @expose_command()
     def place(
@@ -950,9 +930,6 @@ class Internal(_Base, base.Internal):
 
         if needs_reset:
             self.texture = self._new_texture()
-
-        self._outputs = set(o for o in self.core.outputs if o.contains(self))
-        self.damage()
 
     @expose_command()
     def info(self) -> dict:
