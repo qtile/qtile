@@ -23,6 +23,7 @@ from __future__ import annotations
 import typing
 
 from wlroots import xwayland
+from wlroots.wlr_types import SceneTree
 
 from libqtile import hook
 from libqtile.backend import base
@@ -64,7 +65,7 @@ class XWindow(Window[xwayland.Surface]):
         """XWindows also need to restack in the X server's Z stack."""
         if mapped != self._mapped:
             if mapped:
-                self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
+                self.bring_to_front()
             Window.mapped.fset(self, mapped)  # type: ignore
 
     def _on_map(self, _listener: Listener, _data: Any) -> None:
@@ -75,6 +76,14 @@ class XWindow(Window[xwayland.Surface]):
             self._wid = self.core.new_wid()
             logger.debug("Managing new XWayland window with window ID: %s", self._wid)
             surface = self.surface
+
+            # Make a new scene tree for this window and its borders, within
+            # `Core.windows_tree`. The window's position within this tree is the same as the
+            # border width (in each of x and y).
+            self.tree = SceneTree.create(self.core.window_tree)
+            # Store this object on the scene node for finding the window under the pointer.
+            self.node = SceneTree.subsurface_tree_create(self.tree, surface.surface).node
+            self.node.data = self
 
             # Make it static if it isn't a regular window
             if surface.override_redirect:
@@ -281,6 +290,7 @@ class XWindow(Window[xwayland.Surface]):
         self.y = y
         self._width = width
         self._height = height
+        self.tree.node.set_position(x, y)
         self.surface.configure(x, y, width, height)
         self.paint_borders(bordercolor, borderwidth)
 
@@ -290,8 +300,8 @@ class XWindow(Window[xwayland.Surface]):
     @expose_command()
     def bring_to_front(self) -> None:
         if self.mapped:
-            self.core.stack_windows(restack=self)
             self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
+            self.tree.node.raise_to_top()
 
     @expose_command()
     def static(
@@ -306,7 +316,7 @@ class XWindow(Window[xwayland.Surface]):
         hook.fire("client_managed", self.qtile.windows_map[self._wid])
 
     def _to_static(self) -> XStatic:
-        return XStatic(self.core, self.qtile, self.surface, self.wid, self._idle_inhibitors_count)
+        return XStatic(self.core, self.qtile, self, self._idle_inhibitors_count)
 
 
 class XStatic(Static[xwayland.Surface]):
@@ -318,15 +328,14 @@ class XStatic(Static[xwayland.Surface]):
         self,
         core: Core,
         qtile: Qtile,
-        surface: xwayland.Surface,
-        wid: int,
+        win: XWindow,
         idle_inhibitor_count: int,
     ):
+        surface = win.surface
         Static.__init__(
-            self, core, qtile, surface, wid, idle_inhibitor_count=idle_inhibitor_count
+            self, core, qtile, surface, win.wid, idle_inhibitor_count=idle_inhibitor_count
         )
         self._wm_class = surface.wm_class
-        self._find_outputs()
 
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
@@ -341,6 +350,11 @@ class XStatic(Static[xwayland.Surface]):
             self.add_listener(surface.set_geometry_event, self._on_set_geometry)
 
         self.ftm_handle: ftm.ForeignToplevelHandleV1 | None = None
+
+        # Take control of the scene node and tree
+        self.node = win.node
+        self.tree = win.tree
+        self.node.data = self
 
     @expose_command()
     def kill(self) -> None:

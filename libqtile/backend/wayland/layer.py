@@ -23,6 +23,7 @@ from __future__ import annotations
 import typing
 
 from pywayland.server import Listener
+from wlroots.wlr_types import SceneTree
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1
 
 from libqtile.backend.wayland.subsurface import SubSurface
@@ -50,9 +51,7 @@ class LayerStatic(Static[LayerSurfaceV1]):
         surface: LayerSurfaceV1,
         wid: int,
     ):
-        tree = core.layer_trees[surface.pending.layer]
-        self.scene_layer = core.scene.layer_surface_v1_create(tree, surface)
-        Static.__init__(self, core, qtile, surface, wid, self.scene_layer.tree)
+        Static.__init__(self, core, qtile, surface, wid)
         self.subsurfaces: list[SubSurface] = []
 
         self.add_listener(surface.map_event, self._on_map)
@@ -71,6 +70,13 @@ class LayerStatic(Static[LayerSurfaceV1]):
                 self.output = output
                 self.screen = self.output.screen
 
+        # Make a new scene tree for this window and any popups.
+        self.tree = SceneTree.create(core.layer_trees[surface.pending.layer])
+        self.scene_layer = core.scene.layer_surface_v1_create(self.tree, surface)
+        # Store this object on the scene node for finding the window under the pointer.
+        self.node = self.scene_layer.tree.node
+        self.node.data = self
+
         # Temporarily set the layer's current state to pending so that we can easily
         # arrange it.
         self._layer = surface.pending.layer
@@ -79,7 +85,7 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self.mapped = True
         self.output.organise_layers()
         surface.current = old_state
-        self.node.reparent(core.layer_trees[old_state.layer])
+        self.tree.node.reparent(core.layer_trees[old_state.layer])
 
     def finalize(self) -> None:
         Static.finalize(self)
@@ -141,7 +147,7 @@ class LayerStatic(Static[LayerSurfaceV1]):
             self.output.layers[self._layer].remove(self)
             self._layer = pending.layer
             self.output.layers[self._layer].append(self)
-            self.node.reparent(self.core.layer_trees[self._layer])
+            self.tree.node.reparent(self.core.layer_trees[self._layer])
             self.output.organise_layers()
 
     def kill(self) -> None:
