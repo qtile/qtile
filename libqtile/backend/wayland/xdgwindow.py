@@ -52,6 +52,11 @@ if typing.TYPE_CHECKING:
     from libqtile.utils import ColorsType
 
 EDGES_TILED = Edges.TOP | Edges.BOTTOM | Edges.LEFT | Edges.RIGHT
+WM_CAPABILITIES = (
+    XdgTopLevelWMCapabilities.MAXIMIZE
+    | XdgTopLevelWMCapabilities.FULLSCREEN
+    | XdgTopLevelWMCapabilities.MINIMIZE
+)
 
 
 class XdgWindow(Window[XdgSurface]):
@@ -63,12 +68,7 @@ class XdgWindow(Window[XdgSurface]):
         self._wm_class = surface.toplevel.app_id
         self.popups: list[XdgPopupWindow] = []
         self.subsurfaces: list[SubSurface] = []
-
-        surface.set_wm_capabilities(
-            XdgTopLevelWMCapabilities.MAXIMIZE
-            | XdgTopLevelWMCapabilities.FULLSCREEN
-            | XdgTopLevelWMCapabilities.MINIMIZE
-        )
+        surface.set_wm_capabilities(WM_CAPABILITIES)
 
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
@@ -149,7 +149,6 @@ class XdgWindow(Window[XdgSurface]):
     def _on_unmap(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow unmap")
         self.mapped = False
-        self.damage()
         seat = self.core.seat
         if not seat.destroyed:
             if self.surface.surface == seat.keyboard_state.focused_surface:
@@ -296,11 +295,6 @@ class XdgWindow(Window[XdgSurface]):
         if above:
             self.bring_to_front()
 
-        prev_outputs = self._outputs.copy()
-        self._find_outputs()
-        for output in self._outputs | prev_outputs:
-            output.damage()
-
     @expose_command()
     def static(
         self,
@@ -342,7 +336,6 @@ class XdgStatic(Static[XdgSurface]):
             self, core, qtile, surface, wid, idle_inhibitor_count=idle_inhibitor_count
         )
         self.subsurfaces: list[SubSurface] = []
-        self._find_outputs()
 
         if surface.toplevel.title:
             self.name = surface.toplevel.title
@@ -391,8 +384,6 @@ class XdgStatic(Static[XdgSurface]):
         self.surface.set_size(width, height)
         self.surface.set_bounds(width, height)
         self.paint_borders(bordercolor, borderwidth)
-        self._find_outputs()
-        self.damage()
 
     def _on_set_title(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgstatic set_title")
@@ -453,21 +444,21 @@ class XdgPopupWindow(HasListeners):
         self.add_listener(xdg_popup.base.surface.commit_event, self._on_commit)
 
     def _on_map(self, _listener: Listener, _data: Any) -> None:
+        # TODO: remove?
         logger.debug("Signal: popup map")
-        self.output.damage()
 
     def _on_unmap(self, _listener: Listener, _data: Any) -> None:
+        # TODO: remove?
         logger.debug("Signal: popup unmap")
-        self.output.damage()
 
     def _on_destroy(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: popup destroy")
         self.finalize_listeners()
-        self.output.damage()
 
     def _on_new_popup(self, _listener: Listener, xdg_popup: XdgPopup) -> None:
         logger.debug("Signal: popup new_popup")
         self.popups.append(XdgPopupWindow(self, xdg_popup))
 
     def _on_commit(self, _listener: Listener, _data: Any) -> None:
-        self.output.damage()
+        # TODO: remove?
+        pass
