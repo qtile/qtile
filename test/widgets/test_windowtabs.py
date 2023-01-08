@@ -125,3 +125,14 @@ def test_selected(manager):
 
     manager.kill_window(window_one)
     assert widget_text() == ""
+
+
+@windowtabs_config
+def test_escaping_text(manager):
+    """
+    Ampersands can cause a crash if not escaped before passing to
+    pangocffi.parse_markup.
+    Test that the widget can parse text safely.
+    """
+    manager.test_window("Text & Text")
+    assert manager.c.widget["windowtabs"].info()["text"] == "<b>Text &amp; Text</b>"
