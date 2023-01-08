@@ -29,6 +29,7 @@ import string
 from typing import TYPE_CHECKING
 
 from dbus_next import Message, Variant
+from dbus_next.aio import MessageBus
 from dbus_next.constants import MessageType
 
 from libqtile.command.base import expose_command
@@ -197,6 +198,7 @@ class Mpris2(base._TextBox):
         self._current_player: str | None = None
         self.player_names: dict[str, str] = {}
         self._background_poll: asyncio.TimerHandle | None = None
+        self.bus: MessageBus | None = None
 
     @property
     def player(self) -> str:
@@ -206,6 +208,10 @@ class Mpris2(base._TextBox):
             return self.player_names.get(self._current_player, "Unknown")
 
     async def _config_async(self):
+        # These two listeners create separate bus connections. Each connection only has one
+        # callback so we don't need any logic to identify the message and the appropriate
+        # handler in this code.
+
         # Set up a listener for NameOwner changes so we can remove players when they close
         await add_signal_receiver(
             self._name_owner_changed,
@@ -261,14 +267,31 @@ class Mpris2(base._TextBox):
 
         self.parse_message(*message.body)
 
+    async def _send_message(self, destination, interface, path, member, signature, body):
+        bus, message = await _send_dbus_message(
+            session_bus=True,
+            message_type=MessageType.METHOD_CALL,
+            destination=destination,
+            interface=interface,
+            path=path,
+            member=member,
+            signature=signature,
+            body=body,
+            bus=self.bus,
+        )
+
+        # We should reuse the same bus connection for repeated calls.
+        if self.bus is None:
+            self.bus = bus
+
+        return message
+
     async def _check_player(self):
         """Check for player at startup and retrieve metadata."""
         if not (self.objname or self._current_player):
             return
 
-        bus, message = await _send_dbus_message(
-            True,
-            MessageType.METHOD_CALL,
+        message = await self._send_message(
             self.objname if self.objname else self._current_player,
             PROPERTIES_INTERFACE,
             MPRIS_PATH,
@@ -276,9 +299,6 @@ class Mpris2(base._TextBox):
             "s",
             [MPRIS_PLAYER],
         )
-
-        if bus:
-            bus.disconnect()
 
         # If we get an error here it will be because the player object doesn't exist
         if message.message_type != MessageType.METHOD_RETURN:
@@ -298,9 +318,7 @@ class Mpris2(base._TextBox):
             self._background_poll = self.timeout_add(self.poll_interval, self._check_player)
 
     async def get_player_name(self, player):
-        bus, message = await _send_dbus_message(
-            True,
-            MessageType.METHOD_CALL,
+        message = await self._send_message(
             player,
             PROPERTIES_INTERFACE,
             MPRIS_PATH,
@@ -308,9 +326,6 @@ class Mpris2(base._TextBox):
             "ss",
             [MPRIS_OBJECT, "Identity"],
         )
-
-        if bus:
-            bus.disconnect()
 
         if message.message_type != MessageType.METHOD_RETURN:
             logger.warning("Could not retrieve identity of player on %s.", player)
@@ -378,9 +393,7 @@ class Mpris2(base._TextBox):
         task.add_done_callback(self._task_callback)
 
     async def _send_player_cmd(self, cmd: str) -> Message | None:
-        bus, message = await _send_dbus_message(
-            True,
-            MessageType.METHOD_CALL,
+        message = await self._send_message(
             self._current_player,
             MPRIS_PLAYER,
             MPRIS_PATH,
@@ -388,9 +401,6 @@ class Mpris2(base._TextBox):
             "",
             [],
         )
-
-        if bus:
-            bus.disconnect()
 
         return message
 
