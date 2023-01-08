@@ -23,9 +23,9 @@ class Builder(NamedTuple):
 scripts = [
     Builder("PulseAudio interface", "./libqtile/widget/pulseaudio_ffi.py", "PulseVolume widget"),
     Builder(
-        "Wayland libinput interface",
-        "./libqtile/backend/wayland/libinput_ffi_build.py",
-        "Wayland backend input configurability",
+        "Wayland CFFI",
+        "./libqtile/backend/wayland/cffi/build.py",
+        "Wayland backend",
     ),
 ]
 
