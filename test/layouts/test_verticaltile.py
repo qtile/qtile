@@ -69,7 +69,7 @@ verticaltile_single_margin_config = pytest.mark.parametrize(
 @verticaltile_config
 def test_verticaltile_simple(manager):
     manager.test_window("one")
-    assert_dimensions(manager, 0, 0, 800, 600)
+    assert_dimensions(manager, 0, 0, 798, 598)
     manager.test_window("two")
     assert_dimensions(manager, 0, 300, 798, 298)
     manager.test_window("three")
@@ -79,7 +79,7 @@ def test_verticaltile_simple(manager):
 @verticaltile_config
 def test_verticaltile_maximize(manager):
     manager.test_window("one")
-    assert_dimensions(manager, 0, 0, 800, 600)
+    assert_dimensions(manager, 0, 0, 798, 598)
     manager.test_window("two")
     assert_dimensions(manager, 0, 300, 798, 298)
     # Maximize the bottom layout, taking 75% of space
@@ -120,7 +120,7 @@ def test_verticaltile_single_border(manager):
 @verticaltile_single_margin_config
 def test_verticaltile_single_margin(manager):
     manager.test_window("one")
-    assert_dimensions(manager, 2, 2, 796, 596)
+    assert_dimensions(manager, 2, 2, 794, 594)
     manager.test_window("two")
     assert_dimensions(manager, 8, 308, 782, 282)
     manager.test_window("three")
