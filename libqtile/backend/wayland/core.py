@@ -1,4 +1,4 @@
-# Copyright (c) 2021 Matt Colligan
+# Copyright (c) 2021-3 Matt Colligan
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -128,7 +128,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.event_loop = self.display.get_event_loop()
         (
             self.compositor,
-            self._allocator,
+            self.allocator,
             self.renderer,
             self.backend,
             self._subcompositor,
@@ -208,6 +208,7 @@ class Core(base.Core, wlrq.HasListeners):
         self._node = self.scene.tree.node
         # Each tree is created above the existing trees
         self.layer_trees = [
+            SceneTree.create(self.scene.tree),  # Qtile-drawn Wallpapers
             SceneTree.create(self.scene.tree),  # Background
             SceneTree.create(self.scene.tree),  # Bottom
             SceneTree.create(self.scene.tree),  # Regular windows
@@ -215,6 +216,7 @@ class Core(base.Core, wlrq.HasListeners):
             SceneTree.create(self.scene.tree),  # Overlay
             SceneTree.create(self.scene.tree),  # DragIcon
         ]
+        self.wallpaper_tree = self.layer_trees.pop(0)
         self.window_tree = self.layer_trees.pop(2)
 
         # Add support for additional protocols
