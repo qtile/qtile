@@ -446,7 +446,7 @@ class Core(base.Core, wlrq.HasListeners):
         win = xdgwindow.XdgWindow(self, self.qtile, xdg_surface)
         self.pending_windows.add(win)
 
-    def _on_cursor_axis(self, _listener: Listener, event: pointer.PointerEventAxis) -> None:
+    def _on_cursor_axis(self, _listener: Listener, event: pointer.PointerAxisEvent) -> None:
         handled = False
 
         if event.delta != 0 and not self.exclusive_client:
@@ -469,7 +469,7 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_cursor_frame(self, _listener: Listener, _data: Any) -> None:
         self.seat.pointer_notify_frame()
 
-    def _on_cursor_button(self, _listener: Listener, event: pointer.PointerEventButton) -> None:
+    def _on_cursor_button(self, _listener: Listener, event: pointer.PointerButtonEvent) -> None:
         assert self.qtile is not None
         self.idle.notify_activity(self.seat)
         pressed = event.button_state == input_device.ButtonState.PRESSED
@@ -604,12 +604,12 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_new_virtual_keyboard(
         self, _listener: Listener, virtual_keyboard: vkeyboard.VirtualKeyboardV1
     ) -> None:
-        self._add_new_keyboard(virtual_keyboard.input_device)
+        self._add_new_keyboard(virtual_keyboard.keyboard.base)
 
     def _on_new_virtual_pointer(
         self, _listener: Listener, new_pointer_event: vpointer.VirtualPointerV1NewPointerEvent
     ) -> None:
-        device = self._add_new_pointer(new_pointer_event.new_pointer.input_device)
+        device = self._add_new_pointer(new_pointer_event.new_pointer.pointer.base)
         logger.info("New virtual pointer: %s %s", *device.get_info())
 
     def _on_new_idle_inhibitor(
