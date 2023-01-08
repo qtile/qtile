@@ -40,7 +40,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from pywayland.server import Listener
-    from wlroots.wlr_types import Texture
+    from wlroots.wlr_types import SceneBuffer, Texture
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.window import WindowType
@@ -54,7 +54,7 @@ class Output(HasListeners):
         self.renderer = core.renderer
         self.wlr_output = wlr_output
         wlr_output.data = self
-        self.wallpaper: Texture | None = None
+        self.wallpaper: SceneBuffer | None = None
 
         # Initialise wlr_output
         wlr_output.init_render(core.allocator, core.renderer)

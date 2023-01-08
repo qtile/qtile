@@ -27,19 +27,20 @@ import typing
 import cairocffi
 import wlroots.wlr_types.foreign_toplevel_management_v1 as ftm
 from pywayland.server import Client, Listener
-from wlroots import PtrHasData, ffi
+from wlroots import PtrHasData
 from wlroots.util.box import Box
-from wlroots.wlr_types import Texture
+from wlroots.wlr_types import Buffer, Texture
 from wlroots.wlr_types.idle_inhibit_v1 import IdleInhibitorV1
 from wlroots.wlr_types.pointer_constraints_v1 import (
     PointerConstraintV1,
     PointerConstraintV1StateField,
 )
-from wlroots.wlr_types.scene import SceneRect, SceneTree
+from wlroots.wlr_types.scene import SceneBuffer, SceneRect, SceneTree
 
 from libqtile import config, hook, utils
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
+from libqtile.backend.wayland._ffi import ffi, lib
 from libqtile.backend.wayland.drawer import Drawer
 from libqtile.backend.wayland.wlrq import DRM_FORMAT_ARGB8888, HasListeners
 from libqtile.command.base import CommandError, expose_command
@@ -634,8 +635,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     @expose_command()
     def bring_to_front(self) -> None:
         if self.mapped:
-            # TODO: raise to front
-            pass
+            self.node.raise_to_top()
 
     @expose_command()
     def static(
@@ -838,25 +838,37 @@ class Internal(_Base, base.Internal):
         self._width: int = width
         self._height: int = height
         self._opacity: float = 1.0
-        self.texture: Texture = self._new_texture()
+
+        # Store this object on the scene node for finding the window under the pointer.
+        self.wlr_buffer, self.surface = self._new_buffer(init=True)
+        self.tree = SceneTree.create(core.window_tree)
+        scene_buffer = SceneBuffer.create(self.tree, self.wlr_buffer)
+        if scene_buffer is None:
+            raise RuntimeError("Couldn't create scene buffer")
+        self._scene_buffer = scene_buffer
+        self.node = self._scene_buffer.node
+        self.node.data = self
 
     def finalize(self) -> None:
         self.hide()
 
-    def _new_texture(self) -> Texture:
-        clear = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, self._width, self._height)
-        with cairocffi.Context(clear) as context:
-            context.set_source_rgba(0, 0, 0, 0)
-            context.paint()
+    def _new_buffer(self, init: bool = False) -> tuple[Buffer, cairocffi.ImageSurface]:
+        if not init:
+            self.wlr_buffer.drop()
 
-        return Texture.from_pixels(
-            self.core.renderer,
-            DRM_FORMAT_ARGB8888,
-            cairocffi.ImageSurface.format_stride_for_width(cairocffi.FORMAT_ARGB32, self._width),
-            self._width,
-            self._height,
-            cairocffi.cairo.cairo_image_surface_get_data(clear._pointer),
-        )
+        surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, self._width, self._height)
+        stride = surface.get_stride()
+        data = cairocffi.cairo.cairo_image_surface_get_data(surface._pointer)
+        wlr_buffer = lib.cairo_buffer_create(self._width, self._height, stride, data)
+        if wlr_buffer == ffi.NULL:
+            raise RuntimeError("Couldn't allocate cairo buffer.")
+
+        buffer = Buffer(wlr_buffer)
+
+        if not init:
+            self._scene_buffer.set_buffer_with_damage(buffer)
+
+        return buffer, surface
 
     def create_drawer(self, width: int, height: int) -> Drawer:
         """Create a Drawer that draws to this window."""
@@ -910,12 +922,13 @@ class Internal(_Base, base.Internal):
 
         self.x = x
         self.y = y
-        needs_reset = width != self._width or height != self._height
-        self._width = width
-        self._height = height
+        self.tree.node.set_position(x, y)
 
-        if needs_reset:
-            self.texture = self._new_texture()
+        if width != self._width or height != self._height:
+            # Changed size, we need to regenerate the buffer
+            self._width = width
+            self._height = height
+            self.wlr_buffer, self.surface = self._new_buffer()
 
     @expose_command()
     def info(self) -> dict:
@@ -931,8 +944,7 @@ class Internal(_Base, base.Internal):
     @expose_command()
     def bring_to_front(self) -> None:
         if self.mapped:
-            # TODO: raise to front
-            pass
+            self.tree.node.raise_to_top()
 
 
 WindowType = typing.Union[Window, Static, Internal]

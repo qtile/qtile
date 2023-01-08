@@ -27,9 +27,10 @@ from typing import TYPE_CHECKING, cast
 
 import cairocffi
 from pywayland.server import Listener
-from wlroots.wlr_types import SceneTree, Texture, data_device_manager
+from wlroots.wlr_types import Buffer, SceneBuffer, SceneTree, Texture, data_device_manager
 from wlroots.wlr_types.keyboard import KeyboardModifier
 
+from libqtile.backend.wayland._ffi import ffi, lib
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 
@@ -140,21 +141,21 @@ class Painter:
             context.set_source_surface(image)
             context.paint()
 
-            stride = surface.format_stride_for_width(cairocffi.FORMAT_ARGB32, screen.width)
-            surface.flush()
-            texture = Texture.from_pixels(
-                self.core.renderer,
-                DRM_FORMAT_ARGB8888,
-                stride,
-                screen.width,
-                screen.height,
-                cairocffi.cairo.cairo_image_surface_get_data(surface._pointer),
-            )
-            # mypy struggles to understand this. See: https://github.com/python/mypy/issues/11513
-            outputs = [
-                output for output in self.core.outputs if output.wlr_output.enabled  # type: ignore
-            ]
-            outputs[screen.index].wallpaper = texture
+        surface.flush()
+        stride = surface.get_stride()
+        data = cairocffi.cairo.cairo_image_surface_get_data(surface._pointer)
+        wlr_buffer = lib.cairo_buffer_create(screen.width, screen.height, stride, data)
+        if wlr_buffer == ffi.NULL:
+            raise RuntimeError("Couldn't allocate cairo buffer.")
+
+        # mypy struggles to understand this. See: https://github.com/python/mypy/issues/11513
+        outputs = [
+            output for output in self.core.outputs if output.wlr_output.enabled  # type: ignore
+        ]
+        output = outputs[screen.index]
+        if output.wallpaper is not None:
+            output.wallpaper.node.destroy()
+        output.wallpaper = SceneBuffer.create(self.core.wallpaper_tree, Buffer(wlr_buffer))
 
 
 class HasListeners:
