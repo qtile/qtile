@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import cairocffi
+from wlroots.util.region import PixmanRegion32
 
 from libqtile import utils
 from libqtile.backend import base
@@ -20,18 +21,16 @@ class Drawer(base.Drawer):
     1. We stage drawing operations locally in memory using a cairo RecordingSurface.
     2. Then apply these operations to our ImageSurface self._source.
     3. Then copy the pixels onto the window's wlr_texture.
+    TODO: update this docstring with new logic
     """
 
     def __init__(self, qtile: Qtile, win: Internal, width: int, height: int):
         base.Drawer.__init__(self, qtile, win, width, height)
 
-        self._stride = cairocffi.ImageSurface.format_stride_for_width(
-            cairocffi.FORMAT_ARGB32, self.width
-        )
         self._source = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, width, height)
         with cairocffi.Context(self._source) as context:
-            # Initialise surface to all black
-            context.set_source_rgba(*utils.rgb("#000000"))
+            # Initialise surface to empty
+            context.set_source_rgba(0, 0, 0, 0)
             context.paint()
 
     def _draw(
@@ -64,25 +63,33 @@ class Drawer(base.Drawer):
         if height > self._win.height - offsety:
             height = self._win.height - offsety
 
-        # Paint RecordingSurface operations our window's ImageSurface
+        # Paint RecordingSurface operations to ImageSurface
         with cairocffi.Context(self._source) as context:
             context.set_source_surface(self.surface)
             context.paint()
 
-        # Copy drawn ImageSurface data into rendered wlr_texture
-        self._win.texture.write_pixels(
-            self._stride,
-            width,
-            height,
-            cairocffi.cairo.cairo_image_surface_get_data(self._source._pointer),
-            dst_x=offsetx,
-            dst_y=offsety,
-        )
-        self._win.damage()
+        # TODO: is this intermediate surface necessary?
+        # Paint drawn ImageSurface to our window's ImageSurface
+        with cairocffi.Context(self._win.surface) as context:
+            context.set_operator(cairocffi.OPERATOR_SOURCE)
+            context.set_source_surface(self._source, offsetx, offsety)
+            context.rectangle(offsetx, offsety, width, height)
+            context.fill()
+
+        damage = PixmanRegion32()
+        damage.init_rect(offsetx, offsety, width, height)  # type: ignore
+        self._win._scene_buffer.set_buffer_with_damage(self._win.wlr_buffer, damage)
+        damage.fini()
+
+        # Clear intermediate surface
+        with cairocffi.Context(self._source) as context:
+            context.set_source_rgba(0, 0, 0, 0)
+            context.set_operator(cairocffi.OPERATOR_SOURCE)
+            context.paint()
 
     def clear(self, colour: ColorsType) -> None:
         # Draw background straight to ImageSurface
-        ctx = cairocffi.Context(self._source)
+        ctx = cairocffi.Context(self.surface)
         ctx.save()
         ctx.set_operator(cairocffi.OPERATOR_SOURCE)
         self.set_source_rgb(colour, ctx=ctx)

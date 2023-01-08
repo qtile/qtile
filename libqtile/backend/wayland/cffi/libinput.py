@@ -1,5 +1,10 @@
-import wlroots.ffi_build as wlr
-from cffi import FFI
+"""
+CFFI definitions for interfacing with libinput
+"""
+
+SOURCE = """
+#include <libinput.h>
+"""
 
 CDEF = """
 enum libinput_config_status {
@@ -125,18 +130,3 @@ enum libinput_config_status
 libinput_device_config_dwt_set_enabled(struct libinput_device *device,
                                        enum libinput_config_dwt_state enable);
 """
-
-libinput_ffi = FFI()
-libinput_ffi.set_source(
-    "libqtile.backend.wayland._libinput",
-    "#include <libinput.h>\n" + wlr.SOURCE,
-    libraries=["wlroots", "input"],
-    define_macros=[("WLR_USE_UNSTABLE", None)],
-    include_dirs=["/usr/include/pixman-1", wlr.include_dir],
-)
-
-libinput_ffi.include(wlr.ffi_builder)
-libinput_ffi.cdef(CDEF)
-
-if __name__ == "__main__":
-    libinput_ffi.compile()
