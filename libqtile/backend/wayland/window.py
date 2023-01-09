@@ -136,12 +136,12 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
     def finalize(self) -> None:
         self.finalize_listeners()
-        if self.node.data:
-            # self.node.data will be None if the X client unmapped itself, in which case
-            # we weren't sure if it might re-map this window, and so we finalized it in
-            # case it was destroying itself.
-            self.node.data = None
-            self.tree.node.destroy()
+        if self.tree_node.data:
+            # self.tree_node.data will be None if this is an X client that unmapped
+            # itself, in which case we arent't sure if it might re-map, so we finalized
+            # it in case it was destroying itself.
+            self.tree_node.data = None
+            self.tree_node.destroy()
         if self.ftm_handle:
             self.ftm_handle.destroy()
             self.ftm_handle = None
@@ -736,8 +736,8 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
 
     def finalize(self) -> None:
         self.finalize_listeners()
-        self.node.data = None
-        self.tree.node.destroy()
+        self.tree_node.data = None
+        self.tree_node.destroy()
         self.core.remove_pointer_constraints(self)
 
     @property
