@@ -400,6 +400,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         self.output_manager.set_configuration(config)
         self.outputs.sort(key=lambda o: (o.x, o.y))
+        hook.fire("screen_change", None)
 
     def _on_output_manager_apply(
         self, _listener: Listener, config: OutputConfigurationV1
@@ -768,7 +769,6 @@ class Core(base.Core, wlrq.HasListeners):
         else:
             config.send_failed()
         config.destroy()
-        hook.fire("screen_change", None)
 
     def _process_cursor_motion(self, time_msec: int, cx: float, cy: float) -> None:
         assert self.qtile
