@@ -854,7 +854,7 @@ class Internal(_Base, base.Internal):
     def __init__(self, core: Core, qtile: Qtile, x: int, y: int, width: int, height: int):
         self.core = core
         self.qtile = qtile
-        self._mapped: bool = False
+        self._mapped: bool = True
         self._wid: int = self.core.new_wid()
         self.x: int = x
         self.y: int = y
