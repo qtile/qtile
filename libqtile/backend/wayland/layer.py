@@ -70,6 +70,7 @@ class LayerStatic(Static[LayerSurfaceV1]):
 
         # Make a new scene tree for this window
         self.tree = SceneTree.create(core.layer_trees[surface.pending.layer])
+        self.tree.node.set_enabled(enabled=False)
         self.scene_layer = core.scene.layer_surface_v1_create(self.tree, surface)
         self.node = self.scene_layer.tree.node
         self.tree_node = self.tree.node  # Save this to keep the .data alive
