@@ -140,7 +140,7 @@ class Core(base.Core, wlrq.HasListeners):
         # These windows have not been mapped yet; they'll get managed when mapped
         self.pending_windows: set[window.WindowType] = set()
 
-        # set up inputs
+        # Set up inputs
         self.keyboards: list[inputs.Keyboard] = []
         self._pointers: list[inputs.Pointer] = []
         self.grabbed_keys: list[tuple[int, int]] = []
@@ -168,7 +168,7 @@ class Core(base.Core, wlrq.HasListeners):
         )
         self.exclusive_client: pywayland.server.Client | None = None
 
-        # set up outputs
+        # Set up outputs
         self.outputs: list[Output] = []
         self._current_output: Output | None = None
         self.add_listener(self.backend.new_output_event, self._on_new_output)
@@ -179,7 +179,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(self.output_manager.test_event, self._on_output_manager_test)
         self._blanked_outputs: set[Output] = set()
 
-        # set up cursor
+        # Set up cursor
         self.cursor = Cursor(self.output_layout)
         self.cursor_manager = XCursorManager(24)
         self._gestures = PointerGesturesV1(self.display)
@@ -199,11 +199,38 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(self.cursor.hold_end, self._on_cursor_hold_end)
         self._cursor_state = wlrq.CursorState()
 
-        # set up shell
+        # Set up shell
         self.xdg_shell = XdgShell(self.display)
         self.add_listener(self.xdg_shell.new_surface_event, self._on_new_xdg_surface)
         self.layer_shell = LayerShellV1(self.display)
         self.add_listener(self.layer_shell.new_surface_event, self._on_new_layer_surface)
+
+        # Set up scene-graph tree, which looks like this:
+        #
+        #     root (self._node)
+        #     ├── self.wallpaper_tree
+        #     │   ├── Output.wallpaper
+        #     │   └── ... (further outputs)
+        #     ├── Background
+        #     │   ├── LayerStatic.tree
+        #     │   │   └── wlr_scene_layer_surface_v1
+        #     │   │       └── ... (client surfaces)
+        #     │   └── ...
+        #     ├── Bottom (same as Background)
+        #     ├── self.window_tree
+        #     │   ├── XdgWindow.tree
+        #     │   │   ├── XDG toplevel surface
+        #     │   │   │   └── ... (client surfaces)
+        #     │   │   └── XdgWindow._borders
+        #     │   ├── XWindow.tree
+        #     │   │   ├── underlying wlr_surface
+        #     │   │   └── XWindow._borders
+        #     │   └── ...
+        #     ├── Top (same as Background)
+        #     ├── Overlay (same as Background)
+        #     └── DragIcon
+        #         └── wlrq.Dnd
+        #
         self.scene = Scene(self.output_layout)
         self._node = self.scene.tree.node
         # Each tree is created above the existing trees
@@ -1135,23 +1162,50 @@ class Core(base.Core, wlrq.HasListeners):
                 self.qtile.focus_screen(screen.index, warp=False)
 
     def _under_pointer(self) -> tuple[window.WindowType, Surface | None, float, float] | None:
-        assert self.qtile is not None
+        """
+        Find which window and surface is currently under the pointer, if any.
+        """
+        maybe_node = self._node.node_at(self.cursor.x, self.cursor.y)
+        if maybe_node is None:
+            # We didn't find any node, so the pointer is on the root i.e. a
+            # wallpaper-less background.
+            return None
 
-        if maybe_node := self._node.node_at(self.cursor.x, self.cursor.y):
-            node, sx, sy = maybe_node
+        node, sx, sy = maybe_node
 
-            if node.type == SceneNodeType.BUFFER:
-                if scene_buffer := SceneBuffer.from_node(node):
-                    if scene_surface := SceneSurface.from_buffer(scene_buffer):
-                        surface = scene_surface.surface
-                        tree = node.parent
+        if node.type == SceneNodeType.BUFFER:
+            # Buffer nodes can be any surface or subsurface (nested in subtrees) of a
+            # window, or an Internal window, or a wallpaper. In all cases we will get a
+            # wlr_scene_buffer, but only client surfaces will have a wlr_scene_surface.
 
-                        # Find the node corresponding to the window at the root of this tree
-                        while tree.node.data is None:
-                            tree = tree.node.parent
-                        return tree.node.data, surface, sx, sy
+            if scene_buffer := SceneBuffer.from_node(node):
+                if scene_surface := SceneSurface.from_buffer(scene_buffer):
+                    # We got a wlr_scene_surface, so it's definitely a client's
+                    # surface. Walk up the tree to find the window.
+                    surface = scene_surface.surface
+                    tree = node.parent
+                    while tree.node.data is None:
+                        tree = tree.node.parent
+                    return tree.node.data, surface, sx, sy
 
-        # TODO: account for borders, returning: win, None, sx, sy
+                # We didn't get a wlr_scene_surface, so the node is either an Internal
+                # window or wallpaper. These alternatives can be identified by the
+                # presence of a .data on the node.
+                if win := node.data:
+                    return win, None, sx, sy
+                return None
+
+            # We didn't get a wlr_scene_buffer. This shouldn't happen.
+            logger.error("wlr_scene_buffer expected but not found. Please report.")
+            return None
+
+        if node.type == SceneNodeType.RECT:
+            # Rect nodes are only used for window borders. Their immediate parent is the
+            # window's tree, which gives us the window at .data.
+            win = cast(window.Window, node.parent.node.data)
+            return win, None, sx, sy
+
+        logger.error("Couldn't determine what was under the pointer. Please report.")
         return None
 
     def check_idle_inhibitor(self) -> None:
