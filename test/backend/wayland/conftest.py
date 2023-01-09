@@ -81,15 +81,7 @@ class WaylandBackend(Backend):
 
     def get_all_windows(self):
         """Get a list of all windows in ascending order of Z position"""
-        success, result = self.manager.c.eval(
-            textwrap.dedent(
-                """
-            [win.wid for win in self.core.mapped_windows]
-        """
-            )
-        )
-        assert success
-        return eval(result)
+        return self.manager.c.core.query_tree()
 
 
 def new_xdg_client(wmanager, name="xdg"):
