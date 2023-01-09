@@ -136,12 +136,18 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
     def finalize(self) -> None:
         self.finalize_listeners()
-        if self.tree_node.data:
-            # self.tree_node.data will be None if this is an X client that unmapped
-            # itself, in which case we arent't sure if it might re-map, so we finalized
-            # it in case it was destroying itself.
-            self.tree_node.data = None
-            self.tree_node.destroy()
+
+        try:
+            if self.tree_node.data:
+                # self.tree_node.data will be None if this is an X client that unmapped
+                # itself, in which case we arent't sure if it might re-map, so we finalized
+                # it in case it was destroying itself.
+                self.tree_node.data = None
+                self.tree_node.destroy()
+        except AttributeError:
+            # Likely an XWayland client that died before every mapping.
+            pass
+
         if self.ftm_handle:
             self.ftm_handle.destroy()
             self.ftm_handle = None
