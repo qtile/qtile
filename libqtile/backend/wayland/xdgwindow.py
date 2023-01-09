@@ -277,7 +277,7 @@ class XdgWindow(Window[XdgSurface]):
 
         self.x = x
         self.y = y
-        self.tree.node.set_position(x, y)
+        self.tree_node.set_position(x, y)
         self._width = width
         self._height = height
         self.surface.set_size(width, height)
