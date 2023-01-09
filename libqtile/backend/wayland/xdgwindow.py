@@ -400,7 +400,7 @@ class XdgStatic(Static[XdgSurface]):
         self._height = height
         self.surface.set_size(width, height)
         self.surface.set_bounds(width, height)
-        self.paint_borders(bordercolor, borderwidth)
+        self.tree_node.set_position(x, y)
 
     def _on_set_title(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgstatic set_title")

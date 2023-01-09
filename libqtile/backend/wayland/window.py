@@ -682,6 +682,11 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             height = self._height
 
         self.finalize_listeners()
+
+        while self._borders:
+            for rect in self._borders.pop():
+                rect.node.destroy()
+
         win = self._to_static()
         if screen is not None:
             win.screen = self.qtile.screens[screen]
@@ -760,10 +765,6 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
             )
 
         hook.fire("client_focus", self)
-
-    def paint_borders(self, color: ColorsType | None, width: int) -> None:
-        # TODO: remove this method completely. Statics aren't bordered.
-        logger.warning("Static.paint_borders() called by %s", self)
 
     def _on_map(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: static map")
