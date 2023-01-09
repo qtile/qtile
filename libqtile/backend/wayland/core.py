@@ -455,24 +455,10 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_new_xdg_surface(self, _listener: Listener, xdg_surface: XdgSurface) -> None:
         logger.debug("Signal: xdg_shell new_surface_event")
 
-        if xdg_surface.role == XdgSurfaceRole.POPUP:
-            # We must add xdg popups to the scene graph so they get rendered. The
-            # wlroots scene graph provides a helper for this, but to use it we must
-            # provide the proper parent scene node of the xdg popup. To enable this, we
-            # always set the user data field of xdg_surfaces to the corresponding scene
-            # node.
-            parent_xdg_surface = XdgSurface.from_surface(xdg_surface.popup.parent)
-            parent_scene_tree = cast(SceneTree, parent_xdg_surface.data)
-            xdg_surface.data = self.scene.xdg_surface_create(parent_scene_tree, xdg_surface)
-            return
-
-        if xdg_surface.role != XdgSurfaceRole.TOPLEVEL:
-            logger.warning("XDG shell surface did not have role set. Bad client.")
-            return
-
-        assert self.qtile is not None
-        win = xdgwindow.XdgWindow(self, self.qtile, xdg_surface)
-        self.pending_windows.add(win)
+        if xdg_surface.role == XdgSurfaceRole.TOPLEVEL:
+            assert self.qtile is not None
+            win = xdgwindow.XdgWindow(self, self.qtile, xdg_surface)
+            self.pending_windows.add(win)
 
     def _on_cursor_axis(self, _listener: Listener, event: pointer.PointerAxisEvent) -> None:
         handled = False
