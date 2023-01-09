@@ -70,14 +70,11 @@ class XdgWindow(Window[XdgSurface]):
         self.subsurfaces: list[SubSurface] = []
         surface.set_wm_capabilities(WM_CAPABILITIES)
 
-        # Store this object on the scene node for finding the window under the pointer.
-        self.node = core.scene.xdg_surface_create(core.window_tree, surface).node
-        self.node.data = self
-        # Make a new scene tree for this window and its borders, within
-        # `Core.windows_tree`. The window's position within this tree is the same as the
-        # border width (in each of x and y).
-        self.tree = SceneTree.create(self.node.parent)
-        self.node.reparent(self.tree)
+        # Create a scene-graph tree for this window and its borders
+        self.tree = SceneTree.create(core.window_tree)
+        self.tree_node = self.tree.node  # Save this to keep the .data alive
+        self.tree_node.data = self
+        self.node = core.scene.xdg_surface_create(self.tree, surface).node
 
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
@@ -363,7 +360,8 @@ class XdgStatic(Static[XdgSurface]):
         # Take control of the scene node and tree
         self.node = win.node
         self.tree = win.tree
-        self.node.data = self
+        self.tree_node = win.tree_node
+        self.tree_node.data = self
 
     def finalize(self) -> None:
         Static.finalize(self)
