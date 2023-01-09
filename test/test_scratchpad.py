@@ -276,6 +276,7 @@ def test_kill(manager):
 
     # kill current window "dd-a"
     manager.c.window.kill()
+    manager.c.sync()
     is_killed(manager, "dd-a")
     assert_focused(manager, "one")
     assert "window" not in manager.c.group["SCRATCHPAD"].dropdown_info("dd-a")
