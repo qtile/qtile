@@ -288,7 +288,7 @@ class XWindow(Window[xwayland.Surface]):
         self.y = y
         self._width = width
         self._height = height
-        self.tree.node.set_position(x, y)
+        self.tree_node.set_position(x, y)
         self.surface.configure(x, y, width, height)
         self.paint_borders(bordercolor, borderwidth)
 
@@ -299,7 +299,7 @@ class XWindow(Window[xwayland.Surface]):
     def bring_to_front(self) -> None:
         if self.mapped:
             self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
-            self.tree.node.raise_to_top()
+            self.tree_node.raise_to_top()
 
     @expose_command()
     def static(
@@ -384,7 +384,7 @@ class XStatic(Static[xwayland.Surface]):
         self._width = width
         self._height = height
         self.surface.configure(x, y, self._width, self._height)
-        self.paint_borders(bordercolor, borderwidth)
+        self.tree_node.set_position(x, y)
 
     def _on_set_title(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xstatic set_title")

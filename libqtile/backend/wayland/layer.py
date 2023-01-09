@@ -83,7 +83,7 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self.mapped = True
         self.output.organise_layers()
         surface.current = old_state
-        self.tree.node.reparent(core.layer_trees[old_state.layer])
+        self.tree_node.reparent(core.layer_trees[old_state.layer])
 
     @property
     def mapped(self) -> bool:
@@ -94,7 +94,7 @@ class LayerStatic(Static[LayerSurfaceV1]):
         if mapped == self._mapped:
             return
         self._mapped = mapped
-        self.node.set_enabled(enabled=mapped)
+        self.tree_node.set_enabled(enabled=mapped)
         if mapped:
             self.output.layers[self._layer].append(self)
         else:
@@ -140,7 +140,7 @@ class LayerStatic(Static[LayerSurfaceV1]):
             self.output.layers[self._layer].remove(self)
             self._layer = pending.layer
             self.output.layers[self._layer].append(self)
-            self.tree.node.reparent(self.core.layer_trees[self._layer])
+            self.tree_node.reparent(self.core.layer_trees[self._layer])
             self.output.organise_layers()
 
     def kill(self) -> None:
