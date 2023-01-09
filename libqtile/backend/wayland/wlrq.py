@@ -153,9 +153,16 @@ class Painter:
             output for output in self.core.outputs if output.wlr_output.enabled  # type: ignore
         ]
         output = outputs[screen.index]
+
         if output.wallpaper is not None:
-            output.wallpaper.node.destroy()
-        output.wallpaper = SceneBuffer.create(self.core.wallpaper_tree, Buffer(wlr_buffer))
+            output.wallpaper[0].node.destroy()
+            output.wallpaper = None
+
+        # We don't use the surface again but need to keep a reference so it persists
+        if scene_buffer := SceneBuffer.create(self.core.wallpaper_tree, Buffer(wlr_buffer)):
+            output.wallpaper = (scene_buffer, surface)
+        else:
+            logger.warning("Failed to create wlr_scene_buffer.")
 
 
 class HasListeners:
