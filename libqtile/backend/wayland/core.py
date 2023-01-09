@@ -699,7 +699,7 @@ class Core(base.Core, wlrq.HasListeners):
                 except RuntimeError:
                     logger.warning("Couldn't disable output %s", wlr_output.name)
                     return
-                self._blanked_outputs.add(wlr_output.data)
+                self._blanked_outputs.add(output)
 
     def _on_new_layer_surface(self, _listener: Listener, layer_surface: LayerSurfaceV1) -> None:
         logger.debug("Signal: layer_shell new_surface_event")
