@@ -191,9 +191,6 @@ class Dnd(HasListeners):
 
         self.icon = cast(data_device_manager.DragIcon, wlr_drag.icon)
         self.add_listener(wlr_drag.destroy_event, self._on_destroy)
-        self.add_listener(self.icon.map_event, self._on_icon_map)
-        self.add_listener(self.icon.unmap_event, self._on_icon_unmap)
-        self.add_listener(self.icon.destroy_event, self._on_icon_destroy)
         self.add_listener(self.icon.surface.commit_event, self._on_icon_commit)
 
         tree = SceneTree.subsurface_tree_create(core.layer_trees[4], self.icon.surface)
@@ -207,18 +204,6 @@ class Dnd(HasListeners):
     def _on_destroy(self, _listener: Listener, _event: Any) -> None:
         logger.debug("Signal: wlr_drag destroy")
         self.finalize()
-
-    def _on_icon_map(self, _listener: Listener, _event: Any) -> None:
-        logger.debug("Signal: wlr_drag_icon map")
-        # TODO: remove?
-
-    def _on_icon_unmap(self, _listener: Listener, _event: Any) -> None:
-        logger.debug("Signal: wlr_drag_icon unmap")
-        # TODO: remove?
-
-    def _on_icon_destroy(self, _listener: Listener, _event: Any) -> None:
-        logger.debug("Signal: wlr_drag_icon destroy")
-        # TODO: remove?
 
     def _on_icon_commit(self, _listener: Listener, _event: Any) -> None:
         self.width = self.icon.surface.current.width
