@@ -70,12 +70,12 @@ class LayerStatic(Static[LayerSurfaceV1]):
                 self.output = output
                 self.screen = self.output.screen
 
-        # Make a new scene tree for this window and any popups.
+        # Make a new scene tree for this window
         self.tree = SceneTree.create(core.layer_trees[surface.pending.layer])
         self.scene_layer = core.scene.layer_surface_v1_create(self.tree, surface)
-        # Store this object on the scene node for finding the window under the pointer.
         self.node = self.scene_layer.tree.node
-        self.node.data = self
+        self.tree_node = self.tree.node  # Save this to keep the .data alive
+        self.tree_node.data = self
 
         # Temporarily set the layer's current state to pending so that we can easily
         # arrange it.
