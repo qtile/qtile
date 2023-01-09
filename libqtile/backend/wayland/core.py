@@ -666,18 +666,26 @@ class Core(base.Core, wlrq.HasListeners):
         """
         logger.debug("Signal: output_power_manager set_mode_event")
         wlr_output = mode.output
-        assert wlr_output.data
+        output = cast(Output, wlr_output.data)
 
         if mode.mode == OutputPowerManagementV1Mode.ON:
-            if wlr_output.data in self._blanked_outputs:
+            if output in self._blanked_outputs:
                 wlr_output.enable(enable=True)
-                wlr_output.commit()
-                self._blanked_outputs.remove(wlr_output.data)
+                try:
+                    wlr_output.commit()
+                except RuntimeError:
+                    logger.warning("Couldn't enable output %s", wlr_output.name)
+                    return
+                self._blanked_outputs.remove(output)
 
         else:
             if wlr_output.enabled:
                 wlr_output.enable(enable=False)
-                wlr_output.commit()
+                try:
+                    wlr_output.commit()
+                except RuntimeError:
+                    logger.warning("Couldn't disable output %s", wlr_output.name)
+                    return
                 self._blanked_outputs.add(wlr_output.data)
 
     def _on_new_layer_surface(self, _listener: Listener, layer_surface: LayerSurfaceV1) -> None:
