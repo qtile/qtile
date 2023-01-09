@@ -170,7 +170,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         if mapped == self._mapped:
             return
         self._mapped = mapped
-        self.tree.node.set_enabled(enabled=mapped)
+        self.tree_node.set_enabled(enabled=mapped)
         if self._idle_inhibitors_count > 0:
             self.core.check_idle_inhibitor()
 
@@ -656,7 +656,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     @expose_command()
     def bring_to_front(self) -> None:
         if self.mapped:
-            self.node.raise_to_top()
+            self.tree_node.raise_to_top()
 
     @expose_command()
     def static(
@@ -753,7 +753,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         if mapped == self._mapped:
             return
         self._mapped = mapped
-        self.tree.node.set_enabled(enabled=mapped)
+        self.tree_node.set_enabled(enabled=mapped)
 
     def focus(self, warp: bool = True) -> None:
         self.core.focus_window(self)
@@ -829,7 +829,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
     @expose_command()
     def bring_to_front(self) -> None:
         if self.mapped:
-            self.node.raise_to_top()
+            self.tree_node.raise_to_top()
 
     @expose_command()
     def info(self) -> dict:
@@ -906,7 +906,7 @@ class Internal(_Base, base.Internal):
         if mapped == self._mapped:
             return
         self._mapped = mapped
-        self.tree.node.set_enabled(enabled=mapped)
+        self.node.set_enabled(enabled=mapped)
 
     def hide(self) -> None:
         self.mapped = False
@@ -944,7 +944,7 @@ class Internal(_Base, base.Internal):
 
         self.x = x
         self.y = y
-        self.tree.node.set_position(x, y)
+        self.node.set_position(x, y)
 
         if width != self._width or height != self._height:
             # Changed size, we need to regenerate the buffer
@@ -966,7 +966,7 @@ class Internal(_Base, base.Internal):
     @expose_command()
     def bring_to_front(self) -> None:
         if self.mapped:
-            self.tree.node.raise_to_top()
+            self.node.raise_to_top()
 
 
 WindowType = typing.Union[Window, Static, Internal]
