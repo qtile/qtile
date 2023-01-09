@@ -77,13 +77,11 @@ class XWindow(Window[xwayland.Surface]):
             logger.debug("Managing new XWayland window with window ID: %s", self._wid)
             surface = self.surface
 
-            # Make a new scene tree for this window and its borders, within
-            # `Core.windows_tree`. The window's position within this tree is the same as the
-            # border width (in each of x and y).
+            # Create a scene-graph tree for this window and its borders
             self.tree = SceneTree.create(self.core.window_tree)
-            # Store this object on the scene node for finding the window under the pointer.
+            self.tree_node = self.tree.node  # Save this to keep the .data alive
+            self.tree_node.data = self
             self.node = SceneTree.subsurface_tree_create(self.tree, surface.surface).node
-            self.node.data = self
 
             # Make it static if it isn't a regular window
             if surface.override_redirect:
@@ -354,7 +352,8 @@ class XStatic(Static[xwayland.Surface]):
         # Take control of the scene node and tree
         self.node = win.node
         self.tree = win.tree
-        self.node.data = self
+        self.tree_node = win.tree_node
+        self.tree_node.data = self
 
     @expose_command()
     def kill(self) -> None:
