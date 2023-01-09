@@ -79,6 +79,7 @@ class XWindow(Window[xwayland.Surface]):
 
             # Create a scene-graph tree for this window and its borders
             self.tree = SceneTree.create(self.core.window_tree)
+            self.tree.node.set_enabled(enabled=False)
             self.tree_node = self.tree.node  # Save this to keep the .data alive
             self.tree_node.data = self
             self.node = SceneTree.subsurface_tree_create(self.tree, surface.surface).node
