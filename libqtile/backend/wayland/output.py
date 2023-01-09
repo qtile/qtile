@@ -23,26 +23,24 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-from pywayland.protocol.wayland.wl_output import WlOutput
 from wlroots.util.box import Box
 from wlroots.util.clock import Timespec
-from wlroots.util.region import PixmanRegion32
-from wlroots.wlr_types import Matrix
 from wlroots.wlr_types import Output as wlrOutput
-from wlroots.wlr_types import OutputDamage, SceneOutput
+from wlroots.wlr_types import SceneOutput
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1Anchor
 
-from libqtile.backend.wayland.layer import LayerStatic
 from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
     from typing import Any
 
+    from cairocffi import ImageSurface
     from pywayland.server import Listener
-    from wlroots.wlr_types import SceneBuffer, Texture
+    from wlroots.wlr_types import SceneBuffer
 
     from libqtile.backend.wayland.core import Core
+    from libqtile.backend.wayland.layer import LayerStatic
     from libqtile.backend.wayland.window import WindowType
     from libqtile.backend.wayland.wlrq import Dnd
     from libqtile.config import Screen
@@ -54,7 +52,7 @@ class Output(HasListeners):
         self.renderer = core.renderer
         self.wlr_output = wlr_output
         wlr_output.data = self
-        self.wallpaper: SceneBuffer | None = None
+        self.wallpaper: tuple[SceneBuffer, ImageSurface] | None = None
 
         # Initialise wlr_output
         wlr_output.init_render(core.allocator, core.renderer)
