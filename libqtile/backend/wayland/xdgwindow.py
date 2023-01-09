@@ -66,7 +66,6 @@ class XdgWindow(Window[XdgSurface]):
         Window.__init__(self, core, qtile, surface)
 
         self._wm_class = surface.toplevel.app_id
-        self.popups: list[XdgPopupWindow] = []
         self.subsurfaces: list[SubSurface] = []
         surface.set_wm_capabilities(WM_CAPABILITIES)
 
@@ -162,7 +161,7 @@ class XdgWindow(Window[XdgSurface]):
 
     def _on_new_popup(self, _listener: Listener, xdg_popup: XdgPopup) -> None:
         logger.debug("Signal: xdgwindow new_popup")
-        self.popups.append(XdgPopupWindow(self, xdg_popup))
+        XdgPopupWindow(self, xdg_popup)
 
     def _on_new_subsurface(self, _listener: Listener, subsurface: WlrSubSurface) -> None:
         self.subsurfaces.append(SubSurface(self, subsurface))
@@ -419,16 +418,19 @@ class XdgStatic(Static[XdgSurface]):
 class XdgPopupWindow(HasListeners):
     """
     This represents a single `struct wlr_xdg_popup` object and is owned by a single
-    parent window (of `WindowType | XdgPopupWindow`). wlroots does most of the
-    work for us, but we need to listen to certain events so that we know when to render
-    frames and we need to unconstrain the popups so they are completely visible.
+    parent window (of `WindowType | XdgPopupWindow`). wlroots does most of the work for
+    us, we only need to listen for new (nested) popups so that we can position them and
+    add them to the scene-graph tree.
     """
 
     def __init__(self, parent: XdgWindow | XdgPopupWindow, xdg_popup: XdgPopup):
         self.parent = parent
         self.xdg_popup = xdg_popup
         self.core: Core = parent.core
-        self.popups: list[XdgPopupWindow] = []
+
+        # Create scene-graph node in parent's tree
+        parent_tree = typing.cast(SceneTree, parent.tree)  # mypy doesn't like the recursive type
+        self.tree: SceneTree | None = self.core.scene.xdg_surface_create(parent_tree, xdg_popup.base)
 
         # Keep on output
         if isinstance(parent, XdgPopupWindow):
@@ -452,19 +454,8 @@ class XdgPopupWindow(HasListeners):
             self.output_box = box
         xdg_popup.unconstrain_from_box(self.output_box)
 
-        self.add_listener(xdg_popup.base.map_event, self._on_map)
-        self.add_listener(xdg_popup.base.unmap_event, self._on_unmap)
         self.add_listener(xdg_popup.base.destroy_event, self._on_destroy)
         self.add_listener(xdg_popup.base.new_popup_event, self._on_new_popup)
-        self.add_listener(xdg_popup.base.surface.commit_event, self._on_commit)
-
-    def _on_map(self, _listener: Listener, _data: Any) -> None:
-        # TODO: remove?
-        logger.debug("Signal: popup map")
-
-    def _on_unmap(self, _listener: Listener, _data: Any) -> None:
-        # TODO: remove?
-        logger.debug("Signal: popup unmap")
 
     def _on_destroy(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: popup destroy")
@@ -472,8 +463,4 @@ class XdgPopupWindow(HasListeners):
 
     def _on_new_popup(self, _listener: Listener, xdg_popup: XdgPopup) -> None:
         logger.debug("Signal: popup new_popup")
-        self.popups.append(XdgPopupWindow(self, xdg_popup))
-
-    def _on_commit(self, _listener: Listener, _data: Any) -> None:
-        # TODO: remove?
-        pass
+        XdgPopupWindow(self, xdg_popup)
