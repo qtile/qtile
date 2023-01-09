@@ -295,12 +295,15 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
     def paint_borders(self, colors: ColorsType | None, width: int) -> None:
         if not colors:
-            return
+            colors = []
+            width = 0
 
         if not isinstance(colors, list):
             colors = [colors]
 
         self.node.set_position(width, width)
+        self.bordercolor = colors
+        self.borderwidth = width
 
         if width == 0:
             for rects in self._borders:
