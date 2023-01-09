@@ -1365,6 +1365,27 @@ class Core(base.Core, wlrq.HasListeners):
 
         return dict(info)
 
+    @expose_command()
+    def query_tree(self) -> list[int]:
+        """Get IDs of all mapped windows in ascending Z order."""
+        wids = []
+
+        def iterator(buffer: SceneBuffer, _sx: int, _sy: int, _data: None) -> None:
+            # Walk back up tree until we find a window or run out of parents
+            node = buffer.node
+            while True:
+                if win := node.data:
+                    if win.mapped:
+                        wids.append(win.wid)
+                    return
+                parent = node.parent
+                if not parent:
+                    return
+                node = parent.node
+
+        self._node.for_each_buffer(iterator, None)
+        return wids
+
     def get_mouse_position(self) -> tuple[int, int]:
         """Get mouse coordinates."""
         return int(self.cursor.x), int(self.cursor.y)
