@@ -871,6 +871,7 @@ class Internal(_Base, base.Internal):
         self._scene_buffer = scene_buffer
         self.node = self._scene_buffer.node
         self.node.data = self
+        self.node.set_position(x, y)
 
     def finalize(self) -> None:
         self.hide()
