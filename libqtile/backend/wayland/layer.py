@@ -26,7 +26,6 @@ from pywayland.server import Listener
 from wlroots.wlr_types import SceneTree
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1
 
-from libqtile.backend.wayland.subsurface import SubSurface
 from libqtile.backend.wayland.window import Static
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
@@ -52,7 +51,6 @@ class LayerStatic(Static[LayerSurfaceV1]):
         wid: int,
     ):
         Static.__init__(self, core, qtile, surface, wid)
-        self.subsurfaces: list[SubSurface] = []
 
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
@@ -86,11 +84,6 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self.output.organise_layers()
         surface.current = old_state
         self.tree.node.reparent(core.layer_trees[old_state.layer])
-
-    def finalize(self) -> None:
-        Static.finalize(self)
-        for subsurface in self.subsurfaces:
-            subsurface.finalize()
 
     @property
     def mapped(self) -> bool:

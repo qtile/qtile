@@ -35,7 +35,6 @@ from wlroots.wlr_types.xdg_shell import XdgPopup, XdgSurface, XdgTopLevelWMCapab
 from libqtile import hook
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
-from libqtile.backend.wayland.subsurface import SubSurface
 from libqtile.backend.wayland.window import Static, Window
 from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.command.base import expose_command
@@ -43,8 +42,6 @@ from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
     from typing import Any
-
-    from wlroots.wlr_types.surface import SubSurface as WlrSubSurface
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.output import Output
@@ -66,7 +63,6 @@ class XdgWindow(Window[XdgSurface]):
         Window.__init__(self, core, qtile, surface)
 
         self._wm_class = surface.toplevel.app_id
-        self.subsurfaces: list[SubSurface] = []
         surface.set_wm_capabilities(WM_CAPABILITIES)
 
         # Create a scene-graph tree for this window and its borders
@@ -80,16 +76,10 @@ class XdgWindow(Window[XdgSurface]):
         self.add_listener(surface.destroy_event, self._on_destroy)
         self.add_listener(surface.new_popup_event, self._on_new_popup)
         self.add_listener(surface.surface.commit_event, self._on_commit)
-        self.add_listener(surface.surface.new_subsurface_event, self._on_new_subsurface)
         self.add_listener(surface.toplevel.request_maximize_event, self._on_request_maximize)
         self.add_listener(surface.toplevel.request_fullscreen_event, self._on_request_fullscreen)
 
         surface.data = self.ftm_handle = core.foreign_toplevel_manager_v1.create_handle()
-
-    def finalize(self) -> None:
-        Window.finalize(self)
-        for subsurface in self.subsurfaces:
-            subsurface.finalize()
 
     def _on_map(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow map")
@@ -162,9 +152,6 @@ class XdgWindow(Window[XdgSurface]):
     def _on_new_popup(self, _listener: Listener, xdg_popup: XdgPopup) -> None:
         logger.debug("Signal: xdgwindow new_popup")
         XdgPopupWindow(self, xdg_popup)
-
-    def _on_new_subsurface(self, _listener: Listener, subsurface: WlrSubSurface) -> None:
-        self.subsurfaces.append(SubSurface(self, subsurface))
 
     def _on_request_fullscreen(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow request_fullscreen")
@@ -310,9 +297,7 @@ class XdgWindow(Window[XdgSurface]):
         height: int | None = None,
     ) -> None:
         Window.static(self, screen, x, y, width, height)
-        win = self.qtile.windows_map[self._wid]
-        assert isinstance(win, XdgStatic)
-        win.subsurfaces = self.subsurfaces
+        win = typing.cast(XdgStatic, self.qtile.windows_map[self._wid])
 
         for pc in self.core.pointer_constraints.copy():
             if pc.window is self:
@@ -343,7 +328,6 @@ class XdgStatic(Static[XdgSurface]):
         Static.__init__(
             self, core, qtile, surface, win.wid, idle_inhibitor_count=idle_inhibitor_count
         )
-        self.subsurfaces: list[SubSurface] = []
 
         if surface.toplevel.title:
             self.name = surface.toplevel.title
@@ -361,11 +345,6 @@ class XdgStatic(Static[XdgSurface]):
         self.tree = win.tree
         self.tree_node = win.tree_node
         self.tree_node.data = self
-
-    def finalize(self) -> None:
-        Static.finalize(self)
-        for subsurface in self.subsurfaces:
-            subsurface.finalize()
 
     @expose_command()
     def kill(self) -> None:
@@ -430,7 +409,9 @@ class XdgPopupWindow(HasListeners):
 
         # Create scene-graph node in parent's tree
         parent_tree = typing.cast(SceneTree, parent.tree)  # mypy doesn't like the recursive type
-        self.tree: SceneTree | None = self.core.scene.xdg_surface_create(parent_tree, xdg_popup.base)
+        self.tree: SceneTree | None = self.core.scene.xdg_surface_create(
+            parent_tree, xdg_popup.base
+        )
 
         # Keep on output
         if isinstance(parent, XdgPopupWindow):
