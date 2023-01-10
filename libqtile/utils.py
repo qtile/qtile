@@ -164,6 +164,19 @@ def remove_transparency(colour: ColorsType):  # type: ignore
     return [remove_transparency(c) for c in colour]
 
 
+def is_valid_colors(color: ColorsType) -> bool:
+    """
+    Returns whether the argument is a valid color or list of colors.
+    """
+    if not isinstance(color, list):
+        color = [color]
+    try:
+        list(rgb(c) for c in color)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
 def scrub_to_utf8(text: str | bytes) -> str:
     if not text:
         return ""
