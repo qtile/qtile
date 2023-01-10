@@ -671,8 +671,13 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         Fake a mouse-button-press on the bar. Co-ordinates are relative
         to the top-left corner of the bar.
 
-        :screen The integer screen offset
-        :position One of "top", "bottom", "left", or "right"
+        Parameters
+        ==========
+        widgets :
+            A list of widget objects.
+        size :
+            The "thickness" of the bar, i.e. the height of a horizontal bar, or the
+            width of a vertical bar.
         """
         self.process_button_click(x, y, button)
 
