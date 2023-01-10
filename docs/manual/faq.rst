@@ -103,7 +103,7 @@ of binding keys to ``lazy.group[name].toscreen()``, use this:
     for i in groups:
         keys.append(Key([mod], i.name, lazy.function(go_to_group(i.name))))
         
-To be able to move windows across these groups a similar function can be used:
+To be able to move windows across these groups which switching groups, a similar function can be used:
 
 .. code-block:: python
     
