@@ -170,7 +170,7 @@ class _Widget(CommandObject, configurable.Configurable):
             raise confreader.ConfigError("Widget width must be an int")
 
         self.configured = False
-        self._futures: list[asyncio.TimerHandle] = []
+        self._futures: list[asyncio.Handle] = []
         self._mirrors: set[_Widget] = set()
 
     @property
@@ -224,9 +224,15 @@ class _Widget(CommandObject, configurable.Configurable):
         self.qtile = qtile
         self.bar = bar
         self.drawer = bar.window.create_drawer(self.bar.width, self.bar.height)
+
+        # Timers are added to futures list so they can be cancelled if the `finalize` method is
+        # called before the timers have fired.
         if not self.configured:
-            self.qtile.call_soon(self.timer_setup)
-            self.qtile.call_soon(create_task, self._config_async())
+            timer = self.qtile.call_soon(self.timer_setup)
+            async_timer = self.qtile.call_soon(asyncio.create_task, self._config_async())
+
+            # Add these to our list of futures so they can be cancelled.
+            self._futures.extend([timer, async_timer])
 
     async def _config_async(self):
         """
@@ -342,10 +348,27 @@ class _Widget(CommandObject, configurable.Configurable):
 
     def _remove_dead_timers(self):
         """Remove completed and cancelled timers from the list."""
+
+        def is_ready(timer):
+            return timer in self.qtile._eventloop._ready
+
         self._futures = [
             timer
             for timer in self._futures
-            if not (timer.cancelled() or timer.when() < self.qtile._eventloop.time())
+            # Filter out certain handles...
+            if not (
+                timer.cancelled()
+                # Once a scheduled timer is ready to be run its _scheduled flag is set to False
+                # and it's added to the loop's `_ready` queue
+                or (
+                    isinstance(timer, asyncio.TimerHandle)
+                    and not timer._scheduled
+                    and not is_ready(timer)
+                )
+                # Callbacks scheduled via `call_soon` are put into the loop's `_ready` queue
+                # and are removed once they've been executed
+                or (isinstance(timer, asyncio.Handle) and not is_ready(timer))
+            )
         ]
 
     def _wrapper(self, method, *method_args):
