@@ -113,7 +113,7 @@ To be able to move windows across these groups a similar function can be used:
                 qtile.current_window.cmd_togroup(name, switch_group=True)
                 return
 
-            if name in '1234':
+            if name in "123":
                 qtile.current_window.cmd_togroup(name, switch_group=False)
                 qtile.focus_screen(0)
                 qtile.groups_map[name].cmd_toscreen()
