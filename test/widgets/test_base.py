@@ -163,9 +163,22 @@ def test_threadpolltext_force_update(minimal_conf_noscreen, manager_nospawn):
     # Widget is polled immediately when configured
     assert widget.info()["text"] == "Poll count: 1"
 
-    # Default update_imterval is 600 seconds so the widget won't poll during test unless forced
+    # Default update_interval is 600 seconds so the widget won't poll during test unless forced
     widget.force_update()
     assert widget.info()["text"] == "Poll count: 2"
+
+
+def test_threadpolltext_update_interval_none(minimal_conf_noscreen, manager_nospawn):
+    """Check that widget will be polled only once if update_interval == None"""
+    config = minimal_conf_noscreen
+    tpoll = PollingWidget("Not polled", update_interval=None)
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([tpoll], 10))]
+
+    manager_nospawn.start(config)
+    widget = manager_nospawn.c.widget["pollingwidget"]
+
+    # Widget is polled immediately when configured
+    assert widget.info()["text"] == "Poll count: 1"
 
 
 class ScrollingTextConfig(BareConfig):
