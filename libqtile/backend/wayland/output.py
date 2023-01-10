@@ -165,9 +165,11 @@ class Output(HasListeners):
             to_reserve: tuple[int, int, int, int] = tuple(space)  # type: ignore
             if win.reserved_space != to_reserve:
                 # Don't reserve more space if it's already been reserved
-                assert self.core.qtile is not None
-                self.core.qtile.reserve_space(to_reserve, self.screen)
+                assert win.qtile is not None
+                if win.reserved_space:
+                    win.qtile.free_reserved_space(win.reserved_space, self.screen)
                 win.reserved_space = to_reserve
+                win.qtile.reserve_space(to_reserve, self.screen)
 
             win.scene_layer.configure(full_area, usable_area)
             win.place(win.node.x, win.node.y, state.desired_width, state.desired_height, 0, None)
