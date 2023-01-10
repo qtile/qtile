@@ -102,6 +102,27 @@ of binding keys to ``lazy.group[name].toscreen()``, use this:
 
     for i in groups:
         keys.append(Key([mod], i.name, lazy.function(go_to_group(i.name))))
+        
+To be able to move windows across these groups which switching groups, a similar function can be used:
+
+.. code-block:: python
+    
+    def go_to_group_and_move_window(name: str):
+        def _inner(qtile):
+            if len(qtile.screens) == 1:
+                qtile.current_window.cmd_togroup(name, switch_group=True)
+                return
+
+            if name in "123":
+                qtile.current_window.cmd_togroup(name, switch_group=False)
+                qtile.focus_screen(0)
+                qtile.groups_map[name].cmd_toscreen()
+            else:
+                qtile.current_window.cmd_togroup(name, switch_group=False)
+                qtile.focus_screen(1)
+                qtile.groups_map[name].cmd_toscreen()
+
+        return _inner
 
 If you use the ``GroupBox`` widget you can make it reflect this behaviour:
 
