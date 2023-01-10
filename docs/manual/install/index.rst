@@ -1,6 +1,6 @@
-================
-Installing Qtile
-================
+============
+Installation
+============
 
 Distro Guides
 =============

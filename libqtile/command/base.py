@@ -206,7 +206,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         """
         Build a list of contained items for the given item class.
 
-        Exposing this allows __qsh__ to navigate the object graph.
+        Exposing this allows __qsh__ to navigate the command graph.
 
         Returns a tuple `(root, items)` for the specified item class, where:
 

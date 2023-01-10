@@ -6,6 +6,13 @@ The ``mouse`` config file variable defines a set of global mouse actions, and
 is a list of :class:`~libqtile.config.Click` and :class:`~libqtile.config.Drag`
 objects, which define what to do when a window is clicked or dragged.
 
+Default Mouse Bindings
+----------------------
+
+By default, holding your ``mod`` key and left-clicking (and holding) a window will
+allow you to drag it around as a floating window. Holding your ``mod`` key and right-clicking
+(and holding) a window will resize the window (and also make it float if it is not already floating).
+
 Example
 =======
 

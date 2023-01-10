@@ -16,20 +16,27 @@ Tying together screens, bars and widgets, we get something like this:
     from libqtile.config import Screen
     from libqtile import bar, widget
 
+    window_name = widget.WindowName()
+
     screens = [
         Screen(
             bottom=bar.Bar([
                 widget.GroupBox(),
-                widget.WindowName()
+                window_name,
                 ], 30),
             ),
         Screen(
             bottom=bar.Bar([
                 widget.GroupBox(),
-                widget.WindowName()
+                window_name,
                 ], 30),
             )
         ]
+
+Note that a widget can be passed to multiple bars (and likewise multiple times
+to the same bar). Its contents is mirrored across all copies so this is useful
+where you want identical content (e.g. the name of the focussed window, like in
+this example).
 
 Bars support both solid background colors and gradients by supplying a list of
 colors that make up a linear gradient. For example, :code:`bar.Bar(...,
@@ -177,10 +184,7 @@ Reference
 =========
 
 .. qtile_class:: libqtile.config.Screen
-   :no-commands:
 
 .. qtile_class:: libqtile.bar.Bar
-   :no-commands:
 
 .. qtile_class:: libqtile.bar.Gap
-   :no-commands:
