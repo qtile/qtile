@@ -105,6 +105,7 @@ class LayerStatic(Static[LayerSurfaceV1]):
 
             if self.reserved_space:
                 self.qtile.free_reserved_space(self.reserved_space, self.screen)
+                self.reserved_space = None
 
         self.output.organise_layers()
 

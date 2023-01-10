@@ -615,18 +615,19 @@ class Qtile(CommandObject):
     ) -> None:
         """
         Reserve some space at the edge(s) of a screen.
+
+        The requested space is added to space reserved previously: repeated calls to
+        this method are not idempotent.
         """
         for i, pos in enumerate(["left", "right", "top", "bottom"]):
-            if reserved_space[i]:
-                gap = getattr(screen, pos)
-                if isinstance(gap, bar.Bar):
-                    gap.adjust_for_strut(reserved_space[i])
-                elif isinstance(gap, bar.Gap):
-                    gap.size += reserved_space[i]
-                    if gap.size <= 0:
-                        setattr(screen, pos, None)
-                else:
-                    setattr(screen, pos, bar.Gap(reserved_space[i]))
+            if space := reserved_space[i]:
+                if gap := getattr(screen, pos):
+                    gap.adjust_reserved_space(space)
+                elif 0 < space:
+                    gap = bar.Gap(0)
+                    gap.screen = screen
+                    setattr(screen, pos, gap)
+                    gap.adjust_reserved_space(space)
         screen.resize()
 
     def free_reserved_space(
@@ -638,7 +639,8 @@ class Qtile(CommandObject):
         Free up space that has previously been reserved at the edge(s) of a screen.
         """
         # mypy can't work out that the new tuple is also length 4 (see mypy #7509)
-        self.reserve_space(tuple(-i for i in reserved_space), screen)  # type: ignore
+        reserved_space = tuple(-i for i in reserved_space)  # type: ignore
+        self.reserve_space(reserved_space, screen)
 
     def manage(self, win: base.WindowType) -> None:
         if isinstance(win, base.Internal):
