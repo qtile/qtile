@@ -457,6 +457,12 @@ class _TextBox(_Widget):
             "Whether text should scroll completely away (True) or stop when the end of the text is shown (False)",
         ),
         ("scroll_hide", False, "Whether the widget should hide when scrolling has finished"),
+        (
+            "scroll_fixed_width",
+            False,
+            "When ``scroll=True`` the ``width`` parameter is a maximum width and, when text is shorter than this, the widget will resize. "
+            "Setting ``scroll_fixed_width=True`` will force the widget to have a fixed width, regardless of the size of the text.",
+        ),
     ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -557,7 +563,11 @@ class _TextBox(_Widget):
             self._is_scrolling = True
             self._should_scroll = True
         else:
-            self.length_type = bar.CALCULATED
+            if self.scroll_fixed_width:
+                self.length_type = bar.STATIC
+                self.length = self._scroll_width
+            else:
+                self.length_type = bar.CALCULATED
             self._should_scroll = False
 
     def calculate_length(self):
