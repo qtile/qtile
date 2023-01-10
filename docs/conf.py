@@ -10,11 +10,11 @@
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
-
 import os
-import setuptools_scm
 import sys
 from unittest.mock import MagicMock
+
+import setuptools_scm
 
 
 class Mock(MagicMock):
@@ -102,11 +102,12 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
     "sphinxcontrib.seqdiag",
-    "sphinx_qtile",
     "numpydoc",
+    "sphinx_qtile",
 ]
 
 numpydoc_show_class_members = False
+numpydoc_class_members_toctree = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = []
@@ -260,12 +261,12 @@ htmlhelp_basename = "Qtiledoc"
 # -- Options for LaTeX output --------------------------------------------------
 
 latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #'papersize': 'letterpaper',
-    # The font size ('10pt', '11pt' or '12pt').
-    #'pointsize': '10pt',
-    # Additional stuff for the LaTeX preamble.
-    #'preamble': '',
+    #  The paper size ('letterpaper' or 'a4paper').
+    # 'papersize': 'letterpaper',
+    #  The font size ('10pt', '11pt' or '12pt').
+    # 'pointsize': '10pt',
+    #  Additional stuff for the LaTeX preamble.
+    # 'preamble': '',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
@@ -340,6 +341,7 @@ if not os.environ.get("READTHEDOCS"):
 
 
 graphviz_dot_args = ["-Lg"]
+
 
 # A workaround for the responsive tables always having annoying scrollbars.
 def setup(app):
