@@ -158,10 +158,14 @@ class XdgWindow(Window[XdgSurface]):
         logger.debug("Signal: xdgwindow request_fullscreen")
         if self.qtile.config.auto_fullscreen:
             self.fullscreen = self.surface.toplevel.requested.fullscreen
+        else:
+            # Per xdg-shell protocol we must send a configure in response to this
+            # request. Since we're ignoring it, we must schedule a configure manually.
+            self.surface.schedule_configure()
 
     def _on_request_maximize(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow request_maximize")
-        self.fullscreen = self.surface.toplevel.requested.maximized
+        self.maximized = self.surface.toplevel.requested.maximized
 
     def _on_set_title(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow set_title")
