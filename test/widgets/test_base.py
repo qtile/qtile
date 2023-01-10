@@ -189,6 +189,13 @@ class ScrollingTextConfig(BareConfig):
                     TextBox("NoWidth", name="no_width", scroll=True),
                     TextBox("ShortText", name="short_text", width=100, scroll=True),
                     TextBox("Longer text " * 5, name="longer_text", width=100, scroll=True),
+                    TextBox(
+                        "ShortFixedWidth",
+                        name="fixed_width",
+                        width=200,
+                        scroll=True,
+                        scroll_fixed_width=True,
+                    ),
                 ],
                 32,
             )
@@ -257,3 +264,14 @@ def test_text_scroll_long_text(manager):
 
     # Check actually scrolling
     wait_for_scroll(widget)
+
+
+@scrolling_text_config
+def test_scroll_fixed_width(manager):
+    widget = manager.c.widget["fixed_width"]
+
+    _, layout = widget.eval("self.layout.width")
+    assert int(layout) < 200
+
+    # Widget width is fixed at set width
+    assert widget.info()["width"] == 200
