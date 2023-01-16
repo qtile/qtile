@@ -63,7 +63,8 @@ class Wttr(GenPollUrl):
             "location",
             {},
             "Dictionary. Key is a city or place name, or GPS coordinates. "
-            "Value is a display name.",
+            "Value is a display name. If the dictionary is empty, "
+            "the location will be determined based on your IP address.",
         ),
         (
             "units",
