@@ -61,7 +61,7 @@ class Wttr(GenPollUrl):
         ),
         (
             "location",
-            None,
+            {},
             "Dictionary. Key is a city or place name, or GPS coordinates. "
             "Value is a display name.",
         ),
@@ -86,9 +86,6 @@ class Wttr(GenPollUrl):
         self.url = self._get_url()
 
     def _get_url(self):
-        if not self.location:
-            return None
-
         params = {
             "format": self.format,
             "lang": self.lang,
