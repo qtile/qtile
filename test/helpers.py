@@ -172,6 +172,11 @@ class TestManager:
             try:
                 os.environ.pop("DISPLAY", None)
                 os.environ.pop("WAYLAND_DISPLAY", None)
+
+                # Set a different XDG_DATA_HOME for pytest xdist workers
+                # This is to prevent race conditions between workers
+                if worker := os.environ.get("PYTEST_XDIST_WORKER", None):
+                    os.environ["XDG_DATA_HOME"] = str(Path("~/.local/share/qtile/xdist") / worker)
                 kore = self.backend.create()
                 os.environ.update(self.backend.env)
                 init_log(self.log_level)
