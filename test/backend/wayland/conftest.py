@@ -1,6 +1,7 @@
 import contextlib
 import os
 import textwrap
+from pathlib import Path
 
 import pytest
 
@@ -19,7 +20,6 @@ wlr_env = {
     "WLR_LIBINPUT_NO_DEVICES": "1",
     "WLR_RENDERER_ALLOW_SOFTWARE": "1",
     "WLR_RENDERER": "pixman",
-    "XDG_RUNTIME_DIR": "/tmp",
 }
 
 
@@ -28,6 +28,15 @@ def wayland_environment(outputs):
     """This backend just needs some environmental variables set"""
     env = wlr_env.copy()
     env["WLR_HEADLESS_OUTPUTS"] = str(outputs)
+    runtime = Path("/tmp")
+    # When run in parallel using pytest-xdist, there needs to be a different wayland display socket for each worker.
+    # This wayland display socket is created at the base of XDG_RUNTIME_DIR
+    # So we make the runtime path unique per worker
+    if worker := os.environ.get("PYTEST_XDIST_WORKER", None):
+        runtime = runtime / worker
+        # Ensure it exists
+        runtime.mkdir(exist_ok=True)
+    env["XDG_RUNTIME_DIR"] = str(runtime)
     yield env
 
 
