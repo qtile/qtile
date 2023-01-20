@@ -904,3 +904,15 @@ class Drawer:
         self.ctx.line_to(x2, y)
         self.ctx.set_line_width(linewidth)
         self.ctx.stroke()
+
+    def set_pseudo_transparency(self, widget):
+        """
+        Tell drawer to use pseudo transparency for widgets.
+
+        We need reference to the widget so we can calculate position on screen and use
+        this to copy correct part of root pixmap.
+
+        Will only be used by X11 but method defined here to avoid checking
+        backend when configuring widget.
+        """
+        pass

@@ -629,9 +629,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 self.drawer.draw(offsetx=end, width=self.length - end)
             else:
                 self.drawer.draw(offsety=end, height=self.length - end)
-        
-        if self.fake_transparency:
-            self.drawer.add_pseudo_transparency()
 
     @expose_command()
     def info(self):
