@@ -93,6 +93,31 @@ class Icon(window._Window):
         self.systray.bar.draw()
         return False
 
+    def set_pixmap(self, x, y, drawer):
+        pixid = self.qtile.core.conn.conn.generate_id()
+        print(x, y)
+
+        self.qtile.core.conn.conn.core.CreatePixmap(
+            drawer._depth,
+            pixid,
+            self.window.wid,
+            self.width,
+            self.height,
+        )
+        self.qtile.core.conn.conn.core.CopyArea(
+            drawer.pseudopixmap,
+            pixid,
+            drawer._gc,
+            x,
+            y,
+            0,
+            0,
+            self.width,
+            self.height,
+        )
+        self.window.set_attribute(backpixmap=pixid)
+
+
     handle_UnmapNotify = handle_DestroyNotify  # noqa: N815
 
 
@@ -247,7 +272,7 @@ class Systray(base._Widget, window._Window):  # type: ignore[misc]
         self.drawer.clear(self.background or self.bar.background)
         self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
         for pos, icon in enumerate(self.tray_icons):
-            icon.window.set_attribute(backpixmap=self.drawer.pixmap)
+            # icon.window.set_attribute(backpixmap=self.drawer.pseudopixmap)
             if self.bar.horizontal:
                 xoffset = self.offsetx + offset
                 yoffset = self.bar.height // 2 - self.icon_size // 2 + self.offsety
@@ -256,6 +281,11 @@ class Systray(base._Widget, window._Window):  # type: ignore[misc]
                 xoffset = self.bar.width // 2 - self.icon_size // 2 + self.offsetx
                 yoffset = self.offsety + offset
                 step = icon.height
+
+            if self.drawer.pseudotransparent:
+                icon.set_pixmap(offset, self.bar.height // 2 - self.icon_size // 2 , self.drawer)
+            else:
+                icon.window.set_attribute(backpixmap=self.drawer.pixmap)
 
             icon.place(xoffset, yoffset, icon.width, self.icon_size, 0, None)
             if icon.hidden:

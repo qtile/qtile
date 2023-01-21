@@ -300,6 +300,7 @@ class Drawer(base.Drawer):
             y,  # dstx, dsty
             w,
             h,
-        ) 
+        )
+        self.pseudopixmap = pix_root
         # self.qtile.core.conn.conn.flush()
         self._create_pseudo_surface()
