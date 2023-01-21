@@ -217,7 +217,7 @@ class Drawer(base.Drawer):
         ctx.restore()
 
     def set_source_rgb(self, colour, ctx=None):
-        # Remove transparency from non-32 bit windows
+        # Remove transparency from non-32 bit and non-pseudotransparent windows
         if utils.has_transparency(colour) and (self._depth != 32 and not self.pseudotransparent):
             colour = utils.remove_transparency(colour)
 
@@ -302,5 +302,4 @@ class Drawer(base.Drawer):
             h,
         )
         self.pseudopixmap = pix_root
-        # self.qtile.core.conn.conn.flush()
         self._create_pseudo_surface()
