@@ -45,13 +45,13 @@ class Node:
     def children(self):
         return self.node.children
 
-    def node_args(self, enabled=True, highlight=False):
+    def node_args(self, enabled=True, highlight=False, relative_url=str()):
         """Returns a dict of arguments that can be formatted for graphviz."""
         return {
             "pos": f"{self.x},{self.y}!",
             "color": self.color if enabled else DISABLED_COLOUR,
             "fillcolor": self.fillcolor if enabled else DISABLED_COLOUR,
-            "href": self.url,
+            "href": f"{relative_url}{self.url}",
             "style": "filled",
             "label": self.name,
             "fontname": "bold" if highlight else "regular",
@@ -63,15 +63,15 @@ ROOT = graph.CommandGraphRoot()
 
 # Define our nodes with their positions, colours and link to API docs page.
 NODES = [
-    Node(ROOT, 0, 0, "Gray", "DarkGray", "/manual/commands/api/root.html"),
-    Node(graph._BarGraphNode, -1.94, -0.44, "Violet", "Purple", "/manual/commands/api/bars.html"),
+    Node(ROOT, 0, 0, "Gray", "DarkGray", "root.html"),
+    Node(graph._BarGraphNode, -1.94, -0.44, "Violet", "Purple", "bars.html"),
     Node(
         graph._CoreGraphNode,
         -1.56,
         1.24,
         "SlateBlue1",
         "SlateBlue",
-        "/manual/commands/api/backend.html",
+        "backend.html",
     ),
     Node(
         graph._GroupGraphNode,
@@ -79,7 +79,7 @@ NODES = [
         1.24,
         "Orange",
         "OrangeRed",
-        "/manual/commands/api/groups.html",
+        "groups.html",
     ),
     Node(
         graph._LayoutGraphNode,
@@ -87,7 +87,7 @@ NODES = [
         -0.44,
         "Gold",
         "Goldenrod",
-        "/manual/commands/api/layouts.html",
+        "layouts.html",
     ),
     Node(
         graph._ScreenGraphNode,
@@ -95,7 +95,7 @@ NODES = [
         -1.8,
         "LimeGreen",
         "DarkGreen",
-        "/manual/commands/api/screens.html",
+        "screens.html",
     ),
     Node(
         graph._WidgetGraphNode,
@@ -103,9 +103,9 @@ NODES = [
         -1.8,
         "LightBlue",
         "Blue",
-        "/manual/commands/api/widgets.html",
+        "widgets.html",
     ),
-    Node(graph._WindowGraphNode, 0, 2, "Tomato", "Red", "/manual/commands/api/windows.html"),
+    Node(graph._WindowGraphNode, 0, 2, "Tomato", "Red", "windows.html"),
 ]
 
 
@@ -131,6 +131,7 @@ class QtileGraph(SimpleDirectiveMixin, Directive):
     required_arguments = 0
     option_spec = {
         "root": directives.unchanged,
+        "api_page_root": directives.unchanged,
     }
 
     def make_nodes(self):
@@ -138,7 +139,11 @@ class QtileGraph(SimpleDirectiveMixin, Directive):
         node_lines = []
 
         for name, node in NODES_MAP.items():
-            args_dict = node.node_args(name in self.visible_nodes, name == self.graph_name)
+            args_dict = node.node_args(
+                name in self.visible_nodes,
+                name == self.graph_name,
+                self.options.get("api_page_root", ""),
+            )
             args_string = ", ".join(f'{k}="{v}"' for k, v in args_dict.items())
             node_lines.extend([f"node [{args_string}];", f"{name};", ""])
 

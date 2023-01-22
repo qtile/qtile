@@ -10,6 +10,7 @@ follows the available paths in the graph. This is what the graph looks like:
 
 .. qtile_graph::
     :root: all
+    :api_page_root: api/
 
 Each arrow can be read as "holds a reference to". So, we can see that a
 ``widget`` object *holds a reference to* objects of type ``bar``, ``screen``
