@@ -18,33 +18,43 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import pytest
+
+import libqtile
 from libqtile import config
-from libqtile.backend.x11 import xcbq
 from libqtile.backend.x11.core import Core
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
 
 
-# Function that does nothing
-def swallow_nop(qtile):
-    pass
+# Function that increments a counter
+@lazy.function
+def swallow_inc(qtile):
+    qtile.test_data += 1
+    return True
 
 
 # Config with multiple keys and swallow parameters
 class SwallowConfig(Config):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        @libqtile.hook.subscribe.startup
+        def _():
+            libqtile.qtile.test_data = 0
+
     keys = [
         config.Key(
             ["control"],
             "k",
-            lazy.function(swallow_nop),
+            swallow_inc(),
         ),
-        config.Key(["control"], "j", lazy.function(swallow_nop), swallow=False),
-        config.Key(["control"], "i", lazy.function(swallow_nop).when(layout="idonotexist")),
+        config.Key(["control"], "j", swallow_inc(), swallow=False),
+        config.Key(["control"], "i", swallow_inc().when(layout="idonotexist")),
         config.Key(
             ["control"],
             "o",
-            lazy.function(swallow_nop).when(layout="idonotexist"),
-            lazy.function(swallow_nop),
+            swallow_inc().when(layout="idonotexist"),
+            swallow_inc(),
         ),
     ]
 
@@ -75,8 +85,14 @@ def test_swallow(manager):
     not_used_key = config.Key(
         ["control"],
         "h",
-        lazy.function(swallow_nop),
+        swallow_inc(),
     )
+
+    # 3 functions should have been executed
+    assert int(manager.c.eval("self.test_data")[1]) == 3
 
     # This key is not defined in the config so it should not be handled
     assert not send_process_key_event(manager, not_used_key)
+
+    # This key is not defined so test data is not incremented
+    assert int(manager.c.eval("self.test_data")[1]) == 3
