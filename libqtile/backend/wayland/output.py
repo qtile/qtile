@@ -107,20 +107,17 @@ class Output(HasListeners):
 
     def organise_layers(self) -> None:
         """Organise the positioning of layer shell surfaces."""
-        if not self.wlr_output.enabled:
-            return
-
         logger.debug("Output: organising layers")
         ow, oh = self.wlr_output.effective_resolution()
         full_area = Box(int(self.x), int(self.y), ow, oh)
 
-        for i in range(3, -1, -1):
+        for layer in reversed(LayerShellV1Layer):
             # Arrange exclusive surface from top to bottom
-            self._organise_layer(LayerShellV1Layer(i), full_area, full_area, exclusive=True)
+            self._organise_layer(layer, full_area, full_area, exclusive=True)
 
-        for i in range(3, -1, -1):
+        for layer in reversed(LayerShellV1Layer):
             # Arrange non-exclusive surface from top to bottom
-            self._organise_layer(LayerShellV1Layer(i), full_area, full_area, exclusive=False)
+            self._organise_layer(layer, full_area, full_area, exclusive=False)
 
     def _organise_layer(
         self,
