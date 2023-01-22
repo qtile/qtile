@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import pytest
 from libqtile import config
 from libqtile.backend.x11 import xcbq
 from libqtile.backend.x11.core import Core
@@ -59,23 +60,8 @@ def send_process_key_event(manager, key):
     return output[1] == "True"
 
 
-# Helper to send process_button_click to the core manager
-# It also looks up the button code and mask to pass to it
-def send_process_button_click(manager, mouse):
-    modmask = xcbq.translate_masks(mouse.modifiers)
-    output = manager.c.eval(
-        f"self.process_button_click({mouse.button_code}, {modmask}, {0}, {0})"
-    )
-    # Assert if eval successful
-    assert output[0]
-    # Convert the string to a bool
-    return output[1] == "True"
-
-
-def test_swallow(manager_nospawn):
-    manager = manager_nospawn
-    manager.start(SwallowConfig)
-
+@pytest.mark.parametrize("manager", [SwallowConfig], indirect=True)
+def test_swallow(manager):
     # The first key needs to be True as swallowing is not set here
     # We expect the second key to not be handled, as swallow is set to False
     # The third needs to not be swallowed as the layout .when(...) check does not succeed
