@@ -42,12 +42,12 @@ def xdist_lock_path(display, worker):
 def xvfb():
     if worker := os.environ.get("PYTEST_XDIST_WORKER", None):
         xcffib.testing.lock_path = lambda disp: xdist_lock_path(disp, worker)
-    with xcffib.testing.XvfbTest():
+    with xcffib.testing.XvfbTest() as x:
         display = os.environ["DISPLAY"]
         if not can_connect_x11(display):
             raise OSError("Xvfb did not come up")
 
-        yield
+        yield x
 
 
 @pytest.fixture(scope="session")
@@ -155,9 +155,10 @@ class Xephyr:
 @contextlib.contextmanager
 def x11_environment(outputs, **kwargs):
     """This backend needs a Xephyr instance running"""
-    with xvfb():
-        with Xephyr(outputs, **kwargs) as x:
-            yield x
+    with xvfb() as x:
+        #with Xephyr(outputs, **kwargs) as x:
+
+        yield x
 
 
 @pytest.fixture(scope="function")

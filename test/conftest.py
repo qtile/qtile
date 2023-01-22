@@ -97,7 +97,8 @@ def backend(request, backend_name, xephyr, wayland_session):
     if backend_name == "x11":
         from test.backend.x11.conftest import XBackend
 
-        yield XBackend({"DISPLAY": xephyr.display}, args=[xephyr.display])
+        display = f":{xephyr._display}"
+        yield XBackend({"DISPLAY": display}, args=[display])
     elif backend_name == "wayland":
         from test.backend.wayland.conftest import WaylandBackend
 
