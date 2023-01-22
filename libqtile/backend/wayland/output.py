@@ -53,6 +53,7 @@ class Output(HasListeners):
         self.wlr_output = wlr_output
         wlr_output.data = self
         self.wallpaper: tuple[SceneBuffer, ImageSurface] | None = None
+        self._reserved_space = (0, 0, 0, 0)
 
         # Initialise wlr_output
         wlr_output.init_render(core.allocator, core.renderer)
@@ -109,21 +110,33 @@ class Output(HasListeners):
         """Organise the positioning of layer shell surfaces."""
         logger.debug("Output: organising layers")
         ow, oh = self.wlr_output.effective_resolution()
-        full_area = Box(int(self.x), int(self.y), ow, oh)
+        full_area = Box(0, 0, ow, oh)
+        usable_area = Box(0, 0, ow, oh)
 
         for layer in reversed(LayerShellV1Layer):
             # Arrange exclusive surface from top to bottom
-            self._organise_layer(layer, full_area, full_area, exclusive=True)
+            self._organise_layer(layer, full_area, usable_area, exclusive=True)
+
+        # TODO: can this be a geometry?
+        new_reserved_space = (
+            usable_area.x,  # left
+            ow - usable_area.x - usable_area.width,  # right
+            usable_area.y,  # top
+            oh - usable_area.y - usable_area.height,  # bottom
+        )
+        delta = tuple(new - old for new, old in zip(new_reserved_space, self._reserved_space))
+        self.core.qtile.reserve_space(delta, self.screen)  # type: ignore
+        self._reserved_space = new_reserved_space
 
         for layer in reversed(LayerShellV1Layer):
             # Arrange non-exclusive surface from top to bottom
-            self._organise_layer(layer, full_area, full_area, exclusive=False)
+            self._organise_layer(layer, full_area, usable_area, exclusive=False)
 
     def _organise_layer(
         self,
         layer: LayerShellV1Layer,
-        usable_area: Box,
         full_area: Box,
+        usable_area: Box,
         *,
         exclusive: bool,
     ) -> None:
@@ -132,41 +145,6 @@ class Output(HasListeners):
 
             if exclusive != (0 < state.exclusive_zone):
                 continue
-
-            # Reserve space if:
-            #    - layer is anchored to an edge and both perpendicular edges, or
-            #    - layer is anchored to a single edge only.
-            space = [0, 0, 0, 0]
-
-            if state.anchor & LayerSurfaceV1Anchor.HORIZONTAL:
-                if state.anchor & LayerSurfaceV1Anchor.TOP:
-                    space[2] = state.exclusive_zone
-                elif state.anchor & LayerSurfaceV1Anchor.BOTTOM:
-                    space[3] = state.exclusive_zone
-            elif state.anchor & LayerSurfaceV1Anchor.VERTICAL:
-                if state.anchor & LayerSurfaceV1Anchor.LEFT:
-                    space[0] = state.exclusive_zone
-                elif state.anchor & LayerSurfaceV1Anchor.RIGHT:
-                    space[1] = state.exclusive_zone
-            else:
-                # Single edge only
-                if state.anchor == LayerSurfaceV1Anchor.TOP:
-                    space[2] = state.exclusive_zone
-                elif state.anchor == LayerSurfaceV1Anchor.BOTTOM:
-                    space[3] = state.exclusive_zone
-                if state.anchor == LayerSurfaceV1Anchor.LEFT:
-                    space[0] = state.exclusive_zone
-                elif state.anchor == LayerSurfaceV1Anchor.RIGHT:
-                    space[1] = state.exclusive_zone
-
-            to_reserve: tuple[int, int, int, int] = tuple(space)  # type: ignore
-            if win.reserved_space != to_reserve:
-                # Don't reserve more space if it's already been reserved
-                assert win.qtile is not None
-                if win.reserved_space:
-                    win.qtile.free_reserved_space(win.reserved_space, self.screen)
-                win.reserved_space = to_reserve
-                win.qtile.reserve_space(to_reserve, self.screen)
 
             win.scene_layer.configure(full_area, usable_area)
             win.place(win.node.x, win.node.y, state.desired_width, state.desired_height, 0, None)
