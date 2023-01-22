@@ -75,8 +75,9 @@ def xephyr(request, outputs):
     from test.backend.x11.conftest import x11_environment
 
     kwargs = getattr(request, "param", {})
+    xoffset = kwargs.get("xoffset", None)
 
-    with x11_environment(outputs, **kwargs) as x:
+    with x11_environment(outputs, xoffset) as x:
         yield x
 
 
