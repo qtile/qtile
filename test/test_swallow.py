@@ -70,17 +70,34 @@ def send_process_key_event(manager, key):
     return output[1] == "True"
 
 
+def get_test_counter(manager):
+    output = manager.c.eval("self.test_data")
+    # Assert if eval successful
+    assert output[0]
+    return int(output[1])
+
+
 @pytest.mark.parametrize("manager", [SwallowConfig], indirect=True)
 def test_swallow(manager):
     # The first key needs to be True as swallowing is not set here
     # We expect the second key to not be handled, as swallow is set to False
     # The third needs to not be swallowed as the layout .when(...) check does not succeed
     # The fourth needs to be True as one of the functions is executed due to passing the .when(...) check
+    expectedexecuted = [True, True, False, True]
     expectedswallow = [True, False, False, True]
 
     # Loop over all the keys in the config and assert
+    prev_counter = 0
     for index, key in enumerate(SwallowConfig.keys):
         assert send_process_key_event(manager, key) == expectedswallow[index]
+
+        # Test if the function was executed like we expected
+        counter = get_test_counter(manager)
+        if expectedexecuted[index]:
+            assert counter > prev_counter
+        else:
+            assert counter == prev_counter
+        prev_counter = counter
 
     not_used_key = config.Key(
         ["control"],
@@ -88,11 +105,8 @@ def test_swallow(manager):
         swallow_inc(),
     )
 
-    # 3 functions should have been executed
-    assert int(manager.c.eval("self.test_data")[1]) == 3
-
     # This key is not defined in the config so it should not be handled
     assert not send_process_key_event(manager, not_used_key)
 
     # This key is not defined so test data is not incremented
-    assert int(manager.c.eval("self.test_data")[1]) == 3
+    assert get_test_counter(manager) == prev_counter
