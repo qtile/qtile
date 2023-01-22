@@ -96,8 +96,6 @@ class LayerStatic(Static[LayerSurfaceV1]):
     def mapped(self, mapped: bool) -> None:
         if mapped == self._mapped:
             return
-        self._mapped = mapped
-        self.tree_node.set_enabled(enabled=mapped)
         if mapped:
             self.output.layers[self._layer].append(self)
         else:
@@ -108,6 +106,8 @@ class LayerStatic(Static[LayerSurfaceV1]):
                 self.reserved_space = None
 
         self.output.organise_layers()
+        self.tree_node.set_enabled(enabled=mapped)
+        self._mapped = mapped
 
     def _on_map(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: layerstatic map")
