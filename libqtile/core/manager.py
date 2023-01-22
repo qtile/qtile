@@ -1165,6 +1165,9 @@ class Qtile(CommandObject):
     def simulate_keypress(self, modifiers: list[str], key: str) -> None:
         """Simulates a keypress on the focused window.
 
+        This triggers internal bindings only; for full simulation see external tools
+        such as xdotool or ydotool.
+
         Parameters
         ==========
         modifiers :
