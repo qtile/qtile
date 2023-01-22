@@ -214,6 +214,13 @@ XCB_CONN_ERRORS = {
     7: "XCB_CONN_CLOSED_FDPASSING_FAILED",
 }
 
+# Some opcodes from xproto.h, used for faking input.
+XCB_KEY_PRESS = 2
+XCB_KEY_RELEASE = 3
+XCB_BUTTON_PRESS = 4
+XCB_BUTTON_RELEASE = 5
+XCB_MOTION_NOTIFY = 6
+
 
 class MaskMap:
     """
