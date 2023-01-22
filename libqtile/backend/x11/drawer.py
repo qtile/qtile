@@ -35,11 +35,13 @@ class Drawer(base.Drawer):
         )
         self.pseudotransparent = False
         self._pseudo_surface = None
-        self.root_pixmap = None
+        self.pseudo_pixmap = None
+        self._root_surface = None
+        self._root_pixmap = None
 
     def finalize(self):
-        self._free_xcb_surface()
-        self._free_pixmap()
+        self._free_surfaces()
+        self._free_pixmaps()
         self._free_gc()
         base.Drawer.finalize(self)
 
@@ -50,8 +52,8 @@ class Drawer(base.Drawer):
     @width.setter
     def width(self, width):
         if width > self._width:
-            self._free_xcb_surface()
-            self._free_pixmap()
+            self._free_surfaces()
+            self._free_pixmaps()
         self._width = width
 
     @property
@@ -61,8 +63,8 @@ class Drawer(base.Drawer):
     @height.setter
     def height(self, height):
         if height > self._height:
-            self._free_xcb_surface()
-            self._free_pixmap()
+            self._free_surfaces()
+            self._free_pixmaps()
         self._height = height
 
     @property
@@ -111,20 +113,22 @@ class Drawer(base.Drawer):
                 self.qtile.core.conn.conn.core.FreeGC(self._gc)
             self._gc = None
 
-    def _create_xcb_surface(self):
+    def _create_xcb_surface(self, pixmap=None):
+        pixmap = self._pixmap if pixmap is None else pixmap
         surface = cairocffi.XCBSurface(
             self.qtile.core.conn.conn,
-            self._pixmap,
+            pixmap,
             self._visual,
             self.width,
             self.height,
         )
         return surface
 
-    def _free_xcb_surface(self):
-        if self._xcb_surface is not None:
-            self._xcb_surface.finish()
-            self._xcb_surface = None
+    def _free_surfaces(self):
+        for surface in [self._xcb_surface, self.surface, self._pseudo_surface, self._root_surface]:
+            if surface is not None:
+                surface.finish()
+                surface = None
 
     def _create_pixmap(self):
         pixmap = self.qtile.core.conn.conn.generate_id()
@@ -137,17 +141,24 @@ class Drawer(base.Drawer):
         )
         return pixmap
 
-    def _free_pixmap(self):
-        if self._pixmap is not None:
-            with contextlib.suppress(xcffib.ConnectionException):
-                self.qtile.core.conn.conn.core.FreePixmap(self._pixmap)
-            self._pixmap = None
+    def _free_pixmaps(self):
+        for pixmap in [self._pixmap, self.pseudo_pixmap]:
+            if pixmap is not None:
+                with contextlib.suppress(xcffib.ConnectionException):
+                    self.qtile.core.conn.conn.core.FreePixmap(pixmap)
+                pixmap = None
 
-    def _check_xcb(self):
+    def _check_base_surface(self):
         # If the Drawer has been resized/invalidated we need to recreate these
-        if self._xcb_surface is None:
-            self._pixmap = self._create_pixmap()
-            self._xcb_surface = self._create_xcb_surface()
+        if self.pseudotransparent:
+            if self._pseudo_surface is None:
+                self.pseudo_pixmap = self._create_pixmap()
+                self._root_surface = self._create_xcb_surface(self.pseudo_pixmap)
+                self._pseudo_surface = self._create_pseudo_surface()
+        else:
+            if self._xcb_surface is None:
+                self._pixmap = self._create_pixmap()
+                self._xcb_surface = self._create_xcb_surface()
 
     def _paint(self):
         # Only attempt to run RecordingSurface's operations if ie actually need to
@@ -166,9 +177,9 @@ class Drawer(base.Drawer):
         height: int | None = None,
     ):
 
-        if self.pseudotransparent and self.root_pixmap is None:
-            self.root_pixmap = self._get_root_pixmap()
-            if self.root_pixmap is None:
+        if self.pseudotransparent and self._root_pixmap is None:
+            self._root_pixmap = self._get_root_pixmap()
+            if self._root_pixmap is None:
                 logger.warning("Cannot find pixmap for root window. Disabling pseudotransparency.")
                 self.pseudotransparent = False
 
@@ -183,13 +194,13 @@ class Drawer(base.Drawer):
 
         # Check if we need to re-create XCBSurface
         # This may not be needed now that we call in `clear`
-        self._check_xcb()
+        self._check_base_surface()
 
         # paint stored operations(if any) to XCBSurface
         self._paint()
 
         if self.pseudotransparent:
-            self.draw_with_root(offsetx, offsety, width, height)
+            self.pseudo_draw(offsetx, offsety, width, height)
 
         else:
 
@@ -213,9 +224,8 @@ class Drawer(base.Drawer):
                     return v
 
     def clear(self, colour):
-
-        # Check if we need to re-create XCBSurface
-        self._check_xcb()
+        # Check if we need to re-create base surface
+        self._check_base_surface()
 
         mode = cairocffi.OPERATOR_OVER if self.pseudotransparent else cairocffi.OPERATOR_SOURCE
 
@@ -242,10 +252,10 @@ class Drawer(base.Drawer):
         """
         self.pseudotransparent = True
         self.widget = widget
-        self._create_pseudo_surface()
+        # self._create_pseudo_surface()
 
     def _create_pseudo_surface(self):
-        self._pseudo_surface = cairocffi.RecordingSurface(
+        return cairocffi.RecordingSurface(
             cairocffi.CONTENT_COLOR_ALPHA,
             None
         )
@@ -267,49 +277,36 @@ class Drawer(base.Drawer):
         if root_pixmap:
             return root_pixmap[0]
 
-    def draw_with_root(self, x, y, w, h):
-
+    def pseudo_draw(self, x, y, width, height):
         widget_pos = (
             self.widget.bar.screen.x + self.widget.bar.window.x + self.widget.offsetx,
             self.widget.bar.screen.y + self.widget.bar.window.y + self.widget.offsety,
         )
 
-        pix_root = self.qtile.core.conn.conn.generate_id()
-
-        self.qtile.core.conn.conn.core.CreatePixmap(
-            self._depth,
-            pix_root,
-            self._win.wid,
-            w,
-            h
-        )
         self.qtile.core.conn.conn.core.CopyArea(
-            self.root_pixmap,
-            pix_root,
+            self._root_pixmap,
+            self.pseudo_pixmap,
             self._gc,
             *widget_pos,
             0,
             0,
-            w,
-            h,
+            width,
+            height,
         )
 
-        surf_root = cairocffi.XCBSurface(self.qtile.core.conn.conn, pix_root, self._visual, w, h)
-        ctx = cairocffi.Context(surf_root)
-
+        ctx = cairocffi.Context(self._root_surface)
         ctx.set_source_surface(self._pseudo_surface)
         ctx.paint()
 
         self.qtile.core.conn.conn.core.CopyArea(
-            pix_root,
+            self.pseudo_pixmap,
             self._win.wid,
             self._gc,
             0,
             0,
             x,
             y,  # dstx, dsty
-            w,
-            h,
+            width,
+            height,
         )
-        self.pseudopixmap = pix_root
-        self._create_pseudo_surface()
+        self._pseudo_surface = self._create_pseudo_surface()

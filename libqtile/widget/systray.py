@@ -114,17 +114,17 @@ class Icon(window._Window):
         if self._pixmap is None:
             self._pixmap = self.qtile.core.conn.conn.generate_id()
 
-        self.qtile.core.conn.conn.core.CreatePixmap(
-            drawer._depth,
-            self._pixmap,
-            self.window.wid,
-            self.width,
-            self.height,
-        )
+            self.qtile.core.conn.conn.core.CreatePixmap(
+                drawer._depth,
+                self._pixmap,
+                self.window.wid,
+                self.width,
+                self.height,
+            )
 
         # Copy the widget's pixmap to the new pixmap
         self.qtile.core.conn.conn.core.CopyArea(
-            drawer.pseudopixmap,
+            drawer.pseudo_pixmap,
             self._pixmap,
             drawer._gc,
             x,
