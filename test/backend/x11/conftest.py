@@ -1,6 +1,7 @@
 import contextlib
 import os
 import subprocess
+from pathlib import Path
 
 import pytest
 import xcffib
@@ -156,7 +157,7 @@ class Xephyr:
 def x11_environment(outputs, **kwargs):
     """This backend needs a Xephyr instance running"""
     with xvfb() as x:
-        #with Xephyr(outputs, **kwargs) as x:
+        # with Xephyr(outputs, **kwargs) as x:
 
         yield x
 
