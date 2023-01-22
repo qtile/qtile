@@ -153,6 +153,7 @@ class Core(base.Core):
 
         self.qtile = None  # type: Qtile | None
         self._painter = None
+        self._xtest = self.conn.conn(xcffib.xtest.key)
 
         numlock_code = self.conn.keysym_to_keycode(xcbq.keysyms["num_lock"])[0]
         self._numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(numlock_code), 0)
@@ -609,28 +610,6 @@ class Core(base.Core):
             except IndexError:
                 logger.debug("Invalid desktop index: %s", index)
 
-    def fake_xtest(self, xtest, event, input_type) -> None:
-        xtest.FakeInput(
-            input_type,
-            event.detail,
-            xcffib.xproto.Time.CurrentTime,
-            event.root,
-            event.root_x,
-            event.root_y,
-            0,
-        )
-        self.flush()
-
-    def fake_KeyPress(self, event) -> None:  # noqa: N802
-        xtest = self.conn.conn(xcffib.xtest.key)
-        # First release the key as it is possibly already pressed
-        self.fake_xtest(xtest, event, 3)
-        # Fake input by...
-        # Presssing the key
-        self.fake_xtest(xtest, event, 2)
-        # And then releasing again
-        self.fake_xtest(xtest, event, 3)
-
     def handle_KeyPress(self, event, *, simulated=False) -> None:  # noqa: N802
         assert self.qtile is not None
 
@@ -649,7 +628,7 @@ class Core(base.Core):
             # We need to ungrab the key as otherwise we get an event loop
             self.ungrab_key(key)
             # Modifier is pressed, just repeat the event with xtest
-            self.fake_KeyPress(event)
+            self._fake_KeyPress(event)
             # Grab the key again
             self.grab_key(key)
 
@@ -778,6 +757,27 @@ class Core(base.Core):
 
     def handle_ScreenChangeNotify(self, event) -> None:  # noqa: N802
         hook.fire("screen_change", event)
+
+    def _fake_input(self, input_type, detail, x=0, y=0) -> None:
+        self._xtest.FakeInput(
+            input_type,
+            detail,
+            0,  # This is a delay, not timestamp, according to AwesomeWM
+            xcffib.XCB_NONE,
+            x,  # x: Only used for motion events
+            y,  # y: Only used for motion events
+            0,
+        )
+        self.flush()
+
+    def _fake_KeyPress(self, event) -> None:  # noqa: N802
+        # First release the key as it is possibly already pressed
+        for input_type in (
+            xcbq.XCB_KEY_RELEASE,
+            xcbq.XCB_KEY_PRESS,
+            xcbq.XCB_KEY_RELEASE,
+        ):
+            self._fake_input(input_type, event.detail)
 
     @contextlib.contextmanager
     def disable_unmap_events(self):
