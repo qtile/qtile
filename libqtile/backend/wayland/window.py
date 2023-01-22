@@ -175,10 +175,10 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         """We keep track of which windows are mapped so we know which to render"""
         if mapped == self._mapped:
             return
-        self._mapped = mapped
-        self.tree_node.set_enabled(enabled=mapped)
         if self._idle_inhibitors_count > 0:
             self.core.check_idle_inhibitor()
+        self.tree_node.set_enabled(enabled=mapped)
+        self._mapped = mapped
 
     def _on_destroy(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: window destroy")
@@ -761,8 +761,8 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
     def mapped(self, mapped: bool) -> None:
         if mapped == self._mapped:
             return
-        self._mapped = mapped
         self.tree_node.set_enabled(enabled=mapped)
+        self._mapped = mapped
 
     def focus(self, warp: bool = True) -> None:
         self.core.focus_window(self)
@@ -915,8 +915,8 @@ class Internal(_Base, base.Internal):
         """We keep track of which windows are mapped to we know which to render"""
         if mapped == self._mapped:
             return
-        self._mapped = mapped
         self.node.set_enabled(enabled=mapped)
+        self._mapped = mapped
 
     def hide(self) -> None:
         self.mapped = False
