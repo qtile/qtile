@@ -32,8 +32,16 @@ def can_connect_x11(disp=":0", *, ok=None):
     return True
 
 
+def xdist_lock_path(display, worker):
+    lock_path = Path("/tmp") / worker
+    lock_path.mkdir(exist_ok=True)
+    return str(lock_path / f".X{display}-lock")
+
+
 @contextlib.contextmanager
 def xvfb():
+    if worker := os.environ.get("PYTEST_XDIST_WORKER", None):
+        xcffib.testing.lock_path = lambda disp: xdist_lock_path(disp, worker)
     with xcffib.testing.XvfbTest():
         display = os.environ["DISPLAY"]
         if not can_connect_x11(display):
