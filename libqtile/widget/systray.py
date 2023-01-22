@@ -47,11 +47,17 @@ class Icon(window._Window):
         window._Window.__init__(self, win, qtile)
         self.hidden = True
         self.systray = systray
+        self._pixmap = None
         # win.get_name() may return None when apps provide a temporary window before the icon window
         # we need something in self.name in order to sort icons so we use the window's WID.
         self.name = win.get_name() or str(win.wid)
         self.update_size()
         self._wm_class: list[str] | None = None
+
+    def _free_pixmap(self):
+        if self._pixmap is not None:
+            self.qtile.core.conn.conn.core.FreePixmap(self._pixmap)
+            self._pixmap = None
 
     def __eq__(self, other):
         if not isinstance(other, Icon):
@@ -75,6 +81,7 @@ class Icon(window._Window):
 
         self.width = width
         self.height = height
+        self._free_pixmap()
         return False
 
     def handle_PropertyNotify(self, e):  # noqa: N802
@@ -91,6 +98,7 @@ class Icon(window._Window):
         icon = self.qtile.windows_map.pop(wid)
         self.systray.tray_icons.remove(icon)
         self.systray.bar.draw()
+        self._free_pixmap()
         return False
 
     def set_pixmap(self, x, y, drawer):
@@ -103,10 +111,12 @@ class Icon(window._Window):
         """
 
         # Create a new pixmap the size of the icon window
-        pixid = self.qtile.core.conn.conn.generate_id()
+        if self._pixmap is None:
+            self._pixmap = self.qtile.core.conn.conn.generate_id()
+
         self.qtile.core.conn.conn.core.CreatePixmap(
             drawer._depth,
-            pixid,
+            self._pixmap,
             self.window.wid,
             self.width,
             self.height,
@@ -115,7 +125,7 @@ class Icon(window._Window):
         # Copy the widget's pixmap to the new pixmap
         self.qtile.core.conn.conn.core.CopyArea(
             drawer.pseudopixmap,
-            pixid,
+            self._pixmap,
             drawer._gc,
             x,
             y, # Source x, y positions equal the icon's offset in the widget
@@ -126,7 +136,7 @@ class Icon(window._Window):
         )
 
         # Apply the pixmap to the window
-        self.window.set_attribute(backpixmap=pixid)
+        self.window.set_attribute(backpixmap=self._pixmap)
 
 
     handle_UnmapNotify = handle_DestroyNotify  # noqa: N815

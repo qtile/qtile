@@ -34,6 +34,7 @@ class Drawer(base.Drawer):
             win._depth
         )
         self.pseudotransparent = False
+        self._pseudo_surface = None
         self.root_pixmap = None
 
     def finalize(self):
@@ -71,6 +72,25 @@ class Drawer(base.Drawer):
             # systray widget which expects a filled pixmap.
             self.draw()
         return self._pixmap
+
+    @property
+    def base_surface(self):
+        """
+        For reasons with transparency and widget mirrors, we don't draw
+        backgrounds to the recording surface. Instead these are drawns straight
+        to the underlying XCBSurface.
+
+        Where we use pseudotransparency, we still need to draw the background
+        separately (so it's not copied to mirrors) but this should not be
+        an XCBSurface as this results in errors with transparency. We therefore
+        use a separate recording surface.
+        """
+        if self.pseudotransparent:
+            surface = self._pseudo_surface
+        else:
+            surface = self._xcb_surface
+
+        return surface       
 
     def _create_gc(self):
         gc = self.qtile.core.conn.conn.generate_id()
@@ -132,12 +152,7 @@ class Drawer(base.Drawer):
     def _paint(self):
         # Only attempt to run RecordingSurface's operations if ie actually need to
         if self.needs_update:
-            # Paint RecordingSurface operations to the XCBSurface
-            if self.pseudotransparent:
-                surface = self.pseudo_surface
-            else:
-                surface = self._xcb_surface
-            ctx = cairocffi.Context(surface)
+            ctx = cairocffi.Context(self.base_surface)
             ctx.set_source_surface(self.surface, 0, 0)
             ctx.paint()
 
@@ -202,16 +217,11 @@ class Drawer(base.Drawer):
         # Check if we need to re-create XCBSurface
         self._check_xcb()
 
-        if self.pseudotransparent:
-            surface = self.pseudo_surface
-            mode = cairocffi.OPERATOR_OVER
-        else:
-            surface = self._xcb_surface
-            mode = cairocffi.OPERATOR_SOURCE
+        mode = cairocffi.OPERATOR_OVER if self.pseudotransparent else cairocffi.OPERATOR_SOURCE
 
-        ctx = cairocffi.Context(surface)
+        ctx = cairocffi.Context(self.base_surface)
         ctx.save()
-        # ctx.set_operator(mode)
+        ctx.set_operator(mode)
         self.set_source_rgb(colour, ctx=ctx)
         ctx.paint()
         ctx.restore()
@@ -235,7 +245,7 @@ class Drawer(base.Drawer):
         self._create_pseudo_surface()
 
     def _create_pseudo_surface(self):
-        self.pseudo_surface = cairocffi.RecordingSurface(
+        self._pseudo_surface = cairocffi.RecordingSurface(
             cairocffi.CONTENT_COLOR_ALPHA,
             None
         )
@@ -287,7 +297,7 @@ class Drawer(base.Drawer):
         surf_root = cairocffi.XCBSurface(self.qtile.core.conn.conn, pix_root, self._visual, w, h)
         ctx = cairocffi.Context(surf_root)
 
-        ctx.set_source_surface(self.pseudo_surface)
+        ctx.set_source_surface(self._pseudo_surface)
         ctx.paint()
 
         self.qtile.core.conn.conn.core.CopyArea(
