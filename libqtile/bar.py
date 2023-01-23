@@ -156,7 +156,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         ("margin", 0, "Space around bar as int or list of ints [N E S W]."),
         ("border_color", "#000000", "Border colour as str or list of str [N E S W]"),
         ("border_width", 0, "Width of border as int of list of ints [N E S W]"),
-        ("fake_transparency", False, "(x11 only) Enable pseudo-transparency.")
+        ("fake_transparency", False, "(x11 only) Enable pseudo-transparency."),
     ]
 
     def __init__(self, widgets, size, **config):

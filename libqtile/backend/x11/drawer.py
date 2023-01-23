@@ -92,7 +92,7 @@ class Drawer(base.Drawer):
         else:
             surface = self._xcb_surface
 
-        return surface       
+        return surface
 
     def _create_gc(self):
         gc = self.qtile.core.conn.conn.generate_id()
@@ -125,7 +125,12 @@ class Drawer(base.Drawer):
         return surface
 
     def _free_surfaces(self):
-        for surface in [self._xcb_surface, self.surface, self._pseudo_surface, self._root_surface]:
+        for surface in [
+            self._xcb_surface,
+            self.surface,
+            self._pseudo_surface,
+            self._root_surface,
+        ]:
             if surface is not None:
                 surface.finish()
                 surface = None
@@ -180,7 +185,9 @@ class Drawer(base.Drawer):
         if self.pseudotransparent and self._root_pixmap is None:
             self._root_pixmap = self._get_root_pixmap()
             if self._root_pixmap is None:
-                logger.warning("Cannot find pixmap for root window. Disabling pseudotransparency.")
+                logger.warning(
+                    "Cannot find pixmap for root window. Disabling pseudotransparency."
+                )
                 self.pseudotransparent = False
 
         self.current_rect = (offsetx, offsety, width, height)
@@ -214,7 +221,7 @@ class Drawer(base.Drawer):
                 offsetx,
                 offsety,  # dstx, dsty
                 width,
-                height
+                height,
             )
 
     def _find_root_visual(self):
@@ -255,18 +262,13 @@ class Drawer(base.Drawer):
         # self._create_pseudo_surface()
 
     def _create_pseudo_surface(self):
-        return cairocffi.RecordingSurface(
-            cairocffi.CONTENT_COLOR_ALPHA,
-            None
-        )
+        return cairocffi.RecordingSurface(cairocffi.CONTENT_COLOR_ALPHA, None)
 
     def _get_root_pixmap(self):
         root_win = self.qtile.core.conn.default_screen.root
 
         try:
-            root_pixmap = root_win.get_property(
-                "_XROOTPMAP_ID", xcffib.xproto.Atom.PIXMAP, int
-            )
+            root_pixmap = root_win.get_property("_XROOTPMAP_ID", xcffib.xproto.Atom.PIXMAP, int)
         except xcffib.ConnectionException:
             root_pixmap = None
 

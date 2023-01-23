@@ -128,16 +128,15 @@ class Icon(window._Window):
             self._pixmap,
             drawer._gc,
             x,
-            y, # Source x, y positions equal the icon's offset in the widget
+            y,  # Source x, y positions equal the icon's offset in the widget
             0,
-            0, # Pixmap is placed at 0, 0 in new pixmap
+            0,  # Pixmap is placed at 0, 0 in new pixmap
             self.width,
             self.height,
         )
 
         # Apply the pixmap to the window
         self.window.set_attribute(backpixmap=self._pixmap)
-
 
     handle_UnmapNotify = handle_DestroyNotify  # noqa: N815
 
@@ -155,7 +154,7 @@ class Systray(base._Widget, window._Window):  # type: ignore[misc]
 
         If you wish to use this widget with a semi-transparent background
         you should set `fake_transparency=True` in your Bar's config.
-    
+
     """
 
     _instances = 0
@@ -304,7 +303,14 @@ class Systray(base._Widget, window._Window):  # type: ignore[misc]
             else:
                 icon.window.set_attribute(backpixmap=self.drawer.pixmap)
 
-            icon.place(self.offsetx + xoffset, self.offsety + yoffset, icon.width, self.icon_size, 0, None)
+            icon.place(
+                self.offsetx + xoffset,
+                self.offsety + yoffset,
+                icon.width,
+                self.icon_size,
+                0,
+                None,
+            )
             if icon.hidden:
                 icon.unhide()
                 data = [
