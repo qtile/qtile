@@ -22,8 +22,6 @@ questions, you can find support in the following places:
 :Q&A: https://github.com/qtile/qtile/discussions/categories/q-a
 :Mailing List: https://groups.google.com/group/qtile-dev
 
-See :py:class:`here <libqtile.widget.widgetbox.WidgetBox>` for more...
-
 .. toctree::
     :maxdepth: 1
     :caption: Getting Started
