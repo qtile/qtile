@@ -44,17 +44,17 @@ class MockPsutil(ModuleType):
 
 @pytest.fixture
 def sensors_manager(monkeypatch, manager_nospawn, minimal_conf_noscreen, request):
+    params = getattr(request, "param", dict())
     monkeypatch.setitem(sys.modules, "psutil", MockPsutil("psutil"))
     from libqtile.widget import sensors
 
     reload(sensors)
 
     config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=Bar([sensors.ThermalSensor(**getattr(request, "param", dict()))], 10)
-        )
-    ]
+    config.screens = [libqtile.config.Screen(top=Bar([sensors.ThermalSensor(**params)], 10))]
+
+    if "set_defaults" in params:
+        config.widget_defaults = {"foreground": "123456"}
 
     manager_nospawn.start(config)
     yield manager_nospawn
@@ -95,3 +95,9 @@ def test_thermal_sensor_colour_normal(sensors_manager):
 def test_thermal_sensor_colour_alert(sensors_manager):
     _, temp = sensors_manager.c.widget["thermalsensor"].eval("self.layout.colour")
     assert temp == "ff0000"
+
+
+@pytest.mark.parametrize("sensors_manager", [{"set_defaults": True}], indirect=True)
+def test_thermal_sensor_widget_defaults(sensors_manager):
+    _, temp = sensors_manager.c.widget["thermalsensor"].eval("self.layout.colour")
+    assert temp == "123456"
