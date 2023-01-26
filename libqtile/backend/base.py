@@ -653,6 +653,7 @@ class Drawer:
         self.current_rect = (0, 0, 0, 0)
         self.previous_rect = (-1, -1, -1, -1)
         self._enabled = True
+        self.pseudotransparent = False
 
     def finalize(self):
         """Destructor/Clean up resources"""

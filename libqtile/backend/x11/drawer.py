@@ -33,7 +33,6 @@ class Drawer(base.Drawer):
         self._depth, self._visual = qtile.core.conn.default_screen._get_depth_and_visual(
             win._depth
         )
-        self.pseudotransparent = False
         self._pseudo_surface = None
         self.pseudo_pixmap = None
         self._root_surface = None
@@ -159,7 +158,7 @@ class Drawer(base.Drawer):
             if self._pseudo_surface is None:
                 self.pseudo_pixmap = self._create_pixmap()
                 self._root_surface = self._create_xcb_surface(self.pseudo_pixmap)
-                self._pseudo_surface = self._create_pseudo_surface()
+                self._create_pseudo_surface()
         else:
             if self._xcb_surface is None:
                 self._pixmap = self._create_pixmap()
@@ -259,10 +258,10 @@ class Drawer(base.Drawer):
         """
         self.pseudotransparent = True
         self.widget = widget
-        # self._create_pseudo_surface()
 
     def _create_pseudo_surface(self):
-        return cairocffi.RecordingSurface(cairocffi.CONTENT_COLOR_ALPHA, None)
+        self._pseudo_surface = cairocffi.RecordingSurface(cairocffi.CONTENT_COLOR_ALPHA, None)
+        self.pseudo_ctx = cairocffi.Context(self._pseudo_surface)
 
     def _get_root_pixmap(self):
         root_win = self.qtile.core.conn.default_screen.root
@@ -311,4 +310,5 @@ class Drawer(base.Drawer):
             width,
             height,
         )
-        self._pseudo_surface = self._create_pseudo_surface()
+        
+        self._create_pseudo_surface()
