@@ -310,5 +310,5 @@ class Drawer(base.Drawer):
             width,
             height,
         )
-        
+
         self._create_pseudo_surface()

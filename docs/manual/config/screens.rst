@@ -44,6 +44,9 @@ background="#000000")` will give you a black back ground (the default), while
 :code:`bar.Bar(..., background=["#000000", "#FFFFFF"])` will give you a
 background that fades from black to white.
 
+Bar and Widget Transparency
+---------------------------
+
 Bars (and widgets) also support transparency by adding an alpha value to the
 desired color. For example, :code:`bar.Bar(..., background="#00000000")` will
 result in a fully transparent bar. Widget contents will not be impacted i.e.
@@ -52,7 +55,18 @@ entire window.
 
 .. note::
     In X11 backends, transparency will be disabled in a bar if the ``background``
-    color is fully opaque.
+    color is fully opaque. This is primarily to prevent a rendering issue with
+    the ``Systray`` widget where icons will be displayed with a fully transparent
+    background, regardless of the colour of the bar/widget.
+
+    X11 users can also use "pseudotransparency" by setting ``fake_transparency=True``
+    in their bar's configuration. This will attempt to copy the root wallpaper to the
+    widget's background and then render the widget over this. The ``Systray`` widget
+    will render correctly with semi-transparent backgrounds when this option is enabled.
+    Pseudotransparency is not enabled by default.
+
+Bar Borders
+-----------
 
 Users can add borders to the bar by using the ``border_width`` and
 ``border_color`` parameters. Providing a single value sets the value for all

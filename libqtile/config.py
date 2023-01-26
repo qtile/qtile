@@ -628,6 +628,19 @@ class Screen(CommandObject):
     def set_wallpaper(self, path: str, mode: str | None = None) -> None:
         """Set the wallpaper to the given file."""
         self.paint(path, mode)
+        self.refresh_fake_transparency()
+
+    @expose_command
+    def refresh_fake_transparency(self) -> None:
+        """Force update of pseudotransparent bars/widgets."""
+        # If pseudotransparency is enabled, we should redraw the bars.
+        for gap in self.gaps:
+            if isinstance(gap, Bar) and gap.fake_transparency:
+                for w in gap.widgets:
+                    # Clear the root_pixmap reference from the drawers to ensure we pick up
+                    # the new background
+                    w.drawer._root_pixmap = None
+                gap.draw()
 
 
 class Group:
