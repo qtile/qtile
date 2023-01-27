@@ -184,7 +184,7 @@ class Mpris2(base._TextBox):
             logger.warning(
                 "The use of `display_metadata is deprecated. Please use `format` instead."
             )
-            self.format = " - ".join(config["display_metadata"])
+            self.format = " - ".join(f"{{{s}}}" for s in config["display_metadata"])
 
         self._formatter = Mpris2Formatter()
 
