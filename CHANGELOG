@@ -60,8 +60,6 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Fix config being reevaluated twice during reload (e.g. all hooks from config were doubled)
         - Fix `PulseVolume` high CPU usage when update_interval set to 0.
         - Fix `Battery` widget on FreeBSD without explicit `battery` index given.
-        - Fix laggy resize in X11 by limiting the MotionNotify fps to a default of 120. This is configurable
-          per screen with the x11_drag_polling_rate variable.
         - Fix XMonad layout faulty call to nonexistent _shrink_up
         - Fix setting tiled position by mouse for layouts using _SimpleLayoutBase. To support this in other layouts, add a swap method taking two windows.
         - Fix unfullscreening bug in conjunction with Chromium based clients when auto_fullscreen is set to `False`.
