@@ -164,6 +164,9 @@ class Core(base.Core):
             | xcbq.PointerMotionHintMask
         )
 
+        # The last motion notify event that we still need to handle
+        self._motion_notify: xcffib.Event | None = None
+
     @property
     def name(self):
         return "x11"
@@ -288,6 +291,18 @@ class Core(base.Core):
             xcffib.CurrentTime,
         )
 
+    def handle_event(self, event):
+        """Handle an X11 event by forwarding it to the right target"""
+        event_type = event.__class__.__name__
+        if event_type.endswith("Event"):
+            event_type = event_type[:-5]
+        targets = self._get_target_chain(event_type, event)
+        logger.debug("X11 event: %s (targets: %s)", event_type, targets)
+        for target in targets:
+            ret = target(event)
+            if not ret:
+                break
+
     def _xpoll(self) -> None:
         """Poll the connection and dispatch incoming events"""
         assert self.qtile is not None
@@ -301,16 +316,23 @@ class Core(base.Core):
                 if event.__class__ in _IGNORED_EVENTS:
                     continue
 
-                event_type = event.__class__.__name__
-                if event_type.endswith("Event"):
-                    event_type = event_type[:-5]
-
-                targets = self._get_target_chain(event_type, event)
-                logger.debug("X11 event: %s (targets: %s)", event_type, targets)
-                for target in targets:
-                    ret = target(event)
-                    if not ret:
-                        break
+                # Motion Notifies are handled later
+                # Otherwise this is too CPU intensive
+                if type(event) == xcffib.xproto.MotionNotifyEvent:
+                    self._motion_notify = event
+                else:
+                    # These events need the motion notify event handled first
+                    handle_motion_first = type(event) in [
+                        xcffib.xproto.EnterNotifyEvent,
+                        xcffib.xproto.LeaveNotifyEvent,
+                        xcffib.xproto.ButtonPressEvent,
+                        xcffib.xproto.ButtonReleaseEvent,
+                    ]
+                    # Handle events in the correct order
+                    if self._motion_notify and handle_motion_first:
+                        self.handle_event(self._motion_notify)
+                        self._motion_notify = None
+                    self.handle_event(event)
 
             # Catch some bad X exceptions. Since X is event based, race
             # conditions can occur almost anywhere in the code. For example, if
@@ -336,6 +358,10 @@ class Core(base.Core):
                     self.qtile.stop()
                     return
                 logger.exception("Got an exception in poll loop")
+        # Handle any outstanding motion notify events
+        if self._motion_notify:
+            self.handle_event(self._motion_notify)
+            self._motion_notify = None
         self.flush()
 
     def _get_target_chain(self, event_type: str, event) -> list[Callable]:
