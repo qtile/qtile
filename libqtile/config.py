@@ -971,7 +971,7 @@ class DropDown(configurable.Configurable):
         ),
         ("width", 0.8, "Width of window as fraction of current screen width"),
         ("height", 0.35, "Height of window as fraction of current screen."),
-        ("opacity", 0.9, "Opacity of window as fraction. Zero is opaque."),
+        ("opacity", 0.9, "Opacity of window as fraction. One is opaque."),
         (
             "on_focus_lost_hide",
             True,
