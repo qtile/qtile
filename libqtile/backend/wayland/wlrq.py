@@ -190,7 +190,6 @@ class Dnd(HasListeners):
 
     def __init__(self, core: Core, wlr_drag: data_device_manager.Drag):
         self.core = core
-        self.wlr_drag = wlr_drag
         self.x: float = core.cursor.x
         self.y: float = core.cursor.y
         self.width: int = 0  # Set upon surface commit
@@ -203,10 +202,12 @@ class Dnd(HasListeners):
         tree = SceneTree.subsurface_tree_create(core.layer_trees[4], self.icon.surface)
         self.node = tree.node
         self.node.set_enabled(enabled=True)
+        self.node.data = self
 
     def finalize(self) -> None:
         self.finalize_listeners()
         self.core.live_dnd = None
+        self.node.data = None
         self.node.destroy()
 
     def _on_destroy(self, _listener: Listener, _event: Any) -> None:
