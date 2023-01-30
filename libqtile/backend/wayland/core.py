@@ -1166,9 +1166,18 @@ class Core(base.Core, wlrq.HasListeners):
 
             if scene_buffer := SceneBuffer.from_node(node):
                 if scene_surface := SceneSurface.from_buffer(scene_buffer):
-                    # We got a wlr_scene_surface, so it's definitely a client's
-                    # surface. Walk up the tree to find the window.
+                    # We got a wlr_scene_surface, so it's a client's surface. It could
+                    # be a window or a drag icon. Walk up the tree to find the window.
                     surface = scene_surface.surface
+
+                    if self.live_dnd and node == self.live_dnd.node:
+                        # We got the drag icon under the pointer, just return the
+                        # current window along with the drag icon's surface.
+                        assert self.qtile and self.qtile.current_window
+                        return self.qtile.current_window, surface, sx, sy
+
+                    # We got a node that is part of a window, walk up the scene graph to
+                    # find the window object.
                     tree = node.parent
                     while tree.node.data is None:
                         tree = tree.node.parent
