@@ -140,6 +140,7 @@ class KeyboardLayout(base.InLoopPollText):
         Key([mod], "space", lazy.widget["keyboardlayout"].next_keyboard(), desc="Next keyboard layout."),
 
     When running Qtile with the X11 backend, this widget requires setxkbmap to be available.
+    Xmodmap will also be used if .Xmodmap file is available.
     """
 
     defaults = [
