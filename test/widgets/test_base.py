@@ -21,25 +21,31 @@ import pytest
 
 import libqtile.bar
 import libqtile.config
-from libqtile.widget import TextBox
+from libqtile.command.base import expose_command
+from libqtile.widget import Spacer, TextBox
 from libqtile.widget.base import ThreadPoolText, _Widget
 from test.helpers import BareConfig, Retry
 
 
 class TimerWidget(_Widget):
-    def cmd_set_timer1(self):
-        self.timer1 = self.timeout_add(10, self.cmd_set_timer1)
+    @expose_command()
+    def set_timer1(self):
+        self.timer1 = self.timeout_add(10, self.set_timer1)
 
-    def cmd_cancel_timer1(self):
+    @expose_command()
+    def cancel_timer1(self):
         self.timer1.cancel()
 
-    def cmd_set_timer2(self):
-        self.timer2 = self.timeout_add(10, self.cmd_set_timer2)
+    @expose_command()
+    def set_timer2(self):
+        self.timer2 = self.timeout_add(10, self.set_timer2)
 
-    def cmd_cancel_timer2(self):
+    @expose_command()
+    def cancel_timer2(self):
         self.timer2.cancel()
 
-    def cmd_get_active_timers(self):
+    @expose_command()
+    def get_active_timers(self):
         active = [x for x in self._futures if x._scheduled]
         return len(active)
 
@@ -121,6 +127,30 @@ def test_mirrors_different_bar(minimal_conf_noscreen, manager_nospawn):
     assert [w["name"] for w in screen1] == ["mirror"]
 
 
+def test_mirrors_stretch(minimal_conf_noscreen, manager_nospawn):
+    """Verify that mirror widgets stretch according to their own bar"""
+    config = minimal_conf_noscreen
+    tbox = TextBox("Testing Mirrors")
+    stretch = Spacer()
+    config.fake_screens = [
+        libqtile.config.Screen(
+            top=libqtile.bar.Bar([stretch, tbox], 10), x=0, y=0, width=600, height=600
+        ),
+        libqtile.config.Screen(
+            top=libqtile.bar.Bar([stretch, tbox], 10), x=600, y=0, width=200, height=600
+        ),
+    ]
+
+    manager_nospawn.start(config)
+    screen0 = manager_nospawn.c.screen[0].bar["top"].info()["widgets"]
+    screen1 = manager_nospawn.c.screen[1].bar["top"].info()["widgets"]
+
+    # Spacer is the first widget in each bar. This should be stretched according to its own bar
+    # so check its length is equal to the bar length minus the length of the text box.
+    assert screen0[0]["length"] == 600 - screen0[1]["length"]
+    assert screen1[0]["length"] == 200 - screen1[1]["length"]
+
+
 def test_threadpolltext_force_update(minimal_conf_noscreen, manager_nospawn):
     """Check that widget can be polled instantly via command interface."""
     config = minimal_conf_noscreen
@@ -133,9 +163,22 @@ def test_threadpolltext_force_update(minimal_conf_noscreen, manager_nospawn):
     # Widget is polled immediately when configured
     assert widget.info()["text"] == "Poll count: 1"
 
-    # Default update_imterval is 600 seconds so the widget won't poll during test unless forced
+    # Default update_interval is 600 seconds so the widget won't poll during test unless forced
     widget.force_update()
     assert widget.info()["text"] == "Poll count: 2"
+
+
+def test_threadpolltext_update_interval_none(minimal_conf_noscreen, manager_nospawn):
+    """Check that widget will be polled only once if update_interval == None"""
+    config = minimal_conf_noscreen
+    tpoll = PollingWidget("Not polled", update_interval=None)
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([tpoll], 10))]
+
+    manager_nospawn.start(config)
+    widget = manager_nospawn.c.widget["pollingwidget"]
+
+    # Widget is polled immediately when configured
+    assert widget.info()["text"] == "Poll count: 1"
 
 
 class ScrollingTextConfig(BareConfig):
@@ -146,6 +189,13 @@ class ScrollingTextConfig(BareConfig):
                     TextBox("NoWidth", name="no_width", scroll=True),
                     TextBox("ShortText", name="short_text", width=100, scroll=True),
                     TextBox("Longer text " * 5, name="longer_text", width=100, scroll=True),
+                    TextBox(
+                        "ShortFixedWidth",
+                        name="fixed_width",
+                        width=200,
+                        scroll=True,
+                        scroll_fixed_width=True,
+                    ),
                 ],
                 32,
             )
@@ -214,3 +264,14 @@ def test_text_scroll_long_text(manager):
 
     # Check actually scrolling
     wait_for_scroll(widget)
+
+
+@scrolling_text_config
+def test_scroll_fixed_width(manager):
+    widget = manager.c.widget["fixed_width"]
+
+    _, layout = widget.eval("self.layout.width")
+    assert int(layout) < 200
+
+    # Widget width is fixed at set width
+    assert widget.info()["width"] == 200

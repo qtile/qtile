@@ -17,20 +17,21 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from libqtile.command.base import expose_command
 from libqtile.widget import base
 
 
 class QuickExit(base._TextBox):
     """
-    A button of exiting the running qtile easily. When clicked this button, a countdown
-    start. If the button pushed with in the countdown again, the qtile shutdown.
+    A button to shut down Qtile. When clicked, a countdown starts. Clicking
+    the button again stops the countdown and prevents Qtile from shutting down.
     """
 
     defaults = [
-        ("default_text", "[ shutdown ]", "A text displayed as a button"),
-        ("countdown_format", "[ {} seconds ]", "This text is showed when counting down."),
-        ("timer_interval", 1, "A countdown interval."),
-        ("countdown_start", 5, "Time to accept the second pushing."),
+        ("default_text", "[ shutdown ]", "The text displayed on the button."),
+        ("countdown_format", "[ {} seconds ]", "The text displayed when counting down."),
+        ("timer_interval", 1, "The countdown interval."),
+        ("countdown_start", 5, "The number to count down from."),
     ]
 
     def __init__(self, **config):
@@ -41,7 +42,7 @@ class QuickExit(base._TextBox):
         self.text = self.default_text
         self.countdown = self.countdown_start
 
-        self.add_callbacks({"Button1": self.cmd_trigger})
+        self.add_callbacks({"Button1": self.trigger})
 
     def __reset(self):
         self.is_counting = False
@@ -62,7 +63,8 @@ class QuickExit(base._TextBox):
             self.qtile.stop()
             return
 
-    def cmd_trigger(self):
+    @expose_command()
+    def trigger(self):
         if not self.is_counting:
             self.is_counting = True
             self.update()

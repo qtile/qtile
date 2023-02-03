@@ -41,7 +41,7 @@ from libqtile.backend import base
 from libqtile.backend.base import FloatStates
 from libqtile.backend.wayland.drawer import Drawer
 from libqtile.backend.wayland.wlrq import DRM_FORMAT_ARGB8888, HasListeners
-from libqtile.command.base import CommandError
+from libqtile.command.base import CommandError, expose_command
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -126,12 +126,14 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self._float_width: int = 0
         self._float_height: int = 0
         self._float_state = FloatStates.NOT_FLOATING
-
-        surface.data = self.ftm_handle = core.foreign_toplevel_manager_v1.create_handle()
+        self.ftm_handle: ftm.ForeignToplevelHandleV1 | None = None
 
     def finalize(self) -> None:
         self.finalize_listeners()
-        self.ftm_handle.destroy()
+        if self.ftm_handle:
+            self.ftm_handle.destroy()
+            self.ftm_handle = None
+            self.surface.data = None
         self.core.remove_pointer_constraints(self)
 
     @property
@@ -158,9 +160,10 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self._mapped = mapped
         if mapped:
             self.core.mapped_windows.append(self)
+            self.core.stack_windows()
         else:
             self.core.mapped_windows.remove(self)
-        self.core.stack_windows()
+            self.core.stacked_windows.remove(self)
         if self._idle_inhibitors_count > 0:
             self.core.check_idle_inhibitor()
 
@@ -234,13 +237,13 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     def belongs_to_client(self, other: Client) -> bool:
         return other == Client.from_resource(self.surface.surface._ptr.resource)  # type: ignore
 
-    def focus(self, warp: bool) -> None:
+    def focus(self, warp: bool = True) -> None:
         self.core.focus_window(self)
 
         if warp and self.qtile.config.cursor_warp:
             self.core.warp_pointer(
-                self.x + self.width / 2,
-                self.y + self.height / 2,
+                self.x + self._width / 2,
+                self.y + self._height / 2,
             )
 
         if self.group:
@@ -267,7 +270,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             group = self.qtile.groups_map[group_name]
 
         if self.group is group:
-            if toggle and hasattr(self.group.screen, "previous_group"):
+            if toggle and self.group.screen.previous_group:
                 group = self.group.screen.previous_group
             else:
                 return
@@ -283,7 +286,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             self.x += group.screen.x
         group.add(self)
         if switch_group:
-            group.cmd_toscreen(toggle=toggle)
+            group.toscreen(toggle=toggle)
 
     def paint_borders(self, color: ColorsType | None, width: int) -> None:
         if color:
@@ -305,8 +308,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             if self.group and self.group.screen:
                 screen = self.group.screen
                 if not self._float_width:  # These might start as 0
-                    self._float_width = self.width
-                    self._float_height = self.height
+                    self._float_width = self._width
+                    self._float_height = self._height
                 self._reconfigure_floating(
                     screen.x + self.float_x,
                     screen.y + self.float_y,
@@ -320,8 +323,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             self._update_fullscreen(False)
             if self._float_state == FloatStates.FLOATING:
                 # store last size
-                self._float_width = self.width
-                self._float_height = self.height
+                self._float_width = self._width
+                self._float_height = self._height
             self._float_state = FloatStates.NOT_FLOATING
             if self.group:
                 self.group.mark_floating(self, False)
@@ -353,7 +356,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             if self._float_state == FloatStates.MAXIMIZED:
                 self.floating = False
 
-        self.ftm_handle.set_maximized(do_maximize)
+        if self.ftm_handle:
+            self.ftm_handle.set_maximized(do_maximize)
 
     @property
     def minimized(self) -> bool:
@@ -368,7 +372,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             if self._float_state == FloatStates.MINIMIZED:
                 self.floating = False
 
-        self.ftm_handle.set_minimized(do_minimize)
+        if self.ftm_handle:
+            self.ftm_handle.set_minimized(do_minimize)
 
     def _tweak_float(
         self,
@@ -390,11 +395,11 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         y += dy
 
         if w is None:
-            w = self.width
+            w = self._width
         w += dw
 
         if h is None:
-            h = self.height
+            h = self._height
         h += dh
 
         if h < 0:
@@ -431,6 +436,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
                 self.group.mark_floating(self, True)
             hook.fire("float_change")
 
+    @expose_command()
     def info(self) -> dict:
         """Return a dictionary of info."""
         float_info = {
@@ -443,11 +449,12 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             name=self.name,
             x=self.x,
             y=self.y,
-            width=self.width,
-            height=self.height,
+            width=self._width,
+            height=self._height,
             group=self.group.name if self.group else None,
             id=self.wid,
             wm_class=self.get_wm_class(),
+            shell="XDG" if self.__class__.__name__ == "XdgWindow" else "XWayland",
             float_info=float_info,
             floating=self._float_state != FloatStates.NOT_FLOATING,
             maximized=self._float_state == FloatStates.MAXIMIZED,
@@ -496,20 +503,20 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             return self.group.screen if self.group else None
         return None
 
-    def cmd_focus(self, warp: bool = True) -> None:
-        """Focuses the window."""
-        self.focus(warp)
-
-    def cmd_move_floating(self, dx: int, dy: int) -> None:
+    @expose_command()
+    def move_floating(self, dx: int, dy: int) -> None:
         self._tweak_float(dx=dx, dy=dy)
 
-    def cmd_resize_floating(self, dw: int, dh: int) -> None:
+    @expose_command()
+    def resize_floating(self, dw: int, dh: int) -> None:
         self._tweak_float(dw=dw, dh=dh)
 
-    def cmd_set_position_floating(self, x: int, y: int) -> None:
+    @expose_command()
+    def set_position_floating(self, x: int, y: int) -> None:
         self._tweak_float(x=x, y=y)
 
-    def cmd_set_position(self, x: int, y: int) -> None:
+    @expose_command()
+    def set_position(self, x: int, y: int) -> None:
         if self.floating:
             self._tweak_float(x=x, y=y)
             return
@@ -532,62 +539,57 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
                     self.group.layout_all()
                     return
 
-    def cmd_set_size_floating(self, w: int, h: int) -> None:
+    @expose_command()
+    def set_size_floating(self, w: int, h: int) -> None:
         self._tweak_float(w=w, h=h)
 
-    def cmd_place(
-        self,
-        x: int,
-        y: int,
-        width: int,
-        height: int,
-        borderwidth: int,
-        bordercolor: ColorsType | None,
-        above: bool = False,
-        margin: int | None = None,
-    ) -> None:
-        self.place(x, y, width, height, borderwidth, bordercolor, above, margin)
-
-    def cmd_get_position(self) -> tuple[int, int]:
+    @expose_command()
+    def get_position(self) -> tuple[int, int]:
         return self.x, self.y
 
-    def cmd_get_size(self) -> tuple[int, int]:
-        return self.width, self.height
+    @expose_command()
+    def get_size(self) -> tuple[int, int]:
+        return self._width, self._height
 
-    def cmd_toggle_floating(self) -> None:
+    @expose_command()
+    def toggle_floating(self) -> None:
         self.floating = not self.floating
 
-    def cmd_enable_floating(self) -> None:
+    @expose_command()
+    def enable_floating(self) -> None:
         self.floating = True
 
-    def cmd_disable_floating(self) -> None:
+    @expose_command()
+    def disable_floating(self) -> None:
         self.floating = False
 
-    def cmd_toggle_maximize(self) -> None:
+    @expose_command()
+    def toggle_maximize(self) -> None:
         self.maximized = not self.maximized
 
-    def cmd_toggle_minimize(self) -> None:
+    @expose_command()
+    def toggle_minimize(self) -> None:
         self.minimized = not self.minimized
 
-    def cmd_toggle_fullscreen(self) -> None:
+    @expose_command()
+    def toggle_fullscreen(self) -> None:
         self.fullscreen = not self.fullscreen
 
-    def cmd_enable_fullscreen(self) -> None:
+    @expose_command()
+    def enable_fullscreen(self) -> None:
         self.fullscreen = True
 
-    def cmd_disable_fullscreen(self) -> None:
+    @expose_command()
+    def disable_fullscreen(self) -> None:
         self.fullscreen = False
 
-    def cmd_bring_to_front(self) -> None:
+    @expose_command()
+    def bring_to_front(self) -> None:
         if self.mapped:
-            self.core.mapped_windows.remove(self)
-            self.core.mapped_windows.append(self)
-            self.core.stack_windows()
+            self.core.stack_windows(restack=self)
 
-    def cmd_kill(self) -> None:
-        self.kill()
-
-    def cmd_static(
+    @expose_command()
+    def static(
         self,
         screen: int | None = None,
         x: int | None = None,
@@ -605,9 +607,9 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         if y is None:
             y = self.y + self.borderwidth
         if width is None:
-            width = self.width
+            width = self._width
         if height is None:
-            height = self.height
+            height = self._height
 
         self.finalize_listeners()
         win = self._to_static()
@@ -616,9 +618,13 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         win.mapped = True
         win.place(x, y, width, height, 0, None)
         self.qtile.windows_map[self.wid] = win
-        if self in self.core.mapped_windows:
+        if self.mapped:
             self.core.mapped_windows.remove(self)
-        self.core.stack_windows()
+            self.core.stacked_windows.remove(self)
+
+    @expose_command()
+    def is_visible(self) -> bool:
+        return self._mapped
 
     @abc.abstractmethod
     def _to_static(self) -> Static:
@@ -677,10 +683,10 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
 
         if mapped:
             self.core.mapped_windows.append(self)
+            self.core.stack_windows()
         else:
             self.core.mapped_windows.remove(self)
-
-        self.core.stack_windows()
+            self.core.stacked_windows.remove(self)
 
     def _find_outputs(self) -> None:
         self._outputs = set(o for o in self.core.outputs if o.contains(self))
@@ -689,13 +695,13 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         for output in self._outputs:
             output.damage()
 
-    def focus(self, warp: bool) -> None:
+    def focus(self, warp: bool = True) -> None:
         self.core.focus_window(self)
 
         if warp and self.qtile.config.cursor_warp:
             self.core.warp_pointer(
-                self.x + self.width / 2,
-                self.y + self.height / 2,
+                self.x + self._width / 2,
+                self.y + self._height / 2,
             )
 
         hook.fire("client_focus", self)
@@ -771,12 +777,24 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
     def belongs_to_client(self, other: Client) -> bool:
         return other == Client.from_resource(self.surface.surface._ptr.resource)  # type: ignore
 
-    def cmd_bring_to_front(self) -> None:
+    @expose_command()
+    def bring_to_front(self) -> None:
         if self.mapped:
-            self.core.mapped_windows.remove(self)
-            self.core.mapped_windows.append(self)
-            self.core.stack_windows()
+            self.core.stack_windows(restack=self)
             self.damage()
+
+    @expose_command()
+    def info(self) -> dict:
+        """Return a dictionary of info."""
+        info = base.Static.info(self)
+        cls_name = self.__class__.__name__
+        if cls_name == "XdgStatic":
+            info["shell"] = "XDG"
+        elif cls_name == "XStatic":
+            info["shell"] = "XWayland"
+        else:
+            info["shell"] = "layer"
+        return info
 
 
 class Internal(_Base, base.Internal):
@@ -801,7 +819,7 @@ class Internal(_Base, base.Internal):
         self.hide()
 
     def _new_texture(self) -> Texture:
-        clear = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, self.width, self.height)
+        clear = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, self._width, self._height)
         with cairocffi.Context(clear) as context:
             context.set_source_rgba(0, 0, 0, 0)
             context.paint()
@@ -809,9 +827,9 @@ class Internal(_Base, base.Internal):
         return Texture.from_pixels(
             self.core.renderer,
             DRM_FORMAT_ARGB8888,
-            cairocffi.ImageSurface.format_stride_for_width(cairocffi.FORMAT_ARGB32, self.width),
-            self.width,
-            self.height,
+            cairocffi.ImageSurface.format_stride_for_width(cairocffi.FORMAT_ARGB32, self._width),
+            self._width,
+            self._height,
             cairocffi.cairo.cairo_image_surface_get_data(clear._pointer),
         )
 
@@ -831,9 +849,10 @@ class Internal(_Base, base.Internal):
         self._mapped = mapped
         if mapped:
             self.core.mapped_windows.append(self)
+            self.core.stack_windows()
         else:
             self.core.mapped_windows.remove(self)
-        self.core.stack_windows()
+            self.core.stacked_windows.remove(self)
 
     def hide(self) -> None:
         self.mapped = False
@@ -843,9 +862,11 @@ class Internal(_Base, base.Internal):
         self.mapped = True
         self.damage()
 
-    def focus(self, warp: bool) -> None:
+    @expose_command()
+    def focus(self, warp: bool = True) -> None:
         self.core.focus_window(self)
 
+    @expose_command()
     def kill(self) -> None:
         self.hide()
         if self.wid in self.qtile.windows_map:
@@ -857,6 +878,7 @@ class Internal(_Base, base.Internal):
         for output in self._outputs:
             output.damage()
 
+    @expose_command()
     def place(
         self,
         x: int,
@@ -870,13 +892,11 @@ class Internal(_Base, base.Internal):
         respect_hints: bool = False,
     ) -> None:
         if above and self._mapped:
-            self.core.mapped_windows.remove(self)
-            self.core.mapped_windows.append(self)
-            self.core.stack_windows()
+            self.core.stack_windows(restack=self)
 
         self.x = x
         self.y = y
-        needs_reset = width != self.width or height != self.height
+        needs_reset = width != self._width or height != self._height
         self._width = width
         self._height = height
 
@@ -886,21 +906,21 @@ class Internal(_Base, base.Internal):
         self._outputs = set(o for o in self.core.outputs if o.contains(self))
         self.damage()
 
+    @expose_command()
     def info(self) -> dict:
         """Return a dictionary of info."""
         return dict(
             x=self.x,
             y=self.y,
-            width=self.width,
-            height=self.height,
+            width=self._width,
+            height=self._height,
             id=self.wid,
         )
 
-    def cmd_bring_to_front(self) -> None:
+    @expose_command()
+    def bring_to_front(self) -> None:
         if self.mapped:
-            self.core.mapped_windows.remove(self)
-            self.core.mapped_windows.append(self)
-            self.core.stack_windows()
+            self.core.stack_windows(restack=self)
 
 
 WindowType = typing.Union[Window, Static, Internal]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from typing import TYPE_CHECKING
 
 import cairocffi
@@ -28,7 +29,9 @@ class Drawer(base.Drawer):
         self._xcb_surface = None
         self._pixmap = None
         self._gc = None
-        self._depth, self._visual = qtile.core.conn.default_screen._get_depth_and_visual(win._depth)  # type: ignore
+        self._depth, self._visual = qtile.core.conn.default_screen._get_depth_and_visual(
+            win._depth
+        )
 
     def finalize(self):
         self._free_xcb_surface()
@@ -81,7 +84,8 @@ class Drawer(base.Drawer):
 
     def _free_gc(self):
         if self._gc is not None:
-            self.qtile.core.conn.conn.core.FreeGC(self._gc)
+            with contextlib.suppress(xcffib.ConnectionException):
+                self.qtile.core.conn.conn.core.FreeGC(self._gc)
             self._gc = None
 
     def _create_xcb_surface(self):
@@ -112,7 +116,8 @@ class Drawer(base.Drawer):
 
     def _free_pixmap(self):
         if self._pixmap is not None:
-            self.qtile.core.conn.conn.core.FreePixmap(self._pixmap)
+            with contextlib.suppress(xcffib.ConnectionException):
+                self.qtile.core.conn.conn.core.FreePixmap(self._pixmap)
             self._pixmap = None
 
     def _check_xcb(self):
@@ -153,7 +158,7 @@ class Drawer(base.Drawer):
         self._paint()
 
         # Finally, copy XCBSurface's underlying pixmap to the window.
-        self.qtile.core.conn.conn.core.CopyArea(  # type: ignore
+        self.qtile.core.conn.conn.core.CopyArea(
             self._pixmap,
             self._win.wid,
             self._gc,

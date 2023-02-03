@@ -21,9 +21,11 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
 import time
 import typing
+from collections import defaultdict
 
 import pywayland
 import pywayland.server
@@ -41,6 +43,7 @@ from wlroots.wlr_types import (
     GammaControlManagerV1,
     InputInhibitManager,
     OutputLayout,
+    PointerGesturesV1,
     PrimarySelectionV1DeviceManager,
     RelativePointerManagerV1,
     ScreencopyManagerV1,
@@ -78,10 +81,11 @@ from libqtile import hook, log_utils
 from libqtile.backend import base
 from libqtile.backend.wayland import inputs, layer, window, wlrq, xdgwindow, xwindow
 from libqtile.backend.wayland.output import Output
+from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
-    from typing import Any, Sequence
+    from typing import Any, Generator
 
     from pywayland.server import Listener
     from wlroots.wlr_types import Output as wlrOutput
@@ -97,7 +101,10 @@ class Core(base.Core, wlrq.HasListeners):
     def __init__(self) -> None:
         """Setup the Wayland core backend"""
         self.qtile: Qtile | None = None
-        self._hovered_internal: window.Internal | None = None
+
+        # This is the window under the pointer
+        self._hovered_window: window.WindowType | None = None
+        # but this Internal receives keyboard input, e.g. via the Prompt widget.
         self.focused_internal: window.Internal | None = None
 
         # Log exceptions that are raised in Wayland callback functions.
@@ -126,13 +133,13 @@ class Core(base.Core, wlrq.HasListeners):
         # mapped_windows contains just regular windows
         self.mapped_windows: list[window.WindowType] = []  # Ascending in Z
         # stacked_windows also contains layer_shell windows from the current output
-        self.stacked_windows: Sequence[window.WindowType] = []  # Ascending in Z
+        self.stacked_windows: list[window.WindowType] = []  # Ascending in Z
         self._current_output: Output | None = None
 
         # set up inputs
         self.keyboards: list[inputs.Keyboard] = []
+        self._pointers: list[inputs.Pointer] = []
         self.grabbed_keys: list[tuple[int, int]] = []
-        self.grabbed_buttons: list[tuple[int, int]] = []
         DataDeviceManager(self.display)
         self.live_dnd: wlrq.Dnd | None = None
         DataControlManagerV1(self.display)
@@ -145,7 +152,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(self.seat.start_drag_event, self._on_start_drag)
         self.add_listener(self.backend.new_input_event, self._on_new_input)
         # Some devices are added early, so we need to remember to configure them
-        self._pending_input_devices: list[input_device.InputDevice] = []
+        self._pending_input_devices: list[inputs._Device] = []
         hook.subscribe.startup_complete(self._configure_pending_inputs)
 
         self._input_inhibit_manager = InputInhibitManager(self.display)
@@ -170,12 +177,21 @@ class Core(base.Core, wlrq.HasListeners):
         # set up cursor
         self.cursor = Cursor(self.output_layout)
         self.cursor_manager = XCursorManager(24)
+        self._gestures = PointerGesturesV1(self.display)
         self.add_listener(self.seat.request_set_cursor_event, self._on_request_cursor)
         self.add_listener(self.cursor.axis_event, self._on_cursor_axis)
         self.add_listener(self.cursor.frame_event, self._on_cursor_frame)
         self.add_listener(self.cursor.button_event, self._on_cursor_button)
         self.add_listener(self.cursor.motion_event, self._on_cursor_motion)
         self.add_listener(self.cursor.motion_absolute_event, self._on_cursor_motion_absolute)
+        self.add_listener(self.cursor.pinch_begin, self._on_cursor_pinch_begin)
+        self.add_listener(self.cursor.pinch_update, self._on_cursor_pinch_update)
+        self.add_listener(self.cursor.pinch_end, self._on_cursor_pinch_end)
+        self.add_listener(self.cursor.swipe_begin, self._on_cursor_swipe_begin)
+        self.add_listener(self.cursor.swipe_update, self._on_cursor_swipe_update)
+        self.add_listener(self.cursor.swipe_end, self._on_cursor_swipe_end)
+        self.add_listener(self.cursor.hold_begin, self._on_cursor_hold_begin)
+        self.add_listener(self.cursor.hold_end, self._on_cursor_hold_end)
         self._cursor_state = wlrq.CursorState()
 
         # set up shell
@@ -226,17 +242,29 @@ class Core(base.Core, wlrq.HasListeners):
         self.foreign_toplevel_manager_v1 = ForeignToplevelManagerV1.create(self.display)
 
         # Set up XWayland
-        self._xwayland = xwayland.XWayland(self.display, self.compositor, True)
-        if self._xwayland:
+        self._xwayland: xwayland.XWayland | None = None
+        try:
+            self._xwayland = xwayland.XWayland(self.display, self.compositor, True)
+        except RuntimeError:
+            logger.info("Failed to set up XWayland. Continuing without.")
+        else:
             os.environ["DISPLAY"] = self._xwayland.display_name or ""
             logger.info("Set up XWayland with DISPLAY=%s", os.environ["DISPLAY"])
             self.add_listener(self._xwayland.ready_event, self._on_xwayland_ready)
             self.add_listener(self._xwayland.new_surface_event, self._on_xwayland_new_surface)
-        else:
-            logger.info("Failed to set up XWayland. Continuing without.")
 
         # Start
         self.backend.start()
+
+        # Place cursor in middle of centre output
+        x = y = 0
+        if box := self.output_layout.get_box():
+            if output := self.output_layout.output_at(box.width / 2, box.height / 2):
+                if box := self.output_layout.get_box(reference=output):
+                    x = box.x + box.width / 2
+                    y = box.y + box.height / 2
+        self.warp_pointer(x, y)
+        self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
 
     @property
     def name(self) -> str:
@@ -247,6 +275,8 @@ class Core(base.Core, wlrq.HasListeners):
         self._poll()
         for kb in self.keyboards.copy():
             kb.finalize()
+        for pt in self._pointers.copy():
+            pt.finalize()
         for out in self.outputs.copy():
             out.finalize()
 
@@ -292,21 +322,27 @@ class Core(base.Core, wlrq.HasListeners):
         logger.debug("Signal: seat start_drag")
         self.live_dnd = wlrq.Dnd(self, event)
 
-    def _on_new_input(self, _listener: Listener, device: input_device.InputDevice) -> None:
+    def _on_new_input(self, _listener: Listener, wlr_device: input_device.InputDevice) -> None:
         logger.debug("Signal: backend new_input_event")
-        if device.device_type == input_device.InputDeviceType.POINTER:
-            self._add_new_pointer(device)
-        elif device.device_type == input_device.InputDeviceType.KEYBOARD:
-            self._add_new_keyboard(device)
+
+        device: inputs._Device
+        if wlr_device.device_type == input_device.InputDeviceType.POINTER:
+            device = self._add_new_pointer(wlr_device)
+        elif wlr_device.device_type == input_device.InputDeviceType.KEYBOARD:
+            device = self._add_new_keyboard(wlr_device)
+        else:
+            logger.info("New %s device", wlr_device.device_type.name)
+            return
 
         capabilities = WlSeat.capability.pointer
         if self.keyboards:
             capabilities |= WlSeat.capability.keyboard
         self.seat.set_capabilities(capabilities)
 
-        logger.info("New %s: %s", device.device_type.name, device.name)
+        logger.info("New device: %s %s", *device.get_info())
         if self.qtile:
-            inputs.configure_device(device, self.qtile.config.wl_input_rules)
+            if self.qtile.config.wl_input_rules:
+                device.configure(self.qtile.config.wl_input_rules)
         else:
             self._pending_input_devices.append(device)
 
@@ -356,6 +392,10 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_request_cursor(
         self, _listener: Listener, event: seat.PointerRequestSetCursorEvent
     ) -> None:
+        if event._ptr.seat_client != self.seat.pointer_state._ptr.focused_client:
+            # The request came from a cheeky window that doesn't have the pointer
+            return
+
         self._cursor_state.surface = event.surface
         self._cursor_state.hotspot = event.hotspot
 
@@ -449,6 +489,70 @@ class Core(base.Core, wlrq.HasListeners):
         )
         self._process_cursor_motion(event.time_msec, self.cursor.x, self.cursor.y)
 
+    def _on_cursor_pinch_begin(
+        self,
+        _listener: Listener,
+        event: pointer.PointerEventPinchBegin,
+    ) -> None:
+        self.idle.notify_activity(self.seat)
+        self._gestures.send_pinch_begin(self.seat, event.time_msec, event.fingers)
+
+    def _on_cursor_pinch_update(
+        self,
+        _listener: Listener,
+        event: pointer.PointerEventPinchUpdate,
+    ) -> None:
+        self._gestures.send_pinch_update(
+            self.seat, event.time_msec, event.dx, event.dy, event.scale, event.rotation
+        )
+
+    def _on_cursor_pinch_end(
+        self,
+        _listener: Listener,
+        event: pointer.PointerEventPinchEnd,
+    ) -> None:
+        self.idle.notify_activity(self.seat)
+        self._gestures.send_pinch_end(self.seat, event.time_msec, event.cancelled)
+
+    def _on_cursor_swipe_begin(
+        self,
+        _listener: Listener,
+        event: pointer.PointerEventSwipeBegin,
+    ) -> None:
+        self.idle.notify_activity(self.seat)
+        self._gestures.send_swipe_begin(self.seat, event.time_msec, event.fingers)
+
+    def _on_cursor_swipe_update(
+        self,
+        _listener: Listener,
+        event: pointer.PointerEventSwipeUpdate,
+    ) -> None:
+        self._gestures.send_swipe_update(self.seat, event.time_msec, event.dx, event.dy)
+
+    def _on_cursor_swipe_end(
+        self,
+        _listener: Listener,
+        event: pointer.PointerEventSwipeEnd,
+    ) -> None:
+        self.idle.notify_activity(self.seat)
+        self._gestures.send_swipe_end(self.seat, event.time_msec, event.cancelled)
+
+    def _on_cursor_hold_begin(
+        self,
+        _listener: Listener,
+        event: pointer.PointerEventHoldBegin,
+    ) -> None:
+        self.idle.notify_activity(self.seat)
+        self._gestures.send_hold_begin(self.seat, event.time_msec, event.fingers)
+
+    def _on_cursor_hold_end(
+        self,
+        _listener: Listener,
+        event: pointer.PointerEventHoldEnd,
+    ) -> None:
+        self.idle.notify_activity(self.seat)
+        self._gestures.send_hold_end(self.seat, event.time_msec, event.cancelled)
+
     def _on_new_pointer_constraint(
         self, _listener: Listener, wlr_constraint: PointerConstraintV1
     ) -> None:
@@ -469,7 +573,8 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_new_virtual_pointer(
         self, _listener: Listener, new_pointer_event: vpointer.VirtualPointerV1NewPointerEvent
     ) -> None:
-        self._add_new_pointer(new_pointer_event.new_pointer.input_device)
+        device = self._add_new_pointer(new_pointer_event.new_pointer.input_device)
+        logger.info("New virtual pointer: %s %s", *device.get_info())
 
     def _on_new_idle_inhibitor(
         self, _listener: Listener, idle_inhibitor: IdleInhibitorV1
@@ -491,11 +596,8 @@ class Core(base.Core, wlrq.HasListeners):
         self.exclusive_client = self._input_inhibit_manager.active_client
 
         # If another client has keyboard focus, unfocus it.
-        if (
-            self.qtile.current_window
-            and not self.qtile.current_window.belongs_to_client(  # type: ignore
-                self.exclusive_client
-            )
+        if self.qtile.current_window and not self.qtile.current_window.belongs_to_client(
+            self.exclusive_client
         ):
             self.focus_window(None)
 
@@ -653,6 +755,10 @@ class Core(base.Core, wlrq.HasListeners):
         if self.live_dnd:
             self.live_dnd.position(cx, cy)
 
+        self._focus_pointer(cx_int, cy_int, motion=time_msec)
+
+    def _focus_pointer(self, cx: int, cy: int, motion: int | None = None) -> None:
+        assert self.qtile is not None
         found = self._under_pointer()
 
         if found:
@@ -664,44 +770,68 @@ class Core(base.Core, wlrq.HasListeners):
                 if isinstance(win, base.Internal) or not win.belongs_to_client(
                     self.exclusive_client
                 ):
-                    logger.debug(
-                        "Pointer focus withheld from window not owned by exclusive client."
-                    )
-                    self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
-                    self.seat.pointer_notify_clear_focus()
+                    # Moved to an internal or unrelated window
+                    if self._hovered_window is not win:
+                        logger.debug(
+                            "Pointer focus withheld from window not owned by exclusive client."
+                        )
+                        self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                        self.seat.pointer_notify_clear_focus()
+                        self._hovered_window = win
                     return
 
             if isinstance(win, window.Internal):
-                if self._hovered_internal is win:
-                    win.process_pointer_motion(
-                        cx_int - self._hovered_internal.x,
-                        cy_int - self._hovered_internal.y,
-                    )
-                else:
-                    if self._hovered_internal:
-                        self._hovered_internal.process_pointer_leave(
-                            cx_int - self._hovered_internal.x,
-                            cy_int - self._hovered_internal.y,
+                if self._hovered_window is win:
+                    # pointer remained within the same Internal window
+                    if motion is not None:
+                        win.process_pointer_motion(
+                            cx - self._hovered_window.x,
+                            cy - self._hovered_window.y,
                         )
-                    self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
-                    self.seat.pointer_notify_clear_focus()
-                    win.process_pointer_enter(cx_int, cy_int)
-                    self._hovered_internal = win
+                else:
+                    if self._hovered_window:
+                        if isinstance(self._hovered_window, window.Internal):
+                            if motion is not None:
+                                # moved from an Internal to a different Internal
+                                self._hovered_window.process_pointer_leave(
+                                    cx - self._hovered_window.x,
+                                    cy - self._hovered_window.y,
+                                )
+                        elif self.seat.pointer_state.focused_surface:
+                            # moved from a Window or Static to an Internal
+                            self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                            self.seat.pointer_notify_clear_focus()
+                    win.process_pointer_enter(cx, cy)
+                    self._hovered_window = win
                 return
 
             if surface:
+                # The pointer is in a client's surface
                 self.seat.pointer_notify_enter(surface, sx, sy)
-                self.seat.pointer_notify_motion(time_msec, sx, sy)
+                if motion is not None:
+                    self.seat.pointer_notify_motion(motion, sx, sy)
             else:
-                self.seat.pointer_notify_clear_focus()
+                # The pointer is on the border of a client's window
+                if self.seat.pointer_state.focused_surface:
+                    # We just moved out of a client's surface
+                    self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                    self.seat.pointer_notify_clear_focus()
 
             if win is not self.qtile.current_window:
-                hook.fire("client_mouse_enter", win)
+                if isinstance(win, window.Static):
+                    if self._hovered_window is not win:
+                        # qtile.current_window will never be a static window, but we
+                        # still only want to fire client_mouse_enter once, so check
+                        # self._hovered_window.
+                        hook.fire("client_mouse_enter", win)
 
-                if self.qtile.config.follow_mouse_focus:
-                    if isinstance(win, window.Static):
+                    if motion is not None and self.qtile.config.follow_mouse_focus:
                         self.qtile.focus_screen(win.screen.index, False)
-                    else:
+
+                else:
+                    hook.fire("client_mouse_enter", win)
+
+                    if motion is not None and self.qtile.config.follow_mouse_focus:
                         if win.group and win.group.current_window != win:
                             win.group.focus(win, False)
                         if (
@@ -711,18 +841,22 @@ class Core(base.Core, wlrq.HasListeners):
                         ):
                             self.qtile.focus_screen(win.group.screen.index, False)
 
-            if self._hovered_internal:
-                self._hovered_internal = None
+            self._hovered_window = win
 
         else:
-            self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
-            self.seat.pointer_notify_clear_focus()
-            if self._hovered_internal:
-                self._hovered_internal.process_pointer_leave(
-                    cx_int - self._hovered_internal.x,
-                    cy_int - self._hovered_internal.y,
-                )
-                self._hovered_internal = None
+            # There is no window under the pointer
+            if self._hovered_window:
+                if isinstance(self._hovered_window, window.Internal):
+                    # We just moved out of an Internal
+                    self._hovered_window.process_pointer_leave(
+                        cx - self._hovered_window.x,
+                        cy - self._hovered_window.y,
+                    )
+                else:
+                    # We just moved out of a Window or Static
+                    self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                    self.seat.pointer_notify_clear_focus()
+                self._hovered_window = None
 
     def _process_cursor_button(self, button: int, pressed: bool) -> bool:
         assert self.qtile is not None
@@ -732,37 +866,45 @@ class Core(base.Core, wlrq.HasListeners):
                 button, self.seat.keyboard.modifier, int(self.cursor.x), int(self.cursor.y)
             )
 
-            if self._hovered_internal:
-                self._hovered_internal.process_button_click(
-                    int(self.cursor.x - self._hovered_internal.x),
-                    int(self.cursor.y - self._hovered_internal.y),
+            if isinstance(self._hovered_window, window.Internal):
+                self._hovered_window.process_button_click(
+                    int(self.cursor.x - self._hovered_window.x),
+                    int(self.cursor.y - self._hovered_window.y),
                     button,
                 )
         else:
             handled = self.qtile.process_button_release(button, self.seat.keyboard.modifier)
 
-            if self._hovered_internal:
-                self._hovered_internal.process_button_release(
-                    int(self.cursor.x - self._hovered_internal.x),
-                    int(self.cursor.y - self._hovered_internal.y),
+            if isinstance(self._hovered_window, window.Internal):
+                self._hovered_window.process_button_release(
+                    int(self.cursor.x - self._hovered_window.x),
+                    int(self.cursor.y - self._hovered_window.y),
                     button,
                 )
 
         return handled
 
-    def _add_new_pointer(self, device: input_device.InputDevice) -> None:
-        self.cursor.attach_input_device(device)
+    def _add_new_pointer(self, wlr_device: input_device.InputDevice) -> inputs.Pointer:
+        device = inputs.Pointer(self, wlr_device)
+        self._pointers.append(device)
+        self.cursor.attach_input_device(wlr_device)
+        self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+        return device
 
-    def _add_new_keyboard(self, device: input_device.InputDevice) -> None:
-        self.keyboards.append(inputs.Keyboard(self, device))
-        self.seat.set_keyboard(device)
+    def _add_new_keyboard(self, wlr_device: input_device.InputDevice) -> inputs.Keyboard:
+        device = inputs.Keyboard(self, wlr_device)
+        self.keyboards.append(device)
+        self.seat.set_keyboard(wlr_device)
+        return device
 
     def _configure_pending_inputs(self) -> None:
         """Configure inputs that were detected before the config was loaded."""
-        if self.qtile:
+        assert self.qtile is not None
+
+        if self.qtile.config.wl_input_rules:
             for device in self._pending_input_devices:
-                inputs.configure_device(device, self.qtile.config.wl_input_rules)
-            self._pending_input_devices.clear()
+                device.configure(self.qtile.config.wl_input_rules)
+        self._pending_input_devices.clear()
 
     def setup_listener(self, qtile: Qtile) -> None:
         """Setup a listener for the given qtile instance"""
@@ -788,7 +930,7 @@ class Core(base.Core, wlrq.HasListeners):
             self.event_loop.dispatch(0)
             self.display.flush_clients()
 
-    def distribute_windows(self, initial: bool) -> None:
+    def on_config_load(self, initial: bool) -> None:
         if initial:
             # This backend does not support restarting
             return
@@ -823,6 +965,11 @@ class Core(base.Core, wlrq.HasListeners):
                 win.unhide()
             else:
                 win.hide()
+
+        # Apply input device configuration
+        if self.qtile.config.wl_input_rules:
+            for device in [*self.keyboards, *self._pointers]:
+                device.configure(self.qtile.config.wl_input_rules)
 
     def new_wid(self) -> int:
         """Get a new unique window ID"""
@@ -861,8 +1008,10 @@ class Core(base.Core, wlrq.HasListeners):
             if not win.surface.current.keyboard_interactive:
                 return
 
-        if isinstance(win, (xwindow.XWindow, xwindow.XStatic)):
-            if not win.surface.or_surface_wants_focus():
+        if isinstance(win, xwindow.XStatic):
+            if win.surface.override_redirect and not win.surface.or_surface_wants_focus():
+                return
+            if win.surface.icccm_input_model() == xwayland.ICCCMInputModel.NONE:
                 return
 
         previous_surface = self.seat.keyboard_state.focused_surface
@@ -892,11 +1041,13 @@ class Core(base.Core, wlrq.HasListeners):
         logger.debug("Focusing new window")
         if surface.is_xdg_surface and isinstance(win.surface, XdgSurface):
             win.surface.set_activated(True)
-            win.ftm_handle.set_activated(True)
+            if win.ftm_handle:
+                win.ftm_handle.set_activated(True)
 
         elif surface.is_xwayland_surface and isinstance(win.surface, xwayland.Surface):
             win.surface.activate(True)
-            win.ftm_handle.set_activated(True)
+            if win.ftm_handle:
+                win.ftm_handle.set_activated(True)
 
         if enter and self.seat.keyboard._ptr:  # This pointer is NULL when headless
             self.seat.keyboard_notify_enter(surface, self.seat.keyboard)
@@ -918,12 +1069,12 @@ class Core(base.Core, wlrq.HasListeners):
                     return
 
             if self.qtile.config.bring_front_click is True:
-                win.cmd_bring_to_front()
+                win.bring_to_front()
             elif self.qtile.config.bring_front_click == "floating_only":
                 if isinstance(win, base.Window) and win.floating:
-                    win.cmd_bring_to_front()
+                    win.bring_to_front()
                 elif isinstance(win, base.Static):
-                    win.cmd_bring_to_front()
+                    win.bring_to_front()
 
             if isinstance(win, window.Static):
                 if win.screen is not self.qtile.current_screen:
@@ -961,8 +1112,16 @@ class Core(base.Core, wlrq.HasListeners):
                             return win, None, 0, 0
         return None
 
-    def stack_windows(self) -> None:
-        """Put all windows of all types in a Z-ordered list."""
+    def stack_windows(self, restack: window.WindowType | None = None) -> None:
+        """
+        Put all windows of all types in a Z-ordered list.
+
+        A (non-layer_shell) window passed as 'restack' will bubble up the Z order.
+        """
+        if restack:
+            self.mapped_windows.remove(restack)
+            self.mapped_windows.append(restack)
+
         if self._current_output:
             layers = self._current_output.layers
             self.stacked_windows = (
@@ -973,7 +1132,7 @@ class Core(base.Core, wlrq.HasListeners):
                 + layers[LayerShellV1Layer.OVERLAY]
             )
         else:
-            self.stacked_windows = self.mapped_windows
+            self.stacked_windows = self.mapped_windows.copy()
 
     def check_idle_inhibitor(self) -> None:
         """
@@ -1011,24 +1170,16 @@ class Core(base.Core, wlrq.HasListeners):
 
     def grab_button(self, mouse: config.Mouse) -> int:
         """Configure the backend to grab the mouse event"""
-        keysym = wlrq.buttons[mouse.button_code]
-        mask_key = wlrq.translate_masks(mouse.modifiers)
-        self.grabbed_buttons.append((keysym, mask_key))
-        return mask_key
-
-    def ungrab_buttons(self) -> None:
-        """Release the grabbed button events"""
-        self.grabbed_buttons.clear()
-
-    def grab_pointer(self) -> None:
-        """Configure the backend to grab mouse events"""
-
-    def ungrab_pointer(self) -> None:
-        """Release grabbed pointer events"""
+        return wlrq.translate_masks(mouse.modifiers)
 
     def warp_pointer(self, x: float, y: float) -> None:
         """Warp the pointer to the coordinates in relative to the output layout"""
         self.cursor.warp(WarpMode.LayoutClosest, x, y)
+
+    @contextlib.contextmanager
+    def masked(self) -> Generator:
+        yield
+        self._focus_pointer(int(self.cursor.x), int(self.cursor.y))
 
     def flush(self) -> None:
         self._poll()
@@ -1088,7 +1239,8 @@ class Core(base.Core, wlrq.HasListeners):
         if self.focused_internal:
             self.focused_internal.process_key_press(keysym)
 
-    def cmd_set_keymap(
+    @expose_command()
+    def set_keymap(
         self,
         layout: str | None = None,
         options: str | None = None,
@@ -1107,20 +1259,23 @@ class Core(base.Core, wlrq.HasListeners):
         else:
             logger.warning("Could not set keymap: no keyboards set up.")
 
-    def cmd_change_vt(self, vt: int) -> bool:
+    @expose_command()
+    def change_vt(self, vt: int) -> bool:
         """Change virtual terminal to that specified"""
         success = self.backend.get_session().change_vt(vt)
         if not success:
             logger.warning("Could not change VT to: %s", vt)
         return success
 
-    def cmd_hide_cursor(self) -> None:
+    @expose_command()
+    def hide_cursor(self) -> None:
         """Hide the cursor."""
         if not self._cursor_state.hidden:
             self.cursor.set_surface(None, self._cursor_state.hotspot)
             self._cursor_state.hidden = True
 
-    def cmd_unhide_cursor(self) -> None:
+    @expose_command()
+    def unhide_cursor(self) -> None:
         """Unhide the cursor."""
         if self._cursor_state.hidden:
             self.cursor.set_surface(
@@ -1128,3 +1283,23 @@ class Core(base.Core, wlrq.HasListeners):
                 self._cursor_state.hotspot,
             )
             self._cursor_state.hidden = False
+
+    @expose_command()
+    def get_inputs(self) -> dict[str, list[dict[str, str]]]:
+        """Get information on all input devices."""
+        info: defaultdict[str, list[dict]] = defaultdict(list)
+        devices: list[inputs._Device] = self.keyboards + self._pointers  # type: ignore
+
+        for dev in devices:
+            type_key, identifier = dev.get_info()
+            type_info = dict(
+                name=dev.wlr_device.name,
+                identifier=identifier,
+            )
+            info[type_key].append(type_info)
+
+        return dict(info)
+
+    def get_mouse_position(self) -> tuple[int, int]:
+        """Get mouse coordinates."""
+        return int(self.cursor.x), int(self.cursor.y)

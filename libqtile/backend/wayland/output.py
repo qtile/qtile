@@ -227,8 +227,8 @@ class Output(HasListeners):
         self, dnd: Dnd, now: Timespec, scale: float, transform_matrix: Matrix
     ) -> None:
         """Render the drag-n-drop icon if there is one."""
-        icon = dnd.wlr_drag.icon
-        if icon.mapped:
+        icon = dnd.icon
+        if icon is not None and icon.mapped:
             texture = icon.surface.get_texture()
             if texture:
                 box = Box(
@@ -319,8 +319,6 @@ class Output(HasListeners):
                         win.reserved_space = to_reserve
 
                 win.place(int(x + self.x), int(y + self.y), int(ww), int(wh), 0, None)
-
-        self.core.stack_windows()
 
     def contains(self, rect: WindowType | Dnd) -> bool:
         """Returns whether the given window is visible on this output."""

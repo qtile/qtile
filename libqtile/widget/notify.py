@@ -29,6 +29,7 @@
 from os import path
 
 from libqtile import bar, pangocffi, utils
+from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 from libqtile.notify import ClosedReason, notifier
 from libqtile.widget import base
@@ -62,6 +63,8 @@ class Notify(base._TextBox):
             "   return text.replace('\n', '')"
             "then set option parse_text=my_func",
         ),
+        ("background_urgent", "440000", "Background urgent priority colour"),
+        ("background_low", "444444", "Background low priority colour"),
     ]
     capabilities = {"body", "actions"}
 
@@ -76,10 +79,12 @@ class Notify(base._TextBox):
             "Button5": self.next,
         }
         if self.action:
-            default_callbacks["Button3"] = self.invoke
+            default_callbacks["Button3"] = self._invoke
         else:
             self.capabilities = Notify.capabilities.difference({"actions"})
         self.add_callbacks(default_callbacks)
+
+        self.background_normal = self.background
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
@@ -103,6 +108,10 @@ class Notify(base._TextBox):
                 utils.hex(self.foreground_urgent if urgency == 2 else self.foreground_low),
                 self.text,
             )
+            self.background = self.background_urgent if urgency == 2 else self.background_low
+        else:
+            self.background = self.background_normal
+
         if notif.body:
             self.text = '<span weight="bold">%s</span> - %s' % (
                 self.text,
@@ -114,7 +123,7 @@ class Notify(base._TextBox):
             except:  # noqa: E722
                 logger.exception("parse_text function failed:")
         if self.audiofile and path.exists(self.audiofile):
-            self.qtile.cmd_spawn("aplay -q '%s'" % self.audiofile)
+            self.qtile.spawn("aplay -q '%s'" % self.audiofile)
 
     def update(self, notif):
         self.qtile.call_soon_threadsafe(self.real_update, notif)
@@ -124,15 +133,16 @@ class Notify(base._TextBox):
         self.current_id = notif.id - 1
         if notif.timeout and notif.timeout > 0:
             self.timeout_add(
-                notif.timeout / 1000, self.clear, method_args=(ClosedReason.expired,)
+                notif.timeout / 1000, self._clear, method_args=(ClosedReason.expired,)
             )
         elif self.default_timeout:
             self.timeout_add(
-                self.default_timeout, self.clear, method_args=(ClosedReason.expired,)
+                self.default_timeout, self._clear, method_args=(ClosedReason.expired,)
             )
         self.bar.draw()
         return True
 
+    @expose_command()
     def display(self):
         if notifier is None:
             return
@@ -140,12 +150,13 @@ class Notify(base._TextBox):
         self.set_notif_text(notifier.notifications[self.current_id])
         self.bar.draw()
 
-    def clear(self, reason=ClosedReason.dismissed):
+    def _clear(self, reason=ClosedReason.dismissed):
         if notifier is None:
             return
 
         notifier._service.NotificationClosed(notifier.notifications[self.current_id].id, reason)
         self.text = ""
+        self.background = self.background_normal
         self.current_id = len(notifier.notifications) - 1
         self.bar.draw()
 
@@ -153,55 +164,50 @@ class Notify(base._TextBox):
         if self.current_id < len(notifier.notifications):
             notif = notifier.notifications[self.current_id]
             if notif.id == nid:
-                self.clear(ClosedReason.method)
+                self._clear(ClosedReason.method)
 
+    @expose_command()
     def prev(self):
+        """Show previous notification."""
         if self.current_id > 0:
             self.current_id -= 1
         self.display()
 
+    @expose_command()
     def next(self):
         if notifier is None:
             return
 
+        """Show next notification."""
         if self.current_id < len(notifier.notifications) - 1:
             self.current_id += 1
             self.display()
 
-    def invoke(self):
+    def _invoke(self):
         if self.current_id < len(notifier.notifications):
             notif = notifier.notifications[self.current_id]
             if notif.actions:
                 notifier._service.ActionInvoked(notif.id, notif.actions[0])
-            self.clear()
+            self._clear()
 
-    def cmd_display(self):
-        """Display the notifcication"""
-        self.display()
-
-    def cmd_clear(self):
+    @expose_command()
+    def clear(self):
         """Clear the notification"""
-        self.clear()
+        self._clear()
 
-    def cmd_toggle(self):
+    @expose_command()
+    def toggle(self):
         """Toggle showing/clearing the notification"""
         if self.text == "":
             self.display()
         else:
-            self.clear()
+            self._clear()
 
-    def cmd_prev(self):
-        """Show previous notification"""
-        self.prev()
-
-    def cmd_next(self):
-        """Show next notification"""
-        self.next()
-
-    def cmd_invoke(self):
+    @expose_command()
+    def invoke(self):
         """Invoke the notification's default action"""
         if self.action:
-            self.invoke()
+            self._invoke()
 
     def finalize(self):
         # We may need some async calls as part of the finalize call

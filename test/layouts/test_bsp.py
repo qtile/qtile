@@ -33,7 +33,7 @@ class BspConfig(Config):
         libqtile.config.Group("c"),
         libqtile.config.Group("d"),
     ]
-    layouts = [layout.Bsp(), layout.Bsp(margin_on_single=10)]
+    layouts = [layout.Bsp(), layout.Bsp(margin_on_single=10), layout.Bsp(wrap_clients=True)]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
@@ -83,3 +83,32 @@ def test_bsp_margin_on_single(manager):
     # No longer single window so margin reverts to "margin" which is 0
     info = manager.c.window.info()
     assert info["x"] == 0
+
+
+@bsp_config
+def test_bsp_wrap_clients(manager):
+    manager.test_window("one")
+    manager.test_window("two")
+
+    # Default has no wrapping
+    assert_focused(manager, "two")
+    manager.c.layout.next()
+    assert_focused(manager, "two")
+    manager.c.layout.previous()
+    assert_focused(manager, "one")
+    manager.c.layout.previous()
+    assert_focused(manager, "one")
+
+    # Switch to layout with wrapping enabled
+    manager.c.next_layout()
+    manager.c.next_layout()
+
+    assert_focused(manager, "one")
+    manager.c.layout.next()
+    assert_focused(manager, "two")
+    # Layout should wrap here
+    manager.c.layout.next()
+    assert_focused(manager, "one")
+    # and here
+    manager.c.layout.previous()
+    assert_focused(manager, "two")

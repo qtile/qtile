@@ -293,7 +293,7 @@ def test_windowtogroup_groupName_argument():  # noqa: N802
         from libqtile.lazy import lazy
 
         k = Key([], 's', lazy.window.togroup(groupName="g"))
-        c = lambda win: win.cmd_togroup(groupName="g")
+        c = lambda win: win.togroup(groupName="g")
     """
     )
 
@@ -303,7 +303,93 @@ def test_windowtogroup_groupName_argument():  # noqa: N802
         from libqtile.lazy import lazy
 
         k = Key([], 's', lazy.window.togroup(group_name="g"))
-        c = lambda win: win.cmd_togroup(group_name="g")
+        c = lambda win: win.togroup(group_name="g")
+    """
+    )
+
+    check_migrate(orig, expected)
+
+
+def test_command_decorators_opacity():
+    orig = textwrap.dedent(
+        """
+        from libqtile.config import Key
+        from libqtile.lazy import lazy
+
+        def my_func(qtile, opacity):
+            qtile.current_window.cmd_opacity(opacity)
+
+        Key([], 's', lazy.window.opacity(0.8))
+    """
+    )
+
+    expected = textwrap.dedent(
+        """
+        from libqtile.config import Key
+        from libqtile.lazy import lazy
+
+        def my_func(qtile, opacity):
+            qtile.current_window.set_opacity(opacity)
+
+        Key([], 's', lazy.window.set_opacity(0.8))
+    """
+    )
+
+    check_migrate(orig, expected)
+
+
+def test_command_decorators_hints():
+    orig = textwrap.dedent(
+        """
+        def my_func(qtile):
+            hints = qtile.current_window.cmd_hints(opacity)
+    """
+    )
+
+    expected = textwrap.dedent(
+        """
+        def my_func(qtile):
+            hints = qtile.current_window.get_hints(opacity)
+    """
+    )
+
+    check_migrate(orig, expected)
+
+
+def test_command_decorators_screens_and_groups():
+    orig = textwrap.dedent(
+        """
+        def my_func(qtile):
+            screens = qtile.cmd_screens()
+            groups = qtile.cmd_groups()
+    """
+    )
+
+    expected = textwrap.dedent(
+        """
+        def my_func(qtile):
+            screens = qtile.get_screens()
+            groups = qtile.get_groups()
+    """
+    )
+
+    check_migrate(orig, expected)
+
+
+def test_rename_cmd_method_calls():
+    orig = textwrap.dedent(
+        """
+        def my_func(qtile):
+            qtile.cmd_spawn("xterm")
+            qtile.window.cmd_togroup(groupname="1", switch_group=True)
+    """
+    )
+
+    expected = textwrap.dedent(
+        """
+        def my_func(qtile):
+            qtile.spawn("xterm")
+            qtile.window.togroup(groupname="1", switch_group=True)
     """
     )
 

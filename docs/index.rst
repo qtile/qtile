@@ -1,67 +1,75 @@
+.. image:: /_static/qtile-logo.svg
+    :align: center
+
 =======================================
 Everything you need to know about Qtile
 =======================================
 
-Getting started
-===============
+Qtile is a full-featured, hackable tiling window manager written and configured
+in Python. It's available both as an X11 window manager and also as
+:ref:`a Wayland compositor <wayland>`.
+
+This documentation is designed to help you :doc:`install <manual/install/index>`
+and :doc:`configure <manual/config/index>` Qtile. Once it's up and running you'll
+probably want to start adding your own :doc:`customisations <manual/hacking>`
+to have it running exactly the way you want.
+
+You'll find a lot of what you need within these docs but, if you still have some
+questions, you can find support in the following places:
+
+:IRC: irc://irc.oftc.net:6667/qtile
+:Discord: https://discord.gg/ehh233wCrC (Bridged with IRC)
+:Q&A: https://github.com/qtile/qtile/discussions/categories/q-a
+:Mailing List: https://groups.google.com/group/qtile-dev
 
 .. toctree::
     :maxdepth: 1
+    :caption: Getting Started
+    :hidden:
 
     manual/install/index
-    manual/config/index
+    Wayland <manual/wayland>
     manual/troubleshooting
-    As a Wayland Compositor <manual/wayland>
     manual/commands/shell/index
 
-Reference
-=========
+.. toctree::
+    :maxdepth: 1
+    :caption: Scripting
+    :hidden:
+
+    manual/commands/index
+    manual/commands/interfaces
+    manual/commands/api/index
 
 .. toctree::
     :maxdepth: 1
+    :caption: Configuration
+    :hidden:
 
-    manual/ref/extensions
-    manual/ref/hooks
+    manual/config/default
+    manual/config/index
     manual/ref/layouts
     manual/ref/widgets
-    manual/config/default
-
-Advanced scripting
-==================
-
-.. toctree::
-    :maxdepth: 1
-
-    manual/commands/scripting
-    manual/commands/index
-    manual/ref/commands
+    manual/ref/hooks
+    manual/ref/extensions
     manual/commands/keybindings
 
-Getting involved
-================
-
 .. toctree::
     :maxdepth: 1
+    :caption: Hacking
+    :hidden:
 
     manual/hacking
     manual/contributing
 
-Miscellaneous
-=============
-
 .. toctree::
     :maxdepth: 1
+    :caption: Miscellaneous
+    :hidden:
+
 
     manual/faq
-    manual/license
-
-Tips & Tricks
-=============
-
-.. toctree::
-    :maxdepth: 1
-
     manual/howto/widget
     manual/howto/git
-
-* :ref:`genindex`
+    manual/license
+    manual/changelog

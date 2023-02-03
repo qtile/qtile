@@ -27,23 +27,25 @@
 #
 from __future__ import annotations
 
-import contextlib
 import os.path
 import sys
 from typing import TYPE_CHECKING
 
 from libqtile import configurable, hook, utils
 from libqtile.bar import Bar
-from libqtile.command.base import CommandObject
+from libqtile.command.base import CommandObject, expose_command
+from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, ContextManager, Iterable
+    import re
+    from typing import Any, Callable, Iterable
 
     from libqtile.backend import base
     from libqtile.bar import BarType
     from libqtile.command.base import ItemT
     from libqtile.core.manager import Qtile
     from libqtile.group import _Group
+    from libqtile.layout.base import Layout
     from libqtile.lazy import LazyCall
 
 
@@ -60,7 +62,8 @@ class Key:
     key:
         A key specification, e.g. ``"a"``, ``"Tab"``, ``"Return"``, ``"space"``.
     commands:
-        A list :class:`LazyCall` objects to evaluate in sequence upon keypress.
+        One or more :class:`LazyCall` objects to evaluate in sequence upon keypress. Multiple
+        commands should be separated by commas.
     desc:
         Description to be added to the key binding. (Optional)
 
@@ -93,10 +96,16 @@ class KeyChord:
     submappings:
         A list of :class:`Key` or :class:`KeyChord` declarations to bind in this chord.
     mode:
-        A string with Vim-like mode name. If set, the chord mode will not be left after
-        a keystroke (except for Esc which always leaves the current chord/mode).
-        (Optional)
-
+        Boolean. Setting to ``True`` will result in the chord persisting until
+        Escape is pressed. Setting to ``False`` (default) will exit the chord once
+        the sequence has ended.
+    name:
+        A string to name the chord. The name will be displayed in the Chord
+        widget.
+    desc:
+        A string to describe the chord. This attribute is not directly used by Qtile
+        but users may want to access this when creating scripts to show configured
+        keybindings.
     """
 
     def __init__(
@@ -104,14 +113,28 @@ class KeyChord:
         modifiers: list[str],
         key: str,
         submappings: list[Key | KeyChord],
-        mode: str = "",
-    ) -> None:
+        mode: bool | str = False,
+        name: str = "",
+        desc: str = "",
+    ):
         self.modifiers = modifiers
         self.key = key
 
         submappings.append(Key([], "Escape"))
         self.submappings = submappings
         self.mode = mode
+        self.name = name
+        self.desc = desc
+
+        if isinstance(mode, str):
+            logger.warning(
+                "The use of `mode` to set the KeyChord name is deprecated. "
+                "Please use `name='%s'` instead. "
+                "'mode' should be a boolean value to set whether the chord is persistent (True) or not.",
+                mode,
+            )
+            self.name = mode
+            self.mode = True
 
     def __repr__(self) -> str:
         return "<KeyChord (%s, %s)>" % (self.modifiers, self.key)
@@ -145,6 +168,9 @@ class Drag(Mouse):
         A list :class:`LazyCall` objects to evaluate in sequence upon drag.
     start:
         A :class:`LazyCall` object to be evaluated when dragging begins. (Optional)
+    warp_pointer:
+        A :class:`bool` indicating if the pointer should be warped to the bottom right of the window
+        at the start of dragging. (Default: `False`)
 
     """
 
@@ -154,9 +180,11 @@ class Drag(Mouse):
         button: str,
         *commands: LazyCall,
         start: LazyCall | None = None,
+        warp_pointer: bool = False,
     ) -> None:
         super().__init__(modifiers, button, *commands)
         self.start = start
+        self.warp_pointer = warp_pointer
 
     def __repr__(self) -> str:
         return "<Drag (%s, %s)>" % (self.modifiers, self.button)
@@ -341,10 +369,14 @@ class Screen(CommandObject):
     resized to fill it. If the mode is ``"stretch"``, the image is stretched to fit all
     of it into the screen.
 
+    The ``x11_drag_polling_rate`` parameter specifies the rate for drag events in the X11
+    backend. By default this is set to 120, but if you prefer it you can set it lower for
+    better performance or higher if you have a high refresh rate monitor. 120 would mean
+    that we handle a drag event 120 times per second.
+
     """
 
     group: _Group
-    previous_group: _Group
     index: int
 
     def __init__(
@@ -355,6 +387,7 @@ class Screen(CommandObject):
         right: BarType | None = None,
         wallpaper: str | None = None,
         wallpaper_mode: str | None = None,
+        x11_drag_polling_rate: int = 120,
         x: int | None = None,
         y: int | None = None,
         width: int | None = None,
@@ -367,6 +400,7 @@ class Screen(CommandObject):
         self.right = right
         self.wallpaper = wallpaper
         self.wallpaper_mode = wallpaper_mode
+        self.x11_drag_polling_rate = x11_drag_polling_rate
         self.qtile: Qtile | None = None
         # x position of upper left corner can be > 0
         # if one screen is "right" of the other
@@ -374,6 +408,7 @@ class Screen(CommandObject):
         self.y = y if y is not None else 0
         self.width = width if width is not None else 0
         self.height = height if height is not None else 0
+        self.previous_group: _Group | None = None
 
     def _configure(
         self,
@@ -392,6 +427,7 @@ class Screen(CommandObject):
         self.y = y
         self.width = width
         self.height = height
+
         self.set_group(group)
         for i in self.gaps:
             i._configure(qtile, self, reconfigure=reconfigure_gaps)
@@ -446,7 +482,9 @@ class Screen(CommandObject):
         if new_group.screen == self:
             return
 
-        if save_prev and hasattr(self, "group"):
+        if save_prev and new_group is not self.group:
+            # new_group can be self.group only if the screen is getting configured for
+            # the first time
             self.previous_group = self.group
 
         if new_group.screen:
@@ -464,29 +502,26 @@ class Screen(CommandObject):
             s1.group = g2
             g2.set_screen(s1, warp)
         else:
-            if hasattr(self, "group"):
-                old_group = self.group
-                assert self.qtile is not None
-                ctx: ContextManager = self.qtile.core.masked()
-            else:
-                old_group = None
-                ctx = contextlib.nullcontext()
+            assert self.qtile is not None
+            old_group = self.group
             self.group = new_group
-            with ctx:
+            with self.qtile.core.masked():
                 # display clients of the new group and then hide from old group
                 # to remove the screen flickering
                 new_group.set_screen(self, warp)
 
-                if old_group is not None:
+                # Can be the same group only if the screen just got configured for the
+                # first time - see `Qtile._process_screens`.
+                if old_group is not new_group:
                     old_group.set_screen(None, warp)
 
         hook.fire("setgroup")
         hook.fire("focus_change")
         hook.fire("layout_change", self.group.layouts[self.group.current_layout], self.group)
 
-    def toggle_group(self, group: _Group | None = None, warp: bool = True) -> None:
+    def _toggle_group(self, group: _Group | None = None, warp: bool = True) -> None:
         """Switch to the selected group or to the previously active one"""
-        if group in (self.group, None) and hasattr(self, "previous_group"):
+        if group in (self.group, None) and self.previous_group:
             group = self.previous_group
         self.set_group(group, warp=warp)
 
@@ -538,6 +573,7 @@ class Screen(CommandObject):
                 return self.group if sel == self.group.name else None
         return None
 
+    @expose_command
     def resize(
         self,
         x: int | None = None,
@@ -560,27 +596,20 @@ class Screen(CommandObject):
                 bar.draw()
         self.qtile.call_soon(self.group.layout_all)
 
-    def cmd_info(self) -> dict[str, int]:
+    @expose_command()
+    def info(self) -> dict[str, int]:
         """Returns a dictionary of info for this screen."""
         return dict(index=self.index, width=self.width, height=self.height, x=self.x, y=self.y)
 
-    def cmd_resize(
-        self,
-        x: int | None = None,
-        y: int | None = None,
-        w: int | None = None,
-        h: int | None = None,
-    ) -> None:
-        """Resize the screen"""
-        self.resize(x, y, w, h)
-
-    def cmd_next_group(self, skip_empty: bool = False, skip_managed: bool = False) -> None:
+    @expose_command()
+    def next_group(self, skip_empty: bool = False, skip_managed: bool = False) -> None:
         """Switch to the next group"""
         n = self.group.get_next_group(skip_empty, skip_managed)
         self.set_group(n)
         return n.name
 
-    def cmd_prev_group(
+    @expose_command()
+    def prev_group(
         self, skip_empty: bool = False, skip_managed: bool = False, warp: bool = True
     ) -> None:
         """Switch to the previous group"""
@@ -588,13 +617,15 @@ class Screen(CommandObject):
         self.set_group(n, warp=warp)
         return n.name
 
-    def cmd_toggle_group(self, group_name: str | None = None, warp: bool = True) -> None:
+    @expose_command()
+    def toggle_group(self, group_name: str | None = None, warp: bool = True) -> None:
         """Switch to the selected group or to the previously active one"""
         assert self.qtile is not None
         group = self.qtile.groups_map.get(group_name if group_name else "")
-        self.toggle_group(group, warp=warp)
+        self._toggle_group(group, warp=warp)
 
-    def cmd_set_wallpaper(self, path: str, mode: str | None = None) -> None:
+    @expose_command()
+    def set_wallpaper(self, path: str, mode: str | None = None) -> None:
         """Set the wallpaper to the given file."""
         self.paint(path, mode)
 
@@ -616,8 +647,8 @@ class Group:
     exclusive:
         When other apps are started in this group, should we allow them here or not?
     spawn:
-        This will be ``exec()`` d when the group is created. Tou can pass either a
-        program name or a list of programs to ``exec()``
+        This will be executed (via ``qtile.spawn()``) when the group is created. You can pass either a
+        program name or a list of programs to ``exec()``.
     layout:
         The name of default layout for this group (e.g. ``"max"``). This is the name
         specified for a particular layout in ``config.py`` or if not defined it defaults
@@ -648,7 +679,7 @@ class Group:
         exclusive: bool = False,
         spawn: str | list[str] | None = None,
         layout: str | None = None,
-        layouts: list[str] | None = None,
+        layouts: list[Layout] | None = None,
         persist: bool = True,
         init: bool = True,
         layout_opts: dict[str, Any] | None = None,
@@ -724,7 +755,6 @@ class ScratchPad(Group):
             self,
             name,
             layout="floating",
-            layouts=["floating"],
             init=False,
             position=position,
             label=label,
@@ -743,11 +773,9 @@ class Match:
     """
     Match for dynamic groups or auto-floating windows.
 
-    It can match by title, wm_class, role, wm_type, wm_instance_class or net_wm_pid.
-
-    :class:`Match` supports both regular expression objects (i.e. the result of
-    ``re.compile()``) or strings (match as an "include"-match). If a window matches all
-    specified values, it is considered a match.
+    For some properties, :class:`Match` supports both regular expression objects (i.e.
+    the result of ``re.compile()``) or strings (match as an "include"-match). If a
+    window matches all specified values, it is considered a match.
 
     Parameters
     ==========
@@ -773,11 +801,11 @@ class Match:
 
     def __init__(
         self,
-        title: str | None = None,
-        wm_class: str | None = None,
-        role: str | None = None,
-        wm_type: str | None = None,
-        wm_instance_class: str | None = None,
+        title: str | re.Pattern | None = None,
+        wm_class: str | re.Pattern | None = None,
+        role: str | re.Pattern | None = None,
+        wm_type: str | re.Pattern | None = None,
+        wm_instance_class: str | re.Pattern | None = None,
         net_wm_pid: int | None = None,
         func: Callable[[base.Window], bool] | None = None,
         wid: int | None = None,
@@ -943,7 +971,7 @@ class DropDown(configurable.Configurable):
         ),
         ("width", 0.8, "Width of window as fraction of current screen width"),
         ("height", 0.35, "Height of window as fraction of current screen."),
-        ("opacity", 0.9, "Opacity of window as fraction. Zero is opaque."),
+        ("opacity", 0.9, "Opacity of window as fraction. One is opaque."),
         (
             "on_focus_lost_hide",
             True,

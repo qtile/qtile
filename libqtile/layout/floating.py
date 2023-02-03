@@ -31,6 +31,7 @@
 from __future__ import annotations
 
 from libqtile.backend.base import Window
+from libqtile.command.base import expose_command
 from libqtile.config import Match
 from libqtile.layout.base import Layout
 
@@ -251,12 +252,12 @@ class Floating(Layout):
         is_java_dropdown = "sun-awt-X11-XWindowPeer" in cls
         if is_java_dropdown:
             client.paint_borders(bc, bw)
-            client.cmd_bring_to_front()
+            client.bring_to_front()
 
         # alternatively, users may have asked us explicitly to leave the client alone
         elif any(m.compare(client) for m in self.no_reposition_rules):
             client.paint_borders(bc, bw)
-            client.cmd_bring_to_front()
+            client.bring_to_front()
 
         else:
             above = False
@@ -278,7 +279,7 @@ class Floating(Layout):
             )
         client.unhide()
 
-    def add(self, client):
+    def add_client(self, client):
         self.clients.append(client)
         self.focused = client
 
@@ -295,15 +296,18 @@ class Floating(Layout):
     def get_windows(self):
         return self.clients
 
+    @expose_command()
     def info(self):
         d = Layout.info(self)
         d["clients"] = [c.name for c in self.clients]
         return d
 
-    def cmd_next(self):
+    @expose_command()
+    def next(self):
         # This can't ever be called, but implement the abstract method
         pass
 
-    def cmd_previous(self):
+    @expose_command()
+    def previous(self):
         # This can't ever be called, but implement the abstract method
         pass

@@ -162,15 +162,19 @@ class Core(base.Core):
             | xcbq.PointerMotionHintMask
         )
 
+        # The last time we were handling a MotionNotify event
+        self._last_motion_time = 0
+
     @property
     def name(self):
         return "x11"
 
     def finalize(self) -> None:
-        self.conn.conn.core.DeletePropertyChecked(
-            self._root.wid,
-            self.conn.atoms["_NET_SUPPORTING_WM_CHECK"],
-        ).check()
+        with contextlib.suppress(xcffib.ConnectionException):
+            self.conn.conn.core.DeletePropertyChecked(
+                self._root.wid,
+                self.conn.atoms["_NET_SUPPORTING_WM_CHECK"],
+            ).check()
         self.qtile = None
         self.conn.finalize()
 
@@ -222,7 +226,7 @@ class Core(base.Core):
             loop.remove_reader(self.fd)
             self.fd = None
 
-    def distribute_windows(self, initial) -> None:
+    def on_config_load(self, initial) -> None:
         """Assign windows to groups"""
         assert self.qtile is not None
 
@@ -265,7 +269,7 @@ class Core(base.Core):
 
                 if item.get_wm_type() == "dock" or win.reserved_space:
                     assert self.qtile.current_screen is not None
-                    win.cmd_static(self.qtile.current_screen.index)
+                    win.static(self.qtile.current_screen.index)
                     continue
 
             self.qtile.manage(win)
@@ -328,12 +332,7 @@ class Core(base.Core):
             except Exception:
                 error_code = self.conn.conn.has_error()
                 if error_code:
-                    error_string = xcbq.XCB_CONN_ERRORS[error_code]
-                    logger.exception(
-                        "Shutting down due to X connection error %s (%s)",
-                        error_string,
-                        error_code,
-                    )
+                    logger.warning("Shutting down due to disconnection from X server")
                     self.remove_listener()
                     self.qtile.stop()
                     return
@@ -605,7 +604,7 @@ class Core(base.Core):
         if atoms["_NET_CURRENT_DESKTOP"] == opcode:
             index = data.data32[0]
             try:
-                self.qtile.groups[index].cmd_toscreen()
+                self.qtile.groups[index].toscreen()
             except IndexError:
                 logger.debug("Invalid desktop index: %s", index)
 
@@ -637,6 +636,12 @@ class Core(base.Core):
     def handle_MotionNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
+        # Limit the motion notify events from happening too frequently
+        # Here we limit it to the config value
+        resize_fps = self.qtile.current_screen.x11_drag_polling_rate
+        if (event.time - self._last_motion_time) <= (1000 / resize_fps):
+            return
+        self._last_motion_time = event.time
         self.qtile.process_button_motion(event.event_x, event.event_y)
 
     def handle_ConfigureRequest(self, event):  # noqa: N802
@@ -691,7 +696,7 @@ class Core(base.Core):
 
             if xwin.get_wm_type() == "dock" or win.reserved_space:
                 assert self.qtile.current_screen is not None
-                win.cmd_static(self.qtile.current_screen.index)
+                win.static(self.qtile.current_screen.index)
                 return
 
             self.qtile.manage(win)
@@ -722,11 +727,11 @@ class Core(base.Core):
                 # since the window is dead.
                 pass
             # Clear these atoms as per spec
-            win.window.conn.conn.core.DeleteProperty(  # type: ignore
-                win.wid, win.window.conn.atoms["_NET_WM_STATE"]  # type: ignore
+            win.window.conn.conn.core.DeleteProperty(
+                win.wid, win.window.conn.atoms["_NET_WM_STATE"]
             )
-            win.window.conn.conn.core.DeleteProperty(  # type: ignore
-                win.wid, win.window.conn.atoms["_NET_WM_DESKTOP"]  # type: ignore
+            win.window.conn.conn.core.DeleteProperty(
+                win.wid, win.window.conn.atoms["_NET_WM_DESKTOP"]
             )
         self.qtile.unmanage(event.window)
         if self.qtile.current_window is None:
@@ -804,19 +809,15 @@ class Core(base.Core):
     def graceful_shutdown(self):
         """Try to close windows gracefully before exiting"""
 
-        def get_interesting_pid(win):
-            # We don't need to kill Internal or Static windows, they're qtile
-            # managed and don't have any state.
-            if not isinstance(win, base.Window):
-                return None
-            try:
-                return win.window.get_net_wm_pid()
-            except Exception:
-                logger.exception("Got an exception in getting the window pid")
-                return None
-
-        pids = map(get_interesting_pid, self.qtile.windows_map.values())
-        pids = list(filter(lambda x: x is not None, pids))
+        try:
+            pids = []
+            for win in self.qtile.windows_map.values():
+                if not isinstance(win, base.Internal):
+                    if pid := win.get_pid():
+                        pids.append(pid)
+        except xcffib.ConnectionException:
+            logger.warning("Server disconnected, couldn't close windows gracefully.")
+            return
 
         # Give the windows a chance to shut down nicely.
         for pid in pids:

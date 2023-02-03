@@ -41,7 +41,7 @@ import string
 from collections import deque
 
 from libqtile import hook, pangocffi, utils
-from libqtile.command.base import CommandObject, SelectError
+from libqtile.command.base import CommandObject, SelectError, expose_command
 from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import CommandError, QtileCommandInterface
 from libqtile.log_utils import logger
@@ -199,7 +199,7 @@ class GroupCompleter(AbstractCompleter):
         txt = txt.lower()
         if not self.lookup:
             self.lookup = []
-            for group in self.qtile.groups_map.keys():  # type: ignore
+            for group in self.qtile.groups_map.keys():
                 if group.lower().startswith(txt):
                     self.lookup.append((group, group))
 
@@ -234,7 +234,7 @@ class WindowCompleter(AbstractCompleter):
         """Returns the next completion for txt, or None if there is no completion"""
         if self.lookup is None:
             self.lookup = []
-            for wid, window in self.qtile.windows_map.items():  # type: ignore
+            for wid, window in self.qtile.windows_map.items():
                 if window.group and window.name.lower().startswith(txt):
                     self.lookup.append((window.name, wid))
 
@@ -674,10 +674,12 @@ class Prompt(base._TextBox):
             del self.key
         self._update()
 
-    def cmd_fake_keypress(self, key: str) -> None:
+    @expose_command()
+    def fake_keypress(self, key: str) -> None:
         self.process_key_press(self.qtile.core.keysym_from_name(key))
 
-    def cmd_info(self):
+    @expose_command()
+    def info(self):
         """Returns a dictionary of info for this object"""
         return dict(
             name=self.name,
@@ -686,7 +688,8 @@ class Prompt(base._TextBox):
             active=self.active,
         )
 
-    def cmd_exec_general(self, prompt, object_name, cmd_name, selector=None, completer=None):
+    @expose_command()
+    def exec_general(self, prompt, object_name, cmd_name, selector=None, completer=None):
         """
         Execute a cmd of any object. For example layout, group, window, widget
         , etc with a string that is obtained from start_input.

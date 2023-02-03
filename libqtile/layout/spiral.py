@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
 from libqtile.log_utils import logger
 
@@ -142,9 +143,9 @@ class Spiral(_SimpleLayoutBase):
     def clone(self, group):
         return _SimpleLayoutBase.clone(self, group)
 
-    def add(self, client):
+    def add_client(self, client):
         self.dirty = True
-        self.clients.add(client, client_position=self.new_client_position)
+        self.clients.add_client(client, client_position=self.new_client_position)
 
     def remove(self, w):
         self.dirty = True
@@ -339,11 +340,13 @@ class Spiral(_SimpleLayoutBase):
         d["clockwise"] = self.clockwise
         return d
 
-    cmd_down = _SimpleLayoutBase.previous
-    cmd_up = _SimpleLayoutBase.next
+    @expose_command("up")
+    def previous(self):
+        _SimpleLayoutBase.previous(self)
 
-    cmd_previous = _SimpleLayoutBase.previous
-    cmd_next = _SimpleLayoutBase.next
+    @expose_command("down")
+    def next(self):
+        _SimpleLayoutBase.next(self)
 
     def _set_ratio(self, prop: str, value: float | str):
         # We allow a str for 'value' as a string may be issued via IPC.
@@ -363,47 +366,56 @@ class Spiral(_SimpleLayoutBase):
         setattr(self, prop, value)
         self.group.layout_all()
 
-    def cmd_shuffle_down(self):
+    @expose_command()
+    def shuffle_down(self):
         if self.clients:
             self.clients.rotate_down()
             self.group.layout_all()
 
-    def cmd_shuffle_up(self):
+    @expose_command()
+    def shuffle_up(self):
         if self.clients:
             self.clients.rotate_up()
             self.group.layout_all()
 
-    def cmd_decrease_ratio(self):
+    @expose_command()
+    def decrease_ratio(self):
         """Decrease spiral ratio."""
         self._set_ratio("ratio", self.ratio - self.ratio_increment)
 
-    def cmd_increase_ratio(self):
+    @expose_command()
+    def increase_ratio(self):
         """Increase spiral ratio."""
         self._set_ratio("ratio", self.ratio + self.ratio_increment)
 
-    def cmd_shrink_main(self):
+    @expose_command()
+    def shrink_main(self):
         """Shrink the main window."""
         if self.main_pane_ratio is None:
             self.main_pane_ratio = self.ratio
 
         self._set_ratio("main_pane_ratio", self.main_pane_ratio - self.ratio_increment)
 
-    def cmd_grow_main(self):
+    @expose_command()
+    def grow_main(self):
         """Grow the main window."""
         if self.main_pane_ratio is None:
             self.main_pane_ratio = self.ratio
 
         self._set_ratio("main_pane_ratio", self.main_pane_ratio + self.ratio_increment)
 
-    def cmd_set_ratio(self, ratio: float | str):
+    @expose_command()
+    def set_ratio(self, ratio: float | str):
         """Set the ratio for all windows."""
         self._set_ratio("ratio", ratio)
 
-    def cmd_set_master_ratio(self, ratio: float | str):
+    @expose_command()
+    def set_master_ratio(self, ratio: float | str):
         """Set the ratio for the main window."""
         self._set_ratio("main_pane_ratio", ratio)
 
-    def cmd_reset(self):
+    @expose_command()
+    def reset(self):
         """Reset ratios to values set in config."""
         self.ratio = self.initial_ratio
         self.main_pane_ratio = self.initial_main_pane_ratio

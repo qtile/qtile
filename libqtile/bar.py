@@ -24,7 +24,7 @@ import typing
 from collections import defaultdict
 
 from libqtile import configurable
-from libqtile.command.base import CommandObject
+from libqtile.command.base import CommandObject, expose_command
 from libqtile.log_utils import logger
 from libqtile.utils import has_transparency, rgb
 
@@ -113,6 +113,13 @@ class Gap:
         for i in ["top", "bottom", "left", "right"]:
             if getattr(self.screen, i) is self:
                 return i
+
+    @expose_command()
+    def info(self):
+        """
+        Info for this object.
+        """
+        return dict(position=self.position)
 
 
 class Obj:
@@ -383,6 +390,10 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
     def kill_window(self):
         """Kill the window when the bar's screen is no longer being used."""
+        for name, w in self.qtile.widgets_map.copy().items():
+            if w in self.widgets:
+                w.finalize()
+                del self.qtile.widgets_map[name]
         self.drawer.finalize()
         self.window.kill()
         self.window = None
@@ -618,6 +629,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             else:
                 self.drawer.draw(offsety=end, height=self.length - end)
 
+    @expose_command()
     def info(self):
         return dict(
             size=self.size,
@@ -653,21 +665,21 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
         self._add_strut = True
 
-    def cmd_fake_button_press(self, screen, position, x, y, button=1):
+    @expose_command()
+    def fake_button_press(self, screen, position, x, y, button=1):
         """
         Fake a mouse-button-press on the bar. Co-ordinates are relative
         to the top-left corner of the bar.
 
-        :screen The integer screen offset
-        :position One of "top", "bottom", "left", or "right"
+        Parameters
+        ==========
+        widgets :
+            A list of widget objects.
+        size :
+            The "thickness" of the bar, i.e. the height of a horizontal bar, or the
+            width of a vertical bar.
         """
         self.process_button_click(x, y, button)
-
-    def cmd_info(self):
-        """
-        Info for this object.
-        """
-        return self.info()
 
 
 BarType = typing.Union[Bar, Gap]

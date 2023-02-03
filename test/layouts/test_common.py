@@ -209,6 +209,37 @@ def test_focus_cycle(manager):
 
 
 @each_layout_config
+def test_swap_window_order(manager):
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
+
+    window_order = manager.c.group.info().get("windows")
+    assert window_order == ["one", "two", "three"]
+
+    # Swap window on index 0 with index 2
+    manager.c.group.focus_by_name("one")
+    manager.c.group.swap_window_order(2)
+    window_order = manager.c.group.info().get("windows")
+    assert window_order == ["three", "two", "one"]
+    assert_focused(manager, "one")
+
+    # Swap window on index 1 with index 0
+    manager.c.group.focus_by_name("two")
+    manager.c.group.swap_window_order(0)
+    window_order = manager.c.group.info().get("windows")
+    assert window_order == ["two", "three", "one"]
+    assert_focused(manager, "two")
+
+    # Swap window on index 0 with index out of bounds
+    manager.c.group.focus_by_name("two")
+    manager.c.group.swap_window_order(3)
+    window_order = manager.c.group.info().get("windows")
+    assert window_order == ["two", "three", "one"]
+    assert_focused(manager, "two")
+
+
+@each_layout_config
 def test_focus_back(manager):
     # No exception must be raised without windows
     manager.c.group.focus_back()
@@ -531,7 +562,7 @@ class AllLayoutsMultipleBorders(AllLayoutsConfig):
     """
 
     layouts = [
-        layout_cls(border_focus=["#000" "#111", "#222", "#333", "#444"])
+        layout_cls(border_focus=["#000", "#111", "#222", "#333", "#444"])
         for layout_name, layout_cls in AllLayoutsConfig.iter_layouts()
     ]
 

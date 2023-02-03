@@ -26,9 +26,7 @@ border_focus = env("BORDER_FOCUS", "#ff0000")
 border_normal = env("BORDER_NORMAL", "#000000")
 border_width = int(env("BORDER_WIDTH", 8))
 margin = int(env("MARGIN", 10))
-borders = dict(
-    border_focus=border_focus, border_normal=border_normal, border_width=border_width
-)
+borders = dict(border_focus=border_focus, border_normal=border_normal, border_width=border_width)
 style = dict(margin=margin, **borders)
 
 layouts = [

@@ -139,21 +139,13 @@ class StatusNotifierItem:  # noqa: E303
             logger.warning("Unable to find StatusNotifierItem interface on %s", self.service)
             return False
 
-        # Default to XDG icon:
-        icon_name = await self.item.get_icon_name()
-
-        try:
-            icon_path = await self.item.get_icon_theme_path()
-            self.icon = self._get_custom_icon(icon_name, icon_path)
-        except (AttributeError, DBusError):
-            pass
-
-        if not self.icon:
-            self.icon = self._get_xdg_icon(icon_name)
+        await self._get_local_icon()
 
         # If there's no XDG icon, try to use icon provided by application
-        if self.icon is None:
+        if self.icon:
+            self.item.on_new_icon(self._update_local_icon)
 
+        else:
             # Get initial application icons:
             for icon in ["Icon", "Attention", "Overlay"]:
                 await self._get_icon(icon)
@@ -170,6 +162,24 @@ class StatusNotifierItem:  # noqa: E303
             )
 
         return True
+
+    async def _get_local_icon(self):
+        # Default to XDG icon:
+        icon_name = await self.item.get_icon_name()
+
+        try:
+            icon_path = await self.item.get_icon_theme_path()
+            self.icon = self._get_custom_icon(icon_name, icon_path)
+        except (AttributeError, DBusError):
+            pass
+
+        if not self.icon:
+            self.icon = self._get_xdg_icon(icon_name)
+
+    def _update_local_icon(self):
+        self.icon = None
+        task = asyncio.create_task(self._get_local_icon())
+        task.add_done_callback(self._redraw)
 
     def _new_icon(self):
         task = asyncio.create_task(self._get_icon("Icon"))
@@ -326,7 +336,8 @@ class StatusNotifierItem:  # noqa: E303
         return icon
 
     def activate(self):
-        asyncio.create_task(self._activate())
+        if hasattr(self, "call_activate"):
+            asyncio.create_task(self._activate())
 
     async def _activate(self):
         # Call Activate method and pass window position hints
@@ -510,6 +521,9 @@ class StatusNotifierHost:  # noqa: E303
             self._on_icon_changed.append(on_icon_changed)
 
         if self.started:
+            if on_item_added:
+                for item in self.items:
+                    on_item_added(item)
             return
 
         self.bus = await MessageBus().connect()
@@ -580,7 +594,7 @@ class StatusNotifier(base._Widget):
     are recommended to install the `pyxdg <https://pypi.org/project/pyxdg/>`__
     module to support retrieving icons from the selected theme.
 
-    Letf-clicking an icon will trigger an activate event.
+    Left-clicking an icon will trigger an activate event.
 
     .. note::
 

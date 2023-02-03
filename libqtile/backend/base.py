@@ -9,7 +9,7 @@ from abc import ABCMeta, abstractmethod
 import cairocffi
 
 from libqtile import drawer, pangocffi, utils
-from libqtile.command.base import CommandError, CommandObject
+from libqtile.command.base import CommandError, CommandObject, expose_command
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -78,20 +78,19 @@ class Core(CommandObject, metaclass=ABCMeta):
     def grab_button(self, mouse: config.Mouse) -> int:
         """Configure the backend to grab the mouse event"""
 
-    @abstractmethod
     def ungrab_buttons(self) -> None:
         """Release the grabbed button events"""
 
-    @abstractmethod
     def grab_pointer(self) -> None:
         """Configure the backend to grab mouse events"""
 
-    @abstractmethod
     def ungrab_pointer(self) -> None:
         """Release grabbed pointer events"""
 
-    def distribute_windows(self, initial: bool) -> None:
-        """Distribute windows to groups. `initial` will be `True` if Qtile just started."""
+    def on_config_load(self, initial: bool) -> None:
+        """
+        Respond to config loading. `initial` will be `True` if Qtile just started.
+        """
 
     def warp_pointer(self, x: int, y: int) -> None:
         """Warp the pointer to the given coordinates relative."""
@@ -121,7 +120,12 @@ class Core(CommandObject, metaclass=ABCMeta):
         """Get the keysym for a key from its name"""
         raise NotImplementedError
 
-    def cmd_info(self) -> dict:
+    def get_mouse_position(self) -> tuple[int, int]:
+        """Get mouse coordinates."""
+        raise NotImplementedError
+
+    @expose_command()
+    def info(self) -> dict[str, Any]:
         """Get basic information about the running backend."""
         return {"backend": self.name, "display_name": self.display_name}
 
@@ -141,7 +145,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
         self.borderwidth: int = 0
         self.name: str = "<no name>"
         self.reserved_space: tuple[int, int, int, int] | None = None
-        # Window.cmd_static sets this in case it is hooked to client_new to stop the
+        # Window.static sets this in case it is hooked to client_new to stop the
         # Window object from being managed, now that a Static is being used instead
         self.defunct: bool = False
 
@@ -158,11 +162,13 @@ class _Window(CommandObject, metaclass=ABCMeta):
     def unhide(self) -> None:
         """Unhide the window"""
 
-    def cmd_is_visible(self) -> bool:
+    @expose_command()
+    def is_visible(self) -> bool:
         """Is this window visible (i.e. not hidden)?"""
         return False
 
     @abstractmethod
+    @expose_command()
     def kill(self) -> None:
         """Kill the window"""
 
@@ -207,6 +213,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
         self._opacity = opacity
 
     @abstractmethod
+    @expose_command()
     def place(
         self,
         x,
@@ -228,6 +235,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
         return None
 
     @abstractmethod
+    @expose_command()
     def info(self) -> dict[str, Any]:
         """
         Return information on this window.
@@ -244,10 +252,6 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
         """
         return {}
-
-    def cmd_info(self) -> dict:
-        """Return a dictionary of info."""
-        return self.info()
 
 
 class Window(_Window, metaclass=ABCMeta):
@@ -323,20 +327,9 @@ class Window(_Window, metaclass=ABCMeta):
         return match.compare(self)
 
     @abstractmethod
-    def focus(self, warp: bool) -> None:
+    @expose_command()
+    def focus(self, warp: bool = True) -> None:
         """Focus this window and optional warp the pointer to it."""
-
-    @abstractmethod
-    def togroup(
-        self, group_name: str | None = None, *, switch_group: bool = False, toggle: bool = False
-    ) -> None:
-        """Move window to a specified group
-
-        Also switch to that group if switch_group is True.
-
-        If `toggle` is True and and the specified group is already on the screen,
-        use the last used group as target instead.
-        """
 
     @property
     def has_focus(self):
@@ -358,86 +351,91 @@ class Window(_Window, metaclass=ABCMeta):
         """Paint the window borders with the given color(s) and width"""
 
     @abstractmethod
-    def cmd_focus(self, warp: bool = True) -> None:
-        """Focuses the window."""
-
-    def cmd_match(self, *args, **kwargs) -> bool:
-        return self.match(*args, **kwargs)
-
-    @abstractmethod
-    def cmd_get_position(self) -> tuple[int, int]:
+    @expose_command()
+    def get_position(self) -> tuple[int, int]:
         """Get the (x, y) of the window"""
 
     @abstractmethod
-    def cmd_get_size(self) -> tuple[int, int]:
+    @expose_command()
+    def get_size(self) -> tuple[int, int]:
         """Get the (width, height) of the window"""
 
     @abstractmethod
-    def cmd_move_floating(self, dx: int, dy: int) -> None:
+    @expose_command()
+    def move_floating(self, dx: int, dy: int) -> None:
         """Move window by dx and dy"""
 
     @abstractmethod
-    def cmd_resize_floating(self, dw: int, dh: int) -> None:
+    @expose_command()
+    def resize_floating(self, dw: int, dh: int) -> None:
         """Add dw and dh to size of window"""
 
     @abstractmethod
-    def cmd_set_position_floating(self, x: int, y: int) -> None:
+    @expose_command()
+    def set_position_floating(self, x: int, y: int) -> None:
         """Move window to x and y"""
 
     @abstractmethod
-    def cmd_set_position(self, x: int, y: int) -> None:
+    @expose_command()
+    def set_position(self, x: int, y: int) -> None:
         """
         Move floating window to x and y; swap tiling window with the window under the
         pointer.
         """
 
     @abstractmethod
-    def cmd_set_size_floating(self, w: int, h: int) -> None:
+    @expose_command()
+    def set_size_floating(self, w: int, h: int) -> None:
         """Set window dimensions to w and h"""
 
     @abstractmethod
-    def cmd_place(
-        self, x, y, width, height, borderwidth, bordercolor, above=False, margin=None
-    ) -> None:
-        """Place the window with the given position and geometry."""
-
-    @abstractmethod
-    def cmd_toggle_floating(self) -> None:
+    @expose_command()
+    def toggle_floating(self) -> None:
         """Toggle the floating state of the window."""
 
     @abstractmethod
-    def cmd_enable_floating(self) -> None:
+    @expose_command()
+    def enable_floating(self) -> None:
         """Float the window."""
 
     @abstractmethod
-    def cmd_disable_floating(self) -> None:
+    @expose_command()
+    def disable_floating(self) -> None:
         """Tile the window."""
 
     @abstractmethod
-    def cmd_toggle_maximize(self) -> None:
-        """Toggle the maximize state of the window."""
-
-    @abstractmethod
-    def cmd_toggle_minimize(self) -> None:
-        """Toggle the minimize state of the window."""
-
-    @abstractmethod
-    def cmd_toggle_fullscreen(self) -> None:
+    @expose_command()
+    def toggle_maximize(self) -> None:
         """Toggle the fullscreen state of the window."""
 
     @abstractmethod
-    def cmd_enable_fullscreen(self) -> None:
+    @expose_command()
+    def toggle_minimize(self) -> None:
+        """Toggle the minimized state of the window."""
+
+    @abstractmethod
+    @expose_command()
+    def toggle_fullscreen(self) -> None:
+        """Toggle the fullscreen state of the window."""
+
+    @abstractmethod
+    @expose_command()
+    def enable_fullscreen(self) -> None:
         """Fullscreen the window"""
 
     @abstractmethod
-    def cmd_disable_fullscreen(self) -> None:
+    @expose_command()
+    def disable_fullscreen(self) -> None:
         """Un-fullscreen the window"""
 
     @abstractmethod
-    def cmd_bring_to_front(self) -> None:
+    @expose_command()
+    def bring_to_front(self) -> None:
         """Bring the window to the front"""
 
-    def cmd_togroup(
+    @abstractmethod
+    @expose_command()
+    def togroup(
         self,
         group_name: str | None = None,
         groupName: str | None = None,  # Deprecated  # noqa: N803
@@ -453,13 +451,29 @@ class Window(_Window, metaclass=ABCMeta):
 
         `groupName` is deprecated and will be dropped soon. Please use `group_name`
         instead.
+
+        Examples
+        ========
+
+        Move window to current group::
+
+            togroup()
+
+        Move window to group "a"::
+
+            togroup("a")
+
+        Move window to group "a", and switch to group "a"::
+
+            togroup("a", switch_group=True)
         """
         if groupName is not None:
-            logger.warning("Window.cmd_togroup's groupName is deprecated; use group_name")
+            logger.warning("Window.togroup's groupName is deprecated; use group_name")
             group_name = groupName
         self.togroup(group_name, switch_group=switch_group, toggle=toggle)
 
-    def cmd_toscreen(self, index: int | None = None) -> None:
+    @expose_command()
+    def toscreen(self, index: int | None = None) -> None:
         """Move window to a specified screen.
 
         If index is not specified, we assume the current screen
@@ -484,11 +498,9 @@ class Window(_Window, metaclass=ABCMeta):
                 raise CommandError("No such screen: %d" % index)
         self.togroup(screen.group.name)
 
-    def cmd_opacity(self, opacity: float) -> None:
-        """Set the window's opacity.
-
-        The value must be between 0 and 1 inclusive.
-        """
+    @expose_command()
+    def set_opacity(self, opacity: float) -> None:
+        """Set the window's opacity"""
         if opacity < 0.1:
             self.opacity = 0.1
         elif opacity > 1:
@@ -496,27 +508,19 @@ class Window(_Window, metaclass=ABCMeta):
         else:
             self.opacity = opacity
 
-    def cmd_down_opacity(self) -> None:
+    @expose_command()
+    def down_opacity(self) -> None:
         """Decrease the window's opacity by 10%."""
-        if self.opacity > 0.2:
-            # don't go completely clear
-            self.opacity -= 0.1
-        else:
-            self.opacity = 0.1
+        self.set_opacity(self.opacity - 0.1)
 
-    def cmd_up_opacity(self) -> None:
+    @expose_command()
+    def up_opacity(self) -> None:
         """Increase the window's opacity by 10%."""
-        if self.opacity < 0.9:
-            self.opacity += 0.1
-        else:
-            self.opacity = 1
+        self.set_opacity(self.opacity + 0.1)
 
     @abstractmethod
-    def cmd_kill(self) -> None:
-        """Kill the window. Try to be polite."""
-
-    @abstractmethod
-    def cmd_static(
+    @expose_command()
+    def static(
         self,
         screen: int | None = None,
         x: int | None = None,
@@ -530,7 +534,8 @@ class Window(_Window, metaclass=ABCMeta):
         """
         self.defunct = True
 
-    def cmd_center(self) -> None:
+    @expose_command()
+    def center(self) -> None:
         """Centers a floating window on the screen."""
         if not self.floating:
             return
@@ -540,16 +545,16 @@ class Window(_Window, metaclass=ABCMeta):
 
         screen = self.group.screen
 
-        x = (screen.width - self.width) // 2  # type: ignore
-        y = (screen.height - self.height) // 2  # type: ignore
+        x = screen.x + (screen.width - self.width) // 2
+        y = screen.y + (screen.height - self.height) // 2
 
         self.place(
             x,
             y,
-            self.width,  # type: ignore
-            self.height,  # type: ignore
+            self.width,
+            self.height,
             self.borderwidth,
-            self.bordercolor,  # type: ignore
+            self.bordercolor,
             above=True,
             respect_hints=True,
         )
@@ -599,6 +604,7 @@ class Static(_Window, metaclass=ABCMeta):
     def __repr__(self):
         return "%s(name=%r, wid=%i)" % (self.__class__.__name__, self.name, self.wid)
 
+    @expose_command()
     def info(self) -> dict:
         """Return a dictionary of info."""
         return dict(
@@ -612,7 +618,8 @@ class Static(_Window, metaclass=ABCMeta):
         )
 
     @abstractmethod
-    def cmd_bring_to_front(self) -> None:
+    @expose_command()
+    def bring_to_front(self) -> None:
         """Bring the window to the front"""
 
 
@@ -641,7 +648,7 @@ class Drawer:
         self.ctx: cairocffi.Context
         self._reset_surface()
 
-        self.mirrors: set[Drawer] = set()
+        self._has_mirrors = False
 
         self.current_rect = (0, 0, 0, 0)
         self.previous_rect = (-1, -1, -1, -1)
@@ -652,9 +659,16 @@ class Drawer:
         self.surface = None
         self.ctx = None
 
-    def add_mirror(self, mirror: Drawer):
-        """Keep details of other drawers that are mirroring this one."""
-        self.mirrors.add(mirror)
+    @property
+    def has_mirrors(self):
+        return self._has_mirrors
+
+    @has_mirrors.setter
+    def has_mirrors(self, value):
+        if value and not self._has_mirrors:
+            self._create_last_surface()
+
+        self._has_mirrors = value
 
     @property
     def width(self) -> int:
@@ -679,6 +693,10 @@ class Drawer:
             None,
         )
         self.ctx = self.new_ctx()
+
+    def _create_last_surface(self):
+        """Creates a separate RecordingSurface for mirrors to access."""
+        self.last_surface = cairocffi.RecordingSurface(cairocffi.CONTENT_COLOR_ALPHA, None)
 
     @property
     def needs_update(self) -> bool:
@@ -769,9 +787,8 @@ class Drawer:
         """
         if self._enabled:
             self._draw(offsetx, offsety, width, height)
-            if self.mirrors:
-                # mypy is tripping over CONTENT_COLOR_ALPHA here despite it working earlier in this file!
-                self.last_surface = cairocffi.RecordingSurface(cairocffi.CONTENT_COLOR_ALPHA, None)  # type: ignore
+            if self.has_mirrors:
+                self._create_last_surface()
                 ctx = cairocffi.Context(self.last_surface)
                 ctx.set_source_surface(self.surface)
                 ctx.paint()

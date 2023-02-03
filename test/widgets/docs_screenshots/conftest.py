@@ -27,6 +27,7 @@ import cairocffi
 import pytest
 
 from libqtile.bar import Bar
+from libqtile.command.base import expose_command
 from libqtile.config import Group, Screen
 
 
@@ -119,7 +120,8 @@ def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, 
             # We need the widget's name to be the name of the inherited class
             self.name = widget_class.__name__.lower()
 
-        def cmd_take_screenshot(self, target):
+        @expose_command()
+        def take_screenshot(self, target):
             if not self.configured:
                 return
 
@@ -134,7 +136,8 @@ def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, 
             dest.write_to_png(target)
 
     class ScreenshotBar(Bar):
-        def cmd_take_screenshot(self, target, x=0, y=0, width=None, height=None):
+        @expose_command()
+        def take_screenshot(self, target, x=0, y=0, width=None, height=None):
             """Takes a screenshot of the bar. The area can be selected."""
             if not self._configured:
                 return

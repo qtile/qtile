@@ -1,9 +1,65 @@
 Qtile x.xx.x, released XXXX-XX-XX:
+    !!! config breakage/changes !!!
+      - The `cmd_` prefix has been dropped from all commands (this means command names are common when accessed
+        via the command interface or internal python objects).
+      - Custom widgets should now expose command methods with the `@expose_command` decorator (available via
+        `from libqtile.command.base import expose_command`).
+      - Some commands have been renamed (in addition to dropping the 'cmd_' prefix):
+          `hints` -> `get_hints`
+          `groups` -> `get_groups`
+          `screens` -> `get_screens`
+      - Layouts need to rename some methods:
+        - `add` to `add_client`
+        - `cmd_next` to `next`
+        - `cmd_previous` to `previous`
+      - Layouts or widgets that redefine the `commands` property need to update the signature:
+          `@expose_command()`
+          `def commands(self) -> list[str]:`
+      - `Window.getsize` has been renamed `Window.get_size` (i.e. merged with the get_size command).
+      - `Window.getposition` has been renamed `Window.get_position` (i.e. merged with the get_position command).
+      - The `StockTicker` widget `function` option is being deprecated: rename it to `func`.
+      - The formatting of `NetWidget` has changed, if you use the `format` parameter in your config include 
+        `up_suffix`, `total_suffix` and `down_suffix` to display the respective units.
+    * features
+        - Add ability to set icon size in `LaunchBar` widget.
+        - Add 'warp_pointer' option to `Drag` that when set will warp the pointer to the bottom right of
+          the window when dragging begins.
+        - Add `currentsong` status to `Mpd2` widget.
+        - Add ability to disable group toggling in `GroupBox` widget
+        - Add ability to have different border color when windows are stacked in Stack layout. Requires 
+          setting `border_focus_stack` and `border_normal_stack` variables.
+        - Add ability to have different border and margin widths when VerticalTile layout only contains 1 window by
+          setting 'single_border_width' and 'single_margin' keys.
+        - New widget: GenPollCommand
+        - Add ability to add a group at a specified index
+        - Add ability to spawn the `WidgetBox` widget opened.
+        - Add ability to swap focused window based on index, and change the order of windows inside current group
+        - Add ability to update the widget only once if `update_interval` is None.
+        - Add `move_to_slice` command to move current window to single layout in `Slice` layout
+        - Made the `NetWidget` text formattable.
+        - Qtile no longer floods the log following X server disconnection, instead handling those errors.
+    * bugfixes
+        - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
+        - Fix `Notify` bug when apps close notifications.
+        - Fix `CPU` precision bug with specific version of `psutil`
+        - Fix config being reevaluated twice during reload (e.g. all hooks from config were doubled)
+        - Fix `PulseVolume` high CPU usage when update_interval set to 0.
+        - Fix `Battery` widget on FreeBSD without explicit `battery` index given.
+        - Fix laggy resize in X11 by limiting the MotionNotify fps to a default of 120. This is configurable
+          per screen with the x11_drag_polling_rate variable.
+    * python version support
+        - We have added support for python 3.11 and pypy 3.9.
+        - python 3.7, 3.8 and pypy 3.7 are not longer supported.
+        - Fix bug where `StatusNotifier` does not update icons
+
+Qtile 0.22.0, released 2022-09-22:
     !!! Config breakage !!!
         - lazy.qtile.display_kb() no longer receives any arguments. If you passed it any arguments
           (which were ignored previously), remove them.
         - If you have a custom startup Python script that you use instead of `qtile start` and run init_log
           manually, the signature has changed. Please check the source for the updated arguments.
+        - `KeyChord`'s signature has changed. ``mode`` is now a boolean to indicate whether the mode should persist.
+          The ``name`` parameter should be used to name the chord (e.g. for the ``Chord`` widget).
     * features
         - Add ability to draw borders and add margins to the `Max` layout.
         - The default XWayland cursor is now set at startup to left_ptr, so an xsetroot call is not needed to
@@ -17,6 +73,9 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Add player controls (via mouse callbacks) to `Mpris2` widget.
         - Wayland: input inhibitor protocol support added (pywayland>=0.4.14 & pywlroots>=0.15.19)
         - Add commands to control Pomodoro widget.
+        - Add icon theme support to `TaskList` widget (available on X11 and Wayland backends).
+        - Wayland: Use `qtile cmd-obj -o core -f get_inputs` to get input device identifiers for
+          configuring inputs. Also input configs will be updated by config reloads (pywlroots>=0.15.21)
     * bugfixes
         - Widgets that are incompatible with a backend (e.g. Systray on Wayland) will no longer show 
           as a ConfigError in the bar. Instead the widget is silently removed from the bar and a message
@@ -72,6 +131,7 @@ Qtile 0.20.0, released 2022-01-24:
         - Fix bug where `Battery` widget did not retrieve `background` from `widget_defaults`.
         - Fix bug where widgets in a `WidgetBox` are rendered on top of bar borders.
 
+        - Add ability to swap focused window based on index, and change the order of windows inside current group
 Qtile 0.19.0, released 2021-12-22:
     * features
         - Add ability to draw borders to the Bar. Can customise size and colour per edge.

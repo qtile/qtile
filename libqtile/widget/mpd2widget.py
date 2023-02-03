@@ -177,11 +177,14 @@ class Mpd2(base.ThreadPoolText):
         super().__init__("", **config)
 
         self.add_defaults(Mpd2.defaults)
+        if self.color_progress:
+            self.color_progress = utils.hex(self.color_progress)
+
+    def _configure(self, qtile, bar):
+        super()._configure(qtile, bar)
         self.client = MPDClient()
         self.client.timeout = self.timeout
         self.client.idletimeout = self.idletimeout
-        if self.color_progress:
-            self.color_progress = utils.hex(self.color_progress)
 
     @property
     def connected(self):
@@ -290,6 +293,9 @@ class Mpd2(base.ThreadPoolText):
             total = float(song_info["fulltime"]) if song_info["fulltime"] != default else 0.0
             elapsed = float(song_info["elapsed"]) if song_info["elapsed"] != default else 0.0
             song_info["remaining"] = "{:.2f}".format(float(total - elapsed))
+
+        if "song" in self.status_format and song_info["song"] != default:
+            song_info["currentsong"] = str(int(song_info["song"]) + 1)
 
         # mpd serializes tags containing commas as lists.
         for key in song_info:

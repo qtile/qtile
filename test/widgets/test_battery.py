@@ -1,4 +1,3 @@
-import cairocffi
 import pytest
 
 from libqtile import images
@@ -193,9 +192,9 @@ def test_images_good(tmpdir, fake_bar, svg_img_as_pypath):
     batt.fontsize = 12
     batt.bar = fake_bar
     batt.setup_images()
-    assert len(batt.surfaces) == len(BatteryIcon.icon_names)
-    for name, surfpat in batt.surfaces.items():
-        assert isinstance(surfpat, cairocffi.SurfacePattern)
+    assert len(batt.images) == len(BatteryIcon.icon_names)
+    for name, img in batt.images.items():
+        assert isinstance(img, images.Img)
 
 
 def test_images_default(fake_bar):
@@ -207,9 +206,9 @@ def test_images_default(fake_bar):
     batt.fontsize = 12
     batt.bar = fake_bar
     batt.setup_images()
-    assert len(batt.surfaces) == len(BatteryIcon.icon_names)
-    for name, surfpat in batt.surfaces.items():
-        assert isinstance(surfpat, cairocffi.SurfacePattern)
+    assert len(batt.images) == len(BatteryIcon.icon_names)
+    for name, img in batt.images.items():
+        assert isinstance(img, images.Img)
 
 
 def test_battery_background(fake_qtile, fake_window, monkeypatch):

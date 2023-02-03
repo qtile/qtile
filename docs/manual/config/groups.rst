@@ -36,7 +36,6 @@ Reference
 ---------
 
 .. qtile_class:: libqtile.config.Group
-   :no-commands:
 
 .. autofunction:: libqtile.dgroups.simple_key_binder
 
