@@ -27,7 +27,11 @@ from wlroots.util.box import Box
 from wlroots.util.clock import Timespec
 from wlroots.wlr_types import Output as wlrOutput
 from wlroots.wlr_types import SceneOutput
-from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1Anchor
+from wlroots.wlr_types.layer_shell_v1 import (
+    LayerShellV1Layer,
+    LayerSurfaceV1Anchor,
+    LayerSurfaceV1KeyboardInteractivity,
+)
 
 from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
@@ -131,6 +135,20 @@ class Output(HasListeners):
         for layer in reversed(LayerShellV1Layer):
             # Arrange non-exclusive surface from top to bottom
             self._organise_layer(layer, full_area, usable_area, exclusive=False)
+
+        # Find topmost keyboard interactive layer
+        for layer in (LayerShellV1Layer.OVERLAY, LayerShellV1Layer.TOP):
+            for win in self.layers[layer]:
+                if (
+                    win.surface.current.keyboard_interactive
+                    == LayerSurfaceV1KeyboardInteractivity.EXCLUSIVE
+                ):
+                    self.core.exclusive_layer = win
+                    self.core.focus_window(win)
+                    return
+                if self.core.exclusive_layer is win:
+                    # This window previously had exclusive focus, but no longer wants it.
+                    self.core.exclusive_layer = None
 
     def _organise_layer(
         self,

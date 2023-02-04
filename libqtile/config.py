@@ -594,7 +594,7 @@ class Screen(CommandObject):
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
                 bar.draw()
-        self.qtile.call_soon(self.group.layout_all)
+        self.group.layout_all()
 
     @expose_command()
     def info(self) -> dict[str, int]:

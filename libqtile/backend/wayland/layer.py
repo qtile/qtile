@@ -101,6 +101,9 @@ class LayerStatic(Static[LayerSurfaceV1]):
         else:
             self.output.layers[self._layer].remove(self)
 
+            if self.core.exclusive_layer is self:
+                self.core.exclusive_layer = None
+
             if self.reserved_space:
                 self.qtile.free_reserved_space(self.reserved_space, self.screen)
                 self.reserved_space = None
