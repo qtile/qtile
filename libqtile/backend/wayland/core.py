@@ -166,6 +166,11 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(
             self._input_inhibit_manager.deactivate_event, self._on_input_inhibitor_deactivate
         )
+        # exclusive_layer: this layer shell window holds keyboard focus when above other
+        # (layer or non-layer) windows, per the layer shell protocol.
+        self.exclusive_layer: layer.LayerStatic | None = None
+        # exclusive_client: this client (any shell) absorbs keyboard AND pointer input,
+        # per input inhibitor protocol.
         self.exclusive_client: pywayland.server.Client | None = None
 
         # Set up outputs
@@ -1049,6 +1054,10 @@ class Core(base.Core, wlrq.HasListeners):
                 logger.debug("Keyboard focus withheld from window not owned by exclusive client.")
                 # We can't focus surfaces belonging to other clients.
                 return
+
+        if self.exclusive_layer and win is not self.exclusive_layer:
+            logger.debug("Keyboard focus withheld: focus is fixed to exclusive layer surface.")
+            return
 
         if isinstance(win, base.Internal):
             self.focused_internal = win
