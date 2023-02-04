@@ -69,6 +69,7 @@ class _Group(CommandObject):
 
     def _configure(self, layouts, floating_layout, qtile):
         self.screen = None
+        self.last_screen = None
         self.current_layout = 0
         self.focus_history = []
         self.windows = []
@@ -172,6 +173,7 @@ class _Group(CommandObject):
         if screen == self.screen:
             return
         self.screen = screen
+        self.last_screen = screen
         if self.screen:
             # move all floating guys offset to new screen
             self.floating_layout.to_screen(self, self.screen)
@@ -183,6 +185,7 @@ class _Group(CommandObject):
             self.hide()
 
     def hide(self):
+        self.last_screen = self.screen
         self.screen = None
         with self.qtile.core.masked():
             for i in self.windows:
