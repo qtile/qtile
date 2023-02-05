@@ -26,17 +26,15 @@ from pywayland import ffi as wlffi
 from pywayland import lib as wllib
 from pywayland.server import Listener
 from wlroots import ffi
-from wlroots.util.box import Box
 from wlroots.util.clock import Timespec
 from wlroots.util.edges import Edges
 from wlroots.wlr_types import SceneTree
-from wlroots.wlr_types.xdg_shell import XdgPopup, XdgSurface, XdgTopLevelWMCapabilities
+from wlroots.wlr_types.xdg_shell import XdgSurface, XdgTopLevelWMCapabilities
 
 from libqtile import hook
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
 from libqtile.backend.wayland.window import Static, Window
-from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 
@@ -44,7 +42,6 @@ if typing.TYPE_CHECKING:
     from typing import Any
 
     from libqtile.backend.wayland.core import Core
-    from libqtile.backend.wayland.output import Output
     from libqtile.core.manager import Qtile
     from libqtile.utils import ColorsType
 
@@ -64,23 +61,22 @@ class XdgWindow(Window[XdgSurface]):
 
         self._wm_class = surface.toplevel.app_id
         surface.set_wm_capabilities(WM_CAPABILITIES)
+        surface.data = self._data_handle
 
         # Create a scene-graph tree for this window and its borders
-        self.tree = SceneTree.create(core.window_tree)
-        self.tree.node.set_enabled(enabled=False)
-        self.tree_node = self.tree.node  # Save this to keep the .data alive
-        self.tree_node.data = self
-        self.node = core.scene.xdg_surface_create(self.tree, surface).node
+        self.container = SceneTree.create(core.window_tree)
+        self.container.node.set_enabled(enabled=False)
+        self.container.node.data = self._data_handle
+        self.tree = core.scene.xdg_surface_create(self.container, surface)
 
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
-        self.add_listener(surface.new_popup_event, self._on_new_popup)
         self.add_listener(surface.surface.commit_event, self._on_commit)
         self.add_listener(surface.toplevel.request_maximize_event, self._on_request_maximize)
         self.add_listener(surface.toplevel.request_fullscreen_event, self._on_request_fullscreen)
 
-        surface.data = self.ftm_handle = core.foreign_toplevel_manager_v1.create_handle()
+        self.ftm_handle = core.foreign_toplevel_manager_v1.create_handle()
 
     def _on_map(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow map")
@@ -150,10 +146,6 @@ class XdgWindow(Window[XdgSurface]):
             if self.surface.surface == seat.keyboard_state.focused_surface:
                 seat.keyboard_clear_focus()
 
-    def _on_new_popup(self, _listener: Listener, xdg_popup: XdgPopup) -> None:
-        logger.debug("Signal: xdgwindow new_popup")
-        XdgPopupWindow(self, xdg_popup)
-
     def _on_request_fullscreen(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow request_fullscreen")
         if self.qtile.config.auto_fullscreen:
@@ -208,6 +200,7 @@ class XdgWindow(Window[XdgSurface]):
 
     def get_pid(self) -> int:
         pid = wlffi.new("pid_t *")
+        # TODO: all libs are compiled together and should expose all functions
         wllib.wl_client_get_credentials(self.surface._ptr.client.client, pid, ffi.NULL, ffi.NULL)
         return pid[0]
 
@@ -282,7 +275,7 @@ class XdgWindow(Window[XdgSurface]):
 
         self.x = x
         self.y = y
-        self.tree_node.set_position(x, y)
+        self.container.node.set_position(x, y)
         self._width = width
         self._height = height
         self.surface.set_size(width, height)
@@ -345,11 +338,10 @@ class XdgStatic(Static[XdgSurface]):
         self.add_listener(surface.toplevel.set_title_event, self._on_set_title)
         self.add_listener(surface.toplevel.set_app_id_event, self._on_set_app_id)
 
-        # Take control of the scene node and tree
-        self.node = win.node
+        # Take control of the scene tree
+        self.container = win.container
+        self.container.node.data = self._data_handle
         self.tree = win.tree
-        self.tree_node = win.tree_node
-        self.tree_node.data = self
 
     @expose_command()
     def kill(self) -> None:
@@ -381,7 +373,7 @@ class XdgStatic(Static[XdgSurface]):
         self._height = height
         self.surface.set_size(width, height)
         self.surface.set_bounds(width, height)
-        self.tree_node.set_position(x, y)
+        self.container.node.set_position(x, y)
 
     def _on_set_title(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgstatic set_title")
@@ -397,56 +389,3 @@ class XdgStatic(Static[XdgSurface]):
         self._wm_class = self.surface.toplevel.app_id
         if self.ftm_handle:
             self.ftm_handle.set_app_id(self._wm_class or "")
-
-
-class XdgPopupWindow(HasListeners):
-    """
-    This represents a single `struct wlr_xdg_popup` object and is owned by a single
-    parent window (of `WindowType | XdgPopupWindow`). wlroots does most of the work for
-    us, we only need to listen for new (nested) popups so that we can position them and
-    add them to the scene-graph tree.
-    """
-
-    def __init__(self, parent: XdgWindow | XdgPopupWindow, xdg_popup: XdgPopup):
-        self.parent = parent
-        self.xdg_popup = xdg_popup
-        self.core: Core = parent.core
-
-        # Create scene-graph node in parent's tree
-        parent_tree = typing.cast(SceneTree, parent.tree)  # mypy doesn't like the recursive type
-        self.tree: SceneTree | None = self.core.scene.xdg_surface_create(
-            parent_tree, xdg_popup.base
-        )
-
-        # Keep on output
-        if isinstance(parent, XdgPopupWindow):
-            # This is a nested XdgPopup
-            self.output: Output = parent.output
-            self.output_box: Box = parent.output_box
-        else:
-            # Parent is an XdgSurface; This is a first-level XdgPopup
-            box = xdg_popup.base.get_geometry()
-            lx, ly = self.core.output_layout.closest_point(parent.x + box.x, parent.y + box.y)
-            wlr_output = self.core.output_layout.output_at(lx, ly)
-            if wlr_output and wlr_output.data:
-                output = wlr_output.data
-            else:
-                logger.warning("Failed to find output at for xdg_popup. Please report.")
-                output = self.core.outputs[0]
-            self.output = output
-            box = Box(*output.get_geometry())
-            box.x = round(box.x - lx)
-            box.y = round(box.y - ly)
-            self.output_box = box
-        xdg_popup.unconstrain_from_box(self.output_box)
-
-        self.add_listener(xdg_popup.base.destroy_event, self._on_destroy)
-        self.add_listener(xdg_popup.base.new_popup_event, self._on_new_popup)
-
-    def _on_destroy(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: popup destroy")
-        self.finalize_listeners()
-
-    def _on_new_popup(self, _listener: Listener, xdg_popup: XdgPopup) -> None:
-        logger.debug("Signal: popup new_popup")
-        XdgPopupWindow(self, xdg_popup)

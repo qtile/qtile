@@ -169,7 +169,14 @@ class Output(HasListeners):
                 continue
 
             win.scene_layer.configure(full_area, usable_area)
-            win.place(win.node.x, win.node.y, state.desired_width, state.desired_height, 0, None)
+            win.place(
+                win.tree.node.x,
+                win.tree.node.y,
+                state.desired_width,
+                state.desired_height,
+                0,
+                None,
+            )
 
     def contains(self, rect: WindowType | Dnd) -> bool:
         """Returns whether the given window is visible on this output."""

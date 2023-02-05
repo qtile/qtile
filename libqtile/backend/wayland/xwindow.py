@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import typing
 
+from pywayland import ffi as wlffi
 from wlroots import xwayland
 from wlroots.wlr_types import SceneTree
 
@@ -56,6 +57,14 @@ class XWindow(Window[xwayland.Surface]):
         self.add_listener(surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
 
+        # Create a scene-graph tree for this window and its borders
+        self.container = SceneTree.create(core.window_tree)
+        self.container.node.set_enabled(enabled=False)
+        self.container.node.data = self._data_handle
+
+        # Wait until we get a surface when mapping before making a tree
+        self.tree: SceneTree | None = None
+
     @property
     def mapped(self) -> bool:
         return self._mapped
@@ -77,12 +86,8 @@ class XWindow(Window[xwayland.Surface]):
             logger.debug("Managing new XWayland window with window ID: %s", self._wid)
             surface = self.surface
 
-            # Create a scene-graph tree for this window and its borders
-            self.tree = SceneTree.create(self.core.window_tree)
-            self.tree.node.set_enabled(enabled=False)
-            self.tree_node = self.tree.node  # Save this to keep the .data alive
-            self.tree_node.data = self
-            self.node = SceneTree.subsurface_tree_create(self.tree, surface.surface).node
+            # Now we have a surface, we can create the scene-graph node to contain it
+            self.tree = SceneTree.subsurface_tree_create(self.container, surface.surface)
 
             # Make it static if it isn't a regular window
             if surface.override_redirect:
@@ -92,6 +97,8 @@ class XWindow(Window[xwayland.Surface]):
                 self.core.focus_window(win)
                 return
 
+            surface.data = self._data_handle
+
             # Save the client's desired geometry. xterm seems to have these set to 1, so
             # let's ignore 1 or below. The float sizes will be fetched when it is floated.
             if surface.width > 1:
@@ -99,7 +106,8 @@ class XWindow(Window[xwayland.Surface]):
             if self.surface.height > 1:
                 self._height = self._float_height = surface.height
 
-            surface.data = self.ftm_handle = self.core.foreign_toplevel_manager_v1.create_handle()
+            self.ftm_handle = self.core.foreign_toplevel_manager_v1.create_handle()
+
             # Get the client's name and class
             title = surface.title
             if title:
@@ -289,7 +297,7 @@ class XWindow(Window[xwayland.Surface]):
         self.y = y
         self._width = width
         self._height = height
-        self.tree_node.set_position(x, y)
+        self.container.node.set_position(x, y)
         self.surface.configure(x, y, width, height)
         self.paint_borders(bordercolor, borderwidth)
 
@@ -300,7 +308,7 @@ class XWindow(Window[xwayland.Surface]):
     def bring_to_front(self) -> None:
         if self.mapped:
             self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
-            self.tree_node.raise_to_top()
+            self.container.node.raise_to_top()
 
     @expose_command()
     def static(
@@ -348,13 +356,16 @@ class XStatic(Static[xwayland.Surface]):
         if surface.override_redirect:
             self.add_listener(surface.set_geometry_event, self._on_set_geometry)
 
+        # While XWindows will always have a foreign toplevel handle, as they are always
+        # regular windows, XStatic windows can be: 1) regular windows made static by the
+        # user, which have a handle, or 2) XWayland popups (like OR windows), which
+        # we won't give a handle.
         self.ftm_handle: ftm.ForeignToplevelHandleV1 | None = None
 
         # Take control of the scene node and tree
-        self.node = win.node
+        self.container = win.container
+        self.container.node.data = self
         self.tree = win.tree
-        self.tree_node = win.tree_node
-        self.tree_node.data = self
 
     @expose_command()
     def kill(self) -> None:
@@ -385,7 +396,7 @@ class XStatic(Static[xwayland.Surface]):
         self._width = width
         self._height = height
         self.surface.configure(x, y, self._width, self._height)
-        self.tree_node.set_position(x, y)
+        self.container.node.set_position(x, y)
 
     def _on_set_title(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xstatic set_title")

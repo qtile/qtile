@@ -22,8 +22,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
+from pywayland import ffi as wlffi
 from pywayland.server import Listener
-from wlroots.wlr_types import SceneTree, Output as WlrOutput
+from wlroots.wlr_types import Output as WlrOutput
+from wlroots.wlr_types import SceneTree
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1
 
 from libqtile.backend.wayland.output import Output
@@ -34,7 +36,7 @@ from libqtile.log_utils import logger
 if TYPE_CHECKING:
     from typing import Any
 
-    from wlroots.wlr_types.scene import SceneLayerSurfaceV1, SceneNode
+    from wlroots.wlr_types.scene import SceneLayerSurfaceV1
 
     from libqtile.backend.wayland.core import Core
     from libqtile.core.manager import Qtile
@@ -56,29 +58,31 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self.desired_width = 0
         self.desired_height = 0
 
+        self._data_handle = wlffi.new_handle(self)
+        surface.data = self._data_handle
+
         # Determine which output this window is to appear on
         if wlr_output := surface.output:
-            logger.warning("Layer surface requested output: %s", wlr_output.name)
+            logger.debug("Layer surface requested output: %s", wlr_output.name)
         else:
             wlr_output = cast(
                 WlrOutput, core.output_layout.output_at(core.cursor.x, core.cursor.y)
             )
-            logger.warning("Layer surface given output: %s", wlr_output.name)
+            logger.debug("Layer surface given output: %s", wlr_output.name)
             surface.output = wlr_output
 
         output = cast(Output, wlr_output.data)
         self.output = output
         self.screen = output.screen
 
-        # Make a new scene tree for this window
-        self.tree = SceneTree.create(core.layer_trees[surface.pending.layer])
-        self.tree.node.set_enabled(enabled=False)
+        # Add the window to the scene graph
+        parent_tree = core.layer_trees[surface.pending.layer]
         self.scene_layer: SceneLayerSurfaceV1 = core.scene.layer_surface_v1_create(
-            self.tree, surface
+            parent_tree, surface
         )
-        self.node: SceneNode = self.scene_layer.tree.node
-        self.tree_node = self.tree.node  # Save this to keep the .data alive
-        self.tree_node.data = self
+        self.tree: SceneTree = self.scene_layer.tree
+        self.tree.node.data = self._data_handle
+        self.popup_tree = SceneTree.create(parent_tree)  # Popups get their own tree
 
         # Set up listeners
         self.add_listener(surface.map_event, self._on_map)
@@ -87,14 +91,14 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self.add_listener(surface.surface.commit_event, self._on_commit)
 
         # Temporarily set the layer's current state to pending so that we can easily
-        # arrange it.
+        # arrange it. TODO: how much of this is needed?
         self._layer = surface.pending.layer
         old_state = surface.current
         surface.current = surface.pending
         self.mapped = True
         self.output.organise_layers()
         surface.current = old_state
-        self.tree_node.reparent(core.layer_trees[old_state.layer])
+        self._move_to_layer(old_state.layer)
 
     @property
     def mapped(self) -> bool:
@@ -117,13 +121,11 @@ class LayerStatic(Static[LayerSurfaceV1]):
                 self.reserved_space = None
 
         self.output.organise_layers()
-        self.tree_node.set_enabled(enabled=mapped)
         self._mapped = mapped
 
     def _on_map(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: layerstatic map")
         self.mapped = True
-        self.output.organise_layers()
         self.focus(False)
 
     def _on_unmap(self, _listener: Listener, _data: Any) -> None:
@@ -135,16 +137,16 @@ class LayerStatic(Static[LayerSurfaceV1]):
                 group.focus(group.current_window, warp=self.qtile.config.cursor_warp)
             else:
                 self.core.seat.keyboard_clear_focus()
-        self.output.organise_layers()
 
     def _on_commit(self, _listener: Listener, _data: Any) -> None:
-        output = self.surface.output and self.surface.output.data
-        if output and self.output != output:
-            prev_output = self.output
-            self.output = output
-            if self._mapped:
-                prev_output.layers[self._layer].remove(self)
-                self.output.layers[self._layer].append(self)
+        if self.surface.output and self.surface.output.data:
+            output = self.surface.output.data
+            if output != self.output:
+                # The window wants to move to a different output.
+                if self.mapped:
+                    self.output.layers[self._layer].remove(self)
+                    output.layers[self._layer].append(self)
+                self.output = output
 
         pending = self.surface.pending
         if (
@@ -152,11 +154,25 @@ class LayerStatic(Static[LayerSurfaceV1]):
             or self._width != pending.desired_width
             or self._height != pending.desired_height
         ):
+            # The window has changed its desired layer or dimensions.
+            self._move_to_layer(pending.layer)
+
+    def _move_to_layer(self, layer: LayerShellV1Layer) -> None:
+        new_parent = self.core.layer_trees[layer]
+        self.tree.node.reparent(new_parent)
+        self.popup_tree.node.reparent(new_parent)
+
+        if self.mapped:
+            # If we're mapped, we also need to update the lists on the output.
             self.output.layers[self._layer].remove(self)
-            self._layer = pending.layer
-            self.output.layers[self._layer].append(self)
-            self.tree_node.reparent(self.core.layer_trees[self._layer])
+            self.output.layers[layer].append(self)
             self.output.organise_layers()
+
+        self._layer = layer
+
+    def finalize(self) -> None:
+        super().finalize()
+        self.popup_tree.node.destroy()
 
     def kill(self) -> None:
         self.surface.destroy()
@@ -183,6 +199,8 @@ class LayerStatic(Static[LayerSurfaceV1]):
     ) -> None:
         self.x = x
         self.y = y
+        self.tree.node.set_position(x, y)
+        # The actual resizing is done by `Output`.
         self._width = width
         self._height = height
 
