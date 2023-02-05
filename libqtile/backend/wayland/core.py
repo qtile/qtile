@@ -1206,6 +1206,8 @@ class Core(base.Core, wlrq.HasListeners):
         """
         Find which window and surface is currently under the pointer, if any.
         """
+        assert self.qtile is not None
+
         maybe_node = self._node.node_at(self.cursor.x, self.cursor.y)
         if maybe_node is None:
             # We didn't find any node, so the pointer is on the root i.e. a
@@ -1219,34 +1221,37 @@ class Core(base.Core, wlrq.HasListeners):
             # window, or an Internal window, or a wallpaper. In all cases we will get a
             # wlr_scene_buffer, but only client surfaces will have a wlr_scene_surface.
 
-            if scene_buffer := SceneBuffer.from_node(node):
-                if scene_surface := SceneSurface.from_buffer(scene_buffer):
-                    # We got a wlr_scene_surface, so it's a client's surface. It could
-                    # be a window or a drag icon. Walk up the tree to find the window.
-                    surface = scene_surface.surface
-
-                    if self.live_dnd and node == self.live_dnd.node:
-                        # We got the drag icon under the pointer, just return the
-                        # current window along with the drag icon's surface.
-                        assert self.qtile and self.qtile.current_window
-                        return self.qtile.current_window, surface, sx, sy
-
-                    # We got a node that is part of a window, walk up the scene graph to
-                    # find the window object.
-                    tree = node.parent
-                    while tree.node.data is None:
-                        tree = tree.node.parent
-                    return tree.node.data, surface, sx, sy
-
-                # We didn't get a wlr_scene_surface, so the node is either an Internal
-                # window or wallpaper. These alternatives can be identified by the
-                # presence of a .data on the node.
-                if win := node.data:
-                    return win, None, sx, sy
+            scene_buffer = SceneBuffer.from_node(node)
+            if not scene_buffer:
+                # We didn't get a wlr_scene_buffer. This shouldn't happen.
+                logger.error("wlr_scene_buffer expected but not found. Please report.")
                 return None
 
-            # We didn't get a wlr_scene_buffer. This shouldn't happen.
-            logger.error("wlr_scene_buffer expected but not found. Please report.")
+            if scene_surface := SceneSurface.from_buffer(scene_buffer):
+                # We got a wlr_scene_surface, so it's a client's surface. It could be a
+                # window or a drag icon. Walk up the tree to find the window.
+                surface = scene_surface.surface
+
+                if self.live_dnd and node == self.live_dnd.node:
+                    # We got the drag icon under the pointer, just return the current
+                    # window along with the drag icon's surface.
+                    win = self.qtile.current_window
+                    return self.qtile.current_window, surface, sx, sy
+
+                # We got a node that is part of a window, walk up the scene graph to
+                # find the window object.
+                tree = node.parent
+                while tree.node.data is None:
+                    tree = tree.node.parent
+                return tree.node.data, surface, sx, sy
+
+            # We didn't get a wlr_scene_surface, so the node is either an Internal
+            # window or wallpaper. These alternatives can be identified by the
+            # presence of a .data on the node.
+            if win := node.data:
+                # It's an Internal window
+                return win, None, sx, sy
+            # It's wallpaper
             return None
 
         if node.type == SceneNodeType.RECT:
