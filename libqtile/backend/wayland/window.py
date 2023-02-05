@@ -26,10 +26,11 @@ import typing
 
 import cairocffi
 import wlroots.wlr_types.foreign_toplevel_management_v1 as ftm
+from pywayland import ffi as wlffi
 from pywayland.server import Client, Listener
 from wlroots import PtrHasData
 from wlroots.util.box import Box
-from wlroots.wlr_types import Buffer, Texture
+from wlroots.wlr_types import Buffer
 from wlroots.wlr_types.idle_inhibit_v1 import IdleInhibitorV1
 from wlroots.wlr_types.pointer_constraints_v1 import (
     PointerConstraintV1,
@@ -42,7 +43,7 @@ from libqtile.backend import base
 from libqtile.backend.base import FloatStates
 from libqtile.backend.wayland._ffi import ffi, lib
 from libqtile.backend.wayland.drawer import Drawer
-from libqtile.backend.wayland.wlrq import DRM_FORMAT_ARGB8888, HasListeners
+from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.command.base import CommandError, expose_command
 from libqtile.log_utils import logger
 
@@ -52,7 +53,6 @@ if typing.TYPE_CHECKING:
     from wlroots.wlr_types import Surface
 
     from libqtile.backend.wayland.core import Core
-    from libqtile.backend.wayland.output import Output
     from libqtile.command.base import CommandObject, ItemT
     from libqtile.core.manager import Qtile
     from libqtile.group import _Group
@@ -113,6 +113,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self._opacity: float = 1.0
         self._wm_class: str | None = None
         self._idle_inhibitors_count: int = 0
+        self._data_handle: wlffi.CData = wlffi.new_handle(self)
 
         # This is a placeholder to be set properly when the window maps for the first
         # time (and therefore exposed to the user). We need the attribute to exist so
@@ -126,6 +127,15 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self._float_width: int = 0
         self._float_height: int = 0
         self._float_state = FloatStates.NOT_FLOATING
+
+        # Each regular window gets a foreign toplevel handle: all instances of Window
+        # (i.e. toplevel XDG windows and regular X11 windows) have one. If a user uses
+        # the static() command to convert one of these into a Static, that Static will
+        # keep the same handle. However, Static windows can also be layer shell windows
+        # or non-regular X11 clients (e.g. X11 bars or popups), and so might not have a
+        # handle. Because we pass ownership of the handle to a Static during static(),
+        # and the old Window would destroy the handle during finalize(), we make this
+        # attribute optional to avoid the destroy().
         self.ftm_handle: ftm.ForeignToplevelHandleV1 | None = None
 
         # The borders are wlr_scene_rects.
@@ -136,22 +146,17 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
     def finalize(self) -> None:
         self.finalize_listeners()
+        self.surface.data = None
 
-        try:
-            if self.tree_node.data:
-                # self.tree_node.data will be None if this is an X client that unmapped
-                # itself, in which case we arent't sure if it might re-map, so we finalized
-                # it in case it was destroying itself.
-                self.tree_node.data = None
-                self.tree_node.destroy()
-        except AttributeError:
-            # Likely an XWayland client that died before every mapping.
-            pass
+        # Remove the scene graph container. Any borders will die with it.
+        self.container.node.data = None
+        self.container.node.destroy()
+        self._data_handle = None
 
         if self.ftm_handle:
             self.ftm_handle.destroy()
             self.ftm_handle = None
-            self.surface.data = None
+
         self.core.remove_pointer_constraints(self)
 
     @property
@@ -177,7 +182,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             return
         if self._idle_inhibitors_count > 0:
             self.core.check_idle_inhibitor()
-        self.tree_node.set_enabled(enabled=mapped)
+        self.container.node.set_enabled(enabled=mapped)
         self._mapped = mapped
 
     def _on_destroy(self, _listener: Listener, _data: Any) -> None:
@@ -301,7 +306,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         if not isinstance(colors, list):
             colors = [colors]
 
-        self.node.set_position(width, width)
+        self.tree.node.set_position(width, width)
         self.bordercolor = colors
         self.borderwidth = width
 
@@ -348,7 +353,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             else:
                 rects = []
                 for x, y, w, h in geometries:
-                    rect = SceneRect(self.tree, w, h, color_)
+                    rect = SceneRect(self.container, w, h, color_)
                     rect.node.set_position(x, y)
                     rects.append(rect)
 
@@ -665,7 +670,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     @expose_command()
     def bring_to_front(self) -> None:
         if self.mapped:
-            self.tree_node.raise_to_top()
+            self.tree.node.raise_to_top()
 
     @expose_command()
     def static(
@@ -692,11 +697,19 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
         self.finalize_listeners()
 
+        # Destroy the borders. Currently static windows are always borderless.
         while self._borders:
             for rect in self._borders.pop():
                 rect.node.destroy()
 
         win = self._to_static()
+
+        # Pass ownership of the foreign toplevel handle to the static window.
+        if self.ftm_handle:
+            win.ftm_handle = self.ftm_handle
+            self.ftm_handle = None
+            win.add_listener(win.ftm_handle.request_close_event, win._on_foreign_request_close)
+
         if screen is not None:
             win.screen = self.qtile.screens[screen]
         win.mapped = True
@@ -709,7 +722,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
     @abc.abstractmethod
     def _to_static(self) -> Static:
-        # This must return a new `base.Static` subclass instance
+        # This must return a new `Static` subclass instance
         pass
 
 
@@ -738,15 +751,13 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         self.opacity: float = 1.0
         self._wm_class: str | None = None
         self._idle_inhibitors_count = idle_inhibitor_count
-
-        if surface.data:
-            self.ftm_handle = surface.data
-            self.add_listener(self.ftm_handle.request_close_event, self._on_foreign_request_close)
+        self.ftm_handle: ftm.ForeignToplevelHandleV1 | None = None
+        self._data_handle = wlffi.new_handle(self)
+        surface.data = self._data_handle
 
     def finalize(self) -> None:
         self.finalize_listeners()
-        self.tree_node.data = None
-        self.tree_node.destroy()
+        self.surface.data = None
         self.core.remove_pointer_constraints(self)
 
     @property
@@ -761,7 +772,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
     def mapped(self, mapped: bool) -> None:
         if mapped == self._mapped:
             return
-        self.tree_node.set_enabled(enabled=mapped)
+        self.container.node.set_enabled(enabled=mapped)
         self._mapped = mapped
 
     def focus(self, warp: bool = True) -> None:
@@ -804,6 +815,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         self.finalize()
 
     def _on_commit(self, _listener: Listener, _data: Any) -> None:
+        # TODO: Is this needed?
         pass
 
     def _on_foreign_request_close(self, _listener: Listener, _data: Any) -> None:
@@ -838,7 +850,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
     @expose_command()
     def bring_to_front(self) -> None:
         if self.mapped:
-            self.tree_node.raise_to_top()
+            self.tree.node.raise_to_top()
 
     @expose_command()
     def info(self) -> dict:
@@ -862,7 +874,7 @@ class Internal(_Base, base.Internal):
     def __init__(self, core: Core, qtile: Qtile, x: int, y: int, width: int, height: int):
         self.core = core
         self.qtile = qtile
-        self._mapped: bool = True
+        self._mapped: bool = False
         self._wid: int = self.core.new_wid()
         self.x: int = x
         self.y: int = y
@@ -877,9 +889,10 @@ class Internal(_Base, base.Internal):
         if scene_buffer is None:
             raise RuntimeError("Couldn't create scene buffer")
         self._scene_buffer = scene_buffer
-        self.node = self._scene_buffer.node
-        self.node.data = self
+        self.node = self.tree.node
+        self.node.set_enabled(enabled=False)
         self.node.set_position(x, y)
+        self.node.data = self
 
     def finalize(self) -> None:
         self.hide()

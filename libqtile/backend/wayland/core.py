@@ -36,6 +36,7 @@ from pywayland import lib as wllib
 from pywayland.protocol.wayland import WlSeat
 from wlroots import xwayland
 from wlroots.util import log as wlr_log
+from wlroots.util.box import Box
 from wlroots.wlr_types import (
     DataControlManagerV1,
     DataDeviceManager,
@@ -211,6 +212,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.layer_shell = LayerShellV1(self.display)
         self.add_listener(self.layer_shell.new_surface_event, self._on_new_layer_surface)
 
+        # TODO: update this diagram
         # Set up scene-graph tree, which looks like this:
         #
         #     root (self._node)
@@ -463,12 +465,49 @@ class Core(base.Core, wlrq.HasListeners):
             self.cursor.set_surface(event.surface, event.hotspot)
 
     def _on_new_xdg_surface(self, _listener: Listener, xdg_surface: XdgSurface) -> None:
+        assert self.qtile is not None
         logger.debug("Signal: xdg_shell new_surface_event")
 
+        win: xdgwindow.XdgWindow | layer.LayerStatic
+
         if xdg_surface.role == XdgSurfaceRole.TOPLEVEL:
-            assert self.qtile is not None
+            # The new surface is a regular top-level window.
             win = xdgwindow.XdgWindow(self, self.qtile, xdg_surface)
             self.pending_windows.add(win)
+            return
+
+        if xdg_surface.role == XdgSurfaceRole.POPUP:
+            # The new surface is a popup window.
+            if not self._current_output:
+                raise RuntimeError("Can't place a popup without any outputs enabled.")
+
+            parent_surface = xdg_surface.popup.parent
+            if parent_surface.is_xdg_surface:
+                # An XDG shell window created this popup
+                parent = XdgSurface.from_surface(parent_surface)
+                win = cast(xdgwindow.XdgWindow, parent.data)
+                self.scene.xdg_surface_create(win.tree, xdg_surface)
+
+            elif parent_surface.is_layer_surface:
+                # A layer shell window created this popup
+                parent = LayerSurfaceV1.from_wlr_surface(parent_surface)
+                win = cast(layer.LayerStatic, parent.data)
+                self.scene.xdg_surface_create(win.popup_tree, xdg_surface)
+
+            else:
+                # TODO: can the parent be another popup?
+                raise RuntimeError("Unknown surface as popup's parent.")
+
+            # Position the popup
+            box = xdg_surface.get_geometry()
+            lx, ly = self.output_layout.closest_point(win.x + box.x, win.y + box.y)
+            box = Box(*self._current_output.get_geometry())
+            box.x = round(box.x - lx)
+            box.y = round(box.y - ly)
+            xdg_surface.popup.unconstrain_from_box(box)
+            return
+
+        logger.warning("xdg_shell surface had no role set. Ignoring.")
 
     def _on_cursor_axis(self, _listener: Listener, event: pointer.PointerAxisEvent) -> None:
         handled = False
@@ -1095,15 +1134,17 @@ class Core(base.Core, wlrq.HasListeners):
                 previous_xdg_surface = XdgSurface.from_surface(previous_surface)
                 if not win or win.surface != previous_xdg_surface:
                     previous_xdg_surface.set_activated(False)
-                    if previous_xdg_surface.data:
-                        previous_xdg_surface.data.set_activated(False)
+                    if prev_win := previous_xdg_surface.data:
+                        if ftm_handle := prev_win.ftm_handle:
+                            ftm_handle.set_activated(False)
 
             elif previous_surface.is_xwayland_surface:
                 prev_xwayland_surface = xwayland.Surface.from_wlr_surface(previous_surface)
                 if not win or win.surface != prev_xwayland_surface:
                     prev_xwayland_surface.activate(False)
-                    if prev_xwayland_surface.data:
-                        prev_xwayland_surface.data.set_activated(False)
+                    if prev_win := prev_xwayland_surface.data:
+                        if ftm_handle := prev_win.ftm_handle:
+                            ftm_handle.set_activated(False)
 
         if not win or not surface:
             self.seat.keyboard_clear_focus()
@@ -1210,7 +1251,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         if node.type == SceneNodeType.RECT:
             # Rect nodes are only used for window borders. Their immediate parent is the
-            # window's tree, which gives us the window at .data.
+            # window container, which gives us the window at .data.
             win = cast(window.Window, node.parent.node.data)
             return win, None, sx, sy
 
