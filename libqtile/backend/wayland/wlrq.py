@@ -198,13 +198,16 @@ class Dnd(HasListeners):
 
         tree = SceneTree.subsurface_tree_create(core.layer_trees[4], self.icon.surface)
         self.node = tree.node
-        self.node.data = self
+
+        self._data_handle = ffi.new_handle(self)
+        self.node.data = self._data_handle
 
     def finalize(self) -> None:
         self.finalize_listeners()
         self.core.live_dnd = None
         self.node.data = None
         self.node.destroy()
+        self._data_handle = None
 
     def _on_destroy(self, _listener: Listener, _event: Any) -> None:
         logger.debug("Signal: wlr_drag destroy")
