@@ -198,7 +198,6 @@ class Dnd(HasListeners):
 
         tree = SceneTree.subsurface_tree_create(core.layer_trees[4], self.icon.surface)
         self.node = tree.node
-        self.node.set_enabled(enabled=True)
         self.node.data = self
 
     def finalize(self) -> None:
