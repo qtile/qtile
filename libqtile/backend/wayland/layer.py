@@ -120,12 +120,12 @@ class LayerStatic(Static[LayerSurfaceV1]):
                 self.qtile.free_reserved_space(self.reserved_space, self.screen)
                 self.reserved_space = None
 
-        self.output.organise_layers()
         self._mapped = mapped
 
     def _on_map(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: layerstatic map")
         self.mapped = True
+        self.output.organise_layers()
         self.focus(False)
 
     def _on_unmap(self, _listener: Listener, _data: Any) -> None:
@@ -137,6 +137,7 @@ class LayerStatic(Static[LayerSurfaceV1]):
                 group.focus(group.current_window, warp=self.qtile.config.cursor_warp)
             else:
                 self.core.seat.keyboard_clear_focus()
+        self.output.organise_layers()
 
     def _on_commit(self, _listener: Listener, _data: Any) -> None:
         if self.surface.output and self.surface.output.data:
