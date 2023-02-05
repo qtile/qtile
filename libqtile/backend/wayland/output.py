@@ -85,12 +85,12 @@ class Output(HasListeners):
     def screen(self) -> Screen:
         assert self.core.qtile is not None
 
-        if len(self.core.qtile.screens) > 1:
-            x, y, w, h = self.get_geometry()
-            for screen in self.core.qtile.screens:
-                if screen.x == x and screen.y == y:
-                    if screen.width == w and screen.height == h:
-                        return screen
+        for screen in self.core.qtile.screens:
+            # Outputs alias if they have the same (x, y) and share the same Screen, so
+            # we don't need to check the if the width and height match the Screen's.
+            if screen.x == self.x and screen.y == self.y:
+                return screen
+
         return self.core.qtile.current_screen
 
     def _on_destroy(self, _listener: Listener, _data: Any) -> None:
@@ -115,19 +115,22 @@ class Output(HasListeners):
         """Organise the positioning of layer shell surfaces."""
         logger.debug("Output: organising layers")
         ow, oh = self.wlr_output.effective_resolution()
-        full_area = Box(0, 0, ow, oh)
-        usable_area = Box(0, 0, ow, oh)
+
+        # These rects are in output layout coordinates
+        full_area = Box(self.x, self.y, ow, oh)
+        usable_area = Box(self.x, self.y, ow, oh)
 
         for layer in reversed(LayerShellV1Layer):
             # Arrange exclusive surface from top to bottom
             self._organise_layer(layer, full_area, usable_area, exclusive=True)
 
         # TODO: can this be a geometry?
+        # The positions used for reserving space are screen-relative coordinates
         new_reserved_space = (
-            usable_area.x,  # left
-            ow - usable_area.x - usable_area.width,  # right
-            usable_area.y,  # top
-            oh - usable_area.y - usable_area.height,  # bottom
+            usable_area.x - self.x,  # left
+            self.x + ow - usable_area.x - usable_area.width,  # right
+            usable_area.y - self.y,  # top
+            self.y + oh - usable_area.y - usable_area.height,  # bottom
         )
         delta = tuple(new - old for new, old in zip(new_reserved_space, self._reserved_space))
         self.core.qtile.reserve_space(delta, self.screen)  # type: ignore

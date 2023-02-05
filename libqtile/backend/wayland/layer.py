@@ -20,17 +20,18 @@
 
 from __future__ import annotations
 
-import typing
+from typing import TYPE_CHECKING, cast
 
 from pywayland.server import Listener
-from wlroots.wlr_types import SceneTree
+from wlroots.wlr_types import SceneTree, Output as WlrOutput
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1
 
+from libqtile.backend.wayland.output import Output
 from libqtile.backend.wayland.window import Static
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from typing import Any
 
     from wlroots.wlr_types.scene import SceneLayerSurfaceV1, SceneNode
@@ -52,21 +53,22 @@ class LayerStatic(Static[LayerSurfaceV1]):
     ):
         Static.__init__(self, core, qtile, surface, wid)
 
-        self.add_listener(surface.map_event, self._on_map)
-        self.add_listener(surface.unmap_event, self._on_unmap)
-        self.add_listener(surface.destroy_event, self._on_destroy)
-        self.add_listener(surface.surface.commit_event, self._on_commit)
-
         self.desired_width = 0
         self.desired_height = 0
-        if surface.output is None:
-            surface.output = core.output_layout.output_at(core.cursor.x, core.cursor.y)
 
-        if surface.output:
-            output = surface.output.data
-            if output:
-                self.output = output
-                self.screen = self.output.screen
+        # Determine which output this window is to appear on
+        if wlr_output := surface.output:
+            logger.warning("Layer surface requested output: %s", wlr_output.name)
+        else:
+            wlr_output = cast(
+                WlrOutput, core.output_layout.output_at(core.cursor.x, core.cursor.y)
+            )
+            logger.warning("Layer surface given output: %s", wlr_output.name)
+            surface.output = wlr_output
+
+        output = cast(Output, wlr_output.data)
+        self.output = output
+        self.screen = output.screen
 
         # Make a new scene tree for this window
         self.tree = SceneTree.create(core.layer_trees[surface.pending.layer])
@@ -77,6 +79,12 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self.node: SceneNode = self.scene_layer.tree.node
         self.tree_node = self.tree.node  # Save this to keep the .data alive
         self.tree_node.data = self
+
+        # Set up listeners
+        self.add_listener(surface.map_event, self._on_map)
+        self.add_listener(surface.unmap_event, self._on_unmap)
+        self.add_listener(surface.destroy_event, self._on_destroy)
+        self.add_listener(surface.surface.commit_event, self._on_commit)
 
         # Temporarily set the layer's current state to pending so that we can easily
         # arrange it.
