@@ -884,10 +884,12 @@ class Internal(_Base, base.Internal):
         if scene_buffer is None:
             raise RuntimeError("Couldn't create scene buffer")
         self._scene_buffer = scene_buffer
-        self.node = self.tree.node
+        self._data_handle = wlffi.new_handle(self)
+        self._scene_buffer.data = self._data_handle
+        self.node = self._scene_buffer.node
         self.node.set_enabled(enabled=False)
         self.node.set_position(x, y)
-        self.node.data = self
+        self.node.data = self._data_handle
 
     def finalize(self) -> None:
         self.hide()
