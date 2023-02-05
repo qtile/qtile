@@ -644,7 +644,7 @@ class Drawer:
         self._height = height
 
         self.surface: cairocffi.RecordingSurface
-        self.last_surface: cairocffi.RecordingSurface
+        self.last_surface: cairocffi.RecordingSurface | None = None
         self.ctx: cairocffi.Context
         self._reset_surface()
 
@@ -712,8 +712,9 @@ class Drawer:
         return ink_changed or rect_changed
 
     def paint_to(self, drawer: Drawer) -> None:
-        drawer.ctx.set_source_surface(self.last_surface)
-        drawer.ctx.paint()
+        if self.last_surface:
+            drawer.ctx.set_source_surface(self.last_surface)
+            drawer.ctx.paint()
 
     def _rounded_rect(self, x, y, width, height, linewidth):
         aspect = 1.0
