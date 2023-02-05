@@ -149,19 +149,6 @@ class XWindow(Window[xwayland.Surface]):
             if self.surface.surface == seat.keyboard_state.focused_surface:
                 seat.keyboard_clear_focus()
 
-        if not self._unmapping:
-            # Client unmapped X11 windows return to a pending state, where we don't
-            # manage them, but clients can re-use them.
-            self.qtile.unmanage(self.wid)
-            self.finalize()
-            self.add_listener(self.surface.map_event, self._on_map)
-            self.add_listener(self.surface.unmap_event, self._on_unmap)
-            self.add_listener(self.surface.destroy_event, self._on_destroy)
-            self.core.pending_windows.add(self)
-            self._wid = -1
-
-        self._unmapping = False
-
     def _on_request_fullscreen(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xwindow request_fullscreen")
         if self.qtile.config.auto_fullscreen:
