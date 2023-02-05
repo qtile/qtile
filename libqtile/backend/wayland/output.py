@@ -39,9 +39,7 @@ from libqtile.log_utils import logger
 if TYPE_CHECKING:
     from typing import Any
 
-    from cairocffi import ImageSurface
     from pywayland.server import Listener
-    from wlroots.wlr_types import SceneBuffer
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.layer import LayerStatic
@@ -55,21 +53,19 @@ class Output(HasListeners):
         self.core = core
         self.renderer = core.renderer
         self.wlr_output = wlr_output
-        wlr_output.data = self
-        self.wallpaper: tuple[SceneBuffer, ImageSurface] | None = None
         self._reserved_space = (0, 0, 0, 0)
+        self.scene_output = SceneOutput.create(core.scene, wlr_output)
+
+        # These will get updated on the output layout's change event
+        self.x = 0
+        self.y = 0
 
         # Initialise wlr_output
         wlr_output.init_render(core.allocator, core.renderer)
         wlr_output.set_mode(wlr_output.preferred_mode())
         wlr_output.enable()
         wlr_output.commit()
-
-        # Put new output at far right
-        self.x = core.output_layout.get_box().width
-        self.y = 0
-        core.output_layout.add(wlr_output, self.x, self.y)
-        self._scene_output = SceneOutput.create(core.scene, wlr_output)
+        wlr_output.data = self
 
         self.add_listener(wlr_output.destroy_event, self._on_destroy)
         self.add_listener(wlr_output.frame_event, self._on_frame)
@@ -80,6 +76,10 @@ class Output(HasListeners):
     def finalize(self) -> None:
         self.finalize_listeners()
         self.core.remove_output(self)
+        self.scene_output.destroy()
+
+    def __repr__(self) -> str:
+        return "<Output (%s, %s, %s, %s)>" % self.get_geometry()
 
     @property
     def screen(self) -> Screen:
@@ -99,12 +99,13 @@ class Output(HasListeners):
 
     def _on_frame(self, _listener: Listener, _data: Any) -> None:
         try:
-            self._scene_output.commit()
+            self.scene_output.commit()
         except RuntimeError:
-            # Failed to commit scene output; skip.
-            return
+            # Failed to commit scene output; skip rendering.
+            pass
 
-        self._scene_output.send_frame_done(Timespec.get_monotonic_time())
+        # Inform clients of the frame
+        self.scene_output.send_frame_done(Timespec.get_monotonic_time())
 
     def get_geometry(self) -> tuple[int, int, int, int]:
         width, height = self.wlr_output.effective_resolution()

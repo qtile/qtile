@@ -90,6 +90,7 @@ from libqtile.log_utils import logger
 if TYPE_CHECKING:
     from typing import Any, Generator
 
+    from cairocffi import ImageSurface
     from pywayland.server import Listener
     from wlroots.wlr_types import Output as wlrOutput
     from wlroots.wlr_types.data_device_manager import Drag
@@ -236,7 +237,7 @@ class Core(base.Core, wlrq.HasListeners):
         #     └── DragIcon
         #         └── wlrq.Dnd
         #
-        self.scene = Scene(self.output_layout)
+        self.scene = Scene()
         self._node = self.scene.tree.node
         # Each tree is created above the existing trees
         self.layer_trees = [
@@ -249,6 +250,7 @@ class Core(base.Core, wlrq.HasListeners):
             SceneTree.create(self.scene.tree),  # DragIcon
         ]
         self.wallpaper_tree = self.layer_trees.pop(0)
+        self.wallpapers: dict[config.Screen, tuple[SceneBuffer, ImageSurface]] = {}
         self.window_tree = self.layer_trees.pop(2)
 
         # Add support for additional protocols
@@ -417,6 +419,9 @@ class Core(base.Core, wlrq.HasListeners):
                 wlr_output.set_custom_mode(640, 480, 0)
             wlr_output.commit()
 
+        # Let the output layout place it
+        self.output_layout.add_auto(wlr_output)
+
     def _on_output_layout_change(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: output_layout change_event")
         config = OutputConfigurationV1()
@@ -429,9 +434,9 @@ class Core(base.Core, wlrq.HasListeners):
             box = self.output_layout.get_box(output.wlr_output)
             head.state.x = output.x = box.x
             head.state.y = output.y = box.y
+            output.scene_output.set_position(output.x, output.y)
 
         self.output_manager.set_configuration(config)
-        self.outputs.sort(key=lambda o: (o.x, o.y))
         hook.fire("screen_change", None)
 
     def _on_output_manager_apply(
@@ -1231,8 +1236,8 @@ class Core(base.Core, wlrq.HasListeners):
             self.idle.set_enabled(self.seat, True)
 
     def get_screen_info(self) -> list[tuple[int, int, int, int]]:
-        """Get the screen information"""
-        return [screen.get_geometry() for screen in self.outputs if screen.wlr_output.enabled]
+        """Get the output information"""
+        return [output.get_geometry() for output in self.outputs]
 
     def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
         """Configure the backend to grab the key event"""

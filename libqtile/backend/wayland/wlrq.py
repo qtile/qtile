@@ -148,19 +148,16 @@ class Painter:
         if wlr_buffer == ffi.NULL:
             raise RuntimeError("Couldn't allocate cairo buffer.")
 
-        # mypy struggles to understand this. See: https://github.com/python/mypy/issues/11513
-        outputs = [
-            output for output in self.core.outputs if output.wlr_output.enabled  # type: ignore
-        ]
-        output = outputs[screen.index]
+        # Drop references to existing wallpaper if there is one
+        if screen in self.core.wallpapers:
+            old_scene_buffer, old_surface = self.core.wallpapers.pop(screen)
+            old_scene_buffer.node.destroy()
+            old_surface.finish()
 
-        if output.wallpaper is not None:
-            output.wallpaper[0].node.destroy()
-            output.wallpaper = None
-
-        # We don't use the surface again but need to keep a reference so it persists
+        # We need to keep a reference to the surface so its data persists
         if scene_buffer := SceneBuffer.create(self.core.wallpaper_tree, Buffer(wlr_buffer)):
-            output.wallpaper = (scene_buffer, surface)
+            scene_buffer.node.set_position(screen.x, screen.y)
+            self.core.wallpapers[screen] = (scene_buffer, surface)
         else:
             logger.warning("Failed to create wlr_scene_buffer.")
 
