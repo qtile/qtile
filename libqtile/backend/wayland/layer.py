@@ -200,6 +200,7 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self.x = x
         self.y = y
         self.tree.node.set_position(x, y)
+        self.popup_tree.node.set_position(x, y)
         # The actual resizing is done by `Output`.
         self._width = width
         self._height = height
