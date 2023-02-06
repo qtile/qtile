@@ -60,7 +60,7 @@ class XdgWindow(Window[XdgSurface]):
 
         self._wm_class = surface.toplevel.app_id
         surface.set_wm_capabilities(WM_CAPABILITIES)
-        surface.data = self._data_handle
+        surface.data = self.data_handle
         self.tree = core.scene.xdg_surface_create(self.container, surface)
 
         self.add_listener(surface.map_event, self._on_map)
@@ -313,7 +313,7 @@ class XdgStatic(Static[XdgSurface]):
 
         # Take control of the scene tree
         self.container = win.container
-        self.container.node.data = self._data_handle
+        self.container.node.data = self.data_handle
         self.tree = win.tree
 
     @expose_command()
