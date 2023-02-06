@@ -114,10 +114,10 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self._idle_inhibitors_count: int = 0
 
         # Create a scene-graph tree for this window and its borders
-        self._data_handle: wlffi.CData = wlffi.new_handle(self)
+        self.data_handle: wlffi.CData = wlffi.new_handle(self)
         self.container = SceneTree.create(core.window_tree)
         self.container.node.set_enabled(enabled=False)
-        self.container.node.data = self._data_handle
+        self.container.node.data = self.data_handle
 
         # The borders are wlr_scene_rects.
         # Inner list: N, E, S, W edges
@@ -155,7 +155,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         # Remove the scene graph container. Any borders will die with it.
         self.container.node.data = None
         self.container.node.destroy()
-        del self._data_handle
+        del self.data_handle
 
         if self.ftm_handle:
             self.ftm_handle.destroy()
@@ -757,14 +757,14 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         self._wm_class: str | None = None
         self._idle_inhibitors_count = idle_inhibitor_count
         self.ftm_handle: ftm.ForeignToplevelHandleV1 | None = None
-        self._data_handle = wlffi.new_handle(self)
-        surface.data = self._data_handle
+        self.data_handle = wlffi.new_handle(self)
+        surface.data = self.data_handle
 
     def finalize(self) -> None:
         self.finalize_listeners()
         self.surface.data = None
         self.core.remove_pointer_constraints(self)
-        del self._data_handle
+        del self.data_handle
 
     @property
     def wid(self) -> int:
@@ -879,11 +879,11 @@ class Internal(_Base, base.Internal):
         if scene_buffer is None:
             raise RuntimeError("Couldn't create scene buffer")
         self._scene_buffer = scene_buffer
-        self._data_handle = wlffi.new_handle(self)
+        self.data_handle = wlffi.new_handle(self)
         self.node = self._scene_buffer.node
         self.node.set_enabled(enabled=False)
         self.node.set_position(x, y)
-        self.node.data = self._data_handle
+        self.node.data = self.data_handle
 
     def finalize(self) -> None:
         self.hide()

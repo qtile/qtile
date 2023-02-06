@@ -483,10 +483,23 @@ class Core(base.Core, wlrq.HasListeners):
 
             parent_surface = xdg_surface.popup.parent
             if parent_surface.is_xdg_surface:
-                # An XDG shell window created this popup
-                parent = XdgSurface.from_surface(parent_surface)
-                win = cast(xdgwindow.XdgWindow, parent.data)
-                self.scene.xdg_surface_create(win.tree, xdg_surface)
+                # An XDG shell window or popup created this popup
+                parent_xdg_surface = XdgSurface.from_surface(parent_surface)
+
+                if parent_xdg_surface.role == XdgSurfaceRole.TOPLEVEL:
+                    # If the immediate parent is a toplevel, we're a level 1 popup
+                    win = cast(xdgwindow.XdgWindow, parent_xdg_surface.data)
+                    tree = win.tree
+                else:
+                    # otherwise, this is a nested popup
+                    tree = cast(SceneTree, parent_xdg_surface.data)
+                    while parent_xdg_surface.role == XdgSurfaceRole.POPUP:
+                        parent_xdg_surface = XdgSurface.from_surface(
+                            parent_xdg_surface.popup.parent
+                        )
+                    win = cast(xdgwindow.XdgWindow, parent_xdg_surface.data)
+
+                xdg_surface.data = self.scene.xdg_surface_create(tree, xdg_surface)
 
             elif parent_surface.is_layer_surface:
                 # A layer shell window created this popup
@@ -495,13 +508,13 @@ class Core(base.Core, wlrq.HasListeners):
                 self.scene.xdg_surface_create(win.popup_tree, xdg_surface)
 
             else:
-                # TODO: can the parent be another popup?
                 raise RuntimeError("Unknown surface as popup's parent.")
 
             # Position the popup
             box = xdg_surface.get_geometry()
             lx, ly = self.output_layout.closest_point(win.x + box.x, win.y + box.y)
-            box = Box(*self._current_output.get_geometry())
+            wlr_output = self.output_layout.output_at(lx, ly)
+            box = Box(*wlr_output.data.get_geometry())  # type: ignore[union-attr]
             box.x = round(box.x - lx)
             box.y = round(box.y - ly)
             xdg_surface.popup.unconstrain_from_box(box)
