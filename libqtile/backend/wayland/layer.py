@@ -58,8 +58,8 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self.desired_width = 0
         self.desired_height = 0
 
-        self._data_handle = wlffi.new_handle(self)
-        surface.data = self._data_handle
+        self.data_handle = wlffi.new_handle(self)
+        surface.data = self.data_handle
 
         # Determine which output this window is to appear on
         if wlr_output := surface.output:
@@ -81,7 +81,7 @@ class LayerStatic(Static[LayerSurfaceV1]):
             parent_tree, surface
         )
         self.tree: SceneTree = self.scene_layer.tree
-        self.tree.node.data = self._data_handle
+        self.tree.node.data = self.data_handle
         self.popup_tree = SceneTree.create(parent_tree)  # Popups get their own tree
 
         # Set up listeners
