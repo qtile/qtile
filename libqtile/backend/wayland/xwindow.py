@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import typing
 
-from pywayland import ffi as wlffi
 from wlroots import xwayland
 from wlroots.wlr_types import SceneTree
 
@@ -38,6 +37,7 @@ if typing.TYPE_CHECKING:
 
     import wlroots.wlr_types.foreign_toplevel_management_v1 as ftm
     from pywayland.server import Listener
+    from wlroots.xwayland import SurfaceConfigureEvent
 
     from libqtile.backend.wayland.core import Core
     from libqtile.core.manager import Qtile
@@ -49,105 +49,70 @@ class XWindow(Window[xwayland.Surface]):
 
     def __init__(self, core: Core, qtile: Qtile, surface: xwayland.Surface):
         Window.__init__(self, core, qtile, surface)
-
         self._wm_class = self.surface.wm_class
-        self._unmapping: bool = False  # Whether the client or Qtile unmapped this
-
-        self.add_listener(surface.map_event, self._on_map)
-        self.add_listener(surface.unmap_event, self._on_unmap)
-        self.add_listener(surface.destroy_event, self._on_destroy)
-
-        # Create a scene-graph tree for this window and its borders
-        self.container = SceneTree.create(core.window_tree)
-        self.container.node.set_enabled(enabled=False)
-        self.container.node.data = self._data_handle
 
         # Wait until we get a surface when mapping before making a tree
         self.tree: SceneTree | None = None
 
-    @property
-    def mapped(self) -> bool:
-        return self._mapped
+        # Update the name if the client has set one
+        if title := surface.title:
+            self.name = title
 
-    @mapped.setter
-    def mapped(self, mapped: bool) -> None:
-        """XWindows also need to restack in the X server's Z stack."""
-        if mapped != self._mapped:
-            if mapped:
-                self.bring_to_front()
-            Window.mapped.fset(self, mapped)  # type: ignore
+        # Add some listeners
+        self.add_listener(surface.map_event, self._on_map)
+        self.add_listener(surface.unmap_event, self._on_unmap)
+        self.add_listener(surface.request_activate_event, self._on_request_activate)
+        self.add_listener(surface.request_configure_event, self._on_request_configure)
+        self.add_listener(surface.destroy_event, self._on_destroy)
 
-    def _on_map(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: xwindow map")
+    def _on_commit(self, _listener: Listener, _data: Any) -> None:
+        if self.floating:
+            state = self.surface.surface.current
+            if state.width != self._width or state.height != self._height:
+                self.place(
+                    self.x, self.y, state.width, state.height, self.borderwidth, self.bordercolor
+                )
 
-        if self in self.core.pending_windows:
-            self.core.pending_windows.remove(self)
-            self._wid = self.core.new_wid()
-            logger.debug("Managing new XWayland window with window ID: %s", self._wid)
-            surface = self.surface
+    def _on_request_activate(self, _listener: Listener, event: SurfaceConfigureEvent) -> None:
+        logger.debug("Signal: xwindow request_activate")
+        self.surface.activate(True)
 
-            # Now we have a surface, we can create the scene-graph node to contain it
-            self.tree = SceneTree.subsurface_tree_create(self.container, surface.surface)
-
-            # Make it static if it isn't a regular window
-            if surface.override_redirect:
-                self.static(None, surface.x, surface.y, surface.width, surface.height)
-                win = self.qtile.windows_map[self._wid]
-                assert isinstance(win, XStatic)
-                self.core.focus_window(win)
-                return
-
-            surface.data = self._data_handle
-
-            # Save the client's desired geometry. xterm seems to have these set to 1, so
-            # let's ignore 1 or below. The float sizes will be fetched when it is floated.
-            if surface.width > 1:
-                self._width = self._float_width = surface.width
-            if self.surface.height > 1:
-                self._height = self._float_height = surface.height
-
-            self.ftm_handle = self.core.foreign_toplevel_manager_v1.create_handle()
-
-            # Get the client's name and class
-            title = surface.title
-            if title:
-                self.name = title
-                self.ftm_handle.set_title(self.name)
-            self._wm_class = surface.wm_class
-            self.ftm_handle.set_app_id(self._wm_class or "")
-
-            # Add event listeners
-            self.add_listener(surface.surface.commit_event, self._on_commit)
-            self.add_listener(surface.request_fullscreen_event, self._on_request_fullscreen)
-            self.add_listener(surface.set_title_event, self._on_set_title)
-            self.add_listener(surface.set_class_event, self._on_set_class)
-            self.add_listener(
-                self.ftm_handle.request_maximize_event, self._on_foreign_request_maximize
+    def _on_request_configure(self, _listener: Listener, event: SurfaceConfigureEvent) -> None:
+        logger.debug("Signal: xwindow request_configure")
+        if self.floating:
+            self.place(
+                event.x, event.y, event.width, event.height, self.borderwidth, self.bordercolor
             )
-            self.add_listener(
-                self.ftm_handle.request_minimize_event, self._on_foreign_request_minimize
+        else:
+            self.place(
+                self.x, self.y, self.width, self.height, self.borderwidth, self.bordercolor
             )
-            self.add_listener(
-                self.ftm_handle.request_activate_event, self._on_foreign_request_activate
-            )
-            self.add_listener(
-                self.ftm_handle.request_fullscreen_event, self._on_foreign_request_fullscreen
-            )
-            self.add_listener(self.ftm_handle.request_close_event, self._on_foreign_request_close)
-
-            self.qtile.manage(self)
-
-        if self.group and self.group.screen:
-            self.mapped = True
-            self.core.focus_window(self)
 
     def _on_unmap(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xwindow unmap")
-        self.mapped = False
-        seat = self.core.seat
-        if not seat.destroyed:
-            if self.surface.surface == seat.keyboard_state.focused_surface:
-                seat.keyboard_clear_focus()
+        self.hide()
+
+        # If X11 clients unmap themselves, we stop managing them as we normally do. See
+        # The X core's handler for UnmapNotify. Here, we restore them to a pending
+        # state.
+        if self not in self.core.pending_windows:
+            self.finalize_listeners()
+            if self.group and self not in self.group.windows:
+                self.group = None
+            self.qtile.unmanage(self.wid)
+            self.core.pending_windows.add(self)
+            self._wid = -1
+            # Restore the listeners that we set up in __init__
+            self.add_listener(self.surface.map_event, self._on_map)
+            self.add_listener(self.surface.unmap_event, self._on_unmap)
+            self.add_listener(self.surface.request_configure_event, self._on_request_configure)
+            self.add_listener(self.surface.destroy_event, self._on_destroy)
+
+        if self.ftm_handle:
+            self.ftm_handle.destroy()
+            self.ftm_handle = None
+
+        self.core.remove_pointer_constraints(self)
 
     def _on_request_fullscreen(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xwindow request_fullscreen")
@@ -170,13 +135,93 @@ class XWindow(Window[xwayland.Surface]):
             self.ftm_handle.set_app_id(self._wm_class or "")
 
     def hide(self) -> None:
-        if self.mapped:
-            self._unmapping = True
-            self.surface.unmap_event.emit()
+        super().hide()
+
+        if self.tree:
+            self.tree.node.destroy()
+            self.tree = None
+
+            # We stop listening for commit events when unmapped, as the underlying
+            # surface can get destroyed by the client.
+            self.remove_listener(self.surface.surface.commit_event)
 
     def unhide(self) -> None:
-        if not self.mapped:
-            self.surface.map_event.emit()
+        if self not in self.core.pending_windows:
+            if self.group and self.group.screen:
+
+                # Only when mapping does the xwayland_surface have a wlr_surface that we can
+                # listen for commits on and create a tree for.
+                self.add_listener(self.surface.surface.commit_event, self._on_commit)
+                if not self.tree:
+                    self.tree = SceneTree.subsurface_tree_create(
+                        self.container, self.surface.surface
+                    )
+                    self.tree.node.set_position(self.borderwidth, self.borderwidth)
+
+                self.container.node.set_enabled(enabled=True)
+                self.core.focus_window(self)
+                return
+
+        # This is the first time this window has mapped, so we need to do some initial
+        # setup.
+        self.core.pending_windows.remove(self)
+        self._wid = self.core.new_wid()
+        logger.debug("Managing new XWayland window with window ID: %s", self._wid)
+        surface = self.surface
+
+        # Now we have a surface, we can create the scene-graph node to contain it
+        self.tree = SceneTree.subsurface_tree_create(self.container, surface.surface)
+
+        # Make it static if it isn't a regular window (i.e. a window that the X11
+        # backend would consider un
+        if surface.override_redirect:
+            self.static(None, surface.x, surface.y, surface.width, surface.height)
+            win = self.qtile.windows_map[self._wid]
+            assert isinstance(win, XStatic)
+            self.core.focus_window(win)
+            win.bring_to_front()
+            return
+
+        # Save the CData handle that references this object on the XWayland surface.
+        surface.data = self._data_handle
+
+        # Now that the xwayland_surface has a wlr_surface we can add a commit
+        # listener. And now that we have `self.tree`, we can accept fullscreen
+        # requests.
+        self.add_listener(surface.surface.commit_event, self._on_commit)
+        self.add_listener(surface.request_fullscreen_event, self._on_request_fullscreen)
+        # And it doesn't mean make sense to listen to these until we manage this
+        # window
+        self.add_listener(surface.set_title_event, self._on_set_title)
+        self.add_listener(surface.set_class_event, self._on_set_class)
+
+        # Save the client's desired geometry. xterm seems to have these set to 1, so
+        # let's ignore 1 or below. The float sizes will be fetched when it is floated.
+        if surface.width > 1:
+            self._width = self._float_width = surface.width
+        if surface.height > 1:
+            self._height = self._float_height = surface.height
+
+        # Set up the foreign toplevel handle
+        handle = self.ftm_handle = self.core.foreign_toplevel_manager_v1.create_handle()
+        self.add_listener(handle.request_maximize_event, self._on_foreign_request_maximize)
+        self.add_listener(handle.request_minimize_event, self._on_foreign_request_minimize)
+        self.add_listener(handle.request_activate_event, self._on_foreign_request_activate)
+        self.add_listener(handle.request_fullscreen_event, self._on_foreign_request_fullscreen)
+        self.add_listener(handle.request_close_event, self._on_foreign_request_close)
+
+        # Get the client's name and class
+        if title := surface.title:
+            self.name = title
+            handle.set_title(title)
+        self._wm_class = surface.wm_class
+        handle.set_app_id(self._wm_class or "")
+
+        # Now the window is ready to be mapped, we can go ahead and manage it. Map
+        # it first so that we end end up recursing into this signal handler again.
+        self.qtile.manage(self)
+        if self.group and self.group.screen:
+            self.core.focus_window(self)
 
     @expose_command()
     def kill(self) -> None:
@@ -293,9 +338,8 @@ class XWindow(Window[xwayland.Surface]):
 
     @expose_command()
     def bring_to_front(self) -> None:
-        if self.mapped:
-            self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
-            self.container.node.raise_to_top()
+        self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
+        self.container.node.raise_to_top()
 
     @expose_command()
     def static(
@@ -335,6 +379,7 @@ class XStatic(Static[xwayland.Surface]):
         self.add_listener(surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
         self.add_listener(surface.surface.commit_event, self._on_commit)
+        self.add_listener(surface.request_configure_event, self._on_request_configure)
         self.add_listener(surface.set_title_event, self._on_set_title)
         self.add_listener(surface.set_class_event, self._on_set_class)
 
@@ -351,20 +396,59 @@ class XStatic(Static[xwayland.Surface]):
 
         # Take control of the scene node and tree
         self.container = win.container
-        self.container.node.data = self
+        self.container.node.data = self._data_handle
         self.tree = win.tree
+
+    def _on_unmap(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: xstatic unmap")
+        # When an X static window unmaps, just finalize it completely, re-instantiate a
+        # regular XWindow instance, and stick it into a pending state. This way, the
+        # client can re-use the window with a new xwayland surface without issue. There
+        # is certainly a nicer way to do this but that's a TODO.
+        self._on_destroy(None, None)
+        win = XWindow(self.core, self.qtile, self.surface)
+        self.core.pending_windows.add(win)
+
+    def _on_commit(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: xstatic commit")
+        state = self.surface.surface.current
+        if state.width != self._width or state.height != self._height:
+            self.place(
+                self.x, self.y, state.width, state.height, self.borderwidth, self.bordercolor
+            )
+
+    def _on_request_configure(self, _listener: Listener, event: SurfaceConfigureEvent) -> None:
+        logger.debug("Signal: xwindow request_configure")
+        if self.floating:
+            self.place(
+                event.x, event.y, event.width, event.height, self.borderwidth, self.bordercolor
+            )
+        else:
+            self.place(
+                self.x, self.y, self.width, self.height, self.borderwidth, self.bordercolor
+            )
 
     @expose_command()
     def kill(self) -> None:
         self.surface.close()
 
     def hide(self) -> None:
-        if self.mapped:
-            self.surface.unmap_event.emit()
+        super().hide()
+        self.container.node.set_enabled(enabled=False)
 
     def unhide(self) -> None:
-        if not self.mapped:
-            self.surface.map_event.emit()
+        if self not in self.core.pending_windows:
+            # Only when mapping does the xwayland_surface have a wlr_surface that we can
+            # listen for commits on and create a tree for.
+            self.add_listener(self.surface.surface.commit_event, self._on_commit)
+            if not self.tree:
+                self.tree = SceneTree.subsurface_tree_create(self.container, self.surface.surface)
+                self.tree.node.set_position(self.borderwidth, self.borderwidth)
+
+            self.container.node.set_enabled(enabled=True)
+            self.bring_to_front()
+            self.core.focus_window(self)
+            return
 
     def place(
         self,
@@ -405,3 +489,8 @@ class XStatic(Static[xwayland.Surface]):
         self.place(
             self.surface.x, self.surface.y, self.surface.width, self.surface.height, 0, None
         )
+
+    @expose_command()
+    def bring_to_front(self) -> None:
+        self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
+        self.container.node.raise_to_top()

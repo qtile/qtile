@@ -95,56 +95,17 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self._layer = surface.pending.layer
         old_state = surface.current
         surface.current = surface.pending
-        self.mapped = True
+        self.unhide()
         self.output.organise_layers()
         surface.current = old_state
         self._move_to_layer(old_state.layer)
-
-    @property
-    def mapped(self) -> bool:
-        return self._mapped
-
-    @mapped.setter
-    def mapped(self, mapped: bool) -> None:
-        if mapped == self._mapped:
-            return
-        if mapped:
-            self.output.layers[self._layer].append(self)
-        else:
-            self.output.layers[self._layer].remove(self)
-
-            if self.core.exclusive_layer is self:
-                self.core.exclusive_layer = None
-
-            if self.reserved_space:
-                self.qtile.free_reserved_space(self.reserved_space, self.screen)
-                self.reserved_space = None
-
-        self._mapped = mapped
-
-    def _on_map(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: layerstatic map")
-        self.mapped = True
-        self.output.organise_layers()
-        self.focus(False)
-
-    def _on_unmap(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: layerstatic unmap")
-        self.mapped = False
-        if self.surface.surface == self.core.seat.keyboard_state.focused_surface:
-            group = self.qtile.current_screen.group
-            if group.current_window:
-                group.focus(group.current_window, warp=self.qtile.config.cursor_warp)
-            else:
-                self.core.seat.keyboard_clear_focus()
-        self.output.organise_layers()
 
     def _on_commit(self, _listener: Listener, _data: Any) -> None:
         if self.surface.output and self.surface.output.data:
             output = self.surface.output.data
             if output != self.output:
                 # The window wants to move to a different output.
-                if self.mapped:
+                if self.tree.node.enabled:
                     self.output.layers[self._layer].remove(self)
                     output.layers[self._layer].append(self)
                 self.output = output
@@ -163,7 +124,7 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self.tree.node.reparent(new_parent)
         self.popup_tree.node.reparent(new_parent)
 
-        if self.mapped:
+        if self.tree.node.enabled:
             # If we're mapped, we also need to update the lists on the output.
             self.output.layers[self._layer].remove(self)
             self.output.layers[layer].append(self)
@@ -179,12 +140,31 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self.surface.destroy()
 
     def hide(self) -> None:
-        if self.mapped:
-            self.surface.unmap_event.emit()
+        if self.core.exclusive_layer is self:
+            self.core.exclusive_layer = None
+
+        if self.reserved_space:
+            self.qtile.free_reserved_space(self.reserved_space, self.screen)
+            self.reserved_space = None
+
+        if self.surface.surface == self.core.seat.keyboard_state.focused_surface:
+            group = self.qtile.current_screen.group
+            if group.current_window:
+                group.focus(group.current_window, warp=self.qtile.config.cursor_warp)
+            else:
+                self.core.seat.keyboard_clear_focus()
+
+        if self in self.output.layers[self._layer]:
+            self.tree.node.set_enabled(enabled=False)
+            # TODO also toggle popup_tree
+            self.output.layers[self._layer].remove(self)
+            self.output.organise_layers()
 
     def unhide(self) -> None:
-        if not self.mapped:
-            self.surface.map_event.emit()
+        if self not in self.output.layers[self._layer]:
+            self.tree.node.set_enabled(enabled=True)
+            self.output.layers[self._layer].append(self)
+            self.output.organise_layers()
 
     def place(
         self,
@@ -208,4 +188,4 @@ class LayerStatic(Static[LayerSurfaceV1]):
 
     @expose_command()
     def bring_to_front(self) -> None:
-        pass
+        self.tree.node.raise_to_top()

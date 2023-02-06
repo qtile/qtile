@@ -29,7 +29,6 @@ from wlroots.wlr_types import Output as wlrOutput
 from wlroots.wlr_types import SceneOutput
 from wlroots.wlr_types.layer_shell_v1 import (
     LayerShellV1Layer,
-    LayerSurfaceV1Anchor,
     LayerSurfaceV1KeyboardInteractivity,
 )
 
