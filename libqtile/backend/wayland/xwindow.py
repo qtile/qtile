@@ -183,7 +183,7 @@ class XWindow(Window[xwayland.Surface]):
             return
 
         # Save the CData handle that references this object on the XWayland surface.
-        surface.data = self._data_handle
+        surface.data = self.data_handle
 
         # Now that the xwayland_surface has a wlr_surface we can add a commit
         # listener. And now that we have `self.tree`, we can accept fullscreen
@@ -396,7 +396,7 @@ class XStatic(Static[xwayland.Surface]):
 
         # Take control of the scene node and tree
         self.container = win.container
-        self.container.node.data = self._data_handle
+        self.container.node.data = self.data_handle
         self.tree = win.tree
 
     def _on_unmap(self, _listener: Listener, _data: Any) -> None:
