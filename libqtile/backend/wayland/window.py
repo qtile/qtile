@@ -26,7 +26,7 @@ import typing
 
 import cairocffi
 import wlroots.wlr_types.foreign_toplevel_management_v1 as ftm
-from pywayland import ffi as wlffi
+from pywayland import ffi as wlffi  # TODO: can we use a single ffi instance?
 from pywayland.server import Client, Listener
 from wlroots import PtrHasData
 from wlroots.util.box import Box
@@ -107,13 +107,23 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self.qtile = qtile
         self.surface = surface
         self._group: _Group | None = None
-        self._mapped: bool = False
         self.x = 0
         self.y = 0
         self._opacity: float = 1.0
         self._wm_class: str | None = None
         self._idle_inhibitors_count: int = 0
+
+        # Create a scene-graph tree for this window and its borders
         self._data_handle: wlffi.CData = wlffi.new_handle(self)
+        self.container = SceneTree.create(core.window_tree)
+        self.container.node.set_enabled(enabled=False)
+        self.container.node.data = self._data_handle
+
+        # The borders are wlr_scene_rects.
+        # Inner list: N, E, S, W edges
+        # Outer list: outside-in borders i.e. multiple for multiple borders
+        self._borders: list[list[SceneRect]] = []
+        self.bordercolor: ColorsType = "000000"
 
         # This is a placeholder to be set properly when the window maps for the first
         # time (and therefore exposed to the user). We need the attribute to exist so
@@ -138,12 +148,6 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         # attribute optional to avoid the destroy().
         self.ftm_handle: ftm.ForeignToplevelHandleV1 | None = None
 
-        # The borders are wlr_scene_rects.
-        # Inner list: N, E, S, W edges
-        # Outer list: outside-in borders i.e. multiple for multiple borders
-        self._borders: list[list[SceneRect]] = []
-        self.bordercolor = "000000"
-
     def finalize(self) -> None:
         self.finalize_listeners()
         self.surface.data = None
@@ -151,13 +155,21 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         # Remove the scene graph container. Any borders will die with it.
         self.container.node.data = None
         self.container.node.destroy()
-        self._data_handle = None
+        del self._data_handle
 
         if self.ftm_handle:
             self.ftm_handle.destroy()
             self.ftm_handle = None
 
         self.core.remove_pointer_constraints(self)
+
+    def _on_map(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: window map")
+        self.unhide()
+
+    def _on_unmap(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: window unmap")
+        self.hide()
 
     @property
     def wid(self) -> int:
@@ -171,25 +183,9 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     def group(self, group: _Group | None) -> None:
         self._group = group
 
-    @property
-    def mapped(self) -> bool:
-        return self._mapped
-
-    @mapped.setter
-    def mapped(self, mapped: bool) -> None:
-        """We keep track of which windows are mapped so we know which to render"""
-        if mapped == self._mapped:
-            return
-        if self._idle_inhibitors_count > 0:
-            self.core.check_idle_inhibitor()
-        self.container.node.set_enabled(enabled=mapped)
-        self._mapped = mapped
-
     def _on_destroy(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: window destroy")
-        if self.mapped:
-            logger.warning("Window destroyed before unmap event.")
-            self.mapped = False
+        self.hide()
 
         if self in self.core.pending_windows:
             self.core.pending_windows.remove(self)
@@ -197,9 +193,6 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             self.qtile.unmanage(self.wid)
 
         self.finalize()
-
-    def _on_commit(self, _listener: Listener, _data: Any) -> None:
-        pass
 
     def _on_foreign_request_maximize(
         self, _listener: Listener, event: ftm.ForeignToplevelHandleV1MaximizedEvent
@@ -238,6 +231,14 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         listener.remove()
         if self._idle_inhibitors_count == 0:
             self.core.check_idle_inhibitor()
+            # TODO: do we also need to check idle inhibitors when unmapping?
+
+    def hide(self) -> None:
+        self.container.node.set_enabled(enabled=False)
+        seat = self.core.seat
+        if not seat.destroyed:
+            if self.surface.surface == seat.keyboard_state.focused_surface:  # type: ignore
+                seat.keyboard_clear_focus()
 
     def get_wm_class(self) -> list | None:
         if self._wm_class:
@@ -306,7 +307,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         if not isinstance(colors, list):
             colors = [colors]
 
-        self.tree.node.set_position(width, width)
+        if self.tree:
+            self.tree.node.set_position(width, width)
         self.bordercolor = colors
         self.borderwidth = width
 
@@ -363,6 +365,11 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         for rects in old_borders:
             for rect in rects:
                 rect.node.destroy()
+
+        # Ensure the window contents and any nested surfaces are drawn above the
+        # borders.
+        if self.tree:
+            self.tree.node.raise_to_top()
 
         self._borders = new_borders
 
@@ -664,8 +671,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
     @expose_command()
     def bring_to_front(self) -> None:
-        if self.mapped:
-            self.tree.node.raise_to_top()
+        self.container.node.raise_to_top()
 
     @expose_command()
     def static(
@@ -707,13 +713,13 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
         if screen is not None:
             win.screen = self.qtile.screens[screen]
-        win.mapped = True
+        win.unhide()
         win.place(x, y, width, height, 0, None)
         self.qtile.windows_map[self.wid] = win
 
     @expose_command()
     def is_visible(self) -> bool:
-        return self._mapped
+        return self.container.node.enabled
 
     @abc.abstractmethod
     def _to_static(self) -> Static:
@@ -736,7 +742,6 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         self.surface = surface
         self.screen = qtile.current_screen
         self._wid = wid
-        self._mapped: bool = False
         self.x = 0
         self.y = 0
         self._width = 0
@@ -754,21 +759,11 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         self.finalize_listeners()
         self.surface.data = None
         self.core.remove_pointer_constraints(self)
+        del self._data_handle
 
     @property
     def wid(self) -> int:
         return self._wid
-
-    @property
-    def mapped(self) -> bool:
-        return self._mapped
-
-    @mapped.setter
-    def mapped(self, mapped: bool) -> None:
-        if mapped == self._mapped:
-            return
-        self.container.node.set_enabled(enabled=mapped)
-        self._mapped = mapped
 
     def focus(self, warp: bool = True) -> None:
         self.core.focus_window(self)
@@ -783,12 +778,15 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
 
     def _on_map(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: static map")
-        self.mapped = True
+        self.unhide()
         self.focus(True)
+        self.bring_to_front()
 
     def _on_unmap(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: static unmap")
-        self.mapped = False
+        self.hide()
+
+    def hide(self) -> None:
         if self.surface.surface == self.core.seat.keyboard_state.focused_surface:  # type: ignore
             group = self.qtile.current_screen.group
             if group.current_window:
@@ -798,9 +796,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
 
     def _on_destroy(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: static destroy")
-        if self.mapped:
-            logger.warning("Window destroyed before unmap event.")
-            self.mapped = False
+        self.hide()
 
         if self in self.core.pending_windows:
             self.core.pending_windows.remove(self)
@@ -808,10 +804,6 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
             self.qtile.unmanage(self.wid)
 
         self.finalize()
-
-    def _on_commit(self, _listener: Listener, _data: Any) -> None:
-        # TODO: Is this needed?
-        pass
 
     def _on_foreign_request_close(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: foreign_toplevel_management static request_close")
@@ -844,8 +836,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
 
     @expose_command()
     def bring_to_front(self) -> None:
-        if self.mapped:
-            self.tree.node.raise_to_top()
+        self.container.node.raise_to_top()
 
     @expose_command()
     def info(self) -> dict:
@@ -869,7 +860,6 @@ class Internal(_Base, base.Internal):
     def __init__(self, core: Core, qtile: Qtile, x: int, y: int, width: int, height: int):
         self.core = core
         self.qtile = qtile
-        self._mapped: bool = False
         self._wid: int = self.core.new_wid()
         self.x: int = x
         self.y: int = y
@@ -885,7 +875,6 @@ class Internal(_Base, base.Internal):
             raise RuntimeError("Couldn't create scene buffer")
         self._scene_buffer = scene_buffer
         self._data_handle = wlffi.new_handle(self)
-        self._scene_buffer.data = self._data_handle
         self.node = self._scene_buffer.node
         self.node.set_enabled(enabled=False)
         self.node.set_position(x, y)
@@ -916,23 +905,11 @@ class Internal(_Base, base.Internal):
         """Create a Drawer that draws to this window."""
         return Drawer(self.qtile, self, width, height)
 
-    @property
-    def mapped(self) -> bool:
-        return self._mapped
-
-    @mapped.setter
-    def mapped(self, mapped: bool) -> None:
-        """We keep track of which windows are mapped to we know which to render"""
-        if mapped == self._mapped:
-            return
-        self.node.set_enabled(enabled=mapped)
-        self._mapped = mapped
-
     def hide(self) -> None:
-        self.mapped = False
+        self.node.set_enabled(enabled=False)
 
     def unhide(self) -> None:
-        self.mapped = True
+        self.node.set_enabled(enabled=True)
 
     @expose_command()
     def focus(self, warp: bool = True) -> None:
@@ -985,8 +962,7 @@ class Internal(_Base, base.Internal):
 
     @expose_command()
     def bring_to_front(self) -> None:
-        if self.mapped:
-            self.node.raise_to_top()
+        self.node.raise_to_top()
 
 
 WindowType = typing.Union[Window, Static, Internal]

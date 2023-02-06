@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING, cast
 
 import cairocffi
 from pywayland.server import Listener
-from wlroots.wlr_types import Buffer, SceneBuffer, SceneTree, Texture, data_device_manager
+from wlroots.wlr_types import Buffer, SceneBuffer, SceneTree, data_device_manager
 from wlroots.wlr_types.keyboard import KeyboardModifier
 
 from libqtile.backend.wayland._ffi import ffi, lib
@@ -180,6 +180,14 @@ class HasListeners:
     def finalize_listeners(self) -> None:
         for listener in reversed(self._listeners):
             listener.remove()
+        self._listeners.clear()
+
+    def remove_listener(self, event: Signal) -> None:
+        for listener in self._listeners.copy():
+            if listener._signal._ptr == event._ptr:  # type: ignore
+                listener.remove()
+                return
+        logger.warning("Failed to remove listener for event: %s", event)
 
 
 class Dnd(HasListeners):

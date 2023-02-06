@@ -28,7 +28,6 @@ from pywayland.server import Listener
 from wlroots import ffi
 from wlroots.util.clock import Timespec
 from wlroots.util.edges import Edges
-from wlroots.wlr_types import SceneTree
 from wlroots.wlr_types.xdg_shell import XdgSurface, XdgTopLevelWMCapabilities
 
 from libqtile import hook
@@ -62,89 +61,16 @@ class XdgWindow(Window[XdgSurface]):
         self._wm_class = surface.toplevel.app_id
         surface.set_wm_capabilities(WM_CAPABILITIES)
         surface.data = self._data_handle
-
-        # Create a scene-graph tree for this window and its borders
-        self.container = SceneTree.create(core.window_tree)
-        self.container.node.set_enabled(enabled=False)
-        self.container.node.data = self._data_handle
         self.tree = core.scene.xdg_surface_create(self.container, surface)
 
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
-        self.add_listener(surface.surface.commit_event, self._on_commit)
+        # self.add_listener(surface.surface.commit_event, self._on_commit)
         self.add_listener(surface.toplevel.request_maximize_event, self._on_request_maximize)
         self.add_listener(surface.toplevel.request_fullscreen_event, self._on_request_fullscreen)
 
         self.ftm_handle = core.foreign_toplevel_manager_v1.create_handle()
-
-    def _on_map(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: xdgwindow map")
-
-        if not self._wm_class == self.surface.toplevel.app_id:
-            self._wm_class = self.surface.toplevel.app_id
-
-        if self in self.core.pending_windows:
-            self.core.pending_windows.remove(self)
-            self._wid = self.core.new_wid()
-            logger.debug(
-                "Managing new top-level window with window ID: %s, app_id: %s",
-                self._wid,
-                self._wm_class,
-            )
-
-            # Save the client's desired geometry
-            surface = self.surface
-            geometry = surface.get_geometry()
-            self._width = self._float_width = geometry.width
-            self._height = self._float_height = geometry.height
-
-            # Tell the client to render tiled edges
-            surface.set_tiled(EDGES_TILED)
-
-            assert self.ftm_handle is not None
-
-            # Get the client's name
-            if surface.toplevel.title:
-                self.name = surface.toplevel.title
-                self.ftm_handle.set_title(self.name)
-            if self._wm_class:
-                self.ftm_handle.set_app_id(self._wm_class or "")
-
-            # Add the toplevel's listeners
-            self.add_listener(surface.toplevel.set_title_event, self._on_set_title)
-            self.add_listener(surface.toplevel.set_app_id_event, self._on_set_app_id)
-            self.add_listener(
-                self.ftm_handle.request_maximize_event, self._on_foreign_request_maximize
-            )
-            self.add_listener(
-                self.ftm_handle.request_minimize_event, self._on_foreign_request_minimize
-            )
-            self.add_listener(
-                self.ftm_handle.request_activate_event, self._on_foreign_request_activate
-            )
-            self.add_listener(
-                self.ftm_handle.request_fullscreen_event, self._on_foreign_request_fullscreen
-            )
-            self.add_listener(self.ftm_handle.request_close_event, self._on_foreign_request_close)
-
-            self.qtile.manage(self)
-
-            # Send a frame done event to provide an opportunity to redraw even if we
-            # aren't going to map (i.e. because the window was opened on a hidden group)
-            surface.surface.send_frame_done(Timespec.get_monotonic_time())
-
-        if self.group and self.group.screen:
-            self.mapped = True
-            self.core.focus_window(self)
-
-    def _on_unmap(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: xdgwindow unmap")
-        self.mapped = False
-        seat = self.core.seat
-        if not seat.destroyed:
-            if self.surface.surface == seat.keyboard_state.focused_surface:
-                seat.keyboard_clear_focus()
 
     def _on_request_fullscreen(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow request_fullscreen")
@@ -174,16 +100,63 @@ class XdgWindow(Window[XdgSurface]):
         if self.ftm_handle:
             self.ftm_handle.set_app_id(self._wm_class or "")
 
-    def hide(self) -> None:
-        if self.mapped:
-            self.surface.unmap_event.emit()
-
     def unhide(self) -> None:
-        if not self.mapped:
-            self.surface.map_event.emit()
+        self._wm_class = self.surface.toplevel.app_id
+
+        if self not in self.core.pending_windows:
+            # Regular usage
+            if self.group and self.group.screen:
+                self.container.node.set_enabled(enabled=True)
+                self.core.focus_window(self)
+            return
+
+        # This is the first time this window has mapped, so we need to do some initial
+        # setup.
+        self.core.pending_windows.remove(self)
+        self._wid = self.core.new_wid()
+        logger.debug(
+            "Managing new top-level window with window ID: %s, app_id: %s",
+            self._wid,
+            self._wm_class,
+        )
+
+        # Save the client's desired geometry
+        surface = self.surface
+        geometry = surface.get_geometry()
+        self._width = self._float_width = geometry.width
+        self._height = self._float_height = geometry.height
+
+        # Tell the client to render tiled edges
+        surface.set_tiled(EDGES_TILED)
+
+        handle = self.ftm_handle
+        assert handle is not None
+
+        # Get the client's name
+        if surface.toplevel.title:
+            self.name = surface.toplevel.title
+            handle.set_title(self.name)
+        if self._wm_class:
+            handle.set_app_id(self._wm_class or "")
+
+        # Add the toplevel's listeners
+        self.add_listener(surface.toplevel.set_title_event, self._on_set_title)
+        self.add_listener(surface.toplevel.set_app_id_event, self._on_set_app_id)
+        self.add_listener(handle.request_maximize_event, self._on_foreign_request_maximize)
+        self.add_listener(handle.request_minimize_event, self._on_foreign_request_minimize)
+        self.add_listener(handle.request_activate_event, self._on_foreign_request_activate)
+        self.add_listener(handle.request_fullscreen_event, self._on_foreign_request_fullscreen)
+        self.add_listener(handle.request_close_event, self._on_foreign_request_close)
+
+        self.qtile.manage(self)
+
+        # Send a frame done event to provide an opportunity to redraw even if we aren't
+        # going to map (i.e. because the window was opened on a hidden group)
+        surface.surface.send_frame_done(Timespec.get_monotonic_time())
 
     @expose_command()
     def kill(self) -> None:
+        self.hide()
         self.surface.send_close()
 
     def has_fixed_size(self) -> bool:
@@ -334,7 +307,7 @@ class XdgStatic(Static[XdgSurface]):
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
-        self.add_listener(surface.surface.commit_event, self._on_commit)
+        # self.add_listener(surface.surface.commit_event, self._on_commit)
         self.add_listener(surface.toplevel.set_title_event, self._on_set_title)
         self.add_listener(surface.toplevel.set_app_id_event, self._on_set_app_id)
 
@@ -348,12 +321,11 @@ class XdgStatic(Static[XdgSurface]):
         self.surface.send_close()
 
     def hide(self) -> None:
-        if self.mapped:
-            self.surface.unmap_event.emit()
+        super().hide()
+        self.container.node.set_enabled(enabled=False)
 
     def unhide(self) -> None:
-        if not self.mapped:
-            self.surface.map_event.emit()
+        self.container.node.set_enabled(enabled=True)
 
     def place(
         self,
