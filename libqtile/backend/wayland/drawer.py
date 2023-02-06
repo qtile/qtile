@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 import cairocffi
 from wlroots.util.region import PixmanRegion32
 
-from libqtile import utils
 from libqtile.backend import base
 
 if TYPE_CHECKING:

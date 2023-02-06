@@ -61,7 +61,7 @@ from wlroots.wlr_types.cursor import Cursor, WarpMode
 from wlroots.wlr_types.idle import Idle
 from wlroots.wlr_types.idle_inhibit_v1 import IdleInhibitorManagerV1, IdleInhibitorV1
 from wlroots.wlr_types.keyboard import Keyboard
-from wlroots.wlr_types.layer_shell_v1 import LayerShellV1, LayerShellV1Layer, LayerSurfaceV1
+from wlroots.wlr_types.layer_shell_v1 import LayerShellV1, LayerSurfaceV1
 from wlroots.wlr_types.output_management_v1 import (
     OutputConfigurationHeadV1,
     OutputConfigurationV1,
@@ -1151,15 +1151,18 @@ class Core(base.Core, wlrq.HasListeners):
             return
 
         logger.debug("Focusing new window")
-        if surface.is_xdg_surface and isinstance(win.surface, XdgSurface):
-            win.surface.set_activated(True)
-            if win.ftm_handle:
-                win.ftm_handle.set_activated(True)
+        ftm_handle = None
 
-        elif surface.is_xwayland_surface and isinstance(win.surface, xwayland.Surface):
+        if isinstance(win.surface, XdgSurface):
+            win.surface.set_activated(True)
+            ftm_handle = win.ftm_handle
+
+        elif isinstance(win.surface, xwayland.Surface):
             win.surface.activate(True)
-            if win.ftm_handle:
-                win.ftm_handle.set_activated(True)
+            ftm_handle = win.ftm_handle
+
+        if ftm_handle:
+            ftm_handle.set_activated(True)
 
         if enter and self.seat.keyboard._ptr:  # This pointer is NULL when headless
             self.seat.keyboard_notify_enter(surface, self.seat.keyboard)
@@ -1271,15 +1274,12 @@ class Core(base.Core, wlrq.HasListeners):
         assert self.qtile is not None
 
         for win in self.qtile.windows_map.values():
-            if (
-                isinstance(win, (window.Window, window.Static))
-                and win.mapped
-                and win.is_idle_inhibited
-            ):
+            if win.is_idle_inhibited:
+                # TODO: do we also need to check that the window is mapped?
                 self.idle.set_enabled(self.seat, False)
-                break
-        else:
-            self.idle.set_enabled(self.seat, True)
+                return
+
+        self.idle.set_enabled(self.seat, True)
 
     def get_screen_info(self) -> list[tuple[int, int, int, int]]:
         """Get the output information"""
@@ -1444,7 +1444,9 @@ class Core(base.Core, wlrq.HasListeners):
             node = buffer.node
             while True:
                 if win := node.data:
-                    if win.mapped:
+                    if node.enabled:
+                        # TODO does this need to check the container node rather than
+                        # three node within it?
                         wids.append(win.wid)
                     return
                 parent = node.parent
