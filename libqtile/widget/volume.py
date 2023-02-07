@@ -92,6 +92,16 @@ class Volume(base._TextBox):
             "Volume change for up an down commands in percentage."
             "Only used if ``volume_up_command`` and ``volume_down_command`` are not set.",
         ),
+        (
+            "unmute_format",
+            "{volume}%",
+            "Format of text to display. Available fields: 'volume'",
+        ),
+        (
+            "mute_format",
+            "M",
+            "Format of text to display when the volume is muted. Available fields: 'volume'",
+        ),
     ]
 
     def __init__(self, **config):
@@ -99,6 +109,8 @@ class Volume(base._TextBox):
         self.add_defaults(Volume.defaults)
         self.surfaces = {}
         self.volume = None
+        self.mute = False
+        self.mixer_out = ""
 
         self.add_callbacks(
             {
@@ -138,8 +150,11 @@ class Volume(base._TextBox):
 
     def update(self):
         vol = self.get_volume()
-        if vol != self.volume:
+        next_mute = self.check_mute_string in self.mixer_out
+
+        if vol != self.volume or self.mute != next_mute:
             self.volume = vol
+            self.mute = next_mute
             # Update the underlying canvas size before actually attempting
             # to figure out how big it is and draw it.
             self._update_drawer()
@@ -149,7 +164,7 @@ class Volume(base._TextBox):
     def _update_drawer(self):
         if self.theme_path:
             self.drawer.clear(self.background or self.bar.background)
-            if self.volume <= 0:
+            if self.volume <= 0 or self.mute:
                 img_name = "audio-volume-muted"
             elif self.volume <= 30:
                 img_name = "audio-volume-low"
@@ -161,7 +176,7 @@ class Volume(base._TextBox):
             self.drawer.ctx.set_source(self.surfaces[img_name])
             self.drawer.ctx.paint()
         elif self.emoji:
-            if self.volume <= 0:
+            if self.volume <= 0 or self.mute:
                 self.text = "\U0001f507"
             elif self.volume <= 30:
                 self.text = "\U0001f508"
@@ -170,10 +185,9 @@ class Volume(base._TextBox):
             elif self.volume >= 80:
                 self.text = "\U0001f50a"
         else:
-            if self.volume == -1:
-                self.text = "M"
-            else:
-                self.text = "{}%".format(self.volume)
+            self.text = (self.mute_format if self.mute else self.unmute_format).format(
+                volume=self.volume
+            )
 
     def setup_images(self):
         from libqtile import images
@@ -199,18 +213,15 @@ class Volume(base._TextBox):
             else:
                 get_volume_cmd = self.create_amixer_command("sget", self.channel)
 
-            mixer_out = subprocess.getoutput(get_volume_cmd)
+            self.mixer_out = subprocess.getoutput(get_volume_cmd)
         except subprocess.CalledProcessError:
             return -1
 
-        check_mute = mixer_out
+        check_mute = self.mixer_out
         if self.check_mute_command:
             check_mute = subprocess.getoutput(self.check_mute_command)
 
-        if self.check_mute_string in check_mute:
-            return -1
-
-        volgroups = re_vol.search(mixer_out)
+        volgroups = re_vol.search(self.mixer_out)
         if volgroups:
             return int(volgroups.groups()[0])
         else:

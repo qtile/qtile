@@ -51,6 +51,7 @@ class PulseVolume(Volume):
         self.default_sink = None
         self.handle = ffi.new_handle(self)
         self.client_name = ffi.new("char[]", b"Qtile-pulse")
+        self._old_mute = None
 
     def _configure(self, qtile, bar):
         Volume._configure(self, qtile, bar)
@@ -227,17 +228,19 @@ class PulseVolume(Volume):
         manually re-schedule update
         """
         vol = self.get_volume()
-        if vol != self.volume:
+        if vol != self.volume or self.mute is not self._old_mute:
             self.volume = vol
+            self._old_mute = self.mute
             # Update the underlying canvas size before actually attempting
             # to figure out how big it is and draw it.
             self._update_drawer()
             self.bar.draw()
 
     def get_volume(self):
+        self.mute = False
         if self.default_sink:
             if self.default_sink["muted"]:
-                return -1
+                self.mute = True
             base = self.default_sink["base_volume"]
             if not base:
                 return -1
