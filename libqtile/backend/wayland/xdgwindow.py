@@ -66,7 +66,6 @@ class XdgWindow(Window[XdgSurface]):
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
-        # self.add_listener(surface.surface.commit_event, self._on_commit)
         self.add_listener(surface.toplevel.request_maximize_event, self._on_request_maximize)
         self.add_listener(surface.toplevel.request_fullscreen_event, self._on_request_fullscreen)
 
@@ -75,7 +74,11 @@ class XdgWindow(Window[XdgSurface]):
     def _on_request_fullscreen(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow request_fullscreen")
         if self.qtile.config.auto_fullscreen:
-            self.fullscreen = self.surface.toplevel.requested.fullscreen
+            requested = self.surface.toplevel.requested.fullscreen
+            if self.fullscreen == requested:
+                self.surface.schedule_configure()
+            else:
+                self.fullscreen = requested
         else:
             # Per xdg-shell protocol we must send a configure in response to this
             # request. Since we're ignoring it, we must schedule a configure manually.
@@ -182,34 +185,6 @@ class XdgWindow(Window[XdgSurface]):
             self.surface.set_fullscreen(do_full)
             if self.ftm_handle:
                 self.ftm_handle.set_fullscreen(do_full)
-
-    @property
-    def fullscreen(self) -> bool:
-        return self._float_state == FloatStates.FULLSCREEN
-
-    @fullscreen.setter
-    def fullscreen(self, do_full: bool) -> None:
-        self.surface.set_fullscreen(do_full)
-        if do_full:
-            screen = (self.group and self.group.screen) or self.qtile.find_closest_screen(
-                self.x, self.y
-            )
-            if self.group:
-                bw = self.group.floating_layout.fullscreen_border_width
-            else:
-                bw = 0
-            self._reconfigure_floating(
-                screen.x,
-                screen.y,
-                screen.width - 2 * bw,
-                screen.height - 2 * bw,
-                new_float_state=FloatStates.FULLSCREEN,
-            )
-        elif self._float_state == FloatStates.FULLSCREEN:
-            self.floating = False
-
-        if self.ftm_handle:
-            self.ftm_handle.set_fullscreen(do_full)
 
     def place(
         self,
