@@ -264,31 +264,6 @@ class XWindow(Window[xwayland.Surface]):
             if self.ftm_handle:
                 self.ftm_handle.set_fullscreen(do_full)
 
-    @property
-    def fullscreen(self) -> bool:
-        return self._float_state == FloatStates.FULLSCREEN
-
-    @fullscreen.setter
-    def fullscreen(self, do_full: bool) -> None:
-        self.surface.set_fullscreen(do_full)
-        if do_full:
-            screen = (self.group and self.group.screen) or self.qtile.find_closest_screen(
-                self.x, self.y
-            )
-            bw = self.group.floating_layout.fullscreen_border_width if self.group else 0
-            self._reconfigure_floating(
-                screen.x,
-                screen.y,
-                screen.width - 2 * bw,
-                screen.height - 2 * bw,
-                new_float_state=FloatStates.FULLSCREEN,
-            )
-        elif self._float_state == FloatStates.FULLSCREEN:
-            self.floating = False
-
-        if self.ftm_handle:
-            self.ftm_handle.set_fullscreen(do_full)
-
     def place(
         self,
         x: int,
