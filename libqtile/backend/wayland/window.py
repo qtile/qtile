@@ -386,7 +386,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             )
             # wlroots' scene graph doesn't support setting the opacity of trees/nodes by
             # the compositor. See: https://gitlab.freedesktop.org/wlroots/wlroots/-/issues/3393
-            # If/when that becomes supported, this property can be removed.
+            # If/when that becomes supported, this warning can be removed.
         self._opacity = opacity
 
     @property
@@ -420,6 +420,27 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             if self.group:
                 self.group.mark_floating(self, False)
             hook.fire("float_change")
+
+    @property
+    def fullscreen(self) -> bool:
+        return self._float_state == FloatStates.FULLSCREEN
+
+    @fullscreen.setter
+    def fullscreen(self, do_full: bool) -> None:
+        if do_full and self._float_state != FloatStates.FULLSCREEN:
+            screen = (self.group and self.group.screen) or self.qtile.find_closest_screen(
+                self.x, self.y
+            )
+            bw = self.group.floating_layout.fullscreen_border_width if self.group else 0
+            self._reconfigure_floating(
+                screen.x,
+                screen.y,
+                screen.width - 2 * bw,
+                screen.height - 2 * bw,
+                new_float_state=FloatStates.FULLSCREEN,
+            )
+        elif self._float_state == FloatStates.FULLSCREEN:
+            self.floating = False
 
     @abc.abstractmethod
     def _update_fullscreen(self, do_full: bool) -> None:
