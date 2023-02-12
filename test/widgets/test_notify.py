@@ -201,7 +201,6 @@ def test_capabilities():
 @pytest.mark.skipif(shutil.which("notify-send") is None, reason="notify-send not installed.")
 @pytest.mark.usefixtures("dbus")
 def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
-
     # We need to create an object to listen for signals from the qtile
     # notification server. This needs to be created within the manager
     # object so we rely on "eval" applying "exec".

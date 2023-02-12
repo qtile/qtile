@@ -102,7 +102,6 @@ class Zoomy(_SimpleLayoutBase):
             and self.clients.current_client.window.get_property(self.property_name, "UTF8_STRING")
             is not None
         ):
-
             self.clients.current_client.window.set_property(
                 self.property_name, self.property_small, "UTF8_STRING", format=8
             )

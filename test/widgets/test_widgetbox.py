@@ -25,7 +25,6 @@ from test.widgets.conftest import FakeBar
 
 
 def test_widgetbox_widget(fake_qtile, fake_window):
-
     tb_one = TextBox(name="tb_one", text="TB ONE")
     tb_two = TextBox(name="tb_two", text="TB TWO")
 

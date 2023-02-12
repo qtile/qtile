@@ -196,7 +196,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             self._borders_drawn = False
 
             if sum(self._initial_margin) or sum(self.border_width) or self._add_strut:
-
                 try:
                     # Check if colours are valid but don't convert to rgba here
                     if isinstance(self.border_color, list) and len(self.border_color) == 4:
@@ -571,7 +570,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
         # We draw the border before the widgets
         if any(self.border_width) and not self._borders_drawn:
-
             # The border is drawn "outside" of the bar (i.e. not in the space that the
             # widgets occupy) so we need to add the additional space
             width = self.width + self.border_width[1] + self.border_width[3]
@@ -601,7 +599,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             for border_width, colour, opts in zip(
                 self.border_width, self.border_color, line_opts
             ):
-
                 if not border_width:
                     continue
 

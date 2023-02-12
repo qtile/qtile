@@ -201,7 +201,7 @@ MODULE_RENAMES = [
     ("libqtile.window", "libqtile.backend.x11.window"),
 ]
 
-for (fro, to) in MODULE_RENAMES:
+for fro, to in MODULE_RENAMES:
 
     def f(query, fro=fro, to=to):
         return query.select_module(fro).rename(to)

@@ -103,7 +103,6 @@ class Config:
         """Reloads python files from same folder as config file."""
         folder = path.parent
         for module in sys.modules.copy().values():
-
             # Skip built-ins and anything with no filepath.
             if hasattr(module, "__file__") and module.__file__ is not None:
                 subpath = Path(module.__file__)

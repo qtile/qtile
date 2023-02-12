@@ -122,7 +122,6 @@ class Output(HasListeners):
                 with self.renderer.render(
                     wlr_output._ptr.width, wlr_output._ptr.height
                 ) as renderer:
-
                     if self.wallpaper:
                         width, height = wlr_output.effective_resolution()
                         box = Box(0, 0, int(width * scale), int(height * scale))
