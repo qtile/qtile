@@ -205,7 +205,6 @@ class DGroups:
                 and self.groups_map[current_group].exclusive
                 and not intrusive
             ):
-
                 wm_class = client.get_wm_class()
 
                 if wm_class:

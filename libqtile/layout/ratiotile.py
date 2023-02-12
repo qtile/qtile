@@ -72,7 +72,6 @@ class GridInfo:
         best_ratio = None
         best_rows_cols_orientation = None
         for rows, cols, orientation in self._possible_grids(num_windows):
-
             sample_width = width / cols
             sample_height = height / rows
             sample_ratio = sample_width / sample_height

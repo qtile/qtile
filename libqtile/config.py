@@ -393,7 +393,6 @@ class Screen(CommandObject):
         width: int | None = None,
         height: int | None = None,
     ) -> None:
-
         self.top = top
         self.bottom = bottom
         self.left = left

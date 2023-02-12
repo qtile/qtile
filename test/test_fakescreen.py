@@ -388,7 +388,6 @@ def test_hammer_tile(manager):
     for i in range(7):
         manager.test_window("one")
     for i in range(30):
-
         manager.c.to_screen((i + 1) % 4)
         manager.c.group["a"].toscreen()
     assert manager.c.group["a"].info()["windows"] == [

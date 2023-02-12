@@ -77,7 +77,6 @@ class QtileCommands(SimpleDirectiveMixin, Directive):
 
             # Check if method has been exposed to the command graph
             if getattr(method, "_cmd", False):
-
                 # If we're excluding inherited commands then check for them here
                 if exclude_inherited and hasattr(command.base.CommandObject, method):
                     continue

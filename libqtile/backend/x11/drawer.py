@@ -143,7 +143,6 @@ class Drawer(base.Drawer):
         width: int | None = None,
         height: int | None = None,
     ):
-
         self.current_rect = (offsetx, offsety, width, height)
 
         # If this is our first draw, create the gc
@@ -177,7 +176,6 @@ class Drawer(base.Drawer):
                     return v
 
     def clear(self, colour):
-
         # Check if we need to re-create XCBSurface
         self._check_xcb()
 

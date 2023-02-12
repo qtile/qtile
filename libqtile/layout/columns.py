@@ -21,7 +21,6 @@ from libqtile.log_utils import logger
 
 
 class _Column(_ClientList):
-
     # shortcuts for current client and index used in Columns layout
     cw = _ClientList.current_client
     current = _ClientList.current_index
