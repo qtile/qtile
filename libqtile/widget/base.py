@@ -42,6 +42,7 @@ from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandObject, expose_command
 from libqtile.lazy import LazyCall
 from libqtile.log_utils import logger
+from libqtile.utils import create_task
 
 if TYPE_CHECKING:
     from typing import Any
@@ -225,7 +226,7 @@ class _Widget(CommandObject, configurable.Configurable):
         self.drawer = bar.window.create_drawer(self.bar.width, self.bar.height)
         if not self.configured:
             self.qtile.call_soon(self.timer_setup)
-            self.qtile.call_soon(asyncio.create_task, self._config_async())
+            self.qtile.call_soon(create_task, self._config_async())
 
     async def _config_async(self):
         """
@@ -351,9 +352,9 @@ class _Widget(CommandObject, configurable.Configurable):
         self._remove_dead_timers()
         try:
             if asyncio.iscoroutinefunction(method):
-                asyncio.create_task(method(*method_args))
+                create_task(method(*method_args))
             elif asyncio.iscoroutine(method):
-                asyncio.create_task(method)
+                create_task(method)
             else:
                 method(*method_args)
         except:  # noqa: E722

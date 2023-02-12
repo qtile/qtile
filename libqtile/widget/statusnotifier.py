@@ -17,8 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-import asyncio
 import os
 from functools import partial
 
@@ -42,7 +40,7 @@ except ImportError:
 from libqtile import bar
 from libqtile.images import Img
 from libqtile.log_utils import logger
-from libqtile.utils import add_signal_receiver
+from libqtile.utils import add_signal_receiver, create_task
 from libqtile.widget import base
 
 # StatusNotifier seems to have two potential interface names.
@@ -176,22 +174,22 @@ class StatusNotifierItem:  # noqa: E303
         if not self.icon:
             self.icon = self._get_xdg_icon(icon_name)
 
+    def _create_task_and_draw(self, coro):
+        task = create_task(coro)
+        task.add_done_callback(self._redraw)
+
     def _update_local_icon(self):
         self.icon = None
-        task = asyncio.create_task(self._get_local_icon())
-        task.add_done_callback(self._redraw)
+        self._create_task_and_draw(self._get_local_icon())
 
     def _new_icon(self):
-        task = asyncio.create_task(self._get_icon("Icon"))
-        task.add_done_callback(self._redraw)
+        self._create_task_and_draw(self._get_icon("Icon"))
 
     def _new_attention_icon(self):
-        task = asyncio.create_task(self._get_icon("Attention"))
-        task.add_done_callback(self._redraw)
+        self._create_task_and_draw(self._get_icon("Attention"))
 
     def _new_overlay_icon(self):
-        task = asyncio.create_task(self._get_icon("Overlay"))
-        task.add_done_callback(self._redraw)
+        self._create_task_and_draw(self._get_icon("Overlay"))
 
     def _get_custom_icon(self, icon_name, icon_path):
         for ext in [".png", ".svg"]:
@@ -337,7 +335,7 @@ class StatusNotifierItem:  # noqa: E303
 
     def activate(self):
         if hasattr(self, "call_activate"):
-            asyncio.create_task(self._activate())
+            create_task(self._activate())
 
     async def _activate(self):
         # Call Activate method and pass window position hints
@@ -564,7 +562,7 @@ class StatusNotifierHost:  # noqa: E303
         item = StatusNotifierItem(self.bus, service, path=path, icon_theme=self.icon_theme)
         item.on_icon_changed = self.item_icon_changed
         if item not in self.items:
-            task = asyncio.create_task(item.start())
+            task = create_task(item.start())
             task.add_done_callback(partial(self.item_added, item, service))
 
     def remove_item(self, interface):

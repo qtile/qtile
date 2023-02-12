@@ -379,6 +379,8 @@ unsubscribe = Unsubscribe()
 
 
 def _fire_async_event(co):
+    from libqtile.utils import create_task
+
     loop = None
     with contextlib.suppress(RuntimeError):
         loop = asyncio.get_running_loop()
@@ -386,7 +388,7 @@ def _fire_async_event(co):
     if loop is None:
         asyncio.run(co)
     else:
-        asyncio.create_task(co)
+        create_task(co)
 
 
 def fire(event, *args, **kwargs):

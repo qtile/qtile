@@ -206,17 +206,15 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
     # object so we rely on "eval" applying "exec".
     handler = textwrap.dedent(
         """
-        import asyncio
-
-        from libqtile.utils import add_signal_receiver
+        from libqtile.utils import add_signal_receiver, create_task
 
         class SignalListener:
             def __init__(self):
                 self.action_invoked = None
                 self.notification_closed = None
                 global add_signal_receiver
-                global asyncio
-                asyncio.create_task(
+                global create_task
+                create_task(
                     add_signal_receiver(
                         self.on_notification_closed,
                         session_bus=True,
@@ -224,7 +222,7 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
                     )
                 )
 
-                asyncio.create_task(
+                create_task(
                     add_signal_receiver(
                         self.on_action_invoked,
                         session_bus=True,
@@ -247,12 +245,10 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
     # expose actions so we need a lower-level call
     notification_with_actions = textwrap.dedent(
         """
-        import asyncio
-
         from dbus_next import Variant
         from dbus_next.constants import MessageType
 
-        from libqtile.utils import _send_dbus_message
+        from libqtile.utils import _send_dbus_message, create_task
 
         notification = [
             "qtile",
@@ -265,7 +261,7 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
             5000
         ]
 
-        asyncio.create_task(
+        create_task(
             _send_dbus_message(
                 True,
                 MessageType.METHOD_CALL,
@@ -290,6 +286,9 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
 
     # Create our signal listener
     manager_nospawn.c.eval(handler)
+
+    _, result = manager_nospawn.c.eval("self.signal_listener")
+    print(result)
 
     # Send first notification and check time and display time
     notif_1 = [NS]
