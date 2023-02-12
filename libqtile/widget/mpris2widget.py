@@ -33,7 +33,7 @@ from dbus_next.constants import MessageType
 
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
-from libqtile.utils import _send_dbus_message, add_signal_receiver
+from libqtile.utils import _send_dbus_message, add_signal_receiver, create_task
 from libqtile.widget import base
 
 if TYPE_CHECKING:
@@ -249,7 +249,7 @@ class Mpris2(base._TextBox):
         if message.message_type != MessageType.SIGNAL:
             return
 
-        asyncio.create_task(self.process_message(message))
+        create_task(self.process_message(message))
 
     async def process_message(self, message):
         current_player = message.sender
@@ -373,7 +373,8 @@ class Mpris2(base._TextBox):
         if self._current_player is None:
             return
 
-        task = asyncio.create_task(self._send_player_cmd(cmd))
+        task = create_task(self._send_player_cmd(cmd))
+        assert task
         task.add_done_callback(self._task_callback)
 
     async def _send_player_cmd(self, cmd: str) -> Message | None:
