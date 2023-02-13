@@ -185,7 +185,7 @@ class Volume(base._TextBox):
             elif self.volume >= 80:
                 self.text = "\U0001f50a"
         else:
-            self.text = (self.mute_format if self.mute else self.unmute_format).format(
+            self.text = (self.mute_format if self.mute or self.volume < 0 else self.unmute_format).format(
                 volume=self.volume
             )
 
