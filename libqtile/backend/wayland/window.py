@@ -26,7 +26,6 @@ import typing
 
 import cairocffi
 import wlroots.wlr_types.foreign_toplevel_management_v1 as ftm
-from pywayland import ffi as wlffi  # TODO: can we use a single ffi instance?
 from pywayland.server import Client, Listener
 from wlroots import PtrHasData
 from wlroots.util.box import Box
@@ -114,7 +113,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self._idle_inhibitors_count: int = 0
 
         # Create a scene-graph tree for this window and its borders
-        self.data_handle: wlffi.CData = wlffi.new_handle(self)
+        self.data_handle: ffi.CData = ffi.new_handle(self)
         self.container = SceneTree.create(core.window_tree)
         self.container.node.set_enabled(enabled=False)
         self.container.node.data = self.data_handle
@@ -782,7 +781,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         self._wm_class: str | None = None
         self._idle_inhibitors_count = idle_inhibitor_count
         self.ftm_handle: ftm.ForeignToplevelHandleV1 | None = None
-        self.data_handle = wlffi.new_handle(self)
+        self.data_handle = ffi.new_handle(self)
         surface.data = self.data_handle
 
     def finalize(self) -> None:
@@ -908,7 +907,7 @@ class Internal(_Base, base.Internal):
         if scene_buffer is None:
             raise RuntimeError("Couldn't create scene buffer")
         self._scene_buffer = scene_buffer
-        self.data_handle = wlffi.new_handle(self)
+        self.data_handle = ffi.new_handle(self)
         self.node = self._scene_buffer.node
         self.node.set_enabled(enabled=False)
         self.node.set_position(x, y)

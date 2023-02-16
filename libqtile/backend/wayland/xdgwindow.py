@@ -22,10 +22,7 @@ from __future__ import annotations
 
 import typing
 
-from pywayland import ffi as wlffi
-from pywayland import lib as wllib
 from pywayland.server import Listener
-from wlroots import ffi
 from wlroots.util.clock import Timespec
 from wlroots.util.edges import Edges
 from wlroots.wlr_types.xdg_shell import XdgSurface, XdgTopLevelWMCapabilities
@@ -33,6 +30,7 @@ from wlroots.wlr_types.xdg_shell import XdgSurface, XdgTopLevelWMCapabilities
 from libqtile import hook
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
+from libqtile.backend.wayland._ffi import ffi, lib
 from libqtile.backend.wayland.window import Static, Window
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
@@ -175,9 +173,8 @@ class XdgWindow(Window[XdgSurface]):
         return None
 
     def get_pid(self) -> int:
-        pid = wlffi.new("pid_t *")
-        # TODO: all libs are compiled together and should expose all functions
-        wllib.wl_client_get_credentials(self.surface._ptr.client.client, pid, ffi.NULL, ffi.NULL)
+        pid = ffi.new("pid_t *")
+        lib.wl_client_get_credentials(self.surface._ptr.client.client, pid, ffi.NULL, ffi.NULL)
         return pid[0]
 
     def _update_fullscreen(self, do_full: bool) -> None:
