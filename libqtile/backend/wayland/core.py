@@ -1255,7 +1255,8 @@ class Core(base.Core, wlrq.HasListeners):
                     return self.qtile.current_window, surface, sx, sy
 
                 # We got a node that is part of a window, walk up the scene graph to
-                # find the window object.
+                # find the window object. It could also be an XDG popup, which can be
+                # the child of either an XDG window or a layer shell window.
                 tree = node.parent
                 while tree.node.data is None:
                     tree = tree.node.parent

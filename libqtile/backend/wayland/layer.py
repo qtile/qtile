@@ -83,6 +83,7 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self.tree: SceneTree = self.scene_layer.tree
         self.tree.node.data = self.data_handle
         self.popup_tree = SceneTree.create(parent_tree)  # Popups get their own tree
+        self.popup_tree.node.data = self.data_handle
 
         # Set up listeners
         self.add_listener(surface.map_event, self._on_map)
