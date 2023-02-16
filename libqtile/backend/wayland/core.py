@@ -703,7 +703,6 @@ class Core(base.Core, wlrq.HasListeners):
                     # We break if the .data attribute was set, because that tells us
                     # that `win.add_idle_inhibitor` identified this inhibitor as
                     # belonging to that window.
-                    # TODO: why does add_idle_inhibitor have `| None`?
                     break
 
     def _on_input_inhibitor_activate(self, _listener: Listener, _data: Any) -> None:
