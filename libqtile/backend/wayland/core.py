@@ -700,6 +700,10 @@ class Core(base.Core, wlrq.HasListeners):
             if isinstance(win, (window.Window, window.Static)):
                 win.surface.for_each_surface(win.add_idle_inhibitor, idle_inhibitor)
                 if idle_inhibitor.data:
+                    # We break if the .data attribute was set, because that tells us
+                    # that `win.add_idle_inhibitor` identified this inhibitor as
+                    # belonging to that window.
+                    # TODO: why does add_idle_inhibitor have `| None`?
                     break
 
     def _on_input_inhibitor_activate(self, _listener: Listener, _data: Any) -> None:
@@ -1288,7 +1292,7 @@ class Core(base.Core, wlrq.HasListeners):
         assert self.qtile is not None
 
         for win in self.qtile.windows_map.values():
-            if win.is_idle_inhibited:
+            if not isinstance(win, window.Internal) and win.is_idle_inhibited:
                 # TODO: do we also need to check that the window is mapped?
                 self.idle.set_enabled(self.seat, False)
                 return
