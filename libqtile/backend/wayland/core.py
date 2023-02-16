@@ -32,7 +32,6 @@ import pywayland.server
 import wlroots.helper as wlroots_helper
 import wlroots.wlr_types.virtual_keyboard_v1 as vkeyboard
 import wlroots.wlr_types.virtual_pointer_v1 as vpointer
-from pywayland import lib as wllib
 from pywayland.protocol.wayland import WlSeat
 from wlroots import xwayland
 from wlroots.util import log as wlr_log
@@ -84,6 +83,7 @@ from xkbcommon import xkb
 from libqtile import hook, log_utils
 from libqtile.backend import base
 from libqtile.backend.wayland import inputs, layer, window, wlrq, xdgwindow, xwindow
+from libqtile.backend.wayland._ffi import lib
 from libqtile.backend.wayland.output import Output
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
@@ -1032,7 +1032,7 @@ class Core(base.Core, wlrq.HasListeners):
         """Setup a listener for the given qtile instance"""
         logger.debug("Adding io watch")
         self.qtile = qtile
-        self.fd = wllib.wl_event_loop_get_fd(self.event_loop._ptr)
+        self.fd = lib.wl_event_loop_get_fd(self.event_loop._ptr)
         if self.fd:
             asyncio.get_running_loop().add_reader(self.fd, self._poll)
         else:
