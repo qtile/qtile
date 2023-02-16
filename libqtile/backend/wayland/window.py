@@ -578,9 +578,13 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         return match.compare(self)
 
     def add_idle_inhibitor(
-        self, surface: Surface, _x: int, _y: int, inhibitor: IdleInhibitorV1 | None
+        self,
+        surface: Surface,
+        _x: int,
+        _y: int,
+        inhibitor: IdleInhibitorV1,
     ) -> None:
-        if inhibitor and surface == inhibitor.surface:
+        if surface == inhibitor.surface:
             self._idle_inhibitors_count += 1
             inhibitor.data = self
             self.add_listener(inhibitor.destroy_event, self._on_inhibitor_destroy)
@@ -839,9 +843,13 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
             self.core.check_idle_inhibitor()
 
     def add_idle_inhibitor(
-        self, surface: Surface, _x: int, _y: int, inhibitor: IdleInhibitorV1 | None
+        self,
+        surface: Surface,
+        _x: int,
+        _y: int,
+        inhibitor: IdleInhibitorV1,
     ) -> None:
-        if inhibitor and surface == inhibitor.surface:
+        if surface == inhibitor.surface:
             self._idle_inhibitors_count += 1
             inhibitor.data = self
             self.add_listener(inhibitor.destroy_event, self._on_inhibitor_destroy)
