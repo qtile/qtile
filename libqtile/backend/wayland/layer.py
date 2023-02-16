@@ -22,12 +22,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from pywayland import ffi as wlffi
 from pywayland.server import Listener
 from wlroots.wlr_types import Output as WlrOutput
 from wlroots.wlr_types import SceneTree
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1
 
+from libqtile.backend.wayland._ffi import ffi
 from libqtile.backend.wayland.output import Output
 from libqtile.backend.wayland.window import Static
 from libqtile.command.base import expose_command
@@ -58,7 +58,7 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self.desired_width = 0
         self.desired_height = 0
 
-        self.data_handle = wlffi.new_handle(self)
+        self.data_handle = ffi.new_handle(self)
         surface.data = self.data_handle
 
         # Determine which output this window is to appear on
