@@ -28,8 +28,6 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from libqtile.backend.x11 import core
-
 if TYPE_CHECKING:
     from typing import Any
 
@@ -138,8 +136,13 @@ class Config:
 
     def validate(self) -> None:
         """
-        Validate the configuration against the core.
+        Validate the configuration against the X11 core, if it makes sense.
         """
+        try:
+            from libqtile.backend.x11 import core
+        except ImportError:
+            return
+
         valid_keys = core.get_keys()
         valid_mods = core.get_modifiers()
         # we explicitly do not want to set self.keys and self.mouse above,
