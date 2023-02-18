@@ -52,6 +52,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Fix `Battery` widget on FreeBSD without explicit `battery` index given.
         - Fix laggy resize in X11 by limiting the MotionNotify fps to a default of 120. This is configurable
           per screen with the x11_drag_polling_rate variable.
+        - Fix XMonad layout faulty call to nonexistent _shrink_up
     * python version support
         - We have added support for python 3.11 and pypy 3.9.
         - python 3.7, 3.8 and pypy 3.7 are not longer supported.
