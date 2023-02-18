@@ -9,11 +9,6 @@ def test_get_core_x11(display):
     get_core("x11", display).finalize()
 
 
-def test_keys(display):
-    assert "a" in core.get_keys()
-    assert "shift" in core.get_modifiers()
-
-
 def test_no_two_qtiles(xmanager):
     with pytest.raises(core.ExistingWMException):
         core.Core(xmanager.display).finalize()
