@@ -468,7 +468,7 @@ class MonadTall(_SimpleLayoutBase):
             left -= per_amt - self._shrink(idx, per_amt)
         # apply non-equal shrinkage secondary pass
         # in order to use up any left over shrink amounts
-        left = self._shrink_up(cidx, left)
+        left = self.shrink_up(cidx, left)
         # return whatever could not be applied
         return left
 
