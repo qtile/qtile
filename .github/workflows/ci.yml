@@ -8,12 +8,6 @@ jobs:
     build:
         runs-on: ubuntu-22.04
         name: "python ${{ matrix.python-version }}"
-        env:
-          WAYLAND: 1.21.0
-          WAYLAND_PROTOCOLS: 1.31
-          WLROOTS: 0.16.0
-          SEATD: 0.7.0
-          LIBDRM: 2.4.114
         strategy:
             matrix:
                 # If you change one of these, be sure to update:
@@ -41,46 +35,7 @@ jobs:
                   libxcb-render0-dev libxcb-res0-dev libxcb-xfixes0-dev vlc volumeicon-alsa
                 sudo pip -q install meson PyGObject
                 pip -q install "tox<4" tox-gh-actions 
-            - name: Build wayland
-              run: |
-                wget -q --no-check-certificate https://wayland.freedesktop.org/releases/wayland-$WAYLAND.tar.xz
-                tar -xJf wayland-$WAYLAND.tar.xz
-                cd wayland-$WAYLAND
-                meson build -Ddocumentation=false --prefix=/usr
-                ninja -C build
-                sudo ninja -C build install
-            - name: Build wayland-protocols
-              run: |
-                wget -q --no-check-certificate https://wayland.freedesktop.org/releases/wayland-protocols-$WAYLAND_PROTOCOLS.tar.xz
-                tar -xJf wayland-protocols-$WAYLAND_PROTOCOLS.tar.xz
-                cd wayland-protocols-$WAYLAND_PROTOCOLS
-                meson build -Dtests=false --prefix=/usr
-                ninja -C build
-                sudo ninja -C build install
-            - name: Build seatd
-              run: |
-                wget -q --no-check-certificate https://git.sr.ht/~kennylevinsen/seatd/archive/$SEATD.tar.gz
-                tar -xzf $SEATD.tar.gz
-                cd seatd-$SEATD
-                meson build --prefix=/usr
-                ninja -C build
-                sudo ninja -C build install
-            - name: Build libdrm
-              run: |
-                wget -q --no-check-certificate https://gitlab.freedesktop.org/mesa/drm/-/archive/libdrm-$LIBDRM/drm-libdrm-$LIBDRM.tar.gz
-                tar -xzf drm-libdrm-$LIBDRM.tar.gz
-                cd drm-libdrm-$LIBDRM
-                meson build --prefix=/usr
-                ninja -C build
-                sudo ninja -C build install
-            - name: Build wlroots
-              run: |
-                wget -q --no-check-certificate https://gitlab.freedesktop.org/wlroots/wlroots/-/archive/$WLROOTS/wlroots-$WLROOTS.tar.gz
-                tar -xzf wlroots-$WLROOTS.tar.gz
-                cd wlroots-$WLROOTS
-                meson build -Dexamples=false --prefix=/usr -Dxwayland=enabled
-                ninja -C build
-                sudo ninja -C build install
+                ./scripts/ubuntu_wayland_setup
             - name: Run Tests
               run: |
                 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
