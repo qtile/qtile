@@ -22,7 +22,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import asyncio
 from typing import Any
 
 try:
@@ -35,6 +34,7 @@ except ImportError:
     has_dbus = False
 
 from libqtile.log_utils import logger
+from libqtile.utils import create_task
 
 BUS_NAME = "org.freedesktop.Notifications"
 SERVICE_PATH = "/org/freedesktop/Notifications"
@@ -169,7 +169,7 @@ if has_dbus:
                     logger.error("Unable to remove notify on_close callback. Unknown callback.")
 
             if not self.callbacks:
-                return asyncio.create_task(self._release())
+                return create_task(self._release())
 
         async def _release(self):
             """

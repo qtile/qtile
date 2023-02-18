@@ -77,6 +77,7 @@ MOCK_MODULES = [
     "xcffib.xfixes",
     "xcffib.xinerama",
     "xcffib.xproto",
+    "xcffib.xtest",
     "xdg.IconTheme",
     "xkbcommon",
 ]

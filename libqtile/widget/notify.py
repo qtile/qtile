@@ -133,11 +133,11 @@ class Notify(base._TextBox):
         self.current_id = notif.id - 1
         if notif.timeout and notif.timeout > 0:
             self.timeout_add(
-                notif.timeout / 1000, self._clear, method_args=(ClosedReason.expired,)
+                notif.timeout / 1000, self.clear, method_args=(ClosedReason.expired,)
             )
         elif self.default_timeout:
             self.timeout_add(
-                self.default_timeout, self._clear, method_args=(ClosedReason.expired,)
+                self.default_timeout, self.clear, method_args=(ClosedReason.expired,)
             )
         self.bar.draw()
         return True
@@ -150,7 +150,9 @@ class Notify(base._TextBox):
         self.set_notif_text(notifier.notifications[self.current_id])
         self.bar.draw()
 
-    def _clear(self, reason=ClosedReason.dismissed):
+    @expose_command()
+    def clear(self, reason=ClosedReason.dismissed):
+        """Clear the notification"""
         if notifier is None:
             return
 
@@ -164,7 +166,7 @@ class Notify(base._TextBox):
         if self.current_id < len(notifier.notifications):
             notif = notifier.notifications[self.current_id]
             if notif.id == nid:
-                self._clear(ClosedReason.method)
+                self.clear(ClosedReason.method)
 
     @expose_command()
     def prev(self):
@@ -188,12 +190,7 @@ class Notify(base._TextBox):
             notif = notifier.notifications[self.current_id]
             if notif.actions:
                 notifier._service.ActionInvoked(notif.id, notif.actions[0])
-            self._clear()
-
-    @expose_command()
-    def clear(self):
-        """Clear the notification"""
-        self._clear()
+            self.clear()
 
     @expose_command()
     def toggle(self):
@@ -201,7 +198,7 @@ class Notify(base._TextBox):
         if self.text == "":
             self.display()
         else:
-            self._clear()
+            self.clear()
 
     @expose_command()
     def invoke(self):

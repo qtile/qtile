@@ -50,7 +50,13 @@ from libqtile.extension.base import _Extension
 from libqtile.group import _Group
 from libqtile.log_utils import logger
 from libqtile.scratchpad import ScratchPad
-from libqtile.utils import get_cache_dir, lget, send_notification, subscribe_for_resume_events
+from libqtile.utils import (
+    cancel_tasks,
+    get_cache_dir,
+    lget,
+    send_notification,
+    subscribe_for_resume_events,
+)
 from libqtile.widget.base import _Widget
 
 if TYPE_CHECKING:
@@ -318,6 +324,7 @@ class Qtile(CommandObject):
 
     def finalize(self) -> None:
         self._finalize_configurables()
+        cancel_tasks()
         self.core.finalize()
 
     def _process_screens(self, reloading: bool = False) -> None:
@@ -405,15 +412,17 @@ class Qtile(CommandObject):
     def paint_screen(self, screen: Screen, image_path: str, mode: str | None = None) -> None:
         self.core.painter.paint(screen, image_path, mode)
 
-    def process_key_event(self, keysym: int, mask: int) -> None:
+    def process_key_event(self, keysym: int, mask: int) -> tuple[Key | KeyChord | None, bool]:
         key = self.keys_map.get((keysym, mask), None)
         if key is None:
             logger.debug("Ignoring unknown keysym: %s, mask: %s", keysym, mask)
-            return
+            return (None, False)
 
         if isinstance(key, KeyChord):
             self.grab_chord(key)
         else:
+            # Keep track if we have executed a command
+            executed = False
             for cmd in key.commands:
                 if cmd.check(self):
                     status, val = self.server.call(
@@ -421,9 +430,15 @@ class Qtile(CommandObject):
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("KB command error %s: %s", cmd.name, val)
+                    executed = True
             if self.chord_stack and (not self.chord_stack[-1].mode or key.key == "Escape"):
                 self.ungrab_chord()
-            return
+            # We never swallow when no commands have been executed,
+            # even when key.swallow is set to True
+            elif not executed:
+                return (key, False)
+        # Return whether we have handled the key based on the key's swallow parameter
+        return (key, key.swallow)
 
     def grab_keys(self) -> None:
         """Re-grab all of the keys configured in the key map
@@ -1151,6 +1166,9 @@ class Qtile(CommandObject):
     @expose_command()
     def simulate_keypress(self, modifiers: list[str], key: str) -> None:
         """Simulates a keypress on the focused window.
+
+        This triggers internal bindings only; for full simulation see external tools
+        such as xdotool or ydotool.
 
         Parameters
         ==========

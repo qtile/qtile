@@ -159,7 +159,6 @@ class WidgetBox(base._Widget):
             index += 1
 
         if self.box_is_open:
-
             # Need to reverse list as widgets get added in front of eachother.
             for widget in self.widgets[::-1]:
                 # enable drawing again

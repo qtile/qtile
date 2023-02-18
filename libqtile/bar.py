@@ -246,7 +246,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             self._borders_drawn = False
 
             if any(self.margin) or any(self.border_width) or self._reserved_space_updated:
-
                 # Increase the margin size for the border. The border will be drawn
                 # in this space so the empty space will just be the margin.
                 margin = [b + s for b, s in zip(self.border_width, self._reserved_space)]
@@ -623,7 +622,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
         # We draw the border before the widgets
         if any(self.border_width) and not self._borders_drawn:
-
             # The border is drawn "outside" of the bar (i.e. not in the space that the
             # widgets occupy) so we need to add the additional space
             width = self.width + self.border_width[1] + self.border_width[3]
@@ -653,7 +651,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             for border_width, colour, opts in zip(
                 self.border_width, self.border_color, line_opts
             ):
-
                 if not border_width:
                     continue
 

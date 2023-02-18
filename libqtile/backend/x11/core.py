@@ -31,6 +31,7 @@ from typing import TYPE_CHECKING
 import xcffib
 import xcffib.render
 import xcffib.xproto
+import xcffib.xtest
 from xcffib.xproto import EventMask, StackMode
 
 from libqtile import config, hook, utils
@@ -152,6 +153,7 @@ class Core(base.Core):
 
         self.qtile = None  # type: Qtile | None
         self._painter = None
+        self._xtest = self.conn.conn(xcffib.xtest.key)
 
         numlock_code = self.conn.keysym_to_keycode(xcbq.keysyms["num_lock"])[0]
         self._numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(numlock_code), 0)
@@ -608,11 +610,27 @@ class Core(base.Core):
             except IndexError:
                 logger.debug("Invalid desktop index: %s", index)
 
-    def handle_KeyPress(self, event) -> None:  # noqa: N802
+    def handle_KeyPress(self, event, *, simulated=False) -> None:  # noqa: N802
         assert self.qtile is not None
 
         keysym = self.conn.code_to_syms[event.detail][0]
-        self.qtile.process_key_event(keysym, event.state & self._valid_mask)
+        key, handled = self.qtile.process_key_event(keysym, event.state & self._valid_mask)
+
+        if simulated:
+            # Even though simulated keybindings could use a proper X11 event, we don't want do any fake input
+            # This is because it needs extra code for e.g. pressing/releasing the modifiers
+            # This we don't want to handle and instead leave to external tools such as xdotool
+            return
+
+        # As we're grabbing async we can't just replay it, so...
+        # We need to forward the event to the focused window
+        if not handled and key:
+            # We need to ungrab the key as otherwise we get an event loop
+            self.ungrab_key(key)
+            # Modifier is pressed, just repeat the event with xtest
+            self._fake_KeyPress(event)
+            # Grab the key again
+            self.grab_key(key)
 
     def handle_ButtonPress(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
@@ -740,6 +758,27 @@ class Core(base.Core):
     def handle_ScreenChangeNotify(self, event) -> None:  # noqa: N802
         hook.fire("screen_change", event)
 
+    def _fake_input(self, input_type, detail, x=0, y=0) -> None:
+        self._xtest.FakeInput(
+            input_type,
+            detail,
+            0,  # This is a delay, not timestamp, according to AwesomeWM
+            xcffib.XCB_NONE,
+            x,  # x: Only used for motion events
+            y,  # y: Only used for motion events
+            0,
+        )
+        self.flush()
+
+    def _fake_KeyPress(self, event) -> None:  # noqa: N802
+        # First release the key as it is possibly already pressed
+        for input_type in (
+            xcbq.XCB_KEY_RELEASE,
+            xcbq.XCB_KEY_PRESS,
+            xcbq.XCB_KEY_RELEASE,
+        ):
+            self._fake_input(input_type, event.detail)
+
     @contextlib.contextmanager
     def disable_unmap_events(self):
         self._root.set_attribute(eventmask=self.eventmask & (~EventMask.SubstructureNotify))
@@ -754,7 +793,6 @@ class Core(base.Core):
 
     def simulate_keypress(self, modifiers, key):
         """Simulates a keypress on the focused window."""
-        # FIXME: This needs to be done with sendevent, once we have that fixed.
         modmasks = xcbq.translate_masks(modifiers)
         keysym = xcbq.keysyms.get(key.lower())
 
@@ -764,7 +802,7 @@ class Core(base.Core):
         d = DummyEv()
         d.detail = self.conn.keysym_to_keycode(keysym)[0]
         d.state = modmasks
-        self.handle_KeyPress(d)
+        self.handle_KeyPress(d, simulated=True)
 
     def focus_by_click(self, e, window=None):
         """Bring a window to the front

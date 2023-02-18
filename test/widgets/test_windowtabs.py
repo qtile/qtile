@@ -115,7 +115,6 @@ def test_multiple_windows(manager):
 
 @windowtabs_config
 def test_selected(manager):
-
     # Bottom bar widget has custom "selected" indicator
     def widget_text():
         return manager.c.bar["bottom"].info()["widgets"][0]["text"]

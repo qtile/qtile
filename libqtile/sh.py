@@ -319,7 +319,7 @@ class QSh:
             else:
                 return "Invalid builtin: {}".format(cmd)
 
-        command_match = re.fullmatch(r"(?P<cmd>\w+)\((?P<args>[\w\s,]*)\)", line)
+        command_match = re.fullmatch(r"(?P<cmd>\w+)\((?P<args>.*)\)", line)
         if command_match:
             cmd = command_match.group("cmd")
             args = command_match.group("args")

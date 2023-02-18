@@ -66,16 +66,24 @@ class Key:
         commands should be separated by commas.
     desc:
         Description to be added to the key binding. (Optional)
-
+    swallow:
+        Configures when we swallow the key binding. (Optional)
+        Setting it to False will forward the key binding to the focused window after the commands have been executed.
     """
 
     def __init__(
-        self, modifiers: list[str], key: str, *commands: LazyCall, desc: str = ""
+        self,
+        modifiers: list[str],
+        key: str,
+        *commands: LazyCall,
+        desc: str = "",
+        swallow: bool = True,
     ) -> None:
         self.modifiers = modifiers
         self.key = key
         self.commands = commands
         self.desc = desc
+        self.swallow = swallow
 
     def __repr__(self) -> str:
         return "<Key (%s, %s)>" % (self.modifiers, self.key)
@@ -106,6 +114,9 @@ class KeyChord:
         A string to describe the chord. This attribute is not directly used by Qtile
         but users may want to access this when creating scripts to show configured
         keybindings.
+    swallow:
+        Configures when we swallow the key binding of the chord. (Optional)
+        Setting it to False will forward the key binding to the focused window after the commands have been executed.
     """
 
     def __init__(
@@ -116,6 +127,7 @@ class KeyChord:
         mode: bool | str = False,
         name: str = "",
         desc: str = "",
+        swallow: bool = True,
     ):
         self.modifiers = modifiers
         self.key = key
@@ -135,6 +147,7 @@ class KeyChord:
             )
             self.name = mode
             self.mode = True
+        self.swallow = swallow
 
     def __repr__(self) -> str:
         return "<KeyChord (%s, %s)>" % (self.modifiers, self.key)
@@ -283,6 +296,42 @@ class EzKey(EzConfig, Key):
         super().__init__(modkeys, key, *commands, desc=desc)
 
 
+class EzKeyChord(EzConfig, KeyChord):
+    """
+    Define a key chord using the Emacs-like format.
+
+    Parameters
+    ==========
+    keydef:
+        The Emacs-like key specification, e.g. ``"M-S-a"``.
+    submappings:
+        A list of :class:`Key` or :class:`KeyChord` declarations to bind in this chord.
+    mode:
+        Boolean. Setting to ``True`` will result in the chord persisting until
+        Escape is pressed. Setting to ``False`` (default) will exit the chord once
+        the sequence has ended.
+    name:
+        A string to name the chord. The name will be displayed in the Chord
+        widget.
+    desc:
+        A string to describe the chord. This attribute is not directly used by Qtile
+        but users may want to access this when creating scripts to show configured
+        keybindings.
+
+    """
+
+    def __init__(
+        self,
+        keydef: str,
+        submappings: list[Key | KeyChord],
+        mode: bool | str = False,
+        name: str = "",
+        desc: str = "",
+    ):
+        modkeys, key = self.parse(keydef)
+        super().__init__(modkeys, key, submappings, mode, name, desc)
+
+
 class EzClick(EzConfig, Click):
     """
     Bind commands to a clicking action using the Emacs-like format.
@@ -393,7 +442,6 @@ class Screen(CommandObject):
         width: int | None = None,
         height: int | None = None,
     ) -> None:
-
         self.top = top
         self.bottom = bottom
         self.left = left

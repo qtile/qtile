@@ -78,7 +78,7 @@ class QtileClass(SimpleDirectiveMixin, Directive):
             try:
                 with open(index, "r") as f:
                     shots = json.load(f)
-            except (json.JSONDecodeError):
+            except json.JSONDecodeError:
                 shots = {}
 
             widget_shots = shots.get(class_name.lower(), dict())
