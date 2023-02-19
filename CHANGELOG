@@ -53,6 +53,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Fix laggy resize in X11 by limiting the MotionNotify fps to a default of 120. This is configurable
           per screen with the x11_drag_polling_rate variable.
         - Fix XMonad layout faulty call to nonexistent _shrink_up
+        - Fix setting tiled position by mouse for layouts using _SimpleLayoutBase. To support this in other layouts, add a swap method taking two windows.
     * python version support
         - We have added support for python 3.11 and pypy 3.9.
         - python 3.7, 3.8 and pypy 3.7 are not longer supported.
