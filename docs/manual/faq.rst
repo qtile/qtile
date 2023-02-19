@@ -110,17 +110,17 @@ To be able to move windows across these groups which switching groups, a similar
     def go_to_group_and_move_window(name: str):
         def _inner(qtile):
             if len(qtile.screens) == 1:
-                qtile.current_window.cmd_togroup(name, switch_group=True)
+                qtile.current_window.togroup(name, switch_group=True)
                 return
 
             if name in "123":
-                qtile.current_window.cmd_togroup(name, switch_group=False)
+                qtile.current_window.togroup(name, switch_group=False)
                 qtile.focus_screen(0)
-                qtile.groups_map[name].cmd_toscreen()
+                qtile.groups_map[name].toscreen()
             else:
-                qtile.current_window.cmd_togroup(name, switch_group=False)
+                qtile.current_window.togroup(name, switch_group=False)
                 qtile.focus_screen(1)
-                qtile.groups_map[name].cmd_toscreen()
+                qtile.groups_map[name].toscreen()
 
         return _inner
 
