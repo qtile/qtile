@@ -712,9 +712,7 @@ class MonadTall(_SimpleLayoutBase):
     @expose_command()
     def swap(self, window1, window2):
         """Swap two windows"""
-        self.clients.swap(window1, window2, 1)
-        self.group.layout_all()
-        self.group.focus(window1)
+        _SimpleLayoutBase.swap(self, window1, window2)
 
     @expose_command("shuffle_left")
     def swap_left(self):

@@ -487,6 +487,11 @@ class _SimpleLayoutBase(Layout):
         client = self.focus_previous(self.clients.current_client) or self.focus_last()
         self.group.focus(client, True)
 
+    def swap(self, window1, window2):
+        self.clients.swap(window1, window2)
+        self.group.layout_all()
+        self.group.focus(window1)
+
     def next(self):
         if self.clients.current_client is None:
             return
