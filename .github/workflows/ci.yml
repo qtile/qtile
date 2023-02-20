@@ -26,16 +26,15 @@ jobs:
             - name: Install dependencies
               run: |
                 sudo apt update
+                # Any Wayland-specific Ubuntu system dependencies should be installed from ./scripts/ubuntu_wayland_setup
                 sudo apt install --no-install-recommends \
                   libdbus-1-dev libgirepository1.0-dev gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-gudev-1.0 graphviz \
-                  imagemagick libpulse-dev git xserver-xephyr xterm xvfb ninja-build libegl1-mesa-dev \
-                  libgles2-mesa-dev libgbm-dev libinput-dev libxkbcommon-dev libpixman-1-dev libpciaccess-dev \
-                  dbus-x11 libnotify-bin \
-                  xwayland libxcb-composite0-dev libxcb-icccm4-dev libxcb-res0-dev \
-                  libxcb-render0-dev libxcb-res0-dev libxcb-xfixes0-dev vlc volumeicon-alsa
+                  imagemagick libpulse-dev git xserver-xephyr xterm xvfb dbus-x11 libnotify-bin \
+                  libxcb-composite0-dev libxcb-icccm4-dev libxcb-res0-dev libxcb-render0-dev libxcb-res0-dev \
+                  libxcb-xfixes0-dev vlc volumeicon-alsa
                 sudo pip -q install meson PyGObject
                 pip -q install "tox<4" tox-gh-actions 
-                ./scripts/ubuntu_wayland_setup
+                bash -x ./scripts/ubuntu_wayland_setup
             - name: Run Tests
               run: |
                 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
