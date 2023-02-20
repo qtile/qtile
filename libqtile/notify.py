@@ -25,8 +25,8 @@
 from typing import Any
 
 try:
-    from dbus_next import ReleaseNameReply
     from dbus_next.aio import MessageBus
+    from dbus_next.constants import NameFlag
     from dbus_next.service import ServiceInterface, method, signal
 
     has_dbus = True
@@ -34,7 +34,6 @@ except ImportError:
     has_dbus = False
 
 from libqtile.log_utils import logger
-from libqtile.utils import create_task
 
 BUS_NAME = "org.freedesktop.Notifications"
 SERVICE_PATH = "/org/freedesktop/Notifications"
@@ -137,7 +136,12 @@ if has_dbus:
                     self.bus = await MessageBus().connect()
                     self._service = NotificationService(self)
                     self.bus.export(SERVICE_PATH, self._service)
-                    await self.bus.request_name(BUS_NAME)
+                    await self.bus.request_name(
+                        BUS_NAME,
+                        flags=NameFlag.ALLOW_REPLACEMENT
+                        | NameFlag.REPLACE_EXISTING
+                        | NameFlag.DO_NOT_QUEUE,
+                    )
                 except Exception:
                     logger.exception("Dbus connection failed")
                     self._service = None
@@ -167,23 +171,6 @@ if has_dbus:
                     self.close_callbacks.remove(on_close)
                 except ValueError:
                     logger.error("Unable to remove notify on_close callback. Unknown callback.")
-
-            if not self.callbacks:
-                return create_task(self._release())
-
-        async def _release(self):
-            """
-            If the manager has no more callbacks then we need to release the service name
-            from dbus and reset _service to None (to force subsequent calls to `register` to
-            re-register the name on dbus.)
-            """
-            reply = await self.bus.release_name(BUS_NAME)
-
-            if reply != ReleaseNameReply.RELEASED:
-                logger.error("Could not release %s", BUS_NAME)
-                return
-
-            self._service = None
 
         def add(self, notif):
             self.notifications.append(notif)

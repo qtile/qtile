@@ -21,7 +21,6 @@
 # NOTE: This test only tests the functionality of the widget and parts of the manager
 # The notification service (in libqtile/notify.py) is tested separately
 # TO DO: notification service test ;)
-import asyncio
 import shutil
 import subprocess
 import textwrap
@@ -30,7 +29,6 @@ import pytest
 
 import libqtile.config
 from libqtile.bar import Bar
-from libqtile.notify import notifier
 from libqtile.widget import notify
 
 
@@ -288,7 +286,6 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
     manager_nospawn.c.eval(handler)
 
     _, result = manager_nospawn.c.eval("self.signal_listener")
-    print(result)
 
     # Send first notification and check time and display time
     notif_1 = [NS]
@@ -348,27 +345,20 @@ def test_parse_text(manager_nospawn, minimal_conf_noscreen):
 
 
 @pytest.mark.usefixtures("dbus")
-def test_unregister():
+def test_unregister(manager_nospawn, minimal_conf_noscreen):
     """Short test to check if notifier deregisters correctly."""
 
-    async def deregister():
-        def no_op(*args, **kwargs):
-            pass
+    def notifier_has_callbacks():
+        _, out = manager_nospawn.c.widget["notify"].eval("notifier.callbacks")
+        return out != "[]"
 
-        do_nothing = no_op
+    widget = notify.Notify()
+    config = minimal_conf_noscreen
+    config.screens = [libqtile.config.Screen(top=Bar([widget], 10))]
+    manager_nospawn.start(config)
 
-        await notifier.register(no_op)
-        await notifier.register(do_nothing)
+    assert notifier_has_callbacks()
 
-        # Remove one callback: service will not be stopped
-        task = notifier.unregister(no_op)
-        assert task is None
-        assert notifier._service
+    _ = manager_nospawn.c.widget["notify"].eval("self.finalize()")
 
-        # Remove last callback: service will now be stopped
-        task = notifier.unregister(do_nothing)
-        assert task
-        await task
-        assert notifier._service is None
-
-    asyncio.run(deregister())
+    assert not notifier_has_callbacks()
