@@ -2,6 +2,8 @@ Qtile x.xx.x, released XXXX-XX-XX:
     !!! Dependency Changes !!!
       - xcffib must be upgraded to >= 1.4.0
       - cairocffi must be upgraded to >= 1.6.0
+    !!! Notice for packagers - wlroots (optional dependency) bump !!!
+      - Qtile's wayland backend now requires on wlroots 0.16 (and pywlroots 0.16)
     !!! config breakage/changes !!!
       - The `cmd_` prefix has been dropped from all commands (this means command names are common when accessed
         via the command interface or internal python objects).
