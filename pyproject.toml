@@ -1,3 +1,10 @@
 [tool.black]
 line-length = 98
 exclude = 'libqtile/_ffi.*\.py|libqtile/backend/x11/_ffi.*\.py|test/configs/syntaxerr.py'
+
+[tool.pytest.ini_options]
+python_files = "test_*.py"
+testpaths = ["test"]
+filterwarnings = [
+    "error:::libqtile",
+]
