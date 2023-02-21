@@ -22,6 +22,7 @@ build:
     - xvfb
     - dbus-x11
     - libnotify-bin
+    - sudo
   jobs:
     pre_install:
       - pip install xcffib wheel
