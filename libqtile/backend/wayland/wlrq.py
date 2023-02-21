@@ -204,7 +204,7 @@ class Dnd(HasListeners):
         self.add_listener(wlr_drag.destroy_event, self._on_destroy)
         self.add_listener(self.icon.surface.commit_event, self._on_icon_commit)
 
-        tree = SceneTree.subsurface_tree_create(core.layer_trees[4], self.icon.surface)
+        tree = SceneTree.subsurface_tree_create(core.drag_icon_tree, self.icon.surface)
         self.node = tree.node
 
         self.data_handle = ffi.new_handle(self)
