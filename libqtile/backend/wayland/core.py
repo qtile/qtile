@@ -212,48 +212,60 @@ class Core(base.Core, wlrq.HasListeners):
         self.layer_shell = LayerShellV1(self.display)
         self.add_listener(self.layer_shell.new_surface_event, self._on_new_layer_surface)
 
-        # TODO: update this diagram
-        # Set up scene-graph tree, which looks like this:
+        # Set up scene-graph tree, which looks like this from bottom to top:
         #
-        #     root (self._node)
+        #     root (self.scene)
+        #     │
         #     ├── self.wallpaper_tree
-        #     │   ├── Output.wallpaper
+        #     │   ├── SceneBuffer in self.wallpapers
         #     │   └── ... (further outputs)
-        #     ├── Background
-        #     │   ├── LayerStatic.tree
-        #     │   │   └── wlr_scene_layer_surface_v1
-        #     │   │       └── ... (client surfaces)
-        #     │   └── ...
-        #     ├── Bottom (same as Background)
-        #     ├── self.window_tree
-        #     │   ├── XdgWindow.tree
-        #     │   │   ├── XDG toplevel surface
-        #     │   │   │   └── ... (client surfaces)
-        #     │   │   └── XdgWindow._borders
-        #     │   ├── XWindow.tree
-        #     │   │   ├── underlying wlr_surface
-        #     │   │   └── XWindow._borders
-        #     │   └── ...
-        #     ├── Top (same as Background)
-        #     ├── Overlay (same as Background)
-        #     └── DragIcon
-        #         └── wlrq.Dnd
+        #     │
+        #     ├── self.windows_tree
+        #     │   │
+        #     │   ├── Background (layer shell)
+        #     │   │   ├── LayerStatic.tree
+        #     │   │   └── ...
+        #     │   │
+        #     │   ├── Bottom (layer shell)
+        #     │   │   ├── LayerStatic.tree
+        #     │   │   └── ...
+        #     │   │
+        #     │   ├── self.mid_window_tree
+        #     │   │   ├── XdgWindow.container
+        #     │   │   │   ├── XdgWindow.tree
+        #     │   │   │   └── XdgWindow._borders
+        #     │   │   ├── XWindow.container
+        #     │   │   │   ├── XWindow.tree
+        #     │   │   │   └── XWindow._borders
+        #     │   │   └── ... (further regular windows)
+        #     │   │
+        #     │   ├── Top (same as Background)
+        #     │   │   ├── LayerStatic.tree
+        #     │   │   └── ...
+        #     │   │
+        #     │   └── Overlay (same as Background)
+        #     │       ├── LayerStatic.tree
+        #     │       └── ...
+        #     │
+        #     └── self.drag_icon_tree
+        #         ├── DragIcon
+        #         │   └── wlrq.Dnd
+        #         └── ... (usually only one)
         #
         self.scene = Scene()
-        self._node = self.scene.tree.node
-        # Each tree is created above the existing trees
+        # Each tree is created above existing trees
+        self.wallpaper_tree = SceneTree.create(self.scene.tree)
+        self.windows_tree = SceneTree.create(self.scene.tree)
+        self.drag_icon_tree = SceneTree.create(self.scene.tree)
         self.layer_trees = [
-            SceneTree.create(self.scene.tree),  # Qtile-drawn Wallpapers
-            SceneTree.create(self.scene.tree),  # Background
-            SceneTree.create(self.scene.tree),  # Bottom
-            SceneTree.create(self.scene.tree),  # Regular windows
-            SceneTree.create(self.scene.tree),  # Top
-            SceneTree.create(self.scene.tree),  # Overlay
-            SceneTree.create(self.scene.tree),  # DragIcon
+            SceneTree.create(self.windows_tree),  # Background
+            SceneTree.create(self.windows_tree),  # Bottom
+            SceneTree.create(self.windows_tree),  # Regular windows
+            SceneTree.create(self.windows_tree),  # Top
+            SceneTree.create(self.windows_tree),  # Overlay
         ]
-        self.wallpaper_tree = self.layer_trees.pop(0)
+        self.mid_window_tree = self.layer_trees.pop(2)
         self.wallpapers: dict[config.Screen, tuple[SceneBuffer, ImageSurface]] = {}
-        self.window_tree = self.layer_trees.pop(2)
 
         # Add support for additional protocols
         ExportDmabufManagerV1(self.display)
@@ -1235,7 +1247,7 @@ class Core(base.Core, wlrq.HasListeners):
         """
         assert self.qtile is not None
 
-        maybe_node = self._node.node_at(self.cursor.x, self.cursor.y)
+        maybe_node = self.windows_tree.node.node_at(self.cursor.x, self.cursor.y)
         if maybe_node is None:
             # We didn't find any node, so the pointer is on the root i.e. a
             # wallpaper-less background.
@@ -1479,7 +1491,7 @@ class Core(base.Core, wlrq.HasListeners):
                     return
                 node = parent.node
 
-        self._node.for_each_buffer(iterator, None)
+        self.scene.tree.node.for_each_buffer(iterator, None)
         return wids
 
     def get_mouse_position(self) -> tuple[int, int]:

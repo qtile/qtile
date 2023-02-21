@@ -114,7 +114,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
         # Create a scene-graph tree for this window and its borders
         self.data_handle: ffi.CData = ffi.new_handle(self)
-        self.container = SceneTree.create(core.window_tree)
+        self.container = SceneTree.create(core.mid_window_tree)
         self.container.node.set_enabled(enabled=False)
         self.container.node.data = self.data_handle
 
@@ -902,7 +902,7 @@ class Internal(_Base, base.Internal):
 
         # Store this object on the scene node for finding the window under the pointer.
         self.wlr_buffer, self.surface = self._new_buffer(init=True)
-        self.tree = SceneTree.create(core.window_tree)
+        self.tree = SceneTree.create(core.mid_window_tree)
         scene_buffer = SceneBuffer.create(self.tree, self.wlr_buffer)
         if scene_buffer is None:
             raise RuntimeError("Couldn't create scene buffer")
