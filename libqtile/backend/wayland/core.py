@@ -981,11 +981,15 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _process_cursor_button(self, button: int, pressed: bool) -> bool:
         assert self.qtile is not None
+        handled = False
 
         if pressed:
-            handled = self.qtile.process_button_click(
-                button, self.seat.keyboard.modifier, int(self.cursor.x), int(self.cursor.y)
-            )
+            if keyboard := self.seat.keyboard:
+                handled = self.qtile.process_button_click(
+                    button, keyboard.modifier, int(self.cursor.x), int(self.cursor.y)
+                )
+            else:
+                logger.warning("No active keyboard found, keybinding may be missed.")
 
             if isinstance(self._hovered_window, window.Internal):
                 self._hovered_window.process_button_click(
@@ -994,7 +998,10 @@ class Core(base.Core, wlrq.HasListeners):
                     button,
                 )
         else:
-            handled = self.qtile.process_button_release(button, self.seat.keyboard.modifier)
+            if keyboard := self.seat.keyboard:
+                handled = self.qtile.process_button_release(button, keyboard.modifier)
+            else:
+                logger.warning("No active keyboard found, keybinding may be missed.")
 
             if isinstance(self._hovered_window, window.Internal):
                 self._hovered_window.process_button_release(
@@ -1180,8 +1187,9 @@ class Core(base.Core, wlrq.HasListeners):
         if ftm_handle:
             ftm_handle.set_activated(True)
 
-        if enter and self.seat.keyboard._ptr:  # This pointer is NULL when headless
-            self.seat.keyboard_notify_enter(surface, self.seat.keyboard)
+        if enter:
+            if keyboard := self.seat.keyboard:
+                self.seat.keyboard_notify_enter(surface, keyboard)
 
     def _focus_by_click(self) -> None:
         assert self.qtile is not None
