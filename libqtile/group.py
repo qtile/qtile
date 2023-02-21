@@ -265,12 +265,6 @@ class _Group(CommandObject):
         if focus:
             self.focus(win, warp=True, force=force)
 
-    def swap(self, win, win_other):
-        try:
-            self.layout.swap(win, win_other)
-        except AttributeError:
-            logger.warning("This layout does not support swapping tiled windows")
-
     def remove(self, win, force=False):
         self.windows.remove(win)
         hadfocus = self._remove_from_focus_history(win)

@@ -1862,5 +1862,5 @@ class Window(_Window, base.Window):
             if window == self or window.floating:
                 continue
             if self._is_in_window(curx, cury, window):
-                self.group.swap(self, window)
+                self.group.layout.swap(self, window)
                 return

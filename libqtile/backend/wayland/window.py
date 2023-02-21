@@ -531,7 +531,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
                     and window.x <= cx <= (window.x + window.width)
                     and window.y <= cy <= (window.y + window.height)
                 ):
-                    self.group.swap(self, window)
+                    self.group.layout.swap(self, window)
                     return
 
     @expose_command()
