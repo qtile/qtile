@@ -147,8 +147,14 @@ class _Device(ABC, HasListeners):
         self.core = core
         self.wlr_device = wlr_device
 
+        self.add_listener(wlr_device.destroy_event, self._on_destroy)
+
     def finalize(self) -> None:
         self.finalize_listeners()
+
+    def _on_destroy(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: wlr_device destroy (%s)", self.__class__.__name__)
+        self.finalize()
 
     def get_info(self) -> tuple[str, str]:
         """
@@ -197,7 +203,6 @@ class Keyboard(_Device):
         self.qtile = core.qtile
         self.seat = core.seat
         self.keyboard = keyboard
-        self.keyboard.data = self
         self.grabbed_keys = core.grabbed_keys
 
         self.keyboard.set_repeat_info(25, 600)
@@ -211,8 +216,11 @@ class Keyboard(_Device):
     def finalize(self) -> None:
         super().finalize()
         self.core.keyboards.remove(self)
-        if self.core.keyboards and self.core.seat.keyboard.destroyed:
-            self.seat.set_keyboard(self.core.keyboards[-1].keyboard)
+        if self.core.seat.keyboard == self.keyboard:
+            # If this is the active keyboard and we have other keyboards enabled, set
+            # the previous keyboard as the new active keyboard.
+            if self.core.keyboards:
+                self.seat.set_keyboard(self.core.keyboards[-1].keyboard)
 
     def set_keymap(self, layout: str | None, options: str | None, variant: str | None) -> None:
         """
@@ -273,18 +281,9 @@ class Keyboard(_Device):
 
 
 class Pointer(_Device):
-    def __init__(self, core: Core, wlr_device: InputDevice):
-        super().__init__(core, wlr_device)
-
-        self.add_listener(wlr_device.destroy_event, self._on_destroy)
-
     def finalize(self) -> None:
         super().finalize()
         self.core._pointers.remove(self)
-
-    def _on_destroy(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: pointer destroy")
-        self.finalize()
 
     def configure(self, configs: dict[str, InputConfig]) -> None:
         """Applies ``InputConfig`` rules to this pointer device."""
