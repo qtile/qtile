@@ -305,13 +305,13 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             self.window.opacity = self.opacity
             self.window.unhide()
 
-            self.window.process_window_expose = self.process_window_expose
-            self.window.process_button_click = self.process_button_click
-            self.window.process_button_release = self.process_button_release
-            self.window.process_pointer_enter = self.process_pointer_enter
-            self.window.process_pointer_leave = self.process_pointer_leave
-            self.window.process_pointer_motion = self.process_pointer_motion
-            self.window.process_key_press = self.process_key_press
+            self.window.process_window_expose = self.process_window_expose  # type: ignore[assignment]
+            self.window.process_button_click = self.process_button_click  # type: ignore[assignment]
+            self.window.process_button_release = self.process_button_release  # type: ignore[assignment]
+            self.window.process_pointer_enter = self.process_pointer_enter  # type: ignore[assignment]
+            self.window.process_pointer_leave = self.process_pointer_leave  # type: ignore[assignment]
+            self.window.process_pointer_motion = self.process_pointer_motion  # type: ignore[assignment]
+            self.window.process_key_press = self.process_key_press  # type: ignore[assignment]
 
         # We create a new drawer even if there's already a window to ensure the
         # drawer is the right size.
