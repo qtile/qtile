@@ -143,7 +143,7 @@ class XWindow(Window[xwayland.Surface]):
 
             # We stop listening for commit events when unmapped, as the underlying
             # surface can get destroyed by the client.
-            self.remove_listener(self.surface.surface.commit_event)
+            self.finalize_listener(self.surface.surface.commit_event)
 
     def unhide(self) -> None:
         if self not in self.core.pending_windows:
