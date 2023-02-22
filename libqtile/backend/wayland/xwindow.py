@@ -148,7 +148,6 @@ class XWindow(Window[xwayland.Surface]):
     def unhide(self) -> None:
         if self not in self.core.pending_windows:
             if self.group and self.group.screen:
-
                 # Only when mapping does the xwayland_surface have a wlr_surface that we can
                 # listen for commits on and create a tree for.
                 self.add_listener(self.surface.surface.commit_event, self._on_commit)

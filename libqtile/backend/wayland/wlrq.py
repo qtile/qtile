@@ -42,7 +42,6 @@ if TYPE_CHECKING:
     from wlroots.wlr_types import Surface
 
     from libqtile.backend.wayland.core import Core
-    from libqtile.backend.wayland.output import Output
     from libqtile.config import Screen
 
 
