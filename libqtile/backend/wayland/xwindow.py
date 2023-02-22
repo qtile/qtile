@@ -380,7 +380,7 @@ class XStatic(Static[xwayland.Surface]):
         # regular XWindow instance, and stick it into a pending state. This way, the
         # client can re-use the window with a new xwayland surface without issue. There
         # is certainly a nicer way to do this but that's a TODO.
-        self._on_destroy(None, None)
+        self._on_destroy(None, None)  # type: ignore
         win = XWindow(self.core, self.qtile, self.surface)
         self.core.pending_windows.add(win)
 
