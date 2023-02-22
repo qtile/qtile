@@ -182,7 +182,7 @@ class HasListeners:
             listener.remove()
         self._listeners.clear()
 
-    def remove_listener(self, event: Signal) -> None:
+    def finalize_listener(self, event: Signal) -> None:
         for listener in self._listeners.copy():
             if listener._signal._ptr == event._ptr:  # type: ignore
                 listener.remove()
