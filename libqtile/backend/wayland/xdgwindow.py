@@ -30,10 +30,15 @@ from wlroots.wlr_types.xdg_shell import XdgSurface, XdgTopLevelWMCapabilities
 from libqtile import hook
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
-from libqtile.backend.wayland._ffi import ffi, lib
 from libqtile.backend.wayland.window import Static, Window
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
+
+try:
+    # Continue if ffi not built, so that docs can be built without wayland deps.
+    from libqtile.backend.wayland._ffi import ffi, lib
+except ModuleNotFoundError:
+    pass
 
 if typing.TYPE_CHECKING:
     from typing import Any

@@ -27,11 +27,16 @@ from wlroots.wlr_types import Output as WlrOutput
 from wlroots.wlr_types import SceneTree
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1
 
-from libqtile.backend.wayland._ffi import ffi
 from libqtile.backend.wayland.output import Output
 from libqtile.backend.wayland.window import Static
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
+
+try:
+    # Continue if ffi not built, so that docs can be built without wayland deps.
+    from libqtile.backend.wayland._ffi import ffi
+except ModuleNotFoundError:
+    pass
 
 if TYPE_CHECKING:
     from typing import Any

@@ -83,10 +83,15 @@ from xkbcommon import xkb
 from libqtile import hook, log_utils
 from libqtile.backend import base
 from libqtile.backend.wayland import inputs, layer, window, wlrq, xdgwindow, xwindow
-from libqtile.backend.wayland._ffi import lib
 from libqtile.backend.wayland.output import Output
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
+
+try:
+    # Continue if ffi not built, so that docs can be built without wayland deps.
+    from libqtile.backend.wayland._ffi import lib
+except ModuleNotFoundError:
+    pass
 
 if TYPE_CHECKING:
     from typing import Any, Generator
