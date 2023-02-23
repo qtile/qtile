@@ -326,6 +326,9 @@ def guess_terminal(preference: str | Sequence | None = None) -> str | None:
         test_terminals += [preference]
     elif isinstance(preference, Sequence):
         test_terminals += list(preference)
+    if "WAYLAND_DISPLAY" in os.environ:
+        # Wayland-only terminals
+        test_terminals += ["foot"]
     test_terminals += [
         "roxterm",
         "sakura",
