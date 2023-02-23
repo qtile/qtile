@@ -27,6 +27,7 @@ from wlroots.wlr_types import Output as WlrOutput
 from wlroots.wlr_types import SceneTree
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1
 
+from libqtile import hook
 from libqtile.backend.wayland.output import Output
 from libqtile.backend.wayland.window import Static
 from libqtile.command.base import expose_command
@@ -171,6 +172,10 @@ class LayerStatic(Static[LayerSurfaceV1]):
             self.tree.node.set_enabled(enabled=True)
             self.output.layers[self._layer].append(self)
             self.output.organise_layers()
+
+    def focus(self, _warp: bool = True) -> None:
+        self.core.focus_window(self)
+        hook.fire("client_focus", self)
 
     def place(
         self,
