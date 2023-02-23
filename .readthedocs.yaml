@@ -22,10 +22,6 @@ build:
     - xvfb
     - dbus-x11
     - libnotify-bin
-    - sudo
-  jobs:
-    post_system_dependencies:
-      - ./scripts/ubuntu_wayland_setup
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
