@@ -40,11 +40,16 @@ from wlroots.wlr_types.scene import SceneBuffer, SceneRect, SceneTree
 from libqtile import config, hook, utils
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
-from libqtile.backend.wayland._ffi import ffi, lib
 from libqtile.backend.wayland.drawer import Drawer
 from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.command.base import CommandError, expose_command
 from libqtile.log_utils import logger
+
+try:
+    # Continue if ffi not built, so that docs can be built without wayland deps.
+    from libqtile.backend.wayland._ffi import ffi, lib
+except ModuleNotFoundError:
+    pass
 
 if typing.TYPE_CHECKING:
     from typing import Any

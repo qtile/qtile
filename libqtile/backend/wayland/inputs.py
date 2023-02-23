@@ -27,9 +27,16 @@ from pywayland.protocol.wayland import WlKeyboard
 from xkbcommon import xkb
 
 from libqtile import configurable
-from libqtile.backend.wayland._ffi import ffi, lib
 from libqtile.backend.wayland.wlrq import HasListeners, buttons
 from libqtile.log_utils import logger
+
+try:
+    # Continue if ffi not built, so that docs can be built without wayland deps.
+    from libqtile.backend.wayland._ffi import ffi, lib
+
+    _has_ffi = True
+except ModuleNotFoundError:
+    _has_ffi = False
 
 if TYPE_CHECKING:
     from typing import Any
@@ -44,8 +51,32 @@ if TYPE_CHECKING:
 KEY_PRESSED = WlKeyboard.key_state.pressed
 KEY_RELEASED = WlKeyboard.key_state.released
 
-# Keep this around instead of creating it on every key
-xkb_keysym = ffi.new("const xkb_keysym_t **")
+if _has_ffi:
+    # Keep this around instead of creating it on every key
+    xkb_keysym = ffi.new("const xkb_keysym_t **")
+
+    ACCEL_PROFILES = {
+        "adaptive": lib.LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE,
+        "flat": lib.LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT,
+    }
+
+    CLICK_METHODS = {
+        "none": lib.LIBINPUT_CONFIG_CLICK_METHOD_NONE,
+        "button_areas": lib.LIBINPUT_CONFIG_CLICK_METHOD_BUTTON_AREAS,
+        "clickfinger": lib.LIBINPUT_CONFIG_CLICK_METHOD_CLICKFINGER,
+    }
+
+    TAP_MAPS = {
+        "lrm": lib.LIBINPUT_CONFIG_TAP_MAP_LRM,
+        "lmr": lib.LIBINPUT_CONFIG_TAP_MAP_LMR,
+    }
+
+    SCROLL_METHODS = {
+        "none": lib.LIBINPUT_CONFIG_SCROLL_NO_SCROLL,
+        "two_finger": lib.LIBINPUT_CONFIG_SCROLL_2FG,
+        "edge": lib.LIBINPUT_CONFIG_SCROLL_EDGE,
+        "on_button_down": lib.LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN,
+    }
 
 
 class InputConfig(configurable.Configurable):
@@ -116,30 +147,6 @@ class InputConfig(configurable.Configurable):
     def __init__(self, **config: Any) -> None:
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(InputConfig.defaults)
-
-
-ACCEL_PROFILES = {
-    "adaptive": lib.LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE,
-    "flat": lib.LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT,
-}
-
-CLICK_METHODS = {
-    "none": lib.LIBINPUT_CONFIG_CLICK_METHOD_NONE,
-    "button_areas": lib.LIBINPUT_CONFIG_CLICK_METHOD_BUTTON_AREAS,
-    "clickfinger": lib.LIBINPUT_CONFIG_CLICK_METHOD_CLICKFINGER,
-}
-
-TAP_MAPS = {
-    "lrm": lib.LIBINPUT_CONFIG_TAP_MAP_LRM,
-    "lmr": lib.LIBINPUT_CONFIG_TAP_MAP_LMR,
-}
-
-SCROLL_METHODS = {
-    "none": lib.LIBINPUT_CONFIG_SCROLL_NO_SCROLL,
-    "two_finger": lib.LIBINPUT_CONFIG_SCROLL_2FG,
-    "edge": lib.LIBINPUT_CONFIG_SCROLL_EDGE,
-    "on_button_down": lib.LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN,
-}
 
 
 class _Device(ABC, HasListeners):

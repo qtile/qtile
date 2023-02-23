@@ -30,9 +30,14 @@ from pywayland.server import Listener
 from wlroots.wlr_types import Buffer, SceneBuffer, SceneTree, data_device_manager
 from wlroots.wlr_types.keyboard import KeyboardModifier
 
-from libqtile.backend.wayland._ffi import ffi, lib
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
+
+try:
+    # Continue if ffi not built, so that docs can be built without wayland deps.
+    from libqtile.backend.wayland._ffi import ffi, lib
+except ModuleNotFoundError:
+    pass
 
 if TYPE_CHECKING:
     from typing import Any, Callable
