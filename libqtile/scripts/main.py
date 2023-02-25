@@ -34,7 +34,7 @@ def main():
 
     main_parser = argparse.ArgumentParser(
         prog="qtile",
-        description="A full-featured, pure-Python tiling window manager.",
+        description="A full-featured tiling window manager for X11 and Wayland.",
     )
     main_parser.add_argument(
         "-v",
@@ -56,7 +56,7 @@ def main():
     def print_help(options):
         main_parser.print_help()
 
-    help_ = subparsers.add_parser("help", help="Print help information and exit")
+    help_ = subparsers.add_parser("help", help="Print help message and exit.")
     help_.set_defaults(func=print_help)
 
     options = main_parser.parse_args()

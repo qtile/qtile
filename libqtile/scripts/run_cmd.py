@@ -65,14 +65,14 @@ def run_cmd(opts) -> None:
 
 def add_subcommand(subparsers, parents):
     parser = subparsers.add_parser(
-        "run-cmd", parents=parents, help="A wrapper around the command graph"
+        "run-cmd", parents=parents, help="A wrapper around the command graph."
     )
-    parser.add_argument("-s", "--socket", help="Use specified communication socket.")
+    parser.add_argument("-s", "--socket", help="Use specified socket for IPC.")
     parser.add_argument(
         "-i", "--intrusive", action="store_true", help="If the new window should be intrusive."
     )
     parser.add_argument(
-        "-f", "--float", action="store_true", help="If the new window should be float."
+        "-f", "--float", action="store_true", help="If the new window should be floating."
     )
     parser.add_argument(
         "-b",
