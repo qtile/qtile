@@ -60,11 +60,11 @@ def main():
     help_.set_defaults(func=print_help)
 
     options = main_parser.parse_args()
-    try:
+    if func := getattr(options, "func", None):
         log_level = getattr(logging, options.log_level)
         init_log(log_level, log_path=get_default_log())
-        options.func(options)
-    except AttributeError:
+        func(options)
+    else:
         main_parser.print_usage()
         print("")
         print("Did you mean:")
