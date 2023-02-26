@@ -649,10 +649,17 @@ class _Window:
     def update_state(self):
         triggered = ["urgent"]
 
+        state = self.window.get_net_wm_state()
+
         if self.qtile.config.auto_fullscreen:
             triggered.append("fullscreen")
-
-        state = self.window.get_net_wm_state()
+        # This might seem a bit weird but it's to workaround a bug in chromium based clients not properly redrawing
+        # The bug is described in https://github.com/qtile/qtile/issues/4176
+        # This only happens when auto fullscreen is set to false because we then do not obey the disable fullscreen state
+        # So here we simply re-place the window at the coordinates which will magically solve the issue
+        # This only seems to be an issue with unfullscreening, thus we check if we're fullscreen and the window wants to unfullscreen
+        elif self.fullscreen and "fullscreen" not in state:
+            self._reconfigure_floating(new_float_state=FloatStates.FULLSCREEN)
 
         for s in triggered:
             setattr(self, s, (s in state))
