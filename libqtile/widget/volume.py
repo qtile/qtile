@@ -150,7 +150,12 @@ class Volume(base._TextBox):
 
     def update(self):
         vol = self.get_volume()
-        next_mute = self.check_mute_string in self.mixer_out
+        check_mute = (
+            subprocess.getoutput(self.check_mute_command)
+            if self.check_mute_command
+            else self.mixer_out
+        )
+        next_mute = self.check_mute_string in check_mute
 
         if vol != self.volume or self.mute != next_mute:
             self.volume = vol
@@ -185,9 +190,9 @@ class Volume(base._TextBox):
             elif self.volume >= 80:
                 self.text = "\U0001f50a"
         else:
-            self.text = (self.mute_format if self.mute or self.volume < 0 else self.unmute_format).format(
-                volume=self.volume
-            )
+            self.text = (
+                self.mute_format if self.mute or self.volume < 0 else self.unmute_format
+            ).format(volume=self.volume)
 
     def setup_images(self):
         from libqtile import images
@@ -216,10 +221,6 @@ class Volume(base._TextBox):
             self.mixer_out = subprocess.getoutput(get_volume_cmd)
         except subprocess.CalledProcessError:
             return -1
-
-        check_mute = self.mixer_out
-        if self.check_mute_command:
-            check_mute = subprocess.getoutput(self.check_mute_command)
 
         volgroups = re_vol.search(self.mixer_out)
         if volgroups:
