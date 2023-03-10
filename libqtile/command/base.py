@@ -26,9 +26,12 @@ from __future__ import annotations
 
 import abc
 import inspect
+import sys
 import traceback
+from functools import partial
 from typing import TYPE_CHECKING
 
+from libqtile.configurable import Configurable
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
@@ -37,6 +40,50 @@ if TYPE_CHECKING:
     from libqtile.command.graph import SelectorType
 
     ItemT = Optional[tuple[bool, list[str | int]]]
+
+
+def expose_command(name: Callable | str | list[str] | None = None) -> Callable:
+    """
+    Decorator to expose methods to the command interface.
+
+    The exposed command will have the name of the defined method.
+
+    Methods can also be exposed via multiple names by passing the names to this
+    decorator.
+
+    e.g. if a layout wants "up" and "previous" to call the
+    same method:
+
+    @expose_command("previous")
+    def up(self):
+        ...
+
+    `up` will be exposed as `up` and `previous`.
+
+    Multiple names can be passed as a list.
+    """
+
+    def wrapper(func: Callable):
+        setattr(func, "_cmd", True)
+        if name is not None:
+            if not hasattr(func, "_mapping"):
+                setattr(func, "_mapping", list())
+            if isinstance(name, list):
+                func._mapping += name  # type:ignore
+            elif isinstance(name, str):
+                func._mapping.append(name)  # type:ignore
+            else:
+                logger.error("Unexpected value received in command decorator: %s", name)
+        return func
+
+    # If the decorator is added with no parentheses then we should treat it
+    # as if it had been i.e. expose the decorated method
+    if callable(name):
+        func = name
+        name = None
+        return wrapper(func)
+
+    return wrapper
 
 
 class SelectError(Exception):
@@ -59,10 +106,71 @@ class CommandException(Exception):
 class CommandObject(metaclass=abc.ABCMeta):
     """Base class for objects that expose commands
 
-    Each command should be a method named `cmd_X`, where X is the command name.
+    Any command to be exposed should be decorated with
+    `@expose_command()` (classes that are not explicitly
+    inheriting from CommandObject will need to import the module)
     A CommandObject should also implement `._items()` and `._select()` methods
     (c.f. docstring for `.items()` and `.select()`).
     """
+
+    def __new__(cls, *args, **kwargs):
+        # Check which level of command object has been parsed
+        # This test ensures inherited classes don't stop additional
+        # methods from being exposed.
+        # For example, if widget.TextBox has already been parsed, a subsequent
+        # call to initialise a new TextBox will return here. However, if a user
+        # subclasses TextBox for a new widget then that new widget will still
+        # be parsed here to check for new commands.
+        if getattr(cls, "_command_object", "") == cls.__name__:
+            super().__new__(cls)
+
+        commands = {}
+        cmd_s = set()
+
+        # We need to iterate over the class's inherited classes in reverse order
+        # We reverse the order so the exposed command will always be the latest
+        # definition of the method.
+        for c in reversed(list(cls.__mro__)):
+            for method_name in list(c.__dict__.keys()):
+                method = getattr(c, method_name, None)
+
+                if method is None:
+                    continue
+
+                # If the command has been exposed, add it to our dictionary
+                # If the method name is already in our dictionary then bind the
+                # latest definition to that command
+                if hasattr(method, "_cmd") or method_name in commands:
+                    commands[method_name] = method
+                # For now, we'll accept the old format `cmd_` naming scheme for
+                # exposing commands.
+                # NOTE: This will be deprecated in the future
+                elif method_name.startswith("cmd_"):
+                    cmd_s.add(method_name)
+                    commands[method_name[4:]] = method
+
+                # Expose additional names
+                for mapping in getattr(method, "_mapping", list()):
+                    setattr(cls, mapping, method)
+                    commands[mapping] = method
+
+        if cmd_s:
+            names = ", ".join(cmd_s)
+            msg = (
+                f"The use of the 'cmd_' prefix to expose commands via IPC "
+                f"is deprecated. Methods should use the "
+                f"@expose_command() decorator instead. "
+                f"Please update: {names}"
+            )
+            logger.warning("Deprecation Warning: %s", msg)
+
+        # Record the object as being parsed.
+        cls._command_object = cls.__name__
+
+        # Store list of exposed commands
+        cls._commands = commands
+
+        return super().__new__(cls)
 
     def select(self, selectors: list[SelectorType]) -> CommandObject:
         """Return a selected object
@@ -91,8 +199,12 @@ class CommandObject(metaclass=abc.ABCMeta):
             obj = maybe_obj
         return obj
 
+    @expose_command()
     def items(self, name: str) -> tuple[bool, list[str | int] | None]:
-        """Build a list of contained items for the given item class
+        """
+        Build a list of contained items for the given item class.
+
+        Exposing this allows __qsh__ to navigate the command graph.
 
         Returns a tuple `(root, items)` for the specified item class, where:
 
@@ -138,39 +250,52 @@ class CommandObject(metaclass=abc.ABCMeta):
         name: str
             The name of the command to fetch.
 
-        Returns
-        -------
-        Callable
-            The command function that can be invoked.
         """
-        return getattr(self, "cmd_" + name, None)
+        return self._commands.get(name)
 
-    @property
+    def __getattr__(self, name):
+        # We can use __getattr_ to handle deprecated calls to
+        # cmd_ but we need to stop this overriding Configurable's
+        # use of this method
+        if isinstance(self, Configurable):
+            try:
+                return Configurable.__getattr__(self, name)
+            except AttributeError:
+                pass
+
+        # It's not a Configurable attribute so let's check if it's
+        # a command call
+        if name.startswith("cmd_"):
+            cmd = name[4:]
+            if cmd in self.commands():
+                logger.warning(
+                    "Deprecation Warning: commands exposed via IPC no "
+                    "longer use the 'cmd_' prefix. "
+                    "Please replace '%s' with '%s' in your code.",
+                    name,
+                    cmd,
+                )
+                # This is not a bound method so we need to pass 'self'
+                return partial(self.command(cmd), self)
+
+        raise AttributeError
+
+    @expose_command()
     def commands(self) -> list[str]:
-        """All of the commands on the given object"""
-        cmds = [i[4:] for i in dir(self) if i.startswith("cmd_")]
-        return cmds
-
-    def cmd_commands(self) -> list[str]:
-        """Returns a list of possible commands for this object
+        """
+        Returns a list of possible commands for this object
 
         Used by __qsh__ for command completion and online help
         """
-        return self.commands
+        return sorted([cmd for cmd in self._commands])
 
-    def cmd_items(self, name) -> tuple[bool, list[str | int] | None]:
-        """Returns a list of contained items for the specified name
-
-        Used by __qsh__ to allow navigation of the object graph.
-        """
-        return self.items(name)
-
-    def cmd_doc(self, name) -> str:
+    @expose_command()
+    def doc(self, name) -> str:
         """Returns the documentation for a specified command name
 
         Used by __qsh__ to provide online help.
         """
-        if name in self.commands:
+        if name in self.commands():
             command = self.command(name)
             assert command
             signature = self._get_command_signature(command)
@@ -188,7 +313,8 @@ class CommandObject(metaclass=abc.ABCMeta):
             signature = signature.replace(parameters=parameters)
         return str(signature)
 
-    def cmd_eval(self, code: str) -> tuple[bool, str | None]:
+    @expose_command()
+    def eval(self, code: str) -> tuple[bool, str | None]:
         """Evaluates code in the same context as this function
 
         Return value is tuple `(success, result)`, success being a boolean and
@@ -196,16 +322,18 @@ class CommandObject(metaclass=abc.ABCMeta):
         exec was used instead.
         """
         try:
+            globals_ = vars(sys.modules[self.__module__])
             try:
-                return True, str(eval(code))
+                return True, str(eval(code, globals_, locals()))
             except SyntaxError:
-                exec(code)
+                exec(code, globals_, locals())
                 return True, None
         except Exception:
             error = traceback.format_exc().strip().split("\n")[-1]
             return False, error
 
-    def cmd_function(self, function, *args, **kwargs) -> None:
+    @expose_command()
+    def function(self, function, *args, **kwargs) -> None:
         """Call a function with current object as argument"""
         try:
             function(self, *args, **kwargs)

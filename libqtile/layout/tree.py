@@ -30,6 +30,7 @@
 # SOFTWARE.
 
 from libqtile import hook
+from libqtile.command.base import expose_command
 from libqtile.layout.base import Layout
 
 to_superscript = dict(zip(map(ord, "0123456789"), map(ord, "⁰¹²³⁴⁵⁶⁷⁸⁹")))
@@ -43,7 +44,7 @@ class TreeNode:
         self._children_top = None
         self._children_bot = None
 
-    def add(self, node, hint=None):
+    def add_client(self, node, hint=None):
         """Add a node below this node
 
         The `hint` is a node to place the new node after in this nodes
@@ -156,7 +157,7 @@ class Root(TreeNode):
         else:
             self.def_section = self.sections[default_section]
 
-    def add(self, win, hint=None):
+    def add_client(self, win, hint=None):
         """Add a new window
 
         Adds a new `Window` to the tree.  The location of the new node is
@@ -181,7 +182,7 @@ class Root(TreeNode):
             parent = self.def_section
 
         node = Window(win)
-        parent.add(node, hint=hint)
+        parent.add_client(node, hint=hint)
         return node
 
     def add_section(self, name):
@@ -287,10 +288,10 @@ class Window(TreeNode):
         if self.children:
             head = self.children[0]
             # add the first child to our parent, next to ourselves
-            self.parent.add(head, hint=self)
+            self.parent.add_client(head, hint=self)
             # move remaining children to be under the new head
             for i in self.children[1:]:
-                head.add(i)
+                head.add_client(i)
 
         self.parent.children.remove(self)
         del self.children
@@ -420,11 +421,11 @@ class TreeTab(Layout):
         # will be next focused one
         pass
 
-    def add(self, win):
+    def add_client(self, win):
         if self._focused:
-            node = self._tree.add(win, hint=self._nodes[self._focused])
+            node = self._tree.add_client(win, hint=self._nodes[self._focused])
         else:
-            node = self._tree.add(win)
+            node = self._tree.add_client(win)
         self._nodes[win] = node
 
     def remove(self, win):
@@ -488,6 +489,7 @@ class TreeTab(Layout):
                 clients.append(window.window)
         return clients
 
+    @expose_command()
     def info(self):
         def show_section_tree(root):
             """
@@ -547,7 +549,8 @@ class TreeTab(Layout):
         if self._panel:
             self._panel.hide()
 
-    def cmd_down(self):
+    @expose_command("down")
+    def next(self):
         """Switch down in the window list"""
         win = None
         if self._focused:
@@ -558,9 +561,8 @@ class TreeTab(Layout):
             self.group.focus(win.window, False)
         self._focused = win.window if win else None
 
-    cmd_next = cmd_down
-
-    def cmd_up(self):
+    @expose_command("up")
+    def previous(self):
         """Switch up in the window list"""
         win = None
         if self._focused:
@@ -571,9 +573,8 @@ class TreeTab(Layout):
             self.group.focus(win.window, False)
         self._focused = win.window if win else None
 
-    cmd_previous = cmd_up
-
-    def cmd_move_up(self):
+    @expose_command()
+    def move_up(self):
         win = self._focused
         if not win:
             return
@@ -585,7 +586,8 @@ class TreeTab(Layout):
             p[idx - 1] = node
         self.draw_panel()
 
-    def cmd_move_down(self):
+    @expose_command()
+    def move_down(self):
         win = self._focused
         if not win:
             return
@@ -597,27 +599,31 @@ class TreeTab(Layout):
             p[idx + 1] = node
         self.draw_panel()
 
-    def cmd_move_left(self):
+    @expose_command()
+    def move_left(self):
         win = self._focused
         if not win:
             return
         node = self._nodes[win]
         if not isinstance(node.parent, Section):
             node.parent.children.remove(node)
-            node.parent.parent.add(node)
+            node.parent.parent.add_client(node)
         self.draw_panel()
 
-    def cmd_add_section(self, name):
+    @expose_command()
+    def add_section(self, name):
         """Add named section to tree"""
         self._tree.add_section(name)
         self.draw_panel()
 
-    def cmd_del_section(self, name):
+    @expose_command()
+    def del_section(self, name):
         """Remove named section from tree"""
         self._tree.del_section(name)
         self.draw_panel()
 
-    def cmd_section_up(self):
+    @expose_command()
+    def section_up(self):
         win = self._focused
         if not win:
             return
@@ -628,10 +634,11 @@ class TreeTab(Layout):
         idx = snode.parent.children.index(snode)
         if idx > 0:
             node.parent.children.remove(node)
-            snode.parent.children[idx - 1].add(node)
+            snode.parent.children[idx - 1].add_client(node)
         self.draw_panel()
 
-    def cmd_section_down(self):
+    @expose_command()
+    def section_down(self):
         win = self._focused
         if not win:
             return
@@ -642,10 +649,11 @@ class TreeTab(Layout):
         idx = snode.parent.children.index(snode)
         if idx < len(snode.parent.children) - 1:
             node.parent.children.remove(node)
-            snode.parent.children[idx + 1].add(node)
+            snode.parent.children[idx + 1].add_client(node)
         self.draw_panel()
 
-    def cmd_sort_windows(self, sorter, create_sections=True):
+    @expose_command()
+    def sort_windows(self, sorter, create_sections=True):
         """Sorts window to sections using sorter function
 
         Parameters
@@ -674,7 +682,8 @@ class TreeTab(Layout):
                 win.parent = nsec
         self.draw_panel()
 
-    def cmd_move_right(self):
+    @expose_command()
+    def move_right(self):
         win = self._focused
         if not win:
             return
@@ -682,26 +691,30 @@ class TreeTab(Layout):
         idx = node.parent.children.index(node)
         if idx > 0:
             node.parent.children.remove(node)
-            node.parent.children[idx - 1].add(node)
+            node.parent.children[idx - 1].add_client(node)
         self.draw_panel()
 
-    def cmd_expand_branch(self):
+    @expose_command()
+    def expand_branch(self):
         if not self._focused:
             return
         self._nodes[self._focused].expanded = True
         self.draw_panel()
 
-    def cmd_collapse_branch(self):
+    @expose_command()
+    def collapse_branch(self):
         if not self._focused:
             return
         self._nodes[self._focused].expanded = False
         self.draw_panel()
 
-    def cmd_increase_ratio(self):
+    @expose_command()
+    def increase_ratio(self):
         self.panel_width += 10
         self.group.layout_all()
 
-    def cmd_decrease_ratio(self):
+    @expose_command()
+    def decrease_ratio(self):
         self.panel_width -= 10
         self.group.layout_all()
 

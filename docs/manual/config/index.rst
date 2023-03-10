@@ -1,6 +1,6 @@
-=============
-Configuration
-=============
+===============
+The config file
+===============
 
 Qtile is configured in Python. A script (``~/.config/qtile/config.py`` by
 default) is evaluated, and a small set of configuration variables are pulled
@@ -33,43 +33,6 @@ the key bindings are in the default config.
 The default config is not intended to be suitable for all users; it's mostly
 just there so qtile does /something/ when fired up, and so that it doesn't
 crash and cause you to lose all your work if you reload a bad config.
-
-Key Bindings
-------------
-
-The mod key for the default config is ``mod4``, which is typically bound to
-the "Super" keys, which are things like the windows key and the mac command
-key. The basic operation is:
-
-* ``mod + k`` or ``mod + j``: switch windows on the current stack
-* ``mod + <space>``: put focus on the other pane of the stack (when in stack
-  layout)
-* ``mod + <tab>``: switch layouts
-* ``mod + w``: close window
-* ``mod + <ctrl> + r``: reload the config
-* ``mod + <group name>``: switch to that group
-* ``mod + <shift> + <group name>``: send a window to that group
-* ``mod + <enter>``: start terminal guessed by ``libqtile.utils.guess_terminal``
-* ``mod + r``: start a little prompt in the bar so users can run arbitrary
-  commands
-
-The default config defines one screen and 8 groups, one for each letter in
-``asdfuiop``. It has a basic bottom bar that includes a group box, the current
-window name, a little text reminder that you're using the default config,
-a system tray, and a clock.
-
-The default configuration has several more advanced key combinations, but the
-above should be enough for basic usage of qtile.
-
-See :ref:`Keybindings in images <keybinding-img>` for visual
-keybindings in keyboard layout.
-
-Mouse Bindings
---------------
-
-By default, holding your ``mod`` key and clicking (and holding) a window will
-allow you to drag it around as a floating window.
-
 
 Configuration variables
 =======================
@@ -184,10 +147,13 @@ configuration variables that control specific aspects of Qtile's behavior:
 Testing your configuration
 ==========================
 
-The best way to test changes to your configuration is with the provided Xephyr
-script. This will run Qtile with your ``config.py`` inside a nested X server
-and prevent your running instance of Qtile from crashing if something goes
-wrong.
+The best way to test changes to your configuration is with the provided scripts
+at `./scripts/xephyr`_ (X11) or `./scripts/wephyr`_ (Wayland). This will run
+Qtile with your ``config.py`` inside a nested window and prevent your running
+instance of Qtile from crashing if something goes wrong.
+
+.. _./scripts/xephyr: https://github.com/qtile/qtile/blob/master/scripts/xephyr
+.. _./scripts/wephyr: https://github.com/qtile/qtile/blob/master/scripts/wephyr
 
 See :ref:`Hacking Qtile <hacking>` for more information on using
 Xephyr.

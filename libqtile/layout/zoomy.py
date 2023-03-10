@@ -28,6 +28,7 @@
 # SOFTWARE.
 
 import libqtile
+from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
 
 
@@ -46,7 +47,7 @@ class Zoomy(_SimpleLayoutBase):
         _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(Zoomy.defaults)
 
-    def add(self, client):
+    def add_client(self, client):
         self.clients.append_head(client)
 
     def configure(self, client, screen_rect):
@@ -101,7 +102,6 @@ class Zoomy(_SimpleLayoutBase):
             and self.clients.current_client.window.get_property(self.property_name, "UTF8_STRING")
             is not None
         ):
-
             self.clients.current_client.window.set_property(
                 self.property_name, self.property_small, "UTF8_STRING", format=8
             )
@@ -111,8 +111,10 @@ class Zoomy(_SimpleLayoutBase):
                 self.property_name, self.property_big, "UTF8_STRING", format=8
             )
 
-    cmd_next = _SimpleLayoutBase.next
-    cmd_down = _SimpleLayoutBase.next
+    @expose_command("down")
+    def next(self):
+        _SimpleLayoutBase.next(self)
 
-    cmd_previous = _SimpleLayoutBase.previous
-    cmd_up = _SimpleLayoutBase.previous
+    @expose_command("up")
+    def previous(self):
+        _SimpleLayoutBase.previous(self)

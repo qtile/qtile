@@ -191,10 +191,12 @@ class Dnd(HasListeners):
         self.height: int = 0
 
         self.add_listener(wlr_drag.destroy_event, self._on_destroy)
-        self.add_listener(wlr_drag.icon.map_event, self._on_icon_map)
-        self.add_listener(wlr_drag.icon.unmap_event, self._on_icon_unmap)
-        self.add_listener(wlr_drag.icon.destroy_event, self._on_icon_destroy)
-        self.add_listener(wlr_drag.icon.surface.commit_event, self._on_icon_commit)
+        self.icon = icon = wlr_drag.icon
+        if icon is not None:
+            self.add_listener(icon.map_event, self._on_icon_map)
+            self.add_listener(icon.unmap_event, self._on_icon_unmap)
+            self.add_listener(icon.destroy_event, self._on_icon_destroy)
+            self.add_listener(icon.surface.commit_event, self._on_icon_commit)
 
     def finalize(self) -> None:
         self.finalize_listeners()
@@ -218,9 +220,10 @@ class Dnd(HasListeners):
         logger.debug("Signal: wlr_drag_icon destroy")
 
     def _on_icon_commit(self, _listener: Listener, _event: Any) -> None:
-        self.width = self.wlr_drag.icon.surface.current.width
-        self.height = self.wlr_drag.icon.surface.current.height
-        self.position(self.core.cursor.x, self.core.cursor.y)
+        if self.icon is not None:
+            self.width = self.icon.surface.current.width
+            self.height = self.icon.surface.current.height
+            self.position(self.core.cursor.x, self.core.cursor.y)
 
     def position(self, cx: float, cy: float) -> None:
         self.x = cx

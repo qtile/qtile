@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import bar, hook
+from libqtile import bar, hook, pangocffi
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
@@ -63,7 +63,7 @@ class WindowTabs(base._TextBox):
         hook.subscribe.client_name_updated(self.update)
         hook.subscribe.focus_change(self.update)
         hook.subscribe.float_change(self.update)
-        self.add_callbacks({"Button1": self.bar.screen.group.cmd_next_window})
+        self.add_callbacks({"Button1": self.bar.screen.group.next_window})
 
     def update(self, *args):
         names = []
@@ -76,6 +76,7 @@ class WindowTabs(base._TextBox):
             elif w.floating:
                 state = "V "
             task = "%s%s" % (state, w.name if w and w.name else " ")
+            task = pangocffi.markup_escape_text(task)
             if w is self.bar.screen.group.current_window:
                 task = task.join(self.selected)
             names.append(task)

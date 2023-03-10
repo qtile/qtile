@@ -40,13 +40,13 @@ class IdleRPG(GenPollUrl):
 
     defaults = [
         ("format", "IdleRPG: {online} TTL: {ttl}", "Display format"),
-        ("json", False, "Not json :)"),
-        ("xml", True, "Is XML :)"),
     ]
 
     def __init__(self, **config):
         GenPollUrl.__init__(self, **config)
         self.add_defaults(IdleRPG.defaults)
+        self.json = False
+        self.xml = True
 
     def parse(self, body):
         formatted = {}

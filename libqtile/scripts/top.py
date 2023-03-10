@@ -184,9 +184,11 @@ def top(opts):
 
 
 def add_subcommand(subparsers, parents):
-    parser = subparsers.add_parser("top", parents=parents, help="resource usage information")
+    parser = subparsers.add_parser(
+        "top", parents=parents, help="A top-like resource usage monitor."
+    )
     parser.add_argument(
-        "-L", "--lines", type=int, dest="lines", default=10, help="Number of lines."
+        "-L", "--lines", type=int, dest="lines", default=10, help="Number of lines to show."
     )
     parser.add_argument(
         "-r",
@@ -194,7 +196,7 @@ def add_subcommand(subparsers, parents):
         dest="raw",
         action="store_true",
         default=False,
-        help="Output raw without curses",
+        help="Output raw without curses.",
     )
     parser.add_argument(
         "-t",
@@ -202,16 +204,16 @@ def add_subcommand(subparsers, parents):
         type=float,
         dest="seconds",
         default=1.5,
-        help="Number of seconds to refresh",
+        help="Refresh rate.",
     )
     parser.add_argument(
         "--force-start",
         dest="force_start",
         action="store_true",
         default=False,
-        help="Force start tracemalloc on qtile",
+        help="Force start tracemalloc on Qtile.",
     )
     parser.add_argument(
-        "-s", "--socket", type=str, dest="socket", help="Use specified communication socket."
+        "-s", "--socket", type=str, dest="socket", help="Use specified socket for IPC."
     )
     parser.set_defaults(func=top)

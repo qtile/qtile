@@ -125,6 +125,59 @@ def windowtogroup_groupName_argument(funcname, query):  # noqa: N802
     return query.select_method(funcname).modify_argument("groupName", "group_name")
 
 
+def command_decorators_changes(query):
+    """
+    Some commands were renamed when moving from `cmd_` to decorator syntax for
+    exposed commands.
+
+    While most code should continue to work, with required changes indicated in log files,
+    some changes may cause breakages.
+
+    This migration function attempts to address the key changes.
+    """
+    return (
+        query.select_method("cmd_groups")  # noqa: BLK100
+        .rename("get_groups")
+        .select_method("cmd_screens")
+        .rename("get_screens")
+        .select_method("opacity")
+        .rename("set_opacity")
+        .select_method("cmd_opacity")
+        .rename("set_opacity")
+        .select_method("hints")
+        .rename("get_hints")
+        .select_method("cmd_hints")
+        .rename("get_hints")
+    )
+
+
+def rename_cmd_methods(query):
+    """
+    Renames any method call that starts with "cmd_" to remove
+    the prefix.
+    """
+
+    select = """power< name=any* trailer< "(" any* ")" > any* >"""
+
+    def modify(node, capture, filename):
+        def search_method(item):
+            """
+            Result will be a nested list of Node and Leaf objects so
+            we need to be able to recursively check each object.
+            """
+            for obj in item:
+                if hasattr(obj, "value"):
+                    if obj.value.startswith("cmd_"):
+                        obj.value = obj.value[4:]
+                else:
+                    search_method(obj.leaves())
+
+        cmd_name = capture.get("name")
+        search_method(cmd_name)
+
+    return query.select(select).modify(modify)
+
+
 MIGRATIONS = [
     client_name_updated,
     tile_master_windows_rename,
@@ -135,6 +188,8 @@ MIGRATIONS = [
     new_at_current_to_new_client_position,
     partial(windowtogroup_groupName_argument, "togroup"),
     partial(windowtogroup_groupName_argument, "cmd_togroup"),
+    command_decorators_changes,
+    rename_cmd_methods,
 ]
 
 
@@ -146,7 +201,7 @@ MODULE_RENAMES = [
     ("libqtile.window", "libqtile.backend.x11.window"),
 ]
 
-for (fro, to) in MODULE_RENAMES:
+for fro, to in MODULE_RENAMES:
 
     def f(query, fro=fro, to=to):
         return query.select_module(fro).rename(to)
@@ -189,7 +244,7 @@ def do_migrate(args):
 
 def add_subcommand(subparsers, parents):
     parser = subparsers.add_parser(
-        "migrate", parents=parents, help="Migrate a configuration file to the current API"
+        "migrate", parents=parents, help="Migrate a configuration file to the current API."
     )
     parser.add_argument(
         "-c",
@@ -198,11 +253,11 @@ def add_subcommand(subparsers, parents):
         default=os.path.expanduser(
             os.path.join(os.getenv("XDG_CONFIG_HOME", "~/.config"), "qtile", "config.py")
         ),
-        help="Use the specified configuration file (migrates every .py file in this directory)",
+        help="Use the specified configuration file (migrates every .py file in this directory).",
     )
     parser.add_argument(
         "--yes",
         action="store_true",
-        help="Automatically apply diffs with no confirmation",
+        help="Automatically apply diffs with no confirmation.",
     )
     parser.set_defaults(func=do_migrate)

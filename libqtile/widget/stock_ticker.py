@@ -21,6 +21,7 @@
 import locale
 from urllib.parse import urlencode
 
+from libqtile.log_utils import logger
 from libqtile.widget.generic_poll_text import GenPollUrl
 
 
@@ -46,18 +47,18 @@ class StockTicker(GenPollUrl):
 
     defaults = [
         ("interval", "1min", "The default latency to query"),
-        ("function", "TIME_SERIES_INTRADAY", "The default API function to query"),
+        ("func", "TIME_SERIES_INTRADAY", "The default API function to query"),
+        ("function", "TIME_SERIES_INTRADAY", "DEPRECATED: Use `func`."),
     ]
 
     def __init__(self, **config):
+        if "function" in config:
+            logger.warning("`function` parameter is deprecated. Please rename to `func`")
+            config["func"] = config.pop("function")
         GenPollUrl.__init__(self, **config)
         self.add_defaults(StockTicker.defaults)
         self.sign = locale.localeconv()["currency_symbol"]
-        self.query = {
-            "interval": self.interval,
-            "outputsize": "compact",
-            "function": self.function,
-        }
+        self.query = {"interval": self.interval, "outputsize": "compact", "function": self.func}
         for k, v in config.items():
             self.query[k] = v
 

@@ -41,6 +41,7 @@ def simple_key_binder(mod, keynames=None):
         # unbind all
         for key in dgroup.keys[:]:
             dgroup.qtile.ungrab_key(key)
+            dgroup.qtile.config.keys.remove(key)
             dgroup.keys.remove(key)
 
         if keynames:
@@ -55,9 +56,8 @@ def simple_key_binder(mod, keynames=None):
             key = Key([mod], keyname, lazy.group[name].toscreen())
             key_s = Key([mod, "shift"], keyname, lazy.window.togroup(name))
             key_c = Key([mod, "control"], keyname, lazy.group.switch_groups(name))
-            dgroup.keys.append(key)
-            dgroup.keys.append(key_s)
-            dgroup.keys.append(key_c)
+            dgroup.keys.extend([key, key_s, key_c])
+            dgroup.qtile.config.keys.extend([key, key_s, key_c])
             dgroup.qtile.grab_key(key)
             dgroup.qtile.grab_key(key_s)
             dgroup.qtile.grab_key(key_c)
@@ -127,7 +127,7 @@ class DGroups:
                 else:
                     spawns = group.spawn
                 for spawn in spawns:
-                    pid = self.qtile.cmd_spawn(spawn)
+                    pid = self.qtile.spawn(spawn)
                     self.add_rule(Rule(Match(net_wm_pid=pid), group.name))
 
     def _setup_hooks(self):
@@ -189,7 +189,7 @@ class DGroups:
                             self.qtile.screens[affinity].set_group(group_obj)
 
                 if rule.float:
-                    client.cmd_enable_floating()
+                    client.enable_floating()
 
                 if rule.intrusive:
                     intrusive = rule.intrusive
@@ -205,7 +205,6 @@ class DGroups:
                 and self.groups_map[current_group].exclusive
                 and not intrusive
             ):
-
                 wm_class = client.get_wm_class()
 
                 if wm_class:

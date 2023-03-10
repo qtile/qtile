@@ -32,4 +32,4 @@ def test_wttr_methods():
 
 def test_wttr_no_location():
     wttr = widget.Wttr()
-    assert wttr._get_url() is None
+    assert wttr._get_url() == "https://wttr.in/?m&format=3&lang=en"

@@ -93,11 +93,15 @@ def test_signal_handling(monkeypatch):
     widget.update_text()
     assert widget.text == "Mock Bluetooth Device"
 
-    widget._signal_received(None, {"Name": Variant("s", "New Device Name")}, None)
+    widget._device_signal_received(None, {"Name": Variant("s", "New Device Name")}, None)
     assert widget.text == "New Device Name"
 
-    widget._signal_received(None, {"Connected": Variant("b", False)}, None)
+    # Ignore Name change on the adapter
+    widget._adapter_signal_received(None, {"Name": Variant("s", "New Adapter Name")}, None)
+    assert widget.text == "New Device Name"
+
+    widget._device_signal_received(None, {"Connected": Variant("b", False)}, None)
     assert widget.text == "on"
 
-    widget._signal_received(None, {"Powered": Variant("b", False)}, None)
+    widget._adapter_signal_received(None, {"Powered": Variant("b", False)}, None)
     assert widget.text == "off"

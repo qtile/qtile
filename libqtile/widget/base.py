@@ -39,9 +39,10 @@ from typing import TYPE_CHECKING
 
 from libqtile import bar, configurable, confreader
 from libqtile.command import interface
-from libqtile.command.base import CommandError, CommandObject
+from libqtile.command.base import CommandError, CommandObject, expose_command
 from libqtile.lazy import LazyCall
 from libqtile.log_utils import logger
+from libqtile.utils import create_task
 
 if TYPE_CHECKING:
     from typing import Any
@@ -117,7 +118,7 @@ class _Widget(CommandObject, configurable.Configurable):
         from libqtile import qtile
 
         def open_calendar():
-            qtile.cmd_spawn('gsimplecal next_month')
+            qtile.spawn('gsimplecal next_month')
 
         clock = widget.Clock(
             mouse_callbacks={
@@ -138,14 +139,14 @@ class _Widget(CommandObject, configurable.Configurable):
 
     offsetx: int = 0
     offsety: int = 0
-    defaults = [
+    defaults: list[tuple[str, Any, str]] = [
         ("background", None, "Widget background color"),
         (
             "mouse_callbacks",
             {},
             "Dict of mouse button press callback functions. Accepts functions and ``lazy`` calls.",
         ),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     def __init__(self, length, **config):
         """
@@ -170,6 +171,7 @@ class _Widget(CommandObject, configurable.Configurable):
 
         self.configured = False
         self._futures: list[asyncio.TimerHandle] = []
+        self._mirrors: set[_Widget] = set()
 
     @property
     def length(self):
@@ -224,7 +226,7 @@ class _Widget(CommandObject, configurable.Configurable):
         self.drawer = bar.window.create_drawer(self.bar.width, self.bar.height)
         if not self.configured:
             self.qtile.call_soon(self.timer_setup)
-            self.qtile.call_soon(asyncio.create_task, self._config_async())
+            self.qtile.call_soon(create_task, self._config_async())
 
     async def _config_async(self):
         """
@@ -248,7 +250,9 @@ class _Widget(CommandObject, configurable.Configurable):
         self.drawer.set_source_rgb(self.bar.background)
         self.drawer.fillrect(self.offsetx, self.offsety, self.width, self.height)
 
+    @expose_command()
     def info(self):
+        """Info for this object."""
         return dict(
             name=self.name,
             offset=self.offset,
@@ -301,12 +305,6 @@ class _Widget(CommandObject, configurable.Configurable):
         elif name == "screen":
             return self.bar.screen
 
-    def cmd_info(self):
-        """
-        Info for this object.
-        """
-        return self.info()
-
     def draw(self):
         """
         Method that draws the widget. You may call this explicitly to
@@ -353,7 +351,12 @@ class _Widget(CommandObject, configurable.Configurable):
     def _wrapper(self, method, *method_args):
         self._remove_dead_timers()
         try:
-            method(*method_args)
+            if asyncio.iscoroutinefunction(method):
+                create_task(method(*method_args))
+            elif asyncio.iscoroutine(method):
+                create_task(method)
+            else:
+                method(*method_args)
         except:  # noqa: E722
             logger.exception("got exception from widget timer")
 
@@ -368,6 +371,43 @@ class _Widget(CommandObject, configurable.Configurable):
 
     def mouse_leave(self, x, y):
         pass
+
+    def _draw_with_mirrors(self) -> None:
+        self._old_draw()
+        for mirror in self._mirrors:
+            if not mirror.configured:
+                continue
+
+            # If the widget and mirror are on the same bar then we could have an
+            # infinite loop when we call bar.draw(). mirror.draw() will trigger a resize
+            # if it's the wrong size.
+            if mirror.length_type == bar.CALCULATED and mirror.bar is not self.bar:
+                mirror.bar.draw()
+            else:
+                mirror.draw()
+
+    def add_mirror(self, widget: _Widget):
+        if not self._mirrors:
+            self._old_draw = self.draw
+            self.draw = self._draw_with_mirrors  # type: ignore
+
+        self._mirrors.add(widget)
+        if not self.drawer.has_mirrors:
+            self.drawer.has_mirrors = True
+
+    def remove_mirror(self, widget: _Widget):
+        try:
+            self._mirrors.remove(widget)
+        except KeyError:
+            pass
+
+        if not self._mirrors:
+            self.drawer.has_mirrors = False
+
+            if hasattr(self, "_old_draw"):
+                # Deletes the reference to draw and falls back to the original
+                del self.draw
+                del self._old_draw
 
 
 UNSPECIFIED = bar.Obj("UNSPECIFIED")
@@ -418,6 +458,12 @@ class _TextBox(_Widget):
             "Whether text should scroll completely away (True) or stop when the end of the text is shown (False)",
         ),
         ("scroll_hide", False, "Whether the widget should hide when scrolling has finished"),
+        (
+            "scroll_fixed_width",
+            False,
+            "When ``scroll=True`` the ``width`` parameter is a maximum width and, when text is shorter than this, the widget will resize. "
+            "Setting ``scroll_fixed_width=True`` will force the widget to have a fixed width, regardless of the size of the text.",
+        ),
     ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -518,7 +564,11 @@ class _TextBox(_Widget):
             self._is_scrolling = True
             self._should_scroll = True
         else:
-            self.length_type = bar.CALCULATED
+            if self.scroll_fixed_width:
+                self.length_type = bar.STATIC
+                self.length = self._scroll_width
+            else:
+                self.length_type = bar.CALCULATED
             self._should_scroll = False
 
     def calculate_length(self):
@@ -631,7 +681,8 @@ class _TextBox(_Widget):
     def hide_scroll(self):
         self.update("")
 
-    def cmd_set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED, fontshadow=UNSPECIFIED):
+    @expose_command()
+    def set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED, fontshadow=UNSPECIFIED):
         """
         Change the font used by this widget. If font is None, the current
         font is used.
@@ -644,6 +695,7 @@ class _TextBox(_Widget):
             self.fontshadow = fontshadow
         self.bar.draw()
 
+    @expose_command()
     def info(self):
         d = _Widget.info(self)
         d["foreground"] = self.foreground
@@ -651,6 +703,7 @@ class _TextBox(_Widget):
         return d
 
     def update(self, text):
+        """Update the widget text."""
         if self.text == text:
             return
         if text is None:
@@ -679,8 +732,7 @@ class InLoopPollText(_TextBox):
         (
             "update_interval",
             600,
-            "Update interval in seconds, if none, the "
-            "widget updates whenever the event loop is idle.",
+            "Update interval in seconds, if none, the widget updates only once.",
         ),
     ]  # type: list[tuple[str, Any, str]]
 
@@ -735,7 +787,7 @@ class ThreadPoolText(_TextBox):
         (
             "update_interval",
             600,
-            "Update interval in seconds, if none, the " "widget updates whenever it's done.",
+            "Update interval in seconds, if none, the widget updates only once.",
         ),
     ]  # type: list[tuple[str, Any, str]]
 
@@ -757,13 +809,11 @@ class ThreadPoolText(_TextBox):
 
                     if self.update_interval is not None:
                         self.timeout_add(self.update_interval, self.timer_setup)
-                    else:
-                        self.timer_setup()
 
                 except Exception:
                     logger.exception("Failed to reschedule.")
             else:
-                logger.warning("poll() returned None, not rescheduling")
+                logger.warning("%s's poll() returned None, not rescheduling", self.name)
 
         self.future = self.qtile.run_in_executor(self.poll)
         self.future.add_done_callback(on_done)
@@ -771,7 +821,8 @@ class ThreadPoolText(_TextBox):
     def poll(self):
         pass
 
-    def cmd_force_update(self):
+    @expose_command()
+    def force_update(self):
         """Immediately poll the widget. Existing timers are unaffected."""
         self.update(self.poll())
 
@@ -841,44 +892,44 @@ class Mirror(_Widget):
 
     def __init__(self, reflection, **config):
         _Widget.__init__(self, reflection.length, **config)
-        reflection.draw = self.hook(reflection.draw)
         self.reflects = reflection
         self._length = 0
+        self.length_type = self.reflects.length_type
 
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
-        self.reflects.drawer.add_mirror(self.drawer)
+        self.reflects.add_mirror(self)
         # We need to fill the background once before `draw` is called so, if
         # there's no reflection, the mirror matches its parent bar.
         self.drawer.clear(self.background or self.bar.background)
 
+    def calculate_length(self):
+        return self.reflects.calculate_length()
+
     @property
     def length(self):
-        return self.reflects.length
+        if self.length_type != bar.STRETCH:
+            return self.reflects.length
+        return self._length
 
     @length.setter
     def length(self, value):
         self._length = value
 
-    def hook(self, draw):
-        def _():
-            draw()
-            self.draw()
-
-        return _
-
     def draw(self):
-        if self._length != self.reflects.length:
-            self._length = self.length
-            self.bar.draw()
-        else:
-            # We only update the mirror's drawer if the parent widget has
-            # contents in its RecordingSurface. If this is False then the widget
-            # wil just show the existing drawer contents.
-            if self.reflects.drawer.needs_update:
-                self.drawer.clear(self.background or self.bar.background)
-                self.reflects.drawer.paint_to(self.drawer)
-            self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
+        self.drawer.clear(self.reflects.background or self.bar.background)
+        self.reflects.drawer.paint_to(self.drawer)
+        self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
 
     def button_press(self, x, y, button):
         self.reflects.button_press(x, y, button)
+
+    def mouse_enter(self, x, y):
+        self.reflects.mouse_enter(x, y)
+
+    def mouse_leave(self, x, y):
+        self.reflects.mouse_leave(x, y)
+
+    def finalize(self):
+        self.reflects.remove_mirror(self)
+        _Widget.finalize(self)

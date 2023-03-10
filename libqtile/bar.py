@@ -24,7 +24,7 @@ import typing
 from collections import defaultdict
 
 from libqtile import configurable
-from libqtile.command.base import CommandObject
+from libqtile.command.base import CommandObject, expose_command
 from libqtile.log_utils import logger
 from libqtile.utils import has_transparency, rgb
 
@@ -33,7 +33,7 @@ if typing.TYPE_CHECKING:
     from libqtile.widget.base import _Widget
 
 
-class Gap(CommandObject):
+class Gap:
     """A gap placed along one of the edges of the screen
 
     If a gap has been defined, Qtile will avoid covering it with windows. The
@@ -108,29 +108,18 @@ class Gap(CommandObject):
     def geometry(self):
         return (self.x, self.y, self.width, self.height)
 
-    def _items(self, name: str) -> ItemT:
-        if name == "screen" and self.screen is not None:
-            return True, []
-        return None
-
-    def _select(self, name, sel):
-        if name == "screen":
-            return self.screen
-
     @property
     def position(self):
         for i in ["top", "bottom", "left", "right"]:
             if getattr(self.screen, i) is self:
                 return i
 
+    @expose_command()
     def info(self):
-        return dict(position=self.position)
-
-    def cmd_info(self):
         """
         Info for this object.
         """
-        return self.info()
+        return dict(position=self.position)
 
 
 class Obj:
@@ -149,7 +138,7 @@ CALCULATED = Obj("CALCULATED")
 STATIC = Obj("STATIC")
 
 
-class Bar(Gap, configurable.Configurable):
+class Bar(Gap, configurable.Configurable, CommandObject):
     """A bar, which can contain widgets
 
     Parameters
@@ -207,7 +196,6 @@ class Bar(Gap, configurable.Configurable):
             self._borders_drawn = False
 
             if sum(self._initial_margin) or sum(self.border_width) or self._add_strut:
-
                 try:
                     # Check if colours are valid but don't convert to rgba here
                     if isinstance(self.border_color, list) and len(self.border_color) == 4:
@@ -401,6 +389,10 @@ class Bar(Gap, configurable.Configurable):
 
     def kill_window(self):
         """Kill the window when the bar's screen is no longer being used."""
+        for name, w in self.qtile.widgets_map.copy().items():
+            if w in self.widgets:
+                w.finalize()
+                del self.qtile.widgets_map[name]
         self.drawer.finalize()
         self.window.kill()
         self.window = None
@@ -578,7 +570,6 @@ class Bar(Gap, configurable.Configurable):
 
         # We draw the border before the widgets
         if any(self.border_width) and not self._borders_drawn:
-
             # The border is drawn "outside" of the bar (i.e. not in the space that the
             # widgets occupy) so we need to add the additional space
             width = self.width + self.border_width[1] + self.border_width[3]
@@ -608,7 +599,6 @@ class Bar(Gap, configurable.Configurable):
             for border_width, colour, opts in zip(
                 self.border_width, self.border_color, line_opts
             ):
-
                 if not border_width:
                     continue
 
@@ -636,6 +626,7 @@ class Bar(Gap, configurable.Configurable):
             else:
                 self.drawer.draw(offsety=end, height=self.length - end)
 
+    @expose_command()
     def info(self):
         return dict(
             size=self.size,
@@ -671,13 +662,19 @@ class Bar(Gap, configurable.Configurable):
 
         self._add_strut = True
 
-    def cmd_fake_button_press(self, screen, position, x, y, button=1):
+    @expose_command()
+    def fake_button_press(self, screen, position, x, y, button=1):
         """
         Fake a mouse-button-press on the bar. Co-ordinates are relative
         to the top-left corner of the bar.
 
-        :screen The integer screen offset
-        :position One of "top", "bottom", "left", or "right"
+        Parameters
+        ==========
+        widgets :
+            A list of widget objects.
+        size :
+            The "thickness" of the bar, i.e. the height of a horizontal bar, or the
+            width of a vertical bar.
         """
         self.process_button_click(x, y, button)
 

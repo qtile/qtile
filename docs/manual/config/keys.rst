@@ -4,7 +4,42 @@
 Keys
 ====
 
-The ``keys`` variable defines Qtile's key bindings. Individual key bindings are
+The ``keys`` variable defines Qtile's key bindings. 
+
+Default Key Bindings
+--------------------
+
+The mod key for the default config is ``mod4``, which is typically bound to
+the "Super" keys, which are things like the windows key and the mac command
+key. The basic operation is:
+
+* ``mod + k`` or ``mod + j``: switch windows on the current stack
+* ``mod + <space>``: put focus on the other pane of the stack (when in stack
+  layout)
+* ``mod + <tab>``: switch layouts
+* ``mod + w``: close window
+* ``mod + <ctrl> + r``: reload the config
+* ``mod + <group name>``: switch to that group
+* ``mod + <shift> + <group name>``: send a window to that group
+* ``mod + <enter>``: start terminal guessed by ``libqtile.utils.guess_terminal``
+* ``mod + r``: start a little prompt in the bar so users can run arbitrary
+  commands
+
+The default config defines one screen and 8 groups, one for each letter in
+``asdfuiop``. It has a basic bottom bar that includes a group box, the current
+window name, a little text reminder that you're using the default config,
+a system tray, and a clock.
+
+The default configuration has several more advanced key combinations, but the
+above should be enough for basic usage of qtile.
+
+See :ref:`Keybindings in images <keybinding-img>` for visual
+keybindings in keyboard layout.
+
+Defining key bindings
+---------------------
+
+Individual key bindings are
 defined with :class:`~libqtile.config.Key` as demonstrated in the following
 example. Note that you may specify more than one callback functions.
 
@@ -98,8 +133,8 @@ The above code will launch xterm when the user presses Mod + z, followed by x.
 Modes
 -----
 
-Chords can optionally specify a "mode". When this is done, the mode will remain
-active until the user presses <escape>. This can be useful for configuring a
+Chords can optionally persist until a user presses <escape>. This can be done
+by setting ``mode=True``. This can be useful for configuring a
 subset of commands for a particular situations (i.e. similar to vim modes).
 
 ::
@@ -112,7 +147,8 @@ subset of commands for a particular situations (i.e. similar to vim modes).
             Key([], "s", lazy.layout.shrink()),
             Key([], "n", lazy.layout.normalize()),
             Key([], "m", lazy.layout.maximize())],
-            mode="Windows"
+            mode=True,
+            name="Windows"
         )
     ]
 
@@ -121,9 +157,10 @@ then resize windows by just pressing g (to grow the window), s to
 shrink it etc. as many times as needed. To exit the mode, press <escape>.
 
 .. note::
-    If using modes, users may also wish to use the Chord widget
-    (:class:`~libqtile.widget.Chord`) as this will display the name of the
-    currently active mode on the bar.
+    The Chord widget (:class:`~libqtile.widget.Chord`) will display the name
+    of the active chord (as set by the ``name`` parameter). This is particularly
+    useful where the chord is a persistent mode as this will indicate when the
+    chord's mode is still active.
 
 Chains
 ------
@@ -154,9 +191,9 @@ demonstrates the behaviour when using the ``mode`` argument in chains:
             KeyChord([], "y", [
                 KeyChord([], "x", [
                     Key([], "c", lazy.spawn("xterm"))
-                ], mode="inner")
+                ], mode=True, name="inner")
             ])
-        ], mode="outer")
+        ], mode=True, name="outer")
     ]
 
 After pressing Mod+z y x c, the "inner" mode will remain active. When pressing

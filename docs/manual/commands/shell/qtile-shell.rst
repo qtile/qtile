@@ -15,7 +15,7 @@ be configured to, for example, obey VI keybindings with an appropriate
 Navigating the Object Graph
 ===========================
 
-The shell presents a filesystem-like interface to the object graph - the
+The shell presents a filesystem-like interface to the command graph - the
 builtin "cd" and "ls" commands act like their familiar shell counterparts:
 
 .. code-block:: bash
@@ -50,7 +50,7 @@ error message:
     bar['bottom']> ls
     screen/  widget/
 
-Please refer to :ref:`object_graph_keys` for a summary of which objects need a
+Please refer to :ref:`object_graph_selectors` for a summary of which objects need a
 specified selector and the type of selector required. Using ``ls`` will show
 which selectors are available for an object. Please see below for an explanation
 about how Qtile displays shell paths.

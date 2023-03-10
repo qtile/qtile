@@ -150,3 +150,40 @@ def test_command_propagation(manager):
     org_height = manager.c.window.info()["height"]
     manager.c.layout.toggle_split()
     assert manager.c.window.info()["height"] != org_height
+
+
+@slice_config
+def test_command_propagation_direct_call(manager):
+    manager.test_window("slice")
+    manager.test_window("one")
+    manager.test_window("two")
+    info = manager.c.layout.info()
+    assert info["name"] == "slice"
+    org_height = manager.c.window.info()["height"]
+    manager.c.layout.eval("self.toggle_split()")
+    assert manager.c.window.info()["height"] != org_height
+
+
+@slice_config
+def test_move_to_slice(manager):
+    manager.test_window("one")
+    manager.test_window("two")
+    info = manager.c.layout.info()
+
+    # Neither of these windows should be in the slice
+    assert not info["single"]["window"]
+
+    # Move current window to slice
+    manager.c.layout.move_to_slice()
+    info = manager.c.layout.info()
+    assert info["single"]["window"] == "two"
+    assert info["stack"]["clients"] == ["one"]
+    assert_focused(manager, "two")
+
+    # Switch focus to "one" and put it in slice
+    manager.c.group.focus_back()
+    assert_focused(manager, "one")
+    manager.c.layout.move_to_slice()
+    info = manager.c.layout.info()
+    assert info["single"]["window"] == "one"
+    assert info["stack"]["clients"] == ["two"]
