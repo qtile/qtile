@@ -22,7 +22,6 @@ from libqtile.layout.base import Layout, _ClientList
 
 
 class _WinStack(_ClientList):
-
     # shortcuts for current client and index used in Columns layout
     cw = _ClientList.current_client
 

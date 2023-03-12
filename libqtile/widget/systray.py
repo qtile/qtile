@@ -278,21 +278,25 @@ class Systray(base._Widget, window._Window):  # type: ignore[misc]
     def finalize(self):
         base._Widget.finalize(self)
         atoms = self.conn.atoms
-        self.conn.conn.core.SetSelectionOwner(
-            0,
-            atoms["_NET_SYSTEM_TRAY_S{:d}".format(self.screen)],
-            xcffib.CurrentTime,
-        )
-        self.hide()
 
-        root = self.qtile.core._root.wid
-        for icon in self.tray_icons:
-            self.conn.conn.core.ReparentWindow(icon.window.wid, root, 0, 0)
-        self.conn.conn.flush()
+        try:
+            self.conn.conn.core.SetSelectionOwner(
+                0,
+                atoms["_NET_SYSTEM_TRAY_S{:d}".format(self.screen)],
+                xcffib.CurrentTime,
+            )
+            self.hide()
+
+            root = self.qtile.core._root.wid
+            for icon in self.tray_icons:
+                self.conn.conn.core.ReparentWindow(icon.window.wid, root, 0, 0)
+            self.conn.conn.flush()
+
+            self.conn.conn.core.DestroyWindow(self.wid)
+        except xcffib.ConnectionException:
+            self.hidden = True  # Usually set in self.hide()
 
         del self.qtile.windows_map[self.wid]
-        self.conn.conn.core.DestroyWindow(self.wid)
-
         Systray._instances -= 1
 
     def info(self):

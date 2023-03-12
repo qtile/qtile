@@ -5,9 +5,11 @@ Running Qtile as a Wayland Compositor
 .. _wayland:
 
 Some functionality may not yet be implemented in the Wayland compositor. Please
-see the discussion `here <https://github.com/qtile/qtile/discussions/2409>`_ to
-see the current state of development. Also see :ref:`troubleshooting
-<debugging-wayland>`.
+see the discussion `here <https://github.com/qtile/qtile/discussions/2409>`__ to
+see the current state of development. See `here
+<https://github.com/qtile/qtile/labels/Wayland>`__ for unresolved
+Wayland-specific issues and see :ref:`troubleshooting <debugging-wayland>` for
+tips on how to debug Wayland problems.
 
 Backend-Specific Configuration
 ==============================
@@ -28,9 +30,9 @@ backend in your config as follows:
 Running X11-Only Programs
 =========================
 
-Qtile _does_ support XWayland. This requires that `wlroots` and `pywlroots`
-were built with XWayland support, and that XWayland is installed on the system
-from startup. XWayland will be started the first time it is needed.
+Qtile supports XWayland but requires that `wlroots` and `pywlroots` were built
+with XWayland support, and that XWayland is installed on the system from
+startup. XWayland will be started the first time it is needed.
 
 XWayland windows sometimes don't receive mouse events
 -----------------------------------------------------
@@ -48,4 +50,4 @@ core's `set_keymap` command (see below).
 Core Commands
 =============
 
-.. qtile_class:: libqtile.backend.wayland.core.Core
+See the :ref:`wayland_backend_commands` section in the API Commands documentation.

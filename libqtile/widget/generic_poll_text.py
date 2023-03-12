@@ -40,7 +40,7 @@ class GenPollText(base.ThreadPoolText):
 class GenPollUrl(base.ThreadPoolText):
     """A generic text widget that polls an url and parses it using parse function"""
 
-    defaults = [
+    defaults: list[tuple[str, Any, str]] = [
         ("url", None, "Url"),
         ("data", None, "Post Data"),
         ("parse", None, "Parse Function"),
@@ -48,7 +48,7 @@ class GenPollUrl(base.ThreadPoolText):
         ("user_agent", "Qtile", "Set the user agent"),
         ("headers", {}, "Extra Headers"),
         ("xml", False, "Is XML?"),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     def __init__(self, **config):
         base.ThreadPoolText.__init__(self, "", **config)

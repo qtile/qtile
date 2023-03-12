@@ -526,6 +526,33 @@ class _Group(CommandObject):
                 return win.info()
 
     @expose_command()
+    def focus_by_index(self, index: int) -> None:
+        """
+        Change to the window at the specified index in the current group.
+        """
+        windows = self.windows
+        if index < 0 or index > len(windows) - 1:
+            return
+
+        self.focus(windows[index])
+
+    @expose_command()
+    def swap_window_order(self, new_location: int) -> None:
+        """
+        Change the order of the current window within the current group.
+        """
+        if new_location < 0 or new_location > len(self.windows) - 1:
+            return
+
+        windows = self.windows
+        current_window_index = windows.index(self.current_window)
+
+        windows[current_window_index], windows[new_location] = (
+            windows[new_location],
+            windows[current_window_index],
+        )
+
+    @expose_command()
     def switch_groups(self, name):
         """Switch position of current group with name"""
         self.qtile.switch_groups(self.name, name)

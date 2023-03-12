@@ -76,3 +76,73 @@ def test_command_set_invalid_command(caplog, fake_qtile):
     extension.run()
 
     assert caplog.record_tuples == [("libqtile", logging.WARNING, "run pre-command")]
+
+
+@pytest.mark.usefixtures("log_extension_output")
+def test_command_set_inside_command_set_valid_command(caplog, fake_qtile):
+    """Extension should run pre-commands and selected command."""
+
+    inside_command = CommandSet(
+        pre_commands=["run inner pre-command"],
+        commands={"key": "run testcommand"},
+    )
+    inside_command._configure(fake_qtile)
+
+    extension = CommandSet(
+        pre_commands=["run pre-command"],
+        commands={"key": inside_command},
+    )
+    extension._configure(fake_qtile)
+
+    extension.run()
+
+    assert caplog.record_tuples == [
+        ("libqtile", logging.WARNING, "run pre-command"),
+        (
+            "libqtile",
+            logging.WARNING,
+            "run inner pre-command",
+        ),  # pre-command of the inside_command
+        ("libqtile", logging.WARNING, "run testcommand"),
+    ]
+
+
+@pytest.mark.usefixtures("log_extension_output")
+def test_command_set_inside_command_set_invalid_command(caplog, fake_qtile):
+    """Where the key is not in "commands", no command will be run."""
+    inside_command = CommandSet(
+        pre_commands=["run inner pre-command"],
+        commands={"key": "run testcommand"},  # doesn't really matter what command
+    )
+    inside_command._configure(fake_qtile)
+
+    extension = CommandSet(pre_commands=["run pre-command"], commands={"missing": inside_command})
+    extension._configure(fake_qtile)
+    extension.run()
+
+    assert caplog.record_tuples == [("libqtile", logging.WARNING, "run pre-command")]
+
+    caplog.clear()
+
+    inside_command = CommandSet(
+        pre_commands=["run inner pre-command"],
+        commands={"missing": "run testcommand"},
+    )
+    inside_command._configure(fake_qtile)
+
+    extension = CommandSet(
+        pre_commands=["run pre-command"],
+        commands={"key": inside_command},
+    )
+    extension._configure(fake_qtile)
+
+    extension.run()
+
+    assert caplog.record_tuples == [
+        ("libqtile", logging.WARNING, "run pre-command"),
+        (
+            "libqtile",
+            logging.WARNING,
+            "run inner pre-command",
+        ),  # pre-command of the inside_command
+    ]

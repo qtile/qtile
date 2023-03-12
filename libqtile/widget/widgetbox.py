@@ -55,7 +55,7 @@ class WidgetBox(base._Widget):
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
-    defaults = [
+    defaults: list[tuple[str, Any, str]] = [
         ("font", "sans", "Text font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("fontshadow", None, "font shadow color, default is None(no shadow)"),
@@ -68,7 +68,8 @@ class WidgetBox(base._Widget):
         ("text_closed", "[<]", "Text when box is closed"),
         ("text_open", "[>]", "Text when box is open"),
         ("widgets", list(), "A list of widgets to include in the box"),
-    ]  # type: list[tuple[str, Any, str]]
+        ("start_opened", False, "Spawn the box opened"),
+    ]
 
     def __init__(self, _widgets: list[base._Widget] | None = None, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
@@ -125,6 +126,10 @@ class WidgetBox(base._Widget):
         for w in self.widgets:
             w.drawer.disable()
 
+        # We're being cautious: `box_is_open` should never be True here...
+        if self.start_opened and not self.box_is_open:
+            self.qtile.call_soon(self.toggle)
+
     def calculate_length(self):
         return self.layout.width
 
@@ -154,7 +159,6 @@ class WidgetBox(base._Widget):
             index += 1
 
         if self.box_is_open:
-
             # Need to reverse list as widgets get added in front of eachother.
             for widget in self.widgets[::-1]:
                 # enable drawing again

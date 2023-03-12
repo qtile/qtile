@@ -18,21 +18,47 @@ Qtile x.xx.x, released XXXX-XX-XX:
       - `Window.getsize` has been renamed `Window.get_size` (i.e. merged with the get_size command).
       - `Window.getposition` has been renamed `Window.get_position` (i.e. merged with the get_position command).
       - The `StockTicker` widget `function` option is being deprecated: rename it to `func`.
+      - The formatting of `NetWidget` has changed, if you use the `format` parameter in your config include 
+        `up_suffix`, `total_suffix` and `down_suffix` to display the respective units.
     * features
         - Add ability to set icon size in `LaunchBar` widget.
         - Add 'warp_pointer' option to `Drag` that when set will warp the pointer to the bottom right of
           the window when dragging begins.
+        - Add `currentsong` status to `Mpd2` widget.
         - Add ability to disable group toggling in `GroupBox` widget
         - Add ability to have different border color when windows are stacked in Stack layout. Requires 
           setting `border_focus_stack` and `border_normal_stack` variables.
         - Add ability to have different single border width for Columns layout by setting 'single_border_width' key.
+        - Add ability to have different border and margin widths when VerticalTile layout only contains 1 window by
+          setting 'single_border_width' and 'single_margin' keys.
         - New widget: GenPollCommand
+        - Add ability to add a group at a specified index
+        - Add ability to spawn the `WidgetBox` widget opened.
+        - Add ability to swap focused window based on index, and change the order of windows inside current group
+        - Add ability to update the widget only once if `update_interval` is None.
+        - Add `move_to_slice` command to move current window to single layout in `Slice` layout
+        - Made the `NetWidget` text formattable.
+        - Qtile no longer floods the log following X server disconnection, instead handling those errors.
+        - `Key` and `KeyChord` bindings now have another argument `swallow`.
+          It indicates whether or not the pressed keys should be passed on to the focused client.
+          By default the keys are not passed (swallowed), so this argument is set to `True`.
+          When set to `False`, the keys are passed to the focused client. A key is never swallowed if the
+          function is not executed, e.g. due to failing the `.when()` check.
     * bugfixes
         - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
         - Fix `Notify` bug when apps close notifications.
+        - Fix `CPU` precision bug with specific version of `psutil`
+        - Fix config being reevaluated twice during reload (e.g. all hooks from config were doubled)
+        - Fix `PulseVolume` high CPU usage when update_interval set to 0.
+        - Fix `Battery` widget on FreeBSD without explicit `battery` index given.
+        - Fix laggy resize in X11 by limiting the MotionNotify fps to a default of 120. This is configurable
+          per screen with the x11_drag_polling_rate variable.
+        - Fix XMonad layout faulty call to nonexistent _shrink_up
+        - Fix setting tiled position by mouse for layouts using _SimpleLayoutBase. To support this in other layouts, add a swap method taking two windows.
+        - Fix unfullscreening bug in conjunction with Chromium based clients when auto_fullscreen is set to `False`.
     * python version support
         - We have added support for python 3.11 and pypy 3.9.
-        - python 3.7 and pypy 3.7 are not longer supported.
+        - python 3.7, 3.8 and pypy 3.7 are not longer supported.
         - Fix bug where `StatusNotifier` does not update icons
 
 Qtile 0.22.0, released 2022-09-22:
@@ -114,6 +140,7 @@ Qtile 0.20.0, released 2022-01-24:
         - Fix bug where `Battery` widget did not retrieve `background` from `widget_defaults`.
         - Fix bug where widgets in a `WidgetBox` are rendered on top of bar borders.
 
+        - Add ability to swap focused window based on index, and change the order of windows inside current group
 Qtile 0.19.0, released 2021-12-22:
     * features
         - Add ability to draw borders to the Bar. Can customise size and colour per edge.

@@ -468,7 +468,7 @@ class MonadTall(_SimpleLayoutBase):
             left -= per_amt - self._shrink(idx, per_amt)
         # apply non-equal shrinkage secondary pass
         # in order to use up any left over shrink amounts
-        left = self._shrink_up(cidx, left)
+        left = self.shrink_up(cidx, left)
         # return whatever could not be applied
         return left
 
@@ -712,9 +712,7 @@ class MonadTall(_SimpleLayoutBase):
     @expose_command()
     def swap(self, window1, window2):
         """Swap two windows"""
-        self.clients.swap(window1, window2, 1)
-        self.group.layout_all()
-        self.group.focus(window1)
+        _SimpleLayoutBase.swap(self, window1, window2)
 
     @expose_command("shuffle_left")
     def swap_left(self):

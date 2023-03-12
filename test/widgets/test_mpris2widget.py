@@ -197,3 +197,13 @@ def test_mpris2_no_scroll(fake_qtile, patched_module, fake_window):
 
     mp.parse_message(*METADATA_PAUSED.body)
     assert mp.text == "Paused: Never Gonna Give You Up - Whenever You Need Somebody - Rick Astley"
+
+
+def test_mpris2_deprecated_format(patched_module):
+    """
+    Previously, metadata was displayed by using a list of fields.
+    Now, we use a `format` string. The widget should create this when a user
+    provides `display_metadata` in their config.
+    """
+    mp = patched_module.Mpris2(display_metadata=["xesam:title", "xesam:artist"])
+    assert mp.format == "{xesam:title} - {xesam:artist}"

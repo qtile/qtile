@@ -21,7 +21,6 @@
 # NOTE: This test only tests the functionality of the widget and parts of the manager
 # The notification service (in libqtile/notify.py) is tested separately
 # TO DO: notification service test ;)
-import asyncio
 import shutil
 import subprocess
 import textwrap
@@ -30,7 +29,6 @@ import pytest
 
 import libqtile.config
 from libqtile.bar import Bar
-from libqtile.notify import notifier
 from libqtile.widget import notify
 
 
@@ -201,23 +199,20 @@ def test_capabilities():
 @pytest.mark.skipif(shutil.which("notify-send") is None, reason="notify-send not installed.")
 @pytest.mark.usefixtures("dbus")
 def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
-
     # We need to create an object to listen for signals from the qtile
     # notification server. This needs to be created within the manager
     # object so we rely on "eval" applying "exec".
     handler = textwrap.dedent(
         """
-        import asyncio
-
-        from libqtile.utils import add_signal_receiver
+        from libqtile.utils import add_signal_receiver, create_task
 
         class SignalListener:
             def __init__(self):
                 self.action_invoked = None
                 self.notification_closed = None
                 global add_signal_receiver
-                global asyncio
-                asyncio.create_task(
+                global create_task
+                create_task(
                     add_signal_receiver(
                         self.on_notification_closed,
                         session_bus=True,
@@ -225,7 +220,7 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
                     )
                 )
 
-                asyncio.create_task(
+                create_task(
                     add_signal_receiver(
                         self.on_action_invoked,
                         session_bus=True,
@@ -248,12 +243,10 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
     # expose actions so we need a lower-level call
     notification_with_actions = textwrap.dedent(
         """
-        import asyncio
-
         from dbus_next import Variant
         from dbus_next.constants import MessageType
 
-        from libqtile.utils import _send_dbus_message
+        from libqtile.utils import _send_dbus_message, create_task
 
         notification = [
             "qtile",
@@ -266,7 +259,7 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
             5000
         ]
 
-        asyncio.create_task(
+        create_task(
             _send_dbus_message(
                 True,
                 MessageType.METHOD_CALL,
@@ -291,6 +284,8 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
 
     # Create our signal listener
     manager_nospawn.c.eval(handler)
+
+    _, result = manager_nospawn.c.eval("self.signal_listener")
 
     # Send first notification and check time and display time
     notif_1 = [NS]
@@ -350,27 +345,20 @@ def test_parse_text(manager_nospawn, minimal_conf_noscreen):
 
 
 @pytest.mark.usefixtures("dbus")
-def test_unregister():
+def test_unregister(manager_nospawn, minimal_conf_noscreen):
     """Short test to check if notifier deregisters correctly."""
 
-    async def deregister():
-        def no_op(*args, **kwargs):
-            pass
+    def notifier_has_callbacks():
+        _, out = manager_nospawn.c.widget["notify"].eval("notifier.callbacks")
+        return out != "[]"
 
-        do_nothing = no_op
+    widget = notify.Notify()
+    config = minimal_conf_noscreen
+    config.screens = [libqtile.config.Screen(top=Bar([widget], 10))]
+    manager_nospawn.start(config)
 
-        await notifier.register(no_op)
-        await notifier.register(do_nothing)
+    assert notifier_has_callbacks()
 
-        # Remove one callback: service will not be stopped
-        task = notifier.unregister(no_op)
-        assert task is None
-        assert notifier._service
+    _ = manager_nospawn.c.widget["notify"].eval("self.finalize()")
 
-        # Remove last callback: service will now be stopped
-        task = notifier.unregister(do_nothing)
-        assert task
-        await task
-        assert notifier._service is None
-
-    asyncio.run(deregister())
+    assert not notifier_has_callbacks()

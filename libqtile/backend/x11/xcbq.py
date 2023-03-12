@@ -37,6 +37,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import functools
 import operator
 from itertools import chain, repeat
@@ -212,6 +213,13 @@ XCB_CONN_ERRORS = {
     6: "XCB_CONN_CLOSED_INVALID_SCREEN",
     7: "XCB_CONN_CLOSED_FDPASSING_FAILED",
 }
+
+# Some opcodes from xproto.h, used for faking input.
+XCB_KEY_PRESS = 2
+XCB_KEY_RELEASE = 3
+XCB_BUTTON_PRESS = 4
+XCB_BUTTON_RELEASE = 5
+XCB_MOTION_NOTIFY = 6
 
 
 class MaskMap:
@@ -632,10 +640,8 @@ class Connection:
         return window.XWindow(self, wid)
 
     def disconnect(self):
-        try:
+        with contextlib.suppress(xcffib.ConnectionException):
             self.conn.disconnect()
-        except xcffib.ConnectionException:
-            logger.error("Failed to disconnect, connection already failed?")
         self._connected = False
 
     def flush(self):

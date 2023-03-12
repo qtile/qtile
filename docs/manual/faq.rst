@@ -102,6 +102,27 @@ of binding keys to ``lazy.group[name].toscreen()``, use this:
 
     for i in groups:
         keys.append(Key([mod], i.name, lazy.function(go_to_group(i.name))))
+        
+To be able to move windows across these groups which switching groups, a similar function can be used:
+
+.. code-block:: python
+    
+    def go_to_group_and_move_window(name: str):
+        def _inner(qtile):
+            if len(qtile.screens) == 1:
+                qtile.current_window.togroup(name, switch_group=True)
+                return
+
+            if name in "123":
+                qtile.current_window.togroup(name, switch_group=False)
+                qtile.focus_screen(0)
+                qtile.groups_map[name].toscreen()
+            else:
+                qtile.current_window.togroup(name, switch_group=False)
+                qtile.focus_screen(1)
+                qtile.groups_map[name].toscreen()
+
+        return _inner
 
 If you use the ``GroupBox`` widget you can make it reflect this behaviour:
 
@@ -144,7 +165,28 @@ If you see this message:
 ``AttributeError: cffi library 'libcairo.so.2' has no function, constant or global variable named 'cairo_xcb_surface_create'``
 when building Qtile then your Cairo version lacks XCB support.
 
-See :ref:`Cairo Error <cairo-errors>` for further information.
+If it happens, it might be because the ``cairocffi`` and ``xcffib`` dependencies
+were installed in the wrong order.
+
+To fix this:
+
+1. uninstall them from your environment: with ``pip uninstall cairocffi xcffib``
+   if using a virtualenv, or with your system package-manager if you installed
+   the development version of Qtile system-wide.
+#. re-install them sequentially (again, with pip or with your package-manager)::
+
+    pip install xcffib
+    pip install --no-cache-dir cairocffi
+
+See `this issue comment`_ for more information.
+
+.. _`this issue comment`: https://github.com/qtile/qtile/issues/994#issuecomment-497984551
+
+If you are using your system package-manager and the issue still happens,
+the packaging of ``cairocffi`` might be broken for your distribution.
+Try to contact the persons responsible for ``cairocffi``'s packaging
+on your distribution, or to install it from the sources with ``xcffib``
+available.
 
 How can I match the bar with picom?
 ===================================
@@ -166,3 +208,45 @@ See `2526`_ and `1515`_ for more discussion.
 
 .. _`2526`: https://github.com/qtile/qtile/issues/2526
 .. _`1515`: https://github.com/qtile/qtile/issues/1515
+
+Why do get a warning that fonts cannot be loaded?
+=================================================
+
+When installing Qtile on a new system, when running the test suite
+or the Xephyr script (``./scripts/xephyr``),
+you might see errors in the output like the following or similar:
+
+* Xephyr script::
+
+    xterm: cannot load font "-Misc-Fixed-medium-R-*-*-13-120-75-75-C-120-ISO10646-1"
+    xterm: cannot load font "-misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1"
+
+* ``pytest``::
+
+    ---------- Captured stderr call ----------
+    Warning: Cannot convert string "8x13" to type FontStruct
+    Warning: Unable to load any usable ISO8859 font
+    Warning: Unable to load any usable ISO8859 font
+    Error: Aborting: no font found
+
+    -------- Captured stderr teardown --------
+    Qtile exited with exitcode: -9
+
+If it happens, it might be because you're missing fonts on your system.
+
+On ArchLinux, you can fix this by installing ``xorg-fonts-misc``::
+
+    sudo pacman -S xorg-fonts-misc
+
+Try to search for "xorg fonts misc" with your distribution name on the internet
+to find how to install them.
+
+I've upgraded and Qtile's broken. What do I do?
+===============================================
+
+If you've recently upgraded, the first thing to do is check the :doc:`changelog </manual/changelog>`
+and see if any breaking changes were made.
+
+Next, check your log file (see above) to see if any error messages explain what the problem is.
+
+If you're still stuck, come and ask for help on Discord, IRC or GitHub.

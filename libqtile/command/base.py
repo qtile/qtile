@@ -114,7 +114,6 @@ class CommandObject(metaclass=abc.ABCMeta):
     """
 
     def __new__(cls, *args, **kwargs):
-
         # Check which level of command object has been parsed
         # This test ensures inherited classes don't stop additional
         # methods from being exposed.
@@ -132,7 +131,6 @@ class CommandObject(metaclass=abc.ABCMeta):
         # We reverse the order so the exposed command will always be the latest
         # definition of the method.
         for c in reversed(list(cls.__mro__)):
-
             for method_name in list(c.__dict__.keys()):
                 method = getattr(c, method_name, None)
 
@@ -206,7 +204,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         """
         Build a list of contained items for the given item class.
 
-        Exposing this allows __qsh__ to navigate the object graph.
+        Exposing this allows __qsh__ to navigate the command graph.
 
         Returns a tuple `(root, items)` for the specified item class, where:
 

@@ -33,7 +33,7 @@ from shutil import which
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, TypeVar, Union
+    from typing import Any, Callable, Coroutine, TypeVar, Union
 
     ColorType = Union[str, tuple[int, int, int], tuple[int, int, int, float]]
     ColorsType = Union[ColorType, list[ColorType]]
@@ -51,6 +51,38 @@ except ImportError:
 
 from libqtile import hook
 from libqtile.log_utils import logger
+
+# Create a list to collect references to tasks so they're not garbage collected
+# before they've run
+TASKS: list[asyncio.Task[None]] = []
+
+
+def create_task(coro: Coroutine) -> asyncio.Task | None:
+    """
+    Wrapper for asyncio.create_task.
+
+    Stores task so garbage collector doesn't remove it and removes reference when it's done.
+    See: https://textual.textualize.io/blog/2023/02/11/the-heisenbug-lurking-in-your-async-code/
+    for more info about the issue this solves.
+    """
+    loop = asyncio.get_running_loop()
+    if not loop:
+        return None
+
+    def tidy(task: asyncio.Task) -> None:
+        TASKS.remove(task)
+
+    task = asyncio.create_task(coro)
+    TASKS.append(task)
+    task.add_done_callback(tidy)
+
+    return task
+
+
+def cancel_tasks() -> None:
+    """Cancel scheduled tasks."""
+    for task in TASKS:
+        task.cancel()
 
 
 class QtileError(Exception):
@@ -294,6 +326,9 @@ def guess_terminal(preference: str | Sequence | None = None) -> str | None:
         test_terminals += [preference]
     elif isinstance(preference, Sequence):
         test_terminals += list(preference)
+    if "WAYLAND_DISPLAY" in os.environ:
+        # Wayland-only terminals
+        test_terminals += ["foot"]
     test_terminals += [
         "roxterm",
         "sakura",
@@ -487,7 +522,7 @@ async def find_dbus_service(service: str, session_bus: bool) -> bool:
 
 
 def subscribe_for_resume_events() -> None:
-    task = asyncio.create_task(
+    task = create_task(
         add_signal_receiver(
             on_resume,
             session_bus=False,
@@ -497,7 +532,8 @@ def subscribe_for_resume_events() -> None:
             check_service=True,
         )
     )
-    task.add_done_callback(_resume_callback)
+    if task is not None:
+        task.add_done_callback(_resume_callback)
 
 
 def _resume_callback(task: asyncio.Task) -> None:

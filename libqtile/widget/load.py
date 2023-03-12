@@ -38,7 +38,7 @@ class Load(base.ThreadPoolText):
     def __init__(self, **config):
         super().__init__("", **config)
         self.add_defaults(Load.defaults)
-        self.add_callbacks({"Button1": self.cmd_next_load})
+        self.add_callbacks({"Button1": self.next_load})
         self.cycled_times = cycle(Load.times)
         self.set_time()
 

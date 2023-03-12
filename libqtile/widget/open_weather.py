@@ -188,7 +188,7 @@ class OpenWeather(GenPollUrl):
         "50n": "🌫",
     }
 
-    defaults = [
+    defaults: list[tuple[str, Any, str]] = [
         # One of (cityid, location, zip, coordinates) must be set.
         (
             "app_key",
@@ -255,7 +255,7 @@ class OpenWeather(GenPollUrl):
             dict(),
             "Dictionary of weather symbols. Can be used to override default symbols.",
         ),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     def __init__(self, **config):
         GenPollUrl.__init__(self, **config)

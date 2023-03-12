@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from typing import TYPE_CHECKING
 
 import cairocffi
@@ -83,7 +84,8 @@ class Drawer(base.Drawer):
 
     def _free_gc(self):
         if self._gc is not None:
-            self.qtile.core.conn.conn.core.FreeGC(self._gc)
+            with contextlib.suppress(xcffib.ConnectionException):
+                self.qtile.core.conn.conn.core.FreeGC(self._gc)
             self._gc = None
 
     def _create_xcb_surface(self):
@@ -114,7 +116,8 @@ class Drawer(base.Drawer):
 
     def _free_pixmap(self):
         if self._pixmap is not None:
-            self.qtile.core.conn.conn.core.FreePixmap(self._pixmap)
+            with contextlib.suppress(xcffib.ConnectionException):
+                self.qtile.core.conn.conn.core.FreePixmap(self._pixmap)
             self._pixmap = None
 
     def _check_xcb(self):
@@ -140,7 +143,6 @@ class Drawer(base.Drawer):
         width: int | None = None,
         height: int | None = None,
     ):
-
         self.current_rect = (offsetx, offsety, width, height)
 
         # If this is our first draw, create the gc
@@ -174,7 +176,6 @@ class Drawer(base.Drawer):
                     return v
 
     def clear(self, colour):
-
         # Check if we need to re-create XCBSurface
         self._check_xcb()
 

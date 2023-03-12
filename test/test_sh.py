@@ -115,6 +115,7 @@ def test_complete(manager):
     sh = QSh(command)
     assert sh._complete("c", "c") == [
         "cd",
+        "change_window_order",
         "commands",
         "critical",
     ]

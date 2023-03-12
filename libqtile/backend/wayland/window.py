@@ -531,12 +531,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
                     and window.x <= cx <= (window.x + window.width)
                     and window.y <= cy <= (window.y + window.height)
                 ):
-                    clients = self.group.layout.clients
-                    index1 = clients.index(self)
-                    index2 = clients.index(window)
-                    clients[index1], clients[index2] = clients[index2], clients[index1]
-                    self.group.layout.focused = index2
-                    self.group.layout_all()
+                    self.group.layout.swap(self, window)
                     return
 
     @expose_command()

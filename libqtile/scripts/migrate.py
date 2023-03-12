@@ -201,7 +201,7 @@ MODULE_RENAMES = [
     ("libqtile.window", "libqtile.backend.x11.window"),
 ]
 
-for (fro, to) in MODULE_RENAMES:
+for fro, to in MODULE_RENAMES:
 
     def f(query, fro=fro, to=to):
         return query.select_module(fro).rename(to)
@@ -244,7 +244,7 @@ def do_migrate(args):
 
 def add_subcommand(subparsers, parents):
     parser = subparsers.add_parser(
-        "migrate", parents=parents, help="Migrate a configuration file to the current API"
+        "migrate", parents=parents, help="Migrate a configuration file to the current API."
     )
     parser.add_argument(
         "-c",
@@ -253,11 +253,11 @@ def add_subcommand(subparsers, parents):
         default=os.path.expanduser(
             os.path.join(os.getenv("XDG_CONFIG_HOME", "~/.config"), "qtile", "config.py")
         ),
-        help="Use the specified configuration file (migrates every .py file in this directory)",
+        help="Use the specified configuration file (migrates every .py file in this directory).",
     )
     parser.add_argument(
         "--yes",
         action="store_true",
-        help="Automatically apply diffs with no confirmation",
+        help="Automatically apply diffs with no confirmation.",
     )
     parser.set_defaults(func=do_migrate)

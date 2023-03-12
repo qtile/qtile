@@ -12,7 +12,7 @@ jobs:
     container: quay.io/pypa/manylinux_2_24_x86_64
     strategy:
       matrix:
-        python-version: ["cp3.8", "cp3.9", "cp3.10", "cp3.11", "pp3.9"]
+        python-version: ["cp3.9", "cp3.10", "cp3.11", "pp3.9"]
     steps:
       - name: Install dependencies
         run: |
@@ -45,7 +45,7 @@ jobs:
     needs: build-wheel
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11"]
         include:
           - python-version: "pypy-3.9"
             manual-version: "pp3.9"
@@ -103,7 +103,7 @@ jobs:
     needs: [test-wheel, build-source]
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11"]
         include:
           - python-version: "pypy-3.9"
             manual-version: "pp3.9"

@@ -100,6 +100,11 @@ class Single(Layout):
     def get_windows(self):
         return self.window
 
+    def info(self):
+        d = Layout.info(self)
+        d["window"] = self.window.name if self.window else ""
+        return d
+
 
 class Slice(Layout):
     """Slice layout
@@ -272,7 +277,9 @@ class Slice(Layout):
 
     @expose_command()
     def commands(self):
-        return self._get_active_layout().commands()
+        cmds = self._get_active_layout().commands()
+        cmds.extend(cmd for cmd in Layout.commands(self) if cmd not in cmds)
+        return cmds
 
     def get_windows(self):
         clients = list()
@@ -287,6 +294,20 @@ class Slice(Layout):
 
         elif name in self._get_active_layout()._commands:
             return getattr(self._get_active_layout(), name)
+
+    @expose_command()
+    def move_to_slice(self):
+        """Moves the current window to the slice."""
+        win = self.group.current_window
+        old_slice = self._slice.window
+        if old_slice:
+            self._slice.remove(old_slice)
+            self.fallback.add_client(old_slice)
+            self.layouts[old_slice] = self.fallback
+        self.fallback.remove(win)
+        self._slice.add_client(win)
+        self.layouts[win] = self._slice
+        self.group.layout_all()
 
     @expose_command()
     def info(self):

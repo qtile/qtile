@@ -649,10 +649,17 @@ class _Window:
     def update_state(self):
         triggered = ["urgent"]
 
+        state = self.window.get_net_wm_state()
+
         if self.qtile.config.auto_fullscreen:
             triggered.append("fullscreen")
-
-        state = self.window.get_net_wm_state()
+        # This might seem a bit weird but it's to workaround a bug in chromium based clients not properly redrawing
+        # The bug is described in https://github.com/qtile/qtile/issues/4176
+        # This only happens when auto fullscreen is set to false because we then do not obey the disable fullscreen state
+        # So here we simply re-place the window at the coordinates which will magically solve the issue
+        # This only seems to be an issue with unfullscreening, thus we check if we're fullscreen and the window wants to unfullscreen
+        elif self.fullscreen and "fullscreen" not in state:
+            self._reconfigure_floating(new_float_state=FloatStates.FULLSCREEN)
 
         for s in triggered:
             setattr(self, s, (s in state))
@@ -1126,7 +1133,8 @@ class Internal(_Window, base.Internal):
         if self.window.wid in self.qtile.windows_map:
             # It will be present during config reloads; absent during shutdown as this
             # will follow graceful_shutdown
-            self.qtile.core.conn.conn.core.DestroyWindow(self.window.wid)
+            with contextlib.suppress(xcffib.ConnectionException):
+                self.qtile.core.conn.conn.core.DestroyWindow(self.window.wid)
 
     def handle_Expose(self, e):  # noqa: N802
         self.process_window_expose()
@@ -1861,10 +1869,5 @@ class Window(_Window, base.Window):
             if window == self or window.floating:
                 continue
             if self._is_in_window(curx, cury, window):
-                clients = self.group.layout.clients
-                index1 = clients.index(self)
-                index2 = clients.index(window)
-                clients[index1], clients[index2] = clients[index2], clients[index1]
-                self.group.layout.focused = index2
-                self.group.layout_all()
-                break
+                self.group.layout.swap(self, window)
+                return

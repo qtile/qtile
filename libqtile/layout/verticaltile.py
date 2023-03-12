@@ -88,6 +88,8 @@ class VerticalTile(_SimpleLayoutBase):
         ("border_focus", "#FF0000", "Border color(s) for the focused window."),
         ("border_normal", "#FFFFFF", "Border color(s) for un-focused windows."),
         ("border_width", 1, "Border width."),
+        ("single_border_width", None, "Border width for single window."),
+        ("single_margin", None, "Margin for single window."),
         ("margin", 0, "Border margin (int or list of ints [N E S W])."),
     ]
 
@@ -97,6 +99,10 @@ class VerticalTile(_SimpleLayoutBase):
     def __init__(self, **config):
         _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(VerticalTile.defaults)
+        if self.single_border_width is None:
+            self.single_border_width = self.border_width
+        if self.single_margin is None:
+            self.single_margin = self.margin
         self.maximized = None
 
     def add_client(self, window):
@@ -118,21 +124,17 @@ class VerticalTile(_SimpleLayoutBase):
             index = self.clients.index(window)
 
             # border
-            if n > 1:
-                border_width = self.border_width
-            else:
-                border_width = 0
+            border_width = self.border_width if n > 1 else self.single_border_width
+            border_color = self.border_focus if window.has_focus else self.border_normal
 
-            if window.has_focus:
-                border_color = self.border_focus
-            else:
-                border_color = self.border_normal
+            # margin
+            margin = self.margin if n > 1 else self.single_margin
 
             # width
-            if n > 1:
-                width = screen_rect.width - self.border_width * 2
-            else:
-                width = screen_rect.width
+            width = screen_rect.width - border_width * 2
+
+            # y
+            y = screen_rect.y
 
             # height
             if n > 1:
@@ -144,30 +146,21 @@ class VerticalTile(_SimpleLayoutBase):
                 normal_pane_height = (screen_rect.height // n) - (border_width * 2)
 
                 if self.maximized:
+                    y += (index * sec_pane_height) + (border_width * 2 * index)
                     if window is self.maximized:
                         height = main_pane_height
                     else:
                         height = sec_pane_height
+                        if index > self.clients.index(self.maximized):
+                            y = y - sec_pane_height + main_pane_height
                 else:
                     height = normal_pane_height
-            else:
-                height = screen_rect.height
-
-            # y
-            y = screen_rect.y
-
-            if n > 1:
-                if self.maximized:
-                    y += (index * sec_pane_height) + (border_width * 2 * index)
-                else:
                     y += (index * normal_pane_height) + (border_width * 2 * index)
-
-                if self.maximized and window is not self.maximized:
-                    if index > self.clients.index(self.maximized):
-                        y = y - sec_pane_height + main_pane_height
+            else:
+                height = screen_rect.height - 2 * border_width
 
             window.place(
-                screen_rect.x, y, width, height, border_width, border_color, margin=self.margin
+                screen_rect.x, y, width, height, border_width, border_color, margin=margin
             )
             window.unhide()
         else:
