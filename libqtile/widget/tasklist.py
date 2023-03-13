@@ -148,6 +148,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             'e.g., "{}" or "<span underline="low">{}</span>"',
         ),
         (
+            "markup_focused_floating",
+            None,
+            "Text markup of the focused and floating window state. Supports pangomarkup with markup=True."
+            'e.g., "{}" or "<span underline="low">{}</span>"',
+        ),
+        (
             "icon_size",
             None,
             "Icon size. " "(Calculated if set to None. Icons are hidden if set to 0.)",
@@ -218,6 +224,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             or self.markup_maximized
             or self.markup_floating
             or self.markup_focused
+            or self.markup_focused_floating
         ):
             enforce_markup = True
         else:
@@ -225,6 +232,11 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         if window is None:
             pass
+        elif window is window.group.current_window:
+            if window.floating:
+                markup_str = self.markup_focused_floating
+            else:
+                markup_str = self.markup_focused
         elif window.minimized:
             state = self.txt_minimized
             markup_str = self.markup_minimized
@@ -234,8 +246,6 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         elif window.floating:
             state = self.txt_floating
             markup_str = self.markup_floating
-        elif window is window.group.current_window:
-            markup_str = self.markup_focused
 
         window_location = (
             f"[{window.group.windows.index(window) + self.window_name_location_offset}] "
