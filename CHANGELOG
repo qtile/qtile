@@ -43,6 +43,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
           By default the keys are not passed (swallowed), so this argument is set to `True`.
           When set to `False`, the keys are passed to the focused client. A key is never swallowed if the
           function is not executed, e.g. due to failing the `.when()` check.
+        - Add ability to set custom "Undefined" status key value to `Mpd2Widget`.
     * bugfixes
         - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
         - Fix `Notify` bug when apps close notifications.

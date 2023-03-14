@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import sys
+from collections import defaultdict
 from types import ModuleType
 
 import pytest
@@ -191,7 +192,18 @@ def test_mpd2_widget_idle_message(mpd2_manager):
 @pytest.mark.parametrize(
     "mpd2_manager", [{"status_format": "{currentsong}: {artist}/{title}"}], indirect=True
 )
-def test_mpd_widget_current_song(mpd2_manager):
+def test_mpd2_widget_current_song(mpd2_manager):
     """Quick test to check currentsong info"""
     widget = mpd2_manager.c.widget["mpd2"]
     assert widget.info()["text"] == "1: Rick Astley/Never gonna give you up"
+
+
+@pytest.mark.parametrize(
+    "mpd2_manager",
+    [{"undefined_value": "Unknown", "status_format": "{title} ({year})"}],
+    indirect=True,
+)
+def test_mpd2_widget_custom_undefined_value(mpd2_manager):
+    """Quick test to check undefined_value option"""
+    widget = mpd2_manager.c.widget["mpd2"]
+    assert widget.info()["text"] == "Never gonna give you up (Unknown)"
