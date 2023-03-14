@@ -111,7 +111,7 @@ class XdgWindow(Window[XdgSurface]):
 
         if self not in self.core.pending_windows:
             # Regular usage
-            if self.group and self.group.screen:
+            if not self.container.node.enabled and self.group and self.group.screen:
                 self.container.node.set_enabled(enabled=True)
                 self.core.focus_window(self)
             return
