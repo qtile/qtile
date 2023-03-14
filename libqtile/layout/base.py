@@ -27,6 +27,7 @@ from typing import TYPE_CHECKING
 
 from libqtile import configurable
 from libqtile.command.base import CommandObject, expose_command
+from libqtile.command.interface import CommandError
 
 if TYPE_CHECKING:
     from typing import Any
@@ -93,6 +94,10 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
     def hide(self):
         """Called when layout is being hidden"""
         pass
+
+    def swap(self, c1, c2):
+        """Swap the two given clients c1 and c2"""
+        raise CommandError(f"layout: {self.name} does not support swapping windows")
 
     def focus(self, client):
         """Called whenever the focus changes"""
@@ -486,6 +491,11 @@ class _SimpleLayoutBase(Layout):
             return
         client = self.focus_previous(self.clients.current_client) or self.focus_last()
         self.group.focus(client, True)
+
+    def swap(self, window1, window2):
+        self.clients.swap(window1, window2)
+        self.group.layout_all()
+        self.group.focus(window1)
 
     def next(self):
         if self.clients.current_client is None:

@@ -133,7 +133,7 @@ def check_config(args):
 
 def add_subcommand(subparsers, parents):
     parser = subparsers.add_parser(
-        "check", parents=parents, help="Check a configuration file for errors"
+        "check", parents=parents, help="Check a configuration file for errors."
     )
     parser.add_argument(
         "-c",
@@ -143,6 +143,6 @@ def add_subcommand(subparsers, parents):
             path.join(getenv("XDG_CONFIG_HOME", "~/.config"), "qtile", "config.py")
         ),
         dest="configfile",
-        help="Use the specified configuration file",
+        help="Use the specified configuration file.",
     )
     parser.set_defaults(func=check_config)

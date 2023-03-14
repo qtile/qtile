@@ -207,23 +207,5 @@ class Notify(base._TextBox):
             self._invoke()
 
     def finalize(self):
-        # We may need some async calls as part of the finalize call
-        # We run this with `call_soon_threadsafe` as this waits for
-        # the job to finish before continuing. This is important as,
-        # if the config is just reloading, we need to finish deregistering
-        # the notification server before the new Notify widget instance
-        # registers and creates a new server.
-        self.qtile.call_soon_threadsafe(self._finalize)
-        base._TextBox.finalize(self)
-
-    async def _finalize(self):
-        if notifier is not None:
-            task = notifier.unregister(self.update)
-
-            # If the notifier has no more callbacks then it needs to be stopped.
-            # The returned task will handle the release of the service name from
-            # dbus. We await it here to make sure it's finished before we
-            # complete the finalisation of this widget.
-            if task:
-                await task
+        notifier.unregister(self.update)
         base._TextBox.finalize(self)
