@@ -184,7 +184,7 @@ pywayland, pywlroots and python-xkbcommon. Also note that we may not have yet
 caught up with the latest wlroots release ourselves.
 
 .. note::
-   The currently supported wlroots and pylwroots versions are 0.15.x.
+   The currently supported wlroots and pylwroots versions are 0.16.x.
 
 With the Wayland dependencies in place, Qtile can be run either from a TTY, or
 within an existing X11 or Wayland session where it will run inside a nested
