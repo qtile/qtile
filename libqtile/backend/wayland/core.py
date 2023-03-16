@@ -611,11 +611,9 @@ class Core(base.Core, wlrq.HasListeners):
     ) -> None:
         assert self.qtile is not None
         self.idle.notify_activity(self.seat)
-        self.cursor.warp(
-            WarpMode.AbsoluteClosest,
-            event.x,
-            event.y,
-        )
+
+        x, y = self.cursor.absolute_to_layout_coords(event.pointer.base, event.x, event.y)
+        self.cursor.move(x - self.cursor.x, y - self.cursor.y)
         self._process_cursor_motion(event.time_msec, self.cursor.x, self.cursor.y)
 
     def _on_cursor_pinch_begin(
@@ -1034,6 +1032,21 @@ class Core(base.Core, wlrq.HasListeners):
         self._pointers.append(device)
         self.cursor.attach_input_device(wlr_device)
         self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+
+        # Map input device to output if required.
+        if output_name := pointer.Pointer.from_input_device(wlr_device).output_name:
+            target_output = None
+            for output in self.outputs:
+                if output_name == output.wlr_output.name:
+                    target_output = output.wlr_output
+                    break
+
+            if target_output:
+                logger.debug("Mapping pointer to output: %s", output_name)
+            else:
+                logger.warning("Failed to find output (%s) for mapping pointer.", output_name)
+            self.cursor.map_input_to_output(wlr_device, target_output)
+
         return device
 
     def _add_new_keyboard(self, wlr_device: input_device.InputDevice) -> inputs.Keyboard:
