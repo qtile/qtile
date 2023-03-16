@@ -12,7 +12,7 @@ Wayland-specific issues and see :ref:`troubleshooting <debugging-wayland>` for
 tips on how to debug Wayland problems.
 
 .. note::
-   The currently supported wlroots and pylwroots versions are 0.16.x.
+   We currently support wlroots>=0.16.0,<0.17.0 and pywlroots>=0.16.2,<0.17.0.
 
 Backend-Specific Configuration
 ==============================
