@@ -341,7 +341,7 @@ class GroupBox(_GroupBase):
         return width
 
     def group_has_urgent(self, group):
-        return len([w for w in group.windows if w.urgent]) > 0
+        return any(w.urgent for w in group.windows)
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)

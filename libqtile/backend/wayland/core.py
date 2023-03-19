@@ -55,6 +55,7 @@ from wlroots.wlr_types import (
     pointer,
     seat,
     xdg_decoration_v1,
+    xdg_activation_v1,
 )
 from wlroots.wlr_types.cursor import Cursor, WarpMode
 from wlroots.wlr_types.idle import Idle
@@ -312,6 +313,12 @@ class Core(base.Core, wlrq.HasListeners):
         self.active_pointer_constraint: window.PointerConstraint | None = None
         self._relative_pointer_manager_v1 = RelativePointerManagerV1(self.display)
         self.foreign_toplevel_manager_v1 = ForeignToplevelManagerV1.create(self.display)
+
+        self._xdg_activation_v1 = xdg_activation_v1.XdgActivationV1.create(self.display)
+        self.add_listener(
+            self._xdg_activation_v1.request_activate_event,
+            self._on_xdg_activation_v1_request_activate,
+        )
 
         # Set up XWayland
         self._xwayland: xwayland.XWayland | None = None
@@ -821,6 +828,26 @@ class Core(base.Core, wlrq.HasListeners):
         assert self.qtile is not None
         win = xwindow.XWindow(self, self.qtile, surface)
         self.pending_windows.add(win)
+
+    def _on_xdg_activation_v1_request_activate(
+        self, _listener: Listener, event: xdg_activation_v1.XdgActivationV1RequestActivateEvent
+    ) -> None:
+        """Respond to window activate events via the XDG activation V1 protocol."""
+        logger.debug("Signal: xdg_activation_v1 request_activate")
+        assert self.qtile is not None
+
+        focus_on_window_activation = self.qtile.config.focus_on_window_activation
+        if focus_on_window_activation == "never":
+            logger.debug("Ignoring focus request (focus_on_window_activation='never')")
+            return
+
+        surface = event.surface
+        if surface and surface.is_xdg_surface:
+            xdg_surface = XdgSurface.from_surface(surface)
+            if win := xdg_surface.data:
+                win.handle_activation_request(focus_on_window_activation)
+            else:
+                logger.debug("Failed to find window to activate. Ignoring request.")
 
     def _output_manager_reconfigure(self, config: OutputConfigurationV1, apply: bool) -> None:
         """
