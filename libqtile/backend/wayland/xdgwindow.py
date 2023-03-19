@@ -188,6 +188,30 @@ class XdgWindow(Window[XdgSurface]):
             if self.ftm_handle:
                 self.ftm_handle.set_fullscreen(do_full)
 
+    def handle_activation_request(self, focus_on_window_activation: str) -> None:
+        """Respond to XDG activation requests targeting this window."""
+        assert self.qtile is not None and self.group
+
+        if focus_on_window_activation == "focus":
+            logger.debug("Focusing window (focus_on_window_activation='focus')")
+            self.qtile.current_screen.set_group(self.group)
+            self.group.focus(self)
+
+        elif focus_on_window_activation == "smart":
+            if not self.group.screen:
+                logger.debug("Ignoring focus request (focus_on_window_activation='smart')")
+            elif self.group.screen == self.qtile.current_screen:
+                logger.debug("Focusing window (focus_on_window_activation='smart')")
+                self.qtile.current_screen.set_group(self.group)
+                self.group.focus(self)
+            else:
+                self._urgent = True
+                hook.fire("client_urgent_hint_changed", self)
+
+        elif focus_on_window_activation == "urgent":
+            self._urgent = True
+            hook.fire("client_urgent_hint_changed", self)
+
     def place(
         self,
         x: int,

@@ -1711,7 +1711,9 @@ class Window(_Window, base.Window):
                     self.group.focus(self)
                 elif focus_behavior == "smart":
                     if not self.group.screen:
-                        logger.debug("Ignoring focus request")
+                        logger.debug(
+                            "Ignoring focus request (focus_on_window_activation='smart')"
+                        )
                         return
                     if self.group.screen == self.qtile.current_screen:
                         logger.debug("Focusing window")
@@ -1724,7 +1726,7 @@ class Window(_Window, base.Window):
                     logger.debug("Setting urgent flag for window")
                     self.urgent = True
                 elif focus_behavior == "never":
-                    logger.debug("Ignoring focus request")
+                    logger.debug("Ignoring focus request (focus_on_window_activation='never')")
                 else:
                     logger.debug(
                         "Invalid value for focus_on_window_activation: %s", focus_behavior

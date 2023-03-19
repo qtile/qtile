@@ -116,6 +116,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self._opacity: float = 1.0
         self._wm_class: str | None = None
         self._idle_inhibitors_count: int = 0
+        self._urgent = False
 
         # Create a scene-graph tree for this window and its borders
         self.data_handle: ffi.CData = ffi.new_handle(self)
@@ -187,6 +188,10 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     def group(self, group: _Group | None) -> None:
         self._group = group
 
+    @property
+    def urgent(self) -> bool:
+        return self._urgent
+
     def _on_destroy(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: window destroy")
         self.hide()
@@ -253,6 +258,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         return other == Client.from_resource(self.surface.surface._ptr.resource)  # type: ignore
 
     def focus(self, warp: bool = True) -> None:
+        self._urgent = False
         self.core.focus_window(self)
 
         if warp and self.qtile.config.cursor_warp:
@@ -783,6 +789,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         self.ftm_handle: ftm.ForeignToplevelHandleV1 | None = None
         self.data_handle = ffi.new_handle(self)
         surface.data = self.data_handle
+        self._urgent = False
 
     def finalize(self) -> None:
         self.finalize_listeners()
@@ -794,7 +801,12 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
     def wid(self) -> int:
         return self._wid
 
+    @property
+    def urgent(self) -> bool:
+        return self._urgent
+
     def focus(self, warp: bool = True) -> None:
+        self._urgent = False
         self.core.focus_window(self)
 
         if warp and self.qtile.config.cursor_warp:
