@@ -45,6 +45,7 @@ from wlroots.wlr_types import (
     InputInhibitManager,
     OutputLayout,
     PointerGesturesV1,
+    Presentation,
     PrimarySelectionV1DeviceManager,
     RelativePointerManagerV1,
     ScreencopyManagerV1,
@@ -278,6 +279,7 @@ class Core(base.Core, wlrq.HasListeners):
         XdgOutputManagerV1(self.display, self.output_layout)
         ScreencopyManagerV1(self.display)
         GammaControlManagerV1(self.display)
+        self.scene.set_presentation(Presentation.create(self.display, self.backend))
         output_power_manager = OutputPowerManagerV1(self.display)
         self.add_listener(
             output_power_manager.set_mode_event, self._on_output_power_manager_set_mode
