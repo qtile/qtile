@@ -3,3 +3,12 @@
 # and the latest release of cffi.
 # We can pin the version here for the docs build.
 cffi<=1.15.0
+setuptools_scm
+sphinx
+sphinx_rtd_theme
+funcparserlib==1.0.0a0
+sphinxcontrib-seqdiag
+numpydoc
+pytest
+PyGObject
+dbus-next
