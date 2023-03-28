@@ -113,6 +113,10 @@ class Mpd2(base.ThreadPoolText):
             '{play_status} {idle_message} \
                 [{repeat}{random}{single}{consume}{updating_db}]'
 
+            Note that the ``artist`` key fallbacks to similar keys in specific order.
+            (``artist`` -> ``albumartist`` -> ``performer`` ->
+             -> ``composer`` -> ``conductor`` -> ``ensemble``)
+
     idle_message:
         text to display instead of song information when MPD is idle.
         (i.e. no song in queue)
