@@ -212,6 +212,6 @@ def test_mpd2_widget_custom_undefined_value(mpd2_manager):
 def test_mpd2_widget_dynamic_artist_value(mpd2_manager):
     """Quick test to check dynamic artist value"""
     widget = mpd2_manager.c.widget["mpd2"]
-    widget.eval(f"self.client._index = 4")
+    widget.eval("self.client._index = 4")
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "⏸ C418/Sweden [-----]"
