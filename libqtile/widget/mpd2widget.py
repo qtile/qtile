@@ -316,6 +316,13 @@ class Mpd2(base.ThreadPoolText):
         if "song" in self.status_format and song_info["song"] != self.undefined_value:
             song_info["currentsong"] = str(int(song_info["song"]) + 1)
 
+        if "artist" in self.status_format and song_info["artist"] == self.undefined_value:
+            artist_keys = ("albumartist", "performer", "composer", "conductor", "ensemble")
+            for key in artist_keys:
+                if song_info[key] != self.undefined_value:
+                    song_info["artist"] = song_info[key]
+                    break
+
         # mpd serializes tags containing commas as lists.
         for key in song_info:
             if isinstance(song_info[key], list):
