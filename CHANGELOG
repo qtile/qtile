@@ -44,7 +44,6 @@ Qtile x.xx.x, released XXXX-XX-XX:
           When set to `False`, the keys are passed to the focused client. A key is never swallowed if the
           function is not executed, e.g. due to failing the `.when()` check.
         - Add ability to set custom "Undefined" status key value to `Mpd2Widget`.
-        - Made the `Mpd2Widget` `artist` status key dynamic.
         - `Mpd2Widget` now searches for artist name in all similar keys (i.e `albumartist`, `performer`, etc.).
     * bugfixes
         - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
