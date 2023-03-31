@@ -39,6 +39,7 @@ class MockMPD(ModuleType):
             {"title": "Sweet Caroline", "artist": "Neil Diamond"},
             {"title": "Marea", "artist": "Fred Again.."},
             {},
+            {"title": "Sweden", "performer": "C418"},
         ]
 
         def __init__(self):
@@ -206,3 +207,11 @@ def test_mpd2_widget_custom_undefined_value(mpd2_manager):
     """Quick test to check undefined_value option"""
     widget = mpd2_manager.c.widget["mpd2"]
     assert widget.info()["text"] == "Never gonna give you up (Unknown)"
+
+
+def test_mpd2_widget_dynamic_artist_value(mpd2_manager):
+    """Quick test to check dynamic artist value"""
+    widget = mpd2_manager.c.widget["mpd2"]
+    widget.eval("self.client._index = 4")
+    widget.eval("self.update(self.poll())")
+    assert widget.info()["text"] == "⏸ C418/Sweden [-----]"

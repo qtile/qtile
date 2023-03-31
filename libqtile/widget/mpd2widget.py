@@ -113,6 +113,10 @@ class Mpd2(base.ThreadPoolText):
             '{play_status} {idle_message} \
                 [{repeat}{random}{single}{consume}{updating_db}]'
 
+            Note that the ``artist`` key fallbacks to similar keys in specific order.
+            (``artist`` -> ``albumartist`` -> ``performer`` ->
+             -> ``composer`` -> ``conductor`` -> ``ensemble``)
+
     idle_message:
         text to display instead of song information when MPD is idle.
         (i.e. no song in queue)
@@ -315,6 +319,13 @@ class Mpd2(base.ThreadPoolText):
 
         if "song" in self.status_format and song_info["song"] != self.undefined_value:
             song_info["currentsong"] = str(int(song_info["song"]) + 1)
+
+        if "artist" in self.status_format and song_info["artist"] == self.undefined_value:
+            artist_keys = ("albumartist", "performer", "composer", "conductor", "ensemble")
+            for key in artist_keys:
+                if song_info[key] != self.undefined_value:
+                    song_info["artist"] = song_info[key]
+                    break
 
         # mpd serializes tags containing commas as lists.
         for key in song_info:
