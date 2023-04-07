@@ -334,7 +334,7 @@ class StatusNotifierItem:  # noqa: E303
         return icon
 
     def activate(self):
-        if hasattr(self, "call_activate"):
+        if hasattr(self.item, "call_activate"):
             create_task(self._activate())
 
     async def _activate(self):
