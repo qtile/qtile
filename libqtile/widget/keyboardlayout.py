@@ -60,7 +60,7 @@ class _BaseLayoutBackend(metaclass=ABCMeta):
 
 
 class _X11LayoutBackend(_BaseLayoutBackend):
-    kb_layout_regex = re.compile(r"layout:\s+(?P<layout>\w+)")
+    kb_layout_regex = re.compile(r"layout:\s+(?P<layout>[\w-]+)")
     kb_variant_regex = re.compile(r"variant:\s+(?P<variant>\w+)")
 
     def get_keyboard(self) -> str:
