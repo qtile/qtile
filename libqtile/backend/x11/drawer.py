@@ -7,14 +7,14 @@ import cairocffi
 import xcffib.xproto
 
 from libqtile import utils
-from libqtile.backend import base
+from libqtile.backend import drawer
 
 if TYPE_CHECKING:
     from libqtile.backend.base import Internal
     from libqtile.core.manager import Qtile
 
 
-class Drawer(base.Drawer):
+class Drawer(drawer.Drawer):
     """A helper class for drawing to Internal windows.
 
     The underlying surface here is an XCBSurface backed by a pixmap. We draw to the
@@ -25,7 +25,7 @@ class Drawer(base.Drawer):
     """
 
     def __init__(self, qtile: Qtile, win: Internal, width: int, height: int):
-        base.Drawer.__init__(self, qtile, win, width, height)
+        drawer.Drawer.__init__(self, qtile, win, width, height)
         self._xcb_surface = None
         self._pixmap = None
         self._gc = None
@@ -37,7 +37,7 @@ class Drawer(base.Drawer):
         self._free_xcb_surface()
         self._free_pixmap()
         self._free_gc()
-        base.Drawer.finalize(self)
+        drawer.Drawer.finalize(self)
 
     @property
     def width(self):
@@ -192,4 +192,4 @@ class Drawer(base.Drawer):
         if utils.has_transparency(colour) and self._depth != 32:
             colour = utils.remove_transparency(colour)
 
-        base.Drawer.set_source_rgb(self, colour, ctx)
+        drawer.Drawer.set_source_rgb(self, colour, ctx)

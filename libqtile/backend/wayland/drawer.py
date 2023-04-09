@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING
 import cairocffi
 from wlroots.util.region import PixmanRegion32
 
-from libqtile.backend import base
+from libqtile import utils
+from libqtile.backend import drawer
 
 if TYPE_CHECKING:
     from libqtile.backend.wayland.window import Internal
@@ -13,7 +14,7 @@ if TYPE_CHECKING:
     from libqtile.utils import ColorsType
 
 
-class Drawer(base.Drawer):
+class Drawer(drawer.Drawer):
     """
     A helper class for drawing and text layout.
 
@@ -22,7 +23,7 @@ class Drawer(base.Drawer):
     """
 
     def __init__(self, qtile: Qtile, win: Internal, width: int, height: int):
-        base.Drawer.__init__(self, qtile, win, width, height)
+        drawer.Drawer.__init__(self, qtile, win, width, height)
 
     def _draw(
         self,
