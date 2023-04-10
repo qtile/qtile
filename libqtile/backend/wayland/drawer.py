@@ -1,3 +1,23 @@
+# Copyright (c) 2022 m-col
+# Copyright (c) 2023 elParaguayo
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -11,7 +31,6 @@ from libqtile.backend import drawer
 if TYPE_CHECKING:
     from libqtile.backend.wayland.window import Internal
     from libqtile.core.manager import Qtile
-    from libqtile.utils import ColorsType
 
 
 class Drawer(drawer.Drawer):
@@ -62,17 +81,13 @@ class Drawer(drawer.Drawer):
             context.rectangle(offsetx, offsety, width, height)
             context.fill()
 
-        damage = PixmanRegion32()
-        damage.init_rect(offsetx, offsety, width, height)  # type: ignore
-        # TODO: do we really need to `set_buffer` here? would be good to just set damage
-        self._win._scene_buffer.set_buffer_with_damage(self._win.wlr_buffer, damage)
-        damage.fini()
-
-    def clear(self, colour: ColorsType) -> None:
-        # Draw background straight to ImageSurface
-        ctx = cairocffi.Context(self.surface)
-        ctx.save()
-        ctx.set_operator(cairocffi.OPERATOR_SOURCE)
-        self.set_source_rgb(colour, ctx=ctx)
-        ctx.paint()
-        ctx.restore()
+        # Copy drawn ImageSurface data into rendered wlr_texture
+        self._win.texture.write_pixels(
+            self._stride,
+            width,
+            height,
+            cairocffi.cairo.cairo_image_surface_get_data(self._source._pointer),
+            dst_x=offsetx,
+            dst_y=offsety,
+        )
+        self._win.damage()

@@ -75,7 +75,9 @@ class Drawer:
 
     def finalize(self):
         """Destructor/Clean up resources"""
+        self.background_surface = None
         self.surface = None
+        self.last_surface = None
         self.ctx = None
 
     @property
@@ -263,6 +265,10 @@ class Drawer:
             ctx.set_source_rgba(*utils.rgb(colour))
 
     def clear(self, colour):
+        self.ctx.set_operator(cairocffi.OPERATOR_CLEAR)
+        self.ctx.rectangle(0, 0, self.width, self.height)
+        self.ctx.fill()
+        self.ctx.set_operator(cairocffi.OPERATOR_SOURCE)
         self.set_source_rgb(colour)
         self.ctx.rectangle(0, 0, self.width, self.height)
         self.ctx.fill()

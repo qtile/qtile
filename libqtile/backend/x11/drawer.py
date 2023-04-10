@@ -1,3 +1,35 @@
+# Copyright (c) 2010 Aldo Cortesi
+# Copyright (c) 2011 Florian Mounier
+# Copyright (c) 2011 oitel
+# Copyright (c) 2011 Kenji_Takahashi
+# Copyright (c) 2011 Paul Colomiets
+# Copyright (c) 2012, 2014 roger
+# Copyright (c) 2012 nullzion
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2014-2015 Sean Vig
+# Copyright (c) 2014 Nathan Hoad
+# Copyright (c) 2014 dequis
+# Copyright (c) 2014 Tycho Andersen
+# Copyright (c) 2020, 2021 Robert Andrew Ditthardt
+# Copyright (c) 2023 elParaguayo
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 from __future__ import annotations
 
 import contextlib
@@ -149,8 +181,7 @@ class Drawer(drawer.Drawer):
         if self._gc is None:
             self._gc = self._create_gc()
 
-        # Check if we need to re-create XCBSurface
-        # This may not be needed now that we call in `clear`
+        # Recreate an XCBSurface
         self._check_xcb()
 
         # paint stored operations(if any) to XCBSurface
@@ -169,23 +200,18 @@ class Drawer(drawer.Drawer):
             self.height if height is None else height,
         )
 
+        # We release the XCBSurface and pixmap here so we start from a clean
+        # slate next time we draw
+        # This is currently needed as "clear" functions do not remove contents when
+        # using a transparent background.
+        self._free_pixmap()
+        self._free_xcb_surface()
+
     def _find_root_visual(self):
         for i in self.qtile.core.conn.default_screen.allowed_depths:
             for v in i.visuals:
                 if v.visual_id == self.qtile.core.conn.default_screen.root_visual:
                     return v
-
-    def clear(self, colour):
-        # Check if we need to re-create XCBSurface
-        self._check_xcb()
-
-        # Draw background straigt to XCB surface
-        ctx = cairocffi.Context(self._xcb_surface)
-        ctx.save()
-        ctx.set_operator(cairocffi.OPERATOR_SOURCE)
-        self.set_source_rgb(colour, ctx=ctx)
-        ctx.paint()
-        ctx.restore()
 
     def set_source_rgb(self, colour, ctx=None):
         # Remove transparency from non-32 bit windows
