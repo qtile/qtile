@@ -109,7 +109,7 @@ class _Widget(CommandObject, configurable.Configurable):
     you need access to the qtile object, it needs to be imported into your code.
 
     ``lazy`` functions can also be passed as callback functions and can be used in
-    the same was as keybindings.
+    the same way as keybindings.
 
     For example:
 
