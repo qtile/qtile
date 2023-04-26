@@ -238,6 +238,7 @@ class GroupBox(_GroupBase):
         ),
         ("spacing", None, "Spacing between groups" "(if set to None, will be equal to margin_x)"),
         ("toggle", True, "Enable toggling of group when clicking on same group name"),
+        ("markup", False, "Whether or not to use pango markup"),
     ]
 
     def __init__(self, **config):
