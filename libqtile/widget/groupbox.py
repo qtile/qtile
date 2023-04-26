@@ -42,6 +42,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
     defaults: list[tuple[str, Any, str]] = [
         ("borderwidth", 3, "Current group border width"),
         ("center_aligned", True, "center-aligned group box"),
+        ("markup", False, "Whether or not to use pango markup"),
     ]
 
     def __init__(self, **config):
@@ -238,7 +239,6 @@ class GroupBox(_GroupBase):
         ),
         ("spacing", None, "Spacing between groups" "(if set to None, will be equal to margin_x)"),
         ("toggle", True, "Enable toggling of group when clicking on same group name"),
-        ("markup", False, "Whether or not to use pango markup"),
     ]
 
     def __init__(self, **config):
