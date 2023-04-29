@@ -90,7 +90,7 @@ jobs:
               if: ${{ matrix.python-version != 'pypy-3.9' }}
               run: |
                 pip -q install coveralls
-                coveralls --service=github
+                coveralls --service=github-actions
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
