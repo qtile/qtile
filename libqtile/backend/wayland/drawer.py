@@ -81,13 +81,8 @@ class Drawer(drawer.Drawer):
             context.rectangle(offsetx, offsety, width, height)
             context.fill()
 
-        # Copy drawn ImageSurface data into rendered wlr_texture
-        self._win.texture.write_pixels(
-            self._stride,
-            width,
-            height,
-            cairocffi.cairo.cairo_image_surface_get_data(self._source._pointer),
-            dst_x=offsetx,
-            dst_y=offsety,
-        )
-        self._win.damage()
+        damage = PixmanRegion32()
+        damage.init_rect(offsetx, offsety, width, height)  # type: ignore
+        # TODO: do we really need to `set_buffer` here? would be good to just set damage
+        self._win._scene_buffer.set_buffer_with_damage(self._win.wlr_buffer, damage)
+        damage.fini()
