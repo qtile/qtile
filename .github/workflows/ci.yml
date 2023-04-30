@@ -89,12 +89,13 @@ jobs:
               # For speed purposes, we don't do coverage reporting on pypy 3.9
               if: ${{ matrix.python-version != 'pypy-3.9' }}
               run: |
-                pip -q install coveralls
+                pip -q install coveralls >=3.3.0
                 coveralls --service=github
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
                 COVERALLS_PARALLEL: true
+                COVERALLS_SERVICE_JOB_ID: ${{ github.run_id }}
 
     coverage:
         name: Finalize Coverage
