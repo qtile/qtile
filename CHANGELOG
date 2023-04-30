@@ -59,6 +59,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Fix setting tiled position by mouse for layouts using _SimpleLayoutBase. To support this in other layouts, add a swap method taking two windows.
         - Fix unfullscreening bug in conjunction with Chromium based clients when auto_fullscreen is set to `False`.
         - Ensure `CurrentLayoutIcon` expands paths for custom folders.
+        - Fix vertical alignment of icons in `TaskList` widget
     * python version support
         - We have added support for python 3.11 and pypy 3.9.
         - python 3.7, 3.8 and pypy 3.7 are not longer supported.
