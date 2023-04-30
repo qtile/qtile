@@ -76,7 +76,6 @@ class Drawer(drawer.Drawer):
 
         # Paint recorded operations to our window's underlying ImageSurface
         with cairocffi.Context(self._win.surface) as context:
-            context.set_operator(cairocffi.OPERATOR_SOURCE)
             context.set_source_surface(self.surface, offsetx, offsety)
             context.rectangle(offsetx, offsety, width, height)
             context.fill()
