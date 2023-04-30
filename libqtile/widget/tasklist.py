@@ -531,7 +531,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             return
 
         x = offset + self.borderwidth + self.padding_x
-        y = self.padding_y + self.borderwidth
+        y = (self.height - self.icon_size) // 2
 
         self.drawer.ctx.save()
         self.drawer.ctx.translate(x, y)
