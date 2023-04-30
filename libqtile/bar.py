@@ -671,13 +671,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
         for i in self.widgets:
             i.draw()
-        end = i.offset + i.length  # pylint: disable=undefined-loop-variable
-        # we verified that self.widgets is not empty in self.draw(), see above.
-        if end < self._length:
-            if self.horizontal:
-                self.drawer.draw(offsetx=end, width=self._length - end)
-            else:
-                self.drawer.draw(offsety=end, height=self._length - end)
 
     @expose_command()
     def info(self) -> dict[str, Any]:
