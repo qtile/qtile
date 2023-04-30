@@ -265,6 +265,7 @@ class Drawer:
             ctx.set_source_rgba(*utils.rgb(colour))
 
     def clear(self, colour):
+        self.ctx.save()
         self.ctx.set_operator(cairocffi.OPERATOR_CLEAR)
         self.ctx.rectangle(0, 0, self.width, self.height)
         self.ctx.fill()
@@ -272,6 +273,7 @@ class Drawer:
         self.set_source_rgb(colour)
         self.ctx.rectangle(0, 0, self.width, self.height)
         self.ctx.fill()
+        self.ctx.restore()
 
     def textlayout(self, text, colour, font_family, font_size, font_shadow, markup=False, **kw):
         """Get a text layout"""
