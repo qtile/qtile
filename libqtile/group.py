@@ -48,10 +48,11 @@ class _Group(CommandObject):
     A group is identified by its name but displayed in GroupBox widget by its label.
     """
 
-    def __init__(self, name, layout=None, label=None):
+    def __init__(self, name, layout=None, label=None, default_app: str = None):
         self.name = name
         self.label = name if label is None else label
         self.custom_layout = layout  # will be set on _configure
+        self.default_app = default_app
         self.windows = []
         self.tiled_windows = set()
         self.qtile = None
@@ -566,6 +567,15 @@ class _Group(CommandObject):
         """
         self.label = label if label is not None else self.name
         hook.fire("changegroup")
+
+    @expose_command()
+    def spawn_default_app(self):
+        """
+        Spawn the default app for this group if it exists.
+        """
+        if self.default_app:
+            if self.qtile.spawn(self.default_app) < 0:
+                logger.warning("spawn_default_app: The application could not be spawned.")
 
     def __repr__(self):
         return "<group.Group (%r)>" % self.name

@@ -717,6 +717,9 @@ class Group:
     label:
         The display name of the group. Use this to define a display name other than name
         of the group. If set to ``None``, the display name is set to the name.
+    default_app:
+        The default application to spawn when the group is selected and ``group.spawn_default_app()``
+        is called. If not specified, nothing will happen when ``group.spawn_default_app()`` is called.
 
     """
 
@@ -734,9 +737,11 @@ class Group:
         screen_affinity: int | None = None,
         position: int = sys.maxsize,
         label: str | None = None,
+        default_app: str | None = None,
     ) -> None:
         self.name = name
         self.label = label
+        self.default_app = default_app
         self.exclusive = exclusive
         self.spawn = spawn
         self.layout = layout

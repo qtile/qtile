@@ -536,9 +536,11 @@ class Qtile(CommandObject):
         layouts: list[Layout] | None = None,
         label: str | None = None,
         index: int | None = None,
+        default_app: str | None = None,
     ) -> bool:
+        print(f"default_app: {default_app}")
         if name not in self.groups_map.keys():
-            g = _Group(name, layout, label=label)
+            g = _Group(name, layout, label=label, default_app=default_app)
             if index is None:
                 self.groups.append(g)
             else:

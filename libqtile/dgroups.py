@@ -115,7 +115,9 @@ class DGroups:
         rule = Rule(group.matches, group=group.name)
         self.rules.append(rule)
         if start:
-            self.qtile.add_group(group.name, group.layout, group.layouts, group.label)
+            self.qtile.add_group(group.name, group.layout,
+                                 group.layouts, group.label,
+                                 default_app=group.default_app)
 
     def _setup_groups(self):
         for group in self.groups:
