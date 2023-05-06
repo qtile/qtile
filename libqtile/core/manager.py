@@ -21,7 +21,6 @@
 from __future__ import annotations
 
 import asyncio
-import concurrent
 import io
 import logging
 import os
@@ -111,6 +110,9 @@ class Qtile(CommandObject):
         self._stopped_event: asyncio.Event | None = None
 
         self.server = IPCCommandServer(self)
+
+        self._spawned_processes: list[subprocess.Popen] = []
+        self._zombie_killer: asyncio.TimerHandle | None = None
 
     def load_config(self, initial: bool = False) -> None:
         try:
@@ -326,6 +328,7 @@ class Qtile(CommandObject):
 
     def finalize(self) -> None:
         self._finalize_configurables()
+        self._kill_zombies()
         cancel_tasks()
         self.core.finalize()
 
@@ -1233,50 +1236,19 @@ class Qtile(CommandObject):
         except KeyError:
             pass
 
-        # future = concurrent.futures.Future()
+        proc = subprocess.Popen(args, shell=shell, env=env)
 
-        # self._eventloop.call_soon_threadsafe(asyncio.create_task, self._async_spawn(args, shell, env, future))
-        # pid = future.result()
-        # task = asyncio.run_coroutine_threadsafe(self._async_spawn(args, shell, env), self._eventloop)
-        task = asyncio.create_task(self._async_spawn(args, shell, env))
-        task.add_done_callback(self._dcb)
-        import time
-        while not task.done():
-            logger.warning("Waiting for PID")
-            time.sleep(1)
-        pid = task.result()
-        return pid
-        # logger.warning(f"DONE: {pid}")
-        # return pid
-        # spawn = self.call_soon_threadsafe(self._async_spawn, (args, shell, env))
-        # return spawn.result()
+        if not self._spawned_processes:
+            self._zombie_killer = self.call_later(10, self._kill_zombies)
 
-    def _dcb(self, task):
-        logger.warning(f"CB: {task.result()=}")
+        self._spawned_processes.append(proc)
 
-    async def _async_spawn(self, args, shell, env):
-        return 10
-        # logger.warning("IN ASYNC SPAWN")
-        # if shell:
-        #     logger.warning("SHELL")
-        #     cmd = subprocess.list2cmdline(args)
-        #     proc = await asyncio.create_subprocess_shell(
-        #         cmd, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL, env=env
-        #     )
-        # else:
-        #     logger.warning("NO SHELL")
-        #     cmd = args.pop(0)
-        #     logger.warning(f"{cmd=} {args=}")
-        #     proc = await asyncio.create_subprocess_exec(
-        #         cmd, *args, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL, env=env
-        #     )
+        return proc.pid
 
-        # # asyncio.create_task(self._wait_proc(proc))
-        # logger.warning(f"{proc.pid=}")
-        # return proc.pid
-
-    async def _wait_proc(self, proc):
-        await proc.wait()
+    def _kill_zombies(self):
+        self._spawned_processes = [proc for proc in self._spawned_processes if proc.poll() is None]
+        if self._spawned_processes:
+            self._zombie_killer = self.call_later(10, self._kill_zombies)
 
     @expose_command()
     def status(self) -> Literal["OK"]:
