@@ -204,7 +204,6 @@ class Drawer(drawer.Drawer):
         # slate next time we draw
         # This is currently needed as "clear" functions do not remove contents when
         # using a transparent background.
-        self._free_pixmap()
         self._free_xcb_surface()
 
     def _find_root_visual(self):
