@@ -253,7 +253,7 @@ def send_notification(
     title: str,
     message: str,
     urgent: bool = False,
-    timeout: int = 10000,
+    timeout: int = -1,
     id_: int | None = None,
 ) -> int:
     """
