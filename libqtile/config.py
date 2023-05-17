@@ -717,7 +717,9 @@ class Group:
     label:
         The display name of the group. Use this to define a display name other than name
         of the group. If set to ``None``, the display name is set to the name.
-
+    grab_child_window:
+        When an app is spawned at group creation, this options allows to capture windows created by child 
+        processes of the started process. 
     """
 
     def __init__(
@@ -734,11 +736,13 @@ class Group:
         screen_affinity: int | None = None,
         position: int = sys.maxsize,
         label: str | None = None,
+        grab_child_window: bool = False
     ) -> None:
         self.name = name
         self.label = label
         self.exclusive = exclusive
         self.spawn = spawn
+        self.grab_child_window = grab_child_window
         self.layout = layout
         self.layouts = layouts or []
         self.persist = persist

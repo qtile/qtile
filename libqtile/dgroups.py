@@ -26,9 +26,10 @@
 # SOFTWARE.
 
 import collections
+import psutil
 
 import libqtile.hook
-from libqtile.backend.base import Static
+from libqtile.backend.base import Static, Window
 from libqtile.command import lazy
 from libqtile.config import Group, Key, Match, Rule
 from libqtile.log_utils import logger
@@ -63,6 +64,19 @@ def simple_key_binder(mod, keynames=None):
             dgroup.qtile.grab_key(key_c)
 
     return func
+
+def _match_ppid(pid: int):
+    """Utility function to match pid againts window.pid or any of its ppid"""
+    
+    def func(w: Window) -> bool:
+        cid = w.get_pid()
+        while cid not in (pid, 0, 1): # if 0 or 1 are reached, we cannot really find parents that are not qtile
+            cid = psutil.Process(cid).ppid()
+        return cid == pid
+
+    return func
+        
+
 
 
 class DGroups:
@@ -128,7 +142,10 @@ class DGroups:
                     spawns = group.spawn
                 for spawn in spawns:
                     pid = self.qtile.spawn(spawn)
-                    self.add_rule(Rule(Match(net_wm_pid=pid), group.name))
+                    if group.grab_child_window:
+                        self.add_rule(Rule(Match(func=_match_ppid(pid)), group.name))  
+                    else:
+                        self.add_rule(Rule(Match(net_wm_pid=pid), group.name))
 
     def _setup_hooks(self):
         libqtile.hook.subscribe.addgroup(self._addgroup)
