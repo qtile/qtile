@@ -548,3 +548,20 @@ def on_resume(msg):  # type: ignore
     # Value is False when the event is over i.e. the machine has woken up
     if not sleeping:
         hook.fire("resume")
+
+
+def get_ppid(pid: int) -> int | None:
+    """
+    Gets the parent process id (ppid) of a given process (represented by the pid in input)
+    """
+    try:
+        # Buffering is taken by the psutil default
+        with open("/proc/{0}/stat".format(pid), "rb", buffering=32 * 1024) as f:
+            data = f.read()
+    except OSError:  # Very unlikely we are not able to read the /proc stat file
+        logger.warning("Unable to read stat file for pid=%s", pid)
+        return None
+    else:
+        # Process name is between brackets and may contains spaces / additional brackets
+        close_bracket = data.rfind(b")")
+        return int(data[close_bracket + 2 :].split()[1])

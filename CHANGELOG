@@ -72,6 +72,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Ensure `CurrentLayoutIcon` expands paths for custom folders.
         - Fix vertical alignment of icons in `TaskList` widget
         - Fix laggy resize/positioning of floating windows in X11 by handling motion notify events later. We also introduced a cap setting if you want to limit these events further, e.g. for limiting resource usage. This is configurable with the x11_drag_polling_rate variable for each `Screen` which is set to None by default, indicating no cap.
+        - Fix spawn logic to handle windows created by child processes (set grab_child_window to `True` in group configuration to enable this behavior)
     * python version support
         - We have added support for python 3.11 and pypy 3.9.
         - python 3.7, 3.8 and pypy 3.7 are not longer supported.
