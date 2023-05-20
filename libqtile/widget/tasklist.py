@@ -172,7 +172,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         (
             "window_name_location_offset",
             0,
-            "The offset given to window loction",
+            "The offset given to the window location",
         ),
     ]
 
