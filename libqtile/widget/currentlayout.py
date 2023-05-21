@@ -160,7 +160,7 @@ class CurrentLayoutIcon(base._TextBox):
                 self.drawer.clear(self.background or self.bar.background)
                 self.drawer.ctx.save()
                 self.drawer.ctx.translate(
-                    (self.width - surface.width) / 2, (self.height - surface.height) / 2
+                    (self.width - surface.width) / 2, (self.bar.height - surface.height) / 2
                 )
                 self.drawer.ctx.set_source(surface.pattern)
                 self.drawer.ctx.paint()
@@ -225,7 +225,7 @@ class CurrentLayoutIcon(base._TextBox):
 
             img = Img.from_path(icon_file_path)
 
-            new_height = (self.height - 2) * self.scale
+            new_height = (self.bar.height - 2) * self.scale
             img.resize(height=new_height)
             if img.width > self.length:
                 self.length = img.width + self.actual_padding * 2
