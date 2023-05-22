@@ -31,6 +31,7 @@ import signal
 import subprocess
 import tempfile
 from collections import defaultdict
+from logging.handlers import RotatingFileHandler
 from typing import TYPE_CHECKING
 
 import libqtile
@@ -51,6 +52,7 @@ from libqtile.extension.base import _Extension
 from libqtile.group import _Group
 from libqtile.log_utils import logger
 from libqtile.scratchpad import ScratchPad
+from libqtile.scripts.main import VERSION
 from libqtile.utils import (
     cancel_tasks,
     get_cache_dir,
@@ -1353,7 +1355,15 @@ class Qtile(CommandObject):
     @expose_command()
     def qtile_info(self) -> dict:
         """Returns a dictionary of info on the Qtile instance"""
-        return {}
+        dictionary = {
+            "config_path": self.config.file_path,
+            "version": VERSION,
+            "log_level": self.loglevelname(),
+        }
+        if isinstance(logger.handlers[0], RotatingFileHandler):
+            log_path = logger.handlers[0].baseFilename
+            dictionary["log_path"] = log_path
+        return dictionary
 
     @expose_command()
     def shutdown(self) -> None:
