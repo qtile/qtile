@@ -20,6 +20,10 @@ Qtile x.xx.x, released XXXX-XX-XX:
       - The `StockTicker` widget `function` option is being deprecated: rename it to `func`.
       - The formatting of `NetWidget` has changed, if you use the `format` parameter in your config include 
         `up_suffix`, `total_suffix` and `down_suffix` to display the respective units.
+      - The `Notify` widget now has separate `default_timeout` properties for differenct urgency levels. Previously,
+        `default_timeout` was `None` which meant that there was no timeout for all notifications (unless this had been
+        set by the client sending the notification). Now, `default_timeout` is for normal urgency notifications and this
+        has been set to a default of 10 seconds. `default_timeout_urgent`, for critical notifications, has a timeout of `None`.
     * features
         - Add ability to set icon size in `LaunchBar` widget.
         - Add 'warp_pointer' option to `Drag` that when set will warp the pointer to the bottom right of
