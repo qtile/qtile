@@ -104,7 +104,7 @@ use the latest version on PyPI:
 
 .. code-block:: bash
 
-    pip install --no-cache-dir cairocffi
+    pip install --no-cache-dir --no-build-isolation cairocffi
 
 
 Qtile

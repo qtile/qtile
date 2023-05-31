@@ -56,11 +56,11 @@ class CheckCairoXcb(install):
               - The pip cache is cleared (remove ~/.cache/pip, if it exists)
               - Reinstall cairocffi, either:
 
-                  pip install --no-deps --ignore-installed cairocffi
+                  pip install --no-deps --ignore-installed --no-build-isolation cairocffi
 
                 or
 
-                  pip uninstall cairocffi && pip install cairocffi
+                  pip uninstall cairocffi && pip install --no-build-isolation cairocffi
             """
                 )
             )

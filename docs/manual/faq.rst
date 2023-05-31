@@ -176,7 +176,7 @@ To fix this:
 #. re-install them sequentially (again, with pip or with your package-manager)::
 
     pip install xcffib
-    pip install --no-cache-dir cairocffi
+    pip install --no-cache-dir --no-build-isolation cairocffi
 
 See `this issue comment`_ for more information.
 
