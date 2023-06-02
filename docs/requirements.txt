@@ -6,6 +6,6 @@ funcparserlib==1.0.0a0
 sphinxcontrib-seqdiag
 numpydoc
 pytest
-xcffib >= 0.10.1
+xcffib >= 1.4.0
 PyGObject
 dbus-next

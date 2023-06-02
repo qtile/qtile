@@ -52,7 +52,7 @@ class CheckCairoXcb(install):
 
             It looks like your cairocffi was not built with xcffib support.  To fix this:
 
-              - Ensure a recent xcffib is installed (pip install 'xcffib>=0.5.0')
+              - Ensure a recent xcffib is installed (pip install 'xcffib>=1.4.0')
               - The pip cache is cleared (remove ~/.cache/pip, if it exists)
               - Reinstall cairocffi, either:
 
