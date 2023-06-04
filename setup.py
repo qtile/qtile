@@ -70,9 +70,7 @@ class CheckCairoXcb(install):
 
 
 def get_cffi_modules():
-    cffi_modules = [
-        "libqtile/pango_ffi_build.py:pango_ffi",
-    ]
+    cffi_modules = []
     try:
         from cffi.error import PkgConfigError
         from cffi.pkgconfig import call

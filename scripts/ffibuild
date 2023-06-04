@@ -21,7 +21,6 @@ class Builder(NamedTuple):
 
 
 scripts = [
-    Builder("Pango interface", "./libqtile/pango_ffi_build.py", None),
     Builder("PulseAudio interface", "./libqtile/widget/pulseaudio_ffi.py", "PulseVolume widget"),
     Builder(
         "Wayland libinput interface",
