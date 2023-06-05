@@ -20,6 +20,10 @@ Qtile x.xx.x, released XXXX-XX-XX:
       - The `StockTicker` widget `function` option is being deprecated: rename it to `func`.
       - The formatting of `NetWidget` has changed, if you use the `format` parameter in your config include 
         `up_suffix`, `total_suffix` and `down_suffix` to display the respective units.
+      - The `Notify` widget now has separate `default_timeout` properties for differenct urgency levels. Previously,
+        `default_timeout` was `None` which meant that there was no timeout for all notifications (unless this had been
+        set by the client sending the notification). Now, `default_timeout` is for normal urgency notifications and this
+        has been set to a default of 10 seconds. `default_timeout_urgent`, for critical notifications, has a timeout of `None`.
     * features
         - Add ability to set icon size in `LaunchBar` widget.
         - Add 'warp_pointer' option to `Drag` that when set will warp the pointer to the bottom right of
@@ -43,6 +47,9 @@ Qtile x.xx.x, released XXXX-XX-XX:
           By default the keys are not passed (swallowed), so this argument is set to `True`.
           When set to `False`, the keys are passed to the focused client. A key is never swallowed if the
           function is not executed, e.g. due to failing the `.when()` check.
+        - Add ability to set custom "Undefined" status key value to `Mpd2Widget`.
+        - `Mpd2Widget` now searches for artist name in all similar keys (i.e `albumartist`, `performer`, etc.).
+        - Add svg support to `CustomLayoutIcon`
     * bugfixes
         - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
         - Fix `Notify` bug when apps close notifications.
@@ -55,6 +62,8 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Fix XMonad layout faulty call to nonexistent _shrink_up
         - Fix setting tiled position by mouse for layouts using _SimpleLayoutBase. To support this in other layouts, add a swap method taking two windows.
         - Fix unfullscreening bug in conjunction with Chromium based clients when auto_fullscreen is set to `False`.
+        - Ensure `CurrentLayoutIcon` expands paths for custom folders.
+        - Fix vertical alignment of icons in `TaskList` widget
     * python version support
         - We have added support for python 3.11 and pypy 3.9.
         - python 3.7, 3.8 and pypy 3.7 are not longer supported.

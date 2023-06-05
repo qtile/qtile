@@ -5,7 +5,7 @@
 version: 2
 
 build:
-  os: ubuntu-20.04
+  os: ubuntu-22.04
   tools:
     # This should be bumped to 3.11 once there is a dbus-next release > 0.2.3
     python: "3.10"
@@ -22,6 +22,10 @@ build:
     - xvfb
     - dbus-x11
     - libnotify-bin
+  jobs:
+    pre_install:
+      - pip install xcffib wheel
+      - pip install --no-cache --upgrade --no-build-isolation cairocffi
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
@@ -35,5 +39,3 @@ python:
   install:
   # This first requirements file installs a pinned version of cffi as latest version causes crashes
   - requirements: docs/requirements-rtd.txt
-  - requirements: docs/requirements.txt
-  - requirements: requirements.txt

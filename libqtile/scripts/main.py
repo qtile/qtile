@@ -1,6 +1,7 @@
 import argparse
 import logging
 import sys
+from pathlib import Path
 
 from libqtile.log_utils import get_default_log, init_log
 from libqtile.scripts import check, cmd_obj, migrate, run_cmd, shell, start, top
@@ -20,6 +21,14 @@ except ModuleNotFoundError:
         VERSION = "dev"
 
 
+def check_folder(value):
+    path = Path(value)
+    if not path.parent.is_dir():
+        raise argparse.ArgumentTypeError("Log path destination folder does not exist.")
+    # init_log expects a Path object so return `path` not `value`
+    return path
+
+
 def main():
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument(
@@ -31,7 +40,14 @@ def main():
         choices=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"),
         help="Set qtile log level",
     )
-
+    parent_parser.add_argument(
+        "-p",
+        "--log-path",
+        default=get_default_log(),
+        dest="log_path",
+        type=check_folder,
+        help="Set alternative qtile log path",
+    )
     main_parser = argparse.ArgumentParser(
         prog="qtile",
         description="A full-featured tiling window manager for X11 and Wayland.",
@@ -62,7 +78,7 @@ def main():
     options = main_parser.parse_args()
     if func := getattr(options, "func", None):
         log_level = getattr(logging, options.log_level)
-        init_log(log_level, log_path=get_default_log())
+        init_log(log_level, log_path=options.log_path)
         func(options)
     else:
         main_parser.print_usage()
