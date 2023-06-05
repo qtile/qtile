@@ -1,7 +1,7 @@
 from libqtile.log_utils import logger
 
 try:
-    from libqtile.backend.x11._ffi_xcursors import ffi
+    from libqtile.backend.x11.xcursors_ffi import xcursors_ffi as ffi
 except ImportError:
     raise ImportError(
         "No module named libqtile.backend.x11._ffi_xcursors, be sure to run `./scripts/ffibuild`"
