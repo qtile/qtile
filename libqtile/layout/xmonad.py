@@ -1175,9 +1175,17 @@ class MonadThreeCol(MonadTall):
         Will prevent double margins by applying east and south margins only
         when the client is the rightmost or the bottommost window.
         """
-        rightmost = left + width - self.screen_rect.x >= self.screen_rect.width
-        bottommost = top + height - self.screen_rect.y >= self.screen_rect.height
-        margin = [self.margin] * 4
+
+        # Create a temporary margin list for the client
+        if isinstance(self.margin, int):
+            margin = [self.margin] * 4
+        else:
+            # We need to copy this list otherwise we'd be modifying self.margin!
+            margin = self.margin.copy()
+
+        rightmost = left + width - self.screen_rect.x + margin[1] >= self.screen_rect.width
+        bottommost = top + height - self.screen_rect.y + margin[2] >= self.screen_rect.height
+
         if not rightmost:
             margin[1] = 0
         if not bottommost:
