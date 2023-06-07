@@ -47,10 +47,7 @@
 # This is not intended to be a complete cffi-based pango binding.
 
 
-try:
-    from libqtile._ffi_pango import ffi
-except ImportError:
-    raise ImportError("No module named libqtile._ffi_pango, be sure to run `./scripts/ffibuild`")
+from libqtile.pango_ffi import pango_ffi as ffi
 
 gobject = ffi.dlopen("libgobject-2.0.so.0")
 pango = ffi.dlopen("libpango-1.0.so.0")
