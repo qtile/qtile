@@ -25,7 +25,6 @@ from cairocffi.ffi import ffi as cairocffi_ffi
 from cffi import FFI
 
 pango_ffi = FFI()
-pango_ffi.set_source("libqtile._ffi_pango", None)
 
 pango_ffi.include(cairocffi_ffi)
 
