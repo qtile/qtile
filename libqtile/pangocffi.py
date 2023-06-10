@@ -49,9 +49,9 @@
 
 from libqtile.pango_ffi import pango_ffi as ffi
 
-gobject = ffi.dlopen("libgobject-2.0.so.0")
-pango = ffi.dlopen("libpango-1.0.so.0")
-pangocairo = ffi.dlopen("libpangocairo-1.0.so.0")
+gobject = ffi.dlopen("libgobject-2.0.so.0")  # type: ignore
+pango = ffi.dlopen("libpango-1.0.so.0")  # type: ignore
+pangocairo = ffi.dlopen("libpangocairo-1.0.so.0")  # type: ignore
 
 
 def patch_cairo_context(cairo_t):
