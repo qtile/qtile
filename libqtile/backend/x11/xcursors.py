@@ -1,6 +1,5 @@
-from libqtile.log_utils import logger
-
 from libqtile.backend.x11.xcursors_ffi import xcursors_ffi as ffi
+from libqtile.log_utils import logger
 
 
 # Stolen from samurai-x
