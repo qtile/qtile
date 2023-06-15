@@ -9,17 +9,13 @@ jobs:
   build-wheel:
     name: Build wheels
     runs-on: ubuntu-latest
-    container: quay.io/pypa/manylinux_2_24_x86_64
+    container: quay.io/pypa/manylinux_2_28_x86_64
     strategy:
       matrix:
         python-version: ["cp3.9", "cp3.10", "cp3.11", "pp3.9"]
     steps:
       - name: Install dependencies
-        run: |
-          apt update
-          apt-get install -y --no-install-recommends \
-            libcairo-dev \
-            libffi-dev
+        run: dnf install -y cairo-devel libffi-devel
       - uses: actions/checkout@v2
       - name: Set environment variables
         run: |
@@ -30,14 +26,13 @@ jobs:
           PYTHON_VERSION: ${{ matrix.python-version }}
       - name: Build wheels
         run: |
-          pip install xcffib
+          python -m pip install cffi
           python setup.py bdist_wheel
-          auditwheel repair --plat manylinux2014_x86_64 -w output_wheels dist/qtile-*.whl
       - name: Upload wheels
         uses: actions/upload-artifact@v2
         with:
           name: wheels-${{ matrix.python-version }}
-          path: output_wheels/*.whl
+          path: dist/*.whl
   test-wheel:
     name: Test wheels
     runs-on: ubuntu-latest
@@ -70,15 +65,12 @@ jobs:
   build-source:
     name: Build source
     runs-on: ubuntu-latest
-    container: quay.io/pypa/manylinux_2_24_x86_64
+    container: quay.io/pypa/manylinux_2_28_x86_64
     env:
       python-version: "cp3.11"
     steps:
       - name: Install dependencies
-        run: |
-          apt update
-          apt-get install -y --no-install-recommends \
-            libcairo-dev
+        run: dnf install -y cairo-devel libffi-devel
       - uses: actions/checkout@v2
       - name: Set environment variables
         run: |
