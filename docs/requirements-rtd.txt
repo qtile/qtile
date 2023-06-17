@@ -13,3 +13,5 @@ numpydoc
 pytest
 PyGObject
 dbus-next
+cairocffi>=1.6.0
+xcffib>=1.4.0
