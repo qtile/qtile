@@ -196,8 +196,18 @@ class MonadTall(_SimpleLayoutBase):
         if self.single_margin is None:
             self.single_margin = self.margin
         self.relative_sizes = []
-        self.screen_rect = None
+        self._screen_rect = None
         self.default_ratio = self.ratio
+
+    # screen_rect is a property as the MonadThreeCol layout needs to perform
+    # additional actions when the attribute is modified
+    @property
+    def screen_rect(self):
+        return self._screen_rect
+
+    @screen_rect.setter
+    def screen_rect(self, value):
+        self._screen_rect = value
 
     @property
     def focused(self):
@@ -1105,6 +1115,16 @@ class MonadThreeCol(MonadTall):
     def __init__(self, **config):
         MonadTall.__init__(self, **config)
         self.add_defaults(MonadThreeCol.defaults)
+
+    # mypy doesn't like the setter when the getter isn't present
+    # see https://github.com/python/mypy/issues/5936
+    @MonadTall.screen_rect.setter  # type: ignore[attr-defined]
+    def screen_rect(self, value):
+        # If the screen_rect size has change then we need to normalise secondary
+        # windows so they're resized to fill the new space correctly
+        if value != self._screen_rect:
+            self.do_normalize = True
+        self._screen_rect = value
 
     def _configure_specific(self, client, screen_rect, border_color, index):
         """Specific configuration for xmonad three columns."""
