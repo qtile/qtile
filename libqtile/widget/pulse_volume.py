@@ -2,34 +2,34 @@
 import logging
 
 from libqtile.command.base import expose_command
-from libqtile.widget._pulse_audio import ffi, lib
+from libqtile.widget.pulseaudio_ffi import pulseaudio_ffi as ffi
 from libqtile.widget.volume import Volume
 
 log = logging.getLogger(__name__)
 
 
-@ffi.def_extern()
+@ffi.callback("void(pa_context *c, void *userdata)")
 def qtile_pa_context_changed(context, userdata):
     """callback for connecting status update"""
     widget = ffi.from_handle(userdata)
     widget.on_connection_change(context)
 
 
-@ffi.def_extern()
+@ffi.callback("void(pa_context *c, const pa_sink_info *i, int eol, void *userdata)")
 def qtile_on_sink_info(context, info, eol, userdata):
     """callback for each output sink that pulseaudio server has"""
     widget = ffi.from_handle(userdata)
     widget.on_sink_info(info, eol)
 
 
-@ffi.def_extern()
+@ffi.callback("void(pa_context *c, const pa_server_info *i, int eol, void *userdata")
 def qtile_on_server_info(context, info, userdata):
     """callback with a pulseaudio server info"""
     widget = ffi.from_handle(userdata)
     widget.on_server_info(info)
 
 
-@ffi.def_extern()
+@ffi.callback("void(pa_context *c, pa_subscription_event_type_t t, uint32_t idx, void *userdata")
 def qtile_on_sink_update(context, event_type, sink_index, userdata):
     """callback for updates made to sinks"""
     widget = ffi.from_handle(userdata)
@@ -57,10 +57,10 @@ class PulseVolume(Volume):
         self.connect()
 
     def finalize(self):
-        lib.pa_context_disconnect(self.context)
-        lib.pa_mainloop_quit(self.loop, 1)
-        lib.pa_context_unref(self.context)
-        lib.pa_mainloop_free(self.loop)
+        ffi.pa_context_disconnect(self.context)
+        ffi.pa_mainloop_quit(self.loop, 1)
+        ffi.pa_context_unref(self.context)
+        ffi.pa_mainloop_free(self.loop)
         Volume.finalize(self)
 
     def connect(self):
@@ -69,47 +69,47 @@ class PulseVolume(Volume):
         would be passed to `on_connection_change` method
         """
         # create a loop and api entry point
-        self.loop = lib.pa_mainloop_new()
-        self.api = lib.pa_mainloop_get_api(self.loop)
+        self.loop = ffi.pa_mainloop_new()
+        self.api = ffi.pa_mainloop_get_api(self.loop)
         # create context (e.g. connection)
-        self.context = lib.pa_context_new(self.api, self.client_name)
-        lib.pa_context_connect(self.context, ffi.NULL, 0, ffi.NULL)
-        lib.pa_context_set_state_callback(self.context, lib.qtile_pa_context_changed, self.handle)
+        self.context = ffi.pa_context_new(self.api, self.client_name)
+        ffi.pa_context_connect(self.context, ffi.NULL, 0, ffi.NULL)
+        ffi.pa_context_set_state_callback(self.context, ffi.qtile_pa_context_changed, self.handle)
 
     def on_connection_change(self, context):
         """a callback from pulse lib indicating connection status"""
-        state = lib.pa_context_get_state(context)
-        if state == lib.PA_CONTEXT_READY:
+        state = ffi.pa_context_get_state(context)
+        if state == ffi.PA_CONTEXT_READY:
             # ready
             self.connected = True
             # once onnection is established we need to get server information
             self.timeout_add(0.1, self.get_server_info)
             log.debug("Connection to pulseaudio ready")
-        elif state == lib.PA_CONTEXT_FAILED:
+        elif state == ffi.PA_CONTEXT_FAILED:
             # failed to connect
             self.connected = False
             self._subscribed = False
             log.warning("Failed to connect to pulseaudio, retrying in 10s")
             self.timeout_add(10, self.connect)
-        elif state == lib.PA_CONTEXT_TERMINATED:
+        elif state == ffi.PA_CONTEXT_TERMINATED:
             # done
             self.connected = False
             self._subscribed = False
             log.debug("Connection to pulseaudio terminated cleanly")
-        elif state == lib.PA_CONTEXT_UNCONNECTED:
+        elif state == ffi.PA_CONTEXT_UNCONNECTED:
             self.connected = False
             self._subscribed = False
             log.warning("Disconnected from pulseaudio")
 
     def get_server_info(self):
-        lib.pa_context_get_server_info(self.context, lib.qtile_on_server_info, self.handle)
+        ffi.pa_context_get_server_info(self.context, ffi.qtile_on_server_info, self.handle)
 
     def on_server_info(self, info):
         self.default_sink_name = ffi.string(info.default_sink_name).decode("utf-8")
         self.timeout_add(0.1, self.get_sinks)
 
     def get_sinks(self):
-        lib.pa_context_get_sink_info_list(self.context, lib.qtile_on_sink_info, self.handle)
+        ffi.pa_context_get_sink_info_list(self.context, ffi.qtile_on_sink_info, self.handle)
 
     def on_sink_info(self, sink, eol):
         if eol:  # dont operate on sink in case its an eol callback
@@ -130,24 +130,24 @@ class PulseVolume(Volume):
             self.update()
 
     def subscribe_to_sink_events(self):
-        op = lib.pa_context_subscribe(
+        op = ffi.pa_context_subscribe(
             self.context,
-            lib.PA_SUBSCRIPTION_MASK_SINK,
+            ffi.PA_SUBSCRIPTION_MASK_SINK,
             ffi.NULL,
             ffi.NULL,
         )
         self.wait_for_operation(op)
-        lib.pa_context_set_subscribe_callback(self.context, lib.qtile_on_sink_update, self.handle)
+        ffi.pa_context_set_subscribe_callback(self.context, ffi.qtile_on_sink_update, self.handle)
         self._subscribed = True
 
     def on_sink_update(self, event_type, sink_index):
         self.timeout_add(0.1, self.get_sinks)
 
     def wait_for_operation(self, op):
-        state = lib.pa_operation_get_state(op)
-        while state == lib.PA_OPERATION_RUNNING:
-            lib.pa_mainloop_iterate(self.loop, 0, ffi.NULL)
-            state = lib.pa_operation_get_state(op)
+        state = ffi.pa_operation_get_state(op)
+        while state == ffi.PA_OPERATION_RUNNING:
+            ffi.pa_mainloop_iterate(self.loop, 0, ffi.NULL)
+            state = ffi.pa_operation_get_state(op)
 
     def change_volume(self, volume):
         """
@@ -156,7 +156,7 @@ class PulseVolume(Volume):
         # store new volume to "speed up" widget update so that we don't have
         # to wait a callback from pulseaudio
         self.default_sink["values"] = list(volume.values)
-        op = lib.pa_context_set_sink_volume_by_index(
+        op = ffi.pa_context_set_sink_volume_by_index(
             self.context, self.default_sink["index"], volume, ffi.NULL, ffi.NULL
         )
         if op:
@@ -164,7 +164,7 @@ class PulseVolume(Volume):
 
     @expose_command()
     def mute(self):
-        op = lib.pa_context_set_sink_mute_by_index(
+        op = ffi.pa_context_set_sink_mute_by_index(
             self.context,
             self.default_sink["index"],
             not self.default_sink["muted"],
@@ -186,7 +186,7 @@ class PulseVolume(Volume):
                 "values": self.default_sink["values"],
             },
         )
-        lib.pa_cvolume_inc(
+        ffi.pa_cvolume_inc(
             volume,
             int(value * base / 100),
         )
@@ -210,7 +210,7 @@ class PulseVolume(Volume):
                 "values": self.default_sink["values"],
             },
         )
-        lib.pa_cvolume_dec(volume, volume_level)
+        ffi.pa_cvolume_dec(volume, volume_level)
         self.change_volume(volume)
 
     def button_press(self, x, y, button):
@@ -218,7 +218,7 @@ class PulseVolume(Volume):
         self.poll()
 
     def poll(self):
-        lib.pa_mainloop_iterate(self.loop, 0, ffi.NULL)
+        ffi.pa_mainloop_iterate(self.loop, 0, ffi.NULL)
         self.update()
 
     def update(self):

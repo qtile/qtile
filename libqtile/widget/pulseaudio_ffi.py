@@ -404,18 +404,5 @@ pulseaudio_ffi.cdef(
 
     /** Set the context specific call back function that is called whenever the state of the daemon changes */
     void pa_context_set_subscribe_callback(pa_context *c, pa_context_subscribe_cb_t cb, void *userdata);
-
-
-
-    /** python callbacks */
-    extern "Python" void qtile_pa_context_changed(pa_context *c, void *userdata);
-    extern "Python" void qtile_on_sink_info(pa_context *c, const pa_sink_info *i, int eol, void *userdata);
-    extern "Python" void qtile_on_server_info(pa_context *c, const pa_server_info*i, void *userdata);
-    extern "Python" void qtile_on_sink_update(
-        pa_context *c, pa_subscription_event_type_t t, uint32_t idx, void *userdata);
-
 """
 )
-
-if __name__ == "__main__":
-    pulseaudio_ffi.compile()

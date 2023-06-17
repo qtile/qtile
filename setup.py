@@ -77,13 +77,6 @@ def get_cffi_modules():
     except ImportError:
         # technically all ffi defined above wont be built
         print("CFFI package is missing")
-    else:
-        try:
-            call("libpulse", "--libs")
-        except PkgConfigError:
-            print("Failed to find pulseaudio headers. " "PulseVolume widget will be unavailable")
-        else:
-            cffi_modules.append("libqtile/widget/pulseaudio_ffi.py:pulseaudio_ffi")
     try:
         import wlroots.ffi_build
 
