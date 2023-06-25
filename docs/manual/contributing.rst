@@ -62,9 +62,8 @@ to our `issue tracker <https://github.com/qtile/qtile/issues>`_ on GitHub.
       *Please add unit tests* to ensure that your code works and stays working!
     * **Documentation** updates on an as needed basis.
     * A ``qtile migrate`` **migration** is required for config-breaking changes.
-      See `migrate.py <https://github.com/qtile/qtile/blob/libqtile/scripts/migrate.py>`_
-      for examples and consult the `bowler documentation <https://pybowler.io>`_
-      for detailed help and documentation.
+      See :doc:`here <commands/shell/qtile-migrate>` 
+      for current migrations and see below for further information.
     * **Code** that does not include *unrelated changes*. Examples for this are
       formatting changes, replacing quotes or whitespace in other parts of the
       code or "fixing" linter warnings popping up in your editor on existing
@@ -167,3 +166,25 @@ The following examples show how to run tests locally:
         that don't pass the tests are considered incomplete. Don't forget that
         this does not only include the functionality, but the style, typing
         annotations (if necessary) and documentation as well!
+
+Writing migrations
+------------------
+
+Migrations are needed when a commit introduces a change which makes a breaking change to
+a user's config. Examples include renaming classes, methods, arguments and moving modules or
+class definitions.
+
+Where these changes are made, it is strongly encouraged to support the old syntax where possible
+and warn the user about the deprecations. 
+
+Whether or not a deprecation warning is provided, a migration script should be provided that will
+modify the user's config when they run ``qtile migrate``.
+
+Click here for detailed instructions on :doc:`how-to-migrate`.
+
+.. toctree::
+    :maxdepth: 1
+    :hidden:
+
+    how-to-migrate
+  
