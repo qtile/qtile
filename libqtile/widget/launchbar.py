@@ -212,7 +212,7 @@ class LaunchBar(base._Widget):
                 # try to add the extension
                 for extension in img_extensions:
                     if os.path.isfile(ipath + extension):
-                        self.icon_files[name] = ipath + extension
+                        self.icons_files[name] = ipath + extension
                         break
         elif has_xdg:
             self.icons_files[name] = getIconPath(name, theme=self.theme_path)
