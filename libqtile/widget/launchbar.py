@@ -45,7 +45,11 @@ from __future__ import annotations
 import os.path
 
 import cairocffi
-from xdg.IconTheme import getIconPath
+try:
+    from xdg.IconTheme import getIconPath
+    has_xdg = True
+except ImportError:
+    has_xdg = False
 
 from libqtile import bar
 from libqtile.images import Img
@@ -84,6 +88,7 @@ class LaunchBar(base._Widget):
         ("text_only", False, "Don't use any icons."),
         ("icon_size", None, "Size of icons. ``None`` to fit to bar."),
         ("padding_y", 0, "Vertical adjustment for icons."),
+        ("theme_path", None, "Path to icon theme to be used by pyxdg for icons. ``None`` will use default icon theme.")
     ]
 
     def __init__(
@@ -122,6 +127,11 @@ class LaunchBar(base._Widget):
 
     def _configure(self, qtile, pbar):
         base._Widget._configure(self, qtile, pbar)
+
+        if not (has_xdg or self.text_only):
+            logger.warning("You must install pyxdg to use theme icons.")
+            self.text_only = True
+
         self.lookup_icons()
         self.setup_images()
         self.length = self.calculate_length()
@@ -196,7 +206,7 @@ class LaunchBar(base._Widget):
                 # try to add the extension
                 self.icons_files[name] = name + ".png" if os.path.isfile(name + ".png") else None
         else:
-            self.icons_files[name] = getIconPath(name)
+            self.icons_files[name] = getIconPath(name, theme=self.theme_path)
         # no search method found an icon, so default icon
         if self.icons_files[name] is None:
             self.icons_files[name] = self.default_icon
