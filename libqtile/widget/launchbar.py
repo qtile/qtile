@@ -192,15 +192,23 @@ class LaunchBar(base._Widget):
     def _lookup_icon(self, name):
         """Search for the icon corresponding to one command."""
         self.icons_files[name] = None
+        
+        # expands ~ if name is a path and does nothing if not
+        ipath = os.path.expanduser(name)
+
         # if the software_name is directly an absolute path icon file
-        if os.path.isabs(name):
+        if os.path.isabs(ipath) :
             # name start with '/' thus it's an absolute path
-            root, ext = os.path.splitext(name)
-            if ext == ".png":
-                self.icons_files[name] = name if os.path.isfile(name) else None
+            root, ext = os.path.splitext(ipath)
+            img_extensions = [".tif", ".tiff", ".bmp", ".jpg", ".jpeg", ".gif", ".png", ".svg"]
+            if ext in img_extensions:
+                self.icons_files[name] = ipath if os.path.isfile(ipath) else None
             else:
                 # try to add the extension
-                self.icons_files[name] = name + ".png" if os.path.isfile(name + ".png") else None
+                for extension in img_extensions:
+                    if os.path.isfile(ipath + extension):
+                        self.icon_files[name] = ipath + extension
+                        break
         elif has_xdg:
             self.icons_files[name] = getIconPath(name, theme=self.theme_path)
         # no search method found an icon, so default icon
