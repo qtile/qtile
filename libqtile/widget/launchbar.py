@@ -36,7 +36,7 @@ displayed instead.
 To execute a software:
  - ('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode')
 To execute a python command in qtile, begin with by 'qshell:'
- - ('logout', 'qshell:self.qtile.shutdown()', 'logout from qtile')
+ - ('/home/qtile-icons/logout.png', 'qshell:self.qtile.shutdown()', 'logout from qtile')
 
 
 """
@@ -45,6 +45,7 @@ from __future__ import annotations
 import os.path
 
 import cairocffi
+
 try:
     from xdg.IconTheme import getIconPath
     has_xdg = True
@@ -63,7 +64,7 @@ class LaunchBar(base._Widget):
 
     Text will displayed when no icon is found.
 
-    Widget requirements: `pyxdg <https://pypi.org/project/pyxdg/>`__.
+    Optional requirements: `pyxdg <https://pypi.org/project/pyxdg/>`__ for finding the icon path if it is not provided in the progs tuple.
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
@@ -81,9 +82,9 @@ class LaunchBar(base._Widget):
         (
             "progs",
             [],
-            "A list of tuples (software_name, command_to_execute, comment), for example:"
+            "A list of tuples (software_name or icon_path, command_to_execute, comment), for example:"
             " [('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode'), "
-            " ('logout', 'qshell:self.qtile.shutdown()', 'logout from qtile')]",
+            " ('/home/qtile-icons/logout.png', 'qshell:self.qtile.shutdown()', 'logout from qtile')]",
         ),
         ("text_only", False, "Don't use any icons."),
         ("icon_size", None, "Size of icons. ``None`` to fit to bar."),
@@ -127,11 +128,6 @@ class LaunchBar(base._Widget):
 
     def _configure(self, qtile, pbar):
         base._Widget._configure(self, qtile, pbar)
-
-        if not (has_xdg or self.text_only):
-            logger.warning("You must install pyxdg to use theme icons.")
-            self.text_only = True
-
         self.lookup_icons()
         self.setup_images()
         self.length = self.calculate_length()
@@ -205,7 +201,7 @@ class LaunchBar(base._Widget):
             else:
                 # try to add the extension
                 self.icons_files[name] = name + ".png" if os.path.isfile(name + ".png") else None
-        else:
+        elif has_xdg:
             self.icons_files[name] = getIconPath(name, theme=self.theme_path)
         # no search method found an icon, so default icon
         if self.icons_files[name] is None:
