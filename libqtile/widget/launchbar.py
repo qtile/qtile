@@ -36,7 +36,7 @@ displayed instead.
 To execute a software:
  - ('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode')
 To execute a python command in qtile, begin with by 'qshell:'
- - ('/home/qtile-icons/logout.png', 'qshell:self.qtile.shutdown()', 'logout from qtile')
+ - ('/path/to/icon.png', 'qshell:self.qtile.shutdown()', 'logout from qtile')
 
 
 """
@@ -64,7 +64,7 @@ class LaunchBar(base._Widget):
 
     Text will displayed when no icon is found.
 
-    Optional requirements: `pyxdg <https://pypi.org/project/pyxdg/>`__ for finding the icon path if it is not provided in the progs tuple.
+    Optional requirements: `pyxdg <https://pypi.org/project/pyxdg/>`__ for finding the icon path if it is not provided in the ``progs`` tuple.
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
@@ -84,7 +84,7 @@ class LaunchBar(base._Widget):
             [],
             "A list of tuples (software_name or icon_path, command_to_execute, comment), for example:"
             " [('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode'), "
-            " ('/home/qtile-icons/logout.png', 'qshell:self.qtile.shutdown()', 'logout from qtile')]",
+            " ('/path/to/icon.png', 'qshell:self.qtile.shutdown()', 'logout from qtile')]",
         ),
         ("text_only", False, "Don't use any icons."),
         ("icon_size", None, "Size of icons. ``None`` to fit to bar."),
