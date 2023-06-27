@@ -48,6 +48,7 @@ import cairocffi
 
 try:
     from xdg.IconTheme import getIconPath
+
     has_xdg = True
 except ImportError:
     has_xdg = False
@@ -89,7 +90,11 @@ class LaunchBar(base._Widget):
         ("text_only", False, "Don't use any icons."),
         ("icon_size", None, "Size of icons. ``None`` to fit to bar."),
         ("padding_y", 0, "Vertical adjustment for icons."),
-        ("theme_path", None, "Path to icon theme to be used by pyxdg for icons. ``None`` will use default icon theme.")
+        (
+            "theme_path",
+            None,
+            "Path to icon theme to be used by pyxdg for icons. ``None`` will use default icon theme.",
+        ),
     ]
 
     def __init__(
@@ -192,12 +197,12 @@ class LaunchBar(base._Widget):
     def _lookup_icon(self, name):
         """Search for the icon corresponding to one command."""
         self.icons_files[name] = None
-        
+
         # expands ~ if name is a path and does nothing if not
         ipath = os.path.expanduser(name)
 
         # if the software_name is directly an absolute path icon file
-        if os.path.isabs(ipath) :
+        if os.path.isabs(ipath):
             # name start with '/' thus it's an absolute path
             root, ext = os.path.splitext(ipath)
             img_extensions = [".tif", ".tiff", ".bmp", ".jpg", ".jpeg", ".gif", ".png", ".svg"]
