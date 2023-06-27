@@ -48,6 +48,7 @@ import cairocffi
 
 try:
     from xdg.IconTheme import getIconPath
+
     has_xdg = True
 except ImportError:
     has_xdg = False
@@ -89,7 +90,11 @@ class LaunchBar(base._Widget):
         ("text_only", False, "Don't use any icons."),
         ("icon_size", None, "Size of icons. ``None`` to fit to bar."),
         ("padding_y", 0, "Vertical adjustment for icons."),
-        ("theme_path", None, "Path to icon theme to be used by pyxdg for icons. ``None`` will use default icon theme.")
+        (
+            "theme_path",
+            None,
+            "Path to icon theme to be used by pyxdg for icons. ``None`` will use default icon theme.",
+        ),
     ]
 
     def __init__(
