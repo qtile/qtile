@@ -146,11 +146,11 @@ class Columns(Layout):
         ("border_width", 2, "Border width."),
         ("single_border_width", None, "Border width for single window."),
         ("border_on_single", False, "Draw a border when there is one only window."),
-        ("margin", 0, "Margin of the layout (int or list of ints [N E S W])."),
+        ("margin", 0, "Margin of the layout."),
         (
             "margin_on_single",
             None,
-            "Margin when only one window. (int or list of ints [N E S W])",
+            "Margin when only one window.",
         ),
         ("split", True, "New columns presentation mode."),
         ("num_columns", 2, "Preferred number of columns."),
@@ -291,6 +291,16 @@ class Columns(Layout):
         return self.columns[self.current].cw
 
     def configure(self, client: Window, screen_rect: ScreenRect) -> None:
+        "Position client based on order and sizes"
+
+        # percentage_of_space: percent of a clients fair share of the available space
+        # available_space: the size of the space in pixels
+        # clients_in_space: number of clients that are going to share the space
+        def get_absolute_size_from_relative(
+            percentage_of_space, available_space, clients_in_space
+        ):
+            return round(0.01 * percentage_of_space * available_space / clients_in_space)
+
         pos = 0
         for col in self.columns:
             if client in col:
@@ -305,12 +315,23 @@ class Columns(Layout):
         else:
             color = self.border_normal if col.split else self.border_normal_stack
 
-        is_single = len(self.columns) == 1 and (len(col) == 1 or not col.split)
-        border = self.single_border_width if is_single else self.border_width
-        margin_size = self.margin_on_single if is_single else self.margin
+        border = self.border_width
+        margin = self.margin
 
-        width = int(0.5 + col.width * screen_rect.width * 0.01 / len(self.columns))
-        x = screen_rect.x + int(0.5 + pos * screen_rect.width * 0.01 / len(self.columns))
+        # show a single client
+        if len(self.columns) == 1 and (len(col) == 1 or not col.split):
+            border = self.single_border_width if self.border_on_single else 0
+            margin = self.margin_on_single
+
+        # fix double margins by just having margins on the east and south side of each window
+        x_offset = screen_rect.x + margin
+        y_offset = screen_rect.y + margin
+        usable_width = screen_rect.width - margin
+        usable_height = screen_rect.height - margin
+        margin = [0, margin, margin, 0]  # [N, E, S, W]
+
+        width = get_absolute_size_from_relative(col.width, usable_width, len(self.columns))
+        x = x_offset + get_absolute_size_from_relative(pos, usable_width, len(self.columns))
 
         if col.split:
             pos = 0
@@ -318,21 +339,27 @@ class Columns(Layout):
                 if client == c:
                     break
                 pos += col.heights[c]
-            height = int(0.5 + col.heights[client] * screen_rect.height * 0.01 / len(col))
-            y = screen_rect.y + int(0.5 + pos * screen_rect.height * 0.01 / len(col))
+            height = get_absolute_size_from_relative(col.heights[client], usable_height, len(col))
+            y = y_offset + get_absolute_size_from_relative(pos, usable_height, len(col))
             client.place(
-                x, y, width - 2 * border, height - 2 * border, border, color, margin=margin_size
+                x,
+                y,
+                width - 2 * border,
+                height - 2 * border,
+                border,
+                color,
+                margin=margin,
             )
             client.unhide()
         elif client == col.cw:
             client.place(
                 x,
-                screen_rect.y,
+                y_offset,
                 width - 2 * border,
-                screen_rect.height - 2 * border,
+                usable_height - 2 * border,
                 border,
                 color,
-                margin=margin_size,
+                margin=margin,
             )
             client.unhide()
         else:
