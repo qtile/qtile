@@ -819,7 +819,13 @@ class ScratchPad(Group):
 
 class Match:
     """
-    Match for dynamic groups or auto-floating windows.
+    Window properties to compare (match) with a window.
+
+    The properties will be compared to a :class:`~libqtile.base.Window` to determine if
+    its properties *match*. It can match by title, wm_class, role, wm_type,
+    wm_instance_class, net_wm_pid, or wid. Additionally, a function may be
+    passed, which takes in the :class:`~libqtile.base.Window` to be compared
+    against and returns a boolean.
 
     For some properties, :class:`Match` supports both regular expression objects (i.e.
     the result of ``re.compile()``) or strings (match as an "include"-match). If a
@@ -843,7 +849,7 @@ class Match:
         Delegate the match to the given function, which receives the tested client as an
         argument and must return ``True`` if it matches, ``False`` otherwise.
     wid:
-        Match against the window ID.
+        Match against the window ID. This is a unique ID given to each window.
 
     """
 

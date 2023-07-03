@@ -172,7 +172,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         (
             "window_name_location_offset",
             0,
-            "The offset given to window loction",
+            "The offset given to the window location",
         ),
     ]
 
@@ -263,6 +263,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
     @property
     def windows(self):
+        if self.qtile.core.name == "x11":
+            return [
+                w
+                for w in self.bar.screen.group.windows
+                if w.window.get_wm_type() in ("normal", None)
+            ]
         return self.bar.screen.group.windows
 
     def calc_box_widths(self):
@@ -525,7 +531,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             return
 
         x = offset + self.borderwidth + self.padding_x
-        y = self.padding_y + self.borderwidth
+        y = (self.height - self.icon_size) // 2
 
         self.drawer.ctx.save()
         self.drawer.ctx.translate(x, y)

@@ -60,7 +60,7 @@ class _BaseLayoutBackend(metaclass=ABCMeta):
 
 
 class _X11LayoutBackend(_BaseLayoutBackend):
-    kb_layout_regex = re.compile(r"layout:\s+(?P<layout>\w+)")
+    kb_layout_regex = re.compile(r"layout:\s+(?P<layout>[\w-]+)")
     kb_variant_regex = re.compile(r"variant:\s+(?P<variant>\w+)")
 
     def get_keyboard(self) -> str:
@@ -95,6 +95,13 @@ class _X11LayoutBackend(_BaseLayoutBackend):
             logger.error("Can not change the keyboard layout:")
         except OSError:
             logger.error("Please, check that setxkbmap is available:")
+        else:
+            try:
+                check_output("xmodmap $HOME/.Xmodmap", shell=True)
+            except CalledProcessError:
+                logger.error("Can not load ~/.Xmodmap:")
+            except OSError:
+                logger.error("Please, check that xmodmap is available:")
 
 
 class _WaylandLayoutBackend(_BaseLayoutBackend):
@@ -133,6 +140,7 @@ class KeyboardLayout(base.InLoopPollText):
         Key([mod], "space", lazy.widget["keyboardlayout"].next_keyboard(), desc="Next keyboard layout."),
 
     When running Qtile with the X11 backend, this widget requires setxkbmap to be available.
+    Xmodmap will also be used if .Xmodmap file is available.
     """
 
     defaults = [
