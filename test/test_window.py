@@ -1,6 +1,8 @@
 import pytest
 
-from test.conftest import BareConfig
+from libqtile import config, layout, resources
+from libqtile.confreader import Config
+from test.conftest import BareConfig, dualmonitor
 from test.layouts.layout_utils import assert_focused
 from test.test_manager import ManagerConfig
 
@@ -108,33 +110,33 @@ def test_no_size_hint(manager):
 def test_togroup_toggle(manager):
     manager.test_window("one")
     assert manager.c.group.info()["name"] == "a"  # Start on "a"
-    assert manager.c.groups()["a"]["focus"] == "one"
-    assert manager.c.groups()["b"]["focus"] is None
+    assert manager.c.get_groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["b"]["focus"] is None
     manager.c.window.togroup("b", switch_group=True)
     assert manager.c.group.info()["name"] == "b"  # Move the window and switch to "b"
-    assert manager.c.groups()["a"]["focus"] is None
-    assert manager.c.groups()["b"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] is None
+    assert manager.c.get_groups()["b"]["focus"] == "one"
     manager.c.window.togroup("b", switch_group=True)
     assert manager.c.group.info()["name"] == "b"  # Does not toggle by default
-    assert manager.c.groups()["a"]["focus"] is None
-    assert manager.c.groups()["b"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] is None
+    assert manager.c.get_groups()["b"]["focus"] == "one"
     manager.c.window.togroup("b", switch_group=True, toggle=True)
     assert (
         manager.c.group.info()["name"] == "a"
     )  # Explicitly toggling moves the window and switches to "a"
-    assert manager.c.groups()["a"]["focus"] == "one"
-    assert manager.c.groups()["b"]["focus"] is None
+    assert manager.c.get_groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["b"]["focus"] is None
     manager.c.window.togroup("b", switch_group=True, toggle=True)
     manager.c.window.togroup("b", switch_group=True, toggle=True)
     assert manager.c.group.info()["name"] == "a"  # Toggling twice roundtrips between the two
-    assert manager.c.groups()["a"]["focus"] == "one"
-    assert manager.c.groups()["b"]["focus"] is None
+    assert manager.c.get_groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["b"]["focus"] is None
     manager.c.window.togroup("b", toggle=True)
     assert (
         manager.c.group.info()["name"] == "a"
     )  # Toggling without switching only moves the window
-    assert manager.c.groups()["a"]["focus"] is None
-    assert manager.c.groups()["b"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] is None
+    assert manager.c.get_groups()["b"]["focus"] == "one"
 
 
 class BringFrontClickConfig(ManagerConfig):
@@ -200,6 +202,7 @@ def test_bring_front_click(manager, bring_front_click):
         assert wins.index(wids[0]) < wins.index(wids[1]) < wins.index(wids[2])
 
 
+@dualmonitor
 @bare_config
 def test_center_window(manager):
     """Check that floating windows are centered correctly."""
@@ -219,3 +222,86 @@ def test_center_window(manager):
     assert info["y"] == (600 - 100) / 2  # (screen height - window height) / 2
     assert info["width"] == 200
     assert info["height"] == 100
+
+    manager.c.window.togroup("b")  # Second screen
+    manager.c.to_screen(1)  # Focus screen
+    manager.c.group["b"].toscreen()  # Make sure group b is on that screen
+
+    # Second screen is 640x480 at offset (800, 0)
+    manager.c.window.center()
+    info = manager.c.window.info()
+    assert info["x"] == 800 + (640 - 200) / 2  # offset + (screen width - window width) / 2
+    assert info["y"] == (480 - 100) / 2  # (screen height - window height) / 2
+    assert info["width"] == 200
+    assert info["height"] == 100
+
+
+class PositionConfig(Config):
+    auto_fullscreen = True
+    groups = [
+        config.Group("a"),
+        config.Group("b"),
+    ]
+    # MonadTall supports swap, treetab doesn't
+    layouts = [layout.MonadTall(), layout.TreeTab()]
+    floating_layout = resources.default_config.floating_layout
+    keys = []
+    mouse = []
+    screens = []
+    follow_mouse_focus = False
+
+
+position_config = pytest.mark.parametrize("manager", [PositionConfig], indirect=True)
+
+
+@position_config
+def test_set_position(manager):
+    """Check that windows are positioned correctly."""
+    manager.test_window("one")
+
+    # Get first pane coords
+    info = manager.c.window.info()
+    coords = info["x"], info["y"]
+    manager.test_window("two")
+
+    # Get second pane coords
+    info = manager.c.window.info()
+    two_coords = info["x"], info["y"]
+
+    # We should have client one and two in the layout
+    assert manager.c.layout.info()["clients"] == ["one", "two"]
+
+    # Set the position to the first window pane
+    # We need to also set the pointer coords as the function uses them
+    manager.c.eval(f"self.core.warp_pointer({coords[0]}, {coords[1]})")
+    manager.c.window.set_position(coords[0], coords[1])
+
+    # Now they should be swapped
+    assert manager.c.layout.info()["clients"] == ["two", "one"]
+
+    # Swap back to the second pane
+    manager.c.eval(f"self.core.warp_pointer({two_coords[0]}, {two_coords[1]})")
+    manager.c.window.set_position(two_coords[0], two_coords[1])
+
+    # Now they should be back to original
+    assert manager.c.layout.info()["clients"] == ["one", "two"]
+
+    # Test with a layout which doesn't support swap right now (TreeTab)
+    manager.c.layout.next()
+    manager.c.eval(f"self.core.warp_pointer({coords[0]}, {coords[1]})")
+    manager.c.window.set_position(coords[0], coords[1])
+
+    # Now they should be the same
+    assert manager.c.layout.info()["clients"] == ["one", "two"]
+
+    # Now test with floating
+    manager.c.window.enable_floating()
+    manager.c.window.set_position(50, 50)
+    info = manager.c.window.info()
+
+    # Check if the position matches
+    assert info["x"] == 50
+    assert info["y"] == 50
+
+    # Also check if there is only one client now
+    assert len(manager.c.layout.info()["clients"]) == 1

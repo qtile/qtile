@@ -107,7 +107,7 @@ def load_battery(**config) -> _Battery:
     """
     system = platform.system()
     if system == "FreeBSD":
-        return _FreeBSDBattery(str(config["battery"]))
+        return _FreeBSDBattery(str(config.get("battery", 0)))
     elif system == "Linux":
         return _LinuxBattery(**config)
     else:
@@ -192,7 +192,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         ),
     ]
 
-    filenames = {}  # type: dict
+    filenames: dict = {}
 
     BAT_DIR = "/sys/class/power_supply"
 
@@ -451,12 +451,12 @@ class BatteryIcon(base._Widget):
     """Battery life indicator widget."""
 
     orientations = base.ORIENTATION_HORIZONTAL
-    defaults = [
+    defaults: list[tuple[str, Any, str]] = [
         ("battery", 0, "Which battery should be monitored"),
         ("update_interval", 60, "Seconds between status updates"),
         ("theme_path", default_icon_path(), "Path of the icons"),
         ("scale", 1, "Scale factor relative to the bar height.  " "Defaults to 1"),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     icon_names = (
         "battery-missing",
@@ -481,12 +481,12 @@ class BatteryIcon(base._Widget):
 
         base._Widget.__init__(self, length=bar.CALCULATED, **config)
         self.add_defaults(self.defaults)
-        self.scale = 1.0 / self.scale  # type: float
+        self.scale: float = 1.0 / self.scale
 
         self.length_type = bar.STATIC
         self.length = 0
         self.image_padding = 0
-        self.surfaces = {}  # type: dict[str, Img]
+        self.images: dict[str, Img] = {}
         self.current_icon = "battery-missing"
 
         self._battery = self._load_battery(**config)
@@ -518,7 +518,7 @@ class BatteryIcon(base._Widget):
             img.resize(height=new_height)
             if img.width > self.length:
                 self.length = int(img.width + self.image_padding * 2)
-            self.surfaces[key] = img.pattern
+            self.images[key] = img
 
     def update(self) -> None:
         status = self._battery.update_status()
@@ -529,8 +529,12 @@ class BatteryIcon(base._Widget):
 
     def draw(self) -> None:
         self.drawer.clear(self.background or self.bar.background)
-        self.drawer.ctx.set_source(self.surfaces[self.current_icon])
+        image = self.images[self.current_icon]
+        self.drawer.ctx.save()
+        self.drawer.ctx.translate(0, (self.bar.height - image.height) // 2)
+        self.drawer.ctx.set_source(image.pattern)
         self.drawer.ctx.paint()
+        self.drawer.ctx.restore()
         self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
 
     @staticmethod

@@ -31,6 +31,7 @@ from typing import TYPE_CHECKING
 import xcffib
 import xcffib.render
 import xcffib.xproto
+import xcffib.xtest
 from xcffib.xproto import EventMask, StackMode
 
 from libqtile import config, hook, utils
@@ -152,6 +153,7 @@ class Core(base.Core):
 
         self.qtile = None  # type: Qtile | None
         self._painter = None
+        self._xtest = self.conn.conn(xcffib.xtest.key)
 
         numlock_code = self.conn.keysym_to_keycode(xcbq.keysyms["num_lock"])[0]
         self._numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(numlock_code), 0)
@@ -162,15 +164,19 @@ class Core(base.Core):
             | xcbq.PointerMotionHintMask
         )
 
+        # The last time we were handling a MotionNotify event
+        self._last_motion_time = 0
+
     @property
     def name(self):
         return "x11"
 
     def finalize(self) -> None:
-        self.conn.conn.core.DeletePropertyChecked(
-            self._root.wid,
-            self.conn.atoms["_NET_SUPPORTING_WM_CHECK"],
-        ).check()
+        with contextlib.suppress(xcffib.ConnectionException):
+            self.conn.conn.core.DeletePropertyChecked(
+                self._root.wid,
+                self.conn.atoms["_NET_SUPPORTING_WM_CHECK"],
+            ).check()
         self.qtile = None
         self.conn.finalize()
 
@@ -222,7 +228,7 @@ class Core(base.Core):
             loop.remove_reader(self.fd)
             self.fd = None
 
-    def distribute_windows(self, initial) -> None:
+    def on_config_load(self, initial) -> None:
         """Assign windows to groups"""
         assert self.qtile is not None
 
@@ -265,7 +271,7 @@ class Core(base.Core):
 
                 if item.get_wm_type() == "dock" or win.reserved_space:
                     assert self.qtile.current_screen is not None
-                    win.cmd_static(self.qtile.current_screen.index)
+                    win.static(self.qtile.current_screen.index)
                     continue
 
             self.qtile.manage(win)
@@ -328,12 +334,7 @@ class Core(base.Core):
             except Exception:
                 error_code = self.conn.conn.has_error()
                 if error_code:
-                    error_string = xcbq.XCB_CONN_ERRORS[error_code]
-                    logger.exception(
-                        "Shutting down due to X connection error %s (%s)",
-                        error_string,
-                        error_code,
-                    )
+                    logger.warning("Shutting down due to disconnection from X server")
                     self.remove_listener()
                     self.qtile.stop()
                     return
@@ -605,15 +606,31 @@ class Core(base.Core):
         if atoms["_NET_CURRENT_DESKTOP"] == opcode:
             index = data.data32[0]
             try:
-                self.qtile.groups[index].cmd_toscreen()
+                self.qtile.groups[index].toscreen()
             except IndexError:
                 logger.debug("Invalid desktop index: %s", index)
 
-    def handle_KeyPress(self, event) -> None:  # noqa: N802
+    def handle_KeyPress(self, event, *, simulated=False) -> None:  # noqa: N802
         assert self.qtile is not None
 
         keysym = self.conn.code_to_syms[event.detail][0]
-        self.qtile.process_key_event(keysym, event.state & self._valid_mask)
+        key, handled = self.qtile.process_key_event(keysym, event.state & self._valid_mask)
+
+        if simulated:
+            # Even though simulated keybindings could use a proper X11 event, we don't want do any fake input
+            # This is because it needs extra code for e.g. pressing/releasing the modifiers
+            # This we don't want to handle and instead leave to external tools such as xdotool
+            return
+
+        # As we're grabbing async we can't just replay it, so...
+        # We need to forward the event to the focused window
+        if not handled and key:
+            # We need to ungrab the key as otherwise we get an event loop
+            self.ungrab_key(key)
+            # Modifier is pressed, just repeat the event with xtest
+            self._fake_KeyPress(event)
+            # Grab the key again
+            self.grab_key(key)
 
     def handle_ButtonPress(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
@@ -637,6 +654,12 @@ class Core(base.Core):
     def handle_MotionNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
+        # Limit the motion notify events from happening too frequently
+        # Here we limit it to the config value
+        resize_fps = self.qtile.current_screen.x11_drag_polling_rate
+        if (event.time - self._last_motion_time) <= (1000 / resize_fps):
+            return
+        self._last_motion_time = event.time
         self.qtile.process_button_motion(event.event_x, event.event_y)
 
     def handle_ConfigureRequest(self, event):  # noqa: N802
@@ -691,7 +714,7 @@ class Core(base.Core):
 
             if xwin.get_wm_type() == "dock" or win.reserved_space:
                 assert self.qtile.current_screen is not None
-                win.cmd_static(self.qtile.current_screen.index)
+                win.static(self.qtile.current_screen.index)
                 return
 
             self.qtile.manage(win)
@@ -722,11 +745,11 @@ class Core(base.Core):
                 # since the window is dead.
                 pass
             # Clear these atoms as per spec
-            win.window.conn.conn.core.DeleteProperty(  # type: ignore
-                win.wid, win.window.conn.atoms["_NET_WM_STATE"]  # type: ignore
+            win.window.conn.conn.core.DeleteProperty(
+                win.wid, win.window.conn.atoms["_NET_WM_STATE"]
             )
-            win.window.conn.conn.core.DeleteProperty(  # type: ignore
-                win.wid, win.window.conn.atoms["_NET_WM_DESKTOP"]  # type: ignore
+            win.window.conn.conn.core.DeleteProperty(
+                win.wid, win.window.conn.atoms["_NET_WM_DESKTOP"]
             )
         self.qtile.unmanage(event.window)
         if self.qtile.current_window is None:
@@ -734,6 +757,27 @@ class Core(base.Core):
 
     def handle_ScreenChangeNotify(self, event) -> None:  # noqa: N802
         hook.fire("screen_change", event)
+
+    def _fake_input(self, input_type, detail, x=0, y=0) -> None:
+        self._xtest.FakeInput(
+            input_type,
+            detail,
+            0,  # This is a delay, not timestamp, according to AwesomeWM
+            xcffib.XCB_NONE,
+            x,  # x: Only used for motion events
+            y,  # y: Only used for motion events
+            0,
+        )
+        self.flush()
+
+    def _fake_KeyPress(self, event) -> None:  # noqa: N802
+        # First release the key as it is possibly already pressed
+        for input_type in (
+            xcbq.XCB_KEY_RELEASE,
+            xcbq.XCB_KEY_PRESS,
+            xcbq.XCB_KEY_RELEASE,
+        ):
+            self._fake_input(input_type, event.detail)
 
     @contextlib.contextmanager
     def disable_unmap_events(self):
@@ -749,7 +793,6 @@ class Core(base.Core):
 
     def simulate_keypress(self, modifiers, key):
         """Simulates a keypress on the focused window."""
-        # FIXME: This needs to be done with sendevent, once we have that fixed.
         modmasks = xcbq.translate_masks(modifiers)
         keysym = xcbq.keysyms.get(key.lower())
 
@@ -759,7 +802,7 @@ class Core(base.Core):
         d = DummyEv()
         d.detail = self.conn.keysym_to_keycode(keysym)[0]
         d.state = modmasks
-        self.handle_KeyPress(d)
+        self.handle_KeyPress(d, simulated=True)
 
     def focus_by_click(self, e, window=None):
         """Bring a window to the front
@@ -804,19 +847,15 @@ class Core(base.Core):
     def graceful_shutdown(self):
         """Try to close windows gracefully before exiting"""
 
-        def get_interesting_pid(win):
-            # We don't need to kill Internal or Static windows, they're qtile
-            # managed and don't have any state.
-            if not isinstance(win, base.Window):
-                return None
-            try:
-                return win.window.get_net_wm_pid()
-            except Exception:
-                logger.exception("Got an exception in getting the window pid")
-                return None
-
-        pids = map(get_interesting_pid, self.qtile.windows_map.values())
-        pids = list(filter(lambda x: x is not None, pids))
+        try:
+            pids = []
+            for win in self.qtile.windows_map.values():
+                if not isinstance(win, base.Internal):
+                    if pid := win.get_pid():
+                        pids.append(pid)
+        except xcffib.ConnectionException:
+            logger.warning("Server disconnected, couldn't close windows gracefully.")
+            return
 
         # Give the windows a chance to shut down nicely.
         for pid in pids:

@@ -31,7 +31,6 @@ from libqtile.ipc import IPCError
 
 
 def test_trigger_and_cancel(manager_nospawn, minimal_conf_noscreen):
-
     # Set a long interval to allow for unanticipated delays in testing environment
     qewidget = widget.QuickExit(timer_interval=100)
 
@@ -57,7 +56,6 @@ def test_trigger_and_cancel(manager_nospawn, minimal_conf_noscreen):
 
 
 def test_exit(manager_nospawn, minimal_conf_noscreen):
-
     # Set a short interval and start so widget exits immediately
     qewidget = widget.QuickExit(timer_interval=0.001, countdown_start=1)
 

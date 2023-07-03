@@ -28,8 +28,6 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from libqtile.backend.x11 import core
-
 if TYPE_CHECKING:
     from typing import Any
 
@@ -103,10 +101,17 @@ class Config:
         """Reloads python files from same folder as config file."""
         folder = path.parent
         for module in sys.modules.copy().values():
-
             # Skip built-ins and anything with no filepath.
             if hasattr(module, "__file__") and module.__file__ is not None:
                 subpath = Path(module.__file__)
+
+                if subpath == path:
+                    # do not reevaluate config itself here, we want only
+                    # reload all submodules. Also we cant reevaluate config
+                    # here, because it will cache all current modules before they
+                    # are reloaded. Thus, config file should be reloaded after
+                    # this routine.
+                    continue
 
                 # Check if the module is in the config folder or subfolder
                 # if so, reload it
@@ -131,8 +136,13 @@ class Config:
 
     def validate(self) -> None:
         """
-        Validate the configuration against the core.
+        Validate the configuration against the X11 core, if it makes sense.
         """
+        try:
+            from libqtile.backend.x11 import core
+        except ImportError:
+            return
+
         valid_keys = core.get_keys()
         valid_mods = core.get_modifiers()
         # we explicitly do not want to set self.keys and self.mouse above,

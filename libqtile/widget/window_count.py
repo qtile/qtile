@@ -23,6 +23,7 @@ from __future__ import annotations
 from typing import Any
 
 from libqtile import bar, hook
+from libqtile.command.base import expose_command
 from libqtile.widget import base
 
 
@@ -32,7 +33,7 @@ class WindowCount(base._TextBox):
     current group of the screen on which the widget is.
     """
 
-    defaults = [
+    defaults: list[tuple[str, Any, str]] = [
         ("font", "sans", "Text font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("fontshadow", None, "font shadow color, default is None(no shadow)"),
@@ -40,7 +41,7 @@ class WindowCount(base._TextBox):
         ("foreground", "#ffffff", "Foreground colour."),
         ("text_format", "{num}", "Format for message"),
         ("show_zero", False, "Show window count when no windows"),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, width=width, **config)
@@ -69,8 +70,6 @@ class WindowCount(base._TextBox):
     def _win_killed(self, window):
         try:
             self._count = len(self.bar.screen.group.windows)
-            if window.group == self.bar.screen.group:
-                self._count -= 1
         except AttributeError:
             self._count = 0
 
@@ -82,6 +81,7 @@ class WindowCount(base._TextBox):
         else:
             return 0
 
-    def cmd_get(self):
+    @expose_command()
+    def get(self):
         """Retrieve the current text."""
         return self.text

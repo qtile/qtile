@@ -20,11 +20,11 @@
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 from pywayland.protocol.wayland import WlKeyboard
 from wlroots import ffi, lib
-from wlroots.wlr_types import input_device
 from xkbcommon import xkb
 
 from libqtile import configurable
@@ -76,6 +76,9 @@ class InputConfig(configurable.Configurable):
     When a input device is being configured, the most specific matching key in the
     dictionary is found and the corresponding settings are used to configure the device.
     Unique identifiers are chosen first, then ``"type:X"``, then ``"*"``.
+
+    The command ``qtile cmd-obj -o core -f get_inputs`` can be used to get information
+    about connected devices, including their identifiers.
 
     Options default to ``None``, leave a device's default settings intact. For
     information on what each option does, see the documenation for libinput:
@@ -146,13 +149,61 @@ if libinput:
     }
 
 
-class Keyboard(HasListeners):
-    def __init__(self, core: Core, device: InputDevice):
+class _Device(ABC, HasListeners):
+    def __init__(self, core: Core, wlr_device: InputDevice):
         self.core = core
-        self.device = device
+        self.wlr_device = wlr_device
+
+    def finalize(self) -> None:
+        self.finalize_listeners()
+
+    def get_info(self) -> tuple[str, str]:
+        """
+        Get the device type and identifier for this input device. These can be used be
+        used to assign ``InputConfig`` options to devices or types of devices.
+        """
+        device = self.wlr_device
+        name = device.name
+        if name == " " or not name.isprintable():
+            name = "_"
+        type_key = "type:" + device.device_type.name.lower()
+        identifier = "%d:%d:%s" % (device.vendor, device.product, name)
+
+        if type_key == "type:pointer" and libinput is not None:
+            # This checks whether the pointer is a touchpad, so that we can target those
+            # specifically.
+            handle = device.libinput_get_device_handle()
+            if handle and libinput.libinput_device_config_tap_get_finger_count(handle) > 0:
+                type_key = "type:touchpad"
+
+        return type_key, identifier
+
+    def _match_config(self, configs: dict[str, InputConfig]) -> InputConfig | None:
+        """Finds a matching ``InputConfig`` rule."""
+        type_key, identifier = self.get_info()
+
+        if identifier in configs:
+            conf = configs[identifier]
+        elif type_key in configs:
+            conf = configs[type_key]
+        elif "*" in configs:
+            conf = configs["*"]
+        else:
+            return None
+        return conf
+
+    @abstractmethod
+    def configure(self, configs: dict[str, InputConfig]) -> None:
+        """Applies ``InputConfig`` rules to this input device."""
+        pass
+
+
+class Keyboard(_Device):
+    def __init__(self, core: Core, wlr_device: InputDevice):
+        super().__init__(core, wlr_device)
         self.qtile = core.qtile
         self.seat = core.seat
-        self.keyboard = device.keyboard
+        self.keyboard = wlr_device.keyboard
         self.keyboard.data = self
         self.grabbed_keys = core.grabbed_keys
 
@@ -166,10 +217,10 @@ class Keyboard(HasListeners):
         self.add_listener(self.keyboard.destroy_event, self._on_destroy)
 
     def finalize(self) -> None:
-        self.finalize_listeners()
+        super().finalize()
         self.core.keyboards.remove(self)
         if self.core.keyboards and self.core.seat.keyboard.destroyed:
-            self.seat.set_keyboard(self.core.keyboards[-1].device)
+            self.seat.set_keyboard(self.core.keyboards[-1].wlr_device)
 
     def set_keymap(self, layout: str | None, options: str | None, variant: str | None) -> None:
         """
@@ -189,7 +240,7 @@ class Keyboard(HasListeners):
         self.finalize()
 
     def _on_modifier(self, _listener: Listener, _data: Any) -> None:
-        self.seat.set_keyboard(self.device)
+        self.seat.set_keyboard(self.wlr_device)
         self.seat.keyboard_notify_modifiers(self.keyboard.modifiers)
 
     def _on_key(self, _listener: Listener, event: KeyboardKeyEvent) -> None:
@@ -215,8 +266,8 @@ class Keyboard(HasListeners):
             mods = self.keyboard.modifier
             for keysym in keysyms:
                 if (keysym, mods) in self.grabbed_keys:
-                    self.qtile.process_key_event(keysym, mods)
-                    return
+                    if self.qtile.process_key_event(keysym, mods)[1]:
+                        return
 
             if self.core.focused_internal:
                 self.core.focused_internal.process_key_press(keysym)
@@ -224,129 +275,111 @@ class Keyboard(HasListeners):
 
         self.seat.keyboard_notify_key(event)
 
+    def configure(self, configs: dict[str, InputConfig]) -> None:
+        """Applies ``InputConfig`` rules to this keyboard device."""
+        config = self._match_config(configs)
 
-def _configure_keyboard(device: InputDevice, conf: InputConfig) -> None:
-    """Applies ``InputConfig`` rules to a keyboard device"""
-    device.keyboard.set_repeat_info(conf.kb_repeat_rate, conf.kb_repeat_delay)
-    if isinstance(device.keyboard.data, Keyboard):
-        device.keyboard.data.set_keymap(conf.kb_layout, conf.kb_options, conf.kb_variant)
-    else:
-        logger.error("Couldn't configure keyboard. Please report this.")
-
-
-_logged_unsupported = False
+        if config:
+            self.keyboard.set_repeat_info(config.kb_repeat_rate, config.kb_repeat_delay)
+            self.set_keymap(config.kb_layout, config.kb_options, config.kb_variant)
 
 
-def _configure_pointer(device: InputDevice, conf: InputConfig, name: str) -> None:
-    """Applies ``InputConfig`` rules to a pointer device"""
-    handle = device.libinput_get_device_handle()
-    if handle is None:
-        logger.debug("Device not handled by libinput: %s", name)
-        return
+class Pointer(_Device):
+    _logged_unsupported = False
 
-    if libinput is None:
-        global _logged_unsupported
+    def __init__(self, core: Core, wlr_device: InputDevice):
+        super().__init__(core, wlr_device)
 
-        if not _logged_unsupported:
-            logger.error(
-                "Qtile was not built with libinput configuration support. "
-                "For support, pywlroots must be installed at build time."
-            )
-            _logged_unsupported = True
-        return
+        self.add_listener(wlr_device.destroy_event, self._on_destroy)
 
-    if libinput.libinput_device_config_accel_is_available(handle):
-        if ACCEL_PROFILES.get(conf.accel_profile):
-            libinput.libinput_device_config_accel_set_profile(
-                handle, ACCEL_PROFILES.get(conf.accel_profile)
-            )
-        if conf.pointer_accel is not None:
-            libinput.libinput_device_config_accel_set_speed(handle, conf.pointer_accel)
+    def finalize(self) -> None:
+        super().finalize()
+        self.core._pointers.remove(self)
 
-    if CLICK_METHODS.get(conf.click_method):
-        libinput.libinput_device_config_click_set_method(
-            handle, CLICK_METHODS.get(conf.click_method)
-        )
+    def _on_destroy(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: pointer destroy")
+        self.finalize()
 
-    if conf.drag is not None:
-        libinput.libinput_device_config_tap_set_drag_enabled(handle, int(conf.drag))
+    def configure(self, configs: dict[str, InputConfig]) -> None:
+        """Applies ``InputConfig`` rules to this pointer device."""
+        config = self._match_config(configs)
+        if config is None:
+            return
 
-    if conf.drag_lock is not None:
-        libinput.libinput_device_config_tap_set_drag_lock_enabled(handle, int(conf.drag_lock))
+        handle = self.wlr_device.libinput_get_device_handle()
+        if handle is None:
+            logger.debug("Device not handled by libinput: %s", self.wlr_device.name)
+            return
 
-    if conf.dwt is not None:
-        if libinput.libinput_device_config_dwt_is_available(handle):
-            libinput.libinput_device_config_dwt_set_enabled(handle, int(conf.dwt))
+        if libinput is None:
+            if not Pointer._logged_unsupported:
+                logger.error(
+                    "Qtile was not built with libinput configuration support. "
+                    "For support, pywlroots must be installed at build time."
+                )
+                Pointer._logged_unsupported = True
+            return
 
-    if conf.left_handed is not None:
-        if libinput.libinput_device_config_left_handed_is_available(handle):
-            libinput.libinput_device_config_left_handed_set(handle, int(conf.left_handed))
+        if libinput.libinput_device_config_accel_is_available(handle):
+            if ACCEL_PROFILES.get(config.accel_profile):
+                libinput.libinput_device_config_accel_set_profile(
+                    handle, ACCEL_PROFILES.get(config.accel_profile)
+                )
+            if config.pointer_accel is not None:
+                libinput.libinput_device_config_accel_set_speed(handle, config.pointer_accel)
 
-    if conf.middle_emulation is not None:
-        libinput.libinput_device_config_middle_emulation_set_enabled(
-            handle, int(conf.middle_emulation)
-        )
-
-    if conf.natural_scroll is not None:
-        if libinput.libinput_device_config_scroll_has_natural_scroll(handle):
-            libinput.libinput_device_config_scroll_set_natural_scroll_enabled(
-                handle, int(conf.natural_scroll)
+        if CLICK_METHODS.get(config.click_method):
+            libinput.libinput_device_config_click_set_method(
+                handle, CLICK_METHODS.get(config.click_method)
             )
 
-    if SCROLL_METHODS.get(conf.scroll_method):
-        libinput.libinput_device_config_scroll_set_method(
-            handle, SCROLL_METHODS.get(conf.scroll_method)
-        )
-        if conf.scroll_method == "on_button_down":
-            if isinstance(conf.scroll_button, str):
-                if conf.scroll_button == "disable":
-                    button = 0
-                else:  # e.g. Button1
-                    button = buttons[int(conf.scroll_button[-1]) - 1]
-            else:
-                button = conf.scroll_button
-            libinput.libinput_device_config_scroll_set_button(handle, button)
+        if config.drag is not None:
+            libinput.libinput_device_config_tap_set_drag_enabled(handle, int(config.drag))
 
-    if libinput.libinput_device_config_tap_get_finger_count(handle) > 1:
-        if conf.tap is not None:
-            libinput.libinput_device_config_tap_set_enabled(handle, int(conf.tap))
+        if config.drag_lock is not None:
+            libinput.libinput_device_config_tap_set_drag_lock_enabled(
+                handle, int(config.drag_lock)
+            )
 
-        if conf.tap_button_map is not None:
-            if TAP_MAPS.get(conf.tap_button_map):
-                libinput.libinput_device_config_tap_set_button_map(
-                    handle, TAP_MAPS.get(conf.tap_button_map)
+        if config.dwt is not None:
+            if libinput.libinput_device_config_dwt_is_available(handle):
+                libinput.libinput_device_config_dwt_set_enabled(handle, int(config.dwt))
+
+        if config.left_handed is not None:
+            if libinput.libinput_device_config_left_handed_is_available(handle):
+                libinput.libinput_device_config_left_handed_set(handle, int(config.left_handed))
+
+        if config.middle_emulation is not None:
+            libinput.libinput_device_config_middle_emulation_set_enabled(
+                handle, int(config.middle_emulation)
+            )
+
+        if config.natural_scroll is not None:
+            if libinput.libinput_device_config_scroll_has_natural_scroll(handle):
+                libinput.libinput_device_config_scroll_set_natural_scroll_enabled(
+                    handle, int(config.natural_scroll)
                 )
 
+        if SCROLL_METHODS.get(config.scroll_method):
+            libinput.libinput_device_config_scroll_set_method(
+                handle, SCROLL_METHODS.get(config.scroll_method)
+            )
+            if config.scroll_method == "on_button_down":
+                if isinstance(config.scroll_button, str):
+                    if config.scroll_button == "disable":
+                        button = 0
+                    else:  # e.g. Button1
+                        button = buttons[int(config.scroll_button[-1]) - 1]
+                else:
+                    button = config.scroll_button
+                libinput.libinput_device_config_scroll_set_button(handle, button)
 
-def configure_device(device: InputDevice, configs: dict[str, InputConfig] | None) -> None:
-    if not configs:
-        return
+        if libinput.libinput_device_config_tap_get_finger_count(handle) > 1:
+            if config.tap is not None:
+                libinput.libinput_device_config_tap_set_enabled(handle, int(config.tap))
 
-    # Find a matching InputConfig
-    name = device.name
-    if name == " " or not name.isprintable():
-        name = "_"
-    identifier = "%d:%d:%s" % (device.vendor, device.product, name)
-    type_key = "type:" + device.device_type.name.lower()
-
-    if type_key == "type:pointer" and libinput:
-        # This checks whether the pointer is a touchpad.
-        handle = device.libinput_get_device_handle()
-        if handle and libinput.libinput_device_config_tap_get_finger_count(handle) > 0:
-            type_key = "type:touchpad"
-
-    if identifier in configs:
-        conf = configs[identifier]
-    elif type_key in configs:
-        conf = configs[type_key]
-    elif "*" in configs:
-        conf = configs["*"]
-    else:
-        return
-
-    if device.device_type == input_device.InputDeviceType.POINTER:
-        _configure_pointer(device, conf, name)
-    elif device.device_type == input_device.InputDeviceType.KEYBOARD:
-        _configure_keyboard(device, conf)
-    else:
-        logger.warning("Device not configured. Type '%s' not recognised.", device.device_type)
+            if config.tap_button_map is not None:
+                if TAP_MAPS.get(config.tap_button_map):
+                    libinput.libinput_device_config_tap_set_button_map(
+                        handle, TAP_MAPS.get(config.tap_button_map)
+                    )

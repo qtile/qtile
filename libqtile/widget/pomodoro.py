@@ -21,6 +21,7 @@
 from datetime import datetime, timedelta
 from time import time
 
+from libqtile.command.base import expose_command
 from libqtile.utils import send_notification
 from libqtile.widget import base
 
@@ -76,8 +77,8 @@ class Pomodoro(base.ThreadPoolText):
 
         self.add_callbacks(
             {
-                "Button1": self._toggle_break,
-                "Button3": self._toggle_active,
+                "Button1": self.toggle_break,
+                "Button3": self.toggle_active,
             }
         )
 
@@ -146,7 +147,8 @@ class Pomodoro(base.ThreadPoolText):
         )
         return self.prefix[self.status] + time_string
 
-    def _toggle_break(self):
+    @expose_command()
+    def toggle_break(self):
         if self.status == self.STATUS_INACTIVE:
             self.status = self.STATUS_START
             return
@@ -173,7 +175,8 @@ class Pomodoro(base.ThreadPoolText):
                     + self.end_time.strftime("%H:%M"),
                 )
 
-    def _toggle_active(self):
+    @expose_command()
+    def toggle_active(self):
         if self.status != self.STATUS_INACTIVE:
             self.status = self.STATUS_INACTIVE
             if self.notification_on:

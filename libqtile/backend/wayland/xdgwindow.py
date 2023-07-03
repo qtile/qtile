@@ -27,6 +27,7 @@ from pywayland import lib as wllib
 from pywayland.server import Listener
 from wlroots import ffi
 from wlroots.util.box import Box
+from wlroots.util.clock import Timespec
 from wlroots.util.edges import Edges
 from wlroots.wlr_types.xdg_shell import XdgPopup, XdgSurface, XdgTopLevelSetFullscreenEvent
 
@@ -36,6 +37,7 @@ from libqtile.backend.base import FloatStates
 from libqtile.backend.wayland.subsurface import SubSurface
 from libqtile.backend.wayland.window import Static, Window
 from libqtile.backend.wayland.wlrq import HasListeners
+from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -67,6 +69,9 @@ class XdgWindow(Window[XdgSurface]):
         self.add_listener(surface.new_popup_event, self._on_new_popup)
         self.add_listener(surface.surface.commit_event, self._on_commit)
         self.add_listener(surface.surface.new_subsurface_event, self._on_new_subsurface)
+        self.add_listener(surface.toplevel.request_fullscreen_event, self._on_request_fullscreen)
+
+        surface.data = self.ftm_handle = core.foreign_toplevel_manager_v1.create_handle()
 
     def finalize(self) -> None:
         Window.finalize(self)
@@ -97,6 +102,8 @@ class XdgWindow(Window[XdgSurface]):
             # Tell the client to render tiled edges
             surface.set_tiled(EDGES_TILED)
 
+            assert self.ftm_handle is not None
+
             # Get the client's name
             if surface.toplevel.title:
                 self.name = surface.toplevel.title
@@ -105,9 +112,6 @@ class XdgWindow(Window[XdgSurface]):
                 self.ftm_handle.set_app_id(self._wm_class or "")
 
             # Add the toplevel's listeners
-            self.add_listener(
-                surface.toplevel.request_fullscreen_event, self._on_request_fullscreen
-            )
             self.add_listener(surface.toplevel.set_title_event, self._on_set_title)
             self.add_listener(surface.toplevel.set_app_id_event, self._on_set_app_id)
             self.add_listener(
@@ -125,6 +129,10 @@ class XdgWindow(Window[XdgSurface]):
             self.add_listener(self.ftm_handle.request_close_event, self._on_foreign_request_close)
 
             self.qtile.manage(self)
+
+            # Send a frame done event to provide an opportunity to redraw even if we
+            # aren't going to map (i.e. because the window was opened on a hidden group)
+            surface.surface.send_frame_done(Timespec.get_monotonic_time())
 
         if self.group and self.group.screen:
             self.mapped = True
@@ -158,13 +166,15 @@ class XdgWindow(Window[XdgSurface]):
         title = self.surface.toplevel.title
         if title and title != self.name:
             self.name = title
-            self.ftm_handle.set_title(self.name)
+            if self.ftm_handle:
+                self.ftm_handle.set_title(self.name)
             hook.fire("client_name_updated", self)
 
     def _on_set_app_id(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow set_app_id")
         self._wm_class = self.surface.toplevel.app_id
-        self.ftm_handle.set_app_id(self._wm_class or "")
+        if self.ftm_handle:
+            self.ftm_handle.set_app_id(self._wm_class or "")
 
     def hide(self) -> None:
         if self.mapped:
@@ -174,9 +184,7 @@ class XdgWindow(Window[XdgSurface]):
         if not self.mapped:
             self.surface.map_event.emit()
 
-    def cmd_is_visible(self) -> bool:
-        return self._mapped
-
+    @expose_command()
     def kill(self) -> None:
         self.surface.send_close()
 
@@ -201,7 +209,8 @@ class XdgWindow(Window[XdgSurface]):
     def _update_fullscreen(self, do_full: bool) -> None:
         if do_full != (self._float_state == FloatStates.FULLSCREEN):
             self.surface.set_fullscreen(do_full)
-            self.ftm_handle.set_fullscreen(do_full)
+            if self.ftm_handle:
+                self.ftm_handle.set_fullscreen(do_full)
 
     @property
     def fullscreen(self) -> bool:
@@ -228,7 +237,8 @@ class XdgWindow(Window[XdgSurface]):
         elif self._float_state == FloatStates.FULLSCREEN:
             self.floating = False
 
-        self.ftm_handle.set_fullscreen(do_full)
+        if self.ftm_handle:
+            self.ftm_handle.set_fullscreen(do_full)
 
     def place(
         self,
@@ -267,20 +277,21 @@ class XdgWindow(Window[XdgSurface]):
 
         self.x = x
         self.y = y
-        self._width = int(width)
-        self._height = int(height)
-        self.surface.set_size(self._width, self._height)
+        self._width = width
+        self._height = height
+        self.surface.set_size(width, height)
         self.paint_borders(bordercolor, borderwidth)
 
         if above:
-            self.cmd_bring_to_front()
+            self.bring_to_front()
 
         prev_outputs = self._outputs.copy()
         self._find_outputs()
         for output in self._outputs | prev_outputs:
             output.damage()
 
-    def cmd_static(
+    @expose_command()
+    def static(
         self,
         screen: int | None = None,
         x: int | None = None,
@@ -288,7 +299,7 @@ class XdgWindow(Window[XdgSurface]):
         width: int | None = None,
         height: int | None = None,
     ) -> None:
-        Window.cmd_static(self, screen, x, y, width, height)
+        Window.static(self, screen, x, y, width, height)
         win = self.qtile.windows_map[self._wid]
         assert isinstance(win, XdgStatic)
         win.subsurfaces = self.subsurfaces
@@ -338,6 +349,7 @@ class XdgStatic(Static[XdgSurface]):
         for subsurface in self.subsurfaces:
             subsurface.finalize()
 
+    @expose_command()
     def kill(self) -> None:
         self.surface.send_close()
 
@@ -365,7 +377,7 @@ class XdgStatic(Static[XdgSurface]):
         self.y = y
         self._width = width
         self._height = height
-        self.surface.set_size(self._width, self._height)
+        self.surface.set_size(width, height)
         self.paint_borders(bordercolor, borderwidth)
         self._find_outputs()
         self.damage()
@@ -375,13 +387,15 @@ class XdgStatic(Static[XdgSurface]):
         title = self.surface.toplevel.title
         if title and title != self.name:
             self.name = title
-            self.ftm_handle.set_title(self.name)
+            if self.ftm_handle:
+                self.ftm_handle.set_title(self.name)
             hook.fire("client_name_updated", self)
 
     def _on_set_app_id(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgstatic set_app_id")
         self._wm_class = self.surface.toplevel.app_id
-        self.ftm_handle.set_app_id(self._wm_class or "")
+        if self.ftm_handle:
+            self.ftm_handle.set_app_id(self._wm_class or "")
 
 
 class XdgPopupWindow(HasListeners):

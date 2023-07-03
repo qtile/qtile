@@ -5,8 +5,9 @@
 version: 2
 
 build:
-  os: ubuntu-20.04
+  os: ubuntu-22.04
   tools:
+    # This should be bumped to 3.11 once there is a dbus-next release > 0.2.3
     python: "3.10"
   apt_packages:
     - libdbus-1-dev
@@ -34,5 +35,3 @@ python:
   install:
   # This first requirements file installs a pinned version of cffi as latest version causes crashes
   - requirements: docs/requirements-rtd.txt
-  - requirements: docs/requirements.txt
-  - requirements: requirements.txt

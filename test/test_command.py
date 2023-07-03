@@ -2,6 +2,7 @@
 # Copyright (c) 2012, 2014 Tycho Andersen
 # Copyright (c) 2013 Craig Barnes
 # Copyright (c) 2014 Sean Vig
+# Copyright (c) 2021 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +31,7 @@ import libqtile.confreader
 import libqtile.layout
 import libqtile.log_utils
 import libqtile.widget
-from libqtile.command.base import CommandObject
+from libqtile.command.base import CommandObject, expose_command
 from libqtile.command.interface import CommandError
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
@@ -80,25 +81,29 @@ call_config = pytest.mark.parametrize("manager", [CallConfig], indirect=True)
 def test_layout_filter(manager):
     manager.test_window("one")
     manager.test_window("two")
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
     manager.c.simulate_keypress(["control"], "j")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
     manager.c.simulate_keypress(["control"], "k")
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
 
 
-class TestCommands(CommandObject):
+class FakeCommandObject(CommandObject):
     @staticmethod
-    def cmd_one():
+    @expose_command()
+    def one():
         pass
 
-    def cmd_one_self(self):
+    @expose_command()
+    def one_self(self):
         pass
 
-    def cmd_two(self, a):
+    @expose_command()
+    def two(self, a):
         pass
 
-    def cmd_three(self, a, b=99):
+    @expose_command()
+    def three(self, a, b=99):
         pass
 
     def _items(self, name):
@@ -109,22 +114,28 @@ class TestCommands(CommandObject):
 
 
 def test_doc():
-    c = TestCommands()
-    assert "one()" in c.cmd_doc("one")
-    assert "one_self()" in c.cmd_doc("one_self")
-    assert "two(a)" in c.cmd_doc("two")
-    assert "three(a, b=99)" in c.cmd_doc("three")
+    c = FakeCommandObject()
+    assert "one()" in c.doc("one")
+    assert "one_self()" in c.doc("one_self")
+    assert "two(a)" in c.doc("two")
+    assert "three(a, b=99)" in c.doc("three")
 
 
 def test_commands():
-    c = TestCommands()
-    assert len(c.cmd_commands()) == 9
+    c = FakeCommandObject()
+    assert len(c.commands()) == 9
 
 
 def test_command():
-    c = TestCommands()
+    c = FakeCommandObject()
     assert c.command("one")
     assert not c.command("nonexistent")
+
+
+class DecoratedTextBox(libqtile.widget.TextBox):
+    @expose_command("mapped")
+    def exposed(self):
+        return "OK"
 
 
 class ServerConfig(Config):
@@ -154,7 +165,7 @@ class ServerConfig(Config):
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
-                    libqtile.widget.TextBox(name="two"),
+                    DecoratedTextBox(name="two"),
                 ],
                 20,
             ),
@@ -170,6 +181,11 @@ def test_cmd_commands(manager):
     assert manager.c.commands()
     assert manager.c.layout.commands()
     assert manager.c.screen.bar["bottom"].commands()
+
+
+@server_config
+def test_cmd_eval_namespace(manager):
+    assert manager.c.eval("__name__") == (True, "libqtile.core.manager")
 
 
 @server_config
@@ -388,7 +404,6 @@ def test_core_node(manager, backend_name):
 
 
 def test_lazy_arguments(manager_nospawn):
-
     # Decorated function to be bound to key presses
     @lazy.function
     def test_func(qtile, value, multiplier=1):
@@ -463,3 +478,40 @@ def test_deprecated_modules(caplog):
             "libqtile.command_object is deprecated. It has been moved to libqtile.command.base.",
         )
     ]
+
+
+def test_decorators_direct_call():
+    widget = DecoratedTextBox()
+    undecorated = libqtile.widget.TextBox()
+
+    cmds = ["exposed", "mapped"]
+
+    for cmd in cmds:
+        # Check new command is exposed
+        assert cmd in widget.commands()
+        # Check commands are not in widget with same parent class
+        assert cmd not in undecorated.commands()
+
+    assert widget.exposed() == "OK"
+    assert widget.mapped() == "OK"
+
+
+def test_decorators_deprecated_direct_call():
+    widget = DecoratedTextBox()
+    assert widget.cmd_exposed() == "OK"
+
+
+def test_decorators_deprecated_method():
+    class CmdWidget(libqtile.widget.TextBox):
+        def cmd_exposed(self):
+            pass
+
+    assert "exposed" in CmdWidget().commands()
+
+
+@dualmonitor
+@server_config
+def test_decorators_manager_call(manager):
+    widget = manager.c.widget["two"]
+    assert widget.exposed() == "OK"
+    assert widget.mapped() == "OK"

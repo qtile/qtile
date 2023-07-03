@@ -27,6 +27,7 @@ from wlroots.wlr_types.layer_shell_v1 import LayerShellV1Layer, LayerSurfaceV1
 
 from libqtile.backend.wayland.subsurface import SubSurface
 from libqtile.backend.wayland.window import Static
+from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -86,23 +87,24 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self._mapped = mapped
 
         self._layer = self.surface.pending.layer
-        layer = self.output.layers[self._layer]
         if mapped:
-            layer.append(self)
+            self.output.layers[self._layer].append(self)
+            self.core.stack_windows()
         else:
-            layer.remove(self)
+            self.output.layers[self._layer].remove(self)
+            if self in self.core.stacked_windows:
+                self.core.stacked_windows.remove(self)
 
             if self.reserved_space:
                 self.qtile.free_reserved_space(self.reserved_space, self.screen)
-        self.output.organise_layers()
 
-        self.core.stack_windows()
+        self.output.organise_layers()
 
     def _on_map(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: layerstatic map")
         self.mapped = True
         self.output.organise_layers()
-        self.focus(True)
+        self.focus(False)
 
     def _on_unmap(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: layerstatic unmap")
@@ -117,12 +119,27 @@ class LayerStatic(Static[LayerSurfaceV1]):
         self.damage()
 
     def _on_commit(self, _listener: Listener, _data: Any) -> None:
+        output = self.surface.output and self.surface.output.data
+        if output and self.output != output:
+            prev_output = self.output
+            self.output = output
+            self._outputs.remove(prev_output)
+            self._outputs.add(output)
+            if self._mapped:
+                prev_output.layers[self._layer].remove(self)
+                self.output.layers[self._layer].append(self)
+
         current = self.surface.current
         if (
             self._layer != current.layer
             or self.desired_width != current.desired_width
             or self.desired_height != current.desired_height
         ):
+            if self._mapped:
+                self.output.layers[self._layer].remove(self)
+                self._layer = current.layer
+                self.output.layers[self._layer].append(self)
+                self.core.stack_windows()
             self.output.organise_layers()
         self.damage()
 
@@ -151,10 +168,11 @@ class LayerStatic(Static[LayerSurfaceV1]):
     ) -> None:
         self.x = x
         self.y = y
-        self._width = int(width)
-        self._height = int(height)
-        self.surface.configure(self._width, self._height)
+        self._width = width
+        self._height = height
+        self.surface.configure(width, height)
         self.damage()
 
-    def cmd_bring_to_front(self) -> None:
+    @expose_command()
+    def bring_to_front(self) -> None:
         pass

@@ -342,8 +342,8 @@ class TestManager:
         return self.test_window(name, wm_type="notification")
 
     def groupconsistency(self):
-        groups = self.c.groups()
-        screens = self.c.screens()
+        groups = self.c.get_groups()
+        screens = self.c.get_screens()
         seen = set()
         for g in groups.values():
             scrn = g["screen"]

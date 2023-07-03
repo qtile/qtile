@@ -29,6 +29,7 @@
 
 import math
 
+from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
 
 ROWCOL = 1  # do rows at a time left to right top down
@@ -71,7 +72,6 @@ class GridInfo:
         best_ratio = None
         best_rows_cols_orientation = None
         for rows, cols, orientation in self._possible_grids(num_windows):
-
             sample_width = width / cols
             sample_height = height / rows
             sample_ratio = sample_width / sample_height
@@ -221,7 +221,7 @@ class RatioTile(_SimpleLayoutBase):
     def clone(self, group):
         return _SimpleLayoutBase.clone(self, group)
 
-    def add(self, w):
+    def add_client(self, w):
         self.dirty = True
         self.clients.append_head(w)
 
@@ -269,6 +269,7 @@ class RatioTile(_SimpleLayoutBase):
         )
         win.unhide()
 
+    @expose_command()
     def info(self):
         d = _SimpleLayoutBase.info(self)
         focused = self.clients.current_client
@@ -277,29 +278,35 @@ class RatioTile(_SimpleLayoutBase):
         d["layout_info"] = self.layout_info
         return d
 
-    cmd_down = _SimpleLayoutBase.previous
-    cmd_up = _SimpleLayoutBase.next
+    @expose_command("down")
+    def previous(self):
+        _SimpleLayoutBase.previous(self)
 
-    cmd_previous = _SimpleLayoutBase.previous
-    cmd_next = _SimpleLayoutBase.next
+    @expose_command("up")
+    def next(self):
+        _SimpleLayoutBase.next(self)
 
-    def cmd_shuffle_down(self):
+    @expose_command()
+    def shuffle_down(self):
         if self.clients:
             self.clients.rotate_up()
             self.group.layout_all()
 
-    def cmd_shuffle_up(self):
+    @expose_command()
+    def shuffle_up(self):
         if self.clients:
             self.clients.rotate_down()
             self.group.layout_all()
 
-    def cmd_decrease_ratio(self):
+    @expose_command()
+    def decrease_ratio(self):
         new_ratio = self.ratio - self.ratio_increment
         if new_ratio < 0:
             return
         self.ratio = new_ratio
         self.group.layout_all()
 
-    def cmd_increase_ratio(self):
+    @expose_command()
+    def increase_ratio(self):
         self.ratio += self.ratio_increment
         self.group.layout_all()

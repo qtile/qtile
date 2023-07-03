@@ -41,7 +41,7 @@ class Drawer(base.Drawer):
         width: int | None = None,
         height: int | None = None,
     ) -> None:
-        if offsetx > self._win.width:  # type: ignore
+        if offsetx > self._win.width:
             return
 
         # We need to set the current draw area so we can compare to the previous one
@@ -57,12 +57,12 @@ class Drawer(base.Drawer):
         # Make sure geometry doesn't extend beyond texture
         if width is None:
             width = self.width
-        if width > self._win.width - offsetx:  # type: ignore
-            width = self._win.width - offsetx  # type: ignore
+        if width > self._win.width - offsetx:
+            width = self._win.width - offsetx
         if height is None:
             height = self.height
-        if height > self._win.height - offsety:  # type: ignore
-            height = self._win.height - offsety  # type: ignore
+        if height > self._win.height - offsety:
+            height = self._win.height - offsety
 
         # Paint RecordingSurface operations our window's ImageSurface
         with cairocffi.Context(self._source) as context:
@@ -70,7 +70,7 @@ class Drawer(base.Drawer):
             context.paint()
 
         # Copy drawn ImageSurface data into rendered wlr_texture
-        self._win.texture.write_pixels(  # type: ignore
+        self._win.texture.write_pixels(
             self._stride,
             width,
             height,
@@ -78,7 +78,7 @@ class Drawer(base.Drawer):
             dst_x=offsetx,
             dst_y=offsety,
         )
-        self._win.damage()  # type: ignore
+        self._win.damage()
 
     def clear(self, colour: ColorsType) -> None:
         # Draw background straight to ImageSurface

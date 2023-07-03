@@ -1,4 +1,5 @@
 import json
+import subprocess
 from typing import Any
 from urllib.error import URLError
 from urllib.request import Request, urlopen
@@ -39,7 +40,7 @@ class GenPollText(base.ThreadPoolText):
 class GenPollUrl(base.ThreadPoolText):
     """A generic text widget that polls an url and parses it using parse function"""
 
-    defaults = [
+    defaults: list[tuple[str, Any, str]] = [
         ("url", None, "Url"),
         ("data", None, "Post Data"),
         ("parse", None, "Parse Function"),
@@ -47,7 +48,7 @@ class GenPollUrl(base.ThreadPoolText):
         ("user_agent", "Qtile", "Set the user agent"),
         ("headers", {}, "Extra Headers"),
         ("xml", False, "Is XML?"),
-    ]  # type: list[tuple[str, Any, str]]
+    ]
 
     def __init__(self, **config):
         base.ThreadPoolText.__init__(self, "", **config)
@@ -92,3 +93,30 @@ class GenPollUrl(base.ThreadPoolText):
             text = "Can't parse"
 
         return text
+
+
+class GenPollCommand(base.ThreadPoolText):
+    """A generic text widget to display output from scripts or shell commands"""
+
+    defaults = [
+        ("update_interval", 60, "update time in seconds"),
+        ("cmd", None, "command line as a string or list of arguments to execute"),
+        ("shell", False, "run command through shell to enable piping and shell expansion"),
+    ]
+
+    def __init__(self, **config):
+        base.ThreadPoolText.__init__(self, "", **config)
+        self.add_defaults(GenPollCommand.defaults)
+
+    def _configure(self, qtile, bar):
+        base.ThreadPoolText._configure(self, qtile, bar)
+        self.add_callbacks({"Button1": self.force_update})
+
+    def poll(self):
+        process = subprocess.run(
+            self.cmd,
+            capture_output=True,
+            text=True,
+            shell=self.shell,
+        )
+        return process.stdout.strip()

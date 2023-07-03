@@ -29,7 +29,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+from libqtile.command.base import expose_command
 from libqtile.config import Match
 from libqtile.layout.base import _SimpleLayoutBase
 
@@ -69,8 +69,8 @@ class Tile(_SimpleLayoutBase):
         (
             "ratio_increment",
             0.05,
-            "By which amount to change ratio when cmd_decrease_ratio or "
-            "cmd_increase_ratio are called.",
+            "By which amount to change ratio when decrease_ratio or "
+            "increase_ratio are called.",
         ),
         (
             "add_on_top",
@@ -118,14 +118,16 @@ class Tile(_SimpleLayoutBase):
     def slave_windows(self):
         return self.clients[self.master_length :]
 
-    def up(self):
+    @expose_command("shuffle_left")
+    def shuffle_up(self):
         if self.shift_windows:
             self.clients.shuffle_up()
         else:
             self.clients.rotate_down()
         self.group.layout_all()
 
-    def down(self):
+    @expose_command("shuffle_right")
+    def shuffle_down(self):
         if self.shift_windows:
             self.clients.shuffle_down()
         else:
@@ -152,13 +154,13 @@ class Tile(_SimpleLayoutBase):
         c = _SimpleLayoutBase.clone(self, group)
         return c
 
-    def add(self, client, offset_to_current=1):
+    def add_client(self, client, offset_to_current=1):
         if self.add_after_last:
             self.clients.append(client)
         elif self.add_on_top:
             self.clients.append_head(client)
         else:
-            super().add(client, offset_to_current)
+            super().add_client(client, offset_to_current)
         self.reset_master()
 
     def configure(self, client, screen_rect):
@@ -204,6 +206,7 @@ class Tile(_SimpleLayoutBase):
         else:
             client.hide()
 
+    @expose_command()
     def info(self):
         d = _SimpleLayoutBase.info(self)
         d.update(
@@ -214,42 +217,37 @@ class Tile(_SimpleLayoutBase):
         )
         return d
 
-    def cmd_shuffle_down(self):
-        self.down()
+    @expose_command(["left", "up"])
+    def previous(self):
+        _SimpleLayoutBase.previous(self)
 
-    def cmd_shuffle_up(self):
-        self.up()
+    @expose_command(["right", "down"])
+    def next(self):
+        _SimpleLayoutBase.next(self)
 
-    def cmd_reset(self):
+    @expose_command("normalize")
+    def reset(self):
         self.ratio_size = self._initial_ratio
         self.group.layout_all()
 
-    cmd_normalize = cmd_reset
-
-    cmd_shuffle_left = cmd_shuffle_up
-    cmd_shuffle_right = cmd_shuffle_down
-
-    cmd_previous = _SimpleLayoutBase.previous
-    cmd_next = _SimpleLayoutBase.next
-    cmd_up = cmd_previous
-    cmd_down = cmd_next
-    cmd_left = cmd_previous
-    cmd_right = cmd_next
-
-    def cmd_decrease_ratio(self):
+    @expose_command()
+    def decrease_ratio(self):
         self.ratio_size -= self.ratio_increment
         self.group.layout_all()
 
-    def cmd_increase_ratio(self):
+    @expose_command()
+    def increase_ratio(self):
         self.ratio_size += self.ratio_increment
         self.group.layout_all()
 
-    def cmd_decrease_nmaster(self):
+    @expose_command()
+    def decrease_nmaster(self):
         self.master_length -= 1
         if self.master_length <= 0:
             self.master_length = 1
         self.group.layout_all()
 
-    def cmd_increase_nmaster(self):
+    @expose_command()
+    def increase_nmaster(self):
         self.master_length += 1
         self.group.layout_all()

@@ -19,6 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
 
 
@@ -87,6 +88,8 @@ class VerticalTile(_SimpleLayoutBase):
         ("border_focus", "#FF0000", "Border color(s) for the focused window."),
         ("border_normal", "#FFFFFF", "Border color(s) for un-focused windows."),
         ("border_width", 1, "Border width."),
+        ("single_border_width", None, "Border width for single window."),
+        ("single_margin", None, "Margin for single window."),
         ("margin", 0, "Border margin (int or list of ints [N E S W])."),
     ]
 
@@ -96,10 +99,14 @@ class VerticalTile(_SimpleLayoutBase):
     def __init__(self, **config):
         _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(VerticalTile.defaults)
+        if self.single_border_width is None:
+            self.single_border_width = self.border_width
+        if self.single_margin is None:
+            self.single_margin = self.margin
         self.maximized = None
 
-    def add(self, window):
-        return self.clients.add(window, 1)
+    def add_client(self, window):
+        return self.clients.add_client(window, 1)
 
     def remove(self, window):
         if self.maximized is window:
@@ -117,21 +124,17 @@ class VerticalTile(_SimpleLayoutBase):
             index = self.clients.index(window)
 
             # border
-            if n > 1:
-                border_width = self.border_width
-            else:
-                border_width = 0
+            border_width = self.border_width if n > 1 else self.single_border_width
+            border_color = self.border_focus if window.has_focus else self.border_normal
 
-            if window.has_focus:
-                border_color = self.border_focus
-            else:
-                border_color = self.border_normal
+            # margin
+            margin = self.margin if n > 1 else self.single_margin
 
             # width
-            if n > 1:
-                width = screen_rect.width - self.border_width * 2
-            else:
-                width = screen_rect.width
+            width = screen_rect.width - border_width * 2
+
+            # y
+            y = screen_rect.y
 
             # height
             if n > 1:
@@ -143,80 +146,79 @@ class VerticalTile(_SimpleLayoutBase):
                 normal_pane_height = (screen_rect.height // n) - (border_width * 2)
 
                 if self.maximized:
+                    y += (index * sec_pane_height) + (border_width * 2 * index)
                     if window is self.maximized:
                         height = main_pane_height
                     else:
                         height = sec_pane_height
+                        if index > self.clients.index(self.maximized):
+                            y = y - sec_pane_height + main_pane_height
                 else:
                     height = normal_pane_height
-            else:
-                height = screen_rect.height
-
-            # y
-            y = screen_rect.y
-
-            if n > 1:
-                if self.maximized:
-                    y += (index * sec_pane_height) + (border_width * 2 * index)
-                else:
                     y += (index * normal_pane_height) + (border_width * 2 * index)
-
-                if self.maximized and window is not self.maximized:
-                    if index > self.clients.index(self.maximized):
-                        y = y - sec_pane_height + main_pane_height
+            else:
+                height = screen_rect.height - 2 * border_width
 
             window.place(
-                screen_rect.x, y, width, height, border_width, border_color, margin=self.margin
+                screen_rect.x, y, width, height, border_width, border_color, margin=margin
             )
             window.unhide()
         else:
             window.hide()
 
-    def grow(self):
+    def _grow(self):
         if self.ratio + self.steps < 1:
             self.ratio += self.steps
             self.group.layout_all()
 
-    def shrink(self):
+    def _shrink(self):
         if self.ratio - self.steps > 0:
             self.ratio -= self.steps
             self.group.layout_all()
 
-    cmd_previous = _SimpleLayoutBase.previous
-    cmd_next = _SimpleLayoutBase.next
+    @expose_command("up")
+    def previous(self):
+        _SimpleLayoutBase.previous(self)
 
-    cmd_up = cmd_previous
-    cmd_down = cmd_next
+    @expose_command("down")
+    def next(self):
+        _SimpleLayoutBase.next(self)
 
-    def cmd_shuffle_up(self):
+    @expose_command()
+    def shuffle_up(self):
         self.clients.shuffle_up()
         self.group.layout_all()
 
-    def cmd_shuffle_down(self):
+    @expose_command()
+    def shuffle_down(self):
         self.clients.shuffle_down()
         self.group.layout_all()
 
-    def cmd_maximize(self):
+    @expose_command()
+    def maximize(self):
         if self.clients:
             self.maximized = self.clients.current_client
             self.group.layout_all()
 
-    def cmd_normalize(self):
+    @expose_command()
+    def normalize(self):
         self.maximized = None
         self.group.layout_all()
 
-    def cmd_grow(self):
+    @expose_command()
+    def grow(self):
         if not self.maximized:
             return
         if self.clients.current_client is self.maximized:
-            self.grow()
+            self._grow()
         else:
-            self.shrink()
+            self._shrink()
 
-    def cmd_shrink(self):
+    @expose_command()
+    def shrink(self):
         if not self.maximized:
             return
         if self.clients.current_client is self.maximized:
-            self.shrink()
+            self._shrink()
         else:
-            self.grow()
+            self._grow()

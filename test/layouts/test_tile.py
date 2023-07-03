@@ -75,21 +75,21 @@ def test_tile_nextprev(manager):
     manager.test_window("three")
 
     assert manager.c.layout.info()["clients"] == ["three", "two", "one"]
-    assert manager.c.groups()["a"]["focus"] == "three"
+    assert manager.c.get_groups()["a"]["focus"] == "three"
 
     manager.c.layout.next()
-    assert manager.c.groups()["a"]["focus"] == "two"
-
-    manager.c.layout.previous()
-    assert manager.c.groups()["a"]["focus"] == "three"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
 
     manager.c.layout.previous()
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "three"
+
+    manager.c.layout.previous()
+    assert manager.c.get_groups()["a"]["focus"] == "one"
 
     manager.c.layout.next()
     manager.c.layout.next()
     manager.c.layout.next()
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
 
 
 @tile_config

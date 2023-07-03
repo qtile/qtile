@@ -22,6 +22,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from libqtile import bar
+from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 from libqtile.widget import Systray, base
 
@@ -54,7 +55,7 @@ class WidgetBox(base._Widget):
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
-    defaults = [
+    defaults: list[tuple[str, Any, str]] = [
         ("font", "sans", "Text font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("fontshadow", None, "font shadow color, default is None(no shadow)"),
@@ -67,13 +68,14 @@ class WidgetBox(base._Widget):
         ("text_closed", "[<]", "Text when box is closed"),
         ("text_open", "[>]", "Text when box is open"),
         ("widgets", list(), "A list of widgets to include in the box"),
-    ]  # type: list[tuple[str, Any, str]]
+        ("start_opened", False, "Spawn the box opened"),
+    ]
 
     def __init__(self, _widgets: list[base._Widget] | None = None, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(WidgetBox.defaults)
         self.box_is_open = False
-        self.add_callbacks({"Button1": self.cmd_toggle})
+        self.add_callbacks({"Button1": self.toggle})
 
         if _widgets:
             logger.warning(
@@ -124,6 +126,10 @@ class WidgetBox(base._Widget):
         for w in self.widgets:
             w.drawer.disable()
 
+        # We're being cautious: `box_is_open` should never be True here...
+        if self.start_opened and not self.box_is_open:
+            self.qtile.call_soon(self.toggle)
+
     def calculate_length(self):
         return self.layout.width
 
@@ -153,7 +159,6 @@ class WidgetBox(base._Widget):
             index += 1
 
         if self.box_is_open:
-
             # Need to reverse list as widgets get added in front of eachother.
             for widget in self.widgets[::-1]:
                 # enable drawing again
@@ -167,7 +172,8 @@ class WidgetBox(base._Widget):
 
         self.drawer.draw(offsetx=self.offsetx, offsety=self.offsety, width=self.width)
 
-    def cmd_toggle(self):
+    @expose_command()
+    def toggle(self):
         """Toggle box state"""
         self.box_is_open = not self.box_is_open
         self.toggle_widgets()

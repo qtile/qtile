@@ -129,7 +129,7 @@ specs = {
         "add-delete": Spec(
             commands=["add", "add", "delete", "delete", "delete", "add"],
             after=["delete"],
-            windows=5
+            windows=5,
         ),
     },
     "max": {"max": Spec(windows=1)},
@@ -156,9 +156,7 @@ specs = {
             before=["maximize", "shrink_main", "shrink_main"],
         ),
         "maximize": Spec(commands=["maximize"], windows=4, after=["reset"]),
-        "maximize-main": Spec(
-            commands=["maximize"], windows=4, before=["left"], after=["reset"]
-        ),
+        "maximize-main": Spec(commands=["maximize"], windows=4, before=["left"], after=["reset"]),
         "grow": Spec(commands=["grow", "grow", "grow", "grow"], delay="1x2"),
         "grow_main": Spec(
             commands=["grow_main", "grow_main", "grow_main"],
@@ -211,9 +209,7 @@ specs = {
             before=["maximize", "shrink_main", "shrink_main"],
         ),
         "maximize": Spec(commands=["maximize"], windows=4, after=["reset"]),
-        "maximize-main": Spec(
-            commands=["maximize"], windows=4, before=["down"], after=["reset"]
-        ),
+        "maximize-main": Spec(commands=["maximize"], windows=4, before=["down"], after=["reset"]),
         "grow": Spec(commands=["grow", "grow", "grow", "grow"], delay="1x2"),
         "grow_main": Spec(
             commands=["grow_main", "grow_main", "grow_main"],
@@ -252,9 +248,13 @@ specs = {
             commands=["shuffle_up", "shuffle_up", "shuffle_up"], windows=5, delay="1x2"
         ),
         # decrease_ratio does not seem to work
-        # "decrease_ratio": Spec(commands=["decrease_ratio", "decrease_ratio", "decrease_ratio", "decrease_ratio"], windows=5, delay="1x2"),
+        # "decrease_ratio": Spec(
+        # commands=["decrease_ratio", "decrease_ratio", "decrease_ratio", "decrease_ratio"],
+        # windows=5, delay="1x2"),
         # increase_ratio does not seem to work
-        # "increase_ratio": Spec(commands=["increase_ratio", "increase_ratio", "increase_ratio", "increase_ratio"], windows=5, delay="1x2"),
+        # "increase_ratio": Spec(
+        # commands=["increase_ratio", "increase_ratio", "increase_ratio", "increase_ratio"],
+        # windows=5, delay="1x2"),
     },
     "slice": {
         # Slice layout freezes the session
@@ -288,9 +288,7 @@ specs = {
         ),
         "rotate": Spec(commands=["rotate"]),
         "next": Spec(commands=["next"], before=["add", "spawn"], after=["delete"]),
-        "previous": Spec(
-            commands=["previous"], before=["add", "spawn"], after=["delete"]
-        ),
+        "previous": Spec(commands=["previous"], before=["add", "spawn"], after=["delete"]),
         "client_to_next": Spec(
             commands=["client_to_next"], before=["add", "spawn"], after=["delete"]
         ),
@@ -308,9 +306,7 @@ specs = {
         "shuffle_down": Spec(
             commands=["shuffle_down", "shuffle_down", "shuffle_down"], windows=4
         ),
-        "shuffle_up": Spec(
-            commands=["shuffle_up", "shuffle_up", "shuffle_up"], windows=4
-        ),
+        "shuffle_up": Spec(commands=["shuffle_up", "shuffle_up", "shuffle_up"], windows=4),
         "increase-decrease-ratio": Spec(
             commands=[
                 "increase_ratio",
@@ -362,9 +358,7 @@ specs = {
     "verticaltile": {
         "3-windows": Spec(windows=3),
         "4-windows": Spec(before=["up", "maximize"], windows=4),
-        "shuffle_down": Spec(
-            commands=["shuffle_down", "shuffle_down"], before=["up", "up"]
-        ),
+        "shuffle_down": Spec(commands=["shuffle_down", "shuffle_down"], before=["up", "up"]),
         "shuffle_up": Spec(commands=["shuffle_up", "shuffle_up"]),
         "shuffle_down-maximize": Spec(
             commands=["shuffle_down", "shuffle_down"], before=["up", "maximize", "up"]
@@ -373,9 +367,7 @@ specs = {
             commands=["shuffle_up", "shuffle_up"], before=["up", "maximize", "down"]
         ),
         "maximize": Spec(commands=["maximize"]),
-        "normalize": Spec(
-            commands=["normalize"], before=["up", "maximize", "shrink", "shrink"]
-        ),
+        "normalize": Spec(commands=["normalize"], before=["up", "maximize", "shrink", "shrink"]),
         "grow-shrink": Spec(
             commands=["grow", "grow", "shrink", "shrink"],
             before=["maximize", "shrink", "shrink"],
@@ -423,9 +415,7 @@ def take(name, layout, spec):
                 client.run_layout_command(command)
             except Exception:
                 errors.append(
-                    "While running command {}:\n{}".format(
-                        command, traceback.format_exc()
-                    )
+                    "While running command {}:\n{}".format(command, traceback.format_exc())
                 )
                 break
             time.sleep(0.05)
@@ -446,9 +436,7 @@ def take(name, layout, spec):
 def get_selection(args):
     """Parse args of the form LAYOUT, LAYOUT:NAME or LAYOUT:NAME1,NAME2."""
     if not args:
-        return [
-            (layout, sorted(specs[layout].keys())) for layout in sorted(specs.keys())
-        ]
+        return [(layout, sorted(specs[layout].keys())) for layout in sorted(specs.keys())]
 
     errors = []
     selection = []
@@ -485,8 +473,8 @@ def main(args=None):
     # get selection of specs, exit if they don't exist
     try:
         selection = get_selection(args)
-    except LookupError as error:
-        logging.error("Wrong selection:\n" + str(error))
+    except LookupError:
+        logging.exception("Wrong selection:")
         return 1
 
     # switch to group
@@ -499,12 +487,10 @@ def main(args=None):
         for name in names:
             success, errors = take(name, layout, specs[layout][name])
             if success:
-                logging.info("Shooting {}:{} - OK!".format(layout, name))
+                logging.info("Shooting %s:%s - OK!", layout, name)
             else:
                 ok = False
-                logging.error(
-                    "Shooting {}:{} - failed:\n{}".format(layout, name, errors)
-                )
+                logging.error("Shooting %s:%S - failed:\n%s", layout, name, errors)
 
     # switch back to original group
     client.switch_to_group(original_group)

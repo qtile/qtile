@@ -1,4 +1,4 @@
-# This is used for test_manager.py::test_cmd_reload_config
+# This is used for test_manager.py::test_reload_config
 #
 # The exported configuration variables have a different value depending on whether
 # libqtile has a 'test_data' attribute (see below)
@@ -87,5 +87,7 @@ if hasattr(qtile, "test_data"):
     dgroups_app_rules = [Rule(Match(wm_class="test"), float=True)]
     floating_layout = layout.Floating()
     wmname = "TEST"
+
+    qtile.test_data_config_evaluations += 1
 
 groups.append(ScratchPad("S", dropdowns))

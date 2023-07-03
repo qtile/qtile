@@ -41,6 +41,7 @@ from libqtile.command.client import SelectError
 from libqtile.command.interface import CommandError, CommandException
 from libqtile.config import Match
 from libqtile.confreader import Config
+from libqtile.group import _Group
 from libqtile.lazy import lazy
 from test.conftest import dualmonitor, multimonitor
 from test.helpers import BareConfig, Retry, assert_window_died
@@ -137,7 +138,7 @@ def test_clone_dim(manager):
     assert manager.c.group.info()["name"] == "a"
     assert manager.c.group.info()["focus"] == "one"
 
-    assert len(manager.c.screens()) == 1
+    assert len(manager.c.get_screens()) == 1
 
 
 @dualmonitor
@@ -150,10 +151,10 @@ def test_to_screen(manager):
     manager.c.to_screen(0)
     manager.test_window("two")
 
-    ga = manager.c.groups()["a"]
+    ga = manager.c.get_groups()["a"]
     assert ga["windows"] == ["two"]
 
-    gb = manager.c.groups()["b"]
+    gb = manager.c.get_groups()["b"]
     assert gb["windows"] == ["one"]
 
     assert manager.c.window.info()["name"] == "two"
@@ -171,23 +172,23 @@ def test_togroup(manager):
     manager.test_window("one")
     with pytest.raises(CommandError):
         manager.c.window.togroup("nonexistent")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
 
     manager.c.window.togroup("a")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
 
     manager.c.window.togroup("b", switch_group=True)
-    assert manager.c.groups()["b"]["focus"] == "one"
-    assert manager.c.groups()["a"]["focus"] is None
+    assert manager.c.get_groups()["b"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] is None
     assert manager.c.group.info()["name"] == "b"
 
     manager.c.window.togroup("a")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
     assert manager.c.group.info()["name"] == "b"
 
     manager.c.to_screen(1)
     manager.c.window.togroup("c")
-    assert manager.c.groups()["c"]["focus"] == "one"
+    assert manager.c.get_groups()["c"]["focus"] == "one"
 
 
 @manager_config
@@ -222,9 +223,9 @@ def test_keypress(manager):
     manager.test_window("two")
     with pytest.raises(CommandError):
         manager.c.simulate_keypress(["unknown"], "j")
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
     manager.c.simulate_keypress(["control"], "j")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
 
 
 class TooFewGroupsConfig(ManagerConfig):
@@ -234,8 +235,8 @@ class TooFewGroupsConfig(ManagerConfig):
 @pytest.mark.parametrize("manager", [TooFewGroupsConfig], indirect=True)
 @multimonitor
 def test_too_few_groups(manager):
-    assert manager.c.groups()
-    assert len(manager.c.groups()) == len(manager.c.screens())
+    assert manager.c.get_groups()
+    assert len(manager.c.get_groups()) == len(manager.c.get_screens())
 
 
 class _ChordsConfig(Config):
@@ -318,26 +319,26 @@ def test_immediate_chord(manager):
     manager.test_window("three")
     manager.test_window("two")
     manager.test_window("one")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
     # use normal bind to shift focus up
     manager.c.simulate_keypress([], "k")
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
     # enter into key chord and "k" binding no longer working
     manager.c.simulate_keypress(["control"], "a")
     manager.c.simulate_keypress([], "k")
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
     # leave chord using "Escape", "k" bind work again
     manager.c.simulate_keypress([], "Escape")
     manager.c.simulate_keypress([], "k")
-    assert manager.c.groups()["a"]["focus"] == "three"
+    assert manager.c.get_groups()["a"]["focus"] == "three"
     # enter key chord and use it's "j" binding to shift focus down
     manager.c.simulate_keypress(["control"], "a")
     manager.c.simulate_keypress([], "j")
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
     # in immediate chord we leave it after use any
     # bind from it, "j" bind no longer working
     manager.c.simulate_keypress([], "j")
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
 
 
 @chords_config
@@ -345,61 +346,61 @@ def test_mode_chord(manager):
     manager.test_window("three")
     manager.test_window("two")
     manager.test_window("one")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
     # use normal bind to shift focus up
     manager.c.simulate_keypress([], "k")
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
     # enter into key chord and "k" binding no longer working
     manager.c.simulate_keypress(["control"], "b")
     manager.c.simulate_keypress([], "k")
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
     # leave chord using "Escape", "k" bind work again
     manager.c.simulate_keypress([], "Escape")
     manager.c.simulate_keypress([], "k")
-    assert manager.c.groups()["a"]["focus"] == "three"
+    assert manager.c.get_groups()["a"]["focus"] == "three"
     # enter key chord and use it's "j" binding to shift focus down
     manager.c.simulate_keypress(["control"], "b")
     manager.c.simulate_keypress([], "j")
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
     # in mode chord we __not__ leave it after use any
     # bind from it, "j" bind still working
     manager.c.simulate_keypress([], "j")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
     # only way to exit mode chord is by hit "Escape"
     manager.c.simulate_keypress([], "Escape")
     manager.c.simulate_keypress([], "j")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
 
 
 @chords_config
 def test_chord_stack(manager):
     manager.test_window("two")
     manager.test_window("one")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
     manager.c.simulate_keypress(["control"], "d")  # ["nesting_test"]
     # "z" should work, "k" shouldn't:
     manager.c.simulate_keypress([], "z")
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
     manager.c.simulate_keypress([], "z")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
     manager.c.simulate_keypress([], "k")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
     # enter ["nesting_test", "", "inner_named"]:
     manager.c.simulate_keypress([], "a")
     manager.c.simulate_keypress([], "1")
     # "j" should work:
     manager.c.simulate_keypress([], "j")
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
     manager.c.simulate_keypress([], "j")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
     # leave "inner_named" ~> ["nesting_test"]:
     manager.c.simulate_keypress([], "u")
     manager.c.simulate_keypress([], "z")
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
     manager.c.simulate_keypress([], "z")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
     manager.c.simulate_keypress([], "k")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
     # enter ["nesting_test", "", "inner_named"]:
     manager.c.simulate_keypress([], "a")
     manager.c.simulate_keypress([], "1")
@@ -407,11 +408,11 @@ def test_chord_stack(manager):
     manager.c.simulate_keypress([], "v")
     # "k" should work, "z" shouldn't:
     manager.c.simulate_keypress([], "k")
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
     manager.c.simulate_keypress([], "k")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
     manager.c.simulate_keypress([], "z")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
 
 
 @manager_config
@@ -460,7 +461,7 @@ def test_kill_other(manager):
 def test_regression_groupswitch(manager):
     manager.c.group["c"].toscreen()
     manager.c.group["d"].toscreen()
-    assert manager.c.groups()["c"]["screen"] is None
+    assert manager.c.get_groups()["c"]["screen"] is None
 
 
 @manager_config
@@ -500,22 +501,32 @@ def test_adddelgroup(manager):
     manager.test_window("one")
     manager.c.addgroup("dummygroup")
     manager.c.addgroup("testgroup")
-    assert "testgroup" in manager.c.groups().keys()
+    assert "testgroup" in manager.c.get_groups().keys()
 
     manager.c.window.togroup("testgroup")
     manager.c.delgroup("testgroup")
-    assert "testgroup" not in manager.c.groups().keys()
+    assert "testgroup" not in manager.c.get_groups().keys()
     # Assert that the test window is still a member of some group.
-    assert sum(len(i["windows"]) for i in manager.c.groups().values())
+    assert sum(len(i["windows"]) for i in manager.c.get_groups().values())
 
-    for i in list(manager.c.groups().keys())[:-1]:
+    for i in list(manager.c.get_groups().keys())[:-1]:
         manager.c.delgroup(i)
     with pytest.raises(CommandException):
-        manager.c.delgroup(list(manager.c.groups().keys())[0])
+        manager.c.delgroup(list(manager.c.get_groups().keys())[0])
 
-    # Assert that setting layout via cmd_addgroup works
+    # Assert that setting layout via addgroup works
     manager.c.addgroup("testgroup2", layout="max")
-    assert manager.c.groups()["testgroup2"]["layout"] == "max"
+    assert manager.c.get_groups()["testgroup2"]["layout"] == "max"
+
+
+@manager_config
+def test_addgroupat(manager):
+    manager.test_window("one")
+    group_count = len(manager.c.get_groups())
+    manager.c.addgroup("aa", index=1)
+
+    assert len(manager.c.get_groups()) == group_count + 1
+    assert list(manager.c.get_groups())[1] == "aa"
 
 
 @manager_config
@@ -909,13 +920,13 @@ def test_move_floating(manager):
 
 @manager_config
 def test_one_screen(manager):
-    assert len(manager.c.screens()) == 1
+    assert len(manager.c.get_screens()) == 1
 
 
 @dualmonitor
 @manager_config
 def test_two_screens(manager):
-    assert len(manager.c.screens()) == 2
+    assert len(manager.c.get_screens()) == 2
 
 
 @manager_config
@@ -939,12 +950,12 @@ def test_focus_stays_on_layout_switch(manager):
 @pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
 def test_map_request(manager):
     manager.test_window("one")
-    info = manager.c.groups()["a"]
+    info = manager.c.get_groups()["a"]
     assert "one" in info["windows"]
     assert info["focus"] == "one"
 
     manager.test_window("two")
-    info = manager.c.groups()["a"]
+    info = manager.c.get_groups()["a"]
     assert "two" in info["windows"]
     assert info["focus"] == "two"
 
@@ -954,24 +965,24 @@ def test_unmap(manager):
     one = manager.test_window("one")
     two = manager.test_window("two")
     three = manager.test_window("three")
-    info = manager.c.groups()["a"]
+    info = manager.c.get_groups()["a"]
     assert info["focus"] == "three"
 
     assert len(manager.c.windows()) == 3
     manager.kill_window(three)
 
     assert len(manager.c.windows()) == 2
-    info = manager.c.groups()["a"]
+    info = manager.c.get_groups()["a"]
     assert info["focus"] == "two"
 
     manager.kill_window(two)
     assert len(manager.c.windows()) == 1
-    info = manager.c.groups()["a"]
+    info = manager.c.get_groups()["a"]
     assert info["focus"] == "one"
 
     manager.kill_window(one)
     assert len(manager.c.windows()) == 0
-    info = manager.c.groups()["a"]
+    info = manager.c.get_groups()["a"]
     assert info["focus"] is None
 
 
@@ -981,15 +992,15 @@ def test_setgroup(manager):
     manager.test_window("one")
     manager.c.group["b"].toscreen()
     manager.groupconsistency()
-    if len(manager.c.screens()) == 1:
-        assert manager.c.groups()["a"]["screen"] is None
+    if len(manager.c.get_screens()) == 1:
+        assert manager.c.get_groups()["a"]["screen"] is None
     else:
-        assert manager.c.groups()["a"]["screen"] == 1
-    assert manager.c.groups()["b"]["screen"] == 0
+        assert manager.c.get_groups()["a"]["screen"] == 1
+    assert manager.c.get_groups()["b"]["screen"] == 0
 
     manager.c.group["c"].toscreen()
     manager.groupconsistency()
-    assert manager.c.groups()["c"]["screen"] == 0
+    assert manager.c.get_groups()["c"]["screen"] == 0
 
     # Setting the current group once again switches back to the previous group
     manager.c.group["c"].toscreen(toggle=True)
@@ -1009,10 +1020,12 @@ def test_unmap_noscreen(manager):
     assert len(manager.c.windows()) == 2
     manager.kill_window(pid)
     assert len(manager.c.windows()) == 1
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
 
 
 class TScreen(libqtile.config.Screen):
+    group = _Group("")
+
     def set_group(self, x, save_prev=True):
         pass
 
@@ -1123,7 +1136,7 @@ def test_switch_groups_cursor_warp(manager_nospawn):
     assert manager_nospawn.c.layout.info()["name"] == "max"
 
 
-def test_cmd_reload_config(manager_nospawn):
+def test_reload_config(manager_nospawn):
     # The test config uses presence of Qtile.test_data to change config values
     # Here we just want to check configurables are being updated within the live Qtile
     manager_nospawn.start(lambda: BareConfig(file_path=configs_dir / "reloading.py"))
@@ -1134,11 +1147,11 @@ def test_cmd_reload_config(manager_nospawn):
 
     # Original config
     assert manager_nospawn.c.eval("len(self.keys_map)") == (True, "1")
-    assert manager_nospawn.c.eval("len(self.mouse_map)") == (True, "1")
-    assert "".join(manager_nospawn.c.groups().keys()) == "12345S"
+    assert manager_nospawn.c.eval("len(self._mouse_map)") == (True, "1")
+    assert "".join(manager_nospawn.c.get_groups().keys()) == "12345S"
     assert len(manager_nospawn.c.group.info()["layouts"]) == 1
     assert manager_nospawn.c.widget["clock"].eval("self.background") == (True, "None")
-    screens = manager_nospawn.c.screens()[0]
+    screens = manager_nospawn.c.get_screens()[0]
     assert screens["gaps"]["bottom"][3] == 24 and not screens["gaps"]["top"]
     assert len(manager_nospawn.c.internal_windows()) == 1
     assert manager_nospawn.c.eval("self.dgroups.key_binder") == (True, "None")
@@ -1154,13 +1167,16 @@ def test_cmd_reload_config(manager_nospawn):
 
     # Reload #1 - with libqtile.qtile.test_data
     manager_nospawn.c.eval("self.test_data = 1")
+    manager_nospawn.c.eval("self.test_data_config_evaluations = 0")
     manager_nospawn.c.reload_config()
+    # should be readed twice (check+read), but no more
+    assert manager_nospawn.c.eval("self.test_data_config_evaluations") == (True, "2")
     assert manager_nospawn.c.eval("len(self.keys_map)") == (True, "2")
-    assert manager_nospawn.c.eval("len(self.mouse_map)") == (True, "2")
-    assert "".join(manager_nospawn.c.groups().keys()) == "123456789S"
+    assert manager_nospawn.c.eval("len(self._mouse_map)") == (True, "2")
+    assert "".join(manager_nospawn.c.get_groups().keys()) == "123456789S"
     assert len(manager_nospawn.c.group.info()["layouts"]) == 2
     assert manager_nospawn.c.widget["currentlayout"].eval("self.background") == (True, "#ff0000")
-    screens = manager_nospawn.c.screens()[0]
+    screens = manager_nospawn.c.get_screens()[0]
     assert screens["gaps"]["top"][3] == 32 and not screens["gaps"]["bottom"]
     assert len(manager_nospawn.c.internal_windows()) == 1
     _, binder = manager_nospawn.c.eval("self.dgroups.key_binder")
@@ -1174,19 +1190,20 @@ def test_cmd_reload_config(manager_nospawn):
     manager_nospawn.c.group["S"].dropdown_toggle("dropdown2")  # Spawn second dropdown
     assert_dd_appeared()
     manager_nospawn.c.group["S"].dropdown_toggle("dropdown1")  # Send it to ScratchPad
-    assert "dd" in manager_nospawn.c.groups()["S"]["windows"]
-    assert "dd" in manager_nospawn.c.groups()["S"]["windows"]
+    assert "dd" in manager_nospawn.c.get_groups()["S"]["windows"]
+    assert "dd" in manager_nospawn.c.get_groups()["S"]["windows"]
 
     # Reload #2 - back to without libqtile.qtile.test_data
     manager_nospawn.c.eval("del self.test_data")
+    manager_nospawn.c.eval("del self.test_data_config_evaluations")
     manager_nospawn.c.reload_config()
     assert manager_nospawn.c.eval("len(self.keys_map)") == (True, "1")
-    assert manager_nospawn.c.eval("len(self.mouse_map)") == (True, "1")
+    assert manager_nospawn.c.eval("len(self._mouse_map)") == (True, "1")
     # The last four groups persist within QtileState
-    assert "".join(manager_nospawn.c.groups().keys()) == "12345S"
+    assert "".join(manager_nospawn.c.get_groups().keys()) == "12345S"
     assert len(manager_nospawn.c.group.info()["layouts"]) == 1
     assert manager_nospawn.c.widget["clock"].eval("self.background") == (True, "None")
-    screens = manager_nospawn.c.screens()[0]
+    screens = manager_nospawn.c.get_screens()[0]
     assert screens["gaps"]["bottom"][3] == 24 and not screens["gaps"]["top"]
     assert len(manager_nospawn.c.internal_windows()) == 1
     assert manager_nospawn.c.eval("self.dgroups.key_binder") == (True, "None")
@@ -1196,8 +1213,8 @@ def test_cmd_reload_config(manager_nospawn):
     manager_nospawn.c.window.kill()
     if manager_nospawn.backend.name == "x11":
         assert manager_nospawn.c.eval("self.core.wmname") == (True, "LG3D")
-    assert "dd" in manager_nospawn.c.groups()["S"]["windows"]  # First dropdown persists
-    assert "dd" in manager_nospawn.c.groups()["1"]["windows"]  # Second orphans to group
+    assert "dd" in manager_nospawn.c.get_groups()["S"]["windows"]  # First dropdown persists
+    assert "dd" in manager_nospawn.c.get_groups()["1"]["windows"]  # Second orphans to group
 
 
 class CommandsConfig(Config):

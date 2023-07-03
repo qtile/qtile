@@ -80,8 +80,8 @@ class Output(HasListeners):
             wlr_output.commit()
 
     def finalize(self) -> None:
-        self.core.remove_output(self)
         self.finalize_listeners()
+        self.core.remove_output(self)
 
     @property
     def screen(self) -> Screen:
@@ -122,7 +122,6 @@ class Output(HasListeners):
                 with self.renderer.render(
                     wlr_output._ptr.width, wlr_output._ptr.height
                 ) as renderer:
-
                     if self.wallpaper:
                         width, height = wlr_output.effective_resolution()
                         box = Box(0, 0, int(width * scale), int(height * scale))
@@ -227,8 +226,8 @@ class Output(HasListeners):
         self, dnd: Dnd, now: Timespec, scale: float, transform_matrix: Matrix
     ) -> None:
         """Render the drag-n-drop icon if there is one."""
-        icon = dnd.wlr_drag.icon
-        if icon.mapped:
+        icon = dnd.icon
+        if icon is not None and icon.mapped:
             texture = icon.surface.get_texture()
             if texture:
                 box = Box(
@@ -319,8 +318,6 @@ class Output(HasListeners):
                         win.reserved_space = to_reserve
 
                 win.place(int(x + self.x), int(y + self.y), int(ww), int(wh), 0, None)
-
-        self.core.stack_windows()
 
     def contains(self, rect: WindowType | Dnd) -> bool:
         """Returns whether the given window is visible on this output."""

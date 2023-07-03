@@ -72,7 +72,7 @@ class Bluetooth(base._TextBox):
 
         powered = await iface.get_powered()
         # subscribe receiver to property changed
-        props.on_properties_changed(self._signal_received)
+        props.on_properties_changed(self._adapter_signal_received)
         return powered
 
     async def _init_device(self):
@@ -86,15 +86,20 @@ class Bluetooth(base._TextBox):
         connected = await iface.get_connected()
         name = await iface.get_name()
         # subscribe receiver to property changed
-        props.on_properties_changed(self._signal_received)
+        props.on_properties_changed(self._device_signal_received)
         return connected, name
 
-    def _signal_received(self, interface_name, changed_properties, _invalidated_properties):
+    def _adapter_signal_received(
+        self, interface_name, changed_properties, _invalidated_properties
+    ):
         powered = changed_properties.get("Powered", None)
         if powered is not None:
             self.powered = powered.value
             self.update_text()
 
+    def _device_signal_received(
+        self, interface_name, changed_properties, _invalidated_properties
+    ):
         connected = changed_properties.get("Connected", None)
         if connected is not None:
             self.connected = connected.value

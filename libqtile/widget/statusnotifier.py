@@ -17,8 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-import asyncio
 import os
 from functools import partial
 
@@ -42,7 +40,8 @@ except ImportError:
 from libqtile import bar
 from libqtile.images import Img
 from libqtile.log_utils import logger
-from libqtile.utils import add_signal_receiver
+from libqtile.resources.status_notifier.statusnotifieritem import STATUS_NOTIFIER_ITEM_SPEC
+from libqtile.utils import add_signal_receiver, create_task
 from libqtile.widget import base
 
 # StatusNotifier seems to have two potential interface names.
@@ -136,24 +135,29 @@ class StatusNotifierItem:  # noqa: E303
                 continue
 
         if not interface_found:
-            logger.warning("Unable to find StatusNotifierItem interface on %s", self.service)
-            return False
+            logger.info(
+                "Unable to find StatusNotifierItem interface on %s. Falling back to default spec.",
+                self.service,
+            )
+            try:
+                obj = self.bus.get_proxy_object(
+                    self.service, STATUSNOTIFIER_PATH, STATUS_NOTIFIER_ITEM_SPEC
+                )
+                self.item = obj.get_interface("org.kde.StatusNotifierItem")
+            except InterfaceNotFoundError:
+                logger.warning(
+                    "Failed to find StatusNotifierItem interface on %s and fallback to default spec also failed.",
+                    self.service,
+                )
+                return False
 
-        # Default to XDG icon:
-        icon_name = await self.item.get_icon_name()
-
-        try:
-            icon_path = await self.item.get_icon_theme_path()
-            self.icon = self._get_custom_icon(icon_name, icon_path)
-        except (AttributeError, DBusError):
-            pass
-
-        if not self.icon:
-            self.icon = self._get_xdg_icon(icon_name)
+        await self._get_local_icon()
 
         # If there's no XDG icon, try to use icon provided by application
-        if self.icon is None:
+        if self.icon:
+            self.item.on_new_icon(self._update_local_icon)
 
+        else:
             # Get initial application icons:
             for icon in ["Icon", "Attention", "Overlay"]:
                 await self._get_icon(icon)
@@ -171,17 +175,42 @@ class StatusNotifierItem:  # noqa: E303
 
         return True
 
-    def _new_icon(self):
-        task = asyncio.create_task(self._get_icon("Icon"))
+    async def _get_local_icon(self):
+        # Default to XDG icon
+        # Some implementations don't provide an IconName property so we
+        # need to catch an error if we can't read it.
+        # We can't use hasattr to check this as the method will be created
+        # where we've used the default XML spec to provide the object introspection
+        try:
+            icon_name = await self.item.get_icon_name()
+        except DBusError:
+            return
+
+        try:
+            icon_path = await self.item.get_icon_theme_path()
+            self.icon = self._get_custom_icon(icon_name, icon_path)
+        except (AttributeError, DBusError):
+            pass
+
+        if not self.icon:
+            self.icon = self._get_xdg_icon(icon_name)
+
+    def _create_task_and_draw(self, coro):
+        task = create_task(coro)
         task.add_done_callback(self._redraw)
+
+    def _update_local_icon(self):
+        self.icon = None
+        self._create_task_and_draw(self._get_local_icon())
+
+    def _new_icon(self):
+        self._create_task_and_draw(self._get_icon("Icon"))
 
     def _new_attention_icon(self):
-        task = asyncio.create_task(self._get_icon("Attention"))
-        task.add_done_callback(self._redraw)
+        self._create_task_and_draw(self._get_icon("Attention"))
 
     def _new_overlay_icon(self):
-        task = asyncio.create_task(self._get_icon("Overlay"))
-        task.add_done_callback(self._redraw)
+        self._create_task_and_draw(self._get_icon("Overlay"))
 
     def _get_custom_icon(self, icon_name, icon_path):
         for ext in [".png", ".svg"]:
@@ -326,7 +355,8 @@ class StatusNotifierItem:  # noqa: E303
         return icon
 
     def activate(self):
-        asyncio.create_task(self._activate())
+        if hasattr(self.item, "call_activate"):
+            create_task(self._activate())
 
     async def _activate(self):
         # Call Activate method and pass window position hints
@@ -380,9 +410,9 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
         if message.member != "RegisterStatusNotifierItem":
             return False
 
-        # If the argument passed to the method is the service name then we
-        # don't need to do anything else.
-        if message.sender == message.body[0]:
+        # If the argument is not an object path (starting with "/") then we assume
+        # it is the bus name and we don't need to do anything else.
+        if not message.body[0].startswith("/"):
             return False
 
         if message.sender not in self._items:
@@ -510,9 +540,13 @@ class StatusNotifierHost:  # noqa: E303
             self._on_icon_changed.append(on_icon_changed)
 
         if self.started:
+            if on_item_added:
+                for item in self.items:
+                    on_item_added(item)
             return
 
         self.bus = await MessageBus().connect()
+        await self.bus.request_name("org.freedesktop.StatusNotifierHost-qtile")
         for iface in BUS_NAMES:
             w = StatusNotifierWatcher(iface)
             w.on_item_added = self.add_item
@@ -550,7 +584,7 @@ class StatusNotifierHost:  # noqa: E303
         item = StatusNotifierItem(self.bus, service, path=path, icon_theme=self.icon_theme)
         item.on_icon_changed = self.item_icon_changed
         if item not in self.items:
-            task = asyncio.create_task(item.start())
+            task = create_task(item.start())
             task.add_done_callback(partial(self.item_added, item, service))
 
     def remove_item(self, interface):
@@ -580,7 +614,7 @@ class StatusNotifier(base._Widget):
     are recommended to install the `pyxdg <https://pypi.org/project/pyxdg/>`__
     module to support retrieving icons from the selected theme.
 
-    Letf-clicking an icon will trigger an activate event.
+    Left-clicking an icon will trigger an activate event.
 
     .. note::
 

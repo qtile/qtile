@@ -17,7 +17,7 @@ from libqtile.backend import base
 from libqtile.backend.base import FloatStates
 from libqtile.backend.x11 import xcbq
 from libqtile.backend.x11.drawer import Drawer
-from libqtile.command.base import CommandError
+from libqtile.command.base import CommandError, expose_command
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
@@ -649,10 +649,17 @@ class _Window:
     def update_state(self):
         triggered = ["urgent"]
 
+        state = self.window.get_net_wm_state()
+
         if self.qtile.config.auto_fullscreen:
             triggered.append("fullscreen")
-
-        state = self.window.get_net_wm_state()
+        # This might seem a bit weird but it's to workaround a bug in chromium based clients not properly redrawing
+        # The bug is described in https://github.com/qtile/qtile/issues/4176
+        # This only happens when auto fullscreen is set to false because we then do not obey the disable fullscreen state
+        # So here we simply re-place the window at the coordinates which will magically solve the issue
+        # This only seems to be an issue with unfullscreening, thus we check if we're fullscreen and the window wants to unfullscreen
+        elif self.fullscreen and "fullscreen" not in state:
+            self._reconfigure_floating(new_float_state=FloatStates.FULLSCREEN)
 
         for s in triggered:
             setattr(self, s, (s in state))
@@ -668,6 +675,7 @@ class _Window:
         if not val:
             self.hints["urgent"] = False
 
+    @expose_command()
     def info(self):
         if self.group:
             group = self.group.name
@@ -723,6 +731,7 @@ class _Window:
             assert hasattr(self, "window")
             self.window.set_property("_NET_WM_WINDOW_OPACITY", real_opacity)
 
+    @expose_command()
     def kill(self):
         if "WM_DELETE_WINDOW" in self.window.get_wm_protocols():
             data = [
@@ -798,6 +807,7 @@ class _Window:
     def get_pid(self):
         return self.window.get_net_wm_pid()
 
+    @expose_command()
     def place(
         self,
         x,
@@ -988,7 +998,9 @@ class _Window:
         # about this.
         return False
 
-    def focus(self, warp: bool) -> None:
+    @expose_command()
+    def focus(self, warp: bool = True) -> None:
+        """Focuses the window."""
         did_focus = self._do_focus()
         if not did_focus:
             return
@@ -1031,15 +1043,13 @@ class _Window:
             self.group.current_window = self
         hook.fire("client_focus", self)
 
-    def cmd_focus(self, warp: bool = True) -> None:
-        """Focuses the window."""
-        self.focus(warp)
-
-    def cmd_hints(self):
+    @expose_command()
+    def get_hints(self):
         """Returns the X11 hints (WM_HINTS and WM_SIZE_HINTS) for this window."""
         return self.hints
 
-    def cmd_inspect(self):
+    @expose_command()
+    def inspect(self):
         """Tells you more than you ever wanted to know about a window"""
         a = self.window.get_attributes()
         attrs = {
@@ -1118,14 +1128,13 @@ class Internal(_Window, base.Internal):
         """Create a Drawer that draws to this window."""
         return Drawer(self.qtile, self, width, height)
 
+    @expose_command()
     def kill(self):
         if self.window.wid in self.qtile.windows_map:
             # It will be present during config reloads; absent during shutdown as this
             # will follow graceful_shutdown
-            self.qtile.core.conn.conn.core.DestroyWindow(self.window.wid)
-
-    def cmd_kill(self):
-        self.kill()
+            with contextlib.suppress(xcffib.ConnectionException):
+                self.qtile.core.conn.conn.core.DestroyWindow(self.window.wid)
 
     def handle_Expose(self, e):  # noqa: N802
         self.process_window_expose()
@@ -1205,8 +1214,8 @@ class Static(_Window, base.Static):
             self.height = e.height
 
         self.place(
-            self.screen.x + self.x,
-            self.screen.y + self.y,
+            self.x,
+            self.y,
             self.width,
             self.height,
             self.borderwidth,
@@ -1259,7 +1268,8 @@ class Static(_Window, base.Static):
         if name == "_NET_WM_STRUT_PARTIAL":
             self.update_strut()
 
-    def cmd_bring_to_front(self):
+    @expose_command()
+    def bring_to_front(self):
         self.window.configure(stackmode=StackMode.Above)
 
 
@@ -1336,6 +1346,7 @@ class Window(_Window, base.Window):
             pass
         return False
 
+    @expose_command()
     def toggle_floating(self):
         self.floating = not self.floating
 
@@ -1380,9 +1391,6 @@ class Window(_Window, base.Window):
             self.floating = False
             return
 
-    def toggle_fullscreen(self):
-        self.fullscreen = not self.fullscreen
-
     @property
     def maximized(self):
         return self._float_state == FloatStates.MAXIMIZED
@@ -1404,9 +1412,6 @@ class Window(_Window, base.Window):
             if self._float_state == FloatStates.MAXIMIZED:
                 self.floating = False
 
-    def toggle_maximize(self, state=FloatStates.MAXIMIZED):
-        self.maximized = not self.maximized
-
     @property
     def minimized(self):
         return self._float_state == FloatStates.MINIMIZED
@@ -1420,13 +1425,16 @@ class Window(_Window, base.Window):
             if self._float_state == FloatStates.MINIMIZED:
                 self.floating = False
 
+    @expose_command()
     def toggle_minimize(self):
         self.minimized = not self.minimized
 
-    def cmd_is_visible(self) -> bool:
+    @expose_command()
+    def is_visible(self) -> bool:
         return not self.hidden and not self.minimized
 
-    def cmd_static(
+    @expose_command()
+    def static(
         self,
         screen: int | None = None,
         x: int | None = None,
@@ -1485,10 +1493,12 @@ class Window(_Window, base.Window):
 
         self._reconfigure_floating()
 
-    def getsize(self):
+    @expose_command()
+    def get_size(self):
         return (self.width, self.height)
 
-    def getposition(self):
+    @expose_command()
+    def get_position(self):
         return (self.x, self.y)
 
     def _reconfigure_floating(self, new_float_state=FloatStates.FLOATING):
@@ -1527,6 +1537,7 @@ class Window(_Window, base.Window):
         # add to group by position according to _NET_WM_DESKTOP property
         group = None
         index = self.window.get_wm_desktop()
+
         if index is not None and index < len(self.qtile.groups):
             group = self.qtile.groups[index]
         elif index is None:
@@ -1539,6 +1550,7 @@ class Window(_Window, base.Window):
             if group != self.qtile.current_screen.group:
                 self.hide()
 
+    @expose_command()
     def togroup(self, group_name=None, *, switch_group=False, toggle=False):
         """Move window to a specified group
 
@@ -1555,7 +1567,7 @@ class Window(_Window, base.Window):
                 raise CommandError("No such group: %s" % group_name)
 
         if self.group is group:
-            if toggle and hasattr(self.group.screen, "previous_group"):
+            if toggle and self.group.screen.previous_group:
                 group = self.group.screen.previous_group
             else:
                 return
@@ -1571,8 +1583,9 @@ class Window(_Window, base.Window):
             self.x += group.screen.x
         group.add(self)
         if switch_group:
-            group.cmd_toscreen(toggle=toggle)
+            group.toscreen(toggle=toggle)
 
+    @expose_command()
     def match(self, match):
         """Match window against given attributes.
 
@@ -1792,64 +1805,52 @@ class Window(_Window, base.Window):
         elif name == "screen":
             return self.group.screen
 
-    def cmd_kill(self):
-        """Kill this window
-
-        Try to do this politely if the client support
-        this, otherwise be brutal.
-        """
-        self.kill()
-
-    def cmd_move_floating(self, dx, dy):
+    @expose_command()
+    def move_floating(self, dx, dy):
         """Move window by dx and dy"""
         self.tweak_float(dx=dx, dy=dy)
 
-    def cmd_resize_floating(self, dw, dh):
+    @expose_command()
+    def resize_floating(self, dw, dh):
         """Add dw and dh to size of window"""
         self.tweak_float(dw=dw, dh=dh)
 
-    def cmd_set_position_floating(self, x, y):
+    @expose_command()
+    def set_position_floating(self, x, y):
         """Move window to x and y"""
         self.tweak_float(x=x, y=y)
 
-    def cmd_set_size_floating(self, w, h):
+    @expose_command()
+    def set_size_floating(self, w, h):
         """Set window dimensions to w and h"""
         self.tweak_float(w=w, h=h)
 
-    def cmd_place(self, x, y, width, height, borderwidth, bordercolor, above=False, margin=None):
-        self.place(x, y, width, height, borderwidth, bordercolor, above, margin)
-
-    def cmd_get_position(self):
-        return self.getposition()
-
-    def cmd_get_size(self):
-        return self.getsize()
-
-    def cmd_toggle_floating(self):
-        self.toggle_floating()
-
-    def cmd_enable_floating(self):
+    @expose_command()
+    def enable_floating(self):
         self.floating = True
 
-    def cmd_disable_floating(self):
+    @expose_command()
+    def disable_floating(self):
         self.floating = False
 
-    def cmd_toggle_maximize(self):
-        self.toggle_maximize()
+    @expose_command()
+    def toggle_maximize(self):
+        self.maximized = not self.maximized
 
-    def cmd_toggle_fullscreen(self):
-        self.toggle_fullscreen()
+    @expose_command()
+    def toggle_fullscreen(self):
+        self.fullscreen = not self.fullscreen
 
-    def cmd_enable_fullscreen(self):
+    @expose_command()
+    def enable_fullscreen(self):
         self.fullscreen = True
 
-    def cmd_disable_fullscreen(self):
+    @expose_command()
+    def disable_fullscreen(self):
         self.fullscreen = False
 
-    def cmd_toggle_minimize(self):
-        self.toggle_minimize()
-
-    def cmd_bring_to_front(self):
+    @expose_command()
+    def bring_to_front(self):
         if self.floating:
             self.window.configure(stackmode=StackMode.Above)
         else:
@@ -1858,7 +1859,8 @@ class Window(_Window, base.Window):
     def _is_in_window(self, x, y, window):
         return window.edges[0] <= x <= window.edges[2] and window.edges[1] <= y <= window.edges[3]
 
-    def cmd_set_position(self, x, y):
+    @expose_command()
+    def set_position(self, x, y):
         if self.floating:
             self.tweak_float(x, y)
             return
@@ -1867,10 +1869,5 @@ class Window(_Window, base.Window):
             if window == self or window.floating:
                 continue
             if self._is_in_window(curx, cury, window):
-                clients = self.group.layout.clients
-                index1 = clients.index(self)
-                index2 = clients.index(window)
-                clients[index1], clients[index2] = clients[index2], clients[index1]
-                self.group.layout.focused = index2
-                self.group.layout_all()
-                break
+                self.group.layout.swap(self, window)
+                return

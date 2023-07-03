@@ -97,6 +97,7 @@ def test_openweather_parse(
         libqtile.config.Screen(top=Bar([patch_openweather.OpenWeather(**params)], 10))
     ]
     manager_nospawn.start(config)
+    manager_nospawn.c.widget["openweather"].eval("self.update(self.poll())")
     info = manager_nospawn.c.widget["openweather"].info()["text"]
     assert info == expected
 

@@ -26,7 +26,7 @@
 """
 Slice layout. Serves as example of delegating layouts (or sublayouts)
 """
-
+from libqtile.command.base import expose_command
 from libqtile.layout.base import Layout
 from libqtile.layout.max import Max
 
@@ -42,7 +42,7 @@ class Single(Layout):
         self.window = None
         self.focused = False
 
-    def add(self, window):
+    def add_client(self, window):
         assert self.window is None
         self.window = window
 
@@ -91,14 +91,19 @@ class Single(Layout):
             return None
         return self.window
 
-    def cmd_next(self):
+    def next(self):
         pass
 
-    def cmd_previous(self):
+    def previous(self):
         pass
 
     def get_windows(self):
         return self.window
+
+    def info(self):
+        d = Layout.info(self)
+        d["window"] = self.window.name if self.window else ""
+        return d
 
 
 class Slice(Layout):
@@ -184,12 +189,12 @@ class Slice(Layout):
             raise NotImplementedError(self.side)
         return (win, sub)
 
-    def add(self, win):
+    def add_client(self, win):
         if self._slice.empty() and self.match and self.match.compare(win):
-            self._slice.add(win)
+            self._slice.add_client(win)
             self.layouts[win] = self._slice
         else:
-            self.fallback.add(win)
+            self.fallback.add_client(win)
             self.layouts[win] = self.fallback
 
     def remove(self, win):
@@ -253,22 +258,28 @@ class Slice(Layout):
     def __getattr__(self, name):
         """Delegate unimplemented command calls to active layout.
 
-        For ``cmd_``-methods that don't exist on the Slice class, this looks
+        For exposed commands that don't exist on the Slice class, this looks
         for an implementation on the active layout.
         """
-        if name.startswith("cmd_"):
-            return getattr(self._get_active_layout(), name)
+        if "fallback" in self.__dict__:
+            cmd = self.command(name)
+            if cmd:
+                return cmd
         return super().__getattr__(name)
 
-    def cmd_next(self):
-        self.fallback.cmd_next()
+    @expose_command()
+    def next(self):
+        self.fallback.next()
 
-    def cmd_previous(self):
-        self.fallback.cmd_previous()
+    @expose_command()
+    def previous(self):
+        self.fallback.previous()
 
-    @property
+    @expose_command()
     def commands(self):
-        return self._get_active_layout().commands
+        cmds = self._get_active_layout().commands()
+        cmds.extend(cmd for cmd in Layout.commands(self) if cmd not in cmds)
+        return cmds
 
     def get_windows(self):
         clients = list()
@@ -277,6 +288,28 @@ class Slice(Layout):
                 clients.extend(layout.get_windows())
         return clients
 
+    def command(self, name: str):
+        if name in self._commands:
+            return self._commands.get(name)
+
+        elif name in self._get_active_layout()._commands:
+            return getattr(self._get_active_layout(), name)
+
+    @expose_command()
+    def move_to_slice(self):
+        """Moves the current window to the slice."""
+        win = self.group.current_window
+        old_slice = self._slice.window
+        if old_slice:
+            self._slice.remove(old_slice)
+            self.fallback.add_client(old_slice)
+            self.layouts[old_slice] = self.fallback
+        self.fallback.remove(win)
+        self._slice.add_client(win)
+        self.layouts[win] = self._slice
+        self.group.layout_all()
+
+    @expose_command()
     def info(self):
         d = Layout.info(self)
         for layout in self._get_layouts():

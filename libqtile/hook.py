@@ -191,7 +191,7 @@ class Subscribe:
                 if c.name == "xterm":
                     c.togroup("a")
                 elif c.name == "dzen":
-                    c.cmd_static(0)
+                    c.static(0)
         """
         return self._subscribe("client_new", func)
 
@@ -304,7 +304,7 @@ class Subscribe:
         return self._subscribe("screen_change", func)
 
     def screens_reconfigured(self, func):
-        """Called once ``qtile.cmd_reconfigure_screens`` has completed (e.g. if
+        """Called once ``qtile.reconfigure_screens`` has completed (e.g. if
         ``reconfigure_screens`` is set to ``True`` in your config).
 
         **Arguments**
@@ -379,6 +379,8 @@ unsubscribe = Unsubscribe()
 
 
 def _fire_async_event(co):
+    from libqtile.utils import create_task
+
     loop = None
     with contextlib.suppress(RuntimeError):
         loop = asyncio.get_running_loop()
@@ -386,7 +388,7 @@ def _fire_async_event(co):
     if loop is None:
         asyncio.run(co)
     else:
-        asyncio.ensure_future(co)
+        create_task(co)
 
 
 def fire(event, *args, **kwargs):
