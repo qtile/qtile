@@ -22,8 +22,9 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
+from libqtile.resources.default_config import floating_layout
 from test.helpers import HEIGHT, WIDTH
-from test.layouts.layout_utils import assert_focus_path, assert_focused, assert_dimensions
+from test.layouts.layout_utils import assert_dimensions, assert_focus_path, assert_focused
 
 MARGIN = 10
 MARGIN_ON_SINGLE = 30
@@ -38,7 +39,7 @@ class ColumnsConfig(Config):
         layout.Columns(margin=MARGIN, border=BORDER),
         layout.Columns(margin=MARGIN, margin_on_single=MARGIN_ON_SINGLE, border=BORDER),
     ]
-    floating_layout = libqtile.resources.default_config.floating_layout
+    floating_layout = floating_layout
     keys = []
     mouse = []
     screens = []
