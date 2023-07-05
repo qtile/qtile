@@ -84,13 +84,11 @@ class WindowName(base._TextBox):
                 state = "_ "
             elif w.floating:
                 state = "V "
-            var = {}
-            var["state"] = state
-            var["name"] = w.name
+            var = {"state": state, "name": w.name}
             if callable(self.parse_text):
                 try:
                     var["name"] = self.parse_text(var["name"])
-                except:  # noqa: E722
+                except Exception:
                     logger.exception("parse_text function failed:")
             wm_class = w.get_wm_class()
             var["class"] = wm_class[0] if wm_class else ""

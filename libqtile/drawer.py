@@ -75,10 +75,7 @@ class TextLayout:
 
     @property
     def width(self):
-        if self._width is not None:
-            return self._width
-        else:
-            return self.layout.get_pixel_size()[0]
+        return self.layout.get_pixel_size()[0] if self._width is None else self._width
 
     @width.setter
     def width(self, value):
@@ -181,11 +178,10 @@ class TextFrame:
                 self.drawer.rounded_fillrect(*opts)
             else:
                 self.drawer.fillrect(*opts)
+        elif rounded:
+            self.drawer.rounded_rectangle(*opts)
         else:
-            if rounded:
-                self.drawer.rounded_rectangle(*opts)
-            else:
-                self.drawer.rectangle(*opts)
+            self.drawer.rectangle(*opts)
         self.drawer.ctx.stroke()
         self.layout.draw(x + self.pad_left, y + self.pad_top)
 

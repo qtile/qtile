@@ -33,16 +33,14 @@ class _BspNode:
     def __iter__(self):
         yield self
         for child in self.children:
-            for c in child:
-                yield c
+            yield from child
 
     def clients(self):
         if self.client:
             yield self.client
         else:
             for child in self.children:
-                for c in child.clients():
-                    yield c
+                yield from child.clients()
 
     def _shortest(self, length):
         if len(self.children) == 0:
@@ -51,9 +49,7 @@ class _BspNode:
         child0, length0 = self.children[0]._shortest(length + 1)
         child1, length1 = self.children[1]._shortest(length + 1)
 
-        if length1 < length0:
-            return child1, length1
-        return child0, length0
+        return (child1, length1) if length1 < length0 else (child0, length0)
 
     def get_shortest(self):
         return self._shortest(0)[0]
@@ -66,7 +62,7 @@ class _BspNode:
         self.children[1 - idx].client = self.client
         self.children[idx].client = client
         self.client = None
-        self.split_horizontal = True if self.w > self.h * ratio else False
+        self.split_horizontal = self.w > self.h * ratio
         return self.children[idx]
 
     def remove(self, child):
@@ -205,18 +201,15 @@ class Bsp(Layout):
         self.current = node.insert(client, int(self.lower_right), self.ratio)
 
     def remove(self, client):
-        node = self.get_node(client)
-        if node:
-            if node.parent:
-                node = node.parent.remove(node)
-                newclient = next(node.clients(), None)
-                if newclient is None:
-                    self.current = self.root
-                else:
-                    self.current = self.get_node(newclient)
-                return newclient
-            node.client = None
-            self.current = self.root
+        if not (node := self.get_node(client)):
+            return
+        if node.parent:
+            node = node.parent.remove(node)
+            newclient = next(node.clients(), None)
+            self.current = self.root if newclient is None else self.get_node(newclient)
+            return newclient
+        node.client = None
+        self.current = self.root
 
     def configure(self, client, screen_rect):
         self.root.calc_geom(screen_rect.x, screen_rect.y, screen_rect.width, screen_rect.height)
@@ -270,20 +263,17 @@ class Bsp(Layout):
 
     @expose_command()
     def next(self):
-        client = self.focus_next(self.current.client, wrap=self.wrap_clients)
-        if client:
+        if client := self.focus_next(self.current.client, wrap=self.wrap_clients):
             self.group.focus(client, True)
 
     @expose_command()
     def previous(self):
-        client = self.focus_previous(self.current.client, wrap=self.wrap_clients)
-        if client:
+        if client := self.focus_previous(self.current.client, wrap=self.wrap_clients):
             self.group.focus(client, True)
 
     def find_left(self):
         child = self.current
-        parent = child.parent
-        while parent:
+        while parent := child.parent:
             if parent.split_horizontal and child is parent.children[1]:
                 neighbor = parent.children[0]
                 center = self.current.y + self.current.h * 0.5
@@ -294,12 +284,10 @@ class Bsp(Layout):
                         neighbor = neighbor.children[0]
                 return neighbor
             child = parent
-            parent = child.parent
 
     def find_right(self):
         child = self.current
-        parent = child.parent
-        while parent:
+        while parent := child.parent:
             if parent.split_horizontal and child is parent.children[0]:
                 neighbor = parent.children[1]
                 center = self.current.y + self.current.h * 0.5
@@ -310,12 +298,10 @@ class Bsp(Layout):
                         neighbor = neighbor.children[1]
                 return neighbor
             child = parent
-            parent = child.parent
 
     def find_up(self):
         child = self.current
-        parent = child.parent
-        while parent:
+        while parent := child.parent:
             if not parent.split_horizontal and child is parent.children[1]:
                 neighbor = parent.children[0]
                 center = self.current.x + self.current.w * 0.5
@@ -326,12 +312,10 @@ class Bsp(Layout):
                         neighbor = neighbor.children[0]
                 return neighbor
             child = parent
-            parent = child.parent
 
     def find_down(self):
         child = self.current
-        parent = child.parent
-        while parent:
+        while parent := child.parent:
             if not parent.split_horizontal and child is parent.children[0]:
                 neighbor = parent.children[1]
                 center = self.current.x + self.current.w * 0.5
@@ -342,36 +326,30 @@ class Bsp(Layout):
                         neighbor = neighbor.children[1]
                 return neighbor
             child = parent
-            parent = child.parent
 
     @expose_command()
     def left(self):
-        node = self.find_left()
-        if node:
+        if node := self.find_left():
             self.group.focus(node.client, True)
 
     @expose_command()
     def right(self):
-        node = self.find_right()
-        if node:
+        if node := self.find_right():
             self.group.focus(node.client, True)
 
     @expose_command()
     def up(self):
-        node = self.find_up()
-        if node:
+        if node := self.find_up():
             self.group.focus(node.client, True)
 
     @expose_command()
     def down(self):
-        node = self.find_down()
-        if node:
+        if node := self.find_down():
             self.group.focus(node.client, True)
 
     @expose_command()
     def shuffle_left(self):
-        node = self.find_left()
-        if node:
+        if node := self.find_left():
             node.client, self.current.client = self.current.client, node.client
             self.current = node
             self.group.layout_all()
@@ -389,8 +367,7 @@ class Bsp(Layout):
 
     @expose_command()
     def shuffle_right(self):
-        node = self.find_right()
-        if node:
+        if node := self.find_right():
             node.client, self.current.client = self.current.client, node.client
             self.current = node
             self.group.layout_all()
@@ -408,8 +385,7 @@ class Bsp(Layout):
 
     @expose_command()
     def shuffle_up(self):
-        node = self.find_up()
-        if node:
+        if node := self.find_up():
             node.client, self.current.client = self.current.client, node.client
             self.current = node
             self.group.layout_all()
@@ -427,8 +403,7 @@ class Bsp(Layout):
 
     @expose_command()
     def shuffle_down(self):
-        node = self.find_down()
-        if node:
+        if node := self.find_down():
             node.client, self.current.client = self.current.client, node.client
             self.current = node
             self.group.layout_all()
@@ -447,98 +422,82 @@ class Bsp(Layout):
     @expose_command()
     def grow_left(self):
         child = self.current
-        parent = child.parent
-        while parent:
+        while parent := child.parent:
             if parent.split_horizontal and child is parent.children[1]:
                 parent.split_ratio = max(5, parent.split_ratio - self.grow_amount)
                 self.group.layout_all()
                 break
             child = parent
-            parent = child.parent
 
     @expose_command()
     def grow_right(self):
         child = self.current
-        parent = child.parent
-        while parent:
+        while parent := child.parent:
             if parent.split_horizontal and child is parent.children[0]:
                 parent.split_ratio = min(95, parent.split_ratio + self.grow_amount)
                 self.group.layout_all()
                 break
             child = parent
-            parent = child.parent
 
     @expose_command()
     def grow_up(self):
         child = self.current
-        parent = child.parent
-        while parent:
+        while parent := child.parent:
             if not parent.split_horizontal and child is parent.children[1]:
                 parent.split_ratio = max(5, parent.split_ratio - self.grow_amount)
                 self.group.layout_all()
                 break
             child = parent
-            parent = child.parent
 
     @expose_command()
     def grow_down(self):
         child = self.current
-        parent = child.parent
-        while parent:
+        while parent := child.parent:
             if not parent.split_horizontal and child is parent.children[0]:
                 parent.split_ratio = min(95, parent.split_ratio + self.grow_amount)
                 self.group.layout_all()
                 break
             child = parent
-            parent = child.parent
 
     @expose_command()
     def flip_left(self):
         child = self.current
-        parent = child.parent
-        while parent:
+        while parent := child.parent:
             if parent.split_horizontal and child is parent.children[1]:
                 parent.children = parent.children[::-1]
                 self.group.layout_all()
                 break
             child = parent
-            parent = child.parent
 
     @expose_command()
     def flip_right(self):
         child = self.current
-        parent = child.parent
-        while parent:
+        while parent := child.parent:
             if parent.split_horizontal and child is parent.children[0]:
                 parent.children = parent.children[::-1]
                 self.group.layout_all()
                 break
             child = parent
-            parent = child.parent
 
     @expose_command()
     def flip_up(self):
         child = self.current
-        parent = child.parent
-        while parent:
+        while parent := child.parent:
             if not parent.split_horizontal and child is parent.children[1]:
                 parent.children = parent.children[::-1]
                 self.group.layout_all()
                 break
             child = parent
-            parent = child.parent
 
     @expose_command()
     def flip_down(self):
         child = self.current
-        parent = child.parent
-        while parent:
+        while parent := child.parent:
             if not parent.split_horizontal and child is parent.children[0]:
                 parent.children = parent.children[::-1]
                 self.group.layout_all()
                 break
             child = parent
-            parent = child.parent
 
     @expose_command()
     def normalize(self):

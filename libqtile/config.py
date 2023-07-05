@@ -86,7 +86,7 @@ class Key:
         self.swallow = swallow
 
     def __repr__(self) -> str:
-        return "<Key (%s, %s)>" % (self.modifiers, self.key)
+        return f"<Key ({self.modifiers}, {self.key})>"
 
 
 class KeyChord:
@@ -150,7 +150,7 @@ class KeyChord:
         self.swallow = swallow
 
     def __repr__(self) -> str:
-        return "<KeyChord (%s, %s)>" % (self.modifiers, self.key)
+        return f"<KeyChord ({self.modifiers}, {self.key})>"
 
 
 class Mouse:
@@ -200,7 +200,7 @@ class Drag(Mouse):
         self.warp_pointer = warp_pointer
 
     def __repr__(self) -> str:
-        return "<Drag (%s, %s)>" % (self.modifiers, self.button)
+        return f"<Drag ({self.modifiers}, {self.button})>"
 
 
 class Click(Mouse):
@@ -221,7 +221,7 @@ class Click(Mouse):
     """
 
     def __repr__(self) -> str:
-        return "<Click (%s, %s)>" % (self.modifiers, self.button)
+        return f"<Click ({self.modifiers}, {self.button})>"
 
 
 class EzConfig:
@@ -270,7 +270,7 @@ class EzConfig:
             raise utils.QtileError(msg % spec)
 
         if len(keys) > 1:
-            msg = "Key chains are not supported: %s" % spec
+            msg = f"Key chains are not supported: {spec}"
             raise utils.QtileError(msg)
 
         return mods, keys[0]
@@ -347,7 +347,7 @@ class EzClick(EzConfig, Click):
 
     def __init__(self, btndef: str, *commands: LazyCall) -> None:
         modkeys, button = self.parse(btndef)
-        button = "Button%s" % button
+        button = f"Button{button}"
         super().__init__(modkeys, button, *commands)
 
 
@@ -368,7 +368,7 @@ class EzDrag(EzConfig, Drag):
 
     def __init__(self, btndef: str, *commands: LazyCall, start: LazyCall | None = None) -> None:
         modkeys, button = self.parse(btndef)
-        button = "Button%s" % button
+        button = f"Button{button}"
         super().__init__(modkeys, button, *commands, start=start)
 
 
@@ -581,25 +581,22 @@ class Screen(CommandObject):
         return None
 
     def _select(self, name: str, sel: str | int | None) -> CommandObject | None:
-        if name == "layout":
-            if sel is None:
-                return self.group.layout
-            else:
-                assert isinstance(sel, int)
-                return utils.lget(self.group.layouts, sel)
-        elif name == "window":
-            if sel is None:
-                return self.group.current_window
-            else:
-                for i in self.group.windows:
-                    if i.wid == sel:
-                        return i
-        elif name == "bar":
+        if name == "bar":
             assert isinstance(sel, str)
             bar = getattr(self, sel)
             if isinstance(bar, Bar):
                 return bar
 
+        elif name == "group":
+            if sel is None:
+                return self.group
+            else:
+                return self.group if sel == self.group.name else None
+        elif name == "layout":
+            if sel is None:
+                return self.group.layout
+            assert isinstance(sel, int)
+            return utils.lget(self.group.layouts, sel)
         elif name == "widget":
             for gap in self.gaps:
                 if not isinstance(gap, Bar):
@@ -607,11 +604,12 @@ class Screen(CommandObject):
                 for widget in gap.widgets:
                     if widget.name == sel:
                         return widget
-        elif name == "group":
+        elif name == "window":
             if sel is None:
-                return self.group
-            else:
-                return self.group if sel == self.group.name else None
+                return self.group.current_window
+            for i in self.group.windows:
+                if i.wid == sel:
+                    return i
         return None
 
     @expose_command
@@ -662,7 +660,7 @@ class Screen(CommandObject):
     def toggle_group(self, group_name: str | None = None, warp: bool = True) -> None:
         """Switch to the selected group or to the previously active one"""
         assert self.qtile is not None
-        group = self.qtile.groups_map.get(group_name if group_name else "")
+        group = self.qtile.groups_map.get(group_name or "")
         self._toggle_group(group, warp=warp)
 
     @expose_command()
@@ -870,9 +868,9 @@ class Match:
         if net_wm_pid is not None:
             try:
                 self._rules["net_wm_pid"] = int(net_wm_pid)
-            except ValueError:
-                error = 'Invalid rule for net_wm_pid: "%s" only int allowed' % str(net_wm_pid)
-                raise utils.QtileError(error)
+            except ValueError as e:
+                error = f'Invalid rule for net_wm_pid: "{str(net_wm_pid)}" only int allowed'
+                raise utils.QtileError(error) from e
         if func is not None:
             self._rules["func"] = func
 
@@ -883,7 +881,7 @@ class Match:
 
     @staticmethod
     def _get_property_predicate(name: str, value: Any) -> Callable[..., bool]:
-        if name == "net_wm_pid" or name == "wid":
+        if name in {"net_wm_pid", "wid"}:
             return lambda other: other == value
         elif name == "wm_class":
 
@@ -908,13 +906,10 @@ class Match:
             if property_name == "title":
                 value = client.name
             elif "class" in property_name:
-                wm_class = client.get_wm_class()
-                if not wm_class:
-                    return False
-                if property_name == "wm_instance_class":
-                    value = wm_class[0]
+                if wm_class := client.get_wm_class():
+                    value = wm_class[0] if property_name == "wm_instance_class" else wm_class
                 else:
-                    value = wm_class
+                    return False
             elif property_name == "role":
                 value = client.get_wm_role()
             elif property_name == "func":
@@ -934,9 +929,7 @@ class Match:
             if not match(rule_value):
                 return False
 
-        if not self._rules:
-            return False
-        return True
+        return bool(self._rules)
 
     def map(self, callback: Callable[[base.Window], Any], clients: list[base.Window]) -> None:
         """Apply callback to each client that matches this Match"""
@@ -945,7 +938,7 @@ class Match:
                 callback(c)
 
     def __repr__(self) -> str:
-        return "<Match %s>" % self._rules
+        return f"<Match {self._rules}>"
 
 
 class Rule:
@@ -976,10 +969,7 @@ class Rule:
         intrusive: bool = False,
         break_on_match: bool = True,
     ) -> None:
-        if isinstance(match, Match):
-            self.matchlist = [match]
-        else:
-            self.matchlist = match
+        self.matchlist = [match] if isinstance(match, Match) else match
         self.group = group
         self.float = float
         self.intrusive = intrusive

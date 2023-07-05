@@ -107,9 +107,7 @@ class _OpenWeatherResponseParser:
 
     def _get_wind_direction(self):
         wd = self.data.get("wind_deg", None)
-        if wd is None:
-            return None
-        return degrees_to_direction(wd)
+        return None if wd is None else degrees_to_direction(wd)
 
     def _get_sunrise_time(self):
         dt = self.data.get("sys_sunrise", None)
@@ -277,7 +275,7 @@ class OpenWeather(GenPollUrl):
             params["q"] = self.location
         elif self.zip:
             params["zip"] = self.zip
-        elif self.coordinates:
+        else:
             params["lat"] = self.coordinates["latitude"]
             params["lon"] = self.coordinates["longitude"]
 
@@ -290,7 +288,7 @@ class OpenWeather(GenPollUrl):
         try:
             rp = _OpenWeatherResponseParser(response, self.dateformat, self.timeformat)
         except OpenWeatherResponseError as e:
-            return "Error {}".format(e.resp_code)
+            return f"Error {e.resp_code}"
 
         data = rp.data
         data["units_temperature"] = "C" if self.metric else "F"

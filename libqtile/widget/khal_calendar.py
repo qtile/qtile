@@ -80,11 +80,11 @@ class KhalCalendar(base.ThreadPoolText):
 
         # parse khal output for the next seven days
         # and get the next event
-        args = ["khal", "list", "now", str(self.lookahead) + "d"]
+        args = ["khal", "list", "now", f"{str(self.lookahead)}d"]
         cal = subprocess.Popen(args, stdout=subprocess.PIPE)
         output = cal.communicate()[0].decode("utf-8")
         if output == "No events\n":
-            return "No appointments in next " + str(self.lookahead) + " days"
+            return f"No appointments in next {str(self.lookahead)} days"
         output = output.split("\n")
 
         date = "unknown"
@@ -98,11 +98,11 @@ class KhalCalendar(base.ThreadPoolText):
         # output[1] = '[ ][12:00-13:00] dentist'
         try:
             output_nb = output[1].strip(" ")
-            starttime = dateutil.parser.parse(date + " " + output_nb[:5], ignoretz=True)
-            endtime = dateutil.parser.parse(date + " " + output_nb[6:11], ignoretz=True)
+            starttime = dateutil.parser.parse(f"{date} {output_nb[:5]}", ignoretz=True)
+            endtime = dateutil.parser.parse(f"{date} {output_nb[6:11]}", ignoretz=True)
         except ValueError:
             # all day event output contains no start nor end time.
-            starttime = dateutil.parser.parse(date + " 00:00", ignoretz=True)
+            starttime = dateutil.parser.parse(f"{date} 00:00", ignoretz=True)
             endtime = starttime + datetime.timedelta(hours=23, minutes=59)
 
         data = output[0].replace(",", "") + " " + output[1]

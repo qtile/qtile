@@ -23,10 +23,7 @@ from libqtile.command import interface
 
 
 def qshell(args) -> None:
-    if args.socket is None:
-        socket = ipc.find_sockfile()
-    else:
-        socket = args.socket
+    socket = ipc.find_sockfile() if args.socket is None else args.socket
     client = ipc.Client(socket, is_json=args.is_json)
     cmd_object = interface.IPCCommandInterface(client)
     qsh = sh.QSh(cmd_object)

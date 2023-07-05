@@ -67,10 +67,10 @@ class DF(base.ThreadPoolText):
         free = statvfs.f_frsize * statvfs.f_bfree // self.calc
         self.user_free = statvfs.f_frsize * statvfs.f_bavail // self.calc
 
-        if self.visible_on_warn and self.user_free >= self.warn_space:
-            text = ""
-        else:
-            text = self.format.format(
+        return (
+            ""
+            if self.visible_on_warn and self.user_free >= self.warn_space
+            else self.format.format(
                 p=self.partition,
                 s=size,
                 f=free,
@@ -78,5 +78,4 @@ class DF(base.ThreadPoolText):
                 m=self.measure,
                 r=(size - self.user_free) / size * 100,
             )
-
-        return text
+        )

@@ -148,24 +148,25 @@ class _Group(CommandObject):
         If we have have a current_window give it focus, optionally moving warp
         to it.
         """
-        if self.screen and self.windows:
-            with self.qtile.core.masked():
-                normal = [x for x in self.windows if not x.floating]
-                floating = [x for x in self.windows if x.floating and not x.minimized]
-                screen_rect = self.screen.get_rect()
-                if normal:
-                    try:
-                        self.layout.layout(normal, screen_rect)
-                    except Exception:
-                        logger.exception("Exception in layout %s", self.layout.name)
-                if floating:
-                    self.floating_layout.layout(floating, screen_rect)
-                if self.current_window and self.screen == self.qtile.current_screen:
-                    self.current_window.focus(warp)
-                else:
-                    # Screen has lost focus so we reset record of focused window so
-                    # focus will warp when screen is focused again
-                    self.last_focused = None
+        if not self.screen or not self.windows:
+            return
+        with self.qtile.core.masked():
+            normal = [x for x in self.windows if not x.floating]
+            floating = [x for x in self.windows if x.floating and not x.minimized]
+            screen_rect = self.screen.get_rect()
+            if normal:
+                try:
+                    self.layout.layout(normal, screen_rect)
+                except Exception:
+                    logger.exception("Exception in layout %s", self.layout.name)
+            if floating:
+                self.floating_layout.layout(floating, screen_rect)
+            if self.current_window and self.screen == self.qtile.current_screen:
+                self.current_window.focus(warp)
+            else:
+                # Screen has lost focus so we reset record of focused window so
+                # focus will warp when screen is focused again
+                self.last_focused = None
 
     def set_screen(self, screen, warp=True):
         """Set this group's screen to screen"""
@@ -308,21 +309,16 @@ class _Group(CommandObject):
 
     def mark_floating(self, win, floating):
         if floating:
-            if win in self.floating_layout.find_clients(self):
-                # already floating
-                pass
-            else:
-                # Remove from the tiled windows list if the window is not fullscreen
-                if not win.fullscreen:
-                    self.tiled_windows.remove(win)
-                    # Remove the window from the layout if it is not fullscreen
-                    for i in self.layouts:
-                        i.remove(win)
-                        if win is self.current_window:
-                            i.blur()
-                    self.floating_layout.add_client(win)
+            if win not in self.floating_layout.find_clients(self) and not win.fullscreen:
+                self.tiled_windows.remove(win)
+                # Remove the window from the layout if it is not fullscreen
+                for i in self.layouts:
+                    i.remove(win)
                     if win is self.current_window:
-                        self.floating_layout.focus(win)
+                        i.blur()
+                self.floating_layout.add_client(win)
+                if win is self.current_window:
+                    self.floating_layout.focus(win)
         else:
             self.floating_layout.remove(win)
             self.floating_layout.blur()
@@ -347,9 +343,7 @@ class _Group(CommandObject):
 
     def _select(self, name, sel):
         if name == "layout":
-            if sel is None:
-                return self.layout
-            return utils.lget(self.layouts, sel)
+            return self.layout if sel is None else utils.lget(self.layouts, sel)
         if name == "screen":
             return self.screen
         if name == "window":
@@ -358,7 +352,7 @@ class _Group(CommandObject):
             for i in self.windows:
                 if i.wid == sel:
                     return i
-        raise RuntimeError("Invalid selection: {}".format(name))
+        raise RuntimeError(f"Invalid selection: {name}")
 
     @expose_command()
     def setlayout(self, layout):
@@ -417,9 +411,7 @@ class _Group(CommandObject):
                 return False
             if skip_managed and group.screen:
                 return False
-            if isinstance(group, scratchpad.ScratchPad):
-                return False
-            return True
+            return not isinstance(group, scratchpad.ScratchPad)
 
         groups = [group for group in self.qtile.groups if match(group)]
         index = (groups.index(self) + direction) % len(groups)

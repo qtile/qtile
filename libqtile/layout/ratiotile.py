@@ -86,10 +86,7 @@ class GridInfo:
         """
         iterates over possible grids given a number of windows
         """
-        if num_windows < 2:
-            end = 2
-        else:
-            end = num_windows // 2 + 1
+        end = 2 if num_windows < 2 else num_windows // 2 + 1
         for rows in range(1, end):
             cols = int(math.ceil(num_windows / rows))
             yield (rows, cols, ROWCOL)
@@ -234,17 +231,16 @@ class RatioTile(_SimpleLayoutBase):
         if not self.last_screen or self.last_screen != screen:
             self.last_screen = screen
             self.dirty = True
-        if self.last_size and not self.dirty:
-            if screen.width != self.last_size[0] or screen.height != self.last_size[1]:
-                self.dirty = True
+        if (
+            self.last_size
+            and not self.dirty
+            and (screen.width != self.last_size[0] or screen.height != self.last_size[1])
+        ):
+            self.dirty = True
         if self.dirty:
             gi = GridInfo(self.ratio, len(self.clients), screen.width, screen.height)
             self.last_size = (screen.width, screen.height)
-            if self.fancy:
-                method = gi.get_sizes_advanced
-            else:
-                method = gi.get_sizes
-
+            method = gi.get_sizes_advanced if self.fancy else gi.get_sizes
             self.layout_info = method(screen.width, screen.height, screen.x, screen.y)
 
             self.dirty = False
@@ -254,10 +250,7 @@ class RatioTile(_SimpleLayoutBase):
             win.hide()
             return
         x, y, w, h = self.layout_info[idx]
-        if win.has_focus:
-            bc = self.border_focus
-        else:
-            bc = self.border_normal
+        bc = self.border_focus if win.has_focus else self.border_normal
         win.place(
             x,
             y,

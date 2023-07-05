@@ -217,8 +217,6 @@ class Systray(base._Widget, window._Window):  # type: ignore[misc]
         message = data[1]
         wid = data[2]
 
-        parent = self.bar.window.window
-
         if opcode == atoms["_NET_SYSTEM_TRAY_OPCODE"] and message == 0:
             w = window.XWindow(self.conn, wid)
             icon = Icon(w, self.qtile, self)
@@ -228,6 +226,8 @@ class Systray(base._Widget, window._Window):  # type: ignore[misc]
                 self.qtile.windows_map[wid] = icon
 
             self.conn.conn.core.ChangeSaveSet(SetMode.Insert, wid)
+            parent = self.bar.window.window
+
             self.conn.conn.core.ReparentWindow(wid, parent.wid, 0, 0)
             self.conn.conn.flush()
 

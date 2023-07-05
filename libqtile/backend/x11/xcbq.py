@@ -253,7 +253,7 @@ class MaskMap:
                     values.append(getattr(val, "_maskvalue", val))
                 del kwargs[s]
         if kwargs:
-            raise ValueError("Unknown mask names: %s" % list(kwargs.keys()))
+            raise ValueError(f"Unknown mask names: {list(kwargs.keys())}")
         return mask, values
 
 
@@ -320,8 +320,7 @@ class Screen(_Wrapper):
         # Get visuals for 32 and 24 bit
         for d in [32, 24, self.root_depth]:
             if d not in self._visuals:
-                visual = self.get_visual_for_depth(self, d)
-                if visual:
+                if visual := self.get_visual_for_depth(self, d):
                     self._visuals[d] = visual
 
     def _get_depth_and_visual(self, desired_depth):
@@ -356,9 +355,8 @@ class Screen(_Wrapper):
             return
 
         for i in allowed:
-            if i.depth == depth:
-                if i.visuals:
-                    return i.visuals[0]
+            if i.depth == depth and i.visuals:
+                return i.visuals[0]
 
 
 class PseudoScreen:
@@ -461,9 +459,7 @@ class NetWmState:
             atom = xcbq_win.conn.atoms[self.prop_name]
             self.atom = atom
         reply = xcbq_win.get_property("_NET_WM_STATE", "ATOM", unpack=int)
-        if atom in reply:
-            return True
-        return False
+        return atom in reply
 
     def __set__(self, xcbq_win, value):
         try:
@@ -537,7 +533,7 @@ class Connection:
     def pseudoscreens(self):
         pseudoscreens = []
         if hasattr(self, "xinerama"):
-            for i, s in enumerate(self.xinerama.query_screens()):
+            for s in self.xinerama.query_screens():
                 scr = PseudoScreen(
                     self,
                     s.x_org,
@@ -597,10 +593,7 @@ class Connection:
 
     def get_modifier(self, keycode):
         """Return the modifier matching keycode"""
-        for n, l in self.modmap.items():
-            if keycode in l:
-                return n
-        return None
+        return next((n for n, l in self.modmap.items() if keycode in l), None)
 
     def keysym_to_keycode(self, keysym):
         return self.sym_to_codes.get(keysym, [0])
@@ -658,9 +651,7 @@ class Connection:
         return self.conn.get_setup()
 
     def extensions(self):
-        return set(
-            i.name.to_string().lower() for i in self.conn.core.ListExtensions().reply().names
-        )
+        return {i.name.to_string().lower() for i in self.conn.core.ListExtensions().reply().names}
 
     def fixup_focus(self):
         """
@@ -796,18 +787,14 @@ class Painter:
 
 
 def get_keysym(key: str) -> int:
-    keysym = keysyms.get(key.lower())
-    if not keysym:
-        raise XCBQError("Unknown key: %s" % key)
-    return keysym
+    if keysym := keysyms.get(key.lower()):
+        return keysym
+    else:
+        raise XCBQError(f"Unknown key: {key}")
 
 
 def translate_modifiers(mask: int) -> list[str]:
-    r = []
-    for k, v in ModMasks.items():
-        if mask & v:
-            r.append(k)
-    return r
+    return [k for k, v in ModMasks.items() if mask & v]
 
 
 def translate_masks(modifiers: list[str]) -> int:
@@ -820,8 +807,5 @@ def translate_masks(modifiers: list[str]) -> int:
         try:
             masks.append(ModMasks[i.lower()])
         except KeyError as e:
-            raise XCBQError("Unknown modifier: %s" % i) from e
-    if masks:
-        return functools.reduce(operator.or_, masks)
-    else:
-        return 0
+            raise XCBQError(f"Unknown modifier: {i}") from e
+    return functools.reduce(operator.or_, masks) if masks else 0

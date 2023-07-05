@@ -199,7 +199,7 @@ class CurrentLayoutIcon(base._TextBox):
     def find_icon_file_path(self, layout_name):
         for icon_path in self.icon_paths:
             for extension in ["png", "svg"]:
-                icon_filename = "layout-{}.{}".format(layout_name, extension)
+                icon_filename = f"layout-{layout_name}.{extension}"
                 icon_file_path = os.path.join(icon_path, icon_filename)
                 if os.path.isfile(icon_file_path):
                     return icon_file_path

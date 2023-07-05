@@ -96,14 +96,13 @@ class _Graph(base._Widget):
         return self.graphwidth / float(self.samples)
 
     def _for_each_step(self, values):
-        for index, val in enumerate(
+        yield from enumerate(
             itertools.islice(
                 values,
                 max(int(-(self.graphwidth / self.step()) + len(values)), 0),
                 len(values),
             )
-        ):
-            yield index, val
+        )
 
     def _prepare_context(self):
         self.drawer.ctx.set_line_join(cairocffi.LINE_JOIN_ROUND)
@@ -145,7 +144,7 @@ class _Graph(base._Widget):
         elif self.start_pos == "top":
             return -val
         else:
-            raise ValueError("Unknown starting position: %s." % self.start_pos)
+            raise ValueError(f"Unknown starting position: {self.start_pos}.")
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
@@ -163,8 +162,8 @@ class _Graph(base._Widget):
         y = self.margin_y + self.border_width
         if self.start_pos == "bottom":
             y += self.graphheight
-        elif not self.start_pos == "top":
-            raise ValueError("Unknown starting position: %s." % self.start_pos)
+        elif self.start_pos != "top":
+            raise ValueError(f"Unknown starting position: {self.start_pos}.")
         k = 1.0 / (self.maxvalue or 1)
         scaled = [self.graphheight * val * k for val in reversed(self.values)]
 
@@ -175,7 +174,7 @@ class _Graph(base._Widget):
         elif self.type == "linefill":
             self.draw_linefill(x, y, scaled)
         else:
-            raise ValueError("Unknown graph type: %s." % self.type)
+            raise ValueError(f"Unknown graph type: {self.type}.")
 
         self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
 
@@ -229,7 +228,7 @@ class CPUGraph(_Graph):
     def _getvalues(self):
         if isinstance(self.core, int):
             if self.core > psutil.cpu_count() - 1:
-                raise ValueError("No such core: {}".format(self.core))
+                raise ValueError(f"No such core: {self.core}")
             cpu = psutil.cpu_times(percpu=True)[self.core]
         else:
             cpu = psutil.cpu_times()
@@ -245,12 +244,7 @@ class CPUGraph(_Graph):
         nval = self._getvalues()
         oval = self.oldvalues
         busy = nval[0] + nval[1] + nval[2] - oval[0] - oval[1] - oval[2]
-        total = busy + nval[3] - oval[3]
-        # sometimes this value is zero for unknown reason (time shift?)
-        # we just sent the previous value, because it gives us no info about
-        # cpu load, if it's zero.
-
-        if total:
+        if total := busy + nval[3] - oval[3]:
             push_value = busy * 100.0 / total
             self.push(push_value)
         else:
@@ -278,13 +272,13 @@ class MemoryGraph(_Graph):
         self.fulfill(mem)
 
     def _getvalues(self):
-        val = {}
         mem = psutil.virtual_memory()
-        val["MemTotal"] = int(mem.total / 1024 / 1024)
-        val["MemFree"] = int(mem.free / 1024 / 1024)
-        val["Buffers"] = int(mem.buffers / 1024 / 1024)
-        val["Cached"] = int(mem.cached / 1024 / 1024)
-        return val
+        return {
+            "MemTotal": int(mem.total / 1024 / 1024),
+            "MemFree": int(mem.free / 1024 / 1024),
+            "Buffers": int(mem.buffers / 1024 / 1024),
+            "Cached": int(mem.cached / 1024 / 1024),
+        }
 
     def update_graph(self):
         val = self._getvalues()
@@ -310,11 +304,11 @@ class SwapGraph(_Graph):
         self.fulfill(swap)
 
     def _getvalues(self):
-        val = {}
         swap = psutil.swap_memory()
-        val["SwapTotal"] = int(swap.total / 1024 / 1024)
-        val["SwapFree"] = int(swap.free / 1024 / 1024)
-        return val
+        return {
+            "SwapTotal": int(swap.total / 1024 / 1024),
+            "SwapFree": int(swap.free / 1024 / 1024),
+        }
 
     def update_graph(self):
         val = self._getvalues()
@@ -352,8 +346,8 @@ class NetGraph(_Graph):
                     "NetGraph - Automatic interface detection failed, falling back to 'eth0'"
                 )
                 self.interface = "eth0"
-        if self.bandwidth_type != "down" and self.bandwidth_type != "up":
-            raise ValueError("bandwidth type {} not known!".format(self.bandwidth_type))
+        if self.bandwidth_type not in ["down", "up"]:
+            raise ValueError(f"bandwidth type {self.bandwidth_type} not known!")
         self.bytes = 0
         self.bytes = self._get_values()
 
@@ -380,9 +374,7 @@ class NetGraph(_Graph):
         # Oh. and there is probably a better way to do this.
 
         net = psutil.net_io_counters(pernic=True)
-        iface = {}
-        for entry in net:
-            iface[entry] = net[entry].bytes_recv
+        iface = {entry: net[entry].bytes_recv for entry in net}
         return sorted(iface.items(), key=operator.itemgetter(1))[-1][0]
 
 

@@ -104,10 +104,7 @@ class Cmus(base.ThreadPoolText):
                     file_path = file_path.split("/")[-1]
                     now_playing = file_path
             else:
-                if info["stream"]:
-                    now_playing = info["stream"]
-                else:
-                    now_playing = title
+                now_playing = info["stream"] or title
             if now_playing:
                 now_playing = "♫ {0}".format(now_playing)
         return pangocffi.markup_escape_text(now_playing)

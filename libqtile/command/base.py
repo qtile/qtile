@@ -67,7 +67,7 @@ def expose_command(name: Callable | str | list[str] | None = None) -> Callable:
         setattr(func, "_cmd", True)
         if name is not None:
             if not hasattr(func, "_mapping"):
-                setattr(func, "_mapping", list())
+                setattr(func, "_mapping", [])
             if isinstance(name, list):
                 func._mapping += name  # type:ignore
             elif isinstance(name, str):
@@ -90,7 +90,7 @@ class SelectError(Exception):
     """Error raised in resolving a command graph object"""
 
     def __init__(self, err_string: str, name: str, selectors: list[SelectorType]):
-        super().__init__("{}, name: {}, selectors: {}".format(err_string, name, selectors))
+        super().__init__(f"{err_string}, name: {name}, selectors: {selectors}")
         self.name = name
         self.selectors = selectors
 
@@ -150,7 +150,7 @@ class CommandObject(metaclass=abc.ABCMeta):
                     commands[method_name[4:]] = method
 
                 # Expose additional names
-                for mapping in getattr(method, "_mapping", list()):
+                for mapping in getattr(method, "_mapping", []):
                     setattr(cls, mapping, method)
                     commands[mapping] = method
 
@@ -215,11 +215,7 @@ class CommandObject(metaclass=abc.ABCMeta):
             items: a list of contained items
         """
         ret = self._items(name)
-        if ret is None:
-            # Not finding information for a particular item class is OK here;
-            # we don't expect layouts to have a window, etc.
-            return False, None
-        return ret
+        return (False, None) if ret is None else ret
 
     @abc.abstractmethod
     def _items(self, name) -> ItemT:
@@ -287,7 +283,7 @@ class CommandObject(metaclass=abc.ABCMeta):
 
         Used by __qsh__ for command completion and online help
         """
-        return sorted([cmd for cmd in self._commands])
+        return sorted(list(self._commands))
 
     @expose_command()
     def doc(self, name) -> str:
@@ -302,7 +298,7 @@ class CommandObject(metaclass=abc.ABCMeta):
             spec = name + signature
             htext = inspect.getdoc(command) or ""
             return spec + "\n" + htext
-        raise CommandError("No such command: %s" % name)
+        raise CommandError(f"No such command: {name}")
 
     def _get_command_signature(self, command: Callable) -> str:
         signature = inspect.signature(command)

@@ -250,12 +250,10 @@ class GroupBox(_GroupBase):
 
         default_callbacks = {"Button1": self.select_group}
         if self.use_mouse_wheel:
-            default_callbacks.update(
-                {
-                    "Button5" if self.invert_mouse_wheel else "Button4": self.prev_group,
-                    "Button4" if self.invert_mouse_wheel else "Button5": self.next_group,
-                }
-            )
+            default_callbacks |= {
+                "Button5" if self.invert_mouse_wheel else "Button4": self.prev_group,
+                "Button4" if self.invert_mouse_wheel else "Button5": self.next_group,
+            }
         self.add_callbacks(default_callbacks)
 
     @property
@@ -374,11 +372,10 @@ class GroupBox(_GroupBase):
                             to_highlight = True
                         else:
                             border = self.this_screen_border
+                    elif self.qtile.current_screen == g.screen:
+                        border = self.other_current_screen_border
                     else:
-                        if self.qtile.current_screen == g.screen:
-                            border = self.other_current_screen_border
-                        else:
-                            border = self.other_screen_border
+                        border = self.other_screen_border
             elif self.group_has_urgent(g) and self.urgent_alert_method in (
                 "border",
                 "block",

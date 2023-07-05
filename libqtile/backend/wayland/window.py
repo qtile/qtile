@@ -223,16 +223,14 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
     def _find_outputs(self) -> None:
         """Find the outputs on which this window can be seen."""
-        self._outputs = set(o for o in self.core.outputs if o.contains(self))
+        self._outputs = {o for o in self.core.outputs if o.contains(self)}
 
     def damage(self) -> None:
         for output in self._outputs:
             output.damage()
 
     def get_wm_class(self) -> list | None:
-        if self._wm_class:
-            return [self._wm_class]
-        return None
+        return [self._wm_class] if self._wm_class else None
 
     def belongs_to_client(self, other: Client) -> bool:
         return other == Client.from_resource(self.surface.surface._ptr.resource)  # type: ignore
@@ -264,11 +262,11 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         """
         if group_name is None:
             group = self.qtile.current_group
-        else:
-            if group_name not in self.qtile.groups_map:
-                raise CommandError("No such group: %s" % group_name)
+        elif group_name in self.qtile.groups_map:
             group = self.qtile.groups_map[group_name]
 
+        else:
+            raise CommandError(f"No such group: {group_name}")
         if self.group is group:
             if toggle and self.group.screen.previous_group:
                 group = self.group.screen.previous_group
@@ -352,9 +350,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
                 screen.dheight - 2 * bw,
                 new_float_state=FloatStates.MAXIMIZED,
             )
-        else:
-            if self._float_state == FloatStates.MAXIMIZED:
-                self.floating = False
+        elif self._float_state == FloatStates.MAXIMIZED:
+            self.floating = False
 
         if self.ftm_handle:
             self.ftm_handle.set_maximized(do_maximize)
@@ -368,9 +365,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         if do_minimize:
             if self._float_state != FloatStates.MINIMIZED:
                 self._reconfigure_floating(new_float_state=FloatStates.MINIMIZED)
-        else:
-            if self._float_state == FloatStates.MINIMIZED:
-                self.floating = False
+        elif self._float_state == FloatStates.MINIMIZED:
+            self.floating = False
 
         if self.ftm_handle:
             self.ftm_handle.set_minimized(do_minimize)
@@ -402,11 +398,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             h = self._height
         h += dh
 
-        if h < 0:
-            h = 0
-        if w < 0:
-            w = 0
-
+        h = max(h, 0)
+        w = max(w, 0)
         screen = self.qtile.find_closest_screen(x + w // 2, y + h // 2)
         if self.group and screen is not None and screen != self.group.screen:
             self.group.remove(self, force=True)
@@ -483,10 +476,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         if name == "group":
             return True, []
         if name == "layout":
-            if self.group:
-                return True, list(range(len(self.group.layouts)))
-            return None
-        if name == "screen":
+            return (True, list(range(len(self.group.layouts)))) if self.group else None
+        elif name == "screen":
             if self.group and self.group.screen:
                 return True, []
         return None
@@ -684,7 +675,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
             self.core.stacked_windows.remove(self)
 
     def _find_outputs(self) -> None:
-        self._outputs = set(o for o in self.core.outputs if o.contains(self))
+        self._outputs = {o for o in self.core.outputs if o.contains(self)}
 
     def damage(self) -> None:
         for output in self._outputs:
@@ -807,7 +798,7 @@ class Internal(_Base, base.Internal):
         self._width: int = width
         self._height: int = height
         self._opacity: float = 1.0
-        self._outputs: set[Output] = set(o for o in self.core.outputs if o.contains(self))
+        self._outputs: set[Output] = {o for o in self.core.outputs if o.contains(self)}
         self.texture: Texture = self._new_texture()
 
     def finalize(self) -> None:
@@ -898,7 +889,7 @@ class Internal(_Base, base.Internal):
         if needs_reset:
             self.texture = self._new_texture()
 
-        self._outputs = set(o for o in self.core.outputs if o.contains(self))
+        self._outputs = {o for o in self.core.outputs if o.contains(self)}
         self.damage()
 
     @expose_command()
@@ -935,14 +926,17 @@ class PointerConstraint(HasListeners):
         self._needs_warp: bool = False
 
         assert core.qtile is not None
-        owner = None
-
-        for win in core.qtile.windows_map.values():
-            if isinstance(win, (Window | Static)):
-                if win.surface.surface == self.wlr_constraint.surface:
-                    owner = win
-                    break
-
+        owner = next(
+            (
+                win
+                for win in core.qtile.windows_map.values()
+                if (
+                    isinstance(win, (Window | Static))
+                    and win.surface.surface == self.wlr_constraint.surface
+                )
+            ),
+            None,
+        )
         if owner is None:
             logger.error("No window found for pointer constraints. Please report.")
             raise RuntimeError

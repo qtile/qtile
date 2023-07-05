@@ -72,8 +72,7 @@ class Clipboard(base._TextBox):
         else:
             owner = xcbq.window.XWindow(self.qtile.core.conn, owner_id)
 
-        owner_class = owner.get_wm_class()
-        if owner_class:
+        if owner_class := owner.get_wm_class():
             for wm_class in self.blacklist:
                 if wm_class in owner_class:
                     return True
@@ -90,7 +89,7 @@ class Clipboard(base._TextBox):
 
                 text = text.strip()
                 if self.max_width is not None and len(text) > self.max_width:
-                    text = text[: self.max_width] + "..."
+                    text = f"{text[:self.max_width]}..."
 
             self.text = pangocffi.markup_escape_text(text)
 

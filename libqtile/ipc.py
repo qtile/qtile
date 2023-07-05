@@ -69,12 +69,10 @@ def find_sockfile(display: str | None = None):
     if display:
         return os.path.join(cache_directory, SOCKBASE % display)
 
-    display = os.environ.get("WAYLAND_DISPLAY")
-    if display:
+    if display := os.environ.get("WAYLAND_DISPLAY"):
         return os.path.join(cache_directory, SOCKBASE % display)
 
-    display = os.environ.get("DISPLAY")
-    if display:
+    if display := os.environ.get("DISPLAY"):
         return os.path.join(cache_directory, SOCKBASE % display)
 
     sockfile = os.path.join(cache_directory, SOCKBASE % "wayland-0")
@@ -180,8 +178,8 @@ class Client:
             reader, writer = await asyncio.wait_for(
                 asyncio.open_unix_connection(path=self.socket_path), timeout=3
             )
-        except (ConnectionRefusedError, FileNotFoundError):
-            raise IPCError("Could not open {}".format(self.socket_path))
+        except (ConnectionRefusedError, FileNotFoundError) as e:
+            raise IPCError(f"Could not open {self.socket_path}") from e
 
         try:
             send_data = _IPC.pack(msg, is_json=self.is_json)
@@ -189,8 +187,8 @@ class Client:
             writer.write_eof()
 
             read_data = await asyncio.wait_for(reader.read(), timeout=10)
-        except asyncio.TimeoutError:
-            raise IPCError("Server not responding")
+        except asyncio.TimeoutError as exc:
+            raise IPCError("Server not responding") from exc
         finally:
             # see the note in Server._server_callback()
             writer.close()

@@ -70,15 +70,12 @@ class QSh:
     def complete(self, arg, state) -> str | None:
         buf = self.readline.get_line_buffer()
         completers = self._complete(buf, arg)
-        if completers and state < len(completers):
-            return completers[state]
-        return None
+        return completers[state] if completers and state < len(completers) else None
 
     def _complete(self, buf, arg) -> list[str]:
         if not re.search(r" |\(", buf) or buf.startswith("help "):
             options = self._builtins + self._command_client.commands
-            lst = [i for i in options if i.startswith(arg)]
-            return lst
+            return [i for i in options if i.startswith(arg)]
         elif buf.startswith("cd ") or buf.startswith("ls "):
             path, sep, last = arg.rpartition("/")
             node, rest_path = self._find_path(path)
@@ -90,16 +87,12 @@ class QSh:
             options = children + items
             completions = [path + sep + i for i in options if i.startswith(last)]
 
-            if len(completions) == 1:
-                # add a slash to continue completing the next part of the path
-                return [completions[0] + "/"]
-
-            return completions
+            return [f"{completions[0]}/"] if len(completions) == 1 else completions
         return []
 
     @property
     def prompt(self) -> str:
-        return "{} > ".format(format_selectors(self._command_client.selectors))
+        return f"{format_selectors(self._command_client.selectors)} > "
 
     def columnize(self, lst, update_termwidth=True) -> str:
         if update_termwidth:
@@ -122,16 +115,12 @@ class QSh:
         return "\n".join(ret)
 
     def _ls(self, client: CommandClient, object_type: str | None) -> tuple[list[str], list[str]]:
-        if object_type is not None:
-            allow_root, items = client.items(object_type)
-            str_items = [str(i) for i in items]
-            if allow_root:
-                children = client.navigate(object_type, None).children
-            else:
-                children = []
-            return children, str_items
-        else:
+        if object_type is None:
             return client.children, []
+        allow_root, items = client.items(object_type)
+        str_items = [str(i) for i in items]
+        children = client.navigate(object_type, None).children if allow_root else []
+        return children, str_items
 
     def _find_path(self, path: str) -> tuple[CommandClient | None, str | None]:
         """Find an object relative to the current node
@@ -151,7 +140,7 @@ class QSh:
         Return the object in the command graph at the specified path relative
         to the given node.
         """
-        if len(paths) == 0:
+        if not paths:
             return src, None
 
         path, *next_path = paths
@@ -207,7 +196,7 @@ class QSh:
         else:
             allow_root, _ = next_node.items(rest_path)
             if not allow_root:
-                return "Item required for {}".format(rest_path)
+                return f"Item required for {rest_path}"
             self._command_client = next_node.navigate(rest_path, None)
 
         return format_selectors(self._command_client.selectors) or "/"
@@ -235,8 +224,8 @@ class QSh:
 
         objects, items = self._ls(node, rest_path)
 
-        formatted_ls = ["{}{}/".format(base_path, i) for i in objects] + [
-            "{}[{}]/".format(base_path[:-1], i) for i in items
+        formatted_ls = [f"{base_path}{i}/" for i in objects] + [
+            f"{base_path[:-1]}[{i}]/" for i in items
         ]
         return self.columnize(formatted_ls)
 
@@ -279,8 +268,7 @@ class QSh:
                 "========",
                 self.columnize(self._builtins),
             ]
-            cmds = self._command_client.commands
-            if cmds:
+            if cmds := self._command_client.commands:
                 lst.extend(
                     [
                         "",
@@ -293,12 +281,12 @@ class QSh:
         elif arg in self._command_client.commands:
             return self._command_client.call("doc", arg)
         elif arg in self._builtins:
-            c = getattr(self, "do_" + arg)
+            c = getattr(self, f"do_{arg}")
             ret = inspect.getdoc(c)
             assert ret is not None
             return ret
         else:
-            return "No such command: %s" % arg
+            return f"No such command: {arg}"
 
     def do_exit(self, args) -> None:
         """Exit qshell"""
@@ -308,43 +296,34 @@ class QSh:
     do_q = do_exit
 
     def process_line(self, line: str) -> Any:
-        builtin_match = re.fullmatch(r"(?P<cmd>\w+)(?:\s+(?P<arg>\S*))?", line)
-        if builtin_match:
-            cmd = builtin_match.group("cmd")
-            args = builtin_match.group("arg")
-            if cmd in self._builtins:
-                builtin = getattr(self, "do_" + cmd)
-                val = builtin(args)
-                return val
-            else:
-                return "Invalid builtin: {}".format(cmd)
+        if builtin_match := re.fullmatch(r"(?P<cmd>\w+)(?:\s+(?P<arg>\S*))?", line):
+            cmd = builtin_match["cmd"]
+            args = builtin_match["arg"]
+            if cmd not in self._builtins:
+                return f"Invalid builtin: {cmd}"
 
-        command_match = re.fullmatch(r"(?P<cmd>\w+)\((?P<args>.*)\)", line)
-        if command_match:
-            cmd = command_match.group("cmd")
-            args = command_match.group("args")
-            if args:
+            builtin = getattr(self, f"do_{cmd}")
+            return builtin(args)
+        if command_match := re.fullmatch(r"(?P<cmd>\w+)\((?P<args>.*)\)", line):
+            cmd = command_match["cmd"]
+            if args := command_match["args"]:
                 cmd_args = tuple(map(str.strip, args.split(",")))
             else:
                 cmd_args = ()
 
             if cmd not in self._command_client.commands:
-                return "Command does not exist: {}".format(cmd)
+                return f"Command does not exist: {cmd}"
 
             try:
                 return self._command_client.call(cmd, *cmd_args)
             except CommandException as e:
-                return (
-                    "Caught command exception (is the command invoked incorrectly?): {}\n".format(
-                        e
-                    )
-                )
+                return f"Caught command exception (is the command invoked incorrectly?): {e}\n"
 
-        return "Invalid command: {}".format(line)
+        return f"Invalid command: {line}"
 
     def loop(self) -> None:
         self.readline.set_completer(self.complete)
-        self.readline.parse_and_bind(self._completekey + ": complete")
+        self.readline.parse_and_bind(f"{self._completekey}: complete")
         self.readline.set_completer_delims(" ()|")
 
         while True:
@@ -359,7 +338,7 @@ class QSh:
             try:
                 val = self.process_line(line)
             except CommandError as e:
-                val = "Caught command error (is the current path still valid?): {}\n".format(e)
+                val = f"Caught command error (is the current path still valid?): {e}\n"
             if isinstance(val, str):
                 print(val)
             elif val:

@@ -46,9 +46,8 @@ class CPU(base.ThreadPoolText):
         self.add_defaults(CPU.defaults)
 
     def poll(self):
-        variables = dict()
+        variables = {"load_percent": round(psutil.cpu_percent(), 1)}
 
-        variables["load_percent"] = round(psutil.cpu_percent(), 1)
         freq = psutil.cpu_freq()
         if psutil.__version__ == "5.9.0":
             variables["freq_current"] = round(freq.current, 1)

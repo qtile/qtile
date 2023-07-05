@@ -97,10 +97,9 @@ class Core(base.Core):
             supporting_wm_wid = supporting_wm_wid[0]
 
             supporting_wm = window.XWindow(self.conn, supporting_wm_wid)
-            existing_wmname = supporting_wm.get_property(
+            if existing_wmname := supporting_wm.get_property(
                 "_NET_WM_NAME", "UTF8_STRING", unpack=str
-            )
-            if existing_wmname:
+            ):
                 logger.error("not starting; existing window manager %s", existing_wmname)
                 raise ExistingWMException(existing_wmname)
 
@@ -334,13 +333,6 @@ class Core(base.Core):
                         self._motion_notify = None
                     self.handle_event(event)
 
-            # Catch some bad X exceptions. Since X is event based, race
-            # conditions can occur almost anywhere in the code. For example, if
-            # a window is created and then immediately destroyed (before the
-            # event handler is evoked), when the event handler tries to examine
-            # the window properties, it will throw a WindowError exception. We
-            # can essentially ignore it, since the window is already dead and
-            # we've got another event in the queue notifying us to clean it up.
             except (
                 xcffib.xproto.WindowError,
                 xcffib.xproto.AccessError,
@@ -351,8 +343,7 @@ class Core(base.Core):
             ):
                 pass
             except Exception:
-                error_code = self.conn.conn.has_error()
-                if error_code:
+                if self.conn.conn.has_error():
                     logger.warning("Shutting down due to disconnection from X server")
                     self.remove_listener()
                     self.qtile.stop()
@@ -473,7 +464,7 @@ class Core(base.Core):
             keysym = xcbq.get_keysym(key.key)
             modmask = xcbq.translate_masks(key.modifiers)
         except xcbq.XCBQError as err:
-            raise utils.QtileError(err)
+            raise utils.QtileError(err) from err
 
         return keysym, modmask
 
@@ -623,10 +614,10 @@ class Core(base.Core):
         atoms = self.conn.atoms
 
         opcode = event.type
-        data = event.data
-
         # handle change of desktop
         if atoms["_NET_CURRENT_DESKTOP"] == opcode:
+            data = event.data
+
             index = data.data32[0]
             try:
                 self.qtile.groups[index].toscreen()
@@ -725,7 +716,6 @@ class Core(base.Core):
         if internal:
             win = window.Internal(xwin, self.qtile)
             self.qtile.manage(win)
-            win.unhide()
         else:
             win = window.Window(xwin, self.qtile)
 
@@ -737,7 +727,8 @@ class Core(base.Core):
             self.qtile.manage(win)
             if not win.group or not win.group.screen:
                 return
-            win.unhide()
+
+        win.unhide()
 
     def handle_DestroyNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
@@ -752,15 +743,9 @@ class Core(base.Core):
         win = self.qtile.windows_map.get(event.window)
 
         if win and getattr(win, "group", None):
-            try:
+            with contextlib.suppress(xcffib.xproto.WindowError):
                 win.hide()
                 win.state = window.WithdrawnState  # type: ignore
-            except xcffib.xproto.WindowError:
-                # This means that the window has probably been destroyed,
-                # but we haven't yet seen the DestroyNotify (it is likely
-                # next in the queue). So, we just let these errors pass
-                # since the window is dead.
-                pass
             # Clear these atoms as per spec
             win.window.conn.conn.core.DeleteProperty(
                 win.wid, win.window.conn.atoms["_NET_WM_STATE"]
@@ -847,16 +832,11 @@ class Core(base.Core):
                 qtile.current_group.focus(window, False)
                 window.focus(False)
             except AttributeError:
-                # probably clicked an internal window
-                screen = qtile.find_screen(e.root_x, e.root_y)
-                if screen:
+                if screen := qtile.find_screen(e.root_x, e.root_y):
                     qtile.focus_screen(screen.index, warp=False)
 
-        else:
-            # clicked on root window
-            screen = qtile.find_screen(e.root_x, e.root_y)
-            if screen:
-                qtile.focus_screen(screen.index, warp=False)
+        elif screen := qtile.find_screen(e.root_x, e.root_y):
+            qtile.focus_screen(screen.index, warp=False)
 
     def flush(self):
         self.conn.flush()
@@ -876,11 +856,8 @@ class Core(base.Core):
 
         # Give the windows a chance to shut down nicely.
         for pid in pids:
-            try:
+            with contextlib.suppress(OSError):
                 os.kill(pid, signal.SIGTERM)
-            except OSError:
-                # might have died recently
-                pass
 
         def still_alive(pid):
             # most pids will not be children, so we can't use wait()
@@ -894,7 +871,7 @@ class Core(base.Core):
         # sleep forever (1s).
         for i in range(10):
             pids = list(filter(still_alive, pids))
-            if len(pids) == 0:
+            if not pids:
                 break
             time.sleep(0.1)
 

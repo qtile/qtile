@@ -150,11 +150,11 @@ class Config:
         # need to ignore the errors here about missing attributes.
         for k in self.keys:
             if k.key.lower() not in valid_keys:
-                raise ConfigError("No such key: %s" % k.key)
+                raise ConfigError(f"No such key: {k.key}")
             for m in k.modifiers:
                 if m.lower() not in valid_mods:
-                    raise ConfigError("No such modifier: %s" % m)
+                    raise ConfigError(f"No such modifier: {m}")
         for ms in self.mouse:
             for m in ms.modifiers:
                 if m.lower() not in valid_mods:
-                    raise ConfigError("No such modifier: %s" % m)
+                    raise ConfigError(f"No such modifier: {m}")

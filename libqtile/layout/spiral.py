@@ -157,9 +157,12 @@ class Spiral(_SimpleLayoutBase):
             self.last_screen = screen
             self.dirty = True
 
-        if self.last_size and not self.dirty:
-            if screen.width != self.last_size[0] or screen.height != self.last_size[1]:
-                self.dirty = True
+        if (
+            self.last_size
+            and not self.dirty
+            and (screen.width != self.last_size[0] or screen.height != self.last_size[1])
+        ):
+            self.dirty = True
 
         if self.dirty:
             self.layout_info = self.get_spiral(screen.x, screen.y, screen.width, screen.height)
@@ -179,11 +182,7 @@ class Spiral(_SimpleLayoutBase):
             win.hide()
             return
 
-        if win.has_focus:
-            bc = self.border_focus
-        else:
-            bc = self.border_normal
-
+        bc = self.border_focus if win.has_focus else self.border_normal
         (x, y, w, h), margins = self._fix_double_margins(x, y, w, h)
 
         win.place(
@@ -245,11 +244,7 @@ class Spiral(_SimpleLayoutBase):
         self, win_x: int, win_y: int, win_w: int, win_h: int
     ) -> tuple[Rect, list[int]]:
         """Prevent doubling up of margins by halving margins for internal margins."""
-        if isinstance(self.margin, int):
-            margins = [self.margin] * 4
-        else:
-            margins = self.margin
-
+        margins = [self.margin] * 4 if isinstance(self.margin, int) else self.margin
         # Top
         if win_y - margins[0] > self.last_screen.y:
             win_y -= margins[0] // 2
@@ -277,11 +272,7 @@ class Spiral(_SimpleLayoutBase):
         A window that would have negative height or width (after adjusting for margins and borders)
         will return True.
         """
-        if isinstance(self.margin, int):
-            margin = [self.margin] * 4
-        else:
-            margin = self.margin
-
+        margin = [self.margin] * 4 if isinstance(self.margin, int) else self.margin
         return any(
             [
                 win[2] <= margin[1] + margin[3] + 2 * self.border_width,

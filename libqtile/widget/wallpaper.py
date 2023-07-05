@@ -96,10 +96,7 @@ class Wallpaper(base._TextBox):
             self.index += 1
             self.index %= len(self.images)
         cur_image = self.images[self.index]
-        if self.label is None:
-            self.text = os.path.basename(cur_image)
-        else:
-            self.text = self.label
+        self.text = os.path.basename(cur_image) if self.label is None else self.label
         if self.wallpaper_command:
             self.wallpaper_command.append(cur_image)
             subprocess.call(self.wallpaper_command)

@@ -239,17 +239,12 @@ class _ClientList:
 
     @current_index.setter
     def current_index(self, x):
-        if len(self):
-            self._current_idx = abs(x % len(self))
-        else:
-            self._current_idx = 0
+        self._current_idx = abs(x % len(self)) if len(self) else 0
         return self._current_idx
 
     @property
     def current_client(self):
-        if not self.clients:
-            return None
-        return self.clients[self._current_idx]
+        return self.clients[self._current_idx] if self.clients else None
 
     @current_client.setter
     def current_client(self, client):
@@ -288,9 +283,7 @@ class _ClientList:
         Returns the client previous to win in collection.
         """
         idx = self.index(win)
-        if idx > 0:
-            return self[idx - 1]
-        return None
+        return self[idx - 1] if idx > 0 else None
 
     def add_client(self, client, offset_to_current=0, client_position=None):
         """
@@ -303,21 +296,20 @@ class _ClientList:
         Use parameter 'client_position' to insert the given client at 4 specific
         positions: top, bottom, after_current, before_current.
         """
-        if client_position is not None:
-            if client_position == "after_current":
-                return self.add_client(client, offset_to_current=1)
-            elif client_position == "before_current":
-                return self.add_client(client, offset_to_current=0)
-            elif client_position == "top":
-                self.append_head(client)
-            else:  # ie client_position == "bottom"
-                self.append(client)
-        else:
+        if client_position is None:
             pos = max(0, self._current_idx + offset_to_current)
             if pos < len(self.clients):
                 self.clients.insert(pos, client)
             else:
                 self.clients.append(client)
+        elif client_position == "after_current":
+            return self.add_client(client, offset_to_current=1)
+        elif client_position == "before_current":
+            return self.add_client(client, offset_to_current=0)
+        elif client_position == "top":
+            self.append_head(client)
+        else:  # ie client_position == "bottom"
+            self.append(client)
         self.current_client = client
 
     def append_head(self, client):

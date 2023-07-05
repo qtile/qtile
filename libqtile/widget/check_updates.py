@@ -133,8 +133,7 @@ class CheckUpdates(base.ThreadPoolText):
             updates = ""
         num_updates = self.custom_command_modify(len(updates.splitlines()))
 
-        if num_updates < 0:
-            num_updates = 0
+        num_updates = max(num_updates, 0)
         if num_updates == 0:
             self.layout.colour = self.colour_no_updates
             return self.no_update_string
@@ -148,9 +147,7 @@ class CheckUpdates(base.ThreadPoolText):
 
     def poll(self):
         # type: () -> str
-        if not self.cmd:
-            return "N/A"
-        return self._check_updates()
+        return self._check_updates() if self.cmd else "N/A"
 
     def do_execute(self):
         self._process = Popen(self.execute, shell=True)

@@ -74,10 +74,7 @@ class Dmenu(base.RunCommand):
         if self.dmenu_font:
             font = self.dmenu_font
         elif self.font:
-            if self.fontsize:
-                font = "{}-{}".format(self.font, self.fontsize)
-            else:
-                font = self.font
+            font = f"{self.font}-{self.fontsize}" if self.fontsize else self.font
         self.configured_command.extend(("-fn", font))
 
         if self.background:
@@ -100,7 +97,7 @@ class Dmenu(base.RunCommand):
         proc = super().run()
 
         if items:
-            input_str = "\n".join([i for i in items]) + "\n"
+            input_str = "\n".join(list(items)) + "\n"
             return proc.communicate(str.encode(input_str))[0].decode("utf-8")
 
         return proc

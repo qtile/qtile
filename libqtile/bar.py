@@ -295,8 +295,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 if i.configured and i.__class__.__name__ != "Mirror":
                     i = i.create_mirror()
                     self.widgets[idx] = i
-                success = self._configure_widget(i)
-                if success:
+                if self._configure_widget(i):
                     qtile.register_widget(i)
 
         # Alert the user that we've renamed some widgets
@@ -413,7 +412,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 prev_stretch = None
 
         if stretches:
-            stretchspace = length - sum([i.length for i in widgets if i.length_type != STRETCH])
+            stretchspace = length - sum(i.length for i in widgets if i.length_type != STRETCH)
             stretchspace = max(stretchspace, 0)
             num_stretches = len(stretches)
 
@@ -465,14 +464,12 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 offset += i.length
 
     def get_widget_in_position(self, x: int, y: int) -> _Widget | None:
-        if self.horizontal:
-            for i in self.widgets:
+        for i in self.widgets:
+            if self.horizontal:
                 if x < i.offsetx + i.length:
                     return i
-        else:
-            for i in self.widgets:
-                if y < i.offsety + i.length:
-                    return i
+            elif y < i.offsety + i.length:
+                return i
         return None
 
     def process_button_click(self, x: int, y: int, button: int) -> None:
@@ -481,8 +478,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             index = self.qtile.screens.index(self.screen)
             self.qtile.focus_screen(index, warp=False)
 
-        widget = self.get_widget_in_position(x, y)
-        if widget:
+        if widget := self.get_widget_in_position(x, y):
             widget.button_press(
                 x - widget.offsetx,
                 y - widget.offsety,
@@ -490,8 +486,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             )
 
     def process_button_release(self, x: int, y: int, button: int) -> None:
-        widget = self.get_widget_in_position(x, y)
-        if widget:
+        if widget := self.get_widget_in_position(x, y):
             widget.button_release(
                 x - widget.offsetx,
                 y - widget.offsety,

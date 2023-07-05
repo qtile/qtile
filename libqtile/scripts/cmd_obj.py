@@ -65,7 +65,7 @@ def get_formated_info(obj: CommandClient, cmd: str, args=True, short=True) -> st
     elif short:
         doc_args = " " if doc_args == "()" else "*"
 
-    return (doc_args + " " + short_description).rstrip()
+    return f"{doc_args} {short_description}".rstrip()
 
 
 def print_commands(prefix: str, obj: CommandClient) -> None:
@@ -134,14 +134,10 @@ def run_function(client: CommandClient, funcname: str, args: list[str]) -> str:
         print("error: Sorry no function ", funcname)
         sys.exit(1)
     except CommandError as e:
-        print("error: Command '{}' returned error: {}".format(funcname, str(e)))
+        print(f"error: Command '{funcname}' returned error: {str(e)}")
         sys.exit(1)
     except CommandException as e:
-        print(
-            "error: Sorry cannot run function '{}' with arguments {}: {}".format(
-                funcname, args, str(e)
-            )
-        )
+        print(f"error: Sorry cannot run function '{funcname}' with arguments {args}: {str(e)}")
         sys.exit(1)
 
     return ret
@@ -169,13 +165,10 @@ def cmd_obj(args) -> None:
             try:
                 print_commands("-o " + " ".join(args.obj_spec), obj)
             except CommandError:
-                if len(args.obj_spec) == 1:
-                    print(
-                        f"{args.obj_spec} object needs a specified identifier e.g. '-o bar top'."
-                    )
-                    sys.exit(1)
-                else:
+                if len(args.obj_spec) != 1:
                     raise
+                print(f"{args.obj_spec} object needs a specified identifier e.g. '-o bar top'.")
+                sys.exit(1)
         elif args.info:
             print(args.function + get_formated_info(obj, args.function, args=True, short=False))
         else:

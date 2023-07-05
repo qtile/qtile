@@ -101,8 +101,7 @@ class TreeNode:
             return self
         if self.expanded:
             for i in self.children:
-                node = i.get_first_window()
-                if node:
+                if node := i.get_first_window():
                     return node
 
     def get_last_window(self):
@@ -113,8 +112,7 @@ class TreeNode:
         """
         if self.expanded:
             for i in reversed(self.children):
-                node = i.get_last_window()
-                if node:
+                if node := i.get_last_window():
                     return node
         if isinstance(self, Window):
             return self
@@ -127,8 +125,7 @@ class TreeNode:
             parent = node.parent
             idx = parent.children.index(node)
             for i in range(idx + 1, len(parent.children)):
-                res = parent.children[i].get_first_window()
-                if res:
+                if res := parent.children[i].get_first_window():
                     return res
             node = parent
 
@@ -140,8 +137,7 @@ class TreeNode:
             if idx == 0 and isinstance(parent, Window):
                 return parent
             for i in range(idx - 1, -1, -1):
-                res = parent.children[i].get_last_window()
-                if res:
+                if res := parent.children[i].get_last_window():
                     return res
             node = parent
 
@@ -168,11 +164,7 @@ class Root(TreeNode):
             * default section - fallback to default section (first section, if
               not otherwise set)
         """
-        parent = None
-
-        if hint is not None:
-            parent = hint.parent
-
+        parent = hint.parent if hint is not None else None
         if parent is None:
             sect = getattr(win, "tree_section", None)
             if sect is not None:
@@ -396,23 +388,19 @@ class TreeTab(Layout):
         self._focused = win
 
     def focus_first(self):
-        win = self._tree.get_first_window()
-        if win:
+        if win := self._tree.get_first_window():
             return win.window
 
     def focus_last(self):
-        win = self._tree.get_last_window()
-        if win:
+        if win := self._tree.get_last_window():
             return win.window
 
     def focus_next(self, client):
-        win = self._nodes[client].get_next_window()
-        if win:
+        if win := self._nodes[client].get_next_window():
             return win.window
 
     def focus_previous(self, client):
-        win = self._nodes[client].get_prev_window()
-        if win:
+        if win := self._nodes[client].get_prev_window():
             return win.window
 
     def blur(self):
@@ -462,8 +450,7 @@ class TreeTab(Layout):
         self._drawer.draw(offsetx=0, width=self.panel_width)
 
     def process_button_click(self, x, y, _buttom):
-        node = self._tree.button_press(x, y)
-        if node:
+        if node := self._tree.button_press(x, y):
             self.group.focus(node.window, False)
 
     def configure(self, client, screen_rect):
@@ -485,8 +472,7 @@ class TreeTab(Layout):
     def get_windows(self):
         clients = []
         for section in self._tree.children:
-            for window in section.children:
-                clients.append(window.window)
+            clients.extend(window.window for window in section.children)
         return clients
 
     @expose_command()
@@ -552,11 +538,9 @@ class TreeTab(Layout):
     @expose_command("down")
     def next(self):
         """Switch down in the window list"""
-        win = None
-        if self._focused:
-            win = self._nodes[self._focused].get_next_window()
-        if not win:
-            win = self._tree.get_first_window()
+        win = (
+            self._nodes[self._focused].get_next_window() if self._focused else None
+        ) or self._tree.get_first_window()
         if win:
             self.group.focus(win.window, False)
         self._focused = win.window if win else None
@@ -564,11 +548,9 @@ class TreeTab(Layout):
     @expose_command("up")
     def previous(self):
         """Switch up in the window list"""
-        win = None
-        if self._focused:
-            win = self._nodes[self._focused].get_prev_window()
-        if not win:
-            win = self._tree.get_last_window()
+        win = (
+            self._nodes[self._focused].get_prev_window() if self._focused else None
+        ) or self._tree.get_last_window()
         if win:
             self.group.focus(win.window, False)
         self._focused = win.window if win else None

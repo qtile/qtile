@@ -166,7 +166,7 @@ class _Device(ABC, HasListeners):
         name = device.name
         if name == " " or not name.isprintable():
             name = "_"
-        type_key = "type:" + device.device_type.name.lower()
+        type_key = f"type:{device.device_type.name.lower()}"
         identifier = "%d:%d:%s" % (device.vendor, device.product, name)
 
         if type_key == "type:pointer" and libinput is not None:
@@ -265,9 +265,10 @@ class Keyboard(_Device):
             keysyms = [xkb_keysym[0][i] for i in range(nsyms)]
             mods = self.keyboard.modifier
             for keysym in keysyms:
-                if (keysym, mods) in self.grabbed_keys:
-                    if self.qtile.process_key_event(keysym, mods)[1]:
-                        return
+                if (keysym, mods) in self.grabbed_keys and self.qtile.process_key_event(
+                    keysym, mods
+                )[1]:
+                    return
 
             if self.core.focused_internal:
                 self.core.focused_internal.process_key_press(keysym)
@@ -277,9 +278,7 @@ class Keyboard(_Device):
 
     def configure(self, configs: dict[str, InputConfig]) -> None:
         """Applies ``InputConfig`` rules to this keyboard device."""
-        config = self._match_config(configs)
-
-        if config:
+        if config := self._match_config(configs):
             self.keyboard.set_repeat_info(config.kb_repeat_rate, config.kb_repeat_delay)
             self.set_keymap(config.kb_layout, config.kb_options, config.kb_variant)
 
@@ -341,24 +340,27 @@ class Pointer(_Device):
                 handle, int(config.drag_lock)
             )
 
-        if config.dwt is not None:
-            if libinput.libinput_device_config_dwt_is_available(handle):
-                libinput.libinput_device_config_dwt_set_enabled(handle, int(config.dwt))
+        if config.dwt is not None and libinput.libinput_device_config_dwt_is_available(handle):
+            libinput.libinput_device_config_dwt_set_enabled(handle, int(config.dwt))
 
-        if config.left_handed is not None:
-            if libinput.libinput_device_config_left_handed_is_available(handle):
-                libinput.libinput_device_config_left_handed_set(handle, int(config.left_handed))
+        if (
+            config.left_handed is not None
+            and libinput.libinput_device_config_left_handed_is_available(handle)
+        ):
+            libinput.libinput_device_config_left_handed_set(handle, int(config.left_handed))
 
         if config.middle_emulation is not None:
             libinput.libinput_device_config_middle_emulation_set_enabled(
                 handle, int(config.middle_emulation)
             )
 
-        if config.natural_scroll is not None:
-            if libinput.libinput_device_config_scroll_has_natural_scroll(handle):
-                libinput.libinput_device_config_scroll_set_natural_scroll_enabled(
-                    handle, int(config.natural_scroll)
-                )
+        if (
+            config.natural_scroll is not None
+            and libinput.libinput_device_config_scroll_has_natural_scroll(handle)
+        ):
+            libinput.libinput_device_config_scroll_set_natural_scroll_enabled(
+                handle, int(config.natural_scroll)
+            )
 
         if SCROLL_METHODS.get(config.scroll_method):
             libinput.libinput_device_config_scroll_set_method(
@@ -378,8 +380,7 @@ class Pointer(_Device):
             if config.tap is not None:
                 libinput.libinput_device_config_tap_set_enabled(handle, int(config.tap))
 
-            if config.tap_button_map is not None:
-                if TAP_MAPS.get(config.tap_button_map):
-                    libinput.libinput_device_config_tap_set_button_map(
-                        handle, TAP_MAPS.get(config.tap_button_map)
-                    )
+            if config.tap_button_map is not None and TAP_MAPS.get(config.tap_button_map):
+                libinput.libinput_device_config_tap_set_button_map(
+                    handle, TAP_MAPS.get(config.tap_button_map)
+                )

@@ -129,15 +129,15 @@ class _FreeBSDBattery(_Battery):
     def update_status(self) -> BatteryStatus:
         try:
             info = check_output(["acpiconf", "-i", self.battery]).decode("utf-8")
-        except CalledProcessError:
-            raise RuntimeError("acpiconf exited incorrectly")
+        except CalledProcessError as e:
+            raise RuntimeError("acpiconf exited incorrectly") from e
 
         stat_match = re.search(r"State:\t+([a-z]+)", info)
 
         if stat_match is None:
             raise RuntimeError("Could not get battery state!")
 
-        stat = stat_match.group(1)
+        stat = stat_match[1]
         if stat == "charging":
             state = BatteryState.CHARGING
         elif stat == "discharging":
@@ -147,28 +147,24 @@ class _FreeBSDBattery(_Battery):
         else:
             state = BatteryState.UNKNOWN
 
-        percent_re = re.search(r"Remaining capacity:\t+([0-9]+)", info)
-        if percent_re:
-            percent = int(percent_re.group(1)) / 100
+        if percent_re := re.search(r"Remaining capacity:\t+([0-9]+)", info):
+            percent = int(percent_re[1]) / 100
         else:
             raise RuntimeError("Could not get battery percentage!")
 
-        power_re = re.search(r"Present rate:\t+(?:[0-9]+ mA )*\(?([0-9]+) mW", info)
-        if power_re:
-            power = float(power_re.group(1)) / 1000
+        if power_re := re.search(r"Present rate:\t+(?:[0-9]+ mA )*\(?([0-9]+) mW", info):
+            power = float(power_re[1]) / 1000
         else:
             raise RuntimeError("Could not get battery power!")
 
-        time_re = re.search(r"Remaining time:\t+([0-9]+:[0-9]+|unknown)", info)
-        if time_re:
-            if time_re.group(1) == "unknown":
-                time = 0
-            else:
-                hours, _, minutes = time_re.group(1).partition(":")
-                time = int(hours) * 3600 + int(minutes) * 60
-        else:
+        if not (time_re := re.search(r"Remaining time:\t+([0-9]+:[0-9]+|unknown)", info)):
             raise RuntimeError("Could not get remaining battery time!")
 
+        if time_re[1] == "unknown":
+            time = 0
+        else:
+            hours, _, minutes = time_re[1].partition(":")
+            time = int(hours) * 3600 + int(minutes) * 60
         return BatteryStatus(state, percent=percent, power=power, time=time)
 
 
@@ -212,12 +208,11 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(_LinuxBattery.defaults)
         if isinstance(self.battery, int):
-            self.battery = "BAT{}".format(self.battery)
+            self.battery = f"BAT{self.battery}"
 
     def _get_battery_name(self):
         if os.path.isdir(self.BAT_DIR):
-            bats = [f for f in os.listdir(self.BAT_DIR) if f.startswith("BAT")]
-            if bats:
+            if bats := [f for f in os.listdir(self.BAT_DIR) if f.startswith("BAT")]:
                 return bats[0]
         return "BAT0"
 
@@ -237,12 +232,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
                 return f.read().strip(), value_type
         except OSError as e:
             logger.debug("Failed to read '%s':", path, exc_info=True)
-            if isinstance(e, FileNotFoundError):
-                # Let's try another file if this one doesn't exist
-                return None
-            # Do not fail if the file exists but we can not read it this time
-            # See https://github.com/qtile/qtile/pull/1516 for rationale
-            return "-1", "N/A"
+            return None if isinstance(e, FileNotFoundError) else ("-1", "N/A")
 
     def _get_param(self, name) -> tuple[str, str]:
         if name in self.filenames and self.filenames[name]:
@@ -264,17 +254,17 @@ class _LinuxBattery(_Battery, configurable.Configurable):
                 self.filenames[name] = filename
                 return value
 
-        raise RuntimeError("Unable to read status for {}".format(name))
+        raise RuntimeError(f"Unable to read status for {name}")
 
     def update_status(self) -> BatteryStatus:
         stat = self._get_param("status_file")[0]
 
-        if stat == "Full":
-            state = BatteryState.FULL
-        elif stat == "Charging":
+        if stat == "Charging":
             state = BatteryState.CHARGING
         elif stat == "Discharging":
             state = BatteryState.DISCHARGING
+        elif stat == "Full":
+            state = BatteryState.FULL
         else:
             state = BatteryState.UNKNOWN
 
@@ -288,11 +278,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
 
         if now_unit != full_unit:
             raise RuntimeError("Current and full energy units do not match")
-        if full == 0:
-            percent = 0.0
-        else:
-            percent = now / full
-
+        percent = 0.0 if full == 0 else now / full
         if power == 0:
             time = 0
         elif state == BatteryState.DISCHARGING:
@@ -304,7 +290,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
             voltage = float(self._get_param("voltage_now_file")[0])
             power = voltage * power / 1e12
         elif power_unit == "uW":
-            power = power / 1e6
+            power /= 1e6
 
         return BatteryStatus(state=state, percent=percent, power=power, time=time)
 
@@ -374,7 +360,7 @@ class Battery(base.ThreadPoolText):
         try:
             status = self._battery.update_status()
         except RuntimeError as e:
-            return "Error: {}".format(e)
+            return f"Error: {e}"
 
         if self.notify_below:
             percent = int(status.percent * 100)

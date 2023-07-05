@@ -81,7 +81,7 @@ class XdgWindow(Window[XdgSurface]):
     def _on_map(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow map")
 
-        if not self._wm_class == self.surface.toplevel.app_id:
+        if self._wm_class != self.surface.toplevel.app_id:
             self._wm_class = self.surface.toplevel.app_id
 
         if self in self.core.pending_windows:
@@ -143,9 +143,8 @@ class XdgWindow(Window[XdgSurface]):
         self.mapped = False
         self.damage()
         seat = self.core.seat
-        if not seat.destroyed:
-            if self.surface.surface == seat.keyboard_state.focused_surface:
-                seat.keyboard_clear_focus()
+        if self.surface.surface == seat.keyboard_state.focused_surface and not seat.destroyed:
+            seat.keyboard_clear_focus()
 
     def _on_new_popup(self, _listener: Listener, xdg_popup: XdgPopup) -> None:
         logger.debug("Signal: xdgwindow new_popup")
@@ -194,8 +193,7 @@ class XdgWindow(Window[XdgSurface]):
 
     def is_transient_for(self) -> base.WindowType | None:
         """What window is this window a transient window for?"""
-        parent = self.surface.toplevel.parent
-        if parent:
+        if parent := self.surface.toplevel.parent:
             for win in self.qtile.windows_map.values():
                 if isinstance(win, XdgWindow) and win.surface == parent:
                     return win
@@ -223,10 +221,7 @@ class XdgWindow(Window[XdgSurface]):
             screen = (self.group and self.group.screen) or self.qtile.find_closest_screen(
                 self.x, self.y
             )
-            if self.group:
-                bw = self.group.floating_layout.fullscreen_border_width
-            else:
-                bw = 0
+            bw = self.group.floating_layout.fullscreen_border_width if self.group else 0
             self._reconfigure_floating(
                 screen.x,
                 screen.y,

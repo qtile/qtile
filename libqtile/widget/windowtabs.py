@@ -75,7 +75,7 @@ class WindowTabs(base._TextBox):
                 state = "_ "
             elif w.floating:
                 state = "V "
-            task = "%s%s" % (state, w.name if w and w.name else " ")
+            task = f'{state}{w.name if w and w.name else " "}'
             task = pangocffi.markup_escape_text(task)
             if w is self.bar.screen.group.current_window:
                 task = task.join(self.selected)
@@ -84,6 +84,6 @@ class WindowTabs(base._TextBox):
         if callable(self.parse_text):
             try:
                 self.text = self.parse_text(self.text)
-            except:  # noqa: E722
+            except Exception:
                 logger.exception("parse_text function failed:")
         self.bar.draw()

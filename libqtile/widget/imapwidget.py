@@ -89,6 +89,6 @@ class ImapWidget(base.ThreadPoolText):
             im.login(self.user, self.password)
             status, response = im.status(self.mbox, "(UNSEEN)")
             text = response[0].decode()
-            text = self.label + ": " + re.sub(r"\).*$", "", re.sub(r"^.*N\s", "", text))
+            text = f"{self.label}: " + re.sub(r"\).*$", "", re.sub(r"^.*N\s", "", text))
             im.logout()
         return text

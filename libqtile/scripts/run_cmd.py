@@ -31,10 +31,7 @@ from libqtile.command import graph
 
 
 def run_cmd(opts) -> None:
-    if opts.socket is None:
-        socket = ipc.find_sockfile()
-    else:
-        socket = opts.socket
+    socket = ipc.find_sockfile() if opts.socket is None else opts.socket
     client = ipc.Client(socket)
     root = graph.CommandGraphRoot()
 

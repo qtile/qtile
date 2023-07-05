@@ -269,7 +269,7 @@ class Mpris2(base._TextBox):
         bus, message = await _send_dbus_message(
             True,
             MessageType.METHOD_CALL,
-            self.objname if self.objname else self._current_player,
+            self.objname or self._current_player,
             PROPERTIES_INTERFACE,
             MPRIS_PATH,
             "GetAll",
@@ -335,12 +335,10 @@ class Mpris2(base._TextBox):
 
         self.displaytext = ""
 
-        metadata = changed_properties.get("Metadata")
-        if metadata:
+        if metadata := changed_properties.get("Metadata"):
             self.track_info = self.get_track_info(metadata.value)
 
-        playbackstatus = getattr(changed_properties.get("PlaybackStatus"), "value", None)
-        if playbackstatus:
+        if playbackstatus := getattr(changed_properties.get("PlaybackStatus"), "value", None):
             self.is_playing = playbackstatus == "Playing"
             self.status = self.prefixes.get(playbackstatus, "{track}")
 

@@ -119,8 +119,7 @@ class Cursors(dict):
         """
         Get the cursor using xcb-util-cursor, so we support themed cursors
         """
-        cursor = self.xcursor.xcb_cursor_load_cursor(self._cursor_ctx[0], name)
-        return cursor
+        return self.xcursor.xcb_cursor_load_cursor(self._cursor_ctx[0], name)
 
     def get_font_cursor(self, name, cursor_font):
         """

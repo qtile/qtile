@@ -98,11 +98,10 @@ class CommandClient:
             raise SelectError("Not valid child", name, self._current_node.selectors)
 
         normalized_selector = _normalize_item(name, selector) if selector is not None else None
-        if normalized_selector is not None:
-            if not self._command.has_item(self._current_node, name, normalized_selector):
-                raise SelectError(
-                    "Item not available in object", name, self._current_node.selectors
-                )
+        if normalized_selector is not None and not self._command.has_item(
+            self._current_node, name, normalized_selector
+        ):
+            raise SelectError("Item not available in object", name, self._current_node.selectors)
 
         next_node = self._current_node.navigate(name, normalized_selector)
         return self.__class__(self._command, current_node=next_node)
@@ -220,7 +219,7 @@ class InteractiveCommandClient:
         # Python's help() command will try to look up __name__ and __origin__ so we
         # need to handle these explicitly otherwise they'll result in a SelectError
         # which help() does not expect.
-        if name in ["__name__", "__origin__"]:
+        if name in {"__name__", "__origin__"}:
             raise AttributeError
 
         if isinstance(self._current_node, CommandGraphCall):
@@ -294,17 +293,18 @@ class InteractiveCommandClient:
 
 
 def _normalize_item(object_type: str | None, item: str) -> str | int:
-    if object_type in ["group", "widget", "bar"]:
-        return str(item)
-    elif object_type in ["layout", "window", "screen"]:
-        try:
-            return int(item)
-        except ValueError:
-            # A value error could arise because the next selector has been passed
-            raise SelectError(
-                f"Unexpected index {item}. Is this an object_type?",
-                str(object_type),
-                [(str(object_type), str(item))],
-            )
-    else:
+    if object_type in ["group", "widget", "bar"] or object_type not in [
+        "layout",
+        "window",
+        "screen",
+    ]:
         return item
+    try:
+        return int(item)
+    except ValueError as e:
+        # A value error could arise because the next selector has been passed
+        raise SelectError(
+            f"Unexpected index {item}. Is this an object_type?",
+            str(object_type),
+            [(str(object_type), item)],
+        ) from e

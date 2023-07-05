@@ -81,8 +81,8 @@ def get_cairo_pattern(surface, width=None, height=None, theta=0.0):
     matrix.scale(tr_width, tr_height)
 
     epsilon = 1.0e-6
-    pi = 3.141592653589793
     if abs(theta) > epsilon:
+        pi = 3.141592653589793
         theta_rad = pi / 180.0 * theta
         mat_rot = cairocffi.Matrix()
         # https://cairographics.org/cookbook/transform_about_point/
@@ -100,7 +100,7 @@ def get_cairo_pattern(surface, width=None, height=None, theta=0.0):
 class _Descriptor:
     def __init__(self, name=None, default=None, **opts):
         self.name = name
-        self.under_name = "_" + name
+        self.under_name = f"_{name}"
         self.default = default
         for key, value in opts.items():
             setattr(self, key, value)
@@ -235,9 +235,7 @@ class Img:
     def _scale_lock(width_factor, height_factor, initial_size):
         if width_factor and height_factor:
             raise ValueError(
-                "Can't rescale with locked aspect ratio "
-                "and give width_factor and height_factor."
-                " {}, {}".format(width_factor, height_factor)
+                f"Can't rescale with locked aspect ratio and give width_factor and height_factor. {width_factor}, {height_factor}"
             )
         width0, height0 = initial_size
         if width_factor:
@@ -327,7 +325,7 @@ class Loader:
             if ext:
                 set_names.add(n)
             else:
-                set_names.add(n + ".*")
+                set_names.add(f"{n}.*")
 
         for directory in self.directories:
             d_matches = scan_files(directory, *(set_names - seen))

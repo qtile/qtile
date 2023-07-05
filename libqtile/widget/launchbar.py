@@ -117,17 +117,15 @@ class LaunchBar(base._Widget):
         # For now, ignore the comments but may be one day it will be useful
         self.progs = dict(
             enumerate(
-                [
-                    {
-                        "name": prog[0],
-                        "cmd": prog[1],
-                        "comment": prog[2] if len(prog) > 2 else None,
-                    }
-                    for prog in config.get("progs", list())
-                ]
+                {
+                    "name": prog[0],
+                    "cmd": prog[1],
+                    "comment": prog[2] if len(prog) > 2 else None,
+                }
+                for prog in config.get("progs", [])
             )
         )
-        self.progs_name = set([prog["name"] for prog in self.progs.values()])
+        self.progs_name = {prog["name"] for prog in self.progs.values()}
         self.length_type = bar.STATIC
         self.length = 0
 
@@ -222,11 +220,8 @@ class LaunchBar(base._Widget):
 
     def lookup_icons(self):
         """Search for the icons corresponding to the commands to execute."""
-        if self.default_icon is not None:
-            if not os.path.isfile(self.default_icon):
-                # if the default icon provided is not found, switch to
-                # text mode
-                self.default_icon = None
+        if self.default_icon is not None and not os.path.isfile(self.default_icon):
+            self.default_icon = None
         for name in self.progs_name:
             self._lookup_icon(name)
 

@@ -141,10 +141,7 @@ class LazyCall:
         if cur_win_floating and not self._when_floating:
             return False
 
-        if self._layouts and q.current_layout.name not in self._layouts:
-            return False
-
-        return True
+        return not self._layouts or q.current_layout.name in self._layouts
 
 
 class LazyCommandInterface(CommandInterface):

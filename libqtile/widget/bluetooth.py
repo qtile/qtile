@@ -115,8 +115,5 @@ class Bluetooth(base._TextBox):
         if not self.powered:
             text = "off"
         else:
-            if not self.connected:
-                text = "on"
-            else:
-                text = self.device
+            text = self.device if self.connected else "on"
         self.update(text)

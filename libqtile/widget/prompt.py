@@ -99,14 +99,14 @@ class FileCompleter(AbstractCompleter):
         """Returns the next completion for txt, or None if there is no completion"""
         if self.lookup is None:
             self.lookup = []
-            if txt == "" or txt[0] not in "~/":
-                txt = "~/" + txt
+            if not txt or txt[0] not in "~/":
+                txt = f"~/{txt}"
             path = os.path.expanduser(txt)
             if os.path.isdir(path):
                 files = glob.glob(os.path.join(path, "*"))
                 prefix = txt
             else:
-                files = glob.glob(path + "*")
+                files = glob.glob(f"{path}*")
                 prefix = os.path.dirname(txt)
                 prefix = prefix.rstrip("/") or "/"
             for f in files:
@@ -147,10 +147,10 @@ class QshCompleter(AbstractCompleter):
             path = txt.split(".")[:-1]
             self.path = ".".join(path)
             term = txt.split(".")[-1]
-            if len(self.path) > 0:
+            if self.path != "":
                 self.path += "."
 
-            contains_cmd = "self.client.%s_contains" % self.path
+            contains_cmd = f"self.client.{self.path}_contains"
             try:
                 contains = eval(contains_cmd)
             except AttributeError:
@@ -159,14 +159,14 @@ class QshCompleter(AbstractCompleter):
                 if obj.lower().startswith(term):
                     self.lookup.append((obj, obj))
 
-            commands_cmd = "self.client.%scommands()" % self.path
+            commands_cmd = f"self.client.{self.path}commands()"
             try:
                 commands = eval(commands_cmd)
             except (CommandError, AttributeError):
                 commands = []
             for cmd in commands:
                 if cmd.lower().startswith(term):
-                    self.lookup.append((cmd + "()", cmd + "()"))
+                    self.lookup.append((f"{cmd}()", f"{cmd}()"))
 
             self.offset = -1
             self.lookup.append((term, term))
@@ -288,7 +288,7 @@ class CommandCompleter:
                     files = glob.glob(os.path.join(path, "*"))
                     prefix = txt
                 else:
-                    files = glob.glob(path + "*")
+                    files = glob.glob(f"{path}*")
                     prefix = os.path.dirname(txt)
                 prefix = prefix.rstrip("/") or "/"
                 for f in files:
@@ -302,7 +302,7 @@ class CommandCompleter:
                 for d in dirs:
                     try:
                         d = os.path.expanduser(d)
-                        for cmd in glob.iglob(os.path.join(d, "%s*" % txt)):
+                        for cmd in glob.iglob(os.path.join(d, f"{txt}*")):
                             if self.executable(cmd):
                                 self.lookup.append(
                                     (os.path.basename(cmd), cmd),
@@ -368,7 +368,7 @@ class Prompt(base._TextBox):
                         self.history = pickle.load(f)
                         if self.ignore_dups_history:
                             self._dedup_history()
-                    except:  # noqa: E722
+                    except Exception:
                         # unfortunately, pickle doesn't wrap its errors, so we
                         # can't detect what's a pickle error and what's not.
                         logger.exception("failed to load prompt history")
@@ -394,7 +394,7 @@ class Prompt(base._TextBox):
         base._TextBox._configure(self, qtile, bar)
 
         def f(win):
-            if self.active and not win == self.bar.window:
+            if self.active and win != self.bar.window:
                 self._unfocus()
 
         hook.subscribe.client_focus(f)
@@ -495,7 +495,7 @@ class Prompt(base._TextBox):
         color = utils.hex(self.cursor_color)
         text = '<span foreground="{0}">{1}</span>'.format(color, text)
         if self.show_cursor:
-            text = "<u>{}</u>".format(text)
+            text = f"<u>{text}</u>"
         return text
 
     def _update(self) -> None:
@@ -607,28 +607,26 @@ class Prompt(base._TextBox):
         self._update()
 
     def _get_prev_cmd(self):
-        # Get the previous command in history.
-        # If there isn't more previous commands, ring system bell
         if self.record_history:
-            if not self.position:
-                self._alert()
-            else:
+            if self.position:
                 self.position -= 1
                 self.archived_input = self.completer_history[self.position]
                 self.cursor_position = len(self.archived_input)
+            else:
+                self._alert()
 
     def _get_next_cmd(self):
-        # Get the next command in history.
-        # If the last command was already reached, ring system bell.
-        if self.record_history:
-            if self.position == len(self.completer_history):
+        if self.position == len(self.completer_history):
+            if self.record_history:
                 self._alert()
-            elif self.position < len(self.completer_history):
+        elif self.position < len(self.completer_history):
+            if self.record_history:
                 self.position += 1
-                if self.position == len(self.completer_history):
-                    self.archived_input = ""
-                else:
-                    self.archived_input = self.completer_history[self.position]
+                self.archived_input = (
+                    ""
+                    if self.position == len(self.completer_history)
+                    else self.completer_history[self.position]
+                )
                 self.cursor_position = len(self.archived_input)
 
     def _cursor_to_left(self):
@@ -667,9 +665,7 @@ class Prompt(base._TextBox):
 
         Currently only supports ASCII characters.
         """
-        handle_key = self._get_keyhandler(keysym)
-
-        if handle_key:
+        if handle_key := self._get_keyhandler(keysym):
             handle_key()
             del self.key
         self._update()

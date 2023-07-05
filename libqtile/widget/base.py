@@ -197,20 +197,17 @@ class _Widget(CommandObject, configurable.Configurable):
 
     @property
     def offset(self):
-        if self.bar.horizontal:
-            return self.offsetx
-        return self.offsety
+        return self.offsetx if self.bar.horizontal else self.offsety
 
     def _test_orientation_compatibility(self, horizontal):
-        if horizontal:
-            if not self.orientations & ORIENTATION_HORIZONTAL:
-                raise confreader.ConfigError(
-                    self.__class__.__name__
-                    + " is not compatible with the orientation of the bar."
-                )
-        elif not self.orientations & ORIENTATION_VERTICAL:
+        if (
+            horizontal
+            and not self.orientations & ORIENTATION_HORIZONTAL
+            or not horizontal
+            and not self.orientations & ORIENTATION_VERTICAL
+        ):
             raise confreader.ConfigError(
-                self.__class__.__name__ + " is not compatible with the orientation of the bar."
+                f"{self.__class__.__name__} is not compatible with the orientation of the bar."
             )
 
     def timer_setup(self):
@@ -287,17 +284,13 @@ class _Widget(CommandObject, configurable.Configurable):
         """
         Utility function for quick retrieval of a widget by name.
         """
-        w = q.widgets_map.get(name)
-        if not w:
-            raise CommandError("No such widget: %s" % name)
-        return w
+        if w := q.widgets_map.get(name):
+            return w
+        else:
+            raise CommandError(f"No such widget: {name}")
 
     def _items(self, name: str) -> ItemT:
-        if name == "bar":
-            return True, []
-        elif name == "screen":
-            return True, []
-        return None
+        return (True, []) if name in {"bar", "screen"} else None
 
     def _select(self, name, sel):
         if name == "bar":
@@ -357,7 +350,7 @@ class _Widget(CommandObject, configurable.Configurable):
                 create_task(method)
             else:
                 method(*method_args)
-        except:  # noqa: E722
+        except Exception:
             logger.exception("got exception from widget timer")
 
     def create_mirror(self):
@@ -485,7 +478,7 @@ class _TextBox(_Widget):
     @text.setter
     def text(self, value):
         if len(value) > self.max_chars > 0:
-            value = value[: self.max_chars] + "…"
+            value = f"{value[:self.max_chars]}…"
         self._text = value
         if self.layout:
             self.layout.text = self.formatted_text
@@ -529,10 +522,7 @@ class _TextBox(_Widget):
 
     @property
     def actual_padding(self):
-        if self.padding is None:
-            return self.fontsize / 2
-        else:
-            return self.padding
+        return self.fontsize / 2 if self.padding is None else self.padding
 
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
@@ -572,19 +562,17 @@ class _TextBox(_Widget):
             self._should_scroll = False
 
     def calculate_length(self):
-        if self.text:
-            if self.bar.horizontal:
-                return min(self.layout.width, self.bar.width) + self.actual_padding * 2
-            else:
-                return min(self.layout.width, self.bar.height) + self.actual_padding * 2
-        else:
+        if not self.text:
             return 0
+        if self.bar.horizontal:
+            return min(self.layout.width, self.bar.width) + self.actual_padding * 2
+        else:
+            return min(self.layout.width, self.bar.height) + self.actual_padding * 2
 
     def can_draw(self):
-        can_draw = (
+        return (
             self.layout is not None and not self.layout.finalized() and self.offsetx is not None
-        )  # if the bar hasn't placed us yet
-        return can_draw
+        )
 
     def draw(self):
         if not self.can_draw():

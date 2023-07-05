@@ -36,14 +36,13 @@ class ThermalZone(base.ThreadPoolText):
             logger.exception("%s does not exist", self.zone)
             return "err!"
 
-        variables = dict()
-        variables["temp"] = str(value)
+        variables = {"temp": str(value)}
         output = self.format.format(**variables)
         if value < self.high:
             self.layout.colour = self.fgcolor_normal
         elif value < self.crit:
             self.layout.colour = self.fgcolor_high
-        elif value >= self.crit:
+        else:
             self.layout.colour = self.fgcolor_crit
             output = self.format_crit.format(**variables)
         if self.hidden and value < self.crit:

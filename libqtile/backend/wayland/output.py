@@ -90,9 +90,8 @@ class Output(HasListeners):
         if len(self.core.qtile.screens) > 1:
             x, y, w, h = self.get_geometry()
             for screen in self.core.qtile.screens:
-                if screen.x == x and screen.y == y:
-                    if screen.width == w and screen.height == h:
-                        return screen
+                if screen.x == x and screen.y == y and (screen.width == w and screen.height == h):
+                    return screen
         return self.core.qtile.current_screen
 
     def _on_destroy(self, _listener: Listener, _data: Any) -> None:
@@ -228,8 +227,7 @@ class Output(HasListeners):
         """Render the drag-n-drop icon if there is one."""
         icon = dnd.icon
         if icon is not None and icon.mapped:
-            texture = icon.surface.get_texture()
-            if texture:
+            if texture := icon.surface.get_texture():
                 box = Box(
                     int((dnd.x - self.x) * scale),
                     int((dnd.y - self.y) * scale),
@@ -283,7 +281,7 @@ class Output(HasListeners):
                     win.kill()
                     continue
 
-                if 0 < state.exclusive_zone:
+                if state.exclusive_zone > 0:
                     # Reserve space if:
                     #    - layer is anchored to an edge and both perpendicular edges, or
                     #    - layer is anchored to a single edge only.
@@ -327,12 +325,7 @@ class Output(HasListeners):
             return False
 
         ow, oh = self.wlr_output.effective_resolution()
-        if self.x + ow < rect.x:
-            return False
-        if self.y + oh < rect.y:
-            return False
-
-        return True
+        return False if self.x + ow < rect.x else self.y + oh >= rect.y
 
     def damage(self) -> None:
         """Damage this output so it gets re-rendered."""

@@ -305,8 +305,7 @@ class Columns(Layout):
         # pylint: disable=undefined-loop-variable
         for idx, col in enumerate(self.columns):
             if win in col:
-                nxt = col.focus_next(win)
-                if nxt:
+                if nxt := col.focus_next(win):
                     return nxt
                 else:
                     break
@@ -321,8 +320,7 @@ class Columns(Layout):
         # pylint: disable=undefined-loop-variable
         for idx, col in enumerate(self.columns):
             if win in col:
-                prev = col.focus_previous(win)
-                if prev:
+                if prev := col.focus_previous(win):
                     return prev
                 else:
                     break
@@ -340,9 +338,8 @@ class Columns(Layout):
         if self.wrap_focus_columns:
             if len(self.columns) > 1:
                 self.current = (self.current - 1) % len(self.columns)
-        else:
-            if self.current > 0:
-                self.current = self.current - 1
+        elif self.current > 0:
+            self.current = self.current - 1
         self.group.focus(self.cc.cw, True)
 
     @expose_command()
@@ -350,15 +347,12 @@ class Columns(Layout):
         if self.wrap_focus_columns:
             if len(self.columns) > 1:
                 self.current = (self.current + 1) % len(self.columns)
-        else:
-            if len(self.columns) - 1 > self.current:
-                self.current = self.current + 1
+        elif len(self.columns) - 1 > self.current:
+            self.current = self.current + 1
         self.group.focus(self.cc.cw, True)
 
     def want_wrap(self, col):
-        if col.split:
-            return self.wrap_focus_rows
-        return self.wrap_focus_stacks
+        return self.wrap_focus_rows if col.split else self.wrap_focus_stacks
 
     @expose_command()
     def up(self):
@@ -366,9 +360,8 @@ class Columns(Layout):
         if self.want_wrap(col):
             if len(col) > 1:
                 col.current_index -= 1
-        else:
-            if col.current_index > 0:
-                col.current_index -= 1
+        elif col.current_index > 0:
+            col.current_index -= 1
         self.group.focus(col.cw, True)
 
     @expose_command()
@@ -377,9 +370,8 @@ class Columns(Layout):
         if self.want_wrap(col):
             if len(col) > 1:
                 col.current_index += 1
-        else:
-            if col.current_index < len(col) - 1:
-                col.current_index += 1
+        elif col.current_index < len(col) - 1:
+            col.current_index += 1
         self.group.focus(col.cw, True)
 
     @expose_command()

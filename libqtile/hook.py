@@ -369,10 +369,10 @@ class Unsubscribe(Subscribe):
         lst = subscriptions.setdefault(event, [])
         try:
             lst.remove(func)
-        except ValueError:
+        except ValueError as e:
             raise utils.QtileError(
                 "Tried to unsubscribe a hook that was not currently subscribed"
-            )
+            ) from e
 
 
 unsubscribe = Unsubscribe()
@@ -393,7 +393,7 @@ def _fire_async_event(co):
 
 def fire(event, *args, **kwargs):
     if event not in subscribe.hooks:
-        raise utils.QtileError("Unknown event: %s" % event)
+        raise utils.QtileError(f"Unknown event: {event}")
     if event not in SKIPLOG:
         logger.debug("Internal event: %s(%s, %s)", event, args, kwargs)
     for i in subscriptions.get(event, []):
@@ -404,5 +404,5 @@ def fire(event, *args, **kwargs):
                 _fire_async_event(i)
             else:
                 i(*args, **kwargs)
-        except:  # noqa: E722
+        except Exception:
             logger.exception("Error in hook %s", event)

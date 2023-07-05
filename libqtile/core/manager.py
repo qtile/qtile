@@ -164,7 +164,7 @@ class Qtile(CommandObject):
                     with open(self._state, "rb") as f:
                         st = pickle.load(f)
                         st.apply(self)
-                except:  # noqa: E722
+                except Exception:
                     logger.exception("failed restoring state")
                 finally:
                     os.remove(self._state)
@@ -272,7 +272,7 @@ class Qtile(CommandObject):
     def dump_state(self, buf: Any) -> None:
         try:
             pickle.dump(QtileState(self), buf, protocol=0)
-        except:  # noqa: E722
+        except Exception:
             logger.exception("Unable to pickle qtile state")
 
     @expose_command()
@@ -321,7 +321,7 @@ class Qtile(CommandObject):
             for screen in self.screens:
                 for gap in screen.gaps:
                     gap.finalize()
-        except:  # noqa: E722
+        except Exception:
             logger.exception("exception during finalize")
         hook.clear()
 
@@ -349,11 +349,7 @@ class Qtile(CommandObject):
             config = self.config.screens
 
         for i, (x, y, w, h) in enumerate(screen_info):
-            if i + 1 > len(config):
-                scr = Screen()
-            else:
-                scr = config[i]
-
+            scr = Screen() if i + 1 > len(config) else config[i]
             if not hasattr(self, "current_screen") or reloading:
                 self.current_screen = scr
                 reloading = False
@@ -671,16 +667,17 @@ class Qtile(CommandObject):
         if win.defunct:
             return
         self.windows_map[win.wid] = win
-        if self.current_screen and isinstance(win, base.Window):
-            # Window may have been bound to a group in the hook.
-            if not win.group and self.current_screen.group:
-                self.current_screen.group.add(win, focus=win.can_steal_focus)
+        if (
+            self.current_screen
+            and isinstance(win, base.Window)
+            and (not win.group and self.current_screen.group)
+        ):
+            self.current_screen.group.add(win, focus=win.can_steal_focus)
         self.core.update_client_list(self.windows_map)
         hook.fire("client_managed", win)
 
     def unmanage(self, wid: int) -> None:
-        c = self.windows_map.get(wid)
-        if c:
+        if c := self.windows_map.get(wid):
             group = None
             if isinstance(c, base.Static):
                 if c.reserved_space:
@@ -698,13 +695,10 @@ class Qtile(CommandObject):
 
     def find_screen(self, x: int, y: int) -> Screen | None:
         """Find a screen based on the x and y offset"""
-        result = []
-        for i in self.screens:
-            if i.x <= x <= i.x + i.width and i.y <= y <= i.y + i.height:
-                result.append(i)
-        if len(result) == 1:
-            return result[0]
-        return None
+        result = [
+            i for i in self.screens if i.x <= x <= i.x + i.width and i.y <= y <= i.y + i.height
+        ]
+        return result[0] if len(result) == 1 else None
 
     def find_closest_screen(self, x: int, y: int) -> Screen:
         """
@@ -765,7 +759,7 @@ class Qtile(CommandObject):
     def process_button_click(self, button_code: int, modmask: int, x: int, y: int) -> bool:
         handled = False
         for m in self._mouse_map[button_code]:
-            if not m.modmask == modmask:
+            if m.modmask != modmask:
                 continue
 
             if isinstance(m, Click):
@@ -813,14 +807,13 @@ class Qtile(CommandObject):
         ox, oy, rx, ry, cmd = self._drag
         dx = x - ox
         dy = y - oy
-        if dx or dy:
-            for i in cmd:
-                if i.check(self):
-                    status, val = self.server.call(
-                        (i.selectors, i.name, i.args + (rx + dx, ry + dy), i.kwargs)
-                    )
-                    if status in (interface.ERROR, interface.EXCEPTION):
-                        logger.error("Mouse command error %s: %s", i.name, val)
+        for i in cmd:
+            if dx and i.check(self) or not dx and dy and i.check(self):
+                status, val = self.server.call(
+                    (i.selectors, i.name, i.args + (rx + dx, ry + dy), i.kwargs)
+                )
+                if status in (interface.ERROR, interface.EXCEPTION):
+                    logger.error("Mouse command error %s: %s", i.name, val)
 
     def warp_to_screen(self) -> None:
         if self.current_screen:
@@ -849,14 +842,18 @@ class Qtile(CommandObject):
             self.current_window.togroup(group)
 
     def _items(self, name: str) -> ItemT:
-        if name == "group":
+        if name == "bar":
+            return False, [x.position for x in self.current_screen.gaps if isinstance(x, bar.Bar)]
+        elif name == "core":
+            return True, []
+        elif name == "group":
             return True, list(self.groups_map.keys())
         elif name == "layout":
             return True, list(range(len(self.current_group.layouts)))
+        elif name == "screen":
+            return True, list(range(len(self.screens)))
         elif name == "widget":
             return False, list(self.widgets_map.keys())
-        elif name == "bar":
-            return False, [x.position for x in self.current_screen.gaps if isinstance(x, bar.Bar)]
         elif name == "window":
             windows: list[str | int]
             windows = [
@@ -865,47 +862,37 @@ class Qtile(CommandObject):
                 if isinstance(v, CommandObject) and not isinstance(v, _Widget)
             ]
             return True, windows
-        elif name == "screen":
-            return True, list(range(len(self.screens)))
-        elif name == "core":
-            return True, []
         return None
 
     def _select(self, name: str, sel: str | int | None) -> CommandObject | None:
-        if name == "group":
-            if sel is None:
-                return self.current_group
-            else:
-                return self.groups_map.get(sel)  # type: ignore
-        elif name == "layout":
-            if sel is None:
-                return self.current_group.layout
-            else:
-                return lget(self.current_group.layouts, int(sel))
-        elif name == "widget":
-            return self.widgets_map.get(sel)  # type: ignore
-        elif name == "bar":
+        if name == "bar":
             gap = getattr(self.current_screen, sel)  # type: ignore
             if isinstance(gap, bar.Bar):
                 return gap
+        elif name == "core":
+            return self.core
+        elif name == "group":
+            return self.current_group if sel is None else self.groups_map.get(sel)  # type: ignore
+        elif name == "layout":
+            return (
+                self.current_group.layout
+                if sel is None
+                else lget(self.current_group.layouts, int(sel))
+            )
+        elif name == "screen":
+            return self.current_screen if sel is None else lget(self.screens, int(sel))
+        elif name == "widget":
+            return self.widgets_map.get(sel)  # type: ignore
         elif name == "window":
             if sel is None:
                 return self.current_window
-            else:
-                windows: dict[str | int, base._Window]
-                windows = {
-                    k: v
-                    for k, v in self.windows_map.items()
-                    if isinstance(v, CommandObject) and not isinstance(v, _Widget)
-                }
-                return windows.get(sel)
-        elif name == "screen":
-            if sel is None:
-                return self.current_screen
-            else:
-                return lget(self.screens, int(sel))
-        elif name == "core":
-            return self.core
+            windows: dict[str | int, base._Window]
+            windows = {
+                k: v
+                for k, v in self.windows_map.items()
+                if isinstance(v, CommandObject) and not isinstance(v, _Widget)
+            }
+            return windows.get(sel)
         return None
 
     def call_soon(self, func: Callable, *args: Any) -> asyncio.Handle:
@@ -1046,14 +1033,16 @@ class Qtile(CommandObject):
                 if not k.commands:
                     return
                 allargs = ", ".join(
-                    [
-                        value.__name__ if callable(value) else repr(value)
-                        for value in k.commands[0].args
-                    ]
-                    + [
-                        "%s = %s" % (keyword, repr(value))
-                        for keyword, value in k.commands[0].kwargs.items()
-                    ]
+                    (
+                        [
+                            value.__name__ if callable(value) else repr(value)
+                            for value in k.commands[0].args
+                        ]
+                        + [
+                            f"{keyword} = {repr(value)}"
+                            for keyword, value in k.commands[0].kwargs.items()
+                        ]
+                    )
                 )
                 rows.append(
                     [
@@ -1066,12 +1055,8 @@ class Qtile(CommandObject):
                 )
                 return
             if isinstance(k, KeyChord):
-                new_mode_s = k.name if k.name else "<unnamed>"
-                new_mode = (
-                    k.name
-                    if mode == "<root>"
-                    else "{}>{}".format(mode, k.name if k.name else "_")
-                )
+                new_mode_s = k.name or "<unnamed>"
+                new_mode = k.name if mode == "<root>" else "{}>{}".format(mode, k.name or "_")
                 rows.append([mode, name, modifiers, "", "Enter {:s} mode".format(new_mode_s)])
                 for s in k.submappings:
                     walk_binding(s, new_mode)
@@ -1102,10 +1087,7 @@ class Qtile(CommandObject):
         name :
             Group name. If not specified, the current group is assumed.
         """
-        if name is not None:
-            group = self.groups_map[name]
-        else:
-            group = self.current_group
+        group = self.groups_map[name] if name is not None else self.current_group
         group.use_layout(index)
 
     @expose_command()
@@ -1118,10 +1100,7 @@ class Qtile(CommandObject):
         name :
             Group name. If not specified, the current group is assumed
         """
-        if name is not None:
-            group = self.groups_map[name]
-        else:
-            group = self.current_group
+        group = self.groups_map[name] if name is not None else self.current_group
         group.use_next_layout()
 
     @expose_command()
@@ -1134,16 +1113,13 @@ class Qtile(CommandObject):
         name :
             Group name. If not specified, the current group is assumed
         """
-        if name is not None:
-            group = self.groups_map[name]
-        else:
-            group = self.current_group
+        group = self.groups_map[name] if name is not None else self.current_group
         group.use_previous_layout()
 
     @expose_command()
     def get_screens(self) -> list[dict[str, Any]]:
         """Return a list of dictionaries providing information on all screens"""
-        lst = [
+        return [
             dict(
                 index=i.index,
                 group=i.group.name if i.group is not None else None,
@@ -1160,7 +1136,6 @@ class Qtile(CommandObject):
             )
             for i in self.screens
         ]
-        return lst
 
     @expose_command()
     def simulate_keypress(self, modifiers: list[str], key: str) -> None:
@@ -1184,7 +1159,7 @@ class Qtile(CommandObject):
         try:
             self.core.simulate_keypress(modifiers, key)
         except utils.QtileError as e:
-            raise CommandError(str(e))
+            raise CommandError(str(e)) from e
 
     @expose_command()
     def validate_config(self) -> None:
@@ -1586,30 +1561,31 @@ class Qtile(CommandObject):
         """
 
         def f(cmd: str) -> None:
-            if cmd:
-                # c here is used in eval() below
-                q = QtileCommandInterface(self)
-                c = InteractiveCommandClient(q)  # noqa: F841
-                try:
-                    cmd_arg = str(cmd).split(" ")
-                except AttributeError:
-                    return
-                cmd_len = len(cmd_arg)
-                if cmd_len == 0:
-                    logger.debug("No command entered.")
-                    return
-                try:
-                    result = eval("c.{0:s}".format(cmd))
-                except (CommandError, CommandException, AttributeError):
-                    logger.exception("Command errored:")
-                    result = None
-                if result is not None:
-                    from pprint import pformat
+            if not cmd:
+                return
+            # c here is used in eval() below
+            q = QtileCommandInterface(self)
+            c = InteractiveCommandClient(q)  # noqa: F841
+            try:
+                cmd_arg = cmd.split(" ")
+            except AttributeError:
+                return
+            cmd_len = len(cmd_arg)
+            if cmd_len == 0:
+                logger.debug("No command entered.")
+                return
+            try:
+                result = eval("c.{0:s}".format(cmd))
+            except (CommandError, CommandException, AttributeError):
+                logger.exception("Command errored:")
+                result = None
+            if result is not None:
+                from pprint import pformat
 
-                    message = pformat(result)
-                    if messenger:
-                        self.spawn('{0:s} "{1:s}"'.format(messenger, message))
-                    logger.debug(result)
+                message = pformat(result)
+                if messenger:
+                    self.spawn('{0:s} "{1:s}"'.format(messenger, message))
+                logger.debug(result)
 
         mb = self.widgets_map[widget]
         if not mb:
@@ -1680,8 +1656,7 @@ class Qtile(CommandObject):
             one of: "top", "bottom", "left", "right", or "all" (default: "all")
         """
         if position in ["top", "bottom", "left", "right"]:
-            bar = getattr(self.current_screen, position)
-            if bar:
+            if bar := getattr(self.current_screen, position):
                 bar.show(not bar.is_show())
                 self.current_group.layout_all()
             else:

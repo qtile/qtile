@@ -28,16 +28,13 @@ from libqtile import confreader
 
 
 def type_check_config_vars(tempdir, config_name):
-    # write a .pyi file to tempdir:
-    f = open(path.join(tempdir, config_name + ".pyi"), "w")
-    f.write(confreader.config_pyi_header)
-    for name, type_ in confreader.Config.__annotations__.items():
-        f.write(name)
-        f.write(": ")
-        f.write(type_)
-        f.write("\n")
-    f.close()
-
+    with open(path.join(tempdir, f"{config_name}.pyi"), "w") as f:
+        f.write(confreader.config_pyi_header)
+        for name, type_ in confreader.Config.__annotations__.items():
+            f.write(name)
+            f.write(": ")
+            f.write(type_)
+            f.write("\n")
     # need to tell python to look in pwd for modules
     newenv = environ.copy()
     newenv["PYTHONPATH"] = newenv.get("PYTHONPATH", "") + ":"
@@ -51,20 +48,15 @@ def type_check_config_vars(tempdir, config_name):
         env=newenv,
     )
     stdout, stderr = p.communicate()
-    missing_vars = []
-    for line in (stdout + stderr).split("\n"):
-        # filter out stuff that users didn't specify; they'll be imported from
-        # the default config
-        if "is not present at runtime" in line:
-            missing_vars.append(line.split()[0])
-
-    # write missing vars to a tempfile
-    whitelist = open(path.join(tempdir, "stubtest_whitelist"), "w")
-    for var in missing_vars:
-        whitelist.write(var)
-        whitelist.write("\n")
-    whitelist.close()
-
+    missing_vars = [
+        line.split()[0]
+        for line in (stdout + stderr).split("\n")
+        if "is not present at runtime" in line
+    ]
+    with open(path.join(tempdir, "stubtest_whitelist"), "w") as whitelist:
+        for var in missing_vars:
+            whitelist.write(var)
+            whitelist.write("\n")
     p = subprocess.Popen(
         [
             "stubtest",
@@ -90,7 +82,7 @@ def type_check_config_args(config_file):
         subprocess.check_call(["mypy", config_file])
         print("Config file type checking succeeded!")
     except subprocess.CalledProcessError as e:
-        print("Config file type checking failed: {}".format(e))
+        print(f"Config file type checking failed: {e}")
         sys.exit(1)
 
 
@@ -109,7 +101,7 @@ def check_deps() -> None:
 def check_config(args):
     check_deps()
 
-    print("Checking Qtile config at: {}".format(args.configfile))
+    print(f"Checking Qtile config at: {args.configfile}")
 
     # need to do all the checking in a tempdir because we need to write stuff
     # for stubtest

@@ -44,12 +44,7 @@ def simple_key_binder(mod, keynames=None):
             dgroup.qtile.config.keys.remove(key)
             dgroup.keys.remove(key)
 
-        if keynames:
-            keys = keynames
-        else:
-            # keys 1 to 9 and 0
-            keys = list(map(str, list(range(1, 10)) + [0]))
-
+        keys = keynames or list(map(str, list(range(1, 10)) + [0]))
         # bind all keys
         for keyname, group in zip(keys, dgroup.qtile.groups):
             name = group.name
@@ -103,8 +98,7 @@ class DGroups:
         return rule_id
 
     def remove_rule(self, rule_id):
-        rule = self.rules_map.get(rule_id)
-        if rule:
+        if rule := self.rules_map.get(rule_id):
             self.rules.remove(rule)
             del self.rules_map[rule_id]
         else:
@@ -122,10 +116,7 @@ class DGroups:
             self.add_dgroup(group, group.init)
 
             if group.spawn and not self.qtile.no_spawn:
-                if isinstance(group.spawn, str):
-                    spawns = [group.spawn]
-                else:
-                    spawns = group.spawn
+                spawns = [group.spawn] if isinstance(group.spawn, str) else group.spawn
                 for spawn in spawns:
                     pid = self.qtile.spawn(spawn)
                     self.add_rule(Rule(Match(net_wm_pid=pid), group.name))
@@ -205,14 +196,8 @@ class DGroups:
                 and self.groups_map[current_group].exclusive
                 and not intrusive
             ):
-                wm_class = client.get_wm_class()
-
-                if wm_class:
-                    if len(wm_class) > 1:
-                        wm_class = wm_class[1]
-                    else:
-                        wm_class = wm_class[0]
-
+                if wm_class := client.get_wm_class():
+                    wm_class = wm_class[1] if len(wm_class) > 1 else wm_class[0]
                     group_name = wm_class
                 else:
                     group_name = client.name or "Unnamed"

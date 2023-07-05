@@ -46,7 +46,4 @@ class She(base.InLoopPollText):
     def poll(self):
         with open(self.device) as f:
             mode = f.read().strip()
-        if mode in self.modes:
-            return self.modes[mode][self.format]
-        else:
-            return mode
+        return self.modes[mode][self.format] if mode in self.modes else mode

@@ -116,8 +116,7 @@ class KeyboardKbdd(base.ThreadPoolText):
             )
 
     def poll(self):
-        if not self.is_kbdd_running:
-            if self._check_kbdd():
-                self.is_kbdd_running = True
-                return self.configured_keyboards[0]
+        if not self.is_kbdd_running and self._check_kbdd():
+            self.is_kbdd_running = True
+            return self.configured_keyboards[0]
         return self.keyboard

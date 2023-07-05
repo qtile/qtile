@@ -65,7 +65,7 @@ class CommandGraphNode(metaclass=abc.ABCMeta):
         """Navigate from the current node to the specified child"""
         if name in self.children:
             return _COMMAND_GRAPH_MAP[name](selector, self)
-        raise KeyError("Given node is not an object: {}".format(name))
+        raise KeyError(f"Given node is not an object: {name}")
 
     def call(self, name: str) -> CommandGraphCall:
         """Execute the given call on the selected object"""
@@ -159,8 +159,7 @@ class CommandGraphObject(CommandGraphNode, metaclass=abc.ABCMeta):
     @property
     def selectors(self) -> list[SelectorType]:
         """The selectors resolving the location of the node in the command graph"""
-        selectors = self.parent.selectors + [(self.object_type, self.selector)]
-        return selectors
+        return self.parent.selectors + [(self.object_type, self.selector)]
 
     @property
     def parent(self) -> CommandGraphNode:

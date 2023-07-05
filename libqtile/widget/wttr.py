@@ -92,8 +92,7 @@ class Wttr(GenPollUrl):
             "lang": self.lang,
         }
         location = ":".join(quote(loc) for loc in self.location)
-        url = f"https://wttr.in/{location}?{self.units}&{urlencode(params)}"
-        return url
+        return f"https://wttr.in/{location}?{self.units}&{urlencode(params)}"
 
     def parse(self, response):
         for coord in self.location:

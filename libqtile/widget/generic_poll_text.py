@@ -32,9 +32,7 @@ class GenPollText(base.ThreadPoolText):
         self.add_defaults(GenPollText.defaults)
 
     def poll(self):
-        if not self.func:
-            return "You need a poll function"
-        return self.func()
+        return self.func() if self.func else "You need a poll function"
 
 
 class GenPollUrl(base.ThreadPoolText):

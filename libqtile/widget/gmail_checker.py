@@ -53,8 +53,8 @@ class GmailChecker(base.ThreadPoolText):
         answer, raw_data = self.gmail.status(self.email_path, "(MESSAGES UNSEEN)")
         if answer == "OK":
             dec = raw_data[0].decode()
-            messages = int(re.search(r"MESSAGES\s+(\d+)", dec).group(1))
-            unseen = int(re.search(r"UNSEEN\s+(\d+)", dec).group(1))
+            messages = int(re.search(r"MESSAGES\s+(\d+)", dec)[1])
+            unseen = int(re.search(r"UNSEEN\s+(\d+)", dec)[1])
             if self.status_only_unseen:
                 return self.display_fmt.format(unseen)
             else:

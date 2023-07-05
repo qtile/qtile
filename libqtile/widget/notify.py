@@ -115,26 +115,20 @@ class Notify(base._TextBox):
         self.text = pangocffi.markup_escape_text(notif.summary)
         urgency = getattr(notif.hints.get("urgency"), "value", 1)
         if urgency != 1:
-            self.text = '<span color="%s">%s</span>' % (
-                utils.hex(self.foreground_urgent if urgency == 2 else self.foreground_low),
-                self.text,
-            )
+            self.text = f'<span color="{utils.hex(self.foreground_urgent if urgency == 2 else self.foreground_low)}">{self.text}</span>'
             self.background = self.background_urgent if urgency == 2 else self.background_low
         else:
             self.background = self.background_normal
 
         if notif.body:
-            self.text = '<span weight="bold">%s</span> - %s' % (
-                self.text,
-                pangocffi.markup_escape_text(notif.body),
-            )
+            self.text = f'<span weight="bold">{self.text}</span> - {pangocffi.markup_escape_text(notif.body)}'
         if callable(self.parse_text):
             try:
                 self.text = self.parse_text(self.text)
-            except:  # noqa: E722
+            except Exception:
                 logger.exception("parse_text function failed:")
         if self.audiofile and path.exists(self.audiofile):
-            self.qtile.spawn("aplay -q '%s'" % self.audiofile)
+            self.qtile.spawn(f"aplay -q '{self.audiofile}'")
 
     def update(self, notif):
         self.qtile.call_soon_threadsafe(self.real_update, notif)

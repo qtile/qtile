@@ -79,14 +79,12 @@ class _X11LayoutBackend(_BaseLayoutBackend):
             return "ERR"
         keyboard = match_layout.group("layout")
 
-        match_variant = self.kb_variant_regex.search(setxkbmap_output)
-        if match_variant:
+        if match_variant := self.kb_variant_regex.search(setxkbmap_output):
             keyboard += " " + match_variant.group("variant")
         return keyboard
 
     def set_keyboard(self, layout: str, options: str | None) -> None:
-        command = ["setxkbmap"]
-        command.extend(layout.split(" "))
+        command = ["setxkbmap", *layout.split(" ")]
         if options:
             command.extend(["-option", options])
         try:
@@ -171,7 +169,7 @@ class KeyboardLayout(base.InLoopPollText):
         base.InLoopPollText._configure(self, qtile, bar)
 
         if qtile.core.name not in layout_backends:
-            raise ConfigError("KeyboardLayout does not support backend: " + qtile.core.name)
+            raise ConfigError(f"KeyboardLayout does not support backend: {qtile.core.name}")
 
         self.backend = layout_backends[qtile.core.name](qtile)
         self.backend.set_keyboard(self.configured_keyboards[0], self.option)

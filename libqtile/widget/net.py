@@ -110,7 +110,6 @@ class Net(base.ThreadPoolText):
                 "up": net.bytes_sent,
                 "total": net.bytes_recv + net.bytes_sent,
             }
-            return interfaces
         else:
             net = psutil.net_io_counters(pernic=True)
             for iface in net:
@@ -121,7 +120,8 @@ class Net(base.ThreadPoolText):
                     "up": up,
                     "total": down + up,
                 }
-            return interfaces
+
+        return interfaces
 
     def poll(self):
         ret_stat = []

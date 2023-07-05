@@ -64,8 +64,7 @@ class StockTicker(GenPollUrl):
 
     @property
     def url(self):
-        url = "https://www.alphavantage.co/query?" + urlencode(self.query)
-        return url
+        return f"https://www.alphavantage.co/query?{urlencode(self.query)}"
 
     def parse(self, body):
         last = None
@@ -74,20 +73,13 @@ class StockTicker(GenPollUrl):
             if "Last Refreshed" in k:
                 last = v
 
-        # Unfortunately, the actual data key is not consistently named, but
-        # since there are only two and one is "Meta Data", we can just use the
-        # other one.
-        other = None
-        for k, v in body.items():
-            if k != "Meta Data":
-                other = v
-                break
-
-        # The actual price is also not consistently named...
-        price = None
-        for k, v in other[last].items():
-            if "price" in k or "close" in k:
-                price = "{:0.2f}".format(float(v))
-                break
-
+        other = next((v for k, v in body.items() if k != "Meta Data"), None)
+        price = next(
+            (
+                "{:0.2f}".format(float(v))
+                for k, v in other[last].items()
+                if "price" in k or "close" in k
+            ),
+            None,
+        )
         return "{symbol}: {sign}{price}".format(symbol=self.symbol, sign=self.sign, price=price)

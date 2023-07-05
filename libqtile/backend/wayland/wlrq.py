@@ -99,11 +99,8 @@ def translate_masks(modifiers: list[str]) -> int:
         try:
             masks.append(ModMasks[i.lower()])
         except KeyError as e:
-            raise WlrQError("Unknown modifier: %s" % i) from e
-    if masks:
-        return functools.reduce(operator.or_, masks)
-    else:
-        return 0
+            raise WlrQError(f"Unknown modifier: {i}") from e
+    return functools.reduce(operator.or_, masks) if masks else 0
 
 
 class Painter:
@@ -255,11 +252,7 @@ def get_xwayland_atoms(xwayland: xwayland.XWayland) -> dict[int, str]:
         "_NET_WM_WINDOW_TYPE_NORMAL": "normal",
     }
 
-    atoms = {}
-    for atom, name in xwayland_wm_types.items():
-        atoms[xwayland.get_atom(atom)] = name
-
-    return atoms
+    return {xwayland.get_atom(atom): name for atom, name in xwayland_wm_types.items()}
 
 
 @dataclass()

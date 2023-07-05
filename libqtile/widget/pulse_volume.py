@@ -156,22 +156,20 @@ class PulseVolume(Volume):
         # store new volume to "speed up" widget update so that we don't have
         # to wait a callback from pulseaudio
         self.default_sink["values"] = list(volume.values)
-        op = lib.pa_context_set_sink_volume_by_index(
+        if op := lib.pa_context_set_sink_volume_by_index(
             self.context, self.default_sink["index"], volume, ffi.NULL, ffi.NULL
-        )
-        if op:
+        ):
             self.wait_for_operation(op)
 
     @expose_command()
     def mute(self):
-        op = lib.pa_context_set_sink_mute_by_index(
+        if op := lib.pa_context_set_sink_mute_by_index(
             self.context,
             self.default_sink["index"],
             not self.default_sink["muted"],
             ffi.NULL,
             ffi.NULL,
-        )
-        if op:
+        ):
             self.wait_for_operation(op)
 
     @expose_command()
@@ -239,10 +237,7 @@ class PulseVolume(Volume):
             if self.default_sink["muted"]:
                 return -1
             base = self.default_sink["base_volume"]
-            if not base:
-                return -1
-            current = max(self.default_sink["values"])
-            return round(current * 100 / base)
+            return round(max(self.default_sink["values"]) * 100 / base) if base else -1
         return -1
 
     def timer_setup(self):

@@ -111,17 +111,14 @@ def rgb(x: ColorType) -> tuple[float, float, float, float]:
     Which is returned as (1.0, 0.0, 0.0, 0.5).
     """
     if isinstance(x, (tuple, list)):
-        if len(x) == 4:
-            alpha = x[-1]
-        else:
-            alpha = 1.0
+        alpha = x[-1] if len(x) == 4 else 1.0
         return (x[0] / 255.0, x[1] / 255.0, x[2] / 255.0, alpha)
     elif isinstance(x, str):
         if x.startswith("#"):
             x = x[1:]
         if "." in x:
             x, alpha_str = x.split(".")
-            alpha = float("0." + alpha_str)
+            alpha = float(f"0.{alpha_str}")
         else:
             alpha = 1.0
         if len(x) not in (3, 6, 8):
@@ -130,7 +127,7 @@ def rgb(x: ColorType) -> tuple[float, float, float, float]:
             # Multiplying by 17: 0xA * 17 = 0xAA etc.
             vals = tuple(int(i, 16) * 17 for i in x)
         else:
-            vals = tuple(int(i, 16) for i in (x[0:2], x[2:4], x[4:6]))
+            vals = tuple(int(i, 16) for i in (x[:2], x[2:4], x[4:6]))
         if len(x) == 8:
             alpha = int(x[6:8], 16) / 255.0
         vals += (alpha,)  # type: ignore
@@ -199,7 +196,7 @@ def describe_attributes(obj: Any, attrs: list[str], func: Callable = lambda x: x
     for attr in attrs:
         value = getattr(obj, attr, None)
         if func(value):
-            pairs.append("%s=%s" % (attr, value))
+            pairs.append(f"{attr}={value}")
 
     return ", ".join(pairs)
 
@@ -401,11 +398,7 @@ async def _send_dbus_message(
 
     Returns a tuple of the bus object and message response.
     """
-    if session_bus:
-        bus_type = BusType.SESSION
-    else:
-        bus_type = BusType.SYSTEM
-
+    bus_type = BusType.SESSION if session_bus else BusType.SYSTEM
     if isinstance(body, str):
         body = [body]
 
@@ -472,7 +465,7 @@ async def add_signal_receiver(
         "interface": dbus_interface,
     }
 
-    rule = ",".join("{}='{}'".format(k, v) for k, v in match_args.items() if v)
+    rule = ",".join(f"{k}='{v}'" for k, v in match_args.items() if v)
 
     bus, msg = await _send_dbus_message(
         session_bus,

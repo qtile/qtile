@@ -63,8 +63,7 @@ class LayerStatic(Static[LayerSurfaceV1]):
             surface.output = core.output_layout.output_at(core.cursor.x, core.cursor.y)
 
         if surface.output:
-            output = surface.output.data
-            if output:
+            if output := surface.output.data:
                 self.output = output
                 self.screen = self.output.screen
 

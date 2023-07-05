@@ -222,15 +222,13 @@ class Slice(Layout):
     def focus_first(self):
         layouts = self._get_layouts()
         for lay in layouts:
-            win = lay.focus_first()
-            if win:
+            if win := lay.focus_first():
                 return win
 
     def focus_last(self):
         layouts = self._get_layouts()
         for lay in reversed(layouts):
-            win = lay.focus_last()
-            if win:
+            if win := lay.focus_last():
                 return win
 
     def focus_next(self, win):
@@ -262,8 +260,7 @@ class Slice(Layout):
         for an implementation on the active layout.
         """
         if "fallback" in self.__dict__:
-            cmd = self.command(name)
-            if cmd:
+            if cmd := self.command(name):
                 return cmd
         return super().__getattr__(name)
 
@@ -282,7 +279,7 @@ class Slice(Layout):
         return cmds
 
     def get_windows(self):
-        clients = list()
+        clients = []
         for layout in self._get_layouts():
             if layout.get_windows() is not None:
                 clients.extend(layout.get_windows())
@@ -299,8 +296,7 @@ class Slice(Layout):
     def move_to_slice(self):
         """Moves the current window to the slice."""
         win = self.group.current_window
-        old_slice = self._slice.window
-        if old_slice:
+        if old_slice := self._slice.window:
             self._slice.remove(old_slice)
             self.fallback.add_client(old_slice)
             self.layouts[old_slice] = self.fallback

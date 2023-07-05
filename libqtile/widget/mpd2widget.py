@@ -39,10 +39,7 @@ def option(char):
     """
 
     def _convert(elements, key, space):
-        if key in elements and elements[key] != "0":
-            elements[key] = char
-        else:
-            elements[key] = space
+        elements[key] = char if key in elements and elements[key] != "0" else space
 
     return _convert
 
@@ -222,10 +219,7 @@ class Mpd2(base.ThreadPoolText):
 
         poll the mpd server and update widget.
         """
-        if self.connected:
-            return self.update_status()
-        else:
-            return self.no_connection
+        return self.update_status() if self.connected else self.no_connection
 
     def update_status(self):
         """get updated info from mpd server and call format."""
@@ -286,7 +280,7 @@ class Mpd2(base.ThreadPoolText):
         song_info["fulltime"] = song_info["time"]
         del song_info["time"]
 
-        song_info.update(status)
+        song_info |= status
         if song_info["updating_db"] == self.undefined_value:
             song_info["updating_db"] = "0"
         if not callable(self.prepare_status["repeat"]):

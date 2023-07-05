@@ -92,9 +92,7 @@ class XWindow(Window[xwayland.Surface]):
                 self._height = self._float_height = surface.height
 
             surface.data = self.ftm_handle = self.core.foreign_toplevel_manager_v1.create_handle()
-            # Get the client's name and class
-            title = surface.title
-            if title:
+            if title := surface.title:
                 self.name = title
                 self.ftm_handle.set_title(self.name)
             self._wm_class = surface.wm_class
@@ -130,9 +128,8 @@ class XWindow(Window[xwayland.Surface]):
         self.mapped = False
         self.damage()
         seat = self.core.seat
-        if not seat.destroyed:
-            if self.surface.surface == seat.keyboard_state.focused_surface:
-                seat.keyboard_clear_focus()
+        if not seat.destroyed and self.surface.surface == seat.keyboard_state.focused_surface:
+            seat.keyboard_clear_focus()
 
         if not self._unmapping:
             # Client unmapped X11 windows return to a pending state, where we don't
@@ -192,8 +189,7 @@ class XWindow(Window[xwayland.Surface]):
 
     def is_transient_for(self) -> base.WindowType | None:
         """What window is this window a transient window for?"""
-        parent = self.surface.parent
-        if parent:
+        if parent := self.surface.parent:
             for win in self.qtile.windows_map.values():
                 if isinstance(win, XWindow) and win.surface == parent:
                     return win
@@ -203,8 +199,7 @@ class XWindow(Window[xwayland.Surface]):
         return self.surface.pid
 
     def get_wm_type(self) -> str | None:
-        wm_type = self.surface.window_type
-        if wm_type:
+        if wm_type := self.surface.window_type:
             return self.core.xwayland_atoms[wm_type[0]]
         return None
 
@@ -264,8 +259,7 @@ class XWindow(Window[xwayland.Surface]):
             height -= margin[0] + margin[2]
 
         if respect_hints:
-            hints = self.surface.size_hints
-            if hints:
+            if hints := self.surface.size_hints:
                 width = max(width, hints.min_width)
                 height = max(height, hints.min_height)
                 if hints.max_width > 0:

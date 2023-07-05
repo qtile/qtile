@@ -77,7 +77,7 @@ def get_stats(scr, c, group_by="lineno", limit=10, seconds=1.5, force_start=Fals
     (max_y, max_x) = scr.getmaxyx()
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
     while True:
-        scr.addstr(0, 0, "Qtile - Top {} lines".format(limit))
+        scr.addstr(0, 0, f"Qtile - Top {limit} lines")
         scr.addstr(
             1,
             0,
@@ -96,18 +96,16 @@ def get_stats(scr, c, group_by="lineno", limit=10, seconds=1.5, force_start=Fals
             # replace "/path/to/module/file.py" with "module/file.py"
             filename = os.sep.join(frame.filename.split(os.sep)[-2:])
             code = ""
-            line = linecache.getline(frame.filename, frame.lineno).strip()
-            if line:
+            if line := linecache.getline(frame.filename, frame.lineno).strip():
                 code = line
             mem = "{:.1f} KiB".format(stat.size / 1024.0)
-            filename = "{}:{}".format(filename, frame.lineno)
+            filename = f"{filename}:{frame.lineno}"
             scr.addstr(cnt + 1, 0, "{:<3} {:<40} {:<30}".format(index, filename, mem))
             scr.addstr(cnt + 2, 4, code, curses.color_pair(1))
             cnt += 2
 
-        other = top_stats[limit:]
         cnt += 2
-        if other:
+        if other := top_stats[limit:]:
             size = sum(stat.size for stat in other)
             other_size = "{:d} other: {:.1f} KiB".format(len(other), size / 1024.0)
             scr.addstr(cnt, 0, other_size, curses.A_BOLD)
@@ -128,18 +126,16 @@ def raw_stats(c, group_by="lineno", limit=10, force_start=False):
     snapshot = filter_snapshot(snapshot)
     top_stats = snapshot.statistics(group_by)
 
-    print("Qtile - Top {} lines".format(limit))
+    print(f"Qtile - Top {limit} lines")
     for index, stat in enumerate(top_stats[:limit], 1):
         frame = stat.traceback[0]
         # replace "/path/to/module/file.py" with "module/file.py"
         filename = os.sep.join(frame.filename.split(os.sep)[-2:])
         print("#{}: {}:{}: {:.1f} KiB".format(index, filename, frame.lineno, stat.size / 1024.0))
-        line = linecache.getline(frame.filename, frame.lineno).strip()
-        if line:
-            print("    {}".format(line))
+        if line := linecache.getline(frame.filename, frame.lineno).strip():
+            print(f"    {line}")
 
-    other = top_stats[limit:]
-    if other:
+    if other := top_stats[limit:]:
         size = sum(stat.size for stat in other)
         print("{:d} other: {:.1f} KiB".format(len(other), size / 1024.0))
     total = sum(stat.size for stat in top_stats)
@@ -152,10 +148,7 @@ def top(opts):
     lines = opts.lines
     seconds = opts.seconds
     force_start = opts.force_start
-    if opts.socket is None:
-        socket = ipc.find_sockfile()
-    else:
-        socket = opts.socket
+    socket = ipc.find_sockfile() if opts.socket is None else opts.socket
     c = client.InteractiveCommandClient(
         interface.IPCCommandInterface(
             ipc.Client(socket),

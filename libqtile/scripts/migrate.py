@@ -59,24 +59,24 @@ def pacman_to_checkupdates(query):
 
 
 def reset_format(node, capture, filename):
-    args = capture.get("class_arguments")
-    if args:
-        if args[0].type == 260:  # argument list
-            n_children = len(args[0].children)
-            for i in range(n_children):
-                # we only want to remove the format argument
-                if "format" in str(args[0].children[i]):
-                    # remove the argument and the trailing or preceeding comma
-                    if i == n_children - 1:  # last argument
-                        args[0].children[i - 1].remove()
-                        args[0].children[i - 1].remove()
-                    else:
-                        args[0].children[i].remove()
-                        args[0].children[i].remove()
+    if not (args := capture.get("class_arguments")):
+        return
+    if args[0].type == 260:  # argument list
+        n_children = len(args[0].children)
+        for i in range(n_children):
+            # we only want to remove the format argument
+            if "format" in str(args[0].children[i]):
+                # remove the argument and the trailing or preceeding comma
+                if i == n_children - 1:  # last argument
+                    args[0].children[i - 1].remove()
+                    args[0].children[i - 1].remove()
+                else:
+                    args[0].children[i].remove()
+                    args[0].children[i].remove()
 
-                    break
-        else:  # there's only one argument
-            args[0].remove()
+                break
+    else:  # there's only one argument
+        args[0].remove()
 
 
 def bitcoin_to_crypto(query):
@@ -108,10 +108,7 @@ def update_node_nac(node, capture, filename):
     key = capture.get("k")
     key.value = "new_client_position"
     val = capture.get("v")
-    if val.value == "True":
-        val.value = "'before_current'"
-    else:
-        val.value = "'after_current'"
+    val.value = "'before_current'" if val.value == "True" else "'after_current'"
 
 
 def new_at_current_to_new_client_position(query):

@@ -108,23 +108,24 @@ class WindowVisibilityToggler:
         Otherwise, if pointer is moved manually to window by the user
         the window might be hidden again before actually reaching it.
         """
-        if (not self.visible) or (not self.shown):
-            win = self.window
-            # always set the floating state before changing group
-            # to avoid disturbance of tiling layout
-            win._float_state = FloatStates.TOP
-            # add to group and bring it to front.
-            win.togroup()
-            win.bring_to_front()
-            # toggle internal flag of visibility
-            self.shown = True
+        if self.visible and self.shown:
+            return
+        win = self.window
+        # always set the floating state before changing group
+        # to avoid disturbance of tiling layout
+        win._float_state = FloatStates.TOP
+        # add to group and bring it to front.
+        win.togroup()
+        win.bring_to_front()
+        # toggle internal flag of visibility
+        self.shown = True
 
-            # add hooks to determine if focus get lost
-            if self.on_focus_lost_hide:
-                if self.warp_pointer:
-                    win.focus(warp=True)
-                hook.subscribe.client_focus(self.on_focus_change)
-                hook.subscribe.setgroup(self.on_focus_change)
+        # add hooks to determine if focus get lost
+        if self.on_focus_lost_hide:
+            if self.warp_pointer:
+                win.focus(warp=True)
+            hook.subscribe.client_focus(self.on_focus_change)
+            hook.subscribe.setgroup(self.on_focus_change)
 
     def hide(self):
         """
@@ -155,9 +156,8 @@ class WindowVisibilityToggler:
             if (
                 self.window.group is not current_group
                 or self.window is not current_group.current_window
-            ):
-                if self.on_focus_lost_hide:
-                    self.hide()
+            ) and self.on_focus_lost_hide:
+                self.hide()
 
 
 class DropDownToggler(WindowVisibilityToggler):
@@ -192,21 +192,22 @@ class DropDownToggler(WindowVisibilityToggler):
         Like WindowVisibilityToggler.show, but before showing the window,
         its floating x, y, width and height is set.
         """
-        if (not self.visible) or (not self.shown):
-            # SET GEOMETRY
-            win = self.window
-            screen = win.qtile.current_screen
-            # calculate windows floating position and width/height
-            # these may differ for screens, and thus always recalculated.
-            x = int(screen.dx + self.x * screen.dwidth)
-            y = int(screen.dy + self.y * screen.dheight)
-            win.float_x = x
-            win.float_y = y
-            width = int(screen.dwidth * self.width)
-            height = int(screen.dheight * self.height)
-            win.place(x, y, width, height, win.borderwidth, win.bordercolor, respect_hints=True)
-            # Toggle the dropdown
-            WindowVisibilityToggler.show(self)
+        if self.visible and self.shown:
+            return
+        # SET GEOMETRY
+        win = self.window
+        screen = win.qtile.current_screen
+        # calculate windows floating position and width/height
+        # these may differ for screens, and thus always recalculated.
+        x = int(screen.dx + self.x * screen.dwidth)
+        win.float_x = x
+        y = int(screen.dy + self.y * screen.dheight)
+        win.float_y = y
+        width = int(screen.dwidth * self.width)
+        height = int(screen.dheight * self.height)
+        win.place(x, y, width, height, win.borderwidth, win.bordercolor, respect_hints=True)
+        # Toggle the dropdown
+        WindowVisibilityToggler.show(self)
 
 
 class ScratchPad(group._Group):
@@ -261,12 +262,10 @@ class ScratchPad(group._Group):
         This method is subscribed if the given command is spawned
         and unsubscribed immediately if the associated window is detected.
         """
-        name = None
-        for n, match in self._spawned.items():
-            if match.compare(client):
-                name = n
-                break
-
+        name = next(
+            (n for n, match in self._spawned.items() if match.compare(client)),
+            None,
+        )
         if name is not None:
             self._spawned.pop(name)
             if not self._spawned:
@@ -304,11 +303,10 @@ class ScratchPad(group._Group):
         """
         name = None
         for name, dd in self.dropdowns.items():
-            if not dd.window.floating:
-                if dd.window.group is not self:
-                    dd.unsubscribe()
-                    del self.dropdowns[name]
-                    break
+            if not dd.window.floating and dd.window.group is not self:
+                dd.unsubscribe()
+                del self.dropdowns[name]
+                break
         self._check_unsubscribe()
 
     @expose_command()
@@ -322,9 +320,8 @@ class ScratchPad(group._Group):
                     d.hide()
         if name in self.dropdowns:
             self.dropdowns[name].toggle()
-        else:
-            if name in self._dropdownconfig:
-                self._spawn(self._dropdownconfig[name])
+        elif name in self._dropdownconfig:
+            self._spawn(self._dropdownconfig[name])
 
     @expose_command()
     def hide_all(self):
@@ -354,24 +351,20 @@ class ScratchPad(group._Group):
         If name is None, a list of all dropdown names is returned.
         """
         if name is None:
-            return {"dropdowns": [ddname for ddname in self._dropdownconfig]}
+            return {"dropdowns": list(self._dropdownconfig)}
         elif name in self.dropdowns:
             return self.dropdowns[name].info()
         elif name in self._dropdownconfig:
             return self._dropdownconfig[name].info()
         else:
-            raise ValueError('No DropDown named "%s".' % name)
+            raise ValueError(f'No DropDown named "{name}".')
 
     def get_state(self):
         """
         Get the state of existing dropdown windows. Used for restoring state across
         Qtile restarts (`restart` == True) or config reloads (`restart` == False).
         """
-        state = []
-        for name, dd in self.dropdowns.items():
-            client_wid = dd.window.wid
-            state.append((name, client_wid, dd.visible))
-        return state
+        return [(name, dd.window.wid, dd.visible) for name, dd in self.dropdowns.items()]
 
     def restore_state(self, state, restart: bool) -> list[int]:
         """

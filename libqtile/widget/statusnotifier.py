@@ -80,7 +80,7 @@ class StatusNotifierItem:  # noqa: E303
         self.on_icon_changed = None
         self.icon_theme = icon_theme
         self.icon = None
-        self.path = path if path else STATUSNOTIFIER_PATH
+        self.path = path or STATUSNOTIFIER_PATH
 
     def __eq__(self, other):
         # Convenience method to find Item in list by service path
@@ -226,10 +226,7 @@ class StatusNotifierItem:  # noqa: E303
 
         path = getIconPath(icon_name, theme=self.icon_theme, extensions=["png", "svg"])
 
-        if not path:
-            return None
-
-        return Img.from_path(path)
+        return Img.from_path(path) if path else None
 
     async def _get_icon(self, icon_name):
         """
@@ -277,7 +274,7 @@ class StatusNotifierItem:  # noqa: E303
         if not self._pixmaps.get("Icon", False):
             return []
 
-        return sorted([size for size in self._pixmaps["Icon"]])
+        return sorted(list(self._pixmaps["Icon"]))
 
     def _get_surfaces(self, size):
         """
@@ -560,15 +557,11 @@ class StatusNotifierHost:  # noqa: E303
             self.started = True
 
     def item_added(self, item, service, future):
-        success = future.result()
-        # If StatusNotifierItem object was created successfully then we
-        # add to our list and redraw the bar
-        if success:
+        if future.result():
             self.items.append(item)
             for callback in self._on_item_added:
                 callback(item)
 
-        # It's an invalid item so let's remove it from the watchers
         else:
             for w in self.watchers:
                 try:
@@ -683,7 +676,7 @@ class StatusNotifier(base._Widget):
 
     def button_press(self, x, y, button):
         icon = self.find_icon_at_pos(x, y)
-        self.selected_item = icon if icon else None
+        self.selected_item = icon or None
 
         name = "Button{0}".format(button)
         if name in self.mouse_callbacks:

@@ -321,11 +321,7 @@ class MonadTall(_SimpleLayoutBase):
             return
 
         # determine focus border-color
-        if client.has_focus:
-            px = self.border_focus
-        else:
-            px = self.border_normal
-
+        px = self.border_focus if client.has_focus else self.border_normal
         # single client - fullscreen
         if len(self.clients) == 1:
             client.place(
@@ -352,21 +348,15 @@ class MonadTall(_SimpleLayoutBase):
         width_shared = self.screen_rect.width - width_main
 
         # calculate client's x offset
-        if self.align == self._left:  # left or up orientation
-            if cidx == 0:
-                # main client
-                xpos = self.screen_rect.x
-            else:
-                # secondary client
-                xpos = self.screen_rect.x + width_main
-        else:  # right or down orientation
-            if cidx == 0:
-                # main client
-                xpos = self.screen_rect.x + width_shared - self.margin
-            else:
-                # secondary client
-                xpos = self.screen_rect.x
-
+        if self.align == self._left and cidx == 0 or self.align != self._left and cidx != 0:
+            # main client
+            xpos = self.screen_rect.x
+        elif self.align == self._left:
+            # secondary client
+            xpos = self.screen_rect.x + width_main
+        else:
+            # main client
+            xpos = self.screen_rect.x + width_shared - self.margin
         # calculate client height and place
         if cidx > 0:
             # secondary client
@@ -453,7 +443,7 @@ class MonadTall(_SimpleLayoutBase):
         """
         left = amt  # track unused shrink amount
         # for each client before specified index
-        for idx in range(0, cidx):
+        for idx in range(cidx):
             # shrink by whatever is left-over of original amount
             left -= left - self._shrink(idx, left)
         # return unused shrink amount
@@ -473,7 +463,7 @@ class MonadTall(_SimpleLayoutBase):
         per_amt = amt / cidx
         left = amt  # track unused shrink amount
         # for each client before specified index
-        for idx in range(0, cidx):
+        for idx in range(cidx):
             # shrink by equal amount and track left-over
             left -= per_amt - self._shrink(idx, per_amt)
         # apply non-equal shrinkage secondary pass
@@ -607,7 +597,7 @@ class MonadTall(_SimpleLayoutBase):
         """
         # split grow amount among number of clients
         per_amt = amt / cidx
-        for idx in range(0, cidx):
+        for idx in range(cidx):
             self._grow(idx, per_amt)
 
     def grow_down_shared(self, cidx, amt):
@@ -712,12 +702,11 @@ class MonadTall(_SimpleLayoutBase):
 
     def _get_closest(self, x, y, clients):
         """Get closest window to a point x,y"""
-        target = min(
+        return min(
             clients,
             key=lambda c: math.hypot(c.x - x, c.y - y),
             default=self.clients.current_client,
         )
-        return target
 
     @expose_command()
     def swap(self, window1, window2):
@@ -915,21 +904,15 @@ class MonadWide(MonadTall):
         height_shared = self.screen_rect.height - height_main
 
         # calculate client's x offset
-        if self.align == self._up:  # up orientation
-            if cidx == 0:
-                # main client
-                ypos = self.screen_rect.y
-            else:
-                # secondary client
-                ypos = self.screen_rect.y + height_main
-        else:  # right or down orientation
-            if cidx == 0:
-                # main client
-                ypos = self.screen_rect.y + height_shared - self.margin
-            else:
-                # secondary client
-                ypos = self.screen_rect.y
-
+        if self.align == self._up and cidx == 0 or self.align != self._up and cidx != 0:
+            # main client
+            ypos = self.screen_rect.y
+        elif self.align == self._up:
+            # secondary client
+            ypos = self.screen_rect.y + height_main
+        else:
+            # main client
+            ypos = self.screen_rect.y + height_shared - self.margin
         # calculate client height and place
         if cidx > 0:
             # secondary client
@@ -1175,10 +1158,7 @@ class MonadThreeCol(MonadTall):
     def _get_secondary_widths(self):
         """Calculate secondary clients' widths"""
         width = self.screen_rect.width - self._get_main_width()
-        if len(self.clients) == 2:
-            return [width, 0]
-
-        return self._split_integer(width, 2)
+        return [width, 0] if len(self.clients) == 2 else self._split_integer(width, 2)
 
     def _get_secondary_height(self, index):
         """Return the height of the provided index"""

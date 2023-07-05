@@ -125,30 +125,22 @@ class Floating(Layout):
                 win.maximized = True
             elif win.fullscreen:
                 win.fullscreen = True
-            else:
-                # If the window hasn't been floated before, it will be configured in
-                # .configure()
-                if win.float_x is not None and win.float_y is not None:
-                    # By default, place window at same offset from top corner
-                    new_x = new_screen.x + win.float_x
-                    new_y = new_screen.y + win.float_y
-                    # make sure window isn't off screen left/right...
-                    new_x = min(new_x, new_screen.x + new_screen.width - win.width)
-                    new_x = max(new_x, new_screen.x)
-                    # and up/down
-                    new_y = min(new_y, new_screen.y + new_screen.height - win.height)
-                    new_y = max(new_y, new_screen.y)
+            elif win.float_x is not None and win.float_y is not None:
+                new_y = new_screen.y + win.float_y
+                new_x = new_screen.x + win.float_x
+                # make sure window isn't off screen left/right...
+                new_x = min(new_x, new_screen.x + new_screen.width - win.width)
+                new_x = max(new_x, new_screen.x)
+                # and up/down
+                new_y = min(new_y, new_screen.y + new_screen.height - win.height)
+                new_y = max(new_y, new_screen.y)
 
-                    win.x = new_x
-                    win.y = new_y
+                win.x = new_x
+                win.y = new_y
             win.group = new_screen.group
 
     def focus_first(self, group=None):
-        if group is None:
-            clients = self.clients
-        else:
-            clients = self.find_clients(group)
-
+        clients = self.clients if group is None else self.find_clients(group)
         if clients:
             return clients[0]
 
@@ -162,11 +154,7 @@ class Floating(Layout):
             return clients[idx + 1]
 
     def focus_last(self, group=None):
-        if group is None:
-            clients = self.clients
-        else:
-            clients = self.find_clients(group)
-
+        clients = self.clients if group is None else self.find_clients(group)
         if clients:
             return clients[-1]
 
@@ -192,9 +180,7 @@ class Floating(Layout):
             return False
         if client.y < screen_rect.y:  # top
             return False
-        if screen_rect.y + screen_rect.width < client.y + client.height:  # bottom
-            return False
-        return True
+        return screen_rect.y + screen_rect.width >= client.y + client.height
 
     def compute_client_position(self, client, screen_rect):
         """recompute client.x and client.y, returning whether or not to place
@@ -234,11 +220,7 @@ class Floating(Layout):
         return above
 
     def configure(self, client, screen_rect):
-        if client.has_focus:
-            bc = self.border_focus
-        else:
-            bc = self.border_normal
-
+        bc = self.border_focus if client.has_focus else self.border_normal
         if client.maximized:
             bw = self.max_border_width
         elif client.fullscreen:
