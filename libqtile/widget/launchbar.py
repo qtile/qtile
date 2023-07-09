@@ -36,7 +36,7 @@ displayed instead.
 To execute a software:
  - ('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode')
 To execute a python command in qtile, begin with by 'qshell:'
- - ('logout', 'qshell:self.qtile.shutdown()', 'logout from qtile')
+ - ('/path/to/icon.png', 'qshell:self.qtile.shutdown()', 'logout from qtile')
 
 
 """
@@ -45,7 +45,13 @@ from __future__ import annotations
 import os.path
 
 import cairocffi
-from xdg.IconTheme import getIconPath
+
+try:
+    from xdg.IconTheme import getIconPath
+
+    has_xdg = True
+except ImportError:
+    has_xdg = False
 
 from libqtile import bar
 from libqtile.images import Img
@@ -59,7 +65,7 @@ class LaunchBar(base._Widget):
 
     Text will displayed when no icon is found.
 
-    Widget requirements: `pyxdg <https://pypi.org/project/pyxdg/>`__.
+    Optional requirements: `pyxdg <https://pypi.org/project/pyxdg/>`__ for finding the icon path if it is not provided in the ``progs`` tuple.
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
@@ -77,13 +83,18 @@ class LaunchBar(base._Widget):
         (
             "progs",
             [],
-            "A list of tuples (software_name, command_to_execute, comment), for example:"
+            "A list of tuples (software_name or icon_path, command_to_execute, comment), for example:"
             " [('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode'), "
-            " ('logout', 'qshell:self.qtile.shutdown()', 'logout from qtile')]",
+            " ('/path/to/icon.png', 'qshell:self.qtile.shutdown()', 'logout from qtile')]",
         ),
         ("text_only", False, "Don't use any icons."),
         ("icon_size", None, "Size of icons. ``None`` to fit to bar."),
         ("padding_y", 0, "Vertical adjustment for icons."),
+        (
+            "theme_path",
+            None,
+            "Path to icon theme to be used by pyxdg for icons. ``None`` will use default icon theme.",
+        ),
     ]
 
     def __init__(
@@ -186,17 +197,25 @@ class LaunchBar(base._Widget):
     def _lookup_icon(self, name):
         """Search for the icon corresponding to one command."""
         self.icons_files[name] = None
+
+        # expands ~ if name is a path and does nothing if not
+        ipath = os.path.expanduser(name)
+
         # if the software_name is directly an absolute path icon file
-        if os.path.isabs(name):
+        if os.path.isabs(ipath):
             # name start with '/' thus it's an absolute path
-            root, ext = os.path.splitext(name)
-            if ext == ".png":
-                self.icons_files[name] = name if os.path.isfile(name) else None
+            root, ext = os.path.splitext(ipath)
+            img_extensions = [".tif", ".tiff", ".bmp", ".jpg", ".jpeg", ".gif", ".png", ".svg"]
+            if ext in img_extensions:
+                self.icons_files[name] = ipath if os.path.isfile(ipath) else None
             else:
                 # try to add the extension
-                self.icons_files[name] = name + ".png" if os.path.isfile(name + ".png") else None
-        else:
-            self.icons_files[name] = getIconPath(name)
+                for extension in img_extensions:
+                    if os.path.isfile(ipath + extension):
+                        self.icons_files[name] = ipath + extension
+                        break
+        elif has_xdg:
+            self.icons_files[name] = getIconPath(name, theme=self.theme_path)
         # no search method found an icon, so default icon
         if self.icons_files[name] is None:
             self.icons_files[name] = self.default_icon
