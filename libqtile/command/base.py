@@ -22,9 +22,11 @@
 The objects in the command graph and command resolution on the objects
 """
 
+
 from __future__ import annotations
 
 import abc
+import contextlib
 import inspect
 import sys
 import traceback
@@ -215,6 +217,8 @@ class CommandObject(metaclass=abc.ABCMeta):
             items: a list of contained items
         """
         ret = self._items(name)
+        # Not finding information for a particular item class is OK here;
+        # we don't expect layouts to have a window, etc.
         return (False, None) if ret is None else ret
 
     @abc.abstractmethod
@@ -254,11 +258,8 @@ class CommandObject(metaclass=abc.ABCMeta):
         # cmd_ but we need to stop this overriding Configurable's
         # use of this method
         if isinstance(self, Configurable):
-            try:
+            with contextlib.suppress(AttributeError):
                 return Configurable.__getattr__(self, name)
-            except AttributeError:
-                pass
-
         # It's not a Configurable attribute so let's check if it's
         # a command call
         if name.startswith("cmd_"):

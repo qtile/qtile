@@ -92,6 +92,7 @@ class XWindow(Window[xwayland.Surface]):
                 self._height = self._float_height = surface.height
 
             surface.data = self.ftm_handle = self.core.foreign_toplevel_manager_v1.create_handle()
+            # Get the client's name and class
             if title := surface.title:
                 self.name = title
                 self.ftm_handle.set_title(self.name)

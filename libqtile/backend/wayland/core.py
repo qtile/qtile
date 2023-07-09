@@ -603,6 +603,7 @@ class Core(base.Core, wlrq.HasListeners):
         ):
             self.focus_window(None)
 
+        # If another client has pointer focus, unfocus that too.
         if found := self._under_pointer():
             win, _, _, _ = found
 
@@ -663,6 +664,7 @@ class Core(base.Core, wlrq.HasListeners):
         self._xwayland.set_seat(self.seat)
         self.xwayland_atoms: dict[int, str] = wlrq.get_xwayland_atoms(self._xwayland)
 
+        # Set the default XWayland cursor
         if xcursor := self.cursor_manager.get_xcursor("left_ptr"):
             if image := next(xcursor.images, None):
                 self._xwayland.set_cursor(
@@ -757,9 +759,12 @@ class Core(base.Core, wlrq.HasListeners):
         if found := self._under_pointer():
             win, surface, sx, sy = found
 
+            # If we have a client who exclusively gets input, no other client's
+            # surfaces are allowed to get pointer input.
             if self.exclusive_client and (
                 isinstance(win, base.Internal) or not win.belongs_to_client(self.exclusive_client)
             ):
+                # Moved to an internal or unrelated window
                 if self._hovered_window is not win:
                     logger.debug(
                         "Pointer focus withheld from window not owned by exclusive client."
@@ -799,6 +804,7 @@ class Core(base.Core, wlrq.HasListeners):
                 self.seat.pointer_notify_enter(surface, sx, sy)
                 if motion is not None:
                     self.seat.pointer_notify_motion(motion, sx, sy)
+            # The pointer is on the border of a client's window
             elif self.seat.pointer_state.focused_surface:
                 # We just moved out of a client's surface
                 self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
@@ -829,7 +835,7 @@ class Core(base.Core, wlrq.HasListeners):
                             self.qtile.focus_screen(win.group.screen.index, False)
 
             self._hovered_window = win
-
+        # There is no window under the pointer
         elif self._hovered_window:
             if isinstance(self._hovered_window, window.Internal):
                 # We just moved out of an Internal
@@ -1044,6 +1050,8 @@ class Core(base.Core, wlrq.HasListeners):
             if self.exclusive_client and (
                 isinstance(win, base.Internal) or not win.belongs_to_client(self.exclusive_client)
             ):
+                # If we have a client who exclusively gets input, no other client's
+                # surfaces are allowed to get focus.
                 logger.debug("Focus withheld from window not owned by exclusive client.")
                 return
 

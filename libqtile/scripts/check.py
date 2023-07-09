@@ -48,11 +48,14 @@ def type_check_config_vars(tempdir, config_name):
         env=newenv,
     )
     stdout, stderr = p.communicate()
+    # filter out stuff that users didn't specify; they'll be imported from
+    # the default config
     missing_vars = [
         line.split()[0]
         for line in (stdout + stderr).split("\n")
         if "is not present at runtime" in line
     ]
+    # write missing vars to a tempfile
     with open(path.join(tempdir, "stubtest_whitelist"), "w") as whitelist:
         for var in missing_vars:
             whitelist.write(var)

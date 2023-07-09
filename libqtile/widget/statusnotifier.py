@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import contextlib
 import os
 from functools import partial
 
@@ -557,17 +558,17 @@ class StatusNotifierHost:  # noqa: E303
             self.started = True
 
     def item_added(self, item, service, future):
+        # If StatusNotifierItem object was created successfully then we
+        # add to our list and redraw the bar
         if future.result():
             self.items.append(item)
             for callback in self._on_item_added:
                 callback(item)
-
+        # It's an invalid item so let's remove it from the watchers
         else:
             for w in self.watchers:
-                try:
+                with contextlib.suppress(ValueError):
                     w._items.remove(service)
-                except ValueError:
-                    pass
 
     def add_item(self, service, path=None):
         """

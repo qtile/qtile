@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import io
 import logging
 import os
@@ -667,6 +668,7 @@ class Qtile(CommandObject):
         if win.defunct:
             return
         self.windows_map[win.wid] = win
+        # Window may have been bound to a group in the hook.
         if (
             self.current_screen
             and isinstance(win, base.Window)
@@ -1225,15 +1227,12 @@ class Qtile(CommandObject):
             pid2 = os.fork()
             if pid2 == 0:
                 os.close(w)
-                try:
+                with contextlib.suppress(KeyError):
                     # if qtile was installed in a virutal env, we don't
                     # necessarily want to propagate that to children
                     # applications, since it may change e.g. the behavior
                     # of shells that spawn python applications
                     del os.environ["VIRTUAL_ENV"]
-                except KeyError:
-                    pass
-
                 # Open /dev/null as stdin, stdout, stderr
                 try:
                     fd = os.open(os.devnull, os.O_RDWR)
@@ -1242,24 +1241,17 @@ class Qtile(CommandObject):
                     pass
                 else:
                     # For Python >=3.4, need to set file descriptor to inheritable
-                    try:
+                    with contextlib.suppress(AttributeError):
                         os.set_inheritable(fd, True)
-                    except AttributeError:
-                        pass
-
                     # Again, this shouldn't happen, but we should just check
                     if fd > 0:
                         os.dup2(fd, 0)
 
                     os.dup2(fd, 1)
                     os.dup2(fd, 2)
-
-                try:
+                # can't log here since we forked :(
+                with contextlib.suppress(OSError):
                     os.execvp(args[0], args)
-                except OSError:
-                    # can't log here since we forked :(
-                    pass
-
                 os._exit(1)
             else:
                 # Here it doesn't matter if fork failed or not, we just write
@@ -1416,7 +1408,7 @@ class Qtile(CommandObject):
     @expose_command()
     def next_urgent(self) -> None:
         """Focus next window with urgent hint"""
-        try:
+        with contextlib.suppress(IndexError):
             nxt = [w for w in self.windows_map.values() if w.urgent][0]
             assert isinstance(nxt, base.Window)
             if nxt.group:
@@ -1425,8 +1417,6 @@ class Qtile(CommandObject):
             else:
                 self.current_screen.group.add(nxt)
                 self.current_screen.group.focus(nxt)
-        except IndexError:
-            pass  # no window had urgent set
 
     @expose_command()
     def togroup(self, prompt: str = "group", widget: str = "prompt") -> None:

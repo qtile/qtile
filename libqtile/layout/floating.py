@@ -125,7 +125,10 @@ class Floating(Layout):
                 win.maximized = True
             elif win.fullscreen:
                 win.fullscreen = True
+            # If the window hasn't been floated before, it will be configured in
+            # .configure()
             elif win.float_x is not None and win.float_y is not None:
+                # By default, place window at same offset from top corner
                 new_y = new_screen.y + win.float_y
                 new_x = new_screen.x + win.float_x
                 # make sure window isn't off screen left/right...

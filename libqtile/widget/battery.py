@@ -232,6 +232,8 @@ class _LinuxBattery(_Battery, configurable.Configurable):
                 return f.read().strip(), value_type
         except OSError as e:
             logger.debug("Failed to read '%s':", path, exc_info=True)
+            # Do not fail if the file exists but we can not read it this time
+            # See https://github.com/qtile/qtile/pull/1516 for rationale
             return None if isinstance(e, FileNotFoundError) else ("-1", "N/A")
 
     def _get_param(self, name) -> tuple[str, str]:

@@ -607,6 +607,8 @@ class Prompt(base._TextBox):
         self._update()
 
     def _get_prev_cmd(self):
+        # Get the previous command in history.
+        # If there isn't more previous commands, ring system bell
         if self.record_history:
             if self.position:
                 self.position -= 1
@@ -616,6 +618,8 @@ class Prompt(base._TextBox):
                 self._alert()
 
     def _get_next_cmd(self):
+        # Get the next command in history.
+        # If the last command was already reached, ring system bell.
         if self.position == len(self.completer_history):
             if self.record_history:
                 self._alert()

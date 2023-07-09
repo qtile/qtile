@@ -72,8 +72,11 @@ class StockTicker(GenPollUrl):
             # In instead of ==, because of the number prefix that is inconsistent
             if "Last Refreshed" in k:
                 last = v
-
+        # Unfortunately, the actual data key is not consistently named, but
+        # since there are only two and one is "Meta Data", we can just use the
+        # other one.
         other = next((v for k, v in body.items() if k != "Meta Data"), None)
+        # The actual price is also not consistently named...
         price = next(
             (
                 "{:0.2f}".format(float(v))

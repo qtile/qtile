@@ -298,13 +298,12 @@ def _normalize_item(object_type: str | None, item: str) -> str | int:
         "window",
         "screen",
     ]:
-        return item
-    try:
-        return int(item)
-    except ValueError as e:
-        # A value error could arise because the next selector has been passed
-        raise SelectError(
-            f"Unexpected index {item}. Is this an object_type?",
-            str(object_type),
-            [(str(object_type), item)],
-        ) from e
+        try:
+            return int(item)
+        except ValueError as e:
+            # A value error could arise because the next selector has been passed
+            raise SelectError(
+                f"Unexpected index {item}. Is this an object_type?",
+                str(object_type),
+                [(str(object_type), item)],
+            ) from e

@@ -163,6 +163,8 @@ class Core(base.Core):
             | xcbq.PointerMotionHintMask
         )
 
+        # The last time we were handling a MotionNotify event
+        self._last_motion_time = 0
         # The last motion notify event that we still need to handle
         self._motion_notify: xcffib.Event | None = None
 
@@ -314,7 +316,6 @@ class Core(base.Core):
 
                 if event.__class__ in _IGNORED_EVENTS:
                     continue
-
                 # Motion Notifies are handled later
                 # Otherwise this is too CPU intensive
                 if type(event) == xcffib.xproto.MotionNotifyEvent:
@@ -332,6 +333,13 @@ class Core(base.Core):
                         self.handle_event(self._motion_notify)
                         self._motion_notify = None
                     self.handle_event(event)
+            # Catch some bad X exceptions. Since X is event based, race
+            # conditions can occur almost anywhere in the code. For example, if
+            # a window is created and then immediately destroyed (before the
+            # event handler is evoked), when the event handler tries to examine
+            # the window properties, it will throw a WindowError exception. We
+            # can essentially ignore it, since the window is already dead and
+            # we've got another event in the queue notifying us to clean it up.
 
             except (
                 xcffib.xproto.WindowError,
@@ -667,7 +675,12 @@ class Core(base.Core):
 
     def handle_MotionNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
-
+        # Limit the motion notify events from happening too frequently
+        # Here we limit it to the config value
+        resize_fps = self.qtile.current_screen.x11_drag_polling_rate
+        if (event.time - self._last_motion_time) <= (1000 / resize_fps):
+            return
+        self._last_motion_time = event.time
         self.qtile.process_button_motion(event.event_x, event.event_y)
 
     def handle_ConfigureRequest(self, event):  # noqa: N802
@@ -744,6 +757,10 @@ class Core(base.Core):
 
         if win and getattr(win, "group", None):
             with contextlib.suppress(xcffib.xproto.WindowError):
+                # This means that the window has probably been destroyed,
+                # but we haven't yet seen the DestroyNotify (it is likely
+                # next in the queue). So, we just let these errors pass
+                # since the window is dead.
                 win.hide()
                 win.state = window.WithdrawnState  # type: ignore
             # Clear these atoms as per spec
@@ -832,9 +849,10 @@ class Core(base.Core):
                 qtile.current_group.focus(window, False)
                 window.focus(False)
             except AttributeError:
+                # probably clicked an internal window
                 if screen := qtile.find_screen(e.root_x, e.root_y):
                     qtile.focus_screen(screen.index, warp=False)
-
+        # clicked on root window
         elif screen := qtile.find_screen(e.root_x, e.root_y):
             qtile.focus_screen(screen.index, warp=False)
 
@@ -857,6 +875,7 @@ class Core(base.Core):
         # Give the windows a chance to shut down nicely.
         for pid in pids:
             with contextlib.suppress(OSError):
+                # might have died recently
                 os.kill(pid, signal.SIGTERM)
 
         def still_alive(pid):
