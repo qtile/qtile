@@ -21,16 +21,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from libqtile import bar
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
+from libqtile.pangocffi import markup_escape_text
 from libqtile.widget import Systray, base
 
 if TYPE_CHECKING:
     from typing import Any
 
 
-class WidgetBox(base._Widget):
+class WidgetBox(base._TextBox):
     """A widget to declutter your bar.
 
     WidgetBox is a widget that hides widgets by default but shows them when
@@ -56,10 +56,6 @@ class WidgetBox(base._Widget):
 
     orientations = base.ORIENTATION_HORIZONTAL
     defaults: list[tuple[str, Any, str]] = [
-        ("font", "sans", "Text font"),
-        ("fontsize", None, "Font pixel size. Calculated if None."),
-        ("fontshadow", None, "font shadow color, default is None(no shadow)"),
-        ("foreground", "#ffffff", "Foreground colour."),
         (
             "close_button_location",
             "left",
@@ -72,7 +68,7 @@ class WidgetBox(base._Widget):
     ]
 
     def __init__(self, _widgets: list[base._Widget] | None = None, **config):
-        base._Widget.__init__(self, bar.CALCULATED, **config)
+        base._TextBox.__init__(self, **config)
         self.add_defaults(WidgetBox.defaults)
         self.box_is_open = False
         self.add_callbacks({"Button1": self.toggle})
@@ -91,16 +87,9 @@ class WidgetBox(base._Widget):
             self.close_button_location = "left"
 
     def _configure(self, qtile, bar):
-        base._Widget._configure(self, qtile, bar)
+        base._TextBox._configure(self, qtile, bar)
 
-        self.layout = self.drawer.textlayout(
-            self.text_open if self.box_is_open else self.text_closed,
-            self.foreground,
-            self.font,
-            self.fontsize,
-            self.fontshadow,
-            markup=False,
-        )
+        self.text = markup_escape_text(self.text_open if self.box_is_open else self.text_closed)
 
         if self.configured:
             return
@@ -130,11 +119,8 @@ class WidgetBox(base._Widget):
         if self.start_opened and not self.box_is_open:
             self.qtile.call_soon(self.toggle)
 
-    def calculate_length(self):
-        return self.layout.width
-
     def set_box_label(self):
-        self.layout.text = self.text_open if self.box_is_open else self.text_closed
+        self.text = markup_escape_text(self.text_open if self.box_is_open else self.text_closed)
 
     def toggle_widgets(self):
         for widget in self.widgets:
@@ -164,13 +150,6 @@ class WidgetBox(base._Widget):
                 # enable drawing again
                 widget.drawer.enable()
                 self.bar.widgets.insert(index, widget)
-
-    def draw(self):
-        self.drawer.clear(self.background or self.bar.background)
-
-        self.layout.draw(0, int(self.bar.height / 2.0 - self.layout.height / 2.0) + 1)
-
-        self.drawer.draw(offsetx=self.offsetx, offsety=self.offsety, width=self.width)
 
     @expose_command()
     def toggle(self):
