@@ -17,7 +17,7 @@ except ModuleNotFoundError:
         import pkg_resources
 
         VERSION = pkg_resources.require("qtile")[0].version
-    except (pkg_resources.DistributionNotFound, ModuleNotFoundError):
+    except (ModuleNotFoundError, pkg_resources.DistributionNotFound):
         VERSION = "dev"
 
 
