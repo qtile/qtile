@@ -16,8 +16,11 @@ except ModuleNotFoundError:
         # pkg_resources is required for 3.7
         import pkg_resources
 
-        VERSION = pkg_resources.require("qtile")[0].version
-    except (ModuleNotFoundError, pkg_resources.DistributionNotFound):
+        try:
+            VERSION = pkg_resources.require("qtile")[0].version
+        except pkg_resources.DistributionNotFound:
+            VERSION = "dev"
+    except ModuleNotFoundError:
         VERSION = "dev"
 
 
