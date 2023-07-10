@@ -45,7 +45,6 @@ class CheckCairoXcb(install):
 
     def finalize_options(self):
         if not self.cairo_xcb_check():
-
             print(
                 textwrap.dedent(
                     """

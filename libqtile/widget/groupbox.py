@@ -238,6 +238,11 @@ class GroupBox(_GroupBase):
         ),
         ("spacing", None, "Spacing between groups" "(if set to None, will be equal to margin_x)"),
         ("toggle", True, "Enable toggling of group when clicking on same group name"),
+        (
+            "active_label",
+            None,
+            "The label of the active group. When None, it will display the name of the group as normal.",
+        ),
     ]
 
     def __init__(self, **config):
@@ -353,6 +358,7 @@ class GroupBox(_GroupBase):
             is_line = self.highlight_method == "line"
 
             bw = self.box_width([g])
+            label = g.label
 
             if self.group_has_urgent(g) and self.urgent_alert_method == "text":
                 text_color = self.urgent_text
@@ -379,6 +385,8 @@ class GroupBox(_GroupBase):
                             border = self.other_current_screen_border
                         else:
                             border = self.other_screen_border
+                if self.active_label:
+                    label = self.active_label
             elif self.group_has_urgent(g) and self.urgent_alert_method in (
                 "border",
                 "block",
@@ -394,7 +402,7 @@ class GroupBox(_GroupBase):
 
             self.drawbox(
                 offset,
-                g.label,
+                label,
                 border,
                 text_color,
                 highlight_color=self.highlight_color,
