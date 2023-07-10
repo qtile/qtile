@@ -84,6 +84,10 @@ class XWindow(Window[xwayland.Surface]):
                 event.x, event.y, event.width, event.height, self.borderwidth, self.bordercolor
             )
         else:
+            # TODO: We shouldn't need this first configure event, but some clients (e.g.
+            # Ardour) seem to freeze up if we pass the current state, which is what we
+            # want, and do with `self.place`.
+            self.surface.configure(event.x, event.y, event.width, event.height)
             self.place(
                 self.x, self.y, self.width, self.height, self.borderwidth, self.bordercolor
             )
