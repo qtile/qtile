@@ -84,16 +84,7 @@ def get_cffi_modules():
         print("CFFI package is missing")
         return
 
-    # We always need pango
-    cffi_modules = [
-        "libqtile/pango_ffi_build.py:pango_ffi",
-    ]
-
-    # X11 backend dependencies
-    if can_import("xcffib"):
-        cffi_modules.append("libqtile/backend/x11/xcursors_ffi_build.py:xcursors_ffi")
-    else:
-        print("Failed to find xcffib. X11 backend dependencies not built.")
+    cffi_modules = []
 
     # Wayland backend dependencies
     if can_import("wlroots.ffi_build"):
