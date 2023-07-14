@@ -195,7 +195,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         self._configured = False
         self._draw_queued = False
         self.future: asyncio.Handle | None = None
-        self._borders_drawn = False
 
         # The part of the margins that was reserved by clients
         self._reserved_space: list[int] = [0, 0, 0, 0]  # [N, E, S, W]
@@ -243,7 +242,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         # reserved or we're reconfiguring the bar because the screen has changed
         if not self._configured or self._reserved_space_updated or reconfigure:
             Gap._configure(self, qtile, screen)
-            self._borders_drawn = False
 
             if any(self.margin) or any(self.border_width) or self._reserved_space_updated:
                 # Increase the margin size for the border. The border will be drawn
@@ -304,7 +302,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             self.window.opacity = self.opacity
             self.window.unhide()
 
-            self.window.process_window_expose = self.process_window_expose  # type: ignore[assignment]
+            self.window.process_window_expose = self.draw  # type: ignore[assignment]
             self.window.process_button_click = self.process_button_click  # type: ignore[assignment]
             self.window.process_button_release = self.process_button_release  # type: ignore[assignment]
             self.window.process_pointer_enter = self.process_pointer_enter  # type: ignore[assignment]
@@ -601,13 +599,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             self._saved_focus.focus(False)
         self._has_keyboard = None
 
-    def process_window_expose(self) -> None:
-        """
-        If the window is being redrawn we need to redraw borders too.
-        """
-        self._borders_drawn = False
-        self.draw()
-
     def draw(self) -> None:
         assert self.qtile is not None
 
@@ -624,7 +615,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         self._resize(self._length, self.widgets)
 
         # We draw the border before the widgets
-        if any(self.border_width) and not self._borders_drawn:
+        if any(self.border_width):
             # The border is drawn "outside" of the bar (i.e. not in the space that the
             # widgets occupy) so we need to add the additional space
             width = self.width + self.border_width[1] + self.border_width[3]
@@ -668,18 +659,8 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
             self.drawer.draw(0, 0)
 
-            # Prevent multiple redraws of borders
-            self._borders_drawn = True
-
         for i in self.widgets:
             i.draw()
-        end = i.offset + i.length  # pylint: disable=undefined-loop-variable
-        # we verified that self.widgets is not empty in self.draw(), see above.
-        if end < self._length:
-            if self.horizontal:
-                self.drawer.draw(offsetx=end, width=self._length - end)
-            else:
-                self.drawer.draw(offsety=end, height=self._length - end)
 
     @expose_command()
     def info(self) -> dict[str, Any]:
@@ -700,7 +681,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         if is_show != self.is_show():
             if is_show:
                 self._size = self._saved_size
-                self._borders_drawn = False
                 if self.window:
                     self.window.unhide()
             else:

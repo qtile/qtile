@@ -24,7 +24,16 @@ import libqtile.widget
 
 @pytest.fixture
 def widget(monkeypatch):
-    yield libqtile.widget.WidgetBox
+    # We create a wrapper for the WidgetBox which makes sure all widgets
+    # inside the box have "has_mirrors" set to True as this keeps a copy of
+    # the contents in the drawer which we can use for the screenshot.
+    class WidgetBox(libqtile.widget.WidgetBox):
+        def _configure(self, bar, screen):
+            libqtile.widget.WidgetBox._configure(self, bar, screen)
+            for w in self.widgets:
+                w.drawer.has_mirrors = True
+
+    yield WidgetBox
 
 
 @pytest.mark.parametrize(
