@@ -1468,7 +1468,7 @@ class Internal(_Window, base.Internal):
         win.set_property("QTILE_INTERNAL", 1)
         self._depth = desired_depth
 
-    def create_drawer(self, width: int, height: int) -> base.Drawer:
+    def create_drawer(self, width: int, height: int) -> Drawer:
         """Create a Drawer that draws to this window."""
         return Drawer(self.qtile, self, width, height)
 
