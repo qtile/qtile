@@ -35,6 +35,7 @@ from functools import partial
 from typing import Any
 
 from libqtile import hook
+from libqtile.command.base import expose_command
 from libqtile.widget import base
 
 
@@ -292,6 +293,7 @@ class GroupBox(_GroupBase):
         self.click = x
         _GroupBase.button_press(self, x, y, button)
 
+    @expose_command()
     def next_group(self):
         group = None
         current_group = self.qtile.current_group
@@ -302,6 +304,7 @@ class GroupBox(_GroupBase):
             group = next(i)
         self.go_to_group(group)
 
+    @expose_command()
     def prev_group(self):
         group = None
         current_group = self.qtile.current_group
