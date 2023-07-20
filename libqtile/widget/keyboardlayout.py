@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import re
 from abc import ABCMeta, abstractmethod
+from pathlib import Path
 from subprocess import CalledProcessError, check_output
 from typing import TYPE_CHECKING
 
@@ -92,16 +93,16 @@ class _X11LayoutBackend(_BaseLayoutBackend):
         try:
             check_output(command)
         except CalledProcessError:
-            logger.error("Can not change the keyboard layout:")
+            logger.error("Cannot change the keyboard layout.")
         except OSError:
-            logger.error("Please, check that setxkbmap is available:")
+            logger.error("Please, check that setxkbmap is available.")
         else:
-            try:
-                check_output("xmodmap $HOME/.Xmodmap", shell=True)
-            except CalledProcessError:
-                logger.error("Can not load ~/.Xmodmap:")
-            except OSError:
-                logger.error("Please, check that xmodmap is available:")
+            # Load Xmodmap if it's available
+            if Path("~/.Xmodmap").expanduser().is_file():
+                try:
+                    check_output("xmodmap $HOME/.Xmodmap", shell=True)
+                except CalledProcessError:
+                    logger.error("Could not load ~/.Xmodmap.")
 
 
 class _WaylandLayoutBackend(_BaseLayoutBackend):
