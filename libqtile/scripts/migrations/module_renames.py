@@ -24,6 +24,7 @@ from libcst.codemod.visitors import AddImportsVisitor, RemoveImportsVisitor
 
 from libqtile.scripts.migrations._base import (
     Change,
+    Check,
     MigrationTransformer,
     _QtileMigrator,
     add_migration,
@@ -162,6 +163,23 @@ class ModuleRenames(_QtileMigrator):
             Change(f"from libqtile.{mod} import foo", f"from {new_mod}.{new_file} import foo")
         )
         TESTS.append(Change(f"from libqtile import {mod}", f"from {new_mod} import {new_file}"))
+
+    TESTS.append(
+        Check(
+            """
+            from libqtile.command_client import CommandClient
+            from libqtile.command_graph import CommandGraphNode
+            from libqtile.command_interface import QtileCommandInterface
+            from libqtile.command_object import CommandObject
+            """,
+            """
+            from libqtile.command.client import CommandClient
+            from libqtile.command.graph import CommandGraphNode
+            from libqtile.command.interface import QtileCommandInterface
+            from libqtile.command.base import CommandObject
+            """,
+        )
+    )
 
     def run(self, original_node):
         # Run the base transformer first...

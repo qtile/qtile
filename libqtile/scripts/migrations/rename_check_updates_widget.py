@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from libqtile.scripts.migrations._base import (
-    Change,
+    Check,
     RenamerTransformer,
     _QtileMigrator,
     add_migration,
@@ -76,18 +76,18 @@ class RenamePacmanWidget(_QtileMigrator):
     AFTER_VERSION = "0.16.1"
 
     TESTS = [
-        Change(
+        Check(
             """
-            from libqtile import bar
+            from libqtile import bar, widget
             from libqtile.widget import Pacman
 
-            bar.Bar([Pacman()], 30)
+            bar.Bar([Pacman(), widget.Pacman()], 30)
             """,
             """
-            from libqtile import bar
+            from libqtile import bar, widget
             from libqtile.widget import CheckUpdates
 
-            bar.Bar([CheckUpdates()], 30)
+            bar.Bar([CheckUpdates(), widget.CheckUpdates()], 30)
             """,
         )
     ]

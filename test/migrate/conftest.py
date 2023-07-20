@@ -24,6 +24,7 @@ from pathlib import Path
 import pytest
 
 from libqtile.scripts.migrations._base import NoChange
+from test.test_check import run_qtile_check
 
 
 class SourceCode:
@@ -67,8 +68,16 @@ class MigrationTester:
             output = subprocess.run(argv, capture_output=True, check=True)
         except subprocess.CalledProcessError:
             assert False
-        print(output.stdout.decode().splitlines())
+
         assert any(self.test_id in line for line in output.stdout.decode().splitlines())
+
+    def assert_check(self):
+        if not self.test.source:
+            assert False, f"{self.test_id} has no Check test."
+
+        self.assert_migrate()
+
+        assert run_qtile_check(self.test.source_path)
 
 
 @pytest.fixture

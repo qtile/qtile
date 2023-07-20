@@ -24,6 +24,7 @@ from libcst.codemod.visitors import AddImportsVisitor
 
 from libqtile.scripts.migrations._base import (
     Change,
+    Check,
     MigrationTransformer,
     NoChange,
     _QtileMigrator,
@@ -35,7 +36,7 @@ MIGRATION_MAP = {
     "cmd_hints": "get_hints",
     "cmd_groups": "get_groups",
     "cmd_screens": "get_screens",
-    "cmd_opacity": "set_opactity",
+    "cmd_opacity": "set_opacity",
 }
 
 
@@ -140,6 +141,13 @@ class RemoveCmdPrefix(_QtileMigrator):
 
     TESTS = [
         Change("""qtile.cmd_spawn("alacritty")""", """qtile.spawn("alacritty")"""),
+        Change("""qtile.cmd_groups()""", """qtile.get_groups()"""),
+        Change("""qtile.cmd_screens()""", """qtile.get_screens()"""),
+        Change("""qtile.current_window.cmd_hints()""", """qtile.current_window.get_hints()"""),
+        Change(
+            """qtile.current_window.cmd_opacity(0.5)""",
+            """qtile.current_window.set_opacity(0.5)""",
+        ),
         Change(
             """
             class MyWidget(widget.Clock):
@@ -160,6 +168,44 @@ class RemoveCmdPrefix(_QtileMigrator):
             def cmd_some_other_func():
                 pass
             """
+        ),
+        Check(
+            """
+            from libqtile import qtile, widget
+
+            class MyClock(widget.Clock):
+                def cmd_my_exposed_command(self):
+                    pass
+
+            def my_func(qtile):
+                qtile.cmd_spawn("rickroll")
+                hints = qtile.current_window.cmd_hints()
+                groups = qtile.cmd_groups()
+                screens = qtile.cmd_screens()
+                qtile.current_window.cmd_opacity(0.5)
+
+            def cmd_some_other_func():
+                pass
+            """,
+            """
+            from libqtile import qtile, widget
+            from libqtile.command.base import expose_command
+
+            class MyClock(widget.Clock):
+                @expose_command
+                def my_exposed_command(self):
+                    pass
+
+            def my_func(qtile):
+                qtile.spawn("rickroll")
+                hints = qtile.current_window.get_hints()
+                groups = qtile.get_groups()
+                screens = qtile.get_screens()
+                qtile.current_window.set_opacity(0.5)
+
+            def cmd_some_other_func():
+                pass
+            """,
         ),
     ]
 

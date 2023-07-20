@@ -21,7 +21,7 @@ import libcst as cst
 import libcst.matchers as m
 
 from libqtile.scripts.migrations._base import (
-    Change,
+    Check,
     RenamerTransformer,
     _QtileMigrator,
     add_migration,
@@ -84,7 +84,7 @@ class BitcoinToCrypto(_QtileMigrator):
     AFTER_VERSION = "0.18.0"
 
     TESTS = [
-        Change(
+        Check(
             """
             from libqtile import bar
             from libqtile.widget import BitcoinTicker

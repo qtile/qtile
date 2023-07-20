@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from libqtile.scripts.migrations._base import (
-    Change,
+    Check,
     RenamerTransformer,
     _QtileMigrator,
     add_migration,
@@ -43,16 +43,24 @@ class RenameTileMaster(_QtileMigrator):
     AFTER_VERSION = "0.16.1"
 
     TESTS = [
-        Change(
+        Check(
             """
+            from libqtile import layout
             from libqtile.layout import Tile
 
-            t = Tile(masterWindows=2)
+            layouts = [
+                Tile(masterWindows=2),
+                layout.Tile(masterWindows=3)
+            ]
             """,
             """
+            from libqtile import layout
             from libqtile.layout import Tile
 
-            t = Tile(master_length=2)
+            layouts = [
+                Tile(master_length=2),
+                layout.Tile(master_length=3)
+            ]
             """,
         )
     ]
