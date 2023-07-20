@@ -23,7 +23,7 @@ A basic migration will look like this:
     from libqtile.scripts.migrations._base import MigrationTransformer, _QtileMigrator, add_migration
 
 
-    class MigrationTransformer(MigrationTransformer):
+    class MyMigration(MigrationTransformer):
         """The class that actually modifies the code."""
         ...
 
@@ -43,7 +43,7 @@ A basic migration will look like this:
 
         TESTS = []
 
-        visitor = MigrationTransformer
+        visitor = MyMigration
 
 
     add_migration(Migrator)
@@ -177,11 +177,22 @@ works as expected.
 
 Unlike other tests, the tests for the migrations are defined within the ``TESTS`` attribute.
 
-This is a list that should take a ``Change`` or ``NoChange`` object (both are imported from
+This is a list that should take a ``Check``, ``Change`` or ``NoChange`` object (all are imported from
 ``libqtile.scripts.migrations._base``).
 
 A ``Change`` object needs two parameters, the input code and the expected output. A ``NoChange``
 object just defines the input (as the output should be the same).
+
+A ``Check`` object is identical to ``Change`` however, when running the test suite, the migrated
+code will be verified with ``qtile check``. The code will therefore need to include all relevant
+imports etc.
+
+Based on the above, the following is recommended as best practice:
+
+* Define one ``Check`` test which addresses every situation anticipated by the migration
+* Use as many ``Change`` tests as required to test individual scenarios in a minimal way
+* Use ``NoChange`` tests where there are specific cases that should not be modified
+* Depending on the simplicity of the migration, a single ``Check`` may be all that is required
 
 For example, the ``RemoveCmdPrefix`` migration has the following ``TESTS``:
 
@@ -189,6 +200,13 @@ For example, the ``RemoveCmdPrefix`` migration has the following ``TESTS``:
 
     TESTS = [
         Change("""qtile.cmd_spawn("alacritty")""", """qtile.spawn("alacritty")"""),
+        Change("""qtile.cmd_groups()""", """qtile.get_groups()"""),
+        Change("""qtile.cmd_screens()""", """qtile.get_screens()"""),
+        Change("""qtile.current_window.cmd_hints()""", """qtile.current_window.get_hints()"""),
+        Change(
+            """qtile.current_window.cmd_opacity(0.5)""",
+            """qtile.current_window.set_opacity(0.5)""",
+        ),
         Change(
             """
             class MyWidget(widget.Clock):
@@ -209,12 +227,50 @@ For example, the ``RemoveCmdPrefix`` migration has the following ``TESTS``:
             def cmd_some_other_func():
                 pass
             """
+        ),
+        Check(
+            """
+            from libqtile import qtile, widget
+
+            class MyClock(widget.Clock):
+                def cmd_my_exposed_command(self):
+                    pass
+
+            def my_func(qtile):
+                qtile.cmd_spawn("rickroll")
+                hints = qtile.current_window.cmd_hints()
+                groups = qtile.cmd_groups()
+                screens = qtile.cmd_screens()
+                qtile.current_window.cmd_opacity(0.5)
+
+            def cmd_some_other_func():
+                pass
+            """,
+            """
+            from libqtile import qtile, widget
+            from libqtile.command.base import expose_command
+
+            class MyClock(widget.Clock):
+                @expose_command
+                def my_exposed_command(self):
+                    pass
+
+            def my_func(qtile):
+                qtile.spawn("rickroll")
+                hints = qtile.current_window.get_hints()
+                groups = qtile.get_groups()
+                screens = qtile.get_screens()
+                qtile.current_window.set_opacity(0.5)
+
+            def cmd_some_other_func():
+                pass
+            """
         )
     ]
 
 The tests check:
 
-* ``cmd_`` prefix is removed on method calls
+* ``cmd_`` prefix is removed on method calls, updating specific changes as required
 * Exposed methods in a class should use the ``expose_command`` decorator (adding the import if it's not already included)
 * No change is made to a function definition (as it's not part of a class definition)
 
@@ -224,5 +280,7 @@ The tests check:
     
     * If no tests are defined
     * If a ``Change`` test does not result in linting output
+    * If no ``Check`` test is defined
 
-You can check your tests by running ``pytest -k <YourMigrationID>``.
+You can check your tests by running ``pytest -k <YourMigrationID>``. Note, ``mpypy`` must be installed for the
+``Check`` tests to be run.
