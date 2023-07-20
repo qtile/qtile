@@ -146,11 +146,18 @@ class Change:
     def __init__(self, input_code, output_code):
         self.input = input_code
         self.output = output_code
+        self.check = False
 
 
 class NoChange(Change):
     def __init__(self, input_code):
         Change.__init__(self, input_code, input_code)
+
+
+class Check(Change):
+    def __init__(self, input_code, output_code):
+        Change.__init__(self, input_code, output_code)
+        self.check = True
 
 
 class _QtileMigrator:

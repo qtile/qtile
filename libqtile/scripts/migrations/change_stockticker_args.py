@@ -22,6 +22,7 @@ import libcst.matchers as m
 
 from libqtile.scripts.migrations._base import (
     Change,
+    Check,
     MigrationTransformer,
     NoChange,
     _QtileMigrator,
@@ -81,6 +82,36 @@ class StocktickerArgs(_QtileMigrator):
         NoChange("""StockTicker(func="TIME_SERIES_INTRADAY")"""),
         NoChange("""widget.StockTicker(func="TIME_SERIES_INTRADAY")"""),
         NoChange("""libqtile.widget.StockTicker(func="TIME_SERIES_INTRADAY")"""),
+        Check(
+            """
+            import libqtile
+            from libqtile import bar, widget
+            from libqtile.widget import StockTicker
+
+            bar.Bar(
+                [
+                    StockTicker(function="TIME_SERIES_INTRADAY"),
+                    widget.StockTicker(function="TIME_SERIES_INTRADAY"),
+                    libqtile.widget.StockTicker(function="TIME_SERIES_INTRADAY")
+                ],
+                20
+            )
+            """,
+            """
+            import libqtile
+            from libqtile import bar, widget
+            from libqtile.widget import StockTicker
+
+            bar.Bar(
+                [
+                    StockTicker(func="TIME_SERIES_INTRADAY"),
+                    widget.StockTicker(func="TIME_SERIES_INTRADAY"),
+                    libqtile.widget.StockTicker(func="TIME_SERIES_INTRADAY")
+                ],
+                20
+            )
+            """,
+        ),
     ]
 
     visitor = StocktickerArgsTransformer

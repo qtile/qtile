@@ -21,7 +21,7 @@ import libcst as cst
 import libcst.matchers as m
 
 from libqtile.scripts.migrations._base import (
-    Change,
+    Check,
     MigrationTransformer,
     _QtileMigrator,
     add_migration,
@@ -71,7 +71,7 @@ class UpdateTogroupArgs(_QtileMigrator):
     AFTER_VERSION = "0.18.1"
 
     TESTS = [
-        Change(
+        Check(
             """
             from libqtile.config import Key
             from libqtile.lazy import lazy

@@ -21,7 +21,7 @@ import libcst as cst
 import libcst.matchers as m
 
 from libqtile.scripts.migrations._base import (
-    Change,
+    Check,
     MigrationTransformer,
     _QtileMigrator,
     add_migration,
@@ -135,8 +135,13 @@ class KeychordArgs(_QtileMigrator):
     AFTER_VERSION = "0.21.0"
 
     TESTS = [
-        Change(
+        Check(
             """
+            from libqtile.config import Key, KeyChord
+            from libqtile.lazy import lazy
+
+            mod = "mod4"
+
             keys = [
                 KeyChord(
                     [mod],
@@ -150,6 +155,11 @@ class KeychordArgs(_QtileMigrator):
             ]
             """,
             """
+            from libqtile.config import Key, KeyChord
+            from libqtile.lazy import lazy
+
+            mod = "mod4"
+
             keys = [
                 KeyChord(
                     [mod],

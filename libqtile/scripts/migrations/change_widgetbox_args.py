@@ -23,6 +23,7 @@ import libcst.matchers as m
 from libqtile.scripts.migrations._base import (
     EQUALS_NO_SPACE,
     Change,
+    Check,
     MigrationTransformer,
     NoChange,
     _QtileMigrator,
@@ -99,6 +100,24 @@ class WidgetboxArgs(_QtileMigrator):
             )
             """,
         ),
+        Change(
+            """
+            WidgetBox(
+                [
+                    widget.Systray(),
+                    widget.Volume(),
+                ]
+            )
+            """,
+            """
+            WidgetBox(
+                widgets=[
+                    widget.Systray(),
+                    widget.Volume(),
+                ]
+            )
+            """,
+        ),
         NoChange(
             """
             widget.WidgetBox(
@@ -108,6 +127,52 @@ class WidgetboxArgs(_QtileMigrator):
                 ]
             )
             """
+        ),
+        Check(
+            """
+            from libqtile import bar, widget
+            from libqtile.widget import WidgetBox
+
+            bar.Bar(
+                [
+                    WidgetBox(
+                        [
+                            widget.Systray(),
+                            widget.Volume(),
+                        ]
+                    ),
+                    widget.WidgetBox(
+                        [
+                            widget.Systray(),
+                            widget.Volume(),
+                        ]
+                    )
+                ],
+                20,
+            )
+            """,
+            """
+            from libqtile import bar, widget
+            from libqtile.widget import WidgetBox
+
+            bar.Bar(
+                [
+                    WidgetBox(
+                        widgets=[
+                            widget.Systray(),
+                            widget.Volume(),
+                        ]
+                    ),
+                    widget.WidgetBox(
+                        widgets=[
+                            widget.Systray(),
+                            widget.Volume(),
+                        ]
+                    )
+                ],
+                20,
+            )
+            """,
         ),
     ]
 

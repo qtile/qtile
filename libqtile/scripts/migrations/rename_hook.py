@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from libqtile.scripts.migrations._base import (
-    Change,
+    Check,
     RenamerTransformer,
     _QtileMigrator,
     add_migration,
@@ -59,7 +59,7 @@ class RenameWindowNameHook(_QtileMigrator):
     AFTER_VERSION = "0.16.1"
 
     TESTS = [
-        Change(
+        Check(
             """
             from libqtile import hook
 
