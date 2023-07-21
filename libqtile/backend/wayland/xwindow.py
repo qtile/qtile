@@ -162,7 +162,6 @@ class XWindow(Window[xwayland.Surface]):
                     self.tree.node.set_position(self.borderwidth, self.borderwidth)
 
                 self.container.node.set_enabled(enabled=True)
-                self.core.focus_window(self)
                 return
 
         # This is the first time this window has mapped, so we need to do some initial
@@ -396,7 +395,7 @@ class XStatic(Static[xwayland.Surface]):
             )
 
     def _on_request_configure(self, _listener: Listener, event: SurfaceConfigureEvent) -> None:
-        logger.debug("Signal: xwindow request_configure")
+        logger.debug("Signal: xstatic request_configure")
         if self.floating:
             self.place(
                 event.x, event.y, event.width, event.height, self.borderwidth, self.bordercolor
@@ -425,7 +424,6 @@ class XStatic(Static[xwayland.Surface]):
 
             self.container.node.set_enabled(enabled=True)
             self.bring_to_front()
-            self.core.focus_window(self)
             return
 
     def place(
