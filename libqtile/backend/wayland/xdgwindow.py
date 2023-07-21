@@ -113,7 +113,6 @@ class XdgWindow(Window[XdgSurface]):
             # Regular usage
             if not self.container.node.enabled and self.group and self.group.screen:
                 self.container.node.set_enabled(enabled=True)
-                self.core.focus_window(self)
             return
 
         # This is the first time this window has mapped, so we need to do some initial
@@ -162,7 +161,6 @@ class XdgWindow(Window[XdgSurface]):
 
     @expose_command()
     def kill(self) -> None:
-        self.hide()
         self.surface.send_close()
 
     def has_fixed_size(self) -> bool:
