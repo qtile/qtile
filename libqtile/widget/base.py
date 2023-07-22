@@ -187,12 +187,12 @@ class _Widget(CommandObject, configurable.Configurable):
     def width(self):
         if self.bar.horizontal:
             return self.length
-        return self.bar.size - (self.bar.border_width[1] + self.bar.border_width[3])
+        return self.bar.width
 
     @property
     def height(self):
         if self.bar.horizontal:
-            return self.bar.size - (self.bar.border_width[0] + self.bar.border_width[2])
+            return self.bar.height
         return self.length
 
     @property
