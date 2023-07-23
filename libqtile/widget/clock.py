@@ -24,6 +24,10 @@
 import sys
 import time
 from datetime import datetime, timedelta, timezone
+from os import getenv
+
+from locale import setlocale, LC_TIME
+from locale import Error as LocaleError
 
 from libqtile.log_utils import logger
 from libqtile.widget import base
@@ -75,12 +79,21 @@ class Clock(base.InLoopPollText):
         if self.timezone is None:
             logger.debug("Defaulting to the system local timezone.")
 
+        systemLC_TIME = getenv("LC_TIME")
+        if systemLC_TIME is not None:
+            try:
+                setlocale(LC_TIME, systemLC_TIME)
+            except LocaleError:
+                logger.debug("Defaulting to the default time locale.")
+        else:
+            logger.debug("Defaulting to the default time locale.")
+
     def tick(self):
         self.update(self.poll())
         return self.update_interval - time.time() % self.update_interval
 
     # adding .5 to get a proper seconds value because glib could
-    # theoreticaly call our method too early and we could get something
+    # theoretically call our method too early and we could get something
     # like (x-1).999 instead of x.000
     def poll(self):
         if self.timezone:
