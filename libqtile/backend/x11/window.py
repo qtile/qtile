@@ -995,8 +995,11 @@ class _Window:
         if len(self.qtile.windows_map) < 2:
             return
 
-        if self.group is None:
+        if self.group is None and not isinstance(self, Static):
             return
+
+        # Use the window's group or current group if this isn't set (e.g. Static windows)
+        group = self.group or self.qtile.current_group
 
         parent = self.window.get_wm_transient_for()
         if parent is not None and not up:
@@ -1013,9 +1016,14 @@ class _Window:
         if self.wid not in stack or len(stack) < 2:
             return
 
-        group_windows = self.group.windows
-        if self.group.screen is not None:
-            group_bars = [gap for gap in self.group.screen.gaps if isinstance(gap, bar.Bar)]
+        # Get all windows for the group and add Static windows to ensure these are included
+        # in the stacking
+        group_windows = group.windows.copy()
+        statics = [win for win in self.qtile.windows_map.values() if isinstance(win, Static)]
+        group_windows.extend(statics)
+
+        if group.screen is not None:
+            group_bars = [gap for gap in group.screen.gaps if isinstance(gap, bar.Bar)]
         else:
             group_bars = []
 
@@ -1051,6 +1059,10 @@ class _Window:
 
         # If we're forcing to top or bottom of current layer...
         elif top_bottom:
+            # If there are no other windows in the same layer then there's nothing to do
+            if not same:
+                return
+
             if up:
                 sibling = same[-1]
                 above = True
@@ -1277,11 +1289,6 @@ class _Window:
 
         if self.group:
             self.group.current_window = self
-
-        # See https://github.com/qtile/qtile/pull/3409#discussion_r1117952134 for discussion
-        # on mypy error here
-        if self.fullscreen and not self.previous_layer[4]:  # type: ignore
-            self.change_layer()
 
         # Check if we need to restack a previously focused fullscreen window
         self.qtile.core.check_stacking(self)
@@ -2241,3 +2248,13 @@ class Window(_Window, base.Window):
             if self._is_in_window(curx, cury, window):
                 self.group.layout.swap(self, window)
                 return
+
+    @expose_command
+    def focus(self, warp: bool = True) -> None:
+        """Focus the window."""
+        _Window.focus(self, warp)
+
+        # Focusing a fullscreen window puts it into a different layer
+        # priority group. If it's not there already, we need to move it.
+        if self.fullscreen and not self.previous_layer[4]:
+            self.change_layer()
