@@ -80,33 +80,10 @@ def make_qtile(options):
 
 def start(options):
     try:
-        locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
+        locale.setlocale(locale.LC_ALL, '')
     except locale.Error:
         pass
-    try: 
-        locale.setlocale(locale.LC_COLLATE, getenv("LC_COLLATE"))
-    except locale.Error:
-        pass
-    try: 
-        locale.setlocale(locale.LC_CTYPE, getenv("LC_CTYPE"))
-    except locale.Error:
-        pass
-    try:
-        locale.setlocale(locale.LC_MESSAGES, getenv("LC_MESSAGES"))
-    except locale.Error:
-        pass
-    try:
-        locale.setlocale(locale.LC_MONETARY, getenv("LC_MONETARY"))
-    except locale.Error:
-        pass
-    try:
-        locale.setlocale(locale.LC_NUMERIC, getenv("LC_NUMERIC"))
-    except locale.Error:
-        pass
-    try:
-        locale.setlocale(locale.LC_TIME, getenv("LC_TIME"))
-    except locale.Error:
-        pass
+
     rename_process()
     q = make_qtile(options)
     try:
