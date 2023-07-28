@@ -103,7 +103,6 @@ extensions = [
     "sphinx.ext.graphviz",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
-    "sphinxcontrib.seqdiag",
     "numpydoc",
     "sphinx_qtile",
 ]
