@@ -53,6 +53,7 @@ questions, you can find support in the following places:
     manual/ref/hooks
     manual/ref/extensions
     manual/commands/keybindings
+    manual/stacking
 
 .. toctree::
     :maxdepth: 1
