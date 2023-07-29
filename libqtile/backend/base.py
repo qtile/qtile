@@ -482,7 +482,13 @@ class Window(_Window, metaclass=ABCMeta):
     @abstractmethod
     @expose_command()
     def bring_to_front(self) -> None:
-        """Bring the window to the front"""
+        """
+        Bring the window to the front.
+
+        In X11, `bring_to_front` ignores all other layering rules and brings the
+        window to the very front. When that window loses focus, it will be stacked
+        again according the appropriate rules.
+        """
 
     @abstractmethod
     @expose_command()

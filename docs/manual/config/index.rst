@@ -76,7 +76,11 @@ configuration variables that control specific aspects of Qtile's behavior:
       - ``False``
       - When clicked, should the window be brought to the front or not. If this
         is set to "floating_only", only floating windows will get affected (This
-        sets the X Stack Mode to Above.)
+        sets the X Stack Mode to Above.). This will ignore the layering rules and
+        will therefore bring windows above other windows, even if they have been set
+        as "kept_above". This may cause issues with docks and other similar apps as these
+        may end up hidden behind other windows. Setting this to ``False`` or ``"floating_only"``
+        may therefore be required when using these apps.
     * - ``cursor_warp``
       - ``False``
       - If true, the cursor follows the focus as directed by the keyboard,
