@@ -326,7 +326,7 @@ class Core(base.Core):
 
                 # Motion Notifies are handled later
                 # Otherwise this is too CPU intensive
-                if type(event) == xcffib.xproto.MotionNotifyEvent:
+                if isinstance(event, xcffib.xproto.MotionNotifyEvent):
                     self._motion_notify = event
                 else:
                     # These events need the motion notify event handled first
