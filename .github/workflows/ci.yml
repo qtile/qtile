@@ -9,8 +9,8 @@ jobs:
         runs-on: ubuntu-22.04
         name: "python ${{ matrix.python-version }}"
         env:
-          WAYLAND: 1.20.0
-          WAYLAND_PROTOCOLS: 1.24
+          WAYLAND: 1.22.0
+          WAYLAND_PROTOCOLS: 1.32
           WLROOTS: 0.15.0
           SEATD: 0.6.3
           LIBDRM: 2.4.109
