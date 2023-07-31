@@ -18,9 +18,9 @@ jobs:
                 # python version in .readthedocs.yaml
                 python-version: [pypy-3.9, 3.9, '3.10', '3.11']
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v3
             - name: Set up python ${{ matrix.python-version }}
-              uses: actions/setup-python@v2
+              uses: actions/setup-python@v4
               with:
                   python-version: ${{ matrix.python-version }}
             - name: Install dependencies
