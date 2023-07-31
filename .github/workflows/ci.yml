@@ -33,7 +33,7 @@ jobs:
                   libxcb-composite0-dev libxcb-icccm4-dev libxcb-res0-dev libxcb-render0-dev libxcb-res0-dev \
                   libxcb-xfixes0-dev vlc volumeicon-alsa
                 sudo pip -q install meson PyGObject
-                pip -q install "tox<4" tox-gh-actions 
+                pip -q install tox tox-gh-actions 
                 bash -x ./scripts/ubuntu_wayland_setup
             - name: Run Tests
               run: |
