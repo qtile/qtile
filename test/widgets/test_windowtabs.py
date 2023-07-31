@@ -66,8 +66,10 @@ def test_single_window_states(manager):
     def widget_text():
         return manager.c.bar["top"].info()["widgets"][0]["text"]
 
-    # Default _TextBox text is " " and no hooks fired yet.
-    assert widget_text() == " "
+    # When no windows are spawned the text should be ""
+    # Initially TextBox has " " but the Config.set_group function already
+    # calls focus_change hook, so the text should be updated to ""
+    assert widget_text() == ""
 
     # Load a window
     proc = manager.test_window("one")
@@ -86,8 +88,7 @@ def test_single_window_states(manager):
     manager.c.window.toggle_floating()
     assert widget_text() == "<b>V one</b>"
 
-    # Kill the window and check text again
-    # NB hooks fired so empty string is now ""
+    # Kill the window and check empty string again
     manager.kill_window(proc)
     assert widget_text() == ""
 
