@@ -56,8 +56,8 @@ from wlroots.wlr_types import (
     input_device,
     pointer,
     seat,
-    xdg_decoration_v1,
     xdg_activation_v1,
+    xdg_decoration_v1,
 )
 from wlroots.wlr_types.cursor import Cursor, WarpMode
 from wlroots.wlr_types.idle import Idle

@@ -246,7 +246,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             self._borders_drawn = False
 
             if any(self.margin) or any(self.border_width) or self._reserved_space_updated:
-
                 # Increase the margin size for the border. The border will be drawn
                 # in this space so the empty space will just be the margin.
                 margin = [b + s for b, s in zip(self.border_width, self._reserved_space)]
@@ -744,7 +743,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         # TODO: drop the screen and position args, update relevant tests
         self.process_button_click(x, y, button)
 
-    def keep_below(self):
+    def keep_below(self) -> None:
         self.window.keep_below(enable=True)
 
 
