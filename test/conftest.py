@@ -75,9 +75,8 @@ def xephyr(request, outputs):
     from test.backend.x11.conftest import x11_environment
 
     kwargs = getattr(request, "param", {})
-    xoffset = kwargs.get("xoffset", None)
 
-    with x11_environment(outputs, xoffset) as x:
+    with x11_environment(outputs, **kwargs) as x:
         yield x
 
 
@@ -98,8 +97,7 @@ def backend(request, backend_name, xephyr, wayland_session):
     if backend_name == "x11":
         from test.backend.x11.conftest import XBackend
 
-        display = f":{xephyr._display}"
-        yield XBackend({"DISPLAY": display}, args=[display])
+        yield XBackend({"DISPLAY": xephyr.display}, args=[xephyr.display])
     elif backend_name == "wayland":
         from test.backend.wayland.conftest import WaylandBackend
 
