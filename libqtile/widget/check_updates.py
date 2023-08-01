@@ -39,7 +39,6 @@ CMD_DICT = {
     "Fedora": ("dnf list updates -q", 1),
     "FreeBSD": ("pkg_version -I -l '<'", 0),
     "Mandriva": ("urpmq --auto-select", 0),
-    "void": ("xbps-install -nuMS", 0),
     "VoidLinux": ("xbps-install -nuMS", 0),
 }
 
