@@ -8,20 +8,11 @@ from libqtile.scripts import check, cmd_obj, migrate, run_cmd, shell, start, top
 
 try:
     # Python>3.7 can get the version from importlib
-    from importlib.metadata import distribution
+    from importlib.metadata import PackageNotFoundError, distribution
 
     VERSION = distribution("qtile").version
-except ModuleNotFoundError:
-    try:
-        # pkg_resources is required for 3.7
-        import pkg_resources
-
-        try:
-            VERSION = pkg_resources.require("qtile")[0].version
-        except pkg_resources.DistributionNotFound:
-            VERSION = "dev"
-    except ModuleNotFoundError:
-        VERSION = "dev"
+except PackageNotFoundError:
+    VERSION = "dev"
 
 
 def check_folder(value):
