@@ -388,11 +388,6 @@ class XStatic(Static[xwayland.Surface]):
 
     def _on_commit(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xstatic commit")
-        state = self.surface.surface.current
-        if state.width != self._width or state.height != self._height:
-            self.place(
-                self.x, self.y, state.width, state.height, self.borderwidth, self.bordercolor
-            )
 
     def _on_request_configure(self, _listener: Listener, event: SurfaceConfigureEvent) -> None:
         logger.debug("Signal: xstatic request_configure")
