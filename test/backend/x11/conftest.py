@@ -1,5 +1,6 @@
 import contextlib
 import fcntl
+import io
 import os
 import subprocess
 
@@ -35,29 +36,13 @@ def can_connect_x11(disp=":0", *, ok=None):
 
 
 def xdist_find_display(worker, is_xvfb=False):
-    lock_path = Path("/tmp")
-    os.makedirs(lock_path, exist_ok=True)
-
     # oh my god send help
     worker_id = int(worker[2:])
     offset = 1337
     if is_xvfb:
         offset += 13370
     display = offset + (worker_id + 1) * 50
-
-    while True:
-        try:
-            lock_path = lock_path / f".X{display}-lock"
-            f = open(lock_path, "w+")
-            try:
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except OSError:
-                f.close()
-                raise
-        except OSError:
-            display += 1
-            continue
-        return display, f
+    return display, io.StringIO()
 
 
 @contextlib.contextmanager
