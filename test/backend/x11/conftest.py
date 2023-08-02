@@ -34,12 +34,17 @@ def can_connect_x11(disp=":0", *, ok=None):
 
 
 def xdist_find_display(worker, is_xvfb=False):
-    # oh my god send help
     worker_id = int(worker[2:])
-    offset = 1337
-    if is_xvfb:
-        offset += 13370
-    display = offset + (worker_id + 1) * 50
+
+    # We leave 100 displays unused to be used by e.g. other wms
+    offset = 100
+
+    # The first display is xvfb, the second is xephyr
+    # So for worker 0, 100 is xvfb, xephyr 101
+    # Worker 1, 102 is xvfb, xephyr 103
+    display = offset + (worker_id) * 2
+    if not is_xvfb:
+        display += 1
     return display, io.StringIO()
 
 
