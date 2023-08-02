@@ -162,6 +162,7 @@ class XWindow(Window[xwayland.Surface]):
                     self.tree.node.set_position(self.borderwidth, self.borderwidth)
 
                 self.container.node.set_enabled(enabled=True)
+                self.bring_to_front()
                 return
 
         # This is the first time this window has mapped, so we need to do some initial
