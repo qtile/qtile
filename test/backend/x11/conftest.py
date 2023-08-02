@@ -1,5 +1,4 @@
 import contextlib
-import fcntl
 import io
 import os
 import subprocess
@@ -22,7 +21,6 @@ from test.helpers import (
     Retry,
     TestManager,
 )
-from pathlib import Path
 
 
 @Retry(ignore_exceptions=(xcffib.ConnectionException,), return_on_fail=True)
