@@ -23,7 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Any
+from typing import Any, List, Tuple
 
 from libqtile import bar
 from libqtile.command.base import expose_command
@@ -33,7 +33,7 @@ from libqtile.widget import base
 class TextBox(base._TextBox):
     """A flexible textbox that can be updated from bound keys, scripts, and qshell."""
 
-    defaults: list[tuple[str, Any, str]] = [
+    defaults: List[Tuple[str, Any, str]] = [
         ("font", "sans", "Text font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("fontshadow", None, "font shadow color, default is None(no shadow)"),

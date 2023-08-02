@@ -32,14 +32,14 @@
 
 import itertools
 from functools import partial
-from typing import Any
+from typing import Any, List, Tuple
 
 from libqtile import hook
 from libqtile.widget import base
 
 
 class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
-    defaults: list[tuple[str, Any, str]] = [
+    defaults: List[Tuple[str, Any, str]] = [
         ("borderwidth", 3, "Current group border width"),
         ("center_aligned", True, "center-aligned group box"),
     ]
