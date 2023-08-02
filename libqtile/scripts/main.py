@@ -12,7 +12,9 @@ try:
 
     VERSION = distribution("qtile").version
 except ModuleNotFoundError:
-    print("importlibe.metadata not found!")
+    raise
+    import importlib
+    print(dir(importlib.metadata))
     try:
         # pkg_resources is required for 3.7
         import pkg_resources
