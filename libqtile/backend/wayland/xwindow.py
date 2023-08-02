@@ -392,9 +392,7 @@ class XStatic(Static[xwayland.Surface]):
 
     def _on_request_configure(self, _listener: Listener, event: SurfaceConfigureEvent) -> None:
         logger.debug("Signal: xstatic request_configure")
-        self.place(
-            self.x, self.y, self.width, self.height, self.borderwidth, self.bordercolor
-        )
+        self.place(self.x, self.y, self.width, self.height, self.borderwidth, self.bordercolor)
 
     @expose_command()
     def kill(self) -> None:

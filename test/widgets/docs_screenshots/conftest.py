@@ -122,7 +122,7 @@ def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, 
 
         def _configure(self, bar, screen):
             widget_class._configure(self, bar, screen)
-            
+
             # By setting `has_mirrors` to True, the drawer will keep a copy of the latest
             # contents in a separate RecordingSurface which we can access for our screenshots.
             self.drawer.has_mirrors = True
