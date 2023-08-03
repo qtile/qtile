@@ -1243,6 +1243,7 @@ class _Window:
             )
 
             self.window.send_event(e)
+            return True
 
         # we didn't focus this time. but now the window knows if it wants
         # focus, it should SetFocus() itself; we'll get another notification
