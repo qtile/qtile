@@ -724,7 +724,8 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         self.process_button_click(x, y, button)
 
     def keep_below(self) -> None:
-        self.window.keep_below(enable=True)
+        if self.window:
+            self.window.keep_below(enable=True)
 
 
 BarType = typing.Union[Bar, Gap]
