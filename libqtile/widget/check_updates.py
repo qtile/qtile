@@ -39,6 +39,7 @@ CMD_DICT = {
     "Fedora": ("dnf list updates -q", 1),
     "FreeBSD": ("pkg_version -I -l '<'", 0),
     "Mandriva": ("urpmq --auto-select", 0),
+    "Void": ("xbps-install -nuMS", 0),
 }
 
 # We need the spaces here to ensure the indentation is correct in the docstring
