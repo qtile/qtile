@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING
 import cairocffi
 from wlroots.util.region import PixmanRegion32
 
-from libqtile.backend import drawer
+from libqtile.backend.base import drawer
 
 if TYPE_CHECKING:
     from libqtile.backend.wayland.window import Internal

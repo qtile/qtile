@@ -32,7 +32,7 @@ if typing.TYPE_CHECKING:
     import asyncio
     from typing import Any
 
-    from libqtile.backend.base import Internal, _Window
+    from libqtile.backend.base import Internal, WindowType
     from libqtile.command.base import ItemT
     from libqtile.config import Screen
     from libqtile.core.manager import Qtile
@@ -204,7 +204,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         self._saved_size = 0
 
         # Previous window when the bar grabs the keyboard
-        self._saved_focus: _Window | None = None
+        self._saved_focus: WindowType | None = None
 
         # Track widgets that are receiving input
         self._has_cursor: _Widget | None = None
@@ -302,13 +302,13 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             self.window.opacity = self.opacity
             self.window.unhide()
 
-            self.window.process_window_expose = self.draw  # type: ignore[assignment]
-            self.window.process_button_click = self.process_button_click  # type: ignore[assignment]
-            self.window.process_button_release = self.process_button_release  # type: ignore[assignment]
-            self.window.process_pointer_enter = self.process_pointer_enter  # type: ignore[assignment]
-            self.window.process_pointer_leave = self.process_pointer_leave  # type: ignore[assignment]
-            self.window.process_pointer_motion = self.process_pointer_motion  # type: ignore[assignment]
-            self.window.process_key_press = self.process_key_press  # type: ignore[assignment]
+            self.window.process_window_expose = self.draw
+            self.window.process_button_click = self.process_button_click
+            self.window.process_button_release = self.process_button_release
+            self.window.process_pointer_enter = self.process_pointer_enter
+            self.window.process_pointer_leave = self.process_pointer_leave
+            self.window.process_pointer_motion = self.process_pointer_motion
+            self.window.process_key_press = self.process_key_press
 
         # We create a new drawer even if there's already a window to ensure the
         # drawer is the right size.
@@ -651,7 +651,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 move_to, line_to = opts
 
                 # Draw the border
-                self.drawer.set_source_rgb(colour)  # type: ignore [arg-type]
+                self.drawer.set_source_rgb(colour)  # type: ignore[arg-type]
                 self.drawer.ctx.set_line_width(border_width)
                 self.drawer.ctx.move_to(*move_to)
                 self.drawer.ctx.line_to(*line_to)

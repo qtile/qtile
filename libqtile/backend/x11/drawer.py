@@ -39,7 +39,7 @@ import cairocffi
 import xcffib.xproto
 
 from libqtile import utils
-from libqtile.backend import drawer
+from libqtile.backend.base import drawer
 
 if TYPE_CHECKING:
     from libqtile.backend.base import Internal
