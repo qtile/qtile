@@ -188,7 +188,11 @@ class XdgWindow(Window[XdgSurface]):
 
     def handle_activation_request(self, focus_on_window_activation: str) -> None:
         """Respond to XDG activation requests targeting this window."""
-        assert self.qtile is not None and self.group
+        assert self.qtile is not None
+
+        if self.group is None:
+            # Likely still pending, ignore this request.
+            return
 
         if focus_on_window_activation == "focus":
             logger.debug("Focusing window (focus_on_window_activation='focus')")
