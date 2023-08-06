@@ -25,7 +25,7 @@ import multiprocessing
 
 import pytest
 
-from libqtile.backend import drawer
+from libqtile.backend.base import drawer
 from test.helpers import BareConfig, TestManager
 
 

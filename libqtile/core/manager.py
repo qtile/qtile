@@ -894,7 +894,7 @@ class Qtile(CommandObject):
             if sel is None:
                 return self.current_window
             else:
-                windows: dict[str | int, base._Window]
+                windows: dict[str | int, base.WindowType]
                 windows = {
                     k: v
                     for k, v in self.windows_map.items()
