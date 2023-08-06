@@ -59,11 +59,12 @@ class Drawer(drawer.Drawer):
     def __init__(self, qtile: Qtile, win: Internal, width: int, height: int):
         drawer.Drawer.__init__(self, qtile, win, width, height)
         self._xcb_surface = None
-        self._pixmap = None
         self._gc = None
         self._depth, self._visual = qtile.core.conn.default_screen._get_depth_and_visual(
             win._depth
         )
+        # Create an XCBSurface and pixmap
+        self._check_xcb()
 
     def finalize(self):
         self._free_xcb_surface()
@@ -200,12 +201,6 @@ class Drawer(drawer.Drawer):
             self.height if height is None else height,
         )
 
-        # We release the XCBSurface and pixmap here so we start from a clean
-        # slate next time we draw
-        # This is currently needed as "clear" functions do not remove contents when
-        # using a transparent background.
-        self._free_xcb_surface()
-
     def _find_root_visual(self):
         for i in self.qtile.core.conn.default_screen.allowed_depths:
             for v in i.visuals:
@@ -218,3 +213,15 @@ class Drawer(drawer.Drawer):
             colour = utils.remove_transparency(colour)
 
         drawer.Drawer.set_source_rgb(self, colour, ctx)
+
+    def clear(self, colour):
+        # Check if we need to re-create XCBSurface
+        self._check_xcb()
+
+        # Draw background straigt to XCB surface
+        ctx = cairocffi.Context(self._xcb_surface)
+        ctx.save()
+        ctx.set_operator(cairocffi.OPERATOR_SOURCE)
+        self.set_source_rgb(colour, ctx=ctx)
+        ctx.paint()
+        ctx.restore()
