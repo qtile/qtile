@@ -51,15 +51,10 @@ from libqtile.dgroups import DGroups
 from libqtile.extension.base import _Extension
 from libqtile.group import _Group
 from libqtile.log_utils import logger
+from libqtile.resources.sleep import inhibitor
 from libqtile.scratchpad import ScratchPad
 from libqtile.scripts.main import VERSION
-from libqtile.utils import (
-    cancel_tasks,
-    get_cache_dir,
-    lget,
-    send_notification,
-    subscribe_for_resume_events,
-)
+from libqtile.utils import cancel_tasks, get_cache_dir, lget, send_notification
 from libqtile.widget.base import _Widget
 
 if TYPE_CHECKING:
@@ -184,9 +179,10 @@ class Qtile(CommandObject):
         if self.config.reconfigure_screens:
             hook.subscribe.screen_change(self.reconfigure_screens)
 
-        # If user wants resume hooks we need to add a dbus rule
-        if "resume" in hook.subscriptions:
-            subscribe_for_resume_events()
+        # Start the sleep inhibitor process to listen to sleep signals
+        # NB: the inhibitor will only connect to the dbus service if the
+        # user has used the "suspend" or "resume" hooks in their config.
+        inhibitor.start()
 
         if initial:
             hook.fire("startup_complete")
@@ -327,6 +323,7 @@ class Qtile(CommandObject):
 
     def finalize(self) -> None:
         self._finalize_configurables()
+        inhibitor.stop()
         cancel_tasks()
         self.core.finalize()
 

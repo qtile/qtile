@@ -35,6 +35,7 @@ import contextlib
 
 from libqtile import utils
 from libqtile.log_utils import logger
+from libqtile.resources.sleep import inhibitor
 
 subscriptions = {}  # type: dict
 SKIPLOG = set()  # type: set
@@ -353,7 +354,48 @@ class Subscribe:
 
         None
         """
+        inhibitor.want_resume()
         return self._subscribe("resume", func)
+
+    def suspend(self, func):
+        """
+        Called when system is about to sleep, suspend or hibernate.
+
+        Relies on systemd's inhibitor dbus interface, via the dbus-next package.
+
+        .. note::
+
+            when this hook is used, qtile will set an inhibitor that prevent the system
+            from sleeping. The inhibitor is removed as soon as your function exits. However,
+            this inhibitor will also only delay, not block, this process. The default
+            delay is 5 seconds. If your function has not completed within that time, the
+            machine will still sleep. You can increase this delay by setting ``InhibitDelayMaxSec``
+            in ``logind.conf.`` see: https://www.freedesktop.org/software/systemd/man/logind.conf.html
+
+            In addition, closing a laptop lid will ignore inhibitors by default. You can override this
+            by setting ``LidSwitchIgnoreInhibited=no`` in ``/etc/systemd/logind.conf``.
+
+        **Arguments**
+
+        None
+
+        Example:
+
+        .. code:: python
+
+          import subprocess
+
+          from libqtile import hook
+
+
+          @hook.subscribe.suspend
+          def lock_on_sleep():
+              # Run screen locker
+              subprocess.run(["/path/to/screen_locker"])
+
+        """
+        inhibitor.want_sleep()
+        return self._subscribe("suspend", func)
 
 
 subscribe = Subscribe()

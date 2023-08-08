@@ -49,7 +49,6 @@ try:
 except ImportError:
     has_dbus = False
 
-from libqtile import hook
 from libqtile.log_utils import logger
 
 # Create a list to collect references to tasks so they're not garbage collected
@@ -408,6 +407,7 @@ async def _send_dbus_message(
     member: str | None,
     signature: str,
     body: Any,
+    negotiate_unix_fd: bool = False,
 ) -> tuple[MessageBus | None, Message | None]:
     """
     Private method to send messages to dbus via dbus_next.
@@ -423,7 +423,7 @@ async def _send_dbus_message(
         body = [body]
 
     try:
-        bus = await MessageBus(bus_type=bus_type).connect()
+        bus = await MessageBus(bus_type=bus_type, negotiate_unix_fd=negotiate_unix_fd).connect()
     except (AuthError, Exception):
         logger.warning("Unable to connect to dbus.")
         return None, None
@@ -532,32 +532,3 @@ async def find_dbus_service(service: str, session_bus: bool) -> bool:
     names = msg.body[0]
 
     return service in names
-
-
-def subscribe_for_resume_events() -> None:
-    task = create_task(
-        add_signal_receiver(
-            on_resume,
-            session_bus=False,
-            dbus_interface="org.freedesktop.login1.Manager",
-            bus_name="org.freedesktop.login1",
-            signal_name="PrepareForSleep",
-            check_service=True,
-        )
-    )
-    if task is not None:
-        task.add_done_callback(_resume_callback)
-
-
-def _resume_callback(task: asyncio.Task) -> None:
-    if not task.result():
-        logger.warning("Unable to subscribe to system resume events")
-
-
-# We need to ignore typing here. msg is a dbus_next.Message object but dbus_next may not be installed
-def on_resume(msg):  # type: ignore
-    sleeping = msg.body[0]
-
-    # Value is False when the event is over i.e. the machine has woken up
-    if not sleeping:
-        hook.fire("resume")
