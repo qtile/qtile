@@ -61,6 +61,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
           - `lazy.window.move_up()/move_down()` moves windows up and down the z axis.
           - added `only_focused` setting to Max layout, allowing to draw multiple clients on top of each other when
             set to False
+        - Add `suspend` hook to run functions before system goes to sleep.
     * bugfixes
         - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
         - Fix `Notify` bug when apps close notifications.
