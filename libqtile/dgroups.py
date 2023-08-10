@@ -115,7 +115,13 @@ class DGroups:
         rule = Rule(group.matches, group=group.name)
         self.rules.append(rule)
         if start:
-            self.qtile.add_group(group.name, group.layout, group.layouts, group.label)
+            self.qtile.add_group(
+                group.name,
+                group.layout,
+                group.layouts,
+                group.label,
+                screen_affinity=group.screen_affinity,
+            )
 
     def _setup_groups(self):
         for group in self.groups:

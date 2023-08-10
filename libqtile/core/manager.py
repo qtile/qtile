@@ -330,6 +330,25 @@ class Qtile(CommandObject):
         cancel_tasks()
         self.core.finalize()
 
+    def add_autogen_group(self, screen_idx: int) -> _Group:
+        name = f"autogen_{screen_idx + 1}"
+        self.add_group(name)
+        logger.warning("Too few groups in config. Added group: %s", name)
+        return self.groups_map[name]
+
+    def get_available_group(self, screen_idx: int) -> _Group | None:
+        for group in self.groups:
+            # Groups belonging to a screen or a scratchpad are not 'available'
+            # to be assigned to a screen
+            if group.screen or isinstance(group, ScratchPad):
+                continue
+
+            # Only return groups that can be tied to this screen
+            # And thus do not have a "screen affinity" explicitly set for another screen
+            if group.screen_affinity is None or group.screen_affinity == screen_idx:
+                return group
+        return None
+
     def _process_screens(self, reloading: bool = False) -> None:
         current_groups = [s.group for s in self.screens]
         screens = []
@@ -358,17 +377,15 @@ class Qtile(CommandObject):
                 self.current_screen = scr
                 reloading = False
 
-            if len(self.groups) < i + 1:
-                name = f"autogen_{i + 1}"
-                self.add_group(name)
-                logger.warning("Too few groups in config. Added group: %s", name)
-
+            grp = None
             if i < len(current_groups):
                 grp = current_groups[i]
             else:
-                for grp in self.groups:
-                    if not grp.screen:
-                        break
+                # We need to assign a new group
+                # Get an available group or create a new one
+                grp = self.get_available_group(i)
+                if grp is None:
+                    grp = self.add_autogen_group(i)
 
             reconfigure_gaps = (x, y, w, h) != (scr.x, scr.y, scr.width, scr.height)
 
@@ -538,9 +555,10 @@ class Qtile(CommandObject):
         layouts: list[Layout] | None = None,
         label: str | None = None,
         index: int | None = None,
+        screen_affinity: int | None = None,
     ) -> bool:
         if name not in self.groups_map.keys():
-            g = _Group(name, layout, label=label)
+            g = _Group(name, layout, label=label, screen_affinity=screen_affinity)
             if index is None:
                 self.groups.append(g)
             else:

@@ -48,7 +48,8 @@ class _Group(CommandObject):
     A group is identified by its name but displayed in GroupBox widget by its label.
     """
 
-    def __init__(self, name, layout=None, label=None):
+    def __init__(self, name, layout=None, label=None, screen_affinity=None):
+        self.screen_affinity = screen_affinity
         self.name = name
         self.label = name if label is None else label
         self.custom_layout = layout  # will be set on _configure
