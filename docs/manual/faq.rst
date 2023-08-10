@@ -85,6 +85,17 @@ of binding keys to ``lazy.group[name].toscreen()``, use this:
 
 .. code-block:: python
 
+    groups = [
+        # Screen affinity here is used to make
+        # sure the groups startup on the right screens
+        Group(name="1", screen_affinity=0),
+        Group(name="2", screen_affinity=0),
+        Group(name="3", screen_affinity=0),
+        Group(name="q", screen_affinity=1),
+        Group(name="w", screen_affinity=1),
+        Group(name="e", screen_affinity=1),
+    ]
+
     def go_to_group(name: str) -> Callable:
         def _inner(qtile: Qtile) -> None:
             if len(qtile.screens) == 1:
