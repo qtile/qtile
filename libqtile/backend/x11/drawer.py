@@ -59,11 +59,12 @@ class Drawer(drawer.Drawer):
     def __init__(self, qtile: Qtile, win: Internal, width: int, height: int):
         drawer.Drawer.__init__(self, qtile, win, width, height)
         self._xcb_surface = None
-        self._pixmap = None
         self._gc = None
         self._depth, self._visual = qtile.core.conn.default_screen._get_depth_and_visual(
             win._depth
         )
+        # Create an XCBSurface and pixmap
+        self._check_xcb()
 
     def finalize(self):
         self._free_xcb_surface()
@@ -200,12 +201,6 @@ class Drawer(drawer.Drawer):
             self.height if height is None else height,
         )
 
-        # We release the XCBSurface and pixmap here so we start from a clean
-        # slate next time we draw
-        # This is currently needed as "clear" functions do not remove contents when
-        # using a transparent background.
-        self._free_xcb_surface()
-
     def _find_root_visual(self):
         for i in self.qtile.core.conn.default_screen.allowed_depths:
             for v in i.visuals:
@@ -218,3 +213,23 @@ class Drawer(drawer.Drawer):
             colour = utils.remove_transparency(colour)
 
         drawer.Drawer.set_source_rgb(self, colour, ctx)
+
+    def clear_rect(self, x=0, y=0, width=0, height=0):
+        """
+        Erases the background area specified by parameters. By default,
+        the whole Drawer is cleared.
+
+        The ability to clear a smaller area may be useful when you want to
+        erase a smaller area of the drawer (e.g. drawing widget decorations).
+        """
+        if width <= 0:
+            width = self.width
+        if height <= 0:
+            height = self.height
+
+        # Using OPERATOR_CLEAR in a RecordingSurface does not clear the
+        # XCBSurface so we clear the XCBSurface directly.
+        with cairocffi.Context(self._xcb_surface) as ctx:
+            ctx.set_operator(cairocffi.OPERATOR_CLEAR)
+            ctx.rectangle(x, y, width, height)
+            ctx.fill()
