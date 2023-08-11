@@ -264,15 +264,38 @@ class Drawer:
         else:
             ctx.set_source_rgba(*utils.rgb(colour))
 
-    def clear(self, colour):
+    def clear_rect(self, x=0, y=0, width=0, height=0):
+        """
+        Erases the background area specified by parameters. By default,
+        the whole Drawer is cleared.
+
+        The ability to clear a smaller area may be useful when you want to
+        erase a smaller area of the drawer (e.g. drawing widget decorations).
+        """
+        if width <= 0:
+            width = self.width
+        if height <= 0:
+            height = self.height
+
         self.ctx.save()
         self.ctx.set_operator(cairocffi.OPERATOR_CLEAR)
-        self.ctx.rectangle(0, 0, self.width, self.height)
+        self.ctx.rectangle(x, y, width, height)
         self.ctx.fill()
+        self.ctx.restore()
+
+    def clear(self, colour):
+        """Clears background of the Drawer and fills with specified colour."""
+        self.ctx.save()
+
+        # Erase the background
+        self.clear_rect()
+
+        # Fill drawer with new colour
         self.ctx.set_operator(cairocffi.OPERATOR_SOURCE)
         self.set_source_rgb(colour)
         self.ctx.rectangle(0, 0, self.width, self.height)
         self.ctx.fill()
+
         self.ctx.restore()
 
     def textlayout(self, text, colour, font_family, font_size, font_shadow, markup=False, **kw):
