@@ -363,17 +363,28 @@ class Subscribe:
 
         Relies on systemd's inhibitor dbus interface, via the dbus-next package.
 
-        .. note::
+        When this hook is used, qtile will set an inhibitor that prevent the system
+        from sleeping. The inhibitor is removed as soon as your function exits. You should therefore
+        not use long-running code in this function.
 
-            when this hook is used, qtile will set an inhibitor that prevent the system
-            from sleeping. The inhibitor is removed as soon as your function exits. However,
-            this inhibitor will also only delay, not block, this process. The default
-            delay is 5 seconds. If your function has not completed within that time, the
-            machine will still sleep. You can increase this delay by setting ``InhibitDelayMaxSec``
-            in ``logind.conf.`` see: https://www.freedesktop.org/software/systemd/man/logind.conf.html
+        Please note, this inhibitor will also only delay, not block, the computer's ability to sleep.
+        The default delay is 5 seconds. If your function has not completed within that time, the
+        machine will still sleep (see important note below).
 
-            In addition, closing a laptop lid will ignore inhibitors by default. You can override this
-            by setting ``LidSwitchIgnoreInhibited=no`` in ``/etc/systemd/logind.conf``.
+        You can increase this delay by setting ``InhibitDelayMaxSec`` in ``logind.conf.``
+        see: https://www.freedesktop.org/software/systemd/man/logind.conf.html
+
+        In addition, closing a laptop lid will ignore inhibitors by default. You can override this
+        by setting ``LidSwitchIgnoreInhibited=no`` in ``/etc/systemd/logind.conf``.
+
+        .. important::
+
+            The logind service creates an inhibitor by passing a reference to a lock file which must
+            be closed to release the lock. Additional references to the lock may be created if you
+            spawn processes with the ``subprocess`` module and these processes are running when
+            the machine tries to suspend. As a result, it is strongly recommended that you launch
+            any processes with ``qtile.spawn(...)`` as this will not create additional copies of the
+            lock.
 
         **Arguments**
 
@@ -383,15 +394,13 @@ class Subscribe:
 
         .. code:: python
 
-          import subprocess
-
-          from libqtile import hook
+          from libqtile import hook, qtile
 
 
           @hook.subscribe.suspend
           def lock_on_sleep():
               # Run screen locker
-              subprocess.run(["/path/to/screen_locker"])
+              qtile.spawn("/path/to/screen_locker")
 
         """
         inhibitor.want_sleep()
