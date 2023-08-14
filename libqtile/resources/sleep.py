@@ -127,7 +127,9 @@ class Inhibitor:
         if self.fd > 0:
             self.release()
 
-        create_task(self._take())
+        # Check that inhibitor was released
+        if self.fd < 0:
+            create_task(self._take())
 
     async def _take(self) -> None:
         """Sends the request to dbus to create an inhibitor."""
@@ -152,7 +154,14 @@ class Inhibitor:
         else:
             logger.warning("No inhibitor available to release.")
 
-        self.fd = -1
+        try:
+            os.fstat(self.fd)
+        except OSError:
+            # File descriptor was successfully closed
+            self.fd = -1
+        else:
+            # We could read the file descriptor so it's still open
+            logger.warning("Unable to release inhibitor.")
 
     def prepare_for_sleep(self, start: bool) -> None:
         """
