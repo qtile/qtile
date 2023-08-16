@@ -1986,12 +1986,7 @@ class Window(_Window, base.Window):
                 self.group.focus(self, False)
             if self.group.screen and self.qtile.current_screen != self.group.screen:
                 self.qtile.focus_screen(self.group.screen.index, False)
-        else:
-            self._grab_click()
         return True
-
-    def handle_LeaveNotify(self, e):  # noqa: N802
-        self._ungrab_click()
 
     def handle_ButtonPress(self, e):  # noqa: N802
         self.qtile.core.focus_by_click(e, window=self)
