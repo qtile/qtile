@@ -888,6 +888,8 @@ class Core(base.Core):
             # clicked on root window
             screen = qtile.find_screen(e.root_x, e.root_y)
             if screen:
+                if qtile.current_window:
+                    qtile.current_window._grab_click()
                 qtile.focus_screen(screen.index, warp=False)
 
     def flush(self):
