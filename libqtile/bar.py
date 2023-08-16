@@ -614,6 +614,10 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         self._draw_queued = False
         self._resize(self._length, self.widgets)
 
+        # Fill the drawer with the background colour which will be shown if
+        # widgets don't completely fill the bar.
+        self.drawer.clear(self.background)
+
         # We draw the border before the widgets
         if any(self.border_width):
             # The border is drawn "outside" of the bar (i.e. not in the space that the
@@ -640,8 +644,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 ),
             ]
 
-            self.drawer.clear(self.background)
-
             for border_width, colour, opts in zip(
                 self.border_width, self.border_color, line_opts
             ):
@@ -657,7 +659,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 self.drawer.ctx.line_to(*line_to)
                 self.drawer.ctx.stroke()
 
-            self.drawer.draw(0, 0)
+        self.drawer.draw()
 
         for i in self.widgets:
             i.draw()
