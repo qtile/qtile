@@ -126,22 +126,36 @@ Running tests locally
 This section gives an overview about ``tox`` so that you don't have to search
 `its documentation <https://tox.readthedocs.io/en/latest/>`_ just to get
 started.
+
 Checks are grouped in so-called ``environments``. Some of them are configured to
 check that the code works (the usual unit test, e.g. ``py39``, ``pypy3``),
 others make sure that your code conforms to the style guide (``pep8``,
 ``codestyle``, ``mypy``). A third kind of test verifies that the documentation
 and packaging processes work (``docs``, ``docstyle``, ``packaging``).
 
+We have configured ``tox`` to run the full suite of tests whenever a pull request
+is submitted/updated. To reduce the amount of time taken by these tests, we have
+created separate environments for both python versions and backends (e.g. tests for
+x11 and wayland run in parallel for each python version that we currently support).
+
+These environments were designed with automation in mind so there are separate
+``test`` environments which should be used for running qtile's tests locally. By default,
+tests will only run on x11 backend (but see below for information on how to set the
+backend).
+
 The following examples show how to run tests locally:
-   * To run the functional tests, use ``tox -e py39`` (or a different
-     environment). You can specify to only run a specific test file or even a
-     specific test within that file with the following commands:
+   * To run the functional tests, use ``tox -e test``. You can specify to only
+     run a specific test file or even a specific test within that file with
+     the following commands:
 
      .. code-block:: bash
 
-        tox -e py39 # Run all tests with python 3.9 as the interpreter
-        tox -e py39 -- -x test/widgets/test_widgetbox.py  # run a single file
-        tox -e py39 -- -x test/widgets/test_widgetbox.py::test_widgetbox_widget
+        tox -e test # Run all tests in default python version
+        tox -e test -- -x test/widgets/test_widgetbox.py  # run a single file
+        tox -e test -- -x test/widgets/test_widgetbox.py::test_widgetbox_widget
+        tox -e test -- --backend=wayland --backend=x11  # run tests on both backends
+        tox -e test-both  # same as above 
+        tox -e test-wayland  # Just run tests on wayland backend
 
    * To run style and building checks, use ``tox -e docs,packaging,pep8,...``.
      You can use ``-p auto`` to run the environments in parallel.
