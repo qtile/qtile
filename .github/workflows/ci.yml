@@ -7,7 +7,7 @@ on:
 jobs:
     build:
         runs-on: ubuntu-22.04
-        name: "python ${{ matrix.python-version }}"
+        name: "python ${{ matrix.python-version }} on ${{ matrix.backend }}"
         strategy:
             matrix:
                 # If you change one of these, be sure to update:
@@ -17,6 +17,7 @@ jobs:
                 # If adding new python versions, consider also updating
                 # python version in .readthedocs.yaml
                 python-version: [pypy-3.9, 3.9, '3.10', '3.11']
+                backend: ['x11', 'wayland']
         steps:
             - uses: actions/checkout@v3
             - name: Set up python ${{ matrix.python-version }}
@@ -31,14 +32,18 @@ jobs:
                   libdbus-1-dev libgirepository1.0-dev gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-gudev-1.0 graphviz \
                   imagemagick git xserver-xephyr xterm xvfb dbus-x11 libnotify-bin \
                   libxcb-composite0-dev libxcb-icccm4-dev libxcb-res0-dev libxcb-render0-dev libxcb-res0-dev \
-                  libxcb-xfixes0-dev vlc volumeicon-alsa
+                  libxcb-xfixes0-dev vlc volumeicon-alsa libxkbcommon-dev
                 sudo pip -q install meson PyGObject
-                pip -q install tox tox-gh-actions 
-                bash -x ./scripts/ubuntu_wayland_setup
+                pip -q install tox tox-gh-actions
+            - name: Install wayland
+              if: ${{ matrix.backend == 'wayland' }}
+              run: bash -x ./scripts/ubuntu_wayland_setup
             - name: Run Tests
               run: |
                 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
                 tox
+              env:
+                BACKEND: ${{ matrix.backend }}
             - name: Upload coverage data to coveralls.io
               # For speed purposes, we don't do coverage reporting on pypy 3.9
               if: ${{ matrix.python-version != 'pypy-3.9' }}
@@ -47,7 +52,7 @@ jobs:
                 coveralls --service=github
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
+                COVERALLS_FLAG_NAME: ${{ format('{0}-{1}', matrix.python-version, matrix.backend) }}
                 COVERALLS_PARALLEL: true
                 COVERALLS_SERVICE_JOB_ID: ${{ github.run_id }}
 
