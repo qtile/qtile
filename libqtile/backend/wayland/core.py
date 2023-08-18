@@ -1327,15 +1327,21 @@ class Core(base.Core, wlrq.HasListeners):
                 logger.warning("Failed finding the window under the pointer. Please report.")
                 return None
 
-            # We didn't get a wlr_scene_surface, so the node is an Internal window.
-            win = cast(window.Internal, node.data)
+            # We didn't get a wlr_scene_surface, so we're dealing with an internal window
+            # Internal windows have a scenetree for borders. The parent's data we will use to cast to an internal window
+            parent_tree = cast(SceneTree, node.parent)
+            win = cast(window.Internal, parent_tree.node.data)
             return win, None, sx, sy
 
         if node.type == SceneNodeType.RECT:
             # Rect nodes are only used for window borders. Their immediate parent is the
             # window container, which gives us the window at .data.
+            # We have to differentiate between internal windows and normal windows
             parent_tree = cast(SceneTree, node.parent)
-            win = cast(window.Window, parent_tree.node.data)
+            if isinstance(parent_tree.node.data, window.Internal):
+                win = cast(window.Internal, parent_tree.node.data)
+            else:
+                win = cast(window.Window, parent_tree.node.data)
             return win, None, sx, sy
 
         logger.warning("Couldn't determine what was under the pointer. Please report.")

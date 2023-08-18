@@ -915,15 +915,19 @@ class Internal(_Base, base.Internal):
         # Store this object on the scene node for finding the window under the pointer.
         self.wlr_buffer, self.surface = self._new_buffer(init=True)
         self.tree = SceneTree.create(core.mid_window_tree)
+        self.data_handle = ffi.new_handle(self)
+        self.tree.node.set_enabled(enabled=False)
+        self.tree.node.data = self.data_handle
+        self.tree.node.set_position(x, y)
         scene_buffer = SceneBuffer.create(self.tree, self.wlr_buffer)
         if scene_buffer is None:
             raise RuntimeError("Couldn't create scene buffer")
         self._scene_buffer = scene_buffer
-        self.data_handle = ffi.new_handle(self)
-        self.node = self._scene_buffer.node
-        self.node.set_enabled(enabled=False)
-        self.node.set_position(x, y)
-        self.node.data = self.data_handle
+        # The borders are wlr_scene_rects.
+        # Inner list: N, E, S, W edges
+        # Outer list: outside-in borders i.e. multiple for multiple borders
+        self._borders: list[list[SceneRect]] = []
+        self.bordercolor: ColorsType = "000000"
 
     def finalize(self) -> None:
         self.hide()
@@ -951,10 +955,10 @@ class Internal(_Base, base.Internal):
         return Drawer(self.qtile, self, width, height)
 
     def hide(self) -> None:
-        self.node.set_enabled(enabled=False)
+        self.tree.node.set_enabled(enabled=False)
 
     def unhide(self) -> None:
-        self.node.set_enabled(enabled=True)
+        self.tree.node.set_enabled(enabled=True)
 
     @expose_command()
     def focus(self, warp: bool = True) -> None:
@@ -986,13 +990,87 @@ class Internal(_Base, base.Internal):
 
         self.x = x
         self.y = y
-        self.node.set_position(x, y)
+        self.tree.node.set_position(x, y)
 
         if width != self._width or height != self._height:
             # Changed size, we need to regenerate the buffer
             self._width = width
             self._height = height
             self.wlr_buffer, self.surface = self._new_buffer()
+
+    def paint_borders(self, colors: ColorsType | None, width: int) -> None:
+        if not colors:
+            colors = []
+            width = 0
+
+        if not isinstance(colors, list):
+            colors = [colors]
+
+        if self._scene_buffer:
+            self._scene_buffer.node.set_position(width, width)
+        self.bordercolor = colors
+        self.borderwidth = width
+
+        if width == 0:
+            for rects in self._borders:
+                for rect in rects:
+                    rect.node.destroy()
+            self._borders.clear()
+            return
+
+        if len(colors) > width:
+            colors = colors[:width]
+
+        num = len(colors)
+        old_borders = self._borders
+        new_borders = []
+        widths = [width // num] * num
+        for i in range(width % num):
+            widths[i] += 1
+
+        outer_w = self.width + width * 2
+        outer_h = self.height + width * 2
+        coord = 0
+
+        for i, color in enumerate(colors):
+            color_ = _rgb(color)
+            bw = widths[i]
+
+            # [x, y, width, height] for N, E, S, W
+            geometries = (
+                (coord, coord, outer_w - coord * 2, bw),
+                (outer_w - bw - coord, bw + coord, bw, outer_h - bw * 2 - coord * 2),
+                (coord, outer_h - bw - coord, outer_w - coord * 2, bw),
+                (coord, bw + coord, bw, outer_h - bw * 2 - coord * 2),
+            )
+
+            if old_borders:
+                rects = old_borders.pop(0)
+                for (x, y, w, h), rect in zip(geometries, rects):
+                    rect.set_color(color_)
+                    rect.set_size(w, h)
+                    rect.node.set_position(x, y)
+
+            else:
+                rects = []
+                for x, y, w, h in geometries:
+                    rect = SceneRect(self.tree, w, h, color_)
+                    rect.node.set_position(x, y)
+                    rects.append(rect)
+
+            new_borders.append(rects)
+            coord += bw
+
+        for rects in old_borders:
+            for rect in rects:
+                rect.node.destroy()
+
+        # Ensure the window contents and any nested surfaces are drawn above the
+        # borders.
+        if self._scene_buffer:
+            self._scene_buffer.node.raise_to_top()
+
+        self._borders = new_borders
 
     @expose_command()
     def info(self) -> dict:
@@ -1007,7 +1085,7 @@ class Internal(_Base, base.Internal):
 
     @expose_command()
     def bring_to_front(self) -> None:
-        self.node.raise_to_top()
+        self.tree.node.raise_to_top()
 
 
 WindowType = typing.Union[Window, Static, Internal]
