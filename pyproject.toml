@@ -1,3 +1,7 @@
+[build-system]
+requires = [ "setuptools>=41", "wheel", "setuptools-git-versioning<2", ]
+build-backend = "setuptools.build_meta"
+
 [tool.black]
 line-length = 98
 exclude = 'libqtile/_ffi.*\.py|libqtile/backend/x11/_ffi.*\.py|test/configs/syntaxerr.py'
@@ -8,3 +12,11 @@ testpaths = ["test"]
 filterwarnings = [
     "error:::libqtile",
 ]
+
+[tool.setuptools-git-versioning]
+enabled = true
+
+[project]
+name = "qtile"
+description = "A pure-Python tiling window manager."
+dynamic = ["version", "readme"]
