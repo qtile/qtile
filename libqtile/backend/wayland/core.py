@@ -467,6 +467,7 @@ class Core(base.Core, wlrq.HasListeners):
             output.scene_output.set_position(output.x, output.y)
 
         self.output_manager.set_configuration(config)
+        self.outputs.sort(key=lambda o: (o.x, o.y))
         hook.fire("screen_change", None)
 
     def _on_output_manager_apply(
