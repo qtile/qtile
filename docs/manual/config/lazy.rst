@@ -5,7 +5,7 @@ Lazy objects
 ============
 
 Lazy objects are a way of executing any of the commands available in Qtile's
-:doc:commands API </manual/commands/api/index>. 
+:doc:`commands API </manual/commands/api/index>`. 
 
 The name "lazy" refers to the fact that the commands are not executed at the time of
 the call. Instead, the lazy object creates a reference to the relevant command and this
