@@ -508,6 +508,11 @@ class _Window:
         # don't match the requirements to be in any of the other layers.
         self.previous_layer = (False, False, True, False, False, False)
 
+        self.base_x: int | None = None
+        self.base_y: int | None = None
+        self.base_width: int | None = None
+        self.base_height: int | None = None
+
         self.bordercolor = None
         self.state = NormalState
         self._float_state = FloatStates.NOT_FLOATING
@@ -1748,6 +1753,12 @@ class Window(_Window, base.Window):
             needs_change = self._float_state != FloatStates.FULLSCREEN
             screen = self.group.screen or self.qtile.find_closest_screen(self.x, self.y)
 
+            if self._float_state not in (FloatStates.MAXIMIZED, FloatStates.FULLSCREEN):
+                self.base_x = self.x
+                self.base_y = self.y
+                self.base_width = self.width
+                self.base_height = self.height
+
             bw = self.group.floating_layout.fullscreen_border_width
             self._enablefloating(
                 screen.x,
@@ -1762,6 +1773,14 @@ class Window(_Window, base.Window):
             return
 
         if self._float_state == FloatStates.FULLSCREEN:
+            if self.base_x is not None:
+                self.x = self.base_x
+            if self.base_y is not None:
+                self.y = self.base_y
+            if self.base_width is not None:
+                self.width = self.base_width
+            if self.base_height is not None:
+                self.height = self.base_height
             self.floating = False
             self.change_layer()
             return
@@ -1775,6 +1794,12 @@ class Window(_Window, base.Window):
         if do_maximize:
             screen = self.group.screen or self.qtile.find_closest_screen(self.x, self.y)
 
+            if self._float_state not in (FloatStates.MAXIMIZED, FloatStates.FULLSCREEN):
+                self.base_x = self.x
+                self.base_y = self.y
+                self.base_width = self.width
+                self.base_height = self.height
+
             bw = self.group.floating_layout.max_border_width
             self._enablefloating(
                 screen.dx,
@@ -1785,6 +1810,14 @@ class Window(_Window, base.Window):
             )
         else:
             if self._float_state == FloatStates.MAXIMIZED:
+                if self.base_x is not None:
+                    self.x = self.base_x
+                if self.base_y is not None:
+                    self.y = self.base_y
+                if self.base_width is not None:
+                    self.width = self.base_width
+                if self.base_height is not None:
+                    self.height = self.base_height
                 self.floating = False
 
     @property
