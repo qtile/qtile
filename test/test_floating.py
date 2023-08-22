@@ -25,15 +25,6 @@ from libqtile import bar, layout, widget
 from libqtile.config import Screen
 from libqtile.confreader import Config
 
-LEFT_ALT = "mod1"
-WINDOWS = "mod4"
-FONTSIZE = 13
-CHAM1 = "8AE234"
-CHAM3 = "4E9A06"
-GRAPH_KW = dict(
-    line_width=1, graph_color=CHAM3, fill_color=CHAM3 + ".3", border_width=1, border_color=CHAM3
-)
-
 
 class FakeScreenConfig(Config):
     auto_fullscreen = True
