@@ -122,6 +122,22 @@ class _Window(CommandObject, metaclass=ABCMeta):
     def _select(self, name, sel):
         return None
 
+    def _save_geometry(self):
+        self.base_x = self.x
+        self.base_y = self.y
+        self.base_width = self.width
+        self.base_height = self.height
+
+    def _restore_geometry(self):
+        if self.base_x is not None:
+            self.x = self.base_x
+        if self.base_y is not None:
+            self.y = self.base_y
+        if self.base_width is not None:
+            self.width = self.base_width
+        if self.base_height is not None:
+            self.height = self.base_height
+
     @abstractmethod
     @expose_command()
     def info(self) -> dict[str, Any]:

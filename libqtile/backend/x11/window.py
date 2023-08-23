@@ -1754,10 +1754,7 @@ class Window(_Window, base.Window):
             screen = self.group.screen or self.qtile.find_closest_screen(self.x, self.y)
 
             if self._float_state not in (FloatStates.MAXIMIZED, FloatStates.FULLSCREEN):
-                self.base_x = self.x
-                self.base_y = self.y
-                self.base_width = self.width
-                self.base_height = self.height
+                self._save_geometry()
 
             bw = self.group.floating_layout.fullscreen_border_width
             self._enablefloating(
@@ -1773,14 +1770,7 @@ class Window(_Window, base.Window):
             return
 
         if self._float_state == FloatStates.FULLSCREEN:
-            if self.base_x is not None:
-                self.x = self.base_x
-            if self.base_y is not None:
-                self.y = self.base_y
-            if self.base_width is not None:
-                self.width = self.base_width
-            if self.base_height is not None:
-                self.height = self.base_height
+            self._restore_geometry()
             self.floating = False
             self.change_layer()
             return
@@ -1795,10 +1785,7 @@ class Window(_Window, base.Window):
             screen = self.group.screen or self.qtile.find_closest_screen(self.x, self.y)
 
             if self._float_state not in (FloatStates.MAXIMIZED, FloatStates.FULLSCREEN):
-                self.base_x = self.x
-                self.base_y = self.y
-                self.base_width = self.width
-                self.base_height = self.height
+                self._save_geometry()
 
             bw = self.group.floating_layout.max_border_width
             self._enablefloating(
@@ -1810,14 +1797,7 @@ class Window(_Window, base.Window):
             )
         else:
             if self._float_state == FloatStates.MAXIMIZED:
-                if self.base_x is not None:
-                    self.x = self.base_x
-                if self.base_y is not None:
-                    self.y = self.base_y
-                if self.base_width is not None:
-                    self.width = self.base_width
-                if self.base_height is not None:
-                    self.height = self.base_height
+                self._restore_geometry()
                 self.floating = False
 
     @property
