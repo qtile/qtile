@@ -508,11 +508,6 @@ class _Window:
         # don't match the requirements to be in any of the other layers.
         self.previous_layer = (False, False, True, False, False, False)
 
-        self.base_x: int | None = None
-        self.base_y: int | None = None
-        self.base_width: int | None = None
-        self.base_height: int | None = None
-
         self.bordercolor = None
         self.state = NormalState
         self._float_state = FloatStates.NOT_FLOATING

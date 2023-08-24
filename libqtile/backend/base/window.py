@@ -37,6 +37,11 @@ class _Window(CommandObject, metaclass=ABCMeta):
         # Window object from being managed, now that a Static is being used instead
         self.defunct: bool = False
 
+        self.base_x: int | None = None
+        self.base_y: int | None = None
+        self.base_width: int | None = None
+        self.base_height: int | None = None
+
     @property
     @abstractmethod
     def wid(self) -> int:
@@ -123,12 +128,14 @@ class _Window(CommandObject, metaclass=ABCMeta):
         return None
 
     def _save_geometry(self):
+        """Save current window geometry."""
         self.base_x = self.x
         self.base_y = self.y
         self.base_width = self.width
         self.base_height = self.height
 
     def _restore_geometry(self):
+        """Restore previously saved window geometry."""
         if self.base_x is not None:
             self.x = self.base_x
         if self.base_y is not None:

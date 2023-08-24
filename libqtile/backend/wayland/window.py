@@ -153,11 +153,6 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         # attribute optional to avoid the destroy().
         self.ftm_handle: ftm.ForeignToplevelHandleV1 | None = None
 
-        self.base_x: int | None = None
-        self.base_y: int | None = None
-        self.base_width: int | None = None
-        self.base_height: int | None = None
-
     def finalize(self) -> None:
         self.finalize_listeners()
         self.surface.data = None
