@@ -335,11 +335,12 @@ texinfo_documents = [
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 # texinfo_show_urls = 'footnote'
 
-# only import and set the theme if we're building docs locally
+html_theme = "sphinx_rtd_theme"
+
+# only import and set the theme path if we're building docs locally
 if not os.environ.get("READTHEDOCS"):
     import sphinx_rtd_theme
 
-    html_theme = "sphinx_rtd_theme"
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 
