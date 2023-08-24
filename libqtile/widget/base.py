@@ -834,7 +834,7 @@ class ThreadPoolText(_TextBox):
                         self.timeout_add(self.update_interval, self.timer_setup)
 
                 except Exception:
-                    logger.exception("Failed to reschedule.")
+                    logger.exception("Failed to reschedule timer for %s.", self.name)
             else:
                 logger.warning("%s's poll() returned None, not rescheduling", self.name)
 
