@@ -1044,14 +1044,15 @@ class _Window:
         windows.sort(key=lambda w: stack.index(w[0].wid))
 
         # Get lists of windows on lower, higher or same "layer" as window
-        lower = [w[0].wid for w in windows if w[1] is None and w[2] > layering]
-        higher = [w[0].wid for w in windows if w[1] is None and w[2] < layering]
-        same = [w[0].wid for w in windows if w[1] is None and w[2] == layering]
+        lower = [w[0].wid for w in windows if w[2] > layering]
+        higher = [w[0].wid for w in windows if w[2] < layering]
+        same = [w[0].wid for w in windows if w[2] == layering]
 
         # We now need to identify the new position in the stack
 
         # If the window has a parent, the window should just be put above it
-        if parent:
+        # If the parent isn't being managed by qtile then it may not be stacked correctly
+        if parent and parent in self.qtile.windows_map:
             sibling = parent
             above = True
 
