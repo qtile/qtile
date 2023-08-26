@@ -1062,7 +1062,7 @@ class _Window:
                     for k, v in self.qtile.windows_map.items()
                     if v.window.get_wm_transient_for() == parent
                 )
-                window_group.sort(key=lambda w: stack.index(w))
+                window_group.sort(key=stack.index)
 
                 # Make sure we're above the last window in that group
                 sibling = window_group[-1]
@@ -1183,8 +1183,30 @@ class _Window:
             stackmode=xcffib.xproto.StackMode.Above if above else xcffib.xproto.StackMode.Below,
             sibling=sibling,
         )
-        # TODO: also move our children if we were moved upwards
+
+        # Move window's children if we were moved upwards
+        if above:
+            self.raise_children(stack=stack)
+
         self.qtile.core.update_client_lists()
+
+    def raise_children(self, stack=None):
+        """Ensure any transient windows are moved up with the parent."""
+        children = [
+            k
+            for k, v in self.qtile.windows_map.items()
+            if v.window.get_wm_transient_for() == self.window.wid
+        ]
+        if children:
+            if stack is None:
+                stack = list(self.qtile.core._root.query_tree())
+            parent = self.window.wid
+            children.sort(key=stack.index)
+            for child in children:
+                self.qtile.windows_map[child].window.configure(
+                    stackmode=xcffib.xproto.StackMode.Above, sibling=parent
+                )
+                parent = child
 
     def paint_borders(self, color, width):
         self.borderwidth = width
@@ -1639,6 +1661,8 @@ class Static(_Window, base.Static):
     def bring_to_front(self):
         if self.get_wm_type() != "desktop":
             self.window.configure(stackmode=xcffib.xproto.StackMode.Above)
+            self.raise_children()
+            self.qtile.core.update_client_lists()
 
 
 class Window(_Window, base.Window):
@@ -2260,6 +2284,8 @@ class Window(_Window, base.Window):
     def bring_to_front(self):
         if self.get_wm_type() != "desktop":
             self.window.configure(stackmode=xcffib.xproto.StackMode.Above)
+            self.raise_children()
+            self.qtile.core.update_client_lists()
 
     def _is_in_window(self, x, y, window):
         return window.edges[0] <= x <= window.edges[2] and window.edges[1] <= y <= window.edges[3]
