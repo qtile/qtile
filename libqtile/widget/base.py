@@ -172,6 +172,7 @@ class _Widget(CommandObject, configurable.Configurable):
         self.configured = False
         self._futures: list[asyncio.Handle] = []
         self._mirrors: set[_Widget] = set()
+        self.finalized = False
 
     @property
     def length(self):
@@ -251,6 +252,7 @@ class _Widget(CommandObject, configurable.Configurable):
         if hasattr(self, "layout") and self.layout:
             self.layout.finalize()
         self.drawer.finalize()
+        self.finalized = True
 
     def clear(self):
         self.drawer.set_source_rgb(self.bar.background)
@@ -333,6 +335,10 @@ class _Widget(CommandObject, configurable.Configurable):
         """
         This method calls ``.call_later`` with given arguments.
         """
+        # Don't add timers for finalised widgets
+        if self.finalized:
+            return
+
         future = self.qtile.call_later(seconds, self._wrapper, method, *method_args)
 
         self._futures.append(future)
@@ -727,6 +733,13 @@ class _TextBox(_Widget):
 
     def update(self, text):
         """Update the widget text."""
+        # Don't try to update text in dead layouts
+        # This is mainly required for ThreadPoolText based widgets as the
+        # polling function cannot be cancelled and so may be called after the widget
+        # is finalised.
+        if not self.can_draw():
+            return
+
         if self.text == text:
             return
         if text is None:
