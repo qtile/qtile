@@ -1053,7 +1053,23 @@ class _Window:
         # If the window has a parent, the window should just be put above it
         # If the parent isn't being managed by qtile then it may not be stacked correctly
         if parent and parent in self.qtile.windows_map:
-            sibling = parent
+            # If the window is modal then it should be placed above every other window that is in that window group
+            # e.g. the parent of the dialog and any other window that is also transient for the same parent.
+            if "_NET_WM_STATE_MODAL" in self.window.get_net_wm_state():
+                window_group = [parent]
+                window_group.extend(
+                    k
+                    for k, v in self.qtile.windows_map.items()
+                    if v.window.get_wm_transient_for() == parent
+                )
+                window_group.sort(key=lambda w: stack.index(w))
+
+                # Make sure we're above the last window in that group
+                sibling = window_group[-1]
+
+            else:
+                sibling = parent
+
             above = True
 
         # Now we just check whether the window has changed layer.
