@@ -48,7 +48,9 @@ class PulseVolume(Volume):
         self.add_defaults(PulseVolume.defaults)
         self.pulse = pulsectl_asyncio.PulseAsync("qtile-pulse")
         self._subscribed = False
-        self._sink_event_handler = None
+        self._event_handler = None
+        self.default_sink = {}
+        self.default_sink_name = None
 
     def _configure(self, qtile, bar):
         Volume._configure(self, qtile, bar)
@@ -67,9 +69,10 @@ class PulseVolume(Volume):
         if not self.pulse.connected:
             # Check if we were previously connected to the server and,
             # if so, stop the event handler
-            if self._subscribed and self._sink_event_handler is not None:
-                self._sink_event_handler.cancel()
-                self._sink_event_handler = None
+            if self._subscribed:
+                if self._event_handler is not None:
+                    self._event_handler.cancel()
+                    self._event_handler = None
                 self._subscribed = False
             try:
                 await self.pulse.connect()
@@ -80,17 +83,22 @@ class PulseVolume(Volume):
                 # We're connected so get details of the default sink
                 await self.get_server_info()
 
-                # Start an event listener for sink events
-                self._sink_event_handler = create_task(self._sink_event_listener())
+                # Start event listeners for sink and server events
+                self._event_handler = create_task(self._event_listener())
                 self._subscribed = True
 
         # Set a timer to check status in 10 seconds time
         self.timeout_add(10, self._check_pulse_connection())
 
-    async def _sink_event_listener(self):
-        """Listens for sink events from the server."""
-        async for event in self.pulse.subscribe_events('sink'):
-            await self.get_sink_info()
+    async def _event_listener(self):
+        """Listens for sink and client events from the server."""
+        async for event in self.pulse.subscribe_events("sink", "server"):
+            # Sink events will signify volume changes
+            if event.facility == "sink":
+                await self.get_sink_info()
+            # Server events include when the default sink changes
+            elif event.facility == "server":
+                await self.get_server_info()
 
     async def get_server_info(self):
         info = await self.pulse.server_info()
