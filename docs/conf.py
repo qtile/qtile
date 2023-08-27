@@ -44,6 +44,8 @@ MOCK_MODULES = [
     "keyring",
     "mpd",
     "psutil",
+    "pulsectl",
+    "pulsectl_asyncio",
     "pywayland",
     "pywayland.protocol.wayland",
     "pywayland.protocol.wayland.wl_output",
