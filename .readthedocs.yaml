@@ -17,7 +17,6 @@ build:
     - gir1.2-gudev-1.0
     - graphviz
     - imagemagick
-    - libpulse-dev
     - xserver-xephyr
     - xvfb
     - dbus-x11

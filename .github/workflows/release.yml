@@ -19,8 +19,7 @@ jobs:
           apt update
           apt-get install -y --no-install-recommends \
             libcairo-dev \
-            libffi-dev \
-            libpulse-dev
+            libffi-dev
       - uses: actions/checkout@v2
       - name: Set environment variables
         run: |
@@ -79,8 +78,7 @@ jobs:
         run: |
           apt update
           apt-get install -y --no-install-recommends \
-            libcairo-dev \
-            libpulse-dev
+            libcairo-dev
       - uses: actions/checkout@v2
       - name: Set environment variables
         run: |
