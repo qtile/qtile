@@ -149,9 +149,6 @@ class PulseVolume(Volume):
 
         create_task(self._change_volume(value))
 
-    def poll(self):
-        self.update()
-
     def update(self):
         """
         same method as in Volume widgets except that here we don't need to
