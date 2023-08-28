@@ -91,7 +91,7 @@ class PulseVolume(Volume):
         self.timeout_add(10, self._check_pulse_connection())
 
     async def _event_listener(self):
-        """Listens for sink and client events from the server."""
+        """Listens for sink and server events from the server."""
         async for event in self.pulse.subscribe_events("sink", "server"):
             # Sink events will signify volume changes
             if event.facility == "sink":
