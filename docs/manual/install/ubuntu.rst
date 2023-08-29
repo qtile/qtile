@@ -14,13 +14,6 @@ To install the git version see :ref:`installing-from-source`
 Note: As of Ubuntu 20.04 (Focal Fossa), the package has been outdated
 and removed from the Ubuntu's official package list.
 
-On other recent Ubuntu (17.04 or greater) and Debian unstable versions,
-there are Qtile packages available via:
-
-.. code-block:: bash
-
-    sudo apt-get install qtile
-
 Debian 11 (bullseye)
 --------------------
 
