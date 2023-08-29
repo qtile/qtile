@@ -92,17 +92,6 @@ def get_cffi_modules():
     else:
         print("Failed to find pywlroots. Wayland backend dependencies not built.")
 
-    # PulseVolume widget
-    from cffi.error import PkgConfigError
-    from cffi.pkgconfig import call
-
-    try:
-        call("libpulse", "--libs")
-    except PkgConfigError:
-        print("Failed to find pulseaudio headers. PulseVolume widget will be unavailable")
-    else:
-        cffi_modules.append("libqtile/widget/pulseaudio_ffi.py:pulseaudio_ffi")
-
     return cffi_modules
 
 
