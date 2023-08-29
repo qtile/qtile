@@ -39,6 +39,7 @@ class PulseVolume(Volume):
     The widget relies on the `pulsectl_asyncio <https://pypi.org/project/pulsectl-asyncio/>`__
     library to access the libpulse bindings.
     """
+
     defaults = [
         ("limit_max_volume", False, "Limit maximum volume to 100%"),
     ]
@@ -49,8 +50,9 @@ class PulseVolume(Volume):
         self.pulse = pulsectl_asyncio.PulseAsync("qtile-pulse")
         self._subscribed = False
         self._event_handler = None
-        self.default_sink = {}
+        self.default_sink = None
         self.default_sink_name = None
+        self._previous_state = (-1.0, -1)
 
     def _configure(self, qtile, bar):
         Volume._configure(self, qtile, bar)
@@ -78,6 +80,7 @@ class PulseVolume(Volume):
                 await self.pulse.connect()
                 logger.debug("Connection to pulseaudio ready")
             except PulseError:
+                raise
                 logger.warning("Failed to connect to pulseaudio, retrying in 10s")
             else:
                 # We're connected so get details of the default sink
@@ -106,7 +109,9 @@ class PulseVolume(Volume):
         await self.get_sink_info()
 
     async def get_sink_info(self):
-        sinks = [sink for sink in await self.pulse.sink_list() if sink.name == self.default_sink_name]
+        sinks = [
+            sink for sink in await self.pulse.sink_list() if sink.name == self.default_sink_name
+        ]
         if not sinks:
             logger.warning("Cold not get info for default sink")
             self.default_sink = None
@@ -154,13 +159,23 @@ class PulseVolume(Volume):
         same method as in Volume widgets except that here we don't need to
         manually re-schedule update
         """
+        if not self.pulse.connected:
+            return
+
         vol = self.get_volume()
-        if vol != self.volume:
+        mute = self.default_sink.mute
+
+        if (vol, mute) != self._previous_state:
             self.volume = vol
             # Update the underlying canvas size before actually attempting
             # to figure out how big it is and draw it.
+            length = self.length
             self._update_drawer()
-            self.bar.draw()
+            if self.length == length:
+                self.draw()
+            else:
+                self.bar.draw()
+            self._previous_state = (vol, mute)
 
     def get_volume(self):
         if self.default_sink:
