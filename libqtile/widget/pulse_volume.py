@@ -80,7 +80,6 @@ class PulseVolume(Volume):
                 await self.pulse.connect()
                 logger.debug("Connection to pulseaudio ready")
             except PulseError:
-                raise
                 logger.warning("Failed to connect to pulseaudio, retrying in 10s")
             else:
                 # We're connected so get details of the default sink
