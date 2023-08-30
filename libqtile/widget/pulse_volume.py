@@ -47,14 +47,15 @@ class PulseVolume(Volume):
     def __init__(self, **config):
         Volume.__init__(self, **config)
         self.add_defaults(PulseVolume.defaults)
-        self.pulse = pulsectl_asyncio.PulseAsync("qtile-pulse")
         self._subscribed = False
         self._event_handler = None
         self.default_sink = None
         self.default_sink_name = None
         self._previous_state = (-1.0, -1)
+        self.pulse = None
 
     def _configure(self, qtile, bar):
+        self.pulse = pulsectl_asyncio.PulseAsync("qtile-pulse")
         Volume._configure(self, qtile, bar)
         if self.theme_path:
             self.setup_images()
