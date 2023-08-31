@@ -205,7 +205,7 @@ class Dnd(HasListeners):
         self.height: int = 0
 
         self.icon = cast(data_device_manager.DragIcon, wlr_drag.icon)
-        self.add_listener(wlr_drag.destroy_event, self._on_destroy)
+        self.add_listener(self.icon.destroy_event, self._on_destroy)
         self.add_listener(self.icon.surface.commit_event, self._on_icon_commit)
 
         tree = SceneTree.subsurface_tree_create(core.drag_icon_tree, self.icon.surface)
