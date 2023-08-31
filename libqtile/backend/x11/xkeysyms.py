@@ -181,6 +181,7 @@ keysyms = {
     "XF86TouchpadOn": 0x1008FFB0,
     "XF86TouchpadOff": 0x1008FFB1,
     "XF86AudioMicMute": 0x1008FFB2,
+    "XF86Keyboard": 0x1008FFB3,
     "XF86Switch_VT_1": 0x1008FE01,
     "XF86Switch_VT_2": 0x1008FE02,
     "XF86Switch_VT_3": 0x1008FE03,
