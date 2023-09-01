@@ -185,6 +185,8 @@ class Drawer:
         offsety: int = 0,
         width: int | None = None,
         height: int | None = None,
+        src_x: int = 0,
+        src_y: int = 0,
     ):
         """
         A wrapper for the draw operation.
@@ -205,9 +207,20 @@ class Drawer:
             the X portion of the canvas to draw at the starting point.
         height :
             the Y portion of the canvas to draw at the starting point.
+        src_x  :
+            the X position of the origin in the source surface
+        src_y  :
+            the Y position of the origin in the source surface
         """
         if self._enabled:
-            self._draw(offsetx, offsety, width, height)
+            self._draw(
+                offsetx=offsetx,
+                offsety=offsety,
+                width=width,
+                height=height,
+                src_x=src_x,
+                src_y=src_y,
+            )
             if self.has_mirrors:
                 self._create_last_surface()
                 ctx = cairocffi.Context(self.last_surface)
@@ -222,6 +235,8 @@ class Drawer:
         offsety: int = 0,
         width: int | None = None,
         height: int | None = None,
+        src_x: int = 0,
+        src_y: int = 0,
     ):
         """
         This draws our cached operations to the Internal window.
@@ -237,6 +252,10 @@ class Drawer:
             the X portion of the canvas to draw at the starting point.
         height :
             the Y portion of the canvas to draw at the starting point.
+        src_x  :
+            the X position of the origin in the source surface
+        src_y  :
+            the Y position of the origin in the source surface
         """
 
     def new_ctx(self):
