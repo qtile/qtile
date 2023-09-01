@@ -175,6 +175,8 @@ class Drawer(drawer.Drawer):
         offsety: int = 0,
         width: int | None = None,
         height: int | None = None,
+        src_x: int = 0,
+        src_y: int = 0,
     ):
         self.current_rect = (offsetx, offsety, width, height)
 
@@ -193,8 +195,8 @@ class Drawer(drawer.Drawer):
             self._pixmap,
             self._win.wid,
             self._gc,
-            0,
-            0,  # srcx, srcy
+            src_x,
+            src_y,  # srcx, srcy
             offsetx,
             offsety,  # dstx, dsty
             self.width if width is None else width,

@@ -264,9 +264,9 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                     self._length = self.height
                     self._size += margin[1] + margin[3]
                     if screen.left is self:
-                        self.x += margin[3]
+                        self.x += margin[3] - self.border_width[3]
                     else:
-                        self.x -= margin[1]
+                        self.x -= margin[1] + self.border_width[1]
 
             self._reserved_space_updated = False
 
@@ -613,11 +613,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
     def _actual_draw(self) -> None:
         self._draw_queued = False
         self._resize(self._length, self.widgets)
-
-        # Fill the drawer with the background colour which will be shown if
-        # widgets don't completely fill the bar.
-        self.drawer.clear(self.background)
-
         # We draw the border before the widgets
         if any(self.border_width):
             # The border is drawn "outside" of the bar (i.e. not in the space that the
@@ -628,41 +623,77 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             # line_opts is a list of tuples where each tuple represents the borders
             # in the order N, E, S, W. The border tuple contains two pairs of
             # co-ordinates for the start and end of the border.
-            line_opts = [
-                ((0, self.border_width[0] * 0.5), (width, self.border_width[0] * 0.5)),
+            rects = [
+                (0, 0, width, self.border_width[0]),
                 (
-                    (width - (self.border_width[1] * 0.5), self.border_width[0]),
-                    (width - (self.border_width[1] * 0.5), height - self.border_width[2]),
+                    width - (self.border_width[1]),
+                    self.border_width[0],
+                    self.border_width[1],
+                    height - self.border_width[0] - self.border_width[2],
                 ),
+                (0, height - self.border_width[2], width, self.border_width[2]),
                 (
-                    (0, height - self.border_width[2] + (self.border_width[2] * 0.5)),
-                    (width, height - self.border_width[2] + (self.border_width[2] * 0.5)),
-                ),
-                (
-                    (self.border_width[3] * 0.5, self.border_width[0]),
-                    (self.border_width[3] * 0.5, height - self.border_width[2]),
+                    0,
+                    self.border_width[0],
+                    self.border_width[3],
+                    height - self.border_width[0] - self.border_width[2],
                 ),
             ]
 
-            for border_width, colour, opts in zip(
-                self.border_width, self.border_color, line_opts
-            ):
+            for border_width, colour, rect in zip(self.border_width, self.border_color, rects):
                 if not border_width:
                     continue
 
-                move_to, line_to = opts
-
                 # Draw the border
+                self.drawer.clear_rect(*rect)
+                self.drawer.ctx.rectangle(*rect)
                 self.drawer.set_source_rgb(colour)  # type: ignore[arg-type]
-                self.drawer.ctx.set_line_width(border_width)
-                self.drawer.ctx.move_to(*move_to)
-                self.drawer.ctx.line_to(*line_to)
-                self.drawer.ctx.stroke()
+                self.drawer.ctx.fill()
+                src_x, src_y, width, height = rect
 
-        self.drawer.draw()
+                self.drawer.draw(
+                    offsetx=src_x,
+                    offsety=src_y,
+                    width=width,
+                    height=height,
+                    src_x=src_x,
+                    src_y=src_y,
+                )
 
         for i in self.widgets:
             i.draw()
+
+        # We need to check if there is any unoccupied space in the bar
+        # This can happen where there are no SPACER-type widgets to fill
+        # empty space.
+        # In that scenario, we fill the empty space with the bar background colour
+        # We do this, instead of just filling the bar completely at the start of this
+        # method to avoid flickering.
+
+        # Widgets are offset by the top/left border but this is not included in self._length
+        # so we adjust the end of the bar area for this offset
+        if self.horizontal:
+            bar_end = self._length + self.border_width[3]
+        else:
+            bar_end = self._length + self.border_width[0]
+
+        widget_end = i.offset + i.length
+
+        if widget_end < bar_end:
+            # Defines a rectangle for the area enclosed by the bar's borders and the end of the
+            # last widget.
+            if self.horizontal:
+                rect = (widget_end, self.border_width[0], bar_end - widget_end, self.height)
+            else:
+                rect = (self.border_width[3], widget_end, self.width, bar_end - widget_end)
+
+            # Clear that area (i.e. don't clear borders) and fill with background colour
+            self.drawer.clear_rect(*rect)
+            self.drawer.ctx.rectangle(*rect)
+            self.drawer.set_source_rgb(self.background)
+            self.drawer.ctx.fill()
+            x, y, w, h = rect
+            self.drawer.draw(offsetx=x, offsety=y, height=h, width=w, src_x=x, src_y=y)
 
     @expose_command()
     def info(self) -> dict[str, Any]:

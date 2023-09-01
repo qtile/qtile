@@ -49,6 +49,8 @@ class Drawer(drawer.Drawer):
         offsety: int = 0,
         width: int | None = None,
         height: int | None = None,
+        src_x: int = 0,
+        src_y: int = 0,
     ) -> None:
         if offsetx > self._win.width:
             return
@@ -76,7 +78,9 @@ class Drawer(drawer.Drawer):
         # Paint recorded operations to our window's underlying ImageSurface
         with cairocffi.Context(self._win.surface) as context:
             context.set_operator(cairocffi.OPERATOR_SOURCE)
-            context.set_source_surface(self.surface, offsetx, offsety)
+            # Adjust the source surface position by src_x and src_y e.g. if we want
+            # to render part of the surface in a different position
+            context.set_source_surface(self.surface, offsetx - src_x, offsety - src_y)
             context.rectangle(offsetx, offsety, width, height)
             context.fill()
 
