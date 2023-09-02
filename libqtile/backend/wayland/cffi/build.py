@@ -1,3 +1,9 @@
+import sys
+from pathlib import Path
+
+path = Path(__file__).parent / ".." / ".." / ".." / ".."
+sys.path.insert(0, path.absolute().as_posix())
+
 import wlroots.ffi_build as wlr
 from cffi import FFI
 

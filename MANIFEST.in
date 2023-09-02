@@ -3,6 +3,7 @@ include LICENSE
 include README.rst
 include MANIFEST.in
 include CONTRIBUTING.md
+include libqtile/backend/wayland/_ffi*.so
 
 exclude .coveragerc
 exclude .pylintrc
