@@ -301,13 +301,14 @@ class Columns(Layout):
     def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         "Position client based on order and sizes"
 
-        # percentage_of_space: percent of a clients fair share of the available space
-        # available_space: the size of the space in pixels
+        # percentage_of_space: percentage of the available space when
+        #                      divided equally among the clients
+        # available_space: the size of the available space in pixels
         # clients_in_space: number of clients that are going to share the space
         def get_pixels_from_relative_size(percentage_of_space, available_space, clients_in_space):
             return round(0.01 * percentage_of_space * available_space / clients_in_space)
 
-        # percent of space occupied by the window horizontally
+        # percentage of the space occupied by the windows to the left of the client
         pos_x = 0
         for col in self.columns:
             if client in col:
@@ -317,7 +318,7 @@ class Columns(Layout):
             client.hide()
             return
 
-        # percent of space occupied by the window vertically
+        # percentage of the space occupied by the windows above the client
         pos_y = 0
         for c in col:
             if client == c:

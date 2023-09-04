@@ -208,11 +208,6 @@ def test_columns_margins_single_window(manager):
 
     # margin_on_single is set
     manager.c.next_layout()
-    info = manager.c.window.info()
-    assert info["x"] == 30
-    assert info["y"] == 30
-    assert info["width"] == WIDTH - 60
-    assert info["height"] == HEIGHT - 60
 
     assert_dimensions(
         manager,
@@ -336,6 +331,7 @@ def test_columns_initial_ratio_left(manager):
     info = manager.c.window.info()
     assert info["width"] == WIDTH / 2
 
+
 @columns_config
 def test_columns_margins_muliple_windows_three_columns(manager):
     num_columns = 3
@@ -384,7 +380,7 @@ def test_columns_margins_muliple_windows_margin(manager):
     win_height = round(window_size(HEIGHT, num_windows, 0, GAP, BORDER))
     assert_dimensions(manager, GAP, GAP, win_width, win_height)
 
-    # move to the window in the top right of the screen
+    # move to the window in the top right corner of the screen
     manager.c.layout.right()
     num_windows = windows_in_current_column(manager)
 
@@ -398,7 +394,7 @@ def test_columns_margins_muliple_windows_margin(manager):
         win_height,
     )
 
-    # move to the window in the bottom right of the screen
+    # move to the window in the bottom right corner of the screen
     manager.c.layout.down()
     assert_dimensions(
         manager,
