@@ -17,7 +17,7 @@ filterwarnings = [
 enabled = true
 
 [tool.setuptools.dynamic]
-readme = {file = "README.md"}
+readme = {file = "README.rst"}
 
 [project]
 name = "qtile"
