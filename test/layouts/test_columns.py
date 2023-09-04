@@ -28,6 +28,7 @@ from test.layouts.layout_utils import assert_dimensions, assert_focus_path, asse
 
 MARGIN = 10
 MARGIN_ON_SINGLE = 30
+GAP = 10
 BORDER = 2
 
 
@@ -38,6 +39,7 @@ class ColumnsConfig(Config):
         layout.Columns(num_columns=3, border=BORDER),
         layout.Columns(margin=MARGIN, border=BORDER),
         layout.Columns(margin=MARGIN, margin_on_single=MARGIN_ON_SINGLE, border=BORDER),
+        layout.Columns(gap=GAP, border=BORDER),
     ]
     floating_layout = floating_layout
     keys = []
@@ -168,14 +170,14 @@ def test_columns_swap_column_right(manager):
     assert columns[2]["clients"] == ["4", "3"]
 
 
-def window_padding(margin, border):
-    return 2 * border + margin
+def window_padding(margin, gap, border):
+    return 2 * border + margin + gap
 
 
-def window_size(available_space, num_clients, margin, border):
+def window_size(available_space, num_clients, margin, gap, border):
     # rounding can lead to rounding erros
-    per_window_padding = window_padding(margin, border)
-    total_padding = num_clients * per_window_padding + margin  # one margin offset
+    per_window_padding = window_padding(margin, gap, border)
+    total_padding = num_clients * per_window_padding + gap  # one gap offset
     return (available_space - total_padding) / num_clients
 
 
@@ -344,10 +346,10 @@ def test_columns_margins_muliple_windows_three_columns(manager):
     manager.c.layout.left()
     manager.c.layout.left()
 
-    win_width_unrounded = window_size(WIDTH, num_columns, 0, BORDER)
+    win_width_unrounded = window_size(WIDTH, num_columns, 0, 0, BORDER)
     win_width = round(win_width_unrounded)
-    win_height = round(window_size(HEIGHT, windows_in_current_column(manager), 0, BORDER))
-    padding = window_padding(0, BORDER)
+    win_height = round(window_size(HEIGHT, windows_in_current_column(manager), 0, 0, BORDER))
+    padding = window_padding(0, 0, BORDER)
 
     assert_dimensions(manager, 0, 0, win_width, win_height)
 
@@ -367,35 +369,41 @@ def test_columns_margins_muliple_windows_margin(manager):
     for i in range(num_windows):
         manager.test_window(str(i))
 
-    manager.c.next_layout()  # go to the margin layout
-    manager.c.layout.left()  # start with the leftmost window
+    # go to the config with gaps
+    manager.c.next_layout()
+    manager.c.next_layout()
+    manager.c.next_layout()
+    # move to the window on the left side of the screen
+    manager.c.layout.left()
 
     columns = manager.c.layout.info()["columns"]
     num_columns = len(columns)
     num_windows = windows_in_current_column(manager)
 
-    win_width = round(window_size(WIDTH, num_columns, MARGIN, BORDER))
-    win_height = round(window_size(HEIGHT, num_windows, MARGIN, BORDER))
-    assert_dimensions(manager, MARGIN, MARGIN, win_width, win_height)
+    win_width = round(window_size(WIDTH, num_columns, 0, GAP, BORDER))
+    win_height = round(window_size(HEIGHT, num_windows, 0, GAP, BORDER))
+    assert_dimensions(manager, GAP, GAP, win_width, win_height)
 
-    manager.c.layout.right()  # move to the other column
+    # move to the window in the top right of the screen
+    manager.c.layout.right()
     num_windows = windows_in_current_column(manager)
 
-    padding = window_padding(MARGIN, BORDER)
-    win_height = round(window_size(HEIGHT, num_windows, MARGIN, BORDER))
+    padding = window_padding(0, GAP, BORDER)
+    win_height = round(window_size(HEIGHT, num_windows, 0, GAP, BORDER))
     assert_dimensions(
         manager,
-        MARGIN + win_width + padding,
-        MARGIN,
+        GAP + win_width + padding,
+        GAP,
         win_width,
         win_height,
     )
 
-    manager.c.layout.down()  # move to the other column
+    # move to the window in the bottom right of the screen
+    manager.c.layout.down()
     assert_dimensions(
         manager,
-        MARGIN + win_width + padding,
-        MARGIN + win_height + padding,
+        GAP + win_width + padding,
+        GAP + win_height + padding,
         win_width,
         win_height,
     )
