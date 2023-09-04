@@ -365,7 +365,6 @@ class Columns(Layout):
             )
             y += get_pixels_from_relative_size(pos_y, usable_height, num_clients_vertically)
         else:
-            num_windows_vertically = 1
             height = usable_height
         height -= 2 * border + gap_y
 
