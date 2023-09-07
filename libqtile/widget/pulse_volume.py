@@ -18,51 +18,50 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import asyncio
+
 import pulsectl_asyncio
 from pulsectl import PulseError
 
+from libqtile import qtile
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 from libqtile.utils import create_task
 from libqtile.widget.volume import Volume
 
+lock = asyncio.Lock()
 
-class PulseVolume(Volume):
+
+class PulseConnection:
     """
-    Volume widget for systems using PulseAudio.
-
-    The widget connects to the PulseAudio server by using the libpulse library
-    and so should be updated virtually instantly rather than needing to poll the
-    volume status regularly (NB this means that the ``update_interval`` parameter
-    serves no purpose for this widget).
-
-    The widget relies on the `pulsectl_asyncio <https://pypi.org/project/pulsectl-asyncio/>`__
-    library to access the libpulse bindings.
+    Class object to manage the connection to the pulse server and send
+    volume/mute status to subscribed clients.
     """
 
-    defaults = [
-        ("limit_max_volume", False, "Limit maximum volume to 100%"),
-    ]
-
-    def __init__(self, **config):
-        Volume.__init__(self, **config)
-        self.add_defaults(PulseVolume.defaults)
+    def __init__(self):
         self._subscribed = False
         self._event_handler = None
         self.default_sink = None
         self.default_sink_name = None
-        self._previous_state = (-1.0, -1)
         self.pulse = None
+        self.configured = False
+        self.callbacks = []
+        self.qtile = qtile
+        self.timer = None
 
-    def _configure(self, qtile, bar):
-        self.pulse = pulsectl_asyncio.PulseAsync("qtile-pulse")
-        Volume._configure(self, qtile, bar)
-        if self.theme_path:
-            self.setup_images()
+    async def _configure(self):
+        # Use a lock to prevent multiple connection attempts
+        async with lock:
+            if self.configured:
+                return
 
-    async def _config_async(self):
-        # Try to connect to pulse server
-        await self._check_pulse_connection()
+            # Create pulse async object but don't connect
+            self.pulse = pulsectl_asyncio.PulseAsync("qtile-pulse")
+
+            # Try to connect
+            await self._check_pulse_connection()
+
+            self.configured = True
 
     async def _check_pulse_connection(self):
         """
@@ -91,7 +90,7 @@ class PulseVolume(Volume):
                 self._subscribed = True
 
         # Set a timer to check status in 10 seconds time
-        self.timeout_add(10, self._check_pulse_connection())
+        self.timer = self.qtile.call_later(10, create_task, self._check_pulse_connection())
 
     async def _event_listener(self):
         """Listens for sink and server events from the server."""
@@ -104,11 +103,13 @@ class PulseVolume(Volume):
                 await self.get_server_info()
 
     async def get_server_info(self):
+        """Updates the default sink name."""
         info = await self.pulse.server_info()
         self.default_sink_name = info.default_sink_name
         await self.get_sink_info()
 
     async def get_sink_info(self):
+        """Gets a reference to the default sink and triggers update for subscribed clients."""
         sinks = [
             sink for sink in await self.pulse.sink_list() if sink.name == self.default_sink_name
         ]
@@ -118,15 +119,105 @@ class PulseVolume(Volume):
             return
 
         self.default_sink = sinks[0]
-        self.update()
+        self.update_clients()
+
+    def get_volume(self):
+        """Gets volume and mute status for default sink."""
+        if not self.pulse.connected:
+            return None, None
+
+        if self.default_sink:
+            mute = self.default_sink.mute
+            if mute:
+                return -1, mute
+            base = self.default_sink.base_volume
+            if not base:
+                return -1, mute
+            current = self.default_sink.volume.value_flat
+            return round(current * 100 / base), mute
+        return -1, 0
+
+    def update_clients(self):
+        """Sends volume and mute status to subscribed clients."""
+        for callback in self.callbacks:
+            callback(*self.get_volume())
+
+    def subscribe(self, callback):
+        """
+        Subscribes a client for callback events.
+
+        The first subscription will trigger the connection to the
+        pulse server.
+        """
+        need_configure = not bool(self.callbacks)
+        self.callbacks.append(callback)
+
+        if need_configure:
+            create_task(self._configure())
+
+    def unsubscribe(self, callback):
+        """
+        Unsubscribes a client from callback events.
+
+        Removing the last client closes the connection with the
+        pulse server and cancels future calls to connect.
+        """
+        try:
+            self.callbacks.remove(callback)
+        except ValueError:
+            pass
+
+        if not self.callbacks:
+            self.pulse.close()
+
+            # Prevent future calls to connect to the server
+            if self.timer:
+                self.timer.cancel()
+                self.timer = None
+
+            self.configured = False
+
+
+pulse = PulseConnection()
+
+
+class PulseVolume(Volume):
+    """
+    Volume widget for systems using PulseAudio.
+
+    The widget connects to the PulseAudio server by using the libpulse library
+    and so should be updated virtually instantly rather than needing to poll the
+    volume status regularly (NB this means that the ``update_interval`` parameter
+    serves no purpose for this widget).
+
+    The widget relies on the `pulsectl_asyncio <https://pypi.org/project/pulsectl-asyncio/>`__
+    library to access the libpulse bindings.
+    """
+
+    defaults = [
+        ("limit_max_volume", False, "Limit maximum volume to 100%"),
+    ]
+
+    def __init__(self, **config):
+        Volume.__init__(self, **config)
+        self.add_defaults(PulseVolume.defaults)
+        self.volume = 0
+        self.mute = 0
+        self._previous_state = (-1.0, -1)
+
+    def _configure(self, qtile, bar):
+        Volume._configure(self, qtile, bar)
+        if self.theme_path:
+            self.setup_images()
+        pulse.subscribe(self.get_vals)
 
     async def _change_volume(self, volume):
         """Sets volume on default sink."""
-        await self.pulse.volume_set_all_chans(self.default_sink, volume)
+        await pulse.pulse.volume_set_all_chans(pulse.default_sink, volume)
 
     async def _mute(self):
         """Toggles mute status of default sink."""
-        await self.pulse.sink_mute(self.default_sink.index, not self.default_sink.mute)
+        await pulse.pulse.sink_mute(pulse.default_sink.index, not pulse.default_sink.mute)
 
     @expose_command()
     def mute(self):
@@ -137,8 +228,8 @@ class PulseVolume(Volume):
     def increase_vol(self, value=None):
         """Increase volume."""
         if not value:
-            value = self.default_sink.volume.value_flat + (self.step / 100.0)
-        base = self.default_sink.base_volume
+            value = pulse.default_sink.volume.value_flat + (self.step / 100.0)
+        base = pulse.default_sink.base_volume
         if self.limit_max_volume and value > base:
             value = base
 
@@ -148,47 +239,37 @@ class PulseVolume(Volume):
     def decrease_vol(self, value=None):
         """Decrease volume."""
         if not value:
-            value = self.default_sink.volume.value_flat - (self.step / 100.0)
+            value = pulse.default_sink.volume.value_flat - (self.step / 100.0)
 
         value = max(value, 0)
 
         create_task(self._change_volume(value))
+
+    def get_vals(self, vol, mute):
+        if (vol, mute) != self._previous_state:
+            self.volume = vol
+            self.mute = mute
+            self._previous_state = (vol, mute)
+            self.update()
 
     def update(self):
         """
         same method as in Volume widgets except that here we don't need to
         manually re-schedule update
         """
-        if not self.pulse.connected:
+        if pulse.pulse is None or not pulse.pulse.connected:
             return
 
-        vol = self.get_volume()
-        mute = self.default_sink.mute
-
-        if (vol, mute) != self._previous_state:
-            self.volume = vol
-            # Update the underlying canvas size before actually attempting
-            # to figure out how big it is and draw it.
-            length = self.length
-            self._update_drawer()
-            if self.length == length:
-                self.draw()
-            else:
-                self.bar.draw()
-            self._previous_state = (vol, mute)
-
-    def get_volume(self):
-        if self.default_sink:
-            if self.default_sink.mute:
-                return -1
-            base = self.default_sink.base_volume
-            if not base:
-                return -1
-            current = self.default_sink.volume.value_flat
-            return round(current * 100 / base)
-        return -1
+        # Update the underlying canvas size before actually attempting
+        # to figure out how big it is and draw it.
+        length = self.length
+        self._update_drawer()
+        if self.length == length:
+            self.draw()
+        else:
+            self.bar.draw()
 
     def finalize(self):
         # Close the connection to the server
-        self.pulse.close()
+        pulse.unsubscribe(self.get_vals)
         Volume.finalize(self)
