@@ -1046,7 +1046,7 @@ class DropDown(configurable.Configurable):
         ),
     )
 
-    def __init__(self, name: str, cmd: str, **config: dict[str, Any]) -> None:
+    def __init__(self, name: str, cmd: str, **config: Any) -> None:
         """
         Initialize :class:`DropDown` window wrapper.
 
