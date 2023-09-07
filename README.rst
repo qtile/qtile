@@ -54,10 +54,10 @@ Please also consider submitting useful scripts etc. to the qtile-examples repo
 
 .. |logo| image:: https://raw.githubusercontent.com/qtile/qtile/master/logo.png
     :alt: Logo
-    :target: https://www.qtile.org
+    :target: https://qtile.org
 .. |website| image:: https://img.shields.io/badge/website-qtile.org-blue.svg
     :alt: Website
-    :target: https://www.qtile.org
+    :target: https://qtile.org
 .. |pypi| image:: https://img.shields.io/pypi/v/qtile.svg
     :alt: PyPI
     :target: https://pypi.org/project/qtile/
