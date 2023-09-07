@@ -456,9 +456,11 @@ class XStatic(Static[xwayland.Surface]):
 
     def _on_set_geometry(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xstatic set_geometry")
-        self.place(
-            self.surface.x, self.surface.y, self.surface.width, self.surface.height, 0, None
-        )
+        # check if the surface has moved
+        if self.surface.x != self.x or self.surface.y != self.y:
+            self.place(
+                self.surface.x, self.surface.y, self.surface.width, self.surface.height, 0, None
+            )
 
     @expose_command()
     def bring_to_front(self) -> None:
