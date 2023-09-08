@@ -1748,6 +1748,9 @@ class Window(_Window, base.Window):
             needs_change = self._float_state != FloatStates.FULLSCREEN
             screen = self.group.screen or self.qtile.find_closest_screen(self.x, self.y)
 
+            if self._float_state not in (FloatStates.MAXIMIZED, FloatStates.FULLSCREEN):
+                self._save_geometry()
+
             bw = self.group.floating_layout.fullscreen_border_width
             self._enablefloating(
                 screen.x,
@@ -1762,6 +1765,7 @@ class Window(_Window, base.Window):
             return
 
         if self._float_state == FloatStates.FULLSCREEN:
+            self._restore_geometry()
             self.floating = False
             self.change_layer()
             return
@@ -1775,6 +1779,9 @@ class Window(_Window, base.Window):
         if do_maximize:
             screen = self.group.screen or self.qtile.find_closest_screen(self.x, self.y)
 
+            if self._float_state not in (FloatStates.MAXIMIZED, FloatStates.FULLSCREEN):
+                self._save_geometry()
+
             bw = self.group.floating_layout.max_border_width
             self._enablefloating(
                 screen.dx,
@@ -1785,6 +1792,7 @@ class Window(_Window, base.Window):
             )
         else:
             if self._float_state == FloatStates.MAXIMIZED:
+                self._restore_geometry()
                 self.floating = False
 
     @property

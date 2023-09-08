@@ -441,6 +441,10 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             screen = (self.group and self.group.screen) or self.qtile.find_closest_screen(
                 self.x, self.y
             )
+
+            if self._float_state not in (FloatStates.MAXIMIZED, FloatStates.FULLSCREEN):
+                self._save_geometry()
+
             bw = self.group.floating_layout.fullscreen_border_width if self.group else 0
             self._reconfigure_floating(
                 screen.x,
@@ -450,6 +454,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
                 new_float_state=FloatStates.FULLSCREEN,
             )
         elif self._float_state == FloatStates.FULLSCREEN:
+            self._restore_geometry()
             self.floating = False
 
     @abc.abstractmethod
@@ -466,6 +471,10 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             screen = (self.group and self.group.screen) or self.qtile.find_closest_screen(
                 self.x, self.y
             )
+
+            if self._float_state not in (FloatStates.MAXIMIZED, FloatStates.FULLSCREEN):
+                self._save_geometry()
+
             bw = self.group.floating_layout.max_border_width if self.group else 0
             self._reconfigure_floating(
                 screen.dx,
@@ -476,6 +485,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             )
         else:
             if self._float_state == FloatStates.MAXIMIZED:
+                self._restore_geometry()
                 self.floating = False
 
         if self.ftm_handle:
