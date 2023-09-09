@@ -23,7 +23,7 @@ import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
 from test.helpers import HEIGHT, WIDTH
-from test.layouts.layout_utils import assert_focus_path, assert_focused, assert_dimensions
+from test.layouts.layout_utils import assert_dimensions, assert_focus_path, assert_focused
 
 
 class ColumnsConfig(Config):
