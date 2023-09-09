@@ -418,10 +418,7 @@ class Screen(CommandObject):
     resized to fill it. If the mode is ``"stretch"``, the image is stretched to fit all
     of it into the screen.
 
-    The ``x11_drag_polling_rate`` parameter specifies the rate for drag events in the X11
-    backend. By default this is set to 120, but if you prefer it you can set it lower for
-    better performance or higher if you have a high refresh rate monitor. 120 would mean
-    that we handle a drag event 120 times per second.
+    The ``x11_drag_polling_rate`` parameter specifies the rate for drag events in the X11 backend. By default this is set to None, indicating no limit. Because in the X11 backend we already handle motion notify events later, the performance should already be okay. However, to limit these events further you can use this variable and e.g. set it to your monitor refresh rate. 60 would mean that we handle a drag event 60 times per second.
 
     """
 
@@ -436,7 +433,7 @@ class Screen(CommandObject):
         right: BarType | None = None,
         wallpaper: str | None = None,
         wallpaper_mode: str | None = None,
-        x11_drag_polling_rate: int = 120,
+        x11_drag_polling_rate: int | None = None,
         x: int | None = None,
         y: int | None = None,
         width: int | None = None,
@@ -476,9 +473,9 @@ class Screen(CommandObject):
         self.width = width
         self.height = height
 
-        self.set_group(group)
         for i in self.gaps:
             i._configure(qtile, self, reconfigure=reconfigure_gaps)
+        self.set_group(group)
         if self.wallpaper:
             self.wallpaper = os.path.expanduser(self.wallpaper)
             self.paint(self.wallpaper, self.wallpaper_mode)
@@ -642,7 +639,7 @@ class Screen(CommandObject):
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
                 bar.draw()
-        self.qtile.call_soon(self.group.layout_all)
+        self.group.layout_all()
 
     @expose_command()
     def info(self) -> dict[str, int]:
@@ -819,7 +816,13 @@ class ScratchPad(Group):
 
 class Match:
     """
-    Match for dynamic groups or auto-floating windows.
+    Window properties to compare (match) with a window.
+
+    The properties will be compared to a :class:`~libqtile.base.Window` to determine if
+    its properties *match*. It can match by title, wm_class, role, wm_type,
+    wm_instance_class, net_wm_pid, or wid. Additionally, a function may be
+    passed, which takes in the :class:`~libqtile.base.Window` to be compared
+    against and returns a boolean.
 
     For some properties, :class:`Match` supports both regular expression objects (i.e.
     the result of ``re.compile()``) or strings (match as an "include"-match). If a
@@ -843,7 +846,7 @@ class Match:
         Delegate the match to the given function, which receives the tested client as an
         argument and must return ``True`` if it matches, ``False`` otherwise.
     wid:
-        Match against the window ID.
+        Match against the window ID. This is a unique ID given to each window.
 
     """
 
@@ -1043,7 +1046,7 @@ class DropDown(configurable.Configurable):
         ),
     )
 
-    def __init__(self, name: str, cmd: str, **config: dict[str, Any]) -> None:
+    def __init__(self, name: str, cmd: str, **config: Any) -> None:
         """
         Initialize :class:`DropDown` window wrapper.
 

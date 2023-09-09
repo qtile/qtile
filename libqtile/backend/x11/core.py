@@ -32,7 +32,7 @@ import xcffib
 import xcffib.render
 import xcffib.xproto
 import xcffib.xtest
-from xcffib.xproto import EventMask, StackMode
+from xcffib.xproto import EventMask
 
 from libqtile import config, hook, utils
 from libqtile.backend import base
@@ -133,8 +133,8 @@ class Core(base.Core):
         self._selection_window = self.conn.create_window(-1, -1, 1, 1)
         self._selection_window.set_attribute(eventmask=EventMask.PropertyChange)
         if hasattr(self.conn, "xfixes"):
-            self.conn.xfixes.select_selection_input(self._selection_window, "PRIMARY")  # type: ignore
-            self.conn.xfixes.select_selection_input(self._selection_window, "CLIPBOARD")  # type: ignore
+            self.conn.xfixes.select_selection_input(self._selection_window, "PRIMARY")
+            self.conn.xfixes.select_selection_input(self._selection_window, "CLIPBOARD")
 
         primary_atom = self.conn.atoms["PRIMARY"]
         reply = self.conn.conn.core.GetSelectionOwner(primary_atom).reply()
@@ -164,8 +164,12 @@ class Core(base.Core):
             | xcbq.PointerMotionHintMask
         )
 
+        # The last motion notify event that we still need to handle
+        self._motion_notify: xcffib.Event | None = None
         # The last time we were handling a MotionNotify event
         self._last_motion_time = 0
+
+        self.last_focused: base.Window | None = None
 
     @property
     def name(self):
@@ -232,6 +236,9 @@ class Core(base.Core):
         """Assign windows to groups"""
         assert self.qtile is not None
 
+        # Ensure that properties are initialised at startup
+        self.update_client_lists()
+
         if not initial:
             # We are just reloading config
             for win in self.qtile.windows_map.values():
@@ -240,8 +247,8 @@ class Core(base.Core):
             return
 
         # Qtile just started - scan for clients
-        _, _, children = self._root.query_tree()
-        for item in children:
+        for wid in self._root.query_tree():
+            item = window.XWindow(self.conn, wid)
             try:
                 attrs = item.get_attributes()
                 state = item.get_wm_state()
@@ -276,6 +283,9 @@ class Core(base.Core):
 
             self.qtile.manage(win)
 
+            self.update_client_lists()
+            win.change_layer()
+
     def warp_pointer(self, x, y):
         self._root.warp_pointer(x, y)
         self._root.set_input_focus()
@@ -291,6 +301,18 @@ class Core(base.Core):
             xcffib.CurrentTime,
         )
 
+    def handle_event(self, event):
+        """Handle an X11 event by forwarding it to the right target"""
+        event_type = event.__class__.__name__
+        if event_type.endswith("Event"):
+            event_type = event_type[:-5]
+        targets = self._get_target_chain(event_type, event)
+        logger.debug("X11 event: %s (targets: %s)", event_type, targets)
+        for target in targets:
+            ret = target(event)
+            if not ret:
+                break
+
     def _xpoll(self) -> None:
         """Poll the connection and dispatch incoming events"""
         assert self.qtile is not None
@@ -304,16 +326,23 @@ class Core(base.Core):
                 if event.__class__ in _IGNORED_EVENTS:
                     continue
 
-                event_type = event.__class__.__name__
-                if event_type.endswith("Event"):
-                    event_type = event_type[:-5]
-
-                targets = self._get_target_chain(event_type, event)
-                logger.debug("X11 event: %s (targets: %s)", event_type, targets)
-                for target in targets:
-                    ret = target(event)
-                    if not ret:
-                        break
+                # Motion Notifies are handled later
+                # Otherwise this is too CPU intensive
+                if isinstance(event, xcffib.xproto.MotionNotifyEvent):
+                    self._motion_notify = event
+                else:
+                    # These events need the motion notify event handled first
+                    handle_motion_first = type(event) in [
+                        xcffib.xproto.EnterNotifyEvent,
+                        xcffib.xproto.LeaveNotifyEvent,
+                        xcffib.xproto.ButtonPressEvent,
+                        xcffib.xproto.ButtonReleaseEvent,
+                    ]
+                    # Handle events in the correct order
+                    if self._motion_notify and handle_motion_first:
+                        self.handle_event(self._motion_notify)
+                        self._motion_notify = None
+                    self.handle_event(event)
 
             # Catch some bad X exceptions. Since X is event based, race
             # conditions can occur almost anywhere in the code. For example, if
@@ -339,6 +368,10 @@ class Core(base.Core):
                     self.qtile.stop()
                     return
                 logger.exception("Got an exception in poll loop")
+        # Handle any outstanding motion notify events
+        if self._motion_notify:
+            self.handle_event(self._motion_notify)
+            self._motion_notify = None
         self.flush()
 
     def _get_target_chain(self, event_type: str, event) -> list[Callable]:
@@ -418,17 +451,28 @@ class Core(base.Core):
         """The name of the connected display"""
         return self._display_name
 
-    def update_client_list(self, windows_map: dict[int, base.WindowType]) -> None:
-        """Updates the client stack list
+    def update_client_lists(self) -> None:
+        """Updates the _NET_CLIENT_LIST and _NET_CLIENT_LIST_STACKING properties
 
         This is needed for third party tasklists and drag and drop of tabs in
         chrome
         """
+        assert self.qtile
         # Regular top-level managed windows, i.e. excluding Static, Internal and Systray Icons
-        wids = [wid for wid, c in windows_map.items() if isinstance(c, window.Window)]
+        wids = [wid for wid, c in self.qtile.windows_map.items() if isinstance(c, window.Window)]
         self._root.set_property("_NET_CLIENT_LIST", wids)
-        # TODO: check stack order
-        self._root.set_property("_NET_CLIENT_LIST_STACKING", wids)
+
+        # We rely on the stacking order from the X server
+        stacked_wids = []
+        for wid in self._root.query_tree():
+            win = self.qtile.windows_map.get(wid)
+            if not win:
+                continue
+
+            if isinstance(win, window.Window) and win.group:
+                stacked_wids.append(wid)
+
+        self._root.set_property("_NET_CLIENT_LIST_STACKING", stacked_wids)
 
     def update_desktops(self, groups, index: int) -> None:
         """Set the current desktops of the window manager
@@ -655,9 +699,12 @@ class Core(base.Core):
         assert self.qtile is not None
 
         # Limit the motion notify events from happening too frequently
-        # Here we limit it to the config value
+        # As we already handle motion notify events "later", the default is None
+        # So we also need to check if this has to be done in the first place
         resize_fps = self.qtile.current_screen.x11_drag_polling_rate
-        if (event.time - self._last_motion_time) <= (1000 / resize_fps):
+        if resize_fps is not None and (event.time - self._last_motion_time) <= (
+            1000 / resize_fps
+        ):
             return
         self._last_motion_time = event.time
         self.qtile.process_button_motion(event.event_x, event.event_y)
@@ -721,11 +768,14 @@ class Core(base.Core):
             if not win.group or not win.group.screen:
                 return
             win.unhide()
+            self.update_client_lists()
+            win.change_layer()
 
     def handle_DestroyNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
         self.qtile.unmanage(event.window)
+        self.update_client_lists()
         if self.qtile.current_window is None:
             self.conn.fixup_focus()
 
@@ -752,6 +802,7 @@ class Core(base.Core):
                 win.wid, win.window.conn.atoms["_NET_WM_DESKTOP"]
             )
         self.qtile.unmanage(event.window)
+        self.update_client_lists()
         if self.qtile.current_window is None:
             self.conn.fixup_focus()
 
@@ -820,9 +871,7 @@ class Core(base.Core):
                 qtile.config.bring_front_click != "floating_only"
                 or getattr(window, "floating", False)
             ):
-                self.conn.conn.core.ConfigureWindow(
-                    window.wid, xcffib.xproto.ConfigWindow.StackMode, [StackMode.Above]
-                )
+                window.bring_to_front()
 
             try:
                 if window.group.screen is not qtile.current_screen:
@@ -839,6 +888,8 @@ class Core(base.Core):
             # clicked on root window
             screen = qtile.find_screen(e.root_x, e.root_y)
             if screen:
+                if qtile.current_window:
+                    qtile.current_window._grab_click()
                 qtile.focus_screen(screen.index, warp=False)
 
     def flush(self):
@@ -891,3 +942,13 @@ class Core(base.Core):
     def keysym_from_name(self, name: str) -> int:
         """Get the keysym for a key from its name"""
         return keysyms[name.lower()]
+
+    def check_stacking(self, win: base.Window) -> None:
+        """Triggers restacking if a fullscreen window loses focus."""
+        if win is self.last_focused:
+            return
+
+        if self.last_focused and self.last_focused.fullscreen:
+            self.last_focused.change_layer()
+
+        self.last_focused = win

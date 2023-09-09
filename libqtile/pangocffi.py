@@ -47,24 +47,23 @@
 # This is not intended to be a complete cffi-based pango binding.
 
 
-try:
-    from libqtile._ffi_pango import ffi
-except ImportError:
-    raise ImportError("No module named libqtile._ffi_pango, be sure to run `./scripts/ffibuild`")
+from libqtile.pango_ffi import pango_ffi as ffi
 
-gobject = ffi.dlopen("libgobject-2.0.so.0")
-pango = ffi.dlopen("libpango-1.0.so.0")
-pangocairo = ffi.dlopen("libpangocairo-1.0.so.0")
+gobject = ffi.dlopen("libgobject-2.0.so.0")  # type: ignore
+pango = ffi.dlopen("libpango-1.0.so.0")  # type: ignore
+pangocairo = ffi.dlopen("libpangocairo-1.0.so.0")  # type: ignore
 
 
 def patch_cairo_context(cairo_t):
     def create_layout():
-        return PangoLayout(cairo_t._pointer)
+        return PangoLayout(ffi.cast("struct _cairo *", cairo_t._pointer))
 
     cairo_t.create_layout = create_layout
 
     def show_layout(layout):
-        pangocairo.pango_cairo_show_layout(cairo_t._pointer, layout._pointer)
+        pangocairo.pango_cairo_show_layout(
+            ffi.cast("struct _cairo *", cairo_t._pointer), layout._pointer
+        )
 
     cairo_t.show_layout = show_layout
 

@@ -22,10 +22,9 @@
 # SOFTWARE.
 
 from cffi import FFI
-from xcffib.ffi_build import ffi as xcffib_ffi
+from xcffib.ffi import ffi as xcffib_ffi
 
 xcursors_ffi = FFI()
-xcursors_ffi.set_source("libqtile.backend.x11._ffi_xcursors", None)
 
 xcursors_ffi.include(xcffib_ffi)
 
@@ -48,6 +47,3 @@ xcursors_ffi.cdef(
     void xcb_cursor_context_free(xcb_cursor_context_t *ctx);
 """
 )
-
-if __name__ == "__main__":
-    xcursors_ffi.compile()

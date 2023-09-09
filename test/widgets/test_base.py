@@ -46,7 +46,7 @@ class TimerWidget(_Widget):
 
     @expose_command()
     def get_active_timers(self):
-        active = [x for x in self._futures if x._scheduled]
+        active = [x for x in self._futures if getattr(x, "_scheduled", False)]
         return len(active)
 
 

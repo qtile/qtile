@@ -27,9 +27,9 @@ class Mock(MagicMock):
 
 MOCK_MODULES = [
     "libqtile._ffi_pango",
+    "libqtile.backend.wayland._ffi",
     "libqtile.backend.x11._ffi_xcursors",
-    "libqtile.widget._pulse_audio",
-    "cairocffi",
+    "cairocffi.ffi",
     "cairocffi.xcb",
     "cairocffi.pixbuf",
     "cffi",
@@ -44,6 +44,8 @@ MOCK_MODULES = [
     "keyring",
     "mpd",
     "psutil",
+    "pulsectl",
+    "pulsectl_asyncio",
     "pywayland",
     "pywayland.protocol.wayland",
     "pywayland.protocol.wayland.wl_output",
@@ -65,11 +67,13 @@ MOCK_MODULES = [
     "wlroots.wlr_types.output_management_v1",
     "wlroots.wlr_types.pointer_constraints_v1",
     "wlroots.wlr_types.output_power_management_v1",
+    "wlroots.wlr_types.scene",
     "wlroots.wlr_types.server_decoration",
     "wlroots.wlr_types.virtual_keyboard_v1",
     "wlroots.wlr_types.virtual_pointer_v1",
     "wlroots.wlr_types.xdg_shell",
     "xcffib",
+    "xcffib.ffi",
     "xcffib.randr",
     "xcffib.render",
     "xcffib.wrappers",
@@ -102,7 +106,6 @@ extensions = [
     "sphinx.ext.graphviz",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
-    "sphinxcontrib.seqdiag",
     "numpydoc",
     "sphinx_qtile",
 ]
@@ -333,11 +336,12 @@ texinfo_documents = [
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 # texinfo_show_urls = 'footnote'
 
-# only import and set the theme if we're building docs locally
+html_theme = "sphinx_rtd_theme"
+
+# only import and set the theme path if we're building docs locally
 if not os.environ.get("READTHEDOCS"):
     import sphinx_rtd_theme
 
-    html_theme = "sphinx_rtd_theme"
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 

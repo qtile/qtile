@@ -21,11 +21,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from cairocffi.ffi_build import ffi as cairocffi_ffi
+from cairocffi.ffi import ffi as cairocffi_ffi
 from cffi import FFI
 
 pango_ffi = FFI()
-pango_ffi.set_source("libqtile._ffi_pango", None)
 
 pango_ffi.include(cairocffi_ffi)
 
@@ -141,6 +140,3 @@ pango_ffi.cdef(
                          gssize length);
 """
 )
-
-if __name__ == "__main__":
-    pango_ffi.compile()

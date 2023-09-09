@@ -67,6 +67,7 @@ class Config:
     widget_defaults: dict[str, Any]
     extension_defaults: dict[str, Any]
     bring_front_click: bool | Literal["floating_only"]
+    floats_kept_above: bool
     reconfigure_screens: bool
     wmname: str
     auto_minimize: bool

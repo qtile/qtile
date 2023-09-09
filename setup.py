@@ -7,6 +7,7 @@
 # Copyright (c) 2014 roger
 # Copyright (c) 2014 Pedro Algarvio
 # Copyright (c) 2014-2015 Tycho Andersen
+# Copyright (c) 2023 Matt Colligan
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import importlib
 import sys
 import textwrap
 
@@ -45,14 +47,13 @@ class CheckCairoXcb(install):
 
     def finalize_options(self):
         if not self.cairo_xcb_check():
-
             print(
                 textwrap.dedent(
                     """
 
             It looks like your cairocffi was not built with xcffib support.  To fix this:
 
-              - Ensure a recent xcffib is installed (pip install 'xcffib>=0.5.0')
+              - Ensure a recent xcffib is installed (pip install 'xcffib>=1.4.0')
               - The pip cache is cleared (remove ~/.cache/pip, if it exists)
               - Reinstall cairocffi, either:
 
@@ -69,36 +70,28 @@ class CheckCairoXcb(install):
         install.finalize_options(self)
 
 
-def get_cffi_modules():
-    cffi_modules = [
-        "libqtile/pango_ffi_build.py:pango_ffi",
-        "libqtile/backend/x11/xcursors_ffi_build.py:xcursors_ffi",
-    ]
+def can_import(module):
     try:
-        from cffi.error import PkgConfigError
-        from cffi.pkgconfig import call
-    except ImportError:
-        # technically all ffi defined above wont be built
-        print("CFFI package is missing")
-    else:
-        try:
-            call("libpulse", "--libs")
-        except PkgConfigError:
-            print("Failed to find pulseaudio headers. " "PulseVolume widget will be unavailable")
-        else:
-            cffi_modules.append("libqtile/widget/pulseaudio_ffi.py:pulseaudio_ffi")
-    try:
-        import wlroots.ffi_build
+        importlib.import_module(module)
+    except ModuleNotFoundError:
+        return False
+    return True
 
-        cffi_modules.append(
-            "libqtile/backend/wayland/libinput_ffi_build.py:libinput_ffi",
-        )
-    except ImportError:
-        print(
-            "Failed to find pywlroots. "
-            "Wayland backend libinput configuration will be unavailable."
-        )
-        pass
+
+def get_cffi_modules():
+    # Check we have cffi around. If not, none of these will get built.
+    if not can_import("cffi.pkgconfig"):
+        print("CFFI package is missing")
+        return
+
+    cffi_modules = []
+
+    # Wayland backend dependencies
+    if can_import("wlroots.ffi_build"):
+        cffi_modules.append("libqtile/backend/wayland/cffi/build.py:ffi")
+    else:
+        print("Failed to find pywlroots. Wayland backend dependencies not built.")
+
     return cffi_modules
 
 

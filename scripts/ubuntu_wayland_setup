@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+#
+# Helper script to install the non-Python Wayland dependencies on Ubuntu. This
+# is required because most of the time the wlroots version we depend on is more
+# recent than that which can be found in the Ubuntu package repository. This
+# script is used for CI on GitHub and the ReadTheDocs environment.
+
+set -e
+
+# The versions we want
+WAYLAND=1.21.0
+WAYLAND_PROTOCOLS=1.31
+WLROOTS=0.16.2
+SEATD=0.7.0
+LIBDRM=2.4.114
+
+# Packaged dependencies
+sudo apt update
+sudo apt install --no-install-recommends \
+    ninja-build libegl1-mesa-dev libgles2-mesa-dev libgbm-dev libinput-dev libxkbcommon-dev \
+    libpixman-1-dev libpciaccess-dev xwayland hwdata
+
+# Build wayland
+wget --no-check-certificate \
+    https://gitlab.freedesktop.org/wayland/wayland/-/releases/$WAYLAND/downloads/wayland-$WAYLAND.tar.xz
+tar -xJf wayland-$WAYLAND.tar.xz
+cd wayland-$WAYLAND
+meson build -Ddocumentation=false --prefix=/usr
+ninja -C build
+sudo ninja -C build install
+cd ../
+
+# Build wayland-protocols
+wget --no-check-certificate \
+    https://gitlab.freedesktop.org/wayland/wayland-protocols/-/releases/$WAYLAND_PROTOCOLS/downloads/wayland-protocols-$WAYLAND_PROTOCOLS.tar.xz
+tar -xJf wayland-protocols-$WAYLAND_PROTOCOLS.tar.xz
+cd wayland-protocols-$WAYLAND_PROTOCOLS
+meson build -Dtests=false --prefix=/usr
+ninja -C build
+sudo ninja -C build install
+cd ../
+
+# Build seatd
+wget --no-check-certificate https://git.sr.ht/~kennylevinsen/seatd/archive/$SEATD.tar.gz
+tar -xzf $SEATD.tar.gz
+cd seatd-$SEATD
+meson build --prefix=/usr
+ninja -C build
+sudo ninja -C build install
+cd ../
+
+# Build libdrm
+wget --no-check-certificate \
+    https://gitlab.freedesktop.org/mesa/drm/-/archive/libdrm-$LIBDRM/drm-libdrm-$LIBDRM.tar.gz
+tar -xzf drm-libdrm-$LIBDRM.tar.gz
+cd drm-libdrm-$LIBDRM
+meson build --prefix=/usr
+ninja -C build
+sudo ninja -C build install
+cd ../
+
+# Build wlroots
+wget --no-check-certificate \
+    https://gitlab.freedesktop.org/wlroots/wlroots/-/archive/$WLROOTS/wlroots-$WLROOTS.tar.gz
+tar -xzf wlroots-$WLROOTS.tar.gz
+cd wlroots-$WLROOTS
+
+# Temporary hack for wlroots 0.16.0 - 0.16.2 which uses a workaround script at
+# backend/drm/gen_pnpids.sh to generate a case statement, which doesn't compile
+# on ubuntu due to duplicate conditions (acronyms in
+# /usr/share/hwdata/pnp.ids). The case statement is only needed for getting the
+# string representation of an output's manufacturer, which is fine for CI.
+sudo truncate -s 0 /usr/share/hwdata/pnp.ids
+
+meson build -Dexamples=false --prefix=/usr -Dxwayland=enabled
+ninja -C build
+sudo ninja -C build install
+cd ../

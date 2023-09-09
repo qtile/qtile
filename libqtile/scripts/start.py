@@ -80,7 +80,7 @@ def make_qtile(options):
 
 def start(options):
     try:
-        locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
+        locale.setlocale(locale.LC_ALL, "")
     except locale.Error:
         pass
 

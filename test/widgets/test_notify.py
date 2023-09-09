@@ -76,13 +76,16 @@ BACKGROUND_LOW = "333333"
 
 URGENT = "#ff00ff"
 LOW = "#cccccc"
-DEFAULT_TIMEOUT = 3.0
 
 MESSAGE_1, NOTIFICATION_1 = notification("Message 1", "Test Message 1", timeout=5000)
 MESSAGE_2, NOTIFICATION_2 = notification(
     "Urgent Message", "This is not a test!", urgency=2, timeout=10000
 )
 MESSAGE_3, NOTIFICATION_3 = notification("Low priority", "Windows closed unexpectedly", urgency=0)
+
+DEFAULT_TIMEOUT_LOW = 15
+DEFAULT_TIMEOUT_NORMAL = 30
+DEFAULT_TIMEOUT_URGENT = 45
 
 
 @pytest.mark.skipif(shutil.which("notify-send") is None, reason="notify-send not installed.")
@@ -96,7 +99,6 @@ def test_notifications(manager_nospawn, minimal_conf_noscreen):
     widget = notify.Notify(
         foreground_urgent=URGENT,
         foreground_low=LOW,
-        default_timeout=DEFAULT_TIMEOUT,
         background=BACKGROUND_NORMAL,
         background_urgent=BACKGROUND_URGENT,
         background_low=BACKGROUND_LOW,
@@ -127,15 +129,12 @@ def test_notifications(manager_nospawn, minimal_conf_noscreen):
     _, timeout = obj.eval("self.delay")
     assert timeout == "10.0"
 
-    # Send third notification and check time and display time
+    # Send third notification
     notif_3 = [NS]
     notif_3.extend(NOTIFICATION_3)
     subprocess.run(notif_3)
     assert obj.info()["text"] == MESSAGE_3.format(colour=LOW)
     assert background(obj) == BACKGROUND_LOW
-
-    _, timeout = obj.eval("self.delay")
-    assert timeout == str(DEFAULT_TIMEOUT)
 
     # Navigation tests
 
@@ -328,7 +327,6 @@ def test_parse_text(manager_nospawn, minimal_conf_noscreen):
     widget = notify.Notify(
         foreground_urgent=URGENT,
         foreground_low=LOW,
-        default_timeout=DEFAULT_TIMEOUT,
         parse_text=test_parser,
     )
     config = minimal_conf_noscreen
@@ -362,3 +360,31 @@ def test_unregister(manager_nospawn, minimal_conf_noscreen):
     _ = manager_nospawn.c.widget["notify"].eval("self.finalize()")
 
     assert not notifier_has_callbacks()
+
+
+@pytest.mark.parametrize(
+    "urgency,timeout",
+    [(0, DEFAULT_TIMEOUT_LOW), (1, DEFAULT_TIMEOUT_NORMAL), (2, DEFAULT_TIMEOUT_URGENT)],
+)
+@pytest.mark.skipif(shutil.which("notify-send") is None, reason="notify-send not installed.")
+@pytest.mark.usefixtures("dbus")
+def test_notifications_default_timeouts(manager_nospawn, minimal_conf_noscreen, urgency, timeout):
+    notify.Notify.timeout_add = log_timeout
+    widget = notify.Notify(
+        default_timeout_low=DEFAULT_TIMEOUT_LOW,
+        default_timeout=DEFAULT_TIMEOUT_NORMAL,
+        default_timeout_urgent=DEFAULT_TIMEOUT_URGENT,
+    )
+    config = minimal_conf_noscreen
+    config.screens = [libqtile.config.Screen(top=Bar([widget], 10))]
+
+    manager_nospawn.start(config)
+    obj = manager_nospawn.c.widget["notify"]
+
+    # Send first notification and check time and display time
+    notif = [NS]
+    notif.extend(notification("test", "test", urgency=urgency)[1])
+    subprocess.run(notif)
+
+    _, delay = obj.eval("self.delay")
+    assert delay == str(timeout)

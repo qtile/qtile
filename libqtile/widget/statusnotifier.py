@@ -40,6 +40,7 @@ except ImportError:
 from libqtile import bar
 from libqtile.images import Img
 from libqtile.log_utils import logger
+from libqtile.resources.status_notifier.statusnotifieritem import STATUS_NOTIFIER_ITEM_SPEC
 from libqtile.utils import add_signal_receiver, create_task
 from libqtile.widget import base
 
@@ -134,8 +135,21 @@ class StatusNotifierItem:  # noqa: E303
                 continue
 
         if not interface_found:
-            logger.warning("Unable to find StatusNotifierItem interface on %s", self.service)
-            return False
+            logger.info(
+                "Unable to find StatusNotifierItem interface on %s. Falling back to default spec.",
+                self.service,
+            )
+            try:
+                obj = self.bus.get_proxy_object(
+                    self.service, STATUSNOTIFIER_PATH, STATUS_NOTIFIER_ITEM_SPEC
+                )
+                self.item = obj.get_interface("org.kde.StatusNotifierItem")
+            except InterfaceNotFoundError:
+                logger.warning(
+                    "Failed to find StatusNotifierItem interface on %s and fallback to default spec also failed.",
+                    self.service,
+                )
+                return False
 
         await self._get_local_icon()
 
@@ -162,8 +176,15 @@ class StatusNotifierItem:  # noqa: E303
         return True
 
     async def _get_local_icon(self):
-        # Default to XDG icon:
-        icon_name = await self.item.get_icon_name()
+        # Default to XDG icon
+        # Some implementations don't provide an IconName property so we
+        # need to catch an error if we can't read it.
+        # We can't use hasattr to check this as the method will be created
+        # where we've used the default XML spec to provide the object introspection
+        try:
+            icon_name = await self.item.get_icon_name()
+        except DBusError:
+            return
 
         try:
             icon_path = await self.item.get_icon_theme_path()
@@ -334,7 +355,7 @@ class StatusNotifierItem:  # noqa: E303
         return icon
 
     def activate(self):
-        if hasattr(self, "call_activate"):
+        if hasattr(self.item, "call_activate"):
             create_task(self._activate())
 
     async def _activate(self):
@@ -389,9 +410,9 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
         if message.member != "RegisterStatusNotifierItem":
             return False
 
-        # If the argument passed to the method is the service name then we
-        # don't need to do anything else.
-        if message.sender == message.body[0]:
+        # If the argument is not an object path (starting with "/") then we assume
+        # it is the bus name and we don't need to do anything else.
+        if not message.body[0].startswith("/"):
             return False
 
         if message.sender not in self._items:
@@ -525,6 +546,7 @@ class StatusNotifierHost:  # noqa: E303
             return
 
         self.bus = await MessageBus().connect()
+        await self.bus.request_name("org.freedesktop.StatusNotifierHost-qtile")
         for iface in BUS_NAMES:
             w = StatusNotifierWatcher(iface)
             w.on_item_added = self.add_item

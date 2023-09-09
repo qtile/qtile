@@ -31,6 +31,7 @@ import signal
 import subprocess
 import tempfile
 from collections import defaultdict
+from logging.handlers import RotatingFileHandler
 from typing import TYPE_CHECKING
 
 import libqtile
@@ -50,14 +51,10 @@ from libqtile.dgroups import DGroups
 from libqtile.extension.base import _Extension
 from libqtile.group import _Group
 from libqtile.log_utils import logger
+from libqtile.resources.sleep import inhibitor
 from libqtile.scratchpad import ScratchPad
-from libqtile.utils import (
-    cancel_tasks,
-    get_cache_dir,
-    lget,
-    send_notification,
-    subscribe_for_resume_events,
-)
+from libqtile.scripts.main import VERSION
+from libqtile.utils import cancel_tasks, get_cache_dir, lget, send_notification
 from libqtile.widget.base import _Widget
 
 if TYPE_CHECKING:
@@ -182,9 +179,10 @@ class Qtile(CommandObject):
         if self.config.reconfigure_screens:
             hook.subscribe.screen_change(self.reconfigure_screens)
 
-        # If user wants resume hooks we need to add a dbus rule
-        if "resume" in hook.subscriptions:
-            subscribe_for_resume_events()
+        # Start the sleep inhibitor process to listen to sleep signals
+        # NB: the inhibitor will only connect to the dbus service if the
+        # user has used the "suspend" or "resume" hooks in their config.
+        inhibitor.start()
 
         if initial:
             hook.fire("startup_complete")
@@ -325,8 +323,28 @@ class Qtile(CommandObject):
 
     def finalize(self) -> None:
         self._finalize_configurables()
+        inhibitor.stop()
         cancel_tasks()
         self.core.finalize()
+
+    def add_autogen_group(self, screen_idx: int) -> _Group:
+        name = f"autogen_{screen_idx + 1}"
+        self.add_group(name)
+        logger.warning("Too few groups in config. Added group: %s", name)
+        return self.groups_map[name]
+
+    def get_available_group(self, screen_idx: int) -> _Group | None:
+        for group in self.groups:
+            # Groups belonging to a screen or a scratchpad are not 'available'
+            # to be assigned to a screen
+            if group.screen or isinstance(group, ScratchPad):
+                continue
+
+            # Only return groups that can be tied to this screen
+            # And thus do not have a "screen affinity" explicitly set for another screen
+            if group.screen_affinity is None or group.screen_affinity == screen_idx:
+                return group
+        return None
 
     def _process_screens(self, reloading: bool = False) -> None:
         current_groups = [s.group for s in self.screens]
@@ -356,17 +374,15 @@ class Qtile(CommandObject):
                 self.current_screen = scr
                 reloading = False
 
-            if len(self.groups) < i + 1:
-                name = f"autogen_{i + 1}"
-                self.add_group(name)
-                logger.warning("Too few groups in config. Added group: %s", name)
-
+            grp = None
             if i < len(current_groups):
                 grp = current_groups[i]
             else:
-                for grp in self.groups:
-                    if not grp.screen:
-                        break
+                # We need to assign a new group
+                # Get an available group or create a new one
+                grp = self.get_available_group(i)
+                if grp is None:
+                    grp = self.add_autogen_group(i)
 
             reconfigure_gaps = (x, y, w, h) != (scr.x, scr.y, scr.width, scr.height)
 
@@ -536,9 +552,10 @@ class Qtile(CommandObject):
         layouts: list[Layout] | None = None,
         label: str | None = None,
         index: int | None = None,
+        screen_affinity: int | None = None,
     ) -> bool:
         if name not in self.groups_map.keys():
-            g = _Group(name, layout, label=label)
+            g = _Group(name, layout, label=label, screen_affinity=screen_affinity)
             if index is None:
                 self.groups.append(g)
             else:
@@ -629,18 +646,19 @@ class Qtile(CommandObject):
     ) -> None:
         """
         Reserve some space at the edge(s) of a screen.
+
+        The requested space is added to space reserved previously: repeated calls to
+        this method are not idempotent.
         """
         for i, pos in enumerate(["left", "right", "top", "bottom"]):
-            if reserved_space[i]:
-                gap = getattr(screen, pos)
-                if isinstance(gap, bar.Bar):
-                    gap.adjust_for_strut(reserved_space[i])
-                elif isinstance(gap, bar.Gap):
-                    gap.size += reserved_space[i]
-                    if gap.size <= 0:
-                        setattr(screen, pos, None)
-                else:
-                    setattr(screen, pos, bar.Gap(reserved_space[i]))
+            if space := reserved_space[i]:
+                if gap := getattr(screen, pos):
+                    gap.adjust_reserved_space(space)
+                elif 0 < space:
+                    gap = bar.Gap(0)
+                    gap.screen = screen
+                    setattr(screen, pos, gap)
+                    gap.adjust_reserved_space(space)
         screen.resize()
 
     def free_reserved_space(
@@ -652,7 +670,8 @@ class Qtile(CommandObject):
         Free up space that has previously been reserved at the edge(s) of a screen.
         """
         # mypy can't work out that the new tuple is also length 4 (see mypy #7509)
-        self.reserve_space(tuple(-i for i in reserved_space), screen)  # type: ignore
+        reserved_space = tuple(-i for i in reserved_space)  # type: ignore
+        self.reserve_space(reserved_space, screen)
 
     def manage(self, win: base.WindowType) -> None:
         if isinstance(win, base.Internal):
@@ -673,7 +692,7 @@ class Qtile(CommandObject):
             # Window may have been bound to a group in the hook.
             if not win.group and self.current_screen.group:
                 self.current_screen.group.add(win, focus=win.can_steal_focus)
-        self.core.update_client_list(self.windows_map)
+
         hook.fire("client_managed", win)
 
     def unmanage(self, wid: int) -> None:
@@ -688,7 +707,7 @@ class Qtile(CommandObject):
                     group = c.group
                     c.group.remove(c)
             del self.windows_map[wid]
-            self.core.update_client_list(self.windows_map)
+
             if isinstance(c, base.Window):
                 # Put the group back on the window so hooked functions can access it.
                 c.group = group
@@ -890,7 +909,7 @@ class Qtile(CommandObject):
             if sel is None:
                 return self.current_window
             else:
-                windows: dict[str | int, base._Window]
+                windows: dict[str | int, base.WindowType]
                 windows = {
                     k: v
                     for k, v in self.windows_map.items()
@@ -1353,7 +1372,15 @@ class Qtile(CommandObject):
     @expose_command()
     def qtile_info(self) -> dict:
         """Returns a dictionary of info on the Qtile instance"""
-        return {}
+        dictionary = {
+            "config_path": self.config.file_path,
+            "version": VERSION,
+            "log_level": self.loglevelname(),
+        }
+        if isinstance(logger.handlers[0], RotatingFileHandler):
+            log_path = logger.handlers[0].baseFilename
+            dictionary["log_path"] = log_path
+        return dictionary
 
     @expose_command()
     def shutdown(self) -> None:

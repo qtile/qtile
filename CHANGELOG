@@ -1,4 +1,10 @@
 Qtile x.xx.x, released XXXX-XX-XX:
+    !!! Dependency Changes !!!
+      - xcffib must be upgraded to >= 1.4.0
+      - cairocffi must be upgraded to >= 1.6.0
+      - New optional dependency `pulsectl-asyncio` required for `PulseVolume` widget
+    !!! Notice for packagers - wlroots (optional dependency) bump !!!
+      - Qtile's wayland backend now requires on wlroots 0.16 (and pywlroots 0.16)
     !!! config breakage/changes !!!
       - The `cmd_` prefix has been dropped from all commands (this means command names are common when accessed
         via the command interface or internal python objects).
@@ -20,6 +26,12 @@ Qtile x.xx.x, released XXXX-XX-XX:
       - The `StockTicker` widget `function` option is being deprecated: rename it to `func`.
       - The formatting of `NetWidget` has changed, if you use the `format` parameter in your config include 
         `up_suffix`, `total_suffix` and `down_suffix` to display the respective units.
+      - The `Notify` widget now has separate `default_timeout` properties for differenct urgency levels. Previously,
+        `default_timeout` was `None` which meant that there was no timeout for all notifications (unless this had been
+        set by the client sending the notification). Now, `default_timeout` is for normal urgency notifications and this
+        has been set to a default of 10 seconds. `default_timeout_urgent`, for critical notifications, has a timeout of `None`.
+      - The `PulseVolume` widget now depends on a third party library, `pulsectl-asyncio`, to interact with the pulse audio
+        server. Users will now see an `ImportError` until they install that library.
     * features
         - Add ability to set icon size in `LaunchBar` widget.
         - Add 'warp_pointer' option to `Drag` that when set will warp the pointer to the bottom right of
@@ -44,6 +56,16 @@ Qtile x.xx.x, released XXXX-XX-XX:
           By default the keys are not passed (swallowed), so this argument is set to `True`.
           When set to `False`, the keys are passed to the focused client. A key is never swallowed if the
           function is not executed, e.g. due to failing the `.when()` check.
+        - Add ability to set custom "Undefined" status key value to `Mpd2Widget`.
+        - `Mpd2Widget` now searches for artist name in all similar keys (i.e `albumartist`, `performer`, etc.).
+        - Add svg support to `CustomLayoutIcon`
+        - added layering controls for X11 (Wayland support coming soon!):
+          - `lazy.window.keep_above()/keep_below()` marks windows to be kept above/below other windows permanently.
+             Calling the functions with no arguments toggles the state, otherwise pass `enable=True` or `enable=False`.
+          - `lazy.window.move_up()/move_down()` moves windows up and down the z axis.
+          - added `only_focused` setting to Max layout, allowing to draw multiple clients on top of each other when
+            set to False
+        - Add `suspend` hook to run functions before system goes to sleep.
     * bugfixes
         - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
         - Fix `Notify` bug when apps close notifications.
@@ -51,11 +73,12 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Fix config being reevaluated twice during reload (e.g. all hooks from config were doubled)
         - Fix `PulseVolume` high CPU usage when update_interval set to 0.
         - Fix `Battery` widget on FreeBSD without explicit `battery` index given.
-        - Fix laggy resize in X11 by limiting the MotionNotify fps to a default of 120. This is configurable
-          per screen with the x11_drag_polling_rate variable.
         - Fix XMonad layout faulty call to nonexistent _shrink_up
         - Fix setting tiled position by mouse for layouts using _SimpleLayoutBase. To support this in other layouts, add a swap method taking two windows.
         - Fix unfullscreening bug in conjunction with Chromium based clients when auto_fullscreen is set to `False`.
+        - Ensure `CurrentLayoutIcon` expands paths for custom folders.
+        - Fix vertical alignment of icons in `TaskList` widget
+        - Fix laggy resize/positioning of floating windows in X11 by handling motion notify events later. We also introduced a cap setting if you want to limit these events further, e.g. for limiting resource usage. This is configurable with the x11_drag_polling_rate variable for each `Screen` which is set to None by default, indicating no cap.
     * python version support
         - We have added support for python 3.11 and pypy 3.9.
         - python 3.7, 3.8 and pypy 3.7 are not longer supported.

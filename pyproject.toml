@@ -1,3 +1,46 @@
+[build-system]
+requires = [ "setuptools>=41", "wheel", "setuptools-git-versioning<2", ]
+build-backend = "setuptools.build_meta"
+
 [tool.black]
 line-length = 98
 exclude = 'libqtile/_ffi.*\.py|libqtile/backend/x11/_ffi.*\.py|test/configs/syntaxerr.py'
+
+[tool.pytest.ini_options]
+python_files = "test_*.py"
+testpaths = ["test"]
+filterwarnings = [
+    "error:::libqtile",
+]
+
+[tool.setuptools-git-versioning]
+enabled = true
+
+[tool.setuptools.dynamic]
+readme = {file = "README.rst"}
+
+[project]
+name = "qtile"
+description = "A pure-Python tiling window manager."
+dynamic = ["version", "readme"]
+license = {text = "MIT"}
+classifiers = [
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: BSD :: FreeBSD",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Desktop Environment :: Window Managers",
+]
+
+[project.urls]
+"Homepage" = "https://qtile.org"
+"Documentation" = "https://docs.qtile.org/"
+"Code" = "https://github.com/qtile/qtile/"
+"Issue tracker" = "https://github.com/qtile/qtile/issues"
+"Contributing" = "https://docs.qtile.org/en/latest/manual/contributing.html"
+
+[project.scripts]
+qtile = "libqtile.scripts.main:main"

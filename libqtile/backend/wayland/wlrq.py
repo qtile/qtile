@@ -23,25 +23,30 @@ from __future__ import annotations
 import functools
 import operator
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import cairocffi
 from pywayland.server import Listener
-from wlroots.wlr_types import Texture
+from wlroots.wlr_types import Buffer, SceneBuffer, SceneTree, data_device_manager
 from wlroots.wlr_types.keyboard import KeyboardModifier
 
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
+
+try:
+    # Continue if ffi not built, so that docs can be built without wayland deps.
+    from libqtile.backend.wayland._ffi import ffi, lib
+except ModuleNotFoundError:
+    pass
 
 if TYPE_CHECKING:
     from typing import Any, Callable
 
     from pywayland.server import Signal
     from wlroots import xwayland
-    from wlroots.wlr_types import Surface, data_device_manager
+    from wlroots.wlr_types import Surface
 
     from libqtile.backend.wayland.core import Core
-    from libqtile.backend.wayland.output import Output
     from libqtile.config import Screen
 
 
@@ -140,21 +145,25 @@ class Painter:
             context.set_source_surface(image)
             context.paint()
 
-            stride = surface.format_stride_for_width(cairocffi.FORMAT_ARGB32, screen.width)
-            surface.flush()
-            texture = Texture.from_pixels(
-                self.core.renderer,
-                DRM_FORMAT_ARGB8888,
-                stride,
-                screen.width,
-                screen.height,
-                cairocffi.cairo.cairo_image_surface_get_data(surface._pointer),
-            )
-            # mypy struggles to understand this. See: https://github.com/python/mypy/issues/11513
-            outputs = [
-                output for output in self.core.outputs if output.wlr_output.enabled  # type: ignore
-            ]
-            outputs[screen.index].wallpaper = texture
+        surface.flush()
+        stride = surface.get_stride()
+        data = cairocffi.cairo.cairo_image_surface_get_data(surface._pointer)
+        wlr_buffer = lib.cairo_buffer_create(screen.width, screen.height, stride, data)
+        if wlr_buffer == ffi.NULL:
+            raise RuntimeError("Couldn't allocate cairo buffer.")
+
+        # Drop references to existing wallpaper if there is one
+        if screen in self.core.wallpapers:
+            old_scene_buffer, old_surface = self.core.wallpapers.pop(screen)
+            old_scene_buffer.node.destroy()
+            old_surface.finish()
+
+        # We need to keep a reference to the surface so its data persists
+        if scene_buffer := SceneBuffer.create(self.core.wallpaper_tree, Buffer(wlr_buffer)):
+            scene_buffer.node.set_position(screen.x, screen.y)
+            self.core.wallpapers[screen] = (scene_buffer, surface)
+        else:
+            logger.warning("Failed to create wlr_scene_buffer.")
 
 
 class HasListeners:
@@ -175,6 +184,14 @@ class HasListeners:
     def finalize_listeners(self) -> None:
         for listener in reversed(self._listeners):
             listener.remove()
+        self._listeners.clear()
+
+    def finalize_listener(self, event: Signal) -> None:
+        for listener in self._listeners.copy():
+            if listener._signal._ptr == event._ptr:  # type: ignore
+                listener.remove()
+                return
+        logger.warning("Failed to remove listener for event: %s", event)
 
 
 class Dnd(HasListeners):
@@ -182,55 +199,41 @@ class Dnd(HasListeners):
 
     def __init__(self, core: Core, wlr_drag: data_device_manager.Drag):
         self.core = core
-        self.wlr_drag = wlr_drag
-        self._outputs: set[Output] = set()
-
         self.x: float = core.cursor.x
         self.y: float = core.cursor.y
         self.width: int = 0  # Set upon surface commit
         self.height: int = 0
 
-        self.add_listener(wlr_drag.destroy_event, self._on_destroy)
-        self.icon = icon = wlr_drag.icon
-        if icon is not None:
-            self.add_listener(icon.map_event, self._on_icon_map)
-            self.add_listener(icon.unmap_event, self._on_icon_unmap)
-            self.add_listener(icon.destroy_event, self._on_icon_destroy)
-            self.add_listener(icon.surface.commit_event, self._on_icon_commit)
+        self.icon = cast(data_device_manager.DragIcon, wlr_drag.icon)
+        self.add_listener(self.icon.destroy_event, self._on_destroy)
+        self.add_listener(self.icon.surface.commit_event, self._on_icon_commit)
+
+        tree = SceneTree.subsurface_tree_create(core.drag_icon_tree, self.icon.surface)
+        self.node = tree.node
+
+        self.data_handle = ffi.new_handle(self)
+        self.node.data = self.data_handle
 
     def finalize(self) -> None:
         self.finalize_listeners()
         self.core.live_dnd = None
+        self.node.data = None
+        self.node.destroy()
+        self.data_handle = None
 
     def _on_destroy(self, _listener: Listener, _event: Any) -> None:
         logger.debug("Signal: wlr_drag destroy")
         self.finalize()
 
-    def _on_icon_map(self, _listener: Listener, _event: Any) -> None:
-        logger.debug("Signal: wlr_drag_icon map")
-        for output in self._outputs:
-            output.damage()
-
-    def _on_icon_unmap(self, _listener: Listener, _event: Any) -> None:
-        logger.debug("Signal: wlr_drag_icon unmap")
-        for output in self._outputs:
-            output.damage()
-
-    def _on_icon_destroy(self, _listener: Listener, _event: Any) -> None:
-        logger.debug("Signal: wlr_drag_icon destroy")
-
     def _on_icon_commit(self, _listener: Listener, _event: Any) -> None:
-        if self.icon is not None:
-            self.width = self.icon.surface.current.width
-            self.height = self.icon.surface.current.height
-            self.position(self.core.cursor.x, self.core.cursor.y)
+        self.width = self.icon.surface.current.width
+        self.height = self.icon.surface.current.height
+        self.position(self.core.cursor.x, self.core.cursor.y)
 
     def position(self, cx: float, cy: float) -> None:
         self.x = cx
         self.y = cy
-        self._outputs = {o for o in self.core.outputs if o.contains(self)}
-        for output in self._outputs:
-            output.damage()
+        self.node.set_position(int(cx), int(cy))
 
 
 def get_xwayland_atoms(xwayland: xwayland.XWayland) -> dict[int, str]:

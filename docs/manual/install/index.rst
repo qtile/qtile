@@ -178,11 +178,13 @@ Wayland
 
 Qtile can be run as a Wayland compositor rather than an X11 window manager. For
 this, Qtile uses wlroots_, a compositor library which is undergoing fast
-development. This means we can only support one release (typically the latest
-release, unless wlroots cut a release recently and we're still catching up). Be
-aware that some distributions package outdated versions of wlroots. More
-up-to-date distributions such as Arch Linux may also package pywayland,
-pywlroots and python-xkbcommon.
+development. Be aware that some distributions package outdated versions of
+wlroots. More up-to-date distributions such as Arch Linux may package
+pywayland, pywlroots and python-xkbcommon. Also note that we may not have yet
+caught up with the latest wlroots release ourselves.
+
+.. note::
+   We currently support wlroots>=0.16.0,<0.17.0 and pywlroots>=0.16.4,<0.17.0.
 
 With the Wayland dependencies in place, Qtile can be run either from a TTY, or
 within an existing X11 or Wayland session where it will run inside a nested
