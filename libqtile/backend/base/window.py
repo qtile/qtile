@@ -29,11 +29,6 @@ class _Window(CommandObject, metaclass=ABCMeta):
         self.defunct: bool = False
         self._can_steal_focus: bool = True
 
-        self.base_x: int | None = None
-        self.base_y: int | None = None
-        self.base_width: int | None = None
-        self.base_height: int | None = None
-
     @property
     @abstractmethod
     def wid(self) -> int:
@@ -127,24 +122,6 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
     def _select(self, name, sel):
         return None
-
-    def _save_geometry(self):
-        """Save current window geometry."""
-        self.base_x = self.x
-        self.base_y = self.y
-        self.base_width = self.width
-        self.base_height = self.height
-
-    def _restore_geometry(self):
-        """Restore previously saved window geometry."""
-        if self.base_x is not None:
-            self.x = self.base_x
-        if self.base_y is not None:
-            self.y = self.base_y
-        if self.base_width is not None:
-            self.width = self.base_width
-        if self.base_height is not None:
-            self.height = self.base_height
 
     @abstractmethod
     @expose_command()
@@ -379,6 +356,21 @@ class Window(_Window, metaclass=ABCMeta):
     @expose_command()
     def toggle_floating(self) -> None:
         """Toggle the floating state of the window."""
+
+    @abstractmethod
+    @expose_command()
+    def toggle_tiling(self) -> None:
+        """Toggle the tiling state of the window."""
+
+    @abstractmethod
+    @expose_command()
+    def enable_tiling(self) -> None:
+        """Toggle the tiling state of the window."""
+
+    @abstractmethod
+    @expose_command()
+    def disable_tiling(self) -> None:
+        """Toggle the tiling state of the window."""
 
     @abstractmethod
     @expose_command()

@@ -5,7 +5,7 @@ from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING, overload
 
 from libqtile import configurable
-from libqtile.backend.base import Window
+from libqtile.backend.base import Window, WindowStates
 from libqtile.command.base import CommandObject, expose_command
 from libqtile.command.interface import CommandError
 from libqtile.config import ScreenRect
@@ -35,9 +35,15 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         self.add_defaults(Layout.defaults)
 
         self._group: _Group | None = None
+        # by default a layout manages tiling windows
+        self._manages_win_state = WindowStates.TILED
 
     def layout(self, windows: Sequence[Window], screen_rect: ScreenRect) -> None:
         for i in windows:
+            # Set the window to the correct window state
+            # e.g. if we just switched to a floating layout and we layout
+            # windows should get an internal floating state
+            i._win_state = self._manages_win_state
             self.configure(i, screen_rect)
 
     def finalize(self) -> None:

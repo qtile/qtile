@@ -21,6 +21,7 @@ __all__ = [
 
 from libqtile.layout.bsp import Bsp
 from libqtile.layout.columns import Columns
+from libqtile.layout.fullscreen import Fullscreen
 from libqtile.layout.floating import Floating
 from libqtile.layout.matrix import Matrix
 from libqtile.layout.max import Max

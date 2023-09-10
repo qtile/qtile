@@ -136,7 +136,7 @@ class Qtile(CommandObject):
         for grp in self.config.groups:
             if isinstance(grp, ScratchPadConfig):
                 sp = ScratchPad(grp.name, grp.dropdowns, grp.label, grp.single)
-                sp._configure([self.config.floating_layout], self.config.floating_layout, self)
+                sp._configure([self.config.floating_layout], self.config.floating_layout, self.config.fullscreen_layout, self)
                 self.groups.append(sp)
                 self.groups_map[sp.name] = sp
 
@@ -702,7 +702,7 @@ class Qtile(CommandObject):
 
             if not layouts:
                 layouts = self.config.layouts
-            g._configure(layouts, self.config.floating_layout, self)
+            g._configure(layouts, self.config.floating_layout, self.config.fullscreen_layout, self)
             self.groups_map[name] = g
             hook.fire("addgroup", name)
             hook.fire("changegroup")
