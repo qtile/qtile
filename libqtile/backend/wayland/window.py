@@ -4,7 +4,7 @@ import typing
 
 import libqtile.backend.base.window as base
 from libqtile import hook, utils
-from libqtile.backend.base import FloatStates
+from libqtile.backend.base import WindowStates
 from libqtile.backend.base.window import WindowType
 from libqtile.backend.wayland.drawer import Drawer
 from libqtile.command.base import CommandError, expose_command
@@ -364,7 +364,7 @@ class Window(Base, base.Window):
         self.float_y: int | None = None
         self._float_width: int = 0
         self._float_height: int = 0
-        self._float_state = FloatStates.NOT_FLOATING
+        self._float_state = WindowStates.TILED
         # TODO: destroy?
         self._userdata = ffi.new_handle(self)
         ptr.cb_data = self._userdata
@@ -593,12 +593,12 @@ class Window(Base, base.Window):
         wid = int(self._ptr.get_parent(self._ptr))
         return self.qtile.windows_map.get(wid, None)
 
-    def get_new_layer(self, state: FloatStates) -> int:
-        if self.qtile.config.floats_kept_above and state == FloatStates.FLOATING:
+    def get_new_layer(self, state: WindowStates) -> int:
+        if self.qtile.config.floats_kept_above and state == WindowStates.FLOATING:
             return lib.LAYER_KEEPABOVE
-        if state == FloatStates.MAXIMIZED:
+        if state == WindowStates.MAXIMIZED:
             return lib.LAYER_MAX
-        if state == FloatStates.FULLSCREEN:
+        if state == WindowStates.FULLSCREEN:
             return lib.LAYER_FULLSCREEN
         return lib.LAYER_LAYOUT
 
@@ -638,19 +638,19 @@ class Window(Base, base.Window):
             # shell can be either "XDG" or "XWayland" or "layer"?
             shell=ffi.string(self._ptr.shell).decode() if self._ptr.shell != ffi.NULL else "",
             float_info=float_info,
-            floating=self._float_state != FloatStates.NOT_FLOATING,
-            maximized=self._float_state == FloatStates.MAXIMIZED,
-            minimized=self._float_state == FloatStates.MINIMIZED,
-            fullscreen=self._float_state == FloatStates.FULLSCREEN,
+            floating=self._float_state != WindowStates.TILED,
+            maximized=self._float_state == WindowStates.MAXIMIZED,
+            minimized=self._float_state == WindowStates.MINIMIZED,
+            fullscreen=self._float_state == WindowStates.FULLSCREEN,
         )
 
     @property
     def floating(self) -> bool:
-        return self._float_state != FloatStates.NOT_FLOATING
+        return self._float_state != WindowStates.TILED
 
     @floating.setter
     def floating(self, do_float: bool) -> None:
-        if do_float and self._float_state == FloatStates.NOT_FLOATING:
+        if do_float and self._float_state == WindowStates.TILED:
             if self.is_placed():
                 screen = self.group.screen  # type: ignore[union-attr] # see is_placed()
                 if not self._float_width:  # These might start as 0
@@ -664,35 +664,35 @@ class Window(Base, base.Window):
                 )
             else:
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
-                self._float_state = FloatStates.FLOATING
+                self._float_state = WindowStates.FLOATING
             if self.layer != lib.LAYER_KEEPABOVE and self.qtile.config.floats_kept_above:
                 self.keep_above(enable=True)
-        elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
+        elif (not do_float) and self._float_state != WindowStates.TILED:
             self.reparent(lib.LAYER_LAYOUT)
             self._update_fullscreen(False)
             self._update_maximized(False)
             self._update_minimized(False)
-            if self._float_state == FloatStates.FLOATING:
+            if self._float_state == WindowStates.FLOATING:
                 # store last size
                 self._float_width = self.width
                 self._float_height = self.height
-            self._float_state = FloatStates.NOT_FLOATING
+            self._float_state = WindowStates.TILED
             if self.group:
                 self.group.mark_floating(self, False)
             hook.fire("float_change")
 
     @property
     def fullscreen(self) -> bool:
-        return self._float_state == FloatStates.FULLSCREEN
+        return self._float_state == WindowStates.FULLSCREEN
 
     @fullscreen.setter
     def fullscreen(self, do_full: bool) -> None:
-        if do_full and self._float_state != FloatStates.FULLSCREEN:
+        if do_full and self._float_state != WindowStates.FULLSCREEN:
             screen = (self.group and self.group.screen) or self.qtile.find_closest_screen(
                 self.x, self.y
             )
 
-            if self._float_state not in (FloatStates.MAXIMIZED, FloatStates.FULLSCREEN):
+            if self._float_state not in (WindowStates.MAXIMIZED, WindowStates.FULLSCREEN):
                 self._save_geometry()
 
             bw = self.group.floating_layout.fullscreen_border_width if self.group else 0
@@ -701,15 +701,15 @@ class Window(Base, base.Window):
                 screen.y,
                 screen.width - 2 * bw,
                 screen.height - 2 * bw,
-                new_float_state=FloatStates.FULLSCREEN,
+                new_float_state=WindowStates.FULLSCREEN,
             )
-        elif self._float_state == FloatStates.FULLSCREEN:
+        elif self._float_state == WindowStates.FULLSCREEN:
             self._restore_geometry()
             self.floating = False
             self._update_fullscreen(False)
 
     def _update_fullscreen(self, do_full: bool) -> None:
-        if do_full != (self._float_state == FloatStates.FULLSCREEN):
+        if do_full != (self._float_state == WindowStates.FULLSCREEN):
             self._ptr.update_fullscreen(self._ptr, do_full)
 
         if self.group and self.group.screen:
@@ -722,7 +722,7 @@ class Window(Base, base.Window):
 
     @property
     def maximized(self) -> bool:
-        return self._float_state == FloatStates.MAXIMIZED
+        return self._float_state == WindowStates.MAXIMIZED
 
     @maximized.setter
     def maximized(self, do_maximize: bool) -> None:
@@ -731,7 +731,7 @@ class Window(Base, base.Window):
                 self.x, self.y
             )
 
-            if self._float_state not in (FloatStates.MAXIMIZED, FloatStates.FULLSCREEN):
+            if self._float_state not in (WindowStates.MAXIMIZED, WindowStates.FULLSCREEN):
                 self._save_geometry()
 
             bw = self.group.floating_layout.max_border_width if self.group else 0
@@ -740,32 +740,32 @@ class Window(Base, base.Window):
                 screen.dy,
                 screen.dwidth - 2 * bw,
                 screen.dheight - 2 * bw,
-                new_float_state=FloatStates.MAXIMIZED,
+                new_float_state=WindowStates.MAXIMIZED,
             )
         else:
-            if self._float_state == FloatStates.MAXIMIZED:
+            if self._float_state == WindowStates.MAXIMIZED:
                 self._restore_geometry()
                 self.floating = False
 
     def _update_maximized(self, do_max: bool) -> None:
-        if do_max != (self._float_state == FloatStates.MAXIMIZED):
+        if do_max != (self._float_state == WindowStates.MAXIMIZED):
             self._ptr.update_maximized(self._ptr, do_max)
 
     @property
     def minimized(self) -> bool:
-        return self._float_state == FloatStates.MINIMIZED
+        return self._float_state == WindowStates.MINIMIZED
 
     @minimized.setter
     def minimized(self, do_minimize: bool) -> None:
         if do_minimize:
-            if self._float_state != FloatStates.MINIMIZED:
-                self._reconfigure_floating(new_float_state=FloatStates.MINIMIZED)
+            if self._float_state != WindowStates.MINIMIZED:
+                self._reconfigure_floating(new_float_state=WindowStates.MINIMIZED)
         else:
-            if self._float_state == FloatStates.MINIMIZED:
+            if self._float_state == WindowStates.MINIMIZED:
                 self.floating = False
 
     def _update_minimized(self, do_min: bool) -> None:
-        if do_min != (self._float_state == FloatStates.MINIMIZED):
+        if do_min != (self._float_state == WindowStates.MINIMIZED):
             self._ptr.update_minimized(self._ptr, do_min)
 
     def _reconfigure_floating(
@@ -774,19 +774,19 @@ class Window(Base, base.Window):
         y: int | None = None,
         w: int | None = None,
         h: int | None = None,
-        new_float_state: FloatStates = FloatStates.FLOATING,
+        new_float_state: WindowStates = WindowStates.FLOATING,
     ) -> None:
         if self._float_state != new_float_state:
             self._float_state = new_float_state
             self.reparent(self.get_new_layer(new_float_state))
             if self.group:  # may be not, if it's called from hook
                 self.group.mark_floating(self, True)
-            self._update_fullscreen(new_float_state == FloatStates.FULLSCREEN)
+            self._update_fullscreen(new_float_state == WindowStates.FULLSCREEN)
             hook.fire("float_change")
-        self._update_fullscreen(new_float_state == FloatStates.FULLSCREEN)
-        self._update_maximized(new_float_state == FloatStates.MAXIMIZED)
-        self._update_minimized(new_float_state == FloatStates.MINIMIZED)
-        if new_float_state == FloatStates.MINIMIZED:
+        self._update_fullscreen(new_float_state == WindowStates.FULLSCREEN)
+        self._update_maximized(new_float_state == WindowStates.MAXIMIZED)
+        self._update_minimized(new_float_state == WindowStates.MINIMIZED)
+        if new_float_state == WindowStates.MINIMIZED:
             self.hide()
         else:
             self.place(

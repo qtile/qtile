@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from libqtile import config, group, hook
-from libqtile.backend.base import FloatStates
+from libqtile.backend.base import WindowStates
 from libqtile.command.base import expose_command
 from libqtile.config import Match, _Match
 
@@ -97,7 +97,7 @@ class WindowVisibilityToggler:
             win = self.window
             # always set the floating state before changing group
             # to avoid disturbance of tiling layout
-            win._float_state = FloatStates.TOP
+            win._float_state = WindowStates.TOP
             # add to group and bring it to front.
             win.togroup()
             win.bring_to_front()
