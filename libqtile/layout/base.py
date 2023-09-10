@@ -345,6 +345,8 @@ class _ClientList:
         elif idx <= self._current_idx:
             self._current_idx = max(0, self._current_idx - 1)
 
+        return self[self._current_idx]
+
     def rotate_up(self, maintain_index=True):
         """
         Rotate the list. The first client is moved to last position.
