@@ -226,6 +226,9 @@ class _Widget(CommandObject, configurable.Configurable):
         self.bar = bar
         self.drawer = bar.window.create_drawer(self.bar.width, self.bar.height)
 
+        # Clear this flag as widget may be restarted (e.g. if screen removed and re-added)
+        self.finalized = False
+
         # Timers are added to futures list so they can be cancelled if the `finalize` method is
         # called before the timers have fired.
         if not self.configured:
@@ -253,6 +256,10 @@ class _Widget(CommandObject, configurable.Configurable):
             self.layout.finalize()
         self.drawer.finalize()
         self.finalized = True
+
+        # Reset configuration status so the widget can be reconfigured
+        # e.g. when screen is re-added
+        self.configured = False
 
     def clear(self):
         self.drawer.set_source_rgb(self.bar.background)
