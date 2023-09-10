@@ -384,7 +384,11 @@ class Qtile(CommandObject):
                 if grp is None:
                     grp = self.add_autogen_group(i)
 
-            reconfigure_gaps = (x, y, w, h) != (scr.x, scr.y, scr.width, scr.height)
+            # If the screen has changed position and/or size, or is a new screen then make sure that any gaps/bars
+            # are reconfigured
+            reconfigure_gaps = ((x, y, w, h) != (scr.x, scr.y, scr.width, scr.height)) or (
+                i + 1 > len(self.screens)
+            )
 
             if not hasattr(scr, "group"):
                 # Ensure that this screen actually *has* a group, as it won't get
