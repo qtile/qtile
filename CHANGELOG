@@ -4,6 +4,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
       for more information on how to run tests locally.
       - Add `ScreenSplit` layout which allows multiple layouts per screen. Also adds `ScreenSplit`
         widget to display name of active split.
+      - Updated `Bluetooth` widget which allows users to manage multiple devices in a single widget
     * bugfixes
 
 Qtile 0.23.0, released 2023-09-24:
