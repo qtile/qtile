@@ -19,6 +19,9 @@ enabled = true
 [tool.setuptools.dynamic]
 readme = {file = "README.rst"}
 
+[tool.setuptools.packages.find]
+include = ["libqtile*"]
+
 [project]
 name = "qtile"
 description = "A pure-Python tiling window manager."
