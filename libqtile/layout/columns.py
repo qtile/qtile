@@ -130,6 +130,7 @@ class Columns(Layout):
             "Border colour(s) for un-focused windows in stacked columns.",
         ),
         ("border_width", 2, "Border width."),
+        ("single_border_width", None, "Border width for single window."),
         ("border_on_single", False, "Draw a border when there is one only window."),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])."),
         (
@@ -155,6 +156,13 @@ class Columns(Layout):
     def __init__(self, **config):
         Layout.__init__(self, **config)
         self.add_defaults(Columns.defaults)
+        if not self.border_on_single:
+            self.single_border_width = 0
+        elif self.single_border_width is None:
+            self.single_border_width = self.border_width
+
+        if self.margin_on_single is None:
+            self.margin_on_single = self.margin
         self.columns = [_Column(self.split, self.insert_position)]
         self.current = 0
 
@@ -249,19 +257,19 @@ class Columns(Layout):
         else:
             client.hide()
             return
+
         if client.has_focus:
             color = self.border_focus if col.split else self.border_focus_stack
         else:
             color = self.border_normal if col.split else self.border_normal_stack
-        border = self.border_width
-        margin_size = self.margin
-        if len(self.columns) == 1 and (len(col) == 1 or not col.split):
-            if not self.border_on_single:
-                border = 0
-            if self.margin_on_single is not None:
-                margin_size = self.margin_on_single
+
+        is_single = len(self.columns) == 1 and (len(col) == 1 or not col.split)
+        border = self.single_border_width if is_single else self.border_width
+        margin_size = self.margin_on_single if is_single else self.margin
+
         width = int(0.5 + col.width * screen_rect.width * 0.01 / len(self.columns))
         x = screen_rect.x + int(0.5 + pos * screen_rect.width * 0.01 / len(self.columns))
+
         if col.split:
             pos = 0
             for c in col:
