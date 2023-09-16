@@ -22,6 +22,7 @@ key. The basic operation is:
 * ``mod + <group name>``: switch to that group
 * ``mod + <shift> + <group name>``: send a window to that group
 * ``mod + <enter>``: start terminal guessed by ``libqtile.utils.guess_terminal``
+* ``mod + b``: start browser guessed by ``libqtile.utils.guess_browser``
 * ``mod + r``: start a little prompt in the bar so users can run arbitrary
   commands
 

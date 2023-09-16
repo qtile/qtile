@@ -25,6 +25,7 @@ import os
 from collections import OrderedDict
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -127,6 +128,49 @@ def test_guess_terminal_accepts_a_list_of_preferences(path):
 def test_guess_terminal_falls_back_to_defaults(path):
     Path(path, "kitty").touch(mode=0o777)
     assert utils.guess_terminal(["nutty", "witty", "petty"]) == "kitty"
+
+
+def test_guess_browser_accepts_a_preference(path):
+    browser = "super-browser"
+    Path(path, browser).touch(mode=0o777)
+    assert utils.guess_browser(browser) == browser
+
+
+def test_guess_browser_accepts_a_list_of_preferences(path):
+    browser = "super-browser"
+    Path(path, browser).touch(mode=0o777)
+    assert utils.guess_browser(["mediocre-browser", browser]) == browser
+
+
+@patch("libqtile.utils.webbrowser.get")
+@patch("libqtile.utils.subprocess.getoutput")
+@patch("libqtile.utils.which")
+def test_guess_browser_falls_back_to_webbrowser_manager(
+    mock_which, mock_getoutput, mock_webbrowser_get
+):
+    browser = "super-browser"
+    mock_browser = Mock()
+    mock_browser.name = browser
+    mock_webbrowser_get.return_value = mock_browser
+    mock_getoutput.return_value = f"{browser}.desktop"
+    mock_which.return_value = True
+
+    result = utils.guess_browser()
+
+    assert result == browser
+
+
+@patch("libqtile.utils.webbrowser.get")
+@patch("libqtile.utils.which")
+def test_guess_browser_browser_not_detected(mock_which, mock_webbrowser_get):
+    browser = "no-browser"
+    mock_browser = Mock()
+    mock_browser.name = browser
+    mock_webbrowser_get.return_value = mock_browser
+    mock_which.return_value = False
+    result = utils.guess_browser()
+
+    assert result is None
 
 
 @pytest.fixture

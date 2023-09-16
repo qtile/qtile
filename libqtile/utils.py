@@ -25,6 +25,7 @@ import asyncio
 import glob
 import importlib
 import os
+import subprocess
 import traceback
 from collections import defaultdict
 from collections.abc import Sequence
@@ -48,6 +49,8 @@ try:
     has_dbus = True
 except ImportError:
     has_dbus = False
+
+import webbrowser
 
 from libqtile.log_utils import logger
 
@@ -374,6 +377,38 @@ def guess_terminal(preference: str | Sequence | None = None) -> str | None:
         return terminal
 
     logger.error("Default terminal has not been found.")
+    return None
+
+
+def guess_browser(preference: str | Sequence | None = None) -> str | None:
+    """Try to guess browser."""
+    test_browsers = []
+    if isinstance(preference, str):
+        test_browsers += [preference]
+    elif isinstance(preference, Sequence):
+        test_browsers += list(preference)
+    elif preference is None:
+        try:
+            browser = webbrowser.get()
+            preference = browser.name
+        except webbrowser.Error:
+            logger.error("Guessing browser: could not locate runnable browser.")
+            return None
+        if preference == "xdg-open":
+            cmd = "xdg-settings get default-web-browser"
+            output = subprocess.getoutput(cmd)
+            preference = output.split(".")[0]
+        test_browsers += [preference]
+
+    for browser in test_browsers:
+        logger.debug("Guessing browser: %s", browser)
+        if not which(browser, os.X_OK):
+            continue
+
+        logger.info("Browser found: %s", browser)
+        return browser
+
+    logger.error("Default browser has not been found.")
     return None
 
 

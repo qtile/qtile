@@ -27,10 +27,11 @@
 from libqtile import bar, layout, widget
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
-from libqtile.utils import guess_terminal
+from libqtile.utils import guess_browser, guess_terminal
 
 mod = "mod4"
 terminal = guess_terminal()
+browser = guess_browser()
 
 keys = [
     # A list of available commands that can be bound to keys can be found
@@ -65,6 +66,7 @@ keys = [
         desc="Toggle between split and unsplit sides of stack",
     ),
     Key([mod], "Return", lazy.spawn(terminal), desc="Launch terminal"),
+    Key([mod], "b", lazy.spawn(browser), desc="Launch browser"),
     # Toggle between different layouts as defined below
     Key([mod], "Tab", lazy.next_layout(), desc="Toggle between layouts"),
     Key([mod], "w", lazy.window.kill(), desc="Kill focused window"),
