@@ -402,7 +402,7 @@ class Columns(Layout):
         self.group.focus(col.cw, True)
 
     @expose_command()
-    def next(self):
+    def next(self) -> None:
         if self.cc.split and self.cc.current < len(self.cc) - 1:
             self.cc.current += 1
         elif self.columns:
@@ -412,7 +412,7 @@ class Columns(Layout):
         self.group.focus(self.cc.cw, True)
 
     @expose_command()
-    def previous(self):
+    def previous(self) -> None:
         if self.cc.split and self.cc.current > 0:
             self.cc.current -= 1
         elif self.columns:

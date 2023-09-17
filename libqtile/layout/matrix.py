@@ -140,11 +140,11 @@ class Matrix(_SimpleLayoutBase):
         client.unhide()
 
     @expose_command()
-    def previous(self):
+    def previous(self) -> None:
         _SimpleLayoutBase.previous(self)
 
     @expose_command()
-    def next(self):
+    def next(self) -> None:
         _SimpleLayoutBase.next(self)
 
     def horizontal_traversal(self, direction):
