@@ -114,7 +114,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         """Called whenever the focus changes"""
         pass
 
-    def blur(self):
+    def blur(self) -> None:
         """Called whenever focus is gone from this layout"""
         pass
 

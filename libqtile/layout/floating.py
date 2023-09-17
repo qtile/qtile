@@ -186,7 +186,7 @@ class Floating(Layout):
     def focus(self, client: Window) -> None:
         self.focused = client
 
-    def blur(self):
+    def blur(self) -> None:
         self.focused = None
 
     def on_screen(self, client, screen_rect):
