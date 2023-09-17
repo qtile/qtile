@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import copy
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 from libqtile import configurable
 from libqtile.backend.base import Window
@@ -42,7 +42,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
 
     defaults: list[tuple[str, Any, str]] = []
 
-    def __init__(self, **config):
+    def __init__(self, **config: Any) -> None:
         # name is a little odd; we can't resolve it until the class is defined
         # (i.e., we can't figure it out to define it in Layout.defaults), so
         # we resolve it here instead.
@@ -240,7 +240,7 @@ class _ClientList:
     The collection implements focus_xxx methods as desired for Group.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._current_idx: int = 0
         self.clients: list[Window] = []
 
@@ -435,7 +435,17 @@ class _ClientList:
     def __len__(self) -> int:
         return len(self.clients)
 
+    @overload
     def __getitem__(self, i: int) -> Window | None:
+        ...
+
+    @overload
+    def __getitem__(self, i: slice) -> list[Window]:
+        ...
+
+    def __getitem__(self, i: int | slice) -> Window | None | list[Window]:
+        if isinstance(i, slice):
+            return self.clients[i]
         try:
             return self.clients[i]
         except IndexError:
@@ -473,7 +483,7 @@ class _SimpleLayoutBase(Layout):
     Basic Layouts like Max and Matrix are based on this class
     """
 
-    def __init__(self, **config):
+    def __init__(self, **config: Any) -> None:
         Layout.__init__(self, **config)
         self.clients = _ClientList()
 
@@ -516,13 +526,13 @@ class _SimpleLayoutBase(Layout):
 
     def add_client(
         self, client: Window, offset_to_current: int = 0, client_position: str | None = None
-    ):
-        return self.clients.add_client(client, offset_to_current, client_position)
+    ) -> None:
+        self.clients.add_client(client, offset_to_current, client_position)
 
     def remove(self, client: Window) -> None:
         return self.clients.remove(client)
 
-    def get_windows(self):
+    def get_windows(self) -> list[Window]:
         return self.clients.clients
 
     @expose_command()
