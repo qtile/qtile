@@ -117,7 +117,7 @@ class VerticalTile(_SimpleLayoutBase):
     def add_client(self, window):
         return self.clients.add_client(window, 1)
 
-    def remove(self, window: Window) -> None:
+    def remove(self, window: Window) -> Window | None:
         if self.maximized is window:
             self.maximized = None
         return self.clients.remove(window)
