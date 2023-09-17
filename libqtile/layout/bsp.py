@@ -254,14 +254,14 @@ class Bsp(Layout):
             self.current.parent.split_horizontal = not self.current.parent.split_horizontal
         self.group.layout_all()
 
-    def focus_first(self):
+    def focus_first(self) -> Window | None:
         return next(self.root.clients(), None)
 
-    def focus_last(self):
+    def focus_last(self) -> Window | None:
         clients = list(self.root.clients())
         return clients[-1] if len(clients) else None
 
-    def focus_next(self, client, wrap=False):
+    def focus_next(self, client: Window, wrap: bool = False) -> Window | None:
         clients = list(self.root.clients())
         if client in clients:
             idx = clients.index(client)
@@ -269,8 +269,9 @@ class Bsp(Layout):
                 return clients[(idx + 1)]
             elif wrap:
                 return clients[(idx + 1) % len(clients)]
+        return None
 
-    def focus_previous(self, client, wrap=False):
+    def focus_previous(self, client: Window, wrap: bool = False) -> Window | None:
         clients = list(self.root.clients())
         if client in clients:
             idx = clients.index(client)
@@ -278,6 +279,7 @@ class Bsp(Layout):
                 return clients[(idx - 1)]
             elif wrap:
                 return clients[(idx - 1) % len(clients)]
+        return None
 
     @expose_command()
     def next(self):

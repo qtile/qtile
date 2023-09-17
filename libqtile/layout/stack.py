@@ -153,45 +153,43 @@ class Stack(Layout):
             if client in i:
                 i.focus(client)
 
-    def focus_first(self):
-        for i in self.stacks:
-            if i:
-                return i.focus_first()
+    def focus_first(self) -> Window | None:
+        if self.stacks:
+            return self.stacks[0].focus_first()
+        return None
 
-    def focus_last(self):
-        for i in reversed(self.stacks):
-            if i:
-                return i.focus_last()
+    def focus_last(self) -> Window | None:
+        if self.stacks:
+            return self.stacks[-1].focus_last()
+        return None
 
-    def focus_next(self, client):
+    def focus_next(self, client: Window) -> Window | None:
         iterator = iter(self.stacks)
         for i in iterator:
             if client in i:
-                next = i.focus_next(client)
-                if next:
-                    return next
+                if next_ := i.focus_next(client):
+                    return next_
                 break
         else:
-            return
+            return None
 
-        for i in iterator:
-            if i:
-                return i.focus_first()
+        if i := next(iterator, None):
+            return i.focus_first()
+        return None
 
-    def focus_previous(self, client):
-        iterator = iter(reversed(self.stacks))
+    def focus_previous(self, client: Window) -> Window | None:
+        iterator = reversed(self.stacks)
         for i in iterator:
             if client in i:
-                next = i.focus_previous(client)
-                if next:
-                    return next
+                if nxt := i.focus_previous(client):
+                    return nxt
                 break
         else:
-            return
+            return None
 
-        for i in iterator:
-            if i:
-                return i.focus_last()
+        if i := next(iterator, None):
+            return i.focus_last()
+        return None
 
     def add_client(self, client: Window) -> None:
         for i in self.stacks:

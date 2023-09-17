@@ -158,7 +158,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def focus_first(self):
+    def focus_first(self) -> Window | None:
         """Called when the first client in Layout shall be focused.
 
         This method should:
@@ -168,7 +168,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def focus_last(self):
+    def focus_last(self) -> Window | None:
         """Called when the last client in Layout shall be focused.
 
         This method should:
@@ -178,7 +178,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def focus_next(self, win):
+    def focus_next(self, win: Window) -> Window | None:
         """Called when the next client in Layout shall be focused.
 
         This method should:
@@ -198,7 +198,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def focus_previous(self, win):
+    def focus_previous(self, win: Window) -> Window | None:
         """Called when the previous client in Layout shall be focused.
 
         This method should:
@@ -485,19 +485,19 @@ class _SimpleLayoutBase(Layout):
     def focus(self, client: Window) -> None:
         self.clients.current_client = client
 
-    def focus_first(self):
+    def focus_first(self) -> Window | None:
         return self.clients.focus_first()
 
-    def focus_last(self):
+    def focus_last(self) -> Window | None:
         return self.clients.focus_last()
 
-    def focus_next(self, window):
+    def focus_next(self, window: Window) -> Window | None:
         return self.clients.focus_next(window)
 
-    def focus_previous(self, window):
+    def focus_previous(self, window: Window) -> Window | None:
         return self.clients.focus_previous(window)
 
-    def previous(self):
+    def previous(self) -> None:
         if self.clients.current_client is None:
             return
         client = self.focus_previous(self.clients.current_client) or self.focus_last()
@@ -508,7 +508,7 @@ class _SimpleLayoutBase(Layout):
         self.group.layout_all()
         self.group.focus(window1)
 
-    def next(self):
+    def next(self) -> None:
         if self.clients.current_client is None:
             return
         client = self.focus_next(self.clients.current_client) or self.focus_first()

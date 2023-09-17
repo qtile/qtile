@@ -82,21 +82,21 @@ class Single(Layout):
         """
         return self.window is None
 
-    def focus_first(self):
+    def focus_first(self) -> Window | None:
         self.focused = True
         return self.window
 
-    def focus_last(self):
+    def focus_last(self) -> Window | None:
         self.focused = True
         return self.window
 
-    def focus_next(self, window):
+    def focus_next(self, window: Window) -> Window | None:
         if self.focused:
             self.focused = False
             return None
         return self.window
 
-    def focus_previous(self, window):
+    def focus_previous(self, window: Window) -> Window | None:
         if self.focused:
             self.focused = False
             return None
@@ -232,21 +232,23 @@ class Slice(Layout):
         for lay in self._get_layouts():
             lay.blur()
 
-    def focus_first(self):
+    def focus_first(self) -> Window | None:
         layouts = self._get_layouts()
         for lay in layouts:
             win = lay.focus_first()
             if win:
                 return win
+        return None
 
-    def focus_last(self):
+    def focus_last(self) -> None:
         layouts = self._get_layouts()
         for lay in reversed(layouts):
             win = lay.focus_last()
             if win:
                 return win
+        return None
 
-    def focus_next(self, win):
+    def focus_next(self, win: Window) -> Window | None:
         layouts = self._get_layouts()
         cur = self.layouts[win]
         focus = cur.focus_next(win)
@@ -257,7 +259,7 @@ class Slice(Layout):
                 focus = layouts[idx].focus_first()
         return focus
 
-    def focus_previous(self, win):
+    def focus_previous(self, win: Window) -> Window | None:
         layouts = self._get_layouts()
         cur = self.layouts[win]
         focus = cur.focus_previous(win)

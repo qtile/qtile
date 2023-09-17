@@ -307,47 +307,47 @@ class Columns(Layout):
         else:
             client.hide()
 
-    def focus_first(self):
+    def focus_first(self) -> Window | None:
         """Returns first client in first column of layout"""
         if self.columns:
             return self.columns[0].focus_first()
+        return None
 
-    def focus_last(self):
+    def focus_last(self) -> Window | None:
         """Returns last client in last column of layout"""
         if self.columns:
             return self.columns[-1].focus_last()
+        return None
 
-    def focus_next(self, win):
+    def focus_next(self, win: Window) -> None:
         """Returns the next client after 'win' in layout,
         or None if there is no such client"""
         # First: try to get next window in column of win (self.columns is non-empty)
         # pylint: disable=undefined-loop-variable
         for idx, col in enumerate(self.columns):
             if win in col:
-                nxt = col.focus_next(win)
-                if nxt:
+                if nxt := col.focus_next(win):
                     return nxt
-                else:
-                    break
+                break
         # if there was no next, get first client from next column
         if idx + 1 < len(self.columns):
             return self.columns[idx + 1].focus_first()
+        return None
 
-    def focus_previous(self, win):
+    def focus_previous(self, win: Window) -> Window | None:
         """Returns the client previous to 'win' in layout.
         or None if there is no such client"""
         # First: try to focus previous client in column (self.columns is non-empty)
         # pylint: disable=undefined-loop-variable
         for idx, col in enumerate(self.columns):
             if win in col:
-                prev = col.focus_previous(win)
-                if prev:
+                if prev := col.focus_previous(win):
                     return prev
-                else:
-                    break
+                break
         # If there was no previous, get last from previous column
         if idx > 0:
             return self.columns[idx - 1].focus_last()
+        return None
 
     @expose_command()
     def toggle_split(self):

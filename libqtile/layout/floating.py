@@ -158,14 +158,15 @@ class Floating(Layout):
         if clients:
             return clients[0]
 
-    def focus_next(self, win):
+    def focus_next(self, win: Window) -> Window | None:
         if win not in self.clients or win.group is None:
-            return
+            return None
 
         clients = self.find_clients(win.group)
         idx = clients.index(win)
         if len(clients) > idx + 1:
             return clients[idx + 1]
+        return None
 
     def focus_last(self, group=None):
         if group is None:
