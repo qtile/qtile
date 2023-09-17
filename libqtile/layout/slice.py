@@ -36,7 +36,7 @@ from libqtile.layout.base import Layout
 from libqtile.layout.max import Max
 
 if TYPE_CHECKING:
-    from typing import Self, Sequence
+    from typing import Any, Self, Sequence
 
     from libqtile.group import _Group
 
@@ -110,7 +110,7 @@ class Single(Layout):
     def get_windows(self):
         return self.window
 
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = Layout.info(self)
         d["window"] = self.window.name if self.window else ""
         return d
@@ -322,7 +322,7 @@ class Slice(Layout):
         self.group.layout_all()
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = Layout.info(self)
         for layout in self._get_layouts():
             d[layout.name] = layout.info()

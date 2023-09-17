@@ -24,7 +24,7 @@ from libqtile.layout.base import Layout, _ClientList
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import Self
+    from typing import Any, Self
 
     from libqtile.backend.base import Window
     from libqtile.group import _Group
@@ -43,7 +43,7 @@ class _Column(_ClientList):
         self.heights = {}
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         info = _ClientList.info(self)
         info.update(
             dict(
@@ -188,7 +188,7 @@ class Columns(Layout):
         return clients
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = Layout.info(self)
         d["clients"] = []
         d["columns"] = []
