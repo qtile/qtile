@@ -150,7 +150,7 @@ class Spiral(_SimpleLayoutBase):
         self.dirty = True
         self.clients.add_client(client, client_position=self.new_client_position)
 
-    def remove(self, w: Window) -> None:
+    def remove(self, w: Window) -> Window | None:
         self.dirty = True
         return _SimpleLayoutBase.remove(self, w)
 

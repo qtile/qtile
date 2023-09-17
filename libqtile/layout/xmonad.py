@@ -242,7 +242,7 @@ class MonadTall(_SimpleLayoutBase):
         self.clients.add_client(client, client_position=self.new_client_position)
         self.do_normalize = True
 
-    def remove(self, client: Window) -> None:
+    def remove(self, client: Window) -> Window | None:
         "Remove client from layout"
         self.do_normalize = True
         return self.clients.remove(client)

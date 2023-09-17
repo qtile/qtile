@@ -344,18 +344,20 @@ class _ClientList:
         """
         self.clients.append(client)
 
-    def remove(self, client: Window) -> None:
+    def remove(self, client: Window) -> Window | None:
         """
         Remove the given client from collection.
         """
         if client not in self.clients:
-            return
+            return None
         idx = self.clients.index(client)
         del self.clients[idx]
         if len(self) == 0:
             self._current_idx = 0
         elif idx <= self._current_idx:
             self._current_idx = max(0, self._current_idx - 1)
+
+        return self[self._current_idx]
 
     def rotate_up(self, maintain_index: bool = True) -> None:
         """
@@ -529,7 +531,7 @@ class _SimpleLayoutBase(Layout):
     ) -> None:
         self.clients.add_client(client, offset_to_current, client_position)
 
-    def remove(self, client: Window) -> None:
+    def remove(self, client: Window) -> Window | None:
         return self.clients.remove(client)
 
     def get_windows(self) -> list[Window]:
