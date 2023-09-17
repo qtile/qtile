@@ -289,7 +289,7 @@ class Window(TreeNode):
             return self
         return super().button_press(x, y)
 
-    def remove(self):
+    def remove(self) -> None:
         """Removes this Window
 
         If this window has children, the first child takes the place of this
@@ -438,7 +438,7 @@ class TreeTab(Layout):
             node = self._tree.add_client(win)
         self._nodes[win] = node
 
-    def remove(self, win):
+    def remove(self, win: base.Window) -> None:
         if win not in self._nodes:
             return
 

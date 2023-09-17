@@ -56,8 +56,9 @@ class Single(Layout):
         assert self.window is None
         self.window = window
 
-    def remove(self, window):
-        assert self.window is window
+    def remove(self, window: Window) -> None:
+        if self.window is not window:
+            raise ValueError("Cannot remove, window not managed by layout")
         self.window = None
 
     def configure(self, window, screen_rect):
@@ -209,7 +210,7 @@ class Slice(Layout):
             self.fallback.add_client(win)
             self.layouts[win] = self.fallback
 
-    def remove(self, win):
+    def remove(self, win: Window) -> Window:
         lay = self.layouts.pop(win)
         focus = lay.remove(win)
         if not focus:

@@ -203,7 +203,7 @@ class Stack(Layout):
         else:
             self.current_stack.add_client(client)
 
-    def remove(self, client):
+    def remove(self, client: Window) -> Window | None:
         current_offset = self.current_stack_offset
         for i in self.stacks:
             if client in i:
@@ -217,6 +217,7 @@ class Stack(Layout):
             )
             if n:
                 return n.cw
+        return None
 
     def configure(self, client, screen_rect):
         # pylint: disable=undefined-loop-variable

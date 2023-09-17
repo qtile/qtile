@@ -32,7 +32,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from libqtile.backend.base import Window
 from libqtile.command.base import expose_command
 from libqtile.config import Match
 from libqtile.layout.base import Layout
@@ -289,9 +288,9 @@ class Floating(Layout):
         self.clients.append(client)
         self.focused = client
 
-    def remove(self, client):
+    def remove(self, client: Window) -> Window | None:
         if client not in self.clients:
-            return
+            return None
 
         next_focus = self.focus_next(client)
         if client is self.focused:

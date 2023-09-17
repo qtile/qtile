@@ -31,7 +31,7 @@ from libqtile.command.interface import CommandError
 from libqtile.config import ScreenRect
 
 if TYPE_CHECKING:
-    from typing import Any, Self, Sequence
+    from typing import Any, Iterator, Self, Sequence
 
     from libqtile.command.base import ItemT
     from libqtile.group import _Group
@@ -134,7 +134,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def remove(self, client):
+    def remove(self, client: Window) -> Window | None:
         """Called whenever a window is removed from the group
 
         Called whether the layout is current or not. The layout should just
@@ -241,29 +241,28 @@ class _ClientList:
     """
 
     def __init__(self):
-        self._current_idx = 0
-        self.clients = []
+        self._current_idx: int = 0
+        self.clients: list[Window] = []
 
     @property
-    def current_index(self):
+    def current_index(self) -> int:
         return self._current_idx
 
     @current_index.setter
-    def current_index(self, x):
+    def current_index(self, x: int) -> None:
         if len(self):
             self._current_idx = abs(x % len(self))
         else:
             self._current_idx = 0
-        return self._current_idx
 
     @property
-    def current_client(self):
+    def current_client(self) -> Window | None:
         if not self.clients:
             return None
         return self.clients[self._current_idx]
 
     @current_client.setter
-    def current_client(self, client):
+    def current_client(self, client: Window) -> None:
         self._current_idx = self.clients.index(client)
 
     def focus(self, client: Window) -> None:
@@ -273,13 +272,13 @@ class _ClientList:
         """
         self.current_client = client
 
-    def focus_first(self):
+    def focus_first(self) -> Window | None:
         """
         Returns the first client in collection.
         """
         return self[0]
 
-    def focus_next(self, win):
+    def focus_next(self, win: Window) -> Window | None:
         """
         Returns the client next from win in collection.
         """
@@ -288,13 +287,13 @@ class _ClientList:
         except IndexError:
             return None
 
-    def focus_last(self):
+    def focus_last(self) -> Window | None:
         """
         Returns the last client in collection.
         """
         return self[-1]
 
-    def focus_previous(self, win):
+    def focus_previous(self, win: Window) -> Window | None:
         """
         Returns the client previous to win in collection.
         """
@@ -303,7 +302,9 @@ class _ClientList:
             return self[idx - 1]
         return None
 
-    def add_client(self, client, offset_to_current=0, client_position=None):
+    def add_client(
+        self, client: Window, offset_to_current: int = 0, client_position: str | None = None
+    ) -> None:
         """
         Insert the given client into collection at position of the current.
 
@@ -331,19 +332,19 @@ class _ClientList:
                 self.clients.append(client)
         self.current_client = client
 
-    def append_head(self, client):
+    def append_head(self, client: Window) -> None:
         """
         Append the given client in front of list.
         """
         self.clients.insert(0, client)
 
-    def append(self, client):
+    def append(self, client: Window) -> None:
         """
         Append the given client to the end of the collection.
         """
         self.clients.append(client)
 
-    def remove(self, client):
+    def remove(self, client: Window) -> None:
         """
         Remove the given client from collection.
         """
@@ -356,7 +357,7 @@ class _ClientList:
         elif idx <= self._current_idx:
             self._current_idx = max(0, self._current_idx - 1)
 
-    def rotate_up(self, maintain_index=True):
+    def rotate_up(self, maintain_index: bool = True) -> None:
         """
         Rotate the list. The first client is moved to last position.
         If maintain_index is True the current_index is adjusted,
@@ -367,7 +368,7 @@ class _ClientList:
             if maintain_index:
                 self.current_index -= 1
 
-    def rotate_down(self, maintain_index=True):
+    def rotate_down(self, maintain_index: bool = True) -> None:
         """
         Rotate the list. The last client is moved to first position.
         If maintain_index is True the current_index is adjusted,
@@ -393,7 +394,7 @@ class _ClientList:
         elif focus == 2:
             self.current_index = i2
 
-    def shuffle_up(self, maintain_index=True):
+    def shuffle_up(self, maintain_index: bool = True) -> None:
         """
         Shuffle the list. The current client swaps position with its predecessor.
         If maintain_index is True the current_index is adjusted,
@@ -401,11 +402,11 @@ class _ClientList:
         """
         idx = self._current_idx
         if idx > 0:
-            self.clients[idx], self.clients[idx - 1] = self[idx - 1], self[idx]
+            self.clients[idx], self.clients[idx - 1] = self.clients[idx - 1], self.clients[idx]
             if maintain_index:
                 self.current_index -= 1
 
-    def shuffle_down(self, maintain_index=True):
+    def shuffle_down(self, maintain_index: bool = True) -> None:
         """
         Shuffle the list. The current client swaps position with its successor.
         If maintain_index is True the current_index is adjusted,
@@ -413,13 +414,13 @@ class _ClientList:
         """
         idx = self._current_idx
         if idx + 1 < len(self.clients):
-            self.clients[idx], self.clients[idx + 1] = self[idx + 1], self[idx]
+            self.clients[idx], self.clients[idx + 1] = self.clients[idx + 1], self.clients[idx]
             if maintain_index:
                 self.current_index += 1
 
-    def join(self, other, offset_to_current=0):
+    def join(self, other: _ClientList, offset_to_current: int = 0) -> None:
         """
-        Add clients from 'other' _WindowCollection to self.
+        Add clients from 'other' _ClientList to self.
         'offset_to_current' works as described for add()
         """
         pos = max(0, self.current_index + offset_to_current)
@@ -428,30 +429,30 @@ class _ClientList:
         else:
             self.clients.extend(other.clients)
 
-    def index(self, client):
+    def index(self, client: Window) -> int:
         return self.clients.index(client)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.clients)
 
-    def __getitem__(self, i):
+    def __getitem__(self, i: int) -> Window | None:
         try:
             return self.clients[i]
         except IndexError:
             return None
 
-    def __setitem__(self, i, value):
+    def __setitem__(self, i: int, value: Window) -> None:
         self.clients[i] = value
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Window]:
         return self.clients.__iter__()
 
-    def __contains__(self, client):
+    def __contains__(self, client: Window) -> bool:
         return client in self.clients
 
-    def __str__(self):
+    def __str__(self) -> str:
         curr = self.current_client
-        return "_WindowCollection: " + ", ".join(
+        return "_ClientList: " + ", ".join(
             [("[%s]" if c == curr else "%s") % c.name for c in self.clients]
         )
 
@@ -513,10 +514,12 @@ class _SimpleLayoutBase(Layout):
         client = self.focus_next(self.clients.current_client) or self.focus_first()
         self.group.focus(client, True)
 
-    def add_client(self, client, offset_to_current=0, client_position=None):
+    def add_client(
+        self, client: Window, offset_to_current: int = 0, client_position: str | None = None
+    ):
         return self.clients.add_client(client, offset_to_current, client_position)
 
-    def remove(self, client):
+    def remove(self, client: Window) -> None:
         return self.clients.remove(client)
 
     def get_windows(self):
