@@ -155,6 +155,9 @@ if __name__ == "__main__":
 
     can_run, argv = Gtk.init_check()
     if not can_run:
+        print(f"{os.environ.get('WAYLAND_DISPLAY')=}")
+        print(f"{os.environ.get('DISPLAY')=}")
+        print(f"{os.environ.get('GDK_BACKEND')=}")
         raise RuntimeError(f"Cannot initiate Gtk with argv: {argv}")
 
     win = Gtk.Window(title=title)
