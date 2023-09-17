@@ -28,8 +28,12 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from typing import Sequence
+
 
 from libqtile import hook
+from libqtile.backend.base import WindowType
+from libqtile.config import ScreenRect
 from libqtile.command.base import expose_command
 from libqtile.layout.base import Layout
 
@@ -729,7 +733,7 @@ class TreeTab(Layout):
             "", "ffffff", self.font, self.fontsize, self.fontshadow, wrap=False
         )
 
-    def layout(self, windows, screen_rect):
+    def layout(self, windows: Sequence[WindowType], screen_rect: ScreenRect) -> None:
         if self.place_right:
             body, panel = screen_rect.hsplit(screen_rect.width - self.panel_width)
         else:

@@ -22,12 +22,15 @@
 from __future__ import annotations
 
 import copy
+from libqtile.config import ScreenRect
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 
 from libqtile import configurable
+from libqtile.backend.base import WindowType
 from libqtile.command.base import CommandObject, expose_command
 from libqtile.command.interface import CommandError
+from libqtile.config import ScreenRect
 
 if TYPE_CHECKING:
     from typing import Any
@@ -51,8 +54,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(Layout.defaults)
 
-    def layout(self, windows, screen_rect):
-        assert windows, "let's eliminate unnecessary calls"
+    def layout(self, windows: Sequence[WindowType], screen_rect: ScreenRect) -> None:
         for i in windows:
             self.configure(i, screen_rect)
 
