@@ -91,11 +91,12 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
             return True, []
         return None
 
-    def _select(self, name, sel):
+    def _select(self, name: str, sel: str | int | None) -> CommandObject | None:
         if name == "screen":
             return self.group.screen
         elif name == "group":
             return self.group
+        return None
 
     def show(self, screen_rect):
         """Called when layout is being shown"""
