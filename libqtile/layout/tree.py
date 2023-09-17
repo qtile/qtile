@@ -425,7 +425,7 @@ class TreeTab(Layout):
         if win:
             return win.window
 
-    def blur(self):
+    def blur(self) -> None:
         # Does not clear current window, will change if new one
         # will be focused. This works better when floating window
         # will be next focused one

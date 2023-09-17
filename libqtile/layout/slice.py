@@ -227,7 +227,7 @@ class Slice(Layout):
     def focus(self, win):
         self.layouts[win].focus(win)
 
-    def blur(self):
+    def blur(self) -> None:
         for lay in self._get_layouts():
             lay.blur()
 
