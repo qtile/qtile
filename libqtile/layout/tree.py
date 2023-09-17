@@ -545,7 +545,7 @@ class TreeTab(Layout):
         d["client_trees"] = trees
         return d
 
-    def show(self, screen_rect):
+    def show(self, screen_rect: ScreenRect) -> None:
         if not self._panel:
             self._create_panel(screen_rect)
         if self.place_right:
