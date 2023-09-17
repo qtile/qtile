@@ -236,7 +236,7 @@ class MonadTall(_SimpleLayoutBase):
         c.align = self.align
         return c
 
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:  # type: ignore[override]
         "Add client to layout"
         self.clients.add_client(client, client_position=self.new_client_position)
         self.do_normalize = True

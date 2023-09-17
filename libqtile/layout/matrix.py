@@ -36,6 +36,7 @@ from libqtile.log_utils import logger
 if TYPE_CHECKING:
     from typing import Any, Self
 
+    from libqtile.backend.base import Window
     from libqtile.group import _Group
 
 
@@ -101,7 +102,7 @@ class Matrix(_SimpleLayoutBase):
         assert column < self.columns
         return [self.clients[i] for i in range(column, len(self.clients), self.columns)]
 
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:  # type: ignore[override]
         """Add client to Layout.
         Note that for Matrix the clients are appended at end of list.
         If needed a new row in matrix is created"""

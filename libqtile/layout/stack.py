@@ -192,7 +192,7 @@ class Stack(Layout):
             if i:
                 return i.focus_last()
 
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:
         for i in self.stacks:
             if not i:
                 i.add_client(client)

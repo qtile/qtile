@@ -28,6 +28,7 @@ from libqtile.log_utils import logger
 if TYPE_CHECKING:
     from typing import Any, Self
 
+    from libqtile.backend.base import Window
     from libqtile.group import _Group
 
     Rect = tuple[int, int, int, int]
@@ -145,7 +146,7 @@ class Spiral(_SimpleLayoutBase):
     def clone(self, group: _Group) -> Self:
         return _SimpleLayoutBase.clone(self, group)
 
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:  # type: ignore[override]
         self.dirty = True
         self.clients.add_client(client, client_position=self.new_client_position)
 
