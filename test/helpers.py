@@ -174,6 +174,7 @@ class TestManager:
                 os.environ.pop("WAYLAND_DISPLAY", None)
                 kore = self.backend.create()
                 os.environ.update(self.backend.env)
+                print("Server", os.environ)
                 init_log(logging.DEBUG)
                 if hasattr(self, "log_queue"):
                     logger.addHandler(logging.handlers.QueueHandler(self.log_queue))
