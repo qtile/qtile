@@ -23,7 +23,7 @@ from libqtile.command.base import expose_command
 from libqtile.layout.base import Layout
 
 if TYPE_CHECKING:
-    from typing import Any, Self
+    from typing import Any, Generator, Self
 
     from libqtile.backend.base import Window
     from libqtile.config import ScreenRect
@@ -31,23 +31,24 @@ if TYPE_CHECKING:
 
 
 class _BspNode:
-    def __init__(self, parent=None):
+    def __init__(self, parent: _BspNode | None = None) -> None:
         self.parent = parent
-        self.children = []
-        self.split_horizontal = None
-        self.split_ratio = 50
-        self.client = None
-        self.x = self.y = 0
-        self.w = 16
-        self.h = 9
+        self.children: list[_BspNode] = []
+        self.split_horizontal: bool = False
+        self.split_ratio: float = 50
+        self.client: Window | None = None
+        self.x: int = 0
+        self.y: int = 0
+        self.w: int = 16
+        self.h: int = 9
 
-    def __iter__(self):
+    def __iter__(self) -> Generator[_BspNode, None, None]:
         yield self
         for child in self.children:
             for c in child:
                 yield c
 
-    def clients(self):
+    def clients(self) -> Generator[Window, None, None]:
         if self.client:
             yield self.client
         else:
@@ -55,7 +56,7 @@ class _BspNode:
                 for c in child.clients():
                     yield c
 
-    def _shortest(self, length):
+    def _shortest(self, length: int) -> tuple[_BspNode, int]:
         if len(self.children) == 0:
             return self, length
 
@@ -66,10 +67,11 @@ class _BspNode:
             return child1, length1
         return child0, length0
 
-    def get_shortest(self):
-        return self._shortest(0)[0]
+    def get_shortest(self) -> _BspNode:
+        node, _ = self._shortest(0)
+        return node
 
-    def insert(self, client, idx, ratio):
+    def insert(self, client: Window, idx: int, ratio: float) -> _BspNode:
         if self.client is None:
             self.client = client
             return self
@@ -80,7 +82,7 @@ class _BspNode:
         self.split_horizontal = True if self.w > self.h * ratio else False
         return self.children[idx]
 
-    def remove(self, child):
+    def remove(self, child: _BspNode) -> _BspNode:
         keep = self.children[1 if child is self.children[0] else 0]
         self.children = keep.children
         for c in self.children:
@@ -90,7 +92,7 @@ class _BspNode:
         self.client = keep.client
         return self
 
-    def distribute(self):
+    def distribute(self) -> tuple[int, int]:
         if len(self.children) == 0:
             return 1, 1
         h0, v0 = self.children[0].distribute()
@@ -105,7 +107,7 @@ class _BspNode:
             self.split_ratio = 100 * v0 / v
         return h, v
 
-    def calc_geom(self, x, y, w, h):
+    def calc_geom(self, x: int, y: int, w: int, h: int) -> None:
         self.x = x
         self.y = y
         self.w = w
