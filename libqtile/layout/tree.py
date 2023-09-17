@@ -33,7 +33,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from libqtile import hook
-from libqtile.backend.base import WindowType
 from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect
 from libqtile.layout.base import Layout
@@ -41,6 +40,7 @@ from libqtile.layout.base import Layout
 if TYPE_CHECKING:
     from typing import Self, Sequence
 
+    from libqtile.backend import base
     from libqtile.group import _Group
 
 to_superscript = dict(zip(map(ord, "0123456789"), map(ord, "⁰¹²³⁴⁵⁶⁷⁸⁹")))
@@ -739,7 +739,7 @@ class TreeTab(Layout):
             "", "ffffff", self.font, self.fontsize, self.fontshadow, wrap=False
         )
 
-    def layout(self, windows: Sequence[WindowType], screen_rect: ScreenRect) -> None:
+    def layout(self, windows: Sequence[base.Window], screen_rect: ScreenRect) -> None:
         if self.place_right:
             body, panel = screen_rect.hsplit(screen_rect.width - self.panel_width)
         else:

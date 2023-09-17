@@ -25,7 +25,7 @@ from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING
 
 from libqtile import configurable
-from libqtile.backend.base import WindowType
+from libqtile.backend.base import Window
 from libqtile.command.base import CommandObject, expose_command
 from libqtile.command.interface import CommandError
 from libqtile.config import ScreenRect
@@ -55,7 +55,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
 
         self._group: _Group | None = None
 
-    def layout(self, windows: Sequence[WindowType], screen_rect: ScreenRect) -> None:
+    def layout(self, windows: Sequence[Window], screen_rect: ScreenRect) -> None:
         for i in windows:
             self.configure(i, screen_rect)
 
@@ -106,7 +106,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         """Called when layout is being hidden"""
         pass
 
-    def swap(self, c1, c2):
+    def swap(self, c1: Window, c2: Window) -> None:
         """Swap the two given clients c1 and c2"""
         raise CommandError(f"layout: {self.name} does not support swapping windows")
 
@@ -378,10 +378,10 @@ class _ClientList:
             if maintain_index:
                 self.current_index += 1
 
-    def swap(self, c1, c2, focus=1):
+    def swap(self, c1: Window, c2: Window, focus: int = 1) -> None:
         """
         Swap the two given clients in list.
-        The optional argument 'focus' can be 1, 2 or anything else.
+        The optional argument 'focus' can be 1 or 2.
         In case of 1, the first client c1 is focused, in case of 2 the c2 and
         the current_index is not changed otherwise.
         """
@@ -502,7 +502,7 @@ class _SimpleLayoutBase(Layout):
         client = self.focus_previous(self.clients.current_client) or self.focus_last()
         self.group.focus(client, True)
 
-    def swap(self, window1, window2):
+    def swap(self, window1: Window, window2: Window) -> None:
         self.clients.swap(window1, window2)
         self.group.layout_all()
         self.group.focus(window1)
