@@ -220,7 +220,7 @@ class Slice(Layout):
                 focus = layouts[idx].focus_first()
         return focus
 
-    def hide(self):
+    def hide(self) -> None:
         for lay in self._get_layouts():
             lay.hide()
 

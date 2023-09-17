@@ -555,7 +555,7 @@ class TreeTab(Layout):
         self._resize_panel(panel)
         self._panel.unhide()
 
-    def hide(self):
+    def hide(self) -> None:
         if self._panel:
             self._panel.hide()
 
