@@ -27,6 +27,7 @@ from libqtile.layout.base import Layout, _ClientList
 if TYPE_CHECKING:
     from typing import Self
 
+    from libqtile.backend.base import Window
     from libqtile.group import _Group
 
 
@@ -146,7 +147,7 @@ class Stack(Layout):
         if n:
             self.group.focus(n.cw, True)
 
-    def focus(self, client):
+    def focus(self, client: Window) -> None:
         for i in self.stacks:
             if client in i:
                 i.focus(client)

@@ -26,6 +26,7 @@ from libqtile.log_utils import logger
 if TYPE_CHECKING:
     from typing import Self
 
+    from libqtile.backend.base import Window
     from libqtile.group import _Group
 
 
@@ -198,7 +199,7 @@ class Columns(Layout):
         d["current"] = self.current
         return d
 
-    def focus(self, client):
+    def focus(self, client: Window) -> None:
         for i, c in enumerate(self.columns):
             if client in c:
                 c.focus(client)

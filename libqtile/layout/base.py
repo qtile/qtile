@@ -110,7 +110,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         """Swap the two given clients c1 and c2"""
         raise CommandError(f"layout: {self.name} does not support swapping windows")
 
-    def focus(self, client):
+    def focus(self, client: Window) -> None:
         """Called whenever the focus changes"""
         pass
 
@@ -266,7 +266,7 @@ class _ClientList:
     def current_client(self, client):
         self._current_idx = self.clients.index(client)
 
-    def focus(self, client):
+    def focus(self, client: Window) -> None:
         """
         Mark the given client as the current focused client in collection.
         This is equivalent to setting current_client.
@@ -481,7 +481,7 @@ class _SimpleLayoutBase(Layout):
         c.clients = _ClientList()
         return c
 
-    def focus(self, client):
+    def focus(self, client: Window) -> None:
         self.clients.current_client = client
 
     def focus_first(self):
