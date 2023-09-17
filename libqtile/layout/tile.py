@@ -193,7 +193,10 @@ class Tile(_SimpleLayoutBase):
                 w = screen_width - int(screen_width * self.ratio_size)
                 h = screen_height // (len(self.slave_windows))
                 x = screen_rect.x + int(screen_width * self.ratio_size)
-                y = screen_rect.y + self.clients[self.master_length :].index(client) * h
+                sublist = self.clients[self.master_length :]
+                if client not in sublist:
+                    raise ValueError("Client not in layout. This shouldn't happen.")
+                y = screen_rect.y + sublist.index(client) * h
             if client.has_focus:
                 bc = self.border_focus
             else:
