@@ -25,6 +25,7 @@ from libqtile.layout.base import Layout
 if TYPE_CHECKING:
     from typing import Self
 
+    from libqtile.backend.base import Window
     from libqtile.group import _Group
 
 
@@ -206,7 +207,7 @@ class Bsp(Layout):
             if client is node.client:
                 return node
 
-    def focus(self, client):
+    def focus(self, client: Window) -> None:
         self.current = self.get_node(client)
 
     def add_client(self, client):

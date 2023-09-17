@@ -30,10 +30,15 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from libqtile.backend.base import Window
 from libqtile.command.base import expose_command
 from libqtile.config import Match
 from libqtile.layout.base import Layout
+
+if TYPE_CHECKING:
+    from libqtile.backend.base import Window
 
 
 class Floating(Layout):
@@ -100,7 +105,7 @@ class Floating(Layout):
         """
         Layout.__init__(self, **config)
         self.clients: list[Window] = []
-        self.focused = None
+        self.focused: Window | None = None
 
         if float_rules is None:
             float_rules = self.default_float_rules
@@ -178,7 +183,7 @@ class Floating(Layout):
         if idx > 0:
             return clients[idx - 1]
 
-    def focus(self, client):
+    def focus(self, client: Window) -> None:
         self.focused = client
 
     def blur(self):
