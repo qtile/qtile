@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from typing import Any, Self
 
     from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
     from libqtile.group import _Group
 
 
@@ -258,7 +259,7 @@ class Columns(Layout):
             self.remove_column(c)
         return self.columns[self.current].cw
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         pos = 0
         for col in self.columns:
             if client in col:

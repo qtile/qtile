@@ -40,6 +40,8 @@ from libqtile.layout.base import _SimpleLayoutBase
 if TYPE_CHECKING:
     from typing import Any, Self
 
+    from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
     from libqtile.group import _Group
 
 
@@ -172,7 +174,7 @@ class Tile(_SimpleLayoutBase):
             super().add_client(client, offset_to_current)
         self.reset_master()
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         screen_width = screen_rect.width
         screen_height = screen_rect.height
         border_width = self.border_width

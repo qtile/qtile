@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from typing import Any, Self
 
     from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
     from libqtile.group import _Group
 
 
@@ -228,7 +229,7 @@ class Bsp(Layout):
             node.client = None
             self.current = self.root
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         self.root.calc_geom(screen_rect.x, screen_rect.y, screen_rect.width, screen_rect.height)
         node = self.get_node(client)
         color = self.border_focus if client.has_focus else self.border_normal

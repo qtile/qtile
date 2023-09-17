@@ -25,6 +25,7 @@ from libqtile.layout.base import _SimpleLayoutBase
 
 if TYPE_CHECKING:
     from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
 
 
 class Max(_SimpleLayoutBase):
@@ -51,7 +52,7 @@ class Max(_SimpleLayoutBase):
     def add_client(self, client: Window) -> None:  # type: ignore[override]
         return super().add_client(client, 1)
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         if not self.only_focused or (self.clients and client is self.clients.current_client):
             client.place(
                 screen_rect.x,

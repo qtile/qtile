@@ -37,6 +37,7 @@ if TYPE_CHECKING:
     from typing import Any, Self
 
     from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
     from libqtile.group import _Group
 
 
@@ -108,7 +109,7 @@ class Matrix(_SimpleLayoutBase):
         If needed a new row in matrix is created"""
         return self.clients.append(client)
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         if client not in self.clients:
             return
         idx = self.clients.index(client)
