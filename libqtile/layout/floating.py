@@ -285,7 +285,7 @@ class Floating(Layout):
             )
         client.unhide()
 
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:
         self.clients.append(client)
         self.focused = client
 

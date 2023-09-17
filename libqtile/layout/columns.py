@@ -235,7 +235,7 @@ class Columns(Layout):
             for c, g in zip(self.columns, growth):
                 c.width += g
 
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:
         c = self.cc
         if len(c) > 0 and len(self.columns) < self.num_columns:
             c = self.add_column()

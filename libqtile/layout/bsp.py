@@ -210,7 +210,7 @@ class Bsp(Layout):
     def focus(self, client: Window) -> None:
         self.current = self.get_node(client)
 
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:
         node = self.root.get_shortest() if self.fair else self.current
         self.current = node.insert(client, int(self.lower_right), self.ratio)
 

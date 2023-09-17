@@ -124,7 +124,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         return dict(name=self.name, group=self.group.name if self.group else None)
 
     @abstractmethod
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:
         """Called whenever a window is added to the group
 
         Called whether the layout is current or not. The layout should just add
