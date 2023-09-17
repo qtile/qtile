@@ -58,7 +58,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         for i in windows:
             self.configure(i, screen_rect)
 
-    def finalize(self):
+    def finalize(self) -> None:
         pass
 
     def clone(self, group):
