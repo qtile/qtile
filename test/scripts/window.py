@@ -153,6 +153,7 @@ if __name__ == "__main__":
     # Check if we want to export a StatusNotifierItem interface
     sni = "export_sni_interface" in sys.argv
 
+    print(os.environ)
     can_run, argv = Gtk.init_check()
     if not can_run:
         print(f"{os.environ.get('WAYLAND_DISPLAY')=}")
