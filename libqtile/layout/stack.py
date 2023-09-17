@@ -341,14 +341,14 @@ class Stack(Layout):
         self.group.layout_all()
 
     @expose_command()
-    def next(self):
+    def next(self) -> None:
         """Focus next stack"""
         return self.next_stack()
 
     @expose_command()
-    def previous(self):
+    def previous(self) -> None:
         """Focus previous stack"""
-        return self.previous_stack()
+        self.previous_stack()
 
     @expose_command()
     def client_to_next(self):

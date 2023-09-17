@@ -675,11 +675,11 @@ class MonadTall(_SimpleLayoutBase):
         self.relative_sizes[self.focused - 1] -= self._get_relative_size_from_absolute(change)
 
     @expose_command("down")
-    def next(self):
+    def next(self) -> None:
         _SimpleLayoutBase.next(self)
 
     @expose_command("up")
-    def previous(self):
+    def previous(self) -> None:
         _SimpleLayoutBase.previous(self)
 
     @expose_command()

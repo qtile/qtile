@@ -287,11 +287,11 @@ class RatioTile(_SimpleLayoutBase):
         return d
 
     @expose_command("down")
-    def previous(self):
+    def previous(self) -> None:
         _SimpleLayoutBase.previous(self)
 
     @expose_command("up")
-    def next(self):
+    def next(self) -> None:
         _SimpleLayoutBase.next(self)
 
     @expose_command()

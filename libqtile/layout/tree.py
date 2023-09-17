@@ -564,7 +564,7 @@ class TreeTab(Layout):
             self._panel.hide()
 
     @expose_command("down")
-    def next(self):
+    def next(self) -> None:
         """Switch down in the window list"""
         win = None
         if self._focused:
@@ -576,7 +576,7 @@ class TreeTab(Layout):
         self._focused = win.window if win else None
 
     @expose_command("up")
-    def previous(self):
+    def previous(self) -> None:
         """Switch up in the window list"""
         win = None
         if self._focused:

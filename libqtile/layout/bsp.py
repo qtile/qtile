@@ -282,13 +282,13 @@ class Bsp(Layout):
         return None
 
     @expose_command()
-    def next(self):
+    def next(self) -> None:
         client = self.focus_next(self.current.client, wrap=self.wrap_clients)
         if client:
             self.group.focus(client, True)
 
     @expose_command()
-    def previous(self):
+    def previous(self) -> None:
         client = self.focus_previous(self.current.client, wrap=self.wrap_clients)
         if client:
             self.group.focus(client, True)

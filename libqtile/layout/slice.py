@@ -102,10 +102,10 @@ class Single(Layout):
             return None
         return self.window
 
-    def next(self):
+    def next(self) -> None:
         pass
 
-    def previous(self):
+    def previous(self) -> None:
         pass
 
     def get_windows(self):
@@ -283,11 +283,11 @@ class Slice(Layout):
         return super().__getattr__(name)
 
     @expose_command()
-    def next(self):
+    def next(self) -> None:
         self.fallback.next()
 
     @expose_command()
-    def previous(self):
+    def previous(self) -> None:
         self.fallback.previous()
 
     @expose_command()

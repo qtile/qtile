@@ -310,11 +310,11 @@ class Floating(Layout):
         return d
 
     @expose_command()
-    def next(self):
+    def next(self) -> None:
         # This can't ever be called, but implement the abstract method
         pass
 
     @expose_command()
-    def previous(self):
+    def previous(self) -> None:
         # This can't ever be called, but implement the abstract method
         pass

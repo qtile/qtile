@@ -218,11 +218,11 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def next(self):
+    def next(self) -> None:
         pass
 
     @abstractmethod
-    def previous(self):
+    def previous(self) -> None:
         pass
 
 

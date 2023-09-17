@@ -186,11 +186,11 @@ class VerticalTile(_SimpleLayoutBase):
             self.group.layout_all()
 
     @expose_command("up")
-    def previous(self):
+    def previous(self) -> None:
         _SimpleLayoutBase.previous(self)
 
     @expose_command("down")
-    def next(self):
+    def next(self) -> None:
         _SimpleLayoutBase.next(self)
 
     @expose_command()
