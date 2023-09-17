@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from libqtile.backend.base import WindowType
+from libqtile.backend.base import Window
 from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect
 from libqtile.layout.base import Layout
@@ -164,7 +164,7 @@ class Slice(Layout):
         for lay, wins in grouped.items():
             lay.layout(wins, mapping[lay])
 
-    def layout(self, windows: Sequence[WindowType], screen_rect: ScreenRect) -> None:
+    def layout(self, windows: Sequence[Window], screen_rect: ScreenRect) -> None:
         win, sub = self._get_screen_rects(screen_rect)
         self.delegate_layout(
             windows,

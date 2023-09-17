@@ -44,6 +44,7 @@ from libqtile.layout.base import _SimpleLayoutBase
 if TYPE_CHECKING:
     from typing import Self
 
+    from libqtile.backend.base import Window
     from libqtile.group import _Group
 
 
@@ -726,7 +727,7 @@ class MonadTall(_SimpleLayoutBase):
         return target
 
     @expose_command()
-    def swap(self, window1, window2):
+    def swap(self, window1: Window, window2: Window) -> None:
         """Swap two windows"""
         _SimpleLayoutBase.swap(self, window1, window2)
 
