@@ -22,10 +22,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 """
 Slice layout. Serves as example of delegating layouts (or sublayouts)
 """
+from typing import Sequence
+
+from libqtile.backend.base import WindowType
+from libqtile.config import ScreenRect
 from libqtile.command.base import expose_command
 from libqtile.layout.base import Layout
 from libqtile.layout.max import Max
@@ -152,7 +155,7 @@ class Slice(Layout):
         for lay, wins in grouped.items():
             lay.layout(wins, mapping[lay])
 
-    def layout(self, windows, screen_rect):
+    def layout(self, windows: Sequence[WindowType], screen_rect: ScreenRect) -> None:
         win, sub = self._get_screen_rects(screen_rect)
         self.delegate_layout(
             windows,
