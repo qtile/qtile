@@ -479,7 +479,7 @@ class TreeTab(Layout):
         else:
             client.hide()
 
-    def finalize(self):
+    def finalize(self) -> None:
         if self._panel:
             self._panel.kill()
         Layout.finalize(self)
