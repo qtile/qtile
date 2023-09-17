@@ -17,8 +17,15 @@
 # SOFTWARE.
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from libqtile.command.base import expose_command
 from libqtile.layout.base import Layout
+
+if TYPE_CHECKING:
+    from typing import Self
+
+    from libqtile.group import _Group
 
 
 class _BspNode:
@@ -181,7 +188,7 @@ class Bsp(Layout):
         if self.margin_on_single is None:
             self.margin_on_single = self.margin
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)
         c.root = _BspNode()
         c.current = c.root

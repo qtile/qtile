@@ -36,9 +36,15 @@ from __future__ import annotations
 
 import math
 from collections import namedtuple
+from typing import TYPE_CHECKING
 
 from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
+
+if TYPE_CHECKING:
+    from typing import Self
+
+    from libqtile.group import _Group
 
 
 class MonadTall(_SimpleLayoutBase):
@@ -220,10 +226,9 @@ class MonadTall(_SimpleLayoutBase):
     def _get_absolute_size_from_relative(self, relative_size):
         return int(relative_size * self.screen_rect.height)
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         "Clone layout for other groups"
         c = _SimpleLayoutBase.clone(self, group)
-        c.sizes = []
         c.relative_sizes = []
         c.screen_rect = group.screen.get_rect() if group.screen else None
         c.ratio = self.ratio

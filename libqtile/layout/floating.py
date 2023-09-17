@@ -101,7 +101,6 @@ class Floating(Layout):
         Layout.__init__(self, **config)
         self.clients: list[Window] = []
         self.focused = None
-        self.group = None
 
         if float_rules is None:
             float_rules = self.default_float_rules

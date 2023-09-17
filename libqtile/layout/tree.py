@@ -28,14 +28,20 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from typing import Sequence
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
 
 from libqtile import hook
 from libqtile.backend.base import WindowType
-from libqtile.config import ScreenRect
 from libqtile.command.base import expose_command
+from libqtile.config import ScreenRect
 from libqtile.layout.base import Layout
+
+if TYPE_CHECKING:
+    from typing import Self, Sequence
+
+    from libqtile.group import _Group
 
 to_superscript = dict(zip(map(ord, "0123456789"), map(ord, "⁰¹²³⁴⁵⁶⁷⁸⁹")))
 
@@ -389,7 +395,7 @@ class TreeTab(Layout):
         self._tree = Root(self.sections)
         self._nodes = {}
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)
         c._focused = None
         c._panel = None

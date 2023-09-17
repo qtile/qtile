@@ -29,9 +29,15 @@
 from __future__ import annotations
 
 import math
+from typing import TYPE_CHECKING
 
 from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
+
+if TYPE_CHECKING:
+    from typing import Self
+
+    from libqtile.group import _Group
 
 ROWCOL = 1  # do rows at a time left to right top down
 COLROW = 2  # do cols top to bottom, left to right
@@ -219,7 +225,7 @@ class RatioTile(_SimpleLayoutBase):
         self.last_size = None
         self.last_screen = None
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         return _SimpleLayoutBase.clone(self, group)
 
     def add_client(self, w):
