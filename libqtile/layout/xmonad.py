@@ -45,6 +45,7 @@ if TYPE_CHECKING:
     from typing import Any, Self
 
     from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
     from libqtile.group import _Group
 
 
@@ -314,7 +315,7 @@ class MonadTall(_SimpleLayoutBase):
             self._maximize_secondary()
         self.group.layout_all()
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         "Position client based on order and sizes"
         self.screen_rect = screen_rect
 

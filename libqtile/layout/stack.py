@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from typing import Any, Self
 
     from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
     from libqtile.group import _Group
 
 
@@ -219,7 +220,7 @@ class Stack(Layout):
                 return n.cw
         return None
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         # pylint: disable=undefined-loop-variable
         # We made sure that self.stacks is not empty, so s is defined.
         for i, s in enumerate(self.stacks):

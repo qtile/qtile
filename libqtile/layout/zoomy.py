@@ -34,6 +34,7 @@ from libqtile.layout.base import _SimpleLayoutBase
 
 if TYPE_CHECKING:
     from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
 
 
 class Zoomy(_SimpleLayoutBase):
@@ -54,7 +55,7 @@ class Zoomy(_SimpleLayoutBase):
     def add_client(self, client: Window) -> None:  # type: ignore[override]
         self.clients.append_head(client)
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         left, right = screen_rect.hsplit(screen_rect.width - self.columnwidth)
         if client is self.clients.current_client:
             client.place(

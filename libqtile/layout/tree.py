@@ -476,7 +476,7 @@ class TreeTab(Layout):
         if node:
             self.group.focus(node.window, False)
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: base.Window, screen_rect: ScreenRect) -> None:
         if self._nodes and client is self._focused:
             client.place(
                 screen_rect.x, screen_rect.y, screen_rect.width, screen_rect.height, 0, None

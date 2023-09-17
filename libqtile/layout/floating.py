@@ -40,6 +40,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
 
 
 class Floating(Layout):
@@ -238,7 +239,7 @@ class Floating(Layout):
             client.y = int(round(y))
         return above
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         if client.has_focus:
             bc = self.border_focus
         else:
