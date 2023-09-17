@@ -102,7 +102,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         """Called when layout is being shown"""
         pass
 
-    def hide(self):
+    def hide(self) -> None:
         """Called when layout is being hidden"""
         pass
 
