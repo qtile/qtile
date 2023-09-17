@@ -28,6 +28,7 @@ from libqtile.layout.base import _SimpleLayoutBase
 if TYPE_CHECKING:
     from typing import Self
 
+    from libqtile.backend.base import Window
     from libqtile.group import _Group
 
 
@@ -116,7 +117,7 @@ class VerticalTile(_SimpleLayoutBase):
     def add_client(self, window):
         return self.clients.add_client(window, 1)
 
-    def remove(self, window):
+    def remove(self, window: Window) -> None:
         if self.maximized is window:
             self.maximized = None
         return self.clients.remove(window)

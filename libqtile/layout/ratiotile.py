@@ -37,6 +37,7 @@ from libqtile.layout.base import _SimpleLayoutBase
 if TYPE_CHECKING:
     from typing import Any, Self
 
+    from libqtile.backend.base import Window
     from libqtile.group import _Group
 
 ROWCOL = 1  # do rows at a time left to right top down
@@ -228,11 +229,11 @@ class RatioTile(_SimpleLayoutBase):
     def clone(self, group: _Group) -> Self:
         return _SimpleLayoutBase.clone(self, group)
 
-    def add_client(self, w):
+    def add_client(self, w: Window) -> None:  # type: ignore[override]
         self.dirty = True
         self.clients.append_head(w)
 
-    def remove(self, w):
+    def remove(self, w: Window) -> None:
         self.dirty = True
         return _SimpleLayoutBase.remove(self, w)
 

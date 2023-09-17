@@ -67,7 +67,7 @@ class _Column(_ClientList):
             for c, g in zip(self, growth):
                 self.heights[c] += g
 
-    def remove(self, client):
+    def remove(self, client: Window) -> None:
         _ClientList.remove(self, client)
         delta = self.heights[client] - 100
         del self.heights[client]
