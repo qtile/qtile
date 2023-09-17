@@ -38,6 +38,8 @@ from libqtile.config import Match
 from libqtile.layout.base import Layout
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from libqtile.backend.base import Window
 
 
@@ -301,7 +303,7 @@ class Floating(Layout):
         return self.clients
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = Layout.info(self)
         d["clients"] = [c.name for c in self.clients]
         return d

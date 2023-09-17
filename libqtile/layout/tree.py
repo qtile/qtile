@@ -38,7 +38,7 @@ from libqtile.config import ScreenRect
 from libqtile.layout.base import Layout
 
 if TYPE_CHECKING:
-    from typing import Self, Sequence
+    from typing import Any, Self, Sequence
 
     from libqtile.backend import base
     from libqtile.group import _Group
@@ -500,7 +500,7 @@ class TreeTab(Layout):
         return clients
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         def show_section_tree(root):
             """
             Show a section tree in a nested list, whose every element has the form:

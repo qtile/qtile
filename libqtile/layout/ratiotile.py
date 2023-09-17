@@ -35,7 +35,7 @@ from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
 
 if TYPE_CHECKING:
-    from typing import Self
+    from typing import Any, Self
 
     from libqtile.group import _Group
 
@@ -277,7 +277,7 @@ class RatioTile(_SimpleLayoutBase):
         win.unhide()
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = _SimpleLayoutBase.info(self)
         focused = self.clients.current_client
         d["ratio"] = self.ratio

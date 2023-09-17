@@ -25,7 +25,7 @@ from libqtile.command.base import expose_command
 from libqtile.layout.base import Layout, _ClientList
 
 if TYPE_CHECKING:
-    from typing import Self
+    from typing import Any, Self
 
     from libqtile.backend.base import Window
     from libqtile.group import _Group
@@ -46,7 +46,7 @@ class _WinStack(_ClientList):
         return "_WinStack: %s, %s" % (self.cw, str([client.name for client in self.clients]))
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         info = _ClientList.info(self)
         info["split"] = self.split
         return info
@@ -282,7 +282,7 @@ class Stack(Layout):
         return self.clients
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = Layout.info(self)
         d["stacks"] = [i.info() for i in self.stacks]
         d["current_stack"] = self.current_stack_offset

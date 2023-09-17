@@ -119,7 +119,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         pass
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         """Returns a dictionary of layout information"""
         return dict(name=self.name, group=self.group.name if self.group else None)
 
@@ -456,7 +456,7 @@ class _ClientList:
         )
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         return dict(
             clients=[c.name for c in self.clients],
             current=self._current_idx,
@@ -523,7 +523,7 @@ class _SimpleLayoutBase(Layout):
         return self.clients.clients
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = Layout.info(self)
         d.update(self.clients.info())
         return d

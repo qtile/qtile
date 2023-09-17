@@ -34,7 +34,7 @@ from libqtile.layout.base import _SimpleLayoutBase
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import Self
+    from typing import Any, Self
 
     from libqtile.group import _Group
 
@@ -80,7 +80,7 @@ class Matrix(_SimpleLayoutBase):
         return self.clients.current_index % self.columns
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = _SimpleLayoutBase.info(self)
         d["rows"] = [[win.name for win in self.get_row(i)] for i in range(self.rows)]
         d["current_window"] = self.column, self.row

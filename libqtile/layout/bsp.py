@@ -23,7 +23,7 @@ from libqtile.command.base import expose_command
 from libqtile.layout.base import Layout
 
 if TYPE_CHECKING:
-    from typing import Self
+    from typing import Any, Self
 
     from libqtile.backend.base import Window
     from libqtile.group import _Group
@@ -199,7 +199,7 @@ class Bsp(Layout):
         return list(self.root.clients())
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         return dict(name=self.name, clients=[c.name for c in self.root.clients()])
 
     def get_node(self, client):

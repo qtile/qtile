@@ -38,7 +38,7 @@ from libqtile.config import Match
 from libqtile.layout.base import _SimpleLayoutBase
 
 if TYPE_CHECKING:
-    from typing import Self
+    from typing import Any, Self
 
     from libqtile.group import _Group
 
@@ -216,7 +216,7 @@ class Tile(_SimpleLayoutBase):
             client.hide()
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = _SimpleLayoutBase.info(self)
         d.update(
             dict(

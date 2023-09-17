@@ -42,7 +42,7 @@ from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
 
 if TYPE_CHECKING:
-    from typing import Self
+    from typing import Any, Self
 
     from libqtile.backend.base import Window
     from libqtile.group import _Group
@@ -416,7 +416,7 @@ class MonadTall(_SimpleLayoutBase):
             )
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = _SimpleLayoutBase.info(self)
         d.update(
             dict(
@@ -1337,7 +1337,7 @@ class MonadThreeCol(MonadTall):
             ),
         )
 
-    def info(self):
+    def info(self) -> dict[str, Any]:
         left, right = self._get_columns()
         d = MonadTall.info(self)
         d.update(
