@@ -153,6 +153,10 @@ if __name__ == "__main__":
     # Check if we want to export a StatusNotifierItem interface
     sni = "export_sni_interface" in sys.argv
 
+    can_run, argv = Gtk.init_check()
+    if not can_run:
+        raise RuntimeError(f"Cannot initiate Gtk with argv: {argv}")
+
     win = Gtk.Window(title=title)
     win.set_default_size(100, 100)
 
