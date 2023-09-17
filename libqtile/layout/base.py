@@ -98,7 +98,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
             return self.group
         return None
 
-    def show(self, screen_rect):
+    def show(self, screen_rect: ScreenRect) -> None:
         """Called when layout is being shown"""
         pass
 

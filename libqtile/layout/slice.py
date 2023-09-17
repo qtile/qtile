@@ -174,7 +174,7 @@ class Slice(Layout):
             },
         )
 
-    def show(self, screen_rect):
+    def show(self, screen_rect: ScreenRect) -> None:
         win, sub = self._get_screen_rects(screen_rect)
         self._slice.show(win)
         self.fallback.show(sub)
