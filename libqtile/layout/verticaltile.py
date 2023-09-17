@@ -20,8 +20,15 @@
 # SOFTWARE.
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
+
+if TYPE_CHECKING:
+    from typing import Self
+
+    from libqtile.group import _Group
 
 
 class VerticalTile(_SimpleLayoutBase):
@@ -114,7 +121,7 @@ class VerticalTile(_SimpleLayoutBase):
             self.maximized = None
         return self.clients.remove(window)
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         c = _SimpleLayoutBase.clone(self, group)
         c.maximized = None
         return c

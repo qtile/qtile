@@ -25,13 +25,20 @@
 """
 Slice layout. Serves as example of delegating layouts (or sublayouts)
 """
-from typing import Sequence
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from libqtile.backend.base import WindowType
-from libqtile.config import ScreenRect
 from libqtile.command.base import expose_command
+from libqtile.config import ScreenRect
 from libqtile.layout.base import Layout
 from libqtile.layout.max import Max
+
+if TYPE_CHECKING:
+    from typing import Self, Sequence
+
+    from libqtile.group import _Group
 
 
 class Single(Layout):
@@ -123,13 +130,15 @@ class Slice(Layout):
         ("fallback", Max(), "Layout to be used for the non-slice area."),
     ]
 
+    fallback: Layout
+
     def __init__(self, **config):
         self.layouts = {}
         Layout.__init__(self, **config)
         self.add_defaults(Slice.defaults)
         self._slice = Single()
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         res = Layout.clone(self, group)
         res._slice = self._slice.clone(group)
         res.fallback = self.fallback.clone(group)

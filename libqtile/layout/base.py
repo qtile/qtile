@@ -18,13 +18,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 from __future__ import annotations
 
 import copy
-from libqtile.config import ScreenRect
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
 from libqtile import configurable
 from libqtile.backend.base import WindowType
@@ -33,9 +31,10 @@ from libqtile.command.interface import CommandError
 from libqtile.config import ScreenRect
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Self, Sequence
 
     from libqtile.command.base import ItemT
+    from libqtile.group import _Group
 
 
 class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
@@ -54,6 +53,8 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(Layout.defaults)
 
+        self._group: _Group | None = None
+
     def layout(self, windows: Sequence[WindowType], screen_rect: ScreenRect) -> None:
         for i in windows:
             self.configure(i, screen_rect)
@@ -61,7 +62,14 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
     def finalize(self) -> None:
         pass
 
-    def clone(self, group):
+    @property
+    def group(self) -> _Group:
+        """Returns the group this layout is attached to"""
+        if self._group is None:
+            raise RuntimeError("Layout group accessed too early")
+        return self._group
+
+    def clone(self, group: _Group) -> Self:
         """Duplicate a layout
 
         Make a copy of this layout. This is done to provide each group with a
@@ -73,7 +81,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
             Group to attach new layout instance to.
         """
         c = copy.copy(self)
-        c.group = group
+        c._group = group
         return c
 
     def _items(self, name: str) -> ItemT:
@@ -467,7 +475,7 @@ class _SimpleLayoutBase(Layout):
         Layout.__init__(self, **config)
         self.clients = _ClientList()
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)
         c.clients = _ClientList()
         return c

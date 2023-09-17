@@ -17,9 +17,16 @@
 # SOFTWARE.
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from libqtile.command.base import expose_command
 from libqtile.layout.base import Layout, _ClientList
 from libqtile.log_utils import logger
+
+if TYPE_CHECKING:
+    from typing import Self
+
+    from libqtile.group import _Group
 
 
 class _Column(_ClientList):
@@ -168,7 +175,7 @@ class Columns(Layout):
         self.columns = [_Column(self.split, self.insert_position)]
         self.current = 0
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)
         c.columns = [_Column(self.split, self.insert_position)]
         return c

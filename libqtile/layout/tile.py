@@ -31,9 +31,16 @@
 # SOFTWARE.
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from libqtile.command.base import expose_command
 from libqtile.config import Match
 from libqtile.layout.base import _SimpleLayoutBase
+
+if TYPE_CHECKING:
+    from typing import Self
+
+    from libqtile.group import _Group
 
 
 class Tile(_SimpleLayoutBase):
@@ -152,7 +159,7 @@ class Tile(_SimpleLayoutBase):
                 self.clients.remove(client)
                 self.clients.append_head(client)
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         c = _SimpleLayoutBase.clone(self, group)
         return c
 

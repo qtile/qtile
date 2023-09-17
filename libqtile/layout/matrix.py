@@ -27,10 +27,16 @@
 from __future__ import annotations
 
 import math
+from typing import TYPE_CHECKING
 
 from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
 from libqtile.log_utils import logger
+
+if TYPE_CHECKING:
+    from typing import Self
+
+    from libqtile.group import _Group
 
 
 class Matrix(_SimpleLayoutBase):
@@ -80,7 +86,7 @@ class Matrix(_SimpleLayoutBase):
         d["current_window"] = self.column, self.row
         return d
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         c = _SimpleLayoutBase.clone(self, group)
         c.columns = self.columns
         return c
