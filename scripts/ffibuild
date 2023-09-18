@@ -30,8 +30,6 @@ scripts = [
 
 
 def build(builder: Builder, verbose: bool) -> bool:
-    print("Building", builder.name)
-
     p = run(["python3", builder.path], capture_output=True)
 
     if p.returncode:
