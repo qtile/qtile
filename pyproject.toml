@@ -1,28 +1,16 @@
 [build-system]
-requires = [ "setuptools>=41", "wheel", "setuptools-git-versioning<2", ]
-build-backend = "setuptools.build_meta"
-
-[tool.black]
-line-length = 98
-exclude = 'libqtile/_ffi.*\.py|libqtile/backend/x11/_ffi.*\.py|test/configs/syntaxerr.py'
-
-[tool.pytest.ini_options]
-python_files = "test_*.py"
-testpaths = ["test"]
-filterwarnings = [
-    "error:::libqtile",
+requires = [
+    "setuptools>=60",
+    "setuptools-scm>=7.0",
+    "wheel",
+    "pywlroots>=0.16.4,<0.17.0"
 ]
-
-[tool.setuptools-git-versioning]
-enabled = true
-
-[tool.setuptools.dynamic]
-readme = {file = "README.rst"}
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "qtile"
 description = "A pure-Python tiling window manager."
-dynamic = ["version", "readme"]
+dynamic = ["version", "readme", "dependencies", "optional-dependencies"]
 license = {text = "MIT"}
 classifiers = [
     "Intended Audience :: End Users/Desktop",
@@ -30,6 +18,9 @@ classifiers = [
     "Operating System :: POSIX :: BSD :: FreeBSD",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Desktop Environment :: Window Managers",
@@ -44,3 +35,22 @@ classifiers = [
 
 [project.scripts]
 qtile = "libqtile.scripts.main:main"
+
+[tool.setuptools.packages.find]
+include = ["libqtile*"]
+
+[tool.setuptools_scm]
+
+[tool.setuptools.dynamic]
+readme = {file = "README.rst"}
+
+[tool.black]
+line-length = 98
+exclude = 'libqtile/_ffi.*\.py|libqtile/backend/x11/_ffi.*\.py|test/configs/syntaxerr.py'
+
+[tool.pytest.ini_options]
+python_files = "test_*.py"
+testpaths = ["test"]
+filterwarnings = [
+    "error:::libqtile",
+]

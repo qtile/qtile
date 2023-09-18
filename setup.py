@@ -26,54 +26,20 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 import importlib
 import sys
-import textwrap
+from pathlib import Path
 
 from setuptools import setup
-from setuptools.command.install import install
 
-
-class CheckCairoXcb(install):
-    def cairo_xcb_check(self):
-        try:
-            from cairocffi import cairo
-
-            cairo.cairo_xcb_surface_create
-            return True
-        except AttributeError:
-            return False
-
-    def finalize_options(self):
-        if not self.cairo_xcb_check():
-            print(
-                textwrap.dedent(
-                    """
-
-            It looks like your cairocffi was not built with xcffib support.  To fix this:
-
-              - Ensure a recent xcffib is installed (pip install 'xcffib>=1.4.0')
-              - The pip cache is cleared (remove ~/.cache/pip, if it exists)
-              - Reinstall cairocffi, either:
-
-                  pip install --no-deps --ignore-installed cairocffi
-
-                or
-
-                  pip uninstall cairocffi && pip install cairocffi
-            """
-                )
-            )
-
-            sys.exit(1)
-        install.finalize_options(self)
+ROOT = Path(__file__).parent.resolve()
+sys.path.insert(0, ROOT.as_posix())
 
 
 def can_import(module):
     try:
         importlib.import_module(module)
-    except ModuleNotFoundError:
+    except Exception:
         return False
     return True
 
@@ -96,7 +62,6 @@ def get_cffi_modules():
 
 
 setup(
-    cmdclass={"install": CheckCairoXcb},
     use_scm_version=True,
     cffi_modules=get_cffi_modules(),
     include_package_data=True,

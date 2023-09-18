@@ -11,6 +11,8 @@ exclude requirements.txt
 exclude requirements-dev.txt
 exclude libqtile/_ffi*.py
 exclude libqtile/backend/x11/_ffi*.py
+exclude libqtile/backend/wayland/_ffi*.*
+exclude libqtile/backend/wayland/_libinput*.*
 exclude Makefile
 exclude dev.sh
 exclude logo.png
