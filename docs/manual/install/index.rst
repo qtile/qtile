@@ -196,3 +196,8 @@ window:
 
 See the :ref:`Wayland <wayland>` page for more information on running Qtile as
 a Wayland compositor.
+
+Similar to the xsession example above, a wayland session file can be used to start qtile
+from a login manager. To use this, you should create a `qtile-wayland.desktop
+<https://github.com/qtile/qtile/blob/master/resources/qtile-wayland.desktop>`_ file in
+``/usr/share/wayland-sessions``.
