@@ -69,6 +69,8 @@ default_format = (
     "{play_status} {artist}/{title} " + "[{repeat}{random}{single}{consume}{updating_db}]"
 )
 
+default_undefined_status_value = "Undefined"
+
 
 def default_cmd():
     return None
@@ -111,11 +113,20 @@ class Mpd2(base.ThreadPoolText):
             '{play_status} {idle_message} \
                 [{repeat}{random}{single}{consume}{updating_db}]'
 
+            Note that the ``artist`` key fallbacks to similar keys in specific order.
+            (``artist`` -> ``albumartist`` -> ``performer`` ->
+             -> ``composer`` -> ``conductor`` -> ``ensemble``)
+
     idle_message:
         text to display instead of song information when MPD is idle.
         (i.e. no song in queue)
 
         Default:: "MPD IDLE"
+
+    undefined_value:
+        text to display when status key is undefined
+
+        Default:: "Undefined"
 
     prepare_status:
         dict of functions to replace values in status with custom characters.
@@ -165,6 +176,11 @@ class Mpd2(base.ThreadPoolText):
         ("status_format", default_format, "format for displayed song info."),
         ("idle_format", default_idle_format, "format for status when mpd has no playlist."),
         ("idle_message", default_idle_message, "text to display when mpd is idle."),
+        (
+            "undefined_value",
+            default_undefined_status_value,
+            "text to display when status key is undefined.",
+        ),
         ("timeout", 30, "MPDClient timeout"),
         ("idletimeout", 5, "MPDClient idle command timeout"),
         ("no_connection", "No connection", "Text when mpd is disconnected"),
@@ -256,8 +272,7 @@ class Mpd2(base.ThreadPoolText):
 
     def formatter(self, status, current_song):
         """format song info."""
-        default = "Undefined"
-        song_info = defaultdict(lambda: default)
+        song_info = defaultdict(lambda: self.undefined_value)
         song_info["play_status"] = self.play_states[status["state"]]
 
         if status["state"] == "stop" and current_song == {}:
@@ -272,7 +287,7 @@ class Mpd2(base.ThreadPoolText):
         del song_info["time"]
 
         song_info.update(status)
-        if song_info["updating_db"] == default:
+        if song_info["updating_db"] == self.undefined_value:
             song_info["updating_db"] = "0"
         if not callable(self.prepare_status["repeat"]):
             for k in self.prepare_status:
@@ -290,12 +305,27 @@ class Mpd2(base.ThreadPoolText):
         # Remaining should default to '00:00' if either or both are missing.
         # These values are also used for coloring text by progress, if wanted.
         if "remaining" in self.status_format or self.color_progress:
-            total = float(song_info["fulltime"]) if song_info["fulltime"] != default else 0.0
-            elapsed = float(song_info["elapsed"]) if song_info["elapsed"] != default else 0.0
+            total = (
+                float(song_info["fulltime"])
+                if song_info["fulltime"] != self.undefined_value
+                else 0.0
+            )
+            elapsed = (
+                float(song_info["elapsed"])
+                if song_info["elapsed"] != self.undefined_value
+                else 0.0
+            )
             song_info["remaining"] = "{:.2f}".format(float(total - elapsed))
 
-        if "song" in self.status_format and song_info["song"] != default:
+        if "song" in self.status_format and song_info["song"] != self.undefined_value:
             song_info["currentsong"] = str(int(song_info["song"]) + 1)
+
+        if "artist" in self.status_format and song_info["artist"] == self.undefined_value:
+            artist_keys = ("albumartist", "performer", "composer", "conductor", "ensemble")
+            for key in artist_keys:
+                if song_info[key] != self.undefined_value:
+                    song_info["artist"] = song_info[key]
+                    break
 
         # mpd serializes tags containing commas as lists.
         for key in song_info:

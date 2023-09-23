@@ -30,6 +30,8 @@ import shutil
 import signal
 import subprocess
 import tempfile
+from collections import defaultdict
+from logging.handlers import RotatingFileHandler
 from typing import TYPE_CHECKING
 
 import libqtile
@@ -49,8 +51,10 @@ from libqtile.dgroups import DGroups
 from libqtile.extension.base import _Extension
 from libqtile.group import _Group
 from libqtile.log_utils import logger
+from libqtile.resources.sleep import inhibitor
 from libqtile.scratchpad import ScratchPad
-from libqtile.utils import get_cache_dir, lget, send_notification, subscribe_for_resume_events
+from libqtile.scripts.main import VERSION
+from libqtile.utils import cancel_tasks, get_cache_dir, lget, send_notification
 from libqtile.widget.base import _Widget
 
 if TYPE_CHECKING:
@@ -85,7 +89,7 @@ class Qtile(CommandObject):
         self.socket_path = socket_path
 
         self._drag: tuple | None = None
-        self.mouse_map: dict[int, list[Mouse]] = {}
+        self._mouse_map: defaultdict[int, list[Mouse]] = defaultdict(list)
 
         self.windows_map: dict[int, base.WindowType] = {}
         self.widgets_map: dict[str, _Widget] = {}
@@ -175,9 +179,10 @@ class Qtile(CommandObject):
         if self.config.reconfigure_screens:
             hook.subscribe.screen_change(self.reconfigure_screens)
 
-        # If user wants resume hooks we need to add a dbus rule
-        if "resume" in hook.subscriptions:
-            subscribe_for_resume_events()
+        # Start the sleep inhibitor process to listen to sleep signals
+        # NB: the inhibitor will only connect to the dbus service if the
+        # user has used the "suspend" or "resume" hooks in their config.
+        inhibitor.start()
 
         if initial:
             hook.fire("startup_complete")
@@ -288,7 +293,7 @@ class Qtile(CommandObject):
         self.ungrab_keys()
         self.chord_stack.clear()
         self.core.ungrab_buttons()
-        self.mouse_map.clear()
+        self._mouse_map.clear()
         self.groups_map.clear()
         self.groups.clear()
         self.screens.clear()
@@ -318,7 +323,28 @@ class Qtile(CommandObject):
 
     def finalize(self) -> None:
         self._finalize_configurables()
+        inhibitor.stop()
+        cancel_tasks()
         self.core.finalize()
+
+    def add_autogen_group(self, screen_idx: int) -> _Group:
+        name = f"autogen_{screen_idx + 1}"
+        self.add_group(name)
+        logger.warning("Too few groups in config. Added group: %s", name)
+        return self.groups_map[name]
+
+    def get_available_group(self, screen_idx: int) -> _Group | None:
+        for group in self.groups:
+            # Groups belonging to a screen or a scratchpad are not 'available'
+            # to be assigned to a screen
+            if group.screen or isinstance(group, ScratchPad):
+                continue
+
+            # Only return groups that can be tied to this screen
+            # And thus do not have a "screen affinity" explicitly set for another screen
+            if group.screen_affinity is None or group.screen_affinity == screen_idx:
+                return group
+        return None
 
     def _process_screens(self, reloading: bool = False) -> None:
         current_groups = [s.group for s in self.screens]
@@ -348,17 +374,15 @@ class Qtile(CommandObject):
                 self.current_screen = scr
                 reloading = False
 
-            if len(self.groups) < i + 1:
-                name = f"autogen_{i + 1}"
-                self.add_group(name)
-                logger.warning("Too few groups in config. Added group: %s", name)
-
+            grp = None
             if i < len(current_groups):
                 grp = current_groups[i]
             else:
-                for grp in self.groups:
-                    if not grp.screen:
-                        break
+                # We need to assign a new group
+                # Get an available group or create a new one
+                grp = self.get_available_group(i)
+                if grp is None:
+                    grp = self.add_autogen_group(i)
 
             reconfigure_gaps = (x, y, w, h) != (scr.x, scr.y, scr.width, scr.height)
 
@@ -405,15 +429,17 @@ class Qtile(CommandObject):
     def paint_screen(self, screen: Screen, image_path: str, mode: str | None = None) -> None:
         self.core.painter.paint(screen, image_path, mode)
 
-    def process_key_event(self, keysym: int, mask: int) -> None:
+    def process_key_event(self, keysym: int, mask: int) -> tuple[Key | KeyChord | None, bool]:
         key = self.keys_map.get((keysym, mask), None)
         if key is None:
             logger.debug("Ignoring unknown keysym: %s, mask: %s", keysym, mask)
-            return
+            return (None, False)
 
         if isinstance(key, KeyChord):
             self.grab_chord(key)
         else:
+            # Keep track if we have executed a command
+            executed = False
             for cmd in key.commands:
                 if cmd.check(self):
                     status, val = self.server.call(
@@ -421,9 +447,15 @@ class Qtile(CommandObject):
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("KB command error %s: %s", cmd.name, val)
+                    executed = True
             if self.chord_stack and (not self.chord_stack[-1].mode or key.key == "Escape"):
                 self.ungrab_chord()
-            return
+            # We never swallow when no commands have been executed,
+            # even when key.swallow is set to True
+            elif not executed:
+                return (key, False)
+        # Return whether we have handled the key based on the key's swallow parameter
+        return (key, key.swallow)
 
     def grab_keys(self) -> None:
         """Re-grab all of the keys configured in the key map
@@ -432,12 +464,14 @@ class Qtile(CommandObject):
         """
         self.core.ungrab_keys()
         for key in self.keys_map.values():
-            self.grab_key(key)
+            self.core.grab_key(key)
 
     def grab_key(self, key: Key | KeyChord) -> None:
         """Grab the given key event"""
-        keysym, mask_key = self.core.grab_key(key)
-        self.keys_map[(keysym, mask_key)] = key
+        syms = self.core.grab_key(key)
+        if syms in self.keys_map:
+            logger.warning("Key spec duplicated, overriding previous: %s", key)
+        self.keys_map[syms] = key
 
     def ungrab_key(self, key: Key | KeyChord) -> None:
         """Ungrab a given key event"""
@@ -496,9 +530,7 @@ class Qtile(CommandObject):
         except utils.QtileError:
             logger.warning("Unknown modifier(s): %s", button.modifiers)
             return
-        if button.button_code not in self.mouse_map:
-            self.mouse_map[button.button_code] = []
-        self.mouse_map[button.button_code].append(button)
+        self._mouse_map[button.button_code].append(button)
 
     def update_desktops(self) -> None:
         try:
@@ -519,10 +551,16 @@ class Qtile(CommandObject):
         layout: str | None = None,
         layouts: list[Layout] | None = None,
         label: str | None = None,
+        index: int | None = None,
+        screen_affinity: int | None = None,
     ) -> bool:
         if name not in self.groups_map.keys():
-            g = _Group(name, layout, label=label)
-            self.groups.append(g)
+            g = _Group(name, layout, label=label, screen_affinity=screen_affinity)
+            if index is None:
+                self.groups.append(g)
+            else:
+                self.groups.insert(index, g)
+
             if not layouts:
                 layouts = self.config.layouts
             g._configure(layouts, self.config.floating_layout, self)
@@ -608,18 +646,19 @@ class Qtile(CommandObject):
     ) -> None:
         """
         Reserve some space at the edge(s) of a screen.
+
+        The requested space is added to space reserved previously: repeated calls to
+        this method are not idempotent.
         """
         for i, pos in enumerate(["left", "right", "top", "bottom"]):
-            if reserved_space[i]:
-                gap = getattr(screen, pos)
-                if isinstance(gap, bar.Bar):
-                    gap.adjust_for_strut(reserved_space[i])
-                elif isinstance(gap, bar.Gap):
-                    gap.size += reserved_space[i]
-                    if gap.size <= 0:
-                        setattr(screen, pos, None)
-                else:
-                    setattr(screen, pos, bar.Gap(reserved_space[i]))
+            if space := reserved_space[i]:
+                if gap := getattr(screen, pos):
+                    gap.adjust_reserved_space(space)
+                elif 0 < space:
+                    gap = bar.Gap(0)
+                    gap.screen = screen
+                    setattr(screen, pos, gap)
+                    gap.adjust_reserved_space(space)
         screen.resize()
 
     def free_reserved_space(
@@ -631,7 +670,8 @@ class Qtile(CommandObject):
         Free up space that has previously been reserved at the edge(s) of a screen.
         """
         # mypy can't work out that the new tuple is also length 4 (see mypy #7509)
-        self.reserve_space(tuple(-i for i in reserved_space), screen)  # type: ignore
+        reserved_space = tuple(-i for i in reserved_space)  # type: ignore
+        self.reserve_space(reserved_space, screen)
 
     def manage(self, win: base.WindowType) -> None:
         if isinstance(win, base.Internal):
@@ -652,7 +692,7 @@ class Qtile(CommandObject):
             # Window may have been bound to a group in the hook.
             if not win.group and self.current_screen.group:
                 self.current_screen.group.add(win, focus=win.can_steal_focus)
-        self.core.update_client_list(self.windows_map)
+
         hook.fire("client_managed", win)
 
     def unmanage(self, wid: int) -> None:
@@ -667,7 +707,7 @@ class Qtile(CommandObject):
                     group = c.group
                     c.group.remove(c)
             del self.windows_map[wid]
-            self.core.update_client_list(self.windows_map)
+
             if isinstance(c, base.Window):
                 # Put the group back on the window so hooked functions can access it.
                 c.group = group
@@ -741,7 +781,7 @@ class Qtile(CommandObject):
 
     def process_button_click(self, button_code: int, modmask: int, x: int, y: int) -> bool:
         handled = False
-        for m in self.mouse_map.get(button_code, []):
+        for m in self._mouse_map[button_code]:
             if not m.modmask == modmask:
                 continue
 
@@ -763,8 +803,8 @@ class Qtile(CommandObject):
                     val = (0, 0)
 
                 if m.warp_pointer and self.current_window is not None:
-                    win_size = self.current_window.cmd_get_size()
-                    win_pos = self.current_window.cmd_get_position()
+                    win_size = self.current_window.get_size()
+                    win_pos = self.current_window.get_position()
                     x = win_size[0] + win_pos[0]
                     y = win_size[1] + win_pos[1]
                     self.core.warp_pointer(x, y)
@@ -777,7 +817,7 @@ class Qtile(CommandObject):
 
     def process_button_release(self, button_code: int, modmask: int) -> bool:
         if self._drag is not None:
-            for m in self.mouse_map.get(button_code, []):
+            for m in self._mouse_map[button_code]:
                 if isinstance(m, Drag):
                     self._drag = None
                     self.core.ungrab_pointer()
@@ -869,7 +909,7 @@ class Qtile(CommandObject):
             if sel is None:
                 return self.current_window
             else:
-                windows: dict[str | int, base._Window]
+                windows: dict[str | int, base.WindowType]
                 windows = {
                     k: v
                     for k, v in self.windows_map.items()
@@ -1143,6 +1183,9 @@ class Qtile(CommandObject):
     def simulate_keypress(self, modifiers: list[str], key: str) -> None:
         """Simulates a keypress on the focused window.
 
+        This triggers internal bindings only; for full simulation see external tools
+        such as xdotool or ydotool.
+
         Parameters
         ==========
         modifiers :
@@ -1329,7 +1372,15 @@ class Qtile(CommandObject):
     @expose_command()
     def qtile_info(self) -> dict:
         """Returns a dictionary of info on the Qtile instance"""
-        return {}
+        dictionary = {
+            "config_path": self.config.file_path,
+            "version": VERSION,
+            "log_level": self.loglevelname(),
+        }
+        if isinstance(logger.handlers[0], RotatingFileHandler):
+            log_path = logger.handlers[0].baseFilename
+            dictionary["log_path"] = log_path
+        return dictionary
 
     @expose_command()
     def shutdown(self) -> None:
@@ -1377,6 +1428,32 @@ class Qtile(CommandObject):
             return
 
         mb.start_input(prompt, self.find_window, "window", strict_completer=True)
+
+    @expose_command()
+    def switch_window(self, location: int) -> None:
+        """
+        Change to the window at the specified index in the current group.
+        """
+        windows = self.current_group.windows
+        if location < 1 or location > len(windows):
+            return
+
+        self.current_group.focus(windows[location - 1])
+
+    @expose_command()
+    def change_window_order(self, new_location: int) -> None:
+        """
+        Change the order of the current window within the current group.
+        """
+        if new_location < 1 or new_location > len(self.current_group.windows):
+            return
+
+        windows = self.current_group.windows
+        current_window_index = windows.index(self.current_window)
+
+        temp = windows[current_window_index]
+        windows[current_window_index] = windows[new_location - 1]
+        windows[new_location - 1] = temp
 
     @expose_command()
     def next_urgent(self) -> None:
@@ -1564,9 +1641,12 @@ class Qtile(CommandObject):
         label: str | None = None,
         layout: str | None = None,
         layouts: list[Layout] | None = None,
+        index: int | None = None,
     ) -> bool:
         """Add a group with the given name"""
-        return self.add_group(name=group, layout=layout, layouts=layouts, label=label)
+        return self.add_group(
+            name=group, layout=layout, layouts=layouts, label=label, index=index
+        )
 
     @expose_command()
     def delgroup(self, group: str) -> None:
@@ -1627,7 +1707,7 @@ class Qtile(CommandObject):
             screen = self.current_screen
             is_show = None
             for bar in [screen.left, screen.right, screen.top, screen.bottom]:
-                if bar:
+                if isinstance(bar, libqtile.bar.Bar):
                     if is_show is None:
                         is_show = not bar.is_show()
                     bar.show(is_show)

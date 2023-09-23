@@ -59,7 +59,7 @@ class LoopContext(contextlib.AbstractAsyncContextManager):
             # CancelledErrors happen when we simply cancel the main task during
             # a normal restart procedure
             if not isinstance(exc, asyncio.CancelledError):
-                logger.exception("Exception in event loop:")
+                logger.exception("Exception in event loop:", exc_info=exc)  # noqa: G202
         else:
             logger.error("unhandled error in event loop: %s", context["msg"])
 

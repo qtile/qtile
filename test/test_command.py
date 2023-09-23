@@ -404,7 +404,6 @@ def test_core_node(manager, backend_name):
 
 
 def test_lazy_arguments(manager_nospawn):
-
     # Decorated function to be bound to key presses
     @lazy.function
     def test_func(qtile, value, multiplier=1):

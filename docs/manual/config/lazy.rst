@@ -4,10 +4,16 @@
 Lazy objects
 ============
 
-The :data:`lazy.lazy` object is a special helper object to specify a command
-for later execution. This object acts like the root of the object graph, which
-means that we can specify a command with the same syntax used to call the
-command through a script or through :ref:`qtile-shell`.
+Lazy objects are a way of executing any of the commands available in Qtile's
+:doc:`commands API </manual/commands/api/index>`. 
+
+The name "lazy" refers to the fact that the commands are not executed at the time of
+the call. Instead, the lazy object creates a reference to the relevant command and this
+is only executed when the relevant event is triggered (e.g. on a keypress).
+
+Typically, for config files, the commands are used to manipulate windows,
+layouts and groups as well application commands like exiting, restarting,
+reloading the config file etc.
 
 Example
 -------
@@ -28,14 +34,23 @@ Example
         )
     ]
 
+.. note::
+
+  As noted above, ``lazy`` calls do not call the
+  relevant command but only create a reference to it. While this makes it
+  ideal for binding commands to key presses and ``mouse_callbacks`` for
+  widgets, it also means that ``lazy`` calls cannot be included
+  in user-defined functions.
+
 Lazy functions
 ==============
 
 This is overview of the commonly used functions for the key bindings.  These
-functions can be called from commands on the :ref:`qtile_commands` object or on
+functions can be called from commands on the REPLACE object or on
 another object in the command tree.
 
-Some examples are given below.
+Some examples are given below. For a complete list of available commands, please
+refer to :doc:`/manual/commands/api/index`.
 
 General functions
 -----------------
@@ -109,6 +124,23 @@ Window functions
       - Put the focused window to/from floating mode
     * - ``lazy.window.toggle_fullscreen()``
       - Put the focused window to/from fullscreen mode
+    * - ``lazy.window.move_up()``
+      - Move the window above the next window in the stack.
+    * - ``lazy.window.move_down()``
+      - Move the window below the previous window in the stack.
+    * - ``lazy.window.move_to_top()``
+      - Move the window above all other windows with similar priority
+        (i.e. a "normal" window will not be moved above a ``kept_above`` window).
+    * - ``lazy.window.move_to_bottom()``
+      - Move the window below all other windows with similar priority
+        (i.e. a "normal" window will not be moved below a ``kept_below`` window).
+    * - ``lazy.window.keep_above()``
+      - Keep window above other windows.
+    * - ``lazy.window.keep_below()``
+      - Keep window below other windows.
+    * - ``lazy.window.bring_to_front()``
+      - Bring window above all other windows. Ignores ``kept_above`` priority.
+
 
 Screen functions
 ----------------

@@ -51,7 +51,9 @@ class Notify(base._TextBox):
     defaults = [
         ("foreground_urgent", "ff0000", "Foreground urgent priority colour"),
         ("foreground_low", "dddddd", "Foreground low priority  colour"),
-        ("default_timeout", None, "Default timeout (seconds) for notifications"),
+        ("default_timeout_low", 5, "Default timeout (seconds) for low urgency notifications."),
+        ("default_timeout", 10, "Default timeout (seconds) for normal notifications"),
+        ("default_timeout_urgent", None, "Default timeout (seconds) for urgent notifications"),
         ("audiofile", None, "Audiofile played during notifications"),
         ("action", True, "Enable handling of default action upon right click"),
         (
@@ -94,6 +96,15 @@ class Notify(base._TextBox):
         if notifier is None:
             logger.warning("You must install dbus-next to use the Notify widget.")
 
+        # Create a tuple of our default timeouts. Urgency is an integer of 0-2
+        # (see https://specifications.freedesktop.org/notification-spec/notification-spec-latest.html#urgency-levels)
+        # so they will work as the index of the tuple.
+        self._timeouts = (
+            self.default_timeout_low,
+            self.default_timeout,
+            self.default_timeout_urgent,
+        )
+
     async def _config_async(self):
         if notifier is None:
             return
@@ -133,12 +144,20 @@ class Notify(base._TextBox):
         self.current_id = notif.id - 1
         if notif.timeout and notif.timeout > 0:
             self.timeout_add(
-                notif.timeout / 1000, self._clear, method_args=(ClosedReason.expired,)
+                notif.timeout / 1000, self.clear, method_args=(ClosedReason.expired,)
             )
-        elif self.default_timeout:
-            self.timeout_add(
-                self.default_timeout, self._clear, method_args=(ClosedReason.expired,)
-            )
+        else:
+            urgency = getattr(notif.hints.get("urgency"), "value", 1)
+            try:
+                timeout = self._timeouts[urgency]
+            except IndexError:
+                logger.warning(
+                    "Notification had an unexpected urgency value. Treating as normal priority."
+                )
+                timeout = self._timeouts[1]
+
+            if timeout:
+                self.timeout_add(timeout, self.clear, method_args=(ClosedReason.expired,))
         self.bar.draw()
         return True
 
@@ -150,7 +169,9 @@ class Notify(base._TextBox):
         self.set_notif_text(notifier.notifications[self.current_id])
         self.bar.draw()
 
-    def _clear(self, reason=ClosedReason.dismissed):
+    @expose_command()
+    def clear(self, reason=ClosedReason.dismissed):
+        """Clear the notification"""
         if notifier is None:
             return
 
@@ -164,7 +185,7 @@ class Notify(base._TextBox):
         if self.current_id < len(notifier.notifications):
             notif = notifier.notifications[self.current_id]
             if notif.id == nid:
-                self._clear(ClosedReason.method)
+                self.clear(ClosedReason.method)
 
     @expose_command()
     def prev(self):
@@ -188,12 +209,7 @@ class Notify(base._TextBox):
             notif = notifier.notifications[self.current_id]
             if notif.actions:
                 notifier._service.ActionInvoked(notif.id, notif.actions[0])
-            self._clear()
-
-    @expose_command()
-    def clear(self):
-        """Clear the notification"""
-        self._clear()
+            self.clear()
 
     @expose_command()
     def toggle(self):
@@ -201,7 +217,7 @@ class Notify(base._TextBox):
         if self.text == "":
             self.display()
         else:
-            self._clear()
+            self.clear()
 
     @expose_command()
     def invoke(self):
@@ -210,23 +226,5 @@ class Notify(base._TextBox):
             self._invoke()
 
     def finalize(self):
-        # We may need some async calls as part of the finalize call
-        # We run this with `call_soon_threadsafe` as this waits for
-        # the job to finish before continuing. This is important as,
-        # if the config is just reloading, we need to finish deregistering
-        # the notification server before the new Notify widget instance
-        # registers and creates a new server.
-        self.qtile.call_soon_threadsafe(self._finalize)
-        base._TextBox.finalize(self)
-
-    async def _finalize(self):
-        if notifier is not None:
-            task = notifier.unregister(self.update)
-
-            # If the notifier has no more callbacks then it needs to be stopped.
-            # The returned task will handle the release of the service name from
-            # dbus. We await it here to make sure it's finished before we
-            # complete the finalisation of this widget.
-            if task:
-                await task
+        notifier.unregister(self.update, on_close=self.on_close)
         base._TextBox.finalize(self)

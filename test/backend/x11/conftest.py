@@ -56,7 +56,6 @@ class Xephyr:
     """
 
     def __init__(self, outputs, xoffset=None):
-
         self.outputs = outputs
         if xoffset is None:
             self.xoffset = WIDTH

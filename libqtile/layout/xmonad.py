@@ -32,12 +32,21 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
 
 import math
 from collections import namedtuple
+from typing import TYPE_CHECKING
 
 from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
+
+if TYPE_CHECKING:
+    from typing import Any, Self
+
+    from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
+    from libqtile.group import _Group
 
 
 class MonadTall(_SimpleLayoutBase):
@@ -196,8 +205,18 @@ class MonadTall(_SimpleLayoutBase):
         if self.single_margin is None:
             self.single_margin = self.margin
         self.relative_sizes = []
-        self.screen_rect = None
+        self._screen_rect = None
         self.default_ratio = self.ratio
+
+    # screen_rect is a property as the MonadThreeCol layout needs to perform
+    # additional actions when the attribute is modified
+    @property
+    def screen_rect(self):
+        return self._screen_rect
+
+    @screen_rect.setter
+    def screen_rect(self, value):
+        self._screen_rect = value
 
     @property
     def focused(self):
@@ -209,22 +228,21 @@ class MonadTall(_SimpleLayoutBase):
     def _get_absolute_size_from_relative(self, relative_size):
         return int(relative_size * self.screen_rect.height)
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         "Clone layout for other groups"
         c = _SimpleLayoutBase.clone(self, group)
-        c.sizes = []
         c.relative_sizes = []
         c.screen_rect = group.screen.get_rect() if group.screen else None
         c.ratio = self.ratio
         c.align = self.align
         return c
 
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:  # type: ignore[override]
         "Add client to layout"
         self.clients.add_client(client, client_position=self.new_client_position)
         self.do_normalize = True
 
-    def remove(self, client):
+    def remove(self, client: Window) -> Window | None:
         "Remove client from layout"
         self.do_normalize = True
         return self.clients.remove(client)
@@ -297,7 +315,7 @@ class MonadTall(_SimpleLayoutBase):
             self._maximize_secondary()
         self.group.layout_all()
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         "Position client based on order and sizes"
         self.screen_rect = screen_rect
 
@@ -399,7 +417,7 @@ class MonadTall(_SimpleLayoutBase):
             )
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = _SimpleLayoutBase.info(self)
         d.update(
             dict(
@@ -468,7 +486,7 @@ class MonadTall(_SimpleLayoutBase):
             left -= per_amt - self._shrink(idx, per_amt)
         # apply non-equal shrinkage secondary pass
         # in order to use up any left over shrink amounts
-        left = self._shrink_up(cidx, left)
+        left = self.shrink_up(cidx, left)
         # return whatever could not be applied
         return left
 
@@ -657,11 +675,11 @@ class MonadTall(_SimpleLayoutBase):
         self.relative_sizes[self.focused - 1] -= self._get_relative_size_from_absolute(change)
 
     @expose_command("down")
-    def next(self):
+    def next(self) -> None:
         _SimpleLayoutBase.next(self)
 
     @expose_command("up")
-    def previous(self):
+    def previous(self) -> None:
         _SimpleLayoutBase.previous(self)
 
     @expose_command()
@@ -710,11 +728,9 @@ class MonadTall(_SimpleLayoutBase):
         return target
 
     @expose_command()
-    def swap(self, window1, window2):
+    def swap(self, window1: Window, window2: Window) -> None:
         """Swap two windows"""
-        self.clients.swap(window1, window2, 1)
-        self.group.layout_all()
-        self.group.focus(window1)
+        _SimpleLayoutBase.swap(self, window1, window2)
 
     @expose_command("shuffle_left")
     def swap_left(self):
@@ -1108,6 +1124,16 @@ class MonadThreeCol(MonadTall):
         MonadTall.__init__(self, **config)
         self.add_defaults(MonadThreeCol.defaults)
 
+    # mypy doesn't like the setter when the getter isn't present
+    # see https://github.com/python/mypy/issues/5936
+    @MonadTall.screen_rect.setter  # type: ignore[attr-defined]
+    def screen_rect(self, value):
+        # If the screen_rect size has change then we need to normalise secondary
+        # windows so they're resized to fill the new space correctly
+        if value != self._screen_rect:
+            self.do_normalize = True
+        self._screen_rect = value
+
     def _configure_specific(self, client, screen_rect, border_color, index):
         """Specific configuration for xmonad three columns."""
         if index == 0:
@@ -1177,9 +1203,17 @@ class MonadThreeCol(MonadTall):
         Will prevent double margins by applying east and south margins only
         when the client is the rightmost or the bottommost window.
         """
-        rightmost = left + width - self.screen_rect.x >= self.screen_rect.width
-        bottommost = top + height - self.screen_rect.y >= self.screen_rect.height
-        margin = [self.margin] * 4
+
+        # Create a temporary margin list for the client
+        if isinstance(self.margin, int):
+            margin = [self.margin] * 4
+        else:
+            # We need to copy this list otherwise we'd be modifying self.margin!
+            margin = self.margin.copy()
+
+        rightmost = left + width - self.screen_rect.x + margin[1] >= self.screen_rect.width
+        bottommost = top + height - self.screen_rect.y + margin[2] >= self.screen_rect.height
+
         if not rightmost:
             margin[1] = 0
         if not bottommost:
@@ -1304,7 +1338,7 @@ class MonadThreeCol(MonadTall):
             ),
         )
 
-    def info(self):
+    def info(self) -> dict[str, Any]:
         left, right = self._get_columns()
         d = MonadTall.info(self)
         d.update(

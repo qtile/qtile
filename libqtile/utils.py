@@ -33,7 +33,7 @@ from shutil import which
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, TypeVar, Union
+    from typing import Any, Callable, Coroutine, TypeVar, Union
 
     ColorType = Union[str, tuple[int, int, int], tuple[int, int, int, float]]
     ColorsType = Union[ColorType, list[ColorType]]
@@ -49,8 +49,39 @@ try:
 except ImportError:
     has_dbus = False
 
-from libqtile import hook
 from libqtile.log_utils import logger
+
+# Create a list to collect references to tasks so they're not garbage collected
+# before they've run
+TASKS: list[asyncio.Task[None]] = []
+
+
+def create_task(coro: Coroutine) -> asyncio.Task | None:
+    """
+    Wrapper for asyncio.create_task.
+
+    Stores task so garbage collector doesn't remove it and removes reference when it's done.
+    See: https://textual.textualize.io/blog/2023/02/11/the-heisenbug-lurking-in-your-async-code/
+    for more info about the issue this solves.
+    """
+    loop = asyncio.get_running_loop()
+    if not loop:
+        return None
+
+    def tidy(task: asyncio.Task) -> None:
+        TASKS.remove(task)
+
+    task = asyncio.create_task(coro)
+    TASKS.append(task)
+    task.add_done_callback(tidy)
+
+    return task
+
+
+def cancel_tasks() -> None:
+    """Cancel scheduled tasks."""
+    for task in TASKS:
+        task.cancel()
 
 
 class QtileError(Exception):
@@ -130,6 +161,19 @@ def remove_transparency(colour: ColorsType):  # type: ignore
     if isinstance(colour, (str, tuple)):
         return tuple(x * 255.0 for x in rgb(colour)[:3])
     return [remove_transparency(c) for c in colour]
+
+
+def is_valid_colors(color: ColorsType) -> bool:
+    """
+    Returns whether the argument is a valid color or list of colors.
+    """
+    if not isinstance(color, list):
+        color = [color]
+    try:
+        list(rgb(c) for c in color)
+        return True
+    except (ValueError, TypeError):
+        return False
 
 
 def scrub_to_utf8(text: str | bytes) -> str:
@@ -221,7 +265,7 @@ def send_notification(
     title: str,
     message: str,
     urgent: bool = False,
-    timeout: int = 10000,
+    timeout: int = -1,
     id_: int | None = None,
 ) -> int:
     """
@@ -294,6 +338,9 @@ def guess_terminal(preference: str | Sequence | None = None) -> str | None:
         test_terminals += [preference]
     elif isinstance(preference, Sequence):
         test_terminals += list(preference)
+    if "WAYLAND_DISPLAY" in os.environ:
+        # Wayland-only terminals
+        test_terminals += ["foot"]
     test_terminals += [
         "roxterm",
         "sakura",
@@ -360,6 +407,7 @@ async def _send_dbus_message(
     member: str | None,
     signature: str,
     body: Any,
+    negotiate_unix_fd: bool = False,
 ) -> tuple[MessageBus | None, Message | None]:
     """
     Private method to send messages to dbus via dbus_next.
@@ -375,7 +423,7 @@ async def _send_dbus_message(
         body = [body]
 
     try:
-        bus = await MessageBus(bus_type=bus_type).connect()
+        bus = await MessageBus(bus_type=bus_type, negotiate_unix_fd=negotiate_unix_fd).connect()
     except (AuthError, Exception):
         logger.warning("Unable to connect to dbus.")
         return None, None
@@ -484,31 +532,3 @@ async def find_dbus_service(service: str, session_bus: bool) -> bool:
     names = msg.body[0]
 
     return service in names
-
-
-def subscribe_for_resume_events() -> None:
-    task = asyncio.create_task(
-        add_signal_receiver(
-            on_resume,
-            session_bus=False,
-            dbus_interface="org.freedesktop.login1.Manager",
-            bus_name="org.freedesktop.login1",
-            signal_name="PrepareForSleep",
-            check_service=True,
-        )
-    )
-    task.add_done_callback(_resume_callback)
-
-
-def _resume_callback(task: asyncio.Task) -> None:
-    if not task.result():
-        logger.warning("Unable to subscribe to system resume events")
-
-
-# We need to ignore typing here. msg is a dbus_next.Message object but dbus_next may not be installed
-def on_resume(msg):  # type: ignore
-    sleeping = msg.body[0]
-
-    # Value is False when the event is over i.e. the machine has woken up
-    if not sleeping:
-        hook.fire("resume")

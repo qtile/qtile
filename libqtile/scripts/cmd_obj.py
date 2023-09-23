@@ -189,17 +189,17 @@ def cmd_obj(args) -> None:
 
 def add_subcommand(subparsers, parents):
     epilog = textwrap.dedent(
-        """\
-    Examples:
-     qtile cmd-obj
-     qtile cmd-obj -o cmd
-     qtile cmd-obj -o cmd -f prev_layout -i
-     qtile cmd-obj -o cmd -f prev_layout -a 3 # prev_layout on group 3
-     qtile cmd-obj -o group 3 -f focus_back
-     qtile cmd-obj -o cmd -f restart # restart qtile
-     """
+        """
+        Examples:
+         qtile cmd-obj
+         qtile cmd-obj -o cmd
+         qtile cmd-obj -o cmd -f prev_layout -i
+         qtile cmd-obj -o cmd -f prev_layout -a 3 # prev_layout on group 3
+         qtile cmd-obj -o group 3 -f focus_back
+         qtile cmd-obj -o cmd -f restart # restart qtile
+        """
     )
-    description = "qtile.command functionality exposed to the shell."
+    description = "Access the command interface from a shell."
     parser = subparsers.add_parser(
         "cmd-obj",
         help=description,
@@ -226,5 +226,5 @@ def add_subcommand(subparsers, parents):
         action="store_true",
         help="With both --object and --function args prints documentation for function.",
     )
-    parser.add_argument("--socket", "-s", help="Path of the Qtile IPC socket.")
+    parser.add_argument("--socket", "-s", help="Use specified socket for IPC.")
     parser.set_defaults(func=cmd_obj)

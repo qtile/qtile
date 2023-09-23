@@ -69,7 +69,6 @@ class TwoScreenConfig(Config):
 
 
 def test_restart_hook_and_state(manager_nospawn, request, backend, backend_name):
-
     if backend_name == "wayland":
         pytest.skip("Skipping test on Wayland.")
 

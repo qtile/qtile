@@ -46,6 +46,7 @@ class CommandSet(Dmenu):
     ex. CommandSet inside another CommandSet
 
     .. code-block:: python
+
         CommandSet(
             commands={
                 "Hello": CommandSet(

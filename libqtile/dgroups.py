@@ -41,6 +41,7 @@ def simple_key_binder(mod, keynames=None):
         # unbind all
         for key in dgroup.keys[:]:
             dgroup.qtile.ungrab_key(key)
+            dgroup.qtile.config.keys.remove(key)
             dgroup.keys.remove(key)
 
         if keynames:
@@ -55,9 +56,8 @@ def simple_key_binder(mod, keynames=None):
             key = Key([mod], keyname, lazy.group[name].toscreen())
             key_s = Key([mod, "shift"], keyname, lazy.window.togroup(name))
             key_c = Key([mod, "control"], keyname, lazy.group.switch_groups(name))
-            dgroup.keys.append(key)
-            dgroup.keys.append(key_s)
-            dgroup.keys.append(key_c)
+            dgroup.keys.extend([key, key_s, key_c])
+            dgroup.qtile.config.keys.extend([key, key_s, key_c])
             dgroup.qtile.grab_key(key)
             dgroup.qtile.grab_key(key_s)
             dgroup.qtile.grab_key(key_c)
@@ -115,7 +115,13 @@ class DGroups:
         rule = Rule(group.matches, group=group.name)
         self.rules.append(rule)
         if start:
-            self.qtile.add_group(group.name, group.layout, group.layouts, group.label)
+            self.qtile.add_group(
+                group.name,
+                group.layout,
+                group.layouts,
+                group.label,
+                screen_affinity=group.screen_affinity,
+            )
 
     def _setup_groups(self):
         for group in self.groups:
@@ -205,7 +211,6 @@ class DGroups:
                 and self.groups_map[current_group].exclusive
                 and not intrusive
             ):
-
                 wm_class = client.get_wm_class()
 
                 if wm_class:

@@ -48,7 +48,8 @@ class _Group(CommandObject):
     A group is identified by its name but displayed in GroupBox widget by its label.
     """
 
-    def __init__(self, name, layout=None, label=None):
+    def __init__(self, name, layout=None, label=None, screen_affinity=None):
+        self.screen_affinity = screen_affinity
         self.name = name
         self.label = name if label is None else label
         self.custom_layout = layout  # will be set on _configure
@@ -256,6 +257,8 @@ class _Group(CommandObject):
             win._float_state = FloatStates.FULLSCREEN
         elif self.floating_layout.match(win) and not win.fullscreen:
             win._float_state = FloatStates.FLOATING
+            if self.qtile.config.floats_kept_above:
+                win.keep_above(enable=True)
         if win.floating and not win.fullscreen:
             self.floating_layout.add_client(win)
         if not win.floating or win.fullscreen:
@@ -524,6 +527,33 @@ class _Group(CommandObject):
         for win in self.windows:
             if win.name == name:
                 return win.info()
+
+    @expose_command()
+    def focus_by_index(self, index: int) -> None:
+        """
+        Change to the window at the specified index in the current group.
+        """
+        windows = self.windows
+        if index < 0 or index > len(windows) - 1:
+            return
+
+        self.focus(windows[index])
+
+    @expose_command()
+    def swap_window_order(self, new_location: int) -> None:
+        """
+        Change the order of the current window within the current group.
+        """
+        if new_location < 0 or new_location > len(self.windows) - 1:
+            return
+
+        windows = self.windows
+        current_window_index = windows.index(self.current_window)
+
+        windows[current_window_index], windows[new_location] = (
+            windows[new_location],
+            windows[current_window_index],
+        )
 
     @expose_command()
     def switch_groups(self, name):

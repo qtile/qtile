@@ -34,12 +34,46 @@ import gi
 gi.require_version("Gdk", "3.0")
 gi.require_version("Gtk", "3.0")
 from dbus_next import Message
+from dbus_next.auth import Authenticator
 from dbus_next.constants import MessageType, PropertyAccess
-from dbus_next.glib import MessageBus
+from dbus_next.glib.message_bus import _AuthLineSource, MessageBus
 from dbus_next.service import ServiceInterface, dbus_property, method, signal
-from gi.repository import Gdk, Gtk
+from gi.repository import Gdk, GLib, Gtk
 
 ICON = Path(__file__).parent / "qtile_icon.rgba"
+
+
+# This patch is needed to address the issue described here:
+# https://github.com/altdesktop/python-dbus-next/issues/113
+# Once dbus_next 0.2.4 is released, the patch can be removed.
+class PatchedMessageBus(MessageBus):
+    def _authenticate(self, authenticate_notify):
+        self._stream.write(b"\0")
+        first_line = self._auth._authentication_start()
+        if first_line is not None:
+            if type(first_line) is not str:
+                raise AuthError("authenticator gave response not type str")
+            self._stream.write(f"{first_line}\r\n".encode())
+            self._stream.flush()
+
+        def line_notify(line):
+            try:
+                resp = self._auth._receive_line(line)
+                self._stream.write(Authenticator._format_line(resp))
+                self._stream.flush()
+                if resp == "BEGIN":
+                    self._readline_source.destroy()
+                    authenticate_notify(None)
+                    return True
+            except Exception as e:
+                authenticate_notify(e)
+                return True
+
+        readline_source = _AuthLineSource(self._stream)
+        readline_source.set_callback(line_notify)
+        readline_source.add_unix_fd(self._fd, GLib.IO_IN)
+        readline_source.attach(self._main_context)
+        self._readline_source = readline_source
 
 
 class SNItem(ServiceInterface):
@@ -105,7 +139,6 @@ class SNItem(ServiceInterface):
 
 
 if __name__ == "__main__":
-
     # GTK consumes the `--name <class>` args
     if len(sys.argv) > 1:
         title = sys.argv[1]
@@ -121,8 +154,6 @@ if __name__ == "__main__":
     sni = "export_sni_interface" in sys.argv
 
     win = Gtk.Window(title=title)
-    win.connect("destroy", Gtk.main_quit)
-    win.connect("key-press-event", Gtk.main_quit)
     win.set_default_size(100, 100)
 
     if window_type == "notification":
@@ -142,7 +173,7 @@ if __name__ == "__main__":
         win.set_type_hint(Gdk.WindowTypeHint.NORMAL)
 
     if sni:
-        bus = MessageBus().connect_sync()
+        bus = PatchedMessageBus().connect_sync()
 
         item = SNItem(win, "org.kde.StatusNotifierItem")
 
@@ -164,5 +195,8 @@ if __name__ == "__main__":
             )
         )
 
+    win.connect("destroy", Gtk.main_quit)
+    win.connect("key-press-event", Gtk.main_quit)
     win.show_all()
+
     Gtk.main()

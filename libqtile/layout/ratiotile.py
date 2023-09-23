@@ -26,11 +26,19 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
 
 import math
+from typing import TYPE_CHECKING
 
 from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
+
+if TYPE_CHECKING:
+    from typing import Any, Self
+
+    from libqtile.backend.base import Window
+    from libqtile.group import _Group
 
 ROWCOL = 1  # do rows at a time left to right top down
 COLROW = 2  # do cols top to bottom, left to right
@@ -72,7 +80,6 @@ class GridInfo:
         best_ratio = None
         best_rows_cols_orientation = None
         for rows, cols, orientation in self._possible_grids(num_windows):
-
             sample_width = width / cols
             sample_height = height / rows
             sample_ratio = sample_width / sample_height
@@ -219,14 +226,14 @@ class RatioTile(_SimpleLayoutBase):
         self.last_size = None
         self.last_screen = None
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         return _SimpleLayoutBase.clone(self, group)
 
-    def add_client(self, w):
+    def add_client(self, w: Window) -> None:  # type: ignore[override]
         self.dirty = True
         self.clients.append_head(w)
 
-    def remove(self, w):
+    def remove(self, w: Window) -> Window | None:
         self.dirty = True
         return _SimpleLayoutBase.remove(self, w)
 
@@ -271,7 +278,7 @@ class RatioTile(_SimpleLayoutBase):
         win.unhide()
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = _SimpleLayoutBase.info(self)
         focused = self.clients.current_client
         d["ratio"] = self.ratio
@@ -280,11 +287,11 @@ class RatioTile(_SimpleLayoutBase):
         return d
 
     @expose_command("down")
-    def previous(self):
+    def previous(self) -> None:
         _SimpleLayoutBase.previous(self)
 
     @expose_command("up")
-    def next(self):
+    def next(self) -> None:
         _SimpleLayoutBase.next(self)
 
     @expose_command()

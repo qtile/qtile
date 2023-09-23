@@ -25,7 +25,7 @@ import multiprocessing
 
 import pytest
 
-from libqtile.backend import base
+from libqtile.backend.base import drawer
 from test.helpers import BareConfig, TestManager
 
 
@@ -153,6 +153,6 @@ def fake_window():
         window = _NestedWindow()
 
         def create_drawer(self, width, height):
-            return base.Drawer(None, self, width, height)
+            return drawer.Drawer(None, self, width, height)
 
     return FakeWindow()

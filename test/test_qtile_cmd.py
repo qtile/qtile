@@ -100,7 +100,6 @@ def run_qtile_cmd(args):
 
 @server_config
 def test_qtile_cmd(manager):
-
     manager.test_window("foo")
     wid = manager.c.window.info()["id"]
 

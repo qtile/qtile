@@ -22,12 +22,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import asyncio
 from typing import Any
 
 try:
-    from dbus_next import ReleaseNameReply
     from dbus_next.aio import MessageBus
+    from dbus_next.constants import NameFlag, RequestNameReply
     from dbus_next.service import ServiceInterface, method, signal
 
     has_dbus = True
@@ -130,17 +129,42 @@ if has_dbus:
             self.callbacks = []
             self.close_callbacks = []
             self._service = None
+            self.bus = None
 
         async def service(self):
-            if self._service is None:
-                try:
-                    self.bus = await MessageBus().connect()
+            if not self.callbacks:
+                if self.bus is None:
+                    try:
+                        self.bus = await MessageBus().connect()
+                    except Exception:
+                        logger.exception("Dbus connection failed")
+                        self._service = None
+                        return self._service
+
                     self._service = NotificationService(self)
                     self.bus.export(SERVICE_PATH, self._service)
-                    await self.bus.request_name(BUS_NAME)
-                except Exception:
-                    logger.exception("Dbus connection failed")
+
+                reply = await self.bus.request_name(
+                    BUS_NAME,
+                    flags=NameFlag.ALLOW_REPLACEMENT
+                    | NameFlag.REPLACE_EXISTING
+                    | NameFlag.DO_NOT_QUEUE,
+                )
+
+                # Check the reply to see if another server is already running.
+                # Other replies could be RequestNameReply.PRIMARY_OWNER or
+                # RequestNameReply.ALREADY_ONWER. Both would indicate qtile server
+                # is running successfully so we don't need to check for them.
+                # RequestNameReply.IN_QUEUE should not be possible as we pass
+                # NameFlag.DO_NOT_QUEUE when requesting the name.
+                if reply == RequestNameReply.EXISTS:
+                    logger.warning(
+                        "Cannot start notification server as another server is already running."
+                    )
                     self._service = None
+                    self.bus.disconnect()
+                    self.bus = None
+
             return self._service
 
         async def register(self, callback, capabilities=None, on_close=None):
@@ -167,23 +191,6 @@ if has_dbus:
                     self.close_callbacks.remove(on_close)
                 except ValueError:
                     logger.error("Unable to remove notify on_close callback. Unknown callback.")
-
-            if not self.callbacks:
-                return asyncio.create_task(self._release())
-
-        async def _release(self):
-            """
-            If the manager has no more callbacks then we need to release the service name
-            from dbus and reset _service to None (to force subsequent calls to `register` to
-            re-register the name on dbus.)
-            """
-            reply = await self.bus.release_name(BUS_NAME)
-
-            if reply != ReleaseNameReply.RELEASED:
-                logger.error("Could not release %s", BUS_NAME)
-                return
-
-            self._service = None
 
         def add(self, notif):
             self.notifications.append(notif)

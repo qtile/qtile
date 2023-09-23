@@ -69,6 +69,28 @@ def test_window_order(manager):
 
 
 @group_config
+def test_focus_by_index(manager):
+    manager.c.group["a"].toscreen()
+    manager.test_window("one")
+    manager.test_window("two")
+
+    info = manager.c.group.info()
+    assert info.get("focus") == "two"
+
+    manager.c.group.focus_by_index(1)
+    info = manager.c.group.info()
+    assert info.get("focus") == "two"
+
+    manager.c.group.focus_by_index(3)
+    info = manager.c.group.info()
+    assert info.get("focus") == "two"
+
+    manager.c.group.focus_by_index(0)
+    info = manager.c.group.info()
+    assert info.get("focus") == "one"
+
+
+@group_config
 def test_toscreen_toggle(manager):
     assert manager.c.group.info()["name"] == "a"  # Start on "a"
     manager.c.group["b"].toscreen()

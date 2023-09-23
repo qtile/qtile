@@ -35,6 +35,7 @@ import subprocess
 
 from libqtile import bar
 from libqtile.command.base import expose_command
+from libqtile.log_utils import logger
 from libqtile.widget import base
 
 __all__ = [
@@ -67,6 +68,12 @@ class Volume(base._TextBox):
             False,
             "Use emoji to display volume states, only if ``theme_path`` is not set."
             "The specified font needs to contain the correct unicode characters.",
+        ),
+        (
+            "emoji_list",
+            ["\U0001f507", "\U0001f508", "\U0001f509", "\U0001f50a"],
+            "List of emojis/font-symbols to display volume states, only if ``emoji`` is set."
+            " List contains 4 symbols, from lowest volume to highest.",
         ),
         ("mute_command", None, "Mute command"),
         ("volume_app", None, "App to control volume"),
@@ -130,7 +137,7 @@ class Volume(base._TextBox):
             cmd.extend(["-D", str(self.device)])
 
         cmd.extend([x for x in args])
-        return cmd
+        return subprocess.list2cmdline(cmd)
 
     def button_press(self, x, y, button):
         base._TextBox.button_press(self, x, y, button)
@@ -161,14 +168,20 @@ class Volume(base._TextBox):
             self.drawer.ctx.set_source(self.surfaces[img_name])
             self.drawer.ctx.paint()
         elif self.emoji:
+            if len(self.emoji_list) < 4:
+                self.emoji_list = ["\U0001f507", "\U0001f508", "\U0001f509", "\U0001f50a"]
+                logger.warning(
+                    "Emoji list given has less than 4 items. Falling back to default emojis."
+                )
+
             if self.volume <= 0:
-                self.text = "\U0001f507"
+                self.text = self.emoji_list[0]
             elif self.volume <= 30:
-                self.text = "\U0001f508"
+                self.text = self.emoji_list[1]
             elif self.volume < 80:
-                self.text = "\U0001f509"
+                self.text = self.emoji_list[2]
             elif self.volume >= 80:
-                self.text = "\U0001f50a"
+                self.text = self.emoji_list[3]
         else:
             if self.volume == -1:
                 self.text = "M"
@@ -194,10 +207,10 @@ class Volume(base._TextBox):
 
     def get_volume(self):
         try:
-            get_volume_cmd = self.create_amixer_command("sget", self.channel)
-
-            if self.get_volume_command:
+            if self.get_volume_command is not None:
                 get_volume_cmd = self.get_volume_command
+            else:
+                get_volume_cmd = self.create_amixer_command("sget", self.channel)
 
             mixer_out = subprocess.getoutput(get_volume_cmd)
         except subprocess.CalledProcessError:
@@ -226,27 +239,33 @@ class Volume(base._TextBox):
     @expose_command()
     def increase_vol(self):
         if self.volume_up_command is not None:
-            subprocess.call(self.volume_up_command, shell=True)
+            volume_up_cmd = self.volume_up_command
         else:
-            subprocess.call(
-                self.create_amixer_command("-q", "sset", self.channel, "{}%+".format(self.step))
+            volume_up_cmd = self.create_amixer_command(
+                "-q", "sset", self.channel, "{}%+".format(self.step)
             )
+
+        subprocess.call(volume_up_cmd, shell=True)
 
     @expose_command()
     def decrease_vol(self):
         if self.volume_down_command is not None:
-            subprocess.call(self.volume_down_command, shell=True)
+            volume_down_cmd = self.volume_down_command
         else:
-            subprocess.call(
-                self.create_amixer_command("-q", "sset", self.channel, "{}%-".format(self.step))
+            volume_down_cmd = self.create_amixer_command(
+                "-q", "sset", self.channel, "{}%-".format(self.step)
             )
+
+        subprocess.call(volume_down_cmd, shell=True)
 
     @expose_command()
     def mute(self):
         if self.mute_command is not None:
-            subprocess.call(self.mute_command, shell=True)
+            mute_cmd = self.mute_command
         else:
-            subprocess.call(self.create_amixer_command("-q", "sset", self.channel, "toggle"))
+            mute_cmd = self.create_amixer_command("-q", "sset", self.channel, "toggle")
+
+        subprocess.call(mute_cmd, shell=True)
 
     @expose_command()
     def run_app(self):

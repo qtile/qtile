@@ -15,13 +15,23 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from libqtile.command.base import expose_command
 from libqtile.layout.base import Layout, _ClientList
 from libqtile.log_utils import logger
 
+if TYPE_CHECKING:
+    from typing import Any, Self
+
+    from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
+    from libqtile.group import _Group
+
 
 class _Column(_ClientList):
-
     # shortcuts for current client and index used in Columns layout
     cw = _ClientList.current_client
     current = _ClientList.current_index
@@ -34,7 +44,7 @@ class _Column(_ClientList):
         self.heights = {}
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         info = _ClientList.info(self)
         info.update(
             dict(
@@ -58,7 +68,7 @@ class _Column(_ClientList):
             for c, g in zip(self, growth):
                 self.heights[c] += g
 
-    def remove(self, client):
+    def remove(self, client: Window) -> None:
         _ClientList.remove(self, client)
         delta = self.heights[client] - 100
         del self.heights[client]
@@ -131,6 +141,7 @@ class Columns(Layout):
             "Border colour(s) for un-focused windows in stacked columns.",
         ),
         ("border_width", 2, "Border width."),
+        ("single_border_width", None, "Border width for single window."),
         ("border_on_single", False, "Draw a border when there is one only window."),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])."),
         (
@@ -156,10 +167,17 @@ class Columns(Layout):
     def __init__(self, **config):
         Layout.__init__(self, **config)
         self.add_defaults(Columns.defaults)
+        if not self.border_on_single:
+            self.single_border_width = 0
+        elif self.single_border_width is None:
+            self.single_border_width = self.border_width
+
+        if self.margin_on_single is None:
+            self.margin_on_single = self.margin
         self.columns = [_Column(self.split, self.insert_position)]
         self.current = 0
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)
         c.columns = [_Column(self.split, self.insert_position)]
         return c
@@ -171,7 +189,7 @@ class Columns(Layout):
         return clients
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = Layout.info(self)
         d["clients"] = []
         d["columns"] = []
@@ -182,7 +200,7 @@ class Columns(Layout):
         d["current"] = self.current
         return d
 
-    def focus(self, client):
+    def focus(self, client: Window) -> None:
         for i, c in enumerate(self.columns):
             if client in c:
                 c.focus(client)
@@ -218,7 +236,7 @@ class Columns(Layout):
             for c, g in zip(self.columns, growth):
                 c.width += g
 
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:
         c = self.cc
         if len(c) > 0 and len(self.columns) < self.num_columns:
             c = self.add_column()
@@ -241,7 +259,7 @@ class Columns(Layout):
             self.remove_column(c)
         return self.columns[self.current].cw
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         pos = 0
         for col in self.columns:
             if client in col:
@@ -250,19 +268,19 @@ class Columns(Layout):
         else:
             client.hide()
             return
+
         if client.has_focus:
             color = self.border_focus if col.split else self.border_focus_stack
         else:
             color = self.border_normal if col.split else self.border_normal_stack
-        border = self.border_width
-        margin_size = self.margin
-        if len(self.columns) == 1 and (len(col) == 1 or not col.split):
-            if not self.border_on_single:
-                border = 0
-            if self.margin_on_single is not None:
-                margin_size = self.margin_on_single
+
+        is_single = len(self.columns) == 1 and (len(col) == 1 or not col.split)
+        border = self.single_border_width if is_single else self.border_width
+        margin_size = self.margin_on_single if is_single else self.margin
+
         width = int(0.5 + col.width * screen_rect.width * 0.01 / len(self.columns))
         x = screen_rect.x + int(0.5 + pos * screen_rect.width * 0.01 / len(self.columns))
+
         if col.split:
             pos = 0
             for c in col:
@@ -289,47 +307,47 @@ class Columns(Layout):
         else:
             client.hide()
 
-    def focus_first(self):
+    def focus_first(self) -> Window | None:
         """Returns first client in first column of layout"""
         if self.columns:
             return self.columns[0].focus_first()
+        return None
 
-    def focus_last(self):
+    def focus_last(self) -> Window | None:
         """Returns last client in last column of layout"""
         if self.columns:
             return self.columns[-1].focus_last()
+        return None
 
-    def focus_next(self, win):
+    def focus_next(self, win: Window) -> None:
         """Returns the next client after 'win' in layout,
         or None if there is no such client"""
         # First: try to get next window in column of win (self.columns is non-empty)
         # pylint: disable=undefined-loop-variable
         for idx, col in enumerate(self.columns):
             if win in col:
-                nxt = col.focus_next(win)
-                if nxt:
+                if nxt := col.focus_next(win):
                     return nxt
-                else:
-                    break
+                break
         # if there was no next, get first client from next column
         if idx + 1 < len(self.columns):
             return self.columns[idx + 1].focus_first()
+        return None
 
-    def focus_previous(self, win):
+    def focus_previous(self, win: Window) -> Window | None:
         """Returns the client previous to 'win' in layout.
         or None if there is no such client"""
         # First: try to focus previous client in column (self.columns is non-empty)
         # pylint: disable=undefined-loop-variable
         for idx, col in enumerate(self.columns):
             if win in col:
-                prev = col.focus_previous(win)
-                if prev:
+                if prev := col.focus_previous(win):
                     return prev
-                else:
-                    break
+                break
         # If there was no previous, get last from previous column
         if idx > 0:
             return self.columns[idx - 1].focus_last()
+        return None
 
     @expose_command()
     def toggle_split(self):
@@ -384,7 +402,7 @@ class Columns(Layout):
         self.group.focus(col.cw, True)
 
     @expose_command()
-    def next(self):
+    def next(self) -> None:
         if self.cc.split and self.cc.current < len(self.cc) - 1:
             self.cc.current += 1
         elif self.columns:
@@ -394,7 +412,7 @@ class Columns(Layout):
         self.group.focus(self.cc.cw, True)
 
     @expose_command()
-    def previous(self):
+    def previous(self) -> None:
         if self.cc.split and self.cc.current > 0:
             self.cc.current -= 1
         elif self.columns:

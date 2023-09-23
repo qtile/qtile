@@ -26,7 +26,10 @@ from libqtile.layout.base import _SimpleLayoutBase
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Self
+
+    from libqtile.backend.base import Window
+    from libqtile.group import _Group
 
     Rect = tuple[int, int, int, int]
 
@@ -140,14 +143,14 @@ class Spiral(_SimpleLayoutBase):
         idx = order.index(self.main_pane)
         self.splits = order[idx : idx + 4]
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         return _SimpleLayoutBase.clone(self, group)
 
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:  # type: ignore[override]
         self.dirty = True
         self.clients.add_client(client, client_position=self.new_client_position)
 
-    def remove(self, w):
+    def remove(self, w: Window) -> Window | None:
         self.dirty = True
         return _SimpleLayoutBase.remove(self, w)
 
@@ -341,11 +344,11 @@ class Spiral(_SimpleLayoutBase):
         return d
 
     @expose_command("up")
-    def previous(self):
+    def previous(self) -> None:
         _SimpleLayoutBase.previous(self)
 
     @expose_command("down")
-    def next(self):
+    def next(self) -> None:
         _SimpleLayoutBase.next(self)
 
     def _set_ratio(self, prop: str, value: float | str):

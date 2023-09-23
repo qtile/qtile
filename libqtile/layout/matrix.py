@@ -27,10 +27,18 @@
 from __future__ import annotations
 
 import math
+from typing import TYPE_CHECKING
 
 from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
 from libqtile.log_utils import logger
+
+if TYPE_CHECKING:
+    from typing import Any, Self
+
+    from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
+    from libqtile.group import _Group
 
 
 class Matrix(_SimpleLayoutBase):
@@ -74,13 +82,13 @@ class Matrix(_SimpleLayoutBase):
         return self.clients.current_index % self.columns
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = _SimpleLayoutBase.info(self)
         d["rows"] = [[win.name for win in self.get_row(i)] for i in range(self.rows)]
         d["current_window"] = self.column, self.row
         return d
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         c = _SimpleLayoutBase.clone(self, group)
         c.columns = self.columns
         return c
@@ -95,13 +103,13 @@ class Matrix(_SimpleLayoutBase):
         assert column < self.columns
         return [self.clients[i] for i in range(column, len(self.clients), self.columns)]
 
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:  # type: ignore[override]
         """Add client to Layout.
         Note that for Matrix the clients are appended at end of list.
         If needed a new row in matrix is created"""
         return self.clients.append(client)
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         if client not in self.clients:
             return
         idx = self.clients.index(client)
@@ -132,11 +140,11 @@ class Matrix(_SimpleLayoutBase):
         client.unhide()
 
     @expose_command()
-    def previous(self):
+    def previous(self) -> None:
         _SimpleLayoutBase.previous(self)
 
     @expose_command()
-    def next(self):
+    def next(self) -> None:
         _SimpleLayoutBase.next(self)
 
     def horizontal_traversal(self, direction):

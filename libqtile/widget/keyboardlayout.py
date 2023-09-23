@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import re
 from abc import ABCMeta, abstractmethod
+from pathlib import Path
 from subprocess import CalledProcessError, check_output
 from typing import TYPE_CHECKING
 
@@ -60,7 +61,7 @@ class _BaseLayoutBackend(metaclass=ABCMeta):
 
 
 class _X11LayoutBackend(_BaseLayoutBackend):
-    kb_layout_regex = re.compile(r"layout:\s+(?P<layout>\w+)")
+    kb_layout_regex = re.compile(r"layout:\s+(?P<layout>[\w-]+)")
     kb_variant_regex = re.compile(r"variant:\s+(?P<variant>\w+)")
 
     def get_keyboard(self) -> str:
@@ -92,9 +93,16 @@ class _X11LayoutBackend(_BaseLayoutBackend):
         try:
             check_output(command)
         except CalledProcessError:
-            logger.error("Can not change the keyboard layout:")
+            logger.error("Cannot change the keyboard layout.")
         except OSError:
-            logger.error("Please, check that setxkbmap is available:")
+            logger.error("Please, check that setxkbmap is available.")
+        else:
+            # Load Xmodmap if it's available
+            if Path("~/.Xmodmap").expanduser().is_file():
+                try:
+                    check_output("xmodmap $HOME/.Xmodmap", shell=True)
+                except CalledProcessError:
+                    logger.error("Could not load ~/.Xmodmap.")
 
 
 class _WaylandLayoutBackend(_BaseLayoutBackend):
@@ -133,6 +141,7 @@ class KeyboardLayout(base.InLoopPollText):
         Key([mod], "space", lazy.widget["keyboardlayout"].next_keyboard(), desc="Next keyboard layout."),
 
     When running Qtile with the X11 backend, this widget requires setxkbmap to be available.
+    Xmodmap will also be used if .Xmodmap file is available.
     """
 
     defaults = [

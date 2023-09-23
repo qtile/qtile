@@ -29,9 +29,20 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from libqtile.command.base import expose_command
 from libqtile.config import Match
 from libqtile.layout.base import _SimpleLayoutBase
+
+if TYPE_CHECKING:
+    from typing import Any, Self
+
+    from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
+    from libqtile.group import _Group
 
 
 class Tile(_SimpleLayoutBase):
@@ -150,7 +161,7 @@ class Tile(_SimpleLayoutBase):
                 self.clients.remove(client)
                 self.clients.append_head(client)
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         c = _SimpleLayoutBase.clone(self, group)
         return c
 
@@ -163,7 +174,7 @@ class Tile(_SimpleLayoutBase):
             super().add_client(client, offset_to_current)
         self.reset_master()
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         screen_width = screen_rect.width
         screen_height = screen_rect.height
         border_width = self.border_width
@@ -182,7 +193,10 @@ class Tile(_SimpleLayoutBase):
                 w = screen_width - int(screen_width * self.ratio_size)
                 h = screen_height // (len(self.slave_windows))
                 x = screen_rect.x + int(screen_width * self.ratio_size)
-                y = screen_rect.y + self.clients[self.master_length :].index(client) * h
+                sublist = self.clients[self.master_length :]
+                if client not in sublist:
+                    raise ValueError("Client not in layout. This shouldn't happen.")
+                y = screen_rect.y + sublist.index(client) * h
             if client.has_focus:
                 bc = self.border_focus
             else:
@@ -207,7 +221,7 @@ class Tile(_SimpleLayoutBase):
             client.hide()
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = _SimpleLayoutBase.info(self)
         d.update(
             dict(
@@ -218,11 +232,11 @@ class Tile(_SimpleLayoutBase):
         return d
 
     @expose_command(["left", "up"])
-    def previous(self):
+    def previous(self) -> None:
         _SimpleLayoutBase.previous(self)
 
     @expose_command(["right", "down"])
-    def next(self):
+    def next(self) -> None:
         _SimpleLayoutBase.next(self)
 
     @expose_command("normalize")

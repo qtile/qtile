@@ -34,10 +34,12 @@ CMD_DICT = {
     "Arch_yay": ("yay -Qu", 0),
     "Debian": ("apt-show-versions -u -b", 0),
     "Gentoo_eix": ("EIX_LIMIT=0 eix -u# --world", 0),
+    "Guix": ("guix upgrade --dry-run", 0),
     "Ubuntu": ("aptitude search ~U", 0),
     "Fedora": ("dnf list updates -q", 1),
     "FreeBSD": ("pkg_version -I -l '<'", 0),
     "Mandriva": ("urpmq --auto-select", 0),
+    "Void": ("xbps-install -nuMS", 0),
 }
 
 # We need the spaces here to ensure the indentation is correct in the docstring

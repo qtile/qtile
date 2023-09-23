@@ -28,10 +28,20 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from libqtile import hook
 from libqtile.command.base import expose_command
+from libqtile.config import ScreenRect
 from libqtile.layout.base import Layout
+
+if TYPE_CHECKING:
+    from typing import Any, Self, Sequence
+
+    from libqtile.backend import base
+    from libqtile.group import _Group
 
 to_superscript = dict(zip(map(ord, "0123456789"), map(ord, "⁰¹²³⁴⁵⁶⁷⁸⁹")))
 
@@ -279,7 +289,7 @@ class Window(TreeNode):
             return self
         return super().button_press(x, y)
 
-    def remove(self):
+    def remove(self) -> None:
         """Removes this Window
 
         If this window has children, the first child takes the place of this
@@ -385,7 +395,7 @@ class TreeTab(Layout):
         self._tree = Root(self.sections)
         self._nodes = {}
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)
         c._focused = None
         c._panel = None
@@ -395,27 +405,31 @@ class TreeTab(Layout):
     def focus(self, win):
         self._focused = win
 
-    def focus_first(self):
+    def focus_first(self) -> base.Window | None:
         win = self._tree.get_first_window()
         if win:
             return win.window
+        return None
 
-    def focus_last(self):
+    def focus_last(self) -> base.Window | None:
         win = self._tree.get_last_window()
         if win:
             return win.window
+        return None
 
-    def focus_next(self, client):
+    def focus_next(self, client: base.Window) -> base.Window | None:
         win = self._nodes[client].get_next_window()
         if win:
             return win.window
+        return None
 
-    def focus_previous(self, client):
+    def focus_previous(self, client: base.Window) -> base.Window | None:
         win = self._nodes[client].get_prev_window()
         if win:
             return win.window
+        return None
 
-    def blur(self):
+    def blur(self) -> None:
         # Does not clear current window, will change if new one
         # will be focused. This works better when floating window
         # will be next focused one
@@ -428,7 +442,7 @@ class TreeTab(Layout):
             node = self._tree.add_client(win)
         self._nodes[win] = node
 
-    def remove(self, win):
+    def remove(self, win: base.Window) -> None:
         if win not in self._nodes:
             return
 
@@ -466,7 +480,7 @@ class TreeTab(Layout):
         if node:
             self.group.focus(node.window, False)
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: base.Window, screen_rect: ScreenRect) -> None:
         if self._nodes and client is self._focused:
             client.place(
                 screen_rect.x, screen_rect.y, screen_rect.width, screen_rect.height, 0, None
@@ -475,7 +489,7 @@ class TreeTab(Layout):
         else:
             client.hide()
 
-    def finalize(self):
+    def finalize(self) -> None:
         if self._panel:
             self._panel.kill()
         Layout.finalize(self)
@@ -490,7 +504,7 @@ class TreeTab(Layout):
         return clients
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         def show_section_tree(root):
             """
             Show a section tree in a nested list, whose every element has the form:
@@ -535,7 +549,7 @@ class TreeTab(Layout):
         d["client_trees"] = trees
         return d
 
-    def show(self, screen_rect):
+    def show(self, screen_rect: ScreenRect) -> None:
         if not self._panel:
             self._create_panel(screen_rect)
         if self.place_right:
@@ -545,12 +559,12 @@ class TreeTab(Layout):
         self._resize_panel(panel)
         self._panel.unhide()
 
-    def hide(self):
+    def hide(self) -> None:
         if self._panel:
             self._panel.hide()
 
     @expose_command("down")
-    def next(self):
+    def next(self) -> None:
         """Switch down in the window list"""
         win = None
         if self._focused:
@@ -562,7 +576,7 @@ class TreeTab(Layout):
         self._focused = win.window if win else None
 
     @expose_command("up")
-    def previous(self):
+    def previous(self) -> None:
         """Switch up in the window list"""
         win = None
         if self._focused:
@@ -729,7 +743,7 @@ class TreeTab(Layout):
             "", "ffffff", self.font, self.fontsize, self.fontshadow, wrap=False
         )
 
-    def layout(self, windows, screen_rect):
+    def layout(self, windows: Sequence[base.Window], screen_rect: ScreenRect) -> None:
         if self.place_right:
             body, panel = screen_rect.hsplit(screen_rect.width - self.panel_width)
         else:

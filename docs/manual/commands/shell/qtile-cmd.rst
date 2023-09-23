@@ -9,7 +9,7 @@ How it works
 
 ``qtile cmd-obj`` works by selecting a command object and calling a specified function of that object.
 
-As per :ref:`commands-api`, Qtile's object graph has seven nodes: ``layout``, ``window``, ``group``,
+As per :ref:`commands-api`, Qtile's command graph has seven nodes: ``layout``, ``window``, ``group``,
 ``bar``, ``widget``, ``screen``, and a special ``root`` node. These are the objects that can be accessed
 via ``qtile cmd-obj`` (NB the root node is called ``cmd`` when using the ``cmd-obj`` script to give it
 an addressable name).
@@ -22,7 +22,7 @@ Selecting an object
 ~~~~~~~~~~~~~~~~~~~
 
 With the exception of ``cmd``, all objects need an identifier so the correct object can be selected. Refer to
-:ref:`object_graph_keys` for more information.
+:ref:`object_graph_selectors` for more information.
 
 .. note::
 

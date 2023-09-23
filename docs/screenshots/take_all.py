@@ -248,9 +248,13 @@ specs = {
             commands=["shuffle_up", "shuffle_up", "shuffle_up"], windows=5, delay="1x2"
         ),
         # decrease_ratio does not seem to work
-        # "decrease_ratio": Spec(commands=["decrease_ratio", "decrease_ratio", "decrease_ratio", "decrease_ratio"], windows=5, delay="1x2"),
+        # "decrease_ratio": Spec(
+        # commands=["decrease_ratio", "decrease_ratio", "decrease_ratio", "decrease_ratio"],
+        # windows=5, delay="1x2"),
         # increase_ratio does not seem to work
-        # "increase_ratio": Spec(commands=["increase_ratio", "increase_ratio", "increase_ratio", "increase_ratio"], windows=5, delay="1x2"),
+        # "increase_ratio": Spec(
+        # commands=["increase_ratio", "increase_ratio", "increase_ratio", "increase_ratio"],
+        # windows=5, delay="1x2"),
     },
     "slice": {
         # Slice layout freezes the session
@@ -469,8 +473,8 @@ def main(args=None):
     # get selection of specs, exit if they don't exist
     try:
         selection = get_selection(args)
-    except LookupError as error:
-        logging.error("Wrong selection:\n" + str(error))
+    except LookupError:
+        logging.exception("Wrong selection:")
         return 1
 
     # switch to group
@@ -483,10 +487,10 @@ def main(args=None):
         for name in names:
             success, errors = take(name, layout, specs[layout][name])
             if success:
-                logging.info("Shooting {}:{} - OK!".format(layout, name))
+                logging.info("Shooting %s:%s - OK!", layout, name)
             else:
                 ok = False
-                logging.error("Shooting {}:{} - failed:\n{}".format(layout, name, errors))
+                logging.error("Shooting %s:%S - failed:\n%s", layout, name, errors)
 
     # switch back to original group
     client.switch_to_group(original_group)

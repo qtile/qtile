@@ -23,7 +23,7 @@ import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
 from test.helpers import HEIGHT, WIDTH
-from test.layouts.layout_utils import assert_focus_path, assert_focused
+from test.layouts.layout_utils import assert_dimensions, assert_focus_path, assert_focused
 
 
 class ColumnsConfig(Config):
@@ -46,11 +46,24 @@ class ColumnsConfig(Config):
     follow_mouse_focus = False
 
 
+class ColumnsSingleBorderDisabledConfig(ColumnsConfig):
+    layouts = [layout.Columns(border_on_single=False, single_border_width=2, border_width=4)]
+
+
+class ColumnsSingleBorderEnabledConfig(ColumnsConfig):
+    layouts = [layout.Columns(border_on_single=True, single_border_width=2, border_width=4)]
+
+
 columns_config = pytest.mark.parametrize("manager", [ColumnsConfig], indirect=True)
+columns_single_border_disabled_config = pytest.mark.parametrize(
+    "manager", [ColumnsSingleBorderDisabledConfig], indirect=True
+)
+columns_single_border_enabled_config = pytest.mark.parametrize(
+    "manager", [ColumnsSingleBorderEnabledConfig], indirect=True
+)
+
 
 # This currently only tests the window focus cycle
-
-
 @columns_config
 def test_columns_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
@@ -168,3 +181,19 @@ def test_columns_margins_single(manager):
     assert info["y"] == 10
     assert info["width"] == WIDTH - 60
     assert info["height"] == HEIGHT - 40
+
+
+@columns_single_border_disabled_config
+def test_columns_single_border_disabled(manager):
+    manager.test_window("1")
+    assert_dimensions(manager, 0, 0, WIDTH, HEIGHT)
+    manager.test_window("2")
+    assert_dimensions(manager, WIDTH / 2, 0, WIDTH / 2 - 8, HEIGHT - 8)
+
+
+@columns_single_border_enabled_config
+def test_columns_single_border_enabled(manager):
+    manager.test_window("1")
+    assert_dimensions(manager, 0, 0, WIDTH - 4, HEIGHT - 4)
+    manager.test_window("2")
+    assert_dimensions(manager, WIDTH / 2, 0, WIDTH / 2 - 8, HEIGHT - 8)

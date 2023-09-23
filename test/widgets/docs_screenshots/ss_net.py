@@ -39,6 +39,10 @@ def widget(monkeypatch):
     [
         {},
         {"format": "{interface}: U {up} D {down} T {total}"},
+        {
+            "format": "{interface}: U {up}{up_suffix} D {down}{down_suffix} T {total}{total_suffix}"
+        },
+        {"format": "{down:.0f}{down_suffix} \u2193\u2191 {up:.0f}{up_suffix}"},
         {"interface": "wlp58s0"},
         {"prefix": "M"},
     ],

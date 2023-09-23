@@ -67,7 +67,6 @@ class ThermalSensor(base.InLoopPollText):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(ThermalSensor.defaults)
         temp_values = self.get_temp_sensors()
-        self.foreground_normal = self.foreground
 
         if temp_values is None:
             self.data = "sensors command not found"
@@ -81,6 +80,7 @@ class ThermalSensor(base.InLoopPollText):
     def _configure(self, qtile, bar):
         self.unit = "°C" if self.metric else "°F"
         base.InLoopPollText._configure(self, qtile, bar)
+        self.foreground_normal = self.foreground
 
     def get_temp_sensors(self):
         """

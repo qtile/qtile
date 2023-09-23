@@ -107,7 +107,6 @@ def patched_moc(fake_qtile, monkeypatch, fake_window):
 
 
 def test_moc_poll_string_formatting(patched_moc):
-
     # Both artist and song title
     assert patched_moc.poll() == "♫ Rick Astley - Never Gonna Give You Up"
 
@@ -121,7 +120,6 @@ def test_moc_poll_string_formatting(patched_moc):
 
 
 def test_moc_state_and_colours(patched_moc):
-
     # Initial poll - playing
     patched_moc.poll()
     assert patched_moc.layout.colour == patched_moc.play_color
@@ -138,7 +136,6 @@ def test_moc_state_and_colours(patched_moc):
 
 
 def test_moc_button_presses(manager_nospawn, minimal_conf_noscreen, monkeypatch):
-
     # This needs to be patched before initialising the widgets as mouse callbacks
     # bind subprocess.Popen.
     monkeypatch.setattr("subprocess.Popen", MockMocpProcess.run)

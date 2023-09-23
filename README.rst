@@ -54,10 +54,10 @@ Please also consider submitting useful scripts etc. to the qtile-examples repo
 
 .. |logo| image:: https://raw.githubusercontent.com/qtile/qtile/master/logo.png
     :alt: Logo
-    :target: https://www.qtile.org
+    :target: https://qtile.org
 .. |website| image:: https://img.shields.io/badge/website-qtile.org-blue.svg
     :alt: Website
-    :target: https://www.qtile.org
+    :target: https://qtile.org
 .. |pypi| image:: https://img.shields.io/pypi/v/qtile.svg
     :alt: PyPI
     :target: https://pypi.org/project/qtile/
@@ -86,9 +86,11 @@ Maintainers
 | `@m-col`_ GPG: ``35D9 2E7C C735 7A81 173E  A1C9 74F9 FDD2 0984 FBEC``
 | `@flacjacket`_ GPG: ``58B5 F350 8339 BFE5 CA93  AC9F 439D 9701 E7EA C588``
 | `@elParaguayo`_ GPG: ``A6BA A1E1 7D26 64AD B97B  2C6F 58A9 AA7C 8672 7DF7``
+| `@jwijenbergh`_ GPG: ``B1C8 1CF3 063B 5836 4946  3687 4827 061B D417 C233``
 
 .. _`@tych0`: https://github.com/tych0
 .. _`@ramnes`: https://github.com/ramnes
 .. _`@m-col`: https://github.com/m-col
 .. _`@flacjacket`: https://github.com/flacjacket
 .. _`@elParaguayo`: https://github.com/elparaguayo
+.. _`@jwijenbergh`: https://github.com/jwijenbergh

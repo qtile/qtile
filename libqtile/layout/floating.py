@@ -27,13 +27,19 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 from __future__ import annotations
 
-from libqtile.backend.base import Window
+from typing import TYPE_CHECKING
+
 from libqtile.command.base import expose_command
 from libqtile.config import Match
 from libqtile.layout.base import Layout
+
+if TYPE_CHECKING:
+    from typing import Any
+
+    from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
 
 
 class Floating(Layout):
@@ -100,8 +106,7 @@ class Floating(Layout):
         """
         Layout.__init__(self, **config)
         self.clients: list[Window] = []
-        self.focused = None
-        self.group = None
+        self.focused: Window | None = None
 
         if float_rules is None:
             float_rules = self.default_float_rules
@@ -152,14 +157,15 @@ class Floating(Layout):
         if clients:
             return clients[0]
 
-    def focus_next(self, win):
+    def focus_next(self, win: Window) -> Window | None:
         if win not in self.clients or win.group is None:
-            return
+            return None
 
         clients = self.find_clients(win.group)
         idx = clients.index(win)
         if len(clients) > idx + 1:
             return clients[idx + 1]
+        return None
 
     def focus_last(self, group=None):
         if group is None:
@@ -179,10 +185,10 @@ class Floating(Layout):
         if idx > 0:
             return clients[idx - 1]
 
-    def focus(self, client):
+    def focus(self, client: Window) -> None:
         self.focused = client
 
-    def blur(self):
+    def blur(self) -> None:
         self.focused = None
 
     def on_screen(self, client, screen_rect):
@@ -233,7 +239,7 @@ class Floating(Layout):
             client.y = int(round(y))
         return above
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         if client.has_focus:
             bc = self.border_focus
         else:
@@ -279,13 +285,13 @@ class Floating(Layout):
             )
         client.unhide()
 
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:
         self.clients.append(client)
         self.focused = client
 
-    def remove(self, client):
+    def remove(self, client: Window) -> Window | None:
         if client not in self.clients:
-            return
+            return None
 
         next_focus = self.focus_next(client)
         if client is self.focused:
@@ -297,17 +303,19 @@ class Floating(Layout):
         return self.clients
 
     @expose_command()
-    def info(self):
-        d = Layout.info(self)
-        d["clients"] = [c.name for c in self.clients]
+    def info(self) -> dict[str, Any]:
+        d = dict(
+            name=self.name,
+            clients=[c.name for c in self.clients],
+        )
         return d
 
     @expose_command()
-    def next(self):
+    def next(self) -> None:
         # This can't ever be called, but implement the abstract method
         pass
 
     @expose_command()
-    def previous(self):
+    def previous(self) -> None:
         # This can't ever be called, but implement the abstract method
         pass

@@ -4,7 +4,42 @@
 Keys
 ====
 
-The ``keys`` variable defines Qtile's key bindings. Individual key bindings are
+The ``keys`` variable defines Qtile's key bindings. 
+
+Default Key Bindings
+--------------------
+
+The mod key for the default config is ``mod4``, which is typically bound to
+the "Super" keys, which are things like the windows key and the mac command
+key. The basic operation is:
+
+* ``mod + k`` or ``mod + j``: switch windows on the current stack
+* ``mod + <space>``: put focus on the other pane of the stack (when in stack
+  layout)
+* ``mod + <tab>``: switch layouts
+* ``mod + w``: close window
+* ``mod + <ctrl> + r``: reload the config
+* ``mod + <group name>``: switch to that group
+* ``mod + <shift> + <group name>``: send a window to that group
+* ``mod + <enter>``: start terminal guessed by ``libqtile.utils.guess_terminal``
+* ``mod + r``: start a little prompt in the bar so users can run arbitrary
+  commands
+
+The default config defines one screen and 8 groups, one for each letter in
+``asdfuiop``. It has a basic bottom bar that includes a group box, the current
+window name, a little text reminder that you're using the default config,
+a system tray, and a clock.
+
+The default configuration has several more advanced key combinations, but the
+above should be enough for basic usage of qtile.
+
+See :ref:`Keybindings in images <keybinding-img>` for visual
+keybindings in keyboard layout.
+
+Defining key bindings
+---------------------
+
+Individual key bindings are
 defined with :class:`~libqtile.config.Key` as demonstrated in the following
 example. Note that you may specify more than one callback functions.
 

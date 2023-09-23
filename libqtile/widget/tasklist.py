@@ -164,6 +164,16 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             None,
             "Path to icon theme to be used by pyxdg for icons. ``None`` will use default icon theme.",
         ),
+        (
+            "window_name_location",
+            False,
+            "Whether to show the location of the window in the title.",
+        ),
+        (
+            "window_name_location_offset",
+            0,
+            "The offset given to the window location",
+        ),
     ]
 
     def __init__(self, **config):
@@ -227,7 +237,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         elif window is window.group.current_window:
             markup_str = self.markup_focused
 
-        window_name = window.name if window and window.name else "?"
+        window_location = (
+            f"[{window.group.windows.index(window) + self.window_name_location_offset}] "
+            if self.window_name_location
+            else ""
+        )
+        window_name = window_location + window.name if window and window.name else "?"
 
         if callable(self.parse_text):
             try:
@@ -248,6 +263,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
     @property
     def windows(self):
+        if self.qtile.core.name == "x11":
+            return [
+                w
+                for w in self.bar.screen.group.windows
+                if w.window.get_wm_type() in ("normal", None)
+            ]
         return self.bar.screen.group.windows
 
     def calc_box_widths(self):
@@ -510,7 +531,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             return
 
         x = offset + self.borderwidth + self.padding_x
-        y = self.padding_y + self.borderwidth
+        y = (self.height - self.icon_size) // 2
 
         self.drawer.ctx.save()
         self.drawer.ctx.translate(x, y)

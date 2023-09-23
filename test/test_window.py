@@ -1,5 +1,7 @@
 import pytest
 
+from libqtile import config, layout, resources
+from libqtile.confreader import Config
 from test.conftest import BareConfig, dualmonitor
 from test.layouts.layout_utils import assert_focused
 from test.test_manager import ManagerConfig
@@ -232,3 +234,74 @@ def test_center_window(manager):
     assert info["y"] == (480 - 100) / 2  # (screen height - window height) / 2
     assert info["width"] == 200
     assert info["height"] == 100
+
+
+class PositionConfig(Config):
+    auto_fullscreen = True
+    groups = [
+        config.Group("a"),
+        config.Group("b"),
+    ]
+    # MonadTall supports swap, treetab doesn't
+    layouts = [layout.MonadTall(), layout.TreeTab()]
+    floating_layout = resources.default_config.floating_layout
+    keys = []
+    mouse = []
+    screens = []
+    follow_mouse_focus = False
+
+
+position_config = pytest.mark.parametrize("manager", [PositionConfig], indirect=True)
+
+
+@position_config
+def test_set_position(manager):
+    """Check that windows are positioned correctly."""
+    manager.test_window("one")
+
+    # Get first pane coords
+    info = manager.c.window.info()
+    coords = info["x"], info["y"]
+    manager.test_window("two")
+
+    # Get second pane coords
+    info = manager.c.window.info()
+    two_coords = info["x"], info["y"]
+
+    # We should have client one and two in the layout
+    assert manager.c.layout.info()["clients"] == ["one", "two"]
+
+    # Set the position to the first window pane
+    # We need to also set the pointer coords as the function uses them
+    manager.c.eval(f"self.core.warp_pointer({coords[0]}, {coords[1]})")
+    manager.c.window.set_position(coords[0], coords[1])
+
+    # Now they should be swapped
+    assert manager.c.layout.info()["clients"] == ["two", "one"]
+
+    # Swap back to the second pane
+    manager.c.eval(f"self.core.warp_pointer({two_coords[0]}, {two_coords[1]})")
+    manager.c.window.set_position(two_coords[0], two_coords[1])
+
+    # Now they should be back to original
+    assert manager.c.layout.info()["clients"] == ["one", "two"]
+
+    # Test with a layout which doesn't support swap right now (TreeTab)
+    manager.c.layout.next()
+    manager.c.eval(f"self.core.warp_pointer({coords[0]}, {coords[1]})")
+    manager.c.window.set_position(coords[0], coords[1])
+
+    # Now they should be the same
+    assert manager.c.layout.info()["clients"] == ["one", "two"]
+
+    # Now test with floating
+    manager.c.window.enable_floating()
+    manager.c.window.set_position(50, 50)
+    info = manager.c.window.info()
+
+    # Check if the position matches
+    assert info["x"] == 50
+    assert info["y"] == 50
+
+    # Also check if there is only one client now
+    assert len(manager.c.layout.info()["clients"]) == 1

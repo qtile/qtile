@@ -15,28 +15,40 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from libqtile.command.base import expose_command
 from libqtile.layout.base import Layout
 
+if TYPE_CHECKING:
+    from typing import Any, Generator, Self
+
+    from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
+    from libqtile.group import _Group
+
 
 class _BspNode:
-    def __init__(self, parent=None):
+    def __init__(self, parent: _BspNode | None = None) -> None:
         self.parent = parent
-        self.children = []
-        self.split_horizontal = None
-        self.split_ratio = 50
-        self.client = None
-        self.x = self.y = 0
-        self.w = 16
-        self.h = 9
+        self.children: list[_BspNode] = []
+        self.split_horizontal: bool = False
+        self.split_ratio: float = 50
+        self.client: Window | None = None
+        self.x: int = 0
+        self.y: int = 0
+        self.w: int = 16
+        self.h: int = 9
 
-    def __iter__(self):
+    def __iter__(self) -> Generator[_BspNode, None, None]:
         yield self
         for child in self.children:
             for c in child:
                 yield c
 
-    def clients(self):
+    def clients(self) -> Generator[Window, None, None]:
         if self.client:
             yield self.client
         else:
@@ -44,7 +56,7 @@ class _BspNode:
                 for c in child.clients():
                     yield c
 
-    def _shortest(self, length):
+    def _shortest(self, length: int) -> tuple[_BspNode, int]:
         if len(self.children) == 0:
             return self, length
 
@@ -55,10 +67,11 @@ class _BspNode:
             return child1, length1
         return child0, length0
 
-    def get_shortest(self):
-        return self._shortest(0)[0]
+    def get_shortest(self) -> _BspNode:
+        node, _ = self._shortest(0)
+        return node
 
-    def insert(self, client, idx, ratio):
+    def insert(self, client: Window, idx: int, ratio: float) -> _BspNode:
         if self.client is None:
             self.client = client
             return self
@@ -69,7 +82,7 @@ class _BspNode:
         self.split_horizontal = True if self.w > self.h * ratio else False
         return self.children[idx]
 
-    def remove(self, child):
+    def remove(self, child: _BspNode) -> _BspNode:
         keep = self.children[1 if child is self.children[0] else 0]
         self.children = keep.children
         for c in self.children:
@@ -79,7 +92,7 @@ class _BspNode:
         self.client = keep.client
         return self
 
-    def distribute(self):
+    def distribute(self) -> tuple[int, int]:
         if len(self.children) == 0:
             return 1, 1
         h0, v0 = self.children[0].distribute()
@@ -94,7 +107,7 @@ class _BspNode:
             self.split_ratio = 100 * v0 / v
         return h, v
 
-    def calc_geom(self, x, y, w, h):
+    def calc_geom(self, x: int, y: int, w: int, h: int) -> None:
         self.x = x
         self.y = y
         self.w = w
@@ -179,7 +192,7 @@ class Bsp(Layout):
         if self.margin_on_single is None:
             self.margin_on_single = self.margin
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)
         c.root = _BspNode()
         c.current = c.root
@@ -189,7 +202,7 @@ class Bsp(Layout):
         return list(self.root.clients())
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         return dict(name=self.name, clients=[c.name for c in self.root.clients()])
 
     def get_node(self, client):
@@ -197,10 +210,10 @@ class Bsp(Layout):
             if client is node.client:
                 return node
 
-    def focus(self, client):
+    def focus(self, client: Window) -> None:
         self.current = self.get_node(client)
 
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:
         node = self.root.get_shortest() if self.fair else self.current
         self.current = node.insert(client, int(self.lower_right), self.ratio)
 
@@ -218,7 +231,7 @@ class Bsp(Layout):
             node.client = None
             self.current = self.root
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         self.root.calc_geom(screen_rect.x, screen_rect.y, screen_rect.width, screen_rect.height)
         node = self.get_node(client)
         color = self.border_focus if client.has_focus else self.border_normal
@@ -243,14 +256,14 @@ class Bsp(Layout):
             self.current.parent.split_horizontal = not self.current.parent.split_horizontal
         self.group.layout_all()
 
-    def focus_first(self):
+    def focus_first(self) -> Window | None:
         return next(self.root.clients(), None)
 
-    def focus_last(self):
+    def focus_last(self) -> Window | None:
         clients = list(self.root.clients())
         return clients[-1] if len(clients) else None
 
-    def focus_next(self, client, wrap=False):
+    def focus_next(self, client: Window, wrap: bool = False) -> Window | None:
         clients = list(self.root.clients())
         if client in clients:
             idx = clients.index(client)
@@ -258,8 +271,9 @@ class Bsp(Layout):
                 return clients[(idx + 1)]
             elif wrap:
                 return clients[(idx + 1) % len(clients)]
+        return None
 
-    def focus_previous(self, client, wrap=False):
+    def focus_previous(self, client: Window, wrap: bool = False) -> Window | None:
         clients = list(self.root.clients())
         if client in clients:
             idx = clients.index(client)
@@ -267,15 +281,16 @@ class Bsp(Layout):
                 return clients[(idx - 1)]
             elif wrap:
                 return clients[(idx - 1) % len(clients)]
+        return None
 
     @expose_command()
-    def next(self):
+    def next(self) -> None:
         client = self.focus_next(self.current.client, wrap=self.wrap_clients)
         if client:
             self.group.focus(client, True)
 
     @expose_command()
-    def previous(self):
+    def previous(self) -> None:
         client = self.focus_previous(self.current.client, wrap=self.wrap_clients)
         if client:
             self.group.focus(client, True)

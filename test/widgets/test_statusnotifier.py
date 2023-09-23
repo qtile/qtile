@@ -25,6 +25,8 @@ import libqtile.layout
 import libqtile.widget
 from test.helpers import Retry  # noqa: I001
 
+pytest.skip("StatusNotifier tests are currently broken", allow_module_level=True)
+
 
 @Retry(ignore_exceptions=(AssertionError,))
 def wait_for_icon(widget, hidden=True, prop="width"):

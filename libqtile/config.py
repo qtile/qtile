@@ -66,16 +66,24 @@ class Key:
         commands should be separated by commas.
     desc:
         Description to be added to the key binding. (Optional)
-
+    swallow:
+        Configures when we swallow the key binding. (Optional)
+        Setting it to False will forward the key binding to the focused window after the commands have been executed.
     """
 
     def __init__(
-        self, modifiers: list[str], key: str, *commands: LazyCall, desc: str = ""
+        self,
+        modifiers: list[str],
+        key: str,
+        *commands: LazyCall,
+        desc: str = "",
+        swallow: bool = True,
     ) -> None:
         self.modifiers = modifiers
         self.key = key
         self.commands = commands
         self.desc = desc
+        self.swallow = swallow
 
     def __repr__(self) -> str:
         return "<Key (%s, %s)>" % (self.modifiers, self.key)
@@ -106,6 +114,9 @@ class KeyChord:
         A string to describe the chord. This attribute is not directly used by Qtile
         but users may want to access this when creating scripts to show configured
         keybindings.
+    swallow:
+        Configures when we swallow the key binding of the chord. (Optional)
+        Setting it to False will forward the key binding to the focused window after the commands have been executed.
     """
 
     def __init__(
@@ -116,6 +127,7 @@ class KeyChord:
         mode: bool | str = False,
         name: str = "",
         desc: str = "",
+        swallow: bool = True,
     ):
         self.modifiers = modifiers
         self.key = key
@@ -135,6 +147,7 @@ class KeyChord:
             )
             self.name = mode
             self.mode = True
+        self.swallow = swallow
 
     def __repr__(self) -> str:
         return "<KeyChord (%s, %s)>" % (self.modifiers, self.key)
@@ -283,6 +296,42 @@ class EzKey(EzConfig, Key):
         super().__init__(modkeys, key, *commands, desc=desc)
 
 
+class EzKeyChord(EzConfig, KeyChord):
+    """
+    Define a key chord using the Emacs-like format.
+
+    Parameters
+    ==========
+    keydef:
+        The Emacs-like key specification, e.g. ``"M-S-a"``.
+    submappings:
+        A list of :class:`Key` or :class:`KeyChord` declarations to bind in this chord.
+    mode:
+        Boolean. Setting to ``True`` will result in the chord persisting until
+        Escape is pressed. Setting to ``False`` (default) will exit the chord once
+        the sequence has ended.
+    name:
+        A string to name the chord. The name will be displayed in the Chord
+        widget.
+    desc:
+        A string to describe the chord. This attribute is not directly used by Qtile
+        but users may want to access this when creating scripts to show configured
+        keybindings.
+
+    """
+
+    def __init__(
+        self,
+        keydef: str,
+        submappings: list[Key | KeyChord],
+        mode: bool | str = False,
+        name: str = "",
+        desc: str = "",
+    ):
+        modkeys, key = self.parse(keydef)
+        super().__init__(modkeys, key, submappings, mode, name, desc)
+
+
 class EzClick(EzConfig, Click):
     """
     Bind commands to a clicking action using the Emacs-like format.
@@ -369,6 +418,8 @@ class Screen(CommandObject):
     resized to fill it. If the mode is ``"stretch"``, the image is stretched to fit all
     of it into the screen.
 
+    The ``x11_drag_polling_rate`` parameter specifies the rate for drag events in the X11 backend. By default this is set to None, indicating no limit. Because in the X11 backend we already handle motion notify events later, the performance should already be okay. However, to limit these events further you can use this variable and e.g. set it to your monitor refresh rate. 60 would mean that we handle a drag event 60 times per second.
+
     """
 
     group: _Group
@@ -382,18 +433,19 @@ class Screen(CommandObject):
         right: BarType | None = None,
         wallpaper: str | None = None,
         wallpaper_mode: str | None = None,
+        x11_drag_polling_rate: int | None = None,
         x: int | None = None,
         y: int | None = None,
         width: int | None = None,
         height: int | None = None,
     ) -> None:
-
         self.top = top
         self.bottom = bottom
         self.left = left
         self.right = right
         self.wallpaper = wallpaper
         self.wallpaper_mode = wallpaper_mode
+        self.x11_drag_polling_rate = x11_drag_polling_rate
         self.qtile: Qtile | None = None
         # x position of upper left corner can be > 0
         # if one screen is "right" of the other
@@ -421,9 +473,9 @@ class Screen(CommandObject):
         self.width = width
         self.height = height
 
-        self.set_group(group)
         for i in self.gaps:
             i._configure(qtile, self, reconfigure=reconfigure_gaps)
+        self.set_group(group)
         if self.wallpaper:
             self.wallpaper = os.path.expanduser(self.wallpaper)
             self.paint(self.wallpaper, self.wallpaper_mode)
@@ -587,7 +639,7 @@ class Screen(CommandObject):
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
                 bar.draw()
-        self.qtile.call_soon(self.group.layout_all)
+        self.group.layout_all()
 
     @expose_command()
     def info(self) -> dict[str, int]:
@@ -640,8 +692,8 @@ class Group:
     exclusive:
         When other apps are started in this group, should we allow them here or not?
     spawn:
-        This will be ``exec()`` d when the group is created. Tou can pass either a
-        program name or a list of programs to ``exec()``
+        This will be executed (via ``qtile.spawn()``) when the group is created. You can pass either a
+        program name or a list of programs to ``exec()``.
     layout:
         The name of default layout for this group (e.g. ``"max"``). This is the name
         specified for a particular layout in ``config.py`` or if not defined it defaults
@@ -764,7 +816,13 @@ class ScratchPad(Group):
 
 class Match:
     """
-    Match for dynamic groups or auto-floating windows.
+    Window properties to compare (match) with a window.
+
+    The properties will be compared to a :class:`~libqtile.base.Window` to determine if
+    its properties *match*. It can match by title, wm_class, role, wm_type,
+    wm_instance_class, net_wm_pid, or wid. Additionally, a function may be
+    passed, which takes in the :class:`~libqtile.base.Window` to be compared
+    against and returns a boolean.
 
     For some properties, :class:`Match` supports both regular expression objects (i.e.
     the result of ``re.compile()``) or strings (match as an "include"-match). If a
@@ -788,7 +846,7 @@ class Match:
         Delegate the match to the given function, which receives the tested client as an
         argument and must return ``True`` if it matches, ``False`` otherwise.
     wid:
-        Match against the window ID.
+        Match against the window ID. This is a unique ID given to each window.
 
     """
 
@@ -964,7 +1022,7 @@ class DropDown(configurable.Configurable):
         ),
         ("width", 0.8, "Width of window as fraction of current screen width"),
         ("height", 0.35, "Height of window as fraction of current screen."),
-        ("opacity", 0.9, "Opacity of window as fraction. Zero is opaque."),
+        ("opacity", 0.9, "Opacity of window as fraction. One is opaque."),
         (
             "on_focus_lost_hide",
             True,
@@ -988,7 +1046,7 @@ class DropDown(configurable.Configurable):
         ),
     )
 
-    def __init__(self, name: str, cmd: str, **config: dict[str, Any]) -> None:
+    def __init__(self, name: str, cmd: str, **config: Any) -> None:
         """
         Initialize :class:`DropDown` window wrapper.
 

@@ -65,14 +65,14 @@ class QtileState:
         Rearrange the windows in the specified Qtile object according to this
         QtileState.
         """
-        for (group, layout, label) in self.groups:
+        for group, layout, label in self.groups:
             try:
                 qtile.groups_map[group].layout = layout
                 qtile.groups_map[group].label = label
             except KeyError:
                 qtile.add_group(group, layout, label=label)
 
-        for (screen, group) in self.screens.items():
+        for screen, group in self.screens.items():
             try:
                 group = qtile.groups_map[group]
                 qtile.screens[screen].set_group(group)

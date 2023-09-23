@@ -66,8 +66,10 @@ def test_single_window_states(manager):
     def widget_text():
         return manager.c.bar["top"].info()["widgets"][0]["text"]
 
-    # Default _TextBox text is " " and no hooks fired yet.
-    assert widget_text() == " "
+    # When no windows are spawned the text should be ""
+    # Initially TextBox has " " but the Config.set_group function already
+    # calls focus_change hook, so the text should be updated to ""
+    assert widget_text() == ""
 
     # Load a window
     proc = manager.test_window("one")
@@ -86,8 +88,7 @@ def test_single_window_states(manager):
     manager.c.window.toggle_floating()
     assert widget_text() == "<b>V one</b>"
 
-    # Kill the window and check text again
-    # NB hooks fired so empty string is now ""
+    # Kill the window and check empty string again
     manager.kill_window(proc)
     assert widget_text() == ""
 
@@ -115,7 +116,6 @@ def test_multiple_windows(manager):
 
 @windowtabs_config
 def test_selected(manager):
-
     # Bottom bar widget has custom "selected" indicator
     def widget_text():
         return manager.c.bar["bottom"].info()["widgets"][0]["text"]
@@ -125,3 +125,14 @@ def test_selected(manager):
 
     manager.kill_window(window_one)
     assert widget_text() == ""
+
+
+@windowtabs_config
+def test_escaping_text(manager):
+    """
+    Ampersands can cause a crash if not escaped before passing to
+    pangocffi.parse_markup.
+    Test that the widget can parse text safely.
+    """
+    manager.test_window("Text & Text")
+    assert manager.c.widget["windowtabs"].info()["text"] == "<b>Text &amp; Text</b>"

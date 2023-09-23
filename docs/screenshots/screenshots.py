@@ -40,7 +40,7 @@ class Client:
             self.color += 1
         if isinstance(color, int):
             color = Client.COLORS[color]
-        self.client.spawn("xterm +ls -hold -e printf '\e]11;{}\007'".format(color))
+        self.client.spawn("xterm +ls -hold -e printf '\e]11;{}\007'".format(color))  # noqa: W605
 
     def prepare_layout(self, layout, windows, commands=None):
         # set selected layout

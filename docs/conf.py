@@ -10,11 +10,11 @@
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
-
 import os
-import setuptools_scm
 import sys
 from unittest.mock import MagicMock
+
+import setuptools_scm
 
 
 class Mock(MagicMock):
@@ -27,9 +27,9 @@ class Mock(MagicMock):
 
 MOCK_MODULES = [
     "libqtile._ffi_pango",
+    "libqtile.backend.wayland._ffi",
     "libqtile.backend.x11._ffi_xcursors",
-    "libqtile.widget._pulse_audio",
-    "cairocffi",
+    "cairocffi.ffi",
     "cairocffi.xcb",
     "cairocffi.pixbuf",
     "cffi",
@@ -44,6 +44,8 @@ MOCK_MODULES = [
     "keyring",
     "mpd",
     "psutil",
+    "pulsectl",
+    "pulsectl_asyncio",
     "pywayland",
     "pywayland.protocol.wayland",
     "pywayland.protocol.wayland.wl_output",
@@ -65,17 +67,20 @@ MOCK_MODULES = [
     "wlroots.wlr_types.output_management_v1",
     "wlroots.wlr_types.pointer_constraints_v1",
     "wlroots.wlr_types.output_power_management_v1",
+    "wlroots.wlr_types.scene",
     "wlroots.wlr_types.server_decoration",
     "wlroots.wlr_types.virtual_keyboard_v1",
     "wlroots.wlr_types.virtual_pointer_v1",
     "wlroots.wlr_types.xdg_shell",
     "xcffib",
+    "xcffib.ffi",
     "xcffib.randr",
     "xcffib.render",
     "xcffib.wrappers",
     "xcffib.xfixes",
     "xcffib.xinerama",
     "xcffib.xproto",
+    "xcffib.xtest",
     "xdg.IconTheme",
     "xkbcommon",
 ]
@@ -101,12 +106,12 @@ extensions = [
     "sphinx.ext.graphviz",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
-    "sphinxcontrib.seqdiag",
-    "sphinx_qtile",
     "numpydoc",
+    "sphinx_qtile",
 ]
 
 numpydoc_show_class_members = False
+numpydoc_class_members_toctree = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = []
@@ -260,12 +265,12 @@ htmlhelp_basename = "Qtiledoc"
 # -- Options for LaTeX output --------------------------------------------------
 
 latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #'papersize': 'letterpaper',
-    # The font size ('10pt', '11pt' or '12pt').
-    #'pointsize': '10pt',
-    # Additional stuff for the LaTeX preamble.
-    #'preamble': '',
+    #  The paper size ('letterpaper' or 'a4paper').
+    # 'papersize': 'letterpaper',
+    #  The font size ('10pt', '11pt' or '12pt').
+    # 'pointsize': '10pt',
+    #  Additional stuff for the LaTeX preamble.
+    # 'preamble': '',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
@@ -331,15 +336,17 @@ texinfo_documents = [
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 # texinfo_show_urls = 'footnote'
 
-# only import and set the theme if we're building docs locally
+html_theme = "sphinx_rtd_theme"
+
+# only import and set the theme path if we're building docs locally
 if not os.environ.get("READTHEDOCS"):
     import sphinx_rtd_theme
 
-    html_theme = "sphinx_rtd_theme"
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 
 graphviz_dot_args = ["-Lg"]
+
 
 # A workaround for the responsive tables always having annoying scrollbars.
 def setup(app):

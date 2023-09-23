@@ -266,20 +266,15 @@ class GroupBox(_GroupBase):
         their label. Groups with an empty string as label are never contained.
         Groups that are not named in visible_groups are not returned.
         """
+        groups = filter(lambda g: g.label, self.qtile.groups)
+
         if self.hide_unused:
-            if self.visible_groups:
-                return [
-                    g
-                    for g in self.qtile.groups
-                    if g.label and (g.windows or g.screen) and g.name in self.visible_groups
-                ]
-            else:
-                return [g for g in self.qtile.groups if g.label and (g.windows or g.screen)]
-        else:
-            if self.visible_groups:
-                return [g for g in self.qtile.groups if g.label and g.name in self.visible_groups]
-            else:
-                return [g for g in self.qtile.groups if g.label]
+            groups = filter(lambda g: g.windows or g.screen, groups)
+
+        if self.visible_groups:
+            groups = filter(lambda g: g.name in self.visible_groups, groups)
+
+        return list(groups)
 
     def get_clicked_group(self):
         group = None
@@ -346,7 +341,7 @@ class GroupBox(_GroupBase):
         return width
 
     def group_has_urgent(self, group):
-        return len([w for w in group.windows if w.urgent]) > 0
+        return any(w.urgent for w in group.windows)
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)

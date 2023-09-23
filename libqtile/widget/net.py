@@ -41,7 +41,7 @@ class Net(base.ThreadPoolText):
     defaults = [
         (
             "format",
-            "{interface}: {down} \u2193\u2191 {up}",
+            "{interface}: {down:6.2f}{down_suffix:<2}\u2193\u2191{up:6.2f}{up_suffix:<2}",
             "Display format of down/upload/total speed of given interfaces",
         ),
         (
@@ -123,15 +123,6 @@ class Net(base.ThreadPoolText):
                 }
             return interfaces
 
-    def _format(self, down, down_letter, up, up_letter, total, total_letter):
-        max_len_down = 7 - len(down_letter)
-        max_len_up = 7 - len(up_letter)
-        max_len_total = 7 - len(total_letter)
-        down = "{val:{max_len}.2f}".format(val=down, max_len=max_len_down)
-        up = "{val:{max_len}.2f}".format(val=up, max_len=max_len_up)
-        total = "{val:{max_len}.2f}".format(val=total, max_len=max_len_total)
-        return down[:max_len_down], up[:max_len_up], total[:max_len_total]
-
     def poll(self):
         ret_stat = []
         try:
@@ -144,21 +135,19 @@ class Net(base.ThreadPoolText):
                 down = down / self.update_interval
                 up = up / self.update_interval
                 total = total / self.update_interval
-                down, down_letter = self.convert_b(down)
-                up, up_letter = self.convert_b(up)
-                total, total_letter = self.convert_b(total)
-                down, up, total = self._format(
-                    down, down_letter, up, up_letter, total, total_letter
-                )
+                down, down_suffix = self.convert_b(down)
+                up, up_suffix = self.convert_b(up)
+                total, total_suffix = self.convert_b(total)
                 self.stats[intf] = new_stats[intf]
                 ret_stat.append(
                     self.format.format(
-                        **{
-                            "interface": intf,
-                            "down": down + down_letter,
-                            "up": up + up_letter,
-                            "total": total + total_letter,
-                        }
+                        interface=intf,
+                        down=down,
+                        down_suffix=down_suffix,
+                        up=up,
+                        up_suffix=up_suffix,
+                        total=total,
+                        total_suffix=total_suffix,
                     )
                 )
 
