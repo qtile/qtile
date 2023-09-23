@@ -304,8 +304,10 @@ class Floating(Layout):
 
     @expose_command()
     def info(self) -> dict[str, Any]:
-        d = Layout.info(self)
-        d["clients"] = [c.name for c in self.clients]
+        d = dict(
+            name=self.name,
+            clients=[c.name for c in self.clients],
+        )
         return d
 
     @expose_command()

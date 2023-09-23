@@ -64,7 +64,12 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
 
     @property
     def group(self) -> _Group:
-        """Returns the group this layout is attached to"""
+        """
+        Returns the group this layout is attached to.
+
+        Layouts start out unattached, and are attached when the group is configured and
+        each layout is cloned for every group.
+        """
         if self._group is None:
             raise RuntimeError("Layout group accessed too early")
         return self._group
