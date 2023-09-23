@@ -44,6 +44,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         - Add ability to have different border and margin widths when VerticalTile layout only contains 1 window by
           setting 'single_border_width' and 'single_margin' keys.
         - New widget: GenPollCommand
+        - Add `format` and `play_icon` parameters for styling cmus widget.
         - Add ability to add a group at a specified index
         - Add ability to spawn the `WidgetBox` widget opened.
         - Add ability to swap focused window based on index, and change the order of windows inside current group
