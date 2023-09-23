@@ -125,6 +125,13 @@ def test_completion():
     assert c.actual() == s
     c.reset()
 
+    assert c.complete("z", aliases={"z": "a"}) == "z"
+    assert c.actual() == "a"
+    c.reset()
+    assert c.complete("/bi", aliases={"z": "a"}) == "/bin/"
+    assert c.actual() == "/bin"
+    c.reset()
+
 
 @gb_config
 def test_draw(manager):
