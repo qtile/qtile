@@ -1,4 +1,8 @@
 Qtile x.xx.x, released XXXX-XX-XX:
+    * features
+    * bugfixes
+
+Qtile 0.23.0, released 2023-09-24:
     !!! Dependency Changes !!!
       - xcffib must be upgraded to >= 1.4.0
       - cairocffi must be upgraded to >= 1.6.0
