@@ -26,21 +26,24 @@ __all__ = ["Memory"]
 
 
 class Memory(base.ThreadPoolText):
-    """Displays memory/swap usage
+    """Display memory/swap usage.
 
-    MemUsed: Returns memory in use
-    MemTotal: Returns total amount of memory
-    MemFree: Returns amount of memory free
-    MemPercent: Returns memory in use as a percentage
-    Buffers: Returns buffer amount
-    Active: Returns active memory
-    Inactive: Returns inactive memory
-    Shmem: Returns shared memory
-    SwapTotal: Returns total amount of swap
-    SwapFree: Returns amount of swap free
-    SwapUsed: Returns amount of swap in use
-    SwapPercent: Returns swap in use as a percentage
+    The following fields are available in the `format` string:
 
+    - ``MemUsed``: Memory in use.
+    - ``MemTotal``: Total amount of memory.
+    - ``MemFree``: Amount of memory free.
+    - ``MemPercent``: Memory in use as a percentage.
+    - ``Buffers``: Buffer amount.
+    - ``Active``: Active memory.
+    - ``Inactive``: Inactive memory.
+    - ``Shmem``: Shared memory.
+    - ``SwapTotal``: Total amount of swap.
+    - ``SwapFree``: Amount of swap free.
+    - ``SwapUsed``: Amount of swap in use.
+    - ``SwapPercent``: Swap in use as a percentage.
+    - ``mm``: Measure unit for memory.
+    - ``ms``: Measure unit for swap.
 
     Widget requirements: psutil_.
 
