@@ -94,7 +94,7 @@ try:
     # Continue if ffi not built, so that docs can be built without wayland deps.
     from libqtile.backend.wayland._ffi import lib
 except ModuleNotFoundError:
-    pass
+    print("Warning: Wayland backend not built. Backend will not run.")
 
 if TYPE_CHECKING:
     from typing import Any, Generator
