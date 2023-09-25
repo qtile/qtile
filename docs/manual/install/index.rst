@@ -116,6 +116,13 @@ With the dependencies in place, you can now install the stable version of qtile 
 
    pip install qtile
 
+Or with sets of dependencies:
+
+.. code-block:: bash
+
+   pip install qtile[wayland]  # for Wayland dependencies
+   pip install qtile[widgets]  # for all widget dependencies
+   pip install qtile[all]      # for all dependencies
 
 Or install qtile-git with:
 
