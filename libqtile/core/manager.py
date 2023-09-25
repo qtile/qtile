@@ -1580,7 +1580,7 @@ class Qtile(CommandObject):
 
         try:
             mb = self.widgets_map[widget]
-            mb.start_input(prompt, f, complete)
+            mb.start_input(prompt, f, complete, aliases=aliases)
         except KeyError:
             logger.error("No widget named '%s' present.", widget)
 

@@ -62,8 +62,13 @@ class AbstractCompleter(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def complete(self, txt: str) -> str:
-        """Perform the requested completion on the given text"""
+    def complete(self, txt: str, aliases: dict[str, str] | None = None) -> str:
+        """
+        Perform the requested completion on the given text.
+
+        The completer can optionally support aliases, which map strings to commands. The
+        completer should include the aliases in the completion results.
+        """
         pass  # pragma: no cover
 
 
@@ -77,7 +82,7 @@ class NullCompleter(AbstractCompleter):
     def reset(self) -> None:
         pass
 
-    def complete(self, txt: str) -> str:
+    def complete(self, txt: str, _aliases: dict[str, str] | None = None) -> str:
         return txt
 
 
@@ -95,7 +100,7 @@ class FileCompleter(AbstractCompleter):
     def reset(self) -> None:
         self.lookup = None
 
-    def complete(self, txt: str) -> str:
+    def complete(self, txt: str, _aliases: dict[str, str] | None = None) -> str:
         """Returns the next completion for txt, or None if there is no completion"""
         if self.lookup is None:
             self.lookup = []
@@ -140,7 +145,7 @@ class QshCompleter(AbstractCompleter):
         self.path = ""
         self.offset = -1
 
-    def complete(self, txt: str) -> str:
+    def complete(self, txt: str, _aliases: dict[str, str] | None = None) -> str:
         txt = txt.lower()
         if self.lookup is None:
             self.lookup = []
@@ -194,7 +199,7 @@ class GroupCompleter(AbstractCompleter):
         self.lookup = None
         self.offset = -1
 
-    def complete(self, txt: str) -> str:
+    def complete(self, txt: str, _aliases: dict[str, str] | None = None) -> str:
         """Returns the next completion for txt, or None if there is no completion"""
         txt = txt.lower()
         if not self.lookup:
@@ -230,7 +235,7 @@ class WindowCompleter(AbstractCompleter):
         self.lookup = None
         self.offset = -1
 
-    def complete(self, txt: str) -> str:
+    def complete(self, txt: str, _aliases: dict[str, str] | None = None) -> str:
         """Returns the next completion for txt, or None if there is no completion"""
         if self.lookup is None:
             self.lookup = []
@@ -277,7 +282,7 @@ class CommandCompleter:
         self.lookup = None
         self.offset = -1
 
-    def complete(self, txt: str) -> str:
+    def complete(self, txt: str, aliases: dict[str, str] | None = None) -> str:
         """Returns the next completion for txt, or None if there is no completion"""
         if self.lookup is None:
             # Lookup is a set of (display value, actual value) tuples.
@@ -309,6 +314,12 @@ class CommandCompleter:
                                 )
                     except OSError:
                         pass
+
+            if aliases:
+                for alias in aliases:
+                    if alias.startswith(txt):
+                        self.lookup.append((alias, aliases[alias]))
+
             self.lookup.sort()
             self.offset = -1
             self.lookup.append((txt, txt))
@@ -358,6 +369,7 @@ class Prompt(base._TextBox):
         self.add_defaults(Prompt.defaults)
         self.active = False
         self.completer = None  # type: AbstractCompleter | None
+        self.aliases: dict[str, str] | None = None
 
         # If history record is on, get saved history or create history record
         if self.record_history:
@@ -430,7 +442,13 @@ class Prompt(base._TextBox):
             self.original_background = self.background
 
     def start_input(
-        self, prompt, callback, complete=None, strict_completer=False, allow_empty_input=False
+        self,
+        prompt,
+        callback,
+        complete=None,
+        strict_completer=False,
+        allow_empty_input=False,
+        aliases: dict[str, str] | None = None,
     ) -> None:
         """Run the prompt
 
@@ -457,6 +475,9 @@ class Prompt(base._TextBox):
             available.
         allow_empty_input :
             When True, an empty value will still call the callback function
+        aliases :
+            Dictionary mapping aliases to commands. If the entered command is a key in
+            this dict, the command it maps to will be executed instead.
         """
 
         if self.cursor and self.cursorblink and not self.active:
@@ -469,6 +490,7 @@ class Prompt(base._TextBox):
         self.show_cursor = self.cursor
         self.cursor_position = 0
         self.callback = callback
+        self.aliases = aliases
         self.completer = self.completers[complete](self.qtile)
         self.strict_completer = strict_completer
         self.allow_empty_input = allow_empty_input
@@ -521,7 +543,7 @@ class Prompt(base._TextBox):
     def _trigger_complete(self) -> None:
         # Trigger the auto completion in user input
         assert self.completer is not None
-        self.user_input = self.completer.complete(self.user_input)
+        self.user_input = self.completer.complete(self.user_input, self.aliases)
         self.cursor_position = len(self.user_input)
 
     def _history_to_input(self) -> None:
