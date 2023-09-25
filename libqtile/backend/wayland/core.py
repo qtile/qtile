@@ -339,16 +339,6 @@ class Core(base.Core, wlrq.HasListeners):
         # Start
         self.backend.start()
 
-        # Place cursor in middle of centre output
-        x = y = 0
-        box = self.output_layout.get_box()
-        if output := self.output_layout.output_at(box.width / 2, box.height / 2):
-            box = self.output_layout.get_box(reference=output, dest_box=box)
-            x = box.x + box.width / 2
-            y = box.y + box.height / 2
-        self.warp_pointer(x, y)
-        self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
-
     @property
     def name(self) -> str:
         return "wayland"
@@ -436,9 +426,6 @@ class Core(base.Core, wlrq.HasListeners):
         output = Output(self, wlr_output)
         self.outputs.append(output)
 
-        if not self._current_output:
-            self._current_output = output
-
         # This is run during tests, when we want to fix the output's geometry
         if wlr_output.is_headless and "PYTEST_CURRENT_TEST" in os.environ:
             if len(self.outputs) == 1:
@@ -451,6 +438,17 @@ class Core(base.Core, wlrq.HasListeners):
 
         # Let the output layout place it
         self.output_layout.add_auto(wlr_output)
+
+        # Set the current output as we have none defined
+        # Now that we have our first output we can warp the pointer there too
+        # We also set the cursor image as we're initializing the cursor here anyways
+        if not self._current_output:
+            self._current_output = output
+            self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+            box = Box(*output.get_geometry())
+            x = box.x + box.width / 2
+            y = box.y + box.height / 2
+            self.warp_pointer(x, y)
 
     def _on_output_layout_change(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: output_layout change_event")
