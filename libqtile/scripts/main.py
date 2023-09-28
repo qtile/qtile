@@ -73,13 +73,16 @@ def main():
     if func := getattr(options, "func", None):
         log_level = getattr(logging, options.log_level)
         init_log(log_level, log_path=options.log_path)
-        func(options)
+        # TODO: make these return bools
+        ret_val = int(bool(func(options)))
     else:
         main_parser.print_usage()
         print("")
         print("Did you mean:")
         print(" ".join(sys.argv + ["start"]))
-        sys.exit(1)
+        ret_val = 1
+
+    sys.exit(ret_val)
 
 
 if __name__ == "__main__":

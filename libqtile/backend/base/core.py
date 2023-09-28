@@ -56,6 +56,16 @@ class Core(CommandObject, metaclass=ABCMeta):
     def get_screen_info(self) -> list[tuple[int, int, int, int]]:
         """Get the screen information"""
 
+    @staticmethod
+    def get_keys() -> list[str] | None:
+        """Get a list of valid keys."""
+        return None
+
+    @staticmethod
+    def get_modifiers() -> list[str] | None:
+        """Get a list of valid modifier keys."""
+        return None
+
     @abstractmethod
     def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
         """Configure the backend to grab the key event"""

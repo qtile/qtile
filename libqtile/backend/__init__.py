@@ -8,8 +8,8 @@ CORES = [
 ]
 
 
-def get_core(backend, *args):
+def get_core(backend):
     if backend not in CORES:
         raise QtileError(f"Backend {backend} does not exist")
 
-    return importlib.import_module(f"libqtile.backend.{backend}.core").Core(*args)
+    return importlib.import_module(f"libqtile.backend.{backend}.core").Core

@@ -111,13 +111,12 @@ class Qtile(CommandObject):
     def load_config(self, initial: bool = False) -> None:
         try:
             self.config.load()
-            self.config.validate()
         except Exception as e:
             logger.exception("Configuration error:")
             send_notification("Configuration error", str(e))
 
         if hasattr(self.core, "wmname"):
-            self.core.wmname = getattr(self.config, "wmname", "qtile")  # type: ignore
+            self.core.wmname = self.config.wmname  # type: ignore
 
         self.dgroups = DGroups(self, self.config.groups, self.config.dgroups_key_binder)
 
@@ -246,7 +245,7 @@ class Qtile(CommandObject):
         if not self.core.supports_restarting:
             raise CommandError(f"Backend does not support restarting: {self.core.name}")
         try:
-            self.config.load()
+            self.config.validate()
         except Exception as error:
             logger.exception("Preventing restart because of a configuration error:")
             send_notification("Configuration error", str(error.__context__))
@@ -281,7 +280,7 @@ class Qtile(CommandObject):
         logger.debug("Reloading the configuration file")
 
         try:
-            self.config.load()
+            self.config.validate()
         except Exception as error:
             logger.exception("Configuration error:")
             send_notification("Configuration error", str(error))
@@ -350,7 +349,7 @@ class Qtile(CommandObject):
         current_groups = [s.group for s in self.screens]
         screens = []
 
-        if hasattr(self.config, "fake_screens"):
+        if self.config.fake_screens:
             screen_info = [(s.x, s.y, s.width, s.height) for s in self.config.fake_screens]
             config = self.config.fake_screens
         else:
@@ -1210,7 +1209,7 @@ class Qtile(CommandObject):
     @expose_command()
     def validate_config(self) -> None:
         try:
-            self.config.load()
+            self.config.validate()
         except Exception as error:
             send_notification("Configuration check", str(error))
         else:

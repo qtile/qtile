@@ -32,9 +32,8 @@ from __future__ import annotations
 import xcffib
 from xcffib.xproto import ClientMessageData, ClientMessageEvent, EventMask, SetMode
 
-from libqtile import bar
+from libqtile import bar, confreader
 from libqtile.backend.x11 import window
-from libqtile.confreader import ConfigError
 from libqtile.widget import base
 
 XEMBED_PROTOCOL_VERSION = 0
@@ -151,7 +150,7 @@ class Systray(base._Widget, window._Window):  # type: ignore[misc]
             return
 
         if Systray._instances > 0:
-            raise ConfigError("Only one Systray can be used.")
+            raise confreader.ConfigError("Only one Systray can be used.")
 
         self.conn = conn = qtile.core.conn
         win = conn.create_window(-1, -1, 1, 1)

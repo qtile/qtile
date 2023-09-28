@@ -23,6 +23,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+#
+#
+# See the documentation for a reference on all options at:
+# http://docs.qtile.org/en/stable/manual/config/index.html#configuration-variables.
+# This config specifies default values that Qtile uses internally as fallback values in
+# case your own config doesn't contain a certain option. The first time you use Qtile it
+# will make a copy of this config at ~/.config/qtile/config.py. Feel free to remove any
+# config options if you're happy with the defaults.
 
 from libqtile import bar, layout, widget
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
@@ -197,6 +205,10 @@ auto_minimize = True
 
 # When using the Wayland backend, this can be used to configure input devices.
 wl_input_rules = None
+
+# This can be used instead of `screens` to split a physical monitor into multiple
+# 'screens': http://docs.qtile.org/en/stable/manual/config/screens.html#fake-screens
+fake_screens = None
 
 # XXX: Gasp! We're lying here. In fact, nobody really uses or cares about this
 # string besides java UI toolkits; you can see several discussions on the

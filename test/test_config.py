@@ -35,7 +35,13 @@ def load_config(name):
     return f
 
 
-def test_validate():
+def test_validate_types():
+    f = confreader.Config(configs_dir / "bad_type.py")
+    with pytest.raises(confreader.ConfigError):
+        f.load()
+
+
+def test_validate_values():
     # bad key
     f = load_config("basic.py")
     f.keys[0].key = "nonexistent"
@@ -55,7 +61,7 @@ def test_basic():
 
 
 def test_syntaxerr():
-    with pytest.raises(SyntaxError):
+    with pytest.raises(confreader.ConfigError):
         load_config("syntaxerr.py")
 
 

@@ -57,14 +57,6 @@ _IGNORED_EVENTS = {
 }
 
 
-def get_keys() -> list[str]:
-    return list(xcbq.keysyms.keys())
-
-
-def get_modifiers() -> list[str]:
-    return list(xcbq.ModMasks.keys())
-
-
 class ExistingWMException(Exception):
     pass
 
@@ -231,6 +223,14 @@ class Core(base.Core):
             loop = asyncio.get_running_loop()
             loop.remove_reader(self.fd)
             self.fd = None
+
+    @staticmethod
+    def get_keys() -> list[str] | None:
+        return list(xcbq.keysyms.keys())
+
+    @staticmethod
+    def get_modifiers() -> list[str] | None:
+        return list(xcbq.ModMasks.keys())
 
     def on_config_load(self, initial) -> None:
         """Assign windows to groups"""

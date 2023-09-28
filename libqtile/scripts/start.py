@@ -48,7 +48,7 @@ def rename_process():
 
 
 def make_qtile(options):
-    kore = libqtile.backend.get_core(options.backend)
+    kore = libqtile.backend.get_core(options.backend)()
 
     if not path.isfile(options.configfile):
         try:

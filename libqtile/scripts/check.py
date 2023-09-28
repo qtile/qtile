@@ -27,7 +27,7 @@ from os import environ, getenv, path
 from libqtile import confreader
 
 
-def type_check_config_vars(tempdir, config_name):
+def type_check_config_vars(tempdir: str, config_name: str) -> bool:
     # write a .pyi file to tempdir:
     f = open(path.join(tempdir, config_name + ".pyi"), "w")
     f.write(confreader.config_pyi_header)
@@ -81,20 +81,20 @@ def type_check_config_vars(tempdir, config_name):
         env=newenv,
     )
     p.wait()
-    if p.returncode != 0:
-        sys.exit(1)
+    return p.returncode == 0
 
 
-def type_check_config_args(config_file):
+def type_check_config_args(config_file: str) -> bool:
     try:
-        subprocess.check_call(["mypy", config_file])
+        subprocess.check_call(["mypy", "--ignore-missing-imports", config_file])
         print("Config file type checking succeeded!")
     except subprocess.CalledProcessError as e:
-        print("Config file type checking failed: {}".format(e))
-        sys.exit(1)
+        print("Config file type checking failed:", e)
+        return False
+    return True
 
 
-def check_deps() -> None:
+def _has_deps() -> bool:
     ok = True
 
     for dep in ["mypy", "stubtest"]:
@@ -102,14 +102,15 @@ def check_deps() -> None:
             print(f"{dep} was not found in PATH. Please install it, add to PATH and try again.")
             ok = False
 
-    if not ok:
-        sys.exit(1)
+    return ok
 
 
-def check_config(args):
-    check_deps()
+def check_config(args) -> bool:
+    if not _has_deps():
+        return False
 
-    print("Checking Qtile config at: {}".format(args.configfile))
+    failed = False
+    print("Checking Qtile config at:", args.configfile)
 
     # need to do all the checking in a tempdir because we need to write stuff
     # for stubtest
@@ -119,16 +120,23 @@ def check_config(args):
 
         # are the top level config variables the right type?
         module_name = path.splitext(path.basename(args.configfile))[0]
-        type_check_config_vars(tempdir, module_name)
+        if not type_check_config_vars(tempdir, module_name):
+            failed = True
 
         # are arguments passed to qtile APIs correct?
-        type_check_config_args(tmp_path)
+        if not type_check_config_args(tmp_path):
+            failed = True
 
     # can we load the config?
     config = confreader.Config(args.configfile)
-    config.load()
-    config.validate()
-    print("Your config can be loaded by Qtile.")
+    try:
+        config.validate()
+        print("\nYour config can be loaded by Qtile.")
+    except confreader.ConfigError as e:
+        print(e)
+        print("\nYour config cannot be loaded by Qtile.")
+
+    return failed
 
 
 def add_subcommand(subparsers, parents):
