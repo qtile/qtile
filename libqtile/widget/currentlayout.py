@@ -25,6 +25,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import itertools
 import os
 
 from libqtile import bar, hook
@@ -160,7 +161,8 @@ class CurrentLayoutIcon(base._TextBox):
                 self.drawer.clear(self.background or self.bar.background)
                 self.drawer.ctx.save()
                 self.drawer.ctx.translate(
-                    (self.width - surface.width) / 2, (self.bar.height - surface.height) / 2
+                    (self.width - surface.width) / 2,
+                    (self.bar.height - surface.height) / 2,
                 )
                 self.drawer.ctx.set_source(surface.pattern)
                 self.drawer.ctx.paint()
@@ -173,12 +175,16 @@ class CurrentLayoutIcon(base._TextBox):
 
     def _get_layout_names(self):
         """
-        Returns a list of tuples of lowercased layout name and class name strings for each available layout.
+        Returns a sequence of tuples of layout name and lowercased class name
+        strings for each available layout.
         """
-        return [
-            (layout.name, layout.__class__.__name__.lower())
-            for layout in self.qtile.config.layouts
-        ]
+
+        layouts = itertools.chain(
+            self.qtile.config.layouts,
+            (layout for group in self.qtile.config.groups for layout in group.layouts),
+        )
+
+        return set((layout.name, layout.__class__.__name__.lower()) for layout in layouts)
 
     def _update_icon_paths(self):
         self.icon_paths = []
