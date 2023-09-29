@@ -358,7 +358,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             logger.warning(
                 "Widget removed: %s does not support %s.",
                 widget.__class__.__name__,
-                self.qtile.core,
+                self.qtile.core.name,
             )
             return False
 
