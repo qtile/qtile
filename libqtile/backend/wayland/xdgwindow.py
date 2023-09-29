@@ -194,25 +194,36 @@ class XdgWindow(Window[XdgSurface]):
             # Likely still pending, ignore this request.
             return
 
+        # For "focus", always focus the window.
         if focus_on_window_activation == "focus":
-            logger.debug("Focusing window (focus_on_window_activation='focus')")
+            logger.debug(
+                "Focusing window (focus_on_window_activation='%s')", focus_on_window_activation
+            )
             self.qtile.current_screen.set_group(self.group)
             self.group.focus(self)
+            return
 
-        elif focus_on_window_activation == "smart":
-            if not self.group.screen:
-                logger.debug("Ignoring focus request (focus_on_window_activation='smart')")
-            elif self.group.screen == self.qtile.current_screen:
-                logger.debug("Focusing window (focus_on_window_activation='smart')")
-                self.qtile.current_screen.set_group(self.group)
-                self.group.focus(self)
-            else:
-                self._urgent = True
-                hook.fire("client_urgent_hint_changed", self)
+        # For "never", do nothing.
+        if focus_on_window_activation == "never":
+            return
 
-        elif focus_on_window_activation == "urgent":
-            self._urgent = True
-            hook.fire("client_urgent_hint_changed", self)
+        # For "smart", focus the window if it's on the current screen.
+        if (
+            focus_on_window_activation == "smart"
+            and self.group.screen == self.qtile.current_screen
+        ):
+            logger.debug("Focusing window (focus_on_window_activation='smart')")
+            self.qtile.current_screen.set_group(self.group)
+            self.group.focus(self)
+            return
+
+        # Otherwise ("smart" on other screen, or "urgent"), mark the window as urgent.
+        logger.debug(
+            "Marking window as urgent (focus_on_window_activation='%s')",
+            focus_on_window_activation,
+        )
+        self._urgent = True
+        hook.fire("client_urgent_hint_changed", self)
 
     def place(
         self,
