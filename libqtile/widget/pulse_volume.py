@@ -191,7 +191,9 @@ class PulseVolume(Volume):
     serves no purpose for this widget).
 
     The widget relies on the `pulsectl_asyncio <https://pypi.org/project/pulsectl-asyncio/>`__
-    library to access the libpulse bindings.
+    library to access the libpulse bindings. If you are using python 3.11 you must use
+    ``pulsectl_asyncio >= 1.0.0``.
+
     """
 
     defaults = [
