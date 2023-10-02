@@ -22,9 +22,10 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from os import environ, getenv, path
+from os import environ, path
 
 from libqtile import confreader
+from libqtile.utils import get_config_file
 
 
 def type_check_config_vars(tempdir, config_name):
@@ -139,9 +140,7 @@ def add_subcommand(subparsers, parents):
         "-c",
         "--config",
         action="store",
-        default=path.expanduser(
-            path.join(getenv("XDG_CONFIG_HOME", "~/.config"), "qtile", "config.py")
-        ),
+        default=get_config_file(),
         dest="configfile",
         help="Use the specified configuration file.",
     )
