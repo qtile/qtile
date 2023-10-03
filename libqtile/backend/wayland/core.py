@@ -246,7 +246,7 @@ class Core(base.Core, wlrq.HasListeners):
         # Set up shell
         self.xdg_shell = XdgShell(self.display)
         self.add_listener(self.xdg_shell.new_surface_event, self._on_new_xdg_surface)
-        self.layer_shell = LayerShellV1(self.display)
+        self.layer_shell = LayerShellV1(self.display, 4)
         self.add_listener(self.layer_shell.new_surface_event, self._on_new_layer_surface)
 
         # Set up scene-graph tree, which looks like this from bottom to top:
