@@ -227,40 +227,27 @@ class Dnd(HasListeners):
 
     def __init__(self, core: Core, wlr_drag: data_device_manager.Drag):
         self.core = core
-        self.x: float = core.cursor.x
-        self.y: float = core.cursor.y
-        self.width: int = 0  # Set upon surface commit
-        self.height: int = 0
-
         self.icon = cast(data_device_manager.DragIcon, wlr_drag.icon)
         self.add_listener(self.icon.destroy_event, self._on_destroy)
-        self.add_listener(self.icon.surface.commit_event, self._on_icon_commit)
+        self.node = SceneTree.drag_icon_create(core.drag_icon_tree, self.icon).node
 
-        tree = SceneTree.subsurface_tree_create(core.drag_icon_tree, self.icon.surface)
-        self.node = tree.node
-
+        # The data handle at .data is used for finding what's under the cursor when it's
+        # moved.
         self.data_handle = ffi.new_handle(self)
         self.node.data = self.data_handle
 
     def finalize(self) -> None:
         self.finalize_listeners()
         self.core.live_dnd = None
-        self.node.data = None
         self.node.destroy()
+        self.node.data = None
         self.data_handle = None
 
     def _on_destroy(self, _listener: Listener, _event: Any) -> None:
         logger.debug("Signal: wlr_drag destroy")
         self.finalize()
 
-    def _on_icon_commit(self, _listener: Listener, _event: Any) -> None:
-        self.width = self.icon.surface.current.width
-        self.height = self.icon.surface.current.height
-        self.position(self.core.cursor.x, self.core.cursor.y)
-
     def position(self, cx: float, cy: float) -> None:
-        self.x = cx
-        self.y = cy
         self.node.set_position(int(cx), int(cy))
 
 
