@@ -14,11 +14,13 @@ Qtile looks in the following places for a configuration file, in order:
 * The location specified by the ``-c`` argument.
 * ``$XDG_CONFIG_HOME/qtile/config.py``, if it is set
 * ``~/.config/qtile/config.py``
+* first ``qtile/config.py`` found in ``$XDG_CONFIG_DIRS`` (defaults to ``/etc/xdg``)
 * It reads the module ``libqtile.resources.default_config``, included by
   default with every Qtile installation.
 
 Qtile will try to create the configuration file as a copy of the default
-config, if it doesn't exist yet.
+config, if it doesn't exist yet, this one will be placed inside of 
+``$XDG_CONFIG_HOME/qtile/config.py`` (if set) or ``~/.config/qtile/config.py``.
 
 Default Configuration
 =====================
