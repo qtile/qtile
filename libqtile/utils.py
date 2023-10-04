@@ -200,20 +200,18 @@ def get_cache_dir() -> str:
         os.makedirs(cache_directory)
     return cache_directory
 
-def _get_config_file():
+
+def get_config_file():
     config_home = os.getenv("XDG_CONFIG_HOME", "~/.config")
-    if (config_file:= Path(f"{config_home}/qtile/config.py")).exists():
+    if (config_file := Path(f"{config_home}/qtile/config.py").expanduser()).exists():
         return config_file
 
     xdg_config_dirs = os.getenv("XDG_CONFIG_DIRS", "/etc/xdg/").split(":")
     for config_dir in xdg_config_dirs:
-        if (system_wide_config := Path(f"{config_dir}/qtile/config.py")).exists():
+        if (system_wide_config := Path(f"{config_dir}/qtile/config.py")).expanduser().exists():
             return system_wide_config
 
     return config_file
-
-def get_config_file():
-    return _get_config_file().expanduser()
 
 
 def describe_attributes(obj: Any, attrs: list[str], func: Callable = lambda x: x) -> str:
