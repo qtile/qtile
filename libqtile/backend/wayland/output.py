@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from pywayland.server import Listener
+    from wlroots.wlr_types.output import OutputEventRequestState
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.layer import LayerStatic
@@ -67,6 +68,7 @@ class Output(HasListeners):
 
         self.add_listener(wlr_output.destroy_event, self._on_destroy)
         self.add_listener(wlr_output.frame_event, self._on_frame)
+        self.add_listener(wlr_output.request_state_event, self._on_request_state)
 
         # The layers enum indexes into this list to get a list of surfaces
         self.layers: list[list[LayerStatic]] = [[] for _ in range(len(LayerShellV1Layer))]
@@ -104,6 +106,10 @@ class Output(HasListeners):
 
         # Inform clients of the frame
         self.scene_output.send_frame_done(Timespec.get_monotonic_time())
+
+    def _on_request_state(self, _listener: Listener, request: OutputEventRequestState) -> None:
+        logger.debug("Signal: output request_state")
+        self.wlr_output.commit_state(request.state)
 
     def get_geometry(self) -> tuple[int, int, int, int]:
         width, height = self.wlr_output.effective_resolution()
