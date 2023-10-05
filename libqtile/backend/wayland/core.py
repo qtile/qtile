@@ -437,7 +437,9 @@ class Core(base.Core, wlrq.HasListeners):
             wlr_output.commit()
 
         # Let the output layout place it
-        self.output_layout.add_auto(wlr_output)
+        if not self.output_layout.add_auto(wlr_output):
+            logger.warning("Failed to add output to layout.")
+            return
 
         # Set the current output as we have none defined
         # Now that we have our first output we can warp the pointer there too
@@ -877,7 +879,8 @@ class Core(base.Core, wlrq.HasListeners):
 
                 # `add` will add outputs that have been removed. Any other outputs that
                 # are already in the layout are just moved as if we had used `move`.
-                self.output_layout.add(wlr_output, state.x, state.y)
+                if not self.output_layout.add(wlr_output, state.x, state.y):
+                    logger.warning("Failed to add output to layout.")
                 wlr_output.set_transform(state.transform)
                 wlr_output.set_scale(state.scale)
             else:
