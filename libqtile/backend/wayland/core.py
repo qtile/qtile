@@ -542,9 +542,8 @@ class Core(base.Core, wlrq.HasListeners):
                 raise RuntimeError("Can't place a popup without any outputs enabled.")
 
             parent_surface = xdg_surface.popup.parent
-            if parent_surface.is_xdg_surface:
+            if parent_xdg_surface := XdgSurface.try_from_surface(parent_surface):
                 # An XDG shell window or popup created this popup
-                parent_xdg_surface = XdgSurface.from_surface(parent_surface)
 
                 if parent_xdg_surface.role == XdgSurfaceRole.TOPLEVEL:
                     # If the immediate parent is a toplevel, we're a level 1 popup
@@ -919,12 +918,14 @@ class Core(base.Core, wlrq.HasListeners):
             return
 
         surface = event.surface
-        if surface and surface.is_xdg_surface:
-            xdg_surface = XdgSurface.from_surface(surface)
-            if win := xdg_surface.data:
-                win.handle_activation_request(focus_on_window_activation)
-            else:
-                logger.debug("Failed to find window to activate. Ignoring request.")
+        if surface:
+            xdg_surface = XdgSurface.try_from_surface(surface)
+            if xdg_surface is not None:
+                if win := xdg_surface.data:
+                    win.handle_activation_request(focus_on_window_activation)
+                else:
+                    # Shouldn't happen.
+                    logger.debug("Failed to find window to activate. Ignoring request.")
 
     def _output_manager_reconfigure(self, config: OutputConfigurationV1, apply: bool) -> None:
         """
@@ -1287,8 +1288,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         if previous_surface is not None:
             # Deactivate the previously focused surface
-            if previous_surface.is_xdg_surface:
-                previous_xdg_surface = XdgSurface.from_surface(previous_surface)
+            if previous_xdg_surface := XdgSurface.try_from_surface(previous_surface):
                 if not win or win.surface != previous_xdg_surface:
                     previous_xdg_surface.set_activated(False)
                     if prev_win := previous_xdg_surface.data:
