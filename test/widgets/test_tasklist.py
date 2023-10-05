@@ -165,6 +165,22 @@ def test_tasklist_custom_markup(tasklist_manager):
     assert widget.info()["text"] == "One|Two"
 
 
+@configure_tasklist(markup_focused="({})", markup_focused_floating="[{}]")
+def test_tasklist_focused_and_floating(tasklist_manager):
+    widget = tasklist_manager.c.widget["tasklist"]
+
+    tasklist_manager.test_window("One")
+    tasklist_manager.test_window("Two")
+    assert widget.info()["text"] == "One|(Two)"
+
+    # Test floating
+    tasklist_manager.c.window.toggle_floating()
+    assert widget.info()["text"] == "One|[Two]"
+
+    tasklist_manager.c.window.toggle_floating()
+    assert widget.info()["text"] == "One|(Two)"
+
+
 @configure_tasklist(margin=0)
 def test_tasklist_click_task(tasklist_manager):
     tasklist_manager.test_window("One")
