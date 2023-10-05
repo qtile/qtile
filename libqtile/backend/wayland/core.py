@@ -560,9 +560,8 @@ class Core(base.Core, wlrq.HasListeners):
 
                 xdg_surface.data = self.scene.xdg_surface_create(tree, xdg_surface)
 
-            elif parent_surface.is_layer_surface:
+            elif parent := LayerSurfaceV1.try_from_wlr_surface(parent_surface):
                 # A layer shell window created this popup
-                parent = LayerSurfaceV1.from_wlr_surface(parent_surface)
                 win = cast(layer.LayerStatic, parent.data)
                 self.scene.xdg_surface_create(win.popup_tree, xdg_surface)
 
