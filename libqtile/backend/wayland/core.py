@@ -1295,9 +1295,11 @@ class Core(base.Core, wlrq.HasListeners):
                         if ftm_handle := prev_win.ftm_handle:
                             ftm_handle.set_activated(False)
 
-            elif previous_surface.is_xwayland_surface:
-                prev_xwayland_surface = xwayland.Surface.from_wlr_surface(previous_surface)
-                if not win or win.surface != prev_xwayland_surface:
+            else:
+                prev_xwayland_surface = xwayland.Surface.try_from_wlr_surface(previous_surface)
+                if prev_xwayland_surface is not None and (
+                    not win or win.surface != prev_xwayland_surface
+                ):
                     prev_xwayland_surface.activate(False)
                     if prev_win := prev_xwayland_surface.data:
                         if ftm_handle := prev_win.ftm_handle:
