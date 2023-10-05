@@ -477,7 +477,7 @@ class Core(base.Core, wlrq.HasListeners):
         # We also set the cursor image as we're initializing the cursor here anyways
         if not self._current_output:
             self._current_output = output
-            self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+            self.cursor_manager.set_cursor_image("default", self.cursor)
             box = Box(*output.get_geometry())
             x = box.x + box.width / 2
             y = box.y + box.height / 2
@@ -823,7 +823,7 @@ class Core(base.Core, wlrq.HasListeners):
             # If we have a client who exclusively gets input, no other client's
             # surfaces are allowed to get pointer input.
             if isinstance(win, base.Internal) or not win.belongs_to_client(self.exclusive_client):
-                self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                self.cursor_manager.set_cursor_image("default", self.cursor)
                 self.seat.pointer_notify_clear_focus()
                 return
 
@@ -887,7 +887,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.xwayland_atoms: dict[int, str] = wlrq.get_xwayland_atoms(self._xwayland)
 
         # Set the default XWayland cursor
-        xcursor = self.cursor_manager.get_xcursor("left_ptr")
+        xcursor = self.cursor_manager.get_xcursor("default")
         if xcursor:
             image = next(xcursor.images, None)
             if image:
@@ -1021,7 +1021,7 @@ class Core(base.Core, wlrq.HasListeners):
                         logger.debug(
                             "Pointer focus withheld from window not owned by exclusive client."
                         )
-                        self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                        self.cursor_manager.set_cursor_image("default", self.cursor)
                         self.seat.pointer_notify_clear_focus()
                         self._hovered_window = win
                     return
@@ -1045,7 +1045,7 @@ class Core(base.Core, wlrq.HasListeners):
                                 )
                         elif self.seat.pointer_state.focused_surface:
                             # moved from a Window or Static to an Internal
-                            self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                            self.cursor_manager.set_cursor_image("default", self.cursor)
                             self.seat.pointer_notify_clear_focus()
                     win.process_pointer_enter(cx, cy)
                     self._hovered_window = win
@@ -1060,7 +1060,7 @@ class Core(base.Core, wlrq.HasListeners):
                 # The pointer is on the border of a client's window
                 if self.seat.pointer_state.focused_surface:
                     # We just moved out of a client's surface
-                    self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                    self.cursor_manager.set_cursor_image("default", self.cursor)
                     self.seat.pointer_notify_clear_focus()
 
             if win is not self.qtile.current_window:
@@ -1095,7 +1095,7 @@ class Core(base.Core, wlrq.HasListeners):
                     )
                 else:
                     # We just moved out of a Window or Static
-                    self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                    self.cursor_manager.set_cursor_image("default", self.cursor)
                     self.seat.pointer_notify_clear_focus()
                 self._hovered_window = None
 
@@ -1136,7 +1136,7 @@ class Core(base.Core, wlrq.HasListeners):
         device = inputs.Pointer(self, wlr_device)
         self._pointers.append(device)
         self.cursor.attach_input_device(wlr_device)
-        self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+        self.cursor_manager.set_cursor_image("default", self.cursor)
 
         # Map input device to output if required.
         if output_name := pointer.Pointer.from_input_device(wlr_device).output_name:
