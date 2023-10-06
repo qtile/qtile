@@ -196,7 +196,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         # Set up cursor
         self.cursor = Cursor(self.output_layout)
-        self.cursor_manager = XCursorManager(24)
+        self._cursor_manager = XCursorManager(24)
         self._gestures = PointerGesturesV1(self.display)
         self.add_listener(self.seat.request_set_cursor_event, self._on_request_cursor)
         self.add_listener(self.cursor.axis_event, self._on_cursor_axis)
@@ -355,7 +355,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         if self._xwayland:
             self._xwayland.destroy()
-        self.cursor_manager.destroy()
+        self._cursor_manager.destroy()
         self.cursor.destroy()
         self.output_layout.destroy()
         self.seat.destroy()
@@ -813,8 +813,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.xwayland_atoms: dict[int, str] = wlrq.get_xwayland_atoms(self._xwayland)
 
         # Set the default XWayland cursor
-        xcursor = self.cursor_manager.get_xcursor("default")
-        if xcursor:
+        if xcursor := self._cursor_manager.get_xcursor("default"):
             image = next(xcursor.images, None)
             if image:
                 self._xwayland.set_cursor(
