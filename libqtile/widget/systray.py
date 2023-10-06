@@ -30,7 +30,7 @@
 from __future__ import annotations
 
 import xcffib
-from xcffib.xproto import ClientMessageData, ClientMessageEvent, EventMask, SetMode
+from xcffib.xproto import ClientMessageData, ClientMessageEvent, EventMask, ExposeEvent, SetMode
 
 from libqtile import bar
 from libqtile.backend.x11 import window
@@ -122,7 +122,7 @@ class Icon(window._Window):
 
         # Copy the widget's pixmap to the new pixmap
         self.qtile.core.conn.conn.core.CopyArea(
-            drawer.pseudo_pixmap,
+            drawer.pixmap,
             self._pixmap,
             drawer._gc,
             x,
@@ -135,6 +135,13 @@ class Icon(window._Window):
 
         # Apply the pixmap to the window
         self.window.set_attribute(backpixmap=self._pixmap)
+
+        # We need to send an Expose event to force the window to redraw
+        event = xcffib.xproto.ExposeEvent.synthetic(
+            self.window.wid, 0, 0, self.width, self.height, 0
+        )
+        self.window.send_event(event, mask=EventMask.Exposure)
+        self.qtile.core.conn.flush()
 
     handle_UnmapNotify = handle_DestroyNotify  # noqa: N815
 
