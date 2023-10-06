@@ -266,9 +266,6 @@ class Drawer(drawer.Drawer):
             if self.root_pixmap is not None:
                 self.pseudo_pixmap = self._create_pixmap()
                 self._root_surface = self._create_xcb_surface(self.pseudo_pixmap)
-                self._pseudo_surface = cairocffi.RecordingSurface(
-                    cairocffi.CONTENT_COLOR_ALPHA, None
-                )
             else:
                 logger.warning("Unable to get root pixmap. Disabling pseudotransparency.")
                 self.pseudotransparent = False
@@ -284,8 +281,8 @@ class Drawer(drawer.Drawer):
             self.pseudo_pixmap,
             self._gc,
             *pos,
-            0,
-            0,
+            src_x,
+            src_y,
             width,
             height,
         )
