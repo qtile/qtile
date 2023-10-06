@@ -24,7 +24,8 @@ from typing import TYPE_CHECKING
 
 from wlroots.util.box import Box
 from wlroots.util.clock import Timespec
-from wlroots.wlr_types import Output as wlrOutput, OutputState
+from wlroots.wlr_types import Output as wlrOutput
+from wlroots.wlr_types import OutputState, SceneOutput
 from wlroots.wlr_types.layer_shell_v1 import (
     LayerShellV1Layer,
     LayerSurfaceV1KeyboardInteractivity,
@@ -37,8 +38,8 @@ if TYPE_CHECKING:
     from typing import Any
 
     from pywayland.server import Listener
-    from wlroots.wlr_types.output import OutputEventRequestState
     from wlroots.wlr_types import SceneOutput
+    from wlroots.wlr_types.output import OutputEventRequestState
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.layer import LayerStatic
@@ -48,16 +49,30 @@ if TYPE_CHECKING:
 
 
 class Output(HasListeners):
-    def __init__(self, core: Core, wlr_output: wlrOutput, scene_output: SceneOutput):
+    def __init__(self, core: Core, wlr_output: wlrOutput):
         self.core = core
         self.renderer = core.renderer
         self.wlr_output = wlr_output
-        self.scene_output = scene_output
         self._reserved_space = (0, 0, 0, 0)
 
         # These will get updated on the output layout's change event
         self.x = 0
         self.y = 0
+
+        self.scene_output = SceneOutput.create(core.scene, wlr_output)
+        wlr_output.init_render(core.allocator, core.renderer)
+
+        # The output may be disabled, switch it on.
+        state = OutputState()
+        state.set_enabled()
+
+        # For now, just select the output's preferred mode.
+        if mode := wlr_output.preferred_mode():
+            state.set_mode(mode)
+
+        # Commit this initial state.
+        wlr_output.commit_state(state)
+        state.finish()
 
         wlr_output.data = self
 
