@@ -275,17 +275,17 @@ class Drawer(drawer.Drawer):
             self._win.x + offsetx,
             self._win.y + offsety,
         )
-
-        self.qtile.core.conn.conn.core.CopyArea(
-            self.root_pixmap,
-            self.pseudo_pixmap,
-            self._gc,
-            *pos,
-            src_x,
-            src_y,
-            width,
-            height,
-        )
+        with self.qtile.core.masked():
+            self.qtile.core.conn.conn.core.CopyArea(
+                self.root_pixmap,
+                self.pseudo_pixmap,
+                self._gc,
+                *pos,
+                src_x,
+                src_y,
+                width,
+                height,
+            )
 
     def _get_root_pixmap(self):
         root_win = self.qtile.core.conn.default_screen.root
