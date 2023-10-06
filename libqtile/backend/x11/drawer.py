@@ -40,6 +40,7 @@ import xcffib.xproto
 
 from libqtile import utils
 from libqtile.backend.base import drawer
+from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
     from libqtile.backend.base import Internal
@@ -65,6 +66,10 @@ class Drawer(drawer.Drawer):
         )
         # Create an XCBSurface and pixmap
         self._check_xcb()
+        self.pseudotransparent = self._depth == 24 and self.qtile.config.x11_fake_transparency
+
+        self.root_pixmap = None
+        self.pseudo_pixmap = None
 
     def finalize(self):
         self._free_xcb_surface()
@@ -121,10 +126,11 @@ class Drawer(drawer.Drawer):
                 self.qtile.core.conn.conn.core.FreeGC(self._gc)
             self._gc = None
 
-    def _create_xcb_surface(self):
+    def _create_xcb_surface(self, pixmap=None):
+        pixmap = self._pixmap if pixmap is None else pixmap
         surface = cairocffi.XCBSurface(
             self.qtile.core.conn.conn,
-            self._pixmap,
+            pixmap,
             self._visual,
             self.width,
             self.height,
@@ -153,6 +159,11 @@ class Drawer(drawer.Drawer):
                 self.qtile.core.conn.conn.core.FreePixmap(self._pixmap)
             self._pixmap = None
 
+        if self.pseudotransparent and self.pseudo_pixmap is not None:
+            with contextlib.suppress(xcffib.ConnectionException):
+                self.qtile.core.conn.conn.core.FreePixmap(self.pseudo_pixmap)
+            self.pseudo_pixmap = None
+
     def _check_xcb(self):
         # If the Drawer has been resized/invalidated we need to recreate these
         if self._xcb_surface is None:
@@ -164,6 +175,13 @@ class Drawer(drawer.Drawer):
         if self.needs_update:
             # Paint RecordingSurface operations to the XCBSurface
             ctx = cairocffi.Context(self._xcb_surface)
+
+            if self.pseudotransparent:
+                ctx.set_operator(cairocffi.OPERATOR_SOURCE)
+                ctx.set_source_surface(self._root_surface, 0, 0)
+                ctx.paint()
+                ctx.set_operator(cairocffi.OPERATOR_OVER)
+
             ctx.set_source_surface(self.surface, 0, 0)
             ctx.paint()
 
@@ -178,14 +196,20 @@ class Drawer(drawer.Drawer):
         src_x: int = 0,
         src_y: int = 0,
     ):
-        self.current_rect = (offsetx, offsety, width, height)
-
         # If this is our first draw, create the gc
         if self._gc is None:
             self._gc = self._create_gc()
 
+        width = self.width if width is None else width
+        height = self.height if height is None else height
+
+        self.current_rect = (offsetx, offsety, width, height, src_x, src_y)
+
         # Recreate an XCBSurface
         self._check_xcb()
+
+        if self.pseudotransparent:
+            self.copy_root_window(offsetx, offsety, width, height, src_x, src_y)
 
         # paint stored operations(if any) to XCBSurface
         self._paint()
@@ -199,8 +223,8 @@ class Drawer(drawer.Drawer):
             src_y,  # srcx, srcy
             offsetx,
             offsety,  # dstx, dsty
-            self.width if width is None else width,
-            self.height if height is None else height,
+            width,
+            height,
         )
 
     def _find_root_visual(self):
@@ -211,7 +235,7 @@ class Drawer(drawer.Drawer):
 
     def set_source_rgb(self, colour, ctx=None):
         # Remove transparency from non-32 bit windows
-        if utils.has_transparency(colour) and self._depth != 32:
+        if utils.has_transparency(colour) and self._depth != 32 and not self.pseudotransparent:
             colour = utils.remove_transparency(colour)
 
         drawer.Drawer.set_source_rgb(self, colour, ctx)
@@ -235,3 +259,50 @@ class Drawer(drawer.Drawer):
             ctx.set_operator(cairocffi.OPERATOR_CLEAR)
             ctx.rectangle(x, y, width, height)
             ctx.fill()
+
+    def copy_root_window(self, offsetx=0, offsety=0, width=0, height=0, src_x=0, src_y=0):
+        if self.root_pixmap is None:
+            self.root_pixmap = self._get_root_pixmap()
+            if self.root_pixmap is not None:
+                self.pseudo_pixmap = self._create_pixmap()
+                self._root_surface = self._create_xcb_surface(self.pseudo_pixmap)
+                self._pseudo_surface = cairocffi.RecordingSurface(
+                    cairocffi.CONTENT_COLOR_ALPHA, None
+                )
+            else:
+                logger.warning("Unable to get root pixmap. Disabling pseudotransparency.")
+                self.pseudotransparent = False
+                return
+
+        pos = (
+            self._win.x + offsetx,
+            self._win.y + offsety,
+        )
+
+        self.qtile.core.conn.conn.core.CopyArea(
+            self.root_pixmap,
+            self.pseudo_pixmap,
+            self._gc,
+            *pos,
+            0,
+            0,
+            width,
+            height,
+        )
+
+    def _get_root_pixmap(self):
+        root_win = self.qtile.core.conn.default_screen.root
+
+        try:
+            root_pixmap = root_win.get_property("_XROOTPMAP_ID", xcffib.xproto.Atom.PIXMAP, int)
+        except xcffib.ConnectionException:
+            root_pixmap = None
+
+        if not root_pixmap:
+            root_pixmap = root_win.get_property(
+                "ESETROOT_PMAP_ID", xcffib.xproto.Atom.PIXMAP, int
+            )
+        if root_pixmap:
+            return root_pixmap[0]
+
+        return None

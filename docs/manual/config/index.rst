@@ -149,6 +149,12 @@ configuration variables that control specific aspects of Qtile's behavior:
       - ``True``
       - If things like steam games want to auto-minimize themselves when losing
         focus, should we respect this or not?
+    * - ``x11_fake_transparency``
+      - ``False``
+      - When set to ``True``, this enables "pseudotransparency" which means that
+        transparency in bars and widgets will be emulated by copying the desktop
+        image to the background of the bar/widget. This is primarily useful if
+        you wish to use the ``Systray`` widget with a semi-transparent background.
 
 
 Testing your configuration

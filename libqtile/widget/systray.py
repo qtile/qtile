@@ -52,6 +52,7 @@ class Icon(window._Window):
         self.name = win.get_name() or str(win.wid)
         self.update_size()
         self._wm_class: list[str] | None = None
+        self._pixmap = None
 
     def __eq__(self, other):
         if not isinstance(other, Icon):
@@ -91,7 +92,49 @@ class Icon(window._Window):
         icon = self.qtile.windows_map.pop(wid)
         self.systray.tray_icons.remove(icon)
         self.systray.bar.draw()
+        self._free_pixmap()
         return False
+
+    def _free_pixmap(self):
+        if self._pixmap is not None:
+            self.qtile.core.conn.conn.core.FreePixmap(self._pixmap)
+            self._pixmap = None
+
+    def set_pixmap(self, x, y, drawer):
+        """
+        Sets the icon's backpixmap to be the widget's background.
+        When using pseudotransparency, this will mean the root wallpaper
+        (and any background rendered by the widget) will also be applied
+        to the icons.
+        """
+
+        # Create a new pixmap the size of the icon window
+        if self._pixmap is None:
+            self._pixmap = self.qtile.core.conn.conn.generate_id()
+
+            self.qtile.core.conn.conn.core.CreatePixmap(
+                drawer._depth,
+                self._pixmap,
+                self.window.wid,
+                self.width,
+                self.height,
+            )
+
+        # Copy the widget's pixmap to the new pixmap
+        self.qtile.core.conn.conn.core.CopyArea(
+            drawer.pseudo_pixmap,
+            self._pixmap,
+            drawer._gc,
+            x,
+            y,  # Source x, y positions equal the icon's offset in the widget
+            0,
+            0,  # Pixmap is placed at 0, 0 in new pixmap
+            self.width,
+            self.height,
+        )
+
+        # Apply the pixmap to the window
+        self.window.set_attribute(backpixmap=self._pixmap)
 
     handle_UnmapNotify = handle_DestroyNotify  # noqa: N815
 
@@ -110,9 +153,8 @@ class Systray(base._Widget, window._Window):  # type: ignore[misc]
         drawn with a semi-transparent background. Instead, icons
         will be drawn with a transparent background.
 
-        If using this widget it is therefore recommended to use
-        a fully opaque background colour or a fully transparent
-        one.
+        If you wish to use this widget with a semi-transparent background
+        you should set ``x11_fake_transparency=True`` in your config.
     """
 
     _instances = 0
@@ -249,15 +291,28 @@ class Systray(base._Widget, window._Window):  # type: ignore[misc]
         for pos, icon in enumerate(self.tray_icons):
             icon.window.set_attribute(backpixmap=self.drawer.pixmap)
             if self.bar.horizontal:
-                xoffset = self.offsetx + offset
-                yoffset = self.bar.height // 2 - self.icon_size // 2 + self.offsety
+                xoffset = offset
+                yoffset = self.bar.height // 2 - self.icon_size // 2
                 step = icon.width
             else:
-                xoffset = self.bar.width // 2 - self.icon_size // 2 + self.offsetx
-                yoffset = self.offsety + offset
+                xoffset = self.bar.width // 2 - self.icon_size // 2
+                yoffset = offset
                 step = icon.height
 
-            icon.place(xoffset, yoffset, icon.width, self.icon_size, 0, None)
+            if self.drawer.pseudotransparent:
+                icon.set_pixmap(xoffset, yoffset, self.drawer)
+            else:
+                icon.window.set_attribute(backpixmap=self.drawer.pixmap)
+
+            icon.place(
+                self.offsetx + xoffset,
+                self.offsety + yoffset,
+                icon.width,
+                self.icon_size,
+                0,
+                None,
+            )
+
             if icon.hidden:
                 icon.unhide()
                 data = [
