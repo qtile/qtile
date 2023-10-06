@@ -20,6 +20,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 
 from wlroots.util.box import Box
@@ -66,9 +67,18 @@ class Output(HasListeners):
         state = OutputState()
         state.set_enabled()
 
-        # For now, just select the output's preferred mode.
+        # Select the output's preferred mode.
         if mode := wlr_output.preferred_mode():
             state.set_mode(mode)
+
+        # During tests, we want to fix the geometry of the 1 or 2 outputs.
+        if wlr_output.is_headless and "PYTEST_CURRENT_TEST" in os.environ:
+            if not core.outputs:
+                # First test output
+                state.set_custom_mode(800, 600, 0)
+            else:
+                # Second test output
+                state.set_custom_mode(640, 480, 0)
 
         # Commit this initial state.
         wlr_output.commit_state(state)

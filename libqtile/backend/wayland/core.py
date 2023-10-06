@@ -457,16 +457,6 @@ class Core(base.Core, wlrq.HasListeners):
         output = Output(self, wlr_output)
         self.outputs.append(output)
 
-        # This is run during tests, when we want to fix the output's geometry
-        if wlr_output.is_headless and "PYTEST_CURRENT_TEST" in os.environ:
-            if len(self.outputs) == 1:
-                # First test output
-                wlr_output.set_custom_mode(800, 600, 0)
-            else:
-                # Second test output
-                wlr_output.set_custom_mode(640, 480, 0)
-            wlr_output.commit()
-
         # Let the output layout place it
         if not self.output_layout.add_auto(wlr_output):
             logger.warning("Failed to add output to layout.")
