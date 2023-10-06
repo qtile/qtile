@@ -51,6 +51,7 @@ from wlroots.wlr_types import (
     ScreencopyManagerV1,
     Surface,
     Viewporter,
+    OutputState,
     XCursorManager,
     XdgOutputManagerV1,
     input_device,
@@ -75,7 +76,14 @@ from wlroots.wlr_types.output_power_management_v1 import (
     OutputPowerV1SetModeEvent,
 )
 from wlroots.wlr_types.pointer_constraints_v1 import PointerConstraintsV1, PointerConstraintV1
-from wlroots.wlr_types.scene import Scene, SceneBuffer, SceneNodeType, SceneSurface, SceneTree
+from wlroots.wlr_types.scene import (
+    Scene,
+    SceneBuffer,
+    SceneNodeType,
+    SceneSurface,
+    SceneTree,
+    SceneOutput,
+)
 from wlroots.wlr_types.server_decoration import (
     ServerDecorationManager,
     ServerDecorationManagerMode,
@@ -454,7 +462,22 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_new_output(self, _listener: Listener, wlr_output: wlrOutput) -> None:
         logger.debug("Signal: backend new_output_event")
-        output = Output(self, wlr_output)
+
+        scene_output = SceneOutput.create(self.scene, wlr_output)
+
+        # Initialise output
+        wlr_output.init_render(self.allocator, self.renderer)
+        if mode := wlr_output.preferred_mode():
+            state = OutputState()
+            state.set_mode(mode)
+            state.set_enabled()
+            if not wlr_output.commit_state(state):
+                state.finish()
+                scene_output.destroy()
+                logger.warning("Failed to initialise output (%s)", wlr_output.name)
+                return
+
+        output = Output(self, wlr_output, scene_output)
         self.outputs.append(output)
 
         # This is run during tests, when we want to fix the output's geometry
