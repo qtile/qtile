@@ -252,8 +252,6 @@ class Keyboard(_Device):
             self.qtile = self.core.qtile
             assert self.qtile is not None
 
-        self.core.idle.notify_activity(self.seat)
-
         if event.state == KEY_PRESSED and not self.core.exclusive_client:
             # translate libinput keycode -> xkbcommon
             keycode = event.keycode + 8
