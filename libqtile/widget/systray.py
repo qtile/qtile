@@ -121,23 +121,24 @@ class Icon(window._Window):
             )
 
         # Copy the widget's pixmap to the new pixmap
-        self.qtile.core.conn.conn.core.CopyArea(
-            drawer.pixmap,
-            self._pixmap,
-            drawer._gc,
-            x,
-            y,  # Source x, y positions equal the icon's offset in the widget
-            0,
-            0,  # Pixmap is placed at 0, 0 in new pixmap
-            self.width,
-            self.height,
-        )
+        with self.qtile.core.masked():
+            self.qtile.core.conn.conn.core.CopyArea(
+                drawer.pixmap,
+                self._pixmap,
+                drawer._gc,
+                x,
+                y,  # Source x, y positions equal the icon's offset in the widget
+                0,
+                0,  # Pixmap is placed at 0, 0 in new pixmap
+                self.width,
+                self.height,
+            )
 
-        # Apply the pixmap to the window
-        self.window.set_attribute(backpixmap=self._pixmap)
+            # Apply the pixmap to the window
+            self.window.set_attribute(backpixmap=self._pixmap)
 
         # We need to send an Expose event to force the window to redraw
-        event = xcffib.xproto.ExposeEvent.synthetic(
+        event = ExposeEvent.synthetic(
             self.window.wid, 0, 0, self.width, self.height, 0
         )
         self.window.send_event(event, mask=EventMask.Exposure)
