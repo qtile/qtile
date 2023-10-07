@@ -336,12 +336,8 @@ class XWindow(Window[xwayland.Surface]):
         Window.static(self, screen, x, y, width, height)
         hook.fire("client_managed", self.qtile.windows_map[self._wid])
 
-    def _to_static(
-        self, x: int | None, y: int | None, width: int | None, height: int | None
-    ) -> XStatic:
-        return XStatic(
-            self.core, self.qtile, self, self._idle_inhibitors_count, x, y, width, height
-        )
+    def _to_static(self, x: int | None, y: int | None, width: int | None, height: int | None) -> XStatic:
+        return XStatic(self.core, self.qtile, self, x, y, width, height)
 
 
 class ConfigWindow:
@@ -366,16 +362,13 @@ class XStatic(Static[xwayland.Surface]):
         core: Core,
         qtile: Qtile,
         win: XWindow,
-        idle_inhibitor_count: int,
         x: int | None,
         y: int | None,
         width: int | None,
         height: int | None,
     ):
         surface = win.surface
-        Static.__init__(
-            self, core, qtile, surface, win.wid, idle_inhibitor_count=idle_inhibitor_count
-        )
+        Static.__init__(self, core, qtile, surface, win.wid)
         self._wm_class = surface.wm_class
 
         self._conf_x = x
