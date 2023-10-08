@@ -172,7 +172,9 @@ class Drawer(drawer.Drawer):
 
     def _paint(self):
         # Only attempt to run RecordingSurface's operations if ie actually need to
-        if self.needs_update:
+        # - If we're using pseudotransparency then we must paint the background image
+        # - If there's content (self.needs_update) then we draw that contents
+        if self.pseudotransparent or self.needs_update:
             # Paint RecordingSurface operations to the XCBSurface
             ctx = cairocffi.Context(self._xcb_surface)
 
