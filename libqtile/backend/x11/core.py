@@ -112,7 +112,6 @@ class Core(base.Core):
             | EventMask.EnterWindow
             | EventMask.LeaveWindow
             | EventMask.ButtonPress
-            | EventMask.PropertyChange
         )
         self._root.set_attribute(eventmask=self.eventmask)
 
@@ -240,6 +239,20 @@ class Core(base.Core):
         """Assign windows to groups"""
         assert self.qtile is not None
 
+        # Check whether we need to subscribe for PropertyChange events
+        # (we use these to tell if the root pixmap has been updated which is
+        # required to update bars relying on pseudotransparency)
+        if self.qtile.config.x11_fake_transparency:
+            # Add PropertyChange to root window's event mask if it's not already there
+            if not self.eventmask & xcffib.xproto.EventMask.PropertyChange:
+                self.eventmask |= xcffib.xproto.EventMask.PropertyChange
+                self._root.set_attribute(eventmask=self.eventmask)
+        else:
+            # Remove PropertyChange from root window's event mask if it's there
+            if self.eventmask & xcffib.xproto.EventMask.PropertyChange:
+                self.eventmask &= ~xcffib.xproto.EventMask.PropertyChange
+                self._root.set_attribute(eventmask=self.eventmask)
+
         # Ensure that properties are initialised at startup
         self.update_client_lists()
 
@@ -289,7 +302,7 @@ class Core(base.Core):
 
             self.update_client_lists()
             win.change_layer()
-
+        
     def warp_pointer(self, x, y):
         self._root.warp_pointer(x, y)
         self._root.set_input_focus()
