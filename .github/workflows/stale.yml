@@ -15,8 +15,7 @@ jobs:
         exempt-issue-labels: 'kind: task,kind: bug,kind: enhancement'
         stale-pr-message: 'This PR is stale because it has been open 90 days with no activity. Remove the `status: stale` label or comment, or this will be closed in 30 days.'
         stale-pr-label: 'status: stale'
-        exempt-all-pr-assignees: true
-        days-before-stale: 180
+        days-before-stale: 90
         days-before-close: 30
     - uses: actions/stale@v2.0.0
       with:
@@ -25,7 +24,6 @@ jobs:
         stale-issue-label: 'status: stale'
         stale-pr-message: 'This PR is stale because it has been open 90 days with no activity. Remove `status: stale` label or comment, or this will be closed in 30 days.'
         stale-pr-label: 'status: stale'
-        exempt-all-pr-assignees: true
         only-labels: 'status: unconfirmed'
-        days-before-stale: 180
+        days-before-stale: 90
         days-before-close: 30
