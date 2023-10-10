@@ -138,9 +138,7 @@ class Icon(window._Window):
             self.window.set_attribute(backpixmap=self._pixmap)
 
         # We need to send an Expose event to force the window to redraw
-        event = ExposeEvent.synthetic(
-            self.window.wid, 0, 0, self.width, self.height, 0
-        )
+        event = ExposeEvent.synthetic(self.window.wid, 0, 0, self.width, self.height, 0)
         self.window.send_event(event, mask=EventMask.Exposure)
         self.qtile.core.conn.flush()
 

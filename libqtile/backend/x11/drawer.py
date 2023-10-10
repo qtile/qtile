@@ -66,9 +66,8 @@ class Drawer(drawer.Drawer):
         )
         # Create an XCBSurface and pixmap
         self._check_xcb()
-        self.pseudotransparent = self._depth == 24 and self.qtile.config.x11_fake_transparency
 
-        self.root_pixmap = None
+        self.pseudotransparent = self._depth == 24 and self.qtile.config.x11_fake_transparency
         self.pseudo_pixmap = None
 
     def finalize(self):
@@ -263,23 +262,25 @@ class Drawer(drawer.Drawer):
             ctx.fill()
 
     def copy_root_window(self, offsetx=0, offsety=0, width=0, height=0, src_x=0, src_y=0):
-        if self.root_pixmap is None:
-            self.root_pixmap = self._get_root_pixmap()
-            if self.root_pixmap is not None:
-                self.pseudo_pixmap = self._create_pixmap()
-                self._root_surface = self._create_xcb_surface(self.pseudo_pixmap)
-            else:
+        if self.qtile.core.root_pixmap is None:
+            self.qtile.core._get_root_pixmap()
+            if self.qtile.core.root_pixmap is None:
                 logger.warning("Unable to get root pixmap. Disabling pseudotransparency.")
                 self.pseudotransparent = False
                 return
+
+        if self.pseudo_pixmap is None:
+            self.pseudo_pixmap = self._create_pixmap()
+            self._root_surface = self._create_xcb_surface(self.pseudo_pixmap)
 
         pos = (
             self._win.x + offsetx,
             self._win.y + offsety,
         )
+
         with self.qtile.core.masked():
             self.qtile.core.conn.conn.core.CopyArea(
-                self.root_pixmap,
+                self.qtile.core.root_pixmap,
                 self.pseudo_pixmap,
                 self._gc,
                 *pos,
@@ -288,20 +289,3 @@ class Drawer(drawer.Drawer):
                 width,
                 height,
             )
-
-    def _get_root_pixmap(self):
-        root_win = self.qtile.core.conn.default_screen.root
-
-        try:
-            root_pixmap = root_win.get_property("_XROOTPMAP_ID", xcffib.xproto.Atom.PIXMAP, int)
-        except xcffib.ConnectionException:
-            root_pixmap = None
-
-        if not root_pixmap:
-            root_pixmap = root_win.get_property(
-                "ESETROOT_PMAP_ID", xcffib.xproto.Atom.PIXMAP, int
-            )
-        if root_pixmap:
-            return root_pixmap[0]
-
-        return None

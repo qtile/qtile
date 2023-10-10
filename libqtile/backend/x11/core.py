@@ -35,6 +35,7 @@ import xcffib.xtest
 from xcffib.xproto import EventMask
 
 from libqtile import config, hook, utils
+from libqtile import bar
 from libqtile.backend import base
 from libqtile.backend.x11 import window, xcbq
 from libqtile.backend.x11.xkeysyms import keysyms
@@ -111,6 +112,7 @@ class Core(base.Core):
             | EventMask.EnterWindow
             | EventMask.LeaveWindow
             | EventMask.ButtonPress
+            | EventMask.PropertyChange
         )
         self._root.set_attribute(eventmask=self.eventmask)
 
@@ -170,6 +172,8 @@ class Core(base.Core):
         self._last_motion_time = 0
 
         self.last_focused: base.Window | None = None
+
+        self.root_pixmap = None
 
     @property
     def name(self):
@@ -638,6 +642,20 @@ class Core(base.Core):
             self._selection[name]["selection"] = value
             hook.fire("selection_change", name, self._selection[name])
 
+        elif all(
+            (
+                name in ("ESETROOT_PMAP_ID", "_XROOTPMAP_ID"),
+                event.window == self._root.wid,
+                self.qtile.config.x11_fake_transparency,
+            )
+        ):
+            self.root_pixmap = self._get_root_pixmap()
+
+            for screen in self.qtile.screens:
+                for gap in screen.gaps:
+                    if isinstance(gap, bar.Bar):
+                        gap.draw()
+
     def handle_ClientMessage(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
@@ -952,3 +970,20 @@ class Core(base.Core):
             self.last_focused.change_layer()
 
         self.last_focused = win
+
+    def _get_root_pixmap(self):
+        root_win = self.conn.default_screen.root
+
+        try:
+            root_pixmap = root_win.get_property("_XROOTPMAP_ID", xcffib.xproto.Atom.PIXMAP, int)
+        except xcffib.ConnectionException:
+            root_pixmap = None
+
+        if not root_pixmap:
+            root_pixmap = root_win.get_property(
+                "ESETROOT_PMAP_ID", xcffib.xproto.Atom.PIXMAP, int
+            )
+        if root_pixmap:
+            self.root_pixmap = root_pixmap[0]
+        else:
+            self.root_pixmap = None
