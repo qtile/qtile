@@ -273,17 +273,13 @@ class Drawer(drawer.Drawer):
             self.pseudo_pixmap = self._create_pixmap()
             self._root_surface = self._create_xcb_surface(self.pseudo_pixmap)
 
-        pos = (
-            self._win.x + offsetx,
-            self._win.y + offsety,
-        )
-
         with self.qtile.core.masked():
             self.qtile.core.conn.conn.core.CopyArea(
                 self.qtile.core.root_pixmap,
                 self.pseudo_pixmap,
                 self._gc,
-                *pos,
+                self._win.x + offsetx,
+                self._win.y + offsety,
                 src_x,
                 src_y,
                 width,

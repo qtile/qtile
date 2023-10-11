@@ -662,7 +662,7 @@ class Core(base.Core):
                 self.qtile.config.x11_fake_transparency,
             )
         ):
-            self.root_pixmap = self._get_root_pixmap()
+            self._get_root_pixmap()
 
             for screen in self.qtile.screens:
                 for gap in screen.gaps:
