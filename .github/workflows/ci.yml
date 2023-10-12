@@ -8,6 +8,8 @@ jobs:
     build:
         runs-on: ubuntu-22.04
         name: "python ${{ matrix.python-version }} on ${{ matrix.backend }}"
+        # pypy is segfaulting at the moment so let's allow it to fail.
+        continue-on-error: ${{ matrix.python-version == 'pypy-3.9' }}
         strategy:
             matrix:
                 # If you change one of these, be sure to update:
