@@ -796,7 +796,7 @@ class Qtile(CommandObject):
                         if status in (interface.ERROR, interface.EXCEPTION):
                             logger.error("Mouse command error %s: %s", i.name, val)
                         handled = True
-            elif isinstance(m, Drag):
+            elif isinstance(m, Drag) and not self.current_window.fullscreen:
                 if m.start:
                     i = m.start
                     status, val = self.server.call((i.selectors, i.name, i.args, i.kwargs))
