@@ -114,6 +114,9 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self.x = 0
         self.y = 0
         self._opacity: float = 1.0
+        self._shadow: ffi.CData | None = None
+        self._shadowblur: int = 20
+        self._corner_radius = 0
         self._wm_class: str | None = None
         self._idle_inhibitors_count: int = 0
         self._urgent = False
@@ -389,15 +392,38 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
     @opacity.setter
     def opacity(self, opacity: float) -> None:
-        if opacity < 1.0:
-            logger.warning(
-                "Sorry, transparency is not yet supported by the wlroots API used by "
-                "Qtile. Transparency can only be achieved if the client sets it."
-            )
-            # wlroots' scene graph doesn't support setting the opacity of trees/nodes by
-            # the compositor. See: https://gitlab.freedesktop.org/wlroots/wlroots/-/issues/3393
-            # If/when that becomes supported, this warning can be removed.
         self._opacity = opacity
+        self.core.configure_node_scenefx(self.container.node)
+
+    @property
+    def shadowblur(self) -> int:
+        return self._shadowblur
+
+    @shadowblur.setter
+    def shadowblur(self, blur_sigma: int) -> None:
+        self._shadowblur = blur_sigma
+        self.core.configure_node_scenefx(self.container.node)
+
+    @property
+    def shadow(self) -> ffi.CData | None:
+        return self._shadow
+
+    @shadow.setter
+    def shadow(self, shadow: ColorType | None) -> None:
+        if shadow:
+            self._shadow = _rgb(shadow)
+        else:
+            self._shadow = None
+        self.core.configure_node_scenefx(self.container.node)
+
+    @property
+    def corner_radius(self) -> int:
+        return self._corner_radius
+
+    @corner_radius.setter
+    def corner_radius(self, corner_radius: int) -> None:
+        self._corner_radius = corner_radius
+        self.core.configure_node_scenefx(self.container.node)
 
     @property
     def floating(self) -> bool:
@@ -793,6 +819,9 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         self._height = 0
         self.borderwidth: int = 0
         self.bordercolor: list[ffi.CData] = [_rgb((0, 0, 0, 1))]
+        self.shadow: ffi.CData | None = None
+        self.shadowblur: int = 20
+        self.corner_radius = 0
         self.opacity: float = 1.0
         self._wm_class: str | None = None
         self._idle_inhibitors_count = idle_inhibitor_count
@@ -918,6 +947,9 @@ class Internal(_Base, base.Internal):
         self._wid: int = self.core.new_wid()
         self.x: int = x
         self.y: int = y
+        self.shadow: ffi.CData | None = None
+        self.shadowblur: int = 20
+        self.corner_radius = 0
         self._width: int = width
         self._height: int = height
         self._opacity: float = 1.0
