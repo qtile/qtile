@@ -223,7 +223,7 @@ def import_class(
 ) -> Any:
     """Import a class safely
 
-    Try to import the class module, and if it fails because of an ImporError
+    Try to import the class module, and if it fails because of an ImportError
     it logs on WARNING, and logs the traceback on DEBUG level
     """
     try:
