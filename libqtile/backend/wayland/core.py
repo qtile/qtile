@@ -363,6 +363,14 @@ class Core(base.Core, wlrq.HasListeners):
         self.display.destroy()
         self.qtile = None
 
+    def win_from_node(self, node) -> Window | None:
+        tree = node.parent
+        while tree and tree.node.data is None:
+            tree = tree.node.parent
+        if tree:
+            return tree.node.data
+        return None
+
     @property
     def display_name(self) -> str:
         return self.socket.decode()
@@ -1315,16 +1323,9 @@ class Core(base.Core, wlrq.HasListeners):
                 # We got a node that is part of a window, walk up the scene graph to
                 # find the window object. It could also be an XDG popup, which can be
                 # the child of either an XDG window or a layer shell window.
-                tree = node.parent
-                while tree and tree.node.data is None:
-                    tree = tree.node.parent
-                if tree:
-                    win = tree.node.data
-                    assert win is not None
-                    return win, scene_surface.surface, sx, sy
-                # We shouldn't get here.
-                logger.warning("Failed finding the window under the pointer. Please report.")
-                return None
+                win = self.win_from_node(node)
+                assert win is not None
+                return win, scene_surface.surface, sx, sy
 
             # We didn't get a wlr_scene_surface, so we're dealing with an internal window
             # Internal windows have a scenetree for borders. The parent's data we will use to cast to an internal window
