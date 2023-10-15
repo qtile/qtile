@@ -52,7 +52,6 @@ class Output(HasListeners):
         self.renderer = core.renderer
         self.wlr_output = wlr_output
         self._reserved_space = (0, 0, 0, 0)
-        self.scene_output = SceneOutput.create(core.scene, wlr_output)
 
         # These will get updated on the output layout's change event
         self.x = 0
@@ -64,6 +63,8 @@ class Output(HasListeners):
         wlr_output.enable()
         wlr_output.commit()
         wlr_output.data = self
+
+        self.scene_output = SceneOutput.create(core.scene, wlr_output)
 
         self.add_listener(wlr_output.destroy_event, self._on_destroy)
         self.add_listener(wlr_output.frame_event, self._on_frame)
