@@ -368,14 +368,17 @@ class Core(base.Core, wlrq.HasListeners):
         scene_surface = SceneSurface.from_buffer(scene_buffer)
         if not scene_surface:
             return
-        if not scene_surface.surface.is_xdg_surface:
-            return
-        xdg_surface = XdgSurface.from_surface(scene_surface.surface)
-        if xdg_surface.role != XdgSurfaceRole.TOPLEVEL:
+        # TODO: Do something with the xwayland surface role?
+        is_x = scene_surface.surface.is_xwayland_surface
+        is_way_top = False
+        if scene_surface.surface.is_xdg_surface:
+            xdg_surface = XdgSurface.from_surface(scene_surface.surface)
+            is_way_top = xdg_surface.role == XdgSurfaceRole.TOPLEVEL
+        if not is_way_top and not is_x:
             return
         scene_buffer.set_opacity(win.opacity)
 
-        if not xdg_surface.surface.is_subsurface:
+        if not scene_surface.surface.is_subsurface:
             scene_buffer.set_corner_radius(win.corner_radius)
             if win.shadow:
                 scene_buffer.set_shadow_data(win.shadow, win.shadowblur)
