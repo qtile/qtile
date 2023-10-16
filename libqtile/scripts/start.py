@@ -24,12 +24,13 @@
 from __future__ import annotations
 
 import locale
-from os import getenv, makedirs, path
+from os import makedirs, path
 from sys import exit
 from typing import TYPE_CHECKING
 
 import libqtile.backend
 from libqtile import confreader
+from libqtile.utils import get_config_file
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
@@ -117,9 +118,7 @@ def add_subcommand(subparsers, parents):
         "-c",
         "--config",
         action="store",
-        default=path.expanduser(
-            path.join(getenv("XDG_CONFIG_HOME", "~/.config"), "qtile", "config.py")
-        ),
+        default=get_config_file(),
         dest="configfile",
         help="Use the specified configuration file.",
     )

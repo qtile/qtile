@@ -27,6 +27,7 @@ from glob import glob
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from libqtile.utils import get_config_file
 from libqtile.scripts.migrations import MIGRATIONS, load_migrations
 
 if TYPE_CHECKING:
@@ -242,9 +243,7 @@ def add_subcommand(subparsers, parents):
         "-c",
         "--config",
         action="store",
-        default=os.path.expanduser(
-            os.path.join(os.getenv("XDG_CONFIG_HOME", "~/.config"), "qtile", "config.py")
-        ),
+        default=get_config_file(),
         help="Use the specified configuration file (migrates every .py file in this directory).",
     )
     parser.add_argument(

@@ -31,6 +31,7 @@ from collections.abc import Sequence
 from random import randint
 from shutil import which
 from typing import TYPE_CHECKING
+from pathlib import Path
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Coroutine, TypeVar, Union
@@ -198,6 +199,21 @@ def get_cache_dir() -> str:
     if not os.path.exists(cache_directory):
         os.makedirs(cache_directory)
     return cache_directory
+
+
+def get_config_file():
+    config_home = Path(os.getenv("XDG_CONFIG_HOME", "~/.config")).expanduser()
+    config_file = config_home.joinpath("qtile/config.py")
+    if config_file.exists():
+        return config_file
+
+    xdg_config_dirs = os.getenv("XDG_CONFIG_DIRS", "/etc/xdg/").split(":")
+    for config_dir in xdg_config_dirs:
+        system_wide_config = Path(config_dir).expanduser().joinpath("qtile/config.py")
+        if system_wide_config.exists():
+            return system_wide_config
+
+    return config_file
 
 
 def describe_attributes(obj: Any, attrs: list[str], func: Callable = lambda x: x) -> str:
