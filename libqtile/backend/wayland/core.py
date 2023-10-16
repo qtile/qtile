@@ -371,8 +371,9 @@ class Core(base.Core, wlrq.HasListeners):
         if not scene_surface.surface.is_xdg_surface:
             return
         xdg_surface = XdgSurface.from_surface(scene_surface.surface)
-        if xdg_surface.role == XdgSurfaceRole.TOPLEVEL:
-            scene_buffer.set_opacity(win.opacity)
+        if xdg_surface.role != XdgSurfaceRole.TOPLEVEL:
+            return
+        scene_buffer.set_opacity(win.opacity)
 
         if not xdg_surface.surface.is_subsurface:
             scene_buffer.set_corner_radius(win.corner_radius)
