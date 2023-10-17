@@ -49,7 +49,7 @@ class Subscribe:
     def __init__(self):
         hooks = set([])
         for i in dir(self):
-            if not i.startswith("_"):
+            if not i.startswith("_") and i != "custom":
                 hooks.add(i)
         self.hooks = hooks
 
@@ -849,6 +849,53 @@ class Subscribe:
         """
         inhibitor.want_sleep()
         return self._subscribe("suspend", func)
+
+    def custom(self, hook_name):
+        """
+        Use to create user-defined hooks.
+
+        The purpose of these hooks is to allow a hook to be fired by an external application.
+
+        Hooked functions can receive arguments but it is up to the application firing the hook to ensure
+        the correct arguments are passed. No checking will be performed by qtile.
+
+        Example:
+
+        .. code:: python
+
+          from libqtile import hook
+          from libqtile.log_utils import logger
+
+          @hook.subscribe.custom("my_custom_hook")
+          def hooked_function():
+            logger.warning("Custom hook received.")
+
+        The external script can then call the hook with the following command:
+
+        .. code::
+
+          qtile cmd-obj -o cmd -f fire_custom_hook -a my_custom_hook
+
+        .. note::
+
+          If the script will be run by a different user then you will need to pass the path to the socket
+          file used by the current process. One way to achieve this is to specify a path for the socket when starting
+          qtile e.g. ``qtile start -s /tmp/qtile.socket``.
+
+          When firing the hook, you should then call
+          ``qtile cmd-obj -o cmd -f fire_custom_hook -a my_custom_hook -s /tmp/qtile.socket``
+
+        """
+        if hook_name in dir(self):
+            raise ValueError(f"Do not use name of existing hook for custom hooks: {hook_name}.")
+
+        def _wrapper(func):
+            name = f"custom_{hook_name}"
+            if name not in self.hooks:
+                self.hooks.add(name)
+            return self._subscribe(f"custom_{hook_name}", func)
+
+        return _wrapper
 
 
 subscribe = Subscribe()
