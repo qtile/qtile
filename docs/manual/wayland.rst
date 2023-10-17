@@ -4,12 +4,13 @@ Running Qtile as a Wayland Compositor
 
 .. _wayland:
 
-Some functionality may not yet be implemented in the Wayland compositor. Please
-see the discussion `here <https://github.com/qtile/qtile/discussions/2409>`__ to
-see the current state of development. See `here
-<https://github.com/qtile/qtile/labels/Wayland>`__ for unresolved
-Wayland-specific issues and see :ref:`troubleshooting <debugging-wayland>` for
-tips on how to debug Wayland problems.
+Some functionality may not yet be implemented in the Wayland compositor.
+Please see the `Wayland To Do List <https://github.com/qtile/qtile/
+discussions/2409>`__ discussion for the current state of development.  Also
+checkout the `unresolved Wayland-specific issues <https://github.com/
+qtile/qtile/issues?q=is%3Aissue+is%3Aopen+label%3A%22core%3A+wayland%22>`__
+and :ref:`troubleshooting <debugging-wayland>` for tips on how to debug Wayland
+problems.
 
 .. note::
    We currently support wlroots>=0.16.0,<0.17.0 and pywlroots==0.16.4.
