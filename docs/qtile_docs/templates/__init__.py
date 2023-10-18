@@ -20,7 +20,10 @@
 # SOFTWARE.
 from qtile_docs.templates.command import qtile_commands_template  # noqa: F401
 from qtile_docs.templates.graph import qtile_graph_template  # noqa: F401
-from qtile_docs.templates.hook import qtile_hooks_template  # noqa: F401
+from qtile_docs.templates.hook import (  # noqa: F401
+    qtile_custom_hook_template,
+    qtile_hooks_template,
+)
 from qtile_docs.templates.migrations import (  # noqa: F401
     qtile_migrations_full_template,
     qtile_migrations_template,
@@ -32,6 +35,7 @@ __all__ = [
     "qtile_commands_template",
     "qtile_graph_template",
     "qtile_hooks_template",
+    "qtile_custom_hook_template",
     "qtile_module_template",
     "qtile_class_template",
     "qtile_migrations_template",
