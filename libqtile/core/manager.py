@@ -1769,7 +1769,6 @@ class Qtile(CommandObject):
         """Run extensions"""
         extension.run()
 
-
     @expose_command()
     def fire_custom_hook(self, hook_name: str, *args) -> None:
         """Fire a custom hook."""
