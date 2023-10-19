@@ -6,6 +6,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
         widget to display name of active split.
       - Updated `Bluetooth` widget which allows users to manage multiple devices in a single widget
       - Add `align` option to `Columns` layout so new windows can be added to left or right column.
+      - Add ability to create user-defined hooks which can be fired from external scripts
     * bugfixes
 
 Qtile 0.23.0, released 2023-09-24:
