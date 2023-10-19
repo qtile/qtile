@@ -28,6 +28,6 @@ qtile_hooks_template = Template(
 
 qtile_custom_hook_template = Template(
     """
-.. autoproperty:: libqtile.hook.Subscribe.custom
+.. autoproperty:: libqtile.hook.Subscribe.user
 """
 )

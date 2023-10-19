@@ -45,9 +45,9 @@ def clear():
     subscriptions.clear()
 
 
-class CustomHook:
+class UserHook:
     """
-    Helper class to turn any dotted attribute of hook.subscribe.custom
+    Helper class to turn any dotted attribute of hook.subscribe.user
     into a custom hook.
     """
 
@@ -55,8 +55,8 @@ class CustomHook:
         self.subscriber = subscriber
 
     def __getattr__(self, value):
-        # Custom hooks use a prefix to prevent overlapping with existing hooks
-        name = f"custom_{value}"
+        # user hooks use a prefix to prevent overlapping with existing hooks
+        name = f"user_{value}"
 
         # Add the name to the set of hooks (to ensure that the hook name is found when
         # firing the hook)
@@ -72,9 +72,9 @@ class CustomHook:
 class Subscribe:
     def __init__(self):
         hooks = set([])
-        self._custom = CustomHook(self)
+        self._user = UserHook(self)
         for i in dir(self):
-            if not i.startswith("_") and i != "custom":
+            if not i.startswith("_") and i != "user":
                 hooks.add(i)
         self.hooks = hooks
 
@@ -876,7 +876,7 @@ class Subscribe:
         return self._subscribe("suspend", func)
 
     @property
-    def custom(self):
+    def user(self):
         """
         Use to create user-defined hooks.
 
@@ -892,7 +892,7 @@ class Subscribe:
           from libqtile import hook
           from libqtile.log_utils import logger
 
-          @hook.subscribe.custom.my_custom_hook
+          @hook.subscribe.user.my_custom_hook
           def hooked_function():
             logger.warning("Custom hook received.")
 
@@ -900,7 +900,7 @@ class Subscribe:
 
         .. code::
 
-          qtile cmd-obj -o cmd -f fire_custom_hook -a my_custom_hook
+          qtile cmd-obj -o cmd -f fire_user_hook -a my_custom_hook
 
         .. note::
 
@@ -909,12 +909,12 @@ class Subscribe:
           qtile e.g. ``qtile start -s /tmp/qtile.socket``.
 
           When firing the hook, you should then call
-          ``qtile cmd-obj -o cmd -f fire_custom_hook -a my_custom_hook -s /tmp/qtile.socket``
+          ``qtile cmd-obj -o cmd -f fire_user_hook -a my_custom_hook -s /tmp/qtile.socket``
 
           However, the same socket will need to be passed wherever you run ``qtile cmd-obj`` or ``qtile shell``.
 
         """
-        return self._custom
+        return self._user
 
 
 subscribe = Subscribe()

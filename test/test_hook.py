@@ -200,7 +200,7 @@ def test_resume_hook(manager):
 
 
 @pytest.mark.usefixtures("hook_fixture")
-def test_custom_hook(manager_nospawn):
+def test_user_hook(manager_nospawn):
     config = BareConfig
     for attr in dir(default_config):
         if not hasattr(config, attr):
@@ -219,8 +219,8 @@ def test_custom_hook(manager_nospawn):
         with manager.custom_text.get_lock():
             manager.custom_text.value = text
 
-    hook.subscribe.custom.set_text(predefined_text)
-    hook.subscribe.custom.define_text(defined_text)
+    hook.subscribe.user.set_text(predefined_text)
+    hook.subscribe.user.define_text(defined_text)
 
     # Check values are as initialised
     manager.start(config)
@@ -228,9 +228,9 @@ def test_custom_hook(manager_nospawn):
     assert manager.custom_text.value == "A"
 
     # Check hooked function with no args
-    manager.c.fire_custom_hook("set_text")
+    manager.c.fire_user_hook("set_text")
     assert manager.custom_no_arg_text.value == "B"
 
     # Check hooked function with a single arg
-    manager.c.fire_custom_hook("define_text", "C")
+    manager.c.fire_user_hook("define_text", "C")
     assert manager.custom_text.value == "C"
