@@ -5,6 +5,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
       - Add `ScreenSplit` layout which allows multiple layouts per screen. Also adds `ScreenSplit`
         widget to display name of active split.
       - Updated `Bluetooth` widget which allows users to manage multiple devices in a single widget
+      - Add `align` option to `Columns` layout so new windows can be added to left or right column.
     * bugfixes
 
 Qtile 0.23.0, released 2023-09-24:
