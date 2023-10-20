@@ -24,7 +24,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import bar, layout, widget
+from libqtile import bar, layout, qtile, widget
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
 from libqtile.utils import guess_terminal
@@ -79,6 +79,12 @@ keys = [
     Key([mod, "control"], "q", lazy.shutdown(), desc="Shutdown Qtile"),
     Key([mod], "r", lazy.spawncmd(), desc="Spawn a command using a prompt widget"),
 ]
+
+if qtile.core.name == "wayland":
+    for i in range(1, 7):
+        keys.extend(
+            [Key(["control", "mod1"], f"f{i}", lazy.core.change_vt(i), desc=f"Switch to VT{i}")]
+        )
 
 groups = [Group(i) for i in "123456789"]
 
