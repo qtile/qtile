@@ -38,6 +38,7 @@ class ColumnsConfig(Config):
         layout.Columns(num_columns=3),
         layout.Columns(margin_on_single=10),
         layout.Columns(margin_on_single=[10, 20, 30, 40]),
+        layout.Columns(align=layout.Columns._left)
     ]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
@@ -197,3 +198,24 @@ def test_columns_single_border_enabled(manager):
     assert_dimensions(manager, 0, 0, WIDTH - 4, HEIGHT - 4)
     manager.test_window("2")
     assert_dimensions(manager, WIDTH / 2, 0, WIDTH / 2 - 8, HEIGHT - 8)
+
+
+@columns_config
+def test_columns_left_align(manager):
+    for _ in range(3):
+        manager.c.next_layout()
+
+    manager.test_window("1")
+    manager.test_window("2")
+    manager.test_window("3")
+
+    # Window 3 should be on the left
+    # Insert position is above other windows:
+    # 3 | 2
+    # 1 |
+    info = manager.c.window.info()
+    print(info)
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == (WIDTH // 2) - 4  # remove border
+    assert info["height"] == (HEIGHT // 2) - 4  # remove border
