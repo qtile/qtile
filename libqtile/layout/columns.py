@@ -17,6 +17,7 @@
 # SOFTWARE.
 from __future__ import annotations
 
+import contextlib
 from typing import TYPE_CHECKING
 
 from libqtile.command.base import expose_command
@@ -162,6 +163,12 @@ class Columns(Layout):
         ("wrap_focus_columns", True, "Wrap the screen when moving focus across columns."),
         ("wrap_focus_rows", True, "Wrap the screen when moving focus across rows."),
         ("wrap_focus_stacks", True, "Wrap the screen when moving focus across stacked."),
+        (
+            "add_to_column",
+            None,
+            "Column to receive new windows (ignored when 'fair=True'). "
+            "Takes integer for index of column (0 is first). 'None': add to last."
+        )
     ]
 
     def __init__(self, **config):
@@ -176,6 +183,12 @@ class Columns(Layout):
             self.margin_on_single = self.margin
         self.columns = [_Column(self.split, self.insert_position)]
         self.current = 0
+        if self.add_to_column is not None:
+            if not isinstance(self.add_to_column, int):
+                logger.warning("'add_to_column' must be 'None' or an integer.")
+                self.add_to_column = None
+            elif not (0 <= self.add_to_column < self.num_columns):
+                logger.warning("'add_to_column' must be an integer between 0 and %s", self.num_columns - 1)
 
     def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)
@@ -237,13 +250,25 @@ class Columns(Layout):
                 c.width += g
 
     def add_client(self, client: Window) -> None:
+        # Default behaviour is to add to current column
         c = self.cc
+
+        # Create a new column if we haven't yet reached number of
+        # required columns
         if len(c) > 0 and len(self.columns) < self.num_columns:
             c = self.add_column()
-        if self.fair:
+
+        # Distribute windows fairly if requested
+        elif self.fair:
             least = min(self.columns, key=len)
             if len(least) < len(c):
                 c = least
+
+        # Check if user has requested windows be added to a specific column
+        elif self.add_to_column is not None:
+            with contextlib.suppress(IndexError):
+                c = self.columns[self.add_to_column]
+
         self.current = self.columns.index(c)
         c.add_client(client)
 
