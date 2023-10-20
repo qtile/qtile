@@ -126,6 +126,7 @@ class Columns(Layout):
         Key([mod], "Return", lazy.layout.toggle_split()),
         Key([mod], "n", lazy.layout.normalize()),
     """
+
     _left = 0
     _right = 1
 
@@ -169,8 +170,8 @@ class Columns(Layout):
             _right,
             "Which side of screen new windows will be added to "
             "(one of ``Columns._left`` or ``Columns._right``). "
-            "Ignored if 'fair=True'."
-        )
+            "Ignored if 'fair=True'.",
+        ),
     ]
 
     def __init__(self, **config):
@@ -186,7 +187,9 @@ class Columns(Layout):
         self.columns = [_Column(self.split, self.insert_position)]
         self.current = 0
         if self.align not in (Columns._left, Columns._right):
-            logger.warning("Unexpected value for `align`. Must be Columns._left or Columns._right.")
+            logger.warning(
+                "Unexpected value for `align`. Must be Columns._left or Columns._right."
+            )
             self.align = Columns._right
 
     def clone(self, group: _Group) -> Self:

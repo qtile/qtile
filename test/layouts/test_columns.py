@@ -38,7 +38,7 @@ class ColumnsConfig(Config):
         layout.Columns(num_columns=3),
         layout.Columns(margin_on_single=10),
         layout.Columns(margin_on_single=[10, 20, 30, 40]),
-        layout.Columns(align=layout.Columns._left)
+        layout.Columns(align=layout.Columns._left),
     ]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
