@@ -127,6 +127,8 @@ class Columns(Layout):
         Key([mod], "Return", lazy.layout.toggle_split()),
         Key([mod], "n", lazy.layout.normalize()),
     """
+    _left = 0
+    _right = 1
 
     defaults = [
         ("border_focus", "#881111", "Border colour(s) for the focused window."),
@@ -164,10 +166,11 @@ class Columns(Layout):
         ("wrap_focus_rows", True, "Wrap the screen when moving focus across rows."),
         ("wrap_focus_stacks", True, "Wrap the screen when moving focus across stacked."),
         (
-            "add_to_column",
-            None,
-            "Column to receive new windows (ignored when 'fair=True'). "
-            "Takes integer for index of column (0 is first). 'None': add to last."
+            "align",
+            _right,
+            "Which side of screen new windows will be added to "
+            "(one of ``Columns._left`` or ``Columns._right``). "
+            "Ignored if 'fair=True'."
         )
     ]
 
@@ -183,12 +186,9 @@ class Columns(Layout):
             self.margin_on_single = self.margin
         self.columns = [_Column(self.split, self.insert_position)]
         self.current = 0
-        if self.add_to_column is not None:
-            if not isinstance(self.add_to_column, int):
-                logger.warning("'add_to_column' must be 'None' or an integer.")
-                self.add_to_column = None
-            elif not (0 <= self.add_to_column < self.num_columns):
-                logger.warning("'add_to_column' must be an integer between 0 and %s", self.num_columns - 1)
+        if self.align not in (Columns._left, Columns._right):
+            logger.warning("Unexpected value for `align`. Must be Columns._left or Columns._right.")
+            self.align = Columns._right
 
     def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)
@@ -264,10 +264,10 @@ class Columns(Layout):
             if len(least) < len(c):
                 c = least
 
-        # Check if user has requested windows be added to a specific column
-        elif self.add_to_column is not None:
-            with contextlib.suppress(IndexError):
-                c = self.columns[self.add_to_column]
+        # Add window to column based on align property
+        else:
+            index = 0 if self.align == Columns._left else -1
+            c = self.columns[index]
 
         self.current = self.columns.index(c)
         c.add_client(client)
