@@ -252,25 +252,14 @@ class Columns(Layout):
                 c.width += g
 
     def add_client(self, client: Window) -> None:
-        # Default behaviour is to add to current column
         c = self.cc
-
-        # Create a new column if we haven't yet reached number of
-        # required columns
         if len(c) > 0 and len(self.columns) < self.num_columns:
-            c = self.add_column()
-
-        # Distribute windows fairly if requested
-        elif self.fair:
+            prepend = (self.align is Columns._left)
+            c = self.add_column(prepend=prepend)
+        if self.fair:
             least = min(self.columns, key=len)
             if len(least) < len(c):
                 c = least
-
-        # Add window to column based on align property
-        else:
-            index = 0 if self.align == Columns._left else -1
-            c = self.columns[index]
-
         self.current = self.columns.index(c)
         c.add_client(client)
 
