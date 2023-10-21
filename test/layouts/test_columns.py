@@ -38,7 +38,6 @@ class ColumnsConfig(Config):
         layout.Columns(num_columns=3),
         layout.Columns(margin_on_single=10),
         layout.Columns(margin_on_single=[10, 20, 30, 40]),
-        layout.Columns(align=layout.Columns._left),
     ]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
@@ -55,12 +54,19 @@ class ColumnsSingleBorderEnabledConfig(ColumnsConfig):
     layouts = [layout.Columns(border_on_single=True, single_border_width=2, border_width=4)]
 
 
+class ColumnsLeftAlign(ColumnsConfig):
+    layouts = [layout.Columns(align=layout.Columns._left, border_width=0)]
+
+
 columns_config = pytest.mark.parametrize("manager", [ColumnsConfig], indirect=True)
 columns_single_border_disabled_config = pytest.mark.parametrize(
     "manager", [ColumnsSingleBorderDisabledConfig], indirect=True
 )
 columns_single_border_enabled_config = pytest.mark.parametrize(
     "manager", [ColumnsSingleBorderEnabledConfig], indirect=True
+)
+columns_left_align = pytest.mark.parametrize(
+    "manager", [ColumnsLeftAlign], indirect=True
 )
 
 
@@ -200,22 +206,28 @@ def test_columns_single_border_enabled(manager):
     assert_dimensions(manager, WIDTH / 2, 0, WIDTH / 2 - 8, HEIGHT - 8)
 
 
-@columns_config
+@columns_left_align
 def test_columns_left_align(manager):
-    for _ in range(3):
-        manager.c.next_layout()
-
+    # window 1: fullscreen
     manager.test_window("1")
-    manager.test_window("2")
-    manager.test_window("3")
-
-    # Window 3 should be on the left
-    # Insert position is above other windows:
-    # 3 | 2
-    # 1 |
     info = manager.c.window.info()
-    print(info)
     assert info["x"] == 0
     assert info["y"] == 0
-    assert info["width"] == (WIDTH // 2) - 4  # remove border
-    assert info["height"] == (HEIGHT // 2) - 4  # remove border
+    assert info["width"] == WIDTH
+    assert info["height"] == HEIGHT
+
+    # window 2: left
+    manager.test_window("2")
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == WIDTH / 2
+    assert info["height"] == HEIGHT
+
+    # window 3: top left
+    manager.test_window("3")
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == WIDTH / 2
+    assert info["height"] == HEIGHT / 2
