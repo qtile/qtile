@@ -188,7 +188,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if self.spacing is None:
             self.spacing = self.margin_x
 
-        self.add_callbacks({"Button1": self.select_window})
+        self.add_callbacks({"Button1": self.select_window, "Button2": self.kill_window})
 
     def box_width(self, text):
         """
@@ -450,6 +450,11 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                     window.bring_to_front()
             else:
                 window.toggle_minimize()
+
+    def kill_window(self):
+        if self.clicked:
+            window = self.clicked
+            window.kill()
 
     def _get_class_icon(self, window):
         if not getattr(window, "icons", False):
