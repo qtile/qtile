@@ -995,7 +995,8 @@ class Core(base.Core, wlrq.HasListeners):
                         self.qtile.focus_screen(win.screen.index, False)
 
                 else:
-                    hook.fire("client_mouse_enter", win)
+                    if self._hovered_window is not win:
+                        hook.fire("client_mouse_enter", win)
 
                     if motion is not None and self.qtile.config.follow_mouse_focus:
                         if win.group and win.group.current_window != win:
