@@ -22,6 +22,8 @@ from __future__ import annotations
 
 import typing
 
+from xcffib.xproto import ConfigWindow
+
 from wlroots import xwayland
 from wlroots.wlr_types import SceneTree
 
@@ -336,8 +338,10 @@ class XWindow(Window[xwayland.Surface]):
         Window.static(self, screen, x, y, width, height)
         hook.fire("client_managed", self.qtile.windows_map[self._wid])
 
-    def _to_static(self) -> XStatic:
-        return XStatic(self.core, self.qtile, self, self._idle_inhibitors_count)
+    def _to_static(self, x: int | None, y: int | None, width: int | None, height: int | None) -> XStatic:
+        return XStatic(
+            self.core, self.qtile, self, self._idle_inhibitors_count, x, y, width, height
+        )
 
 
 class XStatic(Static[xwayland.Surface]):
@@ -351,12 +355,21 @@ class XStatic(Static[xwayland.Surface]):
         qtile: Qtile,
         win: XWindow,
         idle_inhibitor_count: int,
+        x: int | None,
+        y: int | None,
+        width: int | None,
+        height: int | None,
     ):
         surface = win.surface
         Static.__init__(
             self, core, qtile, surface, win.wid, idle_inhibitor_count=idle_inhibitor_count
         )
         self._wm_class = surface.wm_class
+
+        self.conf_x = x
+        self.conf_y = y
+        self.conf_width = width
+        self.conf_height = height
 
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
@@ -393,10 +406,20 @@ class XStatic(Static[xwayland.Surface]):
         self.core.pending_windows.add(win)
 
     def _on_commit(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: xstatic commit")
+        pass
+        # logger.debug("Signal: xstatic commit")
 
     def _on_request_configure(self, _listener: Listener, event: SurfaceConfigureEvent) -> None:
         logger.debug("Signal: xstatic request_configure")
+        cw = ConfigWindow
+        if self.conf_x is None and event.mask & cw.X:
+            self.x = event.x
+        if self.conf_y is None and event.mask & cw.Y:
+            self.y = event.y
+        if self.conf_width is None and event.mask & cw.Width:
+            self.width = event.width
+        if self.conf_height is None and event.mask & cw.Height:
+            self.height = event.height
         self.place(self.x, self.y, self.width, self.height, self.borderwidth, self.bordercolor)
 
     @expose_command()

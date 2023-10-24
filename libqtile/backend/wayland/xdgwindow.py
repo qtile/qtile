@@ -279,7 +279,7 @@ class XdgWindow(Window[XdgSurface]):
 
         hook.fire("client_managed", win)
 
-    def _to_static(self) -> XdgStatic:
+    def _to_static(self, x: int | None, y: int | None, width: int | None, height: int | None) -> XdgStatic:
         return XdgStatic(
             self.core,
             self.qtile,
