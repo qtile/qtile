@@ -623,11 +623,12 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_cursor_button(self, _listener: Listener, event: pointer.PointerButtonEvent) -> None:
         assert self.qtile is not None
         self.idle.notify_activity(self.seat)
+        found = None
         pressed = event.button_state == input_device.ButtonState.PRESSED
         if pressed:
             self._pressed_button_count += 1
             if self._implicit_grab is None:
-                self._focus_by_click(event.time_msec)
+                found = self._focus_by_click()
         else:
             if self._pressed_button_count > 0:  # sanity check
                 self._pressed_button_count -= 1
@@ -646,6 +647,11 @@ class Core(base.Core, wlrq.HasListeners):
             handled = self._process_cursor_button(button, pressed)
 
         if not handled:
+            if self._pressed_button_count == 1 and found:
+                assert self._implicit_grab is None
+                win, surface, sx, sy = found
+                if surface:
+                    self._create_implicit_grab(event.time_msec, surface, sx, sy)
             self.seat.pointer_notify_button(event.time_msec, event.button, event.button_state)
 
     def _implicit_grab_motion(self, time: int):
@@ -1324,7 +1330,7 @@ class Core(base.Core, wlrq.HasListeners):
             if keyboard := self.seat.keyboard:
                 self.seat.keyboard_notify_enter(surface, keyboard)
 
-    def _focus_by_click(self, time: int | None = None) -> None:
+    def _focus_by_click(self) -> tuple[window.WindowType, Surface | None, float, float] | None:
         assert self.qtile is not None
         found = self._under_pointer()
 
@@ -1357,15 +1363,12 @@ class Core(base.Core, wlrq.HasListeners):
                     self.qtile.focus_screen(win.group.screen.index, warp=False)
                 self.qtile.current_group.focus(win, False)
 
-            if self._pressed_button_count == 1:
-                assert self._implicit_grab is None
-                if surface and time is not None:
-                    self._create_implicit_grab(time, surface, sx, sy)
-
         else:
             screen = self.qtile.find_screen(int(self.cursor.x), int(self.cursor.y))
             if screen:
                 self.qtile.focus_screen(screen.index, warp=False)
+
+        return found
 
     def _under_pointer(self) -> tuple[window.WindowType, Surface | None, float, float] | None:
         """
