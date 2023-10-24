@@ -984,21 +984,15 @@ class Core(base.Core, wlrq.HasListeners):
                     self.seat.pointer_notify_clear_focus()
 
             if win is not self.qtile.current_window:
-                if isinstance(win, window.Static):
-                    if self._hovered_window is not win:
-                        # qtile.current_window will never be a static window, but we
-                        # still only want to fire client_mouse_enter once, so check
-                        # self._hovered_window.
-                        hook.fire("client_mouse_enter", win)
+                if self._hovered_window is not win:
+                    # We only want to fire client_mouse_enter once, so check
+                    # self._hovered_window.
+                    hook.fire("client_mouse_enter", win)
 
-                    if motion is not None and self.qtile.config.follow_mouse_focus:
+                if motion is not None and self.qtile.config.follow_mouse_focus:
+                    if isinstance(win, window.Static):
                         self.qtile.focus_screen(win.screen.index, False)
-
-                else:
-                    if self._hovered_window is not win:
-                        hook.fire("client_mouse_enter", win)
-
-                    if motion is not None and self.qtile.config.follow_mouse_focus:
+                    else:
                         if win.group and win.group.current_window != win:
                             win.group.focus(win, False)
                         if (
