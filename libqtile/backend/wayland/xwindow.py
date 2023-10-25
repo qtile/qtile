@@ -22,8 +22,6 @@ from __future__ import annotations
 
 import typing
 
-from xcffib.xproto import ConfigWindow
-
 from wlroots import xwayland
 from wlroots.wlr_types import SceneTree
 
@@ -344,6 +342,17 @@ class XWindow(Window[xwayland.Surface]):
         )
 
 
+class ConfigWindow:
+    """The XCB_CONFIG_WINDOW_* constants.
+
+    Reproduced here to remove a dependency on xcffib.
+    """
+    X = 1
+    Y = 2
+    Width = 4
+    Height = 8
+
+
 class XStatic(Static[xwayland.Surface]):
     """A static window belonging to the XWayland shell."""
 
@@ -374,7 +383,6 @@ class XStatic(Static[xwayland.Surface]):
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
-        self.add_listener(surface.surface.commit_event, self._on_commit)
         self.add_listener(surface.request_configure_event, self._on_request_configure)
         self.add_listener(surface.set_title_event, self._on_set_title)
         self.add_listener(surface.set_class_event, self._on_set_class)
@@ -405,10 +413,6 @@ class XStatic(Static[xwayland.Surface]):
         win = XWindow(self.core, self.qtile, self.surface)
         self.core.pending_windows.add(win)
 
-    def _on_commit(self, _listener: Listener, _data: Any) -> None:
-        pass
-        # logger.debug("Signal: xstatic commit")
-
     def _on_request_configure(self, _listener: Listener, event: SurfaceConfigureEvent) -> None:
         logger.debug("Signal: xstatic request_configure")
         cw = ConfigWindow
@@ -433,8 +437,7 @@ class XStatic(Static[xwayland.Surface]):
     def unhide(self) -> None:
         if self not in self.core.pending_windows:
             # Only when mapping does the xwayland_surface have a wlr_surface that we can
-            # listen for commits on and create a tree for.
-            self.add_listener(self.surface.surface.commit_event, self._on_commit)
+            # create a tree for.
             if not self.tree:
                 self.tree = SceneTree.subsurface_tree_create(self.container, self.surface.surface)
                 self.tree.node.set_position(self.borderwidth, self.borderwidth)

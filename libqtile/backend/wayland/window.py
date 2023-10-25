@@ -733,6 +733,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         if self.group:
             self.group.remove(self)
 
+        # Keep track of user-specified geometry to support X11.
+        # Respect configure requests only if these are `None` here.
         conf_x = x
         conf_y = y
         conf_width = width
