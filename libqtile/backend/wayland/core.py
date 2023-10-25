@@ -108,7 +108,7 @@ if TYPE_CHECKING:
     from libqtile.core.manager import Qtile
 
 
-class ImplicitGrab:
+class ImplicitGrab(wlrq.HasListeners):
     """Keep track of an implicit pointer grab.
 
     A Wayland client expects to receive pointer events from the moment a
@@ -127,15 +127,12 @@ class ImplicitGrab:
     ) -> None:
         self.core = core
         self.surface = surface
-        self.start_x = start_x
-        self.start_y = start_y
-        self.start_sx = start_sx
-        self.start_sy = start_sy
-        self._listener = pywayland.server.Listener(self._on_destroy)
-        surface.destroy_event.add(self._listener)
+        self.start_dx = start_sx - start_x
+        self.start_dy = start_sy - start_y
+        self.add_listener(surface.destroy_event, self._on_destroy)
 
     def finalize(self) -> None:
-        self._listener.remove()
+        self.finalize_listeners()
 
     def _on_destroy(self, _listener: Listener, _data: Any) -> None:
         self.core._release_implicit_grab()
@@ -648,17 +645,14 @@ class Core(base.Core, wlrq.HasListeners):
 
         if not handled:
             if self._pressed_button_count == 1 and found:
-                assert self._implicit_grab is None
                 win, surface, sx, sy = found
                 if surface:
                     self._create_implicit_grab(event.time_msec, surface, sx, sy)
             self.seat.pointer_notify_button(event.time_msec, event.button, event.button_state)
 
-    def _implicit_grab_motion(self, time: int):
-        moved_x = self.cursor.x - self._implicit_grab.start_x
-        moved_y = self.cursor.y - self._implicit_grab.start_y
-        sx = moved_x + self._implicit_grab.start_sx
-        sy = moved_y + self._implicit_grab.start_sy
+    def _implicit_grab_motion(self, time: int) -> None:
+        sx = self.cursor.x + self._implicit_grab.start_dx
+        sy = self.cursor.y + self._implicit_grab.start_dy
         self.seat.pointer_notify_motion(time, sx, sy)
 
     def _on_cursor_motion(self, _listener: Listener, event: pointer.PointerMotionEvent) -> None:
