@@ -25,9 +25,3 @@ qtile_hooks_template = Template(
 .. automethod:: libqtile.hook.subscribe.{{ method }}
 """
 )
-
-qtile_custom_hook_template = Template(
-    """
-.. autoproperty:: libqtile.hook.Subscribe.user
-"""
-)

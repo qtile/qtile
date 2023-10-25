@@ -219,8 +219,8 @@ def test_user_hook(manager_nospawn):
         with manager.custom_text.get_lock():
             manager.custom_text.value = text
 
-    hook.subscribe.user.set_text(predefined_text)
-    hook.subscribe.user.define_text(defined_text)
+    hook.subscribe.user("set_text")(predefined_text)
+    hook.subscribe.user("define_text")(defined_text)
 
     # Check values are as initialised
     manager.start(config)

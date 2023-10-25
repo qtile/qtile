@@ -20,7 +20,7 @@
 # SOFTWARE.
 from docutils.parsers.rst import Directive
 from qtile_docs.base import SimpleDirectiveMixin
-from qtile_docs.templates import qtile_hooks_template, qtile_user_hook_template
+from qtile_docs.templates import qtile_hooks_template
 
 from libqtile.utils import import_class
 
@@ -33,7 +33,3 @@ class QtileHooks(SimpleDirectiveMixin, Directive):
             rst = qtile_hooks_template.render(method=method)
             for line in rst.splitlines():
                 yield line
-
-        rst = qtile_user_hook_template.render()
-        for line in rst.splitlines():
-            yield line

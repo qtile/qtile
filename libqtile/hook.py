@@ -31,7 +31,6 @@
 # SOFTWARE.
 import asyncio
 import contextlib
-from functools import partial
 
 from libqtile import utils
 from libqtile.log_utils import logger
@@ -45,36 +44,11 @@ def clear():
     subscriptions.clear()
 
 
-class UserHook:
-    """
-    Helper class to turn any dotted attribute of hook.subscribe.user
-    into a custom hook.
-    """
-
-    def __init__(self, subscriber):
-        self.subscriber = subscriber
-
-    def __getattr__(self, value):
-        # user hooks use a prefix to prevent overlapping with existing hooks
-        name = f"user_{value}"
-
-        # Add the name to the set of hooks (to ensure that the hook name is found when
-        # firing the hook)
-        self.subscriber.hooks.add(name)
-
-        # The normal hooks are methods which call `_subscribe` with the hook name
-        # and decorated function. Here, we're just getting an attribute so we need
-        # to be pass a partial object that will receive the hooked function as an
-        # argument.
-        return partial(self.subscriber._subscribe, name)
-
-
 class Subscribe:
     def __init__(self):
         hooks = set([])
-        self._user = UserHook(self)
         for i in dir(self):
-            if not i.startswith("_") and i != "user":
+            if not i.startswith("_"):
                 hooks.add(i)
         self.hooks = hooks
 
@@ -875,8 +849,7 @@ class Subscribe:
         inhibitor.want_sleep()
         return self._subscribe("suspend", func)
 
-    @property
-    def user(self):
+    def user(self, hook_name):
         """
         Use to create user-defined hooks.
 
@@ -892,7 +865,7 @@ class Subscribe:
           from libqtile import hook
           from libqtile.log_utils import logger
 
-          @hook.subscribe.user.my_custom_hook
+          @hook.subscribe.user("my_custom_hook")
           def hooked_function():
             logger.warning("Custom hook received.")
 
@@ -914,7 +887,16 @@ class Subscribe:
           However, the same socket will need to be passed wherever you run ``qtile cmd-obj`` or ``qtile shell``.
 
         """
-        return self._user
+        if hook_name in dir(self):
+            raise ValueError(f"Do not use name of existing hook for custom hooks: {hook_name}.")
+
+        def _wrapper(func):
+            name = f"user_{hook_name}"
+            if name not in self.hooks:
+                self.hooks.add(name)
+            return self._subscribe(name, func)
+
+        return _wrapper
 
 
 subscribe = Subscribe()
@@ -954,6 +936,11 @@ def _fire_async_event(co):
 
 def fire(event, *args, **kwargs):
     if event not in subscribe.hooks:
+        # Suppress error for custom events. Event is only in subscribe.hooks
+        # if a custom hook has been subscribed but it should be possible to fire custom
+        # hooks even if there are no subscriptions.
+        if event.startswith("user_"):
+            return
         raise utils.QtileError("Unknown event: %s" % event)
     if event not in SKIPLOG:
         logger.debug("Internal event: %s(%s, %s)", event, args, kwargs)
