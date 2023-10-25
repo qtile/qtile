@@ -21,9 +21,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from libqtile.backend import CORES
 from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.graph import CommandGraphCall, CommandGraphNode
 from libqtile.command.interface import CommandInterface
+from libqtile.confreader import ConfigError
 
 if TYPE_CHECKING:
     from typing import Iterable
@@ -53,6 +55,7 @@ class LazyCall:
         self._if_no_focused: bool = False
         self._layouts: set[str] = set()
         self._when_floating = True
+        self._backend: str | None = None
 
     def __call__(self, *args, **kwargs):
         """Convenience method to allow users to pass arguments to
@@ -97,6 +100,7 @@ class LazyCall:
         if_no_focused: bool = False,
         layout: Iterable[str] | str | None = None,
         when_floating: bool = True,
+        backend: str | None = None,
     ) -> "LazyCall":
         """Enable call only for given layout(s) and floating state
 
@@ -117,6 +121,8 @@ class LazyCall:
             If None, enable the call for all layouts.
         when_floating: bool
             Enable call when the current window is floating.
+        backend: str ("x11" or "wayland")
+            Only run on specified backend
         """
         self._focused = focused
 
@@ -126,6 +132,12 @@ class LazyCall:
             self._layouts = {layout} if isinstance(layout, str) else set(layout)
 
         self._when_floating = when_floating
+
+        if backend is not None:
+            if backend not in CORES:
+                raise ConfigError(f"Unknown backend used in lazy call: {backend}.")
+            self._backend = backend
+
         return self
 
     def check(self, q) -> bool:
@@ -142,6 +154,9 @@ class LazyCall:
             return False
 
         if self._layouts and q.current_layout.name not in self._layouts:
+            return False
+
+        if self._backend and q.core.name != self._backend:
             return False
 
         return True

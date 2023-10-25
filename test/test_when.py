@@ -54,6 +54,16 @@ class WhenConfig(Config):
                 focused=config.Match(wm_class="TestWindow"), if_no_focused=True
             ),
         ),
+        config.Key(
+            ["control"],
+            "w",
+            lazy.next_layout().when(backend="wayland"),
+        ),
+        config.Key(
+            ["control"],
+            "x",
+            lazy.next_layout().when(backend="x11"),
+        ),
     ]
     layouts = [layout.MonadWide(), layout.MonadTall()]
 
@@ -62,7 +72,7 @@ when_config = pytest.mark.parametrize("manager", [WhenConfig], indirect=True)
 
 
 @when_config
-def test_when(manager):
+def test_when(manager, backend_name):
     # Check if the test window is alive and tiled
     one = manager.test_window("one")
     assert not manager.c.window.info()["floating"]
@@ -90,3 +100,20 @@ def test_when(manager):
     # This does go to the next layout as empty is matched
     manager.c.simulate_keypress(["control"], "m")
     assert manager.c.layout.info() != prev_layout_info
+
+    # Test backend specific calls...
+    prev_layout_info = manager.c.layout.info()
+    manager.c.simulate_keypress(["control"], "w")
+
+    if backend_name == "wayland":
+        assert manager.c.layout.info() != prev_layout_info
+    else:
+        assert manager.c.layout.info() == prev_layout_info
+
+    prev_layout_info = manager.c.layout.info()
+    manager.c.simulate_keypress(["control"], "x")
+
+    if backend_name == "x11":
+        assert manager.c.layout.info() != prev_layout_info
+    else:
+        assert manager.c.layout.info() == prev_layout_info
