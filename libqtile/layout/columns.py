@@ -254,7 +254,7 @@ class Columns(Layout):
     def add_client(self, client: Window) -> None:
         c = self.cc
         if len(c) > 0 and len(self.columns) < self.num_columns:
-            prepend = (self.align is Columns._left)
+            prepend = self.align is Columns._left
             c = self.add_column(prepend=prepend)
         if self.fair:
             least = min(self.columns, key=len)

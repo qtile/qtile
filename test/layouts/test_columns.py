@@ -65,9 +65,7 @@ columns_single_border_disabled_config = pytest.mark.parametrize(
 columns_single_border_enabled_config = pytest.mark.parametrize(
     "manager", [ColumnsSingleBorderEnabledConfig], indirect=True
 )
-columns_left_align = pytest.mark.parametrize(
-    "manager", [ColumnsLeftAlign], indirect=True
-)
+columns_left_align = pytest.mark.parametrize("manager", [ColumnsLeftAlign], indirect=True)
 
 
 # This currently only tests the window focus cycle
