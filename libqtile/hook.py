@@ -53,6 +53,13 @@ class Subscribe:
                 hooks.add(i)
         self.hooks = hooks
 
+    def _register(self, hook_name):
+        def _hook_func(func):
+            return self._subscribe(hook_name, func)
+
+        self.hooks.add(hook_name)
+        setattr(self, hook_name, _hook_func)
+
     def _subscribe(self, event, func):
         lst = subscriptions.setdefault(event, [])
         if func not in lst:
@@ -901,3 +908,14 @@ def fire(event, *args, **kwargs):
                 i(*args, **kwargs)
         except:  # noqa: E722
             logger.exception("Error in hook %s", event)
+
+
+def register_hook(hook_name):
+    if hook_name in dir(subscribe):
+        raise utils.QtileError(
+            f"Unable to register hook. A hook with that name already exists: {hook_name}"
+        )
+
+    logger.debug("Registered new hook: '%s'.", hook_name)
+    subscribe._register(hook_name)
+    unsubscribe._register(hook_name)

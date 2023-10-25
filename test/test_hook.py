@@ -197,3 +197,30 @@ def test_resume_hook(manager):
     hook.subscribe.resume(test)
     hook.fire("resume")
     assert test.val == 1
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_register_new_hooks():
+    test = NoArgCall(0)
+
+    # Create a new hook and attach a subscription
+    hook.register_hook("test_hook")
+    hook.subscribe.test_hook(test)
+
+    assert "test_hook" in hook.subscriptions
+    assert hook.subscriptions["test_hook"]
+
+    # Fire the hook and check callback worked
+    hook.fire("test_hook")
+    assert test.val == 1
+
+    # Unsubscribing should also work
+    hook.unsubscribe.test_hook(test)
+    assert not hook.subscriptions["test_hook"]
+
+    # Should get errors if you try to register a hook with an existing name
+    with pytest.raises(libqtile.utils.QtileError):
+        hook.register_hook("test_hook")
+
+    with pytest.raises(libqtile.utils.QtileError):
+        hook.register_hook("client_managed")

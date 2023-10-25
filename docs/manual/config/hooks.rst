@@ -87,3 +87,22 @@ will run them asynchronously in the event loop:
     @hook.subscribe.focus_change
     async def _():
         ...
+
+
+Registering additional hooks
+============================
+
+Third party code (widgets, layouts etc.) are able to register their own hooks which users
+can then subscribe to:
+
+.. code-block:: python
+
+    hook.register_hook("my_widget_hook")
+
+Users then subscribe to the hook as normal:
+
+.. code-block:: python
+
+    @hook.subscribe.my_widget_hook
+    def _():
+        ...
