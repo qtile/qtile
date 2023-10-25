@@ -51,6 +51,7 @@ class Subscribe:
             if not i.startswith("_"):
                 hooks.add(i)
         self.hooks = hooks
+        self.user_hooks = set([])
 
     def _subscribe(self, event, func):
         lst = subscriptions.setdefault(event, [])
@@ -887,9 +888,6 @@ class Subscribe:
           However, the same socket will need to be passed wherever you run ``qtile cmd-obj`` or ``qtile shell``.
 
         """
-        if hook_name in dir(self):
-            raise ValueError(f"Do not use name of existing hook for custom hooks: {hook_name}.")
-
         def _wrapper(func):
             name = f"user_{hook_name}"
             if name not in self.hooks:
@@ -936,11 +934,6 @@ def _fire_async_event(co):
 
 def fire(event, *args, **kwargs):
     if event not in subscribe.hooks:
-        # Suppress error for custom events. Event is only in subscribe.hooks
-        # if a custom hook has been subscribed but it should be possible to fire custom
-        # hooks even if there are no subscriptions.
-        if event.startswith("user_"):
-            return
         raise utils.QtileError("Unknown event: %s" % event)
     if event not in SKIPLOG:
         logger.debug("Internal event: %s(%s, %s)", event, args, kwargs)

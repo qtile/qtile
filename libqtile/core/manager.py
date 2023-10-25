@@ -1770,6 +1770,6 @@ class Qtile(CommandObject):
         extension.run()
 
     @expose_command()
-    def fire_user_hook(self, hook_name: str, *args) -> None:
+    def fire_user_hook(self, hook_name: str, *args: Any) -> None:
         """Fire a custom hook."""
         hook.fire(f"user_{hook_name}", *args)
