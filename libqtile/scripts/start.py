@@ -29,7 +29,7 @@ from sys import exit
 from typing import TYPE_CHECKING
 
 import libqtile.backend
-from libqtile import confreader
+from libqtile import confreader, qtile
 from libqtile.utils import get_config_file
 from libqtile.log_utils import logger
 
@@ -55,6 +55,7 @@ def rename_process():
 
 
 def make_qtile(options) -> Qtile | None:
+    qtile.core.name = options.backend
     if missing_deps := libqtile.backend.has_deps(options.backend):
         print(f"Backend '{options.backend}' missing required Python dependencies:")
         for dep in missing_deps:

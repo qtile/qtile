@@ -20,7 +20,15 @@
 # SOFTWARE.
 
 
-qtile = None
+class UndefinedCore:
+    name = None
+
+
+class UndefinedQtile:
+    core = UndefinedCore()
+
+
+qtile = UndefinedQtile()
 
 
 def init(q):
