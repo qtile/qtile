@@ -29,7 +29,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 import asyncio
 import contextlib
 
@@ -38,7 +37,6 @@ from libqtile.log_utils import logger
 from libqtile.resources.sleep import inhibitor
 
 subscriptions = {}  # type: dict
-SKIPLOG = set()  # type: set
 
 
 def clear():
@@ -889,8 +887,6 @@ def _fire_async_event(co):
 def fire(event, *args, **kwargs):
     if event not in subscribe.hooks:
         raise utils.QtileError("Unknown event: %s" % event)
-    if event not in SKIPLOG:
-        logger.debug("Internal event: %s(%s, %s)", event, args, kwargs)
     for i in subscriptions.get(event, []):
         try:
             if asyncio.iscoroutinefunction(i):
