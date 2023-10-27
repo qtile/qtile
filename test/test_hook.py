@@ -20,7 +20,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 import asyncio
 from multiprocessing import Value
 
@@ -197,3 +196,27 @@ def test_resume_hook(manager):
     hook.subscribe.resume(test)
     hook.fire("resume")
     assert test.val == 1
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_custom_hook_registry():
+    """Tests ability to create custom hook registries"""
+    test = NoArgCall(0)
+
+    custom = hook.Registry("test")
+    custom.register_hook(hook.Hook("test_hook"))
+    custom.subscribe.test_hook(test)
+
+    assert test.val == 0
+
+    # Test ability to fire third party hooks
+    custom.fire("test_hook")
+    assert test.val == 1
+
+    # Check core hooks are not included in custom registry
+    with pytest.raises(libqtile.utils.QtileError):
+        custom.fire("client_managed")
+
+    # Check custom hooks are not in core registry
+    with pytest.raises(libqtile.utils.QtileError):
+        hook.fire("test_hook")

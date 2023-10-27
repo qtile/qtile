@@ -29,12 +29,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
+
 import asyncio
 import contextlib
+from typing import TYPE_CHECKING
 
 from libqtile import utils
 from libqtile.log_utils import logger
 from libqtile.resources.sleep import inhibitor
+
+if TYPE_CHECKING:
+    from typing import Callable
 
 subscriptions = {}  # type: dict
 
@@ -43,21 +49,116 @@ def clear():
     subscriptions.clear()
 
 
-class Subscribe:
-    def __init__(self):
-        hooks = set([])
-        for i in dir(self):
-            if not i.startswith("_"):
-                hooks.add(i)
-        self.hooks = hooks
+def _fire_async_event(co):
+    from libqtile.utils import create_task
 
-    def _subscribe(self, event, func):
-        lst = subscriptions.setdefault(event, [])
+    loop = None
+    with contextlib.suppress(RuntimeError):
+        loop = asyncio.get_running_loop()
+
+    if loop is None:
+        asyncio.run(co)
+    else:
+        create_task(co)
+
+
+def _resume_func(self):
+    def f(func):
+        inhibitor.want_resume()
+        return self._subscribe("resume", func)
+
+    return f
+
+
+def _suspend_func(self):
+    def f(func):
+        inhibitor.want_sleep()
+        return self._subscribe("suspend", func)
+
+    return f
+
+
+class Hook:
+    def __init__(self, name: str, doc: str = "", func: Callable | None = None) -> None:
+        self.name = name
+        self.doc = doc
+        self.func = func
+
+
+class Subscribe:
+    def __init__(self, registry_name: str, check_name=True):
+        self.hooks = set([])
+        if check_name and registry_name in subscriptions:
+            raise NameError("A hook registry already exists with that name: {registry_name}")
+        self.registry_name = registry_name
+
+    def _subscribe(self, event: str, func: Callable) -> Callable:
+        if self.registry_name not in subscriptions:
+            subscriptions[self.registry_name] = {}
+        lst = subscriptions[self.registry_name].setdefault(event, [])
         if func not in lst:
             lst.append(func)
         return func
 
-    def startup_once(self, func):
+    def _register(self, hook: Hook) -> None:
+        def _hook_func(func):
+            return self._subscribe(hook.name, func)
+
+        self.hooks.add(hook.name)
+        setattr(self, hook.name, _hook_func if hook.func is None else hook.func(self))
+        setattr(getattr(self, hook.name), "__doc__", hook.doc)
+
+
+class Unsubscribe(Subscribe):
+    """
+    This class mirrors subscribe, except the _subscribe member has been
+    overridden to remove calls from hooks.
+    """
+
+    def _subscribe(self, event: str, func: Callable) -> None:
+        lst = subscriptions[self.registry_name].setdefault(event, [])
+        try:
+            lst.remove(func)
+        except ValueError:
+            raise utils.QtileError(
+                "Tried to unsubscribe a hook that was not currently subscribed"
+            )
+
+
+class Registry:
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self.subscribe = Subscribe(name)
+        self.unsubscribe = Unsubscribe(name, check_name=False)
+
+    def register_hook(self, hook: Hook) -> None:
+        if hook.name in dir(self.subscribe):
+            raise utils.QtileError(
+                f"Unable to register hook. A hook with that name already exists: {hook.name}"
+            )
+
+        logger.debug("Registered new hook: '%s'.", hook.name)
+        self.subscribe._register(hook)
+        self.unsubscribe._register(hook)
+
+    def fire(self, event, *args, **kwargs):
+        if event not in self.subscribe.hooks:
+            raise utils.QtileError("Unknown event: %s" % event)
+        for i in subscriptions[self.name].get(event, []):
+            try:
+                if asyncio.iscoroutinefunction(i):
+                    _fire_async_event(i(*args, **kwargs))
+                elif asyncio.iscoroutine(i):
+                    _fire_async_event(i)
+                else:
+                    i(*args, **kwargs)
+            except:  # noqa: E722
+                logger.exception("Error in hook %s", event)
+
+
+hooks: list[Hook] = [
+    Hook(
+        "startup_once",
         """Called when Qtile has started on first start
 
         This hook is called exactly once per session (i.e. not on each
@@ -82,10 +183,10 @@ class Subscribe:
               script = os.path.expanduser("~/.config/qtile/autostart.sh")
               subprocess.run([script])
 
-        """
-        return self._subscribe("startup_once", func)
-
-    def startup(self, func):
+        """,
+    ),
+    Hook(
+        "startup",
         """
         Called when qtile is started. Unlike ``startup_once``, this hook is
         fired on every start, including restarts.
@@ -112,10 +213,10 @@ class Subscribe:
           def run_every_startup():
               send_notification("qtile", "Startup")
 
-        """
-        return self._subscribe("startup", func)
-
-    def startup_complete(self, func):
+        """,
+    ),
+    Hook(
+        "startup_complete",
         """
         Called when qtile is started after all resources initialized.
 
@@ -140,10 +241,10 @@ class Subscribe:
           def run_every_startup():
               send_notification("qtile", "Startup complete")
 
-        """
-        return self._subscribe("startup_complete", func)
-
-    def shutdown(self, func):
+        """,
+    ),
+    Hook(
+        "shutdown",
         """
         Called before qtile is shutdown.
 
@@ -173,10 +274,10 @@ class Subscribe:
               script = os.path.expanduser("~/.config/qtile/shutdown.sh")
               subprocess.run([script])
 
-        """
-        return self._subscribe("shutdown", func)
-
-    def restart(self, func):
+        """,
+    ),
+    Hook(
+        "restart",
         """
         Called before qtile is restarted.
 
@@ -199,10 +300,10 @@ class Subscribe:
           def run_every_startup():
               send_notification("qtile", "Restarting...")
 
-        """
-        return self._subscribe("restart", func)
-
-    def setgroup(self, func):
+        """,
+    ),
+    Hook(
+        "setgroup",
         """
         Called when group is put on screen.
 
@@ -227,10 +328,10 @@ class Subscribe:
           def setgroup():
               send_notification("qtile", "Group set")
 
-        """
-        return self._subscribe("setgroup", func)
-
-    def addgroup(self, func):
+        """,
+    ),
+    Hook(
+        "addgroup",
         """
         Called when a new group is added
 
@@ -250,10 +351,10 @@ class Subscribe:
           def group_added(group_name):
               send_notification("qtile", f"New group added: {group_name}")
 
-        """
-        return self._subscribe("addgroup", func)
-
-    def delgroup(self, func):
+        """,
+    ),
+    Hook(
+        "delgroup",
         """
         Called when group is deleted
 
@@ -273,10 +374,10 @@ class Subscribe:
           def group_deleted(group_name):
               send_notification("qtile", f"Group deleted: {group_name}")
 
-        """
-        return self._subscribe("delgroup", func)
-
-    def changegroup(self, func):
+        """,
+    ),
+    Hook(
+        "changegroup",
         """
         Called whenever a group change occurs.
 
@@ -302,10 +403,10 @@ class Subscribe:
           def change_group():
               send_notification("qtile", "Change group event")
 
-        """
-        return self._subscribe("changegroup", func)
-
-    def focus_change(self, func):
+        """,
+    ),
+    Hook(
+        "focus_change",
         """
         Called when focus is changed, including moving focus between groups or when
         focus is lost completely (i.e. when a window is closed.)
@@ -326,10 +427,10 @@ class Subscribe:
           def focus_changed():
               send_notification("qtile", "Focus changed.")
 
-        """
-        return self._subscribe("focus_change", func)
-
-    def float_change(self, func):
+        """,
+    ),
+    Hook(
+        "float_change",
         """
         Called when a change in float state is made (e.g. toggle floating,
         minimised and fullscreen states)
@@ -350,10 +451,10 @@ class Subscribe:
           def float_change():
               send_notification("qtile", "Window float state changed.")
 
-        """
-        return self._subscribe("float_change", func)
-
-    def group_window_add(self, func):
+        """,
+    ),
+    Hook(
+        "group_window_add",
         """Called when a new window is added to a group
 
         **Arguments**
@@ -373,10 +474,10 @@ class Subscribe:
           def group_window_add(group, window):
               send_notification("qtile", f"Window {window.name} added to {group.name}")
 
-        """
-        return self._subscribe("group_window_add", func)
-
-    def client_new(self, func):
+        """,
+    ),
+    Hook(
+        "client_new",
         """
         Called before Qtile starts managing a new client
 
@@ -401,10 +502,10 @@ class Subscribe:
                 elif client.name == "dzen":
                     client.static(0)
 
-        """
-        return self._subscribe("client_new", func)
-
-    def client_managed(self, func):
+        """,
+    ),
+    Hook(
+        "client_managed",
         """
         Called after Qtile starts managing a new client
 
@@ -426,10 +527,10 @@ class Subscribe:
             def client_managed(client):
                 send_notification("qtile", f"{client.name} has been managed by qtile")
 
-        """
-        return self._subscribe("client_managed", func)
-
-    def client_killed(self, func):
+        """,
+    ),
+    Hook(
+        "client_killed",
         """
         Called after a client has been unmanaged
 
@@ -448,10 +549,10 @@ class Subscribe:
             def client_killed(client):
                 send_notification("qtile", f"{client.name} has been killed")
 
-        """
-        return self._subscribe("client_killed", func)
-
-    def client_focus(self, func):
+        """,
+    ),
+    Hook(
+        "client_focus",
         """
         Called whenever focus moves to a client window
 
@@ -470,10 +571,10 @@ class Subscribe:
             def client_focus(client):
                 send_notification("qtile", f"{client.name} has been focused")
 
-        """
-        return self._subscribe("client_focus", func)
-
-    def client_mouse_enter(self, func):
+        """,
+    ),
+    Hook(
+        "client_mouse_enter",
         """
         Called when the mouse enters a client
 
@@ -492,10 +593,10 @@ class Subscribe:
             def client_mouse_enter(client):
                 send_notification("qtile", f"Mouse has entered {client.name}")
 
-        """
-        return self._subscribe("client_mouse_enter", func)
-
-    def client_name_updated(self, func):
+        """,
+    ),
+    Hook(
+        "client_name_updated",
         """
         Called when the client name changes
 
@@ -517,10 +618,10 @@ class Subscribe:
                     f"Client's has been updated to {client.name}"
                 )
 
-        """
-        return self._subscribe("client_name_updated", func)
-
-    def client_urgent_hint_changed(self, func):
+        """,
+    ),
+    Hook(
+        "client_urgent_hint_changed",
         """
         Called when the client urgent hint changes
 
@@ -542,10 +643,10 @@ class Subscribe:
                     f"{client.name} has changed its urgency state"
                 )
 
-        """
-        return self._subscribe("client_urgent_hint_changed", func)
-
-    def layout_change(self, func):
+        """,
+    ),
+    Hook(
+        "layout_change",
         """
         Called on layout change event (including when a new group is
         displayed on the screen)
@@ -568,10 +669,10 @@ class Subscribe:
                     "qtile",
                     f"{layout.name} is now on group {group.name}"
                 )
-        """
-        return self._subscribe("layout_change", func)
-
-    def net_wm_icon_change(self, func):
+        """,
+    ),
+    Hook(
+        "net_wm_icon_change",
         """
         Called on ``_NET_WM_ICON`` change
 
@@ -593,10 +694,10 @@ class Subscribe:
             def icon_change(client):
                 send_notification("qtile", f"{client.name} has changed its icon")
 
-        """
-        return self._subscribe("net_wm_icon_change", func)
-
-    def selection_notify(self, func):
+        """,
+    ),
+    Hook(
+        "selection_notify",
         """
         Called on selection notify
 
@@ -625,10 +726,10 @@ class Subscribe:
                     f"Window {selection['owner']} has made a selection in the {name} selection."
                 )
 
-        """
-        return self._subscribe("selection_notify", func)
-
-    def selection_change(self, func):
+        """,
+    ),
+    Hook(
+        "selection_change",
         """
         Called on selection change
 
@@ -658,10 +759,10 @@ class Subscribe:
                     f"Window {selection['owner']} has changed the {name} selection."
                 )
 
-        """
-        return self._subscribe("selection_change", func)
-
-    def screen_change(self, func):
+        """,
+    ),
+    Hook(
+        "screen_change",
         """
         Called when the output configuration is changed (e.g. via randr in X11).
 
@@ -688,10 +789,10 @@ class Subscribe:
             def screen_change(event):
                 send_notification("qtile", "Screen change detected.")
 
-        """
-        return self._subscribe("screen_change", func)
-
-    def screens_reconfigured(self, func):
+        """,
+    ),
+    Hook(
+        "screens_reconfigured",
         """
         Called once ``qtile.reconfigure_screens`` has completed (e.g. if
         ``reconfigure_screens`` is set to ``True`` in your config).
@@ -711,10 +812,10 @@ class Subscribe:
             def screen_change(event):
                 send_notification("qtile", "Screens have been reconfigured.")
 
-        """
-        return self._subscribe("screens_reconfigured", func)
-
-    def current_screen_change(self, func):
+        """,
+    ),
+    Hook(
+        "current_screen_change",
         """
         Called when the current screen (i.e. the screen with focus) changes
 
@@ -733,10 +834,10 @@ class Subscribe:
             def screen_change(event):
                 send_notification("qtile", "Current screen change detected.")
 
-        """
-        return self._subscribe("current_screen_change", func)
-
-    def enter_chord(self, func):
+        """,
+    ),
+    Hook(
+        "enter_chord",
         """
         Called when key chord begins
 
@@ -758,10 +859,10 @@ class Subscribe:
             def enter_chord(chord_name):
                 send_notification("qtile", "Started {chord_name} key chord.")
 
-        """
-        return self._subscribe("enter_chord", func)
-
-    def leave_chord(self, func):
+        """,
+    ),
+    Hook(
+        "leave_chord",
         """
         Called when key chord ends
 
@@ -780,10 +881,10 @@ class Subscribe:
             ded leave_chord():
                 send_notification("qtile", "Key chord exited")
 
-        """
-        return self._subscribe("leave_chord", func)
-
-    def resume(self, func):
+        """,
+    ),
+    Hook(
+        "resume",
         """
         Called when system wakes up from sleep, suspend or hibernate.
 
@@ -795,11 +896,11 @@ class Subscribe:
         **Arguments**
 
         None
-        """
-        inhibitor.want_resume()
-        return self._subscribe("resume", func)
-
-    def suspend(self, func):
+        """,
+        _resume_func,
+    ),
+    Hook(
+        "suspend",
         """
         Called when system is about to sleep, suspend or hibernate.
 
@@ -844,56 +945,17 @@ class Subscribe:
               # Run screen locker
               qtile.spawn("/path/to/screen_locker")
 
-        """
-        inhibitor.want_sleep()
-        return self._subscribe("suspend", func)
+        """,
+        _suspend_func,
+    ),
+]
 
 
-subscribe = Subscribe()
+qtile_hooks = Registry("qtile")
 
+for hook in hooks:
+    qtile_hooks.register_hook(hook)
 
-class Unsubscribe(Subscribe):
-    """
-    This class mirrors subscribe, except the _subscribe member has been
-    overridden to removed calls from hooks.
-    """
-
-    def _subscribe(self, event, func):
-        lst = subscriptions.setdefault(event, [])
-        try:
-            lst.remove(func)
-        except ValueError:
-            raise utils.QtileError(
-                "Tried to unsubscribe a hook that was not currently subscribed"
-            )
-
-
-unsubscribe = Unsubscribe()
-
-
-def _fire_async_event(co):
-    from libqtile.utils import create_task
-
-    loop = None
-    with contextlib.suppress(RuntimeError):
-        loop = asyncio.get_running_loop()
-
-    if loop is None:
-        asyncio.run(co)
-    else:
-        create_task(co)
-
-
-def fire(event, *args, **kwargs):
-    if event not in subscribe.hooks:
-        raise utils.QtileError("Unknown event: %s" % event)
-    for i in subscriptions.get(event, []):
-        try:
-            if asyncio.iscoroutinefunction(i):
-                _fire_async_event(i(*args, **kwargs))
-            elif asyncio.iscoroutine(i):
-                _fire_async_event(i)
-            else:
-                i(*args, **kwargs)
-        except:  # noqa: E722
-            logger.exception("Error in hook %s", event)
+subscribe = qtile_hooks.subscribe
+unsubscribe = qtile_hooks.unsubscribe
+fire = qtile_hooks.fire
