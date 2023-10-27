@@ -12,6 +12,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
           condition is evaluated once when the config file is first loaded.
       - Add ability to have bar drawns over windows by adding `reserve=False` to bar's config to
         stop the bar reserving screen space.
+      - Add ability for third-party code (widgets, layouts) to create hooks
     * bugfixes
       - Fix two bugs in stacking transient windows in X11
       - Checking configs containing `qtile.core.name` with `python config.py` don't fail anymore (but `qtile.core.name`
