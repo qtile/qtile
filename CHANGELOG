@@ -7,6 +7,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
       - Updated `Bluetooth` widget which allows users to manage multiple devices in a single widget
       - Add `align` option to `Columns` layout so new windows can be added to left or right column.
     * bugfixes
+      - Fix two bugs in stacking transient windows in X11
 
 Qtile 0.23.0, released 2023-09-24:
     !!! Dependency Changes !!!
