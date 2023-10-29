@@ -62,6 +62,10 @@ def _fire_async_event(co):
         create_task(co)
 
 
+# Custom hook functions receive a single argument, "self", which will refer to the
+# Subscribe/Unsubscribe classes.
+
+
 def _resume_func(self):
     def f(func):
         inhibitor.want_resume()
@@ -78,6 +82,19 @@ def _suspend_func(self):
     return f
 
 
+def _user_hook_func(self):
+    def wrapper(hook_name):
+        def f(func):
+            name = f"user_{hook_name}"
+            if name not in self.hooks:
+                self.hooks.add(name)
+            return self._subscribe(name, func)
+
+        return f
+
+    return wrapper
+
+
 class Hook:
     def __init__(self, name: str, doc: str = "", func: Callable | None = None) -> None:
         self.name = name
@@ -90,12 +107,13 @@ class Subscribe:
         self.hooks = set([])
         if check_name and registry_name in subscriptions:
             raise NameError("A hook registry already exists with that name: {registry_name}")
+        elif registry_name not in subscriptions:
+            subscriptions[registry_name] = {}
         self.registry_name = registry_name
 
     def _subscribe(self, event: str, func: Callable) -> Callable:
-        if self.registry_name not in subscriptions:
-            subscriptions[self.registry_name] = {}
-        lst = subscriptions[self.registry_name].setdefault(event, [])
+        registry = subscriptions.setdefault(self.registry_name, dict())
+        lst = registry.setdefault(event, [])
         if func not in lst:
             lst.append(func)
         return func
@@ -116,7 +134,8 @@ class Unsubscribe(Subscribe):
     """
 
     def _subscribe(self, event: str, func: Callable) -> None:
-        lst = subscriptions[self.registry_name].setdefault(event, [])
+        registry = subscriptions.setdefault(self.registry_name, dict())
+        lst = registry.setdefault(event, [])
         try:
             lst.remove(func)
         except ValueError:
@@ -126,10 +145,12 @@ class Unsubscribe(Subscribe):
 
 
 class Registry:
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, hooks: list[Hook] = list()) -> None:
         self.name = name
         self.subscribe = Subscribe(name)
         self.unsubscribe = Unsubscribe(name, check_name=False)
+        for hook in hooks:
+            self.register_hook(hook)
 
     def register_hook(self, hook: Hook) -> None:
         if hook.name in dir(self.subscribe):
@@ -948,13 +969,49 @@ hooks: list[Hook] = [
         """,
         _suspend_func,
     ),
+    Hook(
+        "user",
+        """
+        Use to create user-defined hooks.
+
+        The purpose of these hooks is to allow a hook to be fired by an external application.
+
+        Hooked functions can receive arguments but it is up to the application firing the hook to ensure
+        the correct arguments are passed. No checking will be performed by qtile.
+
+        Example:
+
+        .. code:: python
+
+          from libqtile import hook
+          from libqtile.log_utils import logger
+
+          @hook.subscribe.user("my_custom_hook")
+          def hooked_function():
+            logger.warning("Custom hook received.")
+
+        The external script can then call the hook with the following command:
+
+        .. code::
+
+          qtile cmd-obj -o cmd -f fire_user_hook -a my_custom_hook
+
+        .. note::
+
+          If the script will be run by a different user then you will need to pass the path to the socket
+          file used by the current process. One way to achieve this is to specify a path for the socket when starting
+          qtile e.g. ``qtile start -s /tmp/qtile.socket``.
+          When firing the hook, you should then call
+          ``qtile cmd-obj -o cmd -f fire_user_hook -a my_custom_hook -s /tmp/qtile.socket``
+          However, the same socket will need to be passed wherever you run ``qtile cmd-obj`` or ``qtile shell``.
+
+        """,
+        _user_hook_func,
+    ),
 ]
 
 
-qtile_hooks = Registry("qtile")
-
-for hook in hooks:
-    qtile_hooks.register_hook(hook)
+qtile_hooks = Registry("qtile", hooks)
 
 subscribe = qtile_hooks.subscribe
 unsubscribe = qtile_hooks.unsubscribe
