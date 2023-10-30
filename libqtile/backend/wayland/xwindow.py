@@ -375,10 +375,10 @@ class XStatic(Static[xwayland.Surface]):
         )
         self._wm_class = surface.wm_class
 
-        self.conf_x = x
-        self.conf_y = y
-        self.conf_width = width
-        self.conf_height = height
+        self._conf_x = x
+        self._conf_y = y
+        self._conf_width = width
+        self._conf_height = height
 
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
@@ -416,13 +416,13 @@ class XStatic(Static[xwayland.Surface]):
     def _on_request_configure(self, _listener: Listener, event: SurfaceConfigureEvent) -> None:
         logger.debug("Signal: xstatic request_configure")
         cw = ConfigWindow
-        if self.conf_x is None and event.mask & cw.X:
+        if self._conf_x is None and event.mask & cw.X:
             self.x = event.x
-        if self.conf_y is None and event.mask & cw.Y:
+        if self._conf_y is None and event.mask & cw.Y:
             self.y = event.y
-        if self.conf_width is None and event.mask & cw.Width:
+        if self._conf_width is None and event.mask & cw.Width:
             self.width = event.width
-        if self.conf_height is None and event.mask & cw.Height:
+        if self._conf_height is None and event.mask & cw.Height:
             self.height = event.height
         self.place(self.x, self.y, self.width, self.height, self.borderwidth, self.bordercolor)
 
