@@ -732,6 +732,14 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self.defunct = True
         if self.group:
             self.group.remove(self)
+
+        # Keep track of user-specified geometry to support X11.
+        # Respect configure requests only if these are `None` here.
+        conf_x = x
+        conf_y = y
+        conf_width = width
+        conf_height = height
+
         if x is None:
             x = self.x + self.borderwidth
         if y is None:
@@ -750,7 +758,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         if self.tree:
             self.tree.node.set_position(0, 0)
 
-        win = self._to_static()
+        win = self._to_static(conf_x, conf_y, conf_width, conf_height)
 
         # Pass ownership of the foreign toplevel handle to the static window.
         if self.ftm_handle:
@@ -769,7 +777,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         return self.container.node.enabled
 
     @abc.abstractmethod
-    def _to_static(self) -> Static:
+    def _to_static(self, x: int | None, y: int | None, width: int | None, height: int | None) -> Static:
         # This must return a new `Static` subclass instance
         pass
 
