@@ -120,3 +120,6 @@ class Core(CommandObject, metaclass=ABCMeta):
     def info(self) -> dict[str, Any]:
         """Get basic information about the running backend."""
         return {"backend": self.name, "display_name": self.display_name}
+
+    def setup_barriers(self, screens: list[config.Screen]) -> None:
+        """Set up pointer barriers to focus screens when moving pointer."""

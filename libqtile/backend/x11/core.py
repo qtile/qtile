@@ -45,6 +45,9 @@ from libqtile.utils import QtileError
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
+    from libqtile.config import Screen
+    from libqtile.core.manager import Qtile
+
 _IGNORED_EVENTS = {
     xcffib.xproto.CreateNotifyEvent,
     xcffib.xproto.FocusInEvent,
@@ -811,6 +814,40 @@ class Core(base.Core):
     def handle_ScreenChangeNotify(self, event) -> None:  # noqa: N802
         hook.fire("screen_change", event)
 
+    def handle_BarrierHit(self, event):
+        """Warps pointer to other side of barrier and focuses the relevant screen."""
+        barrier = self.conn.xfixes.barriers.get(event.barrier)
+        if barrier is None:
+            logger.warning("Unknown barrier hit event.")
+            return
+
+        x, y, screen1, screen2 = barrier
+        mouse_x = event.root_x >> 16
+        mouse_y = event.root_y >> 16
+
+        if x is not None:
+            if mouse_x >> 16 < x:
+                # Focus screen 2
+                mouse_x += 1
+                screen = screen2
+            else:
+                # Focus screen 1
+                mouse_x -= 1
+                screen = screen1
+
+        else:
+            if event.root_y >> 16 < y:
+                # Focus screen 2
+                mouse_y += 1
+                screen = screen2
+            else:
+                # Focus screen 1
+                mouse_y -= 1
+                screen = screen1
+
+        self.warp_pointer(mouse_x, mouse_y)
+        self.qtile.focus_screen(screen.index, warp=False)
+
     def _fake_input(self, input_type, detail, x=0, y=0) -> None:
         self._xtest.FakeInput(
             input_type,
@@ -959,3 +996,36 @@ class Core(base.Core):
     def hovered_window(self) -> base.WindowType | None:
         _hovered_window = self.conn.conn.core.QueryPointer(self._root.wid).reply().child
         return self.qtile.windows_map.get(_hovered_window)
+
+    def setup_barriers(self, screens: list[Screen]) -> None:
+        if not (hasattr(self.conn, "xinputextension") and hasattr(self.conn, "xfixes")):
+            logger.warning("Unable to set pointer barriers. Missing extensions.")
+            return
+        self.conn.xinputextension.select_events(self._root.wid)
+
+        if len(screens) < 2:
+            return
+
+        borders = set()
+
+        for screen in screens:
+            for other in [s for s in screens if s is not screen]:
+                border = screen.get_joining_edge(screen, other)
+                if border is None:
+                    continue
+
+                # Vertical border (x coordinate is the same)
+                if border[0] == border[2]:
+                    # We need the leftmost screen first
+                    first = screen if screen.x < other.x else other
+                # Horizontal border
+                else:
+                    # We need higher screen first
+                    first = screen if screen.y < other.y else other
+
+                touching = other if first is screen else screen
+
+                borders.add((*border, first, touching))
+
+        for border in borders:
+            self.conn.xfixes.add_pointer_barrier(self._root.wid, *border)

@@ -48,6 +48,7 @@ import cairocffi.xcb
 import xcffib
 import xcffib.randr
 import xcffib.xinerama
+import xcffib.xinput
 import xcffib.xproto
 from xcffib.xfixes import SelectionEventMask
 from xcffib.xproto import CW, EventMask, WindowClass
@@ -434,10 +435,45 @@ class XFixes:
         self.conn = conn
         self.ext = conn.conn(xcffib.xfixes.key)
         self.ext.QueryVersion(xcffib.xfixes.MAJOR_VERSION, xcffib.xfixes.MINOR_VERSION)
+        self.barriers = {}
 
     def select_selection_input(self, window, selection="PRIMARY"):
         _selection = self.conn.atoms[selection]
         self.conn.xfixes.ext.SelectSelectionInput(window.wid, _selection, self.selection_mask)
+
+    def add_pointer_barrier(self, window, x1, y1, x2, y2, screen1, screen2):
+        barrier = self.conn.conn.generate_id()
+        self.ext.CreatePointerBarrier(barrier, window, x1, y1, x2, y2, 0, 0, [])
+        self.barriers[barrier] = (
+            x1 if x1 == x2 else None,
+            y1 if y1 == y2 else None,
+            screen1,
+            screen2,
+        )
+
+    def remove_pointer_barrier(self, barrier):
+        self.ext.DeletePointerBarrier(barrier)
+        del self.barriers[barrier]
+
+    def remove_pointer_barriers(self):
+        for b in self.barriers.keys():
+            self.remove_pointer_barrier(b)
+
+
+class XInput:
+    def __init__(self, conn):
+        self.conn = conn
+        self.ext = conn.conn(xcffib.xinput.key)
+        self.ext.XIQueryVersion(xcffib.xinput.MAJOR_VERSION, xcffib.xinput.MINOR_VERSION)
+
+    def select_events(self, window):
+        mask = xcffib.xinput.EventMask.synthetic(
+            xcffib.xinput.Device.All,
+            1,
+            [xcffib.xinput.XIEventMask.BarrierHit | xcffib.xinput.XIEventMask.BarrierLeave],
+        )
+        self.ext.XISelectEvents(window, 1, [mask])
+        self.conn.flush()
 
 
 class Connection:
@@ -445,6 +481,7 @@ class Connection:
         "xinerama": Xinerama,
         "randr": RandR,
         "xfixes": XFixes,
+        "xinputextension": XInput,
     }
 
     def __init__(self, display):

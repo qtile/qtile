@@ -439,6 +439,8 @@ class Qtile(CommandObject):
 
         self.screens = screens
 
+        self.core.setup_barriers(self.screens)
+
     @expose_command()
     def reconfigure_screens(self, *_: list[Any], **__: dict[Any, Any]) -> None:
         """
