@@ -20,15 +20,15 @@
 # SOFTWARE.
 
 
-class UndefinedCore:
+class _UndefinedCore:
     name = None
 
 
-class UndefinedQtile:
-    core = UndefinedCore()
+class _UndefinedQtile:
+    core = _UndefinedCore()
 
 
-qtile = UndefinedQtile()
+qtile = _UndefinedQtile()
 
 
 def init(q):

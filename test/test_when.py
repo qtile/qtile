@@ -57,12 +57,12 @@ class WhenConfig(Config):
         config.Key(
             ["control"],
             "t",
-            lazy.next_layout().when(True)
+            lazy.next_layout().when(condition=1 + 1 == 2)
         ),
         config.Key(
             ["control"],
             "f",
-            lazy.next_layout().when(False)
+            lazy.next_layout().when(condition=1 + 1 == 3)
         ),
         config.Key(
             ["control", "shift"],

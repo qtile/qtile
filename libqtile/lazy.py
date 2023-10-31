@@ -54,8 +54,8 @@ class LazyCall:
         self._if_no_focused: bool = False
         self._layouts: set[str] = set()
         self._when_floating = True
-        self._check: bool | None = None
-        self._func: Callable | None = None
+        self._condition: bool | None = None
+        self._func: Callable[[], bool] = lambda: True
 
     def __call__(self, *args, **kwargs):
         """Convenience method to allow users to pass arguments to
@@ -96,20 +96,14 @@ class LazyCall:
 
     def when(
         self,
-        check: bool | None = None,
-        *,
         focused: Match | None = None,
         if_no_focused: bool = False,
         layout: Iterable[str] | str | None = None,
         when_floating: bool = True,
-        func: Callable | None = None
+        func: Callable | None = None,
+        condition: bool | None = None,
     ) -> "LazyCall":
         """Enable call only for matching criteria.
-
-        Positional parameters
-        ---------------------
-        check: a boolean value to determine whether the lazy object should
-            be run.
 
         Keyword parameters
         ----------
@@ -130,12 +124,16 @@ class LazyCall:
             Enable call when the current window is floating.
         func: callable
             Enable call when the result of the callable evaluates to True
+        condition: a boolean value to determine whether the lazy object should
+            be run. Unlike 'func', the condition is evaluated once when the config
+            file is first loaded.
+
         """
         self._focused = focused
 
         self._if_no_focused = if_no_focused
 
-        self._check = check
+        self._condition = condition
         self._func = func
 
         if layout is not None:
@@ -147,7 +145,7 @@ class LazyCall:
     def check(self, q) -> bool:
         cur_win_floating = q.current_window and q.current_window.floating
 
-        if self._check is False:
+        if self._condition is False:
             return False
 
         if self._focused:
