@@ -336,7 +336,9 @@ class XWindow(Window[xwayland.Surface]):
         Window.static(self, screen, x, y, width, height)
         hook.fire("client_managed", self.qtile.windows_map[self._wid])
 
-    def _to_static(self, x: int | None, y: int | None, width: int | None, height: int | None) -> XStatic:
+    def _to_static(
+        self, x: int | None, y: int | None, width: int | None, height: int | None
+    ) -> XStatic:
         return XStatic(
             self.core, self.qtile, self, self._idle_inhibitors_count, x, y, width, height
         )
@@ -347,6 +349,7 @@ class ConfigWindow:
 
     Reproduced here to remove a dependency on xcffib.
     """
+
     X = 1
     Y = 2
     Width = 4

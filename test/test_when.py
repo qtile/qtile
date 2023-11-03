@@ -54,26 +54,10 @@ class WhenConfig(Config):
                 focused=config.Match(wm_class="TestWindow"), if_no_focused=True
             ),
         ),
-        config.Key(
-            ["control"],
-            "t",
-            lazy.next_layout().when(condition=1 + 1 == 2)
-        ),
-        config.Key(
-            ["control"],
-            "f",
-            lazy.next_layout().when(condition=1 + 1 == 3)
-        ),
-        config.Key(
-            ["control", "shift"],
-            "t",
-            lazy.next_layout().when(func=lambda: True)
-        ),
-        config.Key(
-            ["control", "shift"],
-            "f",
-            lazy.next_layout().when(func=lambda: False)
-        ),
+        config.Key(["control"], "t", lazy.next_layout().when(condition=1 + 1 == 2)),
+        config.Key(["control"], "f", lazy.next_layout().when(condition=1 + 1 == 3)),
+        config.Key(["control", "shift"], "t", lazy.next_layout().when(func=lambda: True)),
+        config.Key(["control", "shift"], "f", lazy.next_layout().when(func=lambda: False)),
     ]
     layouts = [layout.MonadWide(), layout.MonadTall()]
 

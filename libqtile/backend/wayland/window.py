@@ -777,7 +777,9 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         return self.container.node.enabled
 
     @abc.abstractmethod
-    def _to_static(self, x: int | None, y: int | None, width: int | None, height: int | None) -> Static:
+    def _to_static(
+        self, x: int | None, y: int | None, width: int | None, height: int | None
+    ) -> Static:
         # This must return a new `Static` subclass instance
         pass
 
