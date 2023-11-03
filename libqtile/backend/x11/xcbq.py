@@ -11,6 +11,7 @@
 # Copyright (c) 2012, 2014-2015 Tycho Andersen
 # Copyright (c) 2013 Tao Sauvage
 # Copyright (c) 2014-2015 Sean Vig
+# Copyright (c) 2023 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
