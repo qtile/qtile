@@ -30,8 +30,8 @@ from typing import TYPE_CHECKING
 
 import libqtile.backend
 from libqtile import confreader, qtile
-from libqtile.utils import get_config_file
 from libqtile.log_utils import logger
+from libqtile.utils import get_config_file
 
 if TYPE_CHECKING:
     from libqtile.core.manager import Qtile

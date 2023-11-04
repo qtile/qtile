@@ -3,15 +3,17 @@
     This script is used to generate xkeysyms.py from the X keysymdef.h definition
     header file.
 """
-import os, os.path, sys
+import os
+import os.path
 import re
+import sys
 
-
-template = '''\
+template = """\
 keysyms = {
 %s
 }\
-'''
+"""
+
 
 def genkeysyms(path):
     XRE = r"#define\s+XK_(\S+)\s+(\S+)"
@@ -22,7 +24,8 @@ def genkeysyms(path):
             ks.append(m.groups())
 
     lines = ["    '%s': %s," % i for i in ks]
-    print(template % '\n'.join(lines))
+    print(template % "\n".join(lines))
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
