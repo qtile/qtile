@@ -28,10 +28,10 @@ import os
 import traceback
 from collections import defaultdict
 from collections.abc import Sequence
+from pathlib import Path
 from random import randint
 from shutil import which
 from typing import TYPE_CHECKING
-from pathlib import Path
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Coroutine, TypeVar, Union
