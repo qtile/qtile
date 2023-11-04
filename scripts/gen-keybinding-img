@@ -142,8 +142,8 @@ class KeyboardPNGFactory:
 
         pos.next_row()
 
-        for l in LEGEND:
-            key_pos[l] = pos.get_pos(l)
+        for legend in LEGEND:
+            key_pos[legend] = pos.get_pos(legend)
 
         pos.skip_x(5)
         key_pos["Button1"] = pos.get_pos("Button1")
