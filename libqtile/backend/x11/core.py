@@ -826,7 +826,7 @@ class Core(base.Core):
         mouse_y = event.root_y >> 16
 
         if x is not None:
-            if mouse_x >> 16 < x:
+            if mouse_x < x:
                 # Focus screen 2
                 mouse_x += 1
                 screen = screen2
@@ -836,7 +836,7 @@ class Core(base.Core):
                 screen = screen1
 
         else:
-            if event.root_y >> 16 < y:
+            if mouse_y < y:
                 # Focus screen 2
                 mouse_y += 1
                 screen = screen2
