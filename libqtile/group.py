@@ -292,25 +292,26 @@ class _Group(CommandObject):
             self.windows.append(win)
         win.group = self
         # Tiling windows follow the current layout's window state
-        keep_layer = False
+        follow_layer = True
         if win._win_state is None or win.tiling:
             win._win_state = self.layout._manages_win_state
         if self.qtile.config.auto_fullscreen and win.wants_to_fullscreen:
             win._win_state = WindowStates.FULLSCREEN
-            keep_layer = True
+            follow_layer = False
         elif self.floating_layout.match(win):
             win._win_state = WindowStates.FLOATING
             if self.qtile.config.floats_kept_above:
                 win.keep_above(enable=True)
-            keep_layer = True
+            follow_layer = False
         if win.floating:
             self.floating_layout.add_client(win)
         if win.fullscreen:
             self.fullscreen_layout.add_client(win)
         if win.tiling:
             self.add_to_layouts(win)
-        win._win_state_follows = win._win_state == self.layout._manages_win_state
-        if keep_layer:
+        # If some other layer is set due to some config option,
+        # make sure that the current layer is kept unless some manual involvement happens
+        if not follow_layer:
             win._win_state_follows = False
         if win.can_steal_focus:
             self.focus(win, warp=True, force=force)
@@ -388,9 +389,9 @@ class _Group(CommandObject):
             self.floating_layout.blur()
 
     def mark_fullscreen(self, win):
-        win._win_state_follows = False
         if win.fullscreen:
             return
+        win._win_state_follows = self.layout._manages_win_state == WindowStates.FULLSCREEN
         self.remove_alt_layouts(win)
         self.remove_from_layouts(win, pseudo=True)
         self.fullscreen_layout.add_client(win)
@@ -402,9 +403,9 @@ class _Group(CommandObject):
     def mark_tiling(self, win):
         if win.tiling:
             return
-        win._win_state_follows = True
         if self.layout._manages_win_state != WindowStates.TILED:
             raise CommandError("The current layout does not support tiling windows")
+        win._win_state_follows = self.layout._manages_win_state == WindowStates.TILED
         self.remove_alt_layouts(win)
         self.add_to_layouts(win)
         win._win_state = WindowStates.TILED
@@ -429,9 +430,9 @@ class _Group(CommandObject):
                 self.tiled_windows.remove(win)
 
     def mark_floating(self, win):
-        win._win_state_follows = False
         if win.floating:
             return
+        win._win_state_follows = self.layout._manages_win_state == WindowStates.FLOATING
         self.remove_alt_layouts(win)
         self.remove_from_layouts(win)
         self.floating_layout.add_client(win)
