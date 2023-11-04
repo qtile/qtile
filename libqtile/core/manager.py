@@ -411,11 +411,11 @@ class Qtile(CommandObject):
         self.screens = screens
 
     @expose_command()
-    def reconfigure_screens(self, ev: Any = None) -> None:
+    def reconfigure_screens(self, **_: dict[Any, Any]) -> None:
         """
         This can be used to set up screens again during run time. Intended usage is to
         be called when the screen_change hook is fired, responding to changes in
-        physical monitor setup by configuring qtile.screens accordingly. The ev kwarg is
+        physical monitor setup by configuring qtile.screens accordingly. The kwargs are
         ignored; it is here in case this function is hooked directly to screen_change.
         """
         logger.info("Reconfiguring screens.")

@@ -48,6 +48,11 @@ readme = {file = "README.rst"}
 line-length = 98
 exclude = 'libqtile/_ffi.*\.py|libqtile/backend/x11/_ffi.*\.py|test/configs/syntaxerr.py'
 
+[tool.vulture]
+paths = ["libqtile"]
+exclude = ["test/configs/syntaxerr.py"]
+min_confidence = 100
+
 [tool.pytest.ini_options]
 python_files = "test_*.py"
 testpaths = ["test"]
