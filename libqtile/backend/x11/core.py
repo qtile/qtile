@@ -1,5 +1,6 @@
 # Copyright (c) 2019 Aldo Cortesi
 # Copyright (c) 2019 Sean Vig
+# Copyright (c) 2023 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -1010,7 +1011,7 @@ class Core(base.Core):
 
         for screen in screens:
             for other in [s for s in screens if s is not screen]:
-                border = screen.get_joining_edge(screen, other)
+                border = screen.get_joining_edge(other)
                 if border is None:
                     continue
 
