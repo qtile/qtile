@@ -114,7 +114,7 @@ class PulseConnection:
             sink for sink in await self.pulse.sink_list() if sink.name == self.default_sink_name
         ]
         if not sinks:
-            logger.warning("Cold not get info for default sink")
+            logger.warning("Could not get info for default sink")
             self.default_sink = None
             return
 
