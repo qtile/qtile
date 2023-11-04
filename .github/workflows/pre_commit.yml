@@ -1,0 +1,17 @@
+name: Run pre-commit
+
+on:
+    push:
+    pull_request:
+
+jobs:
+    check:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v4
+            - name: Install dependencies
+              run: |
+                sudo apt update
+                sudo apt install --no-install-recommends libxkbcommon-dev
+            - uses: pre-commit/action@v3.0.0
