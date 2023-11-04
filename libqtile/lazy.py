@@ -134,7 +134,9 @@ class LazyCall:
         self._if_no_focused = if_no_focused
 
         self._condition = condition
-        self._func = func
+
+        if func is not None:
+            self._func = func
 
         if layout is not None:
             self._layouts = {layout} if isinstance(layout, str) else set(layout)
@@ -161,7 +163,7 @@ class LazyCall:
         if self._layouts and q.current_layout.name not in self._layouts:
             return False
 
-        if self._func:
+        if self._func is not None:
             try:
                 result = self._func()
             except Exception:

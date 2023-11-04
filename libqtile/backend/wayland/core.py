@@ -573,7 +573,7 @@ class Core(base.Core, wlrq.HasListeners):
             box = xdg_surface.get_geometry()
             lx, ly = self.output_layout.closest_point(win.x + box.x, win.y + box.y)
             wlr_output = self.output_layout.output_at(lx, ly)
-            box = Box(*wlr_output.data.get_geometry())  # type: ignore[union-attr]
+            box = Box(*wlr_output.data.get_geometry())
             box.x = round(box.x - lx)
             box.y = round(box.y - ly)
             xdg_surface.popup.unconstrain_from_box(box)
@@ -581,7 +581,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         logger.warning("xdg_shell surface had no role set. Ignoring.")
 
-    def _release_implicit_grab(self, time: int) -> None:
+    def _release_implicit_grab(self, time: int = 0) -> None:
         if self._implicit_grab is not None:
             logger.debug("Releasing implicit grab.")
             self._implicit_grab.finalize()
@@ -592,7 +592,9 @@ class Core(base.Core, wlrq.HasListeners):
     def _create_implicit_grab(self, time: int, surface: Surface, sx: float, sy: float) -> None:
         self._release_implicit_grab(time)
         logger.debug("Creating implicit grab.")
-        self._implicit_grab = ImplicitGrab(self, surface, self.cursor.x, self.cursor.y, sx, sy)
+        self._implicit_grab = ImplicitGrab(
+            self, surface, self.cursor.x, self.cursor.y, int(sx), int(sy)
+        )
 
     def _on_cursor_axis(self, _listener: Listener, event: pointer.PointerAxisEvent) -> None:
         handled = False
@@ -651,9 +653,10 @@ class Core(base.Core, wlrq.HasListeners):
             self.seat.pointer_notify_button(event.time_msec, event.button, event.button_state)
 
     def _implicit_grab_motion(self, time: int) -> None:
-        sx = self.cursor.x + self._implicit_grab.start_dx
-        sy = self.cursor.y + self._implicit_grab.start_dy
-        self.seat.pointer_notify_motion(time, sx, sy)
+        if self._implicit_grab:
+            sx = self.cursor.x + self._implicit_grab.start_dx
+            sy = self.cursor.y + self._implicit_grab.start_dy
+            self.seat.pointer_notify_motion(time, sx, sy)
 
     def _on_cursor_motion(self, _listener: Listener, event: pointer.PointerMotionEvent) -> None:
         assert self.qtile is not None
@@ -1333,7 +1336,7 @@ class Core(base.Core, wlrq.HasListeners):
                     self.exclusive_client
                 ):
                     logger.debug("Focus withheld from window not owned by exclusive client.")
-                    return
+                    return None
 
             if self.qtile.config.bring_front_click is True:
                 win.bring_to_front()
