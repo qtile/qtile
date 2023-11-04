@@ -2,7 +2,6 @@
 """
     Command-line interaction with Qtile TextBox widgets.
 """
-import os
 import sys
 from argparse import ArgumentParser
 

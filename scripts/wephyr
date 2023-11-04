@@ -16,7 +16,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).parent.parent.resolve()
 sys.path.insert(0, BASE_DIR)
 
-from libqtile.command.client import CommandClient
+# flake8: noqa
 from libqtile.utils import get_cache_dir, guess_terminal
 
 CACHE_DIR = Path(get_cache_dir())
