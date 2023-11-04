@@ -490,27 +490,31 @@ class Screen(CommandObject):
 
     @property
     def dx(self) -> int:
-        return self.x + self.left.size if self.left else self.x
+        if self.left and getattr(self.left, "reserve", True):
+            return self.x + self.left.size
+        return self.x
 
     @property
     def dy(self) -> int:
-        return self.y + self.top.size if self.top else self.y
+        if self.top and getattr(self.top, "reserve", True):
+            return self.y + self.top.size
+        return self.y
 
     @property
     def dwidth(self) -> int:
         val = self.width
-        if self.left:
+        if self.left and getattr(self.left, "reserve", True):
             val -= self.left.size
-        if self.right:
+        if self.right and getattr(self.right, "reserve", True):
             val -= self.right.size
         return val
 
     @property
     def dheight(self) -> int:
         val = self.height
-        if self.top:
+        if self.top and getattr(self.top, "reserve", True):
             val -= self.top.size
-        if self.bottom:
+        if self.bottom and getattr(self.bottom, "reserve", True):
             val -= self.bottom.size
         return val
 
