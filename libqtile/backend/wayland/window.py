@@ -246,7 +246,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self.container.node.set_enabled(enabled=False)
         seat = self.core.seat
         if not seat.destroyed:
-            if self.surface.surface == seat.keyboard_state.focused_surface:  # type: ignore
+            if self.surface.surface == seat.keyboard_state.focused_surface:
                 seat.keyboard_clear_focus()
 
     def get_wm_class(self) -> list | None:
@@ -255,7 +255,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         return None
 
     def belongs_to_client(self, other: Client) -> bool:
-        return other == Client.from_resource(self.surface.surface._ptr.resource)  # type: ignore
+        return other == Client.from_resource(self.surface.surface._ptr.resource)
 
     def focus(self, warp: bool = True) -> None:
         self._urgent = False
@@ -850,7 +850,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         self.hide()
 
     def hide(self) -> None:
-        if self.surface.surface == self.core.seat.keyboard_state.focused_surface:  # type: ignore
+        if self.surface.surface == self.core.seat.keyboard_state.focused_surface:
             group = self.qtile.current_screen.group
             if group.current_window:
                 group.focus(group.current_window, warp=self.qtile.config.cursor_warp)
@@ -899,7 +899,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         return self._idle_inhibitors_count > 0
 
     def belongs_to_client(self, other: Client) -> bool:
-        return other == Client.from_resource(self.surface.surface._ptr.resource)  # type: ignore
+        return other == Client.from_resource(self.surface.surface._ptr.resource)
 
     @expose_command()
     def bring_to_front(self) -> None:

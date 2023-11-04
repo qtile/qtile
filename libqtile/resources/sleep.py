@@ -118,7 +118,7 @@ class Inhibitor:
             self.take()
 
         # Finally, attach a handler for the "PrepareForSleep" signal
-        self.login.on_prepare_for_sleep(self.prepare_for_sleep)  # type: ignore[attr-defined]
+        self.login.on_prepare_for_sleep(self.prepare_for_sleep)
 
     def take(self) -> None:
         """Create an inhibitor."""
@@ -134,7 +134,7 @@ class Inhibitor:
     async def _take(self) -> None:
         """Sends the request to dbus to create an inhibitor."""
         # The "Inhibit" method returns a file descriptor
-        self.fd = await self.login.call_inhibit(  # type: ignore[attr-defined]
+        self.fd = await self.login.call_inhibit(
             "sleep",  # what: The lock type. We only want to inhibit sleep
             "qtile",  # who: Name of program requesting inhibitor
             "Run hooked functions before suspend",  # why: Short description of purpose
@@ -197,7 +197,7 @@ class Inhibitor:
             self.release()
 
         if self.sleep or self.resume:
-            self.login.off_prepare_for_sleep(self.prepare_for_sleep)  # type: ignore[attr-defined]
+            self.login.off_prepare_for_sleep(self.prepare_for_sleep)
 
         self.bus.disconnect()
         self.bus = None
