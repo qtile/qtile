@@ -17,6 +17,9 @@ echo "Installing other required packages..."
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
 
+echo "Installing pre-commit hooks..."
+pre-commit install
+
 echo ""
 echo "  * Created virtualenv environment in ./venv."
 echo "  * Installed all dependencies into the virtualenv."
