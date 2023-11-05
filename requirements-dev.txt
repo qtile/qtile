@@ -1,15 +1,7 @@
 libcst
 dbus-next
-flake8
-flake8-black
-flake8-isort
-flake8-tidy-imports
-mypy
-types-python-dateutil
-types-pytz
-types-pkg_resources
-pep8-naming
 psutil
 coverage
 pytest-cov
 tox
+pre-commit
