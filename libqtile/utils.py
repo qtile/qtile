@@ -28,10 +28,10 @@ import os
 import traceback
 from collections import defaultdict
 from collections.abc import Sequence
+from pathlib import Path
 from random import randint
 from shutil import which
 from typing import TYPE_CHECKING
-from pathlib import Path
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Coroutine, TypeVar, Union
@@ -201,7 +201,7 @@ def get_cache_dir() -> str:
     return cache_directory
 
 
-def get_config_file():
+def get_config_file() -> Path:
     config_home = Path(os.getenv("XDG_CONFIG_HOME", "~/.config")).expanduser()
     config_file = config_home.joinpath("qtile/config.py")
     if config_file.exists():
@@ -450,10 +450,10 @@ async def _send_dbus_message(
     msg = await bus.call(
         Message(
             message_type=message_type,
-            destination=destination,  # type: ignore
-            interface=interface,  # type: ignore
-            path=path,  # type: ignore
-            member=member,  # type: ignore
+            destination=destination,
+            interface=interface,
+            path=path,
+            member=member,
             signature=signature,
             body=body,
         )

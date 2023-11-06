@@ -108,6 +108,36 @@ if TYPE_CHECKING:
     from libqtile.core.manager import Qtile
 
 
+class ImplicitGrab(wlrq.HasListeners):
+    """Keep track of an implicit pointer grab.
+
+    A Wayland client expects to receive pointer events from the moment a
+    pointer button is pressed on its surface until the moment the button is
+    released.  The Wayland protocol leaves this behavior to the compositor.
+    """
+
+    def __init__(
+        self,
+        core: Core,
+        surface: Surface,
+        start_x: int,
+        start_y: int,
+        start_sx: int,
+        start_sy: int,
+    ) -> None:
+        self.core = core
+        self.surface = surface
+        self.start_dx = start_sx - start_x
+        self.start_dy = start_sy - start_y
+        self.add_listener(surface.destroy_event, self._on_destroy)
+
+    def finalize(self) -> None:
+        self.finalize_listeners()
+
+    def _on_destroy(self, _listener: Listener, _data: Any) -> None:
+        self.core._release_implicit_grab()
+
+
 class Core(base.Core, wlrq.HasListeners):
     supports_restarting: bool = False
 
@@ -198,6 +228,8 @@ class Core(base.Core, wlrq.HasListeners):
         self.cursor = Cursor(self.output_layout)
         self.cursor_manager = XCursorManager(24)
         self._gestures = PointerGesturesV1(self.display)
+        self._pressed_button_count = 0
+        self._implicit_grab: ImplicitGrab | None = None
         self.add_listener(self.seat.request_set_cursor_event, self._on_request_cursor)
         self.add_listener(self.cursor.axis_event, self._on_cursor_axis)
         self.add_listener(self.cursor.frame_event, self._on_cursor_frame)
@@ -541,7 +573,7 @@ class Core(base.Core, wlrq.HasListeners):
             box = xdg_surface.get_geometry()
             lx, ly = self.output_layout.closest_point(win.x + box.x, win.y + box.y)
             wlr_output = self.output_layout.output_at(lx, ly)
-            box = Box(*wlr_output.data.get_geometry())  # type: ignore[union-attr]
+            box = Box(*wlr_output.data.get_geometry())
             box.x = round(box.x - lx)
             box.y = round(box.y - ly)
             xdg_surface.popup.unconstrain_from_box(box)
@@ -549,10 +581,25 @@ class Core(base.Core, wlrq.HasListeners):
 
         logger.warning("xdg_shell surface had no role set. Ignoring.")
 
+    def _release_implicit_grab(self, time: int = 0) -> None:
+        if self._implicit_grab is not None:
+            logger.debug("Releasing implicit grab.")
+            self._implicit_grab.finalize()
+            self._implicit_grab = None
+            # Pretend the cursor just appeared where it is.
+            self._process_cursor_motion(time, self.cursor.x, self.cursor.y)
+
+    def _create_implicit_grab(self, time: int, surface: Surface, sx: float, sy: float) -> None:
+        self._release_implicit_grab(time)
+        logger.debug("Creating implicit grab.")
+        self._implicit_grab = ImplicitGrab(
+            self, surface, self.cursor.x, self.cursor.y, int(sx), int(sy)
+        )
+
     def _on_cursor_axis(self, _listener: Listener, event: pointer.PointerAxisEvent) -> None:
         handled = False
 
-        if event.delta != 0 and not self.exclusive_client:
+        if event.delta != 0 and not self.exclusive_client and not self._implicit_grab:
             # If we have a client who exclusively gets input, button bindings are disallowed.
             if event.orientation == pointer.AxisOrientation.VERTICAL:
                 button = 5 if 0 < event.delta else 4
@@ -575,9 +622,21 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_cursor_button(self, _listener: Listener, event: pointer.PointerButtonEvent) -> None:
         assert self.qtile is not None
         self.idle.notify_activity(self.seat)
+        found = None
         pressed = event.button_state == input_device.ButtonState.PRESSED
         if pressed:
-            self._focus_by_click()
+            self._pressed_button_count += 1
+            if self._implicit_grab is None:
+                found = self._focus_by_click()
+        else:
+            if self._pressed_button_count > 0:  # sanity check
+                self._pressed_button_count -= 1
+
+        if self._implicit_grab is not None:
+            self.seat.pointer_notify_button(event.time_msec, event.button, event.button_state)
+            if self._pressed_button_count == 0:
+                self._release_implicit_grab(event.time_msec)
+            return
 
         handled = False
 
@@ -587,7 +646,17 @@ class Core(base.Core, wlrq.HasListeners):
             handled = self._process_cursor_button(button, pressed)
 
         if not handled:
+            if self._pressed_button_count == 1 and found:
+                win, surface, sx, sy = found
+                if surface:
+                    self._create_implicit_grab(event.time_msec, surface, sx, sy)
             self.seat.pointer_notify_button(event.time_msec, event.button, event.button_state)
+
+    def _implicit_grab_motion(self, time: int) -> None:
+        if self._implicit_grab:
+            sx = self.cursor.x + self._implicit_grab.start_dx
+            sy = self.cursor.y + self._implicit_grab.start_dy
+            self.seat.pointer_notify_motion(time, sx, sy)
 
     def _on_cursor_motion(self, _listener: Listener, event: pointer.PointerMotionEvent) -> None:
         assert self.qtile is not None
@@ -614,7 +683,11 @@ class Core(base.Core, wlrq.HasListeners):
                 return
 
         self.cursor.move(dx, dy)
-        self._process_cursor_motion(event.time_msec, self.cursor.x, self.cursor.y)
+
+        if self._implicit_grab is None:
+            self._process_cursor_motion(event.time_msec, self.cursor.x, self.cursor.y)
+        else:
+            self._implicit_grab_motion(event.time_msec)
 
     def _on_cursor_motion_absolute(
         self, _listener: Listener, event: pointer.PointerMotionAbsoluteEvent
@@ -624,7 +697,10 @@ class Core(base.Core, wlrq.HasListeners):
 
         x, y = self.cursor.absolute_to_layout_coords(event.pointer.base, event.x, event.y)
         self.cursor.move(x - self.cursor.x, y - self.cursor.y)
-        self._process_cursor_motion(event.time_msec, self.cursor.x, self.cursor.y)
+        if self._implicit_grab is None:
+            self._process_cursor_motion(event.time_msec, self.cursor.x, self.cursor.y)
+        else:
+            self._implicit_grab_motion(event.time_msec)
 
     def _on_cursor_pinch_begin(
         self,
@@ -984,20 +1060,15 @@ class Core(base.Core, wlrq.HasListeners):
                     self.seat.pointer_notify_clear_focus()
 
             if win is not self.qtile.current_window:
-                if isinstance(win, window.Static):
-                    if self._hovered_window is not win:
-                        # qtile.current_window will never be a static window, but we
-                        # still only want to fire client_mouse_enter once, so check
-                        # self._hovered_window.
-                        hook.fire("client_mouse_enter", win)
-
-                    if motion is not None and self.qtile.config.follow_mouse_focus:
-                        self.qtile.focus_screen(win.screen.index, False)
-
-                else:
+                if self._hovered_window is not win:
+                    # We only want to fire client_mouse_enter once, so check
+                    # self._hovered_window.
                     hook.fire("client_mouse_enter", win)
 
-                    if motion is not None and self.qtile.config.follow_mouse_focus:
+                if motion is not None and self.qtile.config.follow_mouse_focus:
+                    if isinstance(win, window.Static):
+                        self.qtile.focus_screen(win.screen.index, False)
+                    else:
                         if win.group and win.group.current_window != win:
                             win.group.focus(win, False)
                         if (
@@ -1251,12 +1322,12 @@ class Core(base.Core, wlrq.HasListeners):
             if keyboard := self.seat.keyboard:
                 self.seat.keyboard_notify_enter(surface, keyboard)
 
-    def _focus_by_click(self) -> None:
+    def _focus_by_click(self) -> tuple[window.WindowType, Surface | None, float, float] | None:
         assert self.qtile is not None
         found = self._under_pointer()
 
         if found:
-            win, _, _, _ = found
+            win, surface, sx, sy = found
 
             if self.exclusive_client:
                 # If we have a client who exclusively gets input, no other client's
@@ -1265,7 +1336,7 @@ class Core(base.Core, wlrq.HasListeners):
                     self.exclusive_client
                 ):
                     logger.debug("Focus withheld from window not owned by exclusive client.")
-                    return
+                    return None
 
             if self.qtile.config.bring_front_click is True:
                 win.bring_to_front()
@@ -1288,6 +1359,8 @@ class Core(base.Core, wlrq.HasListeners):
             screen = self.qtile.find_screen(int(self.cursor.x), int(self.cursor.y))
             if screen:
                 self.qtile.focus_screen(screen.index, warp=False)
+
+        return found
 
     def _under_pointer(self) -> tuple[window.WindowType, Surface | None, float, float] | None:
         """

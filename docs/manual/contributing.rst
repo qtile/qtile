@@ -56,8 +56,9 @@ to our `issue tracker <https://github.com/qtile/qtile/issues>`_ on GitHub.
     Pull requests are not considered complete until they include all of the
     following:
 
-    * **Code** that conforms to PEP8 and is formatted by `black
-      <https://black.readthedocs.io>`_.
+    * **Code** that conforms to our linters and formatters.
+      Run ``pre-commit install`` to install pre-commit hooks that will
+      make sure your code is compliant before any commit.
     * **Unit tests** that pass locally and in our CI environment (More below).
       *Please add unit tests* to ensure that your code works and stays working!
     * **Documentation** updates on an as needed basis.

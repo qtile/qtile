@@ -27,8 +27,8 @@ from glob import glob
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from libqtile.utils import get_config_file
 from libqtile.scripts.migrations import MIGRATIONS, load_migrations
+from libqtile.utils import get_config_file
 
 if TYPE_CHECKING:
     from typing import Iterator

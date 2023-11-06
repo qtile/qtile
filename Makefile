@@ -12,7 +12,7 @@ check: ## Run the test suite
 
 .PHONY: lint
 lint: ## Check the source code
-	TOXENV=codestyle,pep8,vulture,mypy tox
+	pre-commit run -a
 
 .PHONY: clean
 clean: ## Clean generated files

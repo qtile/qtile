@@ -5,7 +5,17 @@ Qtile x.xx.x, released XXXX-XX-XX:
       - Add `ScreenSplit` layout which allows multiple layouts per screen. Also adds `ScreenSplit`
         widget to display name of active split.
       - Updated `Bluetooth` widget which allows users to manage multiple devices in a single widget
+      - Add `align` option to `Columns` layout so new windows can be added to left or right column.
+      - `.when()` have two new parameters:
+        - `func: Callable`: Enable call when the result of the callable evaluates to True
+        - `condition: bool`: a boolean value to determine whether the lazy object should be run. Unlike `func`, the
+          condition is evaluated once when the config file is first loaded.
+      - Add ability to have bar drawns over windows by adding `reserve=False` to bar's config to
+        stop the bar reserving screen space.
     * bugfixes
+      - Fix two bugs in stacking transient windows in X11
+      - Checking configs containing `qtile.core.name` with `python config.py` don't fail anymore (but `qtile.core.name`
+        will be `None`)
 
 Qtile 0.23.0, released 2023-09-24:
     !!! Dependency Changes !!!

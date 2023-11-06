@@ -24,9 +24,10 @@ from typing import TYPE_CHECKING
 from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.graph import CommandGraphCall, CommandGraphNode
 from libqtile.command.interface import CommandInterface
+from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import Iterable
+    from typing import Callable, Iterable
 
     from libqtile.command.graph import SelectorType
     from libqtile.config import Match
@@ -53,6 +54,8 @@ class LazyCall:
         self._if_no_focused: bool = False
         self._layouts: set[str] = set()
         self._when_floating = True
+        self._condition: bool | None = None
+        self._func: Callable[[], bool] = lambda: True
 
     def __call__(self, *args, **kwargs):
         """Convenience method to allow users to pass arguments to
@@ -97,10 +100,12 @@ class LazyCall:
         if_no_focused: bool = False,
         layout: Iterable[str] | str | None = None,
         when_floating: bool = True,
+        func: Callable | None = None,
+        condition: bool | None = None,
     ) -> "LazyCall":
-        """Enable call only for given layout(s) and floating state
+        """Enable call only for matching criteria.
 
-        Parameters
+        Keyword parameters
         ----------
         focused: Match or None
             Match criteria to enable call for the current window.
@@ -117,10 +122,21 @@ class LazyCall:
             If None, enable the call for all layouts.
         when_floating: bool
             Enable call when the current window is floating.
+        func: callable
+            Enable call when the result of the callable evaluates to True
+        condition: a boolean value to determine whether the lazy object should
+            be run. Unlike 'func', the condition is evaluated once when the config
+            file is first loaded.
+
         """
         self._focused = focused
 
         self._if_no_focused = if_no_focused
+
+        self._condition = condition
+
+        if func is not None:
+            self._func = func
 
         if layout is not None:
             self._layouts = {layout} if isinstance(layout, str) else set(layout)
@@ -130,6 +146,9 @@ class LazyCall:
 
     def check(self, q) -> bool:
         cur_win_floating = q.current_window and q.current_window.floating
+
+        if self._condition is False:
+            return False
 
         if self._focused:
             if q.current_window and not self._focused.compare(q.current_window):
@@ -143,6 +162,16 @@ class LazyCall:
 
         if self._layouts and q.current_layout.name not in self._layouts:
             return False
+
+        if self._func is not None:
+            try:
+                result = self._func()
+            except Exception:
+                logger.exception("Error when running function in lazy call. Ignoring.")
+                result = True
+
+            if not result:
+                return False
 
         return True
 

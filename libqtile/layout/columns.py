@@ -127,6 +127,9 @@ class Columns(Layout):
         Key([mod], "n", lazy.layout.normalize()),
     """
 
+    _left = 0
+    _right = 1
+
     defaults = [
         ("border_focus", "#881111", "Border colour(s) for the focused window."),
         ("border_normal", "#220000", "Border colour(s) for un-focused windows."),
@@ -162,6 +165,13 @@ class Columns(Layout):
         ("wrap_focus_columns", True, "Wrap the screen when moving focus across columns."),
         ("wrap_focus_rows", True, "Wrap the screen when moving focus across rows."),
         ("wrap_focus_stacks", True, "Wrap the screen when moving focus across stacked."),
+        (
+            "align",
+            _right,
+            "Which side of screen new windows will be added to "
+            "(one of ``Columns._left`` or ``Columns._right``). "
+            "Ignored if 'fair=True'.",
+        ),
     ]
 
     def __init__(self, **config):
@@ -176,6 +186,11 @@ class Columns(Layout):
             self.margin_on_single = self.margin
         self.columns = [_Column(self.split, self.insert_position)]
         self.current = 0
+        if self.align not in (Columns._left, Columns._right):
+            logger.warning(
+                "Unexpected value for `align`. Must be Columns._left or Columns._right."
+            )
+            self.align = Columns._right
 
     def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)
@@ -239,7 +254,8 @@ class Columns(Layout):
     def add_client(self, client: Window) -> None:
         c = self.cc
         if len(c) > 0 and len(self.columns) < self.num_columns:
-            c = self.add_column()
+            prepend = self.align is Columns._left
+            c = self.add_column(prepend=prepend)
         if self.fair:
             least = min(self.columns, key=len)
             if len(least) < len(c):

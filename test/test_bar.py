@@ -632,3 +632,30 @@ def test_unsupported_widget(manager_nospawn):
     manager_nospawn.start(UnsupportedConfig)
 
     assert len(manager_nospawn.c.bar["top"].info()["widgets"]) == 0
+
+
+class DontReserveBarConfig(GBConfig):
+    screens = [
+        libqtile.config.Screen(
+            top=libqtile.bar.Bar([libqtile.widget.Spacer()], 50, reserve=False),
+        )
+    ]
+    layouts = [libqtile.layout.max.Max()]
+
+
+dont_reserve_bar_config = pytest.mark.parametrize(
+    "manager", [DontReserveBarConfig], indirect=True
+)
+
+
+@dont_reserve_bar_config
+def test_dont_reserve_bar(manager):
+    """Bar is drawn over tiled windows."""
+    manager.test_window("Window")
+    info = manager.c.window.info()
+
+    # Window should fill entire screen
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == 800
+    assert info["height"] == 600

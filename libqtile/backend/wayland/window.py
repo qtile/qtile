@@ -246,7 +246,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self.container.node.set_enabled(enabled=False)
         seat = self.core.seat
         if not seat.destroyed:
-            if self.surface.surface == seat.keyboard_state.focused_surface:  # type: ignore
+            if self.surface.surface == seat.keyboard_state.focused_surface:
                 seat.keyboard_clear_focus()
 
     def get_wm_class(self) -> list | None:
@@ -255,7 +255,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         return None
 
     def belongs_to_client(self, other: Client) -> bool:
-        return other == Client.from_resource(self.surface.surface._ptr.resource)  # type: ignore
+        return other == Client.from_resource(self.surface.surface._ptr.resource)
 
     def focus(self, warp: bool = True) -> None:
         self._urgent = False
@@ -732,6 +732,14 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self.defunct = True
         if self.group:
             self.group.remove(self)
+
+        # Keep track of user-specified geometry to support X11.
+        # Respect configure requests only if these are `None` here.
+        conf_x = x
+        conf_y = y
+        conf_width = width
+        conf_height = height
+
         if x is None:
             x = self.x + self.borderwidth
         if y is None:
@@ -747,8 +755,10 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         while self._borders:
             for rect in self._borders.pop():
                 rect.node.destroy()
+        if self.tree:
+            self.tree.node.set_position(0, 0)
 
-        win = self._to_static()
+        win = self._to_static(conf_x, conf_y, conf_width, conf_height)
 
         # Pass ownership of the foreign toplevel handle to the static window.
         if self.ftm_handle:
@@ -767,7 +777,9 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         return self.container.node.enabled
 
     @abc.abstractmethod
-    def _to_static(self) -> Static:
+    def _to_static(
+        self, x: int | None, y: int | None, width: int | None, height: int | None
+    ) -> Static:
         # This must return a new `Static` subclass instance
         pass
 
@@ -838,7 +850,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         self.hide()
 
     def hide(self) -> None:
-        if self.surface.surface == self.core.seat.keyboard_state.focused_surface:  # type: ignore
+        if self.surface.surface == self.core.seat.keyboard_state.focused_surface:
             group = self.qtile.current_screen.group
             if group.current_window:
                 group.focus(group.current_window, warp=self.qtile.config.cursor_warp)
@@ -887,7 +899,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         return self._idle_inhibitors_count > 0
 
     def belongs_to_client(self, other: Client) -> bool:
-        return other == Client.from_resource(self.surface.surface._ptr.resource)  # type: ignore
+        return other == Client.from_resource(self.surface.surface._ptr.resource)
 
     @expose_command()
     def bring_to_front(self) -> None:

@@ -411,11 +411,11 @@ class Qtile(CommandObject):
         self.screens = screens
 
     @expose_command()
-    def reconfigure_screens(self, ev: Any = None) -> None:
+    def reconfigure_screens(self, *_: list[Any], **__: dict[Any, Any]) -> None:
         """
         This can be used to set up screens again during run time. Intended usage is to
         be called when the screen_change hook is fired, responding to changes in
-        physical monitor setup by configuring qtile.screens accordingly. The ev kwarg is
+        physical monitor setup by configuring qtile.screens accordingly. The args are
         ignored; it is here in case this function is hooked directly to screen_change.
         """
         logger.info("Reconfiguring screens.")
@@ -796,7 +796,9 @@ class Qtile(CommandObject):
                         if status in (interface.ERROR, interface.EXCEPTION):
                             logger.error("Mouse command error %s: %s", i.name, val)
                         handled = True
-            elif isinstance(m, Drag) and not self.current_window.fullscreen:
+            elif (
+                isinstance(m, Drag) and self.current_window and not self.current_window.fullscreen
+            ):
                 if m.start:
                     i = m.start
                     status, val = self.server.call((i.selectors, i.name, i.args, i.kwargs))

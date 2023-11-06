@@ -36,7 +36,7 @@ gi.require_version("Gtk", "3.0")
 from dbus_next import Message
 from dbus_next.auth import Authenticator
 from dbus_next.constants import MessageType, PropertyAccess
-from dbus_next.glib.message_bus import _AuthLineSource, MessageBus
+from dbus_next.glib.message_bus import MessageBus, _AuthLineSource
 from dbus_next.service import ServiceInterface, dbus_property, method, signal
 from gi.repository import Gdk, GLib, Gtk
 

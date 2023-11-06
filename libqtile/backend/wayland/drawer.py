@@ -85,7 +85,7 @@ class Drawer(drawer.Drawer):
             context.fill()
 
         damage = PixmanRegion32()
-        damage.init_rect(offsetx, offsety, width, height)  # type: ignore
+        damage.init_rect(offsetx, offsety, width, height)
         # TODO: do we really need to `set_buffer` here? would be good to just set damage
         self._win._scene_buffer.set_buffer_with_damage(self._win.wlr_buffer, damage)
         damage.fini()

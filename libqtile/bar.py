@@ -184,6 +184,11 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         ("margin", 0, "Space around bar as int or list of ints [N E S W]."),
         ("border_color", "#000000", "Border colour as str or list of str [N E S W]"),
         ("border_width", 0, "Width of border as int of list of ints [N E S W]"),
+        (
+            "reserve",
+            True,
+            "Reserve screen space (when set to 'False', bar will be drawn above windows).",
+        ),
     ]
 
     def __init__(self, widgets: list[_Widget], size: int, **config: Any) -> None:
@@ -343,8 +348,8 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             )
             qtile.renamed_widgets.clear()
 
-        hook.subscribe.setgroup(self.keep_below)
-        hook.subscribe.startup_complete(self.keep_below)
+        hook.subscribe.setgroup(self.set_layer)
+        hook.subscribe.startup_complete(self.set_layer)
 
         self._remove_crashed_widgets(crashed_widgets)
         self.draw()
@@ -765,9 +770,13 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         # TODO: drop the screen and position args, update relevant tests
         self.process_button_click(x, y, button)
 
-    def keep_below(self) -> None:
+    def set_layer(self) -> None:
         if self.window:
-            self.window.keep_below(enable=True)
+            if self.reserve:
+                self.window.keep_below(enable=True)
+            else:
+                # Bar is not reserving screen space so let's keep above other windows
+                self.window.keep_above(enable=True)
 
 
 BarType = typing.Union[Bar, Gap]

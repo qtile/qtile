@@ -21,16 +21,16 @@ BUTTON_NAME_X = 10
 COMMAND_Y = 20
 COMMAND_X = 10
 
-LEGEND = ['modifiers', 'layout', 'group', 'window', 'other']
+LEGEND = ["modifiers", "layout", "group", "window", "other"]
 
 CUSTOM_KEYS = {
-    'Backspace': 2,
-    'Tab': 1.5,
-    '\\': 1.5,
-    'Return': 2.45,
-    'shift': 2,
-    'space': 5,
-    }
+    "Backspace": 2,
+    "Tab": 1.5,
+    "\\": 1.5,
+    "Return": 2.45,
+    "shift": 2,
+    "space": 5,
+}
 
 
 class Button:
@@ -78,7 +78,7 @@ class Pos:
 class KeyboardPNGFactory:
     def __init__(self, modifiers, keys):
         self.keys = keys
-        self.modifiers = modifiers.split('-')
+        self.modifiers = modifiers.split("-")
         self.key_pos = self.calculate_pos(20, 140)
 
     def rgb_red(self, context):
@@ -100,63 +100,63 @@ class KeyboardPNGFactory:
         pos = Pos(x, y)
 
         key_pos = {}
-        for c in '`1234567890-=':
+        for c in "`1234567890-=":
             key_pos[c] = pos.get_pos(c)
 
-        key_pos['Backspace'] = pos.get_pos('Backspace')
+        key_pos["Backspace"] = pos.get_pos("Backspace")
         pos.next_row()
 
-        key_pos['Tab'] = pos.get_pos('Tab')
-        for c in 'qwertyuiop[]\\':
+        key_pos["Tab"] = pos.get_pos("Tab")
+        for c in "qwertyuiop[]\\":
             key_pos[c] = pos.get_pos(c)
         pos.next_row()
 
         pos.skip_x(1.6)
-        for c in 'asdfghjkl;\'':
+        for c in "asdfghjkl;'":
             key_pos[c] = pos.get_pos(c)
-        key_pos['Return'] = pos.get_pos('Return')
+        key_pos["Return"] = pos.get_pos("Return")
         pos.next_row()
 
-        key_pos['shift'] = pos.get_pos('shift')
-        for c in 'zxcvbnm':
+        key_pos["shift"] = pos.get_pos("shift")
+        for c in "zxcvbnm":
             key_pos[c] = pos.get_pos(c)
-        key_pos['period'] = pos.get_pos('period')
-        key_pos['comma'] = pos.get_pos('comma')
-        key_pos['/'] = pos.get_pos('/')
+        key_pos["period"] = pos.get_pos("period")
+        key_pos["comma"] = pos.get_pos("comma")
+        key_pos["/"] = pos.get_pos("/")
         pos.next_row()
 
-        key_pos['control'] = pos.get_pos('control')
+        key_pos["control"] = pos.get_pos("control")
         pos.skip_x()
-        key_pos['mod4'] = pos.get_pos('mod4')
-        key_pos['mod1'] = pos.get_pos('mod1')
-        key_pos['space'] = pos.get_pos('space')
-        key_pos['Print'] = pos.get_pos('Print')
+        key_pos["mod4"] = pos.get_pos("mod4")
+        key_pos["mod1"] = pos.get_pos("mod1")
+        key_pos["space"] = pos.get_pos("space")
+        key_pos["Print"] = pos.get_pos("Print")
         pos.skip_x(3)
-        key_pos['Up'] = pos.get_pos('Up')
+        key_pos["Up"] = pos.get_pos("Up")
 
         pos.next_row()
         pos.skip_x(12.33)
-        key_pos['Left'] = pos.get_pos('Left')
-        key_pos['Down'] = pos.get_pos('Down')
-        key_pos['Right'] = pos.get_pos('Right')
+        key_pos["Left"] = pos.get_pos("Left")
+        key_pos["Down"] = pos.get_pos("Down")
+        key_pos["Right"] = pos.get_pos("Right")
 
         pos.next_row()
 
-        for l in LEGEND:
-            key_pos[l] = pos.get_pos(l)
+        for legend in LEGEND:
+            key_pos[legend] = pos.get_pos(legend)
 
         pos.skip_x(5)
-        key_pos['Button1'] = pos.get_pos('Button1')
-        key_pos['Button2'] = pos.get_pos('Button2')
-        key_pos['Button3'] = pos.get_pos('Button3')
+        key_pos["Button1"] = pos.get_pos("Button1")
+        key_pos["Button2"] = pos.get_pos("Button2")
+        key_pos["Button3"] = pos.get_pos("Button3")
 
         pos.next_row()
-        key_pos['FN_KEYS'] = pos.get_pos('FN_KEYS')
+        key_pos["FN_KEYS"] = pos.get_pos("FN_KEYS")
 
         return key_pos
 
     def add_logo(self, context):
-        logo_img = os.path.abspath(os.path.join(this_dir, "..", 'logo.png'))
+        logo_img = os.path.abspath(os.path.join(this_dir, "..", "logo.png"))
 
         context.save()
         context.scale(0.5)
@@ -176,25 +176,25 @@ class KeyboardPNGFactory:
 
         context.move_to(210, 80)
         context.set_font_size(28)
-        context.show_text('Keybindings for Qtile')
+        context.show_text("Keybindings for Qtile")
 
         context.move_to(210, 100)
         context.set_font_size(18)
         if len([i for i in self.modifiers if i]):
-            context.show_text('Modifiers: ' + ', '.join(self.modifiers))
+            context.show_text("Modifiers: " + ", ".join(self.modifiers))
         else:
-            context.show_text('No modifiers used.')
+            context.show_text("No modifiers used.")
 
         for i in self.key_pos.values():
-            if i.key in ['FN_KEYS']:
+            if i.key in ["FN_KEYS"]:
                 continue
 
             self.draw_button(context, i.key, i.x, i.y, i.width, i.height)
 
         # draw functional
-        fn = [i for i in keys.values() if i.key[:4] == 'XF86']
+        fn = [i for i in keys.values() if i.key[:4] == "XF86"]
         if len(fn):
-            fn_pos = self.key_pos['FN_KEYS']
+            fn_pos = self.key_pos["FN_KEYS"]
             x = fn_pos.x
             for i in fn:
                 self.draw_button(context, i.key, x, fn_pos.y, fn_pos.width, fn_pos.height)
@@ -206,23 +206,23 @@ class KeyboardPNGFactory:
         context.stroke()
         context.set_font_size(28)
         context.move_to(900, 720)
-        context.show_text('MOUSE')
+        context.show_text("MOUSE")
 
         surface.write_to_png(filename)
 
     def draw_button(self, context, key, x, y, width, height):
         fn = False
-        if key[:4] == 'XF86':
+        if key[:4] == "XF86":
             fn = True
 
         if key in LEGEND:
-            if key == 'modifiers':
+            if key == "modifiers":
                 self.rgb_red(context)
-            elif key == 'group':
+            elif key == "group":
                 self.rgb_green(context)
-            elif key == 'layout':
+            elif key == "layout":
                 self.rgb_cyan(context)
-            elif key == 'window':
+            elif key == "window":
                 self.rgb_yellow(context)
             else:
                 self.rgb_violet(context)
@@ -256,8 +256,7 @@ class KeyboardPNGFactory:
         context.show_text(self.translate(key))
 
     def show_multiline(self, context, x, y, key):
-        """Cairo doesn't support multiline. Added with word wrapping.
-        """
+        """Cairo doesn't support multiline. Added with word wrapping."""
         c_width = 14
         if key.key in CUSTOM_KEYS:
             c_width *= CUSTOM_KEYS[key.key]
@@ -265,13 +264,13 @@ class KeyboardPNGFactory:
         context.set_font_size(10)
         context.set_source_rgb(0, 0, 0)
         context.move_to(x, y)
-        words = key.command.split(' ')
+        words = key.command.split(" ")
         words.reverse()
         printable = last_word = words.pop()
         while len(words):
             last_word = words.pop()
-            if len(printable + ' ' + last_word) < c_width:
-                printable += ' ' + last_word
+            if len(printable + " " + last_word) < c_width:
+                printable += " " + last_word
                 continue
 
             context.show_text(printable)
@@ -283,30 +282,30 @@ class KeyboardPNGFactory:
             context.show_text(printable)
 
     def set_key_color(self, context, key):
-        if key.scope == 'group':
+        if key.scope == "group":
             self.rgb_green(context)
-        elif key.scope == 'layout':
+        elif key.scope == "layout":
             self.rgb_cyan(context)
-        elif key.scope == 'window':
+        elif key.scope == "window":
             self.rgb_yellow(context)
         else:
             self.rgb_violet(context)
 
     def translate(self, text):
         dictionary = {
-            'period': ',',
-            'comma': '.',
-            'Left': '←',
-            'Down': '↓',
-            'Right': '→',
-            'Up': '↑',
-            'AudioRaiseVolume': 'Volume up',
-            'AudioLowerVolume': 'Volume down',
-            'AudioMute': 'Audio mute',
-            'AudioMicMute': 'Mic mute',
-            'MonBrightnessUp': 'Brightness up',
-            'MonBrightnessDown': 'Brightness down',
-            }
+            "period": ",",
+            "comma": ".",
+            "Left": "←",
+            "Down": "↓",
+            "Right": "→",
+            "Up": "↑",
+            "AudioRaiseVolume": "Volume up",
+            "AudioLowerVolume": "Volume down",
+            "AudioMute": "Audio mute",
+            "AudioMicMute": "Mic mute",
+            "MonBrightnessUp": "Brightness up",
+            "MonBrightnessDown": "Brightness down",
+        }
 
         if text not in dictionary:
             return text
@@ -316,9 +315,9 @@ class KeyboardPNGFactory:
 
 class KInfo:
     NAME_MAP = {
-            'togroup': 'to group',
-            'toscreen': 'to screen',
-            }
+        "togroup": "to group",
+        "toscreen": "to screen",
+    }
 
     def __init__(self, key):
         self.key = key.key
@@ -326,7 +325,7 @@ class KInfo:
         self.scope = self.get_scope(key)
 
     def get_command(self, key):
-        if hasattr(key, 'desc') and key.desc:
+        if hasattr(key, "desc") and key.desc:
             return key.desc
 
         cmd = key.commands[0]
@@ -334,11 +333,11 @@ class KInfo:
         if command in self.NAME_MAP:
             command = self.NAME_MAP[command]
 
-        command = command.replace('_', ' ')
+        command = command.replace("_", " ")
 
         if len(cmd.args):
             if isinstance(cmd.args[0], str):
-                command += ' ' + cmd.args[0]
+                command += " " + cmd.args[0]
 
         return command
 
@@ -364,7 +363,7 @@ def get_kb_map(config_path=None):
 
     kb_map = {}
     for key in c.keys:
-        mod = '-'.join(key.modifiers)
+        mod = "-".join(key.modifiers)
         if mod not in kb_map:
             kb_map[mod] = {}
 
@@ -372,7 +371,7 @@ def get_kb_map(config_path=None):
         kb_map[mod][info.key] = info
 
     for mouse in c.mouse:
-        mod = '-'.join(mouse.modifiers)
+        mod = "-".join(mouse.modifiers)
         if mod not in kb_map:
             kb_map[mod] = {}
 
@@ -395,26 +394,23 @@ optional arguments:
     -o OUTPUT_DIR, --output-dir OUTPUT_DIR
                         set directory to export all images to
 """
-if __name__ == '__main__':
+if __name__ == "__main__":
     config_path = None
-    output_dir = ''
+    output_dir = ""
     try:
-        opts, args = getopt.getopt(
-            sys.argv[1:],
-            "hc:o:",
-            ['help=', 'config=', 'output-dir='])
+        opts, args = getopt.getopt(sys.argv[1:], "hc:o:", ["help=", "config=", "output-dir="])
 
     except getopt.GetoptError:
         print(help_doc)
         sys.exit(2)
 
     for opt, arg in opts:
-        if opt in ('-h', '--help'):
+        if opt in ("-h", "--help"):
             print(help_doc)
             sys.exit()
-        elif opt in ('-c', '--config'):
+        elif opt in ("-c", "--config"):
             config_path = arg
-        elif opt in ('-o', '--output-dir'):
+        elif opt in ("-o", "--output-dir"):
             output_dir = arg
 
     kb_map = get_kb_map(config_path)
