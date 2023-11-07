@@ -13,7 +13,7 @@ repos:
   rev: 6.1.0
   hooks:
   - id: flake8
-    additional_dependencies: ["flake8-logging-format", "pep8-naming"]
+    additional_dependencies: ["flake8-pyproject", "flake8-logging-format", "pep8-naming"]
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v1.6.1
   hooks:
