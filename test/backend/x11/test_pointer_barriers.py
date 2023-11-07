@@ -49,7 +49,9 @@ def test_screen_focus(xmanager, conn):
 
     xtest = conn.conn(xcffib.xtest.key)
     # Move to edge of barrier
-    xtest.FakeInput(6, 0, xcffib.xproto.Time.CurrentTime, conn.default_screen.root.wid, 799, 100, 0)
+    xtest.FakeInput(
+        6, 0, xcffib.xproto.Time.CurrentTime, conn.default_screen.root.wid, 799, 100, 0
+    )
     # Try to cross barrier
     xtest.FakeInput(6, 1, xcffib.xproto.Time.CurrentTime, conn.default_screen.root.wid, 1, 0, 0)
     conn.conn.flush()
