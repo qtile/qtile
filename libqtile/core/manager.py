@@ -908,7 +908,20 @@ class Qtile(CommandObject):
         if n >= len(self.screens):
             return
         old = self.current_screen
+
+        # If we're dragging a window across screens, we need to remember what the current screen is...
+        if self._drag and self.current_window:
+            cw = self.current_window
+        else:
+            cw = None
+
         self.current_screen = self.screens[n]
+
+        # ... and make it the current window on the next screen.
+        if self._drag and cw is not None:
+            cw.group = self.current_group
+            self.current_group.current_window = cw
+
         if old != self.current_screen:
             hook.fire("current_screen_change")
             hook.fire("setgroup")

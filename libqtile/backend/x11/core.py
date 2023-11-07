@@ -815,7 +815,7 @@ class Core(base.Core):
     def handle_ScreenChangeNotify(self, event) -> None:  # noqa: N802
         hook.fire("screen_change", event)
 
-    def handle_BarrierHit(self, event):
+    def handle_BarrierHit(self, event) -> None:  # noqa: N802
         """Warps pointer to other side of barrier and focuses the relevant screen."""
         barrier = self.conn.xfixes.barriers.get(event.barrier)
         if barrier is None:
@@ -1011,12 +1011,12 @@ class Core(base.Core):
 
         for screen in screens:
             for other in [s for s in screens if s is not screen]:
-                border = screen.get_joining_edge(other)
-                if border is None:
+                edge = screen.get_joining_edge(other)
+                if edge is None:
                     continue
 
                 # Vertical border (x coordinate is the same)
-                if border[0] == border[2]:
+                if edge[0] == edge[2]:
                     # We need the leftmost screen first
                     first = screen if screen.x < other.x else other
                 # Horizontal border
@@ -1026,7 +1026,7 @@ class Core(base.Core):
 
                 touching = other if first is screen else screen
 
-                borders.add((*border, first, touching))
+                borders.add((*edge, first, touching))
 
         for border in borders:
             self.conn.xfixes.add_pointer_barrier(self._root.wid, *border)
