@@ -18,7 +18,7 @@ repos:
   rev: v1.6.1
   hooks:
   - id: mypy
-    additional_dependencies: ["libcst", "pytest", "types-python-dateutil", "types-pytz", "types-pkg_resources", "xkbcommon"]
+    additional_dependencies: ["types-python-dateutil", "types-pytz"]
     files: "^libqtile\/.*"
 - repo: https://github.com/jendrikseipp/vulture
   rev: v2.10
