@@ -817,6 +817,9 @@ class Core(base.Core):
 
     def handle_BarrierHit(self, event) -> None:  # noqa: N802
         """Warps pointer to other side of barrier and focuses the relevant screen."""
+        assert hasattr(self.conn, "xfixes")
+        assert self.qtile
+
         barrier = self.conn.xfixes.barriers.get(event.barrier)
         if barrier is None:
             logger.warning("Unknown barrier hit event.")
