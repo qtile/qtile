@@ -114,6 +114,8 @@ class HookHandlerCollection:
         self.registry_name = registry_name
 
     def __getattr__(self, name: str) -> HookHandler:
+        if name not in self.hooks:
+            raise AttributeError
         return self.hooks[name]
 
     def _register(self, hook: Hook) -> None:
