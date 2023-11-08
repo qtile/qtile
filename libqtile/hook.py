@@ -42,6 +42,8 @@ from libqtile.resources.sleep import inhibitor
 if TYPE_CHECKING:
     from typing import Callable
 
+    HookHandler = Callable[[Callable], Callable]
+
 subscriptions = {}  # type: dict
 
 
@@ -87,7 +89,7 @@ def _user_hook_func(self):
         def f(func):
             name = f"user_{hook_name}"
             if name not in self.hooks:
-                self.hooks.add(name)
+                self.hooks[name] = None
             return self._subscribe(name, func)
 
         return f
@@ -102,15 +104,26 @@ class Hook:
         self.func = func
 
 
-class Subscribe:
+class HookHandlerCollection:
     def __init__(self, registry_name: str, check_name=True):
-        self.hooks = set([])
+        self.hooks: dict[str, HookHandler] = {}
         if check_name and registry_name in subscriptions:
             raise NameError("A hook registry already exists with that name: {registry_name}")
         elif registry_name not in subscriptions:
             subscriptions[registry_name] = {}
         self.registry_name = registry_name
 
+    def __getattr__(self, name: str) -> HookHandler:
+        return self.hooks[name]
+
+    def _register(self, hook: Hook) -> None:
+        def _hook_func(func):
+            return self._subscribe(hook.name, func)
+
+        self.hooks[hook.name] = _hook_func if hook.func is None else hook.func(self)
+
+
+class Subscribe(HookHandlerCollection):
     def _subscribe(self, event: str, func: Callable) -> Callable:
         registry = subscriptions.setdefault(self.registry_name, dict())
         lst = registry.setdefault(event, [])
@@ -118,16 +131,8 @@ class Subscribe:
             lst.append(func)
         return func
 
-    def _register(self, hook: Hook) -> None:
-        def _hook_func(func):
-            return self._subscribe(hook.name, func)
 
-        self.hooks.add(hook.name)
-        setattr(self, hook.name, _hook_func if hook.func is None else hook.func(self))
-        setattr(getattr(self, hook.name), "__doc__", hook.doc)
-
-
-class Unsubscribe(Subscribe):
+class Unsubscribe(HookHandlerCollection):
     """
     This class mirrors subscribe, except the _subscribe member has been
     overridden to remove calls from hooks.
@@ -153,7 +158,7 @@ class Registry:
             self.register_hook(hook)
 
     def register_hook(self, hook: Hook) -> None:
-        if hook.name in dir(self.subscribe):
+        if hook.name in self.subscribe.hooks:
             raise utils.QtileError(
                 f"Unable to register hook. A hook with that name already exists: {hook.name}"
             )
