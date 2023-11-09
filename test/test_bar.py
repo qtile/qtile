@@ -634,23 +634,36 @@ def test_unsupported_widget(manager_nospawn):
     assert len(manager_nospawn.c.bar["top"].info()["widgets"]) == 0
 
 
-class DontReserveBarConfig(GBConfig):
-    screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar([libqtile.widget.Spacer()], 50, reserve=False),
-        )
-    ]
-    layouts = [libqtile.layout.max.Max()]
+@pytest.fixture
+def no_reserve_manager(manager_nospawn, request):
+    position = getattr(request, "param", "top")
+
+    class DontReserveBarConfig(GBConfig):
+        screens = [
+            libqtile.config.Screen(
+                **{position: libqtile.bar.Bar([libqtile.widget.Spacer()], 50, reserve=False)},
+            )
+        ]
+        layouts = [libqtile.layout.max.Max()]
+
+    manager_nospawn.start(DontReserveBarConfig)
+    manager_nospawn.bar_position = position
+    yield manager_nospawn
 
 
-dont_reserve_bar_config = pytest.mark.parametrize(
-    "manager", [DontReserveBarConfig], indirect=True
+@pytest.mark.parametrize(
+    "no_reserve_manager,bar_x,bar_y,bar_w,bar_h",
+    [
+        ("top", 0, 0, 800, 50),
+        ("bottom", 0, 550, 800, 50),
+        ("left", 0, 0, 50, 600),
+        ("right", 750, 0, 50, 600),
+    ],
+    indirect=["no_reserve_manager"],
 )
-
-
-@dont_reserve_bar_config
-def test_dont_reserve_bar(manager):
+def test_dont_reserve_bar(no_reserve_manager, bar_x, bar_y, bar_w, bar_h):
     """Bar is drawn over tiled windows."""
+    manager = no_reserve_manager
     manager.test_window("Window")
     info = manager.c.window.info()
 
@@ -659,3 +672,13 @@ def test_dont_reserve_bar(manager):
     assert info["y"] == 0
     assert info["width"] == 800
     assert info["height"] == 600
+
+    bar = manager.c.bar[manager.bar_position]
+    bar_info = bar.info()
+    _, x = bar.eval("self.x")
+    _, y = bar.eval("self.y")
+
+    assert bar_x == int(x)
+    assert bar_y == int(y)
+    assert bar_w == bar_info["width"]
+    assert bar_h == bar_info["height"]
