@@ -122,7 +122,10 @@ class HookHandlerCollection:
         def _hook_func(func):
             return self._subscribe(hook.name, func)
 
-        self.hooks[hook.name] = _hook_func if hook.func is None else hook.func(self)
+        hooked = _hook_func if hook.func is None else hook.func(self)
+        hooked.__doc__ = hook.doc
+
+        self.hooks[hook.name] = hooked
 
 
 class Subscribe(HookHandlerCollection):
