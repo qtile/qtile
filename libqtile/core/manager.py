@@ -32,6 +32,7 @@ import subprocess
 import tempfile
 from collections import defaultdict
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import libqtile
@@ -1378,14 +1379,21 @@ class Qtile(CommandObject):
     @expose_command()
     def qtile_info(self) -> dict:
         """Returns a dictionary of info on the Qtile instance"""
+        config_path = self.config.file_path
         dictionary = {
-            "config_path": self.config.file_path,
             "version": VERSION,
             "log_level": self.loglevelname(),
         }
+
         if isinstance(logger.handlers[0], RotatingFileHandler):
             log_path = logger.handlers[0].baseFilename
             dictionary["log_path"] = log_path
+
+        if isinstance(config_path, str):
+            dictionary["config_path"] = config_path
+        elif isinstance(config_path, Path):
+            dictionary["config_path"] = config_path.as_posix()
+
         return dictionary
 
     @expose_command()
