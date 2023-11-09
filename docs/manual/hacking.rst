@@ -26,6 +26,7 @@ xvfb              xvfb                Testing with X11 headless (optional)
 
 .. _pytest: https://docs.pytest.org
 .. _Xephyr: https://freedesktop.org/wiki/Software/Xephyr
+.. _pre-commit: https://pre-commit.com/
 
 
 Backends
