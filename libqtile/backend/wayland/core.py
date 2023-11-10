@@ -923,6 +923,8 @@ class Core(base.Core, wlrq.HasListeners):
         surface = event.surface
         if surface and surface.is_xdg_surface:
             xdg_surface = XdgSurface.from_surface(surface)
+            while xdg_surface.role == XdgSurfaceRole.POPUP:
+                xdg_surface = XdgSurface.from_surface(xdg_surface.popup.parent)
             if win := xdg_surface.data:
                 win.handle_activation_request(focus_on_window_activation)
             else:
