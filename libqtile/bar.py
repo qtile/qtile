@@ -273,6 +273,11 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                     else:
                         self.x -= margin[1] + self.border_width[1]
 
+            if screen.bottom is self and not self.reserve:
+                self.y -= self.height + self.margin[2]
+            elif screen.right is self and not self.reserve:
+                self.x -= self.width + self.margin[1]
+
             self._reserved_space_updated = False
 
         width = self.width + (self.border_width[1] + self.border_width[3])
