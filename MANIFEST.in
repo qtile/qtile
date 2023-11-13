@@ -3,6 +3,7 @@ include LICENSE
 include README.rst
 include MANIFEST.in
 include CONTRIBUTING.md
+include .pre-commit-config.yaml
 
 exclude .coveragerc
 exclude .pylintrc
