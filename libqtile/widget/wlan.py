@@ -27,7 +27,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import iwlib
-import os
 
 from libqtile.log_utils import logger
 from libqtile.widget import base
@@ -57,7 +56,7 @@ class Wlan(base.InLoopPollText):
         ("ethint", "eth0", "The ethernet interface to monitor"),
         ("update_interval", 1, "The update interval."),
         ("disconnected_message", "Disconnected", "String to show when the wlan is diconnected."),
-        ("ethernet_message", "Ethernet", "String to show when ethernet is being used"),
+        ("ethernet_message", "eth", "String to show when ethernet is being used"),
         (
             "format",
             "{essid} {quality}/70",
@@ -74,7 +73,8 @@ class Wlan(base.InLoopPollText):
             essid, quality = get_status(self.interface)
             disconnected = essid is None
             if disconnected:
-                if (os.popen("cat /sys/class/net/"+self.ethint+"/operstate").read().strip() == 'up'):
+                statfile = open("/sys/class/net/"+self.ethint+"/operstate", "r")
+                if (statfile.read().strip() == 'up'):
                     return self.ethernet_message
                 else:
                     return self.disconnected_message
