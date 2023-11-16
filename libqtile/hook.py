@@ -175,6 +175,12 @@ class Registry:
     def fire(self, event, *args, **kwargs):
         if event not in self.subscribe.hooks:
             raise utils.QtileError("Unknown event: %s" % event)
+        # We should check if the registry name is in the subscriptions dict
+        # A name can disappear if the config is reloaded (which clears subscriptions)
+        # but there are no hook subscriptions. This is not an issue for qtile core but
+        # third party libraries will need this to prevent KeyErrors when firing hooks
+        if self.name not in subscriptions:
+            subscriptions[self.name] = dict()
         for i in subscriptions[self.name].get(event, []):
             try:
                 if asyncio.iscoroutinefunction(i):
