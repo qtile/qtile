@@ -73,12 +73,11 @@ class Wlan(base.InLoopPollText):
             essid, quality = get_status(self.interface)
             disconnected = essid is None
             if disconnected:
-                statfile = open("/sys/class/net/"+self.ethint+"/operstate", "r")
-                if (statfile.read().strip() == 'up'):
-                    return self.ethernet_message
-                else:
-                    return self.disconnected_message
-
+                with open(f"/sys/class/net/{self.ethint}/operstate", "r") as statfile:
+                    if (statfile.read().strip() == 'up'):
+                        return self.ethernet_message
+                    else:
+                        return self.disconnected_message
             return self.format.format(essid=essid, quality=quality, percent=(quality / 70))
         except EnvironmentError:
             logger.error(
