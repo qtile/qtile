@@ -1,21 +1,21 @@
-
 from __future__ import annotations
 
 import functools
-from abc import abstractmethod, ABCMeta
+from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING
 
-from pywayland.utils import wl_list_for_each, wl_container_of
-from wlroots.wlr_types.scene import SceneRect, SceneNode, SceneNodeType
+from pywayland.utils import wl_container_of, wl_list_for_each
+from wlroots.wlr_types.scene import SceneNode, SceneNodeType, SceneRect
 
 from libqtile import utils
 
 if TYPE_CHECKING:
     from wlroots.wlr_types.scene import SceneTree
+
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.output import Output
-    from libqtile.backend.wayland.window import Window
-    from libqtile.utils import ColorType, ColorsType
+    from libqtile.backend.wayland.window import WindowType
+    from libqtile.utils import ColorType
 
 try:
     # Continue if ffi not built, so that docs can be built without wayland deps.
@@ -46,16 +46,12 @@ class Renderer(metaclass=ABCMeta):
 
     @abstractmethod
     def create_borders(
-            self,
-            window: Window,
-            tree: SceneTree,
-            colors: ColorsType,
-            width: int
+        self, window: WindowType, tree: SceneTree, colors: list[ColorType], width: int
     ) -> None:
         pass
 
     @abstractmethod
-    def destroy_borders(self, window: Window, tree: SceneTree) -> None:
+    def destroy_borders(self, window: WindowType, tree: SceneTree) -> None:
         pass
 
     @abstractmethod
@@ -67,11 +63,7 @@ class WlrootsRenderer(Renderer):
     """This renderer uses the wlroots scene graph renderer."""
 
     def create_borders(
-            self,
-            window: Window,
-            tree: SceneTree,
-            colors: ColorsType,
-            width: int
+        self, window: WindowType, tree: SceneTree, colors: list[ColorType], width: int
     ) -> None:
         # The borders are wlr_scene_rects.
         # They come in groups of four: N, E, S, W edges
@@ -89,7 +81,7 @@ class WlrootsRenderer(Renderer):
         # We can re-use old border nodes, but let's get rid of any extras.
         borders = []
         for ptr in wl_list_for_each(
-                "struct wlr_scene_node *", tree._ptr.children, "link", ffi=ffi
+            "struct wlr_scene_node *", tree._ptr.children, "link", ffi=ffi
         ):
             node = SceneNode(ptr)
             if node.type == SceneNodeType.RECT:
@@ -134,10 +126,10 @@ class WlrootsRenderer(Renderer):
 
             coord += bw
 
-    def destroy_borders(self, window: Window, tree: SceneTree) -> None:
-        for ptr in list(wl_list_for_each(
-                "struct wlr_scene_node *", tree._ptr.children, "link", ffi=ffi
-        )):
+    def destroy_borders(self, window: WindowType, tree: SceneTree) -> None:
+        for ptr in list(
+            wl_list_for_each("struct wlr_scene_node *", tree._ptr.children, "link", ffi=ffi)
+        ):
             node = SceneNode(ptr)
             if node.type == SceneNodeType.RECT:
                 node.destroy()

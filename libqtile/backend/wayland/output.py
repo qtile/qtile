@@ -51,7 +51,7 @@ class Output(HasListeners):
         self.core = core
         self.wlr_output = wlr_output
         self._reserved_space = (0, 0, 0, 0)
-        self.scene_output = SceneOutput.create(core.scene, wlr_output)
+        self.scene_output: SceneOutput = SceneOutput.create(core.scene, wlr_output)
 
         # These will get updated on the output layout's change event
         self.x = 0
