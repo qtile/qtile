@@ -309,7 +309,12 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self.bordercolor = colors
         self.borderwidth = width
 
-        self.core.renderer.create_borders(self)
+        self.core.renderer.create_borders(self, self.container, colors, width)
+
+        # Ensure the window contents and any nested surfaces are drawn above the
+        # borders.
+        if self.tree:
+            self.tree.node.raise_to_top()
 
     @property
     def opacity(self) -> float:
@@ -680,7 +685,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self.finalize_listeners()
 
         # Destroy the borders. Currently static windows are always borderless.
-        self.core.renderer.destroy_borders(self)
+        self.core.renderer.destroy_borders(self, self.container)
         if self.tree:
             self.tree.node.set_position(0, 0)
 
@@ -940,6 +945,26 @@ class Internal(_Base, base.Internal):
             self._width = width
             self._height = height
             self.wlr_buffer, self.surface = self._new_buffer()
+
+    def paint_borders(self, colors: ColorsType | None, width: int) -> None:
+        if not colors:
+            colors = []
+            width = 0
+
+        if not isinstance(colors, list):
+            colors = [colors]
+
+        if self._scene_buffer:
+            self._scene_buffer.node.set_position(width, width)
+        self.bordercolor = colors
+        self.borderwidth = width
+
+        self.core.renderer.create_borders(self, self.tree, colors, width)
+
+        # Ensure the window contents and any nested surfaces are drawn above the
+        # borders.
+        if self._scene_buffer:
+            self._scene_buffer.node.raise_to_top()
 
     @expose_command()
     def info(self) -> dict:
