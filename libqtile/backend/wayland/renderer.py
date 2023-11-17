@@ -45,11 +45,17 @@ class Renderer(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def create_borders(self, window: Window) -> None:
+    def create_borders(
+            self,
+            window: Window,
+            tree: SceneTree,
+            colors: ColorsType,
+            width: int
+    ) -> None:
         pass
 
     @abstractmethod
-    def destroy_borders(self, window: Window) -> None:
+    def destroy_borders(self, window: Window, tree: SceneTree) -> None:
         pass
 
     @abstractmethod
