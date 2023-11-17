@@ -53,7 +53,7 @@ class Wlan(base.InLoopPollText):
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("interface", "wlan0", "The interface to monitor"),
-        ("ethint", "eth0", "The ethernet interface to monitor"),
+        ("ethernet_interface", "eth0", "The ethernet interface to monitor, it will only scan for it when no wlan connection is detected. NOTE: If you do not have a wlan device in your system ethernet functionality will not work, use the Net widget instead"),
         ("update_interval", 1, "The update interval."),
         ("disconnected_message", "Disconnected", "String to show when the wlan is diconnected."),
         ("ethernet_message", "eth", "String to show when ethernet is being used"),
@@ -73,7 +73,7 @@ class Wlan(base.InLoopPollText):
             essid, quality = get_status(self.interface)
             disconnected = essid is None
             if disconnected:
-                with open(f"/sys/class/net/{self.ethint}/operstate", "r") as statfile:
+                with open(f"/sys/class/net/{self.ethernet_interface}/operstate", "r") as statfile:
                     if (statfile.read().strip() == 'up'):
                         return self.ethernet_message
                     else:
