@@ -135,9 +135,9 @@ class WlrootsRenderer(Renderer):
             coord += bw
 
     def destroy_borders(self, window: Window, tree: SceneTree) -> None:
-        for ptr in wl_list_for_each(
+        for ptr in list(wl_list_for_each(
                 "struct wlr_scene_node *", tree._ptr.children, "link", ffi=ffi
-        ):
+        )):
             node = SceneNode(ptr)
             if node.type == SceneNodeType.RECT:
                 node.destroy()
