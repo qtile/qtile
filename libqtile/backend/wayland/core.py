@@ -87,6 +87,7 @@ from libqtile import hook, log_utils
 from libqtile.backend import base
 from libqtile.backend.wayland import inputs, layer, window, wlrq, xdgwindow, xwindow
 from libqtile.backend.wayland.output import Output
+from libqtile.backend.wayland.renderer import Renderer, WlrootsRenderer
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 
@@ -169,7 +170,7 @@ class Core(base.Core, wlrq.HasListeners):
         (
             self.compositor,
             self.allocator,
-            self.renderer,
+            self.wlr_renderer,
             self.backend,
             self._subcompositor,
         ) = wlroots_helper.build_compositor(self.display)
@@ -198,6 +199,7 @@ class Core(base.Core, wlrq.HasListeners):
         # Some devices are added early, so we need to remember to configure them
         self._pending_input_devices: list[inputs._Device] = []
         hook.subscribe.startup_complete(self._configure_pending_inputs)
+        hook.subscribe.startup_complete(self._configure_renderer)
 
         self._input_inhibit_manager = InputInhibitManager(self.display)
         self.add_listener(
@@ -307,6 +309,9 @@ class Core(base.Core, wlrq.HasListeners):
         self.mid_window_tree = self.layer_trees.pop(2)
         self.wallpapers: dict[config.Screen, tuple[SceneBuffer, ImageSurface]] = {}
 
+        # Support for custom renderers
+        self.renderer: Renderer = WlrootsRenderer(self)
+
         # Add support for additional protocols
         ExportDmabufManagerV1(self.display)
         XdgOutputManagerV1(self.display, self.output_layout)
@@ -385,6 +390,7 @@ class Core(base.Core, wlrq.HasListeners):
         for out in self.outputs.copy():
             out.finalize()
 
+        self.renderer.finalize()
         if self._xwayland:
             self._xwayland.destroy()
         self.cursor_manager.destroy()
@@ -1166,6 +1172,14 @@ class Core(base.Core, wlrq.HasListeners):
                 device.configure(self.qtile.config.wl_input_rules)
         self._pending_input_devices.clear()
 
+    def _configure_renderer(self) -> None:
+        assert self.qtile is not None
+        self.renderer.finalize()
+        if self.qtile.config.wl_renderer:
+            self.renderer = self.qtile.config.wl_renderer(self)
+        else:
+            self.renderer = WlrootsRenderer(self)
+
     def setup_listener(self, qtile: Qtile) -> None:
         """Setup a listener for the given qtile instance"""
         logger.debug("Adding io watch")
@@ -1230,6 +1244,9 @@ class Core(base.Core, wlrq.HasListeners):
         if self.qtile.config.wl_input_rules:
             for device in [*self.keyboards, *self._pointers]:
                 device.configure(self.qtile.config.wl_input_rules)
+
+        # Apply wl_renderer option
+        self._configure_renderer()
 
     def new_wid(self) -> int:
         """Get a new unique window ID"""

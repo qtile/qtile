@@ -21,7 +21,6 @@
 from __future__ import annotations
 
 import abc
-import functools
 import typing
 
 import cairocffi
@@ -35,7 +34,7 @@ from wlroots.wlr_types.pointer_constraints_v1 import (
     PointerConstraintV1,
     PointerConstraintV1StateField,
 )
-from wlroots.wlr_types.scene import SceneBuffer, SceneRect, SceneTree
+from wlroots.wlr_types.scene import SceneBuffer, SceneTree
 
 from libqtile import config, hook, utils
 from libqtile.backend import base
@@ -60,17 +59,9 @@ if typing.TYPE_CHECKING:
     from libqtile.command.base import CommandObject, ItemT
     from libqtile.core.manager import Qtile
     from libqtile.group import _Group
-    from libqtile.utils import ColorsType, ColorType
+    from libqtile.utils import ColorsType
 
 S = typing.TypeVar("S", bound=PtrHasData)
-
-
-@functools.lru_cache()
-def _rgb(color: ColorType) -> ffi.CData:
-    """Helper to create and cache float[4] arrays for border painting"""
-    if isinstance(color, ffi.CData):
-        return color
-    return ffi.new("float[4]", utils.rgb(color))
 
 
 class _Base:
@@ -124,10 +115,6 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self.container.node.set_enabled(enabled=False)
         self.container.node.data = self.data_handle
 
-        # The borders are wlr_scene_rects.
-        # Inner list: N, E, S, W edges
-        # Outer list: outside-in borders i.e. multiple for multiple borders
-        self._borders: list[list[SceneRect]] = []
         self.bordercolor: ColorsType = "000000"
 
         # This is a placeholder to be set properly when the window maps for the first
@@ -322,66 +309,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self.bordercolor = colors
         self.borderwidth = width
 
-        if width == 0:
-            for rects in self._borders:
-                for rect in rects:
-                    rect.node.destroy()
-            self._borders.clear()
-            return
-
-        if len(colors) > width:
-            colors = colors[:width]
-
-        num = len(colors)
-        old_borders = self._borders
-        new_borders = []
-        widths = [width // num] * num
-        for i in range(width % num):
-            widths[i] += 1
-
-        outer_w = self.width + width * 2
-        outer_h = self.height + width * 2
-        coord = 0
-
-        for i, color in enumerate(colors):
-            color_ = _rgb(color)
-            bw = widths[i]
-
-            # [x, y, width, height] for N, E, S, W
-            geometries = (
-                (coord, coord, outer_w - coord * 2, bw),
-                (outer_w - bw - coord, bw + coord, bw, outer_h - bw * 2 - coord * 2),
-                (coord, outer_h - bw - coord, outer_w - coord * 2, bw),
-                (coord, bw + coord, bw, outer_h - bw * 2 - coord * 2),
-            )
-
-            if old_borders:
-                rects = old_borders.pop(0)
-                for (x, y, w, h), rect in zip(geometries, rects):
-                    rect.set_color(color_)
-                    rect.set_size(w, h)
-                    rect.node.set_position(x, y)
-
-            else:
-                rects = []
-                for x, y, w, h in geometries:
-                    rect = SceneRect(self.container, w, h, color_)
-                    rect.node.set_position(x, y)
-                    rects.append(rect)
-
-            new_borders.append(rects)
-            coord += bw
-
-        for rects in old_borders:
-            for rect in rects:
-                rect.node.destroy()
-
-        # Ensure the window contents and any nested surfaces are drawn above the
-        # borders.
-        if self.tree:
-            self.tree.node.raise_to_top()
-
-        self._borders = new_borders
+        self.core.renderer.create_borders(self)
 
     @property
     def opacity(self) -> float:
@@ -752,9 +680,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self.finalize_listeners()
 
         # Destroy the borders. Currently static windows are always borderless.
-        while self._borders:
-            for rect in self._borders.pop():
-                rect.node.destroy()
+        self.core.renderer.destroy_borders(self)
         if self.tree:
             self.tree.node.set_position(0, 0)
 
@@ -804,7 +730,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         self._width = 0
         self._height = 0
         self.borderwidth: int = 0
-        self.bordercolor: list[ffi.CData] = [_rgb((0, 0, 0, 1))]
+        self.bordercolor: ColorsType = "000000"
         self.opacity: float = 1.0
         self._wm_class: str | None = None
         self._idle_inhibitors_count = idle_inhibitor_count
@@ -945,11 +871,6 @@ class Internal(_Base, base.Internal):
         if scene_buffer is None:
             raise RuntimeError("Couldn't create scene buffer")
         self._scene_buffer = scene_buffer
-        # The borders are wlr_scene_rects.
-        # Inner list: N, E, S, W edges
-        # Outer list: outside-in borders i.e. multiple for multiple borders
-        self._borders: list[list[SceneRect]] = []
-        self.bordercolor: ColorsType = "000000"
 
     def finalize(self) -> None:
         self.hide()
@@ -1019,80 +940,6 @@ class Internal(_Base, base.Internal):
             self._width = width
             self._height = height
             self.wlr_buffer, self.surface = self._new_buffer()
-
-    def paint_borders(self, colors: ColorsType | None, width: int) -> None:
-        if not colors:
-            colors = []
-            width = 0
-
-        if not isinstance(colors, list):
-            colors = [colors]
-
-        if self._scene_buffer:
-            self._scene_buffer.node.set_position(width, width)
-        self.bordercolor = colors
-        self.borderwidth = width
-
-        if width == 0:
-            for rects in self._borders:
-                for rect in rects:
-                    rect.node.destroy()
-            self._borders.clear()
-            return
-
-        if len(colors) > width:
-            colors = colors[:width]
-
-        num = len(colors)
-        old_borders = self._borders
-        new_borders = []
-        widths = [width // num] * num
-        for i in range(width % num):
-            widths[i] += 1
-
-        outer_w = self.width + width * 2
-        outer_h = self.height + width * 2
-        coord = 0
-
-        for i, color in enumerate(colors):
-            color_ = _rgb(color)
-            bw = widths[i]
-
-            # [x, y, width, height] for N, E, S, W
-            geometries = (
-                (coord, coord, outer_w - coord * 2, bw),
-                (outer_w - bw - coord, bw + coord, bw, outer_h - bw * 2 - coord * 2),
-                (coord, outer_h - bw - coord, outer_w - coord * 2, bw),
-                (coord, bw + coord, bw, outer_h - bw * 2 - coord * 2),
-            )
-
-            if old_borders:
-                rects = old_borders.pop(0)
-                for (x, y, w, h), rect in zip(geometries, rects):
-                    rect.set_color(color_)
-                    rect.set_size(w, h)
-                    rect.node.set_position(x, y)
-
-            else:
-                rects = []
-                for x, y, w, h in geometries:
-                    rect = SceneRect(self.tree, w, h, color_)
-                    rect.node.set_position(x, y)
-                    rects.append(rect)
-
-            new_borders.append(rects)
-            coord += bw
-
-        for rects in old_borders:
-            for rect in rects:
-                rect.node.destroy()
-
-        # Ensure the window contents and any nested surfaces are drawn above the
-        # borders.
-        if self._scene_buffer:
-            self._scene_buffer.node.raise_to_top()
-
-        self._borders = new_borders
 
     @expose_command()
     def info(self) -> dict:

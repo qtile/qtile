@@ -49,7 +49,6 @@ if TYPE_CHECKING:
 class Output(HasListeners):
     def __init__(self, core: Core, wlr_output: wlrOutput):
         self.core = core
-        self.renderer = core.renderer
         self.wlr_output = wlr_output
         self._reserved_space = (0, 0, 0, 0)
         self.scene_output = SceneOutput.create(core.scene, wlr_output)
@@ -59,7 +58,7 @@ class Output(HasListeners):
         self.y = 0
 
         # Initialise wlr_output
-        wlr_output.init_render(core.allocator, core.renderer)
+        wlr_output.init_render(core.allocator, core.wlr_renderer)
         wlr_output.set_mode(wlr_output.preferred_mode())
         wlr_output.enable()
         wlr_output.commit()
@@ -97,7 +96,7 @@ class Output(HasListeners):
 
     def _on_frame(self, _listener: Listener, _data: Any) -> None:
         try:
-            self.scene_output.commit()
+            self.core.renderer.render(self)
         except RuntimeError:
             # Failed to commit scene output; skip rendering.
             pass
