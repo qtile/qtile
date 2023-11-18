@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING
 
 from pywayland.utils import wl_container_of, wl_list_for_each
+from wlroots import ffi, lib
 from wlroots.wlr_types.scene import SceneNode, SceneNodeType, SceneRect
 
 from libqtile import utils
@@ -16,12 +17,6 @@ if TYPE_CHECKING:
     from libqtile.backend.wayland.output import Output
     from libqtile.backend.wayland.window import WindowType
     from libqtile.utils import ColorType
-
-try:
-    # Continue if ffi not built, so that docs can be built without wayland deps.
-    from libqtile.backend.wayland._ffi import ffi
-except ModuleNotFoundError:
-    pass
 
 
 @functools.lru_cache()
@@ -85,11 +80,13 @@ class WlrootsRenderer(Renderer):
         ):
             node = SceneNode(ptr)
             if node.type == SceneNodeType.RECT:
-                rect_ptr = wl_container_of(ptr, "struct wlr_scene_rect *", "node", ffi=ffi)
-                borders.append(SceneRect(ptr=rect_ptr))
+                # TODO: hopefully SceneRect(ptr=...) will be merged into pywlroots
+                # rect_ptr = wl_container_of(ptr, "struct wlr_scene_rect *", "node", ffi=ffi)
+                # borders.append(SceneRect(ptr=rect_ptr))
+                borders.append(node)
 
-        for rect in borders[num * 4 :]:
-            rect.node.destroy()
+        for node in borders[num * 4 :]:
+            node.destroy()
         borders = borders[: num * 4]
 
         widths = [width // num] * num
@@ -116,10 +113,18 @@ class WlrootsRenderer(Renderer):
             borders = borders[4:]
             for i, (x, y, w, h) in enumerate(geometries):
                 try:
-                    rect = rects[i]
-                    rect.set_color(color_)
-                    rect.set_size(w, h)
-                    rect.node.set_position(x, y)
+                    node = rects[i]
+                    rect_ptr = wl_container_of(
+                        node._ptr, "struct wlr_scene_rect *", "node", ffi=ffi
+                    )
+                    lib.wlr_scene_rect_set_color(rect_ptr, color_)
+                    lib.wlr_scene_rect_set_size(rect_ptr, w, h)
+                    node.set_position(x, y)
+                    # TODO: see above
+                    # rect = rects[i]
+                    # rect.set_color(color_)
+                    # rect.set_size(w, h)
+                    # rect.node.set_position(x, y)
                 except IndexError:
                     rect = SceneRect(tree, w, h, color_)
                     rect.node.set_position(x, y)
