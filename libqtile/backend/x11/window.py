@@ -1021,6 +1021,7 @@ class _Window:
         group_windows = group.windows.copy()
         statics = [win for win in self.qtile.windows_map.values() if isinstance(win, Static)]
         group_windows.extend(statics)
+        group_windows.extend(v for w, v in self.qtile.core.override_redirect_map.items())
 
         if group.screen is not None:
             group_bars = [gap for gap in group.screen.gaps if isinstance(gap, bar.Bar)]
@@ -1050,7 +1051,6 @@ class _Window:
         lower = [w[0].wid for w in windows if w[2] > layering]
         higher = [w[0].wid for w in windows if w[2] < layering]
         same = [w[0].wid for w in windows if w[2] == layering]
-
         # We now need to identify the new position in the stack
 
         # If the window has a parent, the window should just be put above it
@@ -1167,16 +1167,14 @@ class _Window:
                 higher.sort(key=lambda wid: stack.index(wid))
 
             for wid in [w for w in lower if stack.index(w) > index]:
-                self.qtile.windows_map[wid].window.configure(
-                    stackmode=xcffib.xproto.StackMode.Below, sibling=same[0]
-                )
+                win = self.qtile.windows_map.get(wid, self.qtile.core.override_redirect_map[wid])
+                win.window.configure(stackmode=xcffib.xproto.StackMode.Below, sibling=same[0])
 
             # We reverse higher as each window will be placed above the last item in the current layer
             # this means the last item we stack will be just above the current layer.
             for wid in [w for w in higher[::-1] if stack.index(w) < index]:
-                self.qtile.windows_map[wid].window.configure(
-                    stackmode=xcffib.xproto.StackMode.Above, sibling=same[-1]
-                )
+                win = self.qtile.windows_map.get(wid, self.qtile.core.override_redirect_map[wid])
+                win.window.configure(stackmode=xcffib.xproto.StackMode.Above, sibling=same[-1])
 
             return
 
