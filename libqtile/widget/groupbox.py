@@ -243,8 +243,6 @@ class GroupBox(_GroupBase):
     def __init__(self, **config):
         _GroupBase.__init__(self, **config)
         self.add_defaults(GroupBox.defaults)
-        if self.spacing is None:
-            self.spacing = self.margin_x
         self.clicked = None
         self.click = None
 
@@ -257,6 +255,11 @@ class GroupBox(_GroupBase):
                 }
             )
         self.add_callbacks(default_callbacks)
+
+    def _configure(self, qtile, bar):
+        _GroupBase._configure(self, qtile, bar)
+        if self.spacing is None:
+            self.spacing = self.margin_x
 
     @property
     def groups(self):
