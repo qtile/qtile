@@ -1327,11 +1327,11 @@ class _Window:
         self.qtile.core._root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
         self._ungrab_click()
 
-        if self.group:
-            self.group.current_window = self
-
         # Check if we need to restack a previously focused fullscreen window
         self.qtile.core.check_stacking(self)
+
+        if self.group and self.group.current_window is not self:
+            self.group.focus(self)
 
         hook.fire("client_focus", self)
 
