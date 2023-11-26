@@ -83,9 +83,10 @@ class GridInfo:
             sample_width = width / cols
             sample_height = height / rows
             sample_ratio = sample_width / sample_height
-            diff = abs(sample_ratio - self.ratio)
-            if best_ratio is None or diff < best_ratio:
-                best_ratio = diff
+            if sample_ratio < 1:
+                sample_ratio = 1/sample_ratio
+            if best_ratio is None or sample_ratio < best_ratio:
+                best_ratio = sample_ratio
                 best_rows_cols_orientation = (rows, cols, orientation)
 
         return best_rows_cols_orientation
