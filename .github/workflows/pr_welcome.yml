@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/first-interaction@v1
+      - uses: jwijenbergh/first-interaction@d018308215c9fd33665206487c874b747e00f0e7
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           pr-message: >+
