@@ -14,7 +14,7 @@ To build on Ubuntu:
 
 $ sudo apt-get install graphiz
 
-Install: https://github.com/:snide/sphinx_rtd_theme
+Install: https://github.com/schettino72/sphinx_press_theme
 
 $ cd ./docs
 $ make html
