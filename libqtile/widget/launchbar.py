@@ -272,19 +272,12 @@ class LaunchBar(base._Widget):
                 )
             else:
                 # display an icon
-                self.drawer.ctx.save()
+                # Translate to vertically centre the icon
                 self.drawer.ctx.translate(0, self._icon_padding + self.padding_y)
                 self.drawer.ctx.set_source(self.surfaces[name])
                 self.drawer.ctx.paint()
-                self.drawer.ctx.restore()
 
             self.drawer.ctx.restore()
-
-            self.drawer.draw(
-                offsetx=self.offset + xoffset,
-                offsety=self.offsety,
-                width=icon_width + self.padding,
-            )
 
             xoffset += icon_width + self.padding
 
