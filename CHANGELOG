@@ -1,4 +1,6 @@
 Qtile x.xx.x, released XXXX-XX-XX:
+    !!! config breakage/changes !!!
+      - Matches no longer use "include/substring" style matching. But match the string exactly. Previously on X11, if the WM_TYPE of a spawned window is e.g. dialog a match with wm_type dialognoonereadschangelogs would return true. Additionally a window with an empty WM_CLASS (which can happen) would match anything. If you rely this style of substring matching, pass a regex to your match or use a function with func=.
     * features
       - Change how `tox` runs tests. See https://docs.qtile.org/en/latest/manual/contributing.html#running-tests-locally
       for more information on how to run tests locally.

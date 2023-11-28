@@ -829,7 +829,7 @@ class Match:
     against and returns a boolean.
 
     For some properties, :class:`Match` supports both regular expression objects (i.e.
-    the result of ``re.compile()``) or strings (match as an "include"-match). If a
+    the result of ``re.compile()``) or strings (match as an exact string). If a
     window matches all specified values, it is considered a match.
 
     Parameters
@@ -896,16 +896,14 @@ class Match:
         elif name == "wm_class":
 
             def predicate(other) -> bool:  # type: ignore
-                # match as an "include"-match on any of the received classes
-                match = getattr(other, "match", lambda v: v in other)
+                match = getattr(other, "match", lambda v: v == other)
                 return value and any(match(v) for v in value)
 
             return predicate
         else:
 
             def predicate(other) -> bool:  # type: ignore
-                # match as an "include"-match
-                match = getattr(other, "match", lambda v: v in other)
+                match = getattr(other, "match", lambda v: v == other)
                 return match(value)
 
             return predicate
