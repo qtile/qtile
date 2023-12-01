@@ -59,19 +59,33 @@ class XWindow(Window[xwayland.Surface]):
             self.name = title
 
         # Add some listeners
-        self.add_listener(surface.surface.map_event, self._on_map)
-        self.add_listener(surface.surface.unmap_event, self._on_unmap)
+        self.add_listener(surface.associate_event, self._on_associate)
+        self.add_listener(surface.dissociate_event, self._on_dissociate)
         self.add_listener(surface.request_activate_event, self._on_request_activate)
         self.add_listener(surface.request_configure_event, self._on_request_configure)
         self.add_listener(surface.destroy_event, self._on_destroy)
 
+    def _on_associate(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: xwindow associate")
+        if wlr_surface := self.surface.surface:
+            self.add_listener(wlr_surface.map_event, self._on_map)
+            self.add_listener(wlr_surface.unmap_event, self._on_unmap)
+        else:
+            raise RuntimeError("XWayland surface unexpectedly has no wlr_surface")
+
+    def _on_dissociate(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: xwindow dissociate")
+        self.finalize_listener(self._map)
+        self.finalize_listener(self._unmap)
+
     def _on_commit(self, _listener: Listener, _data: Any) -> None:
         if self.floating:
-            state = self.surface.surface.current
-            if state.width != self._width or state.height != self._height:
-                self.place(
-                    self.x, self.y, state.width, state.height, self.borderwidth, self.bordercolor
-                )
+            if wlr_surface := self.surface.surface:
+                state = wlr_surface.current
+                if state.width != self._width or state.height != self._height:
+                    self.place(
+                        self.x, self.y, state.width, state.height, self.borderwidth, self.bordercolor
+                    )
 
     def _on_request_activate(self, _listener: Listener, event: SurfaceConfigureEvent) -> None:
         logger.debug("Signal: xwindow request_activate")
@@ -107,8 +121,6 @@ class XWindow(Window[xwayland.Surface]):
             self.core.pending_windows.add(self)
             self._wid = -1
             # Restore the listeners that we set up in __init__
-            self.add_listener(self.surface.map_event, self._on_map)
-            self.add_listener(self.surface.unmap_event, self._on_unmap)
             self.add_listener(self.surface.request_configure_event, self._on_request_configure)
             self.add_listener(self.surface.destroy_event, self._on_destroy)
 
