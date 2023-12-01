@@ -66,8 +66,8 @@ class XdgWindow(Window[XdgSurface]):
         surface.data = self.data_handle
         self.tree = core.scene.xdg_surface_create(self.container, surface)
 
-        self.add_listener(surface.map_event, self._on_map)
-        self.add_listener(surface.unmap_event, self._on_unmap)
+        self.add_listener(surface.surface.map_event, self._on_map)
+        self.add_listener(surface.surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
         self.add_listener(surface.toplevel.request_maximize_event, self._on_request_maximize)
         self.add_listener(surface.toplevel.request_fullscreen_event, self._on_request_fullscreen)
@@ -284,7 +284,6 @@ class XdgWindow(Window[XdgSurface]):
             self.core,
             self.qtile,
             self,
-            self._idle_inhibitors_count,
         )
 
 
@@ -296,12 +295,9 @@ class XdgStatic(Static[XdgSurface]):
         core: Core,
         qtile: Qtile,
         win: XdgWindow,
-        idle_inhibitor_count: int,
     ):
         surface = win.surface
-        Static.__init__(
-            self, core, qtile, surface, win.wid, idle_inhibitor_count=idle_inhibitor_count
-        )
+        Static.__init__(self, core, qtile, surface, win.wid)
 
         if surface.toplevel.title:
             self.name = surface.toplevel.title

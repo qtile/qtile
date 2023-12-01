@@ -60,8 +60,6 @@ from wlroots.wlr_types import (
     xdg_decoration_v1,
 )
 from wlroots.wlr_types.cursor import Cursor, WarpMode
-from wlroots.wlr_types.idle import Idle
-from wlroots.wlr_types.idle_inhibit_v1 import IdleInhibitorManagerV1, IdleInhibitorV1
 from wlroots.wlr_types.keyboard import Keyboard
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1, LayerSurfaceV1
 from wlroots.wlr_types.output_management_v1 import (
@@ -196,7 +194,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         # Set up cursor
         self.cursor = Cursor(self.output_layout)
-        self.cursor_manager = XCursorManager(24)
+        self._cursor_manager = XCursorManager(24)
         self._gestures = PointerGesturesV1(self.display)
         self.add_listener(self.seat.request_set_cursor_event, self._on_request_cursor)
         self.add_listener(self.cursor.axis_event, self._on_cursor_axis)
@@ -217,7 +215,7 @@ class Core(base.Core, wlrq.HasListeners):
         # Set up shell
         self.xdg_shell = XdgShell(self.display)
         self.add_listener(self.xdg_shell.new_surface_event, self._on_new_xdg_surface)
-        self.layer_shell = LayerShellV1(self.display)
+        self.layer_shell = LayerShellV1(self.display, 4)
         self.add_listener(self.layer_shell.new_surface_event, self._on_new_layer_surface)
 
         # Set up scene-graph tree, which looks like this from bottom to top:
@@ -286,9 +284,6 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(
             output_power_manager.set_mode_event, self._on_output_power_manager_set_mode
         )
-        self.idle = Idle(self.display)
-        idle_ihibitor_manager = IdleInhibitorManagerV1(self.display)
-        self.add_listener(idle_ihibitor_manager.new_inhibitor_event, self._on_new_idle_inhibitor)
         PrimarySelectionV1DeviceManager(self.display)
         virtual_keyboard_manager_v1 = vkeyboard.VirtualKeyboardManagerV1(self.display)
         self.add_listener(
@@ -355,7 +350,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         if self._xwayland:
             self._xwayland.destroy()
-        self.cursor_manager.destroy()
+        self._cursor_manager.destroy()
         self.cursor.destroy()
         self.output_layout.destroy()
         self.seat.destroy()
@@ -426,25 +421,17 @@ class Core(base.Core, wlrq.HasListeners):
         output = Output(self, wlr_output)
         self.outputs.append(output)
 
-        # This is run during tests, when we want to fix the output's geometry
-        if wlr_output.is_headless and "PYTEST_CURRENT_TEST" in os.environ:
-            if len(self.outputs) == 1:
-                # First test output
-                wlr_output.set_custom_mode(800, 600, 0)
-            else:
-                # Second test output
-                wlr_output.set_custom_mode(640, 480, 0)
-            wlr_output.commit()
-
         # Let the output layout place it
-        self.output_layout.add_auto(wlr_output)
+        if not self.output_layout.add_auto(wlr_output):
+            logger.warning("Failed to add output to layout.")
+            return
 
         # Set the current output as we have none defined
         # Now that we have our first output we can warp the pointer there too
         # We also set the cursor image as we're initializing the cursor here anyways
         if not self._current_output:
             self._current_output = output
-            self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+            self.cursor.set_xcursor(self._cursor_manager, "default")
             box = Box(*output.get_geometry())
             x = box.x + box.width / 2
             y = box.y + box.height / 2
@@ -509,9 +496,8 @@ class Core(base.Core, wlrq.HasListeners):
                 raise RuntimeError("Can't place a popup without any outputs enabled.")
 
             parent_surface = xdg_surface.popup.parent
-            if parent_surface.is_xdg_surface:
+            if parent_xdg_surface := XdgSurface.try_from_surface(parent_surface):
                 # An XDG shell window or popup created this popup
-                parent_xdg_surface = XdgSurface.from_surface(parent_surface)
 
                 if parent_xdg_surface.role == XdgSurfaceRole.TOPLEVEL:
                     # If the immediate parent is a toplevel, we're a level 1 popup
@@ -528,9 +514,8 @@ class Core(base.Core, wlrq.HasListeners):
 
                 xdg_surface.data = self.scene.xdg_surface_create(tree, xdg_surface)
 
-            elif parent_surface.is_layer_surface:
+            elif parent := LayerSurfaceV1.try_from_wlr_surface(parent_surface):
                 # A layer shell window created this popup
-                parent = LayerSurfaceV1.from_wlr_surface(parent_surface)
                 win = cast(layer.LayerStatic, parent.data)
                 self.scene.xdg_surface_create(win.popup_tree, xdg_surface)
 
@@ -574,7 +559,6 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_cursor_button(self, _listener: Listener, event: pointer.PointerButtonEvent) -> None:
         assert self.qtile is not None
-        self.idle.notify_activity(self.seat)
         pressed = event.button_state == input_device.ButtonState.PRESSED
         if pressed:
             self._focus_by_click()
@@ -591,7 +575,6 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_cursor_motion(self, _listener: Listener, event: pointer.PointerMotionEvent) -> None:
         assert self.qtile is not None
-        self.idle.notify_activity(self.seat)
 
         dx = event.delta_x
         dy = event.delta_y
@@ -620,7 +603,6 @@ class Core(base.Core, wlrq.HasListeners):
         self, _listener: Listener, event: pointer.PointerMotionAbsoluteEvent
     ) -> None:
         assert self.qtile is not None
-        self.idle.notify_activity(self.seat)
 
         x, y = self.cursor.absolute_to_layout_coords(event.pointer.base, event.x, event.y)
         self.cursor.move(x - self.cursor.x, y - self.cursor.y)
@@ -631,7 +613,6 @@ class Core(base.Core, wlrq.HasListeners):
         _listener: Listener,
         event: pointer.PointerPinchBeginEvent,
     ) -> None:
-        self.idle.notify_activity(self.seat)
         self._gestures.send_pinch_begin(self.seat, event.time_msec, event.fingers)
 
     def _on_cursor_pinch_update(
@@ -648,7 +629,6 @@ class Core(base.Core, wlrq.HasListeners):
         _listener: Listener,
         event: pointer.PointerPinchEndEvent,
     ) -> None:
-        self.idle.notify_activity(self.seat)
         self._gestures.send_pinch_end(self.seat, event.time_msec, event.cancelled)
 
     def _on_cursor_swipe_begin(
@@ -656,7 +636,6 @@ class Core(base.Core, wlrq.HasListeners):
         _listener: Listener,
         event: pointer.PointerSwipeBeginEvent,
     ) -> None:
-        self.idle.notify_activity(self.seat)
         self._gestures.send_swipe_begin(self.seat, event.time_msec, event.fingers)
 
     def _on_cursor_swipe_update(
@@ -671,7 +650,6 @@ class Core(base.Core, wlrq.HasListeners):
         _listener: Listener,
         event: pointer.PointerSwipeEndEvent,
     ) -> None:
-        self.idle.notify_activity(self.seat)
         self._gestures.send_swipe_end(self.seat, event.time_msec, event.cancelled)
 
     def _on_cursor_hold_begin(
@@ -679,7 +657,6 @@ class Core(base.Core, wlrq.HasListeners):
         _listener: Listener,
         event: pointer.PointerHoldBeginEvent,
     ) -> None:
-        self.idle.notify_activity(self.seat)
         self._gestures.send_hold_begin(self.seat, event.time_msec, event.fingers)
 
     def _on_cursor_hold_end(
@@ -687,7 +664,6 @@ class Core(base.Core, wlrq.HasListeners):
         _listener: Listener,
         event: pointer.PointerHoldEndEvent,
     ) -> None:
-        self.idle.notify_activity(self.seat)
         self._gestures.send_hold_end(self.seat, event.time_msec, event.cancelled)
 
     def _on_new_pointer_constraint(
@@ -713,23 +689,6 @@ class Core(base.Core, wlrq.HasListeners):
         device = self._add_new_pointer(new_pointer_event.new_pointer.pointer.base)
         logger.info("New virtual pointer: %s %s", *device.get_info())
 
-    def _on_new_idle_inhibitor(
-        self, _listener: Listener, idle_inhibitor: IdleInhibitorV1
-    ) -> None:
-        logger.debug("Signal: idle_inhibitor new_inhibitor")
-
-        if self.qtile is None:
-            return
-
-        for win in self.qtile.windows_map.values():
-            if isinstance(win, (window.Window, window.Static)):
-                win.surface.for_each_surface(win.add_idle_inhibitor, idle_inhibitor)
-                if idle_inhibitor.data:
-                    # We break if the .data attribute was set, because that tells us
-                    # that `win.add_idle_inhibitor` identified this inhibitor as
-                    # belonging to that window.
-                    break
-
     def _on_input_inhibitor_activate(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: input_inhibitor activate")
         assert self.qtile is not None
@@ -749,7 +708,7 @@ class Core(base.Core, wlrq.HasListeners):
             # If we have a client who exclusively gets input, no other client's
             # surfaces are allowed to get pointer input.
             if isinstance(win, base.Internal) or not win.belongs_to_client(self.exclusive_client):
-                self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                self.cursor.set_xcursor(self._cursor_manager, "default")
                 self.seat.pointer_notify_clear_focus()
                 return
 
@@ -813,8 +772,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.xwayland_atoms: dict[int, str] = wlrq.get_xwayland_atoms(self._xwayland)
 
         # Set the default XWayland cursor
-        xcursor = self.cursor_manager.get_xcursor("left_ptr")
-        if xcursor:
+        if xcursor := self._cursor_manager.get_xcursor("default"):
             image = next(xcursor.images, None)
             if image:
                 self._xwayland.set_cursor(
@@ -845,12 +803,14 @@ class Core(base.Core, wlrq.HasListeners):
             return
 
         surface = event.surface
-        if surface and surface.is_xdg_surface:
-            xdg_surface = XdgSurface.from_surface(surface)
-            if win := xdg_surface.data:
-                win.handle_activation_request(focus_on_window_activation)
-            else:
-                logger.debug("Failed to find window to activate. Ignoring request.")
+        if surface:
+            xdg_surface = XdgSurface.try_from_surface(surface)
+            if xdg_surface is not None:
+                if win := xdg_surface.data:
+                    win.handle_activation_request(focus_on_window_activation)
+                else:
+                    # Shouldn't happen.
+                    logger.debug("Failed to find window to activate. Ignoring request.")
 
     def _output_manager_reconfigure(self, config: OutputConfigurationV1, apply: bool) -> None:
         """
@@ -877,7 +837,8 @@ class Core(base.Core, wlrq.HasListeners):
 
                 # `add` will add outputs that have been removed. Any other outputs that
                 # are already in the layout are just moved as if we had used `move`.
-                self.output_layout.add(wlr_output, state.x, state.y)
+                if not self.output_layout.add(wlr_output, state.x, state.y):
+                    logger.warning("Failed to add output to layout.")
                 wlr_output.set_transform(state.transform)
                 wlr_output.set_scale(state.scale)
             else:
@@ -941,7 +902,7 @@ class Core(base.Core, wlrq.HasListeners):
                         logger.debug(
                             "Pointer focus withheld from window not owned by exclusive client."
                         )
-                        self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                        self.cursor.set_xcursor(self._cursor_manager, "default")
                         self.seat.pointer_notify_clear_focus()
                         self._hovered_window = win
                     return
@@ -965,7 +926,7 @@ class Core(base.Core, wlrq.HasListeners):
                                 )
                         elif self.seat.pointer_state.focused_surface:
                             # moved from a Window or Static to an Internal
-                            self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                            self.cursor.set_xcursor(self._cursor_manager, "default")
                             self.seat.pointer_notify_clear_focus()
                     win.process_pointer_enter(cx, cy)
                     self._hovered_window = win
@@ -980,7 +941,7 @@ class Core(base.Core, wlrq.HasListeners):
                 # The pointer is on the border of a client's window
                 if self.seat.pointer_state.focused_surface:
                     # We just moved out of a client's surface
-                    self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                    self.cursor.set_xcursor(self._cursor_manager, "default")
                     self.seat.pointer_notify_clear_focus()
 
             if win is not self.qtile.current_window:
@@ -1020,7 +981,7 @@ class Core(base.Core, wlrq.HasListeners):
                     )
                 else:
                     # We just moved out of a Window or Static
-                    self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                    self.cursor.set_xcursor(self._cursor_manager, "default")
                     self.seat.pointer_notify_clear_focus()
                 self._hovered_window = None
 
@@ -1061,7 +1022,7 @@ class Core(base.Core, wlrq.HasListeners):
         device = inputs.Pointer(self, wlr_device)
         self._pointers.append(device)
         self.cursor.attach_input_device(wlr_device)
-        self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+        self.cursor.set_xcursor(self._cursor_manager, "default")
 
         # Map input device to output if required.
         if output_name := pointer.Pointer.from_input_device(wlr_device).output_name:
@@ -1213,17 +1174,18 @@ class Core(base.Core, wlrq.HasListeners):
 
         if previous_surface is not None:
             # Deactivate the previously focused surface
-            if previous_surface.is_xdg_surface:
-                previous_xdg_surface = XdgSurface.from_surface(previous_surface)
+            if previous_xdg_surface := XdgSurface.try_from_surface(previous_surface):
                 if not win or win.surface != previous_xdg_surface:
                     previous_xdg_surface.set_activated(False)
                     if prev_win := previous_xdg_surface.data:
                         if ftm_handle := prev_win.ftm_handle:
                             ftm_handle.set_activated(False)
 
-            elif previous_surface.is_xwayland_surface:
-                prev_xwayland_surface = xwayland.Surface.from_wlr_surface(previous_surface)
-                if not win or win.surface != prev_xwayland_surface:
+            else:
+                prev_xwayland_surface = xwayland.Surface.try_from_wlr_surface(previous_surface)
+                if prev_xwayland_surface is not None and (
+                    not win or win.surface != prev_xwayland_surface
+                ):
                     prev_xwayland_surface.activate(False)
                     if prev_win := prev_xwayland_surface.data:
                         if ftm_handle := prev_win.ftm_handle:
@@ -1345,21 +1307,6 @@ class Core(base.Core, wlrq.HasListeners):
 
         logger.warning("Couldn't determine what was under the pointer. Please report.")
         return None
-
-    def check_idle_inhibitor(self) -> None:
-        """
-        Checks if any window that is currently mapped has idle inhibitor
-        and if so inhibits idle
-        """
-        assert self.qtile is not None
-
-        for win in self.qtile.windows_map.values():
-            if not isinstance(win, window.Internal) and win.is_idle_inhibited:
-                # TODO: do we also need to check that the window is mapped?
-                self.idle.set_enabled(self.seat, False)
-                return
-
-        self.idle.set_enabled(self.seat, True)
 
     def get_screen_info(self) -> list[tuple[int, int, int, int]]:
         """Get the output information"""

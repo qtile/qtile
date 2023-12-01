@@ -20,12 +20,13 @@
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 
 from wlroots.util.box import Box
 from wlroots.util.clock import Timespec
 from wlroots.wlr_types import Output as wlrOutput
-from wlroots.wlr_types import SceneOutput
+from wlroots.wlr_types import OutputState, SceneOutput
 from wlroots.wlr_types.layer_shell_v1 import (
     LayerShellV1Layer,
     LayerSurfaceV1KeyboardInteractivity,
@@ -38,6 +39,8 @@ if TYPE_CHECKING:
     from typing import Any
 
     from pywayland.server import Listener
+    from wlroots.wlr_types import SceneOutput
+    from wlroots.wlr_types.output import OutputEventRequestState
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.layer import LayerStatic
@@ -52,21 +55,40 @@ class Output(HasListeners):
         self.renderer = core.renderer
         self.wlr_output = wlr_output
         self._reserved_space = (0, 0, 0, 0)
-        self.scene_output = SceneOutput.create(core.scene, wlr_output)
 
         # These will get updated on the output layout's change event
         self.x = 0
         self.y = 0
 
-        # Initialise wlr_output
+        self.scene_output = SceneOutput.create(core.scene, wlr_output)
         wlr_output.init_render(core.allocator, core.renderer)
-        wlr_output.set_mode(wlr_output.preferred_mode())
-        wlr_output.enable()
-        wlr_output.commit()
+
+        # The output may be disabled, switch it on.
+        state = OutputState()
+        state.set_enabled()
+
+        # Select the output's preferred mode.
+        if mode := wlr_output.preferred_mode():
+            state.set_mode(mode)
+
+        # During tests, we want to fix the geometry of the 1 or 2 outputs.
+        if wlr_output.is_headless and "PYTEST_CURRENT_TEST" in os.environ:
+            if not core.outputs:
+                # First test output
+                state.set_custom_mode(800, 600, 0)
+            else:
+                # Second test output
+                state.set_custom_mode(640, 480, 0)
+
+        # Commit this initial state.
+        wlr_output.commit_state(state)
+        state.finish()
+
         wlr_output.data = self
 
         self.add_listener(wlr_output.destroy_event, self._on_destroy)
         self.add_listener(wlr_output.frame_event, self._on_frame)
+        self.add_listener(wlr_output.request_state_event, self._on_request_state)
 
         # The layers enum indexes into this list to get a list of surfaces
         self.layers: list[list[LayerStatic]] = [[] for _ in range(len(LayerShellV1Layer))]
@@ -104,6 +126,10 @@ class Output(HasListeners):
 
         # Inform clients of the frame
         self.scene_output.send_frame_done(Timespec.get_monotonic_time())
+
+    def _on_request_state(self, _listener: Listener, request: OutputEventRequestState) -> None:
+        logger.debug("Signal: output request_state")
+        self.wlr_output.commit_state(request.state)
 
     def get_geometry(self) -> tuple[int, int, int, int]:
         width, height = self.wlr_output.effective_resolution()
