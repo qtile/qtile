@@ -24,6 +24,7 @@ import re
 
 import keyring
 
+from libqtile.confreader import ConfigError
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
@@ -75,6 +76,8 @@ class ImapWidget(base.ThreadPoolText):
     def __init__(self, **config):
         base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(ImapWidget.defaults)
+        if self.user is None:
+            raise ConfigError("You must set the 'user' parameter for the IMAP widget.")
         password = keyring.get_password("imapwidget", self.user)
         if password is not None:
             self.password = password
