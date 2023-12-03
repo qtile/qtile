@@ -195,7 +195,10 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         Gap.__init__(self, size)
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(Bar.defaults)
-        self.widgets = widgets
+        # We need to create a new widget list here as users may have the same list for multiple
+        # screens. In that scenario, if we replace the widget with a mirror, it replaces it in every
+        # bar as python is referring to the same list.
+        self.widgets = widgets.copy()
         self.window: Internal | None = None
         self._configured = False
         self._draw_queued = False
