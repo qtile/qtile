@@ -466,7 +466,7 @@ class _TextBox(_Widget):
             "fmt",
             "{}",
             "Format to apply to the string returned by the widget. Main purpose: applying markup. "
-            "For a widget that returns ``foo``, using ``fmt='<i>{}</i>'`` would give you ``'<i>foo</i>'``. "
+            "For a widget that returns ``foo``, using ``fmt='<i>{}</i>'`` would give you ``<i>foo</i>``. "
             "To control what the widget outputs in the first place, use the ``format`` paramater of the widget (if it has one).",
         ),
         ("max_chars", 0, "Maximum number of characters to display in widget."),
