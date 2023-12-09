@@ -59,7 +59,8 @@ class BatteryState(Enum):
     DISCHARGING = 2
     FULL = 3
     EMPTY = 4
-    UNKNOWN = 5
+    NOT_CHARGING = 5
+    UNKNOWN = 6
 
 
 BatteryStatus = NamedTuple(
@@ -275,6 +276,8 @@ class _LinuxBattery(_Battery, configurable.Configurable):
             state = BatteryState.CHARGING
         elif stat == "Discharging":
             state = BatteryState.DISCHARGING
+        elif stat == "Not charging":
+            state = BatteryState.NOT_CHARGING
         else:
             state = BatteryState.UNKNOWN
 
@@ -320,6 +323,7 @@ class Battery(base.ThreadPoolText):
         ("discharge_char", "V", "Character to indicate the battery is discharging"),
         ("full_char", "=", "Character to indicate the battery is full"),
         ("empty_char", "x", "Character to indicate the battery is empty"),
+        ("not_charging_char", "*", "Character to indicate the batter is not charging"),
         ("unknown_char", "?", "Character to indicate the battery status is unknown"),
         ("format", "{char} {percent:2.0%} {hour:d}:{min:02d} {watt:.2f} W", "Display format"),
         ("hide_threshold", None, "Hide the text when there is enough energy 0 <= x < 1"),
@@ -430,6 +434,8 @@ class Battery(base.ThreadPoolText):
             if self.show_short_text:
                 return "Empty"
             char = self.empty_char
+        elif status.state == BatteryState.NOT_CHARGING:
+            char = self.not_charging_char
         else:
             char = self.unknown_char
 

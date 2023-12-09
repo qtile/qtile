@@ -184,6 +184,11 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         ("margin", 0, "Space around bar as int or list of ints [N E S W]."),
         ("border_color", "#000000", "Border colour as str or list of str [N E S W]"),
         ("border_width", 0, "Width of border as int of list of ints [N E S W]"),
+        (
+            "reserve",
+            True,
+            "Reserve screen space (when set to 'False', bar will be drawn above windows).",
+        ),
     ]
 
     def __init__(self, widgets: list[_Widget], size: int, **config: Any) -> None:
@@ -268,6 +273,11 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                     else:
                         self.x -= margin[1] + self.border_width[1]
 
+            if screen.bottom is self and not self.reserve:
+                self.y -= self.height + self.margin[2]
+            elif screen.right is self and not self.reserve:
+                self.x -= self.width + self.margin[1]
+
             self._reserved_space_updated = False
 
         width = self.width + (self.border_width[1] + self.border_width[3])
@@ -343,8 +353,8 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             )
             qtile.renamed_widgets.clear()
 
-        hook.subscribe.setgroup(self.keep_below)
-        hook.subscribe.startup_complete(self.keep_below)
+        hook.subscribe.setgroup(self.set_layer)
+        hook.subscribe.startup_complete(self.set_layer)
 
         self._remove_crashed_widgets(crashed_widgets)
         self.draw()
@@ -358,7 +368,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             logger.warning(
                 "Widget removed: %s does not support %s.",
                 widget.__class__.__name__,
-                self.qtile.core,
+                self.qtile.core.name,
             )
             return False
 
@@ -765,9 +775,13 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         # TODO: drop the screen and position args, update relevant tests
         self.process_button_click(x, y, button)
 
-    def keep_below(self) -> None:
+    def set_layer(self) -> None:
         if self.window:
-            self.window.keep_below(enable=True)
+            if self.reserve:
+                self.window.keep_below(enable=True)
+            else:
+                # Bar is not reserving screen space so let's keep above other windows
+                self.window.keep_above(enable=True)
 
 
 BarType = typing.Union[Bar, Gap]

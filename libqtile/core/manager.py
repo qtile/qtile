@@ -32,6 +32,7 @@ import subprocess
 import tempfile
 from collections import defaultdict
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import libqtile
@@ -411,11 +412,11 @@ class Qtile(CommandObject):
         self.screens = screens
 
     @expose_command()
-    def reconfigure_screens(self, ev: Any = None) -> None:
+    def reconfigure_screens(self, *_: list[Any], **__: dict[Any, Any]) -> None:
         """
         This can be used to set up screens again during run time. Intended usage is to
         be called when the screen_change hook is fired, responding to changes in
-        physical monitor setup by configuring qtile.screens accordingly. The ev kwarg is
+        physical monitor setup by configuring qtile.screens accordingly. The args are
         ignored; it is here in case this function is hooked directly to screen_change.
         """
         logger.info("Reconfiguring screens.")
@@ -796,7 +797,9 @@ class Qtile(CommandObject):
                         if status in (interface.ERROR, interface.EXCEPTION):
                             logger.error("Mouse command error %s: %s", i.name, val)
                         handled = True
-            elif isinstance(m, Drag):
+            elif (
+                isinstance(m, Drag) and self.current_window and not self.current_window.fullscreen
+            ):
                 if m.start:
                     i = m.start
                     status, val = self.server.call((i.selectors, i.name, i.args, i.kwargs))
@@ -1376,14 +1379,21 @@ class Qtile(CommandObject):
     @expose_command()
     def qtile_info(self) -> dict:
         """Returns a dictionary of info on the Qtile instance"""
+        config_path = self.config.file_path
         dictionary = {
-            "config_path": self.config.file_path,
             "version": VERSION,
             "log_level": self.loglevelname(),
         }
+
         if isinstance(logger.handlers[0], RotatingFileHandler):
             log_path = logger.handlers[0].baseFilename
             dictionary["log_path"] = log_path
+
+        if isinstance(config_path, str):
+            dictionary["config_path"] = config_path
+        elif isinstance(config_path, Path):
+            dictionary["config_path"] = config_path.as_posix()
+
         return dictionary
 
     @expose_command()
@@ -1768,3 +1778,8 @@ class Qtile(CommandObject):
     def run_extension(self, extension: _Extension) -> None:
         """Run extensions"""
         extension.run()
+
+    @expose_command()
+    def fire_user_hook(self, hook_name: str, *args: Any) -> None:
+        """Fire a custom hook."""
+        hook.fire(f"user_{hook_name}", *args)

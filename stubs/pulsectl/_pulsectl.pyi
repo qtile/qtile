@@ -1,5 +1,6 @@
-from ctypes import *
 import time
+from ctypes import *
+
 from _typeshed import Incomplete
 
 force_str: Incomplete
@@ -125,6 +126,7 @@ PA_STREAM_NOTIFY_CB_T: Incomplete
 
 class LibPulse:
     func_defs: Incomplete
+
     class CallError(Exception): ...
     funcs: Incomplete
     def __init__(self) -> None: ...

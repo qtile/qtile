@@ -490,27 +490,31 @@ class Screen(CommandObject):
 
     @property
     def dx(self) -> int:
-        return self.x + self.left.size if self.left else self.x
+        if self.left and getattr(self.left, "reserve", True):
+            return self.x + self.left.size
+        return self.x
 
     @property
     def dy(self) -> int:
-        return self.y + self.top.size if self.top else self.y
+        if self.top and getattr(self.top, "reserve", True):
+            return self.y + self.top.size
+        return self.y
 
     @property
     def dwidth(self) -> int:
         val = self.width
-        if self.left:
+        if self.left and getattr(self.left, "reserve", True):
             val -= self.left.size
-        if self.right:
+        if self.right and getattr(self.right, "reserve", True):
             val -= self.right.size
         return val
 
     @property
     def dheight(self) -> int:
         val = self.height
-        if self.top:
+        if self.top and getattr(self.top, "reserve", True):
             val -= self.top.size
-        if self.bottom:
+        if self.bottom and getattr(self.bottom, "reserve", True):
             val -= self.bottom.size
         return val
 
@@ -825,7 +829,7 @@ class Match:
     against and returns a boolean.
 
     For some properties, :class:`Match` supports both regular expression objects (i.e.
-    the result of ``re.compile()``) or strings (match as an "include"-match). If a
+    the result of ``re.compile()``) or strings (match as an exact string). If a
     window matches all specified values, it is considered a match.
 
     Parameters
@@ -892,16 +896,14 @@ class Match:
         elif name == "wm_class":
 
             def predicate(other) -> bool:  # type: ignore
-                # match as an "include"-match on any of the received classes
-                match = getattr(other, "match", lambda v: v in other)
+                match = getattr(other, "match", lambda v: v == other)
                 return value and any(match(v) for v in value)
 
             return predicate
         else:
 
             def predicate(other) -> bool:  # type: ignore
-                # match as an "include"-match
-                match = getattr(other, "match", lambda v: v in other)
+                match = getattr(other, "match", lambda v: v == other)
                 return match(value)
 
             return predicate

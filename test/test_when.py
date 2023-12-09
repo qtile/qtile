@@ -54,6 +54,10 @@ class WhenConfig(Config):
                 focused=config.Match(wm_class="TestWindow"), if_no_focused=True
             ),
         ),
+        config.Key(["control"], "t", lazy.next_layout().when(condition=1 + 1 == 2)),
+        config.Key(["control"], "f", lazy.next_layout().when(condition=1 + 1 == 3)),
+        config.Key(["control", "shift"], "t", lazy.next_layout().when(func=lambda: True)),
+        config.Key(["control", "shift"], "f", lazy.next_layout().when(func=lambda: False)),
     ]
     layouts = [layout.MonadWide(), layout.MonadTall()]
 
@@ -89,4 +93,22 @@ def test_when(manager):
 
     # This does go to the next layout as empty is matched
     manager.c.simulate_keypress(["control"], "m")
+    assert manager.c.layout.info() != prev_layout_info
+
+    # Test boolean argument
+    prev_layout_info = manager.c.layout.info()
+
+    manager.c.simulate_keypress(["control"], "f")
+    assert manager.c.layout.info() == prev_layout_info
+
+    manager.c.simulate_keypress(["control"], "t")
+    assert manager.c.layout.info() != prev_layout_info
+
+    # Test function argument
+    prev_layout_info = manager.c.layout.info()
+
+    manager.c.simulate_keypress(["control", "shift"], "f")
+    assert manager.c.layout.info() == prev_layout_info
+
+    manager.c.simulate_keypress(["control", "shift"], "t")
     assert manager.c.layout.info() != prev_layout_info

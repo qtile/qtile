@@ -336,8 +336,24 @@ class XWindow(Window[xwayland.Surface]):
         Window.static(self, screen, x, y, width, height)
         hook.fire("client_managed", self.qtile.windows_map[self._wid])
 
-    def _to_static(self) -> XStatic:
-        return XStatic(self.core, self.qtile, self, self._idle_inhibitors_count)
+    def _to_static(
+        self, x: int | None, y: int | None, width: int | None, height: int | None
+    ) -> XStatic:
+        return XStatic(
+            self.core, self.qtile, self, self._idle_inhibitors_count, x, y, width, height
+        )
+
+
+class ConfigWindow:
+    """The XCB_CONFIG_WINDOW_* constants.
+
+    Reproduced here to remove a dependency on xcffib.
+    """
+
+    X = 1
+    Y = 2
+    Width = 4
+    Height = 8
 
 
 class XStatic(Static[xwayland.Surface]):
@@ -351,6 +367,10 @@ class XStatic(Static[xwayland.Surface]):
         qtile: Qtile,
         win: XWindow,
         idle_inhibitor_count: int,
+        x: int | None,
+        y: int | None,
+        width: int | None,
+        height: int | None,
     ):
         surface = win.surface
         Static.__init__(
@@ -358,10 +378,14 @@ class XStatic(Static[xwayland.Surface]):
         )
         self._wm_class = surface.wm_class
 
+        self._conf_x = x
+        self._conf_y = y
+        self._conf_width = width
+        self._conf_height = height
+
         self.add_listener(surface.map_event, self._on_map)
         self.add_listener(surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
-        self.add_listener(surface.surface.commit_event, self._on_commit)
         self.add_listener(surface.request_configure_event, self._on_request_configure)
         self.add_listener(surface.set_title_event, self._on_set_title)
         self.add_listener(surface.set_class_event, self._on_set_class)
@@ -388,15 +412,21 @@ class XStatic(Static[xwayland.Surface]):
         # regular XWindow instance, and stick it into a pending state. This way, the
         # client can re-use the window with a new xwayland surface without issue. There
         # is certainly a nicer way to do this but that's a TODO.
-        self._on_destroy(None, None)  # type: ignore
+        self._on_destroy(None, None)
         win = XWindow(self.core, self.qtile, self.surface)
         self.core.pending_windows.add(win)
 
-    def _on_commit(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: xstatic commit")
-
     def _on_request_configure(self, _listener: Listener, event: SurfaceConfigureEvent) -> None:
         logger.debug("Signal: xstatic request_configure")
+        cw = ConfigWindow
+        if self._conf_x is None and event.mask & cw.X:
+            self.x = event.x
+        if self._conf_y is None and event.mask & cw.Y:
+            self.y = event.y
+        if self._conf_width is None and event.mask & cw.Width:
+            self.width = event.width
+        if self._conf_height is None and event.mask & cw.Height:
+            self.height = event.height
         self.place(self.x, self.y, self.width, self.height, self.borderwidth, self.bordercolor)
 
     @expose_command()
@@ -410,8 +440,7 @@ class XStatic(Static[xwayland.Surface]):
     def unhide(self) -> None:
         if self not in self.core.pending_windows:
             # Only when mapping does the xwayland_surface have a wlr_surface that we can
-            # listen for commits on and create a tree for.
-            self.add_listener(self.surface.surface.commit_event, self._on_commit)
+            # create a tree for.
             if not self.tree:
                 self.tree = SceneTree.subsurface_tree_create(self.container, self.surface.surface)
                 self.tree.node.set_position(self.borderwidth, self.borderwidth)

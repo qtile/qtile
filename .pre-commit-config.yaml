@@ -1,0 +1,26 @@
+exclude: "test/configs/syntaxerr.py"
+repos:
+- repo: https://github.com/psf/black
+  rev: 23.10.1
+  hooks:
+  - id: black
+- repo: https://github.com/pycqa/isort
+  rev: 5.12.0
+  hooks:
+  - id: isort
+    args: ["--profile", "black", "--filter-files"]
+- repo: https://github.com/pycqa/flake8
+  rev: 6.1.0
+  hooks:
+  - id: flake8
+    additional_dependencies: ["flake8-pyproject", "flake8-logging-format", "pep8-naming"]
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v1.6.1
+  hooks:
+  - id: mypy
+    additional_dependencies: ["types-python-dateutil", "types-pytz"]
+    files: "^libqtile\/.*"
+- repo: https://github.com/jendrikseipp/vulture
+  rev: v2.10
+  hooks:
+  - id: vulture

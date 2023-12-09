@@ -121,6 +121,22 @@ def test_text_battery_empty(monkeypatch):
     assert text == "Empty"
 
 
+def test_text_battery_not_charging(monkeypatch):
+    loaded_bat = BatteryStatus(
+        state=BatteryState.NOT_CHARGING,
+        percent=0.5,
+        power=15.0,
+        time=1729,
+    )
+
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
+        batt = Battery()
+
+    text = batt.poll()
+    assert text == "* 50% 0:28 15.00 W"
+
+
 def test_text_battery_unknown(monkeypatch):
     loaded_bat = BatteryStatus(
         state=BatteryState.UNKNOWN,

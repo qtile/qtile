@@ -54,6 +54,10 @@ class ColumnsSingleBorderEnabledConfig(ColumnsConfig):
     layouts = [layout.Columns(border_on_single=True, single_border_width=2, border_width=4)]
 
 
+class ColumnsLeftAlign(ColumnsConfig):
+    layouts = [layout.Columns(align=layout.Columns._left, border_width=0)]
+
+
 columns_config = pytest.mark.parametrize("manager", [ColumnsConfig], indirect=True)
 columns_single_border_disabled_config = pytest.mark.parametrize(
     "manager", [ColumnsSingleBorderDisabledConfig], indirect=True
@@ -61,6 +65,7 @@ columns_single_border_disabled_config = pytest.mark.parametrize(
 columns_single_border_enabled_config = pytest.mark.parametrize(
     "manager", [ColumnsSingleBorderEnabledConfig], indirect=True
 )
+columns_left_align = pytest.mark.parametrize("manager", [ColumnsLeftAlign], indirect=True)
 
 
 # This currently only tests the window focus cycle
@@ -197,3 +202,30 @@ def test_columns_single_border_enabled(manager):
     assert_dimensions(manager, 0, 0, WIDTH - 4, HEIGHT - 4)
     manager.test_window("2")
     assert_dimensions(manager, WIDTH / 2, 0, WIDTH / 2 - 8, HEIGHT - 8)
+
+
+@columns_left_align
+def test_columns_left_align(manager):
+    # window 1: fullscreen
+    manager.test_window("1")
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == WIDTH
+    assert info["height"] == HEIGHT
+
+    # window 2: left
+    manager.test_window("2")
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == WIDTH / 2
+    assert info["height"] == HEIGHT
+
+    # window 3: top left
+    manager.test_window("3")
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == WIDTH / 2
+    assert info["height"] == HEIGHT / 2

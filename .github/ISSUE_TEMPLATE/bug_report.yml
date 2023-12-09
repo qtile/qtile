@@ -1,6 +1,6 @@
 name: "Report an issue"
 description: "Our tracker for bugs and other issues with the core project"
-labels: ["unconfirmed"]
+labels: ["status: unconfirmed"]
 body:
   - type: markdown
     attributes:

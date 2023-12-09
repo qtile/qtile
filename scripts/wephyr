@@ -16,9 +16,8 @@ from pathlib import Path
 BASE_DIR = Path(__file__).parent.parent.resolve()
 sys.path.insert(0, BASE_DIR)
 
+# flake8: noqa
 from libqtile.utils import get_cache_dir, guess_terminal
-from libqtile.command.client import CommandClient
-
 
 CACHE_DIR = Path(get_cache_dir())
 QTILE = BASE_DIR / "bin" / "qtile"
@@ -54,6 +53,7 @@ app_proc = subprocess.Popen(app)
 # Suppress KeyboardInterrupt messages
 def noop(signal, frame):
     pass
+
 
 signal.signal(signal.SIGINT, noop)
 

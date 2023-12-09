@@ -20,7 +20,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 import asyncio
 from multiprocessing import Value
 
@@ -197,3 +196,64 @@ def test_resume_hook(manager):
     hook.subscribe.resume(test)
     hook.fire("resume")
     assert test.val == 1
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_custom_hook_registry():
+    """Tests ability to create custom hook registries"""
+    test = NoArgCall(0)
+
+    custom = hook.Registry("test")
+    custom.register_hook(hook.Hook("test_hook"))
+    custom.subscribe.test_hook(test)
+
+    assert test.val == 0
+
+    # Test ability to fire third party hooks
+    custom.fire("test_hook")
+    assert test.val == 1
+
+    # Check core hooks are not included in custom registry
+    with pytest.raises(libqtile.utils.QtileError):
+        custom.fire("client_managed")
+
+    # Check custom hooks are not in core registry
+    with pytest.raises(libqtile.utils.QtileError):
+        hook.fire("test_hook")
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_user_hook(manager_nospawn):
+    config = BareConfig
+    for attr in dir(default_config):
+        if not hasattr(config, attr):
+            setattr(config, attr, getattr(default_config, attr))
+    manager = manager_nospawn
+
+    manager.custom_no_arg_text = Value("u", "A")
+    manager.custom_text = Value("u", "A")
+
+    # Define two functions: first takes no args, second takes a single arg
+    def predefined_text():
+        with manager.custom_no_arg_text.get_lock():
+            manager.custom_no_arg_text.value = "B"
+
+    def defined_text(text):
+        with manager.custom_text.get_lock():
+            manager.custom_text.value = text
+
+    hook.subscribe.user("set_text")(predefined_text)
+    hook.subscribe.user("define_text")(defined_text)
+
+    # Check values are as initialised
+    manager.start(config)
+    assert manager.custom_no_arg_text.value == "A"
+    assert manager.custom_text.value == "A"
+
+    # Check hooked function with no args
+    manager.c.fire_user_hook("set_text")
+    assert manager.custom_no_arg_text.value == "B"
+
+    # Check hooked function with a single arg
+    manager.c.fire_user_hook("define_text", "C")
+    assert manager.custom_text.value == "C"

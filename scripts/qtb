@@ -2,38 +2,23 @@
 """
     Command-line interaction with Qtile TextBox widgets.
 """
-import os, sys
+import sys
 from argparse import ArgumentParser
+
 from libqtile import command
+
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('--version', action='version', version='%(prog)s 0.2')
+    parser.add_argument("--version", action="version", version="%(prog)s 0.2")
+    parser.add_argument("-l", "--list", action="store_true", help="List addressable widgets")
     parser.add_argument(
-        "-l", "--list",
-        action="store_true",
-        help="List addressable widgets"
-    )
-    parser.add_argument(
-        "-s", "--socket",
-        type=str,
-        default=None,
-        help='Use specified communication socket'
+        "-s", "--socket", type=str, default=None, help="Use specified communication socket"
     )
     # in order for the -l option to work, we can't require these args, so we
     # check for them later
-    parser.add_argument(
-        "name",
-        type=str,
-        required=False,
-        help='Name of widget to change'
-    )
-    parser.add_argument(
-        "text",
-        type=str,
-        required=False,
-        help='Text to to place in widget'
-    )
+    parser.add_argument("name", type=str, required=False, help="Name of widget to change")
+    parser.add_argument("text", type=str, required=False, help="Text to to place in widget")
 
     args = parser.parse_args()
 

@@ -28,6 +28,7 @@ import os
 import traceback
 from collections import defaultdict
 from collections.abc import Sequence
+from pathlib import Path
 from random import randint
 from shutil import which
 from typing import TYPE_CHECKING
@@ -200,6 +201,21 @@ def get_cache_dir() -> str:
     return cache_directory
 
 
+def get_config_file() -> Path:
+    config_home = Path(os.getenv("XDG_CONFIG_HOME", "~/.config")).expanduser()
+    config_file = config_home.joinpath("qtile/config.py")
+    if config_file.exists():
+        return config_file
+
+    xdg_config_dirs = os.getenv("XDG_CONFIG_DIRS", "/etc/xdg/").split(":")
+    for config_dir in xdg_config_dirs:
+        system_wide_config = Path(config_dir).expanduser().joinpath("qtile/config.py")
+        if system_wide_config.exists():
+            return system_wide_config
+
+    return config_file
+
+
 def describe_attributes(obj: Any, attrs: list[str], func: Callable = lambda x: x) -> str:
     """
     Helper for __repr__ functions to list attributes with truthy values only
@@ -223,7 +239,7 @@ def import_class(
 ) -> Any:
     """Import a class safely
 
-    Try to import the class module, and if it fails because of an ImporError
+    Try to import the class module, and if it fails because of an ImportError
     it logs on WARNING, and logs the traceback on DEBUG level
     """
     try:
@@ -434,10 +450,10 @@ async def _send_dbus_message(
     msg = await bus.call(
         Message(
             message_type=message_type,
-            destination=destination,  # type: ignore
-            interface=interface,  # type: ignore
-            path=path,  # type: ignore
-            member=member,  # type: ignore
+            destination=destination,
+            interface=interface,
+            path=path,
+            member=member,
             signature=signature,
             body=body,
         )
