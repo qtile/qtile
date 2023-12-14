@@ -956,6 +956,8 @@ class Core(base.Core, wlrq.HasListeners):
                 self.output_layout.add(wlr_output, state.x, state.y)
                 wlr_output.set_transform(state.transform)
                 wlr_output.set_scale(state.scale)
+                # Ensure we have cursors loaded for the new scale factor.
+                self.cursor_manager.load(state.scale)
             else:
                 if wlr_output.enabled:
                     wlr_output.enable(enable=False)
