@@ -27,7 +27,8 @@ from typing import TYPE_CHECKING, cast
 
 import cairocffi
 from pywayland.server import Listener
-from wlroots import ffi as wlr_ffi, lib as wlr_lib
+from wlroots import ffi as wlr_ffi
+from wlroots import lib as wlr_lib
 from wlroots.wlr_types import Buffer, SceneBuffer, SceneTree, data_device_manager
 from wlroots.wlr_types.keyboard import KeyboardModifier
 
@@ -156,7 +157,7 @@ class Painter:
                 fbox = wlr_ffi.new("struct wlr_fbox *")
                 fbox.x = side
                 fbox.y = 0
-                fbox.width = image_w - 2*side
+                fbox.width = image_w - 2 * side
                 fbox.height = image_h
                 wlr_lib.wlr_scene_buffer_set_source_box(scene_buffer._ptr, fbox)
             elif image_w / image_h < screen.width / screen.height:
@@ -167,13 +168,11 @@ class Painter:
                 fbox.x = 0
                 fbox.y = side
                 fbox.width = image_w
-                fbox.height = image_h - 2*side
+                fbox.height = image_h - 2 * side
                 wlr_lib.wlr_scene_buffer_set_source_box(scene_buffer._ptr, fbox)
-            wlr_lib.wlr_scene_buffer_set_dest_size(
-                scene_buffer._ptr, screen.width, screen.height)
+            wlr_lib.wlr_scene_buffer_set_dest_size(scene_buffer._ptr, screen.width, screen.height)
         elif mode == "stretch":
-            wlr_lib.wlr_scene_buffer_set_dest_size(
-                scene_buffer._ptr, screen.width, screen.height)
+            wlr_lib.wlr_scene_buffer_set_dest_size(scene_buffer._ptr, screen.width, screen.height)
         # Otherwise (mode is None), the image takes up its native size in
         # layout coordinate pixels (which doesn't account for output scaling)
 
