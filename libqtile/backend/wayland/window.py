@@ -27,7 +27,7 @@ import typing
 import cairocffi
 import wlroots.wlr_types.foreign_toplevel_management_v1 as ftm
 from pywayland.server import Client, Listener
-from wlroots import PtrHasData
+from wlroots import PtrHasData, lib as wlr_lib
 from wlroots.util.box import Box
 from wlroots.wlr_types import Buffer
 from wlroots.wlr_types.idle_inhibit_v1 import IdleInhibitorV1
@@ -945,6 +945,8 @@ class Internal(_Base, base.Internal):
         if scene_buffer is None:
             raise RuntimeError("Couldn't create scene buffer")
         self._scene_buffer = scene_buffer
+        wlr_lib.wlr_scene_buffer_set_dest_size(
+            scene_buffer._ptr, width, height)
         # The borders are wlr_scene_rects.
         # Inner list: N, E, S, W edges
         # Outer list: outside-in borders i.e. multiple for multiple borders
@@ -958,10 +960,13 @@ class Internal(_Base, base.Internal):
         if not init:
             self.wlr_buffer.drop()
 
-        surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, self._width, self._height)
+        scale = self.qtile.config.wl_scale_factor
+        width = self._width * scale
+        height = self._height * scale
+        surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, width, height)
         stride = surface.get_stride()
         data = cairocffi.cairo.cairo_image_surface_get_data(surface._pointer)
-        wlr_buffer = lib.cairo_buffer_create(self._width, self._height, stride, data)
+        wlr_buffer = lib.cairo_buffer_create(width, height, stride, data)
         if wlr_buffer == ffi.NULL:
             raise RuntimeError("Couldn't allocate cairo buffer.")
 
@@ -969,6 +974,8 @@ class Internal(_Base, base.Internal):
 
         if not init:
             self._scene_buffer.set_buffer_with_damage(buffer)
+            wlr_lib.wlr_scene_buffer_set_dest_size(
+                self._scene_buffer._ptr, self._width, self._height)
 
         return buffer, surface
 
