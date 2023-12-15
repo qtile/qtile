@@ -776,6 +776,16 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     def is_visible(self) -> bool:
         return self.container.node.enabled
 
+    @expose_command()
+    def move_to_top(self) -> None:
+        if self.tree:
+            self.tree.node.raise_to_top()
+
+    @expose_command()
+    def move_to_bottom(self) -> None:
+        if self.tree:
+            self.tree.node.lower_to_bottom()
+
     @abc.abstractmethod
     def _to_static(
         self, x: int | None, y: int | None, width: int | None, height: int | None
@@ -904,6 +914,14 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
     @expose_command()
     def bring_to_front(self) -> None:
         self.container.node.raise_to_top()
+
+    @expose_command()
+    def move_to_top(self) -> None:
+        self.container.node.raise_to_top()
+
+    @expose_command()
+    def move_to_bottom(self) -> None:
+        self.container.node.lower_to_bottom()
 
     @expose_command()
     def info(self) -> dict:
@@ -1108,6 +1126,14 @@ class Internal(_Base, base.Internal):
     @expose_command()
     def bring_to_front(self) -> None:
         self.tree.node.raise_to_top()
+
+    @expose_command()
+    def move_to_top(self) -> None:
+        self.tree.node.raise_to_top()
+
+    @expose_command()
+    def move_to_bottom(self) -> None:
+        self.tree.node.lower_to_bottom()
 
 
 WindowType = typing.Union[Window, Static, Internal]
