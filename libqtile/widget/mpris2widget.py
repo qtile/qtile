@@ -252,9 +252,6 @@ class Mpris2(base._TextBox):
             self._set_background_poll(False)
 
     def message(self, message):
-        if message.message_type != MessageType.SIGNAL:
-            return
-
         create_task(self.process_message(message))
 
     async def process_message(self, message):
