@@ -851,7 +851,7 @@ class Match:
     title:
         Match against the WM_NAME atom (X11) or title (Wayland).
     wm_class:
-        Match against the second string in WM_CLASS atom (X11) or app ID (Wayland).
+        Match against any value in the whole WM_CLASS atom (X11) or app ID (Wayland).
     role:
         Match against the WM_ROLE atom (X11 only).
     wm_type:
