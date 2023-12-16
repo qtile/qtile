@@ -508,14 +508,14 @@ async def add_signal_receiver(
             return False
 
     match_args = {
-        "type": "signal",
         "sender": bus_name,
         "member": signal_name,
         "path": path,
         "interface": dbus_interface,
     }
 
-    rule = ",".join("{}='{}'".format(k, v) for k, v in match_args.items() if v)
+    rule = "type='signal',"
+    rule += ",".join("{}='{}'".format(k, v) for k, v in match_args.items() if v)
 
     logger.debug("Adding dbus match rule: %s", rule)
 
@@ -532,7 +532,15 @@ async def add_signal_receiver(
 
     # Check if message sent successfully
     if bus and msg and msg.message_type == MessageType.METHOD_RETURN:
-        bus.add_message_handler(callback)
+
+        def signal_callback_wrapper(msg: Message) -> None:
+            """Custom wrapper to only run callback if message matches our rule."""
+            if msg.message_type == MessageType.SIGNAL and msg._matches(
+                **{k: v for k, v in match_args.items() if v}
+            ):
+                callback(msg)
+
+        bus.add_message_handler(signal_callback_wrapper)
         return True
 
     else:
