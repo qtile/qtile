@@ -161,7 +161,7 @@ jobs:
       - name: Build wheels
         run: |
           python -m pip install cffi build auditwheel
-          python -m build --wheel .
+          python -m build --config-setting backend=wayland --wheel .
           ls dist/
           auditwheel show dist/qtile-*.whl
           auditwheel repair --plat manylinux_2_28_x86_64 -w output_wheels dist/qtile-*.whl
