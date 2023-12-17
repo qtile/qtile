@@ -172,36 +172,6 @@ Where are the log files for Qtile?
 
 The log files for qtile are at ``~/.local/share/qtile/qtile.log``.
 
-Why do I get an ``AttributeError`` when building Qtile?
-=======================================================
-
-If you see this message:
-``AttributeError: cffi library 'libcairo.so.2' has no function, constant or global variable named 'cairo_xcb_surface_create'``
-when building Qtile then your Cairo version lacks XCB support.
-
-If it happens, it might be because the ``cairocffi`` and ``xcffib`` dependencies
-were installed in the wrong order.
-
-To fix this:
-
-1. uninstall them from your environment: with ``pip uninstall cairocffi xcffib``
-   if using a virtualenv, or with your system package-manager if you installed
-   the development version of Qtile system-wide.
-#. re-install them sequentially (again, with pip or with your package-manager)::
-
-    pip install xcffib
-    pip install --no-cache-dir cairocffi
-
-See `this issue comment`_ for more information.
-
-.. _`this issue comment`: https://github.com/qtile/qtile/issues/994#issuecomment-497984551
-
-If you are using your system package-manager and the issue still happens,
-the packaging of ``cairocffi`` might be broken for your distribution.
-Try to contact the persons responsible for ``cairocffi``'s packaging
-on your distribution, or to install it from the sources with ``xcffib``
-available.
-
 How can I match the bar with picom?
 ===================================
 
