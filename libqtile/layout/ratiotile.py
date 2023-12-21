@@ -83,9 +83,24 @@ class GridInfo:
             sample_width = width / cols
             sample_height = height / rows
             sample_ratio = sample_width / sample_height
-            diff = abs(sample_ratio - self.ratio)
-            if best_ratio is None or diff < best_ratio:
-                best_ratio = diff
+
+            def is_more_golden_than(a, b, goldstandard=self.ratio):
+                """
+                Judges whether ratio a is more golden than ratio b.
+                The reference is the goldstandard.
+                """
+                # TODO: use math to refactor the next 6 lines
+                factor_a = a / goldstandard
+                factor_b = b / goldstandard
+                weight_a = factor_a if factor_a < 1 else -1 / factor_a
+                weight_b = factor_b if factor_b < 1 else -1 / factor_b
+                weight_a = abs(abs(weight_a) - 1)
+                weight_b = abs(abs(weight_b) - 1)
+                judgement = True if weight_a < weight_b else False
+                return judgement
+
+            if best_ratio is None or is_more_golden_than(sample_ratio, best_ratio):
+                best_ratio = sample_ratio
                 best_rows_cols_orientation = (rows, cols, orientation)
 
         return best_rows_cols_orientation
