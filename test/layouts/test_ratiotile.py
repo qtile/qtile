@@ -386,18 +386,25 @@ def test_resizing(manager):
     def sizes():
         return manager.c.layout.info()["layout_info"]
 
-    for i in range(5):
-        manager.test_window(str(i))
+    def ratio():
+        return manager.c.layout.info()["ratio"]
 
+    # pretend the user wants ratio 0.5
+    # in this layout it means very "tall" windows
+    # on a 800x600 screen
+    for i in range(4):
+        manager.test_window(str(i))
+    assert ratio() == 0.5
     assert sizes() == [
-        (0, 0, 160, 600),
-        (160, 0, 160, 600),
-        (320, 0, 160, 600),
-        (480, 0, 160, 600),
-        (640, 0, 160, 600),
+        (0, 0, 200, 600),
+        (200, 0, 200, 600),
+        (400, 0, 200, 600),
+        (600, 0, 200, 600),
     ]
 
-    manager.c.layout.increase_ratio()
+    # 5 windows are too much of "tall"
+    # the layout needs to switch
+    manager.test_window(str(i))
     assert sizes() == [
         (0, 0, 266, 300),
         (266, 0, 266, 300),
@@ -406,11 +413,108 @@ def test_resizing(manager):
         (400, 300, 400, 300),
     ]
 
+    # the user really likes "tall"
+    # try to have all windows upright
     manager.c.layout.decrease_ratio()
+    manager.c.layout.decrease_ratio()
+    # make sure the ratio is about 0.3
+    assert ratio() - 0.3 < 0.1
     assert sizes() == [
         (0, 0, 160, 600),
         (160, 0, 160, 600),
         (320, 0, 160, 600),
         (480, 0, 160, 600),
         (640, 0, 160, 600),
+    ]
+
+    # the user got tired of tall windows
+    # and wants them all square
+    manager.c.layout.increase_ratio()
+    manager.c.layout.increase_ratio()
+    manager.c.layout.increase_ratio()
+    manager.c.layout.increase_ratio()
+    manager.c.layout.increase_ratio()
+    manager.c.layout.increase_ratio()
+    manager.c.layout.increase_ratio()
+    # make sure the ratio is about 1
+    assert ratio() - 1 < 0.1
+    # this is the most square it gets with 5 windows
+    assert sizes() == [
+        (0, 0, 266, 300),
+        (266, 0, 266, 300),
+        (532, 0, 268, 300),
+        (0, 300, 400, 300),
+        (400, 300, 400, 300),
+    ]
+
+    # from pprint import pformat as pf
+    # with open("/tmp/output","wt") as f:
+    #    sizes_history = []
+    #    changed_at = []
+    #    sizes_history.append((ratio(),sizes()))
+    #    def _print(f,data):
+    #        # things 2print
+    #        sizes2p = data[1]
+    #        ratio2p = data[0]
+    #        f.write(f"assert ratio() - {ratio2p:.1f} < 0.1\n")
+    #        formated = pf(sizes2p).splitlines()
+    #        formated[0] = "assert sizes() == " + formated[0]
+    #        formated[1:]=[" "*18 + line for line in formated[1:]]
+    #        formated[-1]+="\n\n"
+    #        f.write("\n".join(formated))
+    #    _print(f,(ratio(),sizes()))
+    #    for i in range(50):
+    #        manager.c.layout.increase_ratio()
+    #        f.write('manager.c.layout.increase_ratio()\n')
+    #        sizes_history.append((ratio(),sizes()))
+    #        if sizes() != sizes_history[-2][1]:
+    #            # something changed
+    #            changed_at.append(i)
+    #            _print(f,(ratio(),sizes()))
+    #    f.write(pf(changed_at))
+
+    # now the user wants "landscape" windows
+    manager.c.layout.increase_ratio()
+    manager.c.layout.increase_ratio()
+    manager.c.layout.increase_ratio()
+    manager.c.layout.increase_ratio()
+    assert ratio() - 1.4 < 0.1
+    assert sizes() == [
+        (0, 0, 400, 200),
+        (0, 200, 400, 200),
+        (0, 400, 400, 200),
+        (400, 0, 400, 300),
+        (400, 300, 400, 300),
+    ]
+
+    # the user wants the windows all stacked
+    # vertically (5 windows with height=120)
+    # It needs to go up to ratio 3.7
+    for i in range(23):
+        manager.c.layout.increase_ratio()
+
+    # do it one more time to be tolerant
+    manager.c.layout.increase_ratio()
+    assert ratio() - 3.8 < 0.1
+    assert sizes() == [
+        (0, 0, 800, 120),
+        (0, 120, 800, 120),
+        (0, 240, 800, 120),
+        (0, 360, 800, 120),
+        (0, 480, 800, 120),
+    ]
+
+    # just in case to be sure it can go back to normal
+    for i in range(23 + 1 + 4):
+        manager.c.layout.decrease_ratio()
+
+    # make sure the ratio is about 1
+    assert ratio() - 1 < 0.1
+    # this is the most square it gets with 5 windows
+    assert sizes() == [
+        (0, 0, 266, 300),
+        (266, 0, 266, 300),
+        (532, 0, 268, 300),
+        (0, 300, 400, 300),
+        (400, 300, 400, 300),
     ]
