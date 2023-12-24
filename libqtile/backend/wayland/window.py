@@ -267,8 +267,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
                 self.y + self._height / 2,
             )
 
-        if self.group:
-            self.group.current_window = self
+        if self.group and self.group.current_window is not self:
+            self.group.focus(self)
 
         hook.fire("client_focus", self)
 
