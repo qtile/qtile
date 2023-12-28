@@ -1348,8 +1348,6 @@ class Core(base.Core, wlrq.HasListeners):
             elif self.qtile.config.bring_front_click == "floating_only":
                 if isinstance(win, base.Window) and win.floating:
                     win.bring_to_front()
-                elif isinstance(win, base.Static):
-                    win.bring_to_front()
 
             if isinstance(win, window.Static):
                 if win.screen is not self.qtile.current_screen:
