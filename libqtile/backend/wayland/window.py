@@ -777,12 +777,12 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         return self.container.node.enabled
 
     @expose_command()
-    def move_to_top(self) -> None:
+    def move_to_top(self, force=False) -> None:
         if self.tree:
             self.tree.node.raise_to_top()
 
     @expose_command()
-    def move_to_bottom(self) -> None:
+    def move_to_bottom(self, force=False) -> None:
         if self.tree:
             self.tree.node.lower_to_bottom()
 
@@ -916,11 +916,11 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         self.container.node.raise_to_top()
 
     @expose_command()
-    def move_to_top(self) -> None:
+    def move_to_top(self, force=False) -> None:
         self.container.node.raise_to_top()
 
     @expose_command()
-    def move_to_bottom(self) -> None:
+    def move_to_bottom(self, force=False) -> None:
         self.container.node.lower_to_bottom()
 
     @expose_command()
@@ -1128,11 +1128,11 @@ class Internal(_Base, base.Internal):
         self.tree.node.raise_to_top()
 
     @expose_command()
-    def move_to_top(self) -> None:
+    def move_to_top(self, force=False) -> None:
         self.tree.node.raise_to_top()
 
     @expose_command()
-    def move_to_bottom(self) -> None:
+    def move_to_bottom(self, force=False) -> None:
         self.tree.node.lower_to_bottom()
 
 

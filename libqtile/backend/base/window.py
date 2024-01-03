@@ -197,7 +197,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
         """
 
     @expose_command()
-    def move_to_top(self) -> None:
+    def move_to_top(self, force: bool = False) -> None:
         """
         Move this window above all windows in the current layer
         e.g. if you have 3 windows all with "keep_above" set, calling
@@ -205,10 +205,13 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
         Calling this on a "normal" window will not raise it above a "kept_above"
         window.
+
+        Will not raise a window where "keep_below" is True unless
+        force is set to True.
         """
 
     @expose_command()
-    def move_to_bottom(self) -> None:
+    def move_to_bottom(self, force: bool = False) -> None:
         """
         Move this window below all windows in the current layer
         e.g. if you have 3 windows all with "keep_above" set, calling
@@ -216,6 +219,9 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
         Calling this on a "normal" window will not raise it below a "kept_below"
         window.
+
+        Will not lower a window where "keep_above" is True unless
+        force is set to True.
         """
 
 
