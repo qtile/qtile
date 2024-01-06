@@ -425,6 +425,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_start_drag(self, _listener: Listener, wlr_drag: Drag) -> None:
         logger.debug("Signal: seat start_drag")
+        self._release_implicit_grab()
         if not wlr_drag.icon:
             return
         self.live_dnd = wlrq.Dnd(self, wlr_drag)
@@ -646,7 +647,7 @@ class Core(base.Core, wlrq.HasListeners):
             handled = self._process_cursor_button(button, pressed)
 
         if not handled:
-            if self._pressed_button_count == 1 and found:
+            if self._pressed_button_count == 1 and found and not self.live_dnd:
                 win, surface, sx, sy = found
                 if surface:
                     self._create_implicit_grab(event.time_msec, surface, sx, sy)
