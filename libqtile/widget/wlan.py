@@ -68,6 +68,7 @@ class Wlan(base.InLoopPollText):
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(Wlan.defaults)
+        self.ethernetInterfaceNotFound = False
 
     def poll(self):
         try:
@@ -82,17 +83,17 @@ class Wlan(base.InLoopPollText):
                             else:
                                 return self.disconnected_message
                     except FileNotFoundError:
-                        logger.error(
-                            "%s: Ethernet interface has not been found!",
-                            self.__class__.__name__,
-                        )
+                        if not self.ethernetInterfaceNotFound:
+                            logger.error(
+                                "Ethernet interface has not been found!"
+                            )
+                            self.ethernetInterfaceNotFound = True
                         return self.disconnected_message
                 else:
                     return self.disconnected_message
             return self.format.format(essid=essid, quality=quality, percent=(quality / 70))
         except EnvironmentError:
             logger.error(
-                "%s: Probably your wlan device is switched off or "
-                " otherwise not present in your system.",
-                self.__class__.__name__,
+                "Probably your wlan device is switched off or "
+                " otherwise not present in your system."
             )
