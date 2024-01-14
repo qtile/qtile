@@ -1040,6 +1040,9 @@ class _Window:
             )
         )
 
+        # Remove any windows that aren't in the server's stack
+        windows = list(filter(lambda w: w[0].wid in stack, windows))
+
         # Sort this list to match stacking order reported by server
         windows.sort(key=lambda w: stack.index(w[0].wid))
 
