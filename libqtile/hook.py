@@ -626,7 +626,7 @@ hooks: list[Hook] = [
             from libqtile import hook
             from libqtile.utils import send_notification
 
-            @hook.subscribe.client_killed
+            @hook.subscribe.client_mouse_enter
             def client_mouse_enter(client):
                 send_notification("qtile", f"Mouse has entered {client.name}")
 
