@@ -52,7 +52,7 @@ class Backlight(base.InLoopPollText):
 
     You can also bind keyboard shortcuts to the backlight widget with:
 
-    .. code-block: python
+    .. code-block:: python
 
         from libqtile.widget import backlight
         Key(
