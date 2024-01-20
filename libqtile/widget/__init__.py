@@ -87,6 +87,7 @@ widgets = {
     "TextBox": "textbox",
     "ThermalSensor": "sensors",
     "ThermalZone": "thermal_zone",
+    "Touchpad": "touchpad",
     "Volume": "volume",
     "Wallpaper": "wallpaper",
     "WidgetBox": "widgetbox",
