@@ -1,4 +1,8 @@
 Qtile x.xx.x, released XXXX-XX-XX:
+    * features
+    * bugfixes
+
+Qtile 0.24.0, released 2024-01-20:
     !!! config breakage/changes !!!
       - Matches no longer use "include/substring" style matching. But match the string exactly. Previously on X11, if the WM_TYPE of a spawned window is e.g. dialog a match with wm_type dialognoonereadschangelogs would return true. Additionally a window with an empty WM_CLASS (which can happen) would match anything. If you rely this style of substring matching, pass a regex to your match or use a function with func=.
         Using a list of strings inside Match with role, title, wm_class, wm_instance_class, wm_type are also deprecated, use a regex. Right now we replace the property with a regex if it's a list and warn with a deprecation message. You can use "qtile migrate" to migrate your config to this.
