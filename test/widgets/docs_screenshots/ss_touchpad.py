@@ -26,19 +26,19 @@ from libqtile.widget import touchpad
 @pytest.fixture
 def widget(monkeypatch):
     monkeypatch.setattr(
-        touchpad.Touchpad,
-        "_get_touchpad_device_name",
-        lambda self: "",
+        touchpad,
+        "get_touchpad_device_name",
+        lambda: "",
     )
     monkeypatch.setattr(
-        touchpad.Touchpad,
-        "_get_touchpad_enabled",
-        lambda self, id: True,
+        touchpad,
+        "get_touchpad_enabled",
+        lambda id: True,
     )
     monkeypatch.setattr(
-        touchpad.Touchpad,
-        "_set_touchpad_enabled",
-        lambda self, id, state: None,
+        touchpad,
+        "set_touchpad_enabled",
+        lambda id, state: None,
     )
     yield touchpad.Touchpad
 
