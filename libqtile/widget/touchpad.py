@@ -35,7 +35,7 @@ def get_touchpad_device_name() -> str:
 
     for line in properties.splitlines():
         if "touchpad" in line.lower():
-            return str(line)
+            return line
 
     raise RuntimeError("Could not determine touchpad name automatically!")
 
