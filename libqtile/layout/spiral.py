@@ -378,7 +378,10 @@ class Spiral(_SimpleLayoutBase):
         coords = info["layout_info"]
         focused_x, focused_y, *_ = coords[info["current"]]
 
-        min_x_diff = min(x - focused_x for x, *_ in coords if x > focused_x)
+        diffs = tuple(x - focused_x for x, *_ in coords if x > focused_x)
+        if not diffs:
+            return
+        min_x_diff = min(diffs)
         # find the windows that are a minimal x distance away
         min_x = [
             (idx, x, y) for idx, (x, y, *_) in enumerate(coords) if x - focused_x == min_x_diff
