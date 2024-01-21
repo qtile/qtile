@@ -1,5 +1,6 @@
 Qtile x.xx.x, released XXXX-XX-XX:
     * features
+      - Add `Touchpad` widget which shows current touchpad state and allows to easily toggle it
     * bugfixes
 
 Qtile 0.24.0, released 2024-01-20:
