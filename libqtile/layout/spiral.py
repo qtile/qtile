@@ -343,6 +343,54 @@ class Spiral(_SimpleLayoutBase):
         d["clockwise"] = self.clockwise
         return d
 
+    @expose_command()
+    def left(self) -> None:
+        info = self.info()
+        if not info["focused"]:
+            return
+        # get coordinates of top left corner of windows
+        coords = info["layout_info"]
+        focused_x, focused_y, *_ = coords[info["current"]]
+
+        # if we can't go more left quit early
+        if (focused_x, focused_y) == (0, 0):
+            return
+
+        min_x_diff = min(focused_x - x for x, *_ in coords if x < focused_x)
+        # find the windows that are a minimal x distance away
+        min_x = [
+            (idx, x, y) for idx, (x, y, *_) in enumerate(coords) if focused_x - x == min_x_diff
+        ]
+        # and sort by how close their y value is to the current
+        min_x.sort(key=lambda x: abs(focused_y - coords[x[0]][1]))
+
+        new_idx = min_x[0][0]
+        # go to window by index
+        self.clients.current_index = new_idx
+        self.group.focus(self.clients[new_idx])
+
+    @expose_command()
+    def right(self) -> None:
+        info = self.info()
+        if not info["focused"]:
+            return
+        # get coordinates of top left corner of windows
+        coords = info["layout_info"]
+        focused_x, focused_y, *_ = coords[info["current"]]
+
+        min_x_diff = min(x - focused_x for x, *_ in coords if x > focused_x)
+        # find the windows that are a minimal x distance away
+        min_x = [
+            (idx, x, y) for idx, (x, y, *_) in enumerate(coords) if x - focused_x == min_x_diff
+        ]
+        # and sort by how close their y value is to the current
+        min_x.sort(key=lambda x: abs(focused_y - coords[x[0]][1]))
+
+        new_idx = min_x[0][0]
+        # go to window by index
+        self.clients.current_index = new_idx
+        self.group.focus(self.clients[new_idx])
+
     @expose_command("up")
     def previous(self) -> None:
         _SimpleLayoutBase.previous(self)
