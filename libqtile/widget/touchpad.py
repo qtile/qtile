@@ -30,6 +30,30 @@ if TYPE_CHECKING:
     from typing import Any, Callable
 
 
+def get_touchpad_device_name() -> str:
+    properties = subprocess.check_output(["xinput", "list", "--name-only"], text=True)
+
+    for line in properties.splitlines():
+        if "touchpad" in line.lower():
+            return str(line)
+
+    raise RuntimeError("Could not determine touchpad name automatically!")
+
+
+def get_touchpad_enabled(device_id: str) -> bool:
+    properties = subprocess.check_output(["xinput", "list-props", device_id], text=True)
+
+    for line in properties.splitlines():
+        if "device enabled" in line.lower():
+            return line[-1] == "1"
+
+    raise RuntimeError("Could not determine touchpad state automatically!")
+
+
+def set_touchpad_enabled(device_id: str, state: bool) -> None:
+    subprocess.run(["xinput", "enable" if state else "disable", device_id])
+
+
 class Touchpad(base.ThreadPoolText):
     """
     A simple widget to display touchpad state.
@@ -94,13 +118,18 @@ class Touchpad(base.ThreadPoolText):
     def _configure(self, qtile, bar) -> None:
         base.ThreadPoolText._configure(self, qtile, bar)
 
-    def poll(self) -> str:
         if self.device_id is None:
-            device_id = self._get_touchpad_device_name()
+            self.device_id = get_touchpad_device_name()
         if self.get_state_func is None:
-            get_state_func = self._get_touchpad_enabled
+            self.get_state_func = get_touchpad_enabled
+        if self.set_state_func is None:
+            self.set_state_func = set_touchpad_enabled
 
-        state = get_state_func(device_id)
+    def poll(self) -> str:
+        assert isinstance(self.device_id, str), "device_id has to be a string!"
+        assert callable(self.get_state_func), "get_state_func has to be callable!"
+
+        state = self.get_state_func(self.device_id)
         state_text = self.enabled_char if state else self.disabled_char
         return self.format.format(state=state_text)
 
@@ -108,37 +137,10 @@ class Touchpad(base.ThreadPoolText):
     def toggle(self) -> None:
         """Toggle touchpad on/off."""
 
-        if self.device_id is None:
-            device_id = self._get_touchpad_device_name()
-        if self.get_state_func is None:
-            get_state_func = self._get_touchpad_enabled
-        if self.set_state_func is None:
-            set_state_func = self._set_touchpad_enabled
+        assert isinstance(self.device_id, str), "device_id has to be a string!"
+        assert callable(self.get_state_func), "get_state_func has to be callable!"
+        assert callable(self.set_state_func), "set_state_func has to be callable!"
 
-        new_state = not get_state_func(device_id)
-        set_state_func(device_id, new_state)
+        new_state = not self.get_state_func(self.device_id)
+        self.set_state_func(self.device_id, new_state)
         self.force_update()
-
-    @staticmethod
-    def _get_touchpad_device_name() -> str:
-        properties = subprocess.check_output(["xinput", "list", "--name-only"], text=True)
-
-        for line in properties.splitlines():
-            if "touchpad" in line.lower():
-                return str(line)
-
-        raise RuntimeError("Could not determine touchpad name automatically!")
-
-    @staticmethod
-    def _get_touchpad_enabled(device_id: str) -> bool:
-        properties = subprocess.check_output(["xinput", "list-props", device_id], text=True)
-
-        for line in properties.splitlines():
-            if "device enabled" in line.lower():
-                return line[-1] == "1"
-
-        raise RuntimeError("Could not determine touchpad state automatically!")
-
-    @staticmethod
-    def _set_touchpad_enabled(device_id: str, state: bool) -> None:
-        subprocess.run(["xinput", "enable" if state else "disable", device_id])
