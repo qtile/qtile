@@ -54,21 +54,21 @@ class Touchpad(base.ThreadPoolText):
             "device_id",
             None,
             "Touchpad name or id, provided as ``str``. "
-            "It set to ``None`` the widget will try to find it automatically using ``xinput``.",
+            "If set to ``None`` the widget will try to find it automatically using ``xinput``.",
         ),
         (
             "get_state_func",
             None,
             "Function which can read the touchpad state. "
             "It should return the state as ``bool``. "
-            "It set to ``None`` a default function based on ``xinput`` will be used.",
+            "If set to ``None`` a default function based on ``xinput`` will be used.",
         ),
         (
             "set_state_func",
             None,
             "Function which can enable/disable touchpad. "
             "It should take one ``bool`` parameter and change touchpad state accordingly. "
-            "It set to ``None`` a default function based on ``xinput`` will be used.",
+            "If set to ``None`` a default function based on ``xinput`` will be used.",
         ),
         ("format", "{state}", "Displayed text format"),
         ("enabled_char", "[👆]", "State shown when touchpad is enabled"),
@@ -77,7 +77,7 @@ class Touchpad(base.ThreadPoolText):
             "update_interval",
             10,
             "Seconds between status updates. "
-            "When using ``toggle`` command from this class, the status is ",
+            "Additionally, status is updated immediately after calling ``toggle`` command from this class.",
         ),
     ]
 
