@@ -65,6 +65,7 @@ no_test += [widgets.ImapWidget]  # Requires a configured username
 # To test a widget only under one backend, list the widget class here
 exclusive_backend = {
     widgets.Systray: "x11",
+    widgets.Touchpad: "x11",
 }
 
 ################################################################################
