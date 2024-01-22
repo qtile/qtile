@@ -73,6 +73,8 @@ class Touchpad(base.ThreadPoolText):
     get_state_func: None | Callable[[str], bool]
     set_state_func: None | Callable[[str, bool], None]
 
+    supported_backends = {"x11"}
+
     defaults: list[tuple[str, Any, str]] = [
         (
             "device_id",
