@@ -1203,10 +1203,10 @@ class Core(base.Core, wlrq.HasListeners):
 
         assert self.qtile is not None
 
-        for win in self.qtile.windows_map.values():
-            if not isinstance(win, window.Window):
-                continue
-
+        managed_wins = [
+            w for w in self.qtile.windows_map.values() if isinstance(w, window.Window)
+        ]
+        for win in managed_wins:
             group = None
             if win.group:
                 if win.group.name in self.qtile.groups_map:
