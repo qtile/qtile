@@ -475,6 +475,9 @@ class Qtile(CommandObject):
         """Grab the given key event"""
         syms = self.core.grab_key(key)
         if syms in self.keys_map:
+            if self.keys_map[syms] == key:
+                # We've already bound this key definition
+                return
             logger.warning("Key spec duplicated, overriding previous: %s", key)
         self.keys_map[syms] = key
 
