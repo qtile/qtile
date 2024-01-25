@@ -1,6 +1,7 @@
 Qtile x.xx.x, released XXXX-XX-XX:
     * features
     * bugfixes
+      - Fix groups marked with `persist=False` not being deleted when their last window is moved to another group.
 
 Qtile 0.24.0, released 2024-01-20:
     !!! config breakage/changes !!!

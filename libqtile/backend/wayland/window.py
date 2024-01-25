@@ -301,7 +301,17 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             if self.group.screen:
                 # for floats remove window offset
                 self.x -= self.group.screen.x
+            group_ref = self.group
             self.group.remove(self)
+            # delete groups with `persist=False`
+            if (
+                not self.qtile.dgroups.groups_map[group_ref.name].persist
+                and len(group_ref.windows) <= 1
+            ):
+                # set back original group so _del() can grab it
+                self.group = group_ref
+                self.qtile.dgroups._del(self)
+                self.group = None
 
         if group.screen and self.x < group.screen.x:
             self.x += group.screen.x
