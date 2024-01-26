@@ -24,6 +24,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import re
+from io import BytesIO
 
 import cairocffi
 
@@ -418,10 +419,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             framecolor = bordercolor
 
         framed = self.layout.framed(border_width, framecolor, padding_x, self.padding_y)
+
+        y_pos = max(self.margin_y, (self.bar.height - self.layout.height) // 2)
         if block and bordercolor is not None:
-            framed.draw_fill(offset, self.margin_y, rounded)
+            framed.draw_fill(offset, y_pos, rounded)
         else:
-            framed.draw(offset, self.margin_y, rounded)
+            framed.draw(offset, y_pos, rounded)
 
         if icon:
             self.draw_icon(icon, offset)
@@ -462,9 +465,15 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         icon = icons[0]
         width, height = map(int, icon[0].split("x"))
 
-        img = cairocffi.ImageSurface.create_for_data(
+        surf = cairocffi.ImageSurface.create_for_data(
             icon[1], cairocffi.FORMAT_ARGB32, width, height
         )
+
+        # Convert surface into qtile Img object
+        # Can't do this from raw icon data.
+        buffer = BytesIO()
+        surf.write_to_png(buffer)
+        img = Img(buffer.getvalue())
 
         return img
 
@@ -490,7 +499,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         img = Img.from_path(icon)
 
-        return img.surface
+        return img
 
     def get_window_icon(self, window):
         if not getattr(window, "icons", False) and self.theme_mode is None:
@@ -512,30 +521,22 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 img = xdg_img
 
         if img is not None:
-            surface = cairocffi.SurfacePattern(img)
-            height = img.get_height()
-            width = img.get_width()
-            scaler = cairocffi.Matrix()
-            if height != self.icon_size:
-                sp = height / self.icon_size
-                height = self.icon_size
-                width /= sp
-                scaler.scale(sp, sp)
-            surface.set_matrix(scaler)
+            if img.height != self.icon_size:
+                img.resize(height=self.icon_size)
 
-        self._icons_cache[window.wid] = surface
+        self._icons_cache[window.wid] = img
         return surface
 
-    def draw_icon(self, surface, offset):
-        if not surface:
+    def draw_icon(self, icon, offset):
+        if not icon:
             return
 
         x = offset + self.borderwidth + self.padding_x
-        y = (self.height - self.icon_size) // 2
+        y = (self.bar.height - icon.height) // 2
 
         self.drawer.ctx.save()
         self.drawer.ctx.translate(x, y)
-        self.drawer.ctx.set_source(surface)
+        self.drawer.ctx.set_source(icon.pattern)
         self.drawer.ctx.paint()
         self.drawer.ctx.restore()
 
@@ -573,7 +574,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 rounded=self.rounded,
                 block=(self.highlight_method == "block"),
                 width=textwidth,
-                icon=icon,
+                icon=icon if icon else None,
             )
             offset += bw + self.spacing
 
