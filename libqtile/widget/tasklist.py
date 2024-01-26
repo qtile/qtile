@@ -23,8 +23,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import re
-
 import cairocffi
 
 try:
@@ -195,9 +193,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         calculate box width for given text.
         If max_title_width is given, the returned width is limited to it.
         """
-        if self.markup:
-            text = re.sub("<[^<]+?>", "", text)
-        width, _ = self.drawer.max_layout_size([text], self.font, self.fontsize)
+        width, _ = self.drawer.max_layout_size(
+            [text], self.font, self.fontsize, markup=self.markup
+        )
         width = width + 2 * (self.padding_x + self.borderwidth)
         return width
 
