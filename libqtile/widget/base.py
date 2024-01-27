@@ -400,7 +400,7 @@ class _Widget(CommandObject, configurable.Configurable):
         return Mirror(self, background=self.background)
 
     def clone(self):
-        return copy.copy(self)
+        return copy.deepcopy(self)
 
     def mouse_enter(self, x, y):
         pass
