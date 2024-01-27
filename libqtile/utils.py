@@ -533,12 +533,46 @@ async def add_signal_receiver(
     # Check if message sent successfully
     if bus and msg and msg.message_type == MessageType.METHOD_RETURN:
 
+        def match_message(msg: Message, match_args: dict[str, str | None]) -> bool:
+            return msg._matches(**{k: v for k, v in match_args.items() if v})
+
+        async def resolve_sender(signal_msg: Message) -> tuple[str, Message]:
+            """Looks up a pretty bus name to retrieve the unique name."""
+            _, sender_msg = await _send_dbus_message(
+                session_bus,
+                MessageType.METHOD_CALL,
+                "org.freedesktop.DBus",
+                "org.freedesktop.DBus",
+                "/org/freedesktop/DBus",
+                "GetNameOwner",
+                "s",
+                [match_args["sender"]],
+                bus=bus,
+            )
+
+            if sender_msg and sender_msg.message_type == MessageType.METHOD_RETURN:
+                return sender_msg.body[0], signal_msg
+
+            return "", signal_msg
+
+        def check_message(task: asyncio.Task) -> None:
+            new_match_args = match_args.copy()
+            new_sender, signal_message = task.result()
+            new_match_args["sender"] = new_sender
+            if match_message(signal_message, new_match_args):
+                callback(signal_message)
+
         def signal_callback_wrapper(msg: Message) -> None:
             """Custom wrapper to only run callback if message matches our rule."""
-            if msg.message_type == MessageType.SIGNAL and msg._matches(
-                **{k: v for k, v in match_args.items() if v}
-            ):
-                callback(msg)
+            if msg.message_type == MessageType.SIGNAL:
+                if match_message(msg, match_args):
+                    callback(msg)
+                elif "sender" in match_args:
+                    # If the message didn't match and we're trying to match the sender
+                    # We may need to convert the pretty name to the bus's unique name first
+                    task = create_task(resolve_sender(msg))
+                    if task:
+                        task.add_done_callback(check_message)
 
         bus.add_message_handler(signal_callback_wrapper)
         return True
