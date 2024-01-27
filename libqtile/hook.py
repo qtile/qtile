@@ -216,7 +216,7 @@ hooks: list[Hook] = [
 
 
           @hook.subscribe.startup_once
-          def autostart:
+          def autostart():
               script = os.path.expanduser("~/.config/qtile/autostart.sh")
               subprocess.run([script])
 
@@ -845,8 +845,8 @@ hooks: list[Hook] = [
             from libqtile import hook
             from libqtile.utils import send_notification
 
-            @hook.subscribe.screen_change
-            def screen_change(event):
+            @hook.subscribe.screens_reconfigured
+            def screen_reconf():
                 send_notification("qtile", "Screens have been reconfigured.")
 
         """,
@@ -868,7 +868,7 @@ hooks: list[Hook] = [
             from libqtile.utils import send_notification
 
             @hook.subscribe.current_screen_change
-            def screen_change(event):
+            def screen_change():
                 send_notification("qtile", "Current screen change detected.")
 
         """,
