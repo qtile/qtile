@@ -1022,6 +1022,7 @@ class _Window:
         statics = [win for win in self.qtile.windows_map.values() if isinstance(win, Static)]
         group_windows.extend(statics)
         group_windows.extend(v for w, v in self.qtile.core.override_redirect_map.items())
+        group_windows = filter(lambda w: w.window.wid in stack, group_windows)
 
         if group.screen is not None:
             group_bars = [gap for gap in group.screen.gaps if isinstance(gap, bar.Bar)]
