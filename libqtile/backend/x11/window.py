@@ -2144,6 +2144,7 @@ class Window(_Window, base.Window):
                 logger.debug("Focusing window by pager")
                 self.qtile.current_screen.set_group(self.group)
                 self.group.focus(self)
+                self.bring_to_front()
             else:  # XCB_EWMH_CLIENT_SOURCE_TYPE_OTHER
                 focus_behavior = self.qtile.config.focus_on_window_activation
                 if focus_behavior == "focus":
