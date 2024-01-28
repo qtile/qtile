@@ -1168,14 +1168,22 @@ class _Window:
                 higher.sort(key=lambda wid: stack.index(wid))
 
             for wid in [w for w in lower if stack.index(w) > index]:
-                win = self.qtile.windows_map.get(wid, self.qtile.core.override_redirect_map[wid])
-                win.window.configure(stackmode=xcffib.xproto.StackMode.Below, sibling=same[0])
+                win = self.qtile.windows_map.get(
+                    wid, self.qtile.core.override_redirect_map.get(wid, None)
+                )
+                if win:
+                    win.window.configure(stackmode=xcffib.xproto.StackMode.Below, sibling=same[0])
 
             # We reverse higher as each window will be placed above the last item in the current layer
             # this means the last item we stack will be just above the current layer.
             for wid in [w for w in higher[::-1] if stack.index(w) < index]:
-                win = self.qtile.windows_map.get(wid, self.qtile.core.override_redirect_map[wid])
-                win.window.configure(stackmode=xcffib.xproto.StackMode.Above, sibling=same[-1])
+                win = self.qtile.windows_map.get(
+                    wid, self.qtile.core.override_redirect_map.get(wid, None)
+                )
+                if win:
+                    win.window.configure(
+                        stackmode=xcffib.xproto.StackMode.Above, sibling=same[-1]
+                    )
 
             return
 
