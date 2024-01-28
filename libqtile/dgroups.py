@@ -254,4 +254,5 @@ class DGroups:
             del self.timeout[client]
 
         logger.debug("Deleting %s in %ss", group, self.delay)
-        self.timeout[client] = self.qtile.call_later(self.delay, delete_client)
+        if client not in self.timeout:
+            self.timeout[client] = self.qtile.call_later(self.delay, delete_client)

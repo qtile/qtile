@@ -28,6 +28,7 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
+from test.helpers import Retry
 
 
 class GroupConfig(Config):
@@ -102,3 +103,36 @@ def test_toscreen_toggle(manager):
     manager.c.group["b"].toscreen(toggle=True)
     manager.c.group["b"].toscreen(toggle=True)
     assert manager.c.group.info()["name"] == "a"  # Toggling twice roundtrips between the two
+
+
+class NoPersistGroupConfig(GroupConfig):
+    groups = [
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b", exclusive=True),
+        libqtile.config.Group("c", persist=False),
+    ]
+
+
+@pytest.mark.parametrize("manager", [NoPersistGroupConfig], indirect=True)
+def test_non_persistent_groups(manager):
+    @Retry(ignore_exceptions=(AssertionError,))
+    def wait_for_removed(group_name):
+        assert group_name not in manager.c.get_groups()
+
+    window_name = "no_match"
+    manager.c.group["b"].toscreen()
+    manager.test_window(window_name)
+    assert window_name not in manager.c.group.info()["windows"]  # Window was moved to a new group
+    group_name = "TestWindow"  # The new group is named after the window's `wm_class` property
+    assert group_name in manager.c.get_groups()
+    manager.c.group[group_name].toscreen()
+    assert manager.c.window.info()["name"] == window_name
+    manager.c.window.togroup("a")
+    wait_for_removed(group_name)
+
+    window_name = "bar"
+    manager.c.group["c"].toscreen()
+    manager.test_window(window_name)
+    assert manager.c.window.info()["name"] == window_name
+    manager.c.window.togroup("a")
+    wait_for_removed(group_name)
