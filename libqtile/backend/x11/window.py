@@ -1489,6 +1489,13 @@ class _Window:
         self.window.set_property("_NET_WM_STATE", reply)
         self.change_layer(up=False)
 
+    @expose_command()
+    def bring_to_front(self):
+        if self.get_wm_type() != "desktop":
+            self.window.configure(stackmode=xcffib.xproto.StackMode.Above)
+            self.raise_children()
+            self.qtile.core.update_client_lists()
+
 
 class Internal(_Window, base.Internal):
     """An internal window, that should not be managed by qtile"""
@@ -1659,13 +1666,6 @@ class Static(_Window, base.Static):
         name = self.qtile.core.conn.atoms.get_name(e.atom)
         if name == "_NET_WM_STRUT_PARTIAL":
             self.update_strut()
-
-    @expose_command()
-    def bring_to_front(self):
-        if self.get_wm_type() != "desktop":
-            self.window.configure(stackmode=xcffib.xproto.StackMode.Above)
-            self.raise_children()
-            self.qtile.core.update_client_lists()
 
 
 class Window(_Window, base.Window):
@@ -2292,13 +2292,6 @@ class Window(_Window, base.Window):
     @expose_command()
     def disable_fullscreen(self):
         self.fullscreen = False
-
-    @expose_command()
-    def bring_to_front(self):
-        if self.get_wm_type() != "desktop":
-            self.window.configure(stackmode=xcffib.xproto.StackMode.Above)
-            self.raise_children()
-            self.qtile.core.update_client_lists()
 
     def _is_in_window(self, x, y, window):
         return window.edges[0] <= x <= window.edges[2] and window.edges[1] <= y <= window.edges[3]
