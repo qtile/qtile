@@ -211,3 +211,15 @@ def test_tasklist_bad_theme_mode(tasklist_manager, logger):
 def test_tasklist_no_xdg(tasklist_manager, logger):
     msgs = [rec.msg for rec in logger.get_records("setup")]
     assert "You must install pyxdg to use theme icons." in msgs
+
+
+@configure_tasklist(stretch=False)
+def test_tasklist_no_stretch(tasklist_manager):
+    widget = tasklist_manager.c.widget["tasklist"]
+    tasklist_manager.test_window("One")
+    width_one = widget.info()["width"]
+
+    tasklist_manager.test_window("Two")
+    width_two = widget.info()["width"]
+
+    assert width_one != width_two

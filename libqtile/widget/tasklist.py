@@ -32,7 +32,8 @@ try:
 except ImportError:
     has_xdg = False
 
-from libqtile import bar, hook, pangocffi
+import libqtile.bar
+from libqtile import hook, pangocffi
 from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.widget import base
@@ -178,10 +179,15 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             0,
             "The offset given to the window location",
         ),
+        (
+            "stretch",
+            True,
+            "Widget fills available space in bar. Set to `False` to limit widget width to size of its contents.",
+        ),
     ]
 
     def __init__(self, **config):
-        base._Widget.__init__(self, bar.STRETCH, **config)
+        base._Widget.__init__(self, libqtile.bar.STRETCH, **config)
         self.add_defaults(TaskList.defaults)
         self.add_defaults(base.PaddingMixin.defaults)
         self.add_defaults(base.MarginMixin.defaults)
@@ -280,6 +286,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             ]
         return self.bar.screen.group.windows
 
+    @property
+    def max_width(self):
+        width = self.bar.width
+        width -= sum(w.width for w in self.bar.widgets if w is not self)
+        return width
+
     def calc_box_widths(self):
         """
         Calculate box width for each window in current group.
@@ -294,7 +306,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             return []
 
         # Determine available and max average width for task name boxes.
-        width_total = self.width - 2 * self.margin_x - (window_count - 1) * self.spacing
+        width_total = self.max_width - 2 * self.margin_x - (window_count - 1) * self.spacing
         width_avg = width_total / window_count
 
         names = [self.get_taskname(w) for w in windows]
@@ -338,8 +350,20 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         return zip(windows, icons, names, width_boxes)
 
+    def calculate_length(self):
+        width = 10
+        box_widths = [box[3] for box in self.calc_box_widths()]
+        if box_widths:
+            width += self.spacing * len(box_widths) - 1
+            width += sum(w for w in box_widths)
+
+        return width
+
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
+
+        if not self.stretch:
+            self.length_type = libqtile.bar.CALCULATED
 
         if not has_xdg and self.theme_mode is not None:
             logger.warning("You must install pyxdg to use theme icons.")
