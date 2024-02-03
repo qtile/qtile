@@ -32,6 +32,7 @@ from dbus_next import Message, Variant
 from dbus_next.aio import MessageBus
 from dbus_next.constants import MessageType
 
+from libqtile import pangocffi
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 from libqtile.utils import _send_dbus_message, add_signal_receiver, create_task
@@ -73,7 +74,9 @@ class Mpris2Formatter(string.Formatter):
         """
         kwargs = {k.replace(":", "_"): v for k, v in kwargs.items()}
         try:
-            return string.Formatter.get_value(self, key, args, kwargs)
+            return pangocffi.markup_escape_text(
+                string.Formatter.get_value(self, key, args, kwargs)
+            )
         except (IndexError, KeyError):
             return self._default
 
