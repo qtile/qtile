@@ -959,7 +959,7 @@ class Mirror(_Widget):
         self._length = value
 
     def draw(self):
-        self.drawer.clear(self.reflects.background or self.bar.background)
+        self.drawer.clear_rect()
         self.reflects.drawer.paint_to(self.drawer)
         self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
 
