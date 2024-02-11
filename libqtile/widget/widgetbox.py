@@ -158,3 +158,15 @@ class WidgetBox(base._TextBox):
         self.toggle_widgets()
         self.set_box_label()
         self.bar.draw()
+
+    @expose_command()
+    def open(self):
+        """Open the widgetbox."""
+        if not self.box_is_open:
+            self.toggle()
+
+    @expose_command()
+    def close(self):
+        """Close the widgetbox."""
+        if self.box_is_open:
+            self.toggle()
