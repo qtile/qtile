@@ -172,6 +172,7 @@ class Columns(Layout):
             "(one of ``Columns._left`` or ``Columns._right``). "
             "Ignored if 'fair=True'.",
         ),
+        ("initial_ratio", 1, "Ratio of first column to second column."),
     ]
 
     def __init__(self, **config):
@@ -233,6 +234,14 @@ class Columns(Layout):
             self.current += 1
         else:
             self.columns.append(c)
+        if len(self.columns) == 2:
+            # Total width is 200
+            # current + new = 200
+            # current = new * ratio
+            # New column is therefore 200 / (1 + ratio)
+            # Current column is 200 - current column
+            c.width = 200 // (1 + self.initial_ratio)
+            self.cc.width = 200 - c.width
         return c
 
     def remove_column(self, col):
