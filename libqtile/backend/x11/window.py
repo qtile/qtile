@@ -2164,9 +2164,11 @@ class Window(_Window, base.Window):
                     else:  # self.group.screen != self.qtile.current_screen:
                         logger.debug("Setting urgent flag for window")
                         self.urgent = True
+                        hook.fire("client_urgent_hint_changed", self)
                 elif focus_behavior == "urgent":
                     logger.debug("Setting urgent flag for window")
                     self.urgent = True
+                    hook.fire("client_urgent_hint_changed", self)
                 elif focus_behavior == "never":
                     logger.debug("Ignoring focus request (focus_on_window_activation='never')")
                 else:
