@@ -26,6 +26,7 @@ Qtile 0.24.0, released 2024-01-20:
       - Fix two bugs in stacking transient windows in X11
       - Checking configs containing `qtile.core.name` with `python config.py` don't fail anymore (but `qtile.core.name`
         will be `None`)
+      - Fix an error if a wayland xwindow has unknown wm_type
 
 Qtile 0.23.0, released 2023-09-24:
     !!! Dependency Changes !!!
