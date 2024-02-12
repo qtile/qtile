@@ -258,9 +258,9 @@ class XWindow(Window[xwayland.Surface]):
         return self.surface.pid
 
     def get_wm_type(self) -> str | None:
-        wm_type = self.surface.window_type
-        if wm_type:
-            return self.core.xwayland_atoms[wm_type[0]]
+        for wm_type in self.surface.window_type:
+            if wm_type in self.core.xwayland_atoms:
+                return self.core.xwayland_atoms[wm_type]
         return None
 
     def get_wm_role(self) -> str | None:
