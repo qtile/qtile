@@ -92,7 +92,7 @@ class RunCommand(_Extension):
     interact with the qtile object.
 
     Also consider simply using lazy.spawn() or writing a
-    `client <https://docs.qtile.org/en/latest/manual/commands/advanced.html#client-server-scripting-model>`_.
+    [client](https://docs.qtile.org/en/latest/manual/commands/advanced.html#client-server-scripting-model).
     """
 
     defaults: list[tuple[str, Any, str]] = [

@@ -113,7 +113,7 @@ class InputConfig(configurable.Configurable):
     This tries to mirror how Sway configures libinput devices. For more information
     check out sway-input(5): https://man.archlinux.org/man/sway-input.5#LIBINPUT_CONFIGURATION
 
-    Keyboards, managed by `xkbcommon <https://github.com/xkbcommon/libxkbcommon>`_, are
+    Keyboards, managed by [xkbcommon](https://github.com/xkbcommon/libxkbcommon), are
     configured with the options prefixed by ``kb_``. X11's helpful `XKB guide
     <https://www.x.org/releases/X11R7.5/doc/input/XKB-Config.html>`_ may be useful for
     figuring out the syntax for some of these settings.

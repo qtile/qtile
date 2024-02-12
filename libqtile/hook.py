@@ -193,7 +193,7 @@ hooks: list[Hook] = [
         """Called when Qtile has started on first start
 
         This hook is called exactly once per session (i.e. not on each
-        ``lazy.restart()``).
+        `lazy.restart()`).
 
         **Arguments**
 
@@ -219,7 +219,7 @@ hooks: list[Hook] = [
     Hook(
         "startup",
         """
-        Called when qtile is started. Unlike ``startup_once``, this hook is
+        Called when qtile is started. Unlike `startup_once`, this hook is
         fired on every start, including restarts.
 
         When restarting, this hook is fired after qtile has restarted
@@ -251,7 +251,7 @@ hooks: list[Hook] = [
         """
         Called when qtile is started after all resources initialized.
 
-        This is the same as ``startup`` with the only difference being that
+        This is the same as `startup` with the only difference being that
         this hook is fired after the saved state has been restored.
 
         **Arguments**
@@ -283,7 +283,7 @@ hooks: list[Hook] = [
         be delayed.
 
         This hook is only fired when qtile is shutting down, if you want a command
-        to be run when the system sleeps then you should use the ``suspend`` hook
+        to be run when the system sleeps then you should use the `suspend` hook
         instead.
 
         **Arguments**
@@ -413,8 +413,8 @@ hooks: list[Hook] = [
         Called whenever a group change occurs.
 
         The following changes will result in this hook being fired:
-        1) New group added (unlike ``addgroup``, no group name is passed with this hook)
-        2) Group deleted (unlike ``delgroup``, no group name is passed with this hook)
+        1) New group added (unlike `addgroup`, no group name is passed with this hook)
+        2) Group deleted (unlike `delgroup`, no group name is passed with this hook)
         3) Groups order is changed
         4) Group is renamed
 
@@ -490,8 +490,8 @@ hooks: list[Hook] = [
 
         **Arguments**
 
-            * ``Group`` receiving the new window
-            * ``Window`` added to the group
+            * `Group` receiving the new window
+            * `Window` added to the group
 
         Example:
 
@@ -517,7 +517,7 @@ hooks: list[Hook] = [
 
         **Arguments**
 
-            * ``Window`` object
+            * `Window` object
 
         Example:
 
@@ -545,7 +545,7 @@ hooks: list[Hook] = [
 
         **Arguments**
 
-            * ``Window`` object of the managed window
+            * `Window` object of the managed window
 
         Example:
 
@@ -567,7 +567,7 @@ hooks: list[Hook] = [
 
         **Arguments**
 
-            * ``Window`` object of the killed window.
+            * `Window` object of the killed window.
 
         Example:
 
@@ -589,7 +589,7 @@ hooks: list[Hook] = [
 
         **Arguments**
 
-            * ``Window`` object of the new focus.
+            * `Window` object of the new focus.
 
         Example:
 
@@ -611,7 +611,7 @@ hooks: list[Hook] = [
 
         **Arguments**
 
-            * ``Window`` of window entered
+            * `Window` of window entered
 
         Example:
 
@@ -633,7 +633,7 @@ hooks: list[Hook] = [
 
         **Arguments**
 
-            * ``Window`` of client with updated name
+            * `Window` of client with updated name
 
         Example:
 
@@ -658,7 +658,7 @@ hooks: list[Hook] = [
 
         **Arguments**
 
-            * ``Window`` of client with hint change
+            * `Window` of client with hint change
 
         Example:
 
@@ -705,14 +705,14 @@ hooks: list[Hook] = [
     Hook(
         "net_wm_icon_change",
         """
-        Called on ``_NET_WM_ICON`` change
+        Called on `_NET_WM_ICON` change
 
         X11 only. Called when a window notifies that it has changed
         its icon.
 
         **Arguments**
 
-            * ``Window`` of client with changed icon
+            * `Window` of client with changed icon
 
         Example:
 
@@ -737,11 +737,11 @@ hooks: list[Hook] = [
         **Arguments**
 
             * name of the selection
-            * dictionary describing selection, containing ``owner`` and
-              ``selection`` as keys
+            * dictionary describing selection, containing `owner` and
+              `selection` as keys
 
-        The selection owner will typically be ``"PRIMARY"`` when contents is highlighted and
-        ``"CLIPBOARD"`` when contents is actively copied to the clipboard, e.g. with Ctrl + C.
+        The selection owner will typically be `"PRIMARY"` when contents is highlighted and
+        `"CLIPBOARD"` when contents is actively copied to the clipboard, e.g. with Ctrl + C.
 
         Example:
 
@@ -770,11 +770,11 @@ hooks: list[Hook] = [
         **Arguments**
 
             * name of the selection
-            * dictionary describing selection, containing ``owner`` and
-              ``selection`` as keys
+            * dictionary describing selection, containing `owner` and
+              `selection` as keys
 
-        The selection owner will typically be ``"PRIMARY"`` when contents is highlighted and
-        ``"CLIPBOARD"`` when contents is actively copied to the clipboard, e.g. with Ctrl + C.
+        The selection owner will typically be `"PRIMARY"` when contents is highlighted and
+        `"CLIPBOARD"` when contents is actively copied to the clipboard, e.g. with Ctrl + C.
 
         Example:
 
@@ -799,15 +799,15 @@ hooks: list[Hook] = [
 
         .. note::
 
-          If you have ``reconfigure_screens = True`` in your config then qtile
+          If you have `reconfigure_screens = True` in your config then qtile
           will automatically reconfigure your screens when it detects a change to the
           screen configuration. This hook is fired *before* that reconfiguration takes
-          place. The ``screens_reconfigured`` hook should be used where you want to trigger
+          place. The `screens_reconfigured` hook should be used where you want to trigger
           an event after the reconfiguration.
 
         **Arguments**
 
-            * ``xproto.randr.ScreenChangeNotify`` event (X11) or None (Wayland).
+            * `xproto.randr.ScreenChangeNotify` event (X11) or None (Wayland).
 
         Example:
 
@@ -825,8 +825,8 @@ hooks: list[Hook] = [
     Hook(
         "screens_reconfigured",
         """
-        Called once ``qtile.reconfigure_screens`` has completed (e.g. if
-        ``reconfigure_screens`` is set to ``True`` in your config).
+        Called once `qtile.reconfigure_screens` has completed (e.g. if
+        `reconfigure_screens` is set to `True` in your config).
 
         **Arguments**
 
@@ -873,7 +873,7 @@ hooks: list[Hook] = [
         Called when key chord begins
 
         Note: if you only want to use this chord to display the chord name then
-        you should use the ``Chord`` widget.
+        you should use the `Chord` widget.
 
         **Arguments**
 
@@ -945,19 +945,19 @@ hooks: list[Hook] = [
         The default delay is 5 seconds. If your function has not completed within that time, the
         machine will still sleep (see important note below).
 
-        You can increase this delay by setting ``InhibitDelayMaxSec`` in ``logind.conf.``
+        You can increase this delay by setting `InhibitDelayMaxSec` in `logind.conf.`
         see: https://www.freedesktop.org/software/systemd/man/logind.conf.html
 
         In addition, closing a laptop lid will ignore inhibitors by default. You can override this
-        by setting ``LidSwitchIgnoreInhibited=no`` in ``/etc/systemd/logind.conf``.
+        by setting `LidSwitchIgnoreInhibited=no` in `/etc/systemd/logind.conf`.
 
         .. important::
 
             The logind service creates an inhibitor by passing a reference to a lock file which must
             be closed to release the lock. Additional references to the lock may be created if you
-            spawn processes with the ``subprocess`` module and these processes are running when
+            spawn processes with the `subprocess` module and these processes are running when
             the machine tries to suspend. As a result, it is strongly recommended that you launch
-            any processes with ``qtile.spawn(...)`` as this will not create additional copies of the
+            any processes with `qtile.spawn(...)` as this will not create additional copies of the
             lock.
 
         **Arguments**
@@ -1010,10 +1010,10 @@ hooks: list[Hook] = [
 
           If the script will be run by a different user then you will need to pass the path to the socket
           file used by the current process. One way to achieve this is to specify a path for the socket when starting
-          qtile e.g. ``qtile start -s /tmp/qtile.socket``.
+          qtile e.g. `qtile start -s /tmp/qtile.socket`.
           When firing the hook, you should then call
-          ``qtile cmd-obj -o cmd -f fire_user_hook -a my_custom_hook -s /tmp/qtile.socket``
-          However, the same socket will need to be passed wherever you run ``qtile cmd-obj`` or ``qtile shell``.
+          `qtile cmd-obj -o cmd -f fire_user_hook -a my_custom_hook -s /tmp/qtile.socket`
+          However, the same socket will need to be passed wherever you run `qtile cmd-obj` or `qtile shell`.
 
         """,
         _user_hook_func,

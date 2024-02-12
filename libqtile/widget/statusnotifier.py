@@ -611,7 +611,7 @@ class StatusNotifier(base._Widget):
     As per the specification, app icons are first retrieved from the
     user's current theme. If this is not available then the app may
     provide its own icon. In order to use this functionality, users
-    are recommended to install the `pyxdg <https://pypi.org/project/pyxdg/>`__
+    are recommended to install the [pyxdg](https://pypi.org/project/pyxdg/)
     module to support retrieving icons from the selected theme.
 
     Left-clicking an icon will trigger an activate event.

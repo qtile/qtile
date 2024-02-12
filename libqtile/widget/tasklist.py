@@ -46,7 +46,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     Contrary to WindowTabs this is an interactive widget.  The window that
     currently has focus is highlighted.
 
-    Optional requirements: `pyxdg <https://pypi.org/project/pyxdg/>`__ is needed
+    Optional requirements: [pyxdg](https://pypi.org/project/pyxdg/)_ is needed
     to use theme icons and to display icons on Wayland.
     """
 

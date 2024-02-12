@@ -57,10 +57,10 @@ class Key:
     ==========
     modifiers:
         A list of modifier specifications. Modifier specifications are one of:
-        ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
-        ``"mod4"``, ``"mod5"``.
+        `"shift"`, `"lock"`, `"control"`, `"mod1"`, `"mod2"`, `"mod3"`,
+        `"mod4"`, `"mod5"`.
     key:
-        A key specification, e.g. ``"a"``, ``"Tab"``, ``"Return"``, ``"space"``.
+        A key specification, e.g. `"a"`, `"Tab"`, `"Return"`, `"space"`.
     commands:
         One or more :class:`LazyCall` objects to evaluate in sequence upon keypress. Multiple
         commands should be separated by commas.
@@ -97,15 +97,15 @@ class KeyChord:
     ==========
     modifiers:
         A list of modifier specifications. Modifier specifications are one of:
-        ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
-        ``"mod4"``, ``"mod5"``.
+        `"shift"`, `"lock"`, `"control"`, `"mod1"`, `"mod2"`, `"mod3"`,
+        `"mod4"`, `"mod5"`.
     key:
-        A key specification, e.g. ``"a"``, ``"Tab"``, ``"Return"``, ``"space"``.
+        A key specification, e.g. `"a"`, `"Tab"`, `"Return"`, `"space"`.
     submappings:
         A list of :class:`Key` or :class:`KeyChord` declarations to bind in this chord.
     mode:
-        Boolean. Setting to ``True`` will result in the chord persisting until
-        Escape is pressed. Setting to ``False`` (default) will exit the chord once
+        Boolean. Setting to `True` will result in the chord persisting until
+        Escape is pressed. Setting to `False` (default) will exit the chord once
         the sequence has ended.
     name:
         A string to name the chord. The name will be displayed in the Chord
@@ -173,10 +173,10 @@ class Drag(Mouse):
     ==========
     modifiers:
         A list of modifier specifications. Modifier specifications are one of:
-        ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
-        ``"mod4"``, ``"mod5"``.
+        `"shift"`, `"lock"`, `"control"`, `"mod1"`, `"mod2"`, `"mod3"`,
+        `"mod4"`, `"mod5"`.
     button:
-        The button used to start dragging e.g. ``"Button1"``.
+        The button used to start dragging e.g. `"Button1"`.
     commands:
         A list :class:`LazyCall` objects to evaluate in sequence upon drag.
     start:
@@ -211,10 +211,10 @@ class Click(Mouse):
     ==========
     modifiers:
         A list of modifier specifications. Modifier specifications are one of:
-        ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
-        ``"mod4"``, ``"mod5"``.
+        `"shift"`, `"lock"`, `"control"`, `"mod1"`, `"mod2"`, `"mod3"`,
+        `"mod4"`, `"mod5"`.
     button:
-        The button used to start dragging e.g. ``"Button1"``.
+        The button used to start dragging e.g. `"Button1"`.
     commands:
         A list :class:`LazyCall` objects to evaluate in sequence upon drag.
 
@@ -283,7 +283,7 @@ class EzKey(EzConfig, Key):
     Parameters
     ==========
     keydef:
-        The Emacs-like key specification, e.g. ``"M-S-a"``.
+        The Emacs-like key specification, e.g. `"M-S-a"`.
     commands:
         A list :class:`LazyCall` objects to evaluate in sequence upon keypress.
     desc:
@@ -303,12 +303,12 @@ class EzKeyChord(EzConfig, KeyChord):
     Parameters
     ==========
     keydef:
-        The Emacs-like key specification, e.g. ``"M-S-a"``.
+        The Emacs-like key specification, e.g. `"M-S-a"`.
     submappings:
         A list of :class:`Key` or :class:`KeyChord` declarations to bind in this chord.
     mode:
-        Boolean. Setting to ``True`` will result in the chord persisting until
-        Escape is pressed. Setting to ``False`` (default) will exit the chord once
+        Boolean. Setting to `True` will result in the chord persisting until
+        Escape is pressed. Setting to `False` (default) will exit the chord once
         the sequence has ended.
     name:
         A string to name the chord. The name will be displayed in the Chord
@@ -339,7 +339,7 @@ class EzClick(EzConfig, Click):
     Parameters
     ==========
     btndef:
-        The Emacs-like button specification, e.g. ``"M-1"``.
+        The Emacs-like button specification, e.g. `"M-1"`.
     commands:
         A list :class:`LazyCall` objects to evaluate in sequence upon drag.
 
@@ -358,7 +358,7 @@ class EzDrag(EzConfig, Drag):
     Parameters
     ==========
     btndef:
-        The Emacs-like button specification, e.g. ``"M-1"``.
+        The Emacs-like button specification, e.g. `"M-1"`.
     commands:
         A list :class:`LazyCall` objects to evaluate in sequence upon drag.
     start:
@@ -408,17 +408,17 @@ class Screen(CommandObject):
     A physical screen, and its associated paraphernalia.
 
     Define a screen with a given set of :class:`Bar`s of a specific geometry. Also,
-    ``x``, ``y``, ``width``, and ``height`` aren't specified usually unless you are
+    `x`, `y`, `width`, and `height` aren't specified usually unless you are
     using 'fake screens'.
 
-    The ``wallpaper`` parameter, if given, should be a path to an image file. How this
-    image is painted to the screen is specified by the ``wallpaper_mode`` parameter. By
+    The `wallpaper` parameter, if given, should be a path to an image file. How this
+    image is painted to the screen is specified by the `wallpaper_mode` parameter. By
     default, the image will be placed at the screens origin and retain its own
-    dimensions. If the mode is ``"fill"``, the image will be centred on the screen and
-    resized to fill it. If the mode is ``"stretch"``, the image is stretched to fit all
+    dimensions. If the mode is `"fill"`, the image will be centred on the screen and
+    resized to fill it. If the mode is `"stretch"`, the image is stretched to fit all
     of it into the screen.
 
-    The ``x11_drag_polling_rate`` parameter specifies the rate for drag events in the X11 backend. By default this is set to None, indicating no limit. Because in the X11 backend we already handle motion notify events later, the performance should already be okay. However, to limit these events further you can use this variable and e.g. set it to your monitor refresh rate. 60 would mean that we handle a drag event 60 times per second.
+    The `x11_drag_polling_rate` parameter specifies the rate for drag events in the X11 backend. By default this is set to None, indicating no limit. Because in the X11 backend we already handle motion notify events later, the performance should already be okay. However, to limit these events further you can use this variable and e.g. set it to your monitor refresh rate. 60 would mean that we handle a drag event 60 times per second.
 
     """
 
@@ -696,11 +696,11 @@ class Group:
     exclusive:
         When other apps are started in this group, should we allow them here or not?
     spawn:
-        This will be executed (via ``qtile.spawn()``) when the group is created. You can pass either a
-        program name or a list of programs to ``exec()``.
+        This will be executed (via `qtile.spawn()`) when the group is created. You can pass either a
+        program name or a list of programs to `exec()`.
     layout:
-        The name of default layout for this group (e.g. ``"max"``). This is the name
-        specified for a particular layout in ``config.py`` or if not defined it defaults
+        The name of default layout for this group (e.g. `"max"`). This is the name
+        specified for a particular layout in `config.py` or if not defined it defaults
         in general to the class name in all lower case.
     layouts:
         The group layouts list overriding global layouts. Use this to define a separate
@@ -717,7 +717,7 @@ class Group:
         The position of this group.
     label:
         The display name of the group. Use this to define a display name other than name
-        of the group. If set to ``None``, the display name is set to the name.
+        of the group. If set to `None`, the display name is set to the name.
 
     """
 
@@ -788,7 +788,7 @@ class ScratchPad(Group):
         The display name of the :class:`ScratchPad` group. Defaults to the empty string
         such that the group is hidden in :class:`~libqtile.widget.GroupBox` widget.
     single:
-        If ``True``, only one of the dropdowns will be visible at a time.
+        If `True`, only one of the dropdowns will be visible at a time.
 
     """
 
@@ -829,7 +829,7 @@ class Match:
     against and returns a boolean.
 
     For some properties, :class:`Match` supports both regular expression objects (i.e.
-    the result of ``re.compile()``) or strings (match as an exact string). If a
+    the result of `re.compile()`) or strings (match as an exact string). If a
     window matches all specified values, it is considered a match.
 
     Parameters
@@ -848,7 +848,7 @@ class Match:
         Match against the _NET_WM_PID atom (X11) or PID (Wayland).
     func:
         Delegate the match to the given function, which receives the tested client as an
-        argument and must return ``True`` if it matches, ``False`` otherwise.
+        argument and must return `True` if it matches, `False` otherwise.
     wid:
         Match against the window ID. This is a unique ID given to each window.
 
@@ -1035,8 +1035,8 @@ class DropDown(configurable.Configurable):
             "warp_pointer",
             True,
             "Shall pointer warp to center of window on activation? "
-            "This only has effect if any of the ``on_focus_lost_xxx`` options are "
-            "``True``",
+            "This only has effect if any of the `on_focus_lost_xxx` options are "
+            "`True`",
         ),
         (
             "match",

@@ -65,7 +65,7 @@ class LaunchBar(base._Widget):
 
     Text will displayed when no icon is found.
 
-    Optional requirements: `pyxdg <https://pypi.org/project/pyxdg/>`__ for finding the icon path if it is not provided in the ``progs`` tuple.
+    Optional requirements: [pyxdg](https://pypi.org/project/pyxdg/)_ for finding the icon path if it is not provided in the ``progs`` tuple.
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
