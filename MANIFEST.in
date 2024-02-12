@@ -4,6 +4,7 @@ include README.rst
 include MANIFEST.in
 include CONTRIBUTING.md
 include .pre-commit-config.yaml
+include builder.py
 
 exclude .coveragerc
 exclude .pylintrc

@@ -324,8 +324,8 @@ class Drawer:
         )
         return textlayout
 
-    def max_layout_size(self, texts, font_family, font_size):
-        sizelayout = self.textlayout("", "ffffff", font_family, font_size, None)
+    def max_layout_size(self, texts, font_family, font_size, markup=False):
+        sizelayout = self.textlayout("", "ffffff", font_family, font_size, None, markup=markup)
         widths, heights = [], []
         for i in texts:
             sizelayout.text = i

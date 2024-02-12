@@ -115,8 +115,8 @@ class Config:
                     continue
 
                 # Check if the module is in the config folder or subfolder
-                # if so, reload it
-                if folder in subpath.parents:
+                # and the file still exists.  If so, reload it
+                if folder in subpath.parents and subpath.exists():
                     importlib.reload(module)
 
     def load(self):

@@ -425,6 +425,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_start_drag(self, _listener: Listener, wlr_drag: Drag) -> None:
         logger.debug("Signal: seat start_drag")
+        self._release_implicit_grab()
         if not wlr_drag.icon:
             return
         self.live_dnd = wlrq.Dnd(self, wlr_drag)
@@ -646,7 +647,7 @@ class Core(base.Core, wlrq.HasListeners):
             handled = self._process_cursor_button(button, pressed)
 
         if not handled:
-            if self._pressed_button_count == 1 and found:
+            if self._pressed_button_count == 1 and found and not self.live_dnd:
                 win, surface, sx, sy = found
                 if surface:
                     self._create_implicit_grab(event.time_msec, surface, sx, sy)
@@ -956,6 +957,11 @@ class Core(base.Core, wlrq.HasListeners):
                 self.output_layout.add(wlr_output, state.x, state.y)
                 wlr_output.set_transform(state.transform)
                 wlr_output.set_scale(state.scale)
+                # Ensure we have cursors loaded for the new scale factor.
+                self.cursor_manager.load(state.scale)
+                # Rescale the cursor if necessary
+                if not self.seat.pointer_state.focused_surface:
+                    self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
             else:
                 if wlr_output.enabled:
                     wlr_output.enable(enable=False)
@@ -1197,10 +1203,10 @@ class Core(base.Core, wlrq.HasListeners):
 
         assert self.qtile is not None
 
-        for win in self.qtile.windows_map.values():
-            if not isinstance(win, window.Window):
-                continue
-
+        managed_wins = [
+            w for w in self.qtile.windows_map.values() if isinstance(w, window.Window)
+        ]
+        for win in managed_wins:
             group = None
             if win.group:
                 if win.group.name in self.qtile.groups_map:
@@ -1342,8 +1348,6 @@ class Core(base.Core, wlrq.HasListeners):
                 win.bring_to_front()
             elif self.qtile.config.bring_front_click == "floating_only":
                 if isinstance(win, base.Window) and win.floating:
-                    win.bring_to_front()
-                elif isinstance(win, base.Static):
                     win.bring_to_front()
 
             if isinstance(win, window.Static):

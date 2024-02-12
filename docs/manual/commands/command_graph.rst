@@ -61,11 +61,11 @@ We can access the "info" command on the current group like so:
 
 To access a specific group, regardless of whether or not it is current, we use
 the Python mapping lookup syntax. This command sends group "b" to screen 1 (by
-the :meth:`libqtile.config.Group.to_screen` method):
+the :meth:`libqtile.config.Group.toscreen` method):
 
 .. code-block:: python
 
-    c.group["b"].to_screen(1)
+    c.group["b"].toscreen(1)
 
 In different contexts, it is possible to access a default object, where in
 other contexts a key is required.  From the root of the graph, the current

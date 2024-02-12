@@ -22,7 +22,7 @@ Example
     groups = [
         Group("a"),
         Group("b"),
-        Group("c", matches=[Match(wm_class=["Firefox"])]),
+        Group("c", matches=[Match(wm_class="Firefox")]),
     ]
 
     # allow mod3+1 through mod3+0 to bind to groups; if you bind your groups

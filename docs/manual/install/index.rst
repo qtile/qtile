@@ -57,9 +57,7 @@ only the dependencies of one of these is required.
 +-------------------+-------------------------+-----------------------------------------+
 | CFFI_             | python3-cffi            | Bars and popups                         |
 +-------------------+-------------------------+-----------------------------------------+
-| cairocffi_        | python3-cairocffi       | Drawing on bars and popups (if using    |
-|                   |                         | X11 install xcffib BEFORE installing    |
-|                   |                         | cairocffi, see below)                   |
+| cairocffi_        | python3-cairocffi       | Drawing on bars and popups              |
 +-------------------+-------------------------+-----------------------------------------+
 | libpangocairo     | libpangocairo-1.0-0     | Writing on bars and popups              |
 +-------------------+-------------------------+-----------------------------------------+
@@ -93,20 +91,6 @@ only the dependencies of one of these is required.
 .. _dbus-next: https://python-dbus-next.readthedocs.io/en/latest/index.html
 
 
-cairocffi
----------
-
-Qtile uses cairocffi_ for drawing on status bars and popup windows. Under X11,
-cairocffi requires XCB support via xcffib, which you should be sure to have
-installed **before** installing cairocffi; otherwise, the needed cairo-xcb
-bindings will not be built. Once you've got the dependencies installed, you can
-use the latest version on PyPI:
-
-.. code-block:: bash
-
-    pip install --no-cache-dir cairocffi
-
-
 Qtile
 -----
 
@@ -131,11 +115,7 @@ Or install qtile-git with:
     git clone https://github.com/qtile/qtile.git
     cd qtile
     pip install .
-
-As long as the necessary libraries are in place, this can be done at any point,
-however, it is recommended that you first install xcffib to ensure the
-cairo-xcb bindings are built (X11 only) (see above).
-
+    pip install --config-setting backend=wayland .  # adds wayland dependencies
 
 .. _starting-qtile:
 

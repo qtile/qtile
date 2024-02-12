@@ -140,7 +140,7 @@ class Pomodoro(base.ThreadPoolText):
         else:
             self.layout.colour = self.color_break
 
-        time_string = "%i:%i:%s" % (
+        time_string = "%d:%02d:%02d" % (
             time_left.seconds // 3600,
             time_left.seconds % 3600 // 60,
             time_left.seconds % 60,

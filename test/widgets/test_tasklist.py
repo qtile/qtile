@@ -165,6 +165,22 @@ def test_tasklist_custom_markup(tasklist_manager):
     assert widget.info()["text"] == "One|Two"
 
 
+@configure_tasklist(markup_focused="({})", markup_focused_floating="[{}]")
+def test_tasklist_focused_and_floating(tasklist_manager):
+    widget = tasklist_manager.c.widget["tasklist"]
+
+    tasklist_manager.test_window("One")
+    tasklist_manager.test_window("Two")
+    assert widget.info()["text"] == "One|(Two)"
+
+    # Test floating
+    tasklist_manager.c.window.toggle_floating()
+    assert widget.info()["text"] == "One|[Two]"
+
+    tasklist_manager.c.window.toggle_floating()
+    assert widget.info()["text"] == "One|(Two)"
+
+
 @configure_tasklist(margin=0)
 def test_tasklist_click_task(tasklist_manager):
     tasklist_manager.test_window("One")
@@ -195,3 +211,15 @@ def test_tasklist_bad_theme_mode(tasklist_manager, logger):
 def test_tasklist_no_xdg(tasklist_manager, logger):
     msgs = [rec.msg for rec in logger.get_records("setup")]
     assert "You must install pyxdg to use theme icons." in msgs
+
+
+@configure_tasklist(stretch=False)
+def test_tasklist_no_stretch(tasklist_manager):
+    widget = tasklist_manager.c.widget["tasklist"]
+    tasklist_manager.test_window("One")
+    width_one = widget.info()["width"]
+
+    tasklist_manager.test_window("Two")
+    width_two = widget.info()["width"]
+
+    assert width_one != width_two

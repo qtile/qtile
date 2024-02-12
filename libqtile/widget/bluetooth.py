@@ -677,3 +677,20 @@ class Bluetooth(base._TextBox, base.MarginMixin):
         self._line_index = 0
         self.show_adapter = False
         self.refresh()
+
+    def finalize(self):
+        """Remove dbus signal handlers before finalising."""
+        # Clearing dicts will call the __del__ method on the stored objects
+        # which has been defined to remove signal handlers
+        self.devices.clear()
+        self.adapters.clear()
+
+        # Remove object manager's handlers
+        self.object_manager.off_interfaces_added(self._interface_added)
+        self.object_manager.off_interfaces_removed(self._interface_removed)
+
+        # Disconnect the bus connection
+        self.bus.disconnect()
+        self.bus = None
+
+        base._TextBox.finalize(self)

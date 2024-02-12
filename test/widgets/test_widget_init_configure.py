@@ -58,6 +58,7 @@ extras = [
 
 # To skip a test entirely, list the widget class here
 no_test = [widgets.Mirror, widgets.PulseVolume]  # Mirror requires a reflection object
+no_test += [widgets.ImapWidget]  # Requires a configured username
 
 # To test a widget only under one backend, list the widget class here
 exclusive_backend = {
