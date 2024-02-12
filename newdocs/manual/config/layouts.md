@@ -1,6 +1,4 @@
-=======
-Layouts
-=======
+# Layouts
 
 A layout is an algorithm for laying out windows in a group on your screen.
 Since Qtile is a tiling window manager, this usually means that we try to use
@@ -14,15 +12,13 @@ the next and previous layouts.
 
 See :ref:`ref-layouts` for a listing of available layouts.
 
+## Example
 
-Example
-=======
+```python
+from libqtile import layout
 
-::
-
-    from libqtile import layout
-
-    layouts = [
-        layout.Max(),
-        layout.Stack(stacks=2)
-    ]
+layouts = [
+    layout.Max(),
+    layout.Stack(stacks=2)
+]
+```

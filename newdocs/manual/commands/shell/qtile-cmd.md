@@ -42,7 +42,8 @@ result in an error.
 
 ### Output of `qtile cmd-obj -h`
 
-```
+```console
+$ qtile cmd-obj -h
 usage: qtile cmd-obj [-h] [--object OBJ_SPEC [OBJ_SPEC ...]]
                     [--function FUNCTION] [--args ARGS [ARGS ...]] [--info]
 
@@ -72,7 +73,8 @@ Examples:
 
 ### Output of `qtile cmd-obj -o group 3`
 
-```
+```console
+$ qtile cmd-obj -o group 3
 -o group 3 -f commands            Returns a list of possible commands for this object
 -o group 3 -f doc               * Returns the documentation for a specified command name
 -o group 3 -f eval              * Evaluates code in the same context as this function
@@ -93,7 +95,8 @@ Examples:
 
 ### Output of `qtile cmd-obj -o cmd`
 
-```
+```console
+$ qtile cmd-obj -o cmd
 -o cmd -f add_rule              * Add a dgroup rule, returns rule_id needed to remove it
 -o cmd -f addgroup              * Add a group with the given name
 -o cmd -f commands                Returns a list of possible commands for this object

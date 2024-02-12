@@ -1,6 +1,4 @@
-
-The Command Graph
-=================
+# The Command Graph
 
 The objects in Qtile's command graph come in eight flavours, matching the eight
 basic components of the window manager: `layouts`, `windows`, `groups`,
@@ -23,11 +21,11 @@ Let's look at an example, starting at the root node. The following script runs
 the `status` command on the root node, which, in this case, is represented by
 the `InteractiveCommandClient` object:
 
-.. code-block:: python
-
-    from libqtile.command.client import InteractiveCommandClient
-    c = InteractiveCommandClient()
-    print(c.status())
+```python
+from libqtile.command.client import InteractiveCommandClient
+c = InteractiveCommandClient()
+print(c.status())
+```
 
 The `InteractiveCommandClient` is a class that allows us to traverse the
 command graph using attributes to select child nodes or commands.  In this
@@ -40,11 +38,11 @@ An alternative is to use the `CommandClient`, which allows for a more precise
 resolution of command graph objects, but is not as easy to interact with from a
 REPL:
 
-.. code-block:: python
-
-    from libqtile.command.client import CommandClient
-    c = CommandClient()
-    print(c.call("status")())
+```python
+from libqtile.command.client import CommandClient
+c = CommandClient()
+print(c.call("status")())
+```
 
 Like the interactive client, the command client will automatically connect to a
 running Qtile instance.  Here, we first resolve the `status()` command with
@@ -55,17 +53,17 @@ For the rest of this example, we will use the interactive command client.  From
 the graph, we can see that the root node holds a reference to `group` nodes.
 We can access the "info" command on the current group like so:
 
-.. code-block:: python
-
-    c.group.info()
+```python
+c.group.info()
+```
 
 To access a specific group, regardless of whether or not it is current, we use
 the Python mapping lookup syntax. This command sends group "b" to screen 1 (by
 the :meth:`libqtile.config.Group.to_screen` method):
 
-.. code-block:: python
-
-    c.group["b"].to_screen(1)
+```python
+c.group["b"].to_screen(1)
+```
 
 In different contexts, it is possible to access a default object, where in
 other contexts a key is required.  From the root of the graph, the current
@@ -77,25 +75,24 @@ With this context, we can now drill down deeper in the graph, following the
 edges in the graphic above. To access the screen currently displaying group
 "b", we can do this:
 
-.. code-block:: python
-
-    c.group["b"].screen.info()
+```python
+c.group["b"].screen.info()
+```
 
 Be aware, however, that group "b" might not currently be displayed. In that
 case, it has no associated screen, the path resolves to a non-existent
 node, and we get an exception:
 
-.. code-block:: python
-
-    libqtile.command.CommandError: No object screen in path 'group['b'].screen'
-
+```python
+libqtile.command.CommandError: No object screen in path 'group['b'].screen'
+```
 
 The graph is not a tree, since it can contain cycles. This path (redundantly)
 specifies the group belonging to the screen that belongs to group "b":
 
-.. code-block:: python
-
-    c.group["b"].screen.group
+```python
+c.group["b"].screen.group
+```
 
 This amount of connectivity makes it easy to reach out from a given object when
 callbacks and events fire on that object to related objects.

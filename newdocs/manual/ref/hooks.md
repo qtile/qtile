@@ -1,7 +1,3 @@
-.. _ref-hooks:
-
-==============
-Built-in Hooks
-==============
+# Built-in Hooks
 
 .. qtile_hooks:: libqtile.hook.subscribe

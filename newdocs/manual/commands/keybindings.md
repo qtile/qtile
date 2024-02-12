@@ -19,7 +19,8 @@ This script accepts a configuration file and an output directory. If no
 argument is given, the default configuration will be used and files will be
 placed in same directory where the command has been run.
 
-```
+```console
+$ ./scripts/gen-keybinding-img
 usage: gen-keybinding-img [-h] [-c CONFIGFILE] [-o OUTPUT_DIR]
 
 Qtile keybindings image generator

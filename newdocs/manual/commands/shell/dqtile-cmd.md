@@ -10,8 +10,8 @@ A Rofi/dmenu interface to qtile-cmd. Accepts all arguments of qtile-cmd.
 
 ### Output of `dqtile-cmd -h`
 
-```
-dqtile-cmd
+```console
+$ dqtile-cmd
 
 A Rofi/dmenu interface to qtile-cmd. Excepts all arguments of qtile-cmd
 (see below).

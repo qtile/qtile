@@ -1,16 +1,13 @@
-=========================
-Command graph development
-=========================
+# Command graph development
 
 This page provides further detail on how Qtile's command graph works.
-If you just want to script your Qtile window manager the :doc:`earlier information <index>`, in
-addition to the documentation on the :doc:`available commands <api/index>` should be enough to get started.
+If you just want to script your Qtile window manager the [earlier information](index.md), in
+addition to the documentation on the [available commands](api/index.md) should be enough to get started.
 
 To develop the Qtile manager itself, we can dig into how Qtile represents these objects,
 which will lead to the way the commands are dispatched.
 
-Client-Server Scripting Model
-=============================
+## Client-Server Scripting Model
 
 Qtile has a client-server control model - the main Qtile instance listens on a
 named pipe, over which marshalled command calls and response data is passed.
@@ -21,12 +18,10 @@ establishes a connection to the currently running instance of Qtile.  A
 `libqtile.command.client.InteractiveCommandClient` can use this connection to dispatch
 commands to the running instance.  Commands then appear as methods with the
 appropriate signature on the `InteractiveCommandClient` object.  The object hierarchy is
-described in the :ref:`commands-api` section of this manual. Full
-command documentation is available through the :ref:`Qtile Shell
-<qtile-shell>`.
+described in the [Commands API][commands-api] section of this manual. Full
+command documentation is available through the [Qtile Shell][qtile-shell].
 
-Digging Deeper: Command Objects
-===============================
+## Digging Deeper: Command Objects
 
 All of the configured objects setup by Qtile are `CommandObject` subclasses.
 These objects are so named because we can issue commands against them using the
@@ -51,8 +46,7 @@ iteratively selecting objects.  A selector like `[("group", "b"), ("screen",
 None)]` would be to first resolve group "b", then the screen associated to the
 group.
 
-The Command Graph
-=================
+## The Command Graph
 
 In order to help in specifying command objects, there is the abstract command
 graph structure.  The command graph structure allows us to address any valid
@@ -80,10 +74,7 @@ to represent, as the graph is just a representation of a traversal of the real
 objects in a running Qtile window manager.  In order to tie the running Qtile
 instance to the abstract command graph, we move on to the command interface.
 
-.. _command-interface:
-
-Executing graph commands: Command Interface
-===========================================
+## Executing graph commands: Command Interface
 
 The `CommandInterface` is what lets us take an abstract call on the command
 graph and resolve it against a running command object.  Put another way, this
@@ -114,8 +105,7 @@ lazy execution, the `LazyCommandInterface` instead returns a `LazyCall`
 which is able to be resolved later by the running Qtile instance when it is
 configured to fire.
 
-Tying it together: Command Client
-=================================
+## Tying it together: Command Client
 
 So far, we have our running Command Objects and the Command Interface to
 dispatch commands against these objects as well as the Command Graph structure
@@ -139,14 +129,14 @@ traversing by accessing properties and performing key lookups.
 Returning to our examples above, we now have the full context to see what is
 going on when we call:
 
-.. code-block:: python
-
-    from libqtile.command.client import CommandClient
-    c = CommandClient()
-    print(c.call("status")())
-    from libqtile.command.client import InteractiveCommandClient
-    c = InteractiveCommandClient()
-    print(c.status())
+```python
+from libqtile.command.client import CommandClient
+c = CommandClient()
+print(c.call("status")())
+from libqtile.command.client import InteractiveCommandClient
+c = InteractiveCommandClient()
+print(c.status())
+```
 
 In both cases, the command clients are constructed with the default command
 interface, which sets up an IPC connection to the running Qtile instance, and
