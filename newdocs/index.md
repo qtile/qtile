@@ -17,4 +17,4 @@ questions, you can find support in the following places:
 - **IRC**: irc://irc.oftc.net:6667/qtile
 - **Discord**: https://discord.gg/ehh233wCrC (Bridged with IRC)
 - **Q&A**: https://github.com/qtile/qtile/discussions/categories/q-a
-- **Mailing** List: https://groups.google.com/group/qtile-dev
+- **Mailing List**: https://groups.google.com/group/qtile-dev
