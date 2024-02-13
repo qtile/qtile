@@ -184,7 +184,8 @@ class Drag(Mouse):
     warp_pointer:
         A :class:`bool` indicating if the pointer should be warped to the bottom right of the window
         at the start of dragging. (Default: `False`)
-
+    end:
+        A :class:`LazyCall` object to be evaluated when dragging finishes. (Optional)
     """
 
     def __init__(
@@ -194,9 +195,11 @@ class Drag(Mouse):
         *commands: LazyCall,
         start: LazyCall | None = None,
         warp_pointer: bool = False,
+        end: LazyCall | None = None,
     ) -> None:
         super().__init__(modifiers, button, *commands)
         self.start = start
+        self.end = end
         self.warp_pointer = warp_pointer
 
     def __repr__(self) -> str:
@@ -363,13 +366,20 @@ class EzDrag(EzConfig, Drag):
         A list :class:`LazyCall` objects to evaluate in sequence upon drag.
     start:
         A :class:`LazyCall` object to be evaluated when dragging begins. (Optional)
-
+    end:
+        A :class:`LazyCall` object to be evaluated when dragging finishes. (Optional)
     """
 
-    def __init__(self, btndef: str, *commands: LazyCall, start: LazyCall | None = None) -> None:
+    def __init__(
+        self,
+        btndef: str,
+        *commands: LazyCall,
+        start: LazyCall | None = None,
+        end: LazyCall | None = None,
+    ) -> None:
         modkeys, button = self.parse(btndef)
         button = "Button%s" % button
-        super().__init__(modkeys, button, *commands, start=start)
+        super().__init__(modkeys, button, *commands, start=start, end=end)
 
 
 class ScreenRect:
