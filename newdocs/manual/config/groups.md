@@ -34,7 +34,7 @@ dgroups_key_binder = simple_key_binder("mod3")
 
 .. qtile_class:: libqtile.config.Group
 
-.. autofunction:: libqtile.dgroups.simple_key_binder
+::: libqtile.dgroups.simple_key_binder
 
 ## Group Matching
 
@@ -51,7 +51,7 @@ group which acts as a container for :class:`~libqtile.config.DropDown`
 configurations. A :class:`~libqtile.config.DropDown` can be configured to spawn
 a defined process and bind thats process' window to it. The associated window
 can then be shown and hidden by the lazy command :meth:`dropdown_toggle` (see
-:ref:`lazy`) from the ScratchPad group.  Thus - for example - your favorite
+[lazy objects][lazy-objects]) from the ScratchPad group.  Thus - for example - your favorite
 terminal emulator turns into a quake-like terminal by the control of Qtile.
 
 If the DropDown window turns visible it is placed as a floating window on top

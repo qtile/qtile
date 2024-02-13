@@ -158,9 +158,7 @@ class Mpd2(base.ThreadPoolText):
     mouse_buttons:
         A dict of mouse button numbers to actions
 
-    Widget requirements: python-mpd2_.
-
-    .. _python-mpd2: https://pypi.org/project/python-mpd2/
+    Widget requirements: [python-mpd2](https://pypi.org/project/python-mpd2/).
     """
 
     defaults = [

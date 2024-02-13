@@ -2,12 +2,26 @@
 
 ## Default configuration
 
-<!-- don't delete LS_PNG and END_LS_PNG (it is used for `make genkeyimg`) -->
-<!-- LS_PNG -->
-![kb](_static/keybindings/mod4.png)
-![kb](_static/keybindings/mod4-shift.png)
-![kb](_static/keybindings/mod4-control.png)
-<!-- END_LS_PNG -->
+<!-- ```python exec="1"
+import os
+import sys
+import subprocess
+from pathlib import Path
+
+config_dir = Path(os.environ['MKDOCS_CONFIG_DIR'])
+gen_keybinding_img = config_dir / "scripts", "gen-keybinding-img"
+output_dir = config_dir / "newdocs" / "_static" / "keybindings"
+subprocess.run(
+    [sys.executable, str(gen_keybinding_img), "-o", str(output_dir)],
+    capture_output=True,
+    check=False,
+)
+``` -->
+
+```bash exec="1"
+cd "${MKDOCS_CONFIG_DIR}/newdocs"
+find _static/keybindings/* | awk '{ print length, $$0 }' | sort -n | cut -d" " -f2- | awk '{print "![image](../../../" $$1 ")"}'
+```
 
 ## Generate your own images
 

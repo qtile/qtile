@@ -2,7 +2,7 @@
 
 The `screens` configuration variable is where the physical screens, their
 associated `bars`, and the `widgets` contained within the bars are defined
-(see :ref:`ref-widgets` for a listing of available widgets). 
+(see [built-in widgets][built-in-widgets] for a listing of available widgets). 
 
 ## Example
 

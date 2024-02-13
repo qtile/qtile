@@ -20,10 +20,10 @@ a minimum.
 The graph and object commands are used in a number of
 different places:
 
-* Commands can be [bound to keys][config-keys] in the Qtile
+* Commands can be [bound to keys][keys] in the Qtile
   configuration file using the `lazy` interface.
 * Commands can be called from a script using one of the various
-  [available interfaces][scripting-interfaces] to interact with Qtile from Python or shell scripts.
+  [available interfaces][interfaces] to interact with Qtile from Python or shell scripts.
 
 A couple of additional options are available if you are looking for more
 interactive access:

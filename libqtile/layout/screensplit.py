@@ -96,11 +96,10 @@ class ScreenSplit(Layout):
     the name of the split and the relevant layout. Scrolling up and down on the widget will
     change the active split.
 
-    .. note::
-
-        While keybindings will be passed to the active split's layout, bindings using the
-        ``.when(layout=...)``` syntax will not be applied as the primary layout is
-        ``ScreenSplit``.
+    NOTE:
+    While keybindings will be passed to the active split's layout, bindings using the
+    ``.when(layout=...)``` syntax will not be applied as the primary layout is
+    ``ScreenSplit``.
     """
 
     defaults = [

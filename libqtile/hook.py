@@ -207,18 +207,18 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
+        import os
+        import subprocess
 
-          import os
-          import subprocess
-
-          from libqtile import hook
+        from libqtile import hook
 
 
-          @hook.subscribe.startup_once
-          def autostart():
-              script = os.path.expanduser("~/.config/qtile/autostart.sh")
-              subprocess.run([script])
+        @hook.subscribe.startup_once
+        def autostart():
+            script = os.path.expanduser("~/.config/qtile/autostart.sh")
+            subprocess.run([script])
+        ```
 
         """,
     ),
@@ -238,17 +238,17 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
+        import subprocess
 
-          import subprocess
-
-          from libqtile import hook
-          from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
 
-          @hook.subscribe.startup
-          def run_every_startup():
-              send_notification("qtile", "Startup")
+        @hook.subscribe.startup
+        def run_every_startup():
+            send_notification("qtile", "Startup")
+        ```
 
         """,
     ),
@@ -266,17 +266,17 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
+        import subprocess
 
-          import subprocess
-
-          from libqtile import hook
-          from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
 
-          @hook.subscribe.startup_complete
-          def run_every_startup():
-              send_notification("qtile", "Startup complete")
+        @hook.subscribe.startup_complete
+        def run_every_startup():
+            send_notification("qtile", "Startup complete")
+        ```
 
         """,
     ),
@@ -298,18 +298,18 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
+        import os
+        import subprocess
 
-          import os
-          import subprocess
-
-          from libqtile import hook
+        from libqtile import hook
 
 
-          @hook.subscribe.shutdown
-          def autostart:
-              script = os.path.expanduser("~/.config/qtile/shutdown.sh")
-              subprocess.run([script])
+        @hook.subscribe.shutdown
+        def autostart:
+            script = os.path.expanduser("~/.config/qtile/shutdown.sh")
+            subprocess.run([script])
+        ```
 
         """,
     ),
@@ -327,15 +327,15 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
-          from libqtile import hook
-          from libqtile.utils import send_notification
 
-
-          @hook.subscribe.restart
-          def run_every_startup():
-              send_notification("qtile", "Restarting...")
+        @hook.subscribe.restart
+        def run_every_startup():
+            send_notification("qtile", "Restarting...")
+        ```
 
         """,
     ),
@@ -355,16 +355,16 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-          from libqtile import hook
-          from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
 
-          @hook.subscribe.setgroup
-          def setgroup():
-              send_notification("qtile", "Group set")
-
+        @hook.subscribe.setgroup
+        def setgroup():
+            send_notification("qtile", "Group set")
+        ```
         """,
     ),
     Hook(
@@ -378,15 +378,16 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-          from libqtile import hook
-          from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
 
-          @hook.subscribe.addgroup
-          def group_added(group_name):
-              send_notification("qtile", f"New group added: {group_name}")
+        @hook.subscribe.addgroup
+        def group_added(group_name):
+            send_notification("qtile", f"New group added: {group_name}")
+        ```
 
         """,
     ),
@@ -401,15 +402,16 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-          from libqtile import hook
-          from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
 
-          @hook.subscribe.delgroup
-          def group_deleted(group_name):
-              send_notification("qtile", f"Group deleted: {group_name}")
+        @hook.subscribe.delgroup
+        def group_deleted(group_name):
+            send_notification("qtile", f"Group deleted: {group_name}")
+        ```
 
         """,
     ),
@@ -430,15 +432,16 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-          from libqtile import hook
-          from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
 
-          @hook.subscribe.changegroup
-          def change_group():
-              send_notification("qtile", "Change group event")
+        @hook.subscribe.changegroup
+        def change_group():
+            send_notification("qtile", "Change group event")
+        ```
 
         """,
     ),
@@ -454,15 +457,16 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-          from libqtile import hook
-          from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
 
-          @hook.subscribe.focus_change
-          def focus_changed():
-              send_notification("qtile", "Focus changed.")
+        @hook.subscribe.focus_change
+        def focus_changed():
+            send_notification("qtile", "Focus changed.")
+        ```
 
         """,
     ),
@@ -478,15 +482,16 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-          from libqtile import hook
-          from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
 
-          @hook.subscribe.float_change
-          def float_change():
-              send_notification("qtile", "Window float state changed.")
+        @hook.subscribe.float_change
+        def float_change():
+            send_notification("qtile", "Window float state changed.")
+        ```
 
         """,
     ),
@@ -501,15 +506,16 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-          from libqtile import hook
-          from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
 
-          @hook.subscribe.group_window_add
-          def group_window_add(group, window):
-              send_notification("qtile", f"Window {window.name} added to {group.name}")
+        @hook.subscribe.group_window_add
+        def group_window_add(group, window):
+            send_notification("qtile", f"Window {window.name} added to {group.name}")
+        ```
 
         """,
     ),
@@ -527,17 +533,18 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-            from libqtile import hook
+        from libqtile import hook
 
 
-            @hook.subscribe.client_new
-            def new_client(client):
-                if client.name == "xterm":
-                    client.togroup("a")
-                elif client.name == "dzen":
-                    client.static(0)
+        @hook.subscribe.client_new
+        def new_client(client):
+            if client.name == "xterm":
+                client.togroup("a")
+            elif client.name == "dzen":
+                client.static(0)
+        ```
 
         """,
     ),
@@ -555,14 +562,15 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-            from libqtile import hook
-            from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
-            @hook.subscribe.client_managed
-            def client_managed(client):
-                send_notification("qtile", f"{client.name} has been managed by qtile")
+        @hook.subscribe.client_managed
+        def client_managed(client):
+            send_notification("qtile", f"{client.name} has been managed by qtile")
+        ```
 
         """,
     ),
@@ -577,14 +585,15 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-            from libqtile import hook
-            from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
-            @hook.subscribe.client_killed
-            def client_killed(client):
-                send_notification("qtile", f"{client.name} has been killed")
+        @hook.subscribe.client_killed
+        def client_killed(client):
+            send_notification("qtile", f"{client.name} has been killed")
+        ```
 
         """,
     ),
@@ -599,14 +608,15 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-            from libqtile import hook
-            from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
-            @hook.subscribe.client_focus
-            def client_focus(client):
-                send_notification("qtile", f"{client.name} has been focused")
+        @hook.subscribe.client_focus
+        def client_focus(client):
+            send_notification("qtile", f"{client.name} has been focused")
+        ```
 
         """,
     ),
@@ -621,14 +631,15 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-            from libqtile import hook
-            from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
-            @hook.subscribe.client_mouse_enter
-            def client_mouse_enter(client):
-                send_notification("qtile", f"Mouse has entered {client.name}")
+        @hook.subscribe.client_mouse_enter
+        def client_mouse_enter(client):
+            send_notification("qtile", f"Mouse has entered {client.name}")
+        ```
 
         """,
     ),
@@ -643,17 +654,18 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-            from libqtile import hook
-            from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
-            @hook.subscribe.client_name_updated
-            def client_name_updated(client):
-                send_notification(
-                    "qtile",
-                    f"Client's has been updated to {client.name}"
-                )
+        @hook.subscribe.client_name_updated
+        def client_name_updated(client):
+            send_notification(
+                "qtile",
+                f"Client's has been updated to {client.name}"
+            )
+        ```
 
         """,
     ),
@@ -668,17 +680,18 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-            from libqtile import hook
-            from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
-            @hook.subscribe.client_urgent_hint_changed
-            def client_urgency_change(client):
-                send_notification(
-                    "qtile",
-                    f"{client.name} has changed its urgency state"
-                )
+        @hook.subscribe.client_urgent_hint_changed
+        def client_urgency_change(client):
+            send_notification(
+                "qtile",
+                f"{client.name} has changed its urgency state"
+            )
+        ```
 
         """,
     ),
@@ -695,17 +708,18 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-            from libqtile import hook
-            from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
-            @hook.subscribe.layout_change
-            def layout_change(layout, group):
-                send_notification(
-                    "qtile",
-                    f"{layout.name} is now on group {group.name}"
-                )
+        @hook.subscribe.layout_change
+        def layout_change(layout, group):
+            send_notification(
+                "qtile",
+                f"{layout.name} is now on group {group.name}"
+            )
+        ```
         """,
     ),
     Hook(
@@ -722,14 +736,15 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-            from libqtile import hook
-            from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
-            @hook.subscribe.net_wm_icon_change
-            def icon_change(client):
-                send_notification("qtile", f"{client.name} has changed its icon")
+        @hook.subscribe.net_wm_icon_change
+        def icon_change(client):
+            send_notification("qtile", f"{client.name} has changed its icon")
+        ```
 
         """,
     ),
@@ -751,17 +766,18 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-            from libqtile import hook
-            from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
-            @hook.subscribe.selection_notify
-            def selection_notify(name, selection):
-                send_notification(
-                    "qtile",
-                    f"Window {selection['owner']} has made a selection in the {name} selection."
-                )
+        @hook.subscribe.selection_notify
+        def selection_notify(name, selection):
+            send_notification(
+                "qtile",
+                f"Window {selection['owner']} has made a selection in the {name} selection."
+            )
+        ```
 
         """,
     ),
@@ -784,17 +800,18 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-            from libqtile import hook
-            from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
-            @hook.subscribe.selection_change
-            def selection_change(name, selection):
-                send_notification(
-                    "qtile",
-                    f"Window {selection['owner']} has changed the {name} selection."
-                )
+        @hook.subscribe.selection_change
+        def selection_change(name, selection):
+            send_notification(
+                "qtile",
+                f"Window {selection['owner']} has changed the {name} selection."
+            )
+        ```
 
         """,
     ),
@@ -803,13 +820,12 @@ hooks: list[Hook] = [
         """
         Called when the output configuration is changed (e.g. via randr in X11).
 
-        .. note::
-
-          If you have `reconfigure_screens = True` in your config then qtile
-          will automatically reconfigure your screens when it detects a change to the
-          screen configuration. This hook is fired *before* that reconfiguration takes
-          place. The `screens_reconfigured` hook should be used where you want to trigger
-          an event after the reconfiguration.
+        NOTE:
+        If you have `reconfigure_screens = True` in your config then qtile
+        will automatically reconfigure your screens when it detects a change to the
+        screen configuration. This hook is fired *before* that reconfiguration takes
+        place. The `screens_reconfigured` hook should be used where you want to trigger
+        an event after the reconfiguration.
 
         **Arguments**
 
@@ -817,14 +833,15 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-            from libqtile import hook
-            from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
-            @hook.subscribe.screen_change
-            def screen_change(event):
-                send_notification("qtile", "Screen change detected.")
+        @hook.subscribe.screen_change
+        def screen_change(event):
+            send_notification("qtile", "Screen change detected.")
+        ```
 
         """,
     ),
@@ -840,14 +857,15 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-            from libqtile import hook
-            from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
-            @hook.subscribe.screens_reconfigured
-            def screen_reconf():
-                send_notification("qtile", "Screens have been reconfigured.")
+        @hook.subscribe.screens_reconfigured
+        def screen_reconf():
+            send_notification("qtile", "Screens have been reconfigured.")
+        ```
 
         """,
     ),
@@ -862,14 +880,15 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-            from libqtile import hook
-            from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
-            @hook.subscribe.current_screen_change
-            def screen_change():
-                send_notification("qtile", "Current screen change detected.")
+        @hook.subscribe.current_screen_change
+        def screen_change():
+            send_notification("qtile", "Current screen change detected.")
+        ```
 
         """,
     ),
@@ -887,14 +906,15 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-            from libqtile import hook
-            from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
-            @hook.subscribe.enter_chord
-            def enter_chord(chord_name):
-                send_notification("qtile", "Started {chord_name} key chord.")
+        @hook.subscribe.enter_chord
+        def enter_chord(chord_name):
+            send_notification("qtile", "Started {chord_name} key chord.")
+        ```
 
         """,
     ),
@@ -909,14 +929,15 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-            from libqtile import hook
-            from libqtile.utils import send_notification
+        from libqtile import hook
+        from libqtile.utils import send_notification
 
-            @hook.subscribe.leave_chord
-            ded leave_chord():
-                send_notification("qtile", "Key chord exited")
+        @hook.subscribe.leave_chord
+        ded leave_chord():
+            send_notification("qtile", "Key chord exited")
+        ```
 
         """,
     ),
@@ -957,14 +978,13 @@ hooks: list[Hook] = [
         In addition, closing a laptop lid will ignore inhibitors by default. You can override this
         by setting `LidSwitchIgnoreInhibited=no` in `/etc/systemd/logind.conf`.
 
-        .. important::
-
-            The logind service creates an inhibitor by passing a reference to a lock file which must
-            be closed to release the lock. Additional references to the lock may be created if you
-            spawn processes with the `subprocess` module and these processes are running when
-            the machine tries to suspend. As a result, it is strongly recommended that you launch
-            any processes with `qtile.spawn(...)` as this will not create additional copies of the
-            lock.
+        IMPORTANT:
+        The logind service creates an inhibitor by passing a reference to a lock file which must
+        be closed to release the lock. Additional references to the lock may be created if you
+        spawn processes with the `subprocess` module and these processes are running when
+        the machine tries to suspend. As a result, it is strongly recommended that you launch
+        any processes with `qtile.spawn(...)` as this will not create additional copies of the
+        lock.
 
         **Arguments**
 
@@ -972,15 +992,15 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
+        from libqtile import hook, qtile
 
-          from libqtile import hook, qtile
 
-
-          @hook.subscribe.suspend
-          def lock_on_sleep():
-              # Run screen locker
-              qtile.spawn("/path/to/screen_locker")
+        @hook.subscribe.suspend
+        def lock_on_sleep():
+            # Run screen locker
+            qtile.spawn("/path/to/screen_locker")
+        ```
 
         """,
         _suspend_func,
@@ -997,29 +1017,29 @@ hooks: list[Hook] = [
 
         Example:
 
-        .. code:: python
+        ```python
 
-          from libqtile import hook
-          from libqtile.log_utils import logger
+        from libqtile import hook
+        from libqtile.log_utils import logger
 
-          @hook.subscribe.user("my_custom_hook")
-          def hooked_function():
-            logger.warning("Custom hook received.")
+        @hook.subscribe.user("my_custom_hook")
+        def hooked_function():
+        logger.warning("Custom hook received.")
+        ```
 
         The external script can then call the hook with the following command:
 
-        .. code::
+        ```bash
+        qtile cmd-obj -o cmd -f fire_user_hook -a my_custom_hook
+        ```
 
-          qtile cmd-obj -o cmd -f fire_user_hook -a my_custom_hook
-
-        .. note::
-
-          If the script will be run by a different user then you will need to pass the path to the socket
-          file used by the current process. One way to achieve this is to specify a path for the socket when starting
-          qtile e.g. `qtile start -s /tmp/qtile.socket`.
-          When firing the hook, you should then call
-          `qtile cmd-obj -o cmd -f fire_user_hook -a my_custom_hook -s /tmp/qtile.socket`
-          However, the same socket will need to be passed wherever you run `qtile cmd-obj` or `qtile shell`.
+        NOTE:
+        If the script will be run by a different user then you will need to pass the path to the socket
+        file used by the current process. One way to achieve this is to specify a path for the socket when starting
+        qtile e.g. `qtile start -s /tmp/qtile.socket`.
+        When firing the hook, you should then call
+        `qtile cmd-obj -o cmd -f fire_user_hook -a my_custom_hook -s /tmp/qtile.socket`
+        However, the same socket will need to be passed wherever you run `qtile cmd-obj` or `qtile shell`.
 
         """,
         _user_hook_func,

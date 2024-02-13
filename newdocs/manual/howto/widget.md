@@ -364,7 +364,7 @@ def _setup_hooks(self):
     hook.subscribe.setgroup(self._wincount)
 ```
 
-Read the :ref:`ref-hooks` page for details of which hooks are available and which arguments
+Read the [built-in hooks][built-in-hooks] page for details of which hooks are available and which arguments
 are passed to the callback function.
 
 ### Using dbus
@@ -549,7 +549,7 @@ Basic initialisation and configurations (using defaults) will automatically be t
 However, where possible, it is strongly encouraged that widgets include additional unit
 tests that test specific functionality of the widget (e.g. reaction to hooks).
 
-See :ref:`unit-testing` for more.
+See [Unit testing][unit-testing] for more.
 
 ### Documentation
 

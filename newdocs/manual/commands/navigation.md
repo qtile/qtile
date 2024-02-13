@@ -8,12 +8,12 @@ the selector is optional (i.e. if it can be omitted to select the default object
 
 Object | Key | Optional? | Example
 ------ | --- | --------- | -------
-[`bar`][libqtile.bars] | `"top"`, `"bottom"`[^1] | No | `c.screen.bar["bottom"]`
-[`group`][libqtile.groups] | Name string | Yes | `c.group["one"]`<br>`c.group`
-[`layout`][libqtile.layouts] | Integer index | Yes | `c.layout[2]`<br>`c.layout`
-[`screen`][libqtile.screens] | Integer index | Yes | `c.screen[1]`<br>`c.screen`
-[`widget`][libqtile.widgets] | Widget name[^2] | No | `c.widget["textbox"]`
-[`window`][libqtile.windows] | Integer window ID | Yes | `c.window[123456]`<br>`c.window`
+[`bar`][libqtile.bar] | `"top"`, `"bottom"`[^1] | No | `c.screen.bar["bottom"]`
+[`group`][libqtile.group] | Name string | Yes | `c.group["one"]`<br>`c.group`
+[`layout`][libqtile.layout] | Integer index | Yes | `c.layout[2]`<br>`c.layout`
+[`screen`][libqtile.screen] | Integer index | Yes | `c.screen[1]`<br>`c.screen`
+[`widget`][libqtile.widget] | Widget name[^2] | No | `c.widget["textbox"]`
+[`window`][libqtile.window] | Integer window ID | Yes | `c.window[123456]`<br>`c.window`
 [`core`][libqtile.backend] | No | n/a | `c.core`
 
 [^1]:

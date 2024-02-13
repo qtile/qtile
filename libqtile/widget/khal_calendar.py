@@ -54,9 +54,7 @@ class KhalCalendar(base.ThreadPoolText):
     qtile status bar. Appointments within the "reminder" time will be
     highlighted.
 
-    Widget requirements: dateutil_.
-
-    .. _dateutil: https://pypi.org/project/python-dateutil/
+    Widget requirements: [dateutil](https://pypi.org/project/python-dateutil/).
     """
 
     defaults = [

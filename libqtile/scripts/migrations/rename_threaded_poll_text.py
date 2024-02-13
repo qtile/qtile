@@ -42,21 +42,21 @@ class RenameThreadedPollText(_QtileMigrator):
 
     Example:
 
-    .. code:: python
+    ```python
+    from libqtile import widget
 
-        from libqtile import widget
-
-        class MyPollingWidget(widget.base.ThreadedPollText):
-            ...
+    class MyPollingWidget(widget.base.ThreadedPollText):
+        ...
+    ```
 
     Should be updated as follows:
 
-    .. code:: python
+    ```python
+    from libqtile import widget
 
-        from libqtile import widget
-
-        class MyPollingWidget(widget.base.ThreadPoolText):
-            ...
+    class MyPollingWidget(widget.base.ThreadPoolText):
+        ...
+    ```
 
     """
 

@@ -6,9 +6,9 @@ When Qtile is running, it logs error messages (and other messages) to its log
 file. This is found at `~/.local/share/qtile/qtile.log`. This is the first
 place to check to see what is going on. If you are getting unexpected errors
 from normal usage or your configuration (and you're not doing something wacky)
-and believe you have found a bug, then please [report a bug][reporting].
+and believe you have found a bug, then please [report a bug][reporting-bugs].
 
-If you are [hacking on Qtile][hacking] and you want to debug your
+If you are [hacking on Qtile][hacking-on-qtile] and you want to debug your
 changes, this log is your best friend. You can send messages to the log from
 within libqtile by using the `logger`:
 
@@ -30,7 +30,7 @@ traceback of an error to the log. By sticking these amongst your changes you
 can look more closely at the effects of any changes you made to Qtile's
 internals.
 
-## X11: Capturing an ``xtrace``
+## X11: Capturing an `xtrace`
 
 Occasionally, a bug will be low level enough to require an `xtrace` of
 Qtile's conversations with the X server. To capture one of these, create an

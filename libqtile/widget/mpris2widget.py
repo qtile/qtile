@@ -107,9 +107,7 @@ class Mpris2(base._TextBox):
     Basic mouse controls are also available: button 1 = play/pause,
     scroll up = next track, scroll down = previous track.
 
-    Widget requirements: dbus-next_.
-
-    .. _dbus-next: https://pypi.org/project/dbus-next/
+    Widget requirements: [dbus-next](https://pypi.org/project/dbus-next/).
     """
 
     defaults = [

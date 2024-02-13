@@ -88,15 +88,15 @@ class InputConfig(configurable.Configurable):
     are used to match input devices, and the values are instances of this class with the
     desired settings. For example:
 
-    .. code-block:: python
+    ```python
+    from libqtile.backend.wayland import InputConfig
 
-        from libqtile.backend.wayland import InputConfig
-
-        wl_input_rules = {
-            "1267:12377:ELAN1300:00 04F3:3059 Touchpad": InputConfig(left_handed=True),
-            "*": InputConfig(left_handed=True, pointer_accel=True),
-            "type:keyboard": InputConfig(kb_options="ctrl:nocaps,compose:ralt"),
-        }
+    wl_input_rules = {
+        "1267:12377:ELAN1300:00 04F3:3059 Touchpad": InputConfig(left_handed=True),
+        "*": InputConfig(left_handed=True, pointer_accel=True),
+        "type:keyboard": InputConfig(kb_options="ctrl:nocaps,compose:ralt"),
+    }
+    ```
 
     When a input device is being configured, the most specific matching key in the
     dictionary is found and the corresponding settings are used to configure the device.

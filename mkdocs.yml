@@ -15,6 +15,7 @@ validation:
   unrecognized_links: warn
 
 nav:
+- index.md
 - Getting Started:
   - Installation:
     - manual/install/index.md
@@ -25,11 +26,27 @@ nav:
     - Slackware: manual/install/slackware.md
     - FreeBSD: manual/install/freebsd.md
     - NixOS: manual/install/nixos.md
-  - Wayland: manual/wayland.md
-  - Troubleshooting: manual/troubleshooting.md
-  - Entry points: manual/commands/shell/index.md
+  - Running Qtile:
+    - Gnome: manual/install/gnome.md
+    - systemd: manual/install/without-dm.md
+    - Wayland: manual/wayland.md
+    - Troubleshooting: manual/troubleshooting.md
+  - Entry points:
+    - manual/commands/shell/index.md
+    - manual/commands/shell/qtile-start.md
+    - manual/commands/shell/qtile-shell.md
+    - manual/commands/shell/qtile-migrate.md
+    - manual/commands/shell/qtile-cmd.md
+    - manual/commands/shell/qtile-run.md
+    - manual/commands/shell/qtile-top.md
+    - manual/commands/shell/dqtile-cmd.md
+    - manual/commands/shell/iqshell.md
 - Scripting:
-  - Architecture: manual/commands/index.md
+  - Architecture:
+    - manual/commands/index.md
+    - The Command Graph: manual/commands/command_graph.md
+    - Navigating the Command Graph: manual/commands/navigation.md
+    - Command Graph development: manual/commands/advanced.md
   - Interfaces: manual/commands/interfaces.md
   - Commands API:
     - manual/commands/api/index.md
@@ -43,7 +60,16 @@ nav:
     - Core: manual/commands/api/backend.md
 - Configuration:
   - Default configuration file: manual/config/default.md
-  - The configuration file: manual/config/index.md
+  - The configuration file:
+    - manual/config/index.md
+    - Configuration variables:
+      - Lazy objects: manual/config/lazy.md
+      - Groups: manual/config/groups.md
+      - Keys: manual/config/keys.md
+      - Layouts: manual/config/layouts.md
+      - Mouse: manual/config/mouse.md
+      - Screens: manual/config/screens.md
+      - Hooks: manual/config/hooks.md
   - Built-in Layouts: manual/ref/layouts.md
   - Built-in Widgets: manual/ref/widgets.md
   - Built-in Hooks: manual/ref/hooks.md
@@ -53,6 +79,7 @@ nav:
 - Hacking:
   - Hacking on Qtile: manual/hacking.md
   - Contributing: manual/contributing.md
+  - Migrations: manual/how-to-migrate.md
 - Miscellaneous:
   - Frequently Asked Questions: manual/faq.md
   - How to create a widget: manual/howto/widget.md
@@ -73,8 +100,8 @@ theme:
   - content.tooltips
   - navigation.footer
   - navigation.sections
-  # - navigation.tabs
-  # - navigation.tabs.sticky
+  - navigation.tabs
+  - navigation.tabs.sticky
   - navigation.top
   - search.highlight
   - search.suggest
@@ -102,6 +129,9 @@ theme:
 extra_css:
 - _static/material.css
 - _static/mkdocstrings.css
+
+hooks:
+- scripts/mkdocs_hooks.py
 
 markdown_extensions:
 - attr_list
@@ -149,6 +179,7 @@ plugins:
           docstring_section_style: list
           extensions:
           - scripts/griffe_extensions.py
+          - griffe_inherited_docstrings
           filters: ["!^_"]
           heading_level: 1
           inherited_members: true

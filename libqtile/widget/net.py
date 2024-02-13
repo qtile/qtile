@@ -33,9 +33,7 @@ class Net(base.ThreadPoolText):
     Displays interface down and up speed
 
 
-    Widget requirements: psutil_.
-
-    .. _psutil: https://pypi.org/project/psutil/
+    Widget requirements: [psutil](https://pypi.org/project/psutil/).
     """
 
     defaults = [

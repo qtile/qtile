@@ -128,7 +128,7 @@ Note from the last example that each navigation step must be called separately. 
 passed to `navigate()` are `node` and `selector`. `selector` is `None` when you wish to access
 the default object on that node (e.g. the current screen).
 
-More technical explanation about the python command clients can be found at [command-interface][].
+More technical explanation about the python command clients can be found at [Command Interface][executing-graph-commands-command-interface].
 
 ### InteractiveCommandClient
 

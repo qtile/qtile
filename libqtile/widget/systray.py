@@ -105,14 +105,14 @@ class Systray(base._Widget, window._Window):  # type: ignore[misc]
     Only one Systray widget is allowed. Adding additional Systray
     widgets will result in a ConfigError.
 
-    .. note::
-        Icons will not render correctly where the bar/widget is
-        drawn with a semi-transparent background. Instead, icons
-        will be drawn with a transparent background.
-
-        If using this widget it is therefore recommended to use
-        a fully opaque background colour or a fully transparent
-        one.
+    > NOTE:
+    > Icons will not render correctly where the bar/widget is
+    > drawn with a semi-transparent background. Instead, icons
+    > will be drawn with a transparent background.
+    >
+    > If using this widget it is therefore recommended to use
+    > a fully opaque background colour or a fully transparent
+    > one.
     """
 
     _instances = 0

@@ -7,7 +7,7 @@ This can be used standalone or in other shell scripts.
 
 `qtile cmd-obj` works by selecting a command object and calling a specified function of that object.
 
-As per [commands-api][], Qtile's command graph has seven nodes: `layout`, `window`, `group`,
+As per [Architecture][architecture], Qtile's command graph has seven nodes: `layout`, `window`, `group`,
 `bar`, `widget`, `screen`, and a special `root` node. These are the objects that can be accessed
 via `qtile cmd-obj` (NB the root node is called `cmd` when using the `cmd-obj` script to give it
 an addressable name).
@@ -19,9 +19,9 @@ arguments to be passed via the `-a` flag.
 ### Selecting an object
 
 With the exception of `cmd`, all objects need an identifier so the correct object can be selected. Refer to
-[object_graph_selectors][] for more information.
+[Navigating the command graph][navigating-the-command-graph] for more information.
 
-NOTE: You will see from the graph on [commands-api][] that certain objects can be accessed from other objects.
+NOTE: You will see from the graph on [Architecture][architecture] that certain objects can be accessed from other objects.
 For example, `qtile cmd-obj -o group term layout` will list the commands for the current layout on the
 `term` group.
 

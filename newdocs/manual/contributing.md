@@ -20,18 +20,18 @@ has two qualities:
 Ensure to include any appropriate log entries from
 `~/.local/share/qtile/qtile.log` and/or `~/.xsession-errors`!
 Sometimes, an `xtrace` is requested. If that is the case, refer to
-[capturing an xtrace][capturing-an-xtrace].
+[capturing an xtrace][x11-capturing-an-xtrace].
 
 ## Writing code
 
-To get started writing code for Qtile, check out our guide to :ref:`hacking`.
-A more detailed page on creating widgets is available :ref:`here <widget-creation>`.
+To get started writing code for Qtile, check out our guide to [Hacking on Qtile][hacking-on-qtile].
+A more detailed page on creating widgets is available [here][how-to-create-a-widget].
 
 > IMPORTANT:
 > Use a separate **git branch** to make rebasing easy. Ideally, you would
 > `git checkout -b <my_feature_branch_name>` before starting your work.
 > 
-> See also: :ref:`using git <using-git>`.
+> See also: [using `git`][using-git].
 
 ### Submit a pull request
 
@@ -51,7 +51,7 @@ to our [issue tracker](https://github.com/qtile/qtile/issues) on GitHub.
 >   *Please add unit tests* to ensure that your code works and stays working!
 > * **Documentation** updates on an as needed basis.
 > * A `qtile migrate` **migration** is required for config-breaking changes.
->   See [qtile-migrate](commands/shell/qtile-migrate) 
+>   See [qtile-migrate](commands/shell/qtile-migrate.md) 
 >   for current migrations and see below for further information.
 > * **Code** that does not include *unrelated changes*. Examples for this are
 >   formatting changes, replacing quotes or whitespace in other parts of the

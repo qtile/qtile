@@ -41,35 +41,35 @@ class RenamePacmanWidget(_QtileMigrator):
 
     Example:
 
-    .. code:: python
-
-      screens = [
-          Screen(
-              top=Bar(
-                  [
-                    ...
-                    widget.Pacman(),
-                    ...
-                  ]
-              )
-          )
-      ]
+    ```python
+    screens = [
+        Screen(
+            top=Bar(
+                [
+                ...
+                widget.Pacman(),
+                ...
+                ]
+            )
+        )
+    ]
+    ```
 
     Should be updated as follows:
 
-    .. code:: python
-
-      screens = [
-          Screen(
-              top=Bar(
-                  [
-                    ...
-                    widget.CheckUpdates(),
-                    ...
-                  ]
-              )
-          )
-      ]
+    ```python
+    screens = [
+        Screen(
+            top=Bar(
+                [
+                ...
+                widget.CheckUpdates(),
+                ...
+                ]
+            )
+        )
+    ]
+    ```
 
     """
 

@@ -28,7 +28,7 @@ a system tray, and a clock.
 The default configuration has several more advanced key combinations, but the
 above should be enough for basic usage of qtile.
 
-See :ref:`Keybindings in images <keybinding-img>` for visual
+See [Keybindings in images][keybindings-in-images] for visual
 keybindings in keyboard layout.
 
 ## Defining Key Bindings

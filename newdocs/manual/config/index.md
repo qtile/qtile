@@ -21,7 +21,7 @@ config, if it doesn't exist yet, this one will be placed inside of
 
 ## Default Configuration
 
-The [default configuration][default_config]
+The [default configuration][default-config-file]
 is invoked when qtile cannot find a configuration file. In addition, if qtile
 is restarted or the config is reloaded, qtile will load the default
 configuration if the config file it finds has some kind of error in it. The
@@ -169,4 +169,4 @@ instance of Qtile from crashing if something goes wrong.
 [./scripts/xephyr]: https://github.com/qtile/qtile/blob/master/scripts/xephyr
 [./scripts/wephyr]: https://github.com/qtile/qtile/blob/master/scripts/wephyr
 
-See [Hacking Qtile][hacking] for more information on using Xephyr.
+See [Hacking Qtile][hacking-on-qtile] for more information on using Xephyr.

@@ -4,7 +4,7 @@ Some functionality may not yet be implemented in the Wayland compositor.
 Please see the [Wayland To Do List](https://github.com/qtile/qtile/discussions/2409)
 discussion for the current state of development.
 Also checkout the [unresolved Wayland-specific issues](https://github.com/qtile/qtile/issues?q=is%3Aissue+is%3Aopen+label%3A%22core%3A+wayland%22)
-and [troubleshooting][debugging-wayland] for tips on how to debug Wayland
+and [troubleshooting][debugging-in-wayland] for tips on how to debug Wayland
 problems.
 
 NOTE: We currently support wlroots>=0.16.0,<0.17.0 and pywlroots==0.16.4.
@@ -44,4 +44,4 @@ core's `set_keymap` command (see below).
 
 ## Core Commands
 
-See the [Wayland backend commands][wayland_backend_commands] section in the API Commands documentation.
+See the [Wayland backend commands][wayland-backend] section in the API Commands documentation.

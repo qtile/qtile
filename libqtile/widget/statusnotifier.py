@@ -616,12 +616,12 @@ class StatusNotifier(base._Widget):
 
     Left-clicking an icon will trigger an activate event.
 
-    .. note::
+    NOTE:
+    Context menus are not currently supported by the official widget.
+    However, a modded version of the widget which provides basic menu
+    support is available from elParaguayo's [qtile-extras][] repo.
 
-        Context menus are not currently supported by the official widget.
-        However, a modded version of the widget which provides basic menu
-        support is available from elParaguayo's `qtile-extras
-        <https://github.com/elParaguayo/qtile-extras>`_ repo.
+    [qtile-extras]: https://github.com/elParaguayo/qtile-extras
     """
 
     orientations = base.ORIENTATION_BOTH

@@ -113,14 +113,14 @@ class RunCommand(_Extension):
         An extension can inherit this class, define configured_command and use
         the process object by overriding this method and using super():
 
-        .. code-block:: python
+        ```python
+        def _configure(self, qtile):
+            Superclass._configure(self, qtile)
+            self.configured_command = "foo --bar"
 
-            def _configure(self, qtile):
-                Superclass._configure(self, qtile)
-                self.configured_command = "foo --bar"
-
-            def run(self):
-                process = super(Subclass, self).run()
+        def run(self):
+            process = super(Subclass, self).run()
+        ```
         """
         if self.configured_command:
             if isinstance(self.configured_command, str):

@@ -4,7 +4,7 @@ Qtile provides a mechanism for subscribing to certain events in `libqtile.hook`.
 To subscribe to a hook in your configuration, simply decorate a function with
 the hook you wish to subscribe to.
 
-See :ref:`ref-hooks` for a listing of available hooks.
+See [built-in hooks][built-in-hooks] for a listing of available hooks.
 
 ## Examples
 
@@ -28,7 +28,7 @@ def floating_dialogs(window):
 ```
 
 A list of available hooks can be found in the
-:ref:`Built-in Hooks <ref-hooks>` reference.
+[built-in hooks][built-in-hooks] reference.
 
 ## Autostart
 

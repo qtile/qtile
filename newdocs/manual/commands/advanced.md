@@ -18,7 +18,7 @@ establishes a connection to the currently running instance of Qtile.  A
 `libqtile.command.client.InteractiveCommandClient` can use this connection to dispatch
 commands to the running instance.  Commands then appear as methods with the
 appropriate signature on the `InteractiveCommandClient` object.  The object hierarchy is
-described in the [Commands API][commands-api] section of this manual. Full
+described in the [Commands API][architecture] section of this manual. Full
 command documentation is available through the [Qtile Shell][qtile-shell].
 
 ## Digging Deeper: Command Objects

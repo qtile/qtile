@@ -44,7 +44,7 @@ bar['bottom']> ls
 screen/  widget/
 ```
 
-Please refer to [object_graph_selectors][] for a summary of which objects need a
+Please refer to [Navigating the command graph][navigating-the-command-graph] for a summary of which objects need a
 specified selector and the type of selector required. Using `ls` will show
 which selectors are available for an object. Please see below for an explanation
 about how Qtile displays shell paths.
