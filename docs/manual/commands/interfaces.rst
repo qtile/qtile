@@ -118,7 +118,7 @@ CommandClient
 ~~~~~~~~~~~~~
 
 The ``CommandClient`` interface is a low-level python interface for accessing and navigating the
-command graph. The low-level nature means that navigation steps must be called explicityly,
+command graph. The low-level nature means that navigation steps must be called explicitly,
 rather than being inferred from the body of the calling command.
 
 For example:
