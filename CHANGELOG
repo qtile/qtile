@@ -1,5 +1,6 @@
 Qtile x.xx.x, released XXXX-XX-XX:
     * features
+      - Add `Touchpad` widget which shows current touchpad state and allows to easily toggle it
     * bugfixes
       - Fix groups marked with `persist=False` not being deleted when their last window is moved to another group.
 
