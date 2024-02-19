@@ -2,6 +2,10 @@ Qtile x.xx.x, released XXXX-XX-XX:
     * features
       - The Battery widget now supports dynamic charge control, allowing for
         protecting battery life.
+      - To support the above (plus the other widgets that modify sysfs), qtile
+        now ships with its own udev rules, located at
+        /resources/99-qtile.rules; distro packagers will probably want to
+        install this rule set.
     * bugfixes
       - Fix groups marked with `persist=False` not being deleted when their last window is moved to another group.
 
