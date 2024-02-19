@@ -99,6 +99,7 @@ from libqtile.backend.wayland.output import Output
 from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
+from libqtile.utils import QtileError
 
 try:
     # Continue if ffi not built, so that docs can be built without wayland deps.
@@ -392,6 +393,16 @@ class Core(base.Core, wlrq.HasListeners):
     @property
     def name(self) -> str:
         return "wayland"
+
+    @property
+    def active_keyboard(self) -> inputs.Keyboard | None:
+        keyboard = self.seat.get_keyboard()
+        if keyboard is not None:
+            for kb in self.keyboards:
+                if kb.keyboard._ptr == keyboard._ptr:
+                    return kb
+
+        return None
 
     def finalize(self) -> None:
         self.finalize_listeners()
@@ -1447,16 +1458,28 @@ class Core(base.Core, wlrq.HasListeners):
         """Get the output information"""
         return [output.get_screen_info() for output in self.get_enabled_outputs()]
 
+    def _get_sym_from_code(self, keycode: int) -> str:
+        keyboard = self.active_keyboard
+        if keyboard is None:
+            raise QtileError("Unable to grab keycode. No active keyboard found.")
+        return keyboard._state.key_get_one_sym(keycode)
+
     def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
         """Configure the backend to grab the key event"""
-        keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
+        if isinstance(key.key, str):
+            keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
+        else:
+            keysym = self._get_sym_from_code(key.key)
         mask_key = wlrq.translate_masks(key.modifiers)
         self.grabbed_keys.append((keysym, mask_key))
         return keysym, mask_key
 
     def ungrab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
         """Release the given key event"""
-        keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
+        if isinstance(key.key, str):
+            keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
+        else:
+            keysym = self._get_sym_from_code(key.key)
         mask_key = wlrq.translate_masks(key.modifiers)
         self.grabbed_keys.remove((keysym, mask_key))
         return keysym, mask_key

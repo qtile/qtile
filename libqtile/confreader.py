@@ -150,7 +150,7 @@ class Config:
         # because they are dynamically resolved from the default_config. so we
         # need to ignore the errors here about missing attributes.
         for k in self.keys:
-            if k.key.lower() not in valid_keys:
+            if isinstance(k.key, str) and k.key.lower() not in valid_keys:
                 raise ConfigError("No such key: %s" % k.key)
             for m in k.modifiers:
                 if m.lower() not in valid_mods:

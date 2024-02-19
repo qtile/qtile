@@ -239,6 +239,7 @@ class Keyboard(_Device):
                 layout=layout, options=options, variant=variant
             )
             self._keymaps[(layout, options, variant)] = keymap
+        self._state = keymap.state_new()
         self.keyboard.set_keymap(keymap)
 
     def _on_modifier(self, _listener: Listener, _data: Any) -> None:

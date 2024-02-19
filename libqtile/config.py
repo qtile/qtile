@@ -62,7 +62,8 @@ class Key:
         ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
         ``"mod4"``, ``"mod5"``.
     key:
-        A key specification, e.g. ``"a"``, ``"Tab"``, ``"Return"``, ``"space"``.
+        A key specification, e.g. ``"a"``, ``"Tab"``, ``"Return"``, ``"space"``. Also accepts
+        an integer value representing a keycode.
     commands:
         One or more :class:`LazyCall` objects to evaluate in sequence upon keypress. Multiple
         commands should be separated by commas.
@@ -76,7 +77,7 @@ class Key:
     def __init__(
         self,
         modifiers: list[str],
-        key: str,
+        key: str | int,
         *commands: LazyCall,
         desc: str = "",
         swallow: bool = True,
@@ -102,7 +103,8 @@ class KeyChord:
         ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
         ``"mod4"``, ``"mod5"``.
     key:
-        A key specification, e.g. ``"a"``, ``"Tab"``, ``"Return"``, ``"space"``.
+        A key specification, e.g. ``"a"``, ``"Tab"``, ``"Return"``, ``"space"``. Also accepts
+        an integer value representing a keycode.
     submappings:
         A list of :class:`Key` or :class:`KeyChord` declarations to bind in this chord.
     mode:
@@ -124,7 +126,7 @@ class KeyChord:
     def __init__(
         self,
         modifiers: list[str],
-        key: str,
+        key: str | int,
         submappings: list[Key | KeyChord],
         mode: bool | str = False,
         name: str = "",
