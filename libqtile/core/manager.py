@@ -483,8 +483,10 @@ class Qtile(CommandObject):
         Useful when a keyboard mapping event is received.
         """
         self.core.ungrab_keys()
-        for key in self.keys_map.values():
-            self.core.grab_key(key)
+        keys = self.keys_map.copy()
+        self.keys_map.clear()
+        for key in keys.values():
+            self.grab_key(key)
 
     def grab_key(self, key: Key | KeyChord) -> None:
         """Grab the given key event"""
@@ -1085,7 +1087,12 @@ class Qtile(CommandObject):
 
         def walk_binding(k: Key | KeyChord, mode: str) -> None:
             nonlocal rows
-            modifiers, name = ", ".join(k.modifiers), k.key
+            modifiers = ", ".join(k.modifiers)
+            if isinstance(k.key, int):
+                name = hex(k.key)
+            else:
+                name = k.key
+
             if isinstance(k, Key):
                 if not k.commands:
                     return

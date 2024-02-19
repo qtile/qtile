@@ -2,6 +2,8 @@ Qtile x.xx.x, released xxxx-xx-xx:
     * features
         - Make default `Plasma` add mode dynamic
         - Add `background` parameter to `Screen` to paint a solid colour background
+        - Add ability to use key codes to bind keys. Will benefit users who change keyboard layouts but
+          wish to retain same bindings, irrespective of layout.
 
     * bugfixes
       - Fix `Plasma` layout with `ScreenSplit` by implementing `get_windows`
