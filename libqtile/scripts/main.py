@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 from libqtile.log_utils import get_default_log, init_log
-from libqtile.scripts import check, cmd_obj, migrate, run_cmd, shell, start, top
+from libqtile.scripts import check, cmd_obj, migrate, run_cmd, shell, start, top, udev
 
 try:
     # Python>3.7 can get the version from importlib
@@ -61,6 +61,7 @@ def main():
     cmd_obj.add_subcommand(subparsers, [parent_parser])
     check.add_subcommand(subparsers, [parent_parser])
     migrate.add_subcommand(subparsers, [parent_parser])
+    udev.add_subcommand(subparsers, [parent_parser])
 
     # `qtile help` should print help
     def print_help(options):

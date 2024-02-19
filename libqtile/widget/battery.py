@@ -440,45 +440,8 @@ class Battery(base.ThreadPoolText):
         Key([mod, "shift"], "x", lazy.widget['battery'].charge_dynamically())
 
     note that this functionality requires qtile to be able to write to certain
-    files in sysfs. The easiest way to persist this across reboots is via a
-    udev rule that sets g+w and ownership of the relevant files to the `sudo`
-    group, assuming the user qtile runs as is in that group.
-
-    This is slightly complicated, since the chage_control_{start,end}_threshold
-    files are not created by the device driver itself, but by the particular
-    ACPI module for your laptop. If we try to do the chown/chmod when the
-    device is added in udev, the files won't be present yet. So, we have to do
-    it when the ACPI module for the laptop is loaded.
-
-    For thinkpads, the udev rule looks like:
-
-    .. code-block:: bash
-
-        cat <<'EOF' | sudo tee /etc/udev/rules.d/99-qtile-battery.rules
-        ACTION=="add" KERNEL=="thinkpad_acpi" RUN+="/home/tycho/config/bin/qtile-battery"
-        EOF
-
-    and the qtile-battery script looks like:
-
-    .. code-block:: bash
-
-        #!/bin/bash -eu
-
-        GROUP=sudo
-        die() {
-            echo "$@"
-            exit 1
-        }
-
-        set_ownership() {
-            chgrp "$GROUP" $1 2>&1
-            chmod g+w $1
-        }
-
-        [ $# -eq 0 ] || die "Usage: $0"
-
-        set_ownership /sys/class/power_supply/BAT*/charge_control_end_threshold
-        set_ownership /sys/class/power_supply/BAT*/charge_control_start_threshold
+    files in sysfs, so make sure that qtile's udev rules are installed
+    correctly.
     """
 
     background: ColorsType | None

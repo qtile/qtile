@@ -188,3 +188,41 @@ Similar to the xsession example above, a wayland session file can be used to sta
 from a login manager. To use this, you should create a `qtile-wayland.desktop
 <https://github.com/qtile/qtile/blob/master/resources/qtile-wayland.desktop>`_ file in
 ``/usr/share/wayland-sessions``.
+
+udev rules
+==========
+
+Qtile has widgets that support managing various kinds of hardware (LCD
+backlight, keyboard backlight, battery charge thresholds) via the kernel's
+exposed sysfs endpoints. However, to make this work, Qtile needs permission to
+write to these files. There is a udev rules file at
+``/resources/99-qtile.rules`` in the tree, which users installing from source
+will want to install at ``/etc/udev/rules.d/`` on their system. By default,
+this rules file changes the group of the relevant files to the ``sudo`` group,
+and changes the file mode to be g+w (i.e. writable by all members of the sudo
+group). The theory here is that most systems qtile is installed on will also
+have the primary user in the ``sudo`` group. However, you can change this to
+whatever you like with the ``--group`` argument; see the sample udev rules.
+
+Note that this file invokes Qtile's hidden ``udev`` from udevd, so udevd will
+need ``qtile`` in its ``$PATH``. For distro packaging this shouldn't be a
+problem, since /usr/bin is typically in udev's path. However, for users that
+installed from source, you may need to modify the udev script to be one that
+sources your virtualenv and then invokes qtile (or just invoke it via its
+hardcoded path if you installed it with ``--break-system-packages``), e.g.:
+
+.. code-block:: bash
+
+    # create a wrapper script that loads the right stuff from our home directory; since
+    # udev will run this script as root, it has no idea about how we've installed qtile
+    mkdir -p $HOME/.local/bin
+    tee $HOME/.local/bin/qtile-udev-wrapper <<- EOF
+    #!/bin/sh
+
+    export PYTHONPATH=$HOME/.local/lib/python$(python3 --version | awk -F '[ .]' '{print $2 "." $3}')/site-packages
+    $HOME/.local/bin/qtile $@
+    EOF
+
+    # copy the in-tree udev rules file to the right place to make udev see it,
+    # and change the rules to point at our wrapper script above.
+    sed "s,qtile,$HOME/.local/bin/qtile-udev-wrapper,g" ./resources/99-qtile.rules | sudo tee /etc/udev/rules.d/99-qtile.rules
