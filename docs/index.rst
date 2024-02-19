@@ -34,15 +34,6 @@ questions, you can find support in the following places:
 
 .. toctree::
     :maxdepth: 1
-    :caption: Scripting
-    :hidden:
-
-    manual/commands/index
-    manual/commands/interfaces
-    manual/commands/api/index
-
-.. toctree::
-    :maxdepth: 1
     :caption: Configuration
     :hidden:
 
@@ -54,6 +45,15 @@ questions, you can find support in the following places:
     manual/ref/extensions
     manual/commands/keybindings
     manual/stacking
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Scripting
+    :hidden:
+
+    manual/commands/index
+    manual/commands/interfaces
+    manual/commands/api/index
 
 .. toctree::
     :maxdepth: 1
