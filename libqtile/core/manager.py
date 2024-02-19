@@ -1034,7 +1034,7 @@ class Qtile(CommandObject):
         class FormatTable:
             def __init__(self) -> None:
                 self.max_col_size: list[int] = []
-                self.rows: list[list[str]] = []
+                self.rows: list[list[str | int]] = []
 
             def add(self, row: list[str]) -> None:
                 n = len(row) - len(self.max_col_size)
