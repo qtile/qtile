@@ -195,6 +195,13 @@ class StatusNotifierItem:  # noqa: E303
         if not self.icon:
             self.icon = self._get_xdg_icon(icon_name)
 
+        if not self.icon:
+            # Use fallback icon libqtile/resources/status_notifier/fallback_icon.png
+            logger.warning("Could not find icon for '%s'. Using fallback icon.", icon_name)
+            root = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-2])
+            path = os.path.join(root, "resources", "status_notifier", "fallback_icon.png")
+            self.icon = Img.from_path(path)
+
     def _create_task_and_draw(self, coro):
         task = create_task(coro)
         task.add_done_callback(self._redraw)
