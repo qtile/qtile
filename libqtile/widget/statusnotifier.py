@@ -620,6 +620,9 @@ class StatusNotifier(base._Widget):
     provide its own icon. In order to use this functionality, users
     are recommended to install the `pyxdg <https://pypi.org/project/pyxdg/>`__
     module to support retrieving icons from the selected theme.
+    If the icon specified by StatusNotifierItem can not be found in
+    the user's current theme and no other icons are provided by the
+    app, a fallback icon is used.
 
     Left-clicking an icon will trigger an activate event.
 
