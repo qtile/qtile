@@ -53,11 +53,19 @@ class Wlan(base.InLoopPollText):
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("interface", "wlan0", "The interface to monitor"),
-        ("ethernet_interface", "eth0", "The ethernet interface to monitor, NOTE: If you do not have a wlan device in your system, ethernet functionality will not work, use the Net widget instead"),
+        (
+            "ethernet_interface",
+            "eth0",
+            "The ethernet interface to monitor, NOTE: If you do not have a wlan device in your system, ethernet functionality will not work, use the Net widget instead",
+        ),
         ("update_interval", 1, "The update interval."),
         ("disconnected_message", "Disconnected", "String to show when the wlan is diconnected."),
         ("ethernet_message", "eth", "String to show when ethernet is being used"),
-        ("use_ethernet", False, "Activate or deactivate checking for ethernet when no wlan connection is detected"),
+        (
+            "use_ethernet",
+            False,
+            "Activate or deactivate checking for ethernet when no wlan connection is detected",
+        ),
         (
             "format",
             "{essid} {quality}/70",
@@ -77,16 +85,16 @@ class Wlan(base.InLoopPollText):
             if disconnected:
                 if self.use_ethernet:
                     try:
-                        with open(f"/sys/class/net/{self.ethernet_interface}/operstate", "r") as statfile:
-                            if (statfile.read().strip() == 'up'):
+                        with open(
+                            f"/sys/class/net/{self.ethernet_interface}/operstate", "r"
+                        ) as statfile:
+                            if statfile.read().strip() == "up":
                                 return self.ethernet_message
                             else:
                                 return self.disconnected_message
                     except FileNotFoundError:
                         if not self.ethernetInterfaceNotFound:
-                            logger.error(
-                                "Ethernet interface has not been found!"
-                            )
+                            logger.error("Ethernet interface has not been found!")
                             self.ethernetInterfaceNotFound = True
                         return self.disconnected_message
                 else:
