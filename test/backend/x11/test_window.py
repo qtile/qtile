@@ -1,14 +1,16 @@
 import os
 import subprocess
 import tempfile
+from multiprocessing import Value
 
 import pytest
 import xcffib.xproto
 import xcffib.xtest
 
 import libqtile.config
-from libqtile import layout, utils
+from libqtile import hook, layout, utils
 from libqtile.backend.x11 import window, xcbq
+from libqtile.backend.x11.xcbq import Connection
 from test.conftest import dualmonitor
 from test.helpers import (
     HEIGHT,
@@ -58,6 +60,60 @@ def test_change_state_via_message(xmanager, conn):
     conn.default_screen.root.send_event(ev, mask=xcffib.xproto.EventMask.SubstructureRedirect)
     conn.xsync()
     assert not xmanager.c.window.info()["minimized"]
+
+
+class UrgentConfig(BareConfig):
+    focus_on_window_activation = "urgent"
+
+
+class SmartConfig(BareConfig):
+    focus_on_window_activation = "smart"
+
+
+@dualmonitor
+def test_urgent_hook_fire(manager_nospawn):
+    manager_nospawn.display = manager_nospawn.backend.env["DISPLAY"]
+    conn = Connection(manager_nospawn.display)
+
+    manager_nospawn.hook_fired = Value("i", 0)
+
+    def _hook_test(val):
+        manager_nospawn.hook_fired.value += 1
+
+    hook.subscribe.client_urgent_hint_changed(_hook_test)
+
+    manager_nospawn.start(UrgentConfig)
+
+    manager_nospawn.test_window("one")
+    window_info = manager_nospawn.c.window.info()
+
+    # send activate window message
+    data = xcffib.xproto.ClientMessageData.synthetic([0, 0, 0, 0, 0], "IIIII")
+    ev = xcffib.xproto.ClientMessageEvent.synthetic(
+        32, window_info["id"], conn.atoms["_NET_ACTIVE_WINDOW"], data
+    )
+    conn.default_screen.root.send_event(ev, mask=xcffib.xproto.EventMask.SubstructureRedirect)
+    conn.xsync()
+
+    manager_nospawn.terminate()
+    assert manager_nospawn.hook_fired.value == 1
+
+    # test that focus_on_window_activation = "smart" also fires the hook
+    manager_nospawn.start(SmartConfig, no_spawn=True)
+
+    manager_nospawn.test_window("one")
+    window_info = manager_nospawn.c.window.info()
+    manager_nospawn.c.window.toscreen(1)
+
+    # send activate window message
+    ev = xcffib.xproto.ClientMessageEvent.synthetic(
+        32, window_info["id"], conn.atoms["_NET_ACTIVE_WINDOW"], data
+    )
+    conn.default_screen.root.send_event(ev, mask=xcffib.xproto.EventMask.SubstructureRedirect)
+    conn.xsync()
+    manager_nospawn.terminate()
+
+    assert manager_nospawn.hook_fired.value == 2
 
 
 @manager_config

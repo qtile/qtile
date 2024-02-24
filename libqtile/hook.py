@@ -175,6 +175,12 @@ class Registry:
     def fire(self, event, *args, **kwargs):
         if event not in self.subscribe.hooks:
             raise utils.QtileError("Unknown event: %s" % event)
+        # We should check if the registry name is in the subscriptions dict
+        # A name can disappear if the config is reloaded (which clears subscriptions)
+        # but there are no hook subscriptions. This is not an issue for qtile core but
+        # third party libraries will need this to prevent KeyErrors when firing hooks
+        if self.name not in subscriptions:
+            subscriptions[self.name] = dict()
         for i in subscriptions[self.name].get(event, []):
             try:
                 if asyncio.iscoroutinefunction(i):
@@ -210,7 +216,7 @@ hooks: list[Hook] = [
 
 
           @hook.subscribe.startup_once
-          def autostart:
+          def autostart():
               script = os.path.expanduser("~/.config/qtile/autostart.sh")
               subprocess.run([script])
 
@@ -620,7 +626,7 @@ hooks: list[Hook] = [
             from libqtile import hook
             from libqtile.utils import send_notification
 
-            @hook.subscribe.client_killed
+            @hook.subscribe.client_mouse_enter
             def client_mouse_enter(client):
                 send_notification("qtile", f"Mouse has entered {client.name}")
 
@@ -839,8 +845,8 @@ hooks: list[Hook] = [
             from libqtile import hook
             from libqtile.utils import send_notification
 
-            @hook.subscribe.screen_change
-            def screen_change(event):
+            @hook.subscribe.screens_reconfigured
+            def screen_reconf():
                 send_notification("qtile", "Screens have been reconfigured.")
 
         """,
@@ -862,7 +868,7 @@ hooks: list[Hook] = [
             from libqtile.utils import send_notification
 
             @hook.subscribe.current_screen_change
-            def screen_change(event):
+            def screen_change():
                 send_notification("qtile", "Current screen change detected.")
 
         """,

@@ -400,7 +400,7 @@ class _Widget(CommandObject, configurable.Configurable):
         return Mirror(self, background=self.background)
 
     def clone(self):
-        return copy.copy(self)
+        return copy.deepcopy(self)
 
     def mouse_enter(self, x, y):
         pass
@@ -465,10 +465,9 @@ class _TextBox(_Widget):
         (
             "fmt",
             "{}",
-            "To format the string returned by the widget. For example, if the clock widget \
-             returns '08:46' we can do fmt='time {}' do print 'time 08:46' on the widget. \
-             To format the individual strings like hour and minutes use the format paramater \
-             of the widget (if it has one)",
+            "Format to apply to the string returned by the widget. Main purpose: applying markup. "
+            "For a widget that returns ``foo``, using ``fmt='<i>{}</i>'`` would give you ``<i>foo</i>``. "
+            "To control what the widget outputs in the first place, use the ``format`` paramater of the widget (if it has one).",
         ),
         ("max_chars", 0, "Maximum number of characters to display in widget."),
         (
@@ -960,7 +959,7 @@ class Mirror(_Widget):
         self._length = value
 
     def draw(self):
-        self.drawer.clear(self.reflects.background or self.bar.background)
+        self.drawer.clear_rect()
         self.reflects.drawer.paint_to(self.drawer)
         self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
 

@@ -1040,6 +1040,9 @@ class _Window:
             )
         )
 
+        # Remove any windows that aren't in the server's stack
+        windows = list(filter(lambda w: w[0].wid in stack, windows))
+
         # Sort this list to match stacking order reported by server
         windows.sort(key=lambda w: stack.index(w[0].wid))
 
@@ -1327,11 +1330,11 @@ class _Window:
         self.qtile.core._root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
         self._ungrab_click()
 
-        if self.group:
-            self.group.current_window = self
-
         # Check if we need to restack a previously focused fullscreen window
         self.qtile.core.check_stacking(self)
+
+        if self.group and self.group.current_window is not self:
+            self.group.focus(self)
 
         hook.fire("client_focus", self)
 
@@ -2006,7 +2009,16 @@ class Window(_Window, base.Window):
             if self.group.screen:
                 # for floats remove window offset
                 self.x -= self.group.screen.x
+            group_ref = self.group
             self.group.remove(self)
+            if (
+                not self.qtile.dgroups.groups_map[group_ref.name].persist
+                and len(group_ref.windows) <= 1
+            ):
+                # set back original group so _del() can grab it
+                self.group = group_ref
+                self.qtile.dgroups._del(self)
+                self.group = None
 
         if group.screen and self.x < group.screen.x:
             self.x += group.screen.x
@@ -2132,6 +2144,7 @@ class Window(_Window, base.Window):
                 logger.debug("Focusing window by pager")
                 self.qtile.current_screen.set_group(self.group)
                 self.group.focus(self)
+                self.bring_to_front()
             else:  # XCB_EWMH_CLIENT_SOURCE_TYPE_OTHER
                 focus_behavior = self.qtile.config.focus_on_window_activation
                 if focus_behavior == "focus":
@@ -2151,9 +2164,11 @@ class Window(_Window, base.Window):
                     else:  # self.group.screen != self.qtile.current_screen:
                         logger.debug("Setting urgent flag for window")
                         self.urgent = True
+                        hook.fire("client_urgent_hint_changed", self)
                 elif focus_behavior == "urgent":
                     logger.debug("Setting urgent flag for window")
                     self.urgent = True
+                    hook.fire("client_urgent_hint_changed", self)
                 elif focus_behavior == "never":
                     logger.debug("Ignoring focus request (focus_on_window_activation='never')")
                 else:

@@ -32,6 +32,8 @@ def widget(monkeypatch):
         percent=0.5,
         power=15.0,
         time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
     )
 
     monkeypatch.setattr("libqtile.widget.battery.load_battery", dummy_load_battery(loaded_bat))

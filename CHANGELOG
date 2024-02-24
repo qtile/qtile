@@ -1,6 +1,14 @@
 Qtile x.xx.x, released XXXX-XX-XX:
+    * features
+      - The Battery widget now supports dynamic charge control, allowing for
+        protecting battery life.
+    * bugfixes
+      - Fix groups marked with `persist=False` not being deleted when their last window is moved to another group.
+
+Qtile 0.24.0, released 2024-01-20:
     !!! config breakage/changes !!!
       - Matches no longer use "include/substring" style matching. But match the string exactly. Previously on X11, if the WM_TYPE of a spawned window is e.g. dialog a match with wm_type dialognoonereadschangelogs would return true. Additionally a window with an empty WM_CLASS (which can happen) would match anything. If you rely this style of substring matching, pass a regex to your match or use a function with func=.
+        Using a list of strings inside Match with role, title, wm_class, wm_instance_class, wm_type are also deprecated, use a regex. Right now we replace the property with a regex if it's a list and warn with a deprecation message. You can use "qtile migrate" to migrate your config to this.
     * features
       - Change how `tox` runs tests. See https://docs.qtile.org/en/latest/manual/contributing.html#running-tests-locally
       for more information on how to run tests locally.
@@ -20,6 +28,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
       - Fix two bugs in stacking transient windows in X11
       - Checking configs containing `qtile.core.name` with `python config.py` don't fail anymore (but `qtile.core.name`
         will be `None`)
+      - Fix an error if a wayland xwindow has unknown wm_type
 
 Qtile 0.23.0, released 2023-09-24:
     !!! Dependency Changes !!!

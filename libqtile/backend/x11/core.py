@@ -241,9 +241,11 @@ class Core(base.Core):
 
         if not initial:
             # We are just reloading config
-            for win in self.qtile.windows_map.values():
-                if type(win) is window.Window:
-                    win.set_group()
+            managed_wins = [
+                w for w in self.qtile.windows_map.values() if isinstance(w, window.Window)
+            ]
+            for managed_win in managed_wins:
+                managed_win.set_group()
             return
 
         # Qtile just started - scan for clients

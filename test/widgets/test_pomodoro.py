@@ -80,7 +80,7 @@ def test_pomodoro(fake_qtile, fake_window):
 
     # Left clicking toggles state
     widget.toggle_break()
-    assert widget.poll() == f"{PREFIX_ACTIVE}0:15:0"
+    assert widget.poll() == f"{PREFIX_ACTIVE}0:15:00"
     assert widget.layout.colour == COLOR_ACTIVE
 
     # Another left click should pause
@@ -91,33 +91,33 @@ def test_pomodoro(fake_qtile, fake_window):
     widget.toggle_break()
     # Add 5 mins should take 5 mins off our timer
     MockDatetime._adjustment += timedelta(minutes=5)
-    assert widget.poll() == f"{PREFIX_ACTIVE}0:10:0"
+    assert widget.poll() == f"{PREFIX_ACTIVE}0:10:00"
     assert widget.layout.colour == COLOR_ACTIVE
 
     # Add 10 mins should take us to end of first pomodoro
     # So we get a short break between pomodori
     MockDatetime._adjustment += timedelta(minutes=10)
-    assert widget.poll() == f"{PREFIX_BREAK}0:5:0"
+    assert widget.poll() == f"{PREFIX_BREAK}0:05:00"
     assert widget.layout.colour == COLOR_BREAK
 
     # Add 5 mins should take us to start of second pomodoro
     MockDatetime._adjustment += timedelta(minutes=5)
-    assert widget.poll() == f"{PREFIX_ACTIVE}0:15:0"
+    assert widget.poll() == f"{PREFIX_ACTIVE}0:15:00"
     assert widget.layout.colour == COLOR_ACTIVE
 
     # Add 15 mins should take us to end of second pomodoro
     # and start of long break (as there are only two pomodori)
     MockDatetime._adjustment += timedelta(minutes=15)
-    assert widget.poll() == f"{PREFIX_LONG_BREAK}0:10:0"
+    assert widget.poll() == f"{PREFIX_LONG_BREAK}0:10:00"
     assert widget.layout.colour == COLOR_BREAK
 
     # Move forward so we're at start of next pomodoro
     MockDatetime._adjustment += timedelta(minutes=10)
-    assert widget.poll() == f"{PREFIX_ACTIVE}0:15:0"
+    assert widget.poll() == f"{PREFIX_ACTIVE}0:15:00"
 
     # Advance into pomodoro
     MockDatetime._adjustment += timedelta(minutes=10)
-    assert widget.poll() == f"{PREFIX_ACTIVE}0:5:0"
+    assert widget.poll() == f"{PREFIX_ACTIVE}0:05:00"
 
     # Right-click toggles active state
     widget.toggle_active()
@@ -125,4 +125,4 @@ def test_pomodoro(fake_qtile, fake_window):
 
     # Right-click again resets status
     widget.toggle_active()
-    assert widget.poll() == f"{PREFIX_ACTIVE}0:15:0"
+    assert widget.poll() == f"{PREFIX_ACTIVE}0:15:00"
