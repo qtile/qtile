@@ -1225,7 +1225,9 @@ class Qtile(CommandObject):
             send_notification("Configuration check", "No error found!")
 
     @expose_command()
-    def spawn(self, cmd: str | list[str], shell: bool = False) -> int:
+    def spawn(
+        self, cmd: str | list[str], shell: bool = False, env: dict[str, str] = dict()
+    ) -> int:
         """
         Spawn a new process.
 
@@ -1236,6 +1238,8 @@ class Qtile(CommandObject):
         shell:
             Whether to execute the command in a new shell by prepending it with "/bin/sh
             -c". This enables the use of shell syntax within the command (e.g. pipes).
+        env:
+            Dictionary of environmental variables to pass with command.
 
         Examples
         ========
@@ -1287,6 +1291,9 @@ class Qtile(CommandObject):
                     del os.environ["VIRTUAL_ENV"]
                 except KeyError:
                     pass
+
+                for k, v in env.items():
+                    os.environ[k] = v
 
                 # Open /dev/null as stdin, stdout, stderr
                 try:
