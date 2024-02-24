@@ -83,7 +83,6 @@ class Inhibitor:
         for a sleep or wake signal.
         """
         if not has_dbus:
-            logger.warning("dbus-next is not installed. Cannot run inhibitor process.")
             return
 
         if not (self.sleep or self.resume):
