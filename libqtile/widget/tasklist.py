@@ -351,7 +351,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         return zip(windows, icons, names, width_boxes)
 
     def calculate_length(self):
-        width = 10
+        width = 0
         box_widths = [box[3] for box in self.calc_box_widths()]
         if box_widths:
             width += self.spacing * len(box_widths) - 1
