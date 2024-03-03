@@ -151,12 +151,12 @@ class StatusNotifierItem:  # noqa: E303
                 )
                 return False
 
-        await self._get_local_icon()
+        # Trying to get the local icon (first without fallback because there might be application-provided icons)
+        await self._get_local_icon(fallback=False)
 
         # If there's no XDG icon, try to use icon provided by application
         if self.icon:
             self.item.on_new_icon(self._update_local_icon)
-
         else:
             # Get initial application icons:
             for icon in ["Icon", "Attention", "Overlay"]:
@@ -172,10 +172,16 @@ class StatusNotifierItem:  # noqa: E303
             logger.warning(
                 "Cannot find icon in current theme and no icon provided by StatusNotifierItem."
             )
+            # No "local" icon and no application-provided icons are available.
+            # The "local" icon may be updated at a later time, so "_update_local_icon"
+            # gets registered for "on_new_icon" with the option to fall back to
+            # a default icon.
+            self.item.on_new_icon(self._update_local_icon)
+            await self._get_local_icon()
 
         return True
 
-    async def _get_local_icon(self):
+    async def _get_local_icon(self, fallback=True):
         # Default to XDG icon
         # Some implementations don't provide an IconName property so we
         # need to catch an error if we can't read it.
@@ -194,6 +200,13 @@ class StatusNotifierItem:  # noqa: E303
 
         if not self.icon:
             self.icon = self._get_xdg_icon(icon_name)
+
+        if not self.icon and fallback:
+            # Use fallback icon libqtile/resources/status_notifier/fallback_icon.png
+            logger.warning("Could not find icon for '%s'. Using fallback icon.", icon_name)
+            root = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-2])
+            path = os.path.join(root, "resources", "status_notifier", "fallback_icon.png")
+            self.icon = Img.from_path(path)
 
     def _create_task_and_draw(self, coro):
         task = create_task(coro)
@@ -613,6 +626,9 @@ class StatusNotifier(base._Widget):
     provide its own icon. In order to use this functionality, users
     are recommended to install the `pyxdg <https://pypi.org/project/pyxdg/>`__
     module to support retrieving icons from the selected theme.
+    If the icon specified by StatusNotifierItem can not be found in
+    the user's current theme and no other icons are provided by the
+    app, a fallback icon is used.
 
     Left-clicking an icon will trigger an activate event.
 
