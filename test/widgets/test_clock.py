@@ -43,11 +43,6 @@ class MockDatetime(datetime.datetime):
     def now(cls, *args, **kwargs):
         return cls(2021, 1, 1, 10, 20, 30)
 
-    def astimezone(self, tzone=None):
-        if tzone is None:
-            return self
-        return self + datetime.timedelta(hours=tzone)
-
 
 @pytest.fixture
 def patched_clock(monkeypatch):
@@ -75,7 +70,7 @@ def test_clock(fake_qtile, monkeypatch, fake_window):
 
 
 @pytest.mark.usefixtures("patched_clock")
-def test_clock_invalid_timezone(fake_qtile, monkeypatch, fake_window):
+def test_clock_invalid_timezone(fake_qtile, monkeypatch, fake_window, caplog):
     """test clock widget with invalid timezone (and no pytz or dateutil modules)"""
 
     class FakeDateutilTZ:
@@ -103,9 +98,11 @@ def test_clock_invalid_timezone(fake_qtile, monkeypatch, fake_window):
     fakebar = FakeBar([clk2], window=fake_window)
     clk2._configure(fake_qtile, fakebar)
 
-    # An invalid timezone current causes a TypeError
-    with pytest.raises(TypeError):
-        clk2.poll()
+    # An invalid timezone results in a log message
+    assert (
+        "Clock widget can not infer its timezone from a string without pytz or dateutil."
+        in caplog.text
+    )
 
 
 @pytest.mark.usefixtures("patched_clock")
@@ -127,7 +124,8 @@ def test_clock_datetime_timezone(fake_qtile, monkeypatch, fake_window):
     clock.dateutil = FakeDateutilTZ
 
     # Fake datetime module just adds the timezone value to the time
-    clk3 = clock.Clock(timezone=1)
+    tz = datetime.timezone(datetime.timedelta(hours=1))
+    clk3 = clock.Clock(timezone=tz)
 
     fakebar = FakeBar([clk3], window=fake_window)
     clk3._configure(fake_qtile, fakebar)
@@ -154,7 +152,8 @@ def test_clock_pytz_timezone(fake_qtile, monkeypatch, fake_window):
         # to show that this code is being run
         @classmethod
         def timezone(cls, value):
-            return int(value) + 1
+            hours = int(value) + 1
+            return datetime.timezone(datetime.timedelta(hours=hours))
 
     # We need pytz in the sys.modules dict
     monkeypatch.setitem(sys.modules, "pytz", True)
@@ -185,7 +184,8 @@ def test_clock_dateutil_timezone(fake_qtile, monkeypatch, fake_window):
         class TZ:
             @classmethod
             def gettz(cls, val):
-                return int(val) + 2
+                hours = int(val) + 2
+                return datetime.timezone(datetime.timedelta(hours=hours))
 
         tz = TZ
 
@@ -269,3 +269,27 @@ def test_clock_tick(manager_nospawn, minimal_conf_noscreen, monkeypatch):
     topbar = manager_nospawn.c.bar["top"]
     manager_nospawn.c.widget["clock"].eval("self.tick()")
     assert topbar.info()["widgets"][0]["text"] == "10:21"
+
+
+@pytest.mark.usefixtures("patched_clock")
+def test_clock_change_timezones(fake_qtile, monkeypatch, fake_window):
+    """test commands to change timezones"""
+
+    tz1 = datetime.timezone(datetime.timedelta(hours=1))
+    tz2 = datetime.timezone(-datetime.timedelta(hours=1))
+
+    # Pytz timezone must be a string
+    clk4 = clock.Clock(timezone=tz1)
+
+    fakebar = FakeBar([clk4], window=fake_window)
+    clk4._configure(fake_qtile, fakebar)
+    text = clk4.poll()
+    assert text == "11:20"
+
+    clk4.update_timezone(tz2)
+    text = clk4.poll()
+    assert text == "09:20"
+
+    clk4.use_system_timezone()
+    text = clk4.poll()
+    assert text == "10:20"
