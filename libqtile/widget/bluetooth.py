@@ -42,11 +42,14 @@ def _catch_dbus_error(msg):
     """Decorator to catch DBusErrors and log a message."""
 
     def _wrapper(func):
-        async def f(self):
+        async def f(self, *args, **kwargs):
             try:
-                await func(self)
+                await func(self, *args, **kwargs)
             except DBusError:
                 logger.warning(msg, self.name)
+            except BlockingIOError:
+                logger.debug("DBus resource is temporarily unavailable.")
+                pass
 
         return f
 
@@ -118,6 +121,7 @@ class BluetoothDevice(_BluetoothBase):
         await self.interface.call_pair()
         await self.connect()
 
+    @_catch_dbus_error("Unable to call action: %s.")
     async def action(self):
         """Helper method to call appropriate method based on device status."""
         if self.connected:
@@ -171,11 +175,13 @@ class BluetoothDevice(_BluetoothBase):
         self.battery_device = None
         self._battery = 0
 
+    @_catch_dbus_error("Unable to get battery device: %s.")
     async def get_battery(self):
         proxy = await self.widget.get_proxy(self.path)
         with contextlib.suppress(InterfaceNotFoundError):
             self.battery_device = proxy.get_interface(BLUEZ_BATTERY)
 
+    @_catch_dbus_error("Unable to update properties: %s.")
     async def update_props(self, setup=False):
         """Refresh all the properties for the device."""
         # Some devices don't report a name so we fall back to the device address
@@ -262,12 +268,14 @@ class BluetoothAdapter(_BluetoothBase):
     def name(self):
         return self._name
 
+    @_catch_dbus_error("Unable to update discovery status: %s.")
     async def discover(self):
         if self.discovering:
             await self.stop_discovery()
         else:
             await self.start_discovery()
 
+    @_catch_dbus_error("Unable to update properties: %s.")
     async def update_props(self, setup=False):
         self._discovering = await self.interface.get_discovering()
         self._powered = await self.interface.get_powered()
