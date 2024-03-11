@@ -34,6 +34,7 @@ from libqtile.bar import Bar
 def no_op(*args, **kwargs):
     pass
 
+
 def mock_open(output):
     class MockOpen:
         def __init__(self, *args):
@@ -49,6 +50,7 @@ def mock_open(output):
             return self.output
 
     return MockOpen
+
 
 class MockIwlib(ModuleType):
     DATA = {
@@ -99,6 +101,7 @@ def test_wlan_display(minimal_conf_noscreen, manager_nospawn, patched_wlan, kwar
 
     text = manager_nospawn.c.bar["top"].info()["widgets"][0]["text"]
     assert text == expected
+
 
 @pytest.mark.parametrize(
     "kwargs,state,expected",
