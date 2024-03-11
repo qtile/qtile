@@ -9,6 +9,7 @@ import functools
 import logging
 import multiprocessing
 import os
+import signal
 import subprocess
 import sys
 import tempfile
@@ -227,10 +228,14 @@ class TestManager:
             self.proc.join(10)
 
             if self.proc.is_alive():
+                # uh oh, we're hung somewhere. give it another second to print
+                # some stack traces
+                self.proc.join(1)
+                os.kill(self.proc.pid, signal.SIGWINCH)
                 print("Killing qtile forcefully", file=sys.stderr)
                 # desperate times... this probably messes with multiprocessing...
                 try:
-                    os.kill(self.proc.pid, 9)
+                    os.kill(self.proc.pid, signal.SIGKILL)
                     self.proc.join()
                 except OSError:
                     # The process may have died due to some other error
