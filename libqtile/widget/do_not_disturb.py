@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from subprocess import check_output
+from subprocess import CalledProcessError, check_output
 
 from libqtile.lazy import lazy
 from libqtile.log_utils import logger
@@ -50,7 +50,7 @@ class DoNotDisturb(base.InLoopPollText):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(DoNotDisturb.defaults)
         self.status_retrieved_error = False
-        if self.poll_function == None:
+        if self.poll_function is None:
             self.add_callbacks(
                 {
                     "Button1": lazy.spawn("dunstctl set-paused toggle"),
@@ -69,14 +69,14 @@ class DoNotDisturb(base.InLoopPollText):
         if self.poll_function is None:
             try:
                 check = self.dunst_status()
-            except:
+            except CalledProcessError:
                 if not self.status_retrieved_error:
                     logger.error("Dunst status could not be retrieved")
                     self.status_retrieved_error = True
         elif callable(self.poll_function):
             try:
                 check = self.poll_function()
-            except:
+            except CalledProcessError:
                 if not self.status_retrieved_error:
                     logger.error("Custom poll function status could not be called")
                     self.status_retrieved_error = True
