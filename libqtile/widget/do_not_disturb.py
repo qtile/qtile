@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from subprocess import CalledProcessError, check_output
+from subprocess import check_output
 
 from libqtile.lazy import lazy
 from libqtile.log_utils import logger
