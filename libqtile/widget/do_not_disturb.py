@@ -20,9 +20,10 @@
 
 from subprocess import check_output
 
+from libqtile.lazy import lazy
 from libqtile.log_utils import logger
 from libqtile.widget import base
-from libqtile.lazy import lazy
+
 
 class DoNotDisturb(base.InLoopPollText):
     """
@@ -42,7 +43,7 @@ class DoNotDisturb(base.InLoopPollText):
         ),
         ("enabled_icon", "X", "Icon that displays when do not disturb is enabled"),
         ("disabled_icon", "O", "Icon that displays when do not disturb is disabled"),
-        ("update_interval", 1, "How often in seconds the text must update")
+        ("update_interval", 1, "How often in seconds the text must update"),
     ]
 
     def __init__(self, **config):
@@ -50,42 +51,38 @@ class DoNotDisturb(base.InLoopPollText):
         self.add_defaults(DoNotDisturb.defaults)
         self.status_retrieved_error = False
         if self.poll_function == None:
-            self.add_callbacks({
-                "Button1": lazy.spawn("dunstctl set-paused toggle"),
-                "Button3": lazy.spawn("dunstctl history-pop")
-            })
+            self.add_callbacks(
+                {
+                    "Button1": lazy.spawn("dunstctl set-paused toggle"),
+                    "Button3": lazy.spawn("dunstctl history-pop"),
+                }
+            )
 
     def dunst_status(self):
-        status = check_output(['dunstctl', 'is-paused']).strip()
-        if status == b'true':
+        status = check_output(["dunstctl", "is-paused"]).strip()
+        if status == b"true":
             return True
         return False
-    
+
     def poll(self):
         check = None
-        if self.poll_function == None:
+        if self.poll_function is None:
             try:
                 check = self.dunst_status()
             except:
                 if not self.status_retrieved_error:
-                    logger.error(
-                        "Dunst status could not be retrieved"
-                    )
+                    logger.error("Dunst status could not be retrieved")
                     self.status_retrieved_error = True
         elif callable(self.poll_function):
             try:
                 check = self.poll_function()
             except:
                 if not self.status_retrieved_error:
-                    logger.error(
-                        "Custom poll function status could not be called"
-                    )
+                    logger.error("Custom poll function status could not be called")
                     self.status_retrieved_error = True
         else:
             if not self.status_retrieved_error:
-                logger.error(
-                    "Custom poll function cannot be called"
-                )
+                logger.error("Custom poll function cannot be called")
                 self.status_retrieved_error = True
         if check:
             return self.enabled_icon
