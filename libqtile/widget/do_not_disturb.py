@@ -66,19 +66,9 @@ class DoNotDisturb(base.InLoopPollText):
     def poll(self):
         check = None
         if self.poll_function is None:
-            try:
-                check = self.dunst_status()
-            except CalledProcessError:
-                if not self.status_retrieved_error:
-                    logger.error("Dunst status could not be retrieved")
-                    self.status_retrieved_error = True
+            check = self.dunst_status()
         elif callable(self.poll_function):
-            try:
-                check = self.poll_function()
-            except CalledProcessError:
-                if not self.status_retrieved_error:
-                    logger.error("Custom poll function status could not be called")
-                    self.status_retrieved_error = True
+            check = self.poll_function()
         else:
             if not self.status_retrieved_error:
                 logger.error("Custom poll function cannot be called")
