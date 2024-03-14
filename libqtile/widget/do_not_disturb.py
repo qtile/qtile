@@ -49,6 +49,11 @@ class DoNotDisturb(base.InLoopPollText):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(DoNotDisturb.defaults)
         self.status_retrieved_error = False
+        if self.poll_function == None:
+            self.add_callbacks({
+                "Button1": lazy.spawn("dunstctl set-paused toggle"),
+                "Button3": lazy.spawn("dunstctl history-pop")
+            })
 
     def dunst_status(self):
         status = check_output(['dunstctl', 'is-paused']).strip()
