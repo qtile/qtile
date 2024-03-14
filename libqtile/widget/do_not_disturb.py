@@ -48,3 +48,9 @@ class DoNotDisturb(base.InLoopPollText):
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(DoNotDisturb.defaults)
+
+    def dunst_status(self):
+        status = check_output(['dunstctl', 'is-paused']).strip()
+        if status == b'true':
+            return True
+        return False
