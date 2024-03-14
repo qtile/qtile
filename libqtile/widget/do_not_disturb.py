@@ -67,6 +67,21 @@ class DoNotDisturb(base.InLoopPollText):
                         "Dunst status could not be retrieved"
                     )
                     self.status_retrieved_error = True
+        elif callable(self.poll_function):
+            try:
+                check = self.poll_function()
+            except:
+                if not self.status_retrieved_error:
+                    logger.error(
+                        "Custom poll function status could not be called"
+                    )
+                    self.status_retrieved_error = True
+        else:
+            if not self.status_retrieved_error:
+                logger.error(
+                    "Custom poll function cannot be called"
+                )
+                self.status_retrieved_error = True
         if check:
             return self.enabled_icon
         else:
