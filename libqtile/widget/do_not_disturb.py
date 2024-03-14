@@ -31,7 +31,6 @@ class DoNotDisturb(base.InLoopPollText):
     Can be used with other servers by changing the poll command and mouse callbacks.
     """
 
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         (
             "poll_function",
