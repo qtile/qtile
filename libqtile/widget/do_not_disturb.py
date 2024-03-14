@@ -35,9 +35,9 @@ class DoNotDisturb(base.InLoopPollText):
         (
             "poll_function",
             None,
-            "Function that returns the notification server status"
-            "e.g def func():"
-            "       return true"
+            "Function that returns the notification server status. "
+            "Define the function on your configuration file and "
+            "pass it like poll_function=my_func. "
             "Must return either true or false",
         ),
         ("enabled_icon", "X", "Icon that displays when do not disturb is enabled"),
