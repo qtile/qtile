@@ -48,9 +48,26 @@ class DoNotDisturb(base.InLoopPollText):
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(DoNotDisturb.defaults)
+        self.status_retrieved_error = False
 
     def dunst_status(self):
         status = check_output(['dunstctl', 'is-paused']).strip()
         if status == b'true':
             return True
         return False
+    
+    def poll(self):
+        check = None
+        if self.poll_function == None:
+            try:
+                check = self.dunst_status()
+            except:
+                if not self.status_retrieved_error:
+                    logger.error(
+                        "Dunst status could not be retrieved"
+                    )
+                    self.status_retrieved_error = True
+        if check:
+            return self.enabled_icon
+        else:
+            return self.disabled_icon
