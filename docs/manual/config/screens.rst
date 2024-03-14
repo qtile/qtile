@@ -52,7 +52,13 @@ entire window.
 
 .. note::
     In X11 backends, transparency will be disabled in a bar if the ``background``
-    color is fully opaque.
+    color is fully opaque. This is primarily to prevent a rendering issue with
+    the ``Systray`` widget where icons will be displayed with a fully transparent
+    background, regardless of the colour of the bar/widget.
+
+    X11 users should use "pseudotransparency" (by setting
+    ``x11_fake_transparency=True`` in their config) if they want to use a
+    semi-transparent background in their bar with the ``Systray`` widget.
 
 Users can add borders to the bar by using the ``border_width`` and
 ``border_color`` parameters. Providing a single value sets the value for all

@@ -71,6 +71,7 @@ class Config:
     reconfigure_screens: bool
     wmname: str
     auto_minimize: bool
+    x11_fake_transparency: bool
     # Really we'd want to check this Any is libqtile.backend.wayland.ImportConfig, but
     # doing so forces the import, creating a hard dependency for wlroots.
     wl_input_rules: dict[str, Any] | None
