@@ -599,6 +599,7 @@ class BatteryIcon(base._Widget):
         ("update_interval", 60, "Seconds between status updates"),
         ("theme_path", default_icon_path(), "Path of the icons"),
         ("scale", 1, "Scale factor relative to the bar height.  " "Defaults to 1"),
+        ("padding", 0, "Additional padding either side of the icon"),
     ]
 
     icon_names = (
@@ -626,8 +627,6 @@ class BatteryIcon(base._Widget):
         self.add_defaults(self.defaults)
         self.scale: float = 1.0 / self.scale
 
-        self.length_type = bar.STATIC
-        self.length = 0
         self.image_padding = 0
         self.images: dict[str, Img] = {}
         self.current_icon = "battery-missing"
@@ -649,19 +648,22 @@ class BatteryIcon(base._Widget):
 
     def _configure(self, qtile, bar) -> None:
         base._Widget._configure(self, qtile, bar)
-        self.image_padding = 0
         self.setup_images()
-        self.image_padding = (self.bar.height - self.bar.height / 5) / 2
 
     def setup_images(self) -> None:
         d_imgs = images.Loader(self.theme_path)(*self.icon_names)
 
-        new_height = self.bar.height * self.scale - self.image_padding
+        new_height = self.bar.height * self.scale
         for key, img in d_imgs.items():
             img.resize(height=new_height)
-            if img.width > self.length:
-                self.length = int(img.width + self.image_padding * 2)
             self.images[key] = img
+
+    def calculate_length(self):
+        if not self.images:
+            return 0
+
+        icon = self.images[self.current_icon]
+        return icon.width + 2 * self.padding
 
     def update(self) -> None:
         status = self._battery.update_status()
@@ -674,7 +676,7 @@ class BatteryIcon(base._Widget):
         self.drawer.clear(self.background or self.bar.background)
         image = self.images[self.current_icon]
         self.drawer.ctx.save()
-        self.drawer.ctx.translate(0, (self.bar.height - image.height) // 2)
+        self.drawer.ctx.translate(self.padding, (self.bar.height - image.height) // 2)
         self.drawer.ctx.set_source(image.pattern)
         self.drawer.ctx.paint()
         self.drawer.ctx.restore()
