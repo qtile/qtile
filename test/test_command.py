@@ -32,8 +32,10 @@ import libqtile.layout
 import libqtile.log_utils
 import libqtile.widget
 from libqtile.command.base import CommandObject, expose_command
-from libqtile.command.interface import CommandError
+from libqtile.command.client import CommandClient
+from libqtile.command.interface import CommandError, IPCCommandInterface
 from libqtile.confreader import Config
+from libqtile.ipc import Client, IPCError
 from libqtile.lazy import lazy
 from test.conftest import dualmonitor
 
@@ -86,6 +88,27 @@ def test_layout_filter(manager):
     assert manager.c.get_groups()["a"]["focus"] == "one"
     manager.c.simulate_keypress(["control"], "k")
     assert manager.c.get_groups()["a"]["focus"] == "two"
+
+
+@call_config
+def test_param_hoisting(manager):
+    manager.test_window("two")
+
+    client = Client(manager.sockfile)
+    command = IPCCommandInterface(client)
+    cmd_client = CommandClient(command)
+
+    # 'zomg' is not a valid warp command
+    with pytest.raises(IPCError):
+        cmd_client.navigate("window", None).call("focus", warp="zomg", lifted=True)
+
+    cmd_client.navigate("window", None).call("focus", warp=False, lifted=True)
+
+    # 'zomg' is not a valid bar position
+    with pytest.raises(IPCError):
+        cmd_client.call("hide_show_bar", position="zomg", lifted=True)
+
+    cmd_client.call("hide_show_bar", position="top", lifted=True)
 
 
 class FakeCommandObject(CommandObject):

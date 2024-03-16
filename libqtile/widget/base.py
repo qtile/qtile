@@ -288,7 +288,7 @@ class _Widget(CommandObject, configurable.Configurable):
             if isinstance(cmd, LazyCall):
                 if cmd.check(self.qtile):
                     status, val = self.qtile.server.call(
-                        (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
+                        (cmd.selectors, cmd.name, cmd.args, cmd.kwargs, False)
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("Mouse callback command error %s: %s", cmd.name, val)

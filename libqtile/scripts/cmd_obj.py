@@ -129,7 +129,7 @@ def get_object(client: CommandClient, argv: list[str]) -> CommandClient:
 def run_function(client: CommandClient, funcname: str, args: list[str]) -> str:
     "Run command with specified args on given object."
     try:
-        ret = client.call(funcname, *args)
+        ret = client.call(funcname, *args, lifted=True)
     except SelectError:
         print("error: Sorry no function ", funcname)
         sys.exit(1)
