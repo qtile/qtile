@@ -25,17 +25,20 @@ The interface to execute commands on the command graph
 from __future__ import annotations
 
 import traceback
+import types
+import typing
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Union, get_args, get_origin
+
+from typing_extensions import Literal
 
 from libqtile import ipc
 from libqtile.command.base import CommandError, CommandException, CommandObject, SelectError
 from libqtile.command.graph import CommandGraphCall, CommandGraphNode
 from libqtile.log_utils import logger
+from libqtile.utils import ColorType  # noqa: F401
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from libqtile.command.graph import SelectorType
 
 SUCCESS = 0
@@ -308,13 +311,62 @@ class IPCCommandServer:
             return ERROR, "No such command"
 
         logger.debug("Command: %s(%s, %s)", name, args, kwargs)
+
+        def lift_arg(typ, arg):
+            # for stuff like int | None, allow either
+            if get_origin(typ) is Union:
+                for t in get_args(typ):
+                    if t == types.NoneType:
+                        # special case None? I don't know what this looks like
+                        # coming over IPC
+                        if arg == "":
+                            return None
+                        if arg is None:
+                            return None
+                        continue
+
+                    try:
+                        return lift_arg(t, arg)
+                    except TypeError:
+                        pass
+                # uh oh, we couldn't lift it to anything
+                raise TypeError(f"{arg} is not a {typ}")
+
+            # for literals, check that it is one of the valid strings
+            if get_origin(typ) is Literal:
+                if arg not in get_args(typ):
+                    raise TypeError(f"{arg} is not one of {get_origin(typ)}")
+                return arg
+
+            if typ is bool:
+                # >>> bool("False") is True
+                # True
+                # ... but we want it to be false :)
+                if arg == "True":
+                    return True
+                if arg == "False":
+                    return False
+                raise TypeError(f"{arg} is not a bool")
+
+            return typ(arg)
+
+        converted_args = []
+        converted_kwargs = dict()
+
+        params = typing.get_type_hints(cmd, globalns=globals())
+
+        # Check if method is bound
+        if not hasattr(cmd, "__self__"):
+            converted_args.append(obj)
+
+        for param, arg in zip(params.keys(), args):
+            converted_args.append(lift_arg(params[param], arg))
+
+        for k, v in kwargs.items():
+            converted_kwargs[k] = lift_arg(params[k], v)
+
         try:
-            # Check if method is bound
-            if hasattr(cmd, "__self__"):
-                return SUCCESS, cmd(*args, **kwargs)
-            else:
-                # If not, pass object as first argument
-                return SUCCESS, cmd(obj, *args, **kwargs)
+            return SUCCESS, cmd(*converted_args, **converted_kwargs)
         except CommandError as err:
             return ERROR, err.args[0]
         except Exception:
