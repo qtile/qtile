@@ -22,10 +22,15 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import traceback
 from os import environ, path
 
 from libqtile import confreader
 from libqtile.utils import get_config_file
+
+
+class CheckError(Exception):
+    pass
 
 
 def type_check_config_vars(tempdir, config_name):
@@ -83,7 +88,7 @@ def type_check_config_vars(tempdir, config_name):
     )
     p.wait()
     if p.returncode != 0:
-        sys.exit(1)
+        raise CheckError()
 
 
 def type_check_config_args(config_file):
@@ -92,7 +97,7 @@ def type_check_config_args(config_file):
         print("Config file type checking succeeded!")
     except subprocess.CalledProcessError as e:
         print("Config file type checking failed: {}".format(e))
-        sys.exit(1)
+        raise CheckError()
 
 
 def check_deps() -> None:
@@ -104,32 +109,54 @@ def check_deps() -> None:
             ok = False
 
     if not ok:
-        sys.exit(1)
+        raise CheckError()
 
 
 def check_config(args):
-    check_deps()
-
     print("Checking Qtile config at: {}".format(args.configfile))
+    print("Checking if config is valid python...")
 
-    # need to do all the checking in a tempdir because we need to write stuff
-    # for stubtest
-    with tempfile.TemporaryDirectory() as tempdir:
-        shutil.copytree(path.dirname(args.configfile), tempdir, dirs_exist_ok=True)
-        tmp_path = path.join(tempdir, path.basename(args.configfile))
+    try:
+        # can we load the config?
+        config = confreader.Config(args.configfile)
+        config.load()
+        config.validate()
+    except Exception:
+        print(traceback.format_exc())
+        sys.exit("Errors found in config. Exiting check.")
 
-        # are the top level config variables the right type?
-        module_name = path.splitext(path.basename(args.configfile))[0]
-        type_check_config_vars(tempdir, module_name)
+    try:
+        check_deps()
+    except CheckError:
+        print("Missing dependencies. Skipping type checking.")
+    else:
+        # need to do all the checking in a tempdir because we need to write stuff
+        # for stubtest
+        print("Type checking config file...")
+        valid = True
+        with tempfile.TemporaryDirectory() as tempdir:
+            shutil.copytree(path.dirname(args.configfile), tempdir, dirs_exist_ok=True)
+            tmp_path = path.join(tempdir, path.basename(args.configfile))
 
-        # are arguments passed to qtile APIs correct?
-        type_check_config_args(tmp_path)
+            # are the top level config variables the right type?
+            module_name = path.splitext(path.basename(args.configfile))[0]
+            try:
+                type_check_config_vars(tempdir, module_name)
+            except CheckError:
+                valid = False
 
-    # can we load the config?
-    config = confreader.Config(args.configfile)
-    config.load()
-    config.validate()
-    print("Your config can be loaded by Qtile.")
+            # are arguments passed to qtile APIs correct?
+            try:
+                type_check_config_args(tmp_path)
+            except CheckError:
+                valid = False
+
+    if valid:
+        print("Your config can be loaded by Qtile.")
+    else:
+        print(
+            "Your config is valid python but has type checking errors. This may result in unexpected behaviour."
+        )
 
 
 def add_subcommand(subparsers, parents):
