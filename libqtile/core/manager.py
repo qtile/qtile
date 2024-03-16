@@ -1748,6 +1748,7 @@ class Qtile(CommandObject):
     def hide_show_bar(
         self,
         position: Literal["top", "bottom", "left", "right", "all"] = "all",
+        screen: Literal["current", "all"] = "current",
     ) -> None:
         """Toggle visibility of a given bar
 
@@ -1755,16 +1756,28 @@ class Qtile(CommandObject):
         ==========
         position :
             one of: "top", "bottom", "left", "right", or "all" (default: "all")
+        screen :
+            one of: "current", "all" (default: "all")
         """
+        to_mod = [self.current_screen]
+        if screen == "all":
+            to_mod = self.screens
+        for s in to_mod:
+            self.hide_show_bar_screen(s, position)
+
+    def hide_show_bar_screen(
+        self,
+        screen: Screen,
+        position: Literal["top", "bottom", "left", "right", "all"] = "all",
+    ) -> None:
         if position in ["top", "bottom", "left", "right"]:
-            bar = getattr(self.current_screen, position)
+            bar = getattr(screen, position)
             if bar:
                 bar.show(not bar.is_show())
                 self.current_group.layout_all()
             else:
                 logger.warning("Not found bar in position '%s' for hide/show.", position)
         elif position == "all":
-            screen = self.current_screen
             is_show = None
             for bar in [screen.left, screen.right, screen.top, screen.bottom]:
                 if isinstance(bar, libqtile.bar.Bar):
