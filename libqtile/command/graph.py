@@ -67,15 +67,15 @@ class CommandGraphNode(metaclass=abc.ABCMeta):
             return _COMMAND_GRAPH_MAP[name](selector, self)
         raise KeyError("Given node is not an object: {}".format(name))
 
-    def call(self, name: str) -> CommandGraphCall:
+    def call(self, name: str, lifted: bool = False) -> CommandGraphCall:
         """Execute the given call on the selected object"""
-        return CommandGraphCall(name, self)
+        return CommandGraphCall(name, self, lifted=lifted)
 
 
 class CommandGraphCall:
     """A call performed on a particular object in the command graph"""
 
-    def __init__(self, name: str, parent: CommandGraphNode) -> None:
+    def __init__(self, name: str, parent: CommandGraphNode, lifted: bool = False) -> None:
         """A command to be executed on the selected object
 
         A terminal node in the command graph, specifying an actual command to
@@ -90,6 +90,7 @@ class CommandGraphCall:
         """
         self._name = name
         self._parent = parent
+        self.lifted = lifted
 
     @property
     def name(self) -> str:
