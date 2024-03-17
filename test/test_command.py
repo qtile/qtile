@@ -21,8 +21,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import logging
-
 import pytest
 
 import libqtile.bar
@@ -451,56 +449,6 @@ def test_lazy_arguments(manager_nospawn):
     manager_nospawn.c.simulate_keypress(["control"], "k")
     _, val = manager_nospawn.c.eval("self.test_func_output")
     assert val == "500"
-
-
-def test_deprecated_modules(caplog):
-    libqtile.log_utils.init_log()
-
-    from libqtile.command_client import InteractiveCommandClient  # noqa: F401
-
-    assert caplog.record_tuples == [
-        (
-            "libqtile",
-            logging.WARNING,
-            "libqtile.command_client is deprecated. It has been moved to libqtile.command.client",
-        )
-    ]
-
-    caplog.clear()
-
-    from libqtile.command_graph import CommandGraphNode  # noqa: F401
-
-    assert caplog.record_tuples == [
-        (
-            "libqtile",
-            logging.WARNING,
-            "libqtile.command_graph is deprecated. It has been moved to libqtile.command.graph",
-        )
-    ]
-
-    caplog.clear()
-
-    from libqtile.command_interface import CommandInterface  # noqa: F401
-
-    assert caplog.record_tuples == [
-        (
-            "libqtile",
-            logging.WARNING,
-            "libqtile.command_interface is deprecated. It has been moved to libqtile.command.interface",
-        )
-    ]
-
-    caplog.clear()
-
-    from libqtile.command_object import CommandObject  # noqa: F401
-
-    assert caplog.record_tuples == [
-        (
-            "libqtile",
-            logging.WARNING,
-            "libqtile.command_object is deprecated. It has been moved to libqtile.command.base.",
-        )
-    ]
 
 
 def test_decorators_direct_call():
