@@ -1444,14 +1444,20 @@ class Core(base.Core, wlrq.HasListeners):
 
     def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
         """Configure the backend to grab the key event"""
-        keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
+        if isinstance(key.key, str):
+            keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
+        else:
+            keysym = self.keyboards[0]._state.key_get_one_sym(key.key)
         mask_key = wlrq.translate_masks(key.modifiers)
         self.grabbed_keys.append((keysym, mask_key))
         return keysym, mask_key
 
     def ungrab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
         """Release the given key event"""
-        keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
+        if isinstance(key.key, str):
+            keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
+        else:
+            keysym = self.keyboards[0]._state.key_get_one_sym(key.key)
         mask_key = wlrq.translate_masks(key.modifiers)
         self.grabbed_keys.remove((keysym, mask_key))
         return keysym, mask_key

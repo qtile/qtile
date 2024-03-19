@@ -470,8 +470,10 @@ class Qtile(CommandObject):
         Useful when a keyboard mapping event is received.
         """
         self.core.ungrab_keys()
-        for key in self.keys_map.values():
-            self.core.grab_key(key)
+        keys = self.keys_map.copy()
+        self.keys_map.clear()
+        for key in keys.values():
+            self.grab_key(key)
 
     def grab_key(self, key: Key | KeyChord) -> None:
         """Grab the given key event"""
@@ -1034,7 +1036,7 @@ class Qtile(CommandObject):
         class FormatTable:
             def __init__(self) -> None:
                 self.max_col_size: list[int] = []
-                self.rows: list[list[str]] = []
+                self.rows: list[list[str | int]] = []
 
             def add(self, row: list[str]) -> None:
                 n = len(row) - len(self.max_col_size)
