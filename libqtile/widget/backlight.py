@@ -43,12 +43,9 @@ class Backlight(base.InLoopPollText):
     """A simple widget to show the current brightness of a monitor.
 
     If the change_command parameter is set to None, the widget will attempt to
-    use the interface at /sys/class to change brightness. Depending on the
-    setup, the user may need to be added to the video group to have permission
-    to write to this interface. This depends on having the correct udev rules
-    the brightness file; these are typically installed alongside brightness
-    tools such as brightnessctl (which changes the group to 'video') so
-    installing that is an easy way to get it working.
+    use the interface at /sys/class to change brightness. This depends on
+    having the correct udev rules, so be sure Qtile's udev rules are installed
+    correctly.
 
     You can also bind keyboard shortcuts to the backlight widget with:
 
