@@ -82,7 +82,6 @@ class MockMPD(ModuleType):
             self._status["state"] = "pause"
 
         def play(self):
-            print("PLAYING")
             self._status["state"] = "play"
 
         def stop(self):

@@ -33,6 +33,7 @@ class Memory(base.ThreadPoolText):
     - ``MemUsed``: Memory in use.
     - ``MemTotal``: Total amount of memory.
     - ``MemFree``: Amount of memory free.
+    - ``Available``: Amount of memory available.
     - ``MemPercent``: Memory in use as a percentage.
     - ``Buffers``: Buffer amount.
     - ``Active``: Active memory.
@@ -72,6 +73,7 @@ class Memory(base.ThreadPoolText):
         val["MemUsed"] = mem.used / self.calc_mem
         val["MemTotal"] = mem.total / self.calc_mem
         val["MemFree"] = mem.free / self.calc_mem
+        val["Available"] = mem.available / self.calc_mem
         val["MemPercent"] = mem.percent
         val["Buffers"] = mem.buffers / self.calc_mem
         val["Active"] = mem.active / self.calc_mem

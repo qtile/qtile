@@ -39,15 +39,10 @@ class WindowTabs(base._TextBox):
         ("selected", ("<b>", "</b>"), "Selected task indicator"),
         (
             "parse_text",
-            None,
-            "Function to parse and modify window names. "
-            "e.g. function in config that removes excess "
-            "strings from window name: "
-            "def my_func(text)"
-            '    for string in [" - Chromium", " - Firefox"]:'
-            '        text = text.replace(string, "")'
-            "   return text"
-            "then set option parse_text=my_func",
+            lambda window_name: window_name,
+            "Function to modify window names. It must accept "
+            "a string argument (original window name) and return "
+            "a string with the modified name.",
         ),
     ]
 
@@ -68,6 +63,11 @@ class WindowTabs(base._TextBox):
     def update(self, *args):
         names = []
         for w in self.bar.screen.group.windows:
+            try:
+                name = self.parse_text(w.name if w and w.name else "")
+            except:  # noqa: E722
+                logger.exception("parse_text function failed:")
+                name = w.name if w and w.name else "(unnamed)"
             state = ""
             if w.maximized:
                 state = "[] "
@@ -75,15 +75,9 @@ class WindowTabs(base._TextBox):
                 state = "_ "
             elif w.floating:
                 state = "V "
-            task = "%s%s" % (state, w.name if w and w.name else " ")
-            task = pangocffi.markup_escape_text(task)
+            task = pangocffi.markup_escape_text(state + name)
             if w is self.bar.screen.group.current_window:
                 task = task.join(self.selected)
             names.append(task)
         self.text = self.separator.join(names)
-        if callable(self.parse_text):
-            try:
-                self.text = self.parse_text(self.text)
-            except:  # noqa: E722
-                logger.exception("parse_text function failed:")
         self.bar.draw()

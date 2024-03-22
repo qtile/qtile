@@ -440,45 +440,8 @@ class Battery(base.ThreadPoolText):
         Key([mod, "shift"], "x", lazy.widget['battery'].charge_dynamically())
 
     note that this functionality requires qtile to be able to write to certain
-    files in sysfs. The easiest way to persist this across reboots is via a
-    udev rule that sets g+w and ownership of the relevant files to the `sudo`
-    group, assuming the user qtile runs as is in that group.
-
-    This is slightly complicated, since the chage_control_{start,end}_threshold
-    files are not created by the device driver itself, but by the particular
-    ACPI module for your laptop. If we try to do the chown/chmod when the
-    device is added in udev, the files won't be present yet. So, we have to do
-    it when the ACPI module for the laptop is loaded.
-
-    For thinkpads, the udev rule looks like:
-
-    .. code-block:: bash
-
-        cat <<'EOF' | sudo tee /etc/udev/rules.d/99-qtile-battery.rules
-        ACTION=="add" KERNEL=="thinkpad_acpi" RUN+="/home/tycho/config/bin/qtile-battery"
-        EOF
-
-    and the qtile-battery script looks like:
-
-    .. code-block:: bash
-
-        #!/bin/bash -eu
-
-        GROUP=sudo
-        die() {
-            echo "$@"
-            exit 1
-        }
-
-        set_ownership() {
-            chgrp "$GROUP" $1 2>&1
-            chmod g+w $1
-        }
-
-        [ $# -eq 0 ] || die "Usage: $0"
-
-        set_ownership /sys/class/power_supply/BAT*/charge_control_end_threshold
-        set_ownership /sys/class/power_supply/BAT*/charge_control_start_threshold
+    files in sysfs, so make sure that qtile's udev rules are installed
+    correctly.
     """
 
     background: ColorsType | None
@@ -636,6 +599,7 @@ class BatteryIcon(base._Widget):
         ("update_interval", 60, "Seconds between status updates"),
         ("theme_path", default_icon_path(), "Path of the icons"),
         ("scale", 1, "Scale factor relative to the bar height.  " "Defaults to 1"),
+        ("padding", 0, "Additional padding either side of the icon"),
     ]
 
     icon_names = (
@@ -663,8 +627,6 @@ class BatteryIcon(base._Widget):
         self.add_defaults(self.defaults)
         self.scale: float = 1.0 / self.scale
 
-        self.length_type = bar.STATIC
-        self.length = 0
         self.image_padding = 0
         self.images: dict[str, Img] = {}
         self.current_icon = "battery-missing"
@@ -686,19 +648,22 @@ class BatteryIcon(base._Widget):
 
     def _configure(self, qtile, bar) -> None:
         base._Widget._configure(self, qtile, bar)
-        self.image_padding = 0
         self.setup_images()
-        self.image_padding = (self.bar.height - self.bar.height / 5) / 2
 
     def setup_images(self) -> None:
         d_imgs = images.Loader(self.theme_path)(*self.icon_names)
 
-        new_height = self.bar.height * self.scale - self.image_padding
+        new_height = self.bar.height * self.scale
         for key, img in d_imgs.items():
             img.resize(height=new_height)
-            if img.width > self.length:
-                self.length = int(img.width + self.image_padding * 2)
             self.images[key] = img
+
+    def calculate_length(self):
+        if not self.images:
+            return 0
+
+        icon = self.images[self.current_icon]
+        return icon.width + 2 * self.padding
 
     def update(self) -> None:
         status = self._battery.update_status()
@@ -711,7 +676,7 @@ class BatteryIcon(base._Widget):
         self.drawer.clear(self.background or self.bar.background)
         image = self.images[self.current_icon]
         self.drawer.ctx.save()
-        self.drawer.ctx.translate(0, (self.bar.height - image.height) // 2)
+        self.drawer.ctx.translate(self.padding, (self.bar.height - image.height) // 2)
         self.drawer.ctx.set_source(image.pattern)
         self.drawer.ctx.paint()
         self.drawer.ctx.restore()

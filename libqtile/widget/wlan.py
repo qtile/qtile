@@ -53,8 +53,19 @@ class Wlan(base.InLoopPollText):
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("interface", "wlan0", "The interface to monitor"),
+        (
+            "ethernet_interface",
+            "eth0",
+            "The ethernet interface to monitor, NOTE: If you do not have a wlan device in your system, ethernet functionality will not work, use the Net widget instead",
+        ),
         ("update_interval", 1, "The update interval."),
         ("disconnected_message", "Disconnected", "String to show when the wlan is diconnected."),
+        ("ethernet_message", "eth", "String to show when ethernet is being used"),
+        (
+            "use_ethernet",
+            False,
+            "Activate or deactivate checking for ethernet when no wlan connection is detected",
+        ),
         (
             "format",
             "{essid} {quality}/70",
@@ -65,18 +76,32 @@ class Wlan(base.InLoopPollText):
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(Wlan.defaults)
+        self.ethernetInterfaceNotFound = False
 
     def poll(self):
         try:
             essid, quality = get_status(self.interface)
             disconnected = essid is None
             if disconnected:
-                return self.disconnected_message
-
+                if self.use_ethernet:
+                    try:
+                        with open(
+                            f"/sys/class/net/{self.ethernet_interface}/operstate", "r"
+                        ) as statfile:
+                            if statfile.read().strip() == "up":
+                                return self.ethernet_message
+                            else:
+                                return self.disconnected_message
+                    except FileNotFoundError:
+                        if not self.ethernetInterfaceNotFound:
+                            logger.error("Ethernet interface has not been found!")
+                            self.ethernetInterfaceNotFound = True
+                        return self.disconnected_message
+                else:
+                    return self.disconnected_message
             return self.format.format(essid=essid, quality=quality, percent=(quality / 70))
         except EnvironmentError:
             logger.error(
-                "%s: Probably your wlan device is switched off or "
-                " otherwise not present in your system.",
-                self.__class__.__name__,
+                "Probably your wlan device is switched off or "
+                " otherwise not present in your system."
             )
