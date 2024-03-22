@@ -54,15 +54,15 @@ class BluetoothArgs(_QtileMigrator):
 
     For example:
 
-    .. code:: python
-
-        widget.Bluetooth(hci="/dev_XX_XX_XX_XX_XX_XX")
+    ```python
+    widget.Bluetooth(hci="/dev_XX_XX_XX_XX_XX_XX")
+    ```
 
     should be changed to:
 
-    .. code::
-
-        widget.Bluetooth(device="/dev_XX_XX_XX_XX_XX_XX")
+    ```python
+    widget.Bluetooth(device="/dev_XX_XX_XX_XX_XX_XX")
+    ```
 
     """
 

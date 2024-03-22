@@ -112,20 +112,20 @@ class DmenuRun(Dmenu):
 
     config.py should have something like:
 
-    .. code-block:: python
-
-        from libqtile import extension
-        keys = [
-            Key(['mod4'], 'r', lazy.run_extension(extension.DmenuRun(
-                dmenu_prompt=">",
-                dmenu_font="Andika-8",
-                background="#15181a",
-                foreground="#00ff00",
-                selected_background="#079822",
-                selected_foreground="#fff",
-                dmenu_height=24,  # Only supported by some dmenu forks
-            ))),
-        ]
+    ```python
+    from libqtile import extension
+    keys = [
+        Key(['mod4'], 'r', lazy.run_extension(extension.DmenuRun(
+            dmenu_prompt=">",
+            dmenu_font="Andika-8",
+            background="#15181a",
+            foreground="#00ff00",
+            selected_background="#079822",
+            selected_foreground="#fff",
+            dmenu_height=24,  # Only supported by some dmenu forks
+        ))),
+    ]
+    ```
 
     """
 

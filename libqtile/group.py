@@ -193,7 +193,7 @@ class _Group(CommandObject):
     def focus(self, win, warp=True, force=False):
         """Focus the given window
 
-        If win is in the group, blur any windows and call ``focus`` on the
+        If win is in the group, blur any windows and call `focus` on the
         layout (in case it wants to track anything), fire focus_change hook and
         invoke layout_all.
 

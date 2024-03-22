@@ -624,7 +624,7 @@ class StatusNotifier(base._Widget):
     As per the specification, app icons are first retrieved from the
     user's current theme. If this is not available then the app may
     provide its own icon. In order to use this functionality, users
-    are recommended to install the `pyxdg <https://pypi.org/project/pyxdg/>`__
+    are recommended to install the [pyxdg](https://pypi.org/project/pyxdg/)
     module to support retrieving icons from the selected theme.
     If the icon specified by StatusNotifierItem can not be found in
     the user's current theme and no other icons are provided by the
@@ -632,12 +632,12 @@ class StatusNotifier(base._Widget):
 
     Left-clicking an icon will trigger an activate event.
 
-    .. note::
+    NOTE:
+    Context menus are not currently supported by the official widget.
+    However, a modded version of the widget which provides basic menu
+    support is available from elParaguayo's [qtile-extras][] repo.
 
-        Context menus are not currently supported by the official widget.
-        However, a modded version of the widget which provides basic menu
-        support is available from elParaguayo's `qtile-extras
-        <https://github.com/elParaguayo/qtile-extras>`_ repo.
+    [qtile-extras]: https://github.com/elParaguayo/qtile-extras
     """
 
     orientations = base.ORIENTATION_BOTH

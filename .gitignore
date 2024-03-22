@@ -21,6 +21,7 @@ qtile.egg-info/
 /doc
 /docs/_build
 /docs/_static/keybindings/
+site/
 .coverage
 # some people hack on macs? :-)
 .DS_Store

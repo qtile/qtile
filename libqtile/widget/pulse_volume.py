@@ -190,7 +190,7 @@ class PulseVolume(Volume):
     volume status regularly (NB this means that the ``update_interval`` parameter
     serves no purpose for this widget).
 
-    The widget relies on the `pulsectl_asyncio <https://pypi.org/project/pulsectl-asyncio/>`__
+    The widget relies on the [pulsectl_asyncio](https://pypi.org/project/pulsectl-asyncio/)_
     library to access the libpulse bindings. If you are using python 3.11 you must use
     ``pulsectl_asyncio >= 1.0.0``.
 

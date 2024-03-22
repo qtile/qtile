@@ -113,19 +113,19 @@ class _Widget(CommandObject, configurable.Configurable):
 
     For example:
 
-    .. code-block:: python
+    ```python
+    from libqtile import qtile
 
-        from libqtile import qtile
+    def open_calendar():
+        qtile.spawn('gsimplecal next_month')
 
-        def open_calendar():
-            qtile.spawn('gsimplecal next_month')
-
-        clock = widget.Clock(
-            mouse_callbacks={
-                'Button1': open_calendar,
-                'Button3': lazy.spawn('gsimplecal prev_month')
-            }
-        )
+    clock = widget.Clock(
+        mouse_callbacks={
+            'Button1': open_calendar,
+            'Button3': lazy.spawn('gsimplecal prev_month')
+        }
+    )
+    ```
 
     When the clock widget receives a click with button 1, the ``open_calendar`` function
     will be executed.

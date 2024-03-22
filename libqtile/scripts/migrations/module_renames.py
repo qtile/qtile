@@ -135,21 +135,21 @@ class ModuleRenames(_QtileMigrator):
 
     NB. this migration will update imports in the following forms:
 
-    .. code:: python
-
-        import libqtile.command_client
-        import libqtile.command_interface as interface
-        from libqtile import command_client
-        from libqtile.command_client import CommandClient
+    ```python
+    import libqtile.command_client
+    import libqtile.command_interface as interface
+    from libqtile import command_client
+    from libqtile.command_client import CommandClient
+    ```
 
     Results in:
 
-    .. code:: python
-
-        import libqtile.command.client
-        import libqtile.command.interface as interface
-        from libqtile.command.client import CommandClient
-        from libqtile.command import client
+    ```python
+    import libqtile.command.client
+    import libqtile.command.interface as interface
+    from libqtile.command.client import CommandClient
+    from libqtile.command import client
+    ```
 
     """
 

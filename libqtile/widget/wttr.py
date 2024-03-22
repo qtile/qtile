@@ -4,43 +4,43 @@ from libqtile.widget import GenPollUrl
 
 
 class Wttr(GenPollUrl):
-    """Display weather widget provided by wttr.in_.
-
-    .. _wttr.in: https://github.com/chubin/wttr.in/
+    """Display weather widget provided by [wttr.in](https://github.com/chubin/wttr.in/).
 
     To specify your own custom output format, use the special %-notation
     (example: 'My_city: %t(%f), wind: %w'):
 
-        - %c    Weather condition,
-        - %C    Weather condition textual name,
-        - %h    Humidity,
-        - %t    Temperature (Actual),
-        - %f    Temperature (Feels Like),
-        - %w    Wind,
-        - %l    Location,
-        - %m    Moonphase 🌑🌒🌓🌔🌕🌖🌗🌘,
-        - %M    Moonday,
-        - %p    precipitation (mm),
-        - %P    pressure (hPa),
-        - %D    Dawn !,
-        - %S    Sunrise !,
-        - %z    Zenith !,
-        - %s    Sunset !,
-        - %d    Dusk !. (!times are shown in the local timezone)
+    - %c    Weather condition,
+    - %C    Weather condition textual name,
+    - %h    Humidity,
+    - %t    Temperature (Actual),
+    - %f    Temperature (Feels Like),
+    - %w    Wind,
+    - %l    Location,
+    - %m    Moonphase 🌑🌒🌓🌔🌕🌖🌗🌘,
+    - %M    Moonday,
+    - %p    precipitation (mm),
+    - %P    pressure (hPa),
+    - %D    Dawn !,
+    - %S    Sunrise !,
+    - %z    Zenith !,
+    - %s    Sunset !,
+    - %d    Dusk !. (!times are shown in the local timezone)
 
-    Add the character ``~`` at the beginning to get weather for some special
-    location: ``~Vostok Station`` or ``~Eiffel Tower``.
+    Add the character `~` at the beginning to get weather for some special
+    location: `~Vostok Station` or `~Eiffel Tower`.
 
     Also can use IP-addresses (direct) or domain names (prefixed with @) to
     specify a location:
-    ``@github.com``, ``123.456.678.123``
+    `@github.com`, `123.456.678.123`
 
-    Specify multiple locations as dictionary ::
+    Specify multiple locations as dictionary:
 
-        location={
-            'Minsk': 'Minsk',
-            '64.127146,-21.873472': 'Reykjavik',
-        }
+    ```python
+    location={
+        'Minsk': 'Minsk',
+        '64.127146,-21.873472': 'Reykjavik',
+    }
+    ```
 
     Cities will change randomly every update.
     """

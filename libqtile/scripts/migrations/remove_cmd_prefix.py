@@ -104,37 +104,38 @@ class RemoveCmdPrefix(_QtileMigrator):
 
     For example:
 
-    .. code:: python
-
-      qtile.cmd_spawn("vlc")
+    ```python
+    qtile.cmd_spawn("vlc")
+    ```
 
     would be replaced with:
 
-    .. code:: python
-
-      qtile.spawn("vlc")
+    ```python
+    qtile.spawn("vlc")
+    ```
 
     Where users have created their own widgets with methods using this prefix,
     the syntax has also changed:
 
     For example:
 
-    .. code:: python
-
-        class MyWidget(libqtile.widget.base._Widget):
-            def cmd_my_command(self):
-                pass
+    ```python
+    class MyWidget(libqtile.widget.base._Widget):
+        def cmd_my_command(self):
+            pass
+    ```
 
     Should be updated as follows:
 
-    .. code:: python
+    ```python
+    from libqtile.command.base import expose_command
 
-        from libqtile.command.base import expose_command
+    class MyWidget(libqtile.widget.base._Widget):
+        @expose_command
+        def my_command(self):
+            pass
+    ```
 
-        class MyWidget(libqtile.widget.base._Widget):
-            @expose_command
-            def my_command(self):
-                pass
     """
 
     AFTER_VERSION = "0.22.1"

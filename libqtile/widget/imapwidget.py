@@ -61,9 +61,7 @@ class ImapWidget(base.ThreadPoolText):
     ``mbox="~/Maildir/HomeMail/fred"``.  Note the nested sets of quotes! Labels
     can be whatever you choose, of course.
 
-    Widget requirements: keyring_.
-
-    .. _keyring: https://pypi.org/project/keyring/
+    Widget requirements: [keyring](https://pypi.org/project/keyring/).
     """
 
     defaults = [

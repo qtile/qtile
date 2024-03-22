@@ -54,17 +54,17 @@ class UpdateTogroupArgs(_QtileMigrator):
 
     The following code:
 
-    .. code:: python
-
-        lazy.window.togroup(groupName="1")
+    ```python
+    lazy.window.togroup(groupName="1")
+    ```
 
     will result in a warning in your logfile: ``Window.togroup's groupName is deprecated; use group_name``.
 
     The code should be updated to:
 
-    .. code:: python
-
-        lazy.window.togroup(group_name="1")
+    ```python
+    lazy.window.togroup(group_name="1")
+    ```
 
     """
 

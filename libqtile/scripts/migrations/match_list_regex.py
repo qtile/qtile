@@ -79,15 +79,15 @@ class MatchListRegex(_QtileMigrator):
 
     For example:
 
-    .. code:: python
-
-        Match(wm_class=["one", "two"])
+    ```python
+    Match(wm_class=["one", "two"])
+    ```
 
     should be changed to:
 
-    .. code::
-
-        Match(wm_class=re.compile(r"^(one|two)$"))
+    ```python
+    Match(wm_class=re.compile(r"^(one|two)$"))
+    ```
 
     """
 

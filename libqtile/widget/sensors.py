@@ -37,9 +37,7 @@ class ThermalSensor(base.InLoopPollText):
     Then you can choose which you want, otherwise it will display the first
     available.
 
-    Widget requirements: psutil_.
-
-    .. _psutil: https://pypi.org/project/psutil/
+    Widget requirements: [psutil](https://pypi.org/project/psutil/).
     """
 
     defaults = [

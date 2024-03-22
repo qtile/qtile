@@ -88,15 +88,15 @@ class InputConfig(configurable.Configurable):
     are used to match input devices, and the values are instances of this class with the
     desired settings. For example:
 
-    .. code-block:: python
+    ```python
+    from libqtile.backend.wayland import InputConfig
 
-        from libqtile.backend.wayland import InputConfig
-
-        wl_input_rules = {
-            "1267:12377:ELAN1300:00 04F3:3059 Touchpad": InputConfig(left_handed=True),
-            "*": InputConfig(left_handed=True, pointer_accel=True),
-            "type:keyboard": InputConfig(kb_options="ctrl:nocaps,compose:ralt"),
-        }
+    wl_input_rules = {
+        "1267:12377:ELAN1300:00 04F3:3059 Touchpad": InputConfig(left_handed=True),
+        "*": InputConfig(left_handed=True, pointer_accel=True),
+        "type:keyboard": InputConfig(kb_options="ctrl:nocaps,compose:ralt"),
+    }
+    ```
 
     When a input device is being configured, the most specific matching key in the
     dictionary is found and the corresponding settings are used to configure the device.
@@ -113,7 +113,7 @@ class InputConfig(configurable.Configurable):
     This tries to mirror how Sway configures libinput devices. For more information
     check out sway-input(5): https://man.archlinux.org/man/sway-input.5#LIBINPUT_CONFIGURATION
 
-    Keyboards, managed by `xkbcommon <https://github.com/xkbcommon/libxkbcommon>`_, are
+    Keyboards, managed by [xkbcommon](https://github.com/xkbcommon/libxkbcommon), are
     configured with the options prefixed by ``kb_``. X11's helpful `XKB guide
     <https://www.x.org/releases/X11R7.5/doc/input/XKB-Config.html>`_ may be useful for
     figuring out the syntax for some of these settings.

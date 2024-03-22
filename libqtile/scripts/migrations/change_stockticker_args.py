@@ -52,15 +52,15 @@ class StocktickerArgs(_QtileMigrator):
 
     For example:
 
-    .. code:: python
-
-        widget.StockTicker(function="TIME_SERIES_INTRADAY")
+    ```python
+    widget.StockTicker(function="TIME_SERIES_INTRADAY")
+    ```
 
     should be changed to:
 
-    .. code::
-
-        widget.StockTicker(func="TIME_SERIES_INTRADAY")
+    ```python
+    widget.StockTicker(func="TIME_SERIES_INTRADAY")
+    ```
 
     """
 

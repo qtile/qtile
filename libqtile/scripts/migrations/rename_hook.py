@@ -40,19 +40,19 @@ class RenameWindowNameHook(_QtileMigrator):
 
     Example:
 
-    .. code:: python
-
-      @hook.subscribe.window_name_changed
-      def my_func(window):
-          ...
+    ```python
+    @hook.subscribe.window_name_changed
+    def my_func(window):
+        ...
+    ```
 
     Should be updated as follows:
 
-    .. code:: python
-
-      @hook.subscribe.client_name_updated
-      def my_func(window):
-          ...
+    ```python
+    @hook.subscribe.client_name_updated
+    def my_func(window):
+        ...
+    ```
 
     """
 

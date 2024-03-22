@@ -45,9 +45,7 @@ class Wlan(base.InLoopPollText):
     """
     Displays Wifi SSID and quality.
 
-    Widget requirements: iwlib_.
-
-    .. _iwlib: https://pypi.org/project/iwlib/
+    Widget requirements: [iwlib](https://pypi.org/project/iwlib/).
     """
 
     orientations = base.ORIENTATION_HORIZONTAL

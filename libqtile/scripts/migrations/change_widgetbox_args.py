@@ -57,25 +57,25 @@ class WidgetboxArgs(_QtileMigrator):
 
     For example:
 
-    .. code:: python
-
-        widget.WidgetBox(
-            [
-                widget.Systray(),
-                widget.Volume(),
-            ]
-        )
+    ```python
+    widget.WidgetBox(
+        [
+            widget.Systray(),
+            widget.Volume(),
+        ]
+    )
+    ```
 
     should be changed to:
 
-    .. code::
-
-        widget.WidgetBox(
-            widgets=[
-                widget.Systray(),
-                widget.Volume(),
-            ]
-        )
+    ```python
+    widget.WidgetBox(
+        widgets=[
+            widget.Systray(),
+            widget.Volume(),
+        ]
+    )
+    ```
 
     """
 
