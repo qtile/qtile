@@ -181,6 +181,12 @@ window:
 
     qtile start -b wayland
 
+If you need D-Bus use this instead:
+
+.. code-block:: bash
+
+    dbus-run-session qtile start -b wayland
+
 See the :ref:`Wayland <wayland>` page for more information on running Qtile as
 a Wayland compositor.
 
