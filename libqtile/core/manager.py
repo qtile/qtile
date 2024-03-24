@@ -821,7 +821,7 @@ class Qtile(CommandObject):
                     y = win_size[1] + win_pos[1]
                     self.core.warp_pointer(x, y)
 
-                self._drag = (x, y, val[0], val[1], m.commands)
+                self._drag = (x, y, val[0], val[1], m.commands, m.end)
                 self.core.grab_pointer()
                 handled = True
 
@@ -831,6 +831,14 @@ class Qtile(CommandObject):
         if self._drag is not None:
             for m in self._mouse_map[button_code]:
                 if isinstance(m, Drag):
+                    end = self._drag[5]
+                    if end is not None:
+                        if end.check(self):
+                            status, val = self.server.call(
+                                (end.selectors, end.name, end.args, end.kwargs)
+                            )
+                            if status in (interface.ERROR, interface.EXCEPTION):
+                                logger.error("Mouse command error %s: %s", end.name, val)
                     self._drag = None
                     self.core.ungrab_pointer()
                     return True
@@ -839,7 +847,7 @@ class Qtile(CommandObject):
     def process_button_motion(self, x: int, y: int) -> None:
         if self._drag is None:
             return
-        ox, oy, rx, ry, cmd = self._drag
+        ox, oy, rx, ry, cmd, _end = self._drag
         dx = x - ox
         dy = y - oy
         if dx or dy:
