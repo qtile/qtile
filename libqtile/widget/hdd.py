@@ -43,19 +43,14 @@ class HDD(base.ThreadPoolText):
 
     def poll(self):
         variables = dict()
+        # Field index 9 contains the number of milliseconds the device has been performing I/O operations
+        with open(self.path) as f:
+            io_ticks = int(f.read().split()[9])
 
-        try:
-            # Field index 9 contains the number of milliseconds the device has been performing I/O operations
-            with open(self.path) as f:
-                io_ticks = int(f.read().split()[9])
+        variables["HDDPercent"] = round(
+            max(min(((io_ticks - self._prev) / self.update_interval) / 10, 100.0), 0.0), 1
+        )
 
-            variables["HDDPercent"] = round(
-                max(min(((io_ticks - self._prev) / self.update_interval) / 10, 100.0), 0.0), 1
-            )
-
-            self._prev = io_ticks
-
-        except IOError:
-            variables["HDDPercent"] = 0
+        self._prev = io_ticks
 
         return self.format.format(**variables)
