@@ -21,25 +21,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-"""
-This module define a widget that displays icons to launch softwares or commands
-when clicked -- a launchbar.
-Only png icon files are displayed, not xpm because cairo doesn't support
-loading of xpm file.
-The order of displaying (from left to right) is in the order of the list.
-
-If no icon was found for the name provided and if default_icon is set to None
-then the name is printed instead. If default_icon is defined then this icon is
-displayed instead.
-
-To execute a software:
- - ('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode')
-To execute a python command in qtile, begin with by 'qshell:'
- - ('/path/to/icon.png', 'qshell:self.qtile.shutdown()', 'logout from qtile')
-
-
-"""
 from __future__ import annotations
 
 import os.path
@@ -61,9 +42,21 @@ from libqtile.widget import base
 
 class LaunchBar(base._Widget):
     """
-    A widget that display icons to launch the associated command.
+    This module defines a widget that displays icons to launch softwares or commands
+    when clicked -- a launchbar.
+    Only png icon files are displayed, not xpm because cairo doesn't support
+    loading of xpm file.
+    The order of displaying (from left to right) is in the order of the list.
 
-    Text will displayed when no icon is found.
+    If no icon was found for the name provided and if default_icon is set to None
+    then the name is printed instead. If default_icon is defined then this icon is
+    displayed instead.
+
+    To execute a software:
+     - ('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode')
+    To execute a python command in qtile, begin with by 'qshell:'
+     - ('/path/to/icon.png', 'qshell:self.qtile.shutdown()', 'logout from qtile')
+
 
     Optional requirements: `pyxdg <https://pypi.org/project/pyxdg/>`__ for finding the icon path if it is not provided in the ``progs`` tuple.
     """
