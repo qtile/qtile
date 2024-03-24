@@ -218,6 +218,17 @@ class _Window(CommandObject, metaclass=ABCMeta):
         window.
         """
 
+    @abstractmethod
+    @expose_command()
+    def bring_to_front(self) -> None:
+        """
+        Bring the window to the front.
+
+        In X11, `bring_to_front` ignores all other layering rules and brings the
+        window to the very front. When that window loses focus, it will be stacked
+        again according the appropriate rules.
+        """
+
 
 class Window(_Window, metaclass=ABCMeta):
     """
@@ -392,17 +403,6 @@ class Window(_Window, metaclass=ABCMeta):
     @expose_command()
     def disable_fullscreen(self) -> None:
         """Un-fullscreen the window"""
-
-    @abstractmethod
-    @expose_command()
-    def bring_to_front(self) -> None:
-        """
-        Bring the window to the front.
-
-        In X11, `bring_to_front` ignores all other layering rules and brings the
-        window to the very front. When that window loses focus, it will be stacked
-        again according the appropriate rules.
-        """
 
     @abstractmethod
     @expose_command()
@@ -587,11 +587,6 @@ class Static(_Window, metaclass=ABCMeta):
             height=self.height,
             id=self.wid,
         )
-
-    @abstractmethod
-    @expose_command()
-    def bring_to_front(self) -> None:
-        """Bring the window to the front"""
 
 
 WindowType = typing.Union[Window, Internal, Static]
