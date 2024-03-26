@@ -40,6 +40,7 @@ from typing import TYPE_CHECKING
 
 from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
+from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
     from typing import Any, Self
@@ -251,6 +252,14 @@ class MonadTall(_SimpleLayoutBase):
     @expose_command()
     def set_ratio(self, ratio):
         "Directly set the main pane ratio"
+        # We allow a str for 'ratio' as a string may be issued via IPC.
+        if not isinstance(ratio, (float, int)):
+            try:
+                ratio = float(ratio)
+            except ValueError:
+                logger.error("Invalid ratio value: %s", ratio)
+                return
+
         ratio = min(self.max_ratio, ratio)
         self.ratio = max(self.min_ratio, ratio)
         self.group.layout_all()
