@@ -71,6 +71,7 @@ questions, you can find support in the following places:
 
     manual/faq
     manual/howto/widget
+    manual/howto/layout
     manual/howto/git
     manual/license
     manual/changelog
