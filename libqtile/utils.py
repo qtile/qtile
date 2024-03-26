@@ -31,15 +31,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from random import randint
 from shutil import which
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Any, Callable, Coroutine, TypeVar, Union
-
-    ColorType = Union[str, tuple[int, int, int], tuple[int, int, int, float]]
-    ColorsType = Union[ColorType, list[ColorType]]
-
-    T = TypeVar("T")
+from typing import TYPE_CHECKING, Union
 
 try:
     from dbus_next import AuthError, Message, Variant
@@ -51,6 +43,13 @@ except ImportError:
     has_dbus = False
 
 from libqtile.log_utils import logger
+
+ColorType = Union[str, tuple[int, int, int], tuple[int, int, int, float]]
+ColorsType = Union[ColorType, list[ColorType]]
+if TYPE_CHECKING:
+    from typing import Any, Callable, Coroutine, TypeVar
+
+    T = TypeVar("T")
 
 dbus_bus_connections = set()
 
