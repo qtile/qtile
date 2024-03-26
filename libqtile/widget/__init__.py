@@ -49,6 +49,7 @@ widgets = {
     "GenPollCommand": "generic_poll_text",
     "GmailChecker": "gmail_checker",
     "GroupBox": "groupbox",
+    "HDD": "hdd",
     "HDDBusyGraph": "graph",
     "HDDGraph": "graph",
     "IdleRPG": "idlerpg",
