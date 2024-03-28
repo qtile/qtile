@@ -105,3 +105,22 @@ Screenshots
 ===========
 
 As `scrot <https://github.com/dreamer/scrot>` and other similiar X11 tools doesn't work for wayland, one may be interested in: `grim <https://git.sr.ht/~emersion/grim>`/`slurp <https://github.com/emersion/slurp>`, `shotman <https://git.sr.ht/~whynothugo/shotman>`, `flameshot <https://flameshot.org/>` or `swappy <https://github.com/jtheoof/swappy>`.
+
+Screen sharing
+==============
+
+Here is a write up on how to get screen sharing enabled in Wayland:
+
+To get screen sharing working on Qtile Wayland, make sure `xdg-desktop-portal`, `xdg-desktop-portal-gtk`, `xdg-desktop-portal-wlr`, `python-dbus-next`, and `wlroots` are installed on your system and add the following lines to your `config.py`:
+
+.. code-block:: python
+    import os  
+    from libqtile import qtile   
+    if qtile.core.name == "wayland":  
+        os.environ["XDG_SESSION_DESKTOP"] = "qtile:wlroots"
+        os.environ["XDG_CURRENT_DESKTOP"] = "qtile:wlroots"
+
+And add this to your autostart script:
+
+.. code-block:: sh
+    dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP &
