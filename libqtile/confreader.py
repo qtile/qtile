@@ -29,9 +29,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any
-
-    from typing_extensions import Literal
+    from typing import Any, Literal
 
     from libqtile.config import Group, Key, Mouse, Rule, Screen
     from libqtile.layout.base import Layout
@@ -43,7 +41,7 @@ class ConfigError(Exception):
 
 config_pyi_header = """
 from typing import Any
-from typing_extensions import Literal
+from typing import Literal
 from libqtile.config import Group, Key, Mouse, Rule, Screen
 from libqtile.layout.base import Layout
 
