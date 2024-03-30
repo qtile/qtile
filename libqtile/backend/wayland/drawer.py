@@ -47,8 +47,8 @@ class Drawer(drawer.Drawer):
         self,
         offsetx: int = 0,
         offsety: int = 0,
-        _width: int | None = None,
-        _height: int | None = None,
+        width: int | None = None,
+        height: int | None = None,
         src_x: int = 0,
         src_y: int = 0,
     ) -> None:
@@ -56,7 +56,7 @@ class Drawer(drawer.Drawer):
             return
 
         # We need to set the current draw area so we can compare to the previous one
-        self.current_rect = (offsetx, offsety, _width, _height)
+        self.current_rect = (offsetx, offsety, width, height)
         # rect_changed = current_rect != self.previous_rect
 
         if not self.needs_update:
@@ -66,18 +66,18 @@ class Drawer(drawer.Drawer):
         self.previous_rect = self.current_rect
 
         # Make sure geometry doesn't extend beyond texture
-        if _width is None:
-            width = self.width
+        if width is None:
+            _width = self.width
         else:
-            width = _width
-        if width > self._win.width - offsetx:
-            width = self._win.width - offsetx
-        if _height is None:
-            height = self.height
+            _width = width
+        if _width > self._win.width - offsetx:
+            _width = self._win.width - offsetx
+        if height is None:
+            _height = self.height
         else:
-            height = _height
+            _height = height
         if _height > self._win.height - offsety:
-            height = self._win.height - offsety
+            _height = self._win.height - offsety
         scale = self.qtile.config.wl_scale_factor
 
         # Paint recorded operations to our window's underlying ImageSurface
@@ -87,12 +87,12 @@ class Drawer(drawer.Drawer):
             # Adjust the source surface position by src_x and src_y e.g. if we want
             # to render part of the surface in a different position
             context.set_source_surface(self.surface, offsetx - src_x, offsety - src_y)
-            context.rectangle(offsetx, offsety, width, height)
+            context.rectangle(offsetx, offsety, _width, _height)
             context.fill()
 
         damage = PixmanRegion32()
         # width and height are problematic
-        damage.init_rect(offsetx * scale, offsety * scale, width * scale, height * scale)
+        damage.init_rect(offsetx * scale, offsety * scale, _width * scale, _height * scale)
         # TODO: do we really need to `set_buffer` here? would be good to just set damage
         self._win._scene_buffer.set_buffer_with_damage(self._win.wlr_buffer, damage)
         damage.fini()
