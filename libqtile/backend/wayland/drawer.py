@@ -74,10 +74,12 @@ class Drawer(drawer.Drawer):
             height = self.height
         if height > self._win.height - offsety:
             height = self._win.height - offsety
+        scale = self.qtile.config.wl_scale_factor
 
         # Paint recorded operations to our window's underlying ImageSurface
         with cairocffi.Context(self._win.surface) as context:
             context.set_operator(cairocffi.OPERATOR_SOURCE)
+            context.scale(scale, scale)
             # Adjust the source surface position by src_x and src_y e.g. if we want
             # to render part of the surface in a different position
             context.set_source_surface(self.surface, offsetx - src_x, offsety - src_y)
@@ -85,7 +87,7 @@ class Drawer(drawer.Drawer):
             context.fill()
 
         damage = PixmanRegion32()
-        damage.init_rect(offsetx, offsety, width, height)
+        damage.init_rect(offsetx * scale, offsety * scale, width * scale, height * scale)
         # TODO: do we really need to `set_buffer` here? would be good to just set damage
         self._win._scene_buffer.set_buffer_with_damage(self._win.wlr_buffer, damage)
         damage.fini()
