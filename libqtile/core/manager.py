@@ -59,9 +59,7 @@ from libqtile.utils import cancel_tasks, get_cache_dir, lget, remove_dbus_rules,
 from libqtile.widget.base import _Widget
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
-
-    from typing_extensions import Literal
+    from typing import Any, Callable, Literal
 
     from libqtile.command.base import ItemT
     from libqtile.confreader import Config
