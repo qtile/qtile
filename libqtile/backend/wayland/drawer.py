@@ -47,8 +47,8 @@ class Drawer(drawer.Drawer):
         self,
         offsetx: int = 0,
         offsety: int = 0,
-        width: int | None = None,
-        height: int | None = None,
+        _width: int | None = None,
+        _height: int | None = None,
         src_x: int = 0,
         src_y: int = 0,
     ) -> None:
@@ -56,7 +56,7 @@ class Drawer(drawer.Drawer):
             return
 
         # We need to set the current draw area so we can compare to the previous one
-        self.current_rect = (offsetx, offsety, width, height)
+        self.current_rect = (offsetx, offsety, _width, _height)
         # rect_changed = current_rect != self.previous_rect
 
         if not self.needs_update:
@@ -66,13 +66,17 @@ class Drawer(drawer.Drawer):
         self.previous_rect = self.current_rect
 
         # Make sure geometry doesn't extend beyond texture
-        if width is None:
+        if _width is None:
             width = self.width
+        else:
+            width = _width
         if width > self._win.width - offsetx:
             width = self._win.width - offsetx
-        if height is None:
+        if _height is None:
             height = self.height
-        if height > self._win.height - offsety:
+        else:
+            height = _height
+        if _height > self._win.height - offsety:
             height = self._win.height - offsety
         scale = self.qtile.config.wl_scale_factor
 
@@ -87,6 +91,7 @@ class Drawer(drawer.Drawer):
             context.fill()
 
         damage = PixmanRegion32()
+        # width and height are problematic
         damage.init_rect(offsetx * scale, offsety * scale, width * scale, height * scale)
         # TODO: do we really need to `set_buffer` here? would be good to just set damage
         self._win._scene_buffer.set_buffer_with_damage(self._win.wlr_buffer, damage)
