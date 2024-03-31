@@ -14,4 +14,4 @@ jobs:
               run: |
                 sudo apt update
                 sudo apt install --no-install-recommends libxkbcommon-dev
-            - uses: pre-commit/action@v3.0.0
+            - uses: pre-commit/action@v3.0.1
