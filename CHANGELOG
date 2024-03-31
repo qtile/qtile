@@ -1,4 +1,6 @@
 Qtile x.xx.x, released XXXX-XX-XX:
+    !!! Python version support !!!
+      - this release drops support for python 3.9
     * features
     * bugfixes
 

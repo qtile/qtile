@@ -125,7 +125,7 @@ jobs:
     container: quay.io/pypa/manylinux_2_28_x86_64
     strategy:
       matrix:
-        python-version: ["cp3.9", "cp3.10", "cp3.11", "pp3.9"]
+        python-version: ["cp3.10", "cp3.11", "cp3.12", "pp3.10"]
     steps:
       - name: Install dependencies
         run: |
@@ -176,10 +176,10 @@ jobs:
     needs: build-wheel
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.10", "3.11", "3.12"]
         include:
-          - python-version: "pypy-3.9"
-            manual-version: "pp3.9"
+          - python-version: "pypy-3.10"
+            manual-version: "pp3.10"
     steps:
       - name: Download wheels
         if: ${{ matrix.manual-version == '' }}
@@ -204,7 +204,7 @@ jobs:
     runs-on: ubuntu-latest
     container: quay.io/pypa/manylinux_2_28_x86_64
     env:
-      python-version: "cp3.11"
+      python-version: "cp3.12"
     steps:
       - name: Install dependencies
         run: dnf install -y cairo-devel libffi-devel libxkbcommon-devel
@@ -231,10 +231,10 @@ jobs:
     needs: [test-wheel, build-source]
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.10", "3.11", "3.12"]
         include:
-          - python-version: "pypy-3.9"
-            manual-version: "pp3.9"
+          - python-version: "pypy-3.10"
+            manual-version: "pp3.10"
     steps:
       - name: Download wheels
         if: ${{ matrix.manual-version == '' }}
@@ -267,7 +267,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test-wheel, build-source]
     env:
-      python-version: "cp3.11"
+      python-version: "cp3.12"
     steps:
       - name: Download source
         uses: actions/download-artifact@v4
