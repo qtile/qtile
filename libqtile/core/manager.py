@@ -1225,7 +1225,7 @@ class Qtile(CommandObject):
 
     @expose_command()
     def spawn(
-        self, cmd: str | list[str], shell: bool = False, env: dict[str, str] = dict()
+        self, cmd: list[str] | str, shell: bool = False, env: dict[str, str] = dict()
     ) -> int:
         """
         Spawn a new process.
