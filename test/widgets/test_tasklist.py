@@ -26,7 +26,7 @@ from libqtile.confreader import Config
 from libqtile.widget.tasklist import TaskList
 
 
-class TestTaskList(TaskList):
+class TaskListTestWidget(TaskList):
     def __init__(self, *args, **kwargs):
         TaskList.__init__(self, *args, **kwargs)
         self._text = ""
@@ -64,7 +64,7 @@ def tasklist_manager(request, manager_nospawn, override_xdg, monkeypatch):
         floating_layout = libqtile.resources.default_config.floating_layout
         keys = []
         mouse = []
-        screens = [Screen(top=bar.Bar([TestTaskList(name="tasklist", **config)], 28))]
+        screens = [Screen(top=bar.Bar([TaskListTestWidget(name="tasklist", **config)], 28))]
 
     manager_nospawn.start(TasklistConfig)
     yield manager_nospawn
