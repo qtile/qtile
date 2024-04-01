@@ -1119,7 +1119,7 @@ class Qtile(CommandObject):
         return list(self.widgets_map.keys())
 
     @expose_command()
-    def to_layout_index(self, index: str, name: str | None = None) -> None:
+    def to_layout_index(self, index: int, name: str | None = None) -> None:
         """
         Switch to the layout with the given index in self.layouts.
 
