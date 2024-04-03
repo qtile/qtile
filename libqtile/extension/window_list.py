@@ -61,7 +61,11 @@ class WindowList(Dmenu):
 
     def run(self):
         self.list_windows()
-        out = super().run(items=self.item_to_win.keys())
+        task = super().run(items=self.item_to_win.keys())
+        task.add_done_callback(self._process_result)
+
+    def _process_result(self, task):
+        out = task.result()
 
         try:
             sout = out.rstrip("\n")

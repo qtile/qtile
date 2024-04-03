@@ -18,3 +18,4 @@ for keybindings and mouse callbacks).
     Widgets <widgets>
     Screens <screens>
     Core <backend>
+    Extensions <extension>

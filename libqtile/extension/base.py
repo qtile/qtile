@@ -18,21 +18,23 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import asyncio
 import re
 import shlex
-from subprocess import PIPE, Popen
 from typing import Any
 
 from libqtile import configurable
+from libqtile.command.base import CommandObject, expose_command
 from libqtile.log_utils import logger
+from libqtile.utils import create_task
 
 RGB = re.compile(r"^#?([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$")
 
 
-class _Extension(configurable.Configurable):
+class _Extension(configurable.Configurable, CommandObject):
     """Base Extension class"""
 
-    installed_extensions = []  # type: list
+    installed_extensions = {}  # type: dict
 
     defaults = [
         ("font", "sans", "defines the font name to be used"),
@@ -46,7 +48,14 @@ class _Extension(configurable.Configurable):
     def __init__(self, **config):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(_Extension.defaults)
-        _Extension.installed_extensions.append(self)
+        name = self.__class__.__name__.lower()
+        _Extension.installed_extensions[name] = self
+
+    def _items(self, name):
+        return None
+
+    def _select(self, name, sel):
+        return None
 
     def _check_colors(self):
         """
@@ -77,6 +86,7 @@ class _Extension(configurable.Configurable):
         self.qtile = qtile
         self._check_colors()
 
+    @expose_command
     def run(self):
         """
         This method must be implemented by the subclasses.
@@ -100,7 +110,7 @@ class RunCommand(_Extension):
         #       among all the objects inheriting this class, and if one of them
         #       modified it, all the other objects would see the modified list;
         #       use a string or a tuple instead, which are immutable
-        ("command", None, "the command to be launched (string or list with arguments)"),
+        ("cmd", None, "the command to be launched (string or list with arguments)"),
     ]
 
     def __init__(self, **config):
@@ -113,6 +123,11 @@ class RunCommand(_Extension):
         An extension can inherit this class, define configured_command and use
         the process object by overriding this method and using super():
 
+        To avoid timeouts when calling the run command via IPC, processes are run
+        using the asyncio module. As a result, ``run()`` returns a task object. To
+        retrieve the process object, the exension needs to wait for the task to complete
+        and retrieve the result.
+
         .. code-block:: python
 
             def _configure(self, qtile):
@@ -120,12 +135,26 @@ class RunCommand(_Extension):
                 self.configured_command = "foo --bar"
 
             def run(self):
-                process = super(Subclass, self).run()
+                task = super(Subclass, self).run()
+                task.add_done_callback(self.process_result)
+
+            def process_result(self, task):
+                proc = task.result()
+
         """
-        if self.configured_command:
-            if isinstance(self.configured_command, str):
-                self.configured_command = shlex.split(self.configured_command)
-            # Else assume that self.configured_command is already a sequence
-        else:
-            self.configured_command = self.command
-        return Popen(self.configured_command, stdout=PIPE, stdin=PIPE)
+        if not self.configured_command:
+            self.configured_command = self.cmd
+
+        if isinstance(self.configured_command, str):
+            self.configured_command = shlex.split(self.configured_command)
+
+        task = create_task(RunCommand._run(self))
+        return task
+
+    async def _run(self):
+        proc = await asyncio.create_subprocess_exec(
+            *self.configured_command,
+            stdout=asyncio.subprocess.PIPE,
+            stdin=asyncio.subprocess.PIPE,
+        )
+        return proc

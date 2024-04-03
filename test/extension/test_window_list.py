@@ -32,14 +32,16 @@ def extension_manager(monkeypatch, manager_nospawn):
     extension = WindowList()
 
     # We want the value returned immediately
-    def fake_popen(cmd, *args, **kwargs):
-        class PopenObj:
-            def communicate(self, value_in, *args):
+    async def fake_async_subprocess(cmd, *args, **kwargs):
+        class AsyncProc:
+            async def communicate(self, value_in, *args):
                 return [value_in, None]
 
-        return PopenObj()
+        return AsyncProc()
 
-    monkeypatch.setattr("libqtile.extension.base.Popen", fake_popen)
+    monkeypatch.setattr(
+        "libqtile.extension.base.asyncio.create_subprocess_exec", fake_async_subprocess
+    )
 
     class ManagerConfig(Config):
         groups = [

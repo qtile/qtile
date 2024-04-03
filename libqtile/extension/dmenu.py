@@ -21,6 +21,7 @@
 import shlex
 
 from libqtile.extension import base
+from libqtile.utils import create_task
 
 
 class Dmenu(base.RunCommand):
@@ -97,11 +98,16 @@ class Dmenu(base.RunCommand):
             lines = min(len(items), int(self.dmenu_lines))
             self.configured_command.extend(("-l", str(lines)))
 
-        proc = super().run()
+        task = create_task(self._run(items))
+        return task
+
+    async def _run(self, items):
+        proc = await super().run()
 
         if items:
             input_str = "\n".join([i for i in items]) + "\n"
-            return proc.communicate(str.encode(input_str))[0].decode("utf-8")
+            stdout, _stderr = await proc.communicate(str.encode(input_str))
+            return stdout.decode("utf-8")
 
         return proc
 

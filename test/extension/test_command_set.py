@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import asyncio
 import logging
 
 import pytest
@@ -38,17 +39,19 @@ def fake_qtile():
 def log_extension_output(monkeypatch):
     init_log()
 
-    def fake_popen(cmd, *args, **kwargs):
-        class PopenObj:
-            def communicate(self, value_in, *args):
+    async def fake_async_subprocess(cmd, *args, **kwargs):
+        class AsyncProc:
+            async def communicate(self, value_in, *args):
                 if value_in.startswith(b"missing"):
                     return [b"something_else", None]
                 else:
                     return [value_in, None]
 
-        return PopenObj()
+        return AsyncProc()
 
-    monkeypatch.setattr("libqtile.extension.base.Popen", fake_popen)
+    monkeypatch.setattr(
+        "libqtile.extension.base.asyncio.create_subprocess_exec", fake_async_subprocess
+    )
 
     yield
 
@@ -56,93 +59,140 @@ def log_extension_output(monkeypatch):
 @pytest.mark.usefixtures("log_extension_output")
 def test_command_set_valid_command(caplog, fake_qtile):
     """Extension should run pre-commands and selected command."""
-    extension = CommandSet(pre_commands=["run pre-command"], commands={"key": "run testcommand"})
-    extension._configure(fake_qtile)
-    extension.run()
 
-    assert caplog.record_tuples == [
-        ("libqtile", logging.WARNING, "run pre-command"),
-        ("libqtile", logging.WARNING, "run testcommand"),
-    ]
+    async def t():
+        extension = CommandSet(
+            pre_commands=["run pre-command"], commandset={"key": "run testcommand"}
+        )
+        extension._configure(fake_qtile)
+        extension.run()
+
+        tries = 0
+
+        while len(caplog.record_tuples) < 2 and tries < 5:
+            await asyncio.sleep(0.1)
+            tries += 1
+
+        assert caplog.record_tuples == [
+            ("libqtile", logging.WARNING, "run pre-command"),
+            ("libqtile", logging.WARNING, "run testcommand"),
+        ]
+
+    asyncio.run(t())
 
 
 @pytest.mark.usefixtures("log_extension_output")
 def test_command_set_invalid_command(caplog, fake_qtile):
     """Where the key is not in "commands", no command will be run."""
-    extension = CommandSet(
-        pre_commands=["run pre-command"], commands={"missing": "run testcommand"}
-    )
-    extension._configure(fake_qtile)
-    extension.run()
 
-    assert caplog.record_tuples == [("libqtile", logging.WARNING, "run pre-command")]
+    async def t():
+        extension = CommandSet(
+            pre_commands=["run pre-command"], commandset={"missing": "run testcommand"}
+        )
+        extension._configure(fake_qtile)
+        extension.run()
+
+        tries = 0
+
+        while len(caplog.record_tuples) < 1 and tries < 5:
+            await asyncio.sleep(0.1)
+            tries += 1
+
+        assert caplog.record_tuples == [("libqtile", logging.WARNING, "run pre-command")]
+
+    asyncio.run(t())
 
 
 @pytest.mark.usefixtures("log_extension_output")
 def test_command_set_inside_command_set_valid_command(caplog, fake_qtile):
     """Extension should run pre-commands and selected command."""
 
-    inside_command = CommandSet(
-        pre_commands=["run inner pre-command"],
-        commands={"key": "run testcommand"},
-    )
-    inside_command._configure(fake_qtile)
+    async def t():
+        inside_command = CommandSet(
+            pre_commands=["run inner pre-command"],
+            commandset={"key": "run testcommand"},
+        )
+        inside_command._configure(fake_qtile)
 
-    extension = CommandSet(
-        pre_commands=["run pre-command"],
-        commands={"key": inside_command},
-    )
-    extension._configure(fake_qtile)
+        extension = CommandSet(
+            pre_commands=["run pre-command"],
+            commandset={"key": inside_command},
+        )
+        extension._configure(fake_qtile)
+        extension.run()
 
-    extension.run()
+        tries = 0
 
-    assert caplog.record_tuples == [
-        ("libqtile", logging.WARNING, "run pre-command"),
-        (
-            "libqtile",
-            logging.WARNING,
-            "run inner pre-command",
-        ),  # pre-command of the inside_command
-        ("libqtile", logging.WARNING, "run testcommand"),
-    ]
+        while len(caplog.record_tuples) < 3 and tries < 5:
+            await asyncio.sleep(0.1)
+            tries += 1
+
+        assert caplog.record_tuples == [
+            ("libqtile", logging.WARNING, "run pre-command"),
+            (
+                "libqtile",
+                logging.WARNING,
+                "run inner pre-command",
+            ),  # pre-command of the inside_command
+            ("libqtile", logging.WARNING, "run testcommand"),
+        ]
+
+    asyncio.run(t())
 
 
 @pytest.mark.usefixtures("log_extension_output")
 def test_command_set_inside_command_set_invalid_command(caplog, fake_qtile):
     """Where the key is not in "commands", no command will be run."""
-    inside_command = CommandSet(
-        pre_commands=["run inner pre-command"],
-        commands={"key": "run testcommand"},  # doesn't really matter what command
-    )
-    inside_command._configure(fake_qtile)
 
-    extension = CommandSet(pre_commands=["run pre-command"], commands={"missing": inside_command})
-    extension._configure(fake_qtile)
-    extension.run()
+    async def t():
+        inside_command = CommandSet(
+            pre_commands=["run inner pre-command"],
+            commandset={"key": "run testcommand"},  # doesn't really matter what command
+        )
+        inside_command._configure(fake_qtile)
 
-    assert caplog.record_tuples == [("libqtile", logging.WARNING, "run pre-command")]
+        extension = CommandSet(
+            pre_commands=["run pre-command"], commandset={"missing": inside_command}
+        )
+        extension._configure(fake_qtile)
+        extension.run()
 
-    caplog.clear()
+        tries = 0
 
-    inside_command = CommandSet(
-        pre_commands=["run inner pre-command"],
-        commands={"missing": "run testcommand"},
-    )
-    inside_command._configure(fake_qtile)
+        while len(caplog.record_tuples) < 1 and tries < 5:
+            await asyncio.sleep(0.1)
+            tries += 1
 
-    extension = CommandSet(
-        pre_commands=["run pre-command"],
-        commands={"key": inside_command},
-    )
-    extension._configure(fake_qtile)
+        assert caplog.record_tuples == [("libqtile", logging.WARNING, "run pre-command")]
 
-    extension.run()
+        caplog.clear()
 
-    assert caplog.record_tuples == [
-        ("libqtile", logging.WARNING, "run pre-command"),
-        (
-            "libqtile",
-            logging.WARNING,
-            "run inner pre-command",
-        ),  # pre-command of the inside_command
-    ]
+        inside_command = CommandSet(
+            pre_commands=["run inner pre-command"],
+            commandset={"missing": "run testcommand"},
+        )
+        inside_command._configure(fake_qtile)
+
+        extension = CommandSet(
+            pre_commands=["run pre-command"],
+            commandset={"key": inside_command},
+        )
+        extension._configure(fake_qtile)
+        extension.run()
+
+        tries = 0
+
+        while len(caplog.record_tuples) < 2 and tries < 5:
+            await asyncio.sleep(0.1)
+            tries += 1
+
+        assert caplog.record_tuples == [
+            ("libqtile", logging.WARNING, "run pre-command"),
+            (
+                "libqtile",
+                logging.WARNING,
+                "run inner pre-command",
+            ),  # pre-command of the inside_command
+        ]
+
+    asyncio.run(t())

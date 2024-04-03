@@ -125,7 +125,7 @@ class Qtile(CommandObject):
         _Widget.global_defaults = self.config.widget_defaults
         _Extension.global_defaults = self.config.extension_defaults
 
-        for installed_extension in _Extension.installed_extensions:
+        for installed_extension in _Extension.installed_extensions.values():
             installed_extension._configure(self)
 
         for i in self.groups:
@@ -898,6 +898,8 @@ class Qtile(CommandObject):
             return True, list(range(len(self.screens)))
         elif name == "core":
             return True, []
+        elif name == "extension":
+            return False, [name for name in _Extension.installed_extensions.keys()]
         return None
 
     def _select(self, name: str, sel: str | int | None) -> CommandObject | None:
@@ -935,6 +937,8 @@ class Qtile(CommandObject):
                 return lget(self.screens, int(sel))
         elif name == "core":
             return self.core
+        elif name == "extension":
+            return _Extension.installed_extensions.get(sel)
         return None
 
     def call_soon(self, func: Callable, *args: Any) -> asyncio.Handle:

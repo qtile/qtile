@@ -17,6 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import asyncio
+
 from libqtile.extension.base import _Extension
 from libqtile.extension.dmenu import Dmenu, DmenuRun, J4DmenuDesktop
 
@@ -60,24 +62,29 @@ def test_dmenu_configuration_options():
 
 
 def test_dmenu_run(monkeypatch):
-    def fake_popen(cmd, *args, **kwargs):
-        class PopenObj:
-            def communicate(self, value_in, *args):
+    async def fake_async_subprocess(cmd, *args, **kwargs):
+        class AsyncProc:
+            async def communicate(self, value_in, *args):
                 return [value_in, None]
 
-        return PopenObj()
+        return AsyncProc()
 
-    monkeypatch.setattr("libqtile.extension.base.Popen", fake_popen)
+    monkeypatch.setattr(
+        "libqtile.extension.base.asyncio.create_subprocess_exec", fake_async_subprocess
+    )
 
-    # dmenu_lines is set to the lower of config value and len(items) so set a high value now
-    extension = Dmenu(dmenu_lines=5)
-    extension._configure(None)
+    async def t():
+        # dmenu_lines is set to the lower of config value and len(items) so set a high value now
+        extension = Dmenu(dmenu_lines=5)
+        extension._configure(None)
 
-    items = ["test1", "test2"]
-    assert extension.run(items) == "test1\ntest2\n"
+        items = ["test1", "test2"]
+        assert await extension.run(items) == "test1\ntest2\n"
 
-    # dmenu_lines should be length of items
-    assert extension.configured_command[-2:] == ["-l", "2"]
+        # dmenu_lines should be length of items
+        assert extension.configured_command[-2:] == ["-l", "2"]
+
+    asyncio.run(t())
 
 
 def test_dmenurun_extension():

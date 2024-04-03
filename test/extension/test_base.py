@@ -17,6 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import asyncio
+
 import pytest
 
 from libqtile.extension.base import RunCommand, _Extension
@@ -73,12 +75,15 @@ def test_base_methods():
 
 
 def test_run_command(monkeypatch):
-    def fake_popen(cmd, *args, **kwargs):
-        return cmd
+    async def fake_async_proc(*args, **kwargs):
+        return args
 
-    monkeypatch.setattr("libqtile.extension.base.Popen", fake_popen)
+    monkeypatch.setattr("libqtile.extension.base.asyncio.create_subprocess_exec", fake_async_proc)
 
-    extension = RunCommand(command="command --arg1 --arg2")
+    async def t():
+        extension = RunCommand(cmd="command --arg1 --arg2")
 
-    assert extension.command == "command --arg1 --arg2"
-    assert extension.run() == "command --arg1 --arg2"
+        assert extension.cmd == "command --arg1 --arg2"
+        assert await extension.run() == ("command", "--arg1", "--arg2")
+
+    asyncio.run(t())
