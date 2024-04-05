@@ -82,6 +82,7 @@ class Backlight(base.InLoopPollText):
         ("step", 10, "Percent of backlight every scroll changed"),
         ("format", "{percent:2.0%}", "Display format"),
         ("change_command", "xbacklight -set {0}", "Execute command to change value"),
+        ("min_brightness", 0, "Minimum brightness percentage"),
     ]
 
     def __init__(self, **config):
@@ -154,7 +155,7 @@ class Backlight(base.InLoopPollText):
             return
         new = now = self._get_info() * 100
         if direction is ChangeDirection.DOWN:
-            new = max(now - step, 0)
+            new = max(now - step, self.min_brightness)
         elif direction is ChangeDirection.UP:
             new = min(now + step, 100)
         if new != now:
