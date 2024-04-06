@@ -145,12 +145,12 @@ jobs:
           xcb-util-renderutil \
           xcb-util-wm-devel
       - name: Download wayland libraries
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: wayland
       - name: Unpack wayland artifact
         run: tar xf wayland.tar.gz -C /
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set environment variables
         run: |
           PYTHON_ROOT=$(find /opt/python -name ${PYTHON_VERSION/./}-*)
@@ -183,16 +183,16 @@ jobs:
     steps:
       - name: Download wheels
         if: ${{ matrix.manual-version == '' }}
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: wheels-cp${{ matrix.python-version }}
       - name: Download wheels (manual)
         if: ${{ matrix.manual-version != '' }}
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: wheels-${{ matrix.manual-version }}
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install wheel
@@ -208,7 +208,7 @@ jobs:
     steps:
       - name: Install dependencies
         run: dnf install -y cairo-devel libffi-devel libxkbcommon-devel
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set environment variables
         run: |
           PYTHON_ROOT=$(find /opt/python -name ${PYTHON_VERSION/./}-*)
@@ -238,13 +238,13 @@ jobs:
     steps:
       - name: Download wheels
         if: ${{ matrix.manual-version == '' }}
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: wheels-cp${{ matrix.python-version }}
           path: dist/
       - name: Download wheels (manual)
         if: ${{ matrix.manual-version != '' }}
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: wheels-${{ matrix.manual-version }}
           path: dist/
@@ -270,7 +270,7 @@ jobs:
       python-version: "cp3.11"
     steps:
       - name: Download source
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: source
           path: dist/
