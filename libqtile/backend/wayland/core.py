@@ -41,6 +41,7 @@ from wlroots.wlr_types import (
     DataDeviceManager,
     ExportDmabufManagerV1,
     ForeignToplevelManagerV1,
+    FractionalScaleManagerV1,
     GammaControlManagerV1,
     InputInhibitManager,
     OutputLayout,
@@ -308,6 +309,7 @@ class Core(base.Core, wlrq.HasListeners):
         ScreencopyManagerV1(self.display)
         GammaControlManagerV1(self.display)
         Viewporter(self.display)
+        FractionalScaleManagerV1(self.display)
         self.scene.set_presentation(Presentation.create(self.display, self.backend))
         output_power_manager = OutputPowerManagerV1(self.display)
         self.add_listener(
