@@ -84,7 +84,12 @@ class XWindow(Window[xwayland.Surface]):
                 state = wlr_surface.current
                 if state.width != self._width or state.height != self._height:
                     self.place(
-                        self.x, self.y, state.width, state.height, self.borderwidth, self.bordercolor
+                        self.x,
+                        self.y,
+                        state.width,
+                        state.height,
+                        self.borderwidth,
+                        self.bordercolor,
                     )
 
     def _on_request_activate(self, _listener: Listener, event: SurfaceConfigureEvent) -> None:
@@ -348,7 +353,9 @@ class XWindow(Window[xwayland.Surface]):
         Window.static(self, screen, x, y, width, height)
         hook.fire("client_managed", self.qtile.windows_map[self._wid])
 
-    def _to_static(self, x: int | None, y: int | None, width: int | None, height: int | None) -> XStatic:
+    def _to_static(
+        self, x: int | None, y: int | None, width: int | None, height: int | None
+    ) -> XStatic:
         return XStatic(self.core, self.qtile, self, x, y, width, height)
 
 
