@@ -1,5 +1,9 @@
 Qtile x.xx.x, released XXXX-XX-XX:
     * features
+    * bugfixes
+
+Qtile 0.25.0, released 2024-04-06:
+    * features
       - The Battery widget now supports dynamic charge control, allowing for
         protecting battery life.
       - To support the above (plus the other widgets that modify sysfs), qtile
