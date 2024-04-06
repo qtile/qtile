@@ -13,12 +13,22 @@ WAYLAND_PROTOCOLS=1.32
 WLROOTS=0.17.0
 SEATD=0.7.0
 LIBDRM=2.4.114
+PIXMAN=0.43.4
 
 # Packaged dependencies
 sudo apt update
 sudo apt install --no-install-recommends \
     ninja-build libegl1-mesa-dev libgles2-mesa-dev libgbm-dev libinput-dev libxkbcommon-dev \
-    libpixman-1-dev libpciaccess-dev xwayland hwdata
+    libpciaccess-dev xwayland hwdata
+
+# Build pixman
+wget https://gitlab.freedesktop.org/pixman/pixman/-/archive/pixman-$PIXMAN/pixman-pixman-$PIXMAN.tar.gz
+tar -xzf pixman-pixman-$PIXMAN.tar.gz
+cd pixman-pixman-$PIXMAN
+meson build --prefix=/usr
+ninja -C build
+sudo ninja -C build install
+cd ../
 
 # Build wayland
 wget https://gitlab.freedesktop.org/wayland/wayland/-/releases/$WAYLAND/downloads/wayland-$WAYLAND.tar.xz
