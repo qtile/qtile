@@ -44,7 +44,6 @@ if TYPE_CHECKING:
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.layer import LayerStatic
     from libqtile.backend.wayland.window import WindowType
-    from libqtile.backend.wayland.wlrq import Dnd
     from libqtile.config import Screen
 
 
@@ -202,7 +201,7 @@ class Output(HasListeners):
                 None,
             )
 
-    def contains(self, rect: WindowType | Dnd) -> bool:
+    def contains(self, rect: WindowType) -> bool:
         """Returns whether the given window is visible on this output."""
         if rect.x + rect.width < self.x:
             return False
