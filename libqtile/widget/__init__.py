@@ -44,6 +44,7 @@ widgets = {
     "CurrentLayoutIcon": "currentlayout",
     "CurrentScreen": "currentscreen",
     "DF": "df",
+    "DoNotDisturb": "do_not_disturb",
     "GenPollText": "generic_poll_text",
     "GenPollUrl": "generic_poll_text",
     "GenPollCommand": "generic_poll_text",

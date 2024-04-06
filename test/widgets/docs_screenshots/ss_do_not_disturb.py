@@ -1,4 +1,4 @@
-# Copyright (c) 2021 elParaguayo
+# Copyright (c) 2024 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -17,27 +17,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from importlib import reload
-
 import pytest
 
-from test.widgets.test_keyboardkbdd import MockSpawn, mock_signal_receiver
+from test.widgets.test_do_not_disturb import patched_dnd  # noqa: F401
 
 
 @pytest.fixture
-def widget(monkeypatch):
-    from libqtile.widget import keyboardkbdd
+def widget(patched_dnd):  # noqa: F811
+    class DoNotDisturb(patched_dnd):
+        pass
 
-    reload(keyboardkbdd)
-    monkeypatch.setattr(
-        "libqtile.widget.keyboardkbdd.KeyboardKbdd.call_process", MockSpawn.call_process
-    )
-    monkeypatch.setattr("libqtile.widget.keyboardkbdd.add_signal_receiver", mock_signal_receiver)
-    return keyboardkbdd.KeyboardKbdd
+    yield DoNotDisturb
 
 
-@pytest.mark.parametrize(
-    "screenshot_manager", [{"configured_keyboards": ["gb", "us"]}], indirect=True
-)
-def ss_keyboardkbdd(screenshot_manager):
+def ss_do_not_disturb(screenshot_manager):
     screenshot_manager.take_screenshot()

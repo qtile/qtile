@@ -28,6 +28,10 @@ from libqtile.config import Screen
 from libqtile.confreader import Config
 
 
+def custom_text_parser(name):
+    return f"TEST-{name}-TEST"
+
+
 class WindowTabsConfig(Config):
     auto_fullscreen = True
     groups = [libqtile.config.Group("a"), libqtile.config.Group("b")]
@@ -40,6 +44,7 @@ class WindowTabsConfig(Config):
             top=bar.Bar(
                 [
                     widget.WindowTabs(),
+                    widget.WindowTabs(name="customparse", parse_text=custom_text_parser),
                 ],
                 24,
             ),
@@ -136,3 +141,10 @@ def test_escaping_text(manager):
     """
     manager.test_window("Text & Text")
     assert manager.c.widget["windowtabs"].info()["text"] == "<b>Text &amp; Text</b>"
+
+
+@windowtabs_config
+def test_custom_text_parser(manager):
+    """Test the custom text parser function."""
+    manager.test_window("one")
+    assert manager.c.widget["customparse"].info()["text"] == "<b>TEST-one-TEST</b>"

@@ -1,7 +1,15 @@
 Qtile x.xx.x, released XXXX-XX-XX:
     * features
+      - The Battery widget now supports dynamic charge control, allowing for
+        protecting battery life.
+      - To support the above (plus the other widgets that modify sysfs), qtile
+        now ships with its own udev rules, located at
+        /resources/99-qtile.rules; distro packagers will probably want to
+        install this rule set.
       - Add `Touchpad` widget which shows current touchpad state and allows to easily toggle it
     * bugfixes
+      - Fix groups marked with `persist=False` not being deleted when their last window is moved to another group.
+      - Fallback icon in StatusNotifier widget
 
 Qtile 0.24.0, released 2024-01-20:
     !!! config breakage/changes !!!
@@ -26,6 +34,7 @@ Qtile 0.24.0, released 2024-01-20:
       - Fix two bugs in stacking transient windows in X11
       - Checking configs containing `qtile.core.name` with `python config.py` don't fail anymore (but `qtile.core.name`
         will be `None`)
+      - Fix an error if a wayland xwindow has unknown wm_type
 
 Qtile 0.23.0, released 2023-09-24:
     !!! Dependency Changes !!!

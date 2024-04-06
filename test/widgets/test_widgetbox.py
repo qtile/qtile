@@ -176,3 +176,38 @@ def test_deprecated_configuration(caplog):
     box = WidgetBox([tray])
     assert box.widgets == [tray]
     assert "The use of a positional argument in WidgetBox is deprecated." in caplog.text
+
+
+def test_widgetbox_open_close_commands(manager_nospawn, minimal_conf_noscreen):
+    config = minimal_conf_noscreen
+    tbox = TextBox(text="Text Box")
+    widget_box = WidgetBox(widgets=[tbox])
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([widget_box], 10))]
+
+    manager_nospawn.start(config)
+
+    topbar = manager_nospawn.c.bar["top"]
+    widget = manager_nospawn.c.widget["widgetbox"]
+
+    def count():
+        return len(topbar.info()["widgets"])
+
+    assert count() == 1
+
+    widget.open()
+    assert count() == 2
+
+    widget.open()
+    assert count() == 2
+
+    widget.close()
+    assert count() == 1
+
+    widget.close()
+    assert count() == 1
+
+    widget.toggle()
+    assert count() == 2
+
+    widget.toggle()
+    assert count() == 1

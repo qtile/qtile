@@ -29,9 +29,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any
-
-    from typing_extensions import Literal
+    from typing import Any, Literal
 
     from libqtile.config import Group, Key, Mouse, Rule, Screen
     from libqtile.layout.base import Layout
@@ -43,7 +41,7 @@ class ConfigError(Exception):
 
 config_pyi_header = """
 from typing import Any
-from typing_extensions import Literal
+from typing import Literal
 from libqtile.config import Group, Key, Mouse, Rule, Screen
 from libqtile.layout.base import Layout
 
@@ -115,8 +113,8 @@ class Config:
                     continue
 
                 # Check if the module is in the config folder or subfolder
-                # if so, reload it
-                if folder in subpath.parents:
+                # and the file still exists.  If so, reload it
+                if folder in subpath.parents and subpath.exists():
                     importlib.reload(module)
 
     def load(self):

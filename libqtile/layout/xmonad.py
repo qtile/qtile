@@ -147,7 +147,8 @@ class MonadTall(_SimpleLayoutBase):
         Key([modkey, "shift"], "k", lazy.layout.shuffle_up()),
         Key([modkey], "i", lazy.layout.grow()),
         Key([modkey], "m", lazy.layout.shrink()),
-        Key([modkey], "n", lazy.layout.normalize()),
+        Key([modkey], "n", lazy.layout.reset()),
+        Key([modkey, "shift"], "n", lazy.layout.normalize()),
         Key([modkey], "o", lazy.layout.maximize()),
         Key([modkey, "shift"], "space", lazy.layout.flip()),
     """
@@ -878,7 +879,8 @@ class MonadWide(MonadTall):
         Key([modkey, "shift"], "k", lazy.layout.shuffle_up()),
         Key([modkey], "i", lazy.layout.grow()),
         Key([modkey], "m", lazy.layout.shrink()),
-        Key([modkey], "n", lazy.layout.normalize()),
+        Key([modkey], "n", lazy.layout.reset()),
+        Key([modkey, "shift"], "n", lazy.layout.normalize()),
         Key([modkey], "o", lazy.layout.maximize()),
         Key([modkey, "shift"], "space", lazy.layout.flip()),
     """

@@ -55,13 +55,11 @@ from libqtile.log_utils import logger
 from libqtile.resources.sleep import inhibitor
 from libqtile.scratchpad import ScratchPad
 from libqtile.scripts.main import VERSION
-from libqtile.utils import cancel_tasks, get_cache_dir, lget, send_notification
+from libqtile.utils import cancel_tasks, get_cache_dir, lget, remove_dbus_rules, send_notification
 from libqtile.widget.base import _Widget
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
-
-    from typing_extensions import Literal
+    from typing import Any, Callable, Literal
 
     from libqtile.command.base import ItemT
     from libqtile.confreader import Config
@@ -298,6 +296,7 @@ class Qtile(CommandObject):
         self.groups_map.clear()
         self.groups.clear()
         self.screens.clear()
+        remove_dbus_rules()
         self.load_config()
 
     def _finalize_configurables(self) -> None:
@@ -324,6 +323,7 @@ class Qtile(CommandObject):
 
     def finalize(self) -> None:
         self._finalize_configurables()
+        remove_dbus_rules()
         inhibitor.stop()
         cancel_tasks()
         self.core.finalize()
@@ -475,6 +475,9 @@ class Qtile(CommandObject):
         """Grab the given key event"""
         syms = self.core.grab_key(key)
         if syms in self.keys_map:
+            if self.keys_map[syms] == key:
+                # We've already bound this key definition
+                return
             logger.warning("Key spec duplicated, overriding previous: %s", key)
         self.keys_map[syms] = key
 
@@ -1220,7 +1223,9 @@ class Qtile(CommandObject):
             send_notification("Configuration check", "No error found!")
 
     @expose_command()
-    def spawn(self, cmd: str | list[str], shell: bool = False) -> int:
+    def spawn(
+        self, cmd: str | list[str], shell: bool = False, env: dict[str, str] = dict()
+    ) -> int:
         """
         Spawn a new process.
 
@@ -1231,6 +1236,8 @@ class Qtile(CommandObject):
         shell:
             Whether to execute the command in a new shell by prepending it with "/bin/sh
             -c". This enables the use of shell syntax within the command (e.g. pipes).
+        env:
+            Dictionary of environmental variables to pass with command.
 
         Examples
         ========
@@ -1282,6 +1289,9 @@ class Qtile(CommandObject):
                     del os.environ["VIRTUAL_ENV"]
                 except KeyError:
                     pass
+
+                for k, v in env.items():
+                    os.environ[k] = v
 
                 # Open /dev/null as stdin, stdout, stderr
                 try:

@@ -1,4 +1,4 @@
-# Copyright (c) 2021 elParaguayo
+# Copyright (c) 2024 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -17,27 +17,30 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from importlib import reload
-
 import pytest
 
-from test.widgets.test_keyboardkbdd import MockSpawn, mock_signal_receiver
+from libqtile import config, widget
+from libqtile.bar import Bar
+from test.helpers import BareConfig
 
 
-@pytest.fixture
-def widget(monkeypatch):
-    from libqtile.widget import keyboardkbdd
-
-    reload(keyboardkbdd)
-    monkeypatch.setattr(
-        "libqtile.widget.keyboardkbdd.KeyboardKbdd.call_process", MockSpawn.call_process
-    )
-    monkeypatch.setattr("libqtile.widget.keyboardkbdd.add_signal_receiver", mock_signal_receiver)
-    return keyboardkbdd.KeyboardKbdd
+class GroupBoxConfig(BareConfig):
+    screens = [
+        config.Screen(
+            top=Bar([widget.GroupBox(), widget.GroupBox(name="has_markup", markup=True)], 24)
+        )
+    ]
+    groups = [config.Group("1", label="<sup>1</sup>")]
 
 
-@pytest.mark.parametrize(
-    "screenshot_manager", [{"configured_keyboards": ["gb", "us"]}], indirect=True
-)
-def ss_keyboardkbdd(screenshot_manager):
-    screenshot_manager.take_screenshot()
+groupbox_config = pytest.mark.parametrize("manager", [GroupBoxConfig], indirect=True)
+
+
+@groupbox_config
+def test_groupbox_markup(manager):
+    """Group labels can support markup but this is disabled by default."""
+    no_markup = manager.c.widget["groupbox"]
+    has_markup = manager.c.widget["has_markup"]
+
+    # If markup is disabled, text will include markup tags so widget will be wider
+    assert no_markup.info()["width"] > has_markup.info()["width"]

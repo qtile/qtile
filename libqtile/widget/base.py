@@ -400,7 +400,7 @@ class _Widget(CommandObject, configurable.Configurable):
         return Mirror(self, background=self.background)
 
     def clone(self):
-        return copy.copy(self)
+        return copy.deepcopy(self)
 
     def mouse_enter(self, x, y):
         pass
@@ -937,6 +937,8 @@ class Mirror(_Widget):
         self.reflects = reflection
         self._length = 0
         self.length_type = self.reflects.length_type
+        if self.length_type is bar.STATIC:
+            self._length = self.reflects._length
 
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
@@ -959,7 +961,9 @@ class Mirror(_Widget):
         self._length = value
 
     def draw(self):
-        self.drawer.clear(self.reflects.background or self.bar.background)
+        if self.length <= 0:
+            return
+        self.drawer.clear_rect()
         self.reflects.drawer.paint_to(self.drawer)
         self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
 
