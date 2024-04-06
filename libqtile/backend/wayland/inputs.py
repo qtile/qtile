@@ -247,10 +247,7 @@ class Keyboard(_Device):
         self.seat.keyboard_notify_modifiers(self.keyboard.modifiers)
 
     def _on_key(self, _listener: Listener, event: KeyboardKeyEvent) -> None:
-        if self.qtile is None:
-            # shushes mypy
-            self.qtile = self.core.qtile
-            assert self.qtile is not None
+        self.qtile = self.core.qtile
 
         self.core.idle.notify_activity(self.seat)
 

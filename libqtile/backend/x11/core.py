@@ -44,8 +44,6 @@ from libqtile.utils import QtileError
 if TYPE_CHECKING:
     from typing import Callable, Iterator
 
-    from libqtile.core.manager import Qtile
-
 _IGNORED_EVENTS = {
     xcffib.xproto.CreateNotifyEvent,
     xcffib.xproto.FocusInEvent,
@@ -151,7 +149,6 @@ class Core(base.Core):
         # setup the default cursor
         self._root.set_cursor("left_ptr")
 
-        self.qtile = None  # type: Qtile | None
         self._painter = None
         self._xtest = self.conn.conn(xcffib.xtest.key)
 
@@ -181,7 +178,8 @@ class Core(base.Core):
                 self._root.wid,
                 self.conn.atoms["_NET_SUPPORTING_WM_CHECK"],
             ).check()
-        self.qtile = None
+        if hasattr(self, "qtile"):
+            delattr(self, "qtile")
         self.conn.finalize()
 
     def get_screen_info(self) -> list[tuple[int, int, int, int]]:
@@ -211,7 +209,7 @@ class Core(base.Core):
         self._wmname = wmname
         self._supporting_wm_check_window.set_property("_NET_WM_NAME", wmname)
 
-    def setup_listener(self, qtile: "Qtile") -> None:
+    def setup_listener(self) -> None:
         """Setup a listener for the given qtile instance
 
         :param qtile:
@@ -220,7 +218,6 @@ class Core(base.Core):
             The eventloop to use to listen to the file descriptor.
         """
         logger.debug("Adding io watch")
-        self.qtile = qtile
         self.fd = self.conn.conn.get_file_descriptor()
         asyncio.get_running_loop().add_reader(self.fd, self._xpoll)
 
