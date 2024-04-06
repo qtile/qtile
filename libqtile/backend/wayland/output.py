@@ -39,7 +39,6 @@ if TYPE_CHECKING:
     from typing import Any
 
     from pywayland.server import Listener
-    from wlroots.wlr_types import SceneOutput
     from wlroots.wlr_types.output import OutputEventRequestState
 
     from libqtile.backend.wayland.core import Core

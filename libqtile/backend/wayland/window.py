@@ -53,8 +53,6 @@ except ModuleNotFoundError:
 if typing.TYPE_CHECKING:
     from typing import Any
 
-    from wlroots.wlr_types import Surface
-
     from libqtile.backend.wayland.core import Core
     from libqtile.command.base import CommandObject, ItemT
     from libqtile.core.manager import Qtile
