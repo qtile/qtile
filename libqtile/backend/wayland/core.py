@@ -105,7 +105,6 @@ if TYPE_CHECKING:
     from wlroots.wlr_types.data_device_manager import Drag
 
     from libqtile import config
-    from libqtile.core.manager import Qtile
 
 
 class ImplicitGrab(wlrq.HasListeners):
@@ -143,8 +142,6 @@ class Core(base.Core, wlrq.HasListeners):
 
     def __init__(self) -> None:
         """Setup the Wayland core backend"""
-        self.qtile: Qtile | None = None
-
         # This is the window under the pointer
         self._hovered_window: window.WindowType | None = None
         # but this Internal receives keyboard input, e.g. via the Prompt widget.
@@ -393,7 +390,8 @@ class Core(base.Core, wlrq.HasListeners):
         self.seat.destroy()
         self.backend.destroy()
         self.display.destroy()
-        self.qtile = None
+        if hasattr(self, "qtile"):
+            delattr(self, "qtile")
 
     @property
     def display_name(self) -> str:
@@ -795,9 +793,6 @@ class Core(base.Core, wlrq.HasListeners):
     ) -> None:
         logger.debug("Signal: idle_inhibitor new_inhibitor")
 
-        if self.qtile is None:
-            return
-
         for win in self.qtile.windows_map.values():
             if isinstance(win, (window.Window, window.Static)):
                 win.surface.for_each_surface(win.add_idle_inhibitor, idle_inhibitor)
@@ -1172,10 +1167,9 @@ class Core(base.Core, wlrq.HasListeners):
                 device.configure(self.qtile.config.wl_input_rules)
         self._pending_input_devices.clear()
 
-    def setup_listener(self, qtile: Qtile) -> None:
+    def setup_listener(self) -> None:
         """Setup a listener for the given qtile instance"""
         logger.debug("Adding io watch")
-        self.qtile = qtile
         self.fd = lib.wl_event_loop_get_fd(self.event_loop._ptr)
         if self.fd:
             asyncio.get_running_loop().add_reader(self.fd, self._poll)

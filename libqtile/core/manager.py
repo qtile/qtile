@@ -81,7 +81,7 @@ class Qtile(CommandObject):
         state: str | None = None,
         socket_path: str | None = None,
     ) -> None:
-        self.core = kore
+        self.core: base.Core = kore
         self.config = config
         self.no_spawn = no_spawn
         self._state: QtileState | str | None = state
@@ -210,7 +210,9 @@ class Qtile(CommandObject):
         # Set the event loop policy to facilitate access to main event loop
         asyncio.set_event_loop_policy(QtileEventLoopPolicy(self))
         self._stopped_event = asyncio.Event()
-        self.core.setup_listener(self)
+        self.core.qtile = self
+        self.load_config(initial=True)
+        self.core.setup_listener()
         try:
             async with LoopContext(
                 {
@@ -224,7 +226,6 @@ class Qtile(CommandObject):
                 self._prepare_socket_path(self.socket_path),
                 self.server.call,
             ):
-                self.load_config(initial=True)
                 await self._stopped_event.wait()
         finally:
             self.finalize()
