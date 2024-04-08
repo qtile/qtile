@@ -29,6 +29,7 @@ from libqtile.layout.columns import Columns
 from libqtile.layout.floating import Floating
 from libqtile.layout.matrix import Matrix
 from libqtile.layout.max import Max
+from libqtile.layout.plasma import Plasma
 from libqtile.layout.ratiotile import RatioTile
 from libqtile.layout.screensplit import ScreenSplit
 from libqtile.layout.slice import Slice
