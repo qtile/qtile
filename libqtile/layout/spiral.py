@@ -351,15 +351,7 @@ class Spiral(_SimpleLayoutBase):
     def next(self) -> None:
         _SimpleLayoutBase.next(self)
 
-    def _set_ratio(self, prop: str, value: float | str):
-        # We allow a str for 'value' as a string may be issued via IPC.
-        if not isinstance(value, (float, int)):
-            try:
-                value = float(value)
-            except ValueError:
-                logger.error("Invalid ratio value: %s", value)
-                return
-
+    def _set_ratio(self, prop: str, value: float):
         if not (0 <= value <= 1):
             logger.warning(
                 "Invalid value for %s: %s. Value must be between 0 and 1.", prop, value
@@ -408,12 +400,12 @@ class Spiral(_SimpleLayoutBase):
         self._set_ratio("main_pane_ratio", self.main_pane_ratio + self.ratio_increment)
 
     @expose_command()
-    def set_ratio(self, ratio: float | str):
+    def set_ratio(self, ratio: float):
         """Set the ratio for all windows."""
         self._set_ratio("ratio", ratio)
 
     @expose_command()
-    def set_master_ratio(self, ratio: float | str):
+    def set_master_ratio(self, ratio: float):
         """Set the ratio for the main window."""
         self._set_ratio("main_pane_ratio", ratio)
 
