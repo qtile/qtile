@@ -185,6 +185,12 @@ class XBackend(Backend):
         self.core = Core
         self.manager = None
 
+    def configure(self, manager):
+        """This backend needs to get DISPLAY variable."""
+        success, display = manager.c.eval("self.core.display_name")
+        assert success
+        self.env["DISPLAY"] = display
+
     def fake_click(self, x, y):
         """Click at the specified coordinates"""
         conn = Connection(self.env["DISPLAY"])
