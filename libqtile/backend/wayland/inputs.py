@@ -207,7 +207,6 @@ class _Device(ABC, HasListeners):
 class Keyboard(_Device):
     def __init__(self, core: Core, wlr_device: InputDevice, keyboard: WlrKeyboard):
         super().__init__(core, wlr_device)
-        self.qtile = core.qtile
         self.seat = core.seat
         self.keyboard = keyboard
         self.grabbed_keys = core.grabbed_keys
