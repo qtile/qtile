@@ -446,7 +446,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.seat.set_capabilities(capabilities)
 
         logger.info("New device: %s %s", *device.get_info())
-        if self.qtile:
+        if hasattr(self, "qtile"):
             if self.qtile.config.wl_input_rules:
                 device.configure(self.qtile.config.wl_input_rules)
         else:
