@@ -173,6 +173,18 @@ class DropDownToggler(WindowVisibilityToggler):
         self.y = ddconfig.y
         self.width = ddconfig.width
         self.height = ddconfig.height
+
+        # add "SKIP_TASKBAR" to _NET_WM_STATE atom (for X11)
+        if window.qtile.core.name == "x11":
+            net_wm_state = list(window.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
+            skip_taskbar = window.qtile.core.conn.atoms["_NET_WM_STATE_SKIP_TASKBAR"]
+            if net_wm_state:
+                if "_NET_WM_STATE_SKIP_TASKBAR" not in net_wm_state:
+                    net_wm_state.append(skip_taskbar)
+            else:
+                net_wm_state = [skip_taskbar]
+            window.window.set_property("_NET_WM_STATE", net_wm_state)
+
         # Let's add the window to the scratchpad group.
         window.togroup(scratchpad_name)
         window.opacity = ddconfig.opacity
@@ -299,7 +311,7 @@ class ScratchPad(group._Group):
         """
         hook method which is called if window float state is changed.
         If the current associated window is not floated (any more) the window
-        and process is detached from DRopDown, thus the next call to Show
+        and process is detached from DropDown, thus the next call to Show
         will spawn a new process.
         """
         name = None
