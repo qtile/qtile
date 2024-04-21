@@ -170,6 +170,21 @@ def xmanager(request, xephyr):
 
 
 @pytest.fixture(scope="function")
+def xmanager_nospawn(request, xephyr):
+    """
+    This replicates the `manager` fixture except that the x11 backend is hard-coded. We
+    cannot simply parametrize the `backend_name` fixture module-wide because it gets
+    parametrized by `pytest_generate_tests` in test/conftest.py and only one of these
+    parametrize calls can be used.
+    """
+    backend = XBackend({"DISPLAY": xephyr.display}, args=[xephyr.display])
+
+    with TestManager(backend, request.config.getoption("--debuglog")) as manager:
+        manager.display = xephyr.display
+        yield manager
+
+
+@pytest.fixture(scope="function")
 def conn(xmanager):
     conn = Connection(xmanager.display)
     yield conn
