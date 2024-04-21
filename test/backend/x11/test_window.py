@@ -71,21 +71,21 @@ class SmartConfig(BareConfig):
 
 
 @dualmonitor
-def test_urgent_hook_fire(manager_nospawn):
-    manager_nospawn.display = manager_nospawn.backend.env["DISPLAY"]
-    conn = Connection(manager_nospawn.display)
+def test_urgent_hook_fire(xmanager_nospawn):
+    xmanager_nospawn.display = xmanager_nospawn.backend.env["DISPLAY"]
+    conn = Connection(xmanager_nospawn.display)
 
-    manager_nospawn.hook_fired = Value("i", 0)
+    xmanager_nospawn.hook_fired = Value("i", 0)
 
     def _hook_test(val):
-        manager_nospawn.hook_fired.value += 1
+        xmanager_nospawn.hook_fired.value += 1
 
     hook.subscribe.client_urgent_hint_changed(_hook_test)
 
-    manager_nospawn.start(UrgentConfig)
+    xmanager_nospawn.start(UrgentConfig)
 
-    manager_nospawn.test_window("one")
-    window_info = manager_nospawn.c.window.info()
+    xmanager_nospawn.test_window("one")
+    window_info = xmanager_nospawn.c.window.info()
 
     # send activate window message
     data = xcffib.xproto.ClientMessageData.synthetic([0, 0, 0, 0, 0], "IIIII")
@@ -95,15 +95,15 @@ def test_urgent_hook_fire(manager_nospawn):
     conn.default_screen.root.send_event(ev, mask=xcffib.xproto.EventMask.SubstructureRedirect)
     conn.xsync()
 
-    manager_nospawn.terminate()
-    assert manager_nospawn.hook_fired.value == 1
+    xmanager_nospawn.terminate()
+    assert xmanager_nospawn.hook_fired.value == 1
 
     # test that focus_on_window_activation = "smart" also fires the hook
-    manager_nospawn.start(SmartConfig, no_spawn=True)
+    xmanager_nospawn.start(SmartConfig, no_spawn=True)
 
-    manager_nospawn.test_window("one")
-    window_info = manager_nospawn.c.window.info()
-    manager_nospawn.c.window.toscreen(1)
+    xmanager_nospawn.test_window("one")
+    window_info = xmanager_nospawn.c.window.info()
+    xmanager_nospawn.c.window.toscreen(1)
 
     # send activate window message
     ev = xcffib.xproto.ClientMessageEvent.synthetic(
@@ -111,9 +111,9 @@ def test_urgent_hook_fire(manager_nospawn):
     )
     conn.default_screen.root.send_event(ev, mask=xcffib.xproto.EventMask.SubstructureRedirect)
     conn.xsync()
-    manager_nospawn.terminate()
+    xmanager_nospawn.terminate()
 
-    assert manager_nospawn.hook_fired.value == 2
+    assert xmanager_nospawn.hook_fired.value == 2
 
 
 @manager_config
