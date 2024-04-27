@@ -66,6 +66,7 @@ class CallConfig(Config):
             bottom=libqtile.bar.Bar(
                 [
                     libqtile.widget.GroupBox(),
+                    libqtile.widget.TextBox(),
                 ],
                 20,
             ),
@@ -107,6 +108,12 @@ def test_param_hoisting(manager):
         cmd_client.call("hide_show_bar", position="zomg", lifted=True)
 
     cmd_client.call("hide_show_bar", position="top", lifted=True)
+
+    # 'zomg' is not a valid font size
+    with pytest.raises(IPCError):
+        cmd_client.navigate("widget", "textbox").call("set_font", fontsize="zomg", lifted=True)
+
+    cmd_client.navigate("widget", "textbox").call("set_font", fontsize=12, lifted=True)
 
 
 class FakeCommandObject(CommandObject):

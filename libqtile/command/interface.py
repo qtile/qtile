@@ -28,7 +28,7 @@ import traceback
 import types
 import typing
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING, Any, Literal, get_args, get_origin
+from typing import TYPE_CHECKING, Any, Literal, Union, get_args, get_origin
 
 from libqtile import ipc
 from libqtile.command.base import CommandError, CommandException, CommandObject, SelectError
@@ -309,7 +309,7 @@ def lift_args(cmd, args, kwargs):
 
     def lift_arg(typ, arg):
         # for stuff like int | None, allow either
-        if get_origin(typ) in [types.UnionType, typing.Union]:
+        if get_origin(typ) in [types.UnionType, Union]:
             for t in get_args(typ):
                 if t == types.NoneType:
                     # special case None? I don't know what this looks like
