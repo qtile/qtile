@@ -1,7 +1,5 @@
 import argparse
-import faulthandler
 import logging
-import signal
 import sys
 from pathlib import Path
 
@@ -26,11 +24,6 @@ def check_folder(value):
 
 
 def main():
-    faulthandler.enable(all_threads=True)
-    # This is a bit unfortunate. We use SIGUSR1&2 for reloading config &
-    # restarting qtile, so we overload SIGWINCH here to dump threads.
-    faulthandler.register(signal.SIGWINCH, all_threads=True)
-
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument(
         "-l",
