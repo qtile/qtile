@@ -128,9 +128,26 @@ class Painter:
         image_w = image.get_width()
         image_h = image.get_height()
 
-        stride = image.get_stride()
-        data = cairocffi.cairo.cairo_image_surface_get_data(image._pointer)
-        wlr_buffer = lib.cairo_buffer_create(image_w, image_h, stride, data)
+        # the dimensions of cairo are the full screen if the mode is not specified
+        # otherwise they are the image dimensions for fill and stretch mode
+        # the actual scaling of the image is then done with wlroots functions
+        # so that the GPU is used
+        cairo_w = image_w if mode in ["fill", "stretch"] else screen.width
+        cairo_h = image_h if mode in ["fill", "stretch"] else screen.height
+        surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, cairo_w, cairo_h)
+        with cairocffi.Context(surface) as context:
+            context.save()
+            context.set_operator(cairocffi.OPERATOR_SOURCE)
+            context.set_source_rgb(0, 0, 0)
+            context.rectangle(0, 0, cairo_w, cairo_h)
+            context.fill()
+            context.restore()
+            context.set_source_surface(image)
+            context.paint()
+        surface.flush()
+        stride = surface.get_stride()
+        data = cairocffi.cairo.cairo_image_surface_get_data(surface._pointer)
+        wlr_buffer = lib.cairo_buffer_create(cairo_w, cairo_h, stride, data)
         if wlr_buffer == ffi.NULL:
             raise RuntimeError("Couldn't allocate cairo buffer.")
 
@@ -143,7 +160,7 @@ class Painter:
         # We need to keep a reference to the surface so its data persists
         if scene_buffer := SceneBuffer.create(self.core.wallpaper_tree, Buffer(wlr_buffer)):
             scene_buffer.node.set_position(screen.x, screen.y)
-            self.core.wallpapers[screen] = (scene_buffer, image)
+            self.core.wallpapers[screen] = (scene_buffer, surface)
         else:
             logger.warning("Failed to create wlr_scene_buffer.")
             return
