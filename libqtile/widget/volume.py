@@ -108,7 +108,7 @@ class Volume(base._TextBox):
         self.add_defaults(Volume.defaults)
         self.surfaces = {}
         self.volume = None
-        self.mute = 0
+        self.mute = False
 
         self.add_callbacks(
             {
@@ -217,13 +217,13 @@ class Volume(base._TextBox):
 
             mixer_out = subprocess.getoutput(get_volume_cmd)
         except subprocess.CalledProcessError:
-            return -1, 0
+            return -1, False
 
         check_mute = mixer_out
         if self.check_mute_command:
             check_mute = subprocess.getoutput(self.check_mute_command)
 
-        mute = 1 if self.check_mute_string in check_mute else 0
+        mute = self.check_mute_string in check_mute
 
         volgroups = re_vol.search(mixer_out)
         if volgroups:
