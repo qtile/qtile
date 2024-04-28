@@ -353,7 +353,6 @@ class Bluetooth(base._TextBox, base.MarginMixin):
             None,
             "Time before reverting to default_text. If 'None', text will stay on selected item.",
         ),
-        ("hci", None, "(deprecated) same as 'device'."),
         (
             "device",
             None,
@@ -380,10 +379,6 @@ class Bluetooth(base._TextBox, base.MarginMixin):
             {"Button1": self.click, "Button4": self.scroll_up, "Button5": self.scroll_down}
         )
         self.timer = None
-
-        if "hci" in config and "device" not in config:
-            logger.warning("The 'hci' parameter is deprecated, please use 'device'.")
-            self.device = config["hci"]
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
