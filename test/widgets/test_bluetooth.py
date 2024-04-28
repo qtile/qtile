@@ -457,7 +457,6 @@ def test_default_text(bluetooth_manager):
 @pytest.mark.parametrize(
     "bluetooth_manager",
     [
-        {"hci": "/dev_22_22_22_22_22_22_22_22"},
         {"device": "/dev_22_22_22_22_22_22_22_22"},
     ],
     indirect=True,
