@@ -5,7 +5,6 @@ import typing
 from abc import ABCMeta, abstractmethod
 
 from libqtile.command.base import CommandError, CommandObject, expose_command
-from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
     from typing import Any
@@ -409,7 +408,6 @@ class Window(_Window, metaclass=ABCMeta):
     def togroup(
         self,
         group_name: str | None = None,
-        groupName: str | None = None,  # Deprecated  # noqa: N803
         switch_group: bool = False,
         toggle: bool = False,
     ) -> None:
@@ -419,9 +417,6 @@ class Window(_Window, metaclass=ABCMeta):
 
         If `toggle` is True and and the specified group is already on the screen,
         use the last used group as target instead.
-
-        `groupName` is deprecated and will be dropped soon. Please use `group_name`
-        instead.
 
         Examples
         ========
@@ -438,9 +433,6 @@ class Window(_Window, metaclass=ABCMeta):
 
             togroup("a", switch_group=True)
         """
-        if groupName is not None:
-            logger.warning("Window.togroup's groupName is deprecated; use group_name")
-            group_name = groupName
         self.togroup(group_name, switch_group=switch_group, toggle=toggle)
 
     @expose_command()
