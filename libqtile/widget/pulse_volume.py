@@ -128,8 +128,6 @@ class PulseConnection:
 
         if self.default_sink:
             mute = self.default_sink.mute
-            if mute:
-                return -1, mute
             base = self.default_sink.base_volume
             if not base:
                 return -1, mute
