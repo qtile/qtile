@@ -24,25 +24,16 @@ from libcst.codemod.visitors import AddImportsVisitor, RemoveImportsVisitor
 
 from libqtile.scripts.migrations._base import (
     Change,
-    Check,
     MigrationTransformer,
     _QtileMigrator,
     add_migration,
 )
 
 MODULE_MAP = {
-    "command_graph": cst.parse_expression("libqtile.command.graph"),
-    "command_client": cst.parse_expression("libqtile.command.client"),
-    "command_interface": cst.parse_expression("libqtile.command.interface"),
-    "command_object": cst.parse_expression("libqtile.command.base"),
     "window": cst.parse_expression("libqtile.backend.x11.window"),
 }
 
 IMPORT_MAP = {
-    "command_graph": ("libqtile.command", "graph"),
-    "command_client": ("libqtile.command", "client"),
-    "command_interface": ("libqtile.command", "interface"),
-    "command_object": ("libqtile.command", "base"),
     "window": ("libqtile.backend.x11", "window"),
 }
 
@@ -65,11 +56,6 @@ class ModuleRenamesTransformer(MigrationTransformer):
             self.lint(
                 original_node,
                 "The 'libqtile.window' has been moved to 'libqtile.backend.x11.window'.",
-            )
-        else:
-            self.lint(
-                original_node,
-                "The 'libqtile.command_*' modules have been moved to 'libqtile.command.*'.",
             )
 
     @m.leave(
@@ -127,30 +113,7 @@ class ModuleRenames(_QtileMigrator):
     SUMMARY = "Updates certain deprecated ``libqtile.`` module names."
 
     HELP = """
-    To tidy up the qtile codebase, the ``libqtile.command_*`` modules were moved to
-    ``libqtile.command.*`` with one exception, ``libqtile.command_object`` was renamed
-    ``libqtile.command.base``.
-
-    In addition, the ``libqtile.window`` module was moved to ``libqtile.backend.x11.window``.
-
-    NB. this migration will update imports in the following forms:
-
-    .. code:: python
-
-        import libqtile.command_client
-        import libqtile.command_interface as interface
-        from libqtile import command_client
-        from libqtile.command_client import CommandClient
-
-    Results in:
-
-    .. code:: python
-
-        import libqtile.command.client
-        import libqtile.command.interface as interface
-        from libqtile.command.client import CommandClient
-        from libqtile.command import client
-
+    ``libqtile.window`` module was moved to ``libqtile.backend.x11.window``.
     """
 
     AFTER_VERSION = "0.18.1"
@@ -163,23 +126,6 @@ class ModuleRenames(_QtileMigrator):
             Change(f"from libqtile.{mod} import foo", f"from {new_mod}.{new_file} import foo")
         )
         TESTS.append(Change(f"from libqtile import {mod}", f"from {new_mod} import {new_file}"))
-
-    TESTS.append(
-        Check(
-            """
-            from libqtile.command_client import CommandClient
-            from libqtile.command_graph import CommandGraphNode
-            from libqtile.command_interface import QtileCommandInterface
-            from libqtile.command_object import CommandObject
-            """,
-            """
-            from libqtile.command.client import CommandClient
-            from libqtile.command.graph import CommandGraphNode
-            from libqtile.command.interface import QtileCommandInterface
-            from libqtile.command.base import CommandObject
-            """,
-        )
-    )
 
     def run(self, original_node):
         # Run the base transformer first...
