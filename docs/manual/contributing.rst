@@ -176,7 +176,7 @@ a user's config. Examples include renaming classes, methods, arguments and movin
 class definitions.
 
 Where these changes are made, it is strongly encouraged to support the old syntax where possible
-and warn the user about the deprecations. 
+and warn the user about the deprecations.
 
 Whether or not a deprecation warning is provided, a migration script should be provided that will
 modify the user's config when they run ``qtile migrate``.
@@ -188,4 +188,15 @@ Click here for detailed instructions on :doc:`how-to-migrate`.
     :hidden:
 
     how-to-migrate
-  
+
+Deprecation Policy
+------------------
+
+Interfaces that have been deprecated for at least two years after the first
+release containing the deprecation notice can be deleted. Since all new
+breaking changes should have a migration, users can use ``qtile migrate`` to
+bootstrap across versions when migrations are deleted if necessary.
+
+Deprecated interfaces that do not have a migration (i.e. whose deprecation was
+noted before the migration feature was introduced) are all fair game to be
+deleted, since the migration feature is more than two years old.
