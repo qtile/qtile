@@ -753,8 +753,8 @@ class Plasma(Layout):
 
     .. code:: python
 
-        from libqtile.command import lazy
         from libqtile.config import EzKey
+        from libqtile.lazy import lazy
         ...
         keymap = {
             'M-h': lazy.layout.left(),
