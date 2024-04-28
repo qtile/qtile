@@ -65,6 +65,8 @@ class Floating(Layout):
         Match(func=lambda c: c.has_fixed_ratio()),
     ]
 
+    default_override_rules: list[Match] = []
+
     defaults = [
         ("border_focus", "#0000ff", "Border colour(s) for the focused window."),
         ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
@@ -74,7 +76,11 @@ class Floating(Layout):
     ]
 
     def __init__(
-        self, float_rules: list[Match] | None = None, no_reposition_rules=None, **config
+        self,
+        float_rules: list[Match] | None = None,
+        override_rules: list[Match] | None = None,
+        no_reposition_rules=None,
+        **config,
     ):
         """
         If you have certain apps that you always want to float you can provide
@@ -98,6 +104,10 @@ class Floating(Layout):
 
         Specify these in the ``floating_layout`` in your config.
 
+        Exceptions to match rules can be set by providing a list of ``Match`` objects
+        to ``override_rules``. If a client matches any of these rules then it will not be
+        floated, regardles of whether it matches a rule in ``float_rules``.
+
         Floating layout will try to center most of floating windows by default,
         but if you don't want this to happen for certain windows that are
         centered by mistake, you can use ``no_reposition_rules`` option to
@@ -111,13 +121,19 @@ class Floating(Layout):
         if float_rules is None:
             float_rules = self.default_float_rules
 
+        if override_rules is None:
+            override_rules = self.default_override_rules
+
         self.float_rules = float_rules
+        self.override_rules = override_rules
         self.no_reposition_rules = no_reposition_rules or []
         self.add_defaults(Floating.defaults)
 
     def match(self, win):
         """Used to default float some windows"""
-        return any(win.match(rule) for rule in self.float_rules)
+        matches = any(win.match(rule) for rule in self.float_rules)
+        overrides = any(win.match(rule) for rule in self.override_rules)
+        return matches and not overrides
 
     def find_clients(self, group):
         """Find all clients belonging to a given group"""

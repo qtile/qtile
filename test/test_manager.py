@@ -27,6 +27,7 @@
 # SOFTWARE.
 
 import logging
+import re
 from pathlib import Path
 
 import pytest
@@ -69,7 +70,9 @@ class ManagerConfig(Config):
             *libqtile.layout.floating.Floating.default_float_rules,
             Match(wm_class="float"),
             Match(title="float"),
-        ]
+            Match(title=re.compile(r"^floatthis")),
+        ],
+        override_rules=[Match(title=re.compile(r".*nofloat$"))],
     )
     keys = [
         libqtile.config.Key(
@@ -916,6 +919,15 @@ def test_move_floating(manager):
     assert manager.c.window.info()["height"] == 20
     assert manager.c.window.info()["x"] == 10
     assert manager.c.window.info()["y"] == 20
+
+
+@manager_config
+def test_float_overrides(manager):
+    manager.test_window("floatthiswindow-nofloat")
+    assert manager.c.window.info()["floating"] is False
+
+    manager.test_window("floatthiswindow")
+    assert manager.c.window.info()["floating"] is True
 
 
 @manager_config
