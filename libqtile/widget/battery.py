@@ -34,7 +34,6 @@ from __future__ import annotations
 import os
 import platform
 import re
-import warnings
 from abc import ABC, abstractmethod
 from enum import Enum, unique
 from pathlib import Path
@@ -467,13 +466,6 @@ class Battery(base.ThreadPoolText):
     ]
 
     def __init__(self, **config) -> None:
-        if "update_delay" in config:
-            warnings.warn(
-                "Change from using update_delay to update_interval for battery widget, removed in 0.15",
-                DeprecationWarning,
-            )
-            config["update_interval"] = config.pop("update_delay")
-
         base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(self.defaults)
 
@@ -616,13 +608,6 @@ class BatteryIcon(base._Widget):
     )
 
     def __init__(self, **config) -> None:
-        if "update_delay" in config:
-            warnings.warn(
-                "Change from using update_delay to update_interval for battery widget, removed in 0.15",
-                DeprecationWarning,
-            )
-            config["update_interval"] = config.pop("update_delay")
-
         base._Widget.__init__(self, length=bar.CALCULATED, **config)
         self.add_defaults(self.defaults)
         self.scale: float = 1.0 / self.scale
