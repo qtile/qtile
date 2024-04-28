@@ -119,6 +119,7 @@ class Core(base.Core):
         self._wmname = "qtile"
         self._supporting_wm_check_window = self.conn.create_window(-1, -1, 1, 1)
         self._supporting_wm_check_window.set_property("_NET_WM_NAME", self._wmname)
+        self._supporting_wm_check_window.set_property("_NET_WM_PID", os.getpid())
         self._supporting_wm_check_window.set_property(
             "_NET_SUPPORTING_WM_CHECK", self._supporting_wm_check_window.wid
         )
