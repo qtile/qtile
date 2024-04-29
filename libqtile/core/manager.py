@@ -216,9 +216,7 @@ class Qtile(CommandObject):
         self.core.setup_listener()
 
         faulthandler.enable(all_threads=True)
-        # This is a bit unfortunate. We use SIGUSR1&2 for reloading config &
-        # restarting qtile, so we overload SIGWINCH here to dump threads.
-        faulthandler.register(signal.SIGWINCH, all_threads=True)
+        faulthandler.register(signal.SIGUSR2, all_threads=True)
 
         try:
             async with LoopContext(
@@ -227,7 +225,6 @@ class Qtile(CommandObject):
                     signal.SIGINT: self.stop,
                     signal.SIGHUP: self.stop,
                     signal.SIGUSR1: self.reload_config,
-                    signal.SIGUSR2: self.restart,
                 }
             ), ipc.Server(
                 self._prepare_socket_path(self.socket_path),
