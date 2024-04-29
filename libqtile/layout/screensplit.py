@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING
 
 from libqtile import hook
 from libqtile.command.base import expose_command
-from libqtile.config import Match, ScreenRect
+from libqtile.config import ScreenRect, _Match
 from libqtile.layout import Columns, Max
 from libqtile.layout.base import Layout
 from libqtile.log_utils import logger
@@ -39,7 +39,7 @@ if TYPE_CHECKING:
 
 class Split:
     def __init__(
-        self, *, name: str, rect: Rect, layout: Layout, matches: list[Match] = list()
+        self, *, name: str, rect: Rect, layout: Layout, matches: list[_Match] = list()
     ) -> None:
         # Check that rect is correctly defined
         if not isinstance(rect, (tuple, list)):
@@ -53,7 +53,7 @@ class Split:
 
         if matches:
             if isinstance(matches, list):
-                if not all(isinstance(m, Match) for m in matches):
+                if not all(isinstance(m, _Match) for m in matches):
                     raise ValueError("Invalid object in 'matches'.")
             else:
                 raise ValueError("'matches' must be a list of 'Match' objects.")

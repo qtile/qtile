@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING
 from libqtile import config, group, hook
 from libqtile.backend.base import FloatStates
 from libqtile.command.base import expose_command
-from libqtile.config import Match
+from libqtile.config import Match, _Match
 
 if TYPE_CHECKING:
     from libqtile.backend.base import Window
@@ -243,7 +243,7 @@ class ScratchPad(group._Group):
         group._Group.__init__(self, name, label=label)
         self._dropdownconfig = {dd.name: dd for dd in dropdowns} if dropdowns is not None else {}
         self.dropdowns: dict[str, DropDownToggler] = {}
-        self._spawned: dict[str, Match] = {}
+        self._spawned: dict[str, _Match] = {}
         self._to_hide: list[str] = []
         self._single = single
 

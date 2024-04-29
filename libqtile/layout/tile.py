@@ -34,7 +34,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from libqtile.command.base import expose_command
-from libqtile.config import Match
+from libqtile.config import _Match
 from libqtile.layout.base import _SimpleLayoutBase
 
 if TYPE_CHECKING:
@@ -150,7 +150,7 @@ class Tile(_SimpleLayoutBase):
             return
         if self.clients:
             master_match = match or self.master_match
-            if isinstance(master_match, Match):
+            if isinstance(master_match, _Match):
                 master_match = [master_match]
             masters = []
             for c in self.clients:

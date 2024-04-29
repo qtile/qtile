@@ -604,7 +604,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             fullscreen=self._float_state == FloatStates.FULLSCREEN,
         )
 
-    def match(self, match: config.Match) -> bool:
+    def match(self, match: config._Match) -> bool:
         return match.compare(self)
 
     def add_idle_inhibitor(
