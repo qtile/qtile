@@ -58,6 +58,7 @@ mix!)
     mouse
     screens
     hooks
+    match
 
 In addition to the above variables, there are several other boolean
 configuration variables that control specific aspects of Qtile's behavior:

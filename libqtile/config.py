@@ -832,7 +832,85 @@ def convert_deprecated_list(vals: list[str], name: str) -> re.Pattern:
     return re.compile(regex_input)
 
 
-class Match:
+class _Match:
+    """Base class to implement bitwise logic methods for Match objects."""
+
+    def compare(self, client: base.Window) -> bool:
+        return True
+
+    def __invert__(self) -> InvertMatch:
+        return InvertMatch(self)
+
+    def __and__(self, other: _Match) -> MatchAll:
+        if not isinstance(other, _Match):
+            raise TypeError
+
+        return MatchAll(self, other)
+
+    def __or__(self, other: _Match) -> MatchAny:
+        if not isinstance(other, _Match):
+            raise TypeError
+
+        return MatchAny(self, other)
+
+    def __xor__(self, other: _Match) -> MatchOnlyOne:
+        if not isinstance(other, _Match):
+            raise TypeError
+
+        return MatchOnlyOne(self, other)
+
+
+class InvertMatch(_Match):
+    """Wrapper to invert the result of the comparison."""
+
+    def __init__(self, match: _Match):
+        self.match = match
+
+    def compare(self, client: base.Window) -> bool:
+        return not self.match.compare(client)
+
+    def __repr__(self) -> str:
+        return "<InvertMatch(%r)>" % self.match
+
+
+class MatchAll(_Match):
+    """Wrapper to check if all comparisons return True."""
+
+    def __init__(self, *matches: _Match):
+        self.matches = matches
+
+    def compare(self, client: base.Window) -> bool:
+        return all(m.compare(client) for m in self.matches)
+
+    def __repr__(self) -> str:
+        return "<MatchAll(%r)>" % (self.matches,)
+
+
+class MatchAny(MatchAll):
+    """Wrapper to check if at least one of the comparisons returns True."""
+
+    def compare(self, client: base.Window) -> bool:
+        return any(m.compare(client) for m in self.matches)
+
+    def __repr__(self) -> str:
+        return "<MatchAny(%r)>" % (self.matches,)
+
+
+class MatchOnlyOne(_Match):
+    """Wrapper to check if only one of the two comparisons returns True."""
+
+    def __init__(self, match1: _Match, match2: _Match):
+        self.match1 = match1
+        self.match2 = match2
+
+    def compare(self, client: base.Window) -> bool:
+        return self.match1.compare(client) != self.match2.compare(client)
+
+    def __repr__(self) -> str:
+        return "<MatchOnlyOne(%r, %r)>" % (self.match1, self.match2)
+
+
+class Match(_Match):
     """
     Window properties to compare (match) with a window.
 
@@ -1002,13 +1080,13 @@ class Rule:
 
     def __init__(
         self,
-        match: Match | list[Match],
+        match: _Match | list[_Match],
         group: _Group | None = None,
         float: bool = False,
         intrusive: bool = False,
         break_on_match: bool = True,
     ) -> None:
-        if isinstance(match, Match):
+        if isinstance(match, _Match):
             self.matchlist = [match]
         else:
             self.matchlist = match

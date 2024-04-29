@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from typing import Callable, Iterable
 
     from libqtile.command.graph import SelectorType
-    from libqtile.config import Match
+    from libqtile.config import _Match
 
 
 class LazyCall:
@@ -50,7 +50,7 @@ class LazyCall:
         self._args = args
         self._kwargs = kwargs
 
-        self._focused: Match | None = None
+        self._focused: _Match | None = None
         self._if_no_focused: bool = False
         self._layouts: set[str] = set()
         self._when_floating: bool | None = None
@@ -96,7 +96,7 @@ class LazyCall:
 
     def when(
         self,
-        focused: Match | None = None,
+        focused: _Match | None = None,
         if_no_focused: bool = False,
         layout: Iterable[str] | str | None = None,
         when_floating: bool | None = None,
