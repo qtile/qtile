@@ -88,7 +88,6 @@ class PangoLayout:
         self._pointer = pangocairo.pango_cairo_create_layout(cairo_t)
 
         def free(p):
-            p = ffi.cast("gpointer", p)
             gobject.g_object_unref(p)
 
         self._pointer = ffi.gc(self._pointer, free)
