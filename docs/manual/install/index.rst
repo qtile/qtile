@@ -151,14 +151,6 @@ be to start through a loop to save running applications:
         qtile
     done
 
-Finally, if you're a gnome user, you can start integrate Qtile into Gnome's
-session manager and use gnome as usual.
-
-.. toctree::
-    :maxdepth: 1
-
-    without-dm
-    gnome
 
 Wayland
 =======
