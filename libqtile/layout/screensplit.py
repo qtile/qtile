@@ -120,7 +120,7 @@ class ScreenSplit(Layout):
         self._split_index = 0
         self.layouts = {}
         self._move_win = None
-        self._has_matches = False
+        self._has_matches = None
         print(self.splits)
         splits = []
         for s in self.splits:
@@ -133,6 +133,13 @@ class ScreenSplit(Layout):
 
     def _should_check(self, win):
         return win not in self.layouts and self._move_win is None
+
+    @property
+    def has_matches(self):
+        if self._has_matches is None:
+            self._has_matches = any(split.matches for split in self.splits)
+
+        return self._has_matches
 
     @property
     def active_split(self):
@@ -201,7 +208,7 @@ class ScreenSplit(Layout):
         split = None
         # If this is a new window and we're not moving this window between splits
         # then we should check for match rules
-        if self._has_matches and self._should_check(win):
+        if self.has_matches and self._should_check(win):
             split = self._match_win(win)
 
         if split is not None:

@@ -321,3 +321,25 @@ def test_stepping_between_groups_should_skip_scratchpads(manager):
     manager.c.screen.prev_group()
     # we should be on b group
     assert manager.c.group.info()["name"] == "b"
+
+
+@scratchpad_config
+def test_skip_taskbar(manager):
+    manager.c.group["SCRATCHPAD"].dropdown_reconfigure("dd-a")
+
+    manager.test_window("one")
+    assert_focused(manager, "one")
+
+    # dd-a has no window associated yet
+    assert "window" not in manager.c.group["SCRATCHPAD"].dropdown_info("dd-a")
+
+    # First toggling: wait for window
+    manager.c.group["SCRATCHPAD"].dropdown_toggle("dd-a")
+    is_spawned(manager, "dd-a")
+    assert_focused(manager, "dd-a")
+    assert manager.c.group["SCRATCHPAD"].dropdown_info("dd-a")["window"]["name"] == "dd-a"
+
+    if manager.c.core.info()["backend"] == "x11":
+        # check that window's _NET_WM_STATE contains _NET_WM_STATE_SKIP_TASKBAR
+        net_wm_state = manager.c.window.eval("self.window.get_net_wm_state()")[1]
+        assert "_NET_WM_STATE_SKIP_TASKBAR" in net_wm_state

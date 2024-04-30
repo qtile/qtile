@@ -1,17 +1,15 @@
-# Copyright (c) 2014 Sean Vig
-# Copyright (c) 2014 Florian Scherf
-# Copyright (c) 2014 Tycho Andersen
-#
+# Copyright (c) 2024 Florian G. Hechler
+
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-#
+
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-#
+
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,23 +18,34 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# https://bitbucket.org/tarek/flake8/issue/141/improve-flake8-statement-to-ignore
-# is annoying, so we ignore libqtile/layout/__init__.py completely
-# flake8: noqa
+import sys
+import tempfile
+from importlib import reload
 
-from libqtile.layout.bsp import Bsp
-from libqtile.layout.columns import Columns
-from libqtile.layout.floating import Floating
-from libqtile.layout.matrix import Matrix
-from libqtile.layout.max import Max
-from libqtile.layout.plasma import Plasma
-from libqtile.layout.ratiotile import RatioTile
-from libqtile.layout.screensplit import ScreenSplit
-from libqtile.layout.slice import Slice
-from libqtile.layout.spiral import Spiral
-from libqtile.layout.stack import Stack
-from libqtile.layout.tile import Tile
-from libqtile.layout.tree import TreeTab
-from libqtile.layout.verticaltile import VerticalTile
-from libqtile.layout.xmonad import MonadTall, MonadThreeCol, MonadWide
-from libqtile.layout.zoomy import Zoomy
+import pytest
+
+from test.widgets.test_hdd import MockPsutil, set_io_ticks
+
+
+@pytest.fixture
+def widget(monkeypatch):
+    monkeypatch.setitem(sys.modules, "psutil", MockPsutil("psutil"))
+    from libqtile.widget import hdd
+
+    reload(hdd)
+    yield hdd.HDD
+
+
+def ss_cpu(screenshot_manager):
+    # Create a fake stat file
+    temp_file = tempfile.NamedTemporaryFile(mode="w+", delete=False)
+    widget = screenshot_manager.c.widget["hdd"]
+    widget.eval(f"self.path = '{temp_file.name}'")
+
+    set_io_ticks(temp_file, 0)
+    widget.eval("self.update(self.poll())")
+
+    set_io_ticks(temp_file, 123000)
+    widget.eval("self.update(self.poll())")
+
+    screenshot_manager.take_screenshot()

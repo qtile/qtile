@@ -19,6 +19,7 @@ if typing.TYPE_CHECKING:
 class Core(CommandObject, metaclass=ABCMeta):
     painter: Any
     supports_restarting: bool = True
+    qtile: Qtile
 
     @property
     @abstractmethod
@@ -42,7 +43,7 @@ class Core(CommandObject, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def setup_listener(self, qtile: Qtile) -> None:
+    def setup_listener(self) -> None:
         """Setup a listener for the given qtile instance"""
 
     @abstractmethod

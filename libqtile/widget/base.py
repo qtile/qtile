@@ -35,14 +35,14 @@ import asyncio
 import copy
 import math
 import subprocess
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from libqtile import bar, configurable, confreader
 from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandObject, expose_command
 from libqtile.lazy import LazyCall
 from libqtile.log_utils import logger
-from libqtile.utils import create_task
+from libqtile.utils import ColorType, create_task
 
 if TYPE_CHECKING:
     from typing import Any
@@ -288,7 +288,7 @@ class _Widget(CommandObject, configurable.Configurable):
             if isinstance(cmd, LazyCall):
                 if cmd.check(self.qtile):
                     status, val = self.qtile.server.call(
-                        (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
+                        (cmd.selectors, cmd.name, cmd.args, cmd.kwargs, False)
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("Mouse callback command error %s: %s", cmd.name, val)
@@ -444,9 +444,6 @@ class _Widget(CommandObject, configurable.Configurable):
                 # Deletes the reference to draw and falls back to the original
                 del self.draw
                 del self._old_draw
-
-
-UNSPECIFIED = bar.Obj("UNSPECIFIED")
 
 
 class _TextBox(_Widget):
@@ -717,16 +714,21 @@ class _TextBox(_Widget):
         self.update("")
 
     @expose_command()
-    def set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED, fontshadow=UNSPECIFIED):
+    def set_font(
+        self,
+        font: Union[str, None] = None,
+        fontsize: int = 0,
+        fontshadow: ColorType = "",
+    ):
         """
         Change the font used by this widget. If font is None, the current
         font is used.
         """
-        if font is not UNSPECIFIED:
+        if font is not None:
             self.font = font
-        if fontsize is not UNSPECIFIED:
+        if fontsize != 0:
             self.fontsize = fontsize
-        if fontshadow is not UNSPECIFIED:
+        if fontshadow != "":
             self.fontshadow = fontshadow
         self.bar.draw()
 

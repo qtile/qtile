@@ -230,7 +230,7 @@ class TestManager:
             if self.proc.is_alive():
                 # uh oh, we're hung somewhere. give it another second to print
                 # some stack traces
-                os.kill(self.proc.pid, signal.SIGWINCH)
+                os.kill(self.proc.pid, signal.SIGUSR2)
                 self.proc.join(1)
                 print("Killing qtile forcefully", file=sys.stderr)
                 # desperate times... this probably messes with multiprocessing...

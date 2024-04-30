@@ -1,6 +1,4 @@
-# Copyright (c) 2014 Sean Vig
-# Copyright (c) 2014 Florian Scherf
-# Copyright (c) 2014 Tycho Andersen
+# Copyright (c) 2024 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,24 +17,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import pytest
 
-# https://bitbucket.org/tarek/flake8/issue/141/improve-flake8-statement-to-ignore
-# is annoying, so we ignore libqtile/layout/__init__.py completely
-# flake8: noqa
+from test.widgets.test_do_not_disturb import patched_dnd  # noqa: F401
 
-from libqtile.layout.bsp import Bsp
-from libqtile.layout.columns import Columns
-from libqtile.layout.floating import Floating
-from libqtile.layout.matrix import Matrix
-from libqtile.layout.max import Max
-from libqtile.layout.plasma import Plasma
-from libqtile.layout.ratiotile import RatioTile
-from libqtile.layout.screensplit import ScreenSplit
-from libqtile.layout.slice import Slice
-from libqtile.layout.spiral import Spiral
-from libqtile.layout.stack import Stack
-from libqtile.layout.tile import Tile
-from libqtile.layout.tree import TreeTab
-from libqtile.layout.verticaltile import VerticalTile
-from libqtile.layout.xmonad import MonadTall, MonadThreeCol, MonadWide
-from libqtile.layout.zoomy import Zoomy
+
+@pytest.fixture
+def widget(patched_dnd):  # noqa: F811
+    class DoNotDisturb(patched_dnd):
+        pass
+
+    yield DoNotDisturb
+
+
+def ss_do_not_disturb(screenshot_manager):
+    screenshot_manager.take_screenshot()

@@ -1,4 +1,17 @@
 Qtile x.xx.x, released XXXX-XX-XX:
+    !!! breaking changes !!!
+      - this release drops support for python 3.9
+      - deleted the (very old) libqtile/command_* deprecation wrappers
+      - SIGUSR2 no longer restarts qtile, instead it dumps stack traces
+    * features
+      - automatically lift types to their annotated type when specified via
+        the `qtile cmd-obj` command line
+      - Add `Plasma` layout. The original layout (https://github.com/numirias/qtile-plasma) appears to be unmaintained
+        so we have added this to the main codebase.
+      - Add ability to specify muted and unmuted formats for `Volume` and `PulseVolume` widgets.
+    * bugfixes
+
+Qtile 0.25.0, released 2024-04-06:
     * features
       - The Battery widget now supports dynamic charge control, allowing for
         protecting battery life.

@@ -27,6 +27,8 @@ from typing import TYPE_CHECKING, cast
 
 import cairocffi
 from pywayland.server import Listener
+from wlroots import ffi as wlr_ffi
+from wlroots import lib as wlr_lib
 from wlroots.wlr_types import Buffer, SceneBuffer, SceneTree, data_device_manager
 from wlroots.wlr_types.keyboard import KeyboardModifier
 
@@ -123,32 +125,12 @@ class Painter:
             logger.exception("Could not load wallpaper:")
             return
 
-        surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, screen.width, screen.height)
-        with cairocffi.Context(surface) as context:
-            if mode == "fill":
-                context.rectangle(0, 0, screen.width, screen.height)
-                context.clip()
-                image_w = image.get_width()
-                image_h = image.get_height()
-                width_ratio = screen.width / image_w
-                if width_ratio * image_h >= screen.height:
-                    context.scale(width_ratio)
-                else:
-                    height_ratio = screen.height / image_h
-                    context.translate(-(image_w * height_ratio - screen.width) // 2, 0)
-                    context.scale(height_ratio)
-            elif mode == "stretch":
-                context.scale(
-                    sx=screen.width / image.get_width(),
-                    sy=screen.height / image.get_height(),
-                )
-            context.set_source_surface(image)
-            context.paint()
+        image_w = image.get_width()
+        image_h = image.get_height()
 
-        surface.flush()
-        stride = surface.get_stride()
-        data = cairocffi.cairo.cairo_image_surface_get_data(surface._pointer)
-        wlr_buffer = lib.cairo_buffer_create(screen.width, screen.height, stride, data)
+        stride = image.get_stride()
+        data = cairocffi.cairo.cairo_image_surface_get_data(image._pointer)
+        wlr_buffer = lib.cairo_buffer_create(image_w, image_h, stride, data)
         if wlr_buffer == ffi.NULL:
             raise RuntimeError("Couldn't allocate cairo buffer.")
 
@@ -161,9 +143,38 @@ class Painter:
         # We need to keep a reference to the surface so its data persists
         if scene_buffer := SceneBuffer.create(self.core.wallpaper_tree, Buffer(wlr_buffer)):
             scene_buffer.node.set_position(screen.x, screen.y)
-            self.core.wallpapers[screen] = (scene_buffer, surface)
+            self.core.wallpapers[screen] = (scene_buffer, image)
         else:
             logger.warning("Failed to create wlr_scene_buffer.")
+            return
+
+        # Handle fill mode
+        if mode == "fill":
+            if image_w / image_h > screen.width / screen.height:
+                # image is wider than screen; clip left and right
+                new_w = image_h * screen.width / screen.height
+                side = (image_w - new_w) // 2
+                fbox = wlr_ffi.new("struct wlr_fbox *")
+                fbox.x = side
+                fbox.y = 0
+                fbox.width = image_w - 2 * side
+                fbox.height = image_h
+                wlr_lib.wlr_scene_buffer_set_source_box(scene_buffer._ptr, fbox)
+            elif image_w / image_h < screen.width / screen.height:
+                # image is taller than screen; clip top and bottom
+                new_h = image_w * screen.height / screen.width
+                side = (image_h - new_h) // 2
+                fbox = wlr_ffi.new("struct wlr_fbox *")
+                fbox.x = 0
+                fbox.y = side
+                fbox.width = image_w
+                fbox.height = image_h - 2 * side
+                wlr_lib.wlr_scene_buffer_set_source_box(scene_buffer._ptr, fbox)
+            wlr_lib.wlr_scene_buffer_set_dest_size(scene_buffer._ptr, screen.width, screen.height)
+        elif mode == "stretch":
+            wlr_lib.wlr_scene_buffer_set_dest_size(scene_buffer._ptr, screen.width, screen.height)
+        # Otherwise (mode is None), the image takes up its native size in
+        # layout coordinate pixels (which doesn't account for output scaling)
 
 
 class HasListeners:

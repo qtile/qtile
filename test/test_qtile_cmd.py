@@ -89,13 +89,16 @@ class ServerConfig(Config):
 server_config = pytest.mark.parametrize("manager", [ServerConfig], indirect=True)
 
 
-def run_qtile_cmd(args):
+def run_qtile_cmd(args, no_eval=False):
     cmd = os.path.join(os.path.dirname(__file__), "..", "bin", "qtile")
     argv = [cmd, "cmd-obj"]
     argv.extend(args.split())
     pipe = subprocess.Popen(argv, stdout=subprocess.PIPE)
     output, _ = pipe.communicate()
-    return eval(output.decode())  # as returned by pprint.pprint
+    output = output.decode()
+    if no_eval:
+        return output
+    return eval(output)  # as returned by pprint.pprint
 
 
 @server_config
@@ -140,7 +143,7 @@ def test_qtile_cmd(manager):
 def test_display_kb(manager):
     from pprint import pprint
 
-    cmd = "-s {} -o cmd -f display_kb".format(manager.sockfile)
+    cmd = "-s {} -o root -f display_kb".format(manager.sockfile)
     table = run_qtile_cmd(cmd)
     print(table)
     pprint(table)
@@ -155,3 +158,12 @@ def test_display_kb(manager):
     assert re.search(r"(?m)^named\s{3,}b\s{9,}togroup\('b'\)\s*$", table)
     assert re.search(r"(?m)^named>_\s{3,}a\s{9,}togroup\('a'\)\s*$", table)
     assert re.search(r"(?m)^<root>\s{3,}y\s{9,}\s*$", table) is None
+
+
+@server_config
+def test_cmd_obj_root_node(manager):
+    base = f"-s {manager.sockfile} -f ok"
+    cmd_no_root = base
+    cmd_with_root = f"{base} -o root"
+
+    assert run_qtile_cmd(cmd_no_root, no_eval=True) == run_qtile_cmd(cmd_with_root, no_eval=True)

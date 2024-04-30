@@ -25,22 +25,38 @@ The interface to execute commands on the command graph
 from __future__ import annotations
 
 import traceback
+import types
+import typing
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal, Union, get_args, get_origin
 
 from libqtile import ipc
 from libqtile.command.base import CommandError, CommandException, CommandObject, SelectError
 from libqtile.command.graph import CommandGraphCall, CommandGraphNode
 from libqtile.log_utils import logger
+from libqtile.utils import ColorsType, ColorType  # noqa: F401
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from libqtile.command.graph import SelectorType
 
 SUCCESS = 0
 ERROR = 1
 EXCEPTION = 2
+
+
+# these two mask their aliases from elsewhere in the tree (i.e.
+# libqtile.extension.base._Extension, and libqtile.layout.base.Layout
+#
+# since neither of these have constructors from a single string, we can't
+# really lift them to a type. probably nobody actually passes us layouts here
+# so it doesn't matter, but in the event that it does, we can probably fix it
+# up with some eval() hackery whackery.
+class _Extension:
+    pass
+
+
+class Layout:
+    pass
 
 
 def format_selectors(selectors: list[SelectorType]) -> str:
@@ -229,7 +245,9 @@ class IPCCommandInterface(CommandInterface):
         kwargs:
             The keyword arguments to pass into the command graph call.
         """
-        status, result = self._client.send((call.parent.selectors, call.name, args, kwargs))
+        status, result = self._client.send(
+            (call.parent.selectors, call.name, args, kwargs, call.lifted)
+        )
         if status == SUCCESS:
             return result
         if status == ERROR:
@@ -284,6 +302,96 @@ class IPCCommandInterface(CommandInterface):
         return items is not None and item in items
 
 
+def lift_args(cmd, args, kwargs):
+    """
+    Lift args lifts the arguments to the type annotations on cmd's parameters.
+    """
+
+    def lift_arg(typ, arg):
+        # for stuff like int | None, allow either
+        if get_origin(typ) in [types.UnionType, Union]:
+            for t in get_args(typ):
+                if t == types.NoneType:
+                    # special case None? I don't know what this looks like
+                    # coming over IPC
+                    if arg == "":
+                        return None
+                    if arg is None:
+                        return None
+                    continue
+
+                try:
+                    return lift_arg(t, arg)
+                except TypeError:
+                    pass
+            # uh oh, we couldn't lift it to anything
+            raise TypeError(f"{arg} is not a {typ}")
+
+        # for literals, check that it is one of the valid strings
+        if get_origin(typ) is Literal:
+            if arg not in get_args(typ):
+                raise TypeError(f"{arg} is not one of {get_origin(typ)}")
+            return arg
+
+        if typ is bool:
+            # >>> bool("False") is True
+            # True
+            # ... but we want it to be false :)
+            if arg == "True" or arg is True:
+                return True
+            if arg == "False" or arg is False:
+                return False
+            raise TypeError(f"{arg} is not a bool")
+
+        if typ is Any:
+            # can't do any lifting if we don't know the type
+            return arg
+
+        if typ in [_Extension, Layout]:
+            # these are "complex" objects that can't be created with a
+            # single string argument. we generally don't expect people to
+            # be passing these over the command line, so let's ignore then.
+            return arg
+
+        if get_origin(typ) in [list, dict]:
+            # again, we do not want to be in the business of parsing
+            # lists/dicts of types out of strings; just pass on whatever we
+            # got
+            return arg
+
+        return typ(arg)
+
+    converted_args = []
+    converted_kwargs = dict()
+
+    params = typing.get_type_hints(cmd, globalns=globals())
+
+    non_return_annotated_args = filter(lambda k: k != "return", params.keys())
+    for param, arg in zip(non_return_annotated_args, args):
+        converted_args.append(lift_arg(params[param], arg))
+
+    # if not all args were annotated, we need to keep them anyway. note
+    # that mixing some annotated and not annotated args will not work well:
+    # we will reorder args here and cause problems. this is solveable but
+    # somewhat ugly, and we can avoid it by always annotating all
+    # parameters.
+    #
+    # if we really want to fix this, we
+    # inspect.signature(foo).parameters.keys() gives us the ordered
+    # parameters to reason about.
+    if len(converted_args) < len(args):
+        converted_args.extend(args[len(converted_args) :])
+
+    for k, v in kwargs.items():
+        # if this kwarg has a type annotation, use it
+        if k in params:
+            converted_kwargs[k] = lift_arg(params[k], v)
+        else:
+            converted_kwargs[k] = v
+
+    return tuple(converted_args), converted_kwargs
+
+
 class IPCCommandServer:
     """Execute the object commands for the calls that are sent to it"""
 
@@ -295,9 +403,12 @@ class IPCCommandServer:
         """
         self.qtile = qtile
 
-    def call(self, data: tuple[list[SelectorType], str, tuple, dict]) -> tuple[int, Any]:
+    def call(
+        self,
+        data: tuple[list[SelectorType], str, tuple, dict, bool],
+    ) -> tuple[int, Any]:
         """Receive and parse the given data"""
-        selectors, name, args, kwargs = data
+        selectors, name, args, kwargs, lifted = data
         try:
             obj = self.qtile.select(selectors)
             cmd = obj.command(name)
@@ -308,13 +419,16 @@ class IPCCommandServer:
             return ERROR, "No such command"
 
         logger.debug("Command: %s(%s, %s)", name, args, kwargs)
+
+        if lifted:
+            args, kwargs = lift_args(cmd, args, kwargs)
+
+        # Check if method is bound, if itis, insert magic self
+        if not hasattr(cmd, "__self__"):
+            args = (obj,) + args
+
         try:
-            # Check if method is bound
-            if hasattr(cmd, "__self__"):
-                return SUCCESS, cmd(*args, **kwargs)
-            else:
-                # If not, pass object as first argument
-                return SUCCESS, cmd(obj, *args, **kwargs)
+            return SUCCESS, cmd(*args, **kwargs)
         except CommandError as err:
             return ERROR, err.args[0]
         except Exception:

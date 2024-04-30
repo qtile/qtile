@@ -207,7 +207,6 @@ class _Device(ABC, HasListeners):
 class Keyboard(_Device):
     def __init__(self, core: Core, wlr_device: InputDevice, keyboard: WlrKeyboard):
         super().__init__(core, wlr_device)
-        self.qtile = core.qtile
         self.seat = core.seat
         self.keyboard = keyboard
         self.grabbed_keys = core.grabbed_keys
@@ -247,10 +246,7 @@ class Keyboard(_Device):
         self.seat.keyboard_notify_modifiers(self.keyboard.modifiers)
 
     def _on_key(self, _listener: Listener, event: KeyboardKeyEvent) -> None:
-        if self.qtile is None:
-            # shushes mypy
-            self.qtile = self.core.qtile
-            assert self.qtile is not None
+        self.qtile = self.core.qtile
 
         self.core.idle.notify_activity(self.seat)
 

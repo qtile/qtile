@@ -21,8 +21,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import logging
-
 import pytest
 
 import libqtile.bar
@@ -32,8 +30,10 @@ import libqtile.layout
 import libqtile.log_utils
 import libqtile.widget
 from libqtile.command.base import CommandObject, expose_command
-from libqtile.command.interface import CommandError
+from libqtile.command.client import CommandClient
+from libqtile.command.interface import CommandError, IPCCommandInterface
 from libqtile.confreader import Config
+from libqtile.ipc import Client, IPCError
 from libqtile.lazy import lazy
 from test.conftest import dualmonitor
 
@@ -66,6 +66,7 @@ class CallConfig(Config):
             bottom=libqtile.bar.Bar(
                 [
                     libqtile.widget.GroupBox(),
+                    libqtile.widget.TextBox(),
                 ],
                 20,
             ),
@@ -86,6 +87,33 @@ def test_layout_filter(manager):
     assert manager.c.get_groups()["a"]["focus"] == "one"
     manager.c.simulate_keypress(["control"], "k")
     assert manager.c.get_groups()["a"]["focus"] == "two"
+
+
+@call_config
+def test_param_hoisting(manager):
+    manager.test_window("two")
+
+    client = Client(manager.sockfile)
+    command = IPCCommandInterface(client)
+    cmd_client = CommandClient(command)
+
+    # 'zomg' is not a valid warp command
+    with pytest.raises(IPCError):
+        cmd_client.navigate("window", None).call("focus", warp="zomg", lifted=True)
+
+    cmd_client.navigate("window", None).call("focus", warp=False, lifted=True)
+
+    # 'zomg' is not a valid bar position
+    with pytest.raises(IPCError):
+        cmd_client.call("hide_show_bar", position="zomg", lifted=True)
+
+    cmd_client.call("hide_show_bar", position="top", lifted=True)
+
+    # 'zomg' is not a valid font size
+    with pytest.raises(IPCError):
+        cmd_client.navigate("widget", "textbox").call("set_font", fontsize="zomg", lifted=True)
+
+    cmd_client.navigate("widget", "textbox").call("set_font", fontsize=12, lifted=True)
 
 
 class FakeCommandObject(CommandObject):
@@ -428,56 +456,6 @@ def test_lazy_arguments(manager_nospawn):
     manager_nospawn.c.simulate_keypress(["control"], "k")
     _, val = manager_nospawn.c.eval("self.test_func_output")
     assert val == "500"
-
-
-def test_deprecated_modules(caplog):
-    libqtile.log_utils.init_log()
-
-    from libqtile.command_client import InteractiveCommandClient  # noqa: F401
-
-    assert caplog.record_tuples == [
-        (
-            "libqtile",
-            logging.WARNING,
-            "libqtile.command_client is deprecated. It has been moved to libqtile.command.client",
-        )
-    ]
-
-    caplog.clear()
-
-    from libqtile.command_graph import CommandGraphNode  # noqa: F401
-
-    assert caplog.record_tuples == [
-        (
-            "libqtile",
-            logging.WARNING,
-            "libqtile.command_graph is deprecated. It has been moved to libqtile.command.graph",
-        )
-    ]
-
-    caplog.clear()
-
-    from libqtile.command_interface import CommandInterface  # noqa: F401
-
-    assert caplog.record_tuples == [
-        (
-            "libqtile",
-            logging.WARNING,
-            "libqtile.command_interface is deprecated. It has been moved to libqtile.command.interface",
-        )
-    ]
-
-    caplog.clear()
-
-    from libqtile.command_object import CommandObject  # noqa: F401
-
-    assert caplog.record_tuples == [
-        (
-            "libqtile",
-            logging.WARNING,
-            "libqtile.command_object is deprecated. It has been moved to libqtile.command.base.",
-        )
-    ]
 
 
 def test_decorators_direct_call():

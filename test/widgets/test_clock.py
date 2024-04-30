@@ -43,6 +43,11 @@ class MockDatetime(datetime.datetime):
     def now(cls, *args, **kwargs):
         return cls(2021, 1, 1, 10, 20, 30)
 
+    def astimezone(self, tzone=None):
+        if tzone is None:
+            return self
+        return self + tzone.utcoffset(None)
+
 
 @pytest.fixture
 def patched_clock(monkeypatch):

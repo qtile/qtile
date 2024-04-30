@@ -128,7 +128,7 @@ class _Group(CommandObject):
                 return
         logger.error("No such layout: %s", layout)
 
-    def use_layout(self, index):
+    def use_layout(self, index: int):
         assert -len(self.layouts) <= index < len(self.layouts), "layout index out of bounds"
         self.layout.hide()
         self.current_layout = index % len(self.layouts)
