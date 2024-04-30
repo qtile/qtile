@@ -38,6 +38,8 @@ Qtile supports XWayland but requires that `wlroots` and `pywlroots` were built
 with XWayland support, and that XWayland is installed on the system from
 startup. XWayland will be started the first time it is needed.
 
+Edit: In order to have XWayland support in Qtile, `wlroots` and `pywlroots` must be built with XWayland support, and XWayland must be installed on the system at startup.  It will be started the first time it is needed.
+
 XWayland windows sometimes don't receive mouse events
 -----------------------------------------------------
 
@@ -50,6 +52,8 @@ Input Device Configuration
 
 If you want to change keyboard configuration during runtime, you can use the
 core's `set_keymap` command (see below).
+
+*It might be good to add something here about what works and what doesn't. For instance `"type:keyboard": InputConfig(kb_numlock=True)` doesn't work.  In fact, it makes it so my numlock won't stay on.* 
 
 Core Commands
 =============
@@ -76,6 +80,8 @@ GTK settings aren't applied
 
 GTK have a known issue of not recognizing setted variables. You can fix this by saving below code into a script in your script directory. Then you can just put the name of the script into your autostarting script.
 
+Edit: GTK has a known issue of not recognizing set variables.  To fix this, create a script with the code below and save it in your script directory.  Then add the script to your autostart script.  For a GUI solution, the program `nwg-look` works well.
+
 .. note::
     Please do not forget to place your directory into a PATH and make the script executable
 
@@ -99,12 +105,12 @@ GTK have a known issue of not recognizing setted variables. You can fix this by 
 Gamma adjustment tool
 =====================
 
-Redshift doesn't work for Wayland, but there are alternatives like: `gammastep <https://gitlab.com/chinstrap/gammastep>`, `wlsunset <https://git.sr.ht/~kennylevinsen/wlsunset>`, `wl-gammarelay <https://github.com/jeremija/wl-gammarelay>` and `wl-gammarelay-rs <https://github.com/MaxVerevkin/wl-gammarelay-rs>`.
+Redshift doesn't work on Wayland, but there are alternatives like: `gammastep <https://gitlab.com/chinstrap/gammastep>`, `wlsunset <https://git.sr.ht/~kennylevinsen/wlsunset>`, `wl-gammarelay <https://github.com/jeremija/wl-gammarelay>` and `wl-gammarelay-rs <https://github.com/MaxVerevkin/wl-gammarelay-rs>`.
 
 Screenshots
 ===========
 
-As `scrot <https://github.com/dreamer/scrot>` and other similiar X11 tools doesn't work for wayland, one may be interested in: `grim <https://git.sr.ht/~emersion/grim>`/`slurp <https://github.com/emersion/slurp>`, `shotman <https://git.sr.ht/~whynothugo/shotman>`, `flameshot <https://flameshot.org/>` or `swappy <https://github.com/jtheoof/swappy>`.
+As `scrot <https://github.com/dreamer/scrot>` and other similiar X11 tools don't work on wayland, you might be interested in: `grim <https://git.sr.ht/~emersion/grim>`/`slurp <https://github.com/emersion/slurp>`, `shotman <https://git.sr.ht/~whynothugo/shotman>`, `flameshot <https://flameshot.org/>` or `swappy <https://github.com/jtheoof/swappy>`.
 
 Screen sharing
 ==============
