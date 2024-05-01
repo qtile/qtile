@@ -2149,8 +2149,15 @@ class Window(_Window, base.Window):
                 focus_behavior = self.qtile.config.focus_on_window_activation
                 if focus_behavior == "focus":
                     logger.debug("Focusing window")
-                    self.qtile.current_screen.set_group(self.group)
-                    self.group.focus(self)
+                    # Windows belonging to a scratchpad need to be toggled properly
+                    if isinstance(self.group, ScratchPad):
+                        for dropdown in self.group.dropdowns.values():
+                            if dropdown.window is self:
+                                dropdown.show()
+                                break
+                    else:
+                        self.qtile.current_screen.set_group(self.group)
+                        self.group.focus(self)
                 elif focus_behavior == "smart":
                     if not self.group.screen:
                         logger.debug(
@@ -2159,8 +2166,15 @@ class Window(_Window, base.Window):
                         return
                     if self.group.screen == self.qtile.current_screen:
                         logger.debug("Focusing window")
-                        self.qtile.current_screen.set_group(self.group)
-                        self.group.focus(self)
+                        # Windows belonging to a scratchpad need to be toggled properly
+                        if isinstance(self.group, ScratchPad):
+                            for dropdown in self.group.dropdowns.values():
+                                if dropdown.window is self:
+                                    dropdown.show()
+                                    break
+                        else:
+                            self.qtile.current_screen.set_group(self.group)
+                            self.group.focus(self)
                     else:  # self.group.screen != self.qtile.current_screen:
                         logger.debug("Setting urgent flag for window")
                         self.urgent = True
