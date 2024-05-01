@@ -76,6 +76,7 @@ class Volume(base._TextBox):
             " List contains 4 symbols, from lowest volume to highest.",
         ),
         ("mute_command", None, "Mute command"),
+        ("mute_foreground", None, "Foreground color for mute volume."),
         ("mute_format", "M", "Format to display when volume is muted."),
         ("unmute_format", "{volume}%", "Format of text to display when volume is not muted."),
         ("volume_app", None, "App to control volume"),
@@ -109,6 +110,7 @@ class Volume(base._TextBox):
         self.surfaces = {}
         self.volume = None
         self.mute = False
+        self.unmute_foreground = self.foreground
 
         self.add_callbacks(
             {
@@ -158,6 +160,9 @@ class Volume(base._TextBox):
         self.timeout_add(self.update_interval, self.update)
 
     def _update_drawer(self):
+        if self.mute_foreground is not None:
+            self.foreground = self.mute_foreground if self.mute else self.unmute_foreground
+
         if self.theme_path:
             self.drawer.clear(self.background or self.bar.background)
             if self.volume <= 0:
