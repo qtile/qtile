@@ -53,7 +53,7 @@ class LazyCall:
         self._focused: Match | None = None
         self._if_no_focused: bool = False
         self._layouts: set[str] = set()
-        self._when_floating = True
+        self._when_floating: bool | None = None
         self._condition: bool | None = None
         self._func: Callable[[], bool] = lambda: True
 
@@ -99,7 +99,7 @@ class LazyCall:
         focused: Match | None = None,
         if_no_focused: bool = False,
         layout: Iterable[str] | str | None = None,
-        when_floating: bool = True,
+        when_floating: bool | None = None,
         func: Callable | None = None,
         condition: bool | None = None,
     ) -> "LazyCall":
@@ -157,7 +157,10 @@ class LazyCall:
             if not q.current_window and not self._if_no_focused:
                 return False
 
-        if cur_win_floating and not self._when_floating:
+        if cur_win_floating and self._when_floating is False:
+            return False
+
+        if not cur_win_floating and self._when_floating:
             return False
 
         if self._layouts and q.current_layout.name not in self._layouts:
