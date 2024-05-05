@@ -63,7 +63,7 @@ class Output(HasListeners):
 
         # The output may be disabled, switch it on.
         state = OutputState()
-        state.set_enabled()
+        state.enabled = True
 
         # Select the output's preferred mode.
         if mode := wlr_output.preferred_mode():
