@@ -25,7 +25,7 @@ import typing
 from pywayland.server import Listener
 from wlroots.util.clock import Timespec
 from wlroots.util.edges import Edges
-from wlroots.wlr_types.xdg_shell import XdgSurface, XdgTopLevelWMCapabilities
+from wlroots.wlr_types.xdg_shell import XdgSurface, XdgToplevelWMCapabilities
 
 from libqtile import hook
 from libqtile.backend import base
@@ -49,9 +49,9 @@ if typing.TYPE_CHECKING:
 
 EDGES_TILED = Edges.TOP | Edges.BOTTOM | Edges.LEFT | Edges.RIGHT
 WM_CAPABILITIES = (
-    XdgTopLevelWMCapabilities.MAXIMIZE
-    | XdgTopLevelWMCapabilities.FULLSCREEN
-    | XdgTopLevelWMCapabilities.MINIMIZE
+    XdgToplevelWMCapabilities.MAXIMIZE
+    | XdgToplevelWMCapabilities.FULLSCREEN
+    | XdgToplevelWMCapabilities.MINIMIZE
 )
 
 
