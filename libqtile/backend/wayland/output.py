@@ -79,7 +79,7 @@ class Output(HasListeners):
                 state.set_custom_mode(640, 480, 0)
 
         # Commit this initial state.
-        wlr_output.commit_state(state)
+        wlr_output.commit(state)
         state.finish()
 
         wlr_output.data = self
@@ -127,7 +127,7 @@ class Output(HasListeners):
 
     def _on_request_state(self, _listener: Listener, request: OutputEventRequestState) -> None:
         logger.debug("Signal: output request_state")
-        self.wlr_output.commit_state(request.state)
+        self.wlr_output.commit(request.state)
 
     def get_geometry(self) -> tuple[int, int, int, int]:
         width, height = self.wlr_output.effective_resolution()
