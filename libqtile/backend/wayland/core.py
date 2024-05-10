@@ -918,10 +918,10 @@ class Core(base.Core, wlrq.HasListeners):
                 wlr_output.set_transform(state.transform)
                 wlr_output.set_scale(state.scale)
                 # Ensure we have cursors loaded for the new scale factor.
-                self.cursor_manager.load(state.scale)
+                self._cursor_manager.load(state.scale)
                 # Rescale the cursor if necessary
                 if not self.seat.pointer_state.focused_surface:
-                    self.cursor_manager.set_cursor_image("left_ptr", self.cursor)
+                    self._cursor_manager.set_cursor_image("left_ptr", self.cursor)
             else:
                 if wlr_output.enabled:
                     wlr_output.enable(enable=False)
