@@ -27,6 +27,7 @@ from wlroots.util.box import Box
 from wlroots.util.clock import Timespec
 from wlroots.wlr_types import Output as wlrOutput
 from wlroots.wlr_types import OutputState, SceneOutput
+from wlroots.wlr_types.output import CustomMode
 from wlroots.wlr_types.layer_shell_v1 import (
     LayerShellV1Layer,
     LayerSurfaceV1KeyboardInteractivity,
@@ -63,7 +64,7 @@ class Output(HasListeners):
 
         # The output may be disabled, switch it on.
         state = OutputState()
-        state.enabled = True
+        state.set_enabled(True)
 
         # Select the output's preferred mode.
         if mode := wlr_output.preferred_mode():
@@ -73,10 +74,10 @@ class Output(HasListeners):
         if wlr_output.is_headless and "PYTEST_CURRENT_TEST" in os.environ:
             if not core.outputs:
                 # First test output
-                state.set_custom_mode(800, 600, 0)
+                state.set_custom_mode(CustomMode(width=800, height=600, refresh=0))
             else:
                 # Second test output
-                state.set_custom_mode(640, 480, 0)
+                state.set_custom_mode(CustomMode(width=640, height=480, refresh=0))
 
         # Commit this initial state.
         wlr_output.commit(state)
