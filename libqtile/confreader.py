@@ -72,6 +72,8 @@ class Config:
     # Really we'd want to check this Any is libqtile.backend.wayland.ImportConfig, but
     # doing so forces the import, creating a hard dependency for wlroots.
     wl_input_rules: dict[str, Any] | None
+    wl_xcursor_theme_name: str
+    wl_xcursor_size: int
 
     def __init__(self, file_path=None, **settings):
         """Create a Config() object from settings
