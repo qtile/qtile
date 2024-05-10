@@ -222,7 +222,6 @@ class Core(base.Core, wlrq.HasListeners):
 
         # Set up cursor
         self.cursor = Cursor(self.output_layout)
-        self._cursor_manager = XCursorManager(24)
         self._gestures = PointerGesturesV1(self.display)
         self._pressed_button_count = 0
         self._implicit_grab: ImplicitGrab | None = None
@@ -1136,6 +1135,8 @@ class Core(base.Core, wlrq.HasListeners):
     def setup_listener(self) -> None:
         """Setup a listener for the given qtile instance"""
         logger.debug("Adding io watch")
+        self._cursor_manager = XCursorManager(self.qtile.config.wl_xcursor_theme_name, self.qtile.config.wl_xcursor_size)
+        self.cursor.set_xcursor(self._cursor_manager, "default")
         self.fd = lib.wl_event_loop_get_fd(self.event_loop._ptr)
         if self.fd:
             asyncio.get_running_loop().add_reader(self.fd, self._poll)
