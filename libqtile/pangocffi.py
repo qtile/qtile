@@ -56,14 +56,12 @@ pangocairo = ffi.dlopen("libpangocairo-1.0.so.0")  # type: ignore
 
 def patch_cairo_context(cairo_t):
     def create_layout():
-        return PangoLayout(ffi.cast("struct _cairo *", cairo_t._pointer))
+        return PangoLayout(cairo_t._pointer)
 
     cairo_t.create_layout = create_layout
 
     def show_layout(layout):
-        pangocairo.pango_cairo_show_layout(
-            ffi.cast("struct _cairo *", cairo_t._pointer), layout._pointer
-        )
+        pangocairo.pango_cairo_show_layout(cairo_t._pointer, layout._pointer)
 
     cairo_t.show_layout = show_layout
 
