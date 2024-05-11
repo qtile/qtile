@@ -73,6 +73,7 @@ widgets = {
     "Notify": "notify",
     "NvidiaSensors": "nvidia_sensors",
     "OpenWeather": "open_weather",
+    "Plasma": "plasma",
     "Pomodoro": "pomodoro",
     "Prompt": "prompt",
     "PulseVolume": "pulse_volume",
