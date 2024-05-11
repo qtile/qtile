@@ -24,8 +24,22 @@ from enum import Enum, Flag, auto
 from math import isclose
 from typing import NamedTuple
 
+from libqtile import hook
 from libqtile.command.base import expose_command
+from libqtile.hook import Hook, qtile_hooks
 from libqtile.layout.base import Layout
+
+plasma_hook = Hook(
+    "plasma_add_mode",
+    """
+    Used to flag when the add mode of the Plasma layout has changed.
+
+    The hooked function should take one argument being the layout object.
+    """,
+)
+
+
+qtile_hooks.register_hook(plasma_hook)
 
 
 class NotRestorableError(Exception):
@@ -70,8 +84,8 @@ class Priority(Enum):
 
 
 class AddMode(Flag):
-    HORIZONTAL = 0
-    VERTICAL = 1
+    HORIZONTAL = auto()
+    VERTICAL = auto()
     SPLIT = auto()
 
     @property
@@ -728,6 +742,9 @@ class Plasma(Layout):
     ``lazy.layout.mode_vertical/horizontal()`` will insert a new container allowing
     windows to be added in the new direction.
 
+    You can use the ``Plasma`` widget to show which mode will apply when opening a new
+    window based on the currently focused node.
+
     Windows can be focused selectively by using ``lazy.layout.up/down/left/right()`` to focus
     the nearest window in that direction relative to the currently focused window.
 
@@ -815,8 +832,8 @@ class Plasma(Layout):
         Layout.__init__(self, **config)
         self.add_defaults(Plasma.defaults)
         self.root = Node(None, *self.default_dimensions)
-        self.focused = None
-        self.add_mode = None
+        self._focused = None
+        self._add_mode = None
         Node.priority = Priority.BALANCED if self.fair else Priority.FIXED
 
     @staticmethod
@@ -824,8 +841,60 @@ class Plasma(Layout):
         return [Plasma.convert_names(n) if isinstance(n, list) else n.payload.name for n in tree]
 
     @property
+    def add_mode(self):
+        return self._add_mode
+
+    @add_mode.setter
+    def add_mode(self, value):
+        self._add_mode = value
+        # We trigger a redraw so that the different borders can be drawn based on the add_mode
+        # We check self._group to avoid raising a runtime error from libqtile.layout.base
+        if self._group is not None:
+            hook.fire("plasma_add_mode", self)
+            self.group.layout_all()
+
+    @property
+    def focused(self):
+        return self._focused
+
+    @focused.setter
+    def focused(self, value):
+        self._focused = value
+        hook.fire("plasma_add_mode", self)
+
+    @property
     def focused_node(self):
         return self.root.find_payload(self.focused)
+
+    @property
+    def horizontal(self):
+        if self.focused_node is None:
+            return True
+
+        if self.add_mode is not None:
+            if self.add_mode & AddMode.HORIZONTAL:
+                return True
+            else:
+                return False
+
+        if self.focused_node.parent is None:
+            if self.focused_node.orient is Orient.HORIZONTAL:
+                return True
+            else:
+                return False
+
+        return self.focused_node.parent.horizontal
+
+    @property
+    def vertical(self):
+        return not self.horizontal
+
+    @property
+    def split(self):
+        if self.add_mode is not None and self.add_mode & AddMode.SPLIT:
+            return True
+
+        return False
 
     @expose_command
     def info(self):
@@ -1021,7 +1090,7 @@ class Plasma(Layout):
         self.add_mode = AddMode.VERTICAL | AddMode.SPLIT
 
     @expose_command
-    def set_size(self, x):
+    def set_size(self, x: int):
         """Change size of current window.
 
         (It's recommended to use `width()`/`height()` instead.)
@@ -1030,13 +1099,13 @@ class Plasma(Layout):
         self.refocus()
 
     @expose_command
-    def set_width(self, x):
+    def set_width(self, x: int):
         """Set width of current window."""
         self.focused_node.width = x
         self.refocus()
 
     @expose_command
-    def set_height(self, x):
+    def set_height(self, x: int):
         """Set height of current window."""
         self.focused_node.height = x
         self.refocus()
@@ -1048,7 +1117,7 @@ class Plasma(Layout):
         self.refocus()
 
     @expose_command
-    def grow(self, x):
+    def grow(self, x: int):
         """Grow size of current window.
 
         (It's recommended to use `grow_width()`/`grow_height()` instead.)
@@ -1057,13 +1126,13 @@ class Plasma(Layout):
         self.refocus()
 
     @expose_command
-    def grow_width(self, x):
+    def grow_width(self, x: int):
         """Grow width of current window."""
         self.focused_node.width += x
         self.refocus()
 
     @expose_command
-    def grow_height(self, x):
+    def grow_height(self, x: int):
         """Grow height of current window."""
         self.focused_node.height += x
         self.refocus()
