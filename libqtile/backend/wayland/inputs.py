@@ -222,7 +222,7 @@ class Keyboard(_Device):
     def finalize(self) -> None:
         super().finalize()
         self.core.keyboards.remove(self)
-        if self.core.seat.keyboard == self.keyboard:
+        if self.core.seat.get_keyboard() == self.keyboard:
             # If this is the active keyboard and we have other keyboards enabled, set
             # the previous keyboard as the new active keyboard.
             if self.core.keyboards:
