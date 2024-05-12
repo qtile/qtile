@@ -1068,7 +1068,7 @@ class Core(base.Core, wlrq.HasListeners):
         handled = False
 
         if pressed:
-            if keyboard := self.seat.keyboard:
+            if keyboard := self.seat.get_keyboard():
                 handled = self.qtile.process_button_click(
                     button, keyboard.modifier, int(self.cursor.x), int(self.cursor.y)
                 )
@@ -1082,7 +1082,7 @@ class Core(base.Core, wlrq.HasListeners):
                     button,
                 )
         else:
-            if keyboard := self.seat.keyboard:
+            if keyboard := self.seat.get_keyboard():
                 handled = self.qtile.process_button_release(button, keyboard.modifier)
             else:
                 logger.warning("No active keyboard found, keybinding may be missed.")
@@ -1291,7 +1291,7 @@ class Core(base.Core, wlrq.HasListeners):
             ftm_handle.set_activated(True)
 
         if enter:
-            if keyboard := self.seat.keyboard:
+            if keyboard := self.seat.get_keyboard():
                 self.seat.keyboard_notify_enter(surface, keyboard)
 
     def _focus_by_click(self) -> tuple[window.WindowType, Surface | None, float, float] | None:
