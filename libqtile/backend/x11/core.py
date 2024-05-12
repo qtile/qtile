@@ -38,6 +38,7 @@ from libqtile import config, hook, utils
 from libqtile.backend import base
 from libqtile.backend.x11 import window, xcbq
 from libqtile.backend.x11.xkeysyms import keysyms
+from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 
@@ -183,23 +184,11 @@ class Core(base.Core):
             delattr(self, "qtile")
         self.conn.finalize()
 
-    def get_screen_info(self) -> list[tuple[int, int, int, int]]:
-        info = [(s.x, s.y, s.width, s.height) for s in self.conn.pseudoscreens]
-
-        if not info:
-            info.append(
-                (
-                    0,
-                    0,
-                    self.conn.default_screen.width_in_pixels,
-                    self.conn.default_screen.height_in_pixels,
-                )
-            )
-
+    def get_screen_info(self) -> list[ScreenRect]:
+        ps = self.conn.pseudoscreens
         if self.qtile:
             self._xpoll()
-
-        return info
+        return ps
 
     @property
     def wmname(self):

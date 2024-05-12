@@ -45,7 +45,7 @@ from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import IPCCommandServer, QtileCommandInterface
 from libqtile.config import Click, Drag, Key, KeyChord, Match, Mouse, Rule
 from libqtile.config import ScratchPad as ScratchPadConfig
-from libqtile.config import Screen
+from libqtile.config import Screen, ScreenRect
 from libqtile.core.lifecycle import lifecycle
 from libqtile.core.loop import LoopContext, QtileEventLoopPolicy
 from libqtile.core.state import QtileState
@@ -357,20 +357,22 @@ class Qtile(CommandObject):
         screens = []
 
         if hasattr(self.config, "fake_screens"):
-            screen_info = [(s.x, s.y, s.width, s.height) for s in self.config.fake_screens]
+            screen_info = [
+                ScreenRect(s.x, s.y, s.width, s.height) for s in self.config.fake_screens
+            ]
             config = self.config.fake_screens
         else:
             # Alias screens with the same x and y coordinates, taking largest
             xywh = {}  # type: dict[tuple[int, int], tuple[int, int]]
-            for sx, sy, sw, sh in self.core.get_screen_info():
-                pos = (sx, sy)
+            for info in self.core.get_screen_info():
+                pos = (info.x, info.y)
                 width, height = xywh.get(pos, (0, 0))
-                xywh[pos] = (max(width, sw), max(height, sh))
+                xywh[pos] = (max(width, info.width), max(height, info.height))
 
-            screen_info = [(x, y, w, h) for (x, y), (w, h) in xywh.items()]
+            screen_info = [ScreenRect(x, y, w, h) for (x, y), (w, h) in xywh.items()]
             config = self.config.screens
 
-        for i, (x, y, w, h) in enumerate(screen_info):
+        for i, info in enumerate(screen_info):
             if i + 1 > len(config):
                 scr = Screen()
             else:
@@ -392,9 +394,9 @@ class Qtile(CommandObject):
 
             # If the screen has changed position and/or size, or is a new screen then make sure that any gaps/bars
             # are reconfigured
-            reconfigure_gaps = ((x, y, w, h) != (scr.x, scr.y, scr.width, scr.height)) or (
-                i + 1 > len(self.screens)
-            )
+            reconfigure_gaps = (
+                (info.x, info.y, info.width, info.height) != (scr.x, scr.y, scr.width, scr.height)
+            ) or (i + 1 > len(self.screens))
 
             if not hasattr(scr, "group"):
                 # Ensure that this screen actually *has* a group, as it won't get
@@ -405,7 +407,16 @@ class Qtile(CommandObject):
                 # a group anyway.
                 scr.group = grp
 
-            scr._configure(self, i, x, y, w, h, grp, reconfigure_gaps=reconfigure_gaps)
+            scr._configure(
+                self,
+                i,
+                info.x,
+                info.y,
+                info.width,
+                info.height,
+                grp,
+                reconfigure_gaps=reconfigure_gaps,
+            )
             screens.append(scr)
 
         for screen in self.screens:

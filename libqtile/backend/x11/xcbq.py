@@ -55,6 +55,7 @@ from xcffib.xproto import CW, EventMask, WindowClass
 from libqtile.backend.x11 import window
 from libqtile.backend.x11.xcursors import Cursors
 from libqtile.backend.x11.xkeysyms import keysyms
+from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError, hex
 
@@ -361,20 +362,6 @@ class Screen(_Wrapper):
                     return i.visuals[0]
 
 
-class PseudoScreen:
-    """
-    This may be a Xinerama screen or a RandR CRTC, both of which are
-    rectangular sections of an actual Screen.
-    """
-
-    def __init__(self, conn, x, y, width, height):
-        self.conn = conn
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-
-
 class Colormap:
     def __init__(self, conn, cid):
         self.conn = conn
@@ -418,17 +405,13 @@ class RandR:
         self.ext.SelectInput(conn.default_screen.root.wid, xcffib.randr.NotifyMask.ScreenChange)
 
     def query_crtcs(self, root):
-        crtc_list = []
-        for crtc in self.ext.GetScreenResources(root).reply().crtcs:
-            crtc_info = self.ext.GetCrtcInfo(crtc, xcffib.CurrentTime).reply()
-            crtc_dict = {
-                "x": crtc_info.x,
-                "y": crtc_info.y,
-                "width": crtc_info.width,
-                "height": crtc_info.height,
-            }
-            crtc_list.append(crtc_dict)
-        return crtc_list
+        infos = []
+        for output in self.ext.GetScreenResources(root).reply().outputs:
+            output_info = self.ext.GetOutputInfo(output, xcffib.CurrentTime).reply()
+            crtc_info = self.ext.GetCrtcInfo(output_info.crtc, xcffib.CurrentTime).reply()
+
+            infos.append(ScreenRect(crtc_info.x, crtc_info.y, crtc_info.width, crtc_info.height))
+        return infos
 
 
 class XFixes:
@@ -499,28 +482,19 @@ class Connection:
 
     @property
     def pseudoscreens(self):
-        pseudoscreens = []
         if hasattr(self, "xinerama"):
+            pseudoscreens = []
             for i, s in enumerate(self.xinerama.query_screens()):
-                scr = PseudoScreen(
-                    self,
+                scr = ScreenRect(
                     s.x_org,
                     s.y_org,
                     s.width,
                     s.height,
                 )
                 pseudoscreens.append(scr)
+            return pseudoscreens
         elif hasattr(self, "randr"):
-            for i in self.randr.query_crtcs(self.screens[0].root.wid):
-                scr = PseudoScreen(
-                    self,
-                    i["x"],
-                    i["y"],
-                    i["width"],
-                    i["height"],
-                )
-                pseudoscreens.append(scr)
-        return pseudoscreens
+            return self.randr.query_crtcs(self.screens[0].root.wid)
 
     def finalize(self):
         self.cursors.finalize()

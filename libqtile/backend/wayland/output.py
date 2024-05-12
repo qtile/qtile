@@ -34,6 +34,7 @@ from wlroots.wlr_types.layer_shell_v1 import (
 from wlroots.wlr_types.output import CustomMode
 
 from libqtile.backend.wayland.wlrq import HasListeners
+from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
@@ -98,7 +99,8 @@ class Output(HasListeners):
         self.scene_output.destroy()
 
     def __repr__(self) -> str:
-        return "<Output (%s, %s, %s, %s)>" % self.get_geometry()
+        i = self.get_screen_info()
+        return f"<Output ({i.x}, {i.y}, {i.width}, {i.height})>"
 
     @property
     def screen(self) -> Screen:
@@ -131,9 +133,9 @@ class Output(HasListeners):
         logger.debug("Signal: output request_state")
         self.wlr_output.commit(request.state)
 
-    def get_geometry(self) -> tuple[int, int, int, int]:
+    def get_screen_info(self) -> ScreenRect:
         width, height = self.wlr_output.effective_resolution()
-        return int(self.x), int(self.y), width, height
+        return ScreenRect(int(self.x), int(self.y), width, height)
 
     def organise_layers(self) -> None:
         """Organise the positioning of layer shell surfaces."""

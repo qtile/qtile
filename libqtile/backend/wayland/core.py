@@ -95,6 +95,7 @@ from libqtile.backend import base
 from libqtile.backend.wayland import inputs, layer, window, wlrq, xdgwindow, xwindow
 from libqtile.backend.wayland.output import Output
 from libqtile.command.base import expose_command
+from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
 
 try:
@@ -497,7 +498,7 @@ class Core(base.Core, wlrq.HasListeners):
         if not self._current_output:
             self._current_output = output
             self.cursor.set_xcursor(self._cursor_manager, "default")
-            box = Box(*output.get_geometry())
+            box = Box(*output.get_screen_info())
             x = box.x + box.width / 2
             y = box.y + box.height / 2
             self.warp_pointer(x, y)
@@ -1414,9 +1415,9 @@ class Core(base.Core, wlrq.HasListeners):
         logger.warning("Couldn't determine what was under the pointer. Please report.")
         return None
 
-    def get_screen_info(self) -> list[tuple[int, int, int, int]]:
+    def get_screen_info(self) -> list[ScreenRect]:
         """Get the output information"""
-        return [output.get_geometry() for output in self.outputs]
+        return [output.get_screen_info() for output in self.outputs]
 
     def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
         """Configure the backend to grab the key event"""
