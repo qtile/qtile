@@ -30,6 +30,7 @@ from __future__ import annotations
 import os.path
 import re
 import sys
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from libqtile import configurable, hook, utils
@@ -372,21 +373,12 @@ class EzDrag(EzConfig, Drag):
         super().__init__(modkeys, button, *commands, start=start)
 
 
+@dataclass
 class ScreenRect:
-    def __init__(self, x: int, y: int, width: int, height: int) -> None:
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-
-    def __repr__(self) -> str:
-        return "<%s %d,%d %d,%d>" % (
-            self.__class__.__name__,
-            self.x,
-            self.y,
-            self.width,
-            self.height,
-        )
+    x: int
+    y: int
+    width: int
+    height: int
 
     def hsplit(self, columnwidth: int) -> tuple[ScreenRect, ScreenRect]:
         assert 0 < columnwidth < self.width
