@@ -29,9 +29,8 @@ from libqtile.widget import base
 
 
 class GmailChecker(base.ThreadPoolText):
-    """
-    A simple gmail checker. If 'status_only_unseen' is True - set 'fmt' for one
-    argument, ex. 'unseen: {0}'
+    """A simple gmail checker. If 'status_only_unseen' is True - set 'fmt' for one
+    argument, ex. 'unseen: {0}'.
     """
 
     defaults = [

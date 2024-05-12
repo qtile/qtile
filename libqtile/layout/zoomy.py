@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
 
 class Zoomy(_SimpleLayoutBase):
-    """A layout with single active windows, and few other previews at the right"""
+    """A layout with single active windows, and few other previews at the right."""
 
     defaults = [
         ("columnwidth", 150, "Width of the right column"),

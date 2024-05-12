@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 
 class Max(_SimpleLayoutBase):
-    """Maximized layout
+    """Maximized layout.
 
     A simple layout that only displays one window at a time, filling the
     screen_rect. This is suitable for use on laptops and other devices with

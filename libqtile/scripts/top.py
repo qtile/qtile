@@ -18,9 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-    Command-line top like for qtile
-"""
+"""Command-line top like for qtile."""
 
 import curses
 import linecache

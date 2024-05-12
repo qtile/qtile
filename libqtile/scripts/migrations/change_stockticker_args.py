@@ -44,23 +44,23 @@ class StocktickerArgsTransformer(MigrationTransformer):
 class StocktickerArgs(_QtileMigrator):
     ID = "UpdateStocktickerArgs"
 
-    SUMMARY = "Updates ``StockTicker`` argument signature."
+    SUMMARY = "Updates `StockTicker` argument signature."
 
     HELP = """
-    The ``StockTicker`` widget had a keyword argument called ``function``. This needs to be
-    renamed to ``func`` to prevent clashes with the ``function()`` method of ``CommandObject``.
+    The `StockTicker` widget had a keyword argument called `function`. This needs to be
+    renamed to `func` to prevent clashes with the `function()` method of `CommandObject`.
 
     For example:
 
-    .. code:: python
-
-        widget.StockTicker(function="TIME_SERIES_INTRADAY")
+    ```python
+    widget.StockTicker(function="TIME_SERIES_INTRADAY")
+    ```
 
     should be changed to:
 
-    .. code::
-
-        widget.StockTicker(func="TIME_SERIES_INTRADAY")
+    ```python
+    widget.StockTicker(func="TIME_SERIES_INTRADAY")
+    ```
 
     """
 

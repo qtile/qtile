@@ -35,16 +35,12 @@ if TYPE_CHECKING:
 
 class LazyCall:
     def __init__(self, call: CommandGraphCall, args: tuple, kwargs: dict) -> None:
-        """The lazily evaluated command graph call
+        """The lazily evaluated command graph call.
 
-        Parameters
-        ----------
-        call: CommandGraphCall
-            The call that is made
-        args: tuple
-            The args passed to the call when it is evaluated.
-        kwargs: dict
-            The kwargs passed to the call when it is evaluated.
+        Parameters:
+            call: The call that is made.
+            args: The args passed to the call when it is evaluated.
+            kwargs: The kwargs passed to the call when it is evaluated.
         """
         self._call = call
         self._args = args
@@ -58,17 +54,18 @@ class LazyCall:
         self._func: Callable[[], bool] = lambda: True
 
     def __call__(self, *args, **kwargs):
-        """Convenience method to allow users to pass arguments to
-        functions decorated with `@lazy.function`.
+        """Convenience method allowing decorated functions to accept arguments.
 
+        Examples:
+            ```python
             @lazy.function
             def my_function(qtile, pos_arg, keyword_arg=False):
                 pass
-
+                
             ...
 
             Key(... my_function("Positional argument", keyword_arg=True))
-
+            ```
         """
         # We need to return a new object so the arguments are not shared between
         # a single instance of the LazyCall object.
@@ -76,22 +73,22 @@ class LazyCall:
 
     @property
     def selectors(self) -> list[SelectorType]:
-        """The selectors for the given call"""
+        """The selectors for the given call."""
         return self._call.selectors
 
     @property
     def name(self) -> str:
-        """The name of the given call"""
+        """The name of the given call."""
         return self._call.name
 
     @property
     def args(self) -> tuple:
-        """The args to the given call"""
+        """The args to the given call."""
         return self._args
 
     @property
     def kwargs(self) -> dict:
-        """The kwargs to the given call"""
+        """The kwargs to the given call."""
         return self._kwargs
 
     def when(
@@ -105,29 +102,22 @@ class LazyCall:
     ) -> "LazyCall":
         """Enable call only for matching criteria.
 
-        Keyword parameters
-        ----------
-        focused: Match or None
-            Match criteria to enable call for the current window.
-        if_no_focused: bool
-            Whether or not the `focused` attribute should also
-            match when there is no focused window.
-            This is useful when the `focused` attribute is e.g. set
-            to a regex that should also match when there is
-            no focused window.
-            By default this is set to `False` so that the focused
-            attribute only matches when there is actually a focused window.
-        layout: str, Iterable[str], or None
-            Restrict call to one or more layouts.
-            If None, enable the call for all layouts.
-        when_floating: bool
-            Enable call when the current window is floating.
-        func: callable
-            Enable call when the result of the callable evaluates to True
-        condition: a boolean value to determine whether the lazy object should
-            be run. Unlike 'func', the condition is evaluated once when the config
-            file is first loaded.
-
+        Parameters:
+            focused: Match criteria to enable call for the current window.
+            if_no_focused: Whether or not the `focused` attribute should also
+                match when there is no focused window.
+                This is useful when the `focused` attribute is e.g. set
+                to a regex that should also match when there is
+                no focused window.
+                By default this is set to `False` so that the focused
+                attribute only matches when there is actually a focused window.
+            layout: Restrict call to one or more layouts.
+                If None, enable the call for all layouts.
+            when_floating: Enable call when the current window is floating.
+            func: Enable call when the result of the callable evaluates to True.
+            condition: A boolean value to determine whether the lazy object should
+                be run. Unlike 'func', the condition is evaluated once when the config
+                file is first loaded.
         """
         self._focused = focused
 
@@ -180,22 +170,22 @@ class LazyCall:
 
 
 class LazyCommandInterface(CommandInterface):
-    """A lazy loading command object
+    """A lazy loading command object.
 
     Allows all commands and items to be resolved at run time, and returns
     lazily evaluated commands.
     """
 
     def execute(self, call: CommandGraphCall, args: tuple, kwargs: dict) -> LazyCall:
-        """Lazily evaluate the given call"""
+        """Lazily evaluate the given call."""
         return LazyCall(call, args, kwargs)
 
     def has_command(self, node: CommandGraphNode, command: str) -> bool:
-        """Lazily resolve the given command"""
+        """Lazily resolve the given command."""
         return True
 
     def has_item(self, node: CommandGraphNode, object_type: str, item: str | int) -> bool:
-        """Lazily resolve the given item"""
+        """Lazily resolve the given item."""
         return True
 
 

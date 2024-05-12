@@ -17,9 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-"""
-    A command shell for Qtile.
-"""
+"""A command shell for Qtile."""
 
 from __future__ import annotations
 
@@ -56,7 +54,7 @@ def terminal_width():
 
 
 class QSh:
-    """Qtile shell instance"""
+    """Qtile shell instance."""
 
     def __init__(self, client: CommandInterface, completekey="tab") -> None:
         # Readline is imported here to prevent issues with terminal resizing
@@ -134,7 +132,7 @@ class QSh:
             return client.children, []
 
     def _find_path(self, path: str) -> tuple[CommandClient | None, str | None]:
-        """Find an object relative to the current node
+        """Find an object relative to the current node.
 
         Finds and returns the command graph node that is defined relative to
         the current node.
@@ -146,7 +144,7 @@ class QSh:
     def _find_node(
         self, src: CommandClient, *paths: str
     ) -> tuple[CommandClient | None, str | None]:
-        """Find an object in the command graph
+        """Find an object in the command `graph.dbus_next`.
 
         Return the object in the command graph at the specified path relative
         to the given node.
@@ -187,12 +185,11 @@ class QSh:
     def do_cd(self, arg: str | None) -> str:
         """Change to another path.
 
-        Examples
-        ========
-
-            cd layout/0
-
-            cd ../layout
+        Examples:
+            ```qsh
+            > cd layout/0
+            > cd ../layout
+            ```
         """
         if arg is None:
             self._command_client = self._command_client.root
@@ -215,11 +212,11 @@ class QSh:
     def do_ls(self, arg: str | None) -> str:
         """List contained items on a node.
 
-        Examples
-        ========
-
-                > ls
-                > ls ../layout
+        Examples:
+            ```qsh
+            > ls
+            > ls ../layout
+            ```
         """
         if arg:
             node, rest_path = self._find_path(arg)
@@ -241,35 +238,34 @@ class QSh:
         return self.columnize(formatted_ls)
 
     def do_pwd(self, arg) -> str:
-        """Returns the current working location
+        """Returns the current working location.
 
         This is the same information as presented in the qshell prompt, but is
         very useful when running iqshell.
 
-        Examples
-        ========
-
+        Examples:
+            ```qsh  
             > pwd
             /
             > cd bar/top
             bar['top']> pwd
             bar['top']
+            ```
         """
         return format_selectors(self._command_client.selectors) or "/"
 
     def do_help(self, arg: str | None) -> str:
-        """Give help on commands and builtins
+        """Give help on commands and builtins.
 
         When invoked without arguments, provides an overview of all commands. When
         passed as an argument, also provides a detailed help on a specific command or
         builtin.
 
-        Examples
-        ========
-
+        Examples:
+            ```qsh
             > help
-
             > help command
+            ```
         """
         if not arg:
             lst = [
@@ -301,7 +297,7 @@ class QSh:
             return "No such command: %s" % arg
 
     def do_exit(self, args) -> None:
-        """Exit qshell"""
+        """Exit qshell."""
         sys.exit(0)
 
     do_quit = do_exit

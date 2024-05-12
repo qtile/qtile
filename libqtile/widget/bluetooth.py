@@ -88,8 +88,7 @@ class _BluetoothBase:
 
 
 class BluetoothDevice(_BluetoothBase):
-    """
-    Helper class to represent an org.bluez.Device1 object.
+    """Helper class to represent an org.bluez.Device1 object.
 
     Exposes basic properties/methods and also listens to signals to
     update properties as needed.
@@ -225,8 +224,7 @@ class BluetoothDevice(_BluetoothBase):
 
 
 class BluetoothAdapter(_BluetoothBase):
-    """
-    Helper class for Bluetooth adapters.
+    """Helper class for Bluetooth adapters.
 
     Exposes basic properties/methods and also listens to signals to
     update properties as needed.
@@ -278,11 +276,10 @@ class BluetoothAdapter(_BluetoothBase):
 
 
 class Bluetooth(base._TextBox, base.MarginMixin):
-    """
-    Bluetooth widget that provides following functionality:
+    """Bluetooth widget that provides following functionality:
     - View multiple adapters/devices (adapters can be filtered)
     - Set power and discovery status for adapters
-    - Connect/disconnect/pair devices
+    - Connect/disconnect/pair devices.
 
     The widget works by providing a menu in the bar. Different items are accessed
     by scrolling up and down on the widget.
@@ -297,8 +294,8 @@ class Bluetooth(base._TextBox, base.MarginMixin):
     Symbols are used to show the status of adapters and devices.
 
     Battery level for bluetooth devices can also be shown if available. This functionality is not available
-    by default on all distros. If it doesn't work, you can try adding ``Experimental = true`` to
-    ``/etc/bluetooth/main.conf``.
+    by default on all distros. If it doesn't work, you can try adding `Experimental = true` to
+    `/etc/bluetooth/main.conf`.
     """
 
     defaults = [
@@ -316,7 +313,7 @@ class Bluetooth(base._TextBox, base.MarginMixin):
             "device_format",
             "Device: {name}{battery_level} [{symbol}]",
             "Text to display when showing bluetooth device. "
-            "The ``{adapter`` field is also available if you're using multiple adapters.",
+            "The `{adapter` field is also available if you're using multiple adapters.",
         ),
         (
             "device_battery_format",
@@ -411,8 +408,7 @@ class Bluetooth(base._TextBox, base.MarginMixin):
         return proxy
 
     async def _get_managed_objects(self):
-        """
-        Retrieve list of managed objects.
+        """Retrieve list of managed objects.
 
         These are devices that have previously been paired but may or may
         not currently be connected.

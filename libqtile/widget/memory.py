@@ -30,27 +30,24 @@ class Memory(base.ThreadPoolText):
 
     The following fields are available in the `format` string:
 
-    - ``MemUsed``: Memory in use.
-    - ``MemTotal``: Total amount of memory.
-    - ``MemFree``: Amount of memory free.
-    - ``Available``: Amount of memory available.
-    - ``NotAvailable``: Equal to ``MemTotal`` - ``MemAvailable``
-    - ``MemPercent``: Memory in use as a percentage.
-    - ``Buffers``: Buffer amount.
-    - ``Active``: Active memory.
-    - ``Inactive``: Inactive memory.
-    - ``Shmem``: Shared memory.
-    - ``SwapTotal``: Total amount of swap.
-    - ``SwapFree``: Amount of swap free.
-    - ``SwapUsed``: Amount of swap in use.
-    - ``SwapPercent``: Swap in use as a percentage.
-    - ``mm``: Measure unit for memory.
-    - ``ms``: Measure unit for swap.
+    - `MemUsed`: Memory in use.
+    - `MemTotal`: Total amount of memory.
+    - `MemFree`: Amount of memory free.
+    - `Available`: Amount of memory available.
+    - `NotAvailable`: Equal to `MemTotal` - `MemAvailable`.
+    - `MemPercent`: Memory in use as a percentage.
+    - `Buffers`: Buffer amount.
+    - `Active`: Active memory.
+    - `Inactive`: Inactive memory.
+    - `Shmem`: Shared memory.
+    - `SwapTotal`: Total amount of swap.
+    - `SwapFree`: Amount of swap free.
+    - `SwapUsed`: Amount of swap in use.
+    - `SwapPercent`: Swap in use as a percentage.
+    - `mm`: Measure unit for memory.
+    - `ms`: Measure unit for swap.
 
-    Widget requirements: psutil_.
-
-    .. _psutil: https://pypi.org/project/psutil/
-
+    Widget requirements: [psutil](https://pypi.org/project/psutil/).
     """
 
     defaults = [

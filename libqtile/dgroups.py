@@ -35,7 +35,7 @@ from libqtile.log_utils import logger
 
 
 def simple_key_binder(mod, keynames=None):
-    """Bind keys to mod+group position or to the keys specified as second argument"""
+    """Bind keys to mod+group position or to the keys specified as second argument."""
 
     def func(dgroup):
         # unbind all
@@ -66,7 +66,7 @@ def simple_key_binder(mod, keynames=None):
 
 
 class DGroups:
-    """Dynamic Groups"""
+    """Dynamic Groups."""
 
     def __init__(self, qtile, dgroups, key_binder=None, delay=1):
         self.qtile = qtile

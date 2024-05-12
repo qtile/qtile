@@ -45,13 +45,15 @@ class WidgetBox(base._TextBox):
     Widgets in the box also remain accessible via command interfaces.
 
     Widgets can only be added to the box via the configuration file. The widget
-    is configured by adding widgets to the "widgets" parameter as follows::
+    is configured by adding widgets to the "widgets" parameter as follows:
 
-        widget.WidgetBox(widgets=[
-            widget.TextBox(text="This widget is in the box"),
-            widget.Memory()
-            ]
-        ),
+    ```python
+    widget.WidgetBox(widgets=[
+        widget.TextBox(text="This widget is in the box"),
+        widget.Memory()
+        ]
+    ),
+    ```
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
@@ -153,7 +155,7 @@ class WidgetBox(base._TextBox):
 
     @expose_command()
     def toggle(self):
-        """Toggle box state"""
+        """Toggle box state."""
         self.box_is_open = not self.box_is_open
         self.toggle_widgets()
         self.set_box_label()

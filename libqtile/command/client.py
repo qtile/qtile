@@ -18,8 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-The clients that expose the command graph of a given command interface
+"""The clients that expose the command graph of a given command interface.
 
 The clients give the ability to navigate the command graph while providing name
 resolution with the given command graph interface.  When writing functionality
@@ -49,7 +48,7 @@ if TYPE_CHECKING:
 
 
 class CommandClient:
-    """The object that resolves the commands"""
+    """The object that resolves the commands."""
 
     def __init__(
         self,
@@ -57,21 +56,20 @@ class CommandClient:
         *,
         current_node: CommandGraphNode | None = None,
     ) -> None:
-        """A client that resolves calls through the command object interface
+        """A client that resolves calls through the command object interface.
 
         Exposes a similar API to the command graph, but performs resolution of
         objects.  Any navigation done on the command graph is resolved at the
         point it is invoked.  This command resolution is done via the command
         interface.
 
-        Parameters
-        ----------
-        command: CommandInterface
-            The object that is used to resolve command graph calls, as well as
-            navigate the command graph.
-        current_node: CommandGraphNode
-            The current node that is pointed to in the command graph.  If not
-            specified, the command graph root is used.
+        Parameters:
+            command:
+                The object that is used to resolve command graph calls, as well as
+                navigate the command graph.
+            current_node:
+                The current node that is pointed to in the command graph.  If not
+                specified, the command graph root is used.
         """
         if command is None:
             command = IPCCommandInterface(Client(find_sockfile()))
@@ -79,19 +77,16 @@ class CommandClient:
         self._current_node = current_node if current_node is not None else CommandGraphRoot()
 
     def navigate(self, name: str, selector: str | None) -> CommandClient:
-        """Resolve the given object in the command graph
+        """Resolve the given object in the command graph.
 
-        Parameters
-        ----------
-        name: str
-            The name of the command graph object to resolve.
-        selector: str | None
-            If given, the selector to use to select the next object, and if
-            None, then selects the default object.
+        Parameters:
+            name:
+                The name of the command graph object to resolve.
+            selector:
+                If given, the selector to use to select the next object, and if
+                None, then selects the default object.
 
-        Returns
-        -------
-        CommandClient
+        Returns:
             The client with the given command graph object resolved.
         """
         if name not in self.children:
@@ -108,20 +103,15 @@ class CommandClient:
         return self.__class__(self._command, current_node=next_node)
 
     def call(self, name: str, *args, lifted=True, **kwargs) -> Any:
-        """Resolve and invoke the call into the command graph
+        """Resolve and invoke the call into the command graph.
 
-        Parameters
-        ----------
-        name: str
-            The name of the command to resolve in the command graph.
-        args:
-            The arguments to pass into the call invocation.
-        kwargs:
-            The keyword arguments to pass into the call invocation.
+        Parameters:
+            name: The name of the command to resolve in the command graph.
+            *args: The arguments to pass into the call invocation.
+            **kwargs: The keyword arguments to pass into the call invocation.
 
-        Returns
-        -------
-        The output returned from the function call.
+        Returns:
+            The output returned from the function call.
         """
         if name not in self.commands:
             raise SelectError("Not valid child or command", name, self._current_node.selectors)
@@ -132,7 +122,7 @@ class CommandClient:
 
     @property
     def children(self) -> list[str]:
-        """Get the children of the current location in the command graph"""
+        """Get the children of the current location in the command graph."""
         return self._current_node.children
 
     @property
@@ -141,50 +131,47 @@ class CommandClient:
 
     @property
     def commands(self) -> list[str]:
-        """Get the commands available on the current object"""
+        """Get the commands available on the current object."""
         command_call = self._current_node.call("commands")
         return self._command.execute(command_call, (), {})
 
     def items(self, name: str) -> tuple[bool, list[str | int]]:
-        """Get the available items"""
+        """Get the available items."""
         items_call = self._current_node.call("items")
         return self._command.execute(items_call, (name,), {})
 
     @property
     def root(self) -> CommandClient:
-        """Get the root of the command graph"""
+        """Get the root of the command graph."""
         return self.__class__(self._command)
 
     @property
     def parent(self) -> CommandClient:
-        """Get the parent of the current client"""
+        """Get the parent of the current client."""
         if self._current_node.parent is None:
             raise SelectError("", "", self._current_node.selectors)
         return self.__class__(self._command, current_node=self._current_node.parent)
 
 
 class InteractiveCommandClient:
-    """
-    A command graph client that can be used to easily resolve elements interactively
-    """
+    """A command graph client that can be used to easily resolve elements interactively."""
 
     def __init__(
         self, command: CommandInterface | None = None, *, current_node: GraphType | None = None
     ) -> None:
-        """An interactive client that resolves calls through the gives client
+        """An interactive client that resolves calls through the gives client.
 
         Exposes the command graph API in such a way that it can be traversed
         directly on this object.  The command resolution for this object is
         done via the command interface.
 
         Parameters
-        ----------
-        command: CommandInterface
-            The object that is used to resolve command graph calls, as well as
-            navigate the command graph.
-        current_node: CommandGraphNode
-            The current node that is pointed to in the command graph.  If not
-            specified, the command graph root is used.
+            command:
+                The object that is used to resolve command graph calls, as well as
+                navigate the command graph.
+            current_node:
+                The current node that is pointed to in the command graph.  If not
+                specified, the command graph root is used.
         """
         if command is None:
             command = IPCCommandInterface(Client(find_sockfile()))
@@ -192,31 +179,26 @@ class InteractiveCommandClient:
         self._current_node = current_node if current_node is not None else CommandGraphRoot()
 
     def __call__(self, *args, **kwargs) -> Any:
-        """When the client has navigated to a command, execute it"""
+        """When the client has navigated to a command, execute it."""
         if not isinstance(self._current_node, CommandGraphCall):
             raise SelectError("Invalid call", "", self._current_node.selectors)
 
         return self._command.execute(self._current_node, args, kwargs)
 
     def __getattr__(self, name: str) -> InteractiveCommandClient:
-        """Get the child element of the currently selected object
+        """Get the child element of the currently selected object.
 
         Resolve the element specified by the given name, either the child
         object, or the command on the current object.
 
         Parameters
-        ----------
-        name: str
-            The name of the element to resolve
+            name: The name of the element to resolve
 
-        Return
-        ------
-        InteractiveCommandClient
+        Returns:
             The client navigated to the specified name.  Will respresent either
             a command graph node (if the name is a valid child) or a command
             graph call (if the name is a valid command).
         """
-
         # Python's help() command will try to look up __name__ and __origin__ so we
         # need to handle these explicitly otherwise they'll result in a SelectError
         # which help() does not expect.
@@ -243,21 +225,16 @@ class InteractiveCommandClient:
         return self.__class__(self._command, current_node=next_node)
 
     def __getitem__(self, name: str | int) -> InteractiveCommandClient:
-        """Get the selected element of the currently selected object
+        """Get the selected element of the currently selected object.
 
         From the current command graph object, select the instance with the
         given name.
 
-        Parameters
-        ----------
-        name: str
-            The name, or index if it's of int type, of the item to resolve
+        Parameters:
+            name: The name, or index if it's of int type, of the item to resolve
 
-        Return
-        ------
-        InteractiveCommandClient
-            The current client, navigated to the specified command graph
-            object.
+        Returns:
+            The current client, navigated to the specified command graph object.
         """
         if isinstance(self._current_node, CommandGraphRoot):
             raise KeyError("Root node has no available items", name, self._current_node.selectors)
@@ -284,7 +261,7 @@ class InteractiveCommandClient:
         return self.__class__(self._command, current_node=next_node)
 
     def normalize_item(self, item: str) -> str | int:
-        "Normalize the item according to Qtile._items()."
+        """Normalize the item according to Qtile._items()."""
         object_type = (
             self._current_node.object_type
             if isinstance(self._current_node, CommandGraphObject)

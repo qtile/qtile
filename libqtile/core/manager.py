@@ -68,7 +68,7 @@ if TYPE_CHECKING:
 
 
 class Qtile(CommandObject):
-    """This object is the `root` of the command graph"""
+    """This object is the `root` of the command graph."""
 
     current_screen: Screen
     dgroups: DGroups
@@ -203,7 +203,7 @@ class Qtile(CommandObject):
         asyncio.run(self.async_loop())
 
     async def async_loop(self) -> None:
-        """Run the event loop
+        """Run the event loop.
 
         Finalizes the Qtile instance on exit.
         """
@@ -277,8 +277,7 @@ class Qtile(CommandObject):
 
     @expose_command()
     def reload_config(self) -> None:
-        """
-        Reload the configuration file.
+        """Reload the configuration file.
 
         Can also be triggered by sending Qtile a SIGUSR1 signal.
         """
@@ -305,8 +304,7 @@ class Qtile(CommandObject):
         self.load_config()
 
     def _finalize_configurables(self) -> None:
-        """
-        Finalize objects that are instantiated within the config file. In addition to
+        """Finalize objects that are instantiated within the config file. In addition to
         shutdown, these are finalized and then regenerated when reloading the config.
         """
         try:
@@ -429,8 +427,7 @@ class Qtile(CommandObject):
 
     @expose_command()
     def reconfigure_screens(self, *_: list[Any], **__: dict[Any, Any]) -> None:
-        """
-        This can be used to set up screens again during run time. Intended usage is to
+        """This can be used to set up screens again during run time. Intended usage is to
         be called when the screen_change hook is fired, responding to changes in
         physical monitor setup by configuring qtile.screens accordingly. The args are
         ignored; it is here in case this function is hooked directly to screen_change.
@@ -479,7 +476,7 @@ class Qtile(CommandObject):
         return (key, key.swallow)
 
     def grab_keys(self) -> None:
-        """Re-grab all of the keys configured in the key map
+        """Re-grab all of the keys configured in the key map.
 
         Useful when a keyboard mapping event is received.
         """
@@ -488,7 +485,7 @@ class Qtile(CommandObject):
             self.core.grab_key(key)
 
     def grab_key(self, key: Key | KeyChord) -> None:
-        """Grab the given key event"""
+        """Grab the given key event."""
         syms = self.core.grab_key(key)
         if syms in self.keys_map:
             if self.keys_map[syms] == key:
@@ -498,12 +495,12 @@ class Qtile(CommandObject):
         self.keys_map[syms] = key
 
     def ungrab_key(self, key: Key | KeyChord) -> None:
-        """Ungrab a given key event"""
+        """Ungrab a given key event."""
         keysym, mask_key = self.core.ungrab_key(key)
         self.keys_map.pop((keysym, mask_key))
 
     def ungrab_keys(self) -> None:
-        """Ungrab all key events"""
+        """Ungrab all key events."""
         self.core.ungrab_keys()
         self.keys_map.clear()
 
@@ -518,7 +515,7 @@ class Qtile(CommandObject):
 
     @expose_command()
     def ungrab_chord(self) -> None:
-        """Leave a chord mode"""
+        """Leave a chord mode."""
         hook.fire("leave_chord")
 
         self.ungrab_keys()
@@ -540,7 +537,7 @@ class Qtile(CommandObject):
 
     @expose_command()
     def ungrab_all_chords(self) -> None:
-        """Leave all chord modes and grab the root bindings"""
+        """Leave all chord modes and grab the root bindings."""
         hook.fire("leave_chord")
         self.ungrab_keys()
         self.chord_stack.clear()
@@ -548,7 +545,7 @@ class Qtile(CommandObject):
             self.grab_key(key)
 
     def grab_button(self, button: Mouse) -> None:
-        """Grab the given mouse button event"""
+        """Grab the given mouse button event."""
         try:
             button.modmask = self.core.grab_button(button)
         except utils.QtileError:
@@ -622,8 +619,7 @@ class Qtile(CommandObject):
             self.update_desktops()
 
     def register_widget(self, w: _Widget) -> None:
-        """
-        Register a bar widget
+        """Register a bar widget.
 
         If a widget with the same name already exists, the new widget will be
         automatically renamed by appending numeric suffixes. For example, if
@@ -668,8 +664,7 @@ class Qtile(CommandObject):
         reserved_space: tuple[int, int, int, int],  # [left, right, top, bottom]
         screen: Screen,
     ) -> None:
-        """
-        Reserve some space at the edge(s) of a screen.
+        """Reserve some space at the edge(s) of a screen.
 
         The requested space is added to space reserved previously: repeated calls to
         this method are not idempotent.
@@ -690,9 +685,7 @@ class Qtile(CommandObject):
         reserved_space: tuple[int, int, int, int],  # [left, right, top, bottom]
         screen: Screen,
     ) -> None:
-        """
-        Free up space that has previously been reserved at the edge(s) of a screen.
-        """
+        """Free up space that has previously been reserved at the edge(s) of a screen."""
         # mypy can't work out that the new tuple is also length 4 (see mypy #7509)
         reserved_space = tuple(-i for i in reserved_space)  # type: ignore
         self.reserve_space(reserved_space, screen)
@@ -738,7 +731,7 @@ class Qtile(CommandObject):
             hook.fire("client_killed", c)
 
     def find_screen(self, x: int, y: int) -> Screen | None:
-        """Find a screen based on the x and y offset"""
+        """Find a screen based on the x and y offset."""
         result = []
         for i in self.screens:
             if i.x <= x <= i.x + i.width and i.y <= y <= i.y + i.height:
@@ -748,8 +741,7 @@ class Qtile(CommandObject):
         return None
 
     def find_closest_screen(self, x: int, y: int) -> Screen:
-        """
-        If find_screen returns None, then this basically extends a
+        """If find_screen returns None, then this basically extends a
         screen vertically and horizontally and see if x,y lies in the
         band.
 
@@ -776,8 +768,7 @@ class Qtile(CommandObject):
         return self._find_closest_closest(x, y, x_match + y_match)
 
     def _find_closest_closest(self, x: int, y: int, candidate_screens: list[Screen]) -> Screen:
-        """
-        if find_closest_screen can't determine one, we've got multiple
+        """If find_closest_screen can't determine one, we've got multiple
         screens, so figure out who is closer.  We'll calculate using
         the square of the distance from the center of a screen.
 
@@ -873,7 +864,7 @@ class Qtile(CommandObject):
             self.core.warp_pointer(scr.x + scr.dwidth // 2, scr.y + scr.dheight // 2)
 
     def focus_screen(self, n: int, warp: bool = True) -> None:
-        """Have Qtile move to screen and put focus there"""
+        """Have Qtile move to screen and put focus there."""
         if n >= len(self.screens):
             return
         old = self.current_screen
@@ -887,8 +878,7 @@ class Qtile(CommandObject):
                 self.warp_to_screen()
 
     def move_to_group(self, group: str) -> None:
-        """Create a group if it doesn't exist and move
-        the current window there"""
+        """Create a group if it doesn't exist and move the current window there."""
         if self.current_window and group:
             self.add_group(group)
             self.current_window.togroup(group)
@@ -955,7 +945,8 @@ class Qtile(CommandObject):
 
     def call_soon(self, func: Callable, *args: Any) -> asyncio.Handle:
         """A wrapper for the event loop's call_soon which also flushes the core's
-        event queue after func is called."""
+        event queue after func is called.
+        """
 
         def f() -> None:
             func(*args)
@@ -983,36 +974,37 @@ class Qtile(CommandObject):
 
     def run_in_executor(self, func: Callable, *args: Any) -> asyncio.Future:
         """A wrapper for running a function in the event loop's default
-        executor."""
+        executor.
+        """
         return self._eventloop.run_in_executor(None, func, *args)
 
     @expose_command()
     def debug(self) -> None:
-        """Set log level to DEBUG"""
+        """Set log level to DEBUG."""
         logger.setLevel(logging.DEBUG)
         logger.debug("Switching to DEBUG threshold")
 
     @expose_command()
     def info(self) -> None:
-        """Set log level to INFO"""
+        """Set log level to INFO."""
         logger.setLevel(logging.INFO)
         logger.info("Switching to INFO threshold")
 
     @expose_command()
     def warning(self) -> None:
-        """Set log level to WARNING"""
+        """Set log level to WARNING."""
         logger.setLevel(logging.WARNING)
         logger.warning("Switching to WARNING threshold")
 
     @expose_command()
     def error(self) -> None:
-        """Set log level to ERROR"""
+        """Set log level to ERROR."""
         logger.setLevel(logging.ERROR)
         logger.error("Switching to ERROR threshold")
 
     @expose_command()
     def critical(self) -> None:
-        """Set log level to CRITICAL"""
+        """Set log level to CRITICAL."""
         logger.setLevel(logging.CRITICAL)
         logger.critical("Switching to CRITICAL threshold")
 
@@ -1026,26 +1018,23 @@ class Qtile(CommandObject):
 
     @expose_command()
     def pause(self) -> None:
-        """Drops into pdb"""
+        """Drops into pdb."""
         import pdb
 
         pdb.set_trace()
 
     @expose_command()
     def get_groups(self) -> dict[str, dict[str, Any]]:
-        """
-        Return a dictionary containing information for all groups
+        """Return a dictionary containing information for all groups.
 
-        Examples
-        ========
-
-            get_groups()
+        Examples:
+            >>> get_groups()
         """
         return {i.name: i.info() for i in self.groups}
 
     @expose_command()
     def display_kb(self) -> str:
-        """Display table of key bindings"""
+        """Display table of key bindings."""
 
         class FormatTable:
             def __init__(self) -> None:
@@ -1132,20 +1121,16 @@ class Qtile(CommandObject):
 
     @expose_command()
     def list_widgets(self) -> list[str]:
-        """List of all addressible widget names"""
+        """List of all addressible widget names."""
         return list(self.widgets_map.keys())
 
     @expose_command()
     def to_layout_index(self, index: int, name: str | None = None) -> None:
-        """
-        Switch to the layout with the given index in self.layouts.
+        """Switch to the layout with the given index in self.layouts.
 
-        Parameters
-        ==========
-        index :
-            Index of the layout in the list of layouts.
-        name :
-            Group name. If not specified, the current group is assumed.
+        Parameters:
+            index: Index of the layout in the list of layouts.
+            name: Group name. If not specified, the current group is assumed.
         """
         if name is not None:
             group = self.groups_map[name]
@@ -1155,13 +1140,10 @@ class Qtile(CommandObject):
 
     @expose_command()
     def next_layout(self, name: str | None = None) -> None:
-        """
-        Switch to the next layout.
+        """Switch to the next layout.
 
-        Parameters
-        ==========
-        name :
-            Group name. If not specified, the current group is assumed
+        Parameters:
+            name: Group name. If not specified, the current group is assumed.
         """
         if name is not None:
             group = self.groups_map[name]
@@ -1171,13 +1153,10 @@ class Qtile(CommandObject):
 
     @expose_command()
     def prev_layout(self, name: str | None = None) -> None:
-        """
-        Switch to the previous layout.
+        """Switch to the previous layout.
 
         Parameters
-        ==========
-        name :
-            Group name. If not specified, the current group is assumed
+            name: Group name. If not specified, the current group is assumed.
         """
         if name is not None:
             group = self.groups_map[name]
@@ -1187,7 +1166,7 @@ class Qtile(CommandObject):
 
     @expose_command()
     def get_screens(self) -> list[dict[str, Any]]:
-        """Return a list of dictionaries providing information on all screens"""
+        """Return a list of dictionaries providing information on all screens."""
         lst = [
             dict(
                 index=i.index,
@@ -1214,17 +1193,15 @@ class Qtile(CommandObject):
         This triggers internal bindings only; for full simulation see external tools
         such as xdotool or ydotool.
 
-        Parameters
-        ==========
-        modifiers :
-            A list of modifier specification strings. Modifiers can be one of
-            "shift", "lock", "control" and "mod1" - "mod5".
-        key :
-            Key specification.
+        Parameters:
+            modifiers:
+                A list of modifier specification strings. Modifiers can be one of
+                "shift", "lock", "control" and "mod1" - "mod5".
+            key:
+                Key specification.
 
-        Examples
-        ========
-            simulate_keypress(["control", "mod2"], "k")
+        Examples:
+            >>> simulate_keypress(["control", "mod2"], "k")
         """
         try:
             self.core.simulate_keypress(modifiers, key)
@@ -1244,27 +1221,23 @@ class Qtile(CommandObject):
     def spawn(
         self, cmd: list[str] | str, shell: bool = False, env: dict[str, str] = dict()
     ) -> int:
-        """
-        Spawn a new process.
+        """Spawn a new process.
 
-        Parameters
-        ==========
-        cmd:
-            The command to execute either as a single string or list of strings.
-        shell:
-            Whether to execute the command in a new shell by prepending it with "/bin/sh
-            -c". This enables the use of shell syntax within the command (e.g. pipes).
-        env:
-            Dictionary of environmental variables to pass with command.
+        Parameters:
+            cmd:
+                The command to execute either as a single string or list of strings.
+            shell:
+                Whether to execute the command in a new shell by prepending it with "/bin/sh
+                -c". This enables the use of shell syntax within the command (e.g. pipes).
+            env:
+                Dictionary of environmental variables to pass with command.
 
-        Examples
-        ========
+        Examples:
+            >>> spawn("firefox")
 
-            spawn("firefox")
+            >>> spawn(["xterm", "-T", "Temporary terminal"])
 
-            spawn(["xterm", "-T", "Temporary terminal"])
-
-            spawn("screenshot | xclip", shell=True)
+            >>> spawn("screenshot | xclip", shell=True)
         """
         if isinstance(cmd, str):
             args = shlex.split(cmd)
@@ -1359,40 +1332,36 @@ class Qtile(CommandObject):
 
     @expose_command()
     def status(self) -> Literal["OK"]:
-        """Return "OK" if Qtile is running"""
+        """Return "OK" if Qtile is running."""
         return "OK"
 
     @expose_command()
     def sync(self) -> None:
-        """
-        Sync the backend's event queue. Should only be used for development.
-        """
+        """Sync the backend's event queue. Should only be used for development."""
         self.core.flush()
 
     @expose_command()
     def to_screen(self, n: int) -> None:
-        """Warp focus to screen n, where n is a 0-based screen number
+        """Warp focus to screen n, where n is a 0-based screen number.
 
-        Examples
-        ========
-
-            to_screen(0)
+        Examples:
+            >>> to_screen(0)
         """
         self.focus_screen(n)
 
     @expose_command()
     def next_screen(self) -> None:
-        """Move to next screen"""
+        """Move to next screen."""
         self.focus_screen((self.screens.index(self.current_screen) + 1) % len(self.screens))
 
     @expose_command()
     def prev_screen(self) -> None:
-        """Move to the previous screen"""
+        """Move to the previous screen."""
         self.focus_screen((self.screens.index(self.current_screen) - 1) % len(self.screens))
 
     @expose_command()
     def windows(self) -> list[dict[str, Any]]:
-        """Return info for each client window"""
+        """Return info for each client window."""
         return [
             i.info()
             for i in self.windows_map.values()
@@ -1401,12 +1370,12 @@ class Qtile(CommandObject):
 
     @expose_command()
     def internal_windows(self) -> list[dict[str, Any]]:
-        """Return info for each internal window (bars, for example)"""
+        """Return info for each internal window (bars, for example)."""
         return [i.info() for i in self.windows_map.values() if isinstance(i, base.Internal)]
 
     @expose_command()
     def qtile_info(self) -> dict:
-        """Returns a dictionary of info on the Qtile instance"""
+        """Returns a dictionary of info on the Qtile instance."""
         config_path = self.config.file_path
         dictionary = {
             "version": VERSION,
@@ -1426,12 +1395,12 @@ class Qtile(CommandObject):
 
     @expose_command()
     def shutdown(self) -> None:
-        """Quit Qtile"""
+        """Quit Qtile."""
         self.stop()
 
     @expose_command()
     def switch_groups(self, namea: str, nameb: str) -> None:
-        """Switch position of two groups by name"""
+        """Switch position of two groups by name."""
         if namea not in self.groups_map or nameb not in self.groups_map:
             return
 
@@ -1455,14 +1424,11 @@ class Qtile(CommandObject):
 
     @expose_command()
     def findwindow(self, prompt: str = "window", widget: str = "prompt") -> None:
-        """Launch prompt widget to find a window of the given name
+        """Launch prompt widget to find a window of the given name.
 
-        Parameters
-        ==========
-        prompt :
-            Text with which to prompt user (default: "window")
-        widget :
-            Name of the prompt widget (default: "prompt")
+        Parameters:
+            prompt: Text with which to prompt user (default: "window").
+            widget: Name of the prompt widget (default: "prompt").
         """
         mb = self.widgets_map.get(widget)
         if not mb:
@@ -1473,9 +1439,7 @@ class Qtile(CommandObject):
 
     @expose_command()
     def switch_window(self, location: int) -> None:
-        """
-        Change to the window at the specified index in the current group.
-        """
+        """Change to the window at the specified index in the current group."""
         windows = self.current_group.windows
         if location < 1 or location > len(windows):
             return
@@ -1484,9 +1448,7 @@ class Qtile(CommandObject):
 
     @expose_command()
     def change_window_order(self, new_location: int) -> None:
-        """
-        Change the order of the current window within the current group.
-        """
+        """Change the order of the current window within the current group."""
         if new_location < 1 or new_location > len(self.current_group.windows):
             return
 
@@ -1499,7 +1461,7 @@ class Qtile(CommandObject):
 
     @expose_command()
     def next_urgent(self) -> None:
-        """Focus next window with urgent hint"""
+        """Focus next window with urgent hint."""
         try:
             nxt = [w for w in self.windows_map.values() if w.urgent][0]
             assert isinstance(nxt, base.Window)
@@ -1514,14 +1476,11 @@ class Qtile(CommandObject):
 
     @expose_command()
     def togroup(self, prompt: str = "group", widget: str = "prompt") -> None:
-        """Launch prompt widget to move current window to a given group
+        """Launch prompt widget to move current window to a given group.
 
-        Parameters
-        ==========
-        prompt :
-            Text with which to prompt user (default: "group")
-        widget :
-            Name of the prompt widget (default: "prompt")
+        Parameters:
+            prompt: Text with which to prompt user (default: "group").
+            widget: Name of the prompt widget (default: "prompt").
         """
         if not self.current_window:
             logger.warning("No window to move")
@@ -1536,14 +1495,11 @@ class Qtile(CommandObject):
 
     @expose_command()
     def switchgroup(self, prompt: str = "group", widget: str = "prompt") -> None:
-        """Launch prompt widget to switch to a given group to the current screen
+        """Launch prompt widget to switch to a given group to the current screen.
 
-        Parameters
-        ==========
-        prompt :
-            Text with which to prompt user (default: "group")
-        widget :
-            Name of the prompt widget (default: "prompt")
+        Parameters:
+            prompt: Text with which to prompt user (default: "group").
+            widget: Name of the prompt widget (default: "prompt").
         """
 
         def f(group: str) -> None:
@@ -1562,14 +1518,11 @@ class Qtile(CommandObject):
 
     @expose_command()
     def labelgroup(self, prompt: str = "label", widget: str = "prompt") -> None:
-        """Launch prompt widget to label the current group
+        """Launch prompt widget to label the current group.
 
-        Parameters
-        ==========
-        prompt :
-            Text with which to prompt user (default: "label")
-        widget :
-            Name of the prompt widget (default: "prompt")
+        Parameters:
+            prompt: Text with which to prompt user (default: "label").
+            widget: Name of the prompt widget (default: "prompt").
         """
 
         def f(name: str) -> None:
@@ -1593,21 +1546,14 @@ class Qtile(CommandObject):
     ) -> None:
         """Spawn a command using a prompt widget, with tab-completion.
 
-        Parameters
-        ==========
-        prompt :
-            Text with which to prompt user (default: "spawn: ").
-        widget :
-            Name of the prompt widget (default: "prompt").
-        command :
-            command template (default: "%s").
-        complete :
-            Tab completion function (default: "cmd")
-        shell :
-            Execute the command with /bin/sh (default: True)
-        aliases :
-            Dictionary mapping aliases to commands. If the entered command is a key in
-            this dict, the command it maps to will be executed instead.
+        Parameters:
+            prompt: Text with which to prompt user (default: "spawn: ").
+            widget: Name of the prompt widget (default: "prompt").
+            command: command template (default: "%s").
+            complete: Tab completion function (default: "cmd").
+            shell: Execute the command with /bin/sh (default: True).
+            aliases:Dictionary mapping aliases to commands. If the entered command is a key in
+                this dict, the command it maps to will be executed instead.
         """
 
         def f(args: str) -> None:
@@ -1629,19 +1575,15 @@ class Qtile(CommandObject):
         widget: str = "prompt",
         messenger: str = "xmessage",
     ) -> None:
-        """Execute a Qtile command using the client syntax
+        """Execute a Qtile command using the client syntax.
 
-        Tab completion aids navigation of the command tree
+        Tab completion aids navigation of the command tree.
 
-        Parameters
-        ==========
-        prompt :
-            Text to display at the prompt (default: "command: ")
-        widget :
-            Name of the prompt widget (default: "prompt")
-        messenger :
-            Command to display output, set this to None to disable (default:
-            "xmessage")
+        Parameters:
+            prompt: Text to display at the prompt (default: "command: ").
+            widget: Name of the prompt widget (default: "prompt").
+            messenger: Command to display output, set this to None to disable (default:
+                "xmessage").
         """
 
         def f(cmd: str) -> None:
@@ -1685,14 +1627,14 @@ class Qtile(CommandObject):
         layouts: list[Layout] | None = None,
         index: int | None = None,
     ) -> bool:
-        """Add a group with the given name"""
+        """Add a group with the given name."""
         return self.add_group(
             name=group, layout=layout, layouts=layouts, label=label, index=index
         )
 
     @expose_command()
     def delgroup(self, group: str) -> None:
-        """Delete a group with the given name"""
+        """Delete a group with the given name."""
         self.delete_group(group)
 
     @expose_command()
@@ -1702,16 +1644,12 @@ class Qtile(CommandObject):
         rule_args: dict[str, Any],
         min_priorty: bool = False,
     ) -> int | None:
-        """Add a dgroup rule, returns rule_id needed to remove it
+        """Add a dgroup rule, returns rule_id needed to remove it.
 
-        Parameters
-        ==========
-        match_args :
-            config.Match arguments
-        rule_args :
-            config.Rule arguments
-        min_priorty :
-            If the rule is added with minimum priority (last) (default: False)
+        Parameters:
+            match_args: `config.Match` arguments.
+            rule_args: `config.Rule` arguments.
+            min_priorty: If the rule is added with minimum priority (last) (default: False).
         """
         if not self.dgroups:
             logger.warning("No dgroups created")
@@ -1723,7 +1661,7 @@ class Qtile(CommandObject):
 
     @expose_command()
     def remove_rule(self, rule_id: int) -> None:
-        """Remove a dgroup rule by rule_id"""
+        """Remove a dgroup rule by rule_id."""
         self.dgroups.remove_rule(rule_id)
 
     @expose_command()
@@ -1731,12 +1669,10 @@ class Qtile(CommandObject):
         self,
         position: Literal["top", "bottom", "left", "right", "all"] = "all",
     ) -> None:
-        """Toggle visibility of a given bar
+        """Toggle visibility of a given bar.
 
-        Parameters
-        ==========
-        position :
-            one of: "top", "bottom", "left", "right", or "all" (default: "all")
+        Parameters:
+            position: One of: "top", "bottom", "left", "right", or "all" (default: "all").
         """
         if position in ["top", "bottom", "left", "right"]:
             bar = getattr(self.current_screen, position)
@@ -1762,7 +1698,7 @@ class Qtile(CommandObject):
 
     @expose_command()
     def get_state(self) -> str:
-        """Get pickled state for restarting qtile"""
+        """Get pickled state for restarting qtile."""
         buf = io.BytesIO()
         self.dump_state(buf)
         state = buf.getvalue().decode(errors="backslashreplace")
@@ -1771,7 +1707,7 @@ class Qtile(CommandObject):
 
     @expose_command()
     def tracemalloc_toggle(self) -> None:
-        """Toggle tracemalloc status
+        """Toggle tracemalloc status.
 
         Running tracemalloc is required for `qtile top`
         """
@@ -1784,7 +1720,7 @@ class Qtile(CommandObject):
 
     @expose_command()
     def tracemalloc_dump(self) -> tuple[bool, str]:
-        """Dump tracemalloc snapshot"""
+        """Dump tracemalloc snapshot."""
         import tracemalloc
 
         if not tracemalloc.is_tracing():
@@ -1796,15 +1732,14 @@ class Qtile(CommandObject):
 
     @expose_command()
     def get_test_data(self) -> Any:
-        """
-        Returns any content arbitrarily set in the self.test_data attribute.
+        """Returns any content arbitrarily set in the self.test_data attribute.
         Useful in tests.
         """
         return self.test_data
 
     @expose_command()
     def run_extension(self, extension: _Extension) -> None:
-        """Run extensions"""
+        """Run extensions."""
         extension.run()
 
     @expose_command()

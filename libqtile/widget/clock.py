@@ -42,7 +42,7 @@ except ImportError:
 
 
 class Clock(base.InLoopPollText):
-    """A simple but flexible text-based clock"""
+    """A simple but flexible text-based clock."""
 
     defaults = [
         ("format", "%H:%M", "A Python datetime format string"),
@@ -110,14 +110,13 @@ class Clock(base.InLoopPollText):
 
     @expose_command
     def update_timezone(self, timezone: str | tzinfo | None = None):
-        """
-        Force the clock to update timezone information.
+        """Force the clock to update timezone information.
 
         If the method is called with no arguments then the widget will reload
-        the timzeone set on the computer (e.g. via ``timedatectl set-timezone ..``).
-        This will have no effect if you have previously set a ``timezone`` value.
+        the timzeone set on the computer (e.g. via `timedatectl set-timezone ..`).
+        This will have no effect if you have previously set a `timezone` value.
 
-        Alternatively, you can pass a timezone string (e.g. ``"Europe/Lisbon"``) to change
+        Alternatively, you can pass a timezone string (e.g. `"Europe/Lisbon"`) to change
         the specified timezone. Setting this to an empty string will cause the clock
         to rely on the system timezone.
         """

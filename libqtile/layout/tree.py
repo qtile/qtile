@@ -38,7 +38,7 @@ from libqtile.config import ScreenRect
 from libqtile.layout.base import Layout
 
 if TYPE_CHECKING:
-    from typing import Any, Self, Sequence
+    from typing import Any, Callable, Self, Sequence
 
     from libqtile.backend import base
     from libqtile.group import _Group
@@ -55,7 +55,7 @@ class TreeNode:
         self._children_bot = None
 
     def add_client(self, node, hint=None):
-        """Add a node below this node
+        """Add a node below this node.
 
         The `hint` is a node to place the new node after in this nodes
         children.
@@ -72,7 +72,7 @@ class TreeNode:
         self.children.append(node)
 
     def draw(self, layout, top, level=0):
-        """Draw the node and its children to a layout
+        """Draw the node and its children to a layout.
 
         Draws this node to the given layout (presumably a TreeTab), starting
         from a y-offset of `top` and at the given level.
@@ -85,7 +85,7 @@ class TreeNode:
         return top
 
     def button_press(self, x, y):
-        """Returns self or sibling which got the click"""
+        """Returns self or sibling which got the click."""
         # if we store the locations of each child, it would be possible to do
         # this without having to traverse the tree...
         if not (self._children_top <= y < self._children_bot):
@@ -96,13 +96,13 @@ class TreeNode:
                 return res
 
     def add_superscript(self, title):
-        """Prepend superscript denoting the number of hidden children"""
+        """Prepend superscript denoting the number of hidden children."""
         if not self.expanded and self.children:
             return "{:d}".format(len(self.children)).translate(to_superscript) + title
         return title
 
     def get_first_window(self):
-        """Find the first Window under this node
+        """Find the first Window under this node.
 
         Returns self if this is a `Window`, otherwise finds first `Window` by
         depth-first search
@@ -116,7 +116,7 @@ class TreeNode:
                     return node
 
     def get_last_window(self):
-        """Find the last Window under this node
+        """Find the last Window under this node.
 
         Finds last `Window` by depth-first search, otherwise returns self if
         this is a `Window`.
@@ -168,7 +168,7 @@ class Root(TreeNode):
             self.def_section = self.sections[default_section]
 
     def add_client(self, win, hint=None):
-        """Add a new window
+        """Add a new window.
 
         Adds a new `Window` to the tree.  The location of the new node is
         controlled by looking:
@@ -196,7 +196,7 @@ class Root(TreeNode):
         return node
 
     def add_section(self, name):
-        """Add a new Section with the given name"""
+        """Add a new Section with the given name."""
         if name in self.sections:
             raise ValueError("Duplicate section name")
         node = Section(name)
@@ -205,7 +205,7 @@ class Root(TreeNode):
         self.children.append(node)
 
     def del_section(self, name):
-        """Remove the Section with the given name"""
+        """Remove the Section with the given name."""
         if name not in self.sections:
             raise ValueError("Section name not found")
         if len(self.children) == 1:
@@ -284,13 +284,13 @@ class Window(TreeNode):
         return super().draw(layout, top, level + 1)
 
     def button_press(self, x, y):
-        """Returns self if clicked on title else returns sibling"""
+        """Returns self if clicked on title else returns sibling."""
         if self._title_top <= y < self._children_top:
             return self
         return super().button_press(x, y)
 
     def remove(self) -> None:
-        """Removes this Window
+        """Removes this Window.
 
         If this window has children, the first child takes the place of this
         window, and any remaining children are reparented to that node
@@ -308,11 +308,11 @@ class Window(TreeNode):
 
 
 class TreeTab(Layout):
-    """Tree Tab Layout
+    """Tree Tab Layout.
 
     This layout works just like Max but displays tree of the windows at the
     left border of the screen_rect, which allows you to overview all opened windows.
-    It's designed to work with ``uzbl-browser`` but works with other windows
+    It's designed to work with `uzbl-browser` but works with other windows
     too.
 
     The panel at the left border contains sections, each of which contains
@@ -321,8 +321,6 @@ class TreeTab(Layout):
     right.
 
     For example, it looks like below with two sections initially:
-
-    ::
 
         +------------+
         |Section Foo |
@@ -338,8 +336,6 @@ class TreeTab(Layout):
 
     And then it will look like below if "Window B" is moved right and "Window C"
     is moved right too:
-
-    ::
 
         +------------+
         |Section Foo |
@@ -506,8 +502,7 @@ class TreeTab(Layout):
     @expose_command()
     def info(self) -> dict[str, Any]:
         def show_section_tree(root):
-            """
-            Show a section tree in a nested list, whose every element has the form:
+            """Show a section tree in a nested list, whose every element has the form:
             `[root, [subtrees]]`.
 
             For `[root, [subtrees]]`, The first element is the root node, and the second
@@ -565,7 +560,7 @@ class TreeTab(Layout):
 
     @expose_command("down")
     def next(self) -> None:
-        """Switch down in the window list"""
+        """Switch down in the window list."""
         win = None
         if self._focused:
             win = self._nodes[self._focused].get_next_window()
@@ -577,7 +572,7 @@ class TreeTab(Layout):
 
     @expose_command("up")
     def previous(self) -> None:
-        """Switch up in the window list"""
+        """Switch up in the window list."""
         win = None
         if self._focused:
             win = self._nodes[self._focused].get_prev_window()
@@ -626,13 +621,13 @@ class TreeTab(Layout):
 
     @expose_command()
     def add_section(self, name):
-        """Add named section to tree"""
+        """Add named section to tree."""
         self._tree.add_section(name)
         self.draw_panel()
 
     @expose_command()
     def del_section(self, name):
-        """Remove named section from tree"""
+        """Remove named section from tree."""
         self._tree.del_section(name)
         self.draw_panel()
 
@@ -667,16 +662,16 @@ class TreeTab(Layout):
         self.draw_panel()
 
     @expose_command()
-    def sort_windows(self, sorter, create_sections=True):
-        """Sorts window to sections using sorter function
+    def sort_windows(self, sorter: Callable, create_sections: bool = True):
+        """Sorts window to sections using sorter function.
 
-        Parameters
-        ==========
-        sorter: function with single arg returning string
-            returns name of the section where window should be
-        create_sections:
-            if this parameter is True (default), if sorter returns unknown
-            section name it will be created dynamically
+        Parameters:
+            sorter:
+                Function accepting a single argument, and returning a string.
+                The function should return the name of the section where the window should be.
+            create_sections:
+                If this parameter is True (default), and the sorter returns "unknown",
+                the section name will be created dynamically.
         """
         for sec in self._tree.children:
             for win in sec.children[:]:

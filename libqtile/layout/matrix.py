@@ -41,8 +41,7 @@ if TYPE_CHECKING:
 
 
 class Matrix(_SimpleLayoutBase):
-    """
-    This layout divides the screen into a matrix of equally sized cells and
+    """This layout divides the screen into a matrix of equally sized cells and
     places one window in each cell. The number of columns is configurable and
     can also be changed interactively.
     """
@@ -63,17 +62,17 @@ class Matrix(_SimpleLayoutBase):
 
     @property
     def rows(self):
-        """Calc current number of rows, basd on number of clients and columns"""
+        """Calc current number of rows, basd on number of clients and columns."""
         return int(math.ceil(len(self.clients) / self.columns))
 
     @property
     def row(self):
-        """Calc row index of current client"""
+        """Calc row index of current client."""
         return self.clients.current_index // self.columns
 
     @property
     def column(self):
-        """Calc column index of current client"""
+        """Calc column index of current client."""
         return self.clients.current_index % self.columns
 
     @expose_command()
@@ -89,19 +88,20 @@ class Matrix(_SimpleLayoutBase):
         return c
 
     def get_row(self, row):
-        """Get all clients in given row"""
+        """Get all clients in given row."""
         assert row < self.rows
         return self.clients[row * self.columns : row * self.columns + self.columns]
 
     def get_column(self, column):
-        """Get all clients in given column"""
+        """Get all clients in given column."""
         assert column < self.columns
         return [self.clients[i] for i in range(column, len(self.clients), self.columns)]
 
     def add_client(self, client: Window) -> None:  # type: ignore[override]
         """Add client to Layout.
         Note that for Matrix the clients are appended at end of list.
-        If needed a new row in matrix is created"""
+        If needed a new row in matrix is created.
+        """
         return self.clients.append(client)
 
     def configure(self, client: Window, screen_rect: ScreenRect) -> None:
@@ -143,9 +143,8 @@ class Matrix(_SimpleLayoutBase):
         _SimpleLayoutBase.next(self)
 
     def horizontal_traversal(self, direction):
-        """
-        Internal method for determining left or right client.
-        Negative direction is to left
+        """Internal method for determining left or right client.
+        Negative direction is to left.
         """
         column, row = self.column, self.row
         column = (column + direction) % len(self.get_row(row))
@@ -153,9 +152,8 @@ class Matrix(_SimpleLayoutBase):
         self.group.focus(self.clients.current_client)
 
     def vertical_traversal(self, direction):
-        """
-        internal method for determining above or below client.
-        Negative direction is to top
+        """Internal method for determining above or below client.
+        Negative direction is to top.
         """
         column, row = self.column, self.row
         row = (row + direction) % len(self.get_column(column))
@@ -164,32 +162,32 @@ class Matrix(_SimpleLayoutBase):
 
     @expose_command()
     def left(self):
-        """Switch to the next window on current row"""
+        """Switch to the next window on current row."""
         self.horizontal_traversal(-1)
 
     @expose_command()
     def right(self):
-        """Switch to the next window on current row"""
+        """Switch to the next window on current row."""
         self.horizontal_traversal(+1)
 
     @expose_command()
     def up(self):
-        """Switch to the previous window in current column"""
+        """Switch to the previous window in current column."""
         self.vertical_traversal(-1)
 
     @expose_command()
     def down(self):
-        """Switch to the next window in current column"""
+        """Switch to the next window in current column."""
         self.vertical_traversal(+1)
 
     @expose_command()
     def delete(self):
-        """Decrease number of columns"""
+        """Decrease number of columns."""
         self.columns -= 1
         self.group.layout_all()
 
     @expose_command()
     def add(self):
-        """Increase number of columns"""
+        """Increase number of columns."""
         self.columns += 1
         self.group.layout_all()

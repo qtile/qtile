@@ -71,8 +71,7 @@ class CmdPrefixTransformer(MigrationTransformer):
     @m.call_if_inside(m.ClassDef())
     @m.leave(m.FunctionDef(name=m.Name(m.MatchIfTrue(is_cmd))))
     def change_func_def(self, original_node, updated_node) -> cst.FunctionDef:
-        """
-        Renames method definitions using the cmd_ prefix and adds the
+        """Renames method definitions using the cmd_ prefix and adds the
         @expose_command decorator.
 
         Also sets a flag to show that the script should add the relevant
@@ -95,46 +94,47 @@ class CmdPrefixTransformer(MigrationTransformer):
 class RemoveCmdPrefix(_QtileMigrator):
     ID = "RemoveCmdPrefix"
 
-    SUMMARY = "Removes ``cmd_`` prefix from method calls and definitions."
+    SUMMARY = "Removes `cmd_` prefix from method calls and definitions."
 
     HELP = """
-    The ``cmd_`` prefix was used to identify methods that should be exposed to
+    The `cmd_` prefix was used to identify methods that should be exposed to
     qtile's command API. This has been deprecated and so calls no longer require
     the prefix.
 
     For example:
 
-    .. code:: python
-
-      qtile.cmd_spawn("vlc")
+    ```python
+    qtile.cmd_spawn("vlc")
+    ```
 
     would be replaced with:
 
-    .. code:: python
-
-      qtile.spawn("vlc")
+    ```python
+    qtile.spawn("vlc")
+    ```
 
     Where users have created their own widgets with methods using this prefix,
     the syntax has also changed:
 
     For example:
 
-    .. code:: python
-
-        class MyWidget(libqtile.widget.base._Widget):
-            def cmd_my_command(self):
-                pass
+    ```python
+    class MyWidget(libqtile.widget.base._Widget):
+        def cmd_my_command(self):
+            pass
+    ```
 
     Should be updated as follows:
 
-    .. code:: python
+    ```python
+    from libqtile.command.base import expose_command
 
-        from libqtile.command.base import expose_command
+    class MyWidget(libqtile.widget.base._Widget):
+        @expose_command
+        def my_command(self):
+            pass
+    ```
 
-        class MyWidget(libqtile.widget.base._Widget):
-            @expose_command
-            def my_command(self):
-                pass
     """
 
     AFTER_VERSION = "0.22.1"

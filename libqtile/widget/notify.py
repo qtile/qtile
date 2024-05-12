@@ -36,15 +36,14 @@ from libqtile.widget import base
 
 
 class Notify(base._TextBox):
-    """
-    A notify widget
+    """A notify widget.
 
     This widget can handle actions provided by notification clients. However, only the
     default action is supported, so if a client provides multiple actions then only the
     default (first) action can be invoked. Some programs will provide their own
     notification windows if the notification server does not support actions, so if you
-    want your notifications to handle more than one action then specify ``False`` for
-    the ``action`` option to disable all action handling. Unfortunately we cannot
+    want your notifications to handle more than one action then specify `False` for
+    the `action` option to disable all action handling. Unfortunately we cannot
     specify the capability for exactly one action.
     """
 
@@ -171,7 +170,7 @@ class Notify(base._TextBox):
 
     @expose_command()
     def clear(self, reason=ClosedReason.dismissed):
-        """Clear the notification"""
+        """Clear the notification."""
         if notifier is None:
             return
 
@@ -213,7 +212,7 @@ class Notify(base._TextBox):
 
     @expose_command()
     def toggle(self):
-        """Toggle showing/clearing the notification"""
+        """Toggle showing/clearing the notification."""
         if self.text == "":
             self.display()
         else:
@@ -221,7 +220,7 @@ class Notify(base._TextBox):
 
     @expose_command()
     def invoke(self):
-        """Invoke the notification's default action"""
+        """Invoke the notification's default action."""
         if self.action:
             self._invoke()
 

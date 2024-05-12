@@ -45,26 +45,26 @@ class UpdateTogroupTransformer(MigrationTransformer):
 class UpdateTogroupArgs(_QtileMigrator):
     ID = "UpdateTogroupArgs"
 
-    SUMMARY = "Updates ``groupName`` keyword argument to ``group_name``."
+    SUMMARY = "Updates `groupName` keyword argument to `group_name`."
 
     HELP = """
-    To be consistent with codestyle, the ``groupName`` argument in the ``togroup`` command needs to be
-    changed to ``group_name``.
+    To be consistent with codestyle, the `groupName` argument in the `togroup` command needs to be
+    changed to `group_name`.
 
 
     The following code:
 
-    .. code:: python
+    ```python
+    lazy.window.togroup(groupName="1")
+    ```
 
-        lazy.window.togroup(groupName="1")
-
-    will result in a warning in your logfile: ``Window.togroup's groupName is deprecated; use group_name``.
+    will result in a warning in your logfile: `Window.togroup's groupName is deprecated; use group_name`.
 
     The code should be updated to:
 
-    .. code:: python
-
-        lazy.window.togroup(group_name="1")
+    ```python
+    lazy.window.togroup(group_name="1")
+    ```
 
     """
 

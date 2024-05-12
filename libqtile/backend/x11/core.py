@@ -70,11 +70,12 @@ class ExistingWMException(Exception):
 
 class Core(base.Core):
     def __init__(self, display_name: str | None = None) -> None:
-        """Setup the X11 core backend
+        """Setup the X11 core backend.
 
-        :param display_name:
-            The display name to setup the X11 connection to.  Uses the DISPLAY
-            environment variable if not given.
+        Parameters:
+            display_name:
+                The display name to setup the X11 connection to.  Uses the DISPLAY
+                environment variable if not given.
         """
         if display_name is None:
             display_name = os.environ.get("DISPLAY")
@@ -200,19 +201,13 @@ class Core(base.Core):
         self._supporting_wm_check_window.set_property("_NET_WM_NAME", wmname)
 
     def setup_listener(self) -> None:
-        """Setup a listener for the given qtile instance
-
-        :param qtile:
-            The qtile instance to dispatch events to.
-        :param eventloop:
-            The eventloop to use to listen to the file descriptor.
-        """
+        """Setup a listener for the given qtile instance."""
         logger.debug("Adding io watch")
         self.fd = self.conn.conn.get_file_descriptor()
         asyncio.get_running_loop().add_reader(self.fd, self._xpoll)
 
     def remove_listener(self) -> None:
-        """Remove the listener from the given event loop"""
+        """Remove the listener from the given event loop."""
         if self.fd is not None:
             logger.debug("Removing io watch")
             loop = asyncio.get_running_loop()
@@ -220,7 +215,7 @@ class Core(base.Core):
             self.fd = None
 
     def on_config_load(self, initial) -> None:
-        """Assign windows to groups"""
+        """Assign windows to groups."""
         assert self.qtile is not None
 
         # Ensure that properties are initialised at startup
@@ -291,7 +286,7 @@ class Core(base.Core):
         )
 
     def handle_event(self, event):
-        """Handle an X11 event by forwarding it to the right target"""
+        """Handle an X11 event by forwarding it to the right target."""
         event_type = event.__class__.__name__
         if event_type.endswith("Event"):
             event_type = event_type[:-5]
@@ -303,7 +298,7 @@ class Core(base.Core):
                 break
 
     def _xpoll(self) -> None:
-        """Poll the connection and dispatch incoming events"""
+        """Poll the connection and dispatch incoming events."""
         assert self.qtile is not None
 
         while True:
@@ -364,7 +359,7 @@ class Core(base.Core):
         self.flush()
 
     def _get_target_chain(self, event_type: str, event) -> list[Callable]:
-        """Returns a chain of targets that can handle this event
+        """Returns a chain of targets that can handle this event.
 
         Finds functions named `handle_X`, either on the window object itself or
         on the Qtile instance, where X is the event name (e.g.  EnterNotify,
@@ -406,7 +401,8 @@ class Core(base.Core):
     def get_valid_timestamp(self):
         """Get a valid timestamp, i.e. not CurrentTime, for X server.
 
-        It may be used in cases where CurrentTime is unacceptable for X server."""
+        It may be used in cases where CurrentTime is unacceptable for X server.
+        """
         # do a zero length append to get the time offset as suggested by ICCCM
         # https://tronche.com/gui/x/icccm/sec-2.html#s-2.1
         # we do this on a separate connection since we can't receive events
@@ -437,11 +433,11 @@ class Core(base.Core):
 
     @property
     def display_name(self) -> str:
-        """The name of the connected display"""
+        """The name of the connected display."""
         return self._display_name
 
     def update_client_lists(self) -> None:
-        """Updates the _NET_CLIENT_LIST and _NET_CLIENT_LIST_STACKING properties
+        """Updates the _NET_CLIENT_LIST and _NET_CLIENT_LIST_STACKING properties.
 
         This is needed for third party tasklists and drag and drop of tabs in
         chrome
@@ -464,7 +460,7 @@ class Core(base.Core):
         self._root.set_property("_NET_CLIENT_LIST_STACKING", stacked_wids)
 
     def update_desktops(self, groups, index: int) -> None:
-        """Set the current desktops of the window manager
+        """Set the current desktops of the window manager.
 
         The list of desktops is given by the list of groups, with the current
         desktop given by the index
@@ -478,7 +474,7 @@ class Core(base.Core):
         self._root.set_property("_NET_DESKTOP_VIEWPORT", viewport)
 
     def lookup_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
-        """Find the keysym and the modifier mask for the given key"""
+        """Find the keysym and the modifier mask for the given key."""
         try:
             keysym = xcbq.get_keysym(key.key)
             modmask = xcbq.translate_masks(key.modifiers)
@@ -488,7 +484,7 @@ class Core(base.Core):
         return keysym, modmask
 
     def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
-        """Map the key to receive events on it"""
+        """Map the key to receive events on it."""
         keysym, modmask = self.lookup_key(key)
         codes = self.conn.keysym_to_keycode(keysym)
 
@@ -508,7 +504,7 @@ class Core(base.Core):
         return keysym, modmask & self._valid_mask
 
     def ungrab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
-        """Ungrab the key corresponding to the given keysym and modifier mask"""
+        """Ungrab the key corresponding to the given keysym and modifier mask."""
         keysym, modmask = self.lookup_key(key)
         codes = self.conn.keysym_to_keycode(keysym)
 
@@ -519,13 +515,13 @@ class Core(base.Core):
         return keysym, modmask & self._valid_mask
 
     def ungrab_keys(self) -> None:
-        """Ungrab all of the key events"""
+        """Ungrab all of the key events."""
         self.conn.conn.core.UngrabKey(
             xcffib.xproto.Atom.Any, self._root.wid, xcffib.xproto.ModMask.Any
         )
 
     def grab_pointer(self) -> None:
-        """Get the focus for pointer events"""
+        """Get the focus for pointer events."""
         self.conn.conn.core.GrabPointer(
             True,
             self._root.wid,
@@ -538,11 +534,11 @@ class Core(base.Core):
         )
 
     def ungrab_pointer(self) -> None:
-        """Ungrab the focus for pointer events"""
+        """Ungrab the focus for pointer events."""
         self.conn.conn.core.UngrabPointer(xcffib.xproto.Atom._None)
 
     def grab_button(self, mouse: config.Mouse) -> int:
-        """Grab the given mouse button for events"""
+        """Grab the given mouse button for events."""
         modmask = xcbq.translate_masks(mouse.modifiers)
 
         eventmask = EventMask.ButtonPress
@@ -565,13 +561,13 @@ class Core(base.Core):
         return modmask & self._valid_mask
 
     def ungrab_buttons(self) -> None:
-        """Un-grab all mouse events"""
+        """Un-grab all mouse events."""
         self.conn.conn.core.UngrabButton(
             xcffib.xproto.Atom.Any, self._root.wid, xcffib.xproto.ModMask.Any
         )
 
     def _auto_modmasks(self) -> Iterator[int]:
-        """The modifier masks to add"""
+        """The modifier masks to add."""
         yield 0
         yield xcbq.ModMasks["lock"]
         if self._numlock_mask:
@@ -845,12 +841,10 @@ class Core(base.Core):
         self.handle_KeyPress(d, simulated=True)
 
     def focus_by_click(self, e, window=None):
-        """Bring a window to the front
+        """Bring a window to the front.
 
-        Parameters
-        ==========
-        e: xcb event
-            Click event used to determine window to focus
+        Parameters:
+            e (xcb event): Click event used to determine window to focus.
         """
         qtile = self.qtile
         assert qtile is not None
@@ -885,8 +879,7 @@ class Core(base.Core):
         self.conn.flush()
 
     def graceful_shutdown(self):
-        """Try to close windows gracefully before exiting"""
-
+        """Try to close windows gracefully before exiting."""
         try:
             pids = []
             for win in self.qtile.windows_map.values():
@@ -922,14 +915,12 @@ class Core(base.Core):
             time.sleep(0.1)
 
     def get_mouse_position(self) -> tuple[int, int]:
-        """
-        Get mouse coordinates.
-        """
+        """Get mouse coordinates."""
         reply = self.conn.conn.core.QueryPointer(self._root.wid).reply()
         return reply.root_x, reply.root_y
 
     def keysym_from_name(self, name: str) -> int:
-        """Get the keysym for a key from its name"""
+        """Get the keysym for a key from its name."""
         return keysyms[name.lower()]
 
     def check_stacking(self, win: base.Window) -> None:

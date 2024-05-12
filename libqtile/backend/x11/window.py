@@ -123,7 +123,7 @@ class XWindow:
         self.wid = wid
 
     def _property_string(self, r):
-        """Extract a string from a window property reply message"""
+        """Extract a string from a window property reply message."""
         return r.value.to_string()
 
     def _property_utf8(self, r):
@@ -144,7 +144,7 @@ class XWindow:
         )
 
     def warp_pointer(self, x, y):
-        """Warps the pointer to the location `x`, `y` on the window"""
+        """Warps the pointer to the location `x`, `y` on the window."""
         self.conn.conn.core.WarpPointer(
             0,
             self.wid,  # src_window, dst_window
@@ -244,7 +244,7 @@ class XWindow:
             return self._property_string(r)
 
     def get_wm_transient_for(self):
-        """Returns the WID of the parent window"""
+        """Returns the WID of the parent window."""
         r = self.get_property("WM_TRANSIENT_FOR", "WINDOW", unpack=int)
 
         if r:
@@ -275,9 +275,7 @@ class XWindow:
             return r[0]
 
     def get_wm_type(self):
-        """
-        http://standards.freedesktop.org/wm-spec/wm-spec-latest.html#id2551529
-        """
+        """See http://standards.freedesktop.org/wm-spec/wm-spec-latest.html#id2551529."""
         r = self.get_property("_NET_WM_WINDOW_TYPE", "ATOM", unpack=int)
         if r:
             name = self.conn.atoms.get_name(r[0])
@@ -296,9 +294,7 @@ class XWindow:
             return r[0]
 
     def configure(self, **kwargs):
-        """
-        Arguments can be: x, y, width, height, borderwidth, sibling, stackmode
-        """
+        """Arguments can be: x, y, width, height, borderwidth, sibling, stackmode."""
         mask, values = xcbq.ConfigureMasks(**kwargs)
         # older versions of xcb pack everything into unsigned ints "=I"
         # since 1.12, uses switches to pack things sensibly
@@ -316,12 +312,13 @@ class XWindow:
         self.conn.conn.core.ChangeWindowAttributesChecked(self.wid, mask, values)
 
     def set_property(self, name, value, type=None, format=None):
-        """
-        Parameters
-        ==========
-        name: String Atom name
-        type: String Atom name
-        format: 8, 16, 32
+        """Set a property on the window.
+        
+        Parameters:
+            name: String Atom name.
+            value: Value to set.
+            type: String Atom name.
+            format: 8, 16, 32.
         """
         if name in xcbq.PropertyMap:
             if type or format:
@@ -360,7 +357,7 @@ class XWindow:
             logger.debug("X error in SetProperty (wid=%r, prop=%r), ignoring", self.wid, name)
 
     def get_property(self, prop, type=None, unpack=None):
-        """Return the contents of a property as a GetPropertyReply
+        """Return the contents of a property as a GetPropertyReply.
 
         If unpack is specified, a tuple of values is returned.  The type to
         unpack, either `str` or `int` must be specified.
@@ -416,9 +413,7 @@ class XWindow:
         return self.conn.conn.core.QueryTree(self.wid).reply().children
 
     def paint_borders(self, depth, colors, borderwidth, width, height):
-        """
-        This method is used only by the managing Window class.
-        """
+        """This method is used only by the managing Window class."""
         self.set_property("_NET_FRAME_EXTENTS", [borderwidth] * 4)
 
         if not colors or not borderwidth:
@@ -610,7 +605,7 @@ class _Window:
         return self.qtile.windows_map.get(wid)
 
     def update_hints(self):
-        """Update the local copy of the window's WM_HINTS
+        """Update the local copy of the window's WM_HINTS.
 
         See http://tronche.com/gui/x/icccm/sec-4.html#WM_HINTS
         """
@@ -814,35 +809,32 @@ class _Window:
     @expose_command()
     def place(
         self,
-        x,
-        y,
-        width,
-        height,
-        borderwidth,
-        bordercolor,
-        above=False,
-        margin=None,
-        respect_hints=False,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        borderwidth: int,
+        bordercolor: str,
+        above: bool = False,
+        margin: int | list[int] | None = None,
+        respect_hints: bool = False,
     ):
-        """
-        Places the window at the specified location with the given size.
+        """Places the window at the specified location with the given size.
 
-        Parameters
-        ==========
-        x: int
-        y: int
-        width: int
-        height: int
-        borderwidth: int
-        bordercolor: string
-        above: bool, optional
-        margin: int or list, optional
-            space around window as int or list of ints [N E S W]
-        above: bool, optional
-            If True, the geometry will be adjusted to respect hints provided by the
-            client.
+        Parameters:
+            x: Integer.
+            y: Integer.
+            width: Integer.
+            height: Integer.
+            borderwidth: Integer.
+            bordercolor: String.
+            above: Boolean, optional.
+            margin: Integer or list, optional.
+                Space around window as int or list of ints [N E S W].
+            above: Bool, optional.
+                If True, the geometry will be adjusted to respect hints provided by the
+                client.
         """
-
         # TODO: self.x/y/height/width are updated BEFORE
         # place is called, so there's no way to know if only
         # the position is changed, so we are sending
@@ -918,21 +910,21 @@ class _Window:
             self.send_configure_notify(x, y, width, height)
 
     def get_layering_information(self) -> tuple[bool, bool, bool, bool, bool, bool]:
-        """
-        Get layer-related EMWH-flags
-        https://specifications.freedesktop.org/wm-spec/1.3/ar01s07.html#STACKINGORDER
+        """Get layer-related EMWH-flags.
+
+        See https://specifications.freedesktop.org/wm-spec/1.3/ar01s07.html#STACKINGORDER.
 
         Copied here:
 
-         To obtain good interoperability between different Desktop Environments,
-         the following layered stacking order is recommended, from the bottom:
+        To obtain good interoperability between different Desktop Environments,
+        the following layered stacking order is recommended, from the bottom:
 
-            - windows of type _NET_WM_TYPE_DESKTOP
-            - windows having state _NET_WM_STATE_BELOW
-            - windows not belonging in any other layer
-            - windows of type _NET_WM_TYPE_DOCK (unless they have state
-              _NET_WM_TYPE_BELOW) and windows having state _NET_WM_STATE_ABOVE
-            - focused windows having state _NET_WM_STATE_FULLSCREEN
+        - windows of type _NET_WM_TYPE_DESKTOP
+        - windows having state _NET_WM_STATE_BELOW
+        - windows not belonging in any other layer
+        - windows of type _NET_WM_TYPE_DOCK (unless they have state
+            _NET_WM_TYPE_BELOW) and windows having state _NET_WM_STATE_ABOVE
+        - focused windows having state _NET_WM_STATE_FULLSCREEN
 
         Windows that are transient for another window should be kept above this window.
 
@@ -1218,8 +1210,7 @@ class _Window:
         self.window.paint_borders(self.depth, color, width, self.width, self.height)
 
     def send_configure_notify(self, x, y, width, height):
-        """Send a synthetic ConfigureNotify"""
-
+        """Send a synthetic ConfigureNotify."""
         window = self.window.wid
         above_sibling = False
         override_redirect = False
@@ -1243,10 +1234,7 @@ class _Window:
         return self.window.get_wm_type() != "notification"
 
     def _do_focus(self):
-        """
-        Focus the window if we can, and return whether or not it was successful.
-        """
-
+        """Focus the window if we can, and return whether or not it was successful."""
         # don't focus hidden windows, they should be mapped. this is generally
         # a bug somewhere in the qtile code, but some of the tests do it, so we
         # just have to let it slide for now.
@@ -1345,7 +1333,7 @@ class _Window:
 
     @expose_command()
     def inspect(self):
-        """Tells you more than you ever wanted to know about a window"""
+        """Tells you more than you ever wanted to know about a window."""
         a = self.window.get_attributes()
         attrs = {
             "backing_store": a.backing_store,
@@ -1498,7 +1486,7 @@ class _Window:
 
 
 class Internal(_Window, base.Internal):
-    """An internal window, that should not be managed by qtile"""
+    """An internal window, that should not be managed by qtile."""
 
     _window_mask = (
         EventMask.StructureNotify
@@ -1572,7 +1560,7 @@ class Internal(_Window, base.Internal):
 
 
 class Static(_Window, base.Static):
-    """An static window, belonging to a screen rather than a group"""
+    """An static window, belonging to a screen rather than a group."""
 
     _window_mask = (
         EventMask.StructureNotify
@@ -1869,7 +1857,7 @@ class Window(_Window, base.Window):
         width: int | None = None,
         height: int | None = None,
     ) -> None:
-        """Makes this window a static window, attached to a Screen
+        """Makes this window a static window, attached to a Screen.
 
         If any of the arguments are left unspecified, the values given by the
         window itself are used instead. So, for a window that's aware of its
@@ -1984,7 +1972,7 @@ class Window(_Window, base.Window):
 
     @expose_command()
     def togroup(self, group_name=None, *, switch_group=False, toggle=False):
-        """Move window to a specified group
+        """Move window to a specified group.
 
         Also switch to that group if switch_group is True.
 
@@ -2030,10 +2018,8 @@ class Window(_Window, base.Window):
     def match(self, match):
         """Match window against given attributes.
 
-        Parameters
-        ==========
-        match:
-            a config.Match object
+        Parameters:
+            match: A config.Match object.
         """
         try:
             return match.compare(self)
@@ -2080,8 +2066,7 @@ class Window(_Window, base.Window):
         return False
 
     def update_wm_net_icon(self):
-        """Set a dict with the icons of the window"""
-
+        """Set a dict with the icons of the window."""
         icon = self.window.get_property("_NET_WM_ICON", "CARDINAL")
         if not icon:
             return
@@ -2267,22 +2252,22 @@ class Window(_Window, base.Window):
 
     @expose_command()
     def move_floating(self, dx, dy):
-        """Move window by dx and dy"""
+        """Move window by dx and dy."""
         self.tweak_float(dx=dx, dy=dy)
 
     @expose_command()
     def resize_floating(self, dw, dh):
-        """Add dw and dh to size of window"""
+        """Add dw and dh to size of window."""
         self.tweak_float(dw=dw, dh=dh)
 
     @expose_command()
     def set_position_floating(self, x, y):
-        """Move window to x and y"""
+        """Move window to x and y."""
         self.tweak_float(x=x, y=y)
 
     @expose_command()
     def set_size_floating(self, w, h):
-        """Set window dimensions to w and h"""
+        """Set window dimensions to w and h."""
         self.tweak_float(w=w, h=h)
 
     @expose_command()

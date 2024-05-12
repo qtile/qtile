@@ -22,14 +22,14 @@ class NvidiaSensors(base.ThreadPoolText):
             "format",
             "{temp}°C",
             "Display string format. Three options available:  "
-            "``{temp}`` - temperature, ``{fan_speed}`` and ``{perf}`` - "
+            "`{temp}` - temperature, `{fan_speed}` and `{perf}` - "
             "performance level",
         ),
         ("foreground_alert", "ff0000", "Foreground colour alert"),
         (
             "gpu_bus_id",
             "",
-            "GPU's Bus ID, ex: ``01:00.0``. If leave empty will display all " "available GPU's",
+            "GPU's Bus ID, ex: `01:00.0`. If leave empty will display all " "available GPU's",
         ),
         ("update_interval", 2, "Update interval in seconds."),
         (

@@ -74,7 +74,7 @@ class Drawer:
         self._enabled = True
 
     def finalize(self):
-        """Destructor/Clean up resources"""
+        """Destructor/Clean up resources."""
         self.background_surface = None
         self.surface = None
         self.last_surface = None
@@ -188,29 +188,20 @@ class Drawer:
         src_x: int = 0,
         src_y: int = 0,
     ):
-        """
-        A wrapper for the draw operation.
+        """A wrapper for the draw operation.
 
         This draws our cached operations to the Internal window.
 
         If Drawer has been disabled then the RecordingSurface will
         be cleared if no mirrors are waiting to copy its contents.
 
-        Parameters
-        ==========
-
-        offsetx :
-            the X offset to start drawing at.
-        offsety :
-            the Y offset to start drawing at.
-        width :
-            the X portion of the canvas to draw at the starting point.
-        height :
-            the Y portion of the canvas to draw at the starting point.
-        src_x  :
-            the X position of the origin in the source surface
-        src_y  :
-            the Y position of the origin in the source surface
+        Parameters:
+            offsetx: The X offset to start drawing at.
+            offsety: The Y offset to start drawing at.
+            width: The X portion of the canvas to draw at the starting point.
+            height: The Y portion of the canvas to draw at the starting point.
+            src_x: The X position of the origin in the source surface.
+            src_y: The Y position of the origin in the source surface.
         """
         if self._enabled:
             self._draw(
@@ -238,24 +229,15 @@ class Drawer:
         src_x: int = 0,
         src_y: int = 0,
     ):
-        """
-        This draws our cached operations to the Internal window.
+        """This draws our cached operations to the Internal window.
 
-        Parameters
-        ==========
-
-        offsetx :
-            the X offset to start drawing at.
-        offsety :
-            the Y offset to start drawing at.
-        width :
-            the X portion of the canvas to draw at the starting point.
-        height :
-            the Y portion of the canvas to draw at the starting point.
-        src_x  :
-            the X position of the origin in the source surface
-        src_y  :
-            the Y position of the origin in the source surface
+        Parameters:
+            offsetx: The X offset to start drawing at.
+            offsety: The Y offset to start drawing at.
+            width: The X portion of the canvas to draw at the starting point.
+            height: The Y portion of the canvas to draw at the starting point.
+            src_x: The X position of the origin in the source surface.
+            src_y: The Y position of the origin in the source surface.
         """
 
     def new_ctx(self):
@@ -284,9 +266,9 @@ class Drawer:
             ctx.set_source_rgba(*utils.rgb(colour))
 
     def clear_rect(self, x=0, y=0, width=0, height=0):
-        """
-        Erases the background area specified by parameters. By default,
-        the whole Drawer is cleared.
+        """Erases the background area specified by parameters.
+        
+        By default, the whole Drawer is cleared.
 
         The ability to clear a smaller area may be useful when you want to
         erase a smaller area of the drawer (e.g. drawing widget decorations).
@@ -318,7 +300,7 @@ class Drawer:
         self.ctx.restore()
 
     def textlayout(self, text, colour, font_family, font_size, font_shadow, markup=False, **kw):
-        """Get a text layout"""
+        """Get a text layout."""
         textlayout = TextLayout(
             self, text, colour, font_family, font_size, font_shadow, markup=markup, **kw
         )
@@ -340,14 +322,14 @@ class Drawer:
         return self.ctx.font_extents()
 
     def fit_fontsize(self, heightlimit):
-        """Try to find a maximum font size that fits any strings within the height"""
+        """Try to find a maximum font size that fits any strings within the height."""
         self.ctx.set_font_size(heightlimit)
         asc, desc, height, _, _ = self.font_extents()
         self.ctx.set_font_size(int(heightlimit * heightlimit / height))
         return self.font_extents()
 
     def fit_text(self, strings, heightlimit):
-        """Try to find a maximum font size that fits all strings within the height"""
+        """Try to find a maximum font size that fits all strings within the height."""
         self.ctx.set_font_size(heightlimit)
         _, _, _, maxheight, _, _ = self.ctx.text_extents("".join(strings))
         if not maxheight:

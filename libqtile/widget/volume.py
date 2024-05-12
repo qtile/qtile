@@ -46,9 +46,9 @@ re_vol = re.compile(r"(\d?\d?\d?)%")
 
 
 class Volume(base._TextBox):
-    """Widget that display and change volume
+    """Widget that display and change volume.
 
-    By default, this widget uses ``amixer`` to get and set the volume so users
+    By default, this widget uses `amixer` to get and set the volume so users
     will need to make sure this is installed. Alternatively, users may set the
     relevant parameters for the widget to use a different application.
 
@@ -66,13 +66,13 @@ class Volume(base._TextBox):
         (
             "emoji",
             False,
-            "Use emoji to display volume states, only if ``theme_path`` is not set."
+            "Use emoji to display volume states, only if `theme_path` is not set."
             "The specified font needs to contain the correct unicode characters.",
         ),
         (
             "emoji_list",
             ["\U0001f507", "\U0001f508", "\U0001f509", "\U0001f50a"],
-            "List of emojis/font-symbols to display volume states, only if ``emoji`` is set."
+            "List of emojis/font-symbols to display volume states, only if `emoji` is set."
             " List contains 4 symbols, from lowest volume to highest.",
         ),
         ("mute_command", None, "Mute command"),
@@ -86,7 +86,7 @@ class Volume(base._TextBox):
             "get_volume_command",
             None,
             "Command to get the current volume. "
-            "The expected output should include 1-3 numbers and a ``%`` sign.",
+            "The expected output should include 1-3 numbers and a `%` sign.",
         ),
         ("check_mute_command", None, "Command to check mute status"),
         (
@@ -100,7 +100,7 @@ class Volume(base._TextBox):
             "step",
             2,
             "Volume change for up an down commands in percentage."
-            "Only used if ``volume_up_command`` and ``volume_down_command`` are not set.",
+            "Only used if `volume_up_command` and `volume_down_command` are not set.",
         ),
     ]
 

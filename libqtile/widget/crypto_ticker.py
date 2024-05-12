@@ -35,8 +35,7 @@ _DEFAULT_SYMBOL = str(locale.localeconv()["currency_symbol"])
 
 
 class CryptoTicker(GenPollUrl):
-    """
-    A cryptocurrency ticker widget, data provided by the coinbase.com or the binance.com
+    """A cryptocurrency ticker widget, data provided by the coinbase.com or the binance.com
     API. Defaults to displaying currency in whatever the current locale is. Examples:
 
         # display the average price of bitcoin in local currency

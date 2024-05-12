@@ -32,12 +32,12 @@ class RenameTileMasterTransformer(RenamerTransformer):
 class RenameTileMaster(_QtileMigrator):
     ID = "RenameTileMaster"
 
-    SUMMARY = "Changes ``masterWindows`` argument to ``master_length``."
+    SUMMARY = "Changes `masterWindows` argument to `master_length`."
 
     HELP = """
-    To be consistent with other layouts, the ``masterWindows`` property of the
-    ``Tile`` layout was renamed to ``master_length``. Configs using the
-    ``masterWindows`` argument when configuring the layout should replace this.
+    To be consistent with other layouts, the `masterWindows` property of the
+    `Tile` layout was renamed to `master_length`. Configs using the
+    `masterWindows` argument when configuring the layout should replace this.
     """
 
     AFTER_VERSION = "0.16.1"

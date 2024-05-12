@@ -22,8 +22,7 @@ from libqtile.widget import base
 
 
 class QuickExit(base._TextBox):
-    """
-    A button to shut down Qtile. When clicked, a countdown starts. Clicking
+    """A button to shut down Qtile. When clicked, a countdown starts. Clicking
     the button again stops the countdown and prevents Qtile from shutting down.
     """
 

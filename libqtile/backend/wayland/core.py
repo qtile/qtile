@@ -121,7 +121,7 @@ class ImplicitGrab(wlrq.HasListeners):
 
     A Wayland client expects to receive pointer events from the moment a
     pointer button is pressed on its surface until the moment the button is
-    released.  The Wayland protocol leaves this behavior to the compositor.
+    released. The Wayland protocol leaves this behavior to the compositor.
     """
 
     def __init__(
@@ -150,7 +150,7 @@ class Core(base.Core, wlrq.HasListeners):
     supports_restarting: bool = False
 
     def __init__(self) -> None:
-        """Setup the Wayland core backend"""
+        """Setup the Wayland core backend."""
         # This is the window under the pointer
         self._hovered_window: window.WindowType | None = None
         # but this Internal receives keyboard input, e.g. via the Prompt widget.
@@ -863,8 +863,7 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_output_power_manager_set_mode(
         self, _listener: Listener, mode: OutputPowerV1SetModeEvent
     ) -> None:
-        """
-        Blank/unblank outputs via the output power management protocol.
+        """Blank/unblank outputs via the output power management protocol.
 
         `_blanked_outputs` keeps track of those that were blanked because we don't want
         to unblank outputs that were already disabled due to not being part of the
@@ -957,10 +956,7 @@ class Core(base.Core, wlrq.HasListeners):
                     logger.debug("Failed to find window to activate. Ignoring request.")
 
     def _output_manager_reconfigure(self, config: OutputConfigurationV1, apply: bool) -> None:
-        """
-        See if an output configuration would be accepted by the backend, and apply it if
-        desired.
-        """
+        """See if an output configuration would be accepted by the backend, and apply it if desired."""
         ok = True
 
         for head in config.heads:
@@ -1192,7 +1188,7 @@ class Core(base.Core, wlrq.HasListeners):
         self._pending_input_devices.clear()
 
     def setup_listener(self) -> None:
-        """Setup a listener for the given qtile instance"""
+        """Setup a listener for the given qtile instance."""
         logger.debug("Adding io watch")
         # destroy the old one and load a new one with config settings
         self._cursor_manager.destroy()
@@ -1207,7 +1203,7 @@ class Core(base.Core, wlrq.HasListeners):
             raise RuntimeError("Failed to get Wayland event loop file descriptor.")
 
     def remove_listener(self) -> None:
-        """Remove the listener from the given event loop"""
+        """Remove the listener from the given event loop."""
         if self.fd is not None:
             logger.debug("Removing io watch")
             loop = asyncio.get_running_loop()
@@ -1262,7 +1258,7 @@ class Core(base.Core, wlrq.HasListeners):
                 device.configure(self.qtile.config.wl_input_rules)
 
     def new_wid(self) -> int:
-        """Get a new unique window ID"""
+        """Get a new unique window ID."""
         assert self.qtile is not None
         return max(self.qtile.windows_map.keys(), default=0) + 1
 
@@ -1392,9 +1388,7 @@ class Core(base.Core, wlrq.HasListeners):
         return found
 
     def _under_pointer(self) -> tuple[window.WindowType, Surface | None, float, float] | None:
-        """
-        Find which window and surface is currently under the pointer, if any.
-        """
+        """Find which window and surface is currently under the pointer, if any."""
         # Warning: this method is a bit difficult to follow and has liberal use of
         # typing.cast. Make sure you're familiar with how the scene-graph tree is laid
         # out (see diagram in __init__ above).
@@ -1441,33 +1435,33 @@ class Core(base.Core, wlrq.HasListeners):
         return None
 
     def get_screen_info(self) -> list[ScreenRect]:
-        """Get the output information"""
+        """Get the output information."""
         return [output.get_screen_info() for output in self.get_enabled_outputs()]
 
     def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
-        """Configure the backend to grab the key event"""
+        """Configure the backend to grab the key event."""
         keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
         mask_key = wlrq.translate_masks(key.modifiers)
         self.grabbed_keys.append((keysym, mask_key))
         return keysym, mask_key
 
     def ungrab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
-        """Release the given key event"""
+        """Release the given key event."""
         keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
         mask_key = wlrq.translate_masks(key.modifiers)
         self.grabbed_keys.remove((keysym, mask_key))
         return keysym, mask_key
 
     def ungrab_keys(self) -> None:
-        """Release the grabbed key events"""
+        """Release the grabbed key events."""
         self.grabbed_keys.clear()
 
     def grab_button(self, mouse: config.Mouse) -> int:
-        """Configure the backend to grab the mouse event"""
+        """Configure the backend to grab the mouse event."""
         return wlrq.translate_masks(mouse.modifiers)
 
     def warp_pointer(self, x: float, y: float) -> None:
-        """Warp the pointer to the coordinates in relative to the output layout"""
+        """Warp the pointer to the coordinates in relative to the output layout."""
         self.cursor.warp(WarpMode.LayoutClosest, x, y)
 
     @contextlib.contextmanager
@@ -1485,7 +1479,7 @@ class Core(base.Core, wlrq.HasListeners):
         return internal
 
     def graceful_shutdown(self) -> None:
-        """Try to close windows gracefully before exiting"""
+        """Try to close windows gracefully before exiting."""
         assert self.qtile is not None
 
         # Copy in case the dictionary changes during the loop
@@ -1522,7 +1516,7 @@ class Core(base.Core, wlrq.HasListeners):
                 pc.finalize()
 
     def keysym_from_name(self, name: str) -> int:
-        """Get the keysym for a key from its name"""
+        """Get the keysym for a key from its name."""
         return xkb.keysym_from_name(name, case_insensitive=True)
 
     def simulate_keypress(self, modifiers: list[str], key: str) -> None:
@@ -1545,8 +1539,7 @@ class Core(base.Core, wlrq.HasListeners):
         options: str | None = None,
         variant: str | None = None,
     ) -> None:
-        """
-        Set the keymap for the current keyboard.
+        """Set the keymap for the current keyboard.
 
         The options correspond to xkbcommon configuration environmental variables and if
         not specified are taken from the environment. Acceptable values are strings
@@ -1560,7 +1553,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     @expose_command()
     def change_vt(self, vt: int) -> bool:
-        """Change virtual terminal to that specified"""
+        """Change virtual terminal to that specified."""
         success = self.backend.get_session().change_vt(vt)
         if not success:
             logger.warning("Could not change VT to: %s", vt)

@@ -18,11 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-    A simple IPC mechanism for communicating between two local processes. We
-    use marshal to serialize data - this means that both client and server must
-    run the same Python version, and that clients must be trusted (as
-    un-marshalling untrusted data can result in arbitrary code execution).
+"""A simple IPC mechanism for communicating between two local processes.
+
+We use marshal to serialize data - this means that both client and server must
+run the same Python version, and that clients must be trusted (as
+un-marshalling untrusted data can result in arbitrary code execution).
 """
 
 from __future__ import annotations
@@ -50,19 +50,17 @@ class IPCError(Exception):
 
 
 def find_sockfile(display: str | None = None):
-    """
-    Finds the appropriate socket file for the given display.
+    """Finds the appropriate socket file for the given display.
 
     If unspecified, the socket file is determined as follows:
 
-        - If WAYLAND_DISPLAY is set, use it.
-        - else if DISPLAY is set, use that.
-        - else check for the existence of a socket file for WAYLAND_DISPLAY=wayland-0
-          and if it exists, use it.
-        - else check for the existence of a socket file for DISPLAY=:0
-          and if it exists, use it.
-        - else raise an IPCError.
-
+    - If WAYLAND_DISPLAY is set, use it.
+    - else if DISPLAY is set, use that.
+    - else check for the existence of a socket file for WAYLAND_DISPLAY=wayland-0
+        and if it exists, use it.
+    - else check for the existence of a socket file for DISPLAY=:0
+        and if it exists, use it.
+    - else raise an IPCError.
     """
     cache_directory = get_cache_dir()
 
@@ -89,25 +87,20 @@ def find_sockfile(display: str | None = None):
 
 
 class _IPC:
-    """A helper class to handle properly packing and unpacking messages"""
+    """A helper class to handle properly packing and unpacking messages."""
 
     @staticmethod
     def unpack(data: bytes, *, is_json: bool | None = None) -> tuple[Any, bool]:
-        """Unpack the incoming message
+        """Unpack the incoming message.
 
-        Parameters
-        ----------
-        data: bytes
-            The incoming message to unpack
-        is_json: bool | None
-            If the message should be unpacked as json.  By default, try to
-            unpack json and fallback gracefully to marshalled bytes.
+        Parameters:
+            data: The incoming message to unpack
+            is_json: If the message should be unpacked as json. By default, try to
+                unpack json and fallback gracefully to marshalled bytes.
 
-        Returns
-        -------
-        tuple[Any, bool]
+        Returns:
             A tuple of the unpacked object and a boolean denoting if the
-            message was deserialized using json.  If True, the return message
+            message was deserialized using json. If True, the return message
             should be packed as json.
         """
         if is_json is None or is_json:
@@ -127,7 +120,7 @@ class _IPC:
 
     @staticmethod
     def pack(msg: Any, *, is_json: bool = False) -> bytes:
-        """Pack the object into a message to pass"""
+        """Pack the object into a message to pass."""
         if is_json:
             json_obj = json.dumps(msg, default=_IPC._json_encoder)
             return json_obj.encode()
@@ -138,23 +131,20 @@ class _IPC:
 
     @staticmethod
     def _json_encoder(field: Any) -> Any:
-        """Convert non-serializable types to ones understood by stdlib json module"""
+        """Convert non-serializable types to ones understood by stdlib json module."""
         if isinstance(field, set):
             return list(field)
         raise ValueError(f"Tried to JSON serialize unsupported type {type(field)}: {field}")
 
 
 class Client:
-    def __init__(self, socket_path: str, is_json=False) -> None:
-        """Create a new IPC client
+    def __init__(self, socket_path: str, is_json: bool = False) -> None:
+        """Create a new IPC client.
 
-        Parameters
-        ----------
-        socket_path: str
-            The file path to the file that is used to open the connection to
-            the running IPC server.
-        is_json: bool
-            Pack and unpack messages as json
+        Parameters:
+            socket_path: The file path to the file that is used to open the connection to
+                the running IPC server.
+            is_json: Pack and unpack messages as json.
         """
         self.socket_path = socket_path
         self.is_json = is_json
@@ -163,7 +153,7 @@ class Client:
         return self.send(data)
 
     def send(self, msg: Any) -> Any:
-        """Send the message and return the response from the server
+        """Send the message and return the response from the server.
 
         If any exception is raised by the server, that will propogate out of
         this call.
@@ -171,7 +161,7 @@ class Client:
         return asyncio.run(self.async_send(msg))
 
     async def async_send(self, msg: Any) -> Any:
-        """Send the message to the server
+        """Send the message to the server.
 
         Connect to the server, then pack and send the message to the server,
         then wait for and return the response from the server.
@@ -218,7 +208,7 @@ class Server:
     async def _server_callback(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
     ) -> None:
-        """Callback when a connection is made to the server
+        """Callback when a connection is made to the server.
 
         Read the data sent from the client, execute the requested command, and
         send the reply back to the client.
@@ -245,16 +235,16 @@ class Server:
             await writer.wait_closed()
 
     async def __aenter__(self) -> "Server":
-        """Start and return the server"""
+        """Start and return the server."""
         await self.start()
         return self
 
     async def __aexit__(self, _exc_type, _exc_value, _tb) -> None:
-        """Close and shutdown the server"""
+        """Close and shutdown the server."""
         await self.close()
 
     async def start(self) -> None:
-        """Start the server"""
+        """Start the server."""
         assert self.server is None
 
         logger.debug("Starting server")
@@ -262,7 +252,7 @@ class Server:
         self.server = await server_coroutine
 
     async def close(self) -> None:
-        """Close and shutdown the server"""
+        """Close and shutdown the server."""
         assert self.server is not None
 
         logger.debug("Stopping server on close")

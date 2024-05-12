@@ -26,14 +26,14 @@ from libqtile.widget import base
 
 
 class Chord(base._TextBox):
-    """Display current key chord"""
+    """Display current key chord."""
 
     defaults = [
         (
             "chords_colors",
             {},
             "colors per chord in form of tuple {'chord_name': ('bg', 'fg')}. "
-            "Where a chord name is not in the dictionary, the default ``background`` and ``foreground``"
+            "Where a chord name is not in the dictionary, the default `background` and `foreground`"
             " values will be used.",
         ),
         (

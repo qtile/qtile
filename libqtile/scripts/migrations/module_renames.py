@@ -39,8 +39,7 @@ IMPORT_MAP = {
 
 
 class ModuleRenamesTransformer(MigrationTransformer):
-    """
-    This transfore does a number of things:
+    """This transfore does a number of things:
     - Where possible, it replaces module names directly. It is able to do so where
       the module is shown in its dotted form e.g. libqtile.command_graph.
     - In addition, it identifies where modules are imported from libqtile and
@@ -98,7 +97,7 @@ class ModuleRenamesTransformer(MigrationTransformer):
         )
     )
     def tag_from_imports(self, original_node, _) -> cst.ImportFrom:
-        """Marks which modules are"""
+        """Marks which modules are."""
         for name in original_node.names:
             if name.name.value in IMPORT_MAP:
                 self.lint(original_node, f"From libqtile import {name.name.value} is deprecated.")
@@ -110,10 +109,10 @@ class ModuleRenamesTransformer(MigrationTransformer):
 class ModuleRenames(_QtileMigrator):
     ID = "ModuleRenames"
 
-    SUMMARY = "Updates certain deprecated ``libqtile.`` module names."
+    SUMMARY = "Updates certain deprecated `libqtile.` module names."
 
     HELP = """
-    ``libqtile.window`` module was moved to ``libqtile.backend.x11.window``.
+    `libqtile.window` module was moved to `libqtile.backend.x11.window`.
     """
 
     AFTER_VERSION = "0.18.1"

@@ -88,8 +88,7 @@ class LintLine:
 
 
 class MigrationHelper:
-    """
-    Migrations may need to access details about the position of the match (e.g. for linting) and
+    """Migrations may need to access details about the position of the match (e.g. for linting) and
     the parent node.
 
     These are accessible via metadata providers so this class sets the relevant dependencies
@@ -125,8 +124,7 @@ class MigrationVisitor(MigrationHelper, m.MatcherDecoratableVisitor):
 
 
 class RenamerTransformer(MigrationTransformer):
-    """
-    Very basic transformer. Will replace every instance of 'old_name'
+    """Very basic transformer. Will replace every instance of 'old_name'
     with 'new_name'.
 
     To use: subclass RenameTransformer and set the class attribute
@@ -185,9 +183,7 @@ class _QtileMigrator:
         self._lint_lines += [line.set_id(self.ID) for line in visitor._lint_lines]
 
     def show_lint(self) -> list[LintLine]:
-        """
-        Return a list of LintLine objects storing details of deprecated code.
-        """
+        """Return a list of LintLine objects storing details of deprecated code."""
         return self._lint_lines
 
     @classmethod
@@ -207,9 +203,7 @@ class _QtileMigrator:
         return tuple(int(x) for x in cls.AFTER_VERSION.split("."))
 
     def show_diff(self, no_colour=False) -> str:
-        """
-        Return a string showing the generated diff.
-        """
+        """Return a string showing the generated diff."""
         if self.original is None or self.updated is None:
             return ""
 
@@ -239,8 +233,7 @@ class _QtileMigrator:
     def run(
         self, original
     ) -> tuple[libcst.Module | libcst.metadata.MetadataWrapper, libcst.Module]:
-        """
-        Run the migration set in 'visitor'.
+        """Run the migration set in 'visitor'.
 
         Method can be overriden for more complex scenarios (e.g. multiple transformers).
         """

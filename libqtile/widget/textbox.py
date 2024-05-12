@@ -46,7 +46,7 @@ class TextBox(base._TextBox):
 
     @expose_command()
     def get(self):
-        """Retrieve the text in a TextBox widget"""
+        """Retrieve the text in a TextBox widget."""
         return self.text
 
     @expose_command()

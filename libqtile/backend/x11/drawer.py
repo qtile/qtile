@@ -217,8 +217,7 @@ class Drawer(drawer.Drawer):
         drawer.Drawer.set_source_rgb(self, colour, ctx)
 
     def clear_rect(self, x=0, y=0, width=0, height=0):
-        """
-        Erases the background area specified by parameters. By default,
+        """Erases the background area specified by parameters. By default,
         the whole Drawer is cleared.
 
         The ability to clear a smaller area may be useful when you want to

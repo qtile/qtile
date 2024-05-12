@@ -26,23 +26,22 @@ from libqtile.widget.generic_poll_text import GenPollUrl
 
 
 class StockTicker(GenPollUrl):
-    """
-    A stock ticker widget, based on the alphavantage API. Users must acquire an
-    API key from https://www.alphavantage.co/support/#api-key
+    """A stock ticker widget, based on the alphavantage API. Users must acquire an
+    API key from https://www.alphavantage.co/support/#api-key.
 
     The widget defaults to the TIME_SERIES_INTRADAY API function (i.e. stock
     symbols), but arbitrary Alpha Vantage API queries can be made by passing
     extra arguments to the constructor.
 
-    ::
+    ```python
+    # Display AMZN
+    widget.StockTicker(apikey=..., symbol="AMZN")
 
-        # Display AMZN
-        widget.StockTicker(apikey=..., symbol="AMZN")
-
-        # Display BTC
-        widget.StockTicker(
-            apikey=..., function="DIGITAL_CURRENCY_INTRADAY", symbol="BTC", market="USD"
-        )
+    # Display BTC
+    widget.StockTicker(
+        apikey=..., function="DIGITAL_CURRENCY_INTRADAY", symbol="BTC", market="USD"
+    )
+    ```
     """
 
     defaults = [

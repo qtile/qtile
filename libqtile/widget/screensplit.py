@@ -25,9 +25,8 @@ from libqtile.widget import TextBox
 
 
 class ScreenSplit(TextBox):
-    """
-    A simple widget to show the name of the current split and layout for the
-    ``ScreenSplit`` layout.
+    """A simple widget to show the name of the current split and layout for the
+    `ScreenSplit` layout.
     """
 
     defaults = [("format", "{split_name} ({layout})", "Format string.")]

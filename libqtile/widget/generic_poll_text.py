@@ -21,7 +21,7 @@ except ImportError:
 
 
 class GenPollText(base.ThreadPoolText):
-    """A generic text widget that polls using poll function to get the text"""
+    """A generic text widget that polls using poll function to get the text."""
 
     defaults = [
         ("func", None, "Poll Function"),
@@ -38,7 +38,7 @@ class GenPollText(base.ThreadPoolText):
 
 
 class GenPollUrl(base.ThreadPoolText):
-    """A generic text widget that polls an url and parses it using parse function"""
+    """A generic text widget that polls an url and parses it using parse function."""
 
     defaults: list[tuple[str, Any, str]] = [
         ("url", None, "Url"),
@@ -96,7 +96,7 @@ class GenPollUrl(base.ThreadPoolText):
 
 
 class GenPollCommand(base.ThreadPoolText):
-    """A generic text widget to display output from scripts or shell commands"""
+    """A generic text widget to display output from scripts or shell commands."""
 
     defaults = [
         ("update_interval", 60, "update time in seconds"),

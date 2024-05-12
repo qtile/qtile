@@ -35,8 +35,7 @@ class UpdateMonadLayoutTransformer(MigrationTransformer):
     )
     @m.leave(m.Arg(keyword=m.Name("new_at_current")))
     def update_monad_args(self, original_node, updated_node) -> cst.Arg:
-        """
-        Changes 'new_at_current' kwarg to 'new_client_position' and sets correct
+        """Changes 'new_at_current' kwarg to 'new_client_position' and sets correct
         value ('before|after_current').
         """
         self.lint(
@@ -51,14 +50,14 @@ class UpdateMonadLayoutTransformer(MigrationTransformer):
 class UpdateMonadArgs(_QtileMigrator):
     ID = "UpdateMonadArgs"
 
-    SUMMARY = "Updates ``new_at_current`` keyword argument in Monad layouts."
+    SUMMARY = "Updates `new_at_current` keyword argument in Monad layouts."
 
     HELP = """
-    Replaces the ``new_at_current=True|False`` argument in ``Monad*`` layouts with
-    ``new_client_position`` to be consistent with other layouts.
+    Replaces the `new_at_current=True|False` argument in `Monad*` layouts with
+    `new_client_position` to be consistent with other layouts.
 
-    ``new_at_current=True`` is replaced with ``new_client_position="before_current`` and
-    ``new_at_current=False`` is replaced with ``new_client_position="after_current"``.
+    `new_at_current=True` is replaced with `new_client_position="before_current` and
+    `new_at_current=False` is replaced with `new_client_position="after_current"`.
 
     """
 

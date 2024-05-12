@@ -92,7 +92,7 @@ ORIENTATION_BOTH = _Orientations(3, "horizontal and vertical")
 
 
 class _Widget(CommandObject, configurable.Configurable):
-    """Base Widget class
+    """Base Widget class.
 
     If length is set to the special value `bar.STRETCH`, the bar itself will
     set the length to the maximum remaining space, after all other widgets have
@@ -108,26 +108,26 @@ class _Widget(CommandObject, configurable.Configurable):
     'callbacks' kwarg. No arguments are passed to the function so, if
     you need access to the qtile object, it needs to be imported into your code.
 
-    ``lazy`` functions can also be passed as callback functions and can be used in
+    `lazy` functions can also be passed as callback functions and can be used in
     the same way as keybindings.
 
     For example:
 
-    .. code-block:: python
+    ```python
+    from libqtile import qtile
 
-        from libqtile import qtile
+    def open_calendar():
+        qtile.spawn('gsimplecal next_month')
 
-        def open_calendar():
-            qtile.spawn('gsimplecal next_month')
+    clock = widget.Clock(
+        mouse_callbacks={
+            'Button1': open_calendar,
+            'Button3': lazy.spawn('gsimplecal prev_month')
+        }
+    )
+    ```
 
-        clock = widget.Clock(
-            mouse_callbacks={
-                'Button1': open_calendar,
-                'Button3': lazy.spawn('gsimplecal prev_month')
-            }
-        )
-
-    When the clock widget receives a click with button 1, the ``open_calendar`` function
+    When the clock widget receives a click with button 1, the `open_calendar` function
     will be executed.
     """
 
@@ -144,14 +144,12 @@ class _Widget(CommandObject, configurable.Configurable):
         (
             "mouse_callbacks",
             {},
-            "Dict of mouse button press callback functions. Accepts functions and ``lazy`` calls.",
+            "Dict of mouse button press callback functions. Accepts functions and `lazy` calls.",
         ),
     ]
 
     def __init__(self, length, **config):
-        """
-        length: bar.STRETCH, bar.CALCULATED, or a specified length.
-        """
+        """length: bar.STRETCH, bar.CALCULATED, or a specified length."""
         CommandObject.__init__(self)
         self.name = self.__class__.__name__.lower()
         if "name" in config:
@@ -216,7 +214,8 @@ class _Widget(CommandObject, configurable.Configurable):
 
     def timer_setup(self):
         """This is called exactly once, after the widget has been configured
-        and timers are available to be set up."""
+        and timers are available to be set up.
+        """
         pass
 
     def _configure(self, qtile, bar):
@@ -239,8 +238,7 @@ class _Widget(CommandObject, configurable.Configurable):
             self._futures.extend([timer, async_timer])
 
     async def _config_async(self):
-        """
-        This is called once when the main eventloop has started. this
+        """This is called once when the main eventloop has started. this
         happens after _configure has been run.
 
         Widgets that need to use asyncio coroutines after this point may
@@ -299,9 +297,7 @@ class _Widget(CommandObject, configurable.Configurable):
         pass
 
     def get(self, q, name):
-        """
-        Utility function for quick retrieval of a widget by name.
-        """
+        """Utility function for quick retrieval of a widget by name."""
         w = q.widgets_map.get(name)
         if not w:
             raise CommandError("No such widget: %s" % name)
@@ -321,16 +317,14 @@ class _Widget(CommandObject, configurable.Configurable):
             return self.bar.screen
 
     def draw(self):
-        """
-        Method that draws the widget. You may call this explicitly to
+        """Method that draws the widget. You may call this explicitly to
         redraw the widget, but only if the length of the widget hasn't
         changed. If it has, you must call bar.draw instead.
         """
         raise NotImplementedError
 
     def calculate_length(self):
-        """
-        Must be implemented if the widget can take CALCULATED for length.
+        """Must be implemented if the widget can take CALCULATED for length.
         It must return the width of the widget if it's installed in a
         horizontal bar; it must return the height of the widget if it's
         installed in a vertical bar. Usually you will test the orientation
@@ -339,9 +333,7 @@ class _Widget(CommandObject, configurable.Configurable):
         raise NotImplementedError
 
     def timeout_add(self, seconds, method, method_args=()):
-        """
-        This method calls ``.call_later`` with given arguments.
-        """
+        """This method calls `.call_later` with given arguments."""
         # Don't add timers for finalised widgets
         if self.finalized:
             return
@@ -352,8 +344,7 @@ class _Widget(CommandObject, configurable.Configurable):
         return future
 
     def call_process(self, command, **kwargs):
-        """
-        This method uses `subprocess.check_output` to run the given command
+        """This method uses `subprocess.check_output` to run the given command
         and return the string from stdout, which is decoded when using
         Python 3.
         """
@@ -447,9 +438,7 @@ class _Widget(CommandObject, configurable.Configurable):
 
 
 class _TextBox(_Widget):
-    """
-    Base class for widgets that are just boxes containing text.
-    """
+    """Base class for widgets that are just boxes containing text."""
 
     orientations = ORIENTATION_BOTH
     defaults = [
@@ -463,14 +452,14 @@ class _TextBox(_Widget):
             "fmt",
             "{}",
             "Format to apply to the string returned by the widget. Main purpose: applying markup. "
-            "For a widget that returns ``foo``, using ``fmt='<i>{}</i>'`` would give you ``<i>foo</i>``. "
-            "To control what the widget outputs in the first place, use the ``format`` paramater of the widget (if it has one).",
+            "For a widget that returns `foo`, using `fmt='<i>{}</i>'` would give you `<i>foo</i>`. "
+            "To control what the widget outputs in the first place, use the `format` paramater of the widget (if it has one).",
         ),
         ("max_chars", 0, "Maximum number of characters to display in widget."),
         (
             "scroll",
             False,
-            "Whether text should be scrolled. When True, you must set the widget's ``width``.",
+            "Whether text should be scrolled. When True, you must set the widget's `width`.",
         ),
         (
             "scroll_repeat",
@@ -493,8 +482,8 @@ class _TextBox(_Widget):
         (
             "scroll_fixed_width",
             False,
-            "When ``scroll=True`` the ``width`` parameter is a maximum width and, when text is shorter than this, the widget will resize. "
-            "Setting ``scroll_fixed_width=True`` will force the widget to have a fixed width, regardless of the size of the text.",
+            "When `scroll=True` the `width` parameter is a maximum width and, when text is shorter than this, the widget will resize. "
+            "Setting `scroll_fixed_width=True` will force the widget to have a fixed width, regardless of the size of the text.",
         ),
     ]  # type: list[tuple[str, Any, str]]
 
@@ -586,8 +575,7 @@ class _TextBox(_Widget):
             self.check_width()
 
     def check_width(self):
-        """
-        Check whether the widget needs to have calculated or fixed width
+        """Check whether the widget needs to have calculated or fixed width
         and whether the text should be scrolled.
         """
         if self.layout.width > self._scroll_width:
@@ -720,8 +708,7 @@ class _TextBox(_Widget):
         fontsize: int = 0,
         fontshadow: ColorType = "",
     ):
-        """
-        Change the font used by this widget. If font is None, the current
+        """Change the font used by this widget. If font is None, the current
         font is used.
         """
         if font is not None:
@@ -770,7 +757,8 @@ class InLoopPollText(_TextBox):
     ThreadPoolText instead.
 
     ('fast' here means that this runs /in/ the event loop, so don't block! If
-    you want to run something nontrivial, use ThreadedPollWidget.)"""
+    you want to run something nontrivial, use ThreadedPollWidget.)
+    """
 
     defaults = [
         (
@@ -875,7 +863,7 @@ class ThreadPoolText(_TextBox):
 
 
 class PaddingMixin(configurable.Configurable):
-    """Mixin that provides padding(_x|_y|)
+    """Mixin that provides padding(_x|_y|).
 
     To use it, subclass and add this to __init__:
 
@@ -893,7 +881,7 @@ class PaddingMixin(configurable.Configurable):
 
 
 class MarginMixin(configurable.Configurable):
-    """Mixin that provides margin(_x|_y|)
+    """Mixin that provides margin(_x|_y|).
 
     To use it, subclass and add this to __init__:
 
@@ -911,20 +899,21 @@ class MarginMixin(configurable.Configurable):
 
 
 class Mirror(_Widget):
-    """
-    A widget for showing the same widget content in more than one place, for
+    """A widget for showing the same widget content in more than one place, for
     instance, on bars across multiple screens.
 
     You don't need to use it directly; instead, just instantiate your widget
-    once and hand it in to multiple bars. For instance::
+    once and hand it in to multiple bars. For instance:
 
-        cpu = widget.CPUGraph()
-        clock = widget.Clock()
+    ```python
+    cpu = widget.CPUGraph()
+    clock = widget.Clock()
 
-        screens = [
-            Screen(top=bar.Bar([widget.GroupBox(), cpu, clock])),
-            Screen(top=bar.Bar([widget.GroupBox(), cpu, clock])),
-        ]
+    screens = [
+        Screen(top=bar.Bar([widget.GroupBox(), cpu, clock])),
+        Screen(top=bar.Bar([widget.GroupBox(), cpu, clock])),
+    ]
+    ```
 
     Widgets can be passed to more than one bar, so that there don't need to be
     any duplicates executing the same code all the time, and they'll always be

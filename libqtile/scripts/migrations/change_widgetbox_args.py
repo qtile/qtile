@@ -48,34 +48,34 @@ class WidgetboxArgsTransformer(MigrationTransformer):
 class WidgetboxArgs(_QtileMigrator):
     ID = "UpdateWidgetboxArgs"
 
-    SUMMARY = "Updates ``WidgetBox`` argument signature."
+    SUMMARY = "Updates `WidgetBox` argument signature."
 
     HELP = """
-    The ``WidgetBox`` widget allowed a position argument to set the contents of the widget.
+    The `WidgetBox` widget allowed a position argument to set the contents of the widget.
     This behaviour is deprecated and, instead, the contents should be specified with a
-    keyword argument called ``widgets``.
+    keyword argument called `widgets`.
 
     For example:
 
-    .. code:: python
-
-        widget.WidgetBox(
-            [
-                widget.Systray(),
-                widget.Volume(),
-            ]
-        )
+    ```python
+    widget.WidgetBox(
+        [
+            widget.Systray(),
+            widget.Volume(),
+        ]
+    )
+    ```
 
     should be changed to:
 
-    .. code::
-
-        widget.WidgetBox(
-            widgets=[
-                widget.Systray(),
-                widget.Volume(),
-            ]
-        )
+    ```python
+    widget.WidgetBox(
+        widgets=[
+            widget.Systray(),
+            widget.Volume(),
+        ]
+    )
+    ```
 
     """
 

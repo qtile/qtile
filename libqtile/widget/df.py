@@ -24,7 +24,7 @@ from libqtile.widget import base
 
 
 class DF(base.ThreadPoolText):
-    """Disk Free Widget
+    """Disk Free Widget.
 
     By default the widget only displays if the space is less than warn_space.
     """
@@ -32,7 +32,7 @@ class DF(base.ThreadPoolText):
     defaults = [
         ("partition", "/", "the partition to check space"),
         ("warn_color", "ff0000", "Warning color"),
-        ("warn_space", 2, "Warning space in scale defined by the ``measure`` option."),
+        ("warn_space", 2, "Warning space in scale defined by the `measure` option."),
         ("visible_on_warn", True, "Only display if warning"),
         ("measure", "G", "Measurement (G, M, B)"),
         (

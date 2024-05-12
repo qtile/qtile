@@ -76,10 +76,14 @@ class Config:
     wl_xcursor_size: int
 
     def __init__(self, file_path=None, **settings):
-        """Create a Config() object from settings
+        """Create a Config() object from settings.
 
-        Only attributes found in Config.__annotations__ will be added to object.
-        config attribute precedence is 1.) **settings 2.) self 3.) default_config
+        Only attributes found in `Config.__annotations__` will be added to object.
+        Config attribute precedence is:
+        
+        1. `**settings`
+        2. `self`
+        3. `default_config`
         """
         self.file_path = file_path
         self.update(**settings)
@@ -136,9 +140,7 @@ class Config:
         self.update(**vars(config))
 
     def validate(self) -> None:
-        """
-        Validate the configuration against the X11 core, if it makes sense.
-        """
+        """Validate the configuration against the X11 core, if it makes sense."""
         try:
             from libqtile.backend.x11 import core
         except ImportError:

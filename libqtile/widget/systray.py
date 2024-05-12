@@ -99,20 +99,19 @@ class Icon(window._Window):
 # Mypy doesn't like the inheritance of height and width as _Widget's
 # properties are read only but _Window's have a getter and setter.
 class Systray(base._Widget, window._Window):  # type: ignore[misc]
-    """
-    A widget that manages system tray.
+    """A widget that manages system tray.
 
     Only one Systray widget is allowed. Adding additional Systray
     widgets will result in a ConfigError.
 
-    .. note::
-        Icons will not render correctly where the bar/widget is
-        drawn with a semi-transparent background. Instead, icons
-        will be drawn with a transparent background.
-
-        If using this widget it is therefore recommended to use
-        a fully opaque background colour or a fully transparent
-        one.
+    > NOTE:
+    > Icons will not render correctly where the bar/widget is
+    > drawn with a semi-transparent background. Instead, icons
+    > will be drawn with a transparent background.
+    >
+    > If using this widget it is therefore recommended to use
+    > a fully opaque background colour or a fully transparent
+    > one.
     """
 
     _instances = 0
@@ -201,8 +200,7 @@ class Systray(base._Widget, window._Window):  # type: ignore[misc]
         Systray._instances += 1
 
     def create_mirror(self):
-        """
-        Systray cannot be mirrored as we do not use a Drawer object to render icons.
+        """Systray cannot be mirrored as we do not use a Drawer object to render icons.
 
         Return new, unconfigured instance so that, when the bar tries to configure it
         again, a ConfigError is raised.

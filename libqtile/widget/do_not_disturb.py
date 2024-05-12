@@ -26,8 +26,7 @@ from libqtile.widget import base
 
 
 class DoNotDisturb(base.InLoopPollText):
-    """
-    Displays Do Not Disturb status for notification server Dunst by default.
+    """Displays Do Not Disturb status for notification server Dunst by default.
     Can be used with other servers by changing the poll command and mouse callbacks.
     """
 

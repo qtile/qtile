@@ -162,7 +162,7 @@ class OpenWeather(GenPollUrl):
         - icon
 
     Icon support is available but you will need a suitable font installed. A default icon mapping
-    is provided (``OpenWeather.symbols``) but changes can be made by setting ``weather_symbols``.
+    is provided (`OpenWeather.symbols`) but changes can be made by setting `weather_symbols`.
     Available icon codes can be viewed here: https://openweathermap.org/weather-conditions#Icon-list
     """
 

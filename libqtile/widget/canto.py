@@ -29,11 +29,9 @@ from libqtile.widget import base
 
 
 class Canto(base.ThreadPoolText):
-    """Display RSS feeds updates using the canto console reader
+    """Display RSS feeds updates using the canto console reader.
 
-    Widget requirements: canto_
-
-    .. _canto: https://codezen.org/canto-ng/
+    Widget requirements: [canto](https://codezen.org/canto-ng/).
     """
 
     defaults = [

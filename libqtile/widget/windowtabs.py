@@ -28,8 +28,7 @@ from libqtile.widget import base
 
 
 class WindowTabs(base._TextBox):
-    """
-    Displays the name of each window in the current group.
+    """Displays the name of each window in the current group.
     Contrary to TaskList this is not an interactive widget.
     The window that currently has focus is highlighted.
     """

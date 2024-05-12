@@ -1,5 +1,4 @@
-"""
-A widget for Music Player Daemon (MPD) based on python-mpd2.
+"""A widget for Music Player Daemon (MPD) based on python-mpd2.
 
 This widget exists since python-mpd library is no longer supported.
 """
@@ -32,8 +31,7 @@ play_states = {"play": "\u25b6", "pause": "\u23F8", "stop": "\u25a0"}
 
 
 def option(char):
-    """
-    old status mapping method.
+    """Old status mapping method.
 
     Deprecated.
     """
@@ -82,85 +80,9 @@ format_fns = {
 
 
 class Mpd2(base.ThreadPoolText):
-    r"""Mpd2 Object.
+    """Mpd2 Object.
 
-    Parameters
-    ==========
-    status_format:
-        format string to display status
-
-        For a full list of values, see:
-            MPDClient.status() and MPDClient.currentsong()
-
-        https://musicpd.org/doc/protocol/command_reference.html#command_status
-        https://musicpd.org/doc/protocol/tags.html
-
-        Default::
-
-            '{play_status} {artist}/{title} \
-                [{repeat}{random}{single}{consume}{updating_db}]'
-
-            ``play_status`` is a string from ``play_states`` dict
-
-            Note that the ``time`` property of the song renamed to ``fulltime``
-            to prevent conflicts with status information during formating.
-
-    idle_format:
-        format string to display status when no song is in queue.
-
-        Default::
-
-            '{play_status} {idle_message} \
-                [{repeat}{random}{single}{consume}{updating_db}]'
-
-            Note that the ``artist`` key fallbacks to similar keys in specific order.
-            (``artist`` -> ``albumartist`` -> ``performer`` ->
-             -> ``composer`` -> ``conductor`` -> ``ensemble``)
-
-    idle_message:
-        text to display instead of song information when MPD is idle.
-        (i.e. no song in queue)
-
-        Default:: "MPD IDLE"
-
-    undefined_value:
-        text to display when status key is undefined
-
-        Default:: "Undefined"
-
-    prepare_status:
-        dict of functions to replace values in status with custom characters.
-
-        ``f(status, key, space_element) => str``
-
-        New functionality allows use of a dictionary of plain strings.
-
-        Default::
-
-            status_dict = {
-                'repeat': 'r',
-                'random': 'z',
-                'single': '1',
-                'consume': 'c',
-                'updating_db': 'U'
-            }
-
-    format_fns:
-        A dict of functions to format the various elements.
-
-        'Tag': f(str) => str
-
-        Default:: { 'all': lambda s: cgi.escape(s) }
-
-        N.B. if 'all' is present, it is processed on every element of song_info
-            before any other formatting is done.
-
-    mouse_buttons:
-        A dict of mouse button numbers to actions
-
-    Widget requirements: python-mpd2_.
-
-    .. _python-mpd2: https://pypi.org/project/python-mpd2/
+    Widget requirements: [python-mpd2](https://pypi.org/project/python-mpd2/).
     """
 
     defaults = [
@@ -189,7 +111,92 @@ class Mpd2(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        """Constructor."""
+        """Initialize the Mpd2 widget.
+
+        Parameters:
+            **config: See other parameters.
+        
+        Other parameters:
+            status_format:
+                Format string to display status.
+
+                For a full list of values, see:
+                MPDClient.status() and MPDClient.currentsong().
+
+                - https://musicpd.org/doc/protocol/command_reference.html#command_status
+                - https://musicpd.org/doc/protocol/tags.html
+
+                Default:
+
+                ```
+                '{play_status} {artist}/{title} \\
+                    [{repeat}{random}{single}{consume}{updating_db}]'
+                ```
+
+                `play_status` is a string from `play_states` dict.
+
+                Note that the `time` property of the song renamed to `fulltime`
+                to prevent conflicts with status information during formating.
+
+            idle_format:
+                Format string to display status when no song is in queue.
+
+                Default:
+
+                ```
+                '{play_status} {idle_message} \\
+                    [{repeat}{random}{single}{consume}{updating_db}]'
+                ```
+
+                Note that the `artist` key fallbacks to similar keys in specific order
+                (`artist` -> `albumartist` -> `performer` ->
+                -> `composer` -> `conductor` -> `ensemble`).
+
+            idle_message:
+                Text to display instead of song information when MPD is idle
+                (i.e. no song in queue).
+
+                Default: "MPD IDLE".
+
+            undefined_value:
+                Text to display when status key is undefined.
+
+                Default: "Undefined".
+
+            prepare_status:
+                Dict of functions to replace values in status with custom characters.
+
+                ```
+                f(status, key, space_element) => str
+                ```
+
+                New functionality allows use of a dictionary of plain strings.
+
+                Default:
+
+                ```python
+                status_dict = {
+                    'repeat': 'r',
+                    'random': 'z',
+                    'single': '1',
+                    'consume': 'c',
+                    'updating_db': 'U'
+                }
+                ```
+
+            format_fns:
+                A dict of functions to format the various elements.
+
+                'Tag': f(str) => str
+
+                Default: `{'all': lambda s: cgi.escape(s)}`
+
+                N.B.: if 'all' is present, it is processed on every element of `song_info`
+                before any other formatting is done.
+
+            mouse_buttons:
+                A dict of mouse button numbers to actions.
+        """
         super().__init__("", **config)
 
         self.add_defaults(Mpd2.defaults)
@@ -217,10 +224,9 @@ class Mpd2(base.ThreadPoolText):
         return True
 
     def poll(self):
-        """
-        Called by qtile manager.
+        """Called by qtile manager.
 
-        poll the mpd server and update widget.
+        Poll the mpd server and update widget.
         """
         if self.connected:
             return self.update_status()
@@ -228,7 +234,7 @@ class Mpd2(base.ThreadPoolText):
             return self.no_connection
 
     def update_status(self):
-        """get updated info from mpd server and call format."""
+        """Get updated info from mpd server and call format."""
         self.client.command_list_ok_begin()
         self.client.status()  # pylint: disable=E1101
         self.client.currentsong()  # pylint: disable=E1101
@@ -237,7 +243,7 @@ class Mpd2(base.ThreadPoolText):
         return self.formatter(status, current_song)
 
     def button_press(self, x, y, button):
-        """handle click event on widget."""
+        """Handle click event on widget."""
         base.ThreadPoolText.button_press(self, x, y, button)
         m_name = self.mouse_buttons[button]
 
@@ -261,7 +267,7 @@ class Mpd2(base.ThreadPoolText):
             logger.exception("%s %s", err, e.args[0])
 
     def toggle(self):
-        """toggle play/pause."""
+        """Toggle play/pause."""
         status = self.client.status()  # pylint: disable=E1101
         play_status = status["state"]
 
@@ -271,7 +277,7 @@ class Mpd2(base.ThreadPoolText):
             self.client.play()  # pylint: disable=E1101
 
     def formatter(self, status, current_song):
-        """format song info."""
+        """Format song info."""
         song_info = defaultdict(lambda: self.undefined_value)
         song_info["play_status"] = self.play_states[status["state"]]
 
@@ -363,12 +369,12 @@ class Mpd2(base.ThreadPoolText):
         return formatted
 
     def prepare_formatting(self, status):
-        """old way of preparing status formatting."""
+        """Old way of preparing status formatting."""
         for key in self.prepare_status:
             self.prepare_status[key](status, key, self.space)
 
     def finalize(self):
-        """finalize."""
+        """Finalize."""
         super().finalize()
 
         try:

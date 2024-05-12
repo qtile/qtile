@@ -97,10 +97,7 @@ DRM_FORMAT_ARGB8888 = 875713089
 
 
 def translate_masks(modifiers: list[str]) -> int:
-    """
-    Translate a modifier mask specified as a list of strings into an or-ed
-    bit representation.
-    """
+    """Translate a modifier mask specified as a list of strings into an or-ed bit representation."""
     masks = []
     for i in modifiers:
         try:
@@ -195,9 +192,7 @@ class Painter:
 
 
 class HasListeners:
-    """
-    Classes can subclass this to get some convenience handlers around
-    `pywayland.server.Listener`.
+    """Classes can subclass this to get some convenience handlers around `pywayland.server.Listener`.
 
     This guarantees that all listeners that set up and then removed in reverse order.
     """
@@ -252,9 +247,9 @@ class Dnd(HasListeners):
 
 
 def get_xwayland_atoms(xwayland: xwayland.XWayland) -> dict[int, str]:
-    """
-    These can be used when matching on XWayland clients with wm_type.
-    http://standards.freedesktop.org/wm-spec/latest/ar01s05.html#idm139870830002400
+    """These can be used when matching on XWayland clients with wm_type.
+
+    See http://standards.freedesktop.org/wm-spec/latest/ar01s05.html#idm139870830002400.
     """
     xwayland_wm_types = {
         "_NET_WM_WINDOW_TYPE_DESKTOP": "desktop",
@@ -282,8 +277,9 @@ def get_xwayland_atoms(xwayland: xwayland.XWayland) -> dict[int, str]:
 
 @dataclass()
 class CursorState:
-    """
-    The surface and hotspot state of the cursor. This is tracked directly by the core so
+    """The surface and hotspot state of the cursor.
+
+    This is tracked directly by the core so
     that the cursor can be hidden and later restored to this state at will.
     """
 

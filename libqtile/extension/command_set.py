@@ -22,42 +22,40 @@ from libqtile.extension.dmenu import Dmenu
 
 
 class CommandSet(Dmenu):
-    """
-    Give list of commands to be executed in dmenu style.
+    """Give list of commands to be executed in dmenu style.
 
     ex. manage mocp deamon:
 
-    .. code-block:: python
-
-        Key([mod], 'm', lazy.run_extension(extension.CommandSet(
-            commands={
-                'play/pause': '[ $(mocp -i | wc -l) -lt 2 ] && mocp -p || mocp -G',
-                'next': 'mocp -f',
-                'previous': 'mocp -r',
-                'quit': 'mocp -x',
-                'open': 'urxvt -e mocp',
-                'shuffle': 'mocp -t shuffle',
-                'repeat': 'mocp -t repeat',
-                },
-            pre_commands=['[ $(mocp -i | wc -l) -lt 1 ] && mocp -S'],
-            **Theme.dmenu))),
-
+    ```python
+    Key([mod], 'm', lazy.run_extension(extension.CommandSet(
+        commands={
+            'play/pause': '[ $(mocp -i | wc -l) -lt 2 ] && mocp -p || mocp -G',
+            'next': 'mocp -f',
+            'previous': 'mocp -r',
+            'quit': 'mocp -x',
+            'open': 'urxvt -e mocp',
+            'shuffle': 'mocp -t shuffle',
+            'repeat': 'mocp -t repeat',
+            },
+        pre_commands=['[ $(mocp -i | wc -l) -lt 1 ] && mocp -S'],
+        **Theme.dmenu))),
+    ```
 
     ex. CommandSet inside another CommandSet
 
-    .. code-block:: python
-
-        CommandSet(
-            commands={
-                "Hello": CommandSet(
-                    commands={
-                        "World": "echo 'Hello, World!'"
-                    },
-                    **Theme.dmenu
-                )
-            },
-        **Theme.dmenu
-        )
+    ```python
+    CommandSet(
+        commands={
+            "Hello": CommandSet(
+                commands={
+                    "World": "echo 'Hello, World!'"
+                },
+                **Theme.dmenu
+            )
+        },
+    **Theme.dmenu
+    )
+    ```
 
     """
 

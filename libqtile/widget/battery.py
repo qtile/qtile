@@ -77,14 +77,13 @@ BatteryStatus = NamedTuple(
 
 
 class _Battery(ABC):
-    """
-    Battery interface class specifying what member functions a
+    """Battery interface class specifying what member functions a
     battery implementation should provide.
     """
 
     @abstractmethod
     def update_status(self) -> BatteryStatus:
-        """Read the battery status
+        """Read the battery status.
 
         Reads the battery status from the system and returns the result.
 
@@ -94,19 +93,16 @@ class _Battery(ABC):
 
 
 def load_battery(**config) -> _Battery:
-    """Default battery loading function
+    """Default battery loading function.
 
     Loads and returns the _Battery interface suitable for the current running
     platform.
 
-    Parameters
-    ----------
-    config: Dictionary of config options that are passed to the generated
-    battery.
+    Parameters:
+        config: Dictionary of config options that are passed to the generated battery.
 
-    Return
-    ------
-    The configured _Battery for the current platform.
+    Returns:
+        The configured _Battery for the current platform.
     """
     system = platform.system()
     if system == "FreeBSD":
@@ -118,8 +114,7 @@ def load_battery(**config) -> _Battery:
 
 
 class _FreeBSDBattery(_Battery):
-    """
-    A battery class compatible with FreeBSD. Reads battery status
+    """A battery class compatible with FreeBSD. Reads battery status
     using acpiconf.
 
     Takes a battery setting containing the number of the battery
@@ -230,7 +225,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
             None,
             """
             A function that takes no arguments and returns (start, end) charge
-            thresholds, e.g. ``lambda: (0, 90)``; set to None to disable smart
+            thresholds, e.g. `lambda: (0, 90)`; set to None to disable smart
             charging.
             """,
         ),
@@ -402,43 +397,42 @@ class _LinuxBattery(_Battery, configurable.Configurable):
 
 
 class Battery(base.ThreadPoolText):
-    """
-    A text-based battery monitoring widget supporting both Linux and FreeBSD.
+    """A text-based battery monitoring widget supporting both Linux and FreeBSD.
 
     The Linux version of this widget has functionality to charge "smartly"
     (i.e. not to 100%) under user defined conditions, and provides some
     implementations for doing so. For example, to only charge the battery to
     90%, use:
 
-    .. code-block:: python
-
-        Battery(..., charge_controller: lambda (0, 90))
+    ```python
+    Battery(..., charge_controller: lambda (0, 90))
+    ```
 
     The battery widget also supplies some charging algorithms. To only charge
     the battery between 40-50% while connected to a thunderbolt docking
     station, but 90% all other times, use:
 
-    .. code-block:: python
-
-        from libqtile.widget.battery import thunderbolt_smart_charge
-        Battery(..., charge_controller: thunderbolt_smart_charge)
+    ```python
+    from libqtile.widget.battery import thunderbolt_smart_charge
+    Battery(..., charge_controller: thunderbolt_smart_charge)
+    ```
 
     To temporarily disable/re-enable this (e.g. if you know you're
     going mobile and need to charge) use either:
 
-    .. code-block:: bash
+    ```bash
+    qtile cmd-obj -o bar top widget battery -f charge_to_full
+    qtile cmd-obj -o bar top widget battery -f charge_dynamically
+    ```
 
-        qtile cmd-obj -o bar top widget battery -f charge_to_full
-        qtile cmd-obj -o bar top widget battery -f charge_dynamically
+    Or bind a key to:
 
-    or bind a key to:
+    ```python
+    Key([mod, "shift"], "c", lazy.widget['battery'].charge_to_full())
+    Key([mod, "shift"], "x", lazy.widget['battery'].charge_dynamically())
+    ```
 
-    .. code-block:: python
-
-        Key([mod, "shift"], "c", lazy.widget['battery'].charge_to_full())
-        Key([mod, "shift"], "x", lazy.widget['battery'].charge_dynamically())
-
-    note that this functionality requires qtile to be able to write to certain
+    Note that this functionality requires qtile to be able to write to certain
     files in sysfs, so make sure that qtile's udev rules are installed
     correctly.
     """
@@ -490,7 +484,7 @@ class Battery(base.ThreadPoolText):
 
     @staticmethod
     def _load_battery(**config):
-        """Function used to load the Battery object
+        """Function used to load the Battery object.
 
         Battery behavior can be changed by overloading this function in a base
         class.
@@ -498,7 +492,7 @@ class Battery(base.ThreadPoolText):
         return load_battery(**config)
 
     def poll(self) -> str:
-        """Determine the text to display
+        """Determine the text to display.
 
         Function returning a string with battery information to display on the
         status bar. Should only use the public interface in _Battery to get
@@ -526,16 +520,12 @@ class Battery(base.ThreadPoolText):
         return self.build_string(status)
 
     def build_string(self, status: BatteryStatus) -> str:
-        """Determine the string to return for the given battery state
+        """Determine the string to return for the given battery state.
 
-        Parameters
-        ----------
-        status:
-            The current status of the battery
+        Parameters:
+            status: The current status of the battery
 
-        Returns
-        -------
-        str
+        Returns:
             The string to display for the current status.
         """
         if self.hide_threshold is not None and status.percent > self.hide_threshold:
@@ -577,7 +567,7 @@ class Battery(base.ThreadPoolText):
 
 
 def default_icon_path() -> str:
-    """Get the default path to battery icons"""
+    """Get the default path to battery icons."""
     dir_path = Path(__file__).resolve() / ".." / ".." / "resources" / "battery-icons"
     return str(dir_path.resolve())
 
@@ -620,7 +610,7 @@ class BatteryIcon(base._Widget):
 
     @staticmethod
     def _load_battery(**config):
-        """Function used to load the Battery object
+        """Function used to load the Battery object.
 
         Battery behavior can be changed by overloading this function in a base
         class.

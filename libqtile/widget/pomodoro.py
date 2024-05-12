@@ -27,7 +27,7 @@ from libqtile.widget import base
 
 
 class Pomodoro(base.ThreadPoolText):
-    """Pomodoro technique widget"""
+    """Pomodoro technique widget."""
 
     defaults = [
         ("num_pomodori", 4, "Number of pomodori to do in a cycle"),

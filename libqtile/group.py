@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
 
 class _Group(CommandObject):
-    """A container for a bunch of windows
+    """A container for a bunch of windows.
 
     Analogous to workspaces in other window managers. Each client window
     managed by the window manager belongs to exactly one group.
@@ -114,11 +114,10 @@ class _Group(CommandObject):
 
     @layout.setter
     def layout(self, layout):
-        """
-        Parameters
-        ==========
-        layout :
-            a string with matching the name of a Layout object.
+        """Set the layout.
+
+        Parameters:
+            layout: A string with matching the name of a Layout object.
         """
         for index, obj in enumerate(self.layouts):
             if obj.name == layout:
@@ -169,7 +168,7 @@ class _Group(CommandObject):
                     self.last_focused = None
 
     def set_screen(self, screen, warp=True):
-        """Set this group's screen to screen"""
+        """Set this group's screen to screen."""
         if screen == self.screen:
             return
         self.screen = screen
@@ -191,22 +190,19 @@ class _Group(CommandObject):
             self.layout.hide()
 
     def focus(self, win, warp=True, force=False):
-        """Focus the given window
+        """Focus the given window.
 
-        If win is in the group, blur any windows and call ``focus`` on the
+        If win is in the group, blur any windows and call `focus` on the
         layout (in case it wants to track anything), fire focus_change hook and
         invoke layout_all.
 
-        Parameters
-        ==========
-        win :
-            Window to focus
-        warp :
-            Warp pointer to win. This should basically always be True, unless
-            the focus event is coming from something like EnterNotify, where
-            the user is actively using the mouse, or on full screen layouts
-            where only one window is "maximized" at a time, and it doesn't make
-            sense for the mouse to automatically move.
+        Parameters:
+            win: Window to focus.
+            warp: Warp pointer to win. This should basically always be True, unless
+                the focus event is coming from something like EnterNotify, where
+                the user is actively using the mouse, or on full screen layouts
+                where only one window is "maximized" at a time, and it doesn't make
+                sense for the mouse to automatically move.
         """
         if self.qtile._drag and not force:
             # don't change focus while dragging windows (unless forced)
@@ -234,7 +230,7 @@ class _Group(CommandObject):
 
     @expose_command()
     def info(self):
-        """Returns a dictionary of info for this group"""
+        """Returns a dictionary of info for this group."""
         return dict(
             name=self.name,
             label=self.label,
@@ -371,23 +367,19 @@ class _Group(CommandObject):
     def toscreen(self, screen=None, toggle=False):
         """Pull a group to a specified screen.
 
-        Parameters
-        ==========
-        screen :
-            Screen offset. If not specified, we assume the current screen.
-        toggle :
-            If this group is already on the screen, then the group is toggled
-            with last used
+        Parameters:
+            screen: Screen offset. If not specified, we assume the current screen.
+            toggle: If this group is already on the screen, then the group is toggled
+                with last used.
 
-        Examples
-        ========
-        Pull group to the current screen::
+        Examples:
+            Pull group to the current screen:
 
-            toscreen()
+            >>> toscreen()
 
-        Pull group to screen 0::
+            Pull group to screen 0:
 
-            toscreen(0)
+            >>> toscreen(0)
         """
         if screen is None:
             screen = self.qtile.current_screen
@@ -400,15 +392,13 @@ class _Group(CommandObject):
         else:
             screen.set_group(self)
 
-    def _get_group(self, direction, skip_empty=False, skip_managed=False):
-        """Find a group walking the groups list in the specified direction
+    def _get_group(self, direction: int, skip_empty: bool = False, skip_managed: bool = False):
+        """Find a group walking the groups list in the specified direction.
 
-        Parameters
-        ==========
-        skip_empty :
-            skips the empty groups
-        skip_managed :
-            skips the groups that have a screen
+        Parameters:
+            direction: `1` to get the next group, `-1` to get the previous group.
+            skip_empty: Skips the empty groups.
+            skip_managed: Skips the groups that have a screen.
         """
 
         def match(group):
@@ -436,15 +426,14 @@ class _Group(CommandObject):
 
     @expose_command()
     def unminimize_all(self):
-        """Unminimise all windows in this group"""
+        """Unminimise all windows in this group."""
         for win in self.windows:
             win.minimized = False
         self.layout_all()
 
     @expose_command()
     def next_window(self):
-        """
-        Focus the next window in group.
+        """Focus the next window in group.
 
         Method cycles _all_ windows in group regardless if tiled in current
         layout or floating. Cycling of tiled and floating windows is not mixed.
@@ -468,8 +457,7 @@ class _Group(CommandObject):
 
     @expose_command()
     def prev_window(self):
-        """
-        Focus the previous window in group.
+        """Focus the previous window in group.
 
         Method cycles _all_ windows in group regardless if tiled in current
         layout or floating. Cycling of tiled and floating windows is not mixed.
@@ -493,8 +481,7 @@ class _Group(CommandObject):
 
     @expose_command()
     def focus_back(self):
-        """
-        Focus the window that had focus before the current one got it.
+        """Focus the window that had focus before the current one got it.
 
         Repeated calls to this function would basically continuously switch
         between the last two focused windows. Do nothing if less than 2
@@ -509,9 +496,9 @@ class _Group(CommandObject):
 
     @expose_command()
     def focus_by_name(self, name):
-        """
-        Focus the first window with the given name. Do nothing if the name is
-        not found.
+        """Focus the first window with the given name.
+        
+        Do nothing if the name is not found.
         """
         for win in self.windows:
             if win.name == name:
@@ -520,9 +507,9 @@ class _Group(CommandObject):
 
     @expose_command()
     def info_by_name(self, name):
-        """
-        Get the info for the first window with the given name without giving it
-        focus. Do nothing if the name is not found.
+        """Get the info for the first window with the given name without giving it focus.
+        
+        Do nothing if the name is not found.
         """
         for win in self.windows:
             if win.name == name:
@@ -530,9 +517,7 @@ class _Group(CommandObject):
 
     @expose_command()
     def focus_by_index(self, index: int) -> None:
-        """
-        Change to the window at the specified index in the current group.
-        """
+        """Change to the window at the specified index in the current group."""
         windows = self.windows
         if index < 0 or index > len(windows) - 1:
             return
@@ -541,9 +526,7 @@ class _Group(CommandObject):
 
     @expose_command()
     def swap_window_order(self, new_location: int) -> None:
-        """
-        Change the order of the current window within the current group.
-        """
+        """Change the order of the current window within the current group."""
         if new_location < 0 or new_location > len(self.windows) - 1:
             return
 
@@ -557,13 +540,13 @@ class _Group(CommandObject):
 
     @expose_command()
     def switch_groups(self, name):
-        """Switch position of current group with name"""
+        """Switch position of current group with name."""
         self.qtile.switch_groups(self.name, name)
 
     @expose_command()
     def set_label(self, label):
-        """
-        Set the display name of current group to be used in GroupBox widget.
+        """Set the display name of current group to be used in GroupBox widget.
+
         If label is None, the name of the group is used as display name.
         If label is the empty string, the group is invisible in GroupBox.
         """

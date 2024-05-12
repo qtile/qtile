@@ -18,9 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-The interface to execute commands on the command graph
-"""
+"""The interface to execute commands on the command graph."""
 
 from __future__ import annotations
 
@@ -60,7 +58,7 @@ class Layout:
 
 
 def format_selectors(selectors: list[SelectorType]) -> str:
-    """Build the path to the selected command graph node"""
+    """Build the path to the selected command graph node."""
     path_elements = []
     for name, selector in selectors:
         if selector is not None:
@@ -80,86 +78,66 @@ class CommandInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def execute(self, call: CommandGraphCall, args: tuple, kwargs: dict) -> Any:
-        """Execute the given call, returning the result of the execution
+        """Execute the given call, returning the result of the execution.
 
         Perform the given command graph call, calling the function with the
         given arguments and keyword arguments.
 
-        Parameters
-        ----------
-        call: CommandGraphCall
-            The call on the command graph that is to be performed.
-        args:
-            The arguments to pass into the command graph call.
-        kwargs:
-            The keyword arguments to pass into the command graph call.
+        Parameters:
+            call: The call on the command graph that is to be performed.
+            args: The arguments to pass into the command graph call.
+            kwargs: The keyword arguments to pass into the command graph call.
         """
 
     @abstractmethod
     def has_command(self, node: CommandGraphNode, command: str) -> bool:
-        """Check if the given command exists
+        """Check if the given command exists.
 
-        Parameters
-        ----------
-        node: CommandGraphNode
-            The node to check for commands
-        command: str
-            The name of the command to check for
+        Parameters:
+            node: The node to check for commands.
+            command: The name of the command to check for.
 
-        Returns
-        -------
-        bool
+        Returns:
             True if the command is resolved on the given node
         """
 
     @abstractmethod
     def has_item(self, node: CommandGraphNode, object_type: str, item: str | int) -> bool:
-        """Check if the given item exists
+        """Check if the given item exists.
 
-        Parameters
-        ----------
-        node: CommandGraphNode
-            The node to check for items
-        object_type: str
-            The type of object to check for items.
-        command: str
-            The name of the item to check for
+        Parameters:
+            node: The node to check for items.
+            object_type: The type of object to check for items.
+            command: The name of the item to check for.
 
-        Returns
-        -------
-        bool
+        Returns:
             True if the item is resolved on the given node
         """
 
 
 class QtileCommandInterface(CommandInterface):
-    """Execute the commands via the in process running qtile instance"""
+    """Execute the commands via the in process running qtile instance."""
 
     def __init__(self, command_object: CommandObject):
-        """A command object that directly resolves commands
+        """A command object that directly resolves commands.
 
-        Parameters
-        ----------
-        command_object: CommandObject
-            The command object to use for resolving the commands and items
-            against.
+        Parameters:
+            command_object:
+                The command object to use for resolving the commands and items
+                against.
         """
         self._command_object = command_object
 
     def execute(self, call: CommandGraphCall, args: tuple, kwargs: dict) -> Any:
-        """Execute the given call, returning the result of the execution
+        """Execute the given call, returning the result of the execution.
 
         Perform the given command graph call, calling the function with the
         given arguments and keyword arguments.
 
-        Parameters
-        ----------
-        call: CommandGraphCall
-            The call on the command graph that is to be performed.
-        args:
-            The arguments to pass into the command graph call.
-        kwargs:
-            The keyword arguments to pass into the command graph call.
+        Parameters:
+            call: The call on the command graph that is to be performed.
+            args: The arguments to pass into the command graph call.
+            kwargs: The keyword arguments to pass into the command graph call.
         """
         obj = self._command_object.select(call.selectors)
         cmd = None
@@ -175,40 +153,29 @@ class QtileCommandInterface(CommandInterface):
         return cmd(self._command_object, *args, **kwargs)
 
     def has_command(self, node: CommandGraphNode, command: str) -> bool:
-        """Check if the given command exists
+        """Check if the given command exists.
 
-        Parameters
-        ----------
-        node: CommandGraphNode
-            The node to check for commands
-        command: str
-            The name of the command to check for
+        Parameters:
+            node: The node to check for commands.
+            command: The name of the command to check for.
 
-        Returns
-        -------
-        bool
-            True if the command is resolved on the given node
+        Returns:
+            True if the command is resolved on the given node.
         """
         obj = self._command_object.select(node.selectors)
         cmd = obj.command(command)
         return cmd is not None
 
     def has_item(self, node: CommandGraphNode, object_type: str, item: str | int) -> bool:
-        """Check if the given item exists
+        """Check if the given item exists.
 
-        Parameters
-        ----------
-        node: CommandGraphNode
-            The node to check for items
-        object_type: str
-            The type of object to check for items.
-        item: str
-            The name or index of the item to check for
+        Parameters:
+            node: The node to check for items.
+            object_type: The type of object to check for items.
+            item: The name or index of the item to check for.
 
-        Returns
-        -------
-        bool
-            True if the item is resolved on the given node
+        Returns:
+            True if the item is resolved on the given node.
         """
         try:
             self._command_object.select(node.selectors + [(object_type, item)])
@@ -218,32 +185,26 @@ class QtileCommandInterface(CommandInterface):
 
 
 class IPCCommandInterface(CommandInterface):
-    """Execute the resolved commands using the IPC connection to a running qtile instance"""
+    """Execute the resolved commands using the IPC connection to a running qtile instance."""
 
     def __init__(self, ipc_client: ipc.Client):
-        """Build a command object which resolves commands through IPC calls
+        """Build a command object which resolves commands through IPC calls.
 
-        Parameters
-        ----------
-        ipc_client: ipc.Client
-            The client that is to be used to resolve the calls.
+        Parameters:
+            ipc_client: The client that is to be used to resolve the calls.
         """
         self._client = ipc_client
 
     def execute(self, call: CommandGraphCall, args: tuple, kwargs: dict) -> Any:
-        """Execute the given call, returning the result of the execution
+        """Execute the given call, returning the result of the execution.
 
         Executes the given command over the given IPC client.  Returns the
         result of the execution.
 
         Parameters
-        ----------
-        call: CommandGraphCall
-            The call on the command graph that is to be performed.
-        args:
-            The arguments to pass into the command graph call.
-        kwargs:
-            The keyword arguments to pass into the command graph call.
+            call: The call on the command graph that is to be performed.
+            args: The arguments to pass into the command graph call.
+            kwargs: The keyword arguments to pass into the command graph call.
         """
         status, result = self._client.send(
             (call.parent.selectors, call.name, args, kwargs, call.lifted)
@@ -255,47 +216,36 @@ class IPCCommandInterface(CommandInterface):
         raise CommandException(result)
 
     def has_command(self, node: CommandGraphNode, command: str) -> bool:
-        """Check if the given command exists
+        """Check if the given command exists.
 
         Resolves the allowed commands over the IPC interface, and returns a
         boolean indicating of the given command is valid.
 
-        Parameters
-        ----------
-        node: CommandGraphNode
-            The node to check for commands
-        command: str
-            The name of the command to check for
+        Parameters:
+            node: The node to check for commands.
+            command: The name of the command to check for.
 
-        Returns
-        -------
-        bool
-            True if the command is resolved on the given node
+        Returns:
+            True if the command is resolved on the given node.
         """
         cmd_call = node.call("commands")
         commands = self.execute(cmd_call, (), {})
         return command in commands
 
     def has_item(self, node: CommandGraphNode, object_type: str, item: str | int) -> bool:
-        """Check if the given item exists
+        """Check if the given item exists.
 
         Resolves the available commands for the given command node of the given
         command type.  Performs the resolution of the items through the given
         IPC client.
 
-        Parameters
-        ----------
-        node: CommandGraphNode
-            The node to check for items
-        object_type: str
-            The type of object to check for items.
-        command: str
-            The name of the item to check for
+        Parameters:
+            node: The node to check for items.
+            object_type: The type of object to check for items.
+            command: The name of the item to check for.
 
-        Returns
-        -------
-        bool
-            True if the item is resolved on the given node
+        Returns:
+            True if the item is resolved on the given node.
         """
         items_call = node.call("items")
         _, items = self.execute(items_call, (object_type,), {})
@@ -303,9 +253,7 @@ class IPCCommandInterface(CommandInterface):
 
 
 def lift_args(cmd, args, kwargs):
-    """
-    Lift args lifts the arguments to the type annotations on cmd's parameters.
-    """
+    """Lift args lifts the arguments to the type annotations on cmd's parameters."""
 
     def lift_arg(typ, arg):
         # for stuff like int | None, allow either
@@ -393,10 +341,10 @@ def lift_args(cmd, args, kwargs):
 
 
 class IPCCommandServer:
-    """Execute the object commands for the calls that are sent to it"""
+    """Execute the object commands for the calls that are sent to it."""
 
     def __init__(self, qtile) -> None:
-        """Wrapper around the ipc server for communitacing with the IPCCommandInterface
+        """Wrapper around the ipc server for communitacing with the IPCCommandInterface.
 
         sets up the IPC server such that it will receive and send messages to
         and from the IPCCommandInterface.
@@ -407,7 +355,7 @@ class IPCCommandServer:
         self,
         data: tuple[list[SelectorType], str, tuple, dict, bool],
     ) -> tuple[int, Any]:
-        """Receive and parse the given data"""
+        """Receive and parse the given data."""
         selectors, name, args, kwargs, lifted = data
         try:
             obj = self.qtile.select(selectors)

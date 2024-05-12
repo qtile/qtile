@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 
 
 class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
-    """This class defines the API that should be exposed by all layouts"""
+    """This class defines the API that should be exposed by all layouts."""
 
     defaults: list[tuple[str, Any, str]] = []
 
@@ -64,8 +64,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
 
     @property
     def group(self) -> _Group:
-        """
-        Returns the group this layout is attached to.
+        """Returns the group this layout is attached to.
 
         Layouts start out unattached, and are attached when the group is configured and
         each layout is cloned for every group.
@@ -75,15 +74,13 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         return self._group
 
     def clone(self, group: _Group) -> Self:
-        """Duplicate a layout
+        """Duplicate a layout.
 
         Make a copy of this layout. This is done to provide each group with a
         unique instance of every layout.
 
-        Parameters
-        ==========
-        group:
-            Group to attach new layout instance to.
+        Parameters:
+            group: Group to attach new layout instance to.
         """
         c = copy.copy(self)
         c._group = group
@@ -104,33 +101,33 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         return None
 
     def show(self, screen_rect: ScreenRect) -> None:
-        """Called when layout is being shown"""
+        """Called when layout is being shown."""
         pass
 
     def hide(self) -> None:
-        """Called when layout is being hidden"""
+        """Called when layout is being hidden."""
         pass
 
     def swap(self, c1: Window, c2: Window) -> None:
-        """Swap the two given clients c1 and c2"""
+        """Swap the two given clients c1 and c2."""
         raise CommandError(f"layout: {self.name} does not support swapping windows")
 
     def focus(self, client: Window) -> None:
-        """Called whenever the focus changes"""
+        """Called whenever the focus changes."""
         pass
 
     def blur(self) -> None:
-        """Called whenever focus is gone from this layout"""
+        """Called whenever focus is gone from this layout."""
         pass
 
     @expose_command()
     def info(self) -> dict[str, Any]:
-        """Returns a dictionary of layout information"""
+        """Returns a dictionary of layout information."""
         return dict(name=self.name, group=self.group.name if self.group else None)
 
     @abstractmethod
     def add_client(self, client: Window) -> None:
-        """Called whenever a window is added to the group
+        """Called whenever a window is added to the group.
 
         Called whether the layout is current or not. The layout should just add
         the window to its internal datastructures, without mapping or
@@ -140,7 +137,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
 
     @abstractmethod
     def remove(self, client: Window) -> Window | None:
-        """Called whenever a window is removed from the group
+        """Called whenever a window is removed from the group.
 
         Called whether the layout is current or not. The layout should just
         de-register the window from its data structures, without unmapping the
@@ -152,13 +149,13 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
 
     @abstractmethod
     def configure(self, client: Window, screen_rect: ScreenRect) -> None:
-        """Configure the layout
+        """Configure the layout.
 
         This method should:
 
-            - Configure the dimensions and borders of a window using the
-              `.place()` method.
-            - Call either `.hide()` or `.unhide()` on the window.
+        - Configure the dimensions and borders of a window using the
+            `.place()` method.
+        - Call either `.hide()` or `.unhide()` on the window.
         """
         pass
 
@@ -167,8 +164,9 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         """Called when the first client in Layout shall be focused.
 
         This method should:
-            - Return the first client in Layout, if any.
-            - Not focus the client itself, this is done by caller.
+
+        - Return the first client in Layout, if any.
+        - Not focus the client itself, this is done by caller.
         """
         pass
 
@@ -177,8 +175,9 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         """Called when the last client in Layout shall be focused.
 
         This method should:
-            - Return the last client in Layout, if any.
-            - Not focus the client itself, this is done by caller.
+
+        - Return the last client in Layout, if any.
+        - Not focus the client itself, this is done by caller.
         """
         pass
 
@@ -187,18 +186,17 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         """Called when the next client in Layout shall be focused.
 
         This method should:
-            - Return the next client in Layout, if any.
-            - Return None if the next client would be the first client.
-            - Not focus the client itself, this is done by caller.
+
+        - Return the next client in Layout, if any.
+        - Return None if the next client would be the first client.
+        - Not focus the client itself, this is done by caller.
 
         Do not implement a full cycle here, because the Groups cycling relies
         on returning None here if the end of Layout is hit,
         such that Floating clients are included in cycle.
 
-        Parameters
-        ==========
-        win:
-            The currently focused client.
+        Parameters:
+            win: The currently focused client.
         """
         pass
 
@@ -207,18 +205,17 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         """Called when the previous client in Layout shall be focused.
 
         This method should:
-            - Return the previous client in Layout, if any.
-            - Return None if the previous client would be the last client.
-            - Not focus the client itself, this is done by caller.
+
+        - Return the previous client in Layout, if any.
+        - Return None if the previous client would be the last client.
+        - Not focus the client itself, this is done by caller.
 
         Do not implement a full cycle here, because the Groups cycling relies
         on returning None here if the end of Layout is hit,
         such that Floating clients are included in cycle.
 
-        Parameters
-        ==========
-        win:
-            The currently focused client.
+        Parameters:
+            win: The currently focused client.
         """
         pass
 
@@ -232,8 +229,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
 
 
 class _ClientList:
-    """
-    ClientList maintains a list of clients and a current client.
+    """ClientList maintains a list of clients and a current client.
 
     The collection is meant as a base or utility class for special layouts,
     which need to maintain one or several collections of windows, for example
@@ -271,37 +267,28 @@ class _ClientList:
         self._current_idx = self.clients.index(client)
 
     def focus(self, client: Window) -> None:
-        """
-        Mark the given client as the current focused client in collection.
+        """Mark the given client as the current focused client in collection.
         This is equivalent to setting current_client.
         """
         self.current_client = client
 
     def focus_first(self) -> Window | None:
-        """
-        Returns the first client in collection.
-        """
+        """Returns the first client in collection."""
         return self[0]
 
     def focus_next(self, win: Window) -> Window | None:
-        """
-        Returns the client next from win in collection.
-        """
+        """Returns the client next from win in collection."""
         try:
             return self[self.index(win) + 1]
         except IndexError:
             return None
 
     def focus_last(self) -> Window | None:
-        """
-        Returns the last client in collection.
-        """
+        """Returns the last client in collection."""
         return self[-1]
 
     def focus_previous(self, win: Window) -> Window | None:
-        """
-        Returns the client previous to win in collection.
-        """
+        """Returns the client previous to win in collection."""
         idx = self.index(win)
         if idx > 0:
             return self[idx - 1]
@@ -310,8 +297,7 @@ class _ClientList:
     def add_client(
         self, client: Window, offset_to_current: int = 0, client_position: str | None = None
     ) -> None:
-        """
-        Insert the given client into collection at position of the current.
+        """Insert the given client into collection at position of the current.
 
         Use parameter 'offset_to_current' to specify where the client shall be
         inserted. Defaults to zero, which means at position of current client.
@@ -338,21 +324,15 @@ class _ClientList:
         self.current_client = client
 
     def append_head(self, client: Window) -> None:
-        """
-        Append the given client in front of list.
-        """
+        """Append the given client in front of list."""
         self.clients.insert(0, client)
 
     def append(self, client: Window) -> None:
-        """
-        Append the given client to the end of the collection.
-        """
+        """Append the given client to the end of the collection."""
         self.clients.append(client)
 
     def remove(self, client: Window) -> Window | None:
-        """
-        Remove the given client from collection.
-        """
+        """Remove the given client from collection."""
         if client not in self.clients:
             return None
         idx = self.clients.index(client)
@@ -365,8 +345,7 @@ class _ClientList:
         return self[self._current_idx]
 
     def rotate_up(self, maintain_index: bool = True) -> None:
-        """
-        Rotate the list. The first client is moved to last position.
+        """Rotate the list. The first client is moved to last position.
         If maintain_index is True the current_index is adjusted,
         such that the same client stays current and goes up in list.
         """
@@ -376,8 +355,7 @@ class _ClientList:
                 self.current_index -= 1
 
     def rotate_down(self, maintain_index: bool = True) -> None:
-        """
-        Rotate the list. The last client is moved to first position.
+        """Rotate the list. The last client is moved to first position.
         If maintain_index is True the current_index is adjusted,
         such that the same client stays current and goes down in list.
         """
@@ -387,8 +365,7 @@ class _ClientList:
                 self.current_index += 1
 
     def swap(self, c1: Window, c2: Window, focus: int = 1) -> None:
-        """
-        Swap the two given clients in list.
+        """Swap the two given clients in list.
         The optional argument 'focus' can be 1 or 2.
         In case of 1, the first client c1 is focused, in case of 2 the c2 and
         the current_index is not changed otherwise.
@@ -402,8 +379,7 @@ class _ClientList:
             self.current_index = i2
 
     def shuffle_up(self, maintain_index: bool = True) -> None:
-        """
-        Shuffle the list. The current client swaps position with its predecessor.
+        """Shuffle the list. The current client swaps position with its predecessor.
         If maintain_index is True the current_index is adjusted,
         such that the same client stays current and goes up in list.
         """
@@ -414,8 +390,7 @@ class _ClientList:
                 self.current_index -= 1
 
     def shuffle_down(self, maintain_index: bool = True) -> None:
-        """
-        Shuffle the list. The current client swaps position with its successor.
+        """Shuffle the list. The current client swaps position with its successor.
         If maintain_index is True the current_index is adjusted,
         such that the same client stays current and goes down in list.
         """
@@ -426,9 +401,8 @@ class _ClientList:
                 self.current_index += 1
 
     def join(self, other: _ClientList, offset_to_current: int = 0) -> None:
-        """
-        Add clients from 'other' _ClientList to self.
-        'offset_to_current' works as described for add()
+        """Add clients from 'other' _ClientList to self.
+        'offset_to_current' works as described for add().
         """
         pos = max(0, self.current_index + offset_to_current)
         if pos < len(self.clients):
@@ -482,8 +456,7 @@ class _ClientList:
 
 
 class _SimpleLayoutBase(Layout):
-    """
-    Basic layout class for simple layouts,
+    """Basic layout class for simple layouts,
     which need to maintain a single list of clients.
     This class offers full fledged list of clients and focus cycling.
 

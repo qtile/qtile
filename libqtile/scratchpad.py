@@ -32,9 +32,9 @@ if TYPE_CHECKING:
 
 
 class WindowVisibilityToggler:
-    """
-    WindowVisibilityToggler is a wrapper for a window, used in ScratchPad group
-    to toggle visibility of a window by toggling the group it belongs to.
+    """WindowVisibilityToggler is a wrapper for a window used in ScratchPad group.
+
+    It is used to toggle visibility of a window by toggling the group it belongs to.
     The window is either sent to the named ScratchPad, which is by default
     invisble, or the current group on the current screen.
     With this functionality the window can be shown and hidden by a single
@@ -42,21 +42,15 @@ class WindowVisibilityToggler:
     By default, the window is also hidden if it loses focus.
     """
 
-    def __init__(self, scratchpad_name, window: Window, on_focus_lost_hide, warp_pointer):
-        """
-        Initiliaze the  WindowVisibilityToggler.
+    def __init__(self, scratchpad_name: str, window: Window, on_focus_lost_hide: bool, warp_pointer: bool):
+        """Initialize the WindowVisibilityToggler.
 
         Parameters:
-        ===========
-        scratchpad_name: string
-            The name (not label) of the ScratchPad group used to hide the window
-        window: window
-            The window to toggle
-        on_focus_lost_hide: bool
-            if True the associated window is hidden if it loses focus
-        warp_pointer: bool
-            if True the mouse pointer is warped to center of associated window
-            if shown. Only used if on_focus_lost_hide is True
+            scratchpad_name: The name (not label) of the ScratchPad group used to hide the window.
+            window: The window to toggle.
+            on_focus_lost_hide: If True the associated window is hidden if it loses focus.
+            warp_pointer: If True the mouse pointer is warped to center of associated window
+                if shown. Only used if `on_focus_lost_hide` is True.
         """
         self.scratchpad_name = scratchpad_name
         self.window = window
@@ -77,8 +71,8 @@ class WindowVisibilityToggler:
 
     @property
     def visible(self):
-        """
-        Determine if associated window is currently visible.
+        """Determine if associated window is currently visible.
+
         That is the window is on a group different from the scratchpad
         and that group is the current visible group.
         """
@@ -90,17 +84,15 @@ class WindowVisibilityToggler:
         )
 
     def toggle(self):
-        """
-        Toggle the visibility of associated window. Either show() or hide().
-        """
+        """Toggle the visibility of associated window (either `show()` or `hide()`)."""
         if not self.visible or not self.shown:
             self.show()
         else:
             self.hide()
 
     def show(self):
-        """
-        Show the associated window on top of current screen.
+        """Show the associated window on top of current screen.
+
         The window is moved to the current group as floating window.
 
         If 'warp_pointer' is True the mouse pointer is warped to center of the
@@ -127,9 +119,7 @@ class WindowVisibilityToggler:
                 hook.subscribe.setgroup(self.on_focus_change)
 
     def hide(self):
-        """
-        Hide the associated window. That is, send it to the scratchpad group.
-        """
+        """Hide the associated window, that is, send it to the scratchpad group."""
         if self.visible or self.shown:
             # unsubscribe the hook methods, since the window is not shown
             if self.on_focus_lost_hide:
@@ -139,15 +129,15 @@ class WindowVisibilityToggler:
             self.shown = False
 
     def unsubscribe(self):
-        """unsubscribe all hooks"""
+        """Unsubscribe all hooks."""
         if self.on_focus_lost_hide and (self.visible or self.shown):
             hook.unsubscribe.client_focus(self.on_focus_change)
             hook.unsubscribe.setgroup(self.on_focus_change)
 
     def on_focus_change(self, *args, **kwargs):
-        """
-        hook method which is called on window focus change and group change.
-        Depending on 'on_focus_lost_xxx' arguments, the associated window may
+        """Hook method which is called on window focus change and group change.
+
+        Depending on `on_focus_lost_xxx` arguments, the associated window may
         get hidden (by call to hide) or even killed.
         """
         if self.shown:
@@ -161,9 +151,9 @@ class WindowVisibilityToggler:
 
 
 class DropDownToggler(WindowVisibilityToggler):
-    """
-    Specialized WindowVisibilityToggler which places the associatd window
-    each time it is shown at desired location.
+    """Specialized visibility toggler for drop downs.
+    
+    It places the associatd window at the desired location each time it is shown.
     For example this can be used to create a quake-like terminal.
     """
 
@@ -200,10 +190,7 @@ class DropDownToggler(WindowVisibilityToggler):
         return info
 
     def show(self):
-        """
-        Like WindowVisibilityToggler.show, but before showing the window,
-        its floating x, y, width and height is set.
-        """
+        """Set floating `x`, `y`, `width` and `height`, then show the window."""
         if (not self.visible) or (not self.shown):
             # SET GEOMETRY
             win = self.window
@@ -222,10 +209,9 @@ class DropDownToggler(WindowVisibilityToggler):
 
 
 class ScratchPad(group._Group):
-    """
-    Specialized group which is by default invisible and can be configured, to
-    spawn windows and toggle its visibility (in the current group) by command.
+    """Specialized group to spawn windows and toggle their visibility by command.
 
+    It is invisible by default.
     The ScratchPad group acts as a container for windows which are currently
     not visible but associated to a DropDownToggler and can toggle their
     group by command (of ScratchPad group).
@@ -253,8 +239,8 @@ class ScratchPad(group._Group):
             hook.unsubscribe.float_change(self.on_float_change)
 
     def _spawn(self, ddconfig):
-        """
-        Spawn a process by defined command.
+        """Spawn a process by defined command.
+
         Method is only called if no window is associated. This is either on the
         first call to show or if the window was killed.
         The process id of spawned process is saved and compared to new windows.
@@ -268,8 +254,8 @@ class ScratchPad(group._Group):
             self._spawned[name] = ddconfig.match or Match(net_wm_pid=pid)
 
     def on_client_new(self, client, *args, **kwargs):
-        """
-        hook method which is called on new windows.
+        """Hook method which is called on new windows.
+
         This method is subscribed if the given command is spawned
         and unsubscribed immediately if the associated window is detected.
         """
@@ -296,8 +282,8 @@ class ScratchPad(group._Group):
                 hook.subscribe.float_change(self.on_float_change)
 
     def on_client_killed(self, client, *args, **kwargs):
-        """
-        hook method which is called if a client is killed.
+        """Hook method which is called if a client is killed.
+
         If the associated window is killed, reset internal state.
         """
         name = None
@@ -308,8 +294,8 @@ class ScratchPad(group._Group):
         self._check_unsubscribe()
 
     def on_float_change(self, *args, **kwargs):
-        """
-        hook method which is called if window float state is changed.
+        """Hook method which is called if window float state is changed.
+
         If the current associated window is not floated (any more) the window
         and process is detached from DropDown, thus the next call to Show
         will spawn a new process.
@@ -325,9 +311,7 @@ class ScratchPad(group._Group):
 
     @expose_command()
     def dropdown_toggle(self, name):
-        """
-        Toggle visibility of named DropDown.
-        """
+        """Toggle visibility of named DropDown."""
         if self._single:
             for n, d in self.dropdowns.items():
                 if n != name:
@@ -340,16 +324,14 @@ class ScratchPad(group._Group):
 
     @expose_command()
     def hide_all(self):
-        """
-        Hide all scratchpads.
-        """
+        """Hide all scratchpads."""
         for d in self.dropdowns.values():
             d.hide()
 
     @expose_command()
     def dropdown_reconfigure(self, name, **kwargs):
-        """
-        reconfigure the named DropDown configuration.
+        """Reconfigure the named DropDown configuration.
+
         Note that changed attributes only have an effect on spawning the window.
         """
         if name not in self._dropdownconfig:
@@ -361,8 +343,8 @@ class ScratchPad(group._Group):
 
     @expose_command()
     def dropdown_info(self, name=None):
-        """
-        Get information on configured or currently active DropDowns.
+        """Get information on configured or currently active DropDowns.
+
         If name is None, a list of all dropdown names is returned.
         """
         if name is None:
@@ -375,9 +357,10 @@ class ScratchPad(group._Group):
             raise ValueError('No DropDown named "%s".' % name)
 
     def get_state(self):
-        """
-        Get the state of existing dropdown windows. Used for restoring state across
-        Qtile restarts (`restart` == True) or config reloads (`restart` == False).
+        """Get the state of existing dropdown windows.
+        
+        Used for restoring state across Qtile restarts
+        (`restart is True`) or config reloads (`restart is False`).
         """
         state = []
         for name, dd in self.dropdowns.items():
@@ -386,9 +369,10 @@ class ScratchPad(group._Group):
         return state
 
     def restore_state(self, state, restart: bool) -> list[int]:
-        """
-        Restore the state of existing dropdown windows. Used for restoring state across
-        Qtile restarts (`restart` == True) or config reloads (`restart` == False).
+        """Restore the state of existing dropdown windows.
+        
+        Used for restoring state across Qtile restarts
+        (`restart is True`) or config reloads (`restart is False`).
         """
         orphans = []
         for name, wid, visible in state:

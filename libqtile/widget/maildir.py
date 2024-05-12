@@ -33,7 +33,7 @@ from libqtile.widget import base
 
 
 class Maildir(base.ThreadPoolText):
-    """A simple widget showing the number of new mails in maildir mailboxes"""
+    """A simple widget showing the number of new mails in maildir mailboxes."""
 
     defaults = [
         ("maildir_path", "~/Mail", "path to the Maildir folder"),
@@ -68,12 +68,11 @@ class Maildir(base.ThreadPoolText):
         if isinstance(self.sub_folders[0], str):
             self.sub_folders = [{"path": folder, "label": folder} for folder in self.sub_folders]
 
-    def poll(self):
-        """Scans the mailbox for new messages
+    def poll(self) -> str:
+        """Scans the mailbox for new messages.
 
-        Returns
-        =======
-        A string representing the current mailbox state
+        Returns:
+            A string representing the current mailbox state.
         """
         state = {}
 
@@ -105,16 +104,13 @@ class Maildir(base.ThreadPoolText):
         return s.join(('<span foreground="{}">'.format(color), "</span>"))
 
     def format_text(self, state: dict[str, int]) -> str:
-        """Converts the state of the subfolders to a string
+        """Converts the state of the subfolders to a string.
 
-        Parameters
-        ==========
-        state: dict[str, int]
-            a dictionary mapping subfolder labels to new mail values
+        Parameters:
+            state: A dictionary mapping subfolder labels to new mail values.
 
-        Returns
-        =======
-        a string representation of the given state
+        Returns:
+            A string representation of the given state.
         """
         if self.total:
             return self._format_one(self.sub_folders[0]["label"], sum(state.values()))

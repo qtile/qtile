@@ -208,9 +208,7 @@ class _Graph(base._Widget):
 class CPUGraph(_Graph):
     """Display CPU usage graph.
 
-    Widget requirements: psutil_.
-
-    .. _psutil: https://pypi.org/project/psutil/
+    Widget requirements: [psutil](https://pypi.org/project/psutil/).
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
@@ -261,9 +259,7 @@ class CPUGraph(_Graph):
 class MemoryGraph(_Graph):
     """Displays a memory usage graph.
 
-    Widget requirements: psutil_.
-
-    .. _psutil: https://pypi.org/project/psutil/
+    Widget requirements: [psutil](https://pypi.org/project/psutil/).
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
@@ -294,9 +290,7 @@ class MemoryGraph(_Graph):
 class SwapGraph(_Graph):
     """Display a swap info graph.
 
-    Widget requirements: psutil_.
-
-    .. _psutil: https://pypi.org/project/psutil/
+    Widget requirements: [psutil](https://pypi.org/project/psutil/).
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
@@ -331,9 +325,8 @@ class SwapGraph(_Graph):
 class NetGraph(_Graph):
     """Display a network usage graph.
 
-    Widget requirements: psutil_.
-
-    .. _psutil: https://pypi.org/project/psutil/"""
+    Widget requirements: [psutil](https://pypi.org/project/psutil/).
+    """
 
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
@@ -387,7 +380,7 @@ class NetGraph(_Graph):
 
 
 class HDDGraph(_Graph):
-    """Display HDD free or used space graph"""
+    """Display HDD free or used space graph."""
 
     fixed_upper_bound = True
     orientations = base.ORIENTATION_HORIZONTAL
@@ -414,10 +407,10 @@ class HDDGraph(_Graph):
 
 
 class HDDBusyGraph(_Graph):
-    """Display HDD busy time graph
+    """Display HDD busy time graph.
 
     Parses /sys/block/<dev>/stat file and extracts overall device IO usage,
-    based on ``io_ticks``'s value.  See
+    based on `io_ticks`'s value.  See
     https://www.kernel.org/doc/Documentation/block/stat.txt
     """
 

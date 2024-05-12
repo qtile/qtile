@@ -29,7 +29,7 @@ class Configurable:
         self._user_config = config
 
     def add_defaults(self, defaults):
-        """Add defaults to this object, overwriting any which already exist"""
+        """Add defaults to this object, overwriting any which already exist."""
         # Since we can't check for immutability reliably, shallow copy the
         # value. If a mutable value were set and it were changed in one place
         # it would affect all other instances, since this is typically called
@@ -48,7 +48,7 @@ class Configurable:
             raise AttributeError("%s has no attribute: %s" % (cname, name))
 
     def _find_default(self, name):
-        """Returns a tuple (found, value)"""
+        """Returns a tuple (found, value)."""
         defaults = self._variable_defaults.copy()
         defaults.update(self.global_defaults)
         defaults.update(self._user_config)
@@ -59,9 +59,9 @@ class Configurable:
 
 
 class ExtraFallback:
-    """Adds another layer of fallback to attributes
+    """Adds another layer of fallback to attributes.
 
-    Used to look up a different attribute name
+    Used to look up a different attribute name.
     """
 
     def __init__(self, name, fallback):
@@ -81,5 +81,5 @@ class ExtraFallback:
         return retval
 
     def __set__(self, instance, value):
-        """Set own value to a hidden attribute of the object"""
+        """Set own value to a hidden attribute of the object."""
         setattr(instance, self.hidden_attribute, value)

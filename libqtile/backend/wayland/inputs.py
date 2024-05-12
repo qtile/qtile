@@ -80,32 +80,33 @@ if _has_ffi:
 
 
 class InputConfig(configurable.Configurable):
-    """
-    This is used to configure input devices. An instance of this class represents one
+    """This is used to configure input devices.
+    
+    An instance of this class represents one
     set of settings that can be applied to an input device.
 
-    To use this, define a dictionary called ``wl_input_rules`` in your config. The keys
+    To use this, define a dictionary called `wl_input_rules` in your config. The keys
     are used to match input devices, and the values are instances of this class with the
     desired settings. For example:
 
-    .. code-block:: python
+    ```python
+    from libqtile.backend.wayland import InputConfig
 
-        from libqtile.backend.wayland import InputConfig
-
-        wl_input_rules = {
-            "1267:12377:ELAN1300:00 04F3:3059 Touchpad": InputConfig(left_handed=True),
-            "*": InputConfig(left_handed=True, pointer_accel=True),
-            "type:keyboard": InputConfig(kb_options="ctrl:nocaps,compose:ralt"),
-        }
+    wl_input_rules = {
+        "1267:12377:ELAN1300:00 04F3:3059 Touchpad": InputConfig(left_handed=True),
+        "*": InputConfig(left_handed=True, pointer_accel=True),
+        "type:keyboard": InputConfig(kb_options="ctrl:nocaps,compose:ralt"),
+    }
+    ```
 
     When a input device is being configured, the most specific matching key in the
     dictionary is found and the corresponding settings are used to configure the device.
-    Unique identifiers are chosen first, then ``"type:X"``, then ``"*"``.
+    Unique identifiers are chosen first, then `"type:X"`, then `"*"`.
 
-    The command ``qtile cmd-obj -o core -f get_inputs`` can be used to get information
+    The command `qtile cmd-obj -o core -f get_inputs` can be used to get information
     about connected devices, including their identifiers.
 
-    Options default to ``None``, leave a device's default settings intact. For
+    Options default to `None`, leave a device's default settings intact. For
     information on what each option does, see the documenation for libinput:
     https://wayland.freedesktop.org/libinput/doc/latest/configuration.html. Note that
     devices often only support a subset of settings.
@@ -113,33 +114,34 @@ class InputConfig(configurable.Configurable):
     This tries to mirror how Sway configures libinput devices. For more information
     check out sway-input(5): https://man.archlinux.org/man/sway-input.5#LIBINPUT_CONFIGURATION
 
-    Keyboards, managed by `xkbcommon <https://github.com/xkbcommon/libxkbcommon>`_, are
-    configured with the options prefixed by ``kb_``. X11's helpful `XKB guide
-    <https://www.x.org/releases/X11R7.5/doc/input/XKB-Config.html>`_ may be useful for
+    Keyboards, managed by [xkbcommon](https://github.com/xkbcommon/libxkbcommon), are
+    configured with the options prefixed by `kb_`. X11's helpful [XKB guide][] may be useful for
     figuring out the syntax for some of these settings.
+
+    [XKB Guide]: https://www.x.org/releases/X11R7.5/doc/input/XKB-Config.html
     """
 
     defaults = [
-        ("accel_profile", None, "``'adaptive'`` or ``'flat'``"),
-        ("click_method", None, "``'none'``, ``'button_areas'`` or ``'clickfinger'``"),
-        ("drag", None, "``True`` or ``False``"),
-        ("drag_lock", None, "``True`` or ``False``"),
+        ("accel_profile", None, "`'adaptive'` or `'flat'`"),
+        ("click_method", None, "`'none'`, `'button_areas'` or `'clickfinger'`"),
+        ("drag", None, "`True` or `False`"),
+        ("drag_lock", None, "`True` or `False`"),
         ("dwt", None, "True or False"),
-        ("left_handed", None, "``True`` or ``False``"),
-        ("middle_emulation", None, "``True`` or ``False``"),
-        ("natural_scroll", None, "``True`` or ``False``"),
-        ("pointer_accel", None, "A ``float`` between -1 and 1."),
-        ("scroll_button", None, "``'disable'``, 'Button[1-3,8,9]' or a keycode"),
+        ("left_handed", None, "`True` or `False`"),
+        ("middle_emulation", None, "`True` or `False`"),
+        ("natural_scroll", None, "`True` or `False`"),
+        ("pointer_accel", None, "A `float` between -1 and 1."),
+        ("scroll_button", None, "`'disable'`, 'Button[1-3,8,9]' or a keycode"),
         (
             "scroll_method",
             None,
-            "``'none'``, ``'two_finger'``, ``'edge'``, or ``'on_button_down'``",
+            "`'none'`, `'two_finger'`, `'edge'`, or `'on_button_down'`",
         ),
-        ("tap", None, "``True`` or ``False``"),
-        ("tap_button_map", None, "``'lrm'`` or ``'lmr'``"),
-        ("kb_layout", None, "Keyboard layout i.e. ``XKB_DEFAULT_LAYOUT``"),
-        ("kb_options", None, "Keyboard options i.e. ``XKB_DEFAULT_OPTIONS``"),
-        ("kb_variant", None, "Keyboard variant i.e. ``XKB_DEFAULT_VARIANT``"),
+        ("tap", None, "`True` or `False`"),
+        ("tap_button_map", None, "`'lrm'` or `'lmr'`"),
+        ("kb_layout", None, "Keyboard layout i.e. `XKB_DEFAULT_LAYOUT`"),
+        ("kb_options", None, "Keyboard options i.e. `XKB_DEFAULT_OPTIONS`"),
+        ("kb_variant", None, "Keyboard variant i.e. `XKB_DEFAULT_VARIANT`"),
         ("kb_repeat_rate", 25, "Keyboard key repeats made per second"),
         ("kb_repeat_delay", 600, "Keyboard delay in milliseconds before repeating"),
     ]
@@ -164,9 +166,9 @@ class _Device(ABC, HasListeners):
         self.finalize()
 
     def get_info(self) -> tuple[str, str]:
-        """
-        Get the device type and identifier for this input device. These can be used be
-        used to assign ``InputConfig`` options to devices or types of devices.
+        """Get the device type and identifier for this input device.
+        
+        These can be used be used to assign `InputConfig` options to devices or types of devices.
         """
         device = self.wlr_device
         name = device.name
@@ -185,7 +187,7 @@ class _Device(ABC, HasListeners):
         return type_key, identifier
 
     def _match_config(self, configs: dict[str, InputConfig]) -> InputConfig | None:
-        """Finds a matching ``InputConfig`` rule."""
+        """Finds a matching `InputConfig` rule."""
         type_key, identifier = self.get_info()
 
         if identifier in configs:
@@ -200,7 +202,7 @@ class _Device(ABC, HasListeners):
 
     @abstractmethod
     def configure(self, configs: dict[str, InputConfig]) -> None:
-        """Applies ``InputConfig`` rules to this input device."""
+        """Applies `InputConfig` rules to this input device."""
         pass
 
 
@@ -229,9 +231,7 @@ class Keyboard(_Device):
                 self.seat.set_keyboard(self.core.keyboards[-1].keyboard)
 
     def set_keymap(self, layout: str | None, options: str | None, variant: str | None) -> None:
-        """
-        Set the keymap for this keyboard.
-        """
+        """Set the keymap for this keyboard."""
         if (layout, options, variant) in self._keymaps:
             keymap = self._keymaps[(layout, options, variant)]
         else:
@@ -273,7 +273,7 @@ class Keyboard(_Device):
         self.seat.keyboard_notify_key(event)
 
     def configure(self, configs: dict[str, InputConfig]) -> None:
-        """Applies ``InputConfig`` rules to this keyboard device."""
+        """Applies `InputConfig` rules to this keyboard device."""
         config = self._match_config(configs)
 
         if config:
@@ -287,7 +287,7 @@ class Pointer(_Device):
         self.core._pointers.remove(self)
 
     def configure(self, configs: dict[str, InputConfig]) -> None:
-        """Applies ``InputConfig`` rules to this pointer device."""
+        """Applies `InputConfig` rules to this pointer device."""
         config = self._match_config(configs)
         if config is None:
             return

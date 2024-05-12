@@ -65,8 +65,7 @@ class LoopContext(contextlib.AbstractAsyncContextManager):
 
 
 class QtileEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
-    """
-    Asyncio policy to ensure the main event loop is accessible
+    """Asyncio policy to ensure the main event loop is accessible
     even if `get_event_loop()` is called from a different thread.
     """
 

@@ -113,8 +113,7 @@ def flatten(value):
 
 
 class Node:
-    """
-    A tree node.
+    """A tree node.
 
     Each node represents a container that can hold a payload and child nodes.
     """
@@ -338,8 +337,7 @@ class Node:
 
     @property
     def pixel_perfect(self):
-        """
-        Return pixel-perfect int dimensions (x, y, width, height) which
+        """Return pixel-perfect int dimensions (x, y, width, height) which
         compensate for gaps in the layout grid caused by plain int conversions.
         """
         x, y, width, height = self.x, self.y, self.width, self.height
@@ -447,8 +445,7 @@ class Node:
 
     @property
     def flexible(self):
-        """
-        A node is flexible if its size isn't (explicitly or implictly)
+        """A node is flexible if its size isn't (explicitly or implictly)
         determined.
         """
         if self.fixed:
@@ -729,8 +726,7 @@ class Node:
 
 
 class Plasma(Layout):
-    """
-    A flexible tree-based layout.
+    """A flexible tree-based layout.
 
     Each tree node represents a container whose children are aligned either
     horizontally or vertically. Each window is attached to a leaf of the tree
@@ -739,20 +735,18 @@ class Plasma(Layout):
     integrated into other containers.
 
     Windows in a container will all open in the same direction. Calling
-    ``lazy.layout.mode_vertical/horizontal()`` will insert a new container allowing
+    `lazy.layout.mode_vertical/horizontal()` will insert a new container allowing
     windows to be added in the new direction.
 
-    You can use the ``Plasma`` widget to show which mode will apply when opening a new
+    You can use the `Plasma` widget to show which mode will apply when opening a new
     window based on the currently focused node.
 
-    Windows can be focused selectively by using ``lazy.layout.up/down/left/right()`` to focus
+    Windows can be focused selectively by using `lazy.layout.up/down/left/right()` to focus
     the nearest window in that direction relative to the currently focused window.
 
     "Integrating" windows is best explained with an illustation. Starting with three
-    windows, a, b, c. b is currently focused. Calling ``lazy.layout.integrate_left()``
+    windows, a, b, c. b is currently focused. Calling `lazy.layout.integrate_left()`
     will have the following effect:
-
-    ::
 
         ----------------------         ----------------------
         | a    | b    | c    |         | a        | c       |
@@ -764,48 +758,50 @@ class Plasma(Layout):
         |      |      |      |         |          |         |
         ----------------------         ----------------------
 
-    Finally, windows can me moved around the layout with ``lazy.layout.move_up/down/left/right()``.
+    Finally, windows can me moved around the layout with `lazy.layout.move_up/down/left/right()`.
 
     Example keybindings:
 
-    .. code:: python
+    ```python
+    from libqtile.config import EzKey
+    from libqtile.lazy import lazy
 
-        from libqtile.config import EzKey
-        from libqtile.lazy import lazy
-        ...
-        keymap = {
-            'M-h': lazy.layout.left(),
-            'M-j': lazy.layout.down(),
-            'M-k': lazy.layout.up(),
-            'M-l': lazy.layout.right(),
-            'M-S-h': lazy.layout.move_left(),
-            'M-S-j': lazy.layout.move_down(),
-            'M-S-k': lazy.layout.move_up(),
-            'M-S-l': lazy.layout.move_right(),
-            'M-A-h': lazy.layout.integrate_left(),
-            'M-A-j': lazy.layout.integrate_down(),
-            'M-A-k': lazy.layout.integrate_up(),
-            'M-A-l': lazy.layout.integrate_right(),
-            'M-d': lazy.layout.mode_horizontal(),
-            'M-v': lazy.layout.mode_vertical(),
-            'M-S-d': lazy.layout.mode_horizontal_split(),
-            'M-S-v': lazy.layout.mode_vertical_split(),
-            'M-a': lazy.layout.grow_width(30),
-            'M-x': lazy.layout.grow_width(-30),
-            'M-S-a': lazy.layout.grow_height(30),
-            'M-S-x': lazy.layout.grow_height(-30),
-            'M-C-5': lazy.layout.size(500),
-            'M-C-8': lazy.layout.size(800),
-            'M-n': lazy.layout.reset_size(),
-        }
-        keys = [EzKey(k, v) for k, v in keymap.items()]
+    ...
+
+    keymap = {
+        'M-h': lazy.layout.left(),
+        'M-j': lazy.layout.down(),
+        'M-k': lazy.layout.up(),
+        'M-l': lazy.layout.right(),
+        'M-S-h': lazy.layout.move_left(),
+        'M-S-j': lazy.layout.move_down(),
+        'M-S-k': lazy.layout.move_up(),
+        'M-S-l': lazy.layout.move_right(),
+        'M-A-h': lazy.layout.integrate_left(),
+        'M-A-j': lazy.layout.integrate_down(),
+        'M-A-k': lazy.layout.integrate_up(),
+        'M-A-l': lazy.layout.integrate_right(),
+        'M-d': lazy.layout.mode_horizontal(),
+        'M-v': lazy.layout.mode_vertical(),
+        'M-S-d': lazy.layout.mode_horizontal_split(),
+        'M-S-v': lazy.layout.mode_vertical_split(),
+        'M-a': lazy.layout.grow_width(30),
+        'M-x': lazy.layout.grow_width(-30),
+        'M-S-a': lazy.layout.grow_height(30),
+        'M-S-x': lazy.layout.grow_height(-30),
+        'M-C-5': lazy.layout.size(500),
+        'M-C-8': lazy.layout.size(800),
+        'M-n': lazy.layout.reset_size(),
+    }
+
+    keys = [EzKey(k, v) for k, v in keymap.items()]
+    ```
 
     Acknowledgements:
     This layout was developed by numirias and published at
-    https://github.com/numirias/qtile-plasma A few minor amendments have been made
+    https://github.com/numirias/qtile-plasma. A few minor amendments have been made
     to that layout as part of incorporating this into the main qtile codebase but the
     majority of the work is theirs.
-
     """
 
     defaults = [
@@ -820,8 +816,8 @@ class Plasma(Layout):
         (
             "fair",
             False,
-            "When ``False`` effort will be made to preserve nodes with a fixed size. "
-            "Set to ``True`` to enable new windows to take more space from fixed size nodes.",
+            "When `False` effort will be made to preserve nodes with a fixed size. "
+            "Set to `True` to enable new windows to take more space from fixed size nodes.",
         ),
     ]
     # If windows are added before configure() was called, the screen size is

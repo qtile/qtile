@@ -38,19 +38,18 @@ GOLDEN_RATIO = 1.618
 
 
 class Spiral(_SimpleLayoutBase):
-    """
-    A mathematical layout.
+    """A mathematical layout.
 
     Renders windows in a spiral form by splitting the screen based on a selected ratio.
     The direction of the split is changed every time in a defined order resulting in a
     spiral formation.
 
-    The main window can be sized with ``lazy.layout.grow_main()`` and
-    ``lazy.layout.shrink_main()``. All other windows are sized by
-    ``lazy.layout.increase_ratio()`` and ``lazy.layout.decrease_ratio()``.
+    The main window can be sized with `lazy.layout.grow_main()` and
+    `lazy.layout.shrink_main()`. All other windows are sized by
+    `lazy.layout.increase_ratio()` and `lazy.layout.decrease_ratio()`.
 
-    NB if ``main_pane_ratio`` is not set then it will also be adjusted according to ``ratio``.
-    However, as soon ``shrink_main()`` or ``grow_main()`` have been called once then the
+    NB if `main_pane_ratio` is not set then it will also be adjusted according to `ratio`.
+    However, as soon `shrink_main()` or `grow_main()` have been called once then the
     master pane will only change size following further calls to those methods.
 
     Users are able to choose the location of the main (i.e. largest) pane and the direction
@@ -58,9 +57,7 @@ class Spiral(_SimpleLayoutBase):
 
     Some examples:
 
-    ``main_pane="left", clockwise=True``
-
-    ::
+    `main_pane="left", clockwise=True`
 
         ----------------------
         |1        |2         |
@@ -72,9 +69,7 @@ class Spiral(_SimpleLayoutBase):
         |         |4    |    |
         ----------------------
 
-    ``main_pane="top", clockwise=False``
-
-    ::
+    `main_pane="top", clockwise=False`
 
         ----------------------
         |1                   |
@@ -85,7 +80,6 @@ class Spiral(_SimpleLayoutBase):
         |         |----------|
         |         |3         |
         ----------------------
-
     """
 
     split_ratio: float
@@ -274,8 +268,7 @@ class Spiral(_SimpleLayoutBase):
         return (win_x, win_y, win_w, win_h), margins
 
     def has_invalid_size(self, win: Rect) -> bool:
-        """
-        Checks if window would have an invalid size.
+        """Checks if window would have an invalid size.
 
         A window that would have negative height or width (after adjusting for margins and borders)
         will return True.
@@ -293,8 +286,7 @@ class Spiral(_SimpleLayoutBase):
         )
 
     def get_spiral(self, x, y, width, height) -> list[Rect]:
-        """
-        Calculates positions of windows in the spiral.
+        """Calculates positions of windows in the spiral.
 
         Returns a list of tuples (x, y, w, h) for positioning windows.
         """

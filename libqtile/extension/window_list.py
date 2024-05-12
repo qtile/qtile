@@ -24,9 +24,7 @@ from libqtile.scratchpad import ScratchPad
 
 
 class WindowList(Dmenu):
-    """
-    Give vertical list of all open windows in dmenu. Switch to selected.
-    """
+    """Give vertical list of all open windows in dmenu. Switch to selected."""
 
     defaults = [
         ("item_format", "{group}.{id}: {window}", "the format for the menu items"),

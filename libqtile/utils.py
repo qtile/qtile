@@ -59,8 +59,7 @@ TASKS: list[asyncio.Task[None]] = []
 
 
 def create_task(coro: Coroutine) -> asyncio.Task | None:
-    """
-    Wrapper for asyncio.create_task.
+    """Wrapper for `asyncio.create_task`.
 
     Stores task so garbage collector doesn't remove it and removes reference when it's done.
     See: https://textual.textualize.io/blog/2023/02/11/the-heisenbug-lurking-in-your-async-code/
@@ -98,16 +97,16 @@ def lget(o: list[T], v: int) -> T | None:
 
 
 def rgb(x: ColorType) -> tuple[float, float, float, float]:
-    """
-    Returns a valid RGBA tuple.
+    """Returns a valid RGBA tuple.
 
     Here are some valid specifications:
-        #ff0000
-        with alpha: #ff000080
-        ff0000
-        with alpha: ff0000.5
-        (255, 0, 0)
-        with alpha: (255, 0, 0, 0.5)
+    
+    - #ff0000
+    - with alpha: #ff000080
+    - ff0000
+    - with alpha: ff0000.5
+    - (255, 0, 0)
+    - with alpha: (255, 0, 0, 0.5)
 
     Which is returned as (1.0, 0.0, 0.0, 0.5).
     """
@@ -145,8 +144,7 @@ def hex(x: ColorType) -> str:
 
 
 def has_transparency(colour: ColorsType) -> bool:
-    """
-    Returns True if the colour is not fully opaque.
+    """Returns True if the colour is not fully opaque.
 
     Where a list of colours is passed, returns True if any
     colour is not fully opaque.
@@ -157,18 +155,14 @@ def has_transparency(colour: ColorsType) -> bool:
 
 
 def remove_transparency(colour: ColorsType):  # type: ignore
-    """
-    Returns a tuple of (r, g, b) with no alpha.
-    """
+    """Returns a tuple of (r, g, b) with no alpha."""
     if isinstance(colour, (str, tuple)):
         return tuple(x * 255.0 for x in rgb(colour)[:3])
     return [remove_transparency(c) for c in colour]
 
 
 def is_valid_colors(color: ColorsType) -> bool:
-    """
-    Returns whether the argument is a valid color or list of colors.
-    """
+    """Returns whether the argument is a valid color or list of colors."""
     if not isinstance(color, list):
         color = [color]
     try:
@@ -188,10 +182,7 @@ def scrub_to_utf8(text: str | bytes) -> str:
 
 
 def get_cache_dir() -> str:
-    """
-    Returns the cache directory and create if it doesn't exists
-    """
-
+    """Returns the cache directory and create if it doesn't exists."""
     cache_directory = os.path.expandvars("$XDG_CACHE_HOME")
     if cache_directory == "$XDG_CACHE_HOME":
         # if variable wasn't set
@@ -218,11 +209,7 @@ def get_config_file() -> Path:
 
 
 def describe_attributes(obj: Any, attrs: list[str], func: Callable = lambda x: x) -> str:
-    """
-    Helper for __repr__ functions to list attributes with truthy values only
-    (or values that return a truthy value by func)
-    """
-
+    """Helper for `__repr__` functions to list truthy attributes given a predicate."""
     pairs = []
 
     for attr in attrs:
@@ -238,10 +225,10 @@ def import_class(
     class_name: str,
     fallback: Callable | None = None,
 ) -> Any:
-    """Import a class safely
+    """Import a class safely.
 
     Try to import the class module, and if it fails because of an ImportError
-    it logs on WARNING, and logs the traceback on DEBUG level
+    it logs on WARNING, and logs the traceback on DEBUG level.
     """
     try:
         module = importlib.import_module(module_path, __package__)
@@ -259,7 +246,7 @@ def lazify_imports(
     package: str,
     fallback: Callable | None = None,
 ) -> tuple[tuple[str, ...], Callable, Callable]:
-    """Leverage PEP 562 to make imports lazy in an __init__.py
+    """Leverage PEP 562 to make imports lazy in an `__init__` module.
 
     The registry must be a dictionary with the items to import as keys and the
     modules they belong to as a value.
@@ -285,13 +272,12 @@ def send_notification(
     timeout: int = -1,
     id_: int | None = None,
 ) -> int:
-    """
-    Send a notification.
+    """Send a notification.
 
-    The id_ argument, if passed, requests the notification server to replace a visible
+    The `id_` argument, if passed, requests the notification server to replace a visible
     notification with the same ID. An ID is returned for each call; this would then be
     passed when calling this function again to replace that notification. See:
-    https://developer.gnome.org/notification-spec/
+    https://developer.gnome.org/notification-spec/.
     """
     if not has_dbus:
         logger.warning("dbus-next is not installed. Unable to send notifications.")
@@ -395,15 +381,16 @@ def guess_terminal(preference: str | Sequence | None = None) -> str | None:
 
 
 def scan_files(dirpath: str, *names: str) -> defaultdict[str, list[str]]:
-    """
-    Search a folder recursively for files matching those passed as arguments, with
-    globbing. Returns a dict with keys equal to entries in names, and values a list of
+    """Search a folder recursively for files matching those passed as arguments, with globbing.
+    
+    Returns a dict with keys equal to entries in names, and values a list of
     matching paths. E.g.:
 
+    ```pycon
     >>> scan_files('/wallpapers', '*.png', '*.jpg')
     defaultdict(<class 'list'>, {'*.png': ['/wallpapers/w1.png'], '*.jpg':
     ['/wallpapers/w2.jpg', '/wallpapers/w3.jpg']})
-
+    ```
     """
     dirpath = os.path.expanduser(dirpath)
     files = defaultdict(list)
@@ -427,8 +414,7 @@ async def _send_dbus_message(
     negotiate_unix_fd: bool = False,
     bus: MessageBus | None = None,
 ) -> tuple[MessageBus | None, Message | None]:
-    """
-    Private method to send messages to dbus via dbus_next.
+    """Private method to send messages to dbus via dbus_next.
 
     An existing bus connection can be passed, if left empty, a new
     bus connection will be created.
@@ -484,9 +470,7 @@ async def add_signal_receiver(
     path: str | None = None,
     check_service: bool = False,
 ) -> bool:
-    """
-    Helper function which aims to recreate python-dbus's add_signal_receiver
-    method in dbus_next with asyncio calls.
+    """Recreate python-dbus's `add_signal_receiver` method in `dbus_next` with asyncio calls.
 
     If check_service is `True` the method will raise a wanrning and return False
     if the service is not visible on the bus. If the `bus_name` is None, no
@@ -582,7 +566,6 @@ async def add_signal_receiver(
 
 async def find_dbus_service(service: str, session_bus: bool) -> bool:
     """Looks up service name to see if it is currently available on dbus."""
-
     # We're using low level interface here to reduce unnecessary calls for
     # introspection etc.
     bus, msg = await _send_dbus_message(

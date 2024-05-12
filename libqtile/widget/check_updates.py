@@ -43,7 +43,7 @@ CMD_DICT = {
 }
 
 # We need the spaces here to ensure the indentation is correct in the docstring
-CMD_DOC_COMMANDS = "\n".join(f"    * ``'{k}'`` runs ``{v}``" for k, v in CMD_DICT.items())
+CMD_DOC_COMMANDS = "\n".join(f"    * `'{k}'` runs `{v}`" for k, v in CMD_DICT.items())
 
 
 class CheckUpdates(base.ThreadPoolText):
@@ -52,20 +52,19 @@ class CheckUpdates(base.ThreadPoolText):
     _doc = f"""
     Shows number of pending updates in different unix systems.
 
-    The following built-in options are available via the ``distro`` parameter:
+    The following built-in options are available via the `distro` parameter:
 
 {CMD_DOC_COMMANDS}
 
-    .. note::
-
-        It is common for package managers to return a non-zero code when there are no
-        updates. As a result, the widget will treat *any* error as if there are no updates.
-        If you are using a custom commmand/script, you should therefore ensure that it
-        returns zero when it completes if you wish to see the output of your command.
-
-        In addition, as no errors are recorded to the log, if the widget is showing no
-        updates and you believe that to be incorrect, you should run the appropriate
-        command in a terminal to view any error messages.
+    > NOTE:
+    > It is common for package managers to return a non-zero code when there are no
+    > updates. As a result, the widget will treat *any* error as if there are no updates.
+    > If you are using a custom commmand/script, you should therefore ensure that it
+    > returns zero when it completes if you wish to see the output of your command.
+    >
+    > In addition, as no errors are recorded to the log, if the widget is showing no
+    > updates and you believe that to be incorrect, you should run the appropriate
+    > command in a terminal to view any error messages.
 
     """
 

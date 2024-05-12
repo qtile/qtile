@@ -19,8 +19,7 @@ CORES = {
 
 
 def has_deps(backend: str) -> list[str]:
-    """
-    Check if the backend has all its dependencies installed.
+    """Check if the backend has all its dependencies installed.
 
     Args:
         backend: The backend to check.
