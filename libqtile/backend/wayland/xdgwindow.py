@@ -23,6 +23,7 @@ from __future__ import annotations
 import typing
 
 from pywayland.server import Listener
+from wlroots.util.box import Box
 from wlroots.util.clock import Timespec
 from wlroots.util.edges import Edges
 from wlroots.wlr_types.xdg_shell import XdgSurface, XdgToplevelWMCapabilities
@@ -214,6 +215,12 @@ class XdgWindow(Window[XdgSurface]):
             self._urgent = True
             hook.fire("client_urgent_hint_changed", self)
 
+    def clip(self):
+        if next(self.container.children, None) is None:
+            return
+        geometry = self.surface.get_geometry()
+        self.container.node.subsurface_tree_set_clip(Box(geometry.x, geometry.y, self._width, self._height))
+
     def place(
         self,
         x: int,
@@ -257,6 +264,7 @@ class XdgWindow(Window[XdgSurface]):
         self.surface.set_size(width, height)
         self.surface.set_bounds(width, height)
         self.paint_borders(bordercolor, borderwidth)
+        self.clip()
 
         if above:
             self.bring_to_front()

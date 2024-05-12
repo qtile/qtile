@@ -23,6 +23,7 @@ from __future__ import annotations
 import typing
 
 from wlroots import xwayland
+from wlroots.util.box import Box
 from wlroots.wlr_types import SceneTree
 
 from libqtile import hook
@@ -289,6 +290,11 @@ class XWindow(Window[xwayland.Surface]):
             if self.ftm_handle:
                 self.ftm_handle.set_fullscreen(do_full)
 
+    def clip(self):
+        if next(self.container.children, None) is None:
+            return
+        self.container.node.subsurface_tree_set_clip(Box(0, 0, self._width, self._height))
+
     def place(
         self,
         x: int,
@@ -332,6 +338,7 @@ class XWindow(Window[xwayland.Surface]):
         self.container.node.set_position(x, y)
         self.surface.configure(x, y, width, height)
         self.paint_borders(bordercolor, borderwidth)
+        self.clip()
 
         if above:
             self.bring_to_front()
