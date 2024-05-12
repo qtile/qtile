@@ -1,0 +1,223 @@
+site_name: "Qtile"
+site_description: "A pure-Python tiling window manager."
+site_url: "https://pawamoy.github.io/qtile"
+repo_url: "https://github.com/pawamoy/qtile"
+repo_name: "Qtile"
+site_dir: "site"
+watch: [mkdocs.yml, README.md, CONTRIBUTING.md, CHANGELOG, libqtile]
+copyright: Copyright 2008, Aldo Cortesi and contributors
+edit_uri: edit/master/docs/
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+
+nav:
+- index.md
+- Getting Started:
+  - Installation:
+    - manual/install/index.md
+    - Arch: manual/install/arch.md
+    - Fedora: manual/install/fedora.md
+    - Funtoo: manual/install/funtoo.md
+    - Ubuntu/Debian: manual/install/ubuntu.md
+    - Slackware: manual/install/slackware.md
+    - FreeBSD: manual/install/freebsd.md
+    - NixOS: manual/install/nixos.md
+  - Running Qtile:
+    - systemd: manual/install/without-dm.md
+    - Wayland: manual/wayland.md
+    - Troubleshooting: manual/troubleshooting.md
+  - Entry points:
+    - manual/commands/shell/index.md
+    - manual/commands/shell/qtile-start.md
+    - manual/commands/shell/qtile-shell.md
+    - manual/commands/shell/qtile-migrate.md
+    - manual/commands/shell/qtile-cmd.md
+    - manual/commands/shell/qtile-run.md
+    - manual/commands/shell/qtile-top.md
+    - manual/commands/shell/dqtile-cmd.md
+    - manual/commands/shell/iqshell.md
+- Scripting:
+  - Architecture:
+    - manual/commands/index.md
+    - The Command Graph: manual/commands/command_graph.md
+    - Navigating the Command Graph: manual/commands/navigation.md
+    - Command Graph development: manual/commands/advanced.md
+  - Interfaces: manual/commands/interfaces.md
+  - Commands API:
+    - manual/commands/api/index.md
+    - Qtile root: manual/commands/api/root.md
+    - Layouts: manual/commands/api/layouts/
+    - Windows: manual/commands/api/windows.md
+    - Groups: manual/commands/api/groups.md
+    - Bars: manual/commands/api/bars.md
+    - Widgets: manual/commands/api/widgets/
+    - Screens: manual/commands/api/screens.md
+    - Core: manual/commands/api/backend.md
+- Configuration:
+  - Default configuration file: manual/config/default.md
+  - The configuration file:
+    - manual/config/index.md
+    - Configuration variables:
+      - Lazy objects: manual/config/lazy.md
+      - Groups: manual/config/groups.md
+      - Keys: manual/config/keys.md
+      - Layouts: manual/config/layouts.md
+      - Mouse: manual/config/mouse.md
+      - Screens: manual/config/screens.md
+      - Hooks: manual/config/hooks.md
+      - Match: manual/config/match.md
+  - Built-in Layouts: manual/ref/layouts.md
+  - Built-in Widgets: manual/ref/widgets.md
+  - Built-in Hooks: manual/ref/hooks.md
+  - Built-in Extensions: manual/ref/extensions.md
+  - Keybindings in images: manual/commands/keybindings.md
+  - Window stacking: manual/stacking.md
+- Hacking:
+  - Hacking on Qtile: manual/hacking.md
+  - Contributing: manual/contributing.md
+  - Migrations: manual/how-to-migrate.md
+- Miscellaneous:
+  - Frequently Asked Questions: manual/faq.md
+  - How to create a widget: manual/howto/widget.md
+  - How to create a layout: manual/howto/layout.md
+  - Using `git`: manual/howto/git.md
+  - License: manual/license.md
+  - Changelog: manual/changelog.md
+
+theme:
+  name: material
+  icon:
+    logo: fontawesome/solid/q
+  features:
+  - announce.dismiss
+  - content.action.edit
+  - content.action.view
+  - content.code.annotate
+  - content.code.copy
+  - content.tooltips
+  - navigation.footer
+  - navigation.sections
+  - navigation.tabs
+  - navigation.tabs.sticky
+  - navigation.top
+  - search.highlight
+  - search.suggest
+  - toc.follow
+  palette:
+  - media: "(prefers-color-scheme)"
+    toggle:
+      icon: material/brightness-auto
+      name: Switch to light mode
+  - media: "(prefers-color-scheme: light)"
+    scheme: default
+    primary: blue grey
+    accent: teal
+    toggle:
+      icon: material/weather-sunny
+      name: Switch to dark mode
+  - media: "(prefers-color-scheme: dark)"
+    scheme: slate
+    primary: blue grey
+    accent: teal
+    toggle:
+      icon: material/weather-night
+      name: Switch to system preference
+
+extra_css:
+- _static/material.css
+- _static/mkdocstrings.css
+
+hooks:
+- scripts/mocks.py
+- scripts/mkdocs_hooks.py
+
+markdown_extensions:
+- attr_list
+- admonition
+- callouts
+- footnotes
+- markdown_grid_tables
+- md_in_html
+- mkdocs_graphviz
+- pymdownx.emoji:
+    emoji_index: !!python/name:material.extensions.emoji.twemoji
+    emoji_generator: !!python/name:material.extensions.emoji.to_svg
+- pymdownx.magiclink
+- pymdownx.snippets:
+    base_path: [!relative $config_dir]
+    check_paths: true
+- pymdownx.superfences
+- pymdownx.tabbed:
+    alternate_style: true
+    slugify: !!python/object/apply:pymdownx.slugs.slugify
+      kwds:
+        case: lower
+- pymdownx.tasklist:
+    custom_checkbox: true
+- toc:
+    permalink: true
+
+plugins:
+- search
+- autorefs
+- markdown-exec
+- gen-files:
+    scripts:
+    - scripts/gen_commands_api_layouts.py
+    - scripts/gen_commands_api_widgets.py
+- literate-nav:
+    nav_file: SUMMARY.md
+    implicit_index: true
+- section-index
+- mkdocstrings:
+    enabled: !ENV [MKDOCSTRINGS, true]
+    custom_templates: docs/templates
+    handlers:
+      python:
+        import:
+        - https://docs.python.org/3/objects.inv
+        paths: [.]
+        options:
+          docstring_options:
+            ignore_init_summary: true
+          docstring_section_style: list
+          extensions:
+          - griffe_inherited_docstrings
+          - scripts/griffe_extensions.py
+          filters: ["!^_"]
+          heading_level: 1
+          inherited_members: true
+          merge_init_into_class: true
+          separate_signature: true
+          show_root_heading: true
+          show_root_full_path: false
+          show_signature_annotations: true
+          show_source: true
+          show_symbol_type_heading: true
+          show_symbol_type_toc: true
+          signature_crossrefs: true
+          summary: true
+- minify:
+    minify_html: !ENV [DEPLOY, false]
+# - group:
+#     enabled: !ENV [MATERIAL_INSIDERS, false]
+#     plugins:
+#     - typeset
+
+extra:
+  social:
+  - icon: fontawesome/brands/github
+    link: https://github.com/qtile
+  - icon: fontawesome/brands/discord
+    link: https://discord.gg/ehh233wCrC
+  # - icon: fontawesome/brands/mastodon
+  #   link: https://fosstodon.org/@qtile
+  # - icon: fontawesome/brands/twitter
+  #   link: https://twitter.com/qtile
+  # - icon: fontawesome/brands/gitter
+  #   link: https://gitter.im/qtile
+  - icon: fontawesome/brands/python
+    link: https://pypi.org/project/qtile/

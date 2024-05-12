@@ -1,0 +1,9 @@
+/* More space at the bottom of the page. */
+.md-main__inner {
+    margin-bottom: 1.5rem;
+}
+
+/* Invert logo colors in navbar. */
+.md-logo img {
+    filter: invert(100%);
+}

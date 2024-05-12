@@ -1,0 +1,10 @@
+{% extends "_base/attribute.html" %}
+
+{% block contents scoped %}
+    {{ super() }}
+
+    {# Render attribute members! #}
+    {% set root = False %}
+    {% set heading_level = heading_level + 1 %}
+    {% include "children.html" with context %}
+{% endblock contents %}
