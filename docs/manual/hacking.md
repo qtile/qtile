@@ -1,123 +1,106 @@
-.. _hacking:
+# Hacking on Qtile
 
-================
-Hacking on Qtile
-================
-
-Requirements
-============
+## Requirements
 
 Here are Qtile's additional dependencies that may be required for tests:
 
-================= =================== ==================================================
-Dependency        Ubuntu Package      Needed for
-================= =================== ==================================================
-pytest_           python3-pytest      Running tests
-pre-commit_       pre-commit          Running linters
-PyGObject         python3-gi          Running tests (test windows)
-Xephyr_           xserver-xephyr      Testing with X11 backend (optional, see below)
-mypy              python3-mypy        Testing ``qtile check`` (optional)
-imagemagick>=6.8  imagemagick         ``test/test_images*`` (optional)
-gtk-layer-shell   libgtk-layer-shell0 Testing notification windows in Wayland (optional)
-dbus-launch       dbus-x11            Testing dbus-using widgets (optional)
-notifiy-send      libnotify-bin       Testing ``Notify`` widget (optional)
-xvfb              xvfb                Testing with X11 headless (optional)
-================= =================== ==================================================
+Dependency       | Ubuntu Package      | Needed for
+---------------- | ------------------- | ----------
+[pytest][]       | python3-pytest      | Running tests
+[pre-commit][]   | pre-commit          | Running linters
+PyGObject        | python3-gi          | Running tests (test windows)
+[Xephyr][]       | xserver-xephyr      | Testing with X11 backend (optional, see below)
+mypy             | python3-mypy        | Testing `qtile check` (optional)
+imagemagick>=6.8 | imagemagick         | `test/test_images*` (optional)
+gtk-layer-shell  | libgtk-layer-shell0 | Testing notification windows in Wayland (optional)
+dbus-launch      | dbus-x11            | Testing dbus-using widgets (optional)
+notifiy-send     | libnotify-bin       | Testing `Notify` widget (optional)
+xvfb             | xvfb                | Testing with X11 headless (optional)
 
-.. _pytest: https://docs.pytest.org
-.. _Xephyr: https://freedesktop.org/wiki/Software/Xephyr
-.. _pre-commit: https://pre-commit.com/
+[pytest]: https://docs.pytest.org
+[Xephyr]: https://freedesktop.org/wiki/Software/Xephyr
+[pre-commit]: https://pre-commit.com/
 
-
-Backends
---------
+### Backends
 
 The test suite can be run using the X11 or Wayland backend, or both.  By
 default, only the X11 backend is used for tests. To test a single backend or
 both backends, specify as arguments to pytest:
 
-.. code-block:: bash
+```bash
+pytest --backend wayland  # Test just Wayland backend
+pytest --backend x11 --backend wayland  # Test both
+```
 
-    pytest --backend wayland  # Test just Wayland backend
-    pytest --backend x11 --backend wayland  # Test both
-
-Testing with the X11 backend requires Xephyr_ (and xvfb for headless mode) in addition to the core
+Testing with the X11 backend requires [Xephyr][] (and xvfb for headless mode) in addition to the core
 dependencies.
 
-
-Building cffi module
-====================
+## Building cffi module
 
 Qtile ships with a small in-tree pangocairo binding built using cffi,
-``pangocffi.py``, and also binds to xcursor with cffi.  The bindings are not
+`pangocffi.py`, and also binds to xcursor with cffi.  The bindings are not
 built at run time and will have to be generated manually when the code is
 downloaded or when any changes are made to the cffi library.  This can be done
 by calling:
 
-.. code-block:: bash
+```bash
+./scripts/ffibuild
+```
 
-    ./scripts/ffibuild
+## Setting up the environment
 
-Setting up the environment
-==========================
+In the root of the project, run `./dev.sh`.
+It will create a virtualenv called `venv`.
 
-In the root of the project, run ``./dev.sh``.
-It will create a virtualenv called ``venv``.
+Activate this virtualenv with `. venv/bin/activate`.
+Deactivate it with the `deactivate` command.
 
-Activate this virtualenv with ``. venv/bin/activate``.
-Deactivate it with the ``deactivate`` command.
+## Building the documentation
 
-Building the documentation
-==========================
+To build the documentation, you will also need to install
+[graphviz](https://www.graphviz.org/download/).
 
-To build the documentation, you will also need to install `graphviz
-<https://www.graphviz.org/download/>`_.
+Go into the `docs/` directory and run `pip install -r requirements.txt`.
 
-Go into the ``docs/`` directory and run ``pip install -r requirements.txt``.
+Build the documentation with `make html`.
 
-Build the documentation with ``make html``.
+Check the result by opening `_build/html/index.html` in your browser.
 
-Check the result by opening ``_build/html/index.html`` in your browser.
+> NOTE:
+> To speed up local testing, screenshots are not generated each time the documentation
+> is built.
+>
+> You can enable screenshots by setting the `QTILE_BUILD_SCREENSHOTS` environmental
+> variable at build time e.g. `QTILE_BUILD_SCREENSHOTS=1 make html`. You can also
+> export the variable so it will apply to all local builds `export QTILE_BUILD_SCREENSHOTS=1`
+> (but remember to unset it if you want to skip building screenshots).
 
-.. note::
-
-  To speed up local testing, screenshots are not generated each time the documentation
-  is built.
-
-  You can enable screenshots by setting the ``QTILE_BUILD_SCREENSHOTS`` environmental
-  variable at build time e.g. ``QTILE_BUILD_SCREENSHOTS=1 make html``. You can also
-  export the variable so it will apply to all local builds ``export QTILE_BUILD_SCREENSHOTS=1``
-  (but remember to unset it if you want to skip building screenshots).
-
-Development and testing
-=======================
+## Development and testing
 
 In practice, the development cycle looks something like this:
 
 1. make minor code change
-#. run appropriate test: ``pytest tests/test_module.py`` or ``pytest -k PATTERN``
-#. GOTO 1, until hackage is complete
-#. run entire test suite to make sure you didn't break anything else: ``pytest``
-#. try to commit, get changes and feedback from the pre-commit hooks
-#. GOTO 5, until your changes actually get committed
+1. run appropriate test: `pytest tests/test_module.py` or `pytest -k PATTERN`
+1. GOTO 1, until hackage is complete
+1. run entire test suite to make sure you didn't break anything else: `pytest`
+1. try to commit, get changes and feedback from the pre-commit hooks
+1. GOTO 5, until your changes actually get committed
 
 Tests and pre-commit hooks will be run by our CI on every pull request
 as well so you can see whether or not your contribution passes.
 
-Coding style
-============
+## Coding style
 
-While not all of our code follows `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_,
+While not all of our code follows [PEP8](https://www.python.org/dev/peps/pep-0008/),
 we do try to adhere to it where possible. All new code should be PEP8 compliant.
 
-The ``make lint`` command (or ``pre-commit run -a``) will run our linters and
+The `make lint` command (or `pre-commit run -a`) will run our linters and
 formatters with our configuration over the whole libqtile to ensure your patch
 complies with reasonable formatting constraints. We also request that git commit
 messages follow the
-`standard format <https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>`_.
+[standard format](https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html).
 
-Logging
-=======
+## Logging
 
 Logs are important to us because they are our best way to see what Qtile is
 doing when something abnormal happens. However, our goal is not to have as many
@@ -140,8 +123,14 @@ necessarily have advanced programming knowledge; adapt your message
 accordingly. If it can't make sense to your grandma, it's probably meant to be
 a DEBUG message.
 
-Using Xephyr
-============
+## Deprecation policy
+
+When a widget API is changed, you should deprecate the change using
+`libqtile.widget.base.deprecated` to warn users, in addition to adding it to
+the appropriate place in the changelog. We will typically remove deprecated
+APIs one tag after they are deprecated.
+
+## Using Xephyr
 
 Qtile has a very extensive test suite, using the Xephyr nested X server. When
 tests are run, a nested X server with a nested instance of Qtile is fired up,
@@ -152,24 +141,32 @@ enough to allow unit testing in a nested environment.
 
 The Qtile repo includes a tiny helper script to let you quickly pull up a
 nested instance of Qtile in Xephyr, using your current configuration.
-Run it from the top-level of the repository, like this::
+Run it from the top-level of the repository, like this:
 
-  ./scripts/xephyr
+```bash
+./scripts/xephyr
+```
 
-Change the screen size by setting the ``SCREEN_SIZE`` environment variable.
-Default: 800x600. Example::
+Change the screen size by setting the `SCREEN_SIZE` environment variable.
+Default: 800x600. Example:
 
-  SCREEN_SIZE=1920x1080 ./scripts/xephyr
+```bash
+SCREEN_SIZE=1920x1080 ./scripts/xephyr
+```
 
-Change the log level by setting the ``LOG_LEVEL`` environment variable.
-Default: INFO. Example::
+Change the log level by setting the `LOG_LEVEL` environment variable.
+Default: INFO. Example:
 
-  LOG_LEVEL=DEBUG ./scripts/xephyr
+```bash
+LOG_LEVEL=DEBUG ./scripts/xephyr
+```
 
 The script will also pass any additional options to Qtile. For example, you
-can use a specific configuration file like this::
+can use a specific configuration file like this:
 
-  ./scripts/xephyr -c ~/.config/qtile/other_config.py
+```bash
+./scripts/xephyr -c ~/.config/qtile/other_config.py
+```
 
 Once the Xephyr window is running and focused, you can enable capturing the
 keyboard shortcuts by hitting Control+Shift. Hitting them again will disable the
@@ -177,115 +174,115 @@ capture and let you use your personal keyboard shortcuts again.
 
 You can close the Xephyr window by enabling the capture of keyboard shortcuts
 and hit Mod4+Control+Q. Mod4 (or Mod) is usually the Super key (or Windows key).
-You can also close the Xephyr window by running ``qtile cmd-obj -o cmd -f shutdown``
+You can also close the Xephyr window by running `qtile cmd-obj -o cmd -f shutdown`
 in a terminal (from inside the Xephyr window of course).
 
 You don't need to run the Xephyr script in order to run the tests
 as the test runner will launch its own Xephyr instances.
 
-Second X Session
-================
+## Second X Session
 
 Some users prefer to test Qtile in a second, completely separate X session:
-Just switch to a new tty and run ``startx`` normally to use the ``~/.xinitrc``
+Just switch to a new tty and run `startx` normally to use the `~/.xinitrc`
 X startup script.
 
 It's likely though that you want to use a different, customized startup script
-for testing purposes, for example ``~/.config/qtile/xinitrc``. You can do so by
+for testing purposes, for example `~/.config/qtile/xinitrc`. You can do so by
 launching X with:
 
-.. code-block:: bash
-
+```bash
   startx ~/.config/qtile/xinitrc
+```
 
-``startx`` deals with multiple X sessions automatically. If you want to use
-``xinit`` instead, you need to first copy ``/etc/X11/xinit/xserverrc`` to
-``~/.xserverrc``; when launching it, you have to specify a new session number:
+`startx` deals with multiple X sessions automatically. If you want to use
+`xinit` instead, you need to first copy `/etc/X11/xinit/xserverrc` to
+`~/.xserverrc`; when launching it, you have to specify a new session number:
 
-.. code-block:: bash
+```bash
+xinit ~/.config/qtile/xinitrc -- :1
+```
 
-  xinit ~/.config/qtile/xinitrc -- :1
+Examples of custom X startup scripts are available in
+[qtile-examples](https://github.com/qtile/qtile-examples).
 
-Examples of custom X startup scripts are available in `qtile-examples
-<https://github.com/qtile/qtile-examples>`_.
-
-Debugging in PyCharm
-====================
+## Debugging in PyCharm
 
 Make sure to have all the requirements installed and your development environment setup.
 
-PyCharm should automatically detect the ``venv`` virtualenv when opening the project.
+PyCharm should automatically detect the `venv` virtualenv when opening the project.
 If you are using another viirtualenv, just instruct PyCharm to use it
-in ``Settings -> Project: qtile -> Project interpreter``.
+in `Settings -> Project: qtile -> Project interpreter`.
 
-In the project tree, on the left, right-click on the ``libqtile`` folder,
-and click on ``Mark Directory as -> Sources Root``.
+In the project tree, on the left, right-click on the `libqtile` folder,
+and click on `Mark Directory as -> Sources Root`.
 
 Next, add a Configuration using a Python template with these fields:
 
-- Script path: ``bin/qtile``, or the absolute path to it
-- Parameters: ``-c libqtile/resources/default_config.py``,
-  or nothing if you want to use your own config file in ``~/.config/qtile/config.py``
-- Environment variables: ``PYTHONUNBUFFERED=1;DISPLAY=:1``
+- Script path: `bin/qtile`, or the absolute path to it
+- Parameters: `-c libqtile/resources/default_config.py`,
+  or nothing if you want to use your own config file in `~/.config/qtile/config.py`
+- Environment variables: `PYTHONUNBUFFERED=1;DISPLAY=:1`
 - Working directory: the root of the project
 - Add contents root to PYTHONPATH: yes
 - Add source root to PYTHONPATH: yes
 
 Then, in a terminal, run:
 
-    Xephyr +extension RANDR -screen 1920x1040 :1 -ac &
+```bash
+Xephyr +extension RANDR -screen 1920x1040 :1 -ac &
+```
 
-Note that we used the same display, ``:1``, in both the terminal command
+Note that we used the same display, `:1`, in both the terminal command
 and the PyCharm configuration environment variables.
 Feel free to change the screen size to fit your own screen.
 
-Finally, place your breakpoints in the code and click on ``Debug``!
+Finally, place your breakpoints in the code and click on `Debug`!
 
-Once you finished debugging, you can close the Xephyr window with ``kill PID``
-(use the ``jobs`` builtin to get its PID).
+Once you finished debugging, you can close the Xephyr window with `kill PID`
+(use the `jobs` builtin to get its PID).
 
-Debugging in VSCode
-===================
+## Debugging in VSCode
 
 Make sure to have all the requirements installed and your development
 environment setup.
 
 Open the root of the repo in VSCode.  If you have created it, VSCode should
-detect the ``venv`` virtualenv, if not, select it.
+detect the `venv` virtualenv, if not, select it.
 
 Create a launch.json file with the following lines.
 
-.. code-block:: json
-
-  {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Python: Qtile",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/bin/qtile",
-            "cwd": "${workspaceFolder}",
-            "args": ["-c", "libqtile/resources/default_config.py"],
-            "console": "integratedTerminal",
-            "env": {"PYTHONUNBUFFERED":"1", "DISPLAY":":1"}
-        }
-    ]
-  }
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+      {
+          "name": "Python: Qtile",
+          "type": "python",
+          "request": "launch",
+          "program": "${workspaceFolder}/bin/qtile",
+          "cwd": "${workspaceFolder}",
+          "args": ["-c", "libqtile/resources/default_config.py"],
+          "console": "integratedTerminal",
+          "env": {"PYTHONUNBUFFERED":"1", "DISPLAY":":1"}
+      }
+  ]
+}
+```
 
 Then, in a terminal, run:
 
-    Xephyr +extension RANDR -screen 1920x1040 :1 -ac &
+```bash
+Xephyr +extension RANDR -screen 1920x1040 :1 -ac &
+```
 
-Note that we used the same display, ``:1``, in both the terminal command
-and the VSCode configuration environment variables.  Then ``debug`` usually
+Note that we used the same display, `:1`, in both the terminal command
+and the VSCode configuration environment variables.  Then `debug` usually
 in VSCode. Feel free to change the screen size to fit your own screen.
 
-Resources
-=========
+## Resources
 
 Here are a number of resources that may come in handy:
 
-* `Inter-Client Conventions Manual <https://tronche.com/gui/x/icccm/>`_
-* `Extended Window Manager Hints <https://specifications.freedesktop.org/wm-spec/wm-spec-latest.html>`_
-* `A reasonable basic Xlib Manual <https://tronche.com/gui/x/xlib/>`_
+* [Inter-Client Conventions Manual](https://tronche.com/gui/x/icccm/)
+* [Extended Window Manager Hints](https://specifications.freedesktop.org/wm-spec/wm-spec-latest.html)
+* [A reasonable basic Xlib Manual](https://tronche.com/gui/x/xlib/)

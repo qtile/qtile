@@ -1,0 +1,40 @@
+{% extends "_base/class.html.jinja" %}
+
+{% block children scoped %}
+  {% if config.commands %}
+    {{ log.info(config.commands) }}
+    {% set root = False %}
+    {% with heading_level = heading_level + 1 %}
+      {% filter convert_markdown(heading_level, html_id) %}
+API commands
+
+To access commands on this object via the command graph, use one of the following options:
+
+```python
+lazy.widget["{{ class.name.lower() }}"].<command>()
+```
+
+```bash
+qtile cmd-obj -o widget {{ class.name.lower() }} -f <command>
+```
+      {% endfilter %}
+      {% with functions = class.functions.values()|order_members(config.members_order, members_list) %}
+        {# Render summary. #}
+        The following commands are available for this object:
+        {% for function in functions %}
+          {% if function.has_labels(["command"]) %}
+            {% include function|get_template with context %}
+          {% endif %}
+        {% endfor %}
+        {# Render commands. #}
+        {% for function in functions %}
+          {% if function.has_labels(["command"]) %}
+            {% include function|get_template with context %}
+          {% endif %}
+        {% endfor %}
+      {% endwith %}
+    {% endwith %}
+  {% else %}
+    {{ super() }}
+  {% endif %}
+{% endblock children %}

@@ -1,4 +1,4 @@
-{% extends "_base/attribute.html" %}
+{% extends "_base/attribute.html.jinja" %}
 
 {% block contents scoped %}
     {{ super() }}
@@ -6,5 +6,5 @@
     {# Render attribute members! #}
     {% set root = False %}
     {% set heading_level = heading_level + 1 %}
-    {% include "children.html" with context %}
+    {% include "children"|get_template with context %}
 {% endblock contents %}

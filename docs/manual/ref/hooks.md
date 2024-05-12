@@ -1,7 +1,7 @@
-.. _ref-hooks:
+# Built-in Hooks
 
-==============
-Built-in Hooks
-==============
-
-.. qtile_hooks:: libqtile.hook.subscribe
+::: libqtile.hook.subscribe
+    options:
+      heading_level: 2
+      show_root_heading: false
+      show_root_toc_entry: false

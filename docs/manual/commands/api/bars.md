@@ -1,5 +1,4 @@
-Bar objects
-===========
+# Bar objects
 
 The bar is primarily used to display widgets on the screen. As a result, the bar
 does not need many of its own commands.
@@ -14,7 +13,6 @@ graph.
 .. qtile_graph::
     :root: bar
 
-.. qtile_commands:: libqtile.bar
-    :object-node: bar
-    :object-selector-string: position
-    :no-title:
+::: libqtile.bar
+    options:
+      heading_level: 2

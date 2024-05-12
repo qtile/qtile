@@ -1,5 +1,4 @@
-=========
-Changelog
-=========
+# Changelog
 
-.. literalinclude:: ../../CHANGELOG
+--8<-- "CHANGELOG"
+

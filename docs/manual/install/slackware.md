@@ -1,26 +1,20 @@
-=======================
-Installing on Slackware
-=======================
+# Installing on Slackware
 
-Qtile is available on the `SlackBuilds.org <https://slackbuilds.org/repository/14.2/desktop/qtile/>`_ as:
+Qtile is available on the [SlackBuilds.org](https://slackbuilds.org/repository/14.2/desktop/qtile/) as:
 
-======================= =======================
-Package Name            Description
-======================= =======================
-qtile                   stable branch (release)
-======================= =======================
+Package Name  | Description
+------------- | -----------------------
+qtile         | stable branch (release)
 
-Using slpkg (third party package manager)
-=========================================
+## Using slpkg (third party package manager)
 
-The easy way to install Qtile is with `slpkg <https://github.com/dslackw/slpkg>`_. For example:
+The easy way to install Qtile is with [slpkg](https://github.com/dslackw/slpkg). For example:
 
-.. code-block:: bash
+```bash
+slpkg -s sbo qtile
+```
 
-    slpkg -s sbo qtile
-
-Manual installation
-===================
+## Manual installation
 
 Download dependencies first and install them.
 The order in which you need to install is:
@@ -33,5 +27,4 @@ The order in which you need to install is:
 - cairocffi
 - qtile
 
-
-Please see the HOWTO for more information on `SlackBuild Usage HOWTO <https://slackbuilds.org/howto/>`_.
+Please see the HOWTO for more information on [SlackBuild Usage HOWTO](https://slackbuilds.org/howto/).

@@ -1,5 +1,4 @@
-Screen objects
-==============
+# Screen objects
 
 Screens are the display area that holds bars and an active group. Screen commands
 include changing the current group and changing the wallpaper.
@@ -10,10 +9,6 @@ and windows.
 .. qtile_graph::
     :root: screen
 
-|
-
-.. qtile_commands:: libqtile.config
-    :baseclass: libqtile.config.Screen
-    :includebase:
-    :object-node: screen
-    :no-title:
+::: libqtile.config
+    options:
+      heading_level: 2

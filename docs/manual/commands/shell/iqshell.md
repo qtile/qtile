@@ -1,39 +1,33 @@
-.. _iqshell:
+# iqshell
 
-=======
-iqshell
-=======
-
-In addition to the standard ``qtile shell`` shell interface, we provide a
+In addition to the standard `qtile shell` shell interface, we provide a
 kernel capable of running through Jupyter that hooks into the qshell client.
 The command structure and syntax is the same as qshell, so it is recommended
 you read that for more information about that.
 
-Dependencies
-============
+## Dependencies
 
-In order to run iqshell, you must have `ipykernel`_ and `jupyter_console`_.
+In order to run iqshell, you must have [ipykernel][] and [jupyter_console][].
 You can install the dependencies when you are installing qtile by running:
 
-.. code-block:: bash
-
-    $ pip install qtile[ipython]
+```console
+$ pip install qtile[ipython]
+```
 
 Otherwise, you can just install these two packages separately, either through
 PyPI or through your distribution package manager.
 
-.. _ipykernel: https://pypi.python.org/pypi/ipykernel
-.. _jupyter_console: https://pypi.python.org/pypi/jupyter_console
+[ipykernel]: https://pypi.python.org/pypi/ipykernel
+[jupyter_console]: https://pypi.python.org/pypi/jupyter_console
 
-Installing and Running the Kernel
-=================================
+## Installing and Running the Kernel
 
 Once you have the required dependencies, you can run the kernel right away by
 running:
 
-.. code-block:: bash
-
-    $ python3 -m libqtile.interactive.iqshell_kernel
+```console
+$ python3 -m libqtile.interactive.iqshell_kernel
+```
 
 However, this will merely spawn a kernel instance, you will have to run a
 separate frontend that connects to this kernel.
@@ -41,27 +35,26 @@ separate frontend that connects to this kernel.
 A more convenient way to run the kernel is by registering the kernel with
 Jupyter.  To register the kernel itself, run:
 
-.. code-block:: bash
+```console
+$ python3 -m libqtile.interactive.iqshell_install
+```
 
-    $ python3 -m libqtile.interactive.iqshell_install
-
-If you run this as a non-root user, or pass the ``--user`` flag, this will
+If you run this as a non-root user, or pass the `--user` flag, this will
 install to the user Jupyter kernel directory.  You can now invoke the kernel
 directly when starting a Jupyter frontend, for example:
 
-.. code-block:: bash
+```console
+$ jupyter console --kernel qshell
+```
 
-    $ jupyter console --kernel qshell
+The `iqshell` script will launch a Jupyter terminal console with the qshell kernel.
 
-The ``iqshell`` script will launch a Jupyter terminal console with the qshell kernel.
-
-iqshell vs qtile shell
-======================
+## iqshell vs qtile shell
 
 One of the main drawbacks of running through a Jupyter kernel is the frontend
 has no way to query the current node of the kernel, and as such, there is no
 way to set a custom prompt.  In order to query your current node, you can call
-``pwd``.
+`pwd`.
 
 This, however, enables many of the benefits of running in a Jupyter frontend,
 including being able to save, run, and re-run code cells in frontends such as
