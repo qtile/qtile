@@ -331,7 +331,11 @@ class XWindow(Window[xwayland.Surface]):
             self.float_x = x - self.group.screen.x
             self.float_y = y - self.group.screen.y
 
-        has_place_moved = any([self.surface.x != x, self.surface.y != y, self.surface.width != width, self.surface.height != height])
+        place_changed = any(
+            [self.x != x, self.y != y, self._width != width, self._height != height]
+        )
+        geom_changed = any([self.surface.x != x, self.surface.y != y, self.surface.width != width, self.surface.height != height])
+        needs_repos = place_changed or geom_changed
         has_border_changed = any([borderwidth != self.borderwidth, bordercolor != self.bordercolor])
 
         self.x = x
@@ -339,12 +343,12 @@ class XWindow(Window[xwayland.Surface]):
         self._width = width
         self._height = height
 
-        if has_place_moved:
+        if needs_repos:
             self.container.node.set_position(x, y)
             self.surface.configure(x, y, width, height)
             self.clip()
 
-        if has_place_moved or has_border_changed:
+        if needs_repos or has_border_changed:
             self.paint_borders(bordercolor, borderwidth)
 
         if above:
