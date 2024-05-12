@@ -78,7 +78,7 @@ class XdgWindow(Window[XdgSurface]):
         self.ftm_handle = core.foreign_toplevel_manager_v1.create_handle()
 
     def _on_commit(self, _listener: Listener, _data: Any) -> None:
-        if self in self.core.pending_windows and self.container.node.enabled:
+        if self not in self.core.pending_windows and self.container.node.enabled:
             self.place(
                 self.x, self.y, self.width, self.height, self.borderwidth, self.bordercolor
             )
