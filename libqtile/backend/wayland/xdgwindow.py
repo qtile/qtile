@@ -79,7 +79,9 @@ class XdgWindow(Window[XdgSurface]):
 
     def _on_commit(self, _listener: Listener, _data: Any) -> None:
         if self in self.core.pending_windows and self.container.node.enabled:
-            self.place(self.x, self.y, self.width, self.height, self.borderwidth, self.bordercolor)
+            self.place(
+                self.x, self.y, self.width, self.height, self.borderwidth, self.bordercolor
+            )
 
     def _on_request_fullscreen(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow request_fullscreen")
@@ -224,7 +226,9 @@ class XdgWindow(Window[XdgSurface]):
     def clip(self):
         if next(self.container.children, None) is None:
             return
-        self.container.node.subsurface_tree_set_clip(Box(self._geom.x, self._geom.y, self.width, self.height))
+        self.container.node.subsurface_tree_set_clip(
+            Box(self._geom.x, self._geom.y, self.width, self.height)
+        )
 
     def place(
         self,
@@ -262,8 +266,21 @@ class XdgWindow(Window[XdgSurface]):
             self.float_y = y - self.group.screen.y
 
         geom = self.surface.get_geometry()
-        has_place_moved = any([self._geom.x != geom.x, self._geom.y != geom.y, self._geom.width != width, self._geom.height != geom.height])
-        has_border_changed = any([borderwidth != self.borderwidth, bordercolor != self.bordercolor])
+        place_changed = any(
+            [self.x != x, self.y != y, self._width != width, self._height != height]
+        )
+        geom_changed = any(
+            [
+                self._geom.x != geom.x,
+                self._geom.y != geom.y,
+                self._geom.width != width,
+                self._geom.height != geom.height,
+            ]
+        )
+        needs_repos = place_changed or geom_changed
+        has_border_changed = any(
+            [borderwidth != self.borderwidth, bordercolor != self.bordercolor]
+        )
 
         self._geom = geom
         self.x = x
@@ -271,13 +288,13 @@ class XdgWindow(Window[XdgSurface]):
         self._width = width
         self._height = height
 
-        if has_place_moved:
+        if needs_repos:
             self.container.node.set_position(x, y)
             self.surface.set_size(width, height)
             self.surface.set_bounds(width, height)
             self.clip()
 
-        if has_place_moved or has_border_changed:
+        if needs_repos or has_border_changed:
             self.paint_borders(bordercolor, borderwidth)
 
         if above:
