@@ -541,7 +541,7 @@ class Core(base.Core, wlrq.HasListeners):
                     # otherwise, this is a nested popup
                     tree = cast(SceneTree, parent_xdg_surface.data)
                     while parent_xdg_surface.role == XdgSurfaceRole.POPUP:
-                        parent_xdg_surface = XdgSurface.from_surface(
+                        parent_xdg_surface = XdgSurface.try_from_surface(
                             parent_xdg_surface.popup.parent
                         )
                     win = cast(xdgwindow.XdgWindow, parent_xdg_surface.data)
