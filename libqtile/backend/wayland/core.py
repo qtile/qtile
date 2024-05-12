@@ -1139,7 +1139,9 @@ class Core(base.Core, wlrq.HasListeners):
         logger.debug("Adding io watch")
         # destroy the old one and load a new one with config settings
         self._cursor_manager.destroy()
-        self._cursor_manager = XCursorManager(self.qtile.config.wl_xcursor_theme_name, self.qtile.config.wl_xcursor_size)
+        self._cursor_manager = XCursorManager(
+            self.qtile.config.wl_xcursor_theme_name, self.qtile.config.wl_xcursor_size
+        )
         self.cursor.set_xcursor(self._cursor_manager, "default")
         self.fd = lib.wl_event_loop_get_fd(self.event_loop._ptr)
         if self.fd:

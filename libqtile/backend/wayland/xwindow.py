@@ -334,9 +334,18 @@ class XWindow(Window[xwayland.Surface]):
         place_changed = any(
             [self.x != x, self.y != y, self._width != width, self._height != height]
         )
-        geom_changed = any([self.surface.x != x, self.surface.y != y, self.surface.width != width, self.surface.height != height])
+        geom_changed = any(
+            [
+                self.surface.x != x,
+                self.surface.y != y,
+                self.surface.width != width,
+                self.surface.height != height,
+            ]
+        )
         needs_repos = place_changed or geom_changed
-        has_border_changed = any([borderwidth != self.borderwidth, bordercolor != self.bordercolor])
+        has_border_changed = any(
+            [borderwidth != self.borderwidth, bordercolor != self.bordercolor]
+        )
 
         self.x = x
         self.y = y
