@@ -63,17 +63,23 @@ class XdgWindow(Window[XdgSurface]):
         Window.__init__(self, core, qtile, surface)
 
         self._wm_class = surface.toplevel.app_id
+        self._geom = Box(0, 0, 0, 0)
         surface.set_wm_capabilities(WM_CAPABILITIES)
         surface.data = self.data_handle
         self.tree = core.scene.xdg_surface_create(self.container, surface)
 
         self.add_listener(surface.surface.map_event, self._on_map)
         self.add_listener(surface.surface.unmap_event, self._on_unmap)
+        self.add_listener(surface.surface.commit_event, self._on_commit)
         self.add_listener(surface.destroy_event, self._on_destroy)
         self.add_listener(surface.toplevel.request_maximize_event, self._on_request_maximize)
         self.add_listener(surface.toplevel.request_fullscreen_event, self._on_request_fullscreen)
 
         self.ftm_handle = core.foreign_toplevel_manager_v1.create_handle()
+
+    def _on_commit(self, _listener: Listener, _data: Any) -> None:
+        if self in self.core.pending_windows and self.container.node.enabled:
+            self.place(self.x, self.y, self.width, self.height, self.borderwidth, self.bordercolor)
 
     def _on_request_fullscreen(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xdgwindow request_fullscreen")
@@ -218,8 +224,7 @@ class XdgWindow(Window[XdgSurface]):
     def clip(self):
         if next(self.container.children, None) is None:
             return
-        geometry = self.surface.get_geometry()
-        self.container.node.subsurface_tree_set_clip(Box(geometry.x, geometry.y, self._width, self._height))
+        self.container.node.subsurface_tree_set_clip(Box(self._geom.x, self._geom.y, self.width, self.height))
 
     def place(
         self,
@@ -256,15 +261,24 @@ class XdgWindow(Window[XdgSurface]):
             self.float_x = x - self.group.screen.x
             self.float_y = y - self.group.screen.y
 
+        geom = self.surface.get_geometry()
+        has_place_moved = any([self._geom.x != geom.x, self._geom.y != geom.y, self._geom.width != width, self._geom.height != geom.height])
+        has_border_changed = any([borderwidth != self.borderwidth, bordercolor != self.bordercolor])
+
+        self._geom = geom
         self.x = x
         self.y = y
-        self.container.node.set_position(x, y)
         self._width = width
         self._height = height
-        self.surface.set_size(width, height)
-        self.surface.set_bounds(width, height)
-        self.paint_borders(bordercolor, borderwidth)
-        self.clip()
+
+        if has_place_moved:
+            self.container.node.set_position(x, y)
+            self.surface.set_size(width, height)
+            self.surface.set_bounds(width, height)
+            self.clip()
+
+        if has_place_moved or has_border_changed:
+            self.paint_borders(bordercolor, borderwidth)
 
         if above:
             self.bring_to_front()

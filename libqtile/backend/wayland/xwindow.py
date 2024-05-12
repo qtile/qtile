@@ -331,14 +331,21 @@ class XWindow(Window[xwayland.Surface]):
             self.float_x = x - self.group.screen.x
             self.float_y = y - self.group.screen.y
 
+        has_place_moved = any([self.surface.x != x, self.surface.y != y, self.surface.width != width, self.surface.height != height])
+        has_border_changed = any([borderwidth != self.borderwidth, bordercolor != self.bordercolor])
+
         self.x = x
         self.y = y
         self._width = width
         self._height = height
-        self.container.node.set_position(x, y)
-        self.surface.configure(x, y, width, height)
-        self.paint_borders(bordercolor, borderwidth)
-        self.clip()
+
+        if has_place_moved:
+            self.container.node.set_position(x, y)
+            self.surface.configure(x, y, width, height)
+            self.clip()
+
+        if has_place_moved or has_border_changed:
+            self.paint_borders(bordercolor, borderwidth)
 
         if above:
             self.bring_to_front()
