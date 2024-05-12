@@ -222,6 +222,8 @@ class Core(base.Core, wlrq.HasListeners):
 
         # Set up cursor
         self.cursor = Cursor(self.output_layout)
+        # we later load a new cursor manager with the config settings
+        self._cursor_manager = XCursorManager(None, 24)
         self._gestures = PointerGesturesV1(self.display)
         self._pressed_button_count = 0
         self._implicit_grab: ImplicitGrab | None = None
@@ -1135,6 +1137,8 @@ class Core(base.Core, wlrq.HasListeners):
     def setup_listener(self) -> None:
         """Setup a listener for the given qtile instance"""
         logger.debug("Adding io watch")
+        # destroy the old one and load a new one with config settings
+        self._cursor_manager.destroy()
         self._cursor_manager = XCursorManager(self.qtile.config.wl_xcursor_theme_name, self.qtile.config.wl_xcursor_size)
         self.cursor.set_xcursor(self._cursor_manager, "default")
         self.fd = lib.wl_event_loop_get_fd(self.event_loop._ptr)
