@@ -359,6 +359,8 @@ class Spiral(_SimpleLayoutBase):
             return
 
         setattr(self, prop, value)
+        # Force layout to be recalculated
+        self.dirty = True
         self.group.layout_all()
 
     @expose_command()
@@ -414,4 +416,6 @@ class Spiral(_SimpleLayoutBase):
         """Reset ratios to values set in config."""
         self.ratio = self.initial_ratio
         self.main_pane_ratio = self.initial_main_pane_ratio
+        # Force layout to be recalculated
+        self.dirty = True
         self.group.layout_all()
