@@ -312,9 +312,11 @@ class RatioTile(_SimpleLayoutBase):
         if new_ratio < 0:
             return
         self.ratio = new_ratio
+        self.dirty = True
         self.group.layout_all()
 
     @expose_command()
     def increase_ratio(self):
         self.ratio += self.ratio_increment
+        self.dirty = True
         self.group.layout_all()
