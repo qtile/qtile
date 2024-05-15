@@ -4,7 +4,7 @@ site_url: "https://pawamoy.github.io/qtile"
 repo_url: "https://github.com/pawamoy/qtile"
 repo_name: "Qtile"
 site_dir: "site"
-watch: [mkdocs.yml, README.md, CONTRIBUTING.md, CHANGELOG, libqtile]
+watch: [mkdocs.yml, README.md, CONTRIBUTING.md, CHANGELOG.md, libqtile]
 copyright: Copyright 2008, Aldo Cortesi and contributors
 edit_uri: edit/master/docs/
 
