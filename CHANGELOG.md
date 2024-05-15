@@ -1,5 +1,11 @@
 # Changelog
 
+<details markdown=1><summary>Unreleased changes</summary>
+
+## Qtile x.xx.x, released XXXX-XX-XX
+
+</details>
+
 ## Qtile 0.26.0, released 2024-05-21
 
 ### Breaking changes

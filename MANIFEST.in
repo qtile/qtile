@@ -1,6 +1,6 @@
 include CHANGELOG.md
 include LICENSE
-include README.rst
+include README.md
 include MANIFEST.in
 include CONTRIBUTING.md
 include .pre-commit-config.yaml
