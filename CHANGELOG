@@ -6,7 +6,11 @@ Qtile x.xx.x, released XXXX-XX-XX:
       - lazy.<object>.when(when_floating=X) now behaves differently: the lazy call will be executed
         independently of the current window's float state by default, and can be limited to when it
         is floating or tiled by passing when_floating as True or False respectively.
+    !!! Notice for packagers - wlroots (optional dependency) bump !!!
+      - Qtile's wayland backend now requires wlroots 0.17 and pywlroots 0.17
     * features
+      - For wayland you can now set the cursor theme and size to forcefully use in Qtile,
+        set `wl_xcursor_theme_name` and `wl_xcursor_size` in the configuration
       - automatically lift types to their annotated type when specified via
         the `qtile cmd-obj` command line
       - Add `Plasma` layout. The original layout (https://github.com/numirias/qtile-plasma) appears to be unmaintained
