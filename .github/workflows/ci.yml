@@ -44,6 +44,7 @@ jobs:
               env:
                 BACKEND: ${{ matrix.backend }}
             - name: Upload coverage data to coveralls.io
+              continue-on-error: true
               run: |
                 pip -q install coveralls >=3.3.0
                 coveralls --service=github
