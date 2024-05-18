@@ -22,7 +22,7 @@ import sys
 from setuptools import build_meta as _orig
 from setuptools.build_meta import *  # noqa: F401,F403
 
-WAYLAND_DEPENDENCIES = ["pywlroots>=0.16.4,<0.17.0"]
+WAYLAND_DEPENDENCIES = ["pywlroots>=0.17.0,<0.18.0"]
 
 
 def wants_wayland(config_settings):
