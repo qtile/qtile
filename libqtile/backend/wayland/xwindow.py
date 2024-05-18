@@ -76,8 +76,9 @@ class XWindow(Window[xwayland.Surface]):
 
     def _on_dissociate(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xwindow dissociate")
-        self.finalize_listener(self._map)
-        self.finalize_listener(self._unmap)
+        if wlr_surface := self.surface.surface:
+            self.finalize_listener(wlr_surface.map_event)
+            self.finalize_listener(wlr_surface.unmap_event)
 
     def _on_commit(self, _listener: Listener, _data: Any) -> None:
         if self.floating:
@@ -432,8 +433,8 @@ class XStatic(Static[xwayland.Surface]):
         self._conf_width = width
         self._conf_height = height
 
-        self.add_listener(surface.map_event, self._on_map)
-        self.add_listener(surface.unmap_event, self._on_unmap)
+        self.add_listener(surface.surface.map_event, self._on_map)
+        self.add_listener(surface.surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
         self.add_listener(surface.request_configure_event, self._on_request_configure)
         self.add_listener(surface.set_title_event, self._on_set_title)
