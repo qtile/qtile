@@ -291,11 +291,13 @@ class XWindow(Window[xwayland.Surface]):
                 self.ftm_handle.set_fullscreen(do_full)
 
     def clip(self) -> None:
-        if next(self.container.children, None) is None:
+        if not self.tree:
             return
-        if not self.container.node.enabled:
+        if not self.tree.node.enabled:
             return
-        self.container.node.subsurface_tree_set_clip(Box(0, 0, self._width, self._height))
+        if next(self.tree.children, None) is None:
+            return
+        self.tree.node.subsurface_tree_set_clip(Box(0, 0, self._width, self._height))
 
     def place(
         self,
