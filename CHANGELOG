@@ -6,10 +6,11 @@ Qtile x.xx.x, released XXXX-XX-XX:
       - lazy.<object>.when(when_floating=X) now behaves differently: the lazy call will be executed
         independently of the current window's float state by default, and can be limited to when it
         is floating or tiled by passing when_floating as True or False respectively.
-    !!! Notice for packagers - wlroots (optional dependency) bump !!!
-      - Qtile's wayland backend now requires wlroots 0.17 and pywlroots 0.17
+      - Dropped support for KDE idle protocol on Wayland
+    !!! Notice for packagers - Wayland backend !!!
+      - Qtile's Wayland backend now requires wlroots 0.17.x, pywlroots 0.17.x and pywayland >= 0.4.17.
     * features
-      - For wayland you can now set the cursor theme and size to forcefully use in Qtile,
+      - For Wayland you can now set the cursor theme and size to forcefully use in Qtile,
         set `wl_xcursor_theme` and `wl_xcursor_size` in the configuration
       - automatically lift types to their annotated type when specified via
         the `qtile cmd-obj` command line
