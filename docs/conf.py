@@ -66,6 +66,7 @@ MOCK_MODULES = [
     "wlroots.wlr_types.layer_shell_v1",
     "wlroots.wlr_types.output_management_v1",
     "wlroots.wlr_types.pointer_constraints_v1",
+    "wlroots.wlr_types.output",
     "wlroots.wlr_types.output_power_management_v1",
     "wlroots.wlr_types.scene",
     "wlroots.wlr_types.server_decoration",
