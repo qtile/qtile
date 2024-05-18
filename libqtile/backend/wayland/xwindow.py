@@ -293,6 +293,8 @@ class XWindow(Window[xwayland.Surface]):
     def clip(self):
         if next(self.container.children, None) is None:
             return
+        if not self.container.node.enabled:
+            return
         self.container.node.subsurface_tree_set_clip(Box(0, 0, self._width, self._height))
 
     def place(
