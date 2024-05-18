@@ -356,7 +356,7 @@ class XWindow(Window[xwayland.Surface]):
     @expose_command()
     def bring_to_front(self) -> None:
         self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
-        self.container.node.raise_to_top()
+        self.reparent(self.core.bring_to_front_window_tree)
 
     @expose_command()
     def static(
@@ -475,6 +475,7 @@ class XStatic(Static[xwayland.Surface]):
                 self.tree.node.set_position(self.borderwidth, self.borderwidth)
 
             self.container.node.set_enabled(enabled=True)
+            # TODO: is this correct
             self.bring_to_front()
             return
 
@@ -523,4 +524,4 @@ class XStatic(Static[xwayland.Surface]):
     @expose_command()
     def bring_to_front(self) -> None:
         self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
-        self.container.node.raise_to_top()
+        self.reparent(self.core.bring_to_front_window_tree)

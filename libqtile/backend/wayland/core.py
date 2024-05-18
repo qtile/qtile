@@ -278,6 +278,15 @@ class Core(base.Core, wlrq.HasListeners):
         #     │   │   ├── LayerStatic.tree
         #     │   │   └── ...
         #     │   │
+        #     │   ├── self.keep_below_window_tree
+        #     │   │   ├── XdgWindow.container
+        #     │   │   │   ├── XdgWindow.tree
+        #     │   │   │   └── XdgWindow._borders
+        #     │   │   ├── XWindow.container
+        #     │   │   │   ├── XWindow.tree
+        #     │   │   │   └── XWindow._borders
+        #     │   │   └── ... (further keep below windows)
+        #     │   │
         #     │   ├── self.mid_window_tree
         #     │   │   ├── XdgWindow.container
         #     │   │   │   ├── XdgWindow.tree
@@ -285,7 +294,43 @@ class Core(base.Core, wlrq.HasListeners):
         #     │   │   ├── XWindow.container
         #     │   │   │   ├── XWindow.tree
         #     │   │   │   └── XWindow._borders
-        #     │   │   └── ... (further regular windows)
+        #     │   │   └── ... (further regular tiling windows)
+        #     │   │
+        #     │   ├── self.keep_above_window_tree (floats if floats_kept_above)
+        #     │   │   ├── XdgWindow.container
+        #     │   │   │   ├── XdgWindow.tree
+        #     │   │   │   └── XdgWindow._borders
+        #     │   │   ├── XWindow.container
+        #     │   │   │   ├── XWindow.tree
+        #     │   │   │   └── XWindow._borders
+        #     │   │   └── ... (further keep above windows)
+        #     │   │
+        #     │   ├── self.max_window_tree
+        #     │   │   ├── XdgWindow.container
+        #     │   │   │   ├── XdgWindow.tree
+        #     │   │   │   └── XdgWindow._borders
+        #     │   │   ├── XWindow.container
+        #     │   │   │   ├── XWindow.tree
+        #     │   │   │   └── XWindow._borders
+        #     │   │   └── ... (further max windows)
+        #     │   │
+        #     │   ├── self.fullscreen_window_tree
+        #     │   │   ├── XdgWindow.container
+        #     │   │   │   ├── XdgWindow.tree
+        #     │   │   │   └── XdgWindow._borders
+        #     │   │   ├── XWindow.container
+        #     │   │   │   ├── XWindow.tree
+        #     │   │   │   └── XWindow._borders
+        #     │   │   └── ... (further fullscreen windows)
+        #     │   │
+        #     │   ├── self.bring_to_front_window (bring to front windows + scratchpads)
+        #     │   │   ├── XdgWindow.container
+        #     │   │   │   ├── XdgWindow.tree
+        #     │   │   │   └── XdgWindow._borders
+        #     │   │   ├── XWindow.container
+        #     │   │   │   ├── XWindow.tree
+        #     │   │   │   └── XWindow._borders
+        #     │   │   └── ... (further btf + scratchpad)
         #     │   │
         #     │   ├── Top (same as Background)
         #     │   │   ├── LayerStatic.tree
@@ -308,11 +353,23 @@ class Core(base.Core, wlrq.HasListeners):
         self.layer_trees = [
             SceneTree.create(self.windows_tree),  # Background
             SceneTree.create(self.windows_tree),  # Bottom
+            SceneTree.create(self.windows_tree),  # Keep below windows
             SceneTree.create(self.windows_tree),  # Regular windows
+            SceneTree.create(
+                self.windows_tree
+            ),  # Keep above windows (floats go here if floats_kept_above)
+            SceneTree.create(self.windows_tree),  # Max windows
+            SceneTree.create(self.windows_tree),  # Fullscreen windows
+            SceneTree.create(self.windows_tree),  # Bring to front windows
             SceneTree.create(self.windows_tree),  # Top
             SceneTree.create(self.windows_tree),  # Overlay
         ]
+        self.keep_below_window_tree = self.layer_trees.pop(2)
         self.mid_window_tree = self.layer_trees.pop(2)
+        self.keep_above_window_tree = self.layer_trees.pop(2)
+        self.max_window_tree = self.layer_trees.pop(2)
+        self.fullscreen_window_tree = self.layer_trees.pop(2)
+        self.bring_to_front_window_tree = self.layer_trees.pop(2)
         self.wallpapers: dict[
             config.Screen, tuple[SceneBuffer | SceneRect, ImageSurface | None]
         ] = {}

@@ -116,6 +116,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
         # Create a scene-graph tree for this window and its borders
         self.data_handle: ffi.CData = ffi.new_handle(self)
+        self.tree_layer = core.mid_window_tree
         self.container = SceneTree.create(core.mid_window_tree)
         self.container.node.set_enabled(enabled=False)
         self.container.node.data = self.data_handle
@@ -411,6 +412,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
                 self._float_state = FloatStates.FLOATING
         elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
+            self.reparent(self.core.mid_window_tree)
             self._update_fullscreen(False)
             if self._float_state == FloatStates.FLOATING:
                 # store last size
@@ -537,6 +539,15 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
         self._reconfigure_floating(x, y, w, h)
 
+    def get_new_layer(self, state: FloatStates) -> SceneTree:
+        if self.core.qtile.config.floats_kept_above and state == FloatStates.FLOATING:
+            return self.core.keep_above_window_tree
+        if state == FloatStates.MAXIMIZED:
+            return self.core.max_window_tree
+        if state == FloatStates.FULLSCREEN:
+            return self.core.fullscreen_window_tree
+        return self.core.mid_window_tree
+
     def _reconfigure_floating(
         self,
         x: int | None = None,
@@ -554,6 +565,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             )
         if self._float_state != new_float_state:
             self._float_state = new_float_state
+            self.reparent(self.get_new_layer(new_float_state))
             if self.group:  # may be not, if it's called from hook
                 self.group.mark_floating(self, True)
             hook.fire("float_change")
@@ -686,9 +698,70 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     def disable_fullscreen(self) -> None:
         self.fullscreen = False
 
+    def reparent(self, layer: SceneTree) -> None:
+        # already in the right layer
+        if self.tree_layer is layer:
+            return
+        self.tree_layer = layer
+        self.container.node.reparent(layer)
+
+    @expose_command()
+    def keep_below(self) -> None:
+        self.reparent(self.core.keep_below_window_tree)
+
+    @expose_command()
+    def keep_above(self) -> None:
+        self.reparent(self.core.keep_above_window_tree)
+
+    @expose_command()
+    def move_up(self, force: bool = False) -> None:
+        if force and self.tree_layer is self.core.keep_below_window_tree:
+            self.reparent(self.get_new_layer(self._float_state))
+
+        # the rightmost sibling in the tree
+        # is the upper one
+        # so we need to get the window to the right (x)
+        # of this window and place this window above x
+        next_sibling = None
+        found_child = False
+        for child in self.tree_layer.children:
+            if child._ptr == self.container.node._ptr:
+                found_child = True
+            elif found_child:
+                next_sibling = child
+                break
+        if next_sibling:
+            self.container.node.place_above(next_sibling)
+
+    @expose_command()
+    def move_down(self, force: bool = False) -> None:
+        if force and self.tree_layer is self.core.keep_below_window_tree:
+            self.reparent(self.get_new_layer(self._float_state))
+
+        # the leftmost sibling in the tree
+        # is the bottom one
+        # so we need to get the window to the left (x)
+        # of this window and place this window below x
+        prev_sibling = None
+        for child in self.tree_layer.children:
+            if child._ptr == self.container.node._ptr:
+                break
+            else:
+                prev_sibling = child
+        if prev_sibling:
+            self.container.node.place_below(prev_sibling)
+
+    @expose_command()
+    def move_to_top(self) -> None:
+        self.container.node.raise_to_top()
+
+    @expose_command()
+    def move_to_bottom(self) -> None:
+        self.container.node.lower_to_bottom()
+
     @expose_command()
     def bring_to_front(self) -> None:
-        self.container.node.raise_to_top()
+        self.reparent(self.core.bring_to_front_window_tree)
 
     @expose_command()
     def static(
@@ -952,7 +1025,7 @@ class Internal(_Base, base.Internal):
         respect_hints: bool = False,
     ) -> None:
         if above:
-            self.bring_to_front()
+            self.move_up()
 
         self.x = x
         self.y = y
