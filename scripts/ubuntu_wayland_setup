@@ -10,25 +10,40 @@ set -e
 # The versions we want
 WAYLAND=1.22.0
 WAYLAND_PROTOCOLS=1.32
-WLROOTS=0.17.0
-SEATD=0.7.0
+WLROOTS=0.17.3
+SEATD=0.6.4
 LIBDRM=2.4.114
-PIXMAN=0.43.4
+PIXMAN=0.42.0
+XWAYLAND=22.1.9
+HWDATA=0.364
 
 # Packaged dependencies
 sudo apt update
-sudo apt install --no-install-recommends \
-    ninja-build libegl1-mesa-dev libgles2-mesa-dev libgbm-dev libinput-dev libxkbcommon-dev \
-    libpciaccess-dev xwayland hwdata
-
-# Build pixman
-wget https://gitlab.freedesktop.org/pixman/pixman/-/archive/pixman-$PIXMAN/pixman-pixman-$PIXMAN.tar.gz
-tar -xzf pixman-pixman-$PIXMAN.tar.gz
-cd pixman-pixman-$PIXMAN
-meson build --prefix=/usr
-ninja -C build
-sudo ninja -C build install
-cd ../
+sudo apt-get install -y --no-install-recommends \
+     libepoxy-dev \
+     libegl1-mesa-dev \
+     libgbm-dev \
+     libgles2-mesa-dev \
+     libinput-dev \
+     libpciaccess-dev \
+     libxcb-composite0-dev \
+     libxcb-dri3-dev \
+     libxcb-ewmh-dev \
+     libxcb-icccm4-dev \
+     libxcb-image0-dev \
+     libxcb-present-dev \
+     libxcb-render0-dev \
+     libxcb-res0-dev \
+     libxcb-xfixes0-dev \
+     libxcb-xinput-dev \
+     libxcb1-dev \
+     libxfont-dev \
+     libxkbcommon-dev \
+     libxshmfence-dev \
+     xfonts-utils \
+     xserver-xorg-dev \
+     ninja-build
+sudo pip install meson
 
 # Build wayland
 wget https://gitlab.freedesktop.org/wayland/wayland/-/releases/$WAYLAND/downloads/wayland-$WAYLAND.tar.xz
@@ -48,15 +63,6 @@ ninja -C build
 sudo ninja -C build install
 cd ../
 
-# Build seatd
-wget https://git.sr.ht/~kennylevinsen/seatd/archive/$SEATD.tar.gz
-tar -xzf $SEATD.tar.gz
-cd seatd-$SEATD
-meson build --prefix=/usr
-ninja -C build
-sudo ninja -C build install
-cd ../
-
 # Build libdrm
 wget https://gitlab.freedesktop.org/mesa/drm/-/archive/libdrm-$LIBDRM/drm-libdrm-$LIBDRM.tar.gz
 tar -xzf drm-libdrm-$LIBDRM.tar.gz
@@ -66,18 +72,46 @@ ninja -C build
 sudo ninja -C build install
 cd ../
 
+# Build seatd
+wget https://git.sr.ht/~kennylevinsen/seatd/archive/$SEATD.tar.gz
+tar -xzf $SEATD.tar.gz
+cd seatd-$SEATD
+meson build --prefix=/usr
+ninja -C build
+sudo ninja -C build install
+cd ../
+
+# Build pixman
+wget https://gitlab.freedesktop.org/pixman/pixman/-/archive/pixman-$PIXMAN/pixman-pixman-$PIXMAN.tar.gz
+tar -xzf pixman-pixman-$PIXMAN.tar.gz
+cd pixman-pixman-$PIXMAN
+meson build --prefix=/usr
+ninja -C build
+sudo ninja -C build install
+cd ../
+
+# Build hwdata
+wget https://github.com/vcrhonek/hwdata/archive/refs/tags/v$HWDATA.tar.gz
+tar -xzf v$HWDATA.tar.gz
+cd hwdata-$HWDATA
+./configure --prefix=/usr --libdir=/lib --datadir=/usr/share
+make
+sudo make install
+cd ../
+
+# Build xwayland
+wget https://gitlab.freedesktop.org/xorg/xserver/-/archive/xwayland-$XWAYLAND/xserver-xwayland-$XWAYLAND.tar.gz
+tar -xzf xserver-xwayland-$XWAYLAND.tar.gz
+cd xserver-xwayland-$XWAYLAND
+meson build --prefix=/usr
+ninja -C build
+sudo ninja -C build install
+cd ../
+
 # Build wlroots
 wget https://gitlab.freedesktop.org/wlroots/wlroots/-/archive/$WLROOTS/wlroots-$WLROOTS.tar.gz
 tar -xzf wlroots-$WLROOTS.tar.gz
 cd wlroots-$WLROOTS
-
-# Temporary hack for wlroots 0.16.0 - 0.16.2 which uses a workaround script at
-# backend/drm/gen_pnpids.sh to generate a case statement, which doesn't compile
-# on ubuntu due to duplicate conditions (acronyms in
-# /usr/share/hwdata/pnp.ids). The case statement is only needed for getting the
-# string representation of an output's manufacturer, which is fine for CI.
-sudo truncate -s 0 /usr/share/hwdata/pnp.ids
-
 meson build -Dexamples=false --prefix=/usr -Dxwayland=enabled
 ninja -C build
 sudo ninja -C build install
