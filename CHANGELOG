@@ -10,7 +10,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
       - Qtile's wayland backend now requires wlroots 0.17 and pywlroots 0.17
     * features
       - For wayland you can now set the cursor theme and size to forcefully use in Qtile,
-        set `wl_xcursor_theme_name` and `wl_xcursor_size` in the configuration
+        set `wl_xcursor_theme` and `wl_xcursor_size` in the configuration
       - automatically lift types to their annotated type when specified via
         the `qtile cmd-obj` command line
       - Add `Plasma` layout. The original layout (https://github.com/numirias/qtile-plasma) appears to be unmaintained
