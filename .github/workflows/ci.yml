@@ -8,6 +8,8 @@ jobs:
     build:
         runs-on: ubuntu-22.04
         name: "python ${{ matrix.python-version }} on ${{ matrix.backend }}"
+        # https://github.com/pypy/pypy/issues/4956
+        continue-on-error: "${{ matrix.python-version == 'pypy-3.10' }}"
         strategy:
             matrix:
                 # If you change one of these, be sure to update:
