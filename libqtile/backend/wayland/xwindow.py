@@ -333,6 +333,12 @@ class XWindow(Window[xwayland.Surface]):
             self.float_x = x - self.group.screen.x
             self.float_y = y - self.group.screen.y
 
+        if width < 1:
+            width = 1
+
+        if height < 1:
+            height = 1
+
         place_changed = any(
             [self.x != x, self.y != y, self._width != width, self._height != height]
         )
