@@ -224,11 +224,13 @@ class XdgWindow(Window[XdgSurface]):
             hook.fire("client_urgent_hint_changed", self)
 
     def clip(self) -> None:
-        if next(self.container.children, None) is None:
+        if not self.tree:
             return
-        if not self.container.node.enabled:
+        if not self.tree.node.enabled:
             return
-        self.container.node.subsurface_tree_set_clip(
+        if next(self.tree.children, None) is None:
+            return
+        self.tree.node.subsurface_tree_set_clip(
             Box(self._geom.x, self._geom.y, self.width, self.height)
         )
 
