@@ -354,8 +354,8 @@ class XdgStatic(Static[XdgSurface]):
             self.name = surface.toplevel.title
         self._wm_class = surface.toplevel.app_id
 
-        self.add_listener(surface.map_event, self._on_map)
-        self.add_listener(surface.unmap_event, self._on_unmap)
+        self.add_listener(surface.surface.map_event, self._on_map)
+        self.add_listener(surface.surface.unmap_event, self._on_unmap)
         self.add_listener(surface.destroy_event, self._on_destroy)
         # self.add_listener(surface.surface.commit_event, self._on_commit)
         self.add_listener(surface.toplevel.set_title_event, self._on_set_title)
