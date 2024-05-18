@@ -27,11 +27,11 @@ from wlroots.util.box import Box
 from wlroots.util.clock import Timespec
 from wlroots.wlr_types import Output as wlrOutput
 from wlroots.wlr_types import OutputState, SceneOutput
-from wlroots.wlr_types.output import CustomMode
 from wlroots.wlr_types.layer_shell_v1 import (
     LayerShellV1Layer,
     LayerSurfaceV1KeyboardInteractivity,
 )
+from wlroots.wlr_types.output import CustomMode
 
 from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.log_utils import logger
