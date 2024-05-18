@@ -290,7 +290,7 @@ class XWindow(Window[xwayland.Surface]):
             if self.ftm_handle:
                 self.ftm_handle.set_fullscreen(do_full)
 
-    def clip(self):
+    def clip(self) -> None:
         if next(self.container.children, None) is None:
             return
         if not self.container.node.enabled:

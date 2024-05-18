@@ -223,7 +223,7 @@ class XdgWindow(Window[XdgSurface]):
             self._urgent = True
             hook.fire("client_urgent_hint_changed", self)
 
-    def clip(self):
+    def clip(self) -> None:
         if next(self.container.children, None) is None:
             return
         if not self.container.node.enabled:
