@@ -154,7 +154,7 @@ jobs:
       - name: Create artifact
         run: tar czf ~/wayland.tar.gz -C ${HOME}/wayland/ .
       - name: Upload built libraries
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wayland
           path: ~/wayland.tar.gz
@@ -207,7 +207,7 @@ jobs:
           auditwheel show dist/qtile-*.whl
           auditwheel repair --plat manylinux_2_28_x86_64 -w output_wheels dist/qtile-*.whl
       - name: Upload wheels
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.python-version }}
           path: output_wheels/qtile*.whl
@@ -262,7 +262,7 @@ jobs:
           python -m pip install build
           python -m build --sdist .
       - name: Upload source
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: source
           path: dist/*.tar.gz
