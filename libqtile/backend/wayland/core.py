@@ -107,6 +107,8 @@ if TYPE_CHECKING:
     from libqtile import config
 
 
+DEFAULT_CURSOR_SIZE = 24
+
 class ImplicitGrab(wlrq.HasListeners):
     """Keep track of an implicit pointer grab.
 
@@ -223,7 +225,17 @@ class Core(base.Core, wlrq.HasListeners):
 
         # Set up cursor
         self.cursor = Cursor(self.output_layout)
-        self.cursor_manager = XCursorManager(24)
+        size = DEFAULT_CURSOR_SIZE
+        size_str = os.environ.get("XCURSOR_SIZE")
+        if size_str:
+            try:
+                size = int(size_str)
+                if size <= 0:
+                    size = DEFAULT_CURSOR_SIZE
+            except ValueError:
+                logger.info("Failed to use XCURSOR_SIZE.")
+
+        self.cursor_manager = XCursorManager(size)
         self._gestures = PointerGesturesV1(self.display)
         self._pressed_button_count = 0
         self._implicit_grab: ImplicitGrab | None = None
