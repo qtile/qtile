@@ -177,7 +177,7 @@ jobs:
     container: quay.io/pypa/manylinux_2_28_x86_64
     strategy:
       matrix:
-        python-version: ["cp3.10", "cp3.11", "cp3.12", "pp3.10"]
+        python-version: ["cp3.10", "cp3.11", "cp3.12"]
     steps:
       - name: Install dependencies
         run: |
@@ -227,9 +227,6 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
-        include:
-          - python-version: "pypy-3.10"
-            manual-version: "pp3.10"
     steps:
       - name: Download wheels
         if: ${{ matrix.manual-version == '' }}
@@ -282,9 +279,6 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
-        include:
-          - python-version: "pypy-3.10"
-            manual-version: "pp3.10"
     steps:
       - name: Download wheels
         if: ${{ matrix.manual-version == '' }}

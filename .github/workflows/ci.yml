@@ -8,8 +8,6 @@ jobs:
     build:
         runs-on: ubuntu-22.04
         name: "python ${{ matrix.python-version }} on ${{ matrix.backend }}"
-        # https://github.com/pypy/pypy/issues/4956
-        continue-on-error: "${{ matrix.python-version == 'pypy-3.10' }}"
         strategy:
             matrix:
                 # If you change one of these, be sure to update:
@@ -17,7 +15,9 @@ jobs:
                 # - /setup.cfg:[mypy]
                 # If adding new python versions, consider also updating
                 # python version in .readthedocs.yaml
-                python-version: [pypy-3.10, '3.10', '3.11', '3.12']
+                # TODO: Add back pypy here and in release.yml once:
+                # https://github.com/pypy/pypy/issues/4956 is resolved
+                python-version: ['3.10', '3.11', '3.12']
                 backend: ['x11', 'wayland']
         steps:
             - uses: actions/checkout@v4
