@@ -14,6 +14,7 @@ jobs:
       libdrm-version: "2.4.114"
       seatd-version: "0.6.3"
       pixman-version: "0.42.0"
+      xkbcommon-version: "1.7.0"
       xwayland-version: "22.1.9"
       xcvt-version: "0.1.2"
       inputproto-version: "2021.5"
@@ -60,6 +61,7 @@ jobs:
         run: |
           wget $WAYLAND_URL
           wget $WAYLAND_PROTOCOLS_URL
+          wget $XKBCOMMON_URL
           wget $XCVT_URL
           wget $INPUTPROTO_URL
           wget $XWAYLAND_URL
@@ -69,6 +71,7 @@ jobs:
           wget -O wlroots.tar.gz $WLROOTS_URL
           tar -xJf wayland-${{ env.wayland-version }}.tar.xz
           tar -xJf wayland-protocols-${{ env.wayland-protocols-version }}.tar.xz
+          tar -xzf xkbcommon-${{ env.xkbcommon-version }}.tar.gz
           tar -xzf xorgproto-xorgproto-${{ env.inputproto-version }}.tar.gz
           tar -xzf libxcvt-libxcvt-${{ env.xcvt-version }}.tar.gz
           tar -xzf xserver-xwayland-${{ env.xwayland-version }}.tar.gz
@@ -79,6 +82,7 @@ jobs:
         env:
           WAYLAND_URL: https://gitlab.freedesktop.org/wayland/wayland/-/releases/${{ env.wayland-version }}/downloads/wayland-${{ env.wayland-version }}.tar.xz
           WAYLAND_PROTOCOLS_URL: https://gitlab.freedesktop.org/wayland/wayland-protocols/-/releases/${{ env.wayland-protocols-version }}/downloads/wayland-protocols-${{ env.wayland-protocols-version }}.tar.xz
+          XKBCOMMON_URL: https://github.com/xkbcommon/libxkbcommon/archive/refs/tags/xkbcommon-${{ env.xkbcommon-version }}.tar.gz
           XWAYLAND_URL: https://gitlab.freedesktop.org/xorg/xserver/-/archive/xwayland-${{ env.xwayland-version }}/xserver-xwayland-${{ env.xwayland-version }}.tar.gz
           XCVT_URL: https://gitlab.freedesktop.org/xorg/lib/libxcvt/-/archive/libxcvt-${{ env.xcvt-version }}/libxcvt-libxcvt-${{ env.xcvt-version }}.tar.gz
           INPUTPROTO_URL: https://gitlab.freedesktop.org/xorg/proto/xorgproto/-/archive/xorgproto-${{ env.inputproto-version}}/xorgproto-xorgproto-${{ env.inputproto-version}}.tar.gz
@@ -100,6 +104,13 @@ jobs:
         working-directory: wayland-protocols-${{ env.wayland-protocols-version }}
         run: |
           meson build --prefix=/usr
+          ninja -C build
+          DESTDIR=~/wayland ninja -C build install
+          ninja -C build install
+      - name: Build xkbcommon
+        working-directory: libxkbcommon-xkbcommon-${{ env.xkbcommon-version }}
+        run: |
+          meson build --prefix=/usr -Denable-x11=false -Dxkb-config-root=/usr/share/X11/xkb -Dx-locale-root=/usr/share/X11/locale
           ninja -C build
           DESTDIR=~/wayland ninja -C build install
           ninja -C build install
@@ -173,11 +184,9 @@ jobs:
           dnf install -y \
           cairo-devel \
           libffi-devel \
-          libxkbcommon-devel \
           libudev-devel \
           libinput-devel \
           libpciaccess \
-          libxkbcommon-x11-devel \
           mesa-libEGL \
           mesa-libgbm \
           xcb-util \
@@ -248,7 +257,7 @@ jobs:
       python-version: "cp3.12"
     steps:
       - name: Install dependencies
-        run: dnf install -y cairo-devel libffi-devel libxkbcommon-devel
+        run: dnf install -y cairo-devel libffi-devel
       - uses: actions/checkout@v4
       - name: Set environment variables
         run: |
