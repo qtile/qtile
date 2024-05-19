@@ -9,6 +9,8 @@ Qtile x.xx.x, released XXXX-XX-XX:
       - Dropped support for KDE idle protocol on Wayland
     !!! Notice for packagers - Wayland backend !!!
       - Qtile's Wayland backend now requires wlroots 0.17.x, pywlroots 0.17.x and pywayland >= 0.4.17.
+    !!! Notice for pip package - Pypy !!!
+      - We currently do not build for pypy-3.10 as there seems to be a resolution error in either pypy or pip (https://github.com/pypy/pypy/issues/4956)
     * features
       - For Wayland you can now set the cursor theme and size to forcefully use in Qtile,
         set `wl_xcursor_theme` and `wl_xcursor_size` in the configuration
