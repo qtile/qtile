@@ -67,25 +67,32 @@ class Drawer(drawer.Drawer):
 
         # Make sure geometry doesn't extend beyond texture
         if width is None:
-            width = self.width
-        if width > self._win.width - offsetx:
-            width = self._win.width - offsetx
+            _width = self.width
+        else:
+            _width = width
+        if _width > self._win.width - offsetx:
+            _width = self._win.width - offsetx
         if height is None:
-            height = self.height
-        if height > self._win.height - offsety:
-            height = self._win.height - offsety
+            _height = self.height
+        else:
+            _height = height
+        if _height > self._win.height - offsety:
+            _height = self._win.height - offsety
+        scale = self.qtile.config.wl_scale_factor
 
         # Paint recorded operations to our window's underlying ImageSurface
         with cairocffi.Context(self._win.surface) as context:
             context.set_operator(cairocffi.OPERATOR_SOURCE)
+            context.scale(scale, scale)
             # Adjust the source surface position by src_x and src_y e.g. if we want
             # to render part of the surface in a different position
             context.set_source_surface(self.surface, offsetx - src_x, offsety - src_y)
-            context.rectangle(offsetx, offsety, width, height)
+            context.rectangle(offsetx, offsety, _width, _height)
             context.fill()
 
         damage = PixmanRegion32()
-        damage.init_rect(offsetx, offsety, width, height)
+        # width and height are problematic
+        damage.init_rect(offsetx * scale, offsety * scale, _width * scale, _height * scale)
         # TODO: do we really need to `set_buffer` here? would be good to just set damage
         self._win._scene_buffer.set_buffer_with_damage(self._win.wlr_buffer, damage)
         damage.fini()
