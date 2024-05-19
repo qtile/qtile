@@ -85,6 +85,8 @@ class Output(HasListeners):
 
         wlr_output.data = self
 
+        self.scene_output = SceneOutput.create(core.scene, wlr_output)
+
         self.add_listener(wlr_output.destroy_event, self._on_destroy)
         self.add_listener(wlr_output.frame_event, self._on_frame)
         self.add_listener(wlr_output.request_state_event, self._on_request_state)
@@ -117,6 +119,7 @@ class Output(HasListeners):
         self.finalize()
 
     def _on_frame(self, _listener: Listener, _data: Any) -> None:
+        self.core.configure_node_scenefx(self.core.windows_tree.node)
         try:
             self.scene_output.commit()
         except RuntimeError:

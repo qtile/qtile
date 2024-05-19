@@ -88,10 +88,11 @@ from libqtile.backend.wayland import inputs, layer, window, wlrq, xdgwindow, xwi
 from libqtile.backend.wayland.output import Output
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
+from pywayland.utils import wl_container_of
 
 try:
     # Continue if ffi not built, so that docs can be built without wayland deps.
-    from libqtile.backend.wayland._ffi import lib
+    from libqtile.backend.wayland._ffi import ffi, lib
 except ModuleNotFoundError:
     print("Warning: Wayland backend not built. Backend will not run.")
 
@@ -390,6 +391,53 @@ class Core(base.Core, wlrq.HasListeners):
         self.display.destroy()
         if hasattr(self, "qtile"):
             delattr(self, "qtile")
+
+    def set_buffer_scenefx(self, scene_buffer, win) -> None:
+        scene_surface = SceneSurface.from_buffer(scene_buffer)
+        if not scene_surface:
+            return
+        # TODO: Do something with the xwayland surface role?
+        is_x = scene_surface.surface.is_xwayland_surface
+        is_way_top = False
+        if scene_surface.surface.is_xdg_surface:
+            xdg_surface = XdgSurface.from_surface(scene_surface.surface)
+            is_way_top = xdg_surface.role == XdgSurfaceRole.TOPLEVEL
+        if not is_way_top and not is_x:
+            return
+        scene_buffer.set_opacity(win.opacity)
+
+        if not scene_surface.surface.is_subsurface:
+            scene_buffer.set_corner_radius(win.corner_radius)
+            if win.shadow:
+                scene_buffer.set_shadow_data(win.shadow, win.shadowblur)
+            else:
+                # TODO: Only unset the shadow once for efficiency
+                scene_buffer.unset_shadow_data()
+
+    def win_from_node(self, node) -> Window | None:
+        tree = node.parent
+        while tree and tree.node.data is None:
+            tree = tree.node.parent
+        if tree:
+            return tree.node.data
+        return None
+
+    # Low level iteration code
+    # We cannot use for_each_buffer I think because that does not give the underlying nodes
+    # We need to underlying nodes to e.g. get opacity property
+    def configure_node_scenefx(self, node) -> None:
+        if not node.enabled:
+            return
+        if node.type == SceneNodeType.BUFFER:
+            scene_buffer = SceneBuffer.from_node(node)
+            win = self.win_from_node(node)
+            if win:
+                self.set_buffer_scenefx(scene_buffer, win)
+        elif node.type == SceneNodeType.TREE:
+            tree_ptr = wl_container_of(node._ptr, "struct wlr_scene_tree *", "node", ffi=ffi)
+            parent_tree = SceneTree(tree_ptr)
+            for child in parent_tree.children:
+                self.configure_node_scenefx(child)
 
     @property
     def display_name(self) -> str:
@@ -1360,16 +1408,9 @@ class Core(base.Core, wlrq.HasListeners):
                 # We got a node that is part of a window, walk up the scene graph to
                 # find the window object. It could also be an XDG popup, which can be
                 # the child of either an XDG window or a layer shell window.
-                tree = node.parent
-                while tree and tree.node.data is None:
-                    tree = tree.node.parent
-                if tree:
-                    win = tree.node.data
-                    assert win is not None
-                    return win, scene_surface.surface, sx, sy
-                # We shouldn't get here.
-                logger.warning("Failed finding the window under the pointer. Please report.")
-                return None
+                win = self.win_from_node(node)
+                assert win is not None
+                return win, scene_surface.surface, sx, sy
 
             # We didn't get a wlr_scene_surface, so we're dealing with an internal window
             # Internal windows have a scenetree for borders. The parent's data we will use to cast to an internal window

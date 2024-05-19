@@ -21,6 +21,7 @@ ffi.set_source(
         "/usr/include/pixman-1",
         "/usr/include/libdrm",
         wlr.include_dir,
+        wlr.scenefx_include,
     ],
 )
 
