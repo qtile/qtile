@@ -19,6 +19,7 @@ Qtile x.xx.x, released XXXX-XX-XX:
       - Add `Plasma` layout. The original layout (https://github.com/numirias/qtile-plasma) appears to be unmaintained
         so we have added this to the main codebase.
       - Add ability to specify muted and unmuted formats for `Volume` and `PulseVolume` widgets.
+      - Add back server-side opacity support for Wayland backend
     * bugfixes
 
 Qtile 0.25.0, released 2024-04-06:

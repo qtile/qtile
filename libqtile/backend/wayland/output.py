@@ -117,6 +117,7 @@ class Output(HasListeners):
         self.finalize()
 
     def _on_frame(self, _listener: Listener, _data: Any) -> None:
+        self.core.configure_node_opacity(self.core.windows_tree.node)
         try:
             self.scene_output.commit()
         except RuntimeError:
