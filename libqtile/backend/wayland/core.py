@@ -46,6 +46,7 @@ from wlroots.wlr_types import (
     GammaControlManagerV1,
     InputInhibitManager,
     OutputLayout,
+    OutputState,
     PointerGesturesV1,
     Presentation,
     PrimarySelectionV1DeviceManager,
@@ -219,7 +220,7 @@ class Core(base.Core, wlrq.HasListeners):
         self.exclusive_client: pywayland.server.Client | None = None
 
         # Set up outputs
-        self.outputs: list[Output] = []
+        self._outputs: list[Output] = []
         self._current_output: Output | None = None
         self.add_listener(self.backend.new_output_event, self._on_new_output)
         self.output_layout = OutputLayout()
@@ -375,6 +376,16 @@ class Core(base.Core, wlrq.HasListeners):
         # Start
         self.backend.start()
 
+    def get_enabled_outputs(self) -> list[Output]:
+        ret = []
+        for output in self._outputs:
+            if not output.wlr_output:
+                continue
+            if not output.wlr_output.enabled:
+                continue
+            ret.append(output)
+        return ret
+
     @property
     def name(self) -> str:
         return "wayland"
@@ -386,7 +397,7 @@ class Core(base.Core, wlrq.HasListeners):
             kb.finalize()
         for pt in self._pointers.copy():
             pt.finalize()
-        for out in self.outputs.copy():
+        for out in self._outputs.copy():
             out.finalize()
 
         if self._xwayland:
@@ -485,7 +496,7 @@ class Core(base.Core, wlrq.HasListeners):
     def _on_new_output(self, _listener: Listener, wlr_output: wlrOutput) -> None:
         logger.debug("Signal: backend new_output_event")
         output = Output(self, wlr_output)
-        self.outputs.append(output)
+        self._outputs.append(output)
 
         # Let the output layout place it
         if not self.output_layout.add_auto(wlr_output):
@@ -498,27 +509,49 @@ class Core(base.Core, wlrq.HasListeners):
         if not self._current_output:
             self._current_output = output
             self.cursor.set_xcursor(self._cursor_manager, "default")
-            box = Box(*output.get_screen_info())
+            rect = output.get_screen_info()
+            box = Box(rect.x, rect.y, rect.width, rect.height)
             x = box.x + box.width / 2
             y = box.y + box.height / 2
             self.warp_pointer(x, y)
 
-    def _on_output_layout_change(self, _listener: Listener, _data: Any) -> None:
+    def _on_output_layout_change(
+        self, _listener: Listener | None = None, _data: Any = None
+    ) -> None:
         logger.debug("Signal: output_layout change_event")
         config = OutputConfigurationV1()
 
-        for output in self.outputs:
+        # disable mons that are no longer enabled
+        for output in self._outputs:
+            if output.wlr_output.enabled:
+                continue
             head = OutputConfigurationHeadV1.create(config, output.wlr_output)
-            mode = output.wlr_output.current_mode
-            head.state.mode = mode
-            head.state.enabled = mode is not None and output.wlr_output.enabled
+            head.state.enabled = False
+            self.output_layout.remove(output.wlr_output)
+            if output is self._current_output:
+                en_outputs = self.get_enabled_outputs()
+                self._current_output = en_outputs[0] if en_outputs else None
+
+        for output in self._outputs:
+            if not output.wlr_output.enabled:
+                continue
+            box = self.output_layout.get_box(output.wlr_output)
+            if lib.wlr_box_empty(box._ptr):
+                self.output_layout.add_auto(output.wlr_output)
+
+        # add monitors to layout that are now enabled
+        for output in self._outputs:
+            if not output.wlr_output.enabled:
+                continue
+            head = OutputConfigurationHeadV1.create(config, output.wlr_output)
             box = self.output_layout.get_box(output.wlr_output)
             head.state.x = output.x = box.x
             head.state.y = output.y = box.y
+            head.state.enabled = not lib.wlr_box_empty(box._ptr)
             output.scene_output.set_position(output.x, output.y)
 
         self.output_manager.set_configuration(config)
-        self.outputs.sort(key=lambda o: (o.x, o.y))
+        self._outputs.sort(key=lambda o: (o.x, o.y))
         hook.fire("screen_change", None)
 
     def _on_output_manager_apply(
@@ -930,52 +963,43 @@ class Core(base.Core, wlrq.HasListeners):
         ok = True
 
         for head in config.heads:
-            state = head.state
-            wlr_output = state.output
+            head_state = head.state
+            wlr_output = head_state.output
 
-            if state.enabled:
-                if not wlr_output.enabled:
-                    wlr_output.enable()
-                if state.mode:
-                    wlr_output.set_mode(state.mode)
+            state = OutputState()
+            state.set_enabled(head_state.enabled)
+
+            if head_state.enabled:
+                if head_state.mode:
+                    state.set_mode(head_state.mode)
                 else:
-                    wlr_output.set_custom_mode(
-                        state.custom_mode.width,
-                        state.custom_mode.height,
-                        state.custom_mode.refresh,
-                    )
+                    state.set_custom_mode(head_state.custom_mode)
 
-                # `add` will add outputs that have been removed. Any other outputs that
-                # are already in the layout are just moved as if we had used `move`.
-                if not self.output_layout.add(wlr_output, state.x, state.y):
-                    logger.warning("Failed to add output to layout.")
-                wlr_output.set_transform(state.transform)
-                wlr_output.set_scale(state.scale)
-                # Ensure we have cursors loaded for the new scale factor.
-                self._cursor_manager.load(state.scale)
+                state.set_transform(head_state.transform)
+                state.set_scale(head_state.scale)
+                state.set_adaptive_sync_enabled(head_state.adaptive_sync_enabled)
                 # Rescale the cursor if necessary
+                box = self.output_layout.get_box(wlr_output)
+                if box.x != head_state.x or box.y != head_state.y:
+                    self.output_layout.add(wlr_output, head_state.x, head_state.y)
+                # Ensure we have cursors loaded for the new scale factor.
+                self._cursor_manager.load(head_state.scale)
                 if not self.seat.pointer_state.focused_surface:
-                    self._cursor_manager.set_cursor_image("left_ptr", self.cursor)
-            else:
-                if wlr_output.enabled:
-                    wlr_output.enable(enable=False)
-                self.output_layout.remove(wlr_output)
+                    self.cursor.set_xcursor(self._cursor_manager, "default")
 
-            ok = wlr_output.test()
-            if not ok:
-                break
-
-        for head in config.heads:
-            if ok and apply:
-                head.state.output.commit()
+            if apply:
+                ok = ok and wlr_output.commit(state)
             else:
-                head.state.output.rollback()
+                ok = ok and wlr_output.test(state)
+            state.finish()
 
         if ok:
             config.send_succeeded()
         else:
             config.send_failed()
         config.destroy()
+        if apply:
+            self._on_output_layout_change()
 
     def _process_cursor_motion(self, time_msec: int, cx: float, cy: float) -> None:
         assert self.qtile
@@ -987,7 +1011,7 @@ class Core(base.Core, wlrq.HasListeners):
             # disallowed, so process_button_motion doesn't need to be updated.
             self.qtile.process_button_motion(cx_int, cy_int)
 
-        if len(self.outputs) > 1:
+        if len(self.get_enabled_outputs()) > 1:
             current_wlr_output = self.output_layout.output_at(cx, cy)
             if current_wlr_output:
                 current_output = current_wlr_output.data
@@ -1137,7 +1161,7 @@ class Core(base.Core, wlrq.HasListeners):
         # Map input device to output if required.
         if output_name := pointer.Pointer.from_input_device(wlr_device).output_name:
             target_output = None
-            for output in self.outputs:
+            for output in self.get_enabled_outputs():
                 if output_name == output.wlr_output.name:
                     target_output = output.wlr_output
                     break
@@ -1417,7 +1441,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def get_screen_info(self) -> list[ScreenRect]:
         """Get the output information"""
-        return [output.get_screen_info() for output in self.outputs]
+        return [output.get_screen_info() for output in self.get_enabled_outputs()]
 
     def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
         """Configure the backend to grab the key event"""
@@ -1480,10 +1504,16 @@ class Core(base.Core, wlrq.HasListeners):
         return wlrq.Painter(self)
 
     def remove_output(self, output: Output) -> None:
-        self.outputs.remove(output)
-        self.output_layout.remove(output.wlr_output)
+        # already removed
+        if output not in self._outputs:
+            return
+        self._outputs.remove(output)
+        box = self.output_layout.get_box(output.wlr_output)
+        if not lib.wlr_box_empty(box._ptr):
+            self.output_layout.remove(output.wlr_output)
         if output is self._current_output:
-            self._current_output = self.outputs[0] if self.outputs else None
+            en_outputs = self.get_enabled_outputs()
+            self._current_output = en_outputs[0] if en_outputs else None
 
     def remove_pointer_constraints(self, window: window.Window | window.Static) -> None:
         for pc in self.pointer_constraints.copy():

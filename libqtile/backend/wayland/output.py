@@ -73,7 +73,7 @@ class Output(HasListeners):
 
         # During tests, we want to fix the geometry of the 1 or 2 outputs.
         if wlr_output.is_headless and "PYTEST_CURRENT_TEST" in os.environ:
-            if not core.outputs:
+            if not core.get_enabled_outputs():
                 # First test output
                 state.set_custom_mode(CustomMode(width=800, height=600, refresh=0))
             else:
