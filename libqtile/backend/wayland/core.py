@@ -33,6 +33,7 @@ import wlroots.helper as wlroots_helper
 import wlroots.wlr_types.virtual_keyboard_v1 as vkeyboard
 import wlroots.wlr_types.virtual_pointer_v1 as vpointer
 from pywayland.protocol.wayland import WlSeat
+from pywayland.utils import wl_container_of
 from wlroots import xwayland
 from wlroots.util import log as wlr_log
 from wlroots.util.box import Box
@@ -74,7 +75,14 @@ from wlroots.wlr_types.output_power_management_v1 import (
     OutputPowerV1SetModeEvent,
 )
 from wlroots.wlr_types.pointer_constraints_v1 import PointerConstraintsV1, PointerConstraintV1
-from wlroots.wlr_types.scene import Scene, SceneBuffer, SceneNodeType, SceneSurface, SceneTree
+from wlroots.wlr_types.scene import (
+    Scene,
+    SceneBuffer,
+    SceneNode,
+    SceneNodeType,
+    SceneSurface,
+    SceneTree,
+)
 from wlroots.wlr_types.server_decoration import (
     ServerDecorationManager,
     ServerDecorationManagerMode,
@@ -91,7 +99,7 @@ from libqtile.log_utils import logger
 
 try:
     # Continue if ffi not built, so that docs can be built without wayland deps.
-    from libqtile.backend.wayland._ffi import lib
+    from libqtile.backend.wayland._ffi import ffi, lib
 except ModuleNotFoundError:
     print("Warning: Wayland backend not built. Backend will not run.")
 
@@ -390,6 +398,29 @@ class Core(base.Core, wlrq.HasListeners):
         self.display.destroy()
         if hasattr(self, "qtile"):
             delattr(self, "qtile")
+
+    def win_from_node(self, node: SceneNode) -> window.Window | window.Internal:
+        tree = node.parent
+        while tree and tree.node.data is None:
+            tree = tree.node.parent
+        assert tree and tree.node.data
+        return tree.node.data
+
+    # Low level iteration code
+    # We cannot use for_each_buffer I think because that does not give the underlying nodes
+    # We need to underlying nodes to get the opacity property
+    def configure_node_opacity(self, node: SceneNode) -> None:
+        if not node.enabled:
+            return
+        if node.type == SceneNodeType.BUFFER:
+            scene_buffer = SceneBuffer.from_node(node)
+            win = self.win_from_node(node)
+            scene_buffer.set_opacity(win.opacity)
+        elif node.type == SceneNodeType.TREE:
+            tree_ptr = wl_container_of(node._ptr, "struct wlr_scene_tree *", "node", ffi=ffi)
+            parent_tree = SceneTree(tree_ptr)
+            for child in parent_tree.children:
+                self.configure_node_opacity(child)
 
     @property
     def display_name(self) -> str:
@@ -1360,16 +1391,8 @@ class Core(base.Core, wlrq.HasListeners):
                 # We got a node that is part of a window, walk up the scene graph to
                 # find the window object. It could also be an XDG popup, which can be
                 # the child of either an XDG window or a layer shell window.
-                tree = node.parent
-                while tree and tree.node.data is None:
-                    tree = tree.node.parent
-                if tree:
-                    win = tree.node.data
-                    assert win is not None
-                    return win, scene_surface.surface, sx, sy
-                # We shouldn't get here.
-                logger.warning("Failed finding the window under the pointer. Please report.")
-                return None
+                win = self.win_from_node(node)
+                return win, scene_surface.surface, sx, sy
 
             # We didn't get a wlr_scene_surface, so we're dealing with an internal window
             # Internal windows have a scenetree for borders. The parent's data we will use to cast to an internal window

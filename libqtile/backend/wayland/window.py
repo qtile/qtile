@@ -386,15 +386,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
     @opacity.setter
     def opacity(self, opacity: float) -> None:
-        if opacity < 1.0:
-            logger.warning(
-                "Sorry, transparency is not yet supported by the wlroots API used by "
-                "Qtile. Transparency can only be achieved if the client sets it."
-            )
-            # wlroots' scene graph doesn't support setting the opacity of trees/nodes by
-            # the compositor. See: https://gitlab.freedesktop.org/wlroots/wlroots/-/issues/3393
-            # If/when that becomes supported, this warning can be removed.
         self._opacity = opacity
+        self.core.configure_node_opacity(self.container.node)
 
     @property
     def floating(self) -> bool:
