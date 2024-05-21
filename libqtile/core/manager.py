@@ -423,7 +423,7 @@ class Qtile(CommandObject):
             if screen not in screens:
                 for gap in screen.gaps:
                     if isinstance(gap, bar.Bar) and gap.window:
-                        gap.kill_window()
+                        gap.finalize()
 
         self.screens = screens
 
