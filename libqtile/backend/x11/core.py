@@ -185,10 +185,7 @@ class Core(base.Core):
         self.conn.finalize()
 
     def get_screen_info(self) -> list[ScreenRect]:
-        ps = self.conn.pseudoscreens
-        if self.qtile:
-            self._xpoll()
-        return ps
+        return self.conn.pseudoscreens
 
     @property
     def wmname(self):
@@ -274,6 +271,7 @@ class Core(base.Core):
 
             self.update_client_lists()
             win.change_layer()
+            self.conn.enable_screen_change_notifications()
 
     def warp_pointer(self, x, y):
         self._root.warp_pointer(x, y)
