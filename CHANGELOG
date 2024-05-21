@@ -1,4 +1,8 @@
-Qtile x.xx.x, released XXXX-XX-XX:
+Qtile x.xx.x, released xxxx-xx-xx:
+    * features
+    * bugfixes
+
+Qtile 0.26.0, released 2024-05-21:
     !!! breaking changes !!!
       - this release drops support for python 3.9
       - deleted the (very old) libqtile/command_* deprecation wrappers
