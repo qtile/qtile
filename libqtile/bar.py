@@ -441,26 +441,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             self.window = None
         self.widgets.clear()
 
-    def kill_window(self) -> None:
-        """Kill the window when the bar's screen is no longer being used."""
-        assert self.qtile is not None
-
-        if self.future:
-            self.future.cancel()
-
-        for name, w in self.qtile.widgets_map.copy().items():
-            if w in self.widgets:
-                w.finalize()
-                del self.qtile.widgets_map[name]
-        self.drawer.finalize()
-        if self.window:
-            self.window.kill()
-            self.window = None
-
-        # Reset some flags to allow the bar to be reconfigured as needed
-        self._configured = False
-        self._draw_queued = False
-
     def _resize(self, length: int, widgets: list[_Widget]) -> None:
         # We want consecutive stretch widgets to split one 'block' of space between them
         stretches = []
