@@ -283,7 +283,7 @@ class XdgWindow(Window[XdgSurface]):
             [
                 self._geom.x != geom.x,
                 self._geom.y != geom.y,
-                self._geom.width != width,
+                self._geom.width != geom.width,
                 self._geom.height != geom.height,
             ]
         )
@@ -298,8 +298,8 @@ class XdgWindow(Window[XdgSurface]):
         self._width = width
         self._height = height
 
+        self.container.node.set_position(x, y)
         if needs_repos:
-            self.container.node.set_position(x, y)
             self.surface.set_size(width, height)
             self.surface.set_bounds(width, height)
             self.clip()
