@@ -104,14 +104,11 @@ class XWindow(Window[xwayland.Surface]):
             self.place(
                 event.x, event.y, event.width, event.height, self.borderwidth, self.bordercolor
             )
-        else:
+        elif self in self.core.pending_windows:
             # TODO: We shouldn't need this first configure event, but some clients (e.g.
             # Ardour) seem to freeze up if we pass the current state, which is what we
             # want, and do with `self.place`.
             self.surface.configure(event.x, event.y, event.width, event.height)
-            self.place(
-                self.x, self.y, self.width, self.height, self.borderwidth, self.bordercolor
-            )
 
     def _on_unmap(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xwindow unmap")
