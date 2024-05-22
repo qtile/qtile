@@ -38,8 +38,7 @@ if TYPE_CHECKING:
 
 
 def rename_process():
-    """
-    Try to rename the qtile process if py-setproctitle is installed:
+    """Try to rename the qtile process if py-setproctitle is installed:
 
     http://code.google.com/p/py-setproctitle/
 

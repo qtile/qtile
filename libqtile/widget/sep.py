@@ -27,7 +27,7 @@ from libqtile.widget import base
 
 
 class Sep(base._Widget):
-    """A visible widget separator"""
+    """A visible widget separator."""
 
     orientations = base.ORIENTATION_BOTH
     defaults = [

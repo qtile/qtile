@@ -43,9 +43,7 @@ if TYPE_CHECKING:
 
 
 class Floating(Layout):
-    """
-    Floating layout, which does nothing with windows but handles focus order
-    """
+    """Floating layout, which does nothing with windows but handles focus order."""
 
     default_float_rules: list[_Match] = [
         Match(wm_type="utility"),
@@ -76,31 +74,36 @@ class Floating(Layout):
     def __init__(
         self, float_rules: list[_Match] | None = None, no_reposition_rules=None, **config
     ):
-        """
-        If you have certain apps that you always want to float you can provide
-        ``float_rules`` to do so. ``float_rules`` are a list of
-        Match objects::
+        """If you have certain apps that you always want to float you can provide
+        `float_rules` to do so. `float_rules` are a list of
+        Match objects:
 
-            from libqtile.config import Match
-            Match(title=WM_NAME, wm_class=WM_CLASS, role=WM_WINDOW_ROLE)
+        ```python
+        from libqtile.config import Match
+        Match(title=WM_NAME, wm_class=WM_CLASS, role=WM_WINDOW_ROLE)
+        ```
 
-        When a new window is opened its ``match`` method is called with each of
+        When a new window is opened its `match` method is called with each of
         these rules.  If one matches, the window will float.  The following
-        will float GIMP and Skype::
+        will float GIMP and Skype:
 
-            from libqtile.config import Match
-            float_rules=[Match(wm_class="skype"), Match(wm_class="gimp")]
+        ```python
+        from libqtile.config import Match
+        float_rules=[Match(wm_class="skype"), Match(wm_class="gimp")]
+        ```
 
-        The following ``Match`` will float all windows that are transient windows for a
+        The following `Match` will float all windows that are transient windows for a
         parent window:
 
-            Match(func=lambda c: bool(c.is_transient_for()))
+        ```python
+        Match(func=lambda c: bool(c.is_transient_for()))
+        ```
 
-        Specify these in the ``floating_layout`` in your config.
+        Specify these in the `floating_layout` in your config.
 
         Floating layout will try to center most of floating windows by default,
         but if you don't want this to happen for certain windows that are
-        centered by mistake, you can use ``no_reposition_rules`` option to
+        centered by mistake, you can use `no_reposition_rules` option to
         specify them and layout will rely on windows to position themselves in
         correct location on the screen.
         """
@@ -116,15 +119,15 @@ class Floating(Layout):
         self.add_defaults(Floating.defaults)
 
     def match(self, win):
-        """Used to default float some windows"""
+        """Used to default float some windows."""
         return any(win.match(rule) for rule in self.float_rules)
 
     def find_clients(self, group):
-        """Find all clients belonging to a given group"""
+        """Find all clients belonging to a given group."""
         return [c for c in self.clients if c.group is group]
 
     def to_screen(self, group, new_screen):
-        """Adjust offsets of clients within current screen"""
+        """Adjust offsets of clients within current screen."""
         for win in self.find_clients(group):
             if win.maximized:
                 win.maximized = True
@@ -203,8 +206,9 @@ class Floating(Layout):
         return True
 
     def compute_client_position(self, client, screen_rect):
-        """recompute client.x and client.y, returning whether or not to place
-        this client above other windows or not"""
+        """Recompute client.x and client.y, returning whether or not to place
+        this client above other windows or not.
+        """
         above = True
 
         if client.has_user_set_position() and not self.on_screen(client, screen_rect):

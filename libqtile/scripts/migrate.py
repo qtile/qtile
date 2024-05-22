@@ -67,14 +67,12 @@ def file_and_backup(config_dir: str) -> Iterator[tuple[str, str]]:
 
 
 class QtileMigrate:
-    """
-    May be overkill to use a class here but we can store state (i.e. args)
+    """May be overkill to use a class here but we can store state (i.e. args)
     without needing to pass them around all the time.
     """
 
     def __call__(self, args: argparse.Namespace) -> None:
-        """
-        This is called by ArgParse when we run `qtile migrate`. The parsed options are
+        """This is called by ArgParse when we run `qtile migrate`. The parsed options are
         passed as an argument.
         """
         if "libcst" not in sys.modules:
@@ -113,7 +111,7 @@ class QtileMigrate:
 
         print(f"ID{' ' * (width - 2)}{'After Version':<15}Summary")
         for m in ordered:
-            summary = m.show_summary().replace("``", "'")
+            summary = m.show_summary().replace("`", "'")
             print(f"{m.ID:<{width}}{m.AFTER_VERSION:^15}{summary}")
 
     def show_migration_info(self) -> None:

@@ -33,8 +33,7 @@ lock = asyncio.Lock()
 
 
 class PulseConnection:
-    """
-    Class object to manage the connection to the pulse server and send
+    """Class object to manage the connection to the pulse server and send
     volume/mute status to subscribed clients.
     """
 
@@ -64,8 +63,7 @@ class PulseConnection:
             self.configured = True
 
     async def _check_pulse_connection(self):
-        """
-        The PulseAsync object subscribes to connection state events so we
+        """The PulseAsync object subscribes to connection state events so we
         need to check periodically whether the connection has been lost.
         """
         if not self.pulse.connected:
@@ -141,8 +139,7 @@ class PulseConnection:
             callback(*self.get_volume())
 
     def subscribe(self, callback):
-        """
-        Subscribes a client for callback events.
+        """Subscribes a client for callback events.
 
         The first subscription will trigger the connection to the
         pulse server.
@@ -154,8 +151,7 @@ class PulseConnection:
             create_task(self._configure())
 
     def unsubscribe(self, callback):
-        """
-        Unsubscribes a client from callback events.
+        """Unsubscribes a client from callback events.
 
         Removing the last client closes the connection with the
         pulse server and cancels future calls to connect.
@@ -180,17 +176,16 @@ pulse = PulseConnection()
 
 
 class PulseVolume(Volume):
-    """
-    Volume widget for systems using PulseAudio.
+    """Volume widget for systems using PulseAudio.
 
     The widget connects to the PulseAudio server by using the libpulse library
     and so should be updated virtually instantly rather than needing to poll the
-    volume status regularly (NB this means that the ``update_interval`` parameter
+    volume status regularly (NB this means that the `update_interval` parameter
     serves no purpose for this widget).
 
-    The widget relies on the `pulsectl_asyncio <https://pypi.org/project/pulsectl-asyncio/>`__
+    The widget relies on the [pulsectl_asyncio](https://pypi.org/project/pulsectl-asyncio/)_
     library to access the libpulse bindings. If you are using python 3.11 you must use
-    ``pulsectl_asyncio >= 1.0.0``.
+    `pulsectl_asyncio >= 1.0.0`.
 
     """
 
@@ -253,9 +248,8 @@ class PulseVolume(Volume):
             self.update()
 
     def update(self):
-        """
-        same method as in Volume widgets except that here we don't need to
-        manually re-schedule update
+        """Same method as in Volume widgets except that here we don't need to
+        manually re-schedule update.
         """
         if pulse.pulse is None or not pulse.pulse.connected:
             return

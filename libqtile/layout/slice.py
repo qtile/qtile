@@ -22,9 +22,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-"""
-Slice layout. Serves as example of delegating layouts (or sublayouts)
-"""
+"""Slice layout. Serves as example of delegating layouts (or sublayouts)."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -42,7 +40,7 @@ if TYPE_CHECKING:
 
 
 class Single(Layout):
-    """Layout with single window
+    """Layout with single window.
 
     Just like Max but asserts that window is the one
     """
@@ -76,7 +74,7 @@ class Single(Layout):
             window.hide()
 
     def empty(self):
-        """Is the layout empty
+        """Is the layout empty.
 
         Returns True if the layout empty (and is willing to accept windows)
         """
@@ -118,7 +116,7 @@ class Single(Layout):
 
 
 class Slice(Layout):
-    """Slice layout
+    """Slice layout.
 
     This layout cuts piece of screen_rect and places a single window on that
     piece, and delegates other window placement to other layout
@@ -146,14 +144,11 @@ class Slice(Layout):
         return res
 
     def delegate_layout(self, windows, mapping):
-        """Delegates layouting actual windows
+        """Delegates layouting actual windows.
 
-        Parameters
-        ===========
-        windows:
-            windows to layout
-        mapping:
-            mapping from layout to ScreenRect for each layout
+        Parameters:
+            windows: Windows to layout.
+            mapping: Mapping from layout to ScreenRect for each layout.
         """
         grouped = {}
         for w in windows:

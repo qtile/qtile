@@ -74,20 +74,20 @@ class MatchListRegex(_QtileMigrator):
     SUMMARY = "Updates Match objects using lists"
 
     HELP = """
-    The use of lists in ``Match`` objects is deprecated and should be
+    The use of lists in `Match` objects is deprecated and should be
     replaced with a regex.
 
     For example:
 
-    .. code:: python
-
-        Match(wm_class=["one", "two"])
+    ```python
+    Match(wm_class=["one", "two"])
+    ```
 
     should be changed to:
 
-    .. code::
-
-        Match(wm_class=re.compile(r"^(one|two)$"))
+    ```python
+    Match(wm_class=re.compile(r"^(one|two)$"))
+    ```
 
     """
 

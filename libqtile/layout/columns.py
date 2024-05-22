@@ -103,28 +103,32 @@ class Columns(Layout):
 
     This layout can also emulate wmii's default layout via:
 
-        layout.Columns(num_columns=1, insert_position=1)
+    ```python
+    layout.Columns(num_columns=1, insert_position=1)
+    ```
 
     Or the "Vertical", and "Max", depending on the default parameters.
 
-    An example key configuration is::
+    An example key configuration is:
 
-        Key([mod], "j", lazy.layout.down()),
-        Key([mod], "k", lazy.layout.up()),
-        Key([mod], "h", lazy.layout.left()),
-        Key([mod], "l", lazy.layout.right()),
-        Key([mod, "shift"], "j", lazy.layout.shuffle_down()),
-        Key([mod, "shift"], "k", lazy.layout.shuffle_up()),
-        Key([mod, "shift"], "h", lazy.layout.shuffle_left()),
-        Key([mod, "shift"], "l", lazy.layout.shuffle_right()),
-        Key([mod, "control"], "j", lazy.layout.grow_down()),
-        Key([mod, "control"], "k", lazy.layout.grow_up()),
-        Key([mod, "control"], "h", lazy.layout.grow_left()),
-        Key([mod, "control"], "l", lazy.layout.grow_right()),
-        Key([mod, "shift", "control"], "h", lazy.layout.swap_column_left()),
-        Key([mod, "shift", "control"], "l", lazy.layout.swap_column_right()),
-        Key([mod], "Return", lazy.layout.toggle_split()),
-        Key([mod], "n", lazy.layout.normalize()),
+    ```python
+    Key([mod], "j", lazy.layout.down()),
+    Key([mod], "k", lazy.layout.up()),
+    Key([mod], "h", lazy.layout.left()),
+    Key([mod], "l", lazy.layout.right()),
+    Key([mod, "shift"], "j", lazy.layout.shuffle_down()),
+    Key([mod, "shift"], "k", lazy.layout.shuffle_up()),
+    Key([mod, "shift"], "h", lazy.layout.shuffle_left()),
+    Key([mod, "shift"], "l", lazy.layout.shuffle_right()),
+    Key([mod, "control"], "j", lazy.layout.grow_down()),
+    Key([mod, "control"], "k", lazy.layout.grow_up()),
+    Key([mod, "control"], "h", lazy.layout.grow_left()),
+    Key([mod, "control"], "l", lazy.layout.grow_right()),
+    Key([mod, "shift", "control"], "h", lazy.layout.swap_column_left()),
+    Key([mod, "shift", "control"], "l", lazy.layout.swap_column_right()),
+    Key([mod], "Return", lazy.layout.toggle_split()),
+    Key([mod], "n", lazy.layout.normalize()),
+    ```
     """
 
     _left = 0
@@ -169,7 +173,7 @@ class Columns(Layout):
             "align",
             _right,
             "Which side of screen new windows will be added to "
-            "(one of ``Columns._left`` or ``Columns._right``). "
+            "(one of `Columns._left` or `Columns._right`). "
             "Ignored if 'fair=True'.",
         ),
         ("initial_ratio", 1, "Ratio of first column to second column."),
@@ -339,20 +343,21 @@ class Columns(Layout):
             client.hide()
 
     def focus_first(self) -> Window | None:
-        """Returns first client in first column of layout"""
+        """Returns first client in first column of layout."""
         if self.columns:
             return self.columns[0].focus_first()
         return None
 
     def focus_last(self) -> Window | None:
-        """Returns last client in last column of layout"""
+        """Returns last client in last column of layout."""
         if self.columns:
             return self.columns[-1].focus_last()
         return None
 
     def focus_next(self, win: Window) -> None:
         """Returns the next client after 'win' in layout,
-        or None if there is no such client"""
+        or None if there is no such client.
+        """
         # First: try to get next window in column of win (self.columns is non-empty)
         # pylint: disable=undefined-loop-variable
         for idx, col in enumerate(self.columns):
@@ -367,7 +372,8 @@ class Columns(Layout):
 
     def focus_previous(self, win: Window) -> Window | None:
         """Returns the client previous to 'win' in layout.
-        or None if there is no such client"""
+        or None if there is no such client.
+        """
         # First: try to focus previous client in column (self.columns is non-empty)
         # pylint: disable=undefined-loop-variable
         for idx, col in enumerate(self.columns):

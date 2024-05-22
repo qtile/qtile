@@ -33,8 +33,7 @@ if TYPE_CHECKING:
 
 
 class Drawer(drawer.Drawer):
-    """
-    A helper class for drawing and text layout.
+    """A helper class for drawing and text layout.
 
     1. We stage drawing operations locally in memory using a cairo RecordingSurface.
     2. Then apply these operations to the windows's underlying ImageSurface.

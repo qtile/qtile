@@ -35,8 +35,7 @@ from libqtile.widget import base
 
 
 class CurrentLayout(base._TextBox):
-    """
-    Display the name of the current layout of the current group of the screen,
+    """Display the name of the current layout of the current group of the screen,
     the bar containing the widget, is on.
     """
 
@@ -73,8 +72,7 @@ class CurrentLayout(base._TextBox):
 
 
 class CurrentLayoutIcon(base._TextBox):
-    """
-    Display the icon representing the current layout of the
+    """Display the icon representing the current layout of the
     current group of the screen on which the bar containing the widget is.
 
     If you are using custom layouts, a default icon with question mark
@@ -140,15 +138,11 @@ class CurrentLayoutIcon(base._TextBox):
             self.bar.draw()
 
     def _setup_hooks(self):
-        """
-        Listens for layout change and performs a redraw when it occurs.
-        """
+        """Listens for layout change and performs a redraw when it occurs."""
         hook.subscribe.layout_change(self.hook_response)
 
     def _remove_hooks(self):
-        """
-        Listens for layout change and performs a redraw when it occurs.
-        """
+        """Listens for layout change and performs a redraw when it occurs."""
         hook.unsubscribe.layout_change(self.hook_response)
 
     def draw(self):
@@ -174,11 +168,9 @@ class CurrentLayoutIcon(base._TextBox):
             base._TextBox.draw(self)
 
     def _get_layout_names(self):
-        """
-        Returns a sequence of tuples of layout name and lowercased class name
+        """Returns a sequence of tuples of layout name and lowercased class name
         strings for each available layout.
         """
-
         layouts = itertools.chain(
             self.qtile.config.layouts,
             (layout for group in self.qtile.config.groups for layout in group.layouts),
@@ -211,9 +203,7 @@ class CurrentLayoutIcon(base._TextBox):
                     return icon_file_path
 
     def _setup_images(self):
-        """
-        Loads layout icons.
-        """
+        """Loads layout icons."""
         for names in self._get_layout_names():
             layout_name = names[0]
             # Python doesn't have an ordered set but we can use a dictionary instead

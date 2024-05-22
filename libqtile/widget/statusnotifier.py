@@ -56,8 +56,7 @@ PROTOCOL_VERSION = 0
 
 
 class StatusNotifierItem:  # noqa: E303
-    """
-    Class object which represents an StatusNotiferItem object.
+    """Class object which represents an StatusNotiferItem object.
 
     The item is responsible for interacting with the
     application.
@@ -245,8 +244,7 @@ class StatusNotifierItem:  # noqa: E303
         return Img.from_path(path)
 
     async def _get_icon(self, icon_name):
-        """
-        Requests the pixmap for the given `icon_name` and
+        """Requests the pixmap for the given `icon_name` and
         adds to an internal dictionary for later retrieval.
         """
         attr, method = self.icon_map[icon_name]
@@ -266,8 +264,7 @@ class StatusNotifierItem:  # noqa: E303
         }
 
     def _reorder_bytes(self, icon_bytes):
-        """
-        Method loops over the array and reverses every
+        """Method loops over the array and reverses every
         4 bytes (representing one RGBA pixel).
         """
         arr = bytearray(icon_bytes)
@@ -293,8 +290,7 @@ class StatusNotifierItem:  # noqa: E303
         return sorted([size for size in self._pixmaps["Icon"]])
 
     def _get_surfaces(self, size):
-        """
-        Creates a Cairo ImageSurface for each available icon
+        """Creates a Cairo ImageSurface for each available icon
         for the given size.
         """
         raw_surfaces = {}
@@ -307,8 +303,7 @@ class StatusNotifierItem:  # noqa: E303
         return raw_surfaces
 
     def get_icon(self, size):
-        """
-        Returns a cairo ImageSurface for the selected `size`.
+        """Returns a cairo ImageSurface for the selected `size`.
 
         Will pick the appropriate icon and add any overlay as required.
         """
@@ -381,8 +376,7 @@ class StatusNotifierItem:  # noqa: E303
 
 
 class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
-    """
-    DBus service that creates a StatusNotifierWatcher interface
+    """DBus service that creates a StatusNotifierWatcher interface
     on the bus and listens for applications wanting to register
     items.
     """
@@ -410,8 +404,7 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
         await self._setup_listeners()
 
     def _message_handler(self, message):
-        """
-        Low level method to check incoming messages.
+        """Low level method to check incoming messages.
 
         Ayatana indicators seem to register themselves by passing their object
         path rather than the service providing that object. We therefore need
@@ -436,8 +429,7 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
         return False
 
     async def _setup_listeners(self):
-        """
-        Register a MatchRule to receive signals when interfaces are added
+        """Register a MatchRule to receive signals when interfaces are added
         and removed from the bus.
         """
         await add_signal_receiver(
@@ -515,8 +507,7 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
 
 
 class StatusNotifierHost:  # noqa: E303
-    """
-    Host object to act as a bridge between the widget and the DBus objects.
+    """Host object to act as a bridge between the widget and the DBus objects.
 
     The Host collates items returned from multiple watcher interfaces and
     collates them into a single list for the widget to access.
@@ -538,8 +529,7 @@ class StatusNotifierHost:  # noqa: E303
         on_item_removed: Optional[Callable] = None,
         on_icon_changed: Optional[Callable] = None,
     ):
-        """
-        Starts the host if not already started.
+        """Starts the host if not already started.
 
         Widgets should register their callbacks via this method.
         """
@@ -590,8 +580,7 @@ class StatusNotifierHost:  # noqa: E303
                     pass
 
     def add_item(self, service, path=None):
-        """
-        Creates a StatusNotifierItem for the given service and tries to
+        """Creates a StatusNotifierItem for the given service and tries to
         start it.
         """
         item = StatusNotifierItem(self.bus, service, path=path, icon_theme=self.icon_theme)
@@ -617,14 +606,13 @@ host = StatusNotifierHost()  # noqa: E303
 
 
 class StatusNotifier(base._Widget):
-    """
-    A 'system tray' widget using the freedesktop StatusNotifierItem
+    """A 'system tray' widget using the freedesktop StatusNotifierItem
     specification.
 
     As per the specification, app icons are first retrieved from the
     user's current theme. If this is not available then the app may
     provide its own icon. In order to use this functionality, users
-    are recommended to install the `pyxdg <https://pypi.org/project/pyxdg/>`__
+    are recommended to install the [pyxdg](https://pypi.org/project/pyxdg/)
     module to support retrieving icons from the selected theme.
     If the icon specified by StatusNotifierItem can not be found in
     the user's current theme and no other icons are provided by the
@@ -632,12 +620,12 @@ class StatusNotifier(base._Widget):
 
     Left-clicking an icon will trigger an activate event.
 
-    .. note::
+    Note:
+    Context menus are not currently supported by the official widget.
+    However, a modded version of the widget which provides basic menu
+    support is available from elParaguayo's [qtile-extras][] repo.
 
-        Context menus are not currently supported by the official widget.
-        However, a modded version of the widget which provides basic menu
-        support is available from elParaguayo's `qtile-extras
-        <https://github.com/elParaguayo/qtile-extras>`_ repo.
+    [qtile-extras]: https://github.com/elParaguayo/qtile-extras
     """
 
     orientations = base.ORIENTATION_BOTH
@@ -682,7 +670,7 @@ class StatusNotifier(base._Widget):
         await host.start(on_item_added=draw, on_item_removed=draw, on_icon_changed=draw)
 
     def find_icon_at_pos(self, x, y):
-        """returns StatusNotifierItem object for icon in given position"""
+        """Returns StatusNotifierItem object for icon in given position."""
         offset = self.padding
         val = x if self.bar.horizontal else y
 
@@ -735,7 +723,7 @@ class StatusNotifier(base._Widget):
             self.drawer.draw(offsety=self.offset, offsetx=self.offsetx, height=self.length)
 
     def activate(self):
-        """Primary action when clicking on an icon"""
+        """Primary action when clicking on an icon."""
         if not self.selected_item:
             return
         self.selected_item.activate()

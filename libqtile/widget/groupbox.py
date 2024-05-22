@@ -147,7 +147,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
 
 
 class AGroupBox(_GroupBase):
-    """A widget that graphically displays the current group"""
+    """A widget that graphically displays the current group."""
 
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [("border", "000000", "group box border color")]
@@ -171,8 +171,7 @@ class AGroupBox(_GroupBase):
 
 
 class GroupBox(_GroupBase):
-    """
-    A widget that graphically displays the current group.
+    """A widget that graphically displays the current group.
     All groups are displayed by their label.
     If the label of a group is the empty string that group will not be displayed.
     """
@@ -264,8 +263,7 @@ class GroupBox(_GroupBase):
 
     @property
     def groups(self):
-        """
-        returns list of visible groups.
+        """Returns list of visible groups.
         The existing groups are filtered by the visible_groups attribute and
         their label. Groups with an empty string as label are never contained.
         Groups that are not named in visible_groups are not returned.

@@ -30,7 +30,7 @@ RGB = re.compile(r"^#?([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$")
 
 
 class _Extension(configurable.Configurable):
-    """Base Extension class"""
+    """Base Extension class."""
 
     installed_extensions = []  # type: list
 
@@ -49,8 +49,7 @@ class _Extension(configurable.Configurable):
         _Extension.installed_extensions.append(self)
 
     def _check_colors(self):
-        """
-        dmenu needs colours to be in #rgb or #rrggbb format.
+        """Dmenu needs colours to be in #rgb or #rrggbb format.
 
         Checks colour value, removes invalid values and adds # if missing.
 
@@ -78,21 +77,18 @@ class _Extension(configurable.Configurable):
         self._check_colors()
 
     def run(self):
-        """
-        This method must be implemented by the subclasses.
-        """
+        """This method must be implemented by the subclasses."""
         raise NotImplementedError()
 
 
 class RunCommand(_Extension):
-    """
-    Run an arbitrary command.
+    """Run an arbitrary command.
 
     Mostly useful as a superclass for more specific extensions that need to
     interact with the qtile object.
 
     Also consider simply using lazy.spawn() or writing a
-    `client <https://docs.qtile.org/en/latest/manual/commands/advanced.html#client-server-scripting-model>`_.
+    [client](https://docs.qtile.org/en/latest/manual/commands/advanced.html#client-server-scripting-model).
     """
 
     defaults: list[tuple[str, Any, str]] = [
@@ -109,18 +105,17 @@ class RunCommand(_Extension):
         self.configured_command = None
 
     def run(self):
-        """
-        An extension can inherit this class, define configured_command and use
+        """An extension can inherit this class, define configured_command and use
         the process object by overriding this method and using super():
 
-        .. code-block:: python
+        ```python
+        def _configure(self, qtile):
+            Superclass._configure(self, qtile)
+            self.configured_command = "foo --bar"
 
-            def _configure(self, qtile):
-                Superclass._configure(self, qtile)
-                self.configured_command = "foo --bar"
-
-            def run(self):
-                process = super(Subclass, self).run()
+        def run(self):
+            process = super(Subclass, self).run()
+        ```
         """
         if self.configured_command:
             if isinstance(self.configured_command, str):

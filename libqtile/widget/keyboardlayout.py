@@ -41,23 +41,19 @@ if TYPE_CHECKING:
 
 class _BaseLayoutBackend(metaclass=ABCMeta):
     def __init__(self, qtile: Qtile):
-        """
-        This handles getting and setter the keyboard layout with the appropriate
+        """This handles getting and setter the keyboard layout with the appropriate
         backend.
         """
 
     @abstractmethod
     def get_keyboard(self) -> str:
-        """
-        Return the currently used keyboard layout as a string
+        """Return the currently used keyboard layout as a string.
 
         Examples: "us", "us dvorak".  In case of error returns "unknown".
         """
 
     def set_keyboard(self, layout: str, options: str | None) -> None:
-        """
-        Set the keyboard layout with specified options.
-        """
+        """Set the keyboard layout with specified options."""
 
 
 class _X11LayoutBackend(_BaseLayoutBackend):
@@ -130,7 +126,7 @@ layout_backends = {
 
 
 class KeyboardLayout(base.InLoopPollText):
-    """Widget for changing and displaying the current keyboard layout
+    """Widget for changing and displaying the current keyboard layout.
 
     To use this widget effectively you need to specify keyboard layouts you want to use
     (using "configured_keyboards") and bind function "next_keyboard" to specific keys in
@@ -179,13 +175,12 @@ class KeyboardLayout(base.InLoopPollText):
 
     @expose_command()
     def next_keyboard(self):
-        """set the next layout in the list of configured keyboard layouts as
-        new current layout in use
+        """Set the next layout in the list of configured keyboard layouts as
+        new current layout in use.
 
         If the current keyboard layout is not in the list, it will set as new
         layout the first one in the list.
         """
-
         current_keyboard = self.backend.get_keyboard()
         if current_keyboard in self.configured_keyboards:
             # iterate the list circularly

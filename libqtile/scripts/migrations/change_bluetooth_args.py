@@ -45,24 +45,24 @@ class BluetoothArgsTransformer(MigrationTransformer):
 class BluetoothArgs(_QtileMigrator):
     ID = "UpdateBluetoothArgs"
 
-    SUMMARY = "Updates ``Bluetooth`` argument signature."
+    SUMMARY = "Updates `Bluetooth` argument signature."
 
     HELP = """
-    The ``Bluetooth`` widget previously accepted a ``hci`` keyword argument. This has
+    The `Bluetooth` widget previously accepted a `hci` keyword argument. This has
     been deprecated following a major overhaul of the widget and should be replaced with
-    a keyword argument named ``device``.
+    a keyword argument named `device`.
 
     For example:
 
-    .. code:: python
-
-        widget.Bluetooth(hci="/dev_XX_XX_XX_XX_XX_XX")
+    ```python
+    widget.Bluetooth(hci="/dev_XX_XX_XX_XX_XX_XX")
+    ```
 
     should be changed to:
 
-    .. code::
-
-        widget.Bluetooth(device="/dev_XX_XX_XX_XX_XX_XX")
+    ```python
+    widget.Bluetooth(device="/dev_XX_XX_XX_XX_XX_XX")
+    ```
 
     """
 

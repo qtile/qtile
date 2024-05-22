@@ -39,6 +39,7 @@ import os
 import pickle
 import string
 from collections import deque
+from typing import TYPE_CHECKING
 
 from libqtile import hook, pangocffi, utils
 from libqtile.command.base import CommandObject, SelectError, expose_command
@@ -46,6 +47,9 @@ from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import CommandError, QtileCommandInterface
 from libqtile.log_utils import logger
 from libqtile.widget import base
+
+if TYPE_CHECKING:
+    from typing import Callable
 
 
 class AbstractCompleter(metaclass=abc.ABCMeta):
@@ -63,8 +67,7 @@ class AbstractCompleter(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def complete(self, txt: str, aliases: dict[str, str] | None = None) -> str:
-        """
-        Perform the requested completion on the given text.
+        """Perform the requested completion on the given text.
 
         The completer can optionally support aliases, which map strings to commands. The
         completer should include the aliases in the completion results.
@@ -101,7 +104,7 @@ class FileCompleter(AbstractCompleter):
         self.lookup = None
 
     def complete(self, txt: str, _aliases: dict[str, str] | None = None) -> str:
-        """Returns the next completion for txt, or None if there is no completion"""
+        """Returns the next completion for txt, or None if there is no completion."""
         if self.lookup is None:
             self.lookup = []
             if txt == "" or txt[0] not in "~/":
@@ -192,7 +195,7 @@ class GroupCompleter(AbstractCompleter):
         self.offset = -1
 
     def actual(self) -> str | None:
-        """Returns the current actual value"""
+        """Returns the current actual value."""
         return self.thisfinal
 
     def reset(self) -> None:
@@ -200,7 +203,7 @@ class GroupCompleter(AbstractCompleter):
         self.offset = -1
 
     def complete(self, txt: str, _aliases: dict[str, str] | None = None) -> str:
-        """Returns the next completion for txt, or None if there is no completion"""
+        """Returns the next completion for txt, or None if there is no completion."""
         txt = txt.lower()
         if not self.lookup:
             self.lookup = []
@@ -228,7 +231,7 @@ class WindowCompleter(AbstractCompleter):
         self.offset = -1
 
     def actual(self) -> str | None:
-        """Returns the current actual value"""
+        """Returns the current actual value."""
         return self.thisfinal
 
     def reset(self) -> None:
@@ -236,7 +239,7 @@ class WindowCompleter(AbstractCompleter):
         self.offset = -1
 
     def complete(self, txt: str, _aliases: dict[str, str] | None = None) -> str:
-        """Returns the next completion for txt, or None if there is no completion"""
+        """Returns the next completion for txt, or None if there is no completion."""
         if self.lookup is None:
             self.lookup = []
             for wid, window in self.qtile.windows_map.items():
@@ -256,23 +259,21 @@ class WindowCompleter(AbstractCompleter):
 
 
 class CommandCompleter:
-    """
-    Parameters
-    ==========
-    _testing :
-        disables reloading of the lookup table to make testing possible.
-    """
-
     DEFAULTPATH = "/bin:/usr/bin:/usr/local/bin"
 
     def __init__(self, qtile, _testing=False):
+        """Initialize the command completer.
+        
+        Parameters:
+            _testing: Disables reloading of the lookup table to make testing possible.
+        """
         self.lookup = None  # type: list[tuple[str, str]] | None
         self.offset = -1
         self.thisfinal = None  # type: str | None
         self._testing = _testing
 
     def actual(self) -> str | None:
-        """Returns the current actual value"""
+        """Returns the current actual value."""
         return self.thisfinal
 
     def executable(self, fpath: str):
@@ -283,7 +284,7 @@ class CommandCompleter:
         self.offset = -1
 
     def complete(self, txt: str, aliases: dict[str, str] | None = None) -> str:
-        """Returns the next completion for txt, or None if there is no completion"""
+        """Returns the next completion for txt, or None if there is no completion."""
         if self.lookup is None:
             # Lookup is a set of (display value, actual value) tuples.
             self.lookup = []
@@ -332,9 +333,9 @@ class CommandCompleter:
 
 
 class Prompt(base._TextBox):
-    """A widget that prompts for user input
+    """A widget that prompts for user input.
 
-    Input should be started using the ``.start_input()`` method on this class.
+    Input should be started using the `.start_input()` method on this class.
     """
 
     completers = {
@@ -443,14 +444,14 @@ class Prompt(base._TextBox):
 
     def start_input(
         self,
-        prompt,
-        callback,
-        complete=None,
-        strict_completer=False,
-        allow_empty_input=False,
+        prompt: str,
+        callback: Callable,
+        complete: str | None = None,
+        strict_completer: bool = False,
+        allow_empty_input: bool = False,
         aliases: dict[str, str] | None = None,
     ) -> None:
-        """Run the prompt
+        """Run the prompt.
 
         Displays a prompt and starts to take one line of keyboard input from
         the user. When done, calls the callback with the input string as
@@ -459,27 +460,23 @@ class Prompt(base._TextBox):
         modified). When history is exhausted, fires an alert. It tries to
         mimic, in some way, the shell behavior.
 
-        Parameters
-        ==========
-        complete :
-            Tab-completion. Can be None, "cmd", "file", "group", "qshell" or
-            "window".
-        prompt :
-            text displayed at the prompt, e.g. "spawn: "
-        callback :
-            function to call with returned value.
-        complete :
-            completer to use.
-        strict_completer :
-            When True the return value wil be the exact completer result where
-            available.
-        allow_empty_input :
-            When True, an empty value will still call the callback function
-        aliases :
-            Dictionary mapping aliases to commands. If the entered command is a key in
-            this dict, the command it maps to will be executed instead.
+        Parameters:
+            prompt:
+                Text displayed at the prompt, e.g. "spawn: ".
+            callback:
+                Function to call with returned value.
+            complete:
+                Tab-completion. Can be None, "cmd", "file", "group",
+                "qshell" or "window".
+            strict_completer:
+                When True the return value wil be the exact completer result where
+                available.
+            allow_empty_input:
+                When True, an empty value will still call the callback function.
+            aliases:
+                Dictionary mapping aliases to commands. If the entered command is a key in
+                this dict, the command it maps to will be executed instead.
         """
-
         if self.cursor and self.cursorblink and not self.active:
             self.timeout_add(self.cursorblink, self._blink)
         self.display = self.prompt.format(prompt=prompt)
@@ -702,7 +699,7 @@ class Prompt(base._TextBox):
 
     @expose_command()
     def info(self):
-        """Returns a dictionary of info for this object"""
+        """Returns a dictionary of info for this object."""
         return dict(
             name=self.name,
             width=self.width,
@@ -711,34 +708,36 @@ class Prompt(base._TextBox):
         )
 
     @expose_command()
-    def exec_general(self, prompt, object_name, cmd_name, selector=None, completer=None):
-        """
-        Execute a cmd of any object. For example layout, group, window, widget
-        , etc with a string that is obtained from start_input.
+    def exec_general(self, prompt: str, object_name: str, cmd_name: str, selector=None, completer=None):
+        """Execute a cmd of any object.
+        
+        For example layout, group, window, widget, etc., with a string that is obtained from `start_input`.
 
-        Parameters
-        ==========
-        prompt :
-            Text displayed at the prompt.
-        object_name :
-            Name of a object in Qtile. This string has to be 'layout', 'widget',
-            'bar', 'window' or 'screen'.
-        cmd_name :
-            Execution command of selected object using object_name and selector.
-        selector :
-            This value select a specific object within a object list that is
-            obtained by object_name.
-            If this value is None, current object is selected. e.g. current layout,
-            current window and current screen.
-        completer:
-            Completer to use.
+        Parameters:
+            prompt:
+                Text displayed at the prompt.
+            object_name:
+                Name of a object in Qtile. This string has to be 'layout', 'widget',
+                'bar', 'window' or 'screen'.
+            cmd_name:
+                Execution command of selected object using `object_name` and `selector`.
+            selector:
+                This value select a specific object within a object list that is
+                obtained by `object_name`.
+                If this value is None, current object is selected. e.g. current layout,
+                current window and current screen.
+            completer:
+                Completer to use.
 
-        config example:
-            Key([alt, 'shift'], 'a',
-                lazy.widget['prompt'].exec_general(
-                    'section(add)',
-                    'layout',
-                    'add_section'))
+        Config example:
+
+        ```python
+        Key([alt, 'shift'], 'a',
+            lazy.widget['prompt'].exec_general(
+                'section(add)',
+                'layout',
+                'add_section'))
+        ```
         """
         try:
             obj = self.qtile.select([(object_name, selector)])

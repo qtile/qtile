@@ -32,31 +32,31 @@ class RenameThreadedPollTextTransformer(RenamerTransformer):
 class RenameThreadedPollText(_QtileMigrator):
     ID = "RenameThreadedPollText"
 
-    SUMMARY = "Replaces ``ThreadedPollText`` with ``ThreadPoolText``."
+    SUMMARY = "Replaces `ThreadedPollText` with `ThreadPoolText`."
 
     HELP = """
-    The ``ThreadedPollText`` class needs to replced with ``ThreadPoolText``.
+    The `ThreadedPollText` class needs to replced with `ThreadPoolText`.
 
-    This is because the ``ThreadPoolText`` class can do everything that the
-    ``ThreadedPollText`` does so the redundant code was removed.
+    This is because the `ThreadPoolText` class can do everything that the
+    `ThreadedPollText` does so the redundant code was removed.
 
     Example:
 
-    .. code:: python
+    ```python
+    from libqtile import widget
 
-        from libqtile import widget
-
-        class MyPollingWidget(widget.base.ThreadedPollText):
-            ...
+    class MyPollingWidget(widget.base.ThreadedPollText):
+        ...
+    ```
 
     Should be updated as follows:
 
-    .. code:: python
+    ```python
+    from libqtile import widget
 
-        from libqtile import widget
-
-        class MyPollingWidget(widget.base.ThreadPoolText):
-            ...
+    class MyPollingWidget(widget.base.ThreadPoolText):
+        ...
+    ```
 
     """
 

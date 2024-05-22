@@ -1,6 +1,4 @@
-"""
-CFFI definitions for interfacing with libinput
-"""
+"""CFFI definitions for interfacing with libinput."""
 
 SOURCE = """
 #include <libinput.h>

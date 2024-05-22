@@ -27,7 +27,7 @@ from libqtile.widget import base
 
 
 class Countdown(base.InLoopPollText):
-    """A simple countdown timer text widget"""
+    """A simple countdown timer text widget."""
 
     defaults = [
         (

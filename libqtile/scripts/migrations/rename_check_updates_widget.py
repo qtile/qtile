@@ -32,44 +32,44 @@ class RenameCheckUpdatesTransformer(RenamerTransformer):
 class RenamePacmanWidget(_QtileMigrator):
     ID = "RenamePacmanWidget"
 
-    SUMMARY = "Changes deprecated ``Pacman`` widget name to ``CheckUpdates``."
+    SUMMARY = "Changes deprecated `Pacman` widget name to `CheckUpdates`."
 
     HELP = """
-    The ``Pacman`` widget has been renamed to ``CheckUpdates``.
+    The `Pacman` widget has been renamed to `CheckUpdates`.
 
     This is because the widget supports multiple package managers.
 
     Example:
 
-    .. code:: python
-
-      screens = [
-          Screen(
-              top=Bar(
-                  [
-                    ...
-                    widget.Pacman(),
-                    ...
-                  ]
-              )
-          )
-      ]
+    ```python
+    screens = [
+        Screen(
+            top=Bar(
+                [
+                ...
+                widget.Pacman(),
+                ...
+                ]
+            )
+        )
+    ]
+    ```
 
     Should be updated as follows:
 
-    .. code:: python
-
-      screens = [
-          Screen(
-              top=Bar(
-                  [
-                    ...
-                    widget.CheckUpdates(),
-                    ...
-                  ]
-              )
-          )
-      ]
+    ```python
+    screens = [
+        Screen(
+            top=Bar(
+                [
+                ...
+                widget.CheckUpdates(),
+                ...
+                ]
+            )
+        )
+    ]
+    ```
 
     """
 

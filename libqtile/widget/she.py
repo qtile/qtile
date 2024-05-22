@@ -23,7 +23,7 @@ from libqtile.widget import base
 
 
 class She(base.InLoopPollText):
-    """Widget to display the Super Hybrid Engine status
+    """Widget to display the Super Hybrid Engine status.
 
     Can display either the mode or CPU speed on eeepc computers.
     """

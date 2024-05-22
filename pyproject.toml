@@ -42,7 +42,7 @@ include = ["libqtile*"]
 [tool.setuptools_scm]
 
 [tool.setuptools.dynamic]
-readme = {file = "README.rst"}
+readme = {file = "README.md"}
 
 [tool.black]
 line-length = 98

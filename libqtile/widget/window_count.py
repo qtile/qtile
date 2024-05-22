@@ -28,8 +28,7 @@ from libqtile.widget import base
 
 
 class WindowCount(base._TextBox):
-    """
-    A simple widget to display the number of windows in the
+    """A simple widget to display the number of windows in the
     current group of the screen on which the widget is.
     """
 

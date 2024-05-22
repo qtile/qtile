@@ -35,9 +35,7 @@ if TYPE_CHECKING:
 
 
 class Popup(configurable.Configurable):
-    """
-    This class can be used to create popup windows that display images and/or text.
-    """
+    """This class can be used to create popup windows that display images and/or text."""
 
     defaults = [
         ("opacity", 1.0, "Opacity of notifications."),
@@ -157,9 +155,9 @@ class Popup(configurable.Configurable):
         self.win.unhide()
 
     def draw_image(self, image: ImageSurface, x: int, y: int) -> None:
-        """
-        Paint an image onto the window at point x, y. The image should be a surface e.g.
-        loaded from libqtile.images.Img.from_path.
+        """Paint an image onto the window at point x, y.
+        
+        The image should be a surface e.g. loaded from libqtile.images.Img.from_path.
         """
         self.drawer.ctx.set_source_surface(image, x, y)
         self.drawer.ctx.paint()

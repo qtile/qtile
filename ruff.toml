@@ -1,0 +1,11 @@
+[lint]
+# Enable all `pydocstyle` rules, limiting to those that adhere to the
+# Google convention via `convention = "google"`, below.
+select = ["D"]
+
+# On top of the Google convention, disable `D417`, which requires
+# documentation for every function parameter.
+ignore = ["D203", "D213", "D407", "D408", "D409", "D410", "D413", "D417"]
+
+[lint.pydocstyle]
+convention = "google"

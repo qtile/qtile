@@ -44,18 +44,19 @@ NESW = ("top", "right", "bottom", "left")
 
 
 class Gap:
-    """A gap placed along one of the edges of the screen
+    """A gap placed along one of the edges of the screen.
 
     Qtile will avoid covering gaps with windows.
-
-    Parameters
-    ==========
-    size :
-        The "thickness" of the gap, i.e. the height of a horizontal gap, or the
-        width of a vertical gap.
     """
 
     def __init__(self, size: int) -> None:
+        """Initializes the gap.
+
+        Parameters:
+            size:
+                The "thickness" of the gap, i.e. the height of a horizontal gap, or the
+                width of a vertical gap.
+        """
         # 'size' corresponds to the height of a horizontal gap, or the width
         # of a vertical gap
         self._size = size
@@ -144,9 +145,7 @@ class Gap:
 
     @expose_command()
     def info(self) -> dict[str, Any]:
-        """
-        Info for this object.
-        """
+        """Info for this object."""
         return dict(position=self.position)
 
 
@@ -167,16 +166,7 @@ STATIC = Obj("STATIC")
 
 
 class Bar(Gap, configurable.Configurable, CommandObject):
-    """A bar, which can contain widgets
-
-    Parameters
-    ==========
-    widgets :
-        A list of widget objects.
-    size :
-        The "thickness" of the bar, i.e. the height of a horizontal bar, or the
-        width of a vertical bar.
-    """
+    """A bar, which can contain widgets."""
 
     defaults = [
         ("background", "#000000", "Background colour."),
@@ -192,6 +182,15 @@ class Bar(Gap, configurable.Configurable, CommandObject):
     ]
 
     def __init__(self, widgets: list[_Widget], size: int, **config: Any) -> None:
+        """Initializes the bar.
+        
+        Parameters:
+            widgets:
+                A list of widget objects.
+            size:
+                The "thickness" of the bar, i.e. the height of a horizontal bar, or the
+                width of a vertical bar.
+        """
         Gap.__init__(self, size)
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(Bar.defaults)
@@ -242,8 +241,9 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             self.border_width = [0, 0, 0, 0]
 
     def _configure(self, qtile: Qtile, screen: Screen, reconfigure: bool = False) -> None:
-        """
-        Configure the bar. `reconfigure` is set to True when screen dimensions
+        """Configure the bar.
+        
+        `reconfigure` is set to True when screen dimensions
         change, forcing a recalculation of the bar's dimensions.
         """
         # We only want to adjust margin sizes once unless there's new space being
@@ -601,10 +601,9 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             self._has_keyboard.process_key_press(keycode)
 
     def widget_grab_keyboard(self, widget: _Widget) -> None:
-        """
-        A widget can call this method to grab the keyboard focus
-        and receive keyboard messages. When done,
-        widget_ungrab_keyboard() must be called.
+        """A widget can call this method to grab the keyboard focus and receive keyboard messages.
+        
+        When done, `widget_ungrab_keyboard()` must be called.
         """
         assert self.qtile is not None
 
@@ -614,9 +613,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             self.window.focus(False)
 
     def widget_ungrab_keyboard(self) -> None:
-        """
-        Removes keyboard focus from the widget.
-        """
+        """Removes keyboard focus from the widget."""
         if self._saved_focus is not None:
             self._saved_focus.focus(False)
         self._has_keyboard = None
@@ -763,17 +760,9 @@ class Bar(Gap, configurable.Configurable, CommandObject):
     def fake_button_press(
         self, screen: int, position: str, x: int, y: int, button: int = 1
     ) -> None:
-        """
-        Fake a mouse-button-press on the bar. Co-ordinates are relative
-        to the top-left corner of the bar.
-
-        Parameters
-        ==========
-        widgets :
-            A list of widget objects.
-        size :
-            The "thickness" of the bar, i.e. the height of a horizontal bar, or the
-            width of a vertical bar.
+        """Fake a mouse-button-press on the bar.
+        
+        Coordinates are relative to the top-left corner of the bar.
         """
         # TODO: drop the screen and position args, update relevant tests
         self.process_button_click(x, y, button)

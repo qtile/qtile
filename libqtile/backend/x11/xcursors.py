@@ -116,16 +116,13 @@ class Cursors(dict):
         return xcursor
 
     def get_xcursor(self, name):
-        """
-        Get the cursor using xcb-util-cursor, so we support themed cursors
-        """
+        """Get the cursor using xcb-util-cursor, so we support themed cursors."""
         cursor = self.xcursor.xcb_cursor_load_cursor(self._cursor_ctx[0], name)
         return cursor
 
     def get_font_cursor(self, name, cursor_font):
-        """
-        Get the cursor from the font, used as a fallback if xcb-util-cursor
-        is not installed
+        """Get the cursor from the font, used as a fallback if xcb-util-cursor
+        is not installed.
         """
         fid = self.conn.conn.generate_id()
         self.conn.conn.core.OpenFont(fid, len("cursor"), "cursor")

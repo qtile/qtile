@@ -180,7 +180,7 @@ class Bsp(Layout):
         (
             "wrap_clients",
             False,
-            "Whether client list should be wrapped when using ``next`` and ``previous`` commands.",
+            "Whether client list should be wrapped when using `next` and `previous` commands.",
         ),
     ]
 

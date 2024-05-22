@@ -57,27 +57,27 @@ class BitcoinTransformer(RenamerTransformer):
 class BitcoinToCrypto(_QtileMigrator):
     ID = "UpdateBitcoin"
 
-    SUMMARY = "Updates ``BitcoinTicker`` to ``CryptoTicker``."
+    SUMMARY = "Updates `BitcoinTicker` to `CryptoTicker`."
 
     HELP = """
-    The ``BitcoinTicker`` widget has been renamed ``CryptoTicker``. In addition, the ``format``
+    The `BitcoinTicker` widget has been renamed `CryptoTicker`. In addition, the `format`
     keyword argument is removed during this migration as the available fields for the format
     have changed.
 
-    The removal only happens on instances of ``BitcoinTracker``. i.e. running ``qtile migrate``
+    The removal only happens on instances of `BitcoinTracker`. i.e. running `qtile migrate`
     on the following code:
 
-    .. code:: python
-
-        BitcoinTicker(format="...")
-        CryptoTicker(format="...")
+    ```python
+    BitcoinTicker(format="...")
+    CryptoTicker(format="...")
+    ```
 
     will return:
 
-    .. code:: python
-
-        CryptoTicker()
-        CryptoTicker(format="...")
+    ```python
+    CryptoTicker()
+    CryptoTicker(format="...")
+    ```
 
     """
 

@@ -51,26 +51,7 @@ if TYPE_CHECKING:
 
 
 class Key:
-    """
-    Defines a keybinding.
-
-    Parameters
-    ==========
-    modifiers:
-        A list of modifier specifications. Modifier specifications are one of:
-        ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
-        ``"mod4"``, ``"mod5"``.
-    key:
-        A key specification, e.g. ``"a"``, ``"Tab"``, ``"Return"``, ``"space"``.
-    commands:
-        One or more :class:`LazyCall` objects to evaluate in sequence upon keypress. Multiple
-        commands should be separated by commas.
-    desc:
-        Description to be added to the key binding. (Optional)
-    swallow:
-        Configures when we swallow the key binding. (Optional)
-        Setting it to False will forward the key binding to the focused window after the commands have been executed.
-    """
+    """Defines a keybinding."""
 
     def __init__(
         self,
@@ -80,6 +61,24 @@ class Key:
         desc: str = "",
         swallow: bool = True,
     ) -> None:
+        """Initialize a keybinding.
+
+        Parameters:
+            modifiers:
+                A list of modifier specifications. Modifier specifications are one of:
+                `"shift"`, `"lock"`, `"control"`, `"mod1"`, `"mod2"`, `"mod3"`,
+                `"mod4"`, `"mod5"`.
+            key:
+                A key specification, e.g. `"a"`, `"Tab"`, `"Return"`, `"space"`.
+            commands:
+                One or more [`LazyCall`][] objects to evaluate in sequence upon keypress. Multiple
+                commands should be separated by commas.
+            desc:
+                Description to be added to the key binding (optional).
+            swallow:
+                Configures when we swallow the key binding (optional).
+                Setting it to False will forward the key binding to the focused window after the commands have been executed.
+        """
         self.modifiers = modifiers
         self.key = key
         self.commands = commands
@@ -91,34 +90,7 @@ class Key:
 
 
 class KeyChord:
-    """
-    Define a key chord aka Vim-like mode.
-
-    Parameters
-    ==========
-    modifiers:
-        A list of modifier specifications. Modifier specifications are one of:
-        ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
-        ``"mod4"``, ``"mod5"``.
-    key:
-        A key specification, e.g. ``"a"``, ``"Tab"``, ``"Return"``, ``"space"``.
-    submappings:
-        A list of :class:`Key` or :class:`KeyChord` declarations to bind in this chord.
-    mode:
-        Boolean. Setting to ``True`` will result in the chord persisting until
-        Escape is pressed. Setting to ``False`` (default) will exit the chord once
-        the sequence has ended.
-    name:
-        A string to name the chord. The name will be displayed in the Chord
-        widget.
-    desc:
-        A string to describe the chord. This attribute is not directly used by Qtile
-        but users may want to access this when creating scripts to show configured
-        keybindings.
-    swallow:
-        Configures when we swallow the key binding of the chord. (Optional)
-        Setting it to False will forward the key binding to the focused window after the commands have been executed.
-    """
+    """Define a key chord aka Vim-like mode."""
 
     def __init__(
         self,
@@ -130,6 +102,32 @@ class KeyChord:
         desc: str = "",
         swallow: bool = True,
     ):
+        """Initialize a key chord.
+        
+        Parameters:
+            modifiers:
+                A list of modifier specifications. Modifier specifications are one of:
+                `"shift"`, `"lock"`, `"control"`, `"mod1"`, `"mod2"`, `"mod3"`,
+                `"mod4"`, `"mod5"`.
+            key:
+                A key specification, e.g. `"a"`, `"Tab"`, `"Return"`, `"space"`.
+            submappings:
+                A list of [`Key`][] or [`KeyChord`][] declarations to bind in this chord.
+            mode:
+                Boolean. Setting to `True` will result in the chord persisting until
+                Escape is pressed. Setting to `False` (default) will exit the chord once
+                the sequence has ended.
+            name:
+                A string to name the chord. The name will be displayed in the Chord
+                widget.
+            desc:
+                A string to describe the chord. This attribute is not directly used by Qtile
+                but users may want to access this when creating scripts to show configured
+                keybindings.
+            swallow:
+                Configures when we swallow the key binding of the chord. (Optional)
+                Setting it to False will forward the key binding to the focused window after the commands have been executed.
+        """
         self.modifiers = modifiers
         self.key = key
 
@@ -155,7 +153,21 @@ class KeyChord:
 
 
 class Mouse:
+    """Bind commands to a mouse action."""
+
     def __init__(self, modifiers: list[str], button: str, *commands: LazyCall) -> None:
+        """Initialize a mouse binding.
+                
+        Parameters:
+            modifiers:
+                A list of modifier specifications. Modifier specifications are one of:
+                `"shift"`, `"lock"`, `"control"`, `"mod1"`, `"mod2"`, `"mod3"`,
+                `"mod4"`, `"mod5"`.
+            button:
+                The button used, e.g. `"Button1"`.
+            commands:
+                A list [`LazyCall`][] objects to evaluate in sequence upon using the button.
+        """
         self.modifiers = modifiers
         self.button = button
         self.commands = commands
@@ -164,28 +176,10 @@ class Mouse:
 
 
 class Drag(Mouse):
-    """
-    Bind commands to a dragging action.
+    """Bind commands to a dragging action.
 
     On each motion event the bound commands are executed with two additional parameters
     specifying the x and y offset from the previous position.
-
-    Parameters
-    ==========
-    modifiers:
-        A list of modifier specifications. Modifier specifications are one of:
-        ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
-        ``"mod4"``, ``"mod5"``.
-    button:
-        The button used to start dragging e.g. ``"Button1"``.
-    commands:
-        A list :class:`LazyCall` objects to evaluate in sequence upon drag.
-    start:
-        A :class:`LazyCall` object to be evaluated when dragging begins. (Optional)
-    warp_pointer:
-        A :class:`bool` indicating if the pointer should be warped to the bottom right of the window
-        at the start of dragging. (Default: `False`)
-
     """
 
     def __init__(
@@ -196,6 +190,23 @@ class Drag(Mouse):
         start: LazyCall | None = None,
         warp_pointer: bool = False,
     ) -> None:
+        """Initialize a drag binding.
+                
+        Parameters:
+            modifiers:
+                A list of modifier specifications. Modifier specifications are one of:
+                `"shift"`, `"lock"`, `"control"`, `"mod1"`, `"mod2"`, `"mod3"`,
+                `"mod4"`, `"mod5"`.
+            button:
+                The button used to start dragging e.g. `"Button1"`.
+            commands:
+                A list [`LazyCall`][] objects to evaluate in sequence upon drag.
+            start:
+                A [`LazyCall`][] object to be evaluated when dragging begins. (Optional)
+            warp_pointer:
+                A [`bool`][] indicating if the pointer should be warped to the bottom right of the window
+                at the start of dragging. (Default: `False`)
+        """
         super().__init__(modifiers, button, *commands)
         self.start = start
         self.warp_pointer = warp_pointer
@@ -205,38 +216,24 @@ class Drag(Mouse):
 
 
 class Click(Mouse):
-    """
-    Bind commands to a clicking action.
-
-    Parameters
-    ==========
-    modifiers:
-        A list of modifier specifications. Modifier specifications are one of:
-        ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
-        ``"mod4"``, ``"mod5"``.
-    button:
-        The button used to start dragging e.g. ``"Button1"``.
-    commands:
-        A list :class:`LazyCall` objects to evaluate in sequence upon drag.
-
-    """
+    """Bind commands to a clicking action."""
 
     def __repr__(self) -> str:
         return "<Click (%s, %s)>" % (self.modifiers, self.button)
 
 
 class EzConfig:
-    """
-    Helper class for defining key and button bindings in an Emacs-like format.
+    """Helper class for defining key and button bindings in an Emacs-like format.
 
-    Inspired by Xmonad's XMonad.Util.EZConfig.
+    Inspired by Xmonad's `XMonad.Util.EZConfig`.
 
     Splits an emacs keydef into modifiers and keys. For example:
 
-          "m-s-a"     -> ['mod4', 'shift'], 'a'
-          "a-<minus>" -> ['mod1'], 'minus'
-          "C-<Tab>"   -> ['control'], 'Tab'
-
+    ```
+    "m-s-a"     -> ['mod4', 'shift'], 'a'
+    "a-<minus>" -> ['mod1'], 'minus'
+    "C-<Tab>"   -> ['control'], 'Tab'
+    ```
     """
 
     modifier_keys = {
@@ -278,48 +275,25 @@ class EzConfig:
 
 
 class EzKey(EzConfig, Key):
-    """
-    Defines a keybinding using the Emacs-like format.
-
-    Parameters
-    ==========
-    keydef:
-        The Emacs-like key specification, e.g. ``"M-S-a"``.
-    commands:
-        A list :class:`LazyCall` objects to evaluate in sequence upon keypress.
-    desc:
-        Description to be added to the key binding. (Optional)
-
-    """
+    """Defines a keybinding using the Emacs-like format."""
 
     def __init__(self, keydef: str, *commands: LazyCall, desc: str = "") -> None:
+        """Initialize a keybinding.
+
+        Parameters:
+            keydef:
+                The Emacs-like key specification, e.g. `"M-S-a"`.
+            commands:
+                A list [`LazyCall`][] objects to evaluate in sequence upon keypress.
+            desc:
+                Description to be added to the key binding (optional).
+        """
         modkeys, key = self.parse(keydef)
         super().__init__(modkeys, key, *commands, desc=desc)
 
 
 class EzKeyChord(EzConfig, KeyChord):
-    """
-    Define a key chord using the Emacs-like format.
-
-    Parameters
-    ==========
-    keydef:
-        The Emacs-like key specification, e.g. ``"M-S-a"``.
-    submappings:
-        A list of :class:`Key` or :class:`KeyChord` declarations to bind in this chord.
-    mode:
-        Boolean. Setting to ``True`` will result in the chord persisting until
-        Escape is pressed. Setting to ``False`` (default) will exit the chord once
-        the sequence has ended.
-    name:
-        A string to name the chord. The name will be displayed in the Chord
-        widget.
-    desc:
-        A string to describe the chord. This attribute is not directly used by Qtile
-        but users may want to access this when creating scripts to show configured
-        keybindings.
-
-    """
+    """Define a key chord using the Emacs-like format."""
 
     def __init__(
         self,
@@ -329,45 +303,60 @@ class EzKeyChord(EzConfig, KeyChord):
         name: str = "",
         desc: str = "",
     ):
+        """Initialize a key chord.
+        
+        Parameters:
+            keydef:
+                The Emacs-like key specification, e.g. `"M-S-a"`.
+            submappings:
+                A list of [`Key`][] or [`KeyChord`][] declarations to bind in this chord.
+            mode:
+                Setting to `True` will result in the chord persisting until
+                Escape is pressed. Setting to `False` (default) will exit the chord once
+                the sequence has ended.
+            name:
+                A string to name the chord. The name will be displayed in the Chord
+                widget.
+            desc:
+                A string to describe the chord. This attribute is not directly used by Qtile
+                but users may want to access this when creating scripts to show configured
+                keybindings.
+        """
         modkeys, key = self.parse(keydef)
         super().__init__(modkeys, key, submappings, mode, name, desc)
 
 
 class EzClick(EzConfig, Click):
-    """
-    Bind commands to a clicking action using the Emacs-like format.
-
-    Parameters
-    ==========
-    btndef:
-        The Emacs-like button specification, e.g. ``"M-1"``.
-    commands:
-        A list :class:`LazyCall` objects to evaluate in sequence upon drag.
-
-    """
+    """Bind commands to a clicking action using the Emacs-like format."""
 
     def __init__(self, btndef: str, *commands: LazyCall) -> None:
+        """Initialize a click binding.
+
+        Parameters:
+            btndef:
+                The Emacs-like button specification, e.g. `"M-1"`.
+            commands:
+                A list [`LazyCall`][] objects to evaluate in sequence upon click.
+        """
         modkeys, button = self.parse(btndef)
         button = "Button%s" % button
         super().__init__(modkeys, button, *commands)
 
 
 class EzDrag(EzConfig, Drag):
-    """
-    Bind commands to a dragging action using the Emacs-like format.
-
-    Parameters
-    ==========
-    btndef:
-        The Emacs-like button specification, e.g. ``"M-1"``.
-    commands:
-        A list :class:`LazyCall` objects to evaluate in sequence upon drag.
-    start:
-        A :class:`LazyCall` object to be evaluated when dragging begins. (Optional)
-
-    """
+    """Bind commands to a dragging action using the Emacs-like format."""
 
     def __init__(self, btndef: str, *commands: LazyCall, start: LazyCall | None = None) -> None:
+        """Initialize a drag binding.
+        
+        Parameters:
+            btndef:
+                The Emacs-like button specification, e.g. `"M-1"`.
+            commands:
+                A list [`LazyCall`][] objects to evaluate in sequence upon drag.
+            start:
+                A [`LazyCall`][] object to be evaluated when dragging begins (optional).
+        """
         modkeys, button = self.parse(btndef)
         button = "Button%s" % button
         super().__init__(modkeys, button, *commands, start=start)
@@ -396,22 +385,25 @@ class ScreenRect:
 
 
 class Screen(CommandObject):
-    r"""
-    A physical screen, and its associated paraphernalia.
+    """A physical screen, and its associated paraphernalia.
 
-    Define a screen with a given set of :class:`Bar`\s of a specific geometry. Also,
-    ``x``, ``y``, ``width``, and ``height`` aren't specified usually unless you are
+    Define a screen with a given set of [`Bar`][]s of a specific geometry. Also,
+    `x`, `y`, `width`, and `height` aren't specified usually unless you are
     using 'fake screens'.
 
-    The ``wallpaper`` parameter, if given, should be a path to an image file. How this
-    image is painted to the screen is specified by the ``wallpaper_mode`` parameter. By
+    The `wallpaper` parameter, if given, should be a path to an image file. How this
+    image is painted to the screen is specified by the `wallpaper_mode` parameter. By
     default, the image will be placed at the screens origin and retain its own
-    dimensions. If the mode is ``"fill"``, the image will be centred on the screen and
-    resized to fill it. If the mode is ``"stretch"``, the image is stretched to fit all
+    dimensions. If the mode is `"fill"`, the image will be centred on the screen and
+    resized to fill it. If the mode is `"stretch"`, the image is stretched to fit all
     of it into the screen.
 
-    The ``x11_drag_polling_rate`` parameter specifies the rate for drag events in the X11 backend. By default this is set to None, indicating no limit. Because in the X11 backend we already handle motion notify events later, the performance should already be okay. However, to limit these events further you can use this variable and e.g. set it to your monitor refresh rate. 60 would mean that we handle a drag event 60 times per second.
-
+    The `x11_drag_polling_rate` parameter specifies the rate for drag events in the X11 backend.
+    By default this is set to None, indicating no limit.
+    Because in the X11 backend we already handle motion notify events later,
+    the performance should already be okay. However, to limit these events further
+    you can use this variable and e.g. set it to your monitor refresh rate.
+    60 would mean that we handle a drag event 60 times per second.
     """
 
     group: _Group
@@ -516,7 +508,7 @@ class Screen(CommandObject):
     def set_group(
         self, new_group: _Group | None, save_prev: bool = True, warp: bool = True
     ) -> None:
-        """Put group on this screen"""
+        """Put group on this screen."""
         if new_group is None:
             return
 
@@ -561,7 +553,7 @@ class Screen(CommandObject):
         hook.fire("layout_change", self.group.layouts[self.group.current_layout], self.group)
 
     def _toggle_group(self, group: _Group | None = None, warp: bool = True) -> None:
-        """Switch to the selected group or to the previously active one"""
+        """Switch to the selected group or to the previously active one."""
         if group in (self.group, None) and self.previous_group:
             group = self.previous_group
         self.set_group(group, warp=warp)
@@ -644,7 +636,7 @@ class Screen(CommandObject):
 
     @expose_command()
     def next_group(self, skip_empty: bool = False, skip_managed: bool = False) -> None:
-        """Switch to the next group"""
+        """Switch to the next group."""
         n = self.group.get_next_group(skip_empty, skip_managed)
         self.set_group(n)
         return n.name
@@ -653,14 +645,14 @@ class Screen(CommandObject):
     def prev_group(
         self, skip_empty: bool = False, skip_managed: bool = False, warp: bool = True
     ) -> None:
-        """Switch to the previous group"""
+        """Switch to the previous group."""
         n = self.group.get_previous_group(skip_empty, skip_managed)
         self.set_group(n, warp=warp)
         return n.name
 
     @expose_command()
     def toggle_group(self, group_name: str | None = None, warp: bool = True) -> None:
-        """Switch to the selected group or to the previously active one"""
+        """Switch to the selected group or to the previously active one."""
         assert self.qtile is not None
         group = self.qtile.groups_map.get(group_name if group_name else "")
         self._toggle_group(group, warp=warp)
@@ -672,45 +664,10 @@ class Screen(CommandObject):
 
 
 class Group:
-    """
-    Represents a "dynamic" group
+    """Represents a "dynamic" group.
 
     These groups can spawn apps, only allow certain Matched windows to be on them, hide
     when they're not in use, etc. Groups are identified by their name.
-
-    Parameters
-    ==========
-    name:
-        The name of this group.
-    matches:
-        List of :class:`Match` objects whose matched windows will be assigned to this
-        group.
-    exclusive:
-        When other apps are started in this group, should we allow them here or not?
-    spawn:
-        This will be executed (via ``qtile.spawn()``) when the group is created. You can pass either a
-        program name or a list of programs to ``exec()``.
-    layout:
-        The name of default layout for this group (e.g. ``"max"``). This is the name
-        specified for a particular layout in ``config.py`` or if not defined it defaults
-        in general to the class name in all lower case.
-    layouts:
-        The group layouts list overriding global layouts. Use this to define a separate
-        list of layouts for this particular group.
-    persist:
-        Should this group stay alive when it has no member windows?
-    init:
-        Should this group be alive when Qtile starts?
-    layout_opts:
-        Options to pass to a layout.
-    screen_affinity:
-        Make a dynamic group prefer to start on a specific screen.
-    position:
-        The position of this group.
-    label:
-        The display name of the group. Use this to define a display name other than name
-        of the group. If set to ``None``, the display name is set to the name.
-
     """
 
     def __init__(
@@ -728,6 +685,40 @@ class Group:
         position: int = sys.maxsize,
         label: str | None = None,
     ) -> None:
+        """Initialize a group.
+
+        Parameters:
+            name:
+                The name of this group.
+            matches:
+                List of [`Match`][] objects whose matched windows will be assigned to this
+                group.
+            exclusive:
+                When other apps are started in this group, should we allow them here or not?
+            spawn:
+                This will be executed (via `qtile.spawn()`) when the group is created. You can pass either a
+                program name or a list of programs to `exec()`.
+            layout:
+                The name of default layout for this group (e.g. `"max"`). This is the name
+                specified for a particular layout in `config.py` or if not defined it defaults
+                in general to the class name in all lower case.
+            layouts:
+                The group layouts list overriding global layouts. Use this to define a separate
+                list of layouts for this particular group.
+            persist:
+                Should this group stay alive when it has no member windows?
+            init:
+                Should this group be alive when Qtile starts?
+            layout_opts:
+                Options to pass to a layout.
+            screen_affinity:
+                Make a dynamic group prefer to start on a specific screen.
+            position:
+                The position of this group.
+            label:
+                The display name of the group. Use this to define a display name other than name
+                of the group. If set to `None`, the display name is set to the name.
+        """
         self.name = name
         self.label = label
         self.exclusive = exclusive
@@ -761,27 +752,11 @@ class Group:
 
 
 class ScratchPad(Group):
-    """
-    Represents a "ScratchPad" group
+    """Represents a "ScratchPad" group.
 
     ScratchPad adds a (by default) invisible group to Qtile. That group is used as a
-    place for currently not visible windows spawned by a :class:`DropDown`
+    place for currently not visible windows spawned by a [`DropDown`][]
     configuration.
-
-    Parameters
-    ==========
-    name:
-        The name of this group.
-    dropdowns:
-        :class:`DropDown` s available on the scratchpad.
-    position:
-        The position of this group.
-    label:
-        The display name of the :class:`ScratchPad` group. Defaults to the empty string
-        such that the group is hidden in :class:`~libqtile.widget.GroupBox` widget.
-    single:
-        If ``True``, only one of the dropdowns will be visible at a time.
-
     """
 
     def __init__(
@@ -792,6 +767,21 @@ class ScratchPad(Group):
         label: str = "",
         single: bool = False,
     ) -> None:
+        """Initialize a scratchpad group.
+
+        Parameters:
+            name:
+                The name of this group.
+            dropdowns:
+                [`DropDown`][] s available on the scratchpad.
+            position:
+                The position of this group.
+            label:
+                The display name of the [`ScratchPad`][] group. Defaults to the empty string
+                such that the group is hidden in [`libqtile.widget.GroupBox`][] widget.
+            single:
+                If `True`, only one of the dropdowns will be visible at a time.
+        """
         Group.__init__(
             self,
             name,
@@ -903,39 +893,17 @@ class MatchOnlyOne(_Match):
 
 
 class Match(_Match):
-    """
-    Window properties to compare (match) with a window.
+    """Window properties to compare (match) with a window.
 
-    The properties will be compared to a :class:`~libqtile.base.Window` to determine if
+    The properties will be compared to a [`libqtile.base.Window`][] to determine if
     its properties *match*. It can match by title, wm_class, role, wm_type,
     wm_instance_class, net_wm_pid, or wid. Additionally, a function may be
-    passed, which takes in the :class:`~libqtile.base.Window` to be compared
+    passed, which takes in the [`libqtile.base.Window`][] to be compared
     against and returns a boolean.
 
-    For some properties, :class:`Match` supports both regular expression objects (i.e.
-    the result of ``re.compile()``) or strings (match as an exact string). If a
+    For some properties, [`Match`][] supports both regular expression objects (i.e.
+    the result of `re.compile()`) or strings (match as an exact string). If a
     window matches all specified values, it is considered a match.
-
-    Parameters
-    ==========
-    title:
-        Match against the WM_NAME atom (X11) or title (Wayland).
-    wm_class:
-        Match against any value in the whole WM_CLASS atom (X11) or app ID (Wayland).
-    role:
-        Match against the WM_ROLE atom (X11 only).
-    wm_type:
-        Match against the WM_TYPE atom (X11 only).
-    wm_instance_class:
-        Match against the first string in WM_CLASS atom (X11) or app ID (Wayland).
-    net_wm_pid:
-        Match against the _NET_WM_PID atom (X11) or PID (Wayland).
-    func:
-        Delegate the match to the given function, which receives the tested client as an
-        argument and must return ``True`` if it matches, ``False`` otherwise.
-    wid:
-        Match against the window ID. This is a unique ID given to each window.
-
     """
 
     def __init__(
@@ -949,6 +917,27 @@ class Match(_Match):
         func: Callable[[base.Window], bool] | None = None,
         wid: int | None = None,
     ) -> None:
+        """Initialize a Match object.
+
+        Parameters:
+            title:
+                Match against the WM_NAME atom (X11) or title (Wayland).
+            wm_class:
+                Match against any value in the whole WM_CLASS atom (X11) or app ID (Wayland).
+            role:
+                Match against the WM_ROLE atom (X11 only).
+            wm_type:
+                Match against the WM_TYPE atom (X11 only).
+            wm_instance_class:
+                Match against the first string in WM_CLASS atom (X11) or app ID (Wayland).
+            net_wm_pid:
+                Match against the _NET_WM_PID atom (X11) or PID (Wayland).
+            func:
+                Delegate the match to the given function, which receives the tested client as an
+                argument and must return `True` if it matches, `False` otherwise.
+            wid:
+                Match against the window ID. This is a unique ID given to each window.
+        """
         self._rules: dict[str, Any] = {}
 
         if title is not None:
@@ -1041,7 +1030,7 @@ class Match(_Match):
         return True
 
     def map(self, callback: Callable[[base.Window], Any], clients: list[base.Window]) -> None:
-        """Apply callback to each client that matches this Match"""
+        """Apply callback to each client that matches this Match."""
         for c in clients:
             if self.compare(c):
                 callback(c)
@@ -1051,23 +1040,10 @@ class Match(_Match):
 
 
 class Rule:
-    """
-    How to act on a match.
+    """How to act on a match.
 
-    A :class:`Rule` contains a list of :class:`Match` objects, and a specification about
+    A [`Rule`][] contains a list of [`Match`][] objects, and a specification about
     what to do when any of them is matched.
-
-    Parameters
-    ==========
-    match:
-        :class:`Match` object or a list of such associated with this rule.
-    float:
-        Should we auto float this window?
-    intrusive:
-        Should we override the group's exclusive setting?
-    break_on_match:
-        Should we stop applying rules if this rule is matched?
-
     """
 
     def __init__(
@@ -1078,6 +1054,18 @@ class Rule:
         intrusive: bool = False,
         break_on_match: bool = True,
     ) -> None:
+        """Initialize a Rule object.
+
+        Parameters:
+            match:
+                [`Match`][] object or a list of such associated with this rule.
+            float:
+                Should we auto float this window?
+            intrusive:
+                Should we override the group's exclusive setting?
+            break_on_match:
+                Should we stop applying rules if this rule is matched?
+        """
         if isinstance(match, _Match):
             self.matchlist = [match]
         else:
@@ -1098,8 +1086,8 @@ class Rule:
 
 
 class DropDown(configurable.Configurable):
-    """
-    Configure a specified command and its associated window for the :class:`ScratchPad`.
+    """Configure a specified command and its associated window for the [`ScratchPad`][].
+
     That window can be shown and hidden using a configurable keystroke or any other
     scripted trigger.
     """
@@ -1124,20 +1112,20 @@ class DropDown(configurable.Configurable):
         (
             "on_focus_lost_hide",
             True,
-            "Shall the window be hidden if focus is lost? If so, the :class:`DropDown` "
+            "Shall the window be hidden if focus is lost? If so, the [`DropDown`][] "
             "is hidden if window focus or the group is changed.",
         ),
         (
             "warp_pointer",
             True,
             "Shall pointer warp to center of window on activation? "
-            "This only has effect if any of the ``on_focus_lost_xxx`` options are "
-            "``True``",
+            "This only has effect if any of the `on_focus_lost_xxx` options are "
+            "`True`",
         ),
         (
             "match",
             None,
-            "Use a :class:`Match` to identify the spawned window and move it to the "
+            "Use a [`Match`][] to identify the spawned window and move it to the "
             "scratchpad, instead of relying on the window's PID. This works around "
             "some programs that may not be caught by the window's PID if it does "
             "not match the PID of the spawned process.",
@@ -1145,18 +1133,16 @@ class DropDown(configurable.Configurable):
     )
 
     def __init__(self, name: str, cmd: str, **config: Any) -> None:
-        """
-        Initialize :class:`DropDown` window wrapper.
+        """Initialize [`DropDown`][] window wrapper.
 
         Define a command to spawn a process for the first time the class:`DropDown` is
         shown.
 
-        Parameters
-        ==========
-        name:
-            The name of the dropdown.
-        cmd:
-            Command to spawn a window to be captured by the dropdown.
+        Parameters:
+            name:
+                The name of the dropdown.
+            cmd:
+                Command to spawn a window to be captured by the dropdown.
         """
         configurable.Configurable.__init__(self, **config)
         self.name = name

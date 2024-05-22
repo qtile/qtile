@@ -22,9 +22,7 @@ from libqtile.widget import base
 
 
 class HDD(base.ThreadPoolText):
-    """
-    Displays HDD usage in percent based on the number of milliseconds the device has been performing I/O operations.
-    """
+    """Displays HDD usage in percent based on the number of milliseconds the device has been performing I/O operations."""
 
     defaults = [
         ("device", "sda", "Block device to monitor (e.g. sda)"),

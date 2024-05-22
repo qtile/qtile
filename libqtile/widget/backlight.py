@@ -49,19 +49,19 @@ class Backlight(base.InLoopPollText):
 
     You can also bind keyboard shortcuts to the backlight widget with:
 
-    .. code-block:: python
-
-        from libqtile.widget import backlight
-        Key(
-            [],
-            "XF86MonBrightnessUp",
-            lazy.widget['backlight'].change_backlight(backlight.ChangeDirection.UP)
-        )
-        Key(
-            [],
-            "XF86MonBrightnessDown",
-            lazy.widget['backlight'].change_backlight(backlight.ChangeDirection.DOWN)
-        )
+    ```python
+    from libqtile.widget import backlight
+    Key(
+        [],
+        "XF86MonBrightnessUp",
+        lazy.widget['backlight'].change_backlight(backlight.ChangeDirection.UP)
+    )
+    Key(
+        [],
+        "XF86MonBrightnessDown",
+        lazy.widget['backlight'].change_backlight(backlight.ChangeDirection.DOWN)
+    )
+    ```
     """
 
     filenames: dict = {}

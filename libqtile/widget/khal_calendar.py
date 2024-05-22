@@ -48,15 +48,13 @@ from libqtile.widget import base
 
 
 class KhalCalendar(base.ThreadPoolText):
-    """Khal calendar widget
+    """Khal calendar widget.
 
     This widget will display the next appointment on your Khal calendar in the
     qtile status bar. Appointments within the "reminder" time will be
     highlighted.
 
-    Widget requirements: dateutil_.
-
-    .. _dateutil: https://pypi.org/project/python-dateutil/
+    Widget requirements: [dateutil](https://pypi.org/project/python-dateutil/).
     """
 
     defaults = [

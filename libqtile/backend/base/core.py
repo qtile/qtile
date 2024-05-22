@@ -25,7 +25,7 @@ class Core(CommandObject, metaclass=ABCMeta):
     @property
     @abstractmethod
     def name(self) -> str:
-        """The name of the backend"""
+        """The name of the backend."""
         pass
 
     def _items(self, name: str) -> ItemT:
@@ -36,7 +36,7 @@ class Core(CommandObject, metaclass=ABCMeta):
 
     @abstractmethod
     def finalize(self):
-        """Destructor/Clean up resources"""
+        """Destructor/Clean up resources."""
 
     @property
     @abstractmethod
@@ -45,47 +45,48 @@ class Core(CommandObject, metaclass=ABCMeta):
 
     @abstractmethod
     def setup_listener(self) -> None:
-        """Setup a listener for the given qtile instance"""
+        """Setup a listener for the given qtile instance."""
 
     @abstractmethod
     def remove_listener(self) -> None:
-        """Setup a listener for the given qtile instance"""
+        """Setup a listener for the given qtile instance."""
 
     def update_desktops(self, groups: list[_Group], index: int) -> None:
-        """Set the current desktops of the window manager"""
+        """Set the current desktops of the window manager."""
 
     @abstractmethod
     def get_screen_info(self) -> list[ScreenRect]:
-        """Get the screen information"""
+        """Get the screen information."""
 
     @abstractmethod
     def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
-        """Configure the backend to grab the key event"""
+        """Configure the backend to grab the key event."""
 
     @abstractmethod
     def ungrab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
-        """Release the given key event"""
+        """Release the given key event."""
 
     @abstractmethod
     def ungrab_keys(self) -> None:
-        """Release the grabbed key events"""
+        """Release the grabbed key events."""
 
     @abstractmethod
     def grab_button(self, mouse: config.Mouse) -> int:
-        """Configure the backend to grab the mouse event"""
+        """Configure the backend to grab the mouse event."""
 
     def ungrab_buttons(self) -> None:
-        """Release the grabbed button events"""
+        """Release the grabbed button events."""
 
     def grab_pointer(self) -> None:
-        """Configure the backend to grab mouse events"""
+        """Configure the backend to grab mouse events."""
 
     def ungrab_pointer(self) -> None:
-        """Release grabbed pointer events"""
+        """Release grabbed pointer events."""
 
     def on_config_load(self, initial: bool) -> None:
-        """
-        Respond to config loading. `initial` will be `True` if Qtile just started.
+        """Respond to config loading.
+        
+        `initial` will be `True` if Qtile just started.
         """
 
     def warp_pointer(self, x: int, y: int) -> None:
@@ -104,13 +105,13 @@ class Core(CommandObject, metaclass=ABCMeta):
         """If needed, flush the backend's event queue."""
 
     def graceful_shutdown(self):
-        """Try to close windows gracefully before exiting"""
+        """Try to close windows gracefully before exiting."""
 
     def simulate_keypress(self, modifiers: list[str], key: str) -> None:
-        """Simulate a keypress with given modifiers"""
+        """Simulate a keypress with given modifiers."""
 
     def keysym_from_name(self, name: str) -> int:
-        """Get the keysym for a key from its name"""
+        """Get the keysym for a key from its name."""
         raise NotImplementedError
 
     def get_mouse_position(self) -> tuple[int, int]:

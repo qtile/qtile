@@ -32,27 +32,27 @@ class RenameHookTransformer(RenamerTransformer):
 class RenameWindowNameHook(_QtileMigrator):
     ID = "RenameWindowNameHook"
 
-    SUMMARY = "Changes ``window_name_changed`` hook name."
+    SUMMARY = "Changes `window_name_changed` hook name."
 
     HELP = """
-    The ``window_name_changed`` hook has been replaced with
-    ``client_name_updated``.
+    The `window_name_changed` hook has been replaced with
+    `client_name_updated`.
 
     Example:
 
-    .. code:: python
-
-      @hook.subscribe.window_name_changed
-      def my_func(window):
-          ...
+    ```python
+    @hook.subscribe.window_name_changed
+    def my_func(window):
+        ...
+    ```
 
     Should be updated as follows:
 
-    .. code:: python
-
-      @hook.subscribe.client_name_updated
-      def my_func(window):
-          ...
+    ```python
+    @hook.subscribe.client_name_updated
+    def my_func(window):
+        ...
+    ```
 
     """
 

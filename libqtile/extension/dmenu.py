@@ -24,9 +24,8 @@ from libqtile.extension import base
 
 
 class Dmenu(base.RunCommand):
-    """
-    Python wrapper for dmenu
-    http://tools.suckless.org/dmenu/
+    """Python wrapper for dmenu
+    http://tools.suckless.org/dmenu/.
     """
 
     defaults = [
@@ -107,25 +106,24 @@ class Dmenu(base.RunCommand):
 
 
 class DmenuRun(Dmenu):
-    """
-    Special case to run applications.
+    """Special case to run applications.
 
     config.py should have something like:
 
-    .. code-block:: python
-
-        from libqtile import extension
-        keys = [
-            Key(['mod4'], 'r', lazy.run_extension(extension.DmenuRun(
-                dmenu_prompt=">",
-                dmenu_font="Andika-8",
-                background="#15181a",
-                foreground="#00ff00",
-                selected_background="#079822",
-                selected_foreground="#fff",
-                dmenu_height=24,  # Only supported by some dmenu forks
-            ))),
-        ]
+    ```python
+    from libqtile import extension
+    keys = [
+        Key(['mod4'], 'r', lazy.run_extension(extension.DmenuRun(
+            dmenu_prompt=">",
+            dmenu_font="Andika-8",
+            background="#15181a",
+            foreground="#00ff00",
+            selected_background="#079822",
+            selected_foreground="#fff",
+            dmenu_height=24,  # Only supported by some dmenu forks
+        ))),
+    ]
+    ```
 
     """
 
@@ -139,9 +137,8 @@ class DmenuRun(Dmenu):
 
 
 class J4DmenuDesktop(Dmenu):
-    """
-    Python wrapper for j4-dmenu-desktop
-    https://github.com/enkore/j4-dmenu-desktop
+    """Python wrapper for j4-dmenu-desktop
+    https://github.com/enkore/j4-dmenu-desktop.
     """
 
     defaults = [

@@ -30,9 +30,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-    A minimal EWMH-aware OO layer over xcffib. This is NOT intended to be
-    complete - it only implements the subset of functionalty needed by qtile.
+"""A minimal EWMH-aware OO layer over xcffib. This is NOT intended to be
+complete - it only implements the subset of functionalty needed by qtile.
 """
 
 from __future__ import annotations
@@ -224,8 +223,7 @@ XCB_MOTION_NOTIFY = 6
 
 
 class MaskMap:
-    """
-    A general utility class that encapsulates the way the bitmask/listofvalue idiom
+    """A general utility class that encapsulates the way the bitmask/listofvalue idiom
     works in X protocol. It understands a special attribute _maskvalue on
     objects, which will be used instead of the object value if present.
     This lets us pass in a Font object, rather than Font.fid, for example.
@@ -239,8 +237,7 @@ class MaskMap:
         self.mmap.sort()
 
     def __call__(self, **kwargs):
-        """
-        kwargs: keys should be in the mmap name set
+        """kwargs: keys should be in the mmap name set.
 
         Returns a (mask, values) tuple.
         """
@@ -307,9 +304,7 @@ class _Wrapper:
 
 
 class Screen(_Wrapper):
-    """
-    This represents an actual X screen.
-    """
+    """This represents an actual X screen."""
 
     def __init__(self, conn, screen):
         _Wrapper.__init__(self, screen)
@@ -326,8 +321,7 @@ class Screen(_Wrapper):
                     self._visuals[d] = visual
 
     def _get_depth_and_visual(self, desired_depth):
-        """
-        Returns a tuple of (depth, visual) for the requested
+        """Returns a tuple of (depth, visual) for the requested
         depth.
 
         Falls back to the root depth and visual if the requested
@@ -345,8 +339,7 @@ class Screen(_Wrapper):
 
     @staticmethod
     def get_visual_for_depth(screen, depth):
-        """
-        Returns the visual object of the screen @ some depth
+        """Returns the visual object of the screen @ some depth.
 
         For an ARGB visual -> depth=32
         For a RGB visual   -> depth=24
@@ -368,9 +361,7 @@ class Colormap:
         self.cid = cid
 
     def alloc_color(self, color):
-        """
-        Flexible color allocation.
-        """
+        """Flexible color allocation."""
         try:
             return self.conn.conn.core.AllocNamedColor(self.cid, len(color), color).reply()
         except xcffib.xproto.NameError:
@@ -534,7 +525,7 @@ class Connection:
         self.modmap = modmap
 
     def get_modifier(self, keycode):
-        """Return the modifier matching keycode"""
+        """Return the modifier matching keycode."""
         for n, l in self.modmap.items():
             if keycode in l:
                 return n
@@ -601,8 +592,7 @@ class Connection:
         )
 
     def fixup_focus(self):
-        """
-        If the X11 focus is set to None, all keypress events are discarded,
+        """If the X11 focus is set to None, all keypress events are discarded,
         which makes our hotkeys not work. This fixes up the focus so it is not
         None.
         """
@@ -749,8 +739,7 @@ def translate_modifiers(mask: int) -> list[str]:
 
 
 def translate_masks(modifiers: list[str]) -> int:
-    """
-    Translate a modifier mask specified as a list of strings into an or-ed
+    """Translate a modifier mask specified as a list of strings into an or-ed
     bit representation.
     """
     masks = []

@@ -41,8 +41,7 @@ from libqtile.widget import base
 
 
 class LaunchBar(base._Widget):
-    """
-    This module defines a widget that displays icons to launch softwares or commands
+    """This module defines a widget that displays icons to launch softwares or commands
     when clicked -- a launchbar.
     Only png icon files are displayed, not xpm because cairo doesn't support
     loading of xpm file.
@@ -58,7 +57,8 @@ class LaunchBar(base._Widget):
      - ('/path/to/icon.png', 'qshell:self.qtile.shutdown()', 'logout from qtile')
 
 
-    Optional requirements: `pyxdg <https://pypi.org/project/pyxdg/>`__ for finding the icon path if it is not provided in the ``progs`` tuple.
+    Optional requirements: [pyxdg](https://pypi.org/project/pyxdg/)
+    for finding the icon path if it is not provided in the `progs` tuple.
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
@@ -81,12 +81,12 @@ class LaunchBar(base._Widget):
             " ('/path/to/icon.png', 'qshell:self.qtile.shutdown()', 'logout from qtile')]",
         ),
         ("text_only", False, "Don't use any icons."),
-        ("icon_size", None, "Size of icons. ``None`` to fit to bar."),
+        ("icon_size", None, "Size of icons. `None` to fit to bar."),
         ("padding_y", 0, "Vertical adjustment for icons."),
         (
             "theme_path",
             None,
-            "Path to icon theme to be used by pyxdg for icons. ``None`` will use default icon theme.",
+            "Path to icon theme to be used by pyxdg for icons. `None` will use default icon theme.",
         ),
     ]
 

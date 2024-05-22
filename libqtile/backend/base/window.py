@@ -44,15 +44,15 @@ class _Window(CommandObject, metaclass=ABCMeta):
     @property
     @abstractmethod
     def wid(self) -> int:
-        """The unique window ID"""
+        """The unique window ID."""
 
     @abstractmethod
     def hide(self) -> None:
-        """Hide the window"""
+        """Hide the window."""
 
     @abstractmethod
     def unhide(self) -> None:
-        """Unhide the window"""
+        """Unhide the window."""
 
     @expose_command()
     def is_visible(self) -> bool:
@@ -62,18 +62,18 @@ class _Window(CommandObject, metaclass=ABCMeta):
     @abstractmethod
     @expose_command()
     def kill(self) -> None:
-        """Kill the window"""
+        """Kill the window."""
 
     def get_wm_class(self) -> list | None:
-        """Return the class(es) of the window"""
+        """Return the class(es) of the window."""
         return None
 
     def get_wm_type(self) -> str | None:
-        """Return the type of the window"""
+        """Return the type of the window."""
         return None
 
     def get_wm_role(self) -> str | None:
-        """Return the role of the window"""
+        """Return the role of the window."""
         return None
 
     @property
@@ -91,7 +91,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
     @property
     def urgent(self):
-        """Whether this window urgently wants focus"""
+        """Whether this window urgently wants focus."""
         return False
 
     @property
@@ -147,10 +147,10 @@ class _Window(CommandObject, metaclass=ABCMeta):
     @abstractmethod
     @expose_command()
     def info(self) -> dict[str, Any]:
-        """
-        Return information on this window.
+        """Return information on this window.
 
         Mimimum required keys are:
+
         - name
         - x
         - y
@@ -159,22 +159,20 @@ class _Window(CommandObject, metaclass=ABCMeta):
         - group
         - id
         - wm_class
-
         """
         return {}
 
     @expose_command()
     def keep_above(self, enable: bool | None = None):
-        """Keep this window above all others"""
+        """Keep this window above all others."""
 
     @expose_command()
     def keep_below(self, enable: bool | None = None):
-        """Keep this window below all others"""
+        """Keep this window below all others."""
 
     @expose_command()
     def move_up(self, force: bool = False) -> None:
-        """
-        Move this window above the next window along the z axis.
+        """Move this window above the next window along the z axis.
 
         Will not raise a "normal" window (i.e. one that is not "kept_above/below")
         above a window that is marked as "kept_above".
@@ -185,8 +183,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
     @expose_command()
     def move_down(self, force: bool = False) -> None:
-        """
-        Move this window below the previous window along the z axis.
+        """Move this window below the previous window along the z axis.
 
         Will not lower a "normal" window (i.e. one that is not "kept_above/below")
         below a window that is marked as "kept_below".
@@ -197,9 +194,9 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
     @expose_command()
     def move_to_top(self) -> None:
-        """
-        Move this window above all windows in the current layer
-        e.g. if you have 3 windows all with "keep_above" set, calling
+        """Move this window above all windows in the current layer.
+
+        For example if you have 3 windows all with "keep_above" set, calling
         this method will move the window to the top of those three windows.
 
         Calling this on a "normal" window will not raise it above a "kept_above"
@@ -208,9 +205,9 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
     @expose_command()
     def move_to_bottom(self) -> None:
-        """
-        Move this window below all windows in the current layer
-        e.g. if you have 3 windows all with "keep_above" set, calling
+        """Move this window below all windows in the current layer.
+
+        For example if you have 3 windows all with "keep_above" set, calling
         this method will move the window to the bottom of those three windows.
 
         Calling this on a "normal" window will not raise it below a "kept_below"
@@ -220,8 +217,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
     @abstractmethod
     @expose_command()
     def bring_to_front(self) -> None:
-        """
-        Bring the window to the front.
+        """Bring the window to the front.
 
         In X11, `bring_to_front` ignores all other layering rules and brings the
         window to the very front. When that window loses focus, it will be stacked
@@ -230,8 +226,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
 
 class Window(_Window, metaclass=ABCMeta):
-    """
-    A regular Window belonging to a client.
+    """A regular Window belonging to a client.
 
     Abstract methods are required to be defined as part of a specific backend's
     implementation. Non-abstract methods have default implementations here to be shared
@@ -311,7 +306,7 @@ class Window(_Window, metaclass=ABCMeta):
         return self == self.qtile.current_window
 
     def has_user_set_position(self) -> bool:
-        """Whether this window has user-defined geometry"""
+        """Whether this window has user-defined geometry."""
         return False
 
     def is_transient_for(self) -> WindowType | None:
@@ -323,45 +318,45 @@ class Window(_Window, metaclass=ABCMeta):
         """Return the PID that owns the window."""
 
     def paint_borders(self, color: ColorsType, width: int) -> None:
-        """Paint the window borders with the given color(s) and width"""
+        """Paint the window borders with the given color(s) and width."""
 
     @abstractmethod
     @expose_command()
     def get_position(self) -> tuple[int, int]:
-        """Get the (x, y) of the window"""
+        """Get the (x, y) of the window."""
 
     @abstractmethod
     @expose_command()
     def get_size(self) -> tuple[int, int]:
-        """Get the (width, height) of the window"""
+        """Get the (width, height) of the window."""
 
     @abstractmethod
     @expose_command()
     def move_floating(self, dx: int, dy: int) -> None:
-        """Move window by dx and dy"""
+        """Move window by dx and dy."""
 
     @abstractmethod
     @expose_command()
     def resize_floating(self, dw: int, dh: int) -> None:
-        """Add dw and dh to size of window"""
+        """Add dw and dh to size of window."""
 
     @abstractmethod
     @expose_command()
     def set_position_floating(self, x: int, y: int) -> None:
-        """Move window to x and y"""
+        """Move window to x and y."""
 
     @abstractmethod
     @expose_command()
     def set_position(self, x: int, y: int) -> None:
-        """
-        Move floating window to x and y; swap tiling window with the window under the
-        pointer.
+        """Move floating window to x and y.
+        
+        Swap tiling window with the window under the pointer.
         """
 
     @abstractmethod
     @expose_command()
     def set_size_floating(self, w: int, h: int) -> None:
-        """Set window dimensions to w and h"""
+        """Set window dimensions to w and h."""
 
     @abstractmethod
     @expose_command()
@@ -396,12 +391,12 @@ class Window(_Window, metaclass=ABCMeta):
     @abstractmethod
     @expose_command()
     def enable_fullscreen(self) -> None:
-        """Fullscreen the window"""
+        """Fullscreen the window."""
 
     @abstractmethod
     @expose_command()
     def disable_fullscreen(self) -> None:
-        """Un-fullscreen the window"""
+        """Un-fullscreen the window."""
 
     @abstractmethod
     @expose_command()
@@ -411,27 +406,25 @@ class Window(_Window, metaclass=ABCMeta):
         switch_group: bool = False,
         toggle: bool = False,
     ) -> None:
-        """Move window to a specified group
+        """Move window to a specified group.
 
         Also switch to that group if `switch_group` is True.
 
         If `toggle` is True and and the specified group is already on the screen,
         use the last used group as target instead.
 
-        Examples
-        ========
+        Examples:
+            Move window to current group:
 
-        Move window to current group::
+            >>> togroup()
 
-            togroup()
+            Move window to group "a":
 
-        Move window to group "a"::
+            >>> togroup("a")
 
-            togroup("a")
+            Move window to group "a", and switch to group "a":
 
-        Move window to group "a", and switch to group "a"::
-
-            togroup("a", switch_group=True)
+            >>> togroup("a", switch_group=True)
         """
         self.togroup(group_name, switch_group=switch_group, toggle=toggle)
 
@@ -441,16 +434,14 @@ class Window(_Window, metaclass=ABCMeta):
 
         If index is not specified, we assume the current screen
 
-        Examples
-        ========
+        Examples:
+            Move window to current screen:
 
-        Move window to current screen::
+            >>> toscreen()
 
-            toscreen()
+            Move window to screen 0:
 
-        Move window to screen 0::
-
-            toscreen(0)
+            >>> toscreen(0)
         """
         if index is None:
             screen = self.qtile.current_screen
@@ -463,7 +454,7 @@ class Window(_Window, metaclass=ABCMeta):
 
     @expose_command()
     def set_opacity(self, opacity: float) -> None:
-        """Set the window's opacity"""
+        """Set the window's opacity."""
         if opacity < 0.1:
             self.opacity = 0.1
         elif opacity > 1:

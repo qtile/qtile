@@ -49,8 +49,7 @@ MPRIS_REGEX = re.compile(r"(\{(.*?):(.*?)(:.*?)?\})")
 
 
 class Mpris2Formatter(string.Formatter):
-    """
-    Custom string formatter for MPRIS2 metadata.
+    """Custom string formatter for MPRIS2 metadata.
 
     Keys have a colon (e.g. "xesam:title") which causes issues with python's string
     formatting as the colon splits the identifier from the format specification.
@@ -67,8 +66,7 @@ class Mpris2Formatter(string.Formatter):
         self._default = default
 
     def get_value(self, key, args, kwargs):
-        """
-        Replaces colon in kwarg keys with an underscore before getting value.
+        """Replaces colon in kwarg keys with an underscore before getting value.
 
         Missing identifiers are replaced with the default value.
         """
@@ -81,8 +79,7 @@ class Mpris2Formatter(string.Formatter):
             return self._default
 
     def parse(self, format_string):
-        """
-        Replaces first colon in format string with an underscore.
+        """Replaces first colon in format string with an underscore.
 
         This will cause issues if any identifier is provided that does not
         contain a colon. This should not happen according to the MPRIS2
@@ -93,7 +90,7 @@ class Mpris2Formatter(string.Formatter):
 
 
 class Mpris2(base._TextBox):
-    """An MPRIS 2 widget
+    """An MPRIS 2 widget.
 
     A widget which displays the current track/artist of your favorite MPRIS
     player. This widget scrolls the text if neccessary and information that
@@ -107,9 +104,7 @@ class Mpris2(base._TextBox):
     Basic mouse controls are also available: button 1 = play/pause,
     scroll up = next track, scroll down = previous track.
 
-    Widget requirements: dbus-next_.
-
-    .. _dbus-next: https://pypi.org/project/dbus-next/
+    Widget requirements: [dbus-next](https://pypi.org/project/dbus-next/).
     """
 
     defaults = [
@@ -121,7 +116,7 @@ class Mpris2(base._TextBox):
             "- Find it out with dbus-monitor - "
             "Also see: http://specifications.freedesktop.org/"
             "mpris-spec/latest/#Bus-Name-Policy. "
-            "``None`` will listen for notifications from all MPRIS2 compatible players.",
+            "`None` will listen for notifications from all MPRIS2 compatible players.",
         ),
         (
             "format",
@@ -339,9 +334,7 @@ class Mpris2(base._TextBox):
         changed_properties: dict[str, Any],
         _invalidated_properties: list[str],
     ) -> None:
-        """
-        http://specifications.freedesktop.org/mpris-spec/latest/Track_List_Interface.html#Mapping:Metadata_Map
-        """
+        """http://specifications.freedesktop.org/mpris-spec/latest/Track_List_Interface.html#Mapping:Metadata_Map."""
         if not self.configured:
             return
 

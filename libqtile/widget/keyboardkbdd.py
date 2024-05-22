@@ -28,14 +28,12 @@ from libqtile.widget import base
 
 
 class KeyboardKbdd(base.ThreadPoolText):
-    """Widget for changing keyboard layouts per window, using kbdd
+    """Widget for changing keyboard layouts per window, using kbdd.
 
     kbdd should be installed and running, you can get it from:
     https://github.com/qnikst/kbdd
 
-    The widget also requires dbus-next_.
-
-    .. _dbus-next: https://pypi.org/project/dbus-next/
+    The widget also requires [dbus-next](https://pypi.org/project/dbus-next/).
     """
 
     defaults = [
@@ -91,9 +89,7 @@ class KeyboardKbdd(base.ThreadPoolText):
         self._layout_changed(*message.body)
 
     def _layout_changed(self, layout_changed):
-        """
-        Handler for "layoutChanged" dbus signal.
-        """
+        """Handler for "layoutChanged" dbus signal."""
         if self.colours:
             self._set_colour(layout_changed)
         self.keyboard = self.configured_keyboards[layout_changed]

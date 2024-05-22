@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 
 class QtileState:
-    """Represents the state of the Qtile object
+    """Represents the state of the Qtile object.
 
     This is used for restoring state across restarts or config reloads.
 
@@ -61,8 +61,7 @@ class QtileState:
                 self.current_screen = index
 
     def apply(self, qtile: Qtile) -> None:
-        """
-        Rearrange the windows in the specified Qtile object according to this
+        """Rearrange the windows in the specified Qtile object according to this
         QtileState.
         """
         for group, layout, label in self.groups:
@@ -98,9 +97,7 @@ class QtileState:
         qtile.focus_screen(self.current_screen)
 
     def handle_orphan_dropdowns(self, client: Window | Static) -> None:
-        """
-        Remove any windows from now non-existent scratchpad groups.
-        """
+        """Remove any windows from now non-existent scratchpad groups."""
         client_wid = client.wid
         if client_wid in self.orphans:
             self.orphans.remove(client_wid)

@@ -20,9 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-    Command-line tool to expose qtile.command functionality to shell.
-    This can be used standalone or in other shell scripts.
+"""Command-line tool to expose qtile.command functionality to shell.
+This can be used standalone or in other shell scripts.
 """
 
 from __future__ import annotations
@@ -52,7 +51,6 @@ def get_formated_info(obj: CommandClient, cmd: str, args=True, short=True) -> st
     given cmd it returns empty string.  The arguments are extracted from doc[0]
     line, the summary is constructed from doc[1] line.
     """
-
     doc = obj.call("doc", cmd).splitlines()
 
     tdoc = doc[0]
@@ -90,9 +88,7 @@ def print_commands(prefix: str, obj: CommandClient) -> None:
 
 
 def get_object(client: CommandClient, argv: list[str]) -> CommandClient:
-    """
-    Constructs a path to object and returns given object (if it exists).
-    """
+    """Constructs a path to object and returns given object (if it exists)."""
     if argv[0] in ("cmd", "root"):
         argv = argv[1:]
 
@@ -127,7 +123,7 @@ def get_object(client: CommandClient, argv: list[str]) -> CommandClient:
 
 
 def run_function(client: CommandClient, funcname: str, args: list[str]) -> str:
-    "Run command with specified args on given object."
+    """Run command with specified args on given object."""
     try:
         ret = client.call(funcname, *args, lifted=True)
     except SelectError:
@@ -156,8 +152,7 @@ def print_base_objects() -> None:
 
 
 def cmd_obj(args) -> None:
-    "Runs tool according to specified arguments."
-
+    """Runs tool according to specified arguments."""
     if args.obj_spec:
         sock_file = args.socket or find_sockfile()
         ipc_client = Client(sock_file)

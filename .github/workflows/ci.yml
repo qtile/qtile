@@ -41,7 +41,7 @@ jobs:
               run: bash -x ./scripts/ubuntu_wayland_setup
             - name: Run Tests
               run: |
-                [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
+                [ "$(grep -c -P '\t' CHANGELOG.md)" = "0" ]
                 tox
               env:
                 BACKEND: ${{ matrix.backend }}

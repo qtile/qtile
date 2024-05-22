@@ -29,13 +29,9 @@ from libqtile.widget import base
 
 
 class Net(base.ThreadPoolText):
-    """
-    Displays interface down and up speed
+    """Displays interface down and up speed.
 
-
-    Widget requirements: psutil_.
-
-    .. _psutil: https://pypi.org/project/psutil/
+    Widget requirements: [psutil](https://pypi.org/project/psutil/).
     """
 
     defaults = [
@@ -83,8 +79,7 @@ class Net(base.ThreadPoolText):
         self.stats = self.get_stats()
 
     def convert_b(self, num_bytes: float) -> tuple[float, str]:
-        """Converts the number of bytes to the correct unit"""
-
+        """Converts the number of bytes to the correct unit."""
         num_bytes *= self.byte_multiplier
 
         if self.prefix is None:

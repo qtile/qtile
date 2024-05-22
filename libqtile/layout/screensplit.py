@@ -70,8 +70,7 @@ class Split:
 
 
 class ScreenSplit(Layout):
-    """
-    A layout that allows you to split the screen into separate areas, each of which
+    """A layout that allows you to split the screen into separate areas, each of which
     can be assigned its own layout.
 
     This layout is intended to be used on large monitors where separate layouts may be
@@ -80,27 +79,27 @@ class ScreenSplit(Layout):
     screen.
 
     Each split is defined as a dictionary with the following keys:
-      - ``name``: this is used with the ``ScreenSplit`` widget (see below)
-      - ``rect``: a tuple of (x, y, width, height) with each value being between 0 and 1.
+
+    - `name`: this is used with the `ScreenSplit` widget (see below)
+    - `rect`: a tuple of (x, y, width, height) with each value being between 0 and 1.
         These are relative values based on the screen's dimensions e.g. a value of
-        ``(0.5, 0, 0.5, 1)`` would define an area starting at the top middle of the screen
+        `(0.5, 0, 0.5, 1)` would define an area starting at the top middle of the screen
         and extending to the bottom left corner.
-      - ``layout``: the layout to occupy the defined split.
-      - ``matches``: (optional) list of ``Match`` objects which define which windows will
+    - `layout`: the layout to occupy the defined split.
+    - `matches`: (optional) list of `Match` objects which define which windows will
         open in the defined split.
 
-    Different splits can be selected by using the following ``lazy.layout.next_split()``
-    and ``lazy.layout.previous_split()`` commands.
+    Different splits can be selected by using the following `lazy.layout.next_split()`
+    and `lazy.layout.previous_split()` commands.
 
-    To identify which split is active, users can use the ``ScreenSplit`` widget will show
+    To identify which split is active, users can use the `ScreenSplit` widget will show
     the name of the split and the relevant layout. Scrolling up and down on the widget will
     change the active split.
 
-    .. note::
-
-        While keybindings will be passed to the active split's layout, bindings using the
-        ``.when(layout=...)``` syntax will not be applied as the primary layout is
-        ``ScreenSplit``.
+    NOTE:
+    While keybindings will be passed to the active split's layout, bindings using the
+    `.when(layout=...)` syntax will not be applied as the primary layout is
+    `ScreenSplit`.
     """
 
     defaults = [

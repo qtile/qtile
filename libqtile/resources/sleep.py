@@ -41,8 +41,7 @@ LOGIND_PATH = "/org/freedesktop/login1"
 
 
 class Inhibitor:
-    """
-    Class definition to access systemd's login1 service on dbus.
+    """Class definition to access systemd's login1 service on dbus.
 
     Listens for `PrepareForSleep` signals and fires appropriate hooks
     when the signal is received.
@@ -60,8 +59,7 @@ class Inhibitor:
         self.fd: int = -1
 
     def want_sleep(self) -> None:
-        """
-        Convenience method to set flag to show we want to know when the
+        """Convenience method to set flag to show we want to know when the
         system is going down for sleep.
         """
         if not has_dbus:
@@ -69,8 +67,7 @@ class Inhibitor:
         self.sleep = True
 
     def want_resume(self) -> None:
-        """
-        Convenience method to set flag to show we want to know when the
+        """Convenience method to set flag to show we want to know when the
         system is waking from sleep.
         """
         if not has_dbus:
@@ -78,8 +75,7 @@ class Inhibitor:
         self.resume = True
 
     def start(self) -> None:
-        """
-        Will create connection to dbus only if we want to listen out
+        """Will create connection to dbus only if we want to listen out
         for a sleep or wake signal.
         """
         if not has_dbus:
@@ -91,8 +87,7 @@ class Inhibitor:
         create_task(self._start())
 
     async def _start(self) -> None:
-        """
-        Creates the bus connection and connects to the org.freedesktop.login1.Manager
+        """Creates the bus connection and connects to the org.freedesktop.login1.Manager
         interface. Starts an inhibitor if we are listening for sleep events.
         Attaches handler to the "PrepareForSleep" signal.
         """
@@ -163,8 +158,7 @@ class Inhibitor:
             logger.warning("Unable to release inhibitor.")
 
     def prepare_for_sleep(self, start: bool) -> None:
-        """
-        Handler for "PrepareForSleep" signal.
+        """Handler for "PrepareForSleep" signal.
 
         Value of "sleep" is:
         - True when the machine is about to sleep
@@ -185,8 +179,7 @@ class Inhibitor:
             hook.fire("resume")
 
     def stop(self) -> None:
-        """
-        Deactivates the inhibitor, removing lock and signal handler
+        """Deactivates the inhibitor, removing lock and signal handler
         before closing bus connection.
         """
         if not has_dbus or self.bus is None:

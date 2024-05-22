@@ -25,17 +25,14 @@ from libqtile.widget.generic_poll_text import GenPollUrl
 
 
 class IdleRPG(GenPollUrl):
-    """
-    A widget for monitoring and displaying IdleRPG stats.
+    """A widget for monitoring and displaying IdleRPG stats.
 
-    ::
+    ```python
+    # display idlerpg stats for the player 'pants' on freenode's #idlerpg
+    widget.IdleRPG(url="http://xethron.lolhosting.net/xml.php?player=pants")
+    ```
 
-        # display idlerpg stats for the player 'pants' on freenode's #idlerpg
-        widget.IdleRPG(url="http://xethron.lolhosting.net/xml.php?player=pants")
-
-    Widget requirements: xmltodict_.
-
-    .. _xmltodict: https://pypi.org/project/xmltodict/
+    Widget requirements: [xmltodict](https://pypi.org/project/xmltodict/).
     """
 
     defaults = [

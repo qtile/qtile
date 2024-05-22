@@ -24,8 +24,7 @@ from libqtile.widget import base
 
 
 class Load(base.ThreadPoolText):
-    """
-    A small widget to show the load averages of the system.
+    """A small widget to show the load averages of the system.
     Depends on psutil.
     """
 

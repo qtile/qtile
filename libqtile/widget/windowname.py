@@ -30,7 +30,7 @@ from libqtile.widget import base
 
 
 class WindowName(base._TextBox):
-    """Displays the name of the window that currently has focus"""
+    """Displays the name of the window that currently has focus."""
 
     defaults = [
         ("for_current_screen", False, "instead of this bars screen use currently active screen"),

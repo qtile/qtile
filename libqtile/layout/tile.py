@@ -46,7 +46,7 @@ if TYPE_CHECKING:
 
 
 class Tile(_SimpleLayoutBase):
-    """A layout with two stacks of windows dividing the screen
+    """A layout with two stacks of windows dividing the screen.
 
     The Tile layout divides the screen_rect horizontally into two stacks. The
     maximum amount of "master" windows can be configured; surplus windows will

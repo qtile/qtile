@@ -64,7 +64,7 @@ S = typing.TypeVar("S", bound=PtrHasData)
 
 @functools.lru_cache()
 def _rgb(color: ColorType) -> ffi.CData:
-    """Helper to create and cache float[4] arrays for border painting"""
+    """Helper to create and cache float[4] arrays for border painting."""
     if isinstance(color, ffi.CData):
         return color
     return ffi.new("float[4]", utils.rgb(color))
@@ -95,8 +95,9 @@ class _Base:
 
 
 class Window(typing.Generic[S], _Base, base.Window, HasListeners):
-    """
-    This is a generic window class for "regular" windows. The type variable `S` denotes
+    """This is a generic window class for "regular" windows.
+
+    The type variable `S` denotes
     which type of surface the window manages, and by extension which shell the window
     belongs to. While this does implement some of `base.Window`'s abstract methods, the
     concrete classes are responsible for implementing a few others.
@@ -262,8 +263,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     def togroup(
         self, group_name: str | None = None, *, switch_group: bool = False, toggle: bool = False
     ) -> None:
-        """
-        Move window to a specified group
+        """Move window to a specified group.
 
         Also switch to that group if switch_group is True.
 
@@ -864,9 +864,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
 
 
 class Internal(_Base, base.Internal):
-    """
-    Internal windows are simply textures controlled by the compositor.
-    """
+    """Internal windows are simply textures controlled by the compositor."""
 
     def __init__(self, core: Core, qtile: Qtile, x: int, y: int, width: int, height: int):
         self.core = core
@@ -1058,9 +1056,7 @@ WindowType = typing.Union[Window, Static, Internal]
 
 
 class PointerConstraint(HasListeners):
-    """
-    A small object to listen to signals on `struct wlr_pointer_constraint_v1` instances.
-    """
+    """A small object to listen to signals on `struct wlr_pointer_constraint_v1` instances."""
 
     rect: Box
 

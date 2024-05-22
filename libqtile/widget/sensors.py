@@ -30,16 +30,14 @@ from libqtile.widget import base
 
 
 class ThermalSensor(base.InLoopPollText):
-    """Widget to display temperature sensor information
+    """Widget to display temperature sensor information.
 
     For using the thermal sensor widget you need to have lm-sensors installed.
     You can get a list of the tag_sensors executing "sensors" in your terminal.
     Then you can choose which you want, otherwise it will display the first
     available.
 
-    Widget requirements: psutil_.
-
-    .. _psutil: https://pypi.org/project/psutil/
+    Widget requirements: [psutil](https://pypi.org/project/psutil/).
     """
 
     defaults = [
@@ -47,9 +45,9 @@ class ThermalSensor(base.InLoopPollText):
             "format",
             "{temp:.1f}{unit}",
             "Display string format. Three options available: "
-            "``{temp}`` - temperature, "
-            "``{tag}`` - tag of the temperature sensor, and "
-            "``{unit}`` - °C or °F",
+            "`{temp}` - temperature, "
+            "`{tag}` - tag of the temperature sensor, and "
+            "`{unit}` - °C or °F",
         ),
         ("metric", True, "True to use metric/C, False to use imperial/F"),
         ("update_interval", 2, "Update interval in seconds"),
@@ -83,11 +81,9 @@ class ThermalSensor(base.InLoopPollText):
         self.foreground_normal = self.foreground
 
     def get_temp_sensors(self):
-        """
-        Reads temperatures from sys-fs via psutil.
+        """Reads temperatures from sys-fs via psutil.
         Output will be read Fahrenheit if user has specified it to be.
         """
-
         temperature_list = {}
         temps = psutil.sensors_temperatures(fahrenheit=not self.metric)
         empty_index = 0

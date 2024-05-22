@@ -47,8 +47,7 @@ GOLDEN_RATIO = 1.618
 
 
 class GridInfo:
-    """
-    Calculates sizes for grids
+    """Calculates sizes for grids
     >>> gi = GridInfo(.5, 5, 600, 480)
     >>> gi.calc()
     (1, 5, 1)
@@ -59,7 +58,7 @@ class GridInfo:
     [(0, 0, 600, 96), (0, 96, 600, 96), (0, 192, 600, 96), (0, 288, 600, 96), (0, 384, 600, 96)]
     >>> gi = GridInfo(1, 5, 600, 480)
     >>> gi.get_sizes()
-    [(0, 0, 200, 240), (200, 0, 200, 240), (400, 0, 200, 240), (0, 240, 300, 240), (200, 240, 200, 240)]
+    [(0, 0, 200, 240), (200, 0, 200, 240), (400, 0, 200, 240), (0, 240, 300, 240), (200, 240, 200, 240)].
 
     >>> foo = GridInfo(1.6, 7, 400,370)
     >>> foo.get_sizes(500,580)
@@ -76,7 +75,7 @@ class GridInfo:
         self.num_cols = 0
 
     def calc(self, num_windows, width, height):
-        """returns (rows, cols, orientation) tuple given input"""
+        """Returns (rows, cols, orientation) tuple given input."""
         best_ratio = None
         best_rows_cols_orientation = None
         for rows, cols, orientation in self._possible_grids(num_windows):
@@ -91,9 +90,7 @@ class GridInfo:
         return best_rows_cols_orientation
 
     def _possible_grids(self, num_windows):
-        """
-        iterates over possible grids given a number of windows
-        """
+        """Iterates over possible grids given a number of windows."""
         if num_windows < 2:
             end = 2
         else:
@@ -106,7 +103,7 @@ class GridInfo:
                 yield (cols, rows, COLROW)
 
     def get_sizes_advanced(self, total_width, total_height, xoffset=0, yoffset=0):
-        """after every row/column recalculate remaining area"""
+        """After every row/column recalculate remaining area."""
         results = []
         width = total_width
         height = total_height
@@ -125,7 +122,7 @@ class GridInfo:
         return results
 
     def _get_row_or_col(self, num_windows, width, height, xoffset, yoffset):
-        """process one row (or col) at a time"""
+        """Process one row (or col) at a time."""
         rows, cols, orientation = self.calc(num_windows, width, height)
         results = []
         if orientation == ROWCOL:
@@ -206,7 +203,7 @@ class GridInfo:
 
 
 class RatioTile(_SimpleLayoutBase):
-    """Tries to tile all windows in the width/height ratio passed in"""
+    """Tries to tile all windows in the width/height ratio passed in."""
 
     defaults = [
         ("border_focus", "#0000ff", "Border colour(s) for the focused window."),

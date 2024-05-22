@@ -40,12 +40,12 @@ from libqtile.widget import base
 
 
 class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
-    """Displays the icon and name of each window in the current group
+    """Displays the icon and name of each window in the current group.
 
     Contrary to WindowTabs this is an interactive widget.  The window that
     currently has focus is highlighted.
 
-    Optional requirements: `pyxdg <https://pypi.org/project/pyxdg/>`__ is needed
+    Optional requirements: [pyxdg](https://pypi.org/project/pyxdg/)_ is needed
     to use theme icons and to display icons on Wayland.
     """
 
@@ -167,7 +167,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         (
             "theme_path",
             None,
-            "Path to icon theme to be used by pyxdg for icons. ``None`` will use default icon theme.",
+            "Path to icon theme to be used by pyxdg for icons. `None` will use default icon theme.",
         ),
         (
             "window_name_location",
@@ -201,8 +201,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         self.add_callbacks({"Button1": self.select_window})
 
     def box_width(self, text):
-        """
-        calculate box width for given text.
+        """Calculate box width for given text.
         If max_title_width is given, the returned width is limited to it.
         """
         width, _ = self.drawer.max_layout_size(
@@ -212,8 +211,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         return width
 
     def get_taskname(self, window):
-        """
-        Get display name for given window.
+        """Get display name for given window.
         Depending on its state minimized, maximized and floating
         appropriate characters are prepended.
         """
@@ -293,8 +291,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         return width
 
     def calc_box_widths(self):
-        """
-        Calculate box width for each window in current group.
+        """Calculate box width for each window in current group.
         If the available space is less than overall size of boxes,
         the boxes are shrunk by percentage if greater than average.
         """

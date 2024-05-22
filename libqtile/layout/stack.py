@@ -54,7 +54,7 @@ class _WinStack(_ClientList):
 
 
 class Stack(Layout):
-    """A layout composed of stacks of windows
+    """A layout composed of stacks of windows.
 
     The stack layout divides the screen_rect horizontally into a set of stacks.
     Commands allow you to switch between stacks, to next and previous windows
@@ -291,42 +291,42 @@ class Stack(Layout):
 
     @expose_command()
     def toggle_split(self):
-        """Toggle vertical split on the current stack"""
+        """Toggle vertical split on the current stack."""
         self.current_stack.toggle_split()
         self.group.layout_all()
 
     @expose_command()
     def down(self):
-        """Switch to the next window in this stack"""
+        """Switch to the next window in this stack."""
         self.current_stack.current_index += 1
         self.group.focus(self.current_stack.cw, False)
 
     @expose_command()
     def up(self):
-        """Switch to the previous window in this stack"""
+        """Switch to the previous window in this stack."""
         self.current_stack.current_index -= 1
         self.group.focus(self.current_stack.cw, False)
 
     @expose_command()
     def shuffle_up(self):
-        """Shuffle the order of this stack up"""
+        """Shuffle the order of this stack up."""
         self.current_stack.shuffle_up()
         self.group.layout_all()
 
     @expose_command()
     def shuffle_down(self):
-        """Shuffle the order of this stack down"""
+        """Shuffle the order of this stack down."""
         self.current_stack.shuffle_down()
         self.group.layout_all()
 
     @expose_command()
     def delete(self):
-        """Delete the current stack from the layout"""
+        """Delete the current stack from the layout."""
         self.delete_current_stack()
 
     @expose_command()
     def add(self):
-        """Add another stack to the layout"""
+        """Add another stack to the layout."""
         newstack = _WinStack(autosplit=self.autosplit)
         if self.autosplit:
             newstack.split = True
@@ -335,35 +335,34 @@ class Stack(Layout):
 
     @expose_command()
     def rotate(self):
-        """Rotate order of the stacks"""
+        """Rotate order of the stacks."""
         if self.stacks:
             self.stacks.insert(0, self.stacks.pop())
         self.group.layout_all()
 
     @expose_command()
     def next(self) -> None:
-        """Focus next stack"""
+        """Focus next stack."""
         return self.next_stack()
 
     @expose_command()
     def previous(self) -> None:
-        """Focus previous stack"""
+        """Focus previous stack."""
         self.previous_stack()
 
     @expose_command()
     def client_to_next(self):
-        """Send the current client to the next stack"""
+        """Send the current client to the next stack."""
         return self.client_to_stack(self.current_stack_offset + 1)
 
     @expose_command()
     def client_to_previous(self):
-        """Send the current client to the previous stack"""
+        """Send the current client to the previous stack."""
         return self.client_to_stack(self.current_stack_offset - 1)
 
     @expose_command()
     def client_to_stack(self, n):
-        """
-        Send the current client to stack n, where n is an integer offset.  If
+        """Send the current client to stack n, where n is an integer offset.  If
         is too large or less than 0, it is wrapped modulo the number of stacks.
         """
         if not self.current_stack:

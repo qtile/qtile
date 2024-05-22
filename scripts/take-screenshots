@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # environment variables
 PROJECT_DIR=$(dirname "$(dirname "$(readlink -f "$0")")")
-XDISPLAY=${XDISPLAY:-:1}
+XDISPLAY=${XDISPLAY:-:3}
 SCREEN_SIZE=${SCREEN_SIZE:-960x540}
 LOG_PATH=${PROJECT_DIR}/docs/screenshots/take_all.log
 GEOMETRY=${GEOMETRY:-240x135}
@@ -11,8 +11,10 @@ BORDER_NORMAL=${BORDER_NORMAL:-#000000}
 BORDER_WIDTH=${BORDER_WIDTH:-8}
 MARGIN=${MARGIN:-10}
 if [[ -z "${PYTHON}" ]]; then
-  if [[ -f "${PROJECT_DIR}/venv/bin/python3" ]]; then
-    PYTHON="${PROJECT_DIR}/venv/bin/python3"
+  if [[ -f "${PROJECT_DIR}/venv/bin/python" ]]; then
+    PYTHON="${PROJECT_DIR}/venv/bin/python"
+  elif [[ -f "${PROJECT_DIR}/.venv/bin/python" ]]; then
+    PYTHON="${PROJECT_DIR}/.venv/bin/python"
   else
     PYTHON=python3
   fi
@@ -22,6 +24,7 @@ fi
 nested() {
   env \
     DISPLAY=${XDISPLAY} \
+    QTILE_XEPHYR=1 \
     PYTHON="${PYTHON}" \
     LOG_PATH="${LOG_PATH}" \
     GEOMETRY="${GEOMETRY}" \
@@ -43,7 +46,7 @@ XEPHYR_PID=$!
 
 (
   sleep 1
-  nested "${PYTHON}" "${PROJECT_DIR}/bin/qtile" -l CRITICAL -c "${PROJECT_DIR}/docs/screenshots/config.py" &
+  nested "${PYTHON}" "${PROJECT_DIR}/bin/qtile" start -l DEBUG -c "${PROJECT_DIR}/docs/screenshots/config.py" &
   QTILE_PID=$!
 
   case $1 in

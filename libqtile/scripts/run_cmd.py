@@ -18,9 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-    Command-line wrapper to run commands and add rules to new windows
-"""
+"""Command-line wrapper to run commands and add rules to new windows."""
 
 import argparse
 import atexit

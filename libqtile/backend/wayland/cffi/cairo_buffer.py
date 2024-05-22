@@ -1,6 +1,4 @@
-"""
-CFFI definitions for implementing wlr_buffer with cairo surfaces
-"""
+"""CFFI definitions for implementing wlr_buffer with cairo surfaces."""
 
 SOURCE = """
 #include <drm_fourcc.h>

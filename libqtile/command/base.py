@@ -18,9 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-The objects in the command graph and command resolution on the objects
-"""
+"""The objects in the command graph and command resolution on the objects."""
 
 from __future__ import annotations
 
@@ -43,8 +41,7 @@ if TYPE_CHECKING:
 
 
 def expose_command(name: Callable | str | list[str] | None = None) -> Callable:
-    """
-    Decorator to expose methods to the command interface.
+    """Decorator to expose methods to the command interface.
 
     The exposed command will have the name of the defined method.
 
@@ -87,7 +84,7 @@ def expose_command(name: Callable | str | list[str] | None = None) -> Callable:
 
 
 class SelectError(Exception):
-    """Error raised in resolving a command graph object"""
+    """Error raised in resolving a command graph object."""
 
     def __init__(self, err_string: str, name: str, selectors: list[SelectorType]):
         super().__init__("{}, name: {}, selectors: {}".format(err_string, name, selectors))
@@ -96,15 +93,15 @@ class SelectError(Exception):
 
 
 class CommandError(Exception):
-    """Error raised in resolving a command"""
+    """Error raised in resolving a command."""
 
 
 class CommandException(Exception):
-    """Error raised while executing a command"""
+    """Error raised while executing a command."""
 
 
 class CommandObject(metaclass=abc.ABCMeta):
-    """Base class for objects that expose commands
+    """Base class for objects that expose commands.
 
     Any command to be exposed should be decorated with
     `@expose_command()` (classes that are not explicitly
@@ -173,7 +170,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         return super().__new__(cls)
 
     def select(self, selectors: list[SelectorType]) -> CommandObject:
-        """Return a selected object
+        """Return a selected object.
 
         Recursively finds an object specified by a list of `(name, selector)`
         items.
@@ -201,8 +198,7 @@ class CommandObject(metaclass=abc.ABCMeta):
 
     @expose_command()
     def items(self, name: str) -> tuple[bool, list[str | int] | None]:
-        """
-        Build a list of contained items for the given item class.
+        """Build a list of contained items for the given item class.
 
         Exposing this allows __qsh__ to navigate the command graph.
 
@@ -223,7 +219,7 @@ class CommandObject(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def _items(self, name) -> ItemT:
-        """Generate the items for a given
+        """Generate the items for a given.
 
         Same return as `.items()`. Return `None` if name is not a valid item
         class.
@@ -231,7 +227,7 @@ class CommandObject(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def _select(self, name: str, sel: str | int | None) -> CommandObject | None:
-        """Select the given item of the given item class
+        """Select the given item of the given item class.
 
         This method is called with the following guarantees:
             - `name` is a valid selector class for this item
@@ -243,13 +239,10 @@ class CommandObject(metaclass=abc.ABCMeta):
         """
 
     def command(self, name: str) -> Callable | None:
-        """Return the command with the given name
+        """Return the command with the given name.
 
-        Parameters
-        ----------
-        name: str
-            The name of the command to fetch.
-
+        Parameters:
+            name: The name of the command to fetch.
         """
         return self._commands.get(name)
 
@@ -282,8 +275,7 @@ class CommandObject(metaclass=abc.ABCMeta):
 
     @expose_command()
     def commands(self) -> list[str]:
-        """
-        Returns a list of possible commands for this object
+        """Returns a list of possible commands for this object.
 
         Used by __qsh__ for command completion and online help
         """
@@ -291,7 +283,7 @@ class CommandObject(metaclass=abc.ABCMeta):
 
     @expose_command()
     def doc(self, name) -> str:
-        """Returns the documentation for a specified command name
+        """Returns the documentation for a specified command name.
 
         Used by __qsh__ to provide online help.
         """
@@ -315,7 +307,7 @@ class CommandObject(metaclass=abc.ABCMeta):
 
     @expose_command()
     def eval(self, code: str) -> tuple[bool, str | None]:
-        """Evaluates code in the same context as this function
+        """Evaluates code in the same context as this function.
 
         Return value is tuple `(success, result)`, success being a boolean and
         result being a string representing the return value of eval, or None if
@@ -334,7 +326,7 @@ class CommandObject(metaclass=abc.ABCMeta):
 
     @expose_command()
     def function(self, function, *args, **kwargs) -> None:
-        """Call a function with current object as argument"""
+        """Call a function with current object as argument."""
         try:
             function(self, *args, **kwargs)
         except Exception:

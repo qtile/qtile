@@ -63,10 +63,10 @@ def get_cairo_surface(bytes_img, width=None, height=None):
 def get_cairo_pattern(surface, width=None, height=None, theta=0.0):
     """Return a SurfacePattern from an ImageSurface.
 
-    if width and height are not None scale the pattern
+    If width and height are not None scale the pattern
     to be size width and height.
 
-    theta is in degrees ccw
+    Parameter `theta` is in degrees ccw.
     """
     pattern = cairocffi.SurfacePattern(surface)
     pattern.set_filter(cairocffi.FILTER_BEST)
@@ -150,16 +150,17 @@ _ImgSize = namedtuple("_ImgSize", ("width", "height"))
 
 
 class Img:
-    """Img is a class which creates & manipulates cairo SurfacePatterns from an image
+    """Img is a class which creates and manipulates cairo SurfacePatterns from an image.
 
-    There are two constructors Img(...) and Img.from_path(...)
+    There are two constructors `Img(...)` and `Img.from_path(...)`.
 
-    The cairo surface pattern is at img.pattern.
+    The cairo surface pattern is at `img.pattern`.
     Changing any of the attributes width, height, or theta will update the pattern.
 
-    - width :: pattern width in pixels
-    - height :: pattern height in pixels
-    - theta :: rotation of pattern counter clockwise in degrees
+    - width: pattern width in pixels
+    - height: pattern height in pixels
+    - theta: rotation of pattern counter clockwise in degrees
+
     Pattern is first stretched, then rotated.
     """
 
@@ -178,7 +179,7 @@ class Img:
 
     @classmethod
     def from_path(cls, image_path):
-        "Create an Img instance from image_path"
+        """Create an Img instance from image_path."""
         with open(image_path, "rb") as fobj:
             bytes_img = fobj.read()
         name = os.path.basename(image_path)
@@ -306,11 +307,14 @@ class Img:
 
 
 class Loader:
-    """Loader - create Img() instances from image names
+    """Loader - create Img() instances from image names.
 
-    load icons with Loader e.g.,
+    Load icons with Loader, for example:
+
+    ```pycon
     >>> ldr = Loader('/usr/share/icons/Adwaita/24x24', '/usr/share/icons/Adwaita')
     >>> d_loaded_images = ldr('audio-volume-muted', 'audio-volume-low')
+    ```
     """
 
     def __init__(self, *directories, **kwargs):
