@@ -75,9 +75,12 @@ class Drawer:
 
     def finalize(self):
         """Destructor/Clean up resources"""
-        self.background_surface = None
-        self.surface = None
-        self.last_surface = None
+        if hasattr(self, "surface"):
+            self.surface.finish()
+            delattr(self, "surface")
+        if hasattr(self, "last_surface"):
+            self.last_surface.finish()
+            delattr(self, "last_surface")
         self.ctx = None
 
     @property
@@ -109,6 +112,9 @@ class Drawer:
 
     def _reset_surface(self):
         """This creates a fresh surface and cairo context."""
+        if hasattr(self, "surface"):
+            self.surface.finish()
+
         self.surface = cairocffi.RecordingSurface(
             cairocffi.CONTENT_COLOR_ALPHA,
             None,
