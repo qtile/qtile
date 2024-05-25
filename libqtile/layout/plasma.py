@@ -448,7 +448,7 @@ class Node:
     @property
     def flexible(self):
         """
-        A node is flexible if its size isn't (explicitly or implictly)
+        A node is flexible if its size isn't (explicitly or implicitly)
         determined.
         """
         if self.fixed:
@@ -926,6 +926,13 @@ class Plasma(Layout):
         try:
             self.root.restore(new)
         except NotRestorableError:
+            if self.add_mode is None:
+                # If split has landscape proportions, split horizontally by default,
+                # if portrait, split vertically by default
+                if node.width >= node.height:
+                    self.add_mode = AddMode.HORIZONTAL
+                else:
+                    self.add_mode = AddMode.VERTICAL
             node.add_node(new, self.add_mode)
         self.add_mode = None
 

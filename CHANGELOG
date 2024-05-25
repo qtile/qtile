@@ -1,5 +1,6 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
+        * Make default `Plasma` add mode dynamic
     * bugfixes
         * Fix `Plasma` layout with `ScreenSplit` by implementing `get_windows`
 
