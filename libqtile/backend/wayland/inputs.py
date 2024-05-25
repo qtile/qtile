@@ -144,8 +144,8 @@ class InputConfig(configurable.Configurable):
         ("kb_variant", None, "Keyboard variant i.e. ``XKB_DEFAULT_VARIANT``"),
         ("kb_repeat_rate", 25, "Keyboard key repeats made per second"),
         ("kb_repeat_delay", 600, "Keyboard delay in milliseconds before repeating"),
-        ("kb_numlock", None, "``True`` or ``False`` Enable numlock on startup"),
-        ("kb_capslock", None, "``True`` or ``False`` Enable capslock on startup"),
+        ("kb_numlock", False, "``True`` or ``False`` Enable numlock on startup"),
+        ("kb_capslock", False, "``True`` or ``False`` Enable capslock on startup"),
     ]
 
     def __init__(self, **config: Any) -> None:
