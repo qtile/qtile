@@ -1,5 +1,6 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
+        * Make default `Plasma` add mode dynamic
     * bugfixes
 
 Qtile 0.26.0, released 2024-05-21:
@@ -89,7 +90,7 @@ Qtile 0.23.0, released 2023-09-24:
       - `Window.getsize` has been renamed `Window.get_size` (i.e. merged with the get_size command).
       - `Window.getposition` has been renamed `Window.get_position` (i.e. merged with the get_position command).
       - The `StockTicker` widget `function` option is being deprecated: rename it to `func`.
-      - The formatting of `NetWidget` has changed, if you use the `format` parameter in your config include 
+      - The formatting of `NetWidget` has changed, if you use the `format` parameter in your config include
         `up_suffix`, `total_suffix` and `down_suffix` to display the respective units.
       - The `Notify` widget now has separate `default_timeout` properties for differenct urgency levels. Previously,
         `default_timeout` was `None` which meant that there was no timeout for all notifications (unless this had been
@@ -103,7 +104,7 @@ Qtile 0.23.0, released 2023-09-24:
           the window when dragging begins.
         - Add `currentsong` status to `Mpd2` widget.
         - Add ability to disable group toggling in `GroupBox` widget
-        - Add ability to have different border color when windows are stacked in Stack layout. Requires 
+        - Add ability to have different border color when windows are stacked in Stack layout. Requires
           setting `border_focus_stack` and `border_normal_stack` variables.
         - Add ability to have different single border width for Columns layout by setting 'single_border_width' key.
         - Add ability to have different border and margin widths when VerticalTile layout only contains 1 window by
@@ -175,7 +176,7 @@ Qtile 0.22.0, released 2022-09-22:
         - Wayland: Use `qtile cmd-obj -o core -f get_inputs` to get input device identifiers for
           configuring inputs. Also input configs will be updated by config reloads (pywlroots>=0.15.21)
     * bugfixes
-        - Widgets that are incompatible with a backend (e.g. Systray on Wayland) will no longer show 
+        - Widgets that are incompatible with a backend (e.g. Systray on Wayland) will no longer show
           as a ConfigError in the bar. Instead the widget is silently removed from the bar and a message
           included in the logs.
         - Reduce error messages in `StatusNotifier` widget from certain apps.

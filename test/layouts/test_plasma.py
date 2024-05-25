@@ -1512,7 +1512,7 @@ def test_windows(plasma):
     plasma.test_window("b")
     plasma.test_window("c")
     assert_focused(plasma, "c")
-    assert client_tree(plasma) == ["a", "b", "c"]
+    assert client_tree(plasma) == ["a", ["b", "c"]]
 
 
 def test_split_directions(plasma):
