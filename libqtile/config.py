@@ -472,6 +472,10 @@ class Screen(CommandObject):
             self.wallpaper = os.path.expanduser(self.wallpaper)
             self.paint(self.wallpaper, self.wallpaper_mode)
 
+    def finalize(self) -> None:
+        for gap in self.gaps:
+            gap.finalize()
+
     def paint(self, path: str, mode: str | None = None) -> None:
         if self.qtile:
             self.qtile.paint_screen(self, path, mode)
