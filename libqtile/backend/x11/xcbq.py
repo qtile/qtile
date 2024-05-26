@@ -57,7 +57,7 @@ from libqtile.backend.x11.xcursors import Cursors
 from libqtile.backend.x11.xkeysyms import keysyms
 from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
-from libqtile.utils import QtileError, hex
+from libqtile.utils import QtileError, hex, rgb
 
 
 class XCBQError(QtileError):
@@ -631,14 +631,7 @@ class Painter:
         self.width = -1
         self.height = -1
 
-    def paint(self, screen, image_path, mode=None):
-        try:
-            with open(image_path, "rb") as f:
-                image, _ = cairocffi.pixbuf.decode_to_image_surface(f.read())
-        except IOError:
-            logger.exception("Could not load wallpaper:")
-            return
-
+    def _get_root_pixmap_and_surface(self, screen):
         # Querying the screen dimensions via the xcffib connection does not
         # take account of any screen scaling. We can therefore work out the
         # necessary size of the root window by looking at the
@@ -682,29 +675,9 @@ class Painter:
             self.conn, root_pixmap, root_visual, self.width, self.height
         )
 
-        context = cairocffi.Context(surface)
-        with context:
-            context.translate(screen.x, screen.y)
-            if mode == "fill":
-                context.rectangle(0, 0, screen.width, screen.height)
-                context.clip()
-                image_w = image.get_width()
-                image_h = image.get_height()
-                width_ratio = screen.width / image_w
-                if width_ratio * image_h >= screen.height:
-                    context.scale(width_ratio)
-                else:
-                    height_ratio = screen.height / image_h
-                    context.translate(-(image_w * height_ratio - screen.width) // 2, 0)
-                    context.scale(height_ratio)
-            elif mode == "stretch":
-                context.scale(
-                    sx=screen.width / image.get_width(),
-                    sy=screen.height / image.get_height(),
-                )
-            context.set_source_surface(image)
-            context.paint()
+        return root_pixmap, surface
 
+    def _update_root_pixmap(self, root_pixmap):
         self.conn.core.ChangeProperty(
             xcffib.xproto.PropMode.Replace,
             self.default_screen.root.wid,
@@ -728,6 +701,52 @@ class Painter:
         )
         self.conn.core.ClearArea(0, self.default_screen.root.wid, 0, 0, self.width, self.height)
         self.conn.flush()
+
+    def fill(self, screen, background):
+        root_pixmap, surface = self._get_root_pixmap_and_surface(screen)
+
+        with cairocffi.Context(surface) as ctx:
+            ctx.translate(screen.x, screen.y)
+            ctx.rectangle(0, 0, screen.width, screen.height)
+            ctx.set_source_rgba(*rgb(background))
+            ctx.fill()
+
+        self._update_root_pixmap(root_pixmap)
+
+    def paint(self, screen, image_path, mode=None):
+        try:
+            with open(image_path, "rb") as f:
+                image, _ = cairocffi.pixbuf.decode_to_image_surface(f.read())
+        except IOError:
+            logger.exception("Could not load wallpaper:")
+            return
+
+        root_pixmap, surface = self._get_root_pixmap_and_surface(screen)
+
+        context = cairocffi.Context(surface)
+        with context:
+            context.translate(screen.x, screen.y)
+            if mode == "fill":
+                context.rectangle(0, 0, screen.width, screen.height)
+                context.clip()
+                image_w = image.get_width()
+                image_h = image.get_height()
+                width_ratio = screen.width / image_w
+                if width_ratio * image_h >= screen.height:
+                    context.scale(width_ratio)
+                else:
+                    height_ratio = screen.height / image_h
+                    context.translate(-(image_w * height_ratio - screen.width) // 2, 0)
+                    context.scale(height_ratio)
+            elif mode == "stretch":
+                context.scale(
+                    sx=screen.width / image.get_width(),
+                    sy=screen.height / image.get_height(),
+                )
+            context.set_source_surface(image)
+            context.paint()
+
+        self._update_root_pixmap(root_pixmap)
 
     def __del__(self):
         self.conn.disconnect()

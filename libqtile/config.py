@@ -48,6 +48,7 @@ if TYPE_CHECKING:
     from libqtile.group import _Group
     from libqtile.layout.base import Layout
     from libqtile.lazy import LazyCall
+    from libqtile.utils import ColorType
 
 
 class Key:
@@ -403,6 +404,10 @@ class Screen(CommandObject):
     ``x``, ``y``, ``width``, and ``height`` aren't specified usually unless you are
     using 'fake screens'.
 
+    The ``background`` parameter, if given, should be a valid single colour. This will
+    paint a solid background colour to the screen. Note, the setting is ignored if
+    ``wallpaper`` is also set (see below).
+
     The ``wallpaper`` parameter, if given, should be a path to an image file. How this
     image is painted to the screen is specified by the ``wallpaper_mode`` parameter. By
     default, the image will be placed at the screens origin and retain its own
@@ -423,6 +428,7 @@ class Screen(CommandObject):
         bottom: BarType | None = None,
         left: BarType | None = None,
         right: BarType | None = None,
+        background: ColorType | None = None,
         wallpaper: str | None = None,
         wallpaper_mode: str | None = None,
         x11_drag_polling_rate: int | None = None,
@@ -435,6 +441,7 @@ class Screen(CommandObject):
         self.bottom = bottom
         self.left = left
         self.right = right
+        self.background = background
         self.wallpaper = wallpaper
         self.wallpaper_mode = wallpaper_mode
         self.x11_drag_polling_rate = x11_drag_polling_rate
@@ -468,9 +475,12 @@ class Screen(CommandObject):
         for i in self.gaps:
             i._configure(qtile, self, reconfigure=reconfigure_gaps)
         self.set_group(group)
+
         if self.wallpaper:
             self.wallpaper = os.path.expanduser(self.wallpaper)
             self.paint(self.wallpaper, self.wallpaper_mode)
+        elif self.background:
+            self.qtile.fill_screen(self, self.background)
 
     def paint(self, path: str, mode: str | None = None) -> None:
         if self.qtile:
