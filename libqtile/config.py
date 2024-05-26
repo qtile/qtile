@@ -482,6 +482,10 @@ class Screen(CommandObject):
         elif self.background:
             self.qtile.fill_screen(self, self.background)
 
+    def finalize(self) -> None:
+        for gap in self.gaps:
+            gap.finalize()
+
     def paint(self, path: str, mode: str | None = None) -> None:
         if self.qtile:
             self.qtile.paint_screen(self, path, mode)

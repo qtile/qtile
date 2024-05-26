@@ -170,3 +170,8 @@ class WidgetBox(base._TextBox):
         """Close the widgetbox."""
         if self.box_is_open:
             self.toggle()
+
+    def finalize(self):
+        for widget in self.widgets:
+            widget.finalize()
+        base._TextBox.finalize(self)
