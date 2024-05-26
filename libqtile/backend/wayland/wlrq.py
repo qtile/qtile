@@ -31,9 +31,10 @@ from wlroots import ffi as wlr_ffi
 from wlroots import lib as wlr_lib
 from wlroots.wlr_types import Buffer, SceneBuffer, SceneTree, data_device_manager
 from wlroots.wlr_types.keyboard import KeyboardModifier
+from wlroots.wlr_types.scene import SceneRect
 
 from libqtile.log_utils import logger
-from libqtile.utils import QtileError
+from libqtile.utils import QtileError, rgb
 
 try:
     # Continue if ffi not built, so that docs can be built without wayland deps.
@@ -50,6 +51,7 @@ if TYPE_CHECKING:
 
     from libqtile.backend.wayland.core import Core
     from libqtile.config import Screen
+    from libqtile.utils import ColorType
 
 
 class WlrQError(QtileError):
@@ -117,6 +119,19 @@ class Painter:
     def __init__(self, core: Core):
         self.core = core
 
+    def _clear_previous_background(self, screen: Screen) -> None:
+        # Drop references to existing wallpaper if there is one
+        if screen in self.core.wallpapers:
+            old_scene_buffer, old_surface = self.core.wallpapers.pop(screen)
+            old_scene_buffer.node.destroy()
+            if old_surface is not None:
+                old_surface.finish()
+
+    def fill(self, screen: Screen, background: ColorType) -> None:
+        self._clear_previous_background(screen)
+        rect = SceneRect(self.core.wallpaper_tree, screen.width, screen.height, rgb(background))
+        self.core.wallpapers[screen] = (rect, None)
+
     def paint(self, screen: Screen, image_path: str, mode: str | None = None) -> None:
         try:
             with open(image_path, "rb") as f:
@@ -151,11 +166,7 @@ class Painter:
         if wlr_buffer == ffi.NULL:
             raise RuntimeError("Couldn't allocate cairo buffer.")
 
-        # Drop references to existing wallpaper if there is one
-        if screen in self.core.wallpapers:
-            old_scene_buffer, old_surface = self.core.wallpapers.pop(screen)
-            old_scene_buffer.node.destroy()
-            old_surface.finish()
+        self._clear_previous_background(screen)
 
         # We need to keep a reference to the surface so its data persists
         if scene_buffer := SceneBuffer.create(self.core.wallpaper_tree, Buffer(wlr_buffer)):

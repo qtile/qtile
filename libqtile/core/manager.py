@@ -65,6 +65,7 @@ if TYPE_CHECKING:
     from libqtile.command.base import ItemT
     from libqtile.confreader import Config
     from libqtile.layout.base import Layout
+    from libqtile.utils import ColorType
 
 
 class Qtile(CommandObject):
@@ -449,6 +450,9 @@ class Qtile(CommandObject):
 
     def paint_screen(self, screen: Screen, image_path: str, mode: str | None = None) -> None:
         self.core.painter.paint(screen, image_path, mode)
+
+    def fill_screen(self, screen: Screen, background: ColorType) -> None:
+        self.core.painter.fill(screen, background)
 
     def process_key_event(self, keysym: int, mask: int) -> tuple[Key | KeyChord | None, bool]:
         key = self.keys_map.get((keysym, mask), None)

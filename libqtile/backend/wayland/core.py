@@ -81,6 +81,7 @@ from wlroots.wlr_types.scene import (
     SceneBuffer,
     SceneNode,
     SceneNodeType,
+    SceneRect,
     SceneSurface,
     SceneTree,
 )
@@ -312,7 +313,9 @@ class Core(base.Core, wlrq.HasListeners):
             SceneTree.create(self.windows_tree),  # Overlay
         ]
         self.mid_window_tree = self.layer_trees.pop(2)
-        self.wallpapers: dict[config.Screen, tuple[SceneBuffer, ImageSurface]] = {}
+        self.wallpapers: dict[
+            config.Screen, tuple[SceneBuffer | SceneRect, ImageSurface | None]
+        ] = {}
 
         # Add support for additional protocols
         ExportDmabufManagerV1(self.display)
