@@ -32,7 +32,7 @@ if typing.TYPE_CHECKING:
     import asyncio
     from typing import Any
 
-    from libqtile.backend.base import Internal, WindowType
+    from libqtile.backend.base import Drawer, Internal, WindowType
     from libqtile.command.base import ItemT
     from libqtile.config import Screen
     from libqtile.core.manager import Qtile
@@ -200,6 +200,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         # bar as python is referring to the same list.
         self.widgets = widgets.copy()
         self.window: Internal | None = None
+        self.drawer: Drawer
         self._configured = False
         self._draw_queued = False
         self.future: asyncio.Handle | None = None
@@ -323,9 +324,11 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             self.window.process_pointer_motion = self.process_pointer_motion
             self.window.process_key_press = self.process_key_press
 
-        # We create a new drawer even if there's already a window to ensure the
-        # drawer is the right size.
-        self.drawer = self.window.create_drawer(width, height)
+        if hasattr(self, "drawer"):
+            self.drawer.width = width
+            self.drawer.height = height
+        else:
+            self.drawer = self.window.create_drawer(width, height)
         self.drawer.clear(self.background)
 
         crashed_widgets: set[_Widget] = set()
