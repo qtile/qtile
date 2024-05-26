@@ -406,9 +406,8 @@ class RandR:
 
     def query_crtcs(self, root):
         infos = []
-        for output in self.ext.GetScreenResources(root).reply().outputs:
-            output_info = self.ext.GetOutputInfo(output, xcffib.CurrentTime).reply()
-            crtc_info = self.ext.GetCrtcInfo(output_info.crtc, xcffib.CurrentTime).reply()
+        for crtc in self.ext.GetScreenResources(root).reply().crtcs:
+            crtc_info = self.ext.GetCrtcInfo(crtc, xcffib.CurrentTime).reply()
 
             infos.append(ScreenRect(crtc_info.x, crtc_info.y, crtc_info.width, crtc_info.height))
         return infos
