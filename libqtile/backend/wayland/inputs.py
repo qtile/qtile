@@ -249,6 +249,8 @@ class Keyboard(_Device):
     def _on_key(self, _listener: Listener, event: KeyboardKeyEvent) -> None:
         self.qtile = self.core.qtile
 
+        self.core.idle.notify_activity(self.seat)
+
         if event.state == KEY_PRESSED and not self.core.exclusive_client:
             # translate libinput keycode -> xkbcommon
             keycode = event.keycode + 8

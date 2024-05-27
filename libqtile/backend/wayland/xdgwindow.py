@@ -313,6 +313,7 @@ class XdgWindow(Window[XdgSurface]):
             self.core,
             self.qtile,
             self,
+            self._idle_inhibitors_count,
         )
 
 
@@ -324,9 +325,12 @@ class XdgStatic(Static[XdgSurface]):
         core: Core,
         qtile: Qtile,
         win: XdgWindow,
+        idle_inhibitor_count: int,
     ):
         surface = win.surface
-        Static.__init__(self, core, qtile, surface, win.wid)
+        Static.__init__(
+            self, core, qtile, surface, win.wid, idle_inhibitor_count=idle_inhibitor_count
+        )
 
         if surface.toplevel.title:
             self.name = surface.toplevel.title
