@@ -30,6 +30,7 @@ from pywayland.server import Client, Listener
 from wlroots import PtrHasData
 from wlroots.util.box import Box
 from wlroots.wlr_types import Buffer
+from wlroots.wlr_types.idle_inhibit_v1 import IdleInhibitorV1
 from wlroots.wlr_types.pointer_constraints_v1 import (
     PointerConstraintV1,
     PointerConstraintV1StateField,
@@ -52,6 +53,8 @@ except ModuleNotFoundError:
 
 if typing.TYPE_CHECKING:
     from typing import Any
+
+    from wlroots.wlr_types import Surface
 
     from libqtile.backend.wayland.core import Core
     from libqtile.command.base import CommandObject, ItemT
@@ -112,6 +115,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         self.y = 0
         self._opacity: float = 1.0
         self._wm_class: str | None = None
+        self._idle_inhibitors_count: int = 0
         self._urgent = False
 
         # Create a scene-graph tree for this window and its borders
@@ -228,6 +232,15 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     def _on_foreign_request_close(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: foreign_toplevel_management request_close")
         self.kill()
+
+    def _on_inhibitor_destroy(self, listener: Listener, surface: Surface) -> None:
+        # We don't have reference to the inhibitor, but it doesn't really
+        # matter we only need to keep count of how many inhibitors there are
+        self._idle_inhibitors_count -= 1
+        listener.remove()
+        if self._idle_inhibitors_count == 0:
+            self.core.check_idle_inhibitor()
+            # TODO: do we also need to check idle inhibitors when unmapping?
 
     def hide(self) -> None:
         self.container.node.set_enabled(enabled=False)
@@ -587,6 +600,24 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     def match(self, match: config._Match) -> bool:
         return match.compare(self)
 
+    def add_idle_inhibitor(
+        self,
+        surface: Surface,
+        _x: int,
+        _y: int,
+        inhibitor: IdleInhibitorV1,
+    ) -> None:
+        if surface == inhibitor.surface:
+            self._idle_inhibitors_count += 1
+            inhibitor.data = self
+            self.add_listener(inhibitor.destroy_event, self._on_inhibitor_destroy)
+            if self._idle_inhibitors_count == 1:
+                self.core.check_idle_inhibitor()
+
+    @property
+    def is_idle_inhibited(self) -> bool:
+        return self._idle_inhibitors_count > 0
+
     def _items(self, name: str) -> ItemT:
         if name == "group":
             return True, []
@@ -763,6 +794,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         qtile: Qtile,
         surface: S,
         wid: int,
+        idle_inhibitor_count: int = 0,
     ):
         base.Static.__init__(self)
         self.core = core
@@ -778,6 +810,7 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
         self.bordercolor: list[ffi.CData] = [_rgb((0, 0, 0, 1))]
         self.opacity: float = 1.0
         self._wm_class: str | None = None
+        self._idle_inhibitors_count = idle_inhibitor_count
         self.ftm_handle: ftm.ForeignToplevelHandleV1 | None = None
         self.data_handle = ffi.new_handle(self)
         surface.data = self.data_handle
@@ -841,6 +874,32 @@ class Static(typing.Generic[S], _Base, base.Static, HasListeners):
     def _on_foreign_request_close(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: foreign_toplevel_management static request_close")
         self.kill()
+
+    def _on_inhibitor_destroy(self, listener: Listener, surface: Surface) -> None:
+        # We don't have reference to the inhibitor, but it doesn't really
+        # matter we only need to keep count of how many inhibitors there are
+        self._idle_inhibitors_count -= 1
+        listener.remove()
+        if self._idle_inhibitors_count == 0:
+            self.core.check_idle_inhibitor()
+
+    def add_idle_inhibitor(
+        self,
+        surface: Surface,
+        _x: int,
+        _y: int,
+        inhibitor: IdleInhibitorV1,
+    ) -> None:
+        if surface == inhibitor.surface:
+            self._idle_inhibitors_count += 1
+            inhibitor.data = self
+            self.add_listener(inhibitor.destroy_event, self._on_inhibitor_destroy)
+            if self._idle_inhibitors_count == 1:
+                self.core.check_idle_inhibitor()
+
+    @property
+    def is_idle_inhibited(self) -> bool:
+        return self._idle_inhibitors_count > 0
 
     def belongs_to_client(self, other: Client) -> bool:
         return other == Client.from_resource(self.surface.surface._ptr.resource)

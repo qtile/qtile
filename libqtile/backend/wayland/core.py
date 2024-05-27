@@ -63,6 +63,8 @@ from wlroots.wlr_types import (
     xdg_decoration_v1,
 )
 from wlroots.wlr_types.cursor import Cursor, WarpMode
+from wlroots.wlr_types.idle_inhibit_v1 import IdleInhibitorManagerV1, IdleInhibitorV1
+from wlroots.wlr_types.idle_notify_v1 import IdleNotifierV1
 from wlroots.wlr_types.keyboard import Keyboard
 from wlroots.wlr_types.layer_shell_v1 import LayerShellV1, LayerSurfaceV1
 from wlroots.wlr_types.output_management_v1 import (
@@ -330,6 +332,9 @@ class Core(base.Core, wlrq.HasListeners):
         self.add_listener(
             output_power_manager.set_mode_event, self._on_output_power_manager_set_mode
         )
+        self.idle = IdleNotifierV1(self.display)
+        idle_ihibitor_manager = IdleInhibitorManagerV1(self.display)
+        self.add_listener(idle_ihibitor_manager.new_inhibitor_event, self._on_new_idle_inhibitor)
         PrimarySelectionV1DeviceManager(self.display)
         virtual_keyboard_manager_v1 = vkeyboard.VirtualKeyboardManagerV1(self.display)
         self.add_listener(
@@ -688,6 +693,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_cursor_button(self, _listener: Listener, event: pointer.PointerButtonEvent) -> None:
         assert self.qtile is not None
+        self.idle.notify_activity(self.seat)
         found = None
         pressed = event.button_state == input_device.ButtonState.PRESSED
         if pressed:
@@ -726,6 +732,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_cursor_motion(self, _listener: Listener, event: pointer.PointerMotionEvent) -> None:
         assert self.qtile is not None
+        self.idle.notify_activity(self.seat)
 
         dx = event.delta_x
         dy = event.delta_y
@@ -758,6 +765,7 @@ class Core(base.Core, wlrq.HasListeners):
         self, _listener: Listener, event: pointer.PointerMotionAbsoluteEvent
     ) -> None:
         assert self.qtile is not None
+        self.idle.notify_activity(self.seat)
 
         x, y = self.cursor.absolute_to_layout_coords(event.pointer.base, event.x, event.y)
         self.cursor.move(x - self.cursor.x, y - self.cursor.y)
@@ -771,6 +779,7 @@ class Core(base.Core, wlrq.HasListeners):
         _listener: Listener,
         event: pointer.PointerPinchBeginEvent,
     ) -> None:
+        self.idle.notify_activity(self.seat)
         self._gestures.send_pinch_begin(self.seat, event.time_msec, event.fingers)
 
     def _on_cursor_pinch_update(
@@ -787,6 +796,7 @@ class Core(base.Core, wlrq.HasListeners):
         _listener: Listener,
         event: pointer.PointerPinchEndEvent,
     ) -> None:
+        self.idle.notify_activity(self.seat)
         self._gestures.send_pinch_end(self.seat, event.time_msec, event.cancelled)
 
     def _on_cursor_swipe_begin(
@@ -794,6 +804,7 @@ class Core(base.Core, wlrq.HasListeners):
         _listener: Listener,
         event: pointer.PointerSwipeBeginEvent,
     ) -> None:
+        self.idle.notify_activity(self.seat)
         self._gestures.send_swipe_begin(self.seat, event.time_msec, event.fingers)
 
     def _on_cursor_swipe_update(
@@ -808,6 +819,7 @@ class Core(base.Core, wlrq.HasListeners):
         _listener: Listener,
         event: pointer.PointerSwipeEndEvent,
     ) -> None:
+        self.idle.notify_activity(self.seat)
         self._gestures.send_swipe_end(self.seat, event.time_msec, event.cancelled)
 
     def _on_cursor_hold_begin(
@@ -815,6 +827,7 @@ class Core(base.Core, wlrq.HasListeners):
         _listener: Listener,
         event: pointer.PointerHoldBeginEvent,
     ) -> None:
+        self.idle.notify_activity(self.seat)
         self._gestures.send_hold_begin(self.seat, event.time_msec, event.fingers)
 
     def _on_cursor_hold_end(
@@ -822,6 +835,7 @@ class Core(base.Core, wlrq.HasListeners):
         _listener: Listener,
         event: pointer.PointerHoldEndEvent,
     ) -> None:
+        self.idle.notify_activity(self.seat)
         self._gestures.send_hold_end(self.seat, event.time_msec, event.cancelled)
 
     def _on_new_pointer_constraint(
@@ -846,6 +860,20 @@ class Core(base.Core, wlrq.HasListeners):
     ) -> None:
         device = self._add_new_pointer(new_pointer_event.new_pointer.pointer.base)
         logger.info("New virtual pointer: %s %s", *device.get_info())
+
+    def _on_new_idle_inhibitor(
+        self, _listener: Listener, idle_inhibitor: IdleInhibitorV1
+    ) -> None:
+        logger.debug("Signal: idle_inhibitor new_inhibitor")
+
+        for win in self.qtile.windows_map.values():
+            if isinstance(win, (window.Window, window.Static)):
+                win.surface.for_each_surface(win.add_idle_inhibitor, idle_inhibitor)
+                if idle_inhibitor.data:
+                    # We break if the .data attribute was set, because that tells us
+                    # that `win.add_idle_inhibitor` identified this inhibitor as
+                    # belonging to that window.
+                    break
 
     def _on_input_inhibitor_activate(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: input_inhibitor activate")
@@ -1453,6 +1481,21 @@ class Core(base.Core, wlrq.HasListeners):
 
         logger.warning("Couldn't determine what was under the pointer. Please report.")
         return None
+
+    def check_idle_inhibitor(self) -> None:
+        """
+        Checks if any window that is currently mapped has idle inhibitor
+        and if so inhibits idle
+        """
+        assert self.qtile is not None
+
+        for win in self.qtile.windows_map.values():
+            if not isinstance(win, window.Internal) and win.is_idle_inhibited:
+                # TODO: do we also need to check that the window is mapped?
+                self.idle.set_inhibited(True)
+                return
+
+        self.idle.set_inhibited(False)
 
     def get_screen_info(self) -> list[ScreenRect]:
         """Get the output information"""

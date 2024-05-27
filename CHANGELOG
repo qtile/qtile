@@ -4,6 +4,7 @@ Qtile x.xx.x, released xxxx-xx-xx:
         - Add `background` parameter to `Screen` to paint a solid colour background
         - Add ability to use key codes to bind keys. Will benefit users who change keyboard layouts but
           wish to retain same bindings, irrespective of layout.
+        - Wayland: Add support for idle-notify-v1 protocol needed by swayidle.
 
     * bugfixes
       - Fix `Plasma` layout with `ScreenSplit` by implementing `get_windows`
