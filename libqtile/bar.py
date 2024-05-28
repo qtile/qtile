@@ -298,11 +298,12 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
             # X11 only:
             # To preserve correct display of SysTray widget, we need a 24-bit
-            # window where the user requests an opaque bar.
+            # window where the user requests an opaque bar or they're using pseudotransparency.
             if qtile.core.name == "x11":
                 depth = (
                     32
                     if has_transparency(self.background)
+                    and not qtile.config.x11_fake_transparency
                     else qtile.core.conn.default_screen.root_depth
                 )
 
