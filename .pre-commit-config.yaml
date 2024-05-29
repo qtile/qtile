@@ -13,7 +13,10 @@ repos:
   rev: 6.1.0
   hooks:
   - id: flake8
-    additional_dependencies: ["flake8-pyproject", "flake8-logging-format", "pep8-naming"]
+    # setuptools is required by flake8-logging-format, but not declared
+    # as dependency.
+    # Can be removed when this is fixed: https://github.com/globality-corp/flake8-logging-format/issues/68
+    additional_dependencies: ["flake8-pyproject", "flake8-logging-format", "pep8-naming", "setuptools"]
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v1.6.1
   hooks:

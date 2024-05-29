@@ -13,5 +13,4 @@ jobs:
               run: |
                 sudo apt update
                 sudo apt install --no-install-recommends libxkbcommon-dev
-                pip3 install setuptools
             - uses: pre-commit/action@v3.0.1
