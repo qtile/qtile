@@ -67,7 +67,9 @@ def main():
     def print_help(options):
         main_parser.print_help()
 
-    help_ = subparsers.add_parser("help", help="Print help message and exit.")
+    help_ = subparsers.add_parser(
+        "help", help="Print help message and exit.", parents=[parent_parser]
+    )
     help_.set_defaults(func=print_help)
 
     options = main_parser.parse_args()
