@@ -109,7 +109,7 @@ class Volume(base._TextBox):
         self.add_defaults(Volume.defaults)
         self.surfaces = {}
         self.volume = None
-        self.mute = False
+        self.is_mute = False
         self.unmute_foreground = self.foreground
 
         self.add_callbacks(
@@ -150,9 +150,9 @@ class Volume(base._TextBox):
 
     def update(self):
         vol, muted = self.get_volume()
-        if vol != self.volume or muted != self.mute:
+        if vol != self.volume or muted != self.is_mute:
             self.volume = vol
-            self.mute = muted
+            self.is_mute = muted
             # Update the underlying canvas size before actually attempting
             # to figure out how big it is and draw it.
             self._update_drawer()
@@ -161,7 +161,7 @@ class Volume(base._TextBox):
 
     def _update_drawer(self):
         if self.mute_foreground is not None:
-            self.foreground = self.mute_foreground if self.mute else self.unmute_foreground
+            self.foreground = self.mute_foreground if self.is_mute else self.unmute_foreground
 
         if self.theme_path:
             self.drawer.clear(self.background or self.bar.background)
@@ -193,7 +193,7 @@ class Volume(base._TextBox):
                 self.text = self.emoji_list[3]
         else:
             self.text = (
-                self.mute_format if self.mute or self.volume < 0 else self.unmute_format
+                self.mute_format if self.is_mute or self.volume < 0 else self.unmute_format
             ).format(volume=self.volume)
 
     def setup_images(self):
@@ -228,14 +228,14 @@ class Volume(base._TextBox):
         if self.check_mute_command:
             check_mute = subprocess.getoutput(self.check_mute_command)
 
-        mute = self.check_mute_string in check_mute
+        muted = self.check_mute_string in check_mute
 
         volgroups = re_vol.search(mixer_out)
         if volgroups:
-            return int(volgroups.groups()[0]), mute
+            return int(volgroups.groups()[0]), muted
         else:
             # this shouldn't happen
-            return -1, mute
+            return -1, muted
 
     def draw(self):
         if self.theme_path:

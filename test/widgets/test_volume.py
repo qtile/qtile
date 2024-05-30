@@ -72,7 +72,7 @@ def test_formats():
     vol._update_drawer()
     assert vol.text == "Volume: 50%"
 
-    vol.mute = True
+    vol.is_mute = True
     vol._update_drawer()
     assert vol.text == "Volume: 50% M"
 
@@ -86,10 +86,10 @@ def test_foregrounds():
     assert vol.foreground == foreground
 
     vol.mute_foreground = mute_foreground = "#888888"
-    vol.mute = False
+    vol.is_mute = False
     vol._update_drawer()
     assert vol.foreground == foreground
 
-    vol.mute = True
+    vol.is_mute = True
     vol._update_drawer()
     assert vol.foreground == mute_foreground
