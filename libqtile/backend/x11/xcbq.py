@@ -629,6 +629,7 @@ class Painter:
         self.atoms = AtomCache(self)
         self.width = -1
         self.height = -1
+        self.root_pixmap_id = None
 
     def _get_root_pixmap_and_surface(self, screen):
         # Querying the screen dimensions via the xcffib connection does not
@@ -700,6 +701,11 @@ class Painter:
         )
         self.conn.core.ClearArea(0, self.default_screen.root.wid, 0, 0, self.width, self.height)
         self.conn.flush()
+
+        # now that we have drawn the new pixmap, free the old one
+        if self.root_pixmap_id is not None and self.root_pixmap_id != root_pixmap:
+            self.conn.core.FreePixmap(self.root_pixmap_id)
+            self.root_pixmap_id = root_pixmap
 
     def fill(self, screen, background):
         root_pixmap, surface = self._get_root_pixmap_and_surface(screen)
