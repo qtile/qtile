@@ -202,7 +202,7 @@ class PulseVolume(Volume):
         Volume.__init__(self, **config)
         self.add_defaults(PulseVolume.defaults)
         self.volume = 0
-        self.mute = 0
+        self.is_mute = 0
         self._previous_state = (-1.0, -1)
 
     def _configure(self, qtile, bar):
@@ -245,11 +245,11 @@ class PulseVolume(Volume):
 
         create_task(self._change_volume(value))
 
-    def get_vals(self, vol, mute):
-        if (vol, mute) != self._previous_state:
+    def get_vals(self, vol, muted):
+        if (vol, muted) != self._previous_state:
             self.volume = vol
-            self.mute = mute
-            self._previous_state = (vol, mute)
+            self.is_mute = muted
+            self._previous_state = (vol, muted)
             self.update()
 
     def update(self):
