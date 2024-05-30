@@ -710,6 +710,7 @@ class Painter:
             ctx.set_source_rgba(*rgb(background))
             ctx.fill()
 
+        surface.finish()
         self._update_root_pixmap(root_pixmap)
 
     def paint(self, screen, image_path, mode=None):
@@ -745,6 +746,7 @@ class Painter:
             context.set_source_surface(image)
             context.paint()
 
+        surface.finish()
         self._update_root_pixmap(root_pixmap)
 
     def __del__(self):
