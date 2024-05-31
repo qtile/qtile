@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from pywayland.protocol.wayland import WlKeyboard
@@ -28,6 +29,7 @@ from xkbcommon import xkb
 
 from libqtile import configurable
 from libqtile.backend.wayland.wlrq import HasListeners, buttons
+from libqtile.confreader import ConfigError
 from libqtile.log_utils import logger
 
 try:
@@ -137,6 +139,7 @@ class InputConfig(configurable.Configurable):
         ),
         ("tap", None, "``True`` or ``False``"),
         ("tap_button_map", None, "``'lrm'`` or ``'lmr'``"),
+        ("kb_file", None, "Keyboard layout specified in a .xkb file."),
         ("kb_layout", None, "Keyboard layout i.e. ``XKB_DEFAULT_LAYOUT``"),
         ("kb_options", None, "Keyboard options i.e. ``XKB_DEFAULT_OPTIONS``"),
         ("kb_variant", None, "Keyboard variant i.e. ``XKB_DEFAULT_VARIANT``"),
@@ -213,7 +216,9 @@ class Keyboard(_Device):
 
         self.keyboard.set_repeat_info(25, 600)
         self.xkb_context = xkb.Context()
-        self._keymaps: dict[tuple[str | None, str | None, str | None], xkb.Keymap] = {}
+        self._keymaps: dict[
+            tuple[str | None, str | None, str | None, str | None], xkb.Keymap
+        ] = {}
         self.set_keymap(None, None, None)
 
         self.add_listener(self.keyboard.modifiers_event, self._on_modifier)
@@ -228,17 +233,26 @@ class Keyboard(_Device):
             if self.core.keyboards:
                 self.seat.set_keyboard(self.core.keyboards[-1].keyboard)
 
-    def set_keymap(self, layout: str | None, options: str | None, variant: str | None) -> None:
+    def set_keymap(
+        self,
+        layout: str | None,
+        options: str | None,
+        variant: str | None,
+        xkb_file: str | None = None,
+    ) -> None:
         """
         Set the keymap for this keyboard.
         """
-        if (layout, options, variant) in self._keymaps:
-            keymap = self._keymaps[(layout, options, variant)]
+        if (layout, options, variant, xkb_file) in self._keymaps:
+            keymap = self._keymaps[(layout, options, variant, xkb_file)]
+        elif xkb_file is not None:
+            keymap = self._load_keymap_from_file(xkb_file)
+            self._keymaps[(layout, options, variant, xkb_file)] = keymap
         else:
             keymap = self.xkb_context.keymap_new_from_names(
                 layout=layout, options=options, variant=variant
             )
-            self._keymaps[(layout, options, variant)] = keymap
+            self._keymaps[(layout, options, variant, xkb_file)] = keymap
         self.keyboard.set_keymap(keymap)
 
     def _on_modifier(self, _listener: Listener, _data: Any) -> None:
@@ -272,13 +286,25 @@ class Keyboard(_Device):
 
         self.seat.keyboard_notify_key(event)
 
+    def _load_keymap_from_file(self, xkb_file: str) -> xkb.Keymap:
+        xkbf = Path(xkb_file).expanduser()
+        if not xkbf.is_file():
+            raise ConfigError(f"kb_file {xkb_file} is not found.")
+
+        # read_bytes handles opening and closing of file
+        keymap = self.xkb_context.keymap_new_from_buffer(xkbf.read_bytes())
+
+        return keymap
+
     def configure(self, configs: dict[str, InputConfig]) -> None:
         """Applies ``InputConfig`` rules to this keyboard device."""
         config = self._match_config(configs)
 
         if config:
             self.keyboard.set_repeat_info(config.kb_repeat_rate, config.kb_repeat_delay)
-            self.set_keymap(config.kb_layout, config.kb_options, config.kb_variant)
+            self.set_keymap(
+                config.kb_layout, config.kb_options, config.kb_variant, config.kb_file
+            )
 
 
 class Pointer(_Device):
