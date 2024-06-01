@@ -21,6 +21,7 @@ exclude logo.png
 exclude .readthedocs.yaml
 
 graft libqtile/resources
+graft libqtile/widget/helpers
 graft resources
 graft test
 recursive-include libqtile *.typed
