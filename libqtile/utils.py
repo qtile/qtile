@@ -426,6 +426,7 @@ async def _send_dbus_message(
     body: Any,
     negotiate_unix_fd: bool = False,
     bus: MessageBus | None = None,
+    preserve: bool = False,
 ) -> tuple[MessageBus | None, Message | None]:
     """
     Private method to send messages to dbus via dbus_next.
@@ -470,7 +471,8 @@ async def _send_dbus_message(
     # Keep details of bus connections so we can close them on exit
     # dbus_bus_connetions is a set so we don't need to worry about
     # duplicates
-    dbus_bus_connections.add(bus)
+    if not preserve:
+        dbus_bus_connections.add(bus)
 
     return bus, msg
 
@@ -483,6 +485,8 @@ async def add_signal_receiver(
     bus_name: str | None = None,
     path: str | None = None,
     check_service: bool = False,
+    use_bus: MessageBus | None = None,
+    preserve: bool = False,
 ) -> bool:
     """
     Helper function which aims to recreate python-dbus's add_signal_receiver
@@ -527,6 +531,8 @@ async def add_signal_receiver(
         "AddMatch",
         "s",
         [rule],
+        bus=use_bus,
+        preserve=preserve,
     )
 
     # Check if message sent successfully
