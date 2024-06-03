@@ -1547,6 +1547,7 @@ class Core(base.Core, wlrq.HasListeners):
         layout: str | None = None,
         options: str | None = None,
         variant: str | None = None,
+        kb_file: str | None = None,
     ) -> None:
         """
         Set the keymap for the current keyboard.
@@ -1557,7 +1558,7 @@ class Core(base.Core, wlrq.HasListeners):
         """
         if self.keyboards:
             for keyboard in self.keyboards:
-                keyboard.set_keymap(layout, options, variant)
+                keyboard.set_keymap(layout, options, variant, kb_file)
         else:
             logger.warning("Could not set keymap: no keyboards set up.")
 
