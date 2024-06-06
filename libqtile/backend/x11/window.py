@@ -23,6 +23,7 @@ from libqtile.scratchpad import ScratchPad
 
 if TYPE_CHECKING:
     from libqtile.command.base import ItemT
+    from libqtile.config import Match
 
 # ICCM Constants
 NoValue = 0x0000
@@ -501,6 +502,9 @@ class _Window:
         self._float_width: int = self._width
         self._float_height: int = self._height
 
+        # We don't need this in the base class but we do need it for mypy checks
+        self.fullscreen = property()
+
         # We use `previous_layer` to see if a window has moved up or down a "layer"
         # The layers are defined in the spec:
         # https://specifications.freedesktop.org/wm-spec/1.3/ar01s07.html#STACKINGORDER
@@ -814,15 +818,15 @@ class _Window:
     @expose_command()
     def place(
         self,
-        x,
-        y,
-        width,
-        height,
-        borderwidth,
-        bordercolor,
-        above=False,
-        margin=None,
-        respect_hints=False,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        borderwidth: int,
+        bordercolor: str | list[str],
+        above: bool = False,
+        margin: int | list[int] | None = None,
+        respect_hints: bool = False,
     ):
         """
         Places the window at the specified location with the given size.
@@ -1416,7 +1420,7 @@ class _Window:
         self.change_layer(top_bottom=True, up=False)
 
     @expose_command()
-    def move_up(self, force=False):
+    def move_up(self, force: bool = False):
         if self.kept_below and force:
             self.kept_below = False
         with self.qtile.core.masked():
@@ -1425,21 +1429,21 @@ class _Window:
             self.change_layer()
 
     @expose_command()
-    def move_down(self, force=False):
+    def move_down(self, force: bool = False):
         if self.kept_above and force:
             self.kept_above = False
         with self.qtile.core.masked():
             self.change_layer(up=False)
 
     @expose_command()
-    def move_to_top(self, force=False):
+    def move_to_top(self, force: bool = False):
         if self.kept_below and force:
             self.kept_below = False
         with self.qtile.core.masked():
             self.change_layer(top_bottom=True)
 
     @expose_command()
-    def move_to_bottom(self, force=False):
+    def move_to_bottom(self, force: bool = False):
         if self.kept_above and force:
             self.kept_above = False
         with self.qtile.core.masked():
@@ -1983,7 +1987,9 @@ class Window(_Window, base.Window):
                 self.hide()
 
     @expose_command()
-    def togroup(self, group_name=None, *, switch_group=False, toggle=False):
+    def togroup(
+        self, group_name: str | None = None, *, switch_group: bool = False, toggle: bool = False
+    ):
         """Move window to a specified group
 
         Also switch to that group if switch_group is True.
@@ -2027,7 +2033,7 @@ class Window(_Window, base.Window):
             group.toscreen(toggle=toggle)
 
     @expose_command()
-    def match(self, match):
+    def match(self, match: Match):
         """Match window against given attributes.
 
         Parameters
@@ -2266,22 +2272,22 @@ class Window(_Window, base.Window):
             return self.group.screen
 
     @expose_command()
-    def move_floating(self, dx, dy):
+    def move_floating(self, dx: int, dy: int):
         """Move window by dx and dy"""
         self.tweak_float(dx=dx, dy=dy)
 
     @expose_command()
-    def resize_floating(self, dw, dh):
+    def resize_floating(self, dw: int, dh: int):
         """Add dw and dh to size of window"""
         self.tweak_float(dw=dw, dh=dh)
 
     @expose_command()
-    def set_position_floating(self, x, y):
+    def set_position_floating(self, x: int, y: int):
         """Move window to x and y"""
         self.tweak_float(x=x, y=y)
 
     @expose_command()
-    def set_size_floating(self, w, h):
+    def set_size_floating(self, w: int, h: int):
         """Set window dimensions to w and h"""
         self.tweak_float(w=w, h=h)
 
@@ -2313,7 +2319,7 @@ class Window(_Window, base.Window):
         return window.edges[0] <= x <= window.edges[2] and window.edges[1] <= y <= window.edges[3]
 
     @expose_command()
-    def set_position(self, x, y):
+    def set_position(self, x: int, y: int):
         if self.floating:
             self.tweak_float(x, y)
             return

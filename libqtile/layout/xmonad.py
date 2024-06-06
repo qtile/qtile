@@ -208,6 +208,7 @@ class MonadTall(_SimpleLayoutBase):
         self.relative_sizes = []
         self._screen_rect = None
         self.default_ratio = self.ratio
+        self.align: int
 
     # screen_rect is a property as the MonadThreeCol layout needs to perform
     # additional actions when the attribute is modified
@@ -249,14 +250,14 @@ class MonadTall(_SimpleLayoutBase):
         return self.clients.remove(client)
 
     @expose_command()
-    def set_ratio(self, ratio):
+    def set_ratio(self, ratio: float):
         "Directly set the main pane ratio"
         ratio = min(self.max_ratio, ratio)
         self.ratio = max(self.min_ratio, ratio)
         self.group.layout_all()
 
     @expose_command()
-    def normalize(self, redraw=True):
+    def normalize(self, redraw: bool = True):
         "Evenly distribute screen-space among secondary clients"
         n = len(self.clients) - 1  # exclude main client, 0
         # if secondary clients exist
@@ -268,7 +269,7 @@ class MonadTall(_SimpleLayoutBase):
         self.do_normalize = False
 
     @expose_command()
-    def reset(self, ratio=None, redraw=True):
+    def reset(self, ratio: float | None = None, redraw: bool = True):
         "Reset Layout."
         self.ratio = ratio or self.default_ratio
         if self.align == self._right:
@@ -1232,7 +1233,7 @@ class MonadThreeCol(MonadTall):
         )
 
     @expose_command()
-    def normalize(self, redraw=True):
+    def normalize(self, redraw: bool = True):
         """Evenly distribute screen-space among secondary clients"""
         if self.screen_rect is not None:
             self.relative_sizes = []

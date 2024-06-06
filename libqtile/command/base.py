@@ -290,7 +290,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         return sorted([cmd for cmd in self._commands])
 
     @expose_command()
-    def doc(self, name) -> str:
+    def doc(self, name: str) -> str:
         """Returns the documentation for a specified command name
 
         Used by __qsh__ to provide online help.
@@ -333,7 +333,7 @@ class CommandObject(metaclass=abc.ABCMeta):
             return False, error
 
     @expose_command()
-    def function(self, function, *args, **kwargs) -> None:
+    def function(self, function: Callable, *args, **kwargs) -> None:
         """Call a function with current object as argument"""
         try:
             function(self, *args, **kwargs)

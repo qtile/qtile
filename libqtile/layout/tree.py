@@ -38,7 +38,7 @@ from libqtile.config import ScreenRect
 from libqtile.layout.base import Layout
 
 if TYPE_CHECKING:
-    from typing import Any, Self, Sequence
+    from typing import Any, Callable, Self, Sequence
 
     from libqtile.backend import base
     from libqtile.group import _Group
@@ -625,13 +625,13 @@ class TreeTab(Layout):
         self.draw_panel()
 
     @expose_command()
-    def add_section(self, name):
+    def add_section(self, name: str):
         """Add named section to tree"""
         self._tree.add_section(name)
         self.draw_panel()
 
     @expose_command()
-    def del_section(self, name):
+    def del_section(self, name: str):
         """Remove named section from tree"""
         self._tree.del_section(name)
         self.draw_panel()
@@ -667,7 +667,7 @@ class TreeTab(Layout):
         self.draw_panel()
 
     @expose_command()
-    def sort_windows(self, sorter, create_sections=True):
+    def sort_windows(self, sorter: Callable, create_sections: bool = True):
         """Sorts window to sections using sorter function
 
         Parameters

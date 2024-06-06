@@ -324,7 +324,7 @@ class ScratchPad(group._Group):
         self._check_unsubscribe()
 
     @expose_command()
-    def dropdown_toggle(self, name):
+    def dropdown_toggle(self, name: str):
         """
         Toggle visibility of named DropDown.
         """
@@ -347,7 +347,7 @@ class ScratchPad(group._Group):
             d.hide()
 
     @expose_command()
-    def dropdown_reconfigure(self, name, **kwargs):
+    def dropdown_reconfigure(self, name: str, **kwargs):
         """
         reconfigure the named DropDown configuration.
         Note that changed attributes only have an effect on spawning the window.
@@ -360,7 +360,7 @@ class ScratchPad(group._Group):
                 setattr(dd, attr, value)
 
     @expose_command()
-    def dropdown_info(self, name=None):
+    def dropdown_info(self, name: str | None = None):
         """
         Get information on configured or currently active DropDowns.
         If name is None, a list of all dropdown names is returned.

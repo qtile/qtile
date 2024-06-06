@@ -148,7 +148,7 @@ class Backlight(base.InLoopPollText):
             self.call_process(shlex.split(self.change_command.format(value)))
 
     @expose_command()
-    def change_backlight(self, direction, step=None):
+    def change_backlight(self, direction: ChangeDirection, step: int | None = None):
         if not step:
             step = self.step
         if self._future and not self._future.done():

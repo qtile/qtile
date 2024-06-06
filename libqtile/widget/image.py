@@ -101,7 +101,7 @@ class Image(base._Widget, base.MarginMixin):
             return self.img.height + (self.margin_y * 2)
 
     @expose_command()
-    def update(self, filename):
+    def update(self, filename: str):
         old_length = self.calculate_length()
         self.filename = filename
         self._update_image()

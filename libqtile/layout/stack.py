@@ -361,7 +361,7 @@ class Stack(Layout):
         return self.client_to_stack(self.current_stack_offset - 1)
 
     @expose_command()
-    def client_to_stack(self, n):
+    def client_to_stack(self, n: int):
         """
         Send the current client to stack n, where n is an integer offset.  If
         is too large or less than 0, it is wrapped modulo the number of stacks.

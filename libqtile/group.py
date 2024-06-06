@@ -364,11 +364,11 @@ class _Group(CommandObject):
         raise RuntimeError("Invalid selection: {}".format(name))
 
     @expose_command()
-    def setlayout(self, layout):
+    def setlayout(self, layout: str):
         self.layout = layout
 
     @expose_command()
-    def toscreen(self, screen=None, toggle=False):
+    def toscreen(self, screen: int | None = None, toggle: bool = False):
         """Pull a group to a specified screen.
 
         Parameters
@@ -390,15 +390,15 @@ class _Group(CommandObject):
             toscreen(0)
         """
         if screen is None:
-            screen = self.qtile.current_screen
+            scr = self.qtile.current_screen
         else:
-            screen = self.qtile.screens[screen]
+            scr = self.qtile.screens[screen]
 
-        if screen.group == self:
+        if scr.group == self:
             if toggle:
-                screen.toggle_group(self)
+                scr.toggle_group(self)
         else:
-            screen.set_group(self)
+            scr.set_group(self)
 
     def _get_group(self, direction, skip_empty=False, skip_managed=False):
         """Find a group walking the groups list in the specified direction
@@ -508,7 +508,7 @@ class _Group(CommandObject):
             self.focus(win)
 
     @expose_command()
-    def focus_by_name(self, name):
+    def focus_by_name(self, name: str):
         """
         Focus the first window with the given name. Do nothing if the name is
         not found.
@@ -519,7 +519,7 @@ class _Group(CommandObject):
                 break
 
     @expose_command()
-    def info_by_name(self, name):
+    def info_by_name(self, name: str):
         """
         Get the info for the first window with the given name without giving it
         focus. Do nothing if the name is not found.
@@ -556,12 +556,12 @@ class _Group(CommandObject):
         )
 
     @expose_command()
-    def switch_groups(self, name):
+    def switch_groups(self, name: str):
         """Switch position of current group with name"""
         self.qtile.switch_groups(self.name, name)
 
     @expose_command()
-    def set_label(self, label):
+    def set_label(self, label: str):
         """
         Set the display name of current group to be used in GroupBox widget.
         If label is None, the name of the group is used as display name.

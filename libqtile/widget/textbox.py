@@ -50,5 +50,5 @@ class TextBox(base._TextBox):
         return self.text
 
     @expose_command()
-    def update(self, text):
+    def update(self, text: str):
         base._TextBox.update(self, text)
