@@ -710,7 +710,7 @@ class Painter:
         # now that we have drawn the new pixmap, free the old one
         if self.root_pixmap_id is not None and self.root_pixmap_id != root_pixmap:
             self.conn.core.FreePixmap(self.root_pixmap_id)
-            self.root_pixmap_id = root_pixmap
+        self.root_pixmap_id = root_pixmap
 
     def fill(self, screen, background):
         root_pixmap, surface = self._get_root_pixmap_and_surface(screen)
