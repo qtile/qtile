@@ -165,7 +165,7 @@ class Volume(base._TextBox):
 
         if self.theme_path:
             self.drawer.clear(self.background or self.bar.background)
-            if self.volume <= 0:
+            if self.volume <= 0 or self.is_mute:
                 img_name = "audio-volume-muted"
             elif self.volume <= 30:
                 img_name = "audio-volume-low"
@@ -183,7 +183,7 @@ class Volume(base._TextBox):
                     "Emoji list given has less than 4 items. Falling back to default emojis."
                 )
 
-            if self.volume <= 0:
+            if self.volume <= 0 or self.is_mute:
                 self.text = self.emoji_list[0]
             elif self.volume <= 30:
                 self.text = self.emoji_list[1]
