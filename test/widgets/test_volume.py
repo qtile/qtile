@@ -51,6 +51,10 @@ def test_emoji():
     vol._update_drawer()
     assert vol.text == "\U0001f50a"
 
+    vol.is_mute = True
+    vol._update_drawer()
+    assert vol.text == "\U0001f507"
+
 
 def test_text():
     fmt = "Volume: {}"
