@@ -21,7 +21,13 @@ repos:
   rev: v1.6.1
   hooks:
   - id: mypy
-    additional_dependencies: ["types-python-dateutil", "types-pytz"]
+    additional_dependencies:
+      - types-python-dateutil
+      - types-pytz
+      - dbus-next
+      - pywlroots==0.17.0
+      - libcst
+      - pywayland==0.4.17
     files: "^libqtile\/.*"
 - repo: https://github.com/jendrikseipp/vulture
   rev: v2.10
