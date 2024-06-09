@@ -95,19 +95,19 @@ def test_window_focus_change(plasma_manager):
 
     layout.mode_vertical()
     plasma_manager.test_window("three")
-    assert text() == "V"
+    assert text() == "H"
 
     win("one").focus()
-    assert text() == "H"
+    assert text() == "V"
 
     win("three").focus()
-    assert text() == "V"
+    assert text() == "H"
 
     win("two").focus()
-    assert text() == "V"
+    assert text() == "H"
 
     win("one").focus()
-    assert text() == "H"
+    assert text() == "V"
 
 
 @config(format="{mode}")
