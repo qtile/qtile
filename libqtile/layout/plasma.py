@@ -842,6 +842,13 @@ class Plasma(Layout):
 
     @property
     def add_mode(self):
+        if self._add_mode is None:
+            node = self.root_or_focused_node
+            if node.width >= node.height:
+                return AddMode.HORIZONTAL
+            else:
+                return AddMode.VERTICAL
+
         return self._add_mode
 
     @add_mode.setter
@@ -865,6 +872,10 @@ class Plasma(Layout):
     @property
     def focused_node(self):
         return self.root.find_payload(self.focused)
+
+    @property
+    def root_or_focused_node(self):
+        return self.root if self.focused_node is None else self.focused_node
 
     @property
     def horizontal(self):
@@ -921,19 +932,11 @@ class Plasma(Layout):
         return clients
 
     def add_client(self, client):
-        node = self.root if self.focused_node is None else self.focused_node
         new = Node(client)
         try:
             self.root.restore(new)
         except NotRestorableError:
-            if self.add_mode is None:
-                # If split has landscape proportions, split horizontally by default,
-                # if portrait, split vertically by default
-                if node.width >= node.height:
-                    self.add_mode = AddMode.HORIZONTAL
-                else:
-                    self.add_mode = AddMode.VERTICAL
-            node.add_node(new, self.add_mode)
+            self.root_or_focused_node.add_node(new, self.add_mode)
         self.add_mode = None
 
     def remove(self, client):
