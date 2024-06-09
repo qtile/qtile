@@ -459,10 +459,10 @@ async def _send_dbus_message(
     msg = await bus.call(
         Message(
             message_type=message_type,
-            destination=destination,
-            interface=interface,
-            path=path,
-            member=member,
+            destination=destination,  # type: ignore[arg-type]
+            interface=interface,  # type: ignore[arg-type]
+            path=path,  # type: ignore[arg-type]
+            member=member,  # type: ignore[arg-type]
             signature=signature,
             body=body,
         )

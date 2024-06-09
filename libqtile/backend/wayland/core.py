@@ -440,6 +440,8 @@ class Core(base.Core, wlrq.HasListeners):
             return
         if node.type == SceneNodeType.BUFFER:
             scene_buffer = SceneBuffer.from_node(node)
+            if scene_buffer is None:
+                return
             win = self.win_from_node(node)
             scene_buffer.set_opacity(win.opacity)
         elif node.type == SceneNodeType.TREE:
@@ -660,7 +662,7 @@ class Core(base.Core, wlrq.HasListeners):
         self._release_implicit_grab(time)
         logger.debug("Creating implicit grab.")
         self._implicit_grab = ImplicitGrab(
-            self, surface, self.cursor.x, self.cursor.y, int(sx), int(sy)
+            self, surface, int(self.cursor.x), int(self.cursor.y), int(sx), int(sy)
         )
 
     def _on_cursor_axis(self, _listener: Listener, event: pointer.PointerAxisEvent) -> None:

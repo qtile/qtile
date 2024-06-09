@@ -45,7 +45,9 @@ class RenameUnspecifiedTransformer(MigrationTransformer):
 
         return updated_node.with_changes(args=args)
 
-    def strip_unspecified_imports(self, original_node, updated_node) -> cst.Import:
+    def strip_unspecified_imports(
+        self, original_node, updated_node
+    ) -> cst.Import | cst.RemovalSentinel:
         new_names = list(filter(lambda n: n.name.value != "UNSPECIFIED", original_node.names))
         if len(new_names) == len(original_node.names):
             return original_node
