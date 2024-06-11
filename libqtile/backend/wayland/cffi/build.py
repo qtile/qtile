@@ -100,6 +100,42 @@ struct wlr_cursor {
     ...;
 };
 
+struct wl_list {
+	struct wl_list *prev;
+	struct wl_list *next;
+};
+
+struct wl_signal {
+	struct wl_list listener_list;
+};
+
+struct wlr_output {
+	char *name;
+	char *description;
+	char *make, *model, *serial;
+	int32_t phys_width, phys_height;
+	struct wl_list modes;
+	struct wlr_output_mode *current_mode;
+	int32_t width, height;
+	int32_t refresh;
+	bool enabled;
+	float scale;
+	int subpixel;
+	int transform;
+	int adaptive_sync_status;
+	uint32_t render_format;
+	bool adaptive_sync_supported;
+	...;
+};
+
+struct wlr_output_mode {
+	int32_t width, height;
+	int32_t refresh;
+	bool preferred;
+	int picture_aspect_ratio;
+	struct wl_list link;
+};
+
 // main callbacks
 typedef uint32_t xkb_keysym_t;
 typedef struct _cairo_surface cairo_surface_t;

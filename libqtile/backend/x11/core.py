@@ -14,9 +14,9 @@ from xcffib.xproto import EventMask
 
 from libqtile import config, hook, utils
 from libqtile.backend import base
+from libqtile.backend.base.core import Output
 from libqtile.backend.x11 import window, xcbq
 from libqtile.backend.x11.xkeysyms import keysyms
-from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 
@@ -182,7 +182,7 @@ class Core(base.Core):
             delattr(self, "qtile")
         self.conn.finalize()
 
-    def get_screen_info(self) -> list[ScreenRect]:
+    def get_output_info(self) -> list[Output]:
         return self.conn.pseudoscreens
 
     @property
