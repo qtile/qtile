@@ -59,6 +59,13 @@ from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError, hex, rgb
 
+try:
+    import pyedid
+
+    have_pyedid = True
+except ImportError:
+    have_pyedid = False
+
 
 class XCBQError(QtileError):
     pass
@@ -402,6 +409,7 @@ class Xinerama:
 class RandR:
     def __init__(self, conn):
         self.ext = conn.conn(xcffib.randr.key)
+        self.conn = conn
 
     def query_crtcs(self, root):
         infos = []
@@ -423,6 +431,24 @@ class RandR:
                 infos.insert(0, rect)
             else:
                 infos.append(rect)
+
+            serial = None
+            if have_pyedid:
+                edid_raw = (
+                    self.ext.GetOutputProperty(
+                        crtc_info.outputs[0], self.conn.atoms["EDID"], 0, 0, 256, False, False
+                    )
+                    .reply()
+                    .data
+                )
+                edid = pyedid.parse_edid(bytes(edid_raw))
+                serial = edid.serial
+            else:
+                logger.debug("no pyedid, not detecting monitor serial numbers")
+
+            infos.append(
+                ScreenRect(crtc_info.x, crtc_info.y, crtc_info.width, crtc_info.height, serial)
+            )
         return infos
 
     def enable_screen_change_notifications(self, conn):
@@ -507,6 +533,7 @@ class Connection:
                     s.y_org,
                     s.width,
                     s.height,
+                    None,
                 )
                 pseudoscreens.append(scr)
             return pseudoscreens

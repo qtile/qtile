@@ -135,7 +135,7 @@ class Output(HasListeners):
 
     def get_screen_info(self) -> ScreenRect:
         width, height = self.wlr_output.effective_resolution()
-        return ScreenRect(int(self.x), int(self.y), width, height)
+        return ScreenRect(int(self.x), int(self.y), width, height, self.wlr_output.serial)
 
     def organise_layers(self) -> None:
         """Organise the positioning of layer shell surfaces."""
