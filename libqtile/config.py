@@ -394,8 +394,12 @@ class Screen(CommandObject):
     drawn, so you can set the background color for an image by setting
     background here.
 
-    The ``x11_drag_polling_rate`` parameter specifies the rate for drag events in the X11 backend. By default this is set to None, indicating no limit. Because in the X11 backend we already handle motion notify events later, the performance should already be okay. However, to limit these events further you can use this variable and e.g. set it to your monitor refresh rate. 60 would mean that we handle a drag event 60 times per second.
-
+    The ``x11_drag_polling_rate`` parameter specifies the rate for drag events
+    in the X11 backend. By default this is set to None, indicating no limit.
+    Because in the X11 backend we already handle motion notify events later,
+    the performance should already be okay. However, to limit these events
+    further you can use this variable and e.g. set it to your monitor refresh
+    rate. 60 would mean that we handle a drag event 60 times per second.
     """
 
     group: _Group
