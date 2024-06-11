@@ -112,12 +112,18 @@ def test_qtile_cmd(manager):
     assert group["layouts"] == ["stack", "stack", "stack"]
     assert group["focus"] == "foo"
 
+    output_name = None
+    if manager.backend.name == "wayland":
+        output_name = "HEADLESS-1"
+
     assert run_qtile_cmd(f"-s {manager.sockfile} -o screen {0} -f info") == {
         "height": 600,
         "index": 0,
         "width": 800,
         "x": 0,
         "y": 0,
+        "serial": None,
+        "name": output_name,
     }
 
     bar = run_qtile_cmd("-s {} -o bar {} -f info".format(manager.sockfile, "bottom"))

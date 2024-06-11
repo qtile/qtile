@@ -100,6 +100,12 @@ struct wlr_cursor {
     ...;
 };
 
+struct wlr_output {
+	char *name;
+	char *serial;
+	...;
+};
+
 // main callbacks
 typedef uint32_t xkb_keysym_t;
 typedef struct _cairo_surface cairo_surface_t;
