@@ -514,9 +514,10 @@ class Core(base.Core):
     def get_screen_info(self) -> list[ScreenRect]:
         rects = []
 
-        @ffi.callback("void(int, int, int, int)")
-        def loop(x: int, y: int, width: int, height: int) -> None:
-            rects.append(ScreenRect(x, y, width, height))
+        @ffi.callback("void(int, int, int, int, char *)")
+        def loop(x: int, y: int, width: int, height: int, serial: ffi.CData) -> None:
+            serial_str = ffi.string(serial).decode() if serial != ffi.NULL else None
+            rects.append(ScreenRect(x, y, width, height, serial_str))
 
         lib.qw_server_loop_output_dims(self.qw, loop)
 
