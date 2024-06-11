@@ -51,6 +51,7 @@ from typing import TYPE_CHECKING, Any
 
 from libqtile import hook
 from libqtile.backend import base
+from libqtile.backend.base.core import Output
 from libqtile.backend.wayland import inputs
 from libqtile.backend.wayland.idle_inhibit import InhibitorManager
 from libqtile.backend.wayland.window import Internal, Static, Window
@@ -549,16 +550,23 @@ class Core(base.Core):
         self.qtile.manage(internal)
         return internal
 
-    def get_screen_info(self) -> list[ScreenRect]:
-        rects = []
+    def get_output_info(self) -> list[Output]:
+        outputs = []
 
-        @ffi.callback("void(int, int, int, int)")
-        def loop(x: int, y: int, width: int, height: int) -> None:
-            rects.append(ScreenRect(x, y, width, height))
+        @ffi.callback("void(int, int, int, int, struct wlr_output *)")
+        def loop(x: int, y: int, width: int, height: int, wlr_output: ffi.CData) -> None:
+            serial_str = (
+                ffi.string(wlr_output.serial).decode() if wlr_output.serial != ffi.NULL else None
+            )
+            name_str = (
+                ffi.string(wlr_output.name).decode() if wlr_output.name != ffi.NULL else None
+            )
+            rect = ScreenRect(x, y, width, height)
+            outputs.append(Output(name_str, serial_str, rect))
 
         lib.qw_server_loop_output_dims(self.qw, loop)
 
-        return rects
+        return outputs
 
     def _get_sym_from_code(self, keycode: int) -> int:
         sym = lib.qw_server_get_sym_from_code(self.qw, keycode)
