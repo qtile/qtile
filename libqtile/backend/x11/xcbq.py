@@ -40,6 +40,7 @@ from __future__ import annotations
 import contextlib
 import functools
 import operator
+import struct
 from itertools import chain, repeat
 
 import cairocffi
@@ -223,6 +224,44 @@ XCB_BUTTON_RELEASE = 5
 XCB_MOTION_NOTIFY = 6
 
 
+def parse_serial_from_edid(raw):
+    # https://en.wikipedia.org/wiki/Extended_Display_Identification_Data#EDID_1.4_data_format
+    if sum(map(int, raw)) % 256 != 0:
+        raise Exception(f"bad EDID data checksum {raw}")
+
+    # we only care about the serial number/monitor model name, which can occur
+    # in any of the four possible timing locations, each of which are 18
+    # bytes. We discard everything else.
+    timings = struct.unpack("<54x18s18s18s18s2x", raw[:128])
+    serial = None
+    name = None
+    for t in timings:
+        # skip timing info. we could decode this, but we can get it via
+        # randr's preferred mode encoding if we eventually care.
+        if t[0:2] != b"\x00\x00":
+            continue
+        # https://en.wikipedia.org/wiki/Extended_Display_Identification_Data#Monitor_Descriptors
+        content = t[5:].decode("cp437")
+        if t[3] == 0xFF:
+            serial = content
+
+        if t[3] == 0xFD:
+            name = content
+
+        # some monitors export *both* the serial and the name as 0xfe, which
+        # is annoying. if we see this, first set the name, then set the
+        # serial and hope for the best. if only they had used, you know, one
+        # of the masks that indicated serial or name!
+        if t[3] == 0xFE:
+            content = t[5:].decode("cp437")
+            if name is None:
+                name = content
+            else:
+                serial = content
+
+    return (serial, name)
+
+
 class MaskMap:
     """
     A general utility class that encapsulates the way the bitmask/listofvalue idiom
@@ -402,6 +441,7 @@ class Xinerama:
 class RandR:
     def __init__(self, conn):
         self.ext = conn.conn(xcffib.randr.key)
+        self.conn = conn
 
     def query_crtcs(self, root):
         infos = []
@@ -416,7 +456,21 @@ class RandR:
 
             crtc_info = self.ext.GetCrtcInfo(info.crtc, xcffib.CurrentTime).reply()
 
-            infos.append(ScreenRect(crtc_info.x, crtc_info.y, crtc_info.width, crtc_info.height))
+            edid_raw = (
+                self.ext.GetOutputProperty(
+                    crtc_info.outputs[0], self.conn.atoms["EDID"], 0, 0, 256, False, False
+                )
+                .reply()
+                .data
+            )
+            serial = None
+            name = None
+            if len(edid_raw) > 0:
+                (serial, name) = parse_serial_from_edid(bytes(edid_raw))
+
+            infos.append(
+                ScreenRect(crtc_info.x, crtc_info.y, crtc_info.width, crtc_info.height, serial)
+            )
         return infos
 
     def enable_screen_change_notifications(self, conn):
@@ -501,6 +555,7 @@ class Connection:
                     s.y_org,
                     s.width,
                     s.height,
+                    None,
                 )
                 pseudoscreens.append(scr)
             return pseudoscreens
