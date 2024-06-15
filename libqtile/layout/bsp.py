@@ -565,3 +565,23 @@ class Bsp(Layout):
         if distribute:
             self.root.distribute()
         self.group.layout_all()
+
+    @expose_command()
+    def rotate(self):
+        oldPos_x = self.current.x
+        oldPos_y = self.current.y
+        rotate_command = ("up", "right", "down", "left")
+        for i in rotate_command:
+            if i == "up":
+                self.flip_up()
+            elif i == "right":
+                self.flip_right()
+            elif i == "down":
+                self.flip_down()
+            else:
+                self.flip_left()
+            
+            if oldPos_x == self.current.x and oldPos_y == self.current.y:
+                pass
+            else:
+                break
