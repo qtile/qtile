@@ -123,6 +123,8 @@ class Drawer:
 
     def _create_last_surface(self):
         """Creates a separate RecordingSurface for mirrors to access."""
+        if hasattr(self, "last_surface"):
+            self.last_surface.finish()
         self.last_surface = cairocffi.RecordingSurface(cairocffi.CONTENT_COLOR_ALPHA, None)
 
     @property
