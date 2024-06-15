@@ -255,8 +255,8 @@ class XdgWindow(Window[XdgSurface]):
             width -= margin[1] + margin[3]
             height -= margin[0] + margin[2]
 
+        state = self.surface.toplevel._ptr.current
         if respect_hints:
-            state = self.surface.toplevel._ptr.current
             width = max(width, state.min_width)
             height = max(height, state.min_height)
             if state.max_width:
@@ -276,15 +276,22 @@ class XdgWindow(Window[XdgSurface]):
             height = 1
 
         geom = self.surface.get_geometry()
-        place_changed = any(
-            [self.x != x, self.y != y, self._width != width, self._height != height]
-        )
         geom_changed = any(
             [
                 self._geom.x != geom.x,
                 self._geom.y != geom.y,
                 self._geom.width != geom.width,
                 self._geom.height != geom.height,
+            ]
+        )
+        place_changed = any(
+            [
+                self.x != x,
+                self.y != y,
+                self._width != width,
+                self._height != height,
+                state.width != width,
+                state.height != height,
             ]
         )
         needs_repos = place_changed or geom_changed
