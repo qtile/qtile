@@ -515,7 +515,7 @@ class Battery(base.ThreadPoolText):
                 if not self._has_notified:
                     send_notification(
                         "Warning",
-                        "Battery at {0}%".format(percent),
+                        "Battery at {0:2.0%}".format(status.percent),
                         urgent=True,
                         timeout=self.timeout,
                     )
