@@ -37,7 +37,7 @@ class VerticalTile(_SimpleLayoutBase):
 
     The available height gets divided by the number of panes, if no pane is
     maximized. If one pane has been maximized, the available height gets split
-    in master- and secondary area. The maximized pane (master pane) gets the
+    in master and secondary area. The maximized pane (master pane) gets the
     full height of the master area and the other panes (secondary panes) share
     the remaining space.  The master area (at default 75%) can grow and shrink
     via keybindings.
@@ -62,17 +62,17 @@ class VerticalTile(_SimpleLayoutBase):
         |               |                |       3       |   |
         -----------------                -----------------  ---
 
-    Normal behavior. No              One maximized pane in the master area
-    maximized pane. No               and two secondary panes in the
-    specific areas.                  secondary area.
+        Normal behavior.                 One maximized pane in the master area
+        No maximized pane.               and two secondary panes in the
+        No specific areas.               secondary area.
 
     ::
 
-        -----------------------------------  In some cases VerticalTile can be
+        -----------------------------------  In some cases, VerticalTile can be
         |                                 |  useful on horizontal mounted
-        |                1                |  monitors two.
-        |                                 |  For example if you want to have a
-        |---------------------------------|  webbrowser and a shell below it.
+        |                1                |  monitors too.
+        |                                 |  For example, if you want to have a
+        |---------------------------------|  web browser and a shell below it.
         |                                 |
         |                2                |
         |                                 |
