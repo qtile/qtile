@@ -2197,6 +2197,13 @@ class Window(_Window, base.Window):
                 self.minimized = False
             elif state == IconicState and self.qtile.config.auto_minimize:
                 self.minimized = True
+        elif atoms["_NET_WM_DESKTOP"] == opcode:
+            group_index = data.data32[0]
+            try:
+                group = self.qtile.groups[group_index]
+                self.togroup(group.name)
+            except (IndexError, TypeError):
+                logger.warning("Unexpected _NET_WM_DESKTOP value received: %s", group_index)
         else:
             logger.debug("Unhandled client message: %s", atoms.get_name(opcode))
 
