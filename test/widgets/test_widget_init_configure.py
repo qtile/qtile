@@ -48,7 +48,9 @@ from test.widgets.conftest import FakeBar
 # Widgets listed here will replace the default values.
 # This should be used as a last resort - any failure may indicate an
 # underlying issue in the widget that should be resolved.
-overrides = []
+overrides = [
+    (widgets.Touchpad, {"device_id": "0"}),  # Touchpad requires device_id or working xinput
+]
 
 # Some widgets are not included in __init__.py
 # They can be included in the tests by adding their details here
@@ -63,6 +65,7 @@ no_test += [widgets.ImapWidget]  # Requires a configured username
 # To test a widget only under one backend, list the widget class here
 exclusive_backend = {
     widgets.Systray: "x11",
+    widgets.Touchpad: "x11",
 }
 
 ################################################################################

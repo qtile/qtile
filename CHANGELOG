@@ -42,6 +42,7 @@ Qtile 0.25.0, released 2024-04-06:
         now ships with its own udev rules, located at
         /resources/99-qtile.rules; distro packagers will probably want to
         install this rule set.
+      - Add `Touchpad` widget which shows current touchpad state and allows to easily toggle it
     * bugfixes
       - Fix groups marked with `persist=False` not being deleted when their last window is moved to another group.
       - Fallback icon in StatusNotifier widget
