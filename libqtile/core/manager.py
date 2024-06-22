@@ -601,25 +601,28 @@ class Qtile(CommandObject):
         # one group per screen is needed
         if len(self.groups) == len(self.screens):
             raise ValueError("Can't delete all groups.")
+
         if name in self.groups_map.keys():
             group = self.groups_map[name]
-            if group.screen and group.screen.previous_group:
-                target = group.screen.previous_group
-            else:
-                target = group.get_previous_group()
 
-            # Find a group that's not currently on a screen to bring to the
-            # front. This will terminate because of our check above.
-            while target.screen:
-                target = target.get_previous_group()
+            # Find a group that's not currently on a screen to bring to the front.
+            target = group.get_previous_group(skip_managed=True)
+
+            # move windows to other group
             for i in list(group.windows):
                 i.togroup(target.name)
+
+            # if group to be deleted is currently active
             if self.current_group.name == name:
+                # switch to target group
                 self.current_screen.set_group(target, save_prev=False)
+
             self.groups.remove(group)
             del self.groups_map[name]
+
             hook.fire("delgroup", name)
             hook.fire("changegroup")
+
             self.update_desktops()
 
     def register_widget(self, w: _Widget) -> None:
