@@ -578,9 +578,12 @@ class Qtile(CommandObject):
         label: str | None = None,
         index: int | None = None,
         screen_affinity: int | None = None,
+        persist: bool | None = False,
     ) -> bool:
         if name not in self.groups_map.keys():
-            g = _Group(name, layout, label=label, screen_affinity=screen_affinity)
+            g = _Group(
+                name, layout, label=label, screen_affinity=screen_affinity, persist=persist
+            )
             if index is None:
                 self.groups.append(g)
             else:
@@ -1693,10 +1696,11 @@ class Qtile(CommandObject):
         layout: str | None = None,
         layouts: list[Layout] | None = None,
         index: int | None = None,
+        persist: bool | None = False,
     ) -> bool:
         """Add a group with the given name"""
         return self.add_group(
-            name=group, layout=layout, layouts=layouts, label=label, index=index
+            name=group, layout=layout, layouts=layouts, label=label, index=index, persist=persist
         )
 
     @expose_command()
