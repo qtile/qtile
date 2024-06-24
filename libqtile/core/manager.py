@@ -979,7 +979,7 @@ class Qtile(CommandObject):
 
         return self._eventloop.call_soon_threadsafe(f)
 
-    def call_later(self, delay: int, func: Callable, *args: Any) -> asyncio.TimerHandle:
+    def call_later(self, delay: int | float, func: Callable, *args: Any) -> asyncio.TimerHandle:
         """Another event loop proxy, see `call_soon`."""
 
         def f() -> None:
