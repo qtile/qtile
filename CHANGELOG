@@ -5,6 +5,7 @@ Qtile x.xx.x, released xxxx-xx-xx:
         - Add ability to use key codes to bind keys. Will benefit users who change keyboard layouts but
           wish to retain same bindings, irrespective of layout.
         - Wayland: Add support for idle-notify-v1 protocol needed by swayidle.
+        - Wayland: Make keybinds repeat according to the keyboard's repeat rate and delay. Previously the keybinds did not repeat.
 
     * bugfixes
       - Fix `Plasma` layout with `ScreenSplit` by implementing `get_windows`
