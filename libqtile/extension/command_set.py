@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+from libqtile.command.base import expose_command
 from libqtile.extension.dmenu import Dmenu
 
 
@@ -62,7 +62,7 @@ class CommandSet(Dmenu):
     """
 
     defaults = [
-        ("commands", None, "dictionary of commands where key is runable command"),
+        ("commandset", None, "dictionary of commands where key is runable command"),
         ("pre_commands", None, "list of commands to be executed before getting dmenu answer"),
     ]
 
@@ -70,16 +70,21 @@ class CommandSet(Dmenu):
         Dmenu.__init__(self, **config)
         self.add_defaults(CommandSet.defaults)
 
+    @expose_command
     def run(self):
-        if not self.commands:
+        """Run the extension."""
+        if not self.commandset:
             return
 
         if self.pre_commands:
             for cmd in self.pre_commands:
                 self.qtile.spawn(cmd)
 
-        out = super(CommandSet, self).run(items=self.commands.keys())
+        task = super(CommandSet, self).run(items=self.commandset.keys())
+        task.add_done_callback(self._process_result)
 
+    def _process_result(self, task):
+        out = task.result()
         try:
             sout = out.rstrip("\n")
         except AttributeError:
@@ -88,12 +93,13 @@ class CommandSet(Dmenu):
             # list
             return
 
-        if sout not in self.commands:
+        if sout not in self.commandset:
             return
 
-        command = self.commands[sout]
+        command = self.commandset[sout]
 
         if isinstance(command, str):
             self.qtile.spawn(command)
         elif isinstance(command, CommandSet):
+            command._configure(self.qtile)
             command.run()
