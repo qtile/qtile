@@ -283,13 +283,18 @@ def test_battery_background(fake_qtile, fake_window, monkeypatch):
 def test_charge_control(fake_qtile, fake_window, monkeypatch):
     start = 0
     end = 100
+    batnum = 0
 
-    def save_battery_percentage(self, charge_start_threshold, charge_end_threshold):
+    def save_battery_percentage(
+        self, charge_start_threshold, charge_end_threshold, battery_number
+    ):
         nonlocal start
         nonlocal end
+        nonlocal batnum
 
         start = charge_start_threshold
         end = charge_end_threshold
+        batnum = battery_number
 
     with monkeypatch.context() as manager:
         manager.setattr(
@@ -329,13 +334,18 @@ def test_charge_control_disabled(fake_qtile, fake_window, monkeypatch):
 def test_charge_control_force_charge(fake_qtile, fake_window, monkeypatch):
     start = 4
     end = 7
+    batnum = 0
 
-    def save_battery_percentage(self, charge_start_threshold, charge_end_threshold):
+    def save_battery_percentage(
+        self, charge_start_threshold, charge_end_threshold, battery_number
+    ):
         nonlocal start
         nonlocal end
+        nonlocal batnum
 
         start = charge_start_threshold
         end = charge_end_threshold
+        batnum = battery_number
 
     with monkeypatch.context() as manager:
         manager.setattr(
