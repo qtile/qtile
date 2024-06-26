@@ -104,14 +104,11 @@ class XWindow(Window[xwayland.Surface]):
             self.place(
                 event.x, event.y, event.width, event.height, self.borderwidth, self.bordercolor
             )
-        else:
+        elif self in self.core.pending_windows:
             # TODO: We shouldn't need this first configure event, but some clients (e.g.
             # Ardour) seem to freeze up if we pass the current state, which is what we
             # want, and do with `self.place`.
             self.surface.configure(event.x, event.y, event.width, event.height)
-            self.place(
-                self.x, self.y, self.width, self.height, self.borderwidth, self.bordercolor
-            )
 
     def _on_unmap(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xwindow unmap")
@@ -377,7 +374,7 @@ class XWindow(Window[xwayland.Surface]):
     @expose_command()
     def bring_to_front(self) -> None:
         self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
-        self.container.node.raise_to_top()
+        self.reparent(self.core.bring_to_front_window_tree)
 
     @expose_command()
     def static(
@@ -501,6 +498,7 @@ class XStatic(Static[xwayland.Surface]):
                 self.tree.node.set_position(self.borderwidth, self.borderwidth)
 
             self.container.node.set_enabled(enabled=True)
+            # TODO: is this correct
             self.bring_to_front()
             return
 
@@ -549,4 +547,4 @@ class XStatic(Static[xwayland.Surface]):
     @expose_command()
     def bring_to_front(self) -> None:
         self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
-        self.container.node.raise_to_top()
+        self.reparent(self.core.bring_to_front_window_tree)
