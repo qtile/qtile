@@ -108,15 +108,15 @@ class _Window(CommandObject, metaclass=ABCMeta):
     @expose_command()
     def place(
         self,
-        x,
-        y,
-        width,
-        height,
-        borderwidth,
-        bordercolor,
-        above=False,
-        margin=None,
-        respect_hints=False,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        borderwidth: int,
+        bordercolor: str | list[str],
+        above: bool = False,
+        margin: int | list[int] | None = None,
+        respect_hints: bool = False,
     ):
         """Place the window in the given position."""
 

@@ -225,7 +225,7 @@ class PulseVolume(Volume):
         create_task(self._mute())
 
     @expose_command()
-    def increase_vol(self, value=None):
+    def increase_vol(self, value: float | None = None):
         """Increase volume."""
         if not value:
             value = pulse.default_sink.volume.value_flat + (self.step / 100.0)
@@ -236,10 +236,12 @@ class PulseVolume(Volume):
         create_task(self._change_volume(value))
 
     @expose_command()
-    def decrease_vol(self, value=None):
+    def decrease_vol(self, value: float | None = None):
         """Decrease volume."""
         if not value:
             value = pulse.default_sink.volume.value_flat - (self.step / 100.0)
+
+        assert value
 
         value = max(value, 0)
 
