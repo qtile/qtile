@@ -10,6 +10,7 @@ Qtile x.xx.x, released xxxx-xx-xx:
     * bugfixes
       - Fix `Plasma` layout with `ScreenSplit` by implementing `get_windows`
       - Fix border bug in fullscreening/maximizing wayland windows
+      - Fix automatic fullscreening for many XWayland applications (e.g. games) by checking if they want to fullscreen on map
 
 Qtile 0.26.0, released 2024-05-21:
     !!! breaking changes !!!
