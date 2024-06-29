@@ -137,10 +137,21 @@ class XWindow(Window[xwayland.Surface]):
 
         self.core.remove_pointer_constraints(self)
 
-    def _on_request_fullscreen(self, _listener: Listener, _data: Any) -> None:
+    def _on_request_fullscreen(
+        self, _listener: Listener | None = None, _data: Any | None = None
+    ) -> None:
         logger.debug("Signal: xwindow request_fullscreen")
-        if self.qtile.config.auto_fullscreen:
-            self.fullscreen = not self.fullscreen
+        wlr_surface = self.surface.surface
+
+        # check if there is a surface and if it is mapped
+        if not wlr_surface or not wlr_surface._ptr.mapped:
+            return
+
+        # check if auto fullscreen is enabled in the config
+        if not self.qtile.config.auto_fullscreen:
+            return
+
+        self.fullscreen = self.surface.fullscreen
 
     def _on_set_title(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xwindow set_title")
@@ -243,6 +254,11 @@ class XWindow(Window[xwayland.Surface]):
             handle.set_title(title)
         self._wm_class = surface.wm_class
         handle.set_app_id(self._wm_class or "")
+
+        # check if the surface wanted to be fullscreened
+        # some applications e.g. games want to fullscreen
+        # before the window is mapped
+        self._on_request_fullscreen()
 
         # Now the window is ready to be mapped, we can go ahead and manage it. Map
         # it first so that we end end up recursing into this signal handler again.
