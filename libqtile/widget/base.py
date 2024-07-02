@@ -509,6 +509,7 @@ class _TextBox(_Widget):
         self._scroll_queued = False
         self._scroll_timer = None
         self._scroll_width = width
+        self._force_redraw = False
 
     @property
     def text(self):
@@ -748,8 +749,10 @@ class _TextBox(_Widget):
         if not self.can_draw():
             return
 
-        if self.text == text:
+        if self.text == text and not self._force_redraw:
             return
+        self._force_redraw = False
+
         if text is None:
             text = ""
 
