@@ -100,6 +100,7 @@ class Cmus(base.ThreadPoolText):
         if info:
             status = info["status"]
             if self.status != status:
+                self._force_redraw = True
                 self.status = status
                 if self.status == "playing":
                     self.layout.colour = self.play_color
