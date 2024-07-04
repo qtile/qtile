@@ -3,7 +3,7 @@ import pytest
 
 from libqtile import bar, images
 from libqtile.widget import Volume
-from test.widgets.conftest import TEST_DIR
+from test.widgets.conftest import TEST_DIR, FakeBar
 
 
 def test_images_fail():
@@ -81,10 +81,14 @@ def test_formats():
     assert vol.text == "Volume: 50% M"
 
 
-def test_foregrounds():
+def test_foregrounds(fake_qtile, fake_window):
     foreground = "#dddddd"
     mute_foreground = None
+
     vol = Volume(foreground=foreground, mute_foreground=mute_foreground)
+    fakebar = FakeBar([vol], window=fake_window)
+    vol._configure(fake_qtile, fakebar)
+
     vol.volume = 50
     vol._update_drawer()
     assert vol.foreground == foreground

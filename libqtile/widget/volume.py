@@ -110,7 +110,6 @@ class Volume(base._TextBox):
         self.surfaces = {}
         self.volume = None
         self.is_mute = False
-        self.unmute_foreground = self.foreground
 
         self.add_callbacks(
             {
@@ -126,6 +125,7 @@ class Volume(base._TextBox):
             self.length_type = bar.STATIC
             self.length = 0
         base._TextBox._configure(self, qtile, parent_bar)
+        self.unmute_foreground = self.foreground
 
     def timer_setup(self):
         self.timeout_add(self.update_interval, self.update)
