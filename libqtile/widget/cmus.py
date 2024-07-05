@@ -14,11 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import datetime
+import math
 import subprocess
 from functools import partial
 
 from libqtile import pangocffi
 from libqtile.widget import base
+
+
+def format_time(time_seconds_string):
+    """Format time in seconds as [h:]mm:ss."""
+    return str(datetime.timedelta(seconds=float(time_seconds_string))).lstrip("0").lstrip(":")
 
 
 class Cmus(base.ThreadPoolText):
@@ -31,15 +38,55 @@ class Cmus(base.ThreadPoolText):
         - skip forward in playlist on scroll up;
         - skip backward in playlist on scroll down.
 
+    The following fields (extracted from ``cmus-remote -C status``) are available in the `format`
+    string:
+
+    - ``status``: cmus playback status, one of "playing", "paused" or "stopped".
+    - ``file``
+    - ``position``: Current position in [h:]mm:ss.
+    - ``position_percent``: Current position in percent.
+    - ``remaining``: Remaining time in [h:]mm:ss.
+    - ``remaining_percent``: Remaining time in percent.
+    - ``duration``: Total length in [h:]mm:ss.
+    - ``artist``
+    - ``album``
+    - ``albumartist``
+    - ``composer``
+    - ``comment``
+    - ``date``
+    - ``discnumber``
+    - ``genre``
+    - ``title``: Title or filename if no title is available.
+    - ``tracknumber``
+    - ``stream``
+    - ``status_text``: Text indicating the playback status, corresponds to one of `playing_text`,
+      `paused_text` or `stopped_text`.
+
     Cmus (https://cmus.github.io) should be installed.
     """
 
     defaults = [
-        ("format", "{play_icon}{artist} - {title}", "Format of playback info."),
-        ("play_icon", "♫ ", "Icon to display, if chosen."),
-        ("play_color", "00ff00", "Text colour when playing."),
-        ("noplay_color", "cecece", "Text colour when not playing."),
+        ("format", "{status_text}{artist} - {title}", "Format of playback info."),
+        ("stream_format", "{status_text}{stream}", "Format of playback info for streams."),
+        (
+            "no_artist_format",
+            "{status_text}{title}",
+            "Format of playback info if no artist available.",
+        ),
+        ("playing_text", "♫ ", "Text to display when playing, if chosen."),
+        ("playing_color", "00ff00", "Text colour when playing."),
+        ("paused_text", "♫ ", "Text to display when paused, if chosen."),
+        ("paused_color", "cecece", "Text color when paused."),
+        ("stopped_text", "♫ ", "Text to display when stopped, if chosen."),
+        ("stopped_color", "cecece", "Text color when stopped."),
         ("update_interval", 0.5, "Update Time in seconds."),
+        (
+            "play_icon",
+            "♫ ",
+            "DEPRECATED Text to display when playing, paused, and stopped, if chosen.",
+        ),
+        ("play_color", "", "DEPRECATED Text colour when playing."),
+        ("noplay_color", "", "DEPRECATED Text colour when paused or stopped."),
     ]
 
     def __init__(self, **config):
@@ -56,6 +103,15 @@ class Cmus(base.ThreadPoolText):
             }
         )
 
+    def _configure(self, qtile, parent_bar):
+        base.ThreadPoolText._configure(self, qtile, parent_bar)
+        # Backwards compatibility
+        if self.play_color:
+            self.playing_color = self.play_color
+            self.paused_color = self.play_color
+        if self.noplay_color:
+            self.stopped_color = self.noplay_color
+
     def get_info(self):
         """Return a dictionary with info about the current cmus status."""
         try:
@@ -67,6 +123,11 @@ class Cmus(base.ThreadPoolText):
             info = {
                 "status": "",
                 "file": "",
+                "position": "",
+                "position_percent": "",
+                "remaining": "",
+                "remaining_percent": "",
+                "duration": "",
                 "artist": "",
                 "album": "",
                 "albumartist": "",
@@ -78,10 +139,13 @@ class Cmus(base.ThreadPoolText):
                 "title": "",
                 "tracknumber": "",
                 "stream": "",
+                "status_text": "",
                 "play_icon": self.play_icon,
             }
 
             for line in output:
+                if line.startswith("set"):
+                    break
                 for data in info:
                     match = data + " "
                     if match in line:
@@ -89,8 +153,33 @@ class Cmus(base.ThreadPoolText):
                         if index < 5:
                             info[data] = line[len(data) + index :].strip()
                             break
-                    elif line.startswith("set"):
-                        return info
+
+            # Set status text
+            status = info["status"]
+            info["status_text"] = getattr(self, f"{status}_text", self.stopped_text)
+
+            # Format and process duration and position
+            if info["position"] != "" and info["duration"] != "" and int(info["duration"]) > 0:
+                info["position_percent"] = (
+                    str(math.floor(int(info["position"]) / int(info["duration"]) * 100)) + "%"
+                )
+                info["remaining_percent"] = (
+                    str(
+                        math.ceil(
+                            (int(info["duration"]) - int(info["position"]))
+                            / int(info["duration"])
+                            * 100
+                        )
+                    )
+                    + "%"
+                )
+                info["remaining"] = format_time(int(info["duration"]) - int(info["position"]))
+                info["position"] = format_time(info["position"])
+                info["duration"] = format_time(info["duration"])
+            else:
+                info["duration"] = ""
+                info["position"] = ""
+
             return info
 
     def now_playing(self):
@@ -98,29 +187,31 @@ class Cmus(base.ThreadPoolText):
         info = self.get_info()
         now_playing = ""
         if info:
+            display_format = self.format
             status = info["status"]
             if self.status != status:
                 self.status = status
                 if self.status == "playing":
-                    self.layout.colour = self.play_color
+                    self.layout.colour = self.playing_color
+                elif self.status == "paused":
+                    self.layout.colour = self.paused_color
                 else:
-                    self.layout.colour = self.noplay_color
+                    self.layout.colour = self.stopped_color
             self.local = info["file"].startswith("/")
-            title = "{play_icon}" + info["title"]
             if self.local:
-                now_playing = self.format.format(**info)
-                if not info["artist"] and not info["title"]:
-                    file_path = info["file"]
-                    file_path = "{play_icon}" + file_path.split("/")[-1]
-                    now_playing = file_path.format(**info)
-            else:
-                if info["stream"]:
-                    stream_title = "{play_icon}" + info["stream"]
-                    now_playing = stream_title.format(**info)
-                else:
-                    now_playing = title.format(**info)
-        if now_playing == self.play_icon:
-            now_playing = ""
+                if not info["title"]:
+                    info["title"] = info["file"].split("/")[-1]
+                if not info["artist"]:
+                    display_format = self.no_artist_format
+            elif info["stream"]:
+                display_format = self.stream_format
+            # Handle case if cmus was started and no file is selected yet
+            elif not info["file"]:
+                display_format = ""
+            now_playing = display_format.format(**info)
+            if now_playing.strip() == info["status_text"].strip():
+                now_playing = ""
+
         return pangocffi.markup_escape_text(now_playing)
 
     def play(self):
