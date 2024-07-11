@@ -442,8 +442,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         if self.window:
             self.window.kill()
             self.window = None
-        for widget in self.widgets:
-            widget.finalize()
         self.widgets.clear()
 
     def _resize(self, length: int, widgets: list[_Widget]) -> None:

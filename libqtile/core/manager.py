@@ -311,6 +311,8 @@ class Qtile(CommandObject):
         shutdown, these are finalized and then regenerated when reloading the config.
         """
         try:
+            for widget in self.widgets_map.values():
+                widget.finalize()
             self.widgets_map.clear()
 
             # For layouts we need to finalize each clone of a layout in each group
@@ -319,7 +321,8 @@ class Qtile(CommandObject):
                     layout.finalize()
 
             for screen in self.screens:
-                screen.finalize()
+                for gap in screen.gaps:
+                    gap.finalize()
         except:  # noqa: E722
             logger.exception("exception during finalize")
         hook.clear()
@@ -419,7 +422,9 @@ class Qtile(CommandObject):
 
         for screen in self.screens:
             if screen not in screens:
-                screen.finalize()
+                for gap in screen.gaps:
+                    if isinstance(gap, bar.Bar) and gap.window:
+                        gap.finalize()
 
         self.screens = screens
 
