@@ -1,5 +1,9 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
+    * bugfixes
+
+Qtile 0.27.0, released 2024-07-12:
+    * features
         - Make default `Plasma` add mode dynamic
         - Add `background` parameter to `Screen` to paint a solid colour background
         - Add ability to use key codes to bind keys. Will benefit users who change keyboard layouts but
