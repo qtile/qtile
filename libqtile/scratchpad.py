@@ -179,7 +179,7 @@ class DropDownToggler(WindowVisibilityToggler):
             net_wm_state = list(window.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
             skip_taskbar = window.qtile.core.conn.atoms["_NET_WM_STATE_SKIP_TASKBAR"]
             if net_wm_state:
-                if "_NET_WM_STATE_SKIP_TASKBAR" not in net_wm_state:
+                if skip_taskbar not in net_wm_state:
                     net_wm_state.append(skip_taskbar)
             else:
                 net_wm_state = [skip_taskbar]

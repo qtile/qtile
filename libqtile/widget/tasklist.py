@@ -279,11 +279,13 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     @property
     def windows(self):
         if self.qtile.core.name == "x11":
-            return [
-                w
-                for w in self.bar.screen.group.windows
-                if w.window.get_wm_type() in ("normal", None)
-            ]
+            windows = []
+            for w in self.bar.screen.group.windows:
+                wm_states = list(w.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
+                skip_taskbar = w.qtile.core.conn.atoms["_NET_WM_STATE_SKIP_TASKBAR"]
+                if w.window.get_wm_type() in ("normal", None) and skip_taskbar not in wm_states:
+                    windows.append(w)
+            return windows
         return self.bar.screen.group.windows
 
     @property
