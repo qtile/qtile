@@ -655,6 +655,7 @@ class _Window:
 
         if self.qtile.config.auto_fullscreen:
             triggered.append("fullscreen")
+            triggered.append("maximized")
         # This might seem a bit weird but it's to workaround a bug in chromium based clients not properly redrawing
         # The bug is described in https://github.com/qtile/qtile/issues/4176
         # This only happens when auto fullscreen is set to false because we then do not obey the disable fullscreen state
@@ -662,6 +663,8 @@ class _Window:
         # This only seems to be an issue with unfullscreening, thus we check if we're fullscreen and the window wants to unfullscreen
         elif self.fullscreen and "fullscreen" not in state:
             self._reconfigure_floating(new_float_state=FloatStates.FULLSCREEN)
+        elif self.maximized and "maximized" not in state:
+            self._reconfigure_floating(new_float_state=FloatStates.MAXIMIZED)
 
         for s in triggered:
             attr = s
@@ -1741,6 +1744,7 @@ class Window(_Window, base.Window):
 
         elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
             self.update_fullscreen_wm_state(False)
+            self.update_maximized_wm_state(False)
             if self._float_state == FloatStates.FLOATING:
                 # store last size
                 self._float_width = self.width
@@ -1757,6 +1761,14 @@ class Window(_Window, base.Window):
     def wants_to_fullscreen(self):
         try:
             return "fullscreen" in self.window.get_net_wm_state()
+        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
+            pass
+        return False
+
+    @property
+    def wants_to_maximize(self):
+        try:
+            return "maximized" in self.window.get_net_wm_state()
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             pass
         return False
@@ -1779,6 +1791,25 @@ class Window(_Window, base.Window):
         prev_state = set(self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
 
         if do_full:
+            self.set_wm_state(prev_state, prev_state | atom)
+        else:
+            self.set_wm_state(prev_state, prev_state - atom)
+
+    def update_maximized_wm_state(self, do_max):
+        # already done updating previously
+        if do_max == self.maximized:
+            return
+
+        # update maximized _NET_WM_STATE
+        atom = set(
+            [
+                self.qtile.core.conn.atoms["_NET_WM_STATE_MAXIMIZED_HORZ"],
+                self.qtile.core.conn.atoms["_NET_WM_STATE_MAXIMIZED_VERT"],
+            ]
+        )
+        prev_state = set(self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
+
+        if do_max:
             self.set_wm_state(prev_state, prev_state | atom)
         else:
             self.set_wm_state(prev_state, prev_state - atom)
@@ -1931,6 +1962,7 @@ class Window(_Window, base.Window):
 
     def _reconfigure_floating(self, new_float_state=FloatStates.FLOATING):
         self.update_fullscreen_wm_state(new_float_state == FloatStates.FULLSCREEN)
+        self.update_maximized_wm_state(new_float_state == FloatStates.MAXIMIZED)
         if new_float_state == FloatStates.MINIMIZED:
             self.state = IconicState
             self.hide()

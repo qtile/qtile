@@ -157,6 +157,7 @@ Qtile 0.23.0, released 2023-09-24:
           - added `only_focused` setting to Max layout, allowing to draw multiple clients on top of each other when
             set to False
         - Add `suspend` hook to run functions before system goes to sleep.
+        - Add ability to maximize window using header bar buttons.
     * bugfixes
         - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
         - Fix `Notify` bug when apps close notifications.

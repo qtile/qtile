@@ -1053,3 +1053,43 @@ def test_move_float_above_tiled(xmanager):
 
     _wnd("two").toggle_floating()
     assert _clients() == ["one", "three", "two"]
+
+
+def test_net_wm_state_maximized(xmanager, conn):
+    """Test client's maximize state."""
+    atoms = {
+        conn.atoms["_NET_WM_STATE_MAXIMIZED_HORZ"],
+        conn.atoms["_NET_WM_STATE_MAXIMIZED_VERT"],
+    }
+
+    def assert_state_maximized(wid, has_state):
+        r = conn.conn.core.GetProperty(
+            False, wid, conn.atoms["_NET_WM_STATE"], conn.atoms["ATOM"], 0, (2**32) - 1
+        ).reply()
+        assert bool(atoms & set(r.value.to_atoms())) == has_state
+
+    def _wnd(name):
+        return xmanager.c.window[{w["name"]: w["id"] for w in xmanager.c.windows()}[name]]
+
+    xmanager.test_window("one", floating=True)
+    wid1 = xmanager.c.window.info()["id"]
+    assert_state_maximized(wid1, False)
+    type, format = xcbq.PropertyMap["_NET_WM_STATE"]
+    conn.conn.core.ChangePropertyChecked(
+        xcffib.xproto.PropMode.Replace,
+        wid1,
+        conn.atoms["_NET_WM_STATE"],
+        conn.atoms[type],
+        format,
+        len(atoms),
+        list(atoms),
+    ).check()
+    assert_state_maximized(wid1, True)
+    _wnd("one").toggle_maximize()
+    assert_state_maximized(wid1, False)
+
+    xmanager.test_window("two", floating=True)
+    wid2 = xmanager.c.window.info()["id"]
+    assert_state_maximized(wid2, False)
+    _wnd("two").toggle_maximize()
+    assert_state_maximized(wid2, True)
