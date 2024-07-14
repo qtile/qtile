@@ -144,6 +144,8 @@ net_wm_states = (
 WindowStates = {
     None: "normal",
     "_NET_WM_STATE_FULLSCREEN": "fullscreen",
+    "_NET_WM_STATE_MAXIMIZED_VERT": "maximized",
+    "_NET_WM_STATE_MAXIMIZED_HORZ": "maximized",
     "_NET_WM_STATE_DEMANDS_ATTENTION": "urgent",
 }
 
