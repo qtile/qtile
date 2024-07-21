@@ -45,7 +45,9 @@ class RenameUnspecifiedTransformer(MigrationTransformer):
 
         return updated_node.with_changes(args=args)
 
-    def strip_unspecified_imports(self, original_node, updated_node) -> cst.Import:
+    def strip_unspecified_imports(
+        self, original_node, updated_node
+    ) -> cst.Import | cst.RemovalSentinel:
         new_names = list(filter(lambda n: n.name.value != "UNSPECIFIED", original_node.names))
         if len(new_names) == len(original_node.names):
             return original_node
@@ -89,8 +91,9 @@ class RenameUnspecified(_QtileMigrator):
             tb = TextBox(text="hello")
             # just to use ORIENTATION_BOTH and force us to delete only the
             # right thing
-            tb.orientations = ORIENTATION_BOTH
-            tb.set_font(font=UNSPECIFIED, fontsize=12)
+            if False:
+                tb.orientations = ORIENTATION_BOTH
+                tb.set_font(font=UNSPECIFIED, fontsize=12)
             """,
             """
             from libqtile.widget.base import ORIENTATION_BOTH
@@ -100,8 +103,9 @@ class RenameUnspecified(_QtileMigrator):
             tb = TextBox(text="hello")
             # just to use ORIENTATION_BOTH and force us to delete only the
             # right thing
-            tb.orientations = ORIENTATION_BOTH
-            tb.set_font(fontsize=12)
+            if False:
+                tb.orientations = ORIENTATION_BOTH
+                tb.set_font(fontsize=12)
             """,
         )
     ]
