@@ -28,35 +28,30 @@ class Rhythmbox(base.ThreadPoolText):
         - Skip forward in playlist on scroll up
         - Skip backward in playlist on scroll down
 
+    The following options are available for the `format_options` string:
+
+    - ``%at``: album title
+    - ``%aa``: album artist
+    - ``%aA``: album artist (lowercase)
+    - ``%as``: album artist sortname
+    - ``%aS``: album artist sortname (lowercase)
+    - ``%ay``: album year
+    - ``%ag``: album genre
+    - ``%aG``: album genre (lowercase)
+    - ``%an``: album disc number
+    - ``%aN``: album disc number, zero padded
+    - ``%st``: stream title
+    - ``%tn``: track number (i.e., 8)
+    - ``%tN``: track number, zero padded (i.e., 08)
+    - ``%tt``: track title
+    - ``%ta``: track artist
+    - ``%tA``: track artist (lowercase)
+    - ``%ts``: track artist sortname
+    - ``%tS``: track artist sortname (lowercase)
+    - ``%td``: track duration
+    - ``%te``: track elapsed time
+
     Rhythmbox (https://www.rhythmbox.org/) and Playerctl (https://github.com/altdesktop/playerctl) should be installed.
-    
-    Format Options
-    --------------
-    %at - album title
-    %aa - album artist
-    %aA - album artist (lowercase)
-    %as - album artist sortname
-    %aS - album artist sortname (lowercase)
-    %ay - album year
-    %ag - album genre
-    %aG - album genre (lowercase)
-    %an - album disc number
-    %aN - album disc number, zero padded
-    %st - stream title
-    %tn - track number (i.e., 8)
-    %tN - track number, zero padded (i.e., 08)
-    %tt - track title
-    %ta - track artist
-    %tA - track artist (lowercase)
-    %ts - track artist sortname
-    %tS - track artist sortname (lowercase)
-    %td - track duration
-    %te - track elapsed time
-
-    Variables can be combined using quotes. For example, "%tn %aa %tt", will print the track number followed
-    by the artist and the title of the track.
-
-    The available options can also be found here: https://man.archlinux.org/man/rhythmbox-client.1.en#FORMAT_OPTIONS.
     """
 
     defaults = [
