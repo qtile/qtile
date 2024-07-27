@@ -38,6 +38,9 @@ class Core(CommandObject, metaclass=ABCMeta):
     def finalize(self):
         """Destructor/Clean up resources"""
 
+    def _finalize_wallpapers(self):
+        """Destroy wallpaper objects"""
+
     @property
     @abstractmethod
     def display_name(self) -> str:

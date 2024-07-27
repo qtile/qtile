@@ -442,7 +442,11 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         if self.window:
             self.window.kill()
             self.window = None
-        self.widgets.clear()
+        for widget in self.widgets:
+            try:
+                widget.finalize()
+            except:  # noqa: E722
+                logger.exception("exception during widget (%s) finalisation", widget.name)
 
     def _resize(self, length: int, widgets: list[_Widget]) -> None:
         # We want consecutive stretch widgets to split one 'block' of space between them
