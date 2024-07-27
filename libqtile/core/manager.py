@@ -294,6 +294,7 @@ class Qtile(CommandObject):
 
         self._state = QtileState(self, restart=False)
         self._finalize_configurables()
+        self.core._finalize_wallpapers()
         hook.clear()
         self.ungrab_keys()
         self.chord_stack.clear()
@@ -310,21 +311,21 @@ class Qtile(CommandObject):
         Finalize objects that are instantiated within the config file. In addition to
         shutdown, these are finalized and then regenerated when reloading the config.
         """
-        try:
-            for widget in self.widgets_map.values():
-                widget.finalize()
-            self.widgets_map.clear()
-
-            # For layouts we need to finalize each clone of a layout in each group
-            for group in self.groups:
-                for layout in group.layouts:
+        # For layouts we need to finalize each clone of a layout in each group
+        for group in self.groups:
+            for layout in group.layouts:
+                try:
                     layout.finalize()
+                except:  # noqa: E722
+                    logger.exception("exception during layout finalisation")
 
-            for screen in self.screens:
-                for gap in screen.gaps:
-                    gap.finalize()
-        except:  # noqa: E722
-            logger.exception("exception during finalize")
+        for screen in self.screens:
+            try:
+                screen.finalize()
+            except:  # noqa: E722
+                logger.exception("exception during screen finalisation")
+
+        self.widgets_map.clear()
         hook.clear()
 
     def finalize(self) -> None:
@@ -332,7 +333,10 @@ class Qtile(CommandObject):
         remove_dbus_rules()
         inhibitor.stop()
         cancel_tasks()
-        self.core.finalize()
+        try:
+            self.core.finalize()
+        except:  # noqa: E722
+            logger.exception("exception during core finalisation")
 
     def add_autogen_group(self, screen_idx: int) -> _Group:
         name = f"autogen_{screen_idx + 1}"

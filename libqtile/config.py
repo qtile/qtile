@@ -488,6 +488,13 @@ class Screen(CommandObject):
         if self.qtile:
             self.qtile.paint_screen(self, path, mode)
 
+    def finalize(self) -> None:
+        for gap in self.gaps:
+            try:
+                gap.finalize()
+            except:  # noqa: E722
+                logger.exception("exception during gap finalisation")
+
     @property
     def gaps(self) -> Iterable[BarType]:
         return (i for i in [self.top, self.bottom, self.left, self.right] if i)

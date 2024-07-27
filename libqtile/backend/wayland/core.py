@@ -421,6 +421,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         if self._xwayland:
             self._xwayland.destroy()
+        self._finalize_wallpapers()
         self._cursor_manager.destroy()
         self.cursor.destroy()
         self.output_layout.destroy()
@@ -429,6 +430,14 @@ class Core(base.Core, wlrq.HasListeners):
         self.display.destroy()
         if hasattr(self, "qtile"):
             delattr(self, "qtile")
+
+    def _finalize_wallpapers(self) -> None:
+        for buffer, surface in self.wallpapers.values():
+            buffer.node.destroy()
+            if surface is not None:
+                surface.finish()
+
+        self.wallpapers.clear()
 
     def win_from_node(self, node: SceneNode) -> window.Window | window.Internal:
         tree = node.parent
