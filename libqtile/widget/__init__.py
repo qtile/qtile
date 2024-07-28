@@ -77,6 +77,7 @@ widgets = {
     "Pomodoro": "pomodoro",
     "Prompt": "prompt",
     "PulseVolume": "pulse_volume",
+    "Rhythmbox": "rhythmbox",
     "QuickExit": "quick_exit",
     "ScreenSplit": "screensplit",
     "Sep": "sep",
