@@ -57,9 +57,12 @@ class Rhythmbox(base.ThreadPoolText):
     """
 
     defaults = [
-        ("format", "%aa - %tt"),
-        ("play_color", "00ff00", "Text color when playing."),
-        ("no_play_color", "cecece", "Text color when not playing."),
+        ("format", "%aa - %tt", "Track information to display"),
+        ("play_icon", "", "Icon to display when track is playing"),
+        ("pause_icon", "", "Icon to display when track is paused"),
+        ("stop_icon", "", "Icon to display when track is stopped"),
+        ("play_color", "00ff00", "Text color when track is playing."),
+        ("no_play_color", "cecece", "Text color when track is paused or stopped."),
         ("update_interval", 0.5, "Update time in seconds."),
     ]
 
@@ -98,14 +101,14 @@ class Rhythmbox(base.ThreadPoolText):
 
         if self.status == "Playing":
             self.layout.colour = self.play_color
-            return f" {pangocffi.markup_escape_text(now_playing)}"
+            return f"{self.play_icon} {pangocffi.markup_escape_text(now_playing)}"
         else:
             self.layout.colour = self.no_play_color
 
             if self.status == "Paused":
-                return f" {pangocffi.markup_escape_text(now_playing)}"
+                return f"{self.pause_icon} {pangocffi.markup_escape_text(now_playing)}"
             elif self.status == "Stopped":
-                return " No Song Playing"
+                return f"{self.stop_icon} No Song Playing"
             else:
                 return ""
 
