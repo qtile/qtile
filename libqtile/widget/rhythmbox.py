@@ -28,7 +28,7 @@ class Rhythmbox(base.ThreadPoolText):
         - Skip forward in playlist on scroll up
         - Skip backward in playlist on scroll down
 
-    The following options (extracted from ``man rhythmbox-client``) are available for the `format` string:
+    The following options (extracted from ``man rhythmbox-client``) are available for the ``format`` string:
 
     - ``%at``: album title
     - ``%aa``: album artist
