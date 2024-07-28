@@ -86,9 +86,9 @@ class Rhythmbox(base.ThreadPoolText):
     def play(self):
 
         if self.status == "Stopped":
-            subprocess.Popen(["rhythmbox-client", "--play"])
+            self.qtile.spawn("rhythmbox-client --play")
         elif self.status in ("Paused", "Playing"):
-            subprocess.Popen(["rhythmbox-client", "--play-pause"])
+            self.qtile.spawn("rhythmbox-client --play-pause")
 
     def now_playing(self):
         """Return a string with the details of the now-playing or paused song."""
