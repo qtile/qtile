@@ -78,8 +78,8 @@ class Rhythmbox(base.ThreadPoolText):
         self.add_callbacks(
             {
                 "Button1": self.play,
-                "Button4": partial(subprocess.Popen, ["rhythmbox-client", "--next"]),
-                "Button5": partial(subprocess.Popen, ["rhythmbox-client", "--previous"]),
+                "Button4": lazy.spawn("rhythmbox-client --next"),
+                "Button5": lazy.spawn("rhythmbox-client --previous"),
             }
         )
 
