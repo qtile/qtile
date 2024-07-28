@@ -89,12 +89,14 @@ class Rhythmbox(base.ThreadPoolText):
     def now_playing(self):
         """Return a string with the details of the now-playing or paused song."""
         now_playing = subprocess.run(
-            ['rhythmbox-client', f"--print-playing-format={self.format}"],
+            ["rhythmbox-client", f"--print-playing-format={self.format}"],
             text=True,
-            capture_output=True
+            capture_output=True,
         ).stdout.strip()
 
-        status = subprocess.run(["playerctl", "--player=rhythmbox", "status"], capture_output=True, text=True).stdout.strip()
+        status = subprocess.run(
+            ["playerctl", "--player=rhythmbox", "status"], capture_output=True, text=True
+        ).stdout.strip()
 
         if self.status != status:
             self.status = status
