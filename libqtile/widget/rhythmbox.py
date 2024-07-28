@@ -61,9 +61,9 @@ class Rhythmbox(base.ThreadPoolText):
         ("play_icon", "", "Icon to display when track is playing"),
         ("pause_icon", "", "Icon to display when track is paused"),
         ("stop_icon", "", "Icon to display when track is stopped"),
-        ("play_color", "00ff00", "Text color when track is playing."),
-        ("no_play_color", "cecece", "Text color when track is paused or stopped."),
-        ("update_interval", 0.5, "Update time in seconds."),
+        ("play_color", "00ff00", "Text color when track is playing"),
+        ("no_play_color", "cecece", "Text color when track is paused or stopped"),
+        ("update_interval", 0.5, "Update time in seconds"),
     ]
 
     def __init__(self, **config):
