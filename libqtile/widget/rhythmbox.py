@@ -52,6 +52,8 @@ class Rhythmbox(base.ThreadPoolText):
     - ``%te``: track elapsed time
 
     Rhythmbox (https://www.rhythmbox.org/) and Playerctl (https://github.com/altdesktop/playerctl) should be installed.
+
+    This widget supports the following bar orientations: horizontal and vertical.
     """
 
     defaults = [
