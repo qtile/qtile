@@ -23,7 +23,7 @@ class Rhythmbox(base.ThreadPoolText):
     """
     A simple Rhythmbox widget that is based on the Cmus widget.
 
-    Show details about the paused or playing song, and allow basic mouse control from the bar:
+    Show metadata about the currently paused or playing song, and allow basic mouse control from the bar:
         - Toggle pause (if playing) or play (if paused) on left click
         - Skip forward in playlist on scroll up
         - Skip backward in playlist on scroll down
