@@ -28,7 +28,7 @@ class Rhythmbox(base.ThreadPoolText):
         - Skip forward in playlist on scroll up
         - Skip backward in playlist on scroll down
 
-    The following options are available for the `format_options` string:
+    The following options (extracted from ``man rhythmbox-client``) are available for the `format` string:
 
     - ``%at``: album title
     - ``%aa``: album artist
@@ -55,7 +55,7 @@ class Rhythmbox(base.ThreadPoolText):
     """
 
     defaults = [
-        ("format_options", None),
+        ("format", "%aa - %tt"),
         ("play_color", "00ff00", "Text color when playing."),
         ("no_play_color", "cecece", "Text color when not playing."),
         ("update_interval", 0.5, "Update time in seconds."),
@@ -83,10 +83,11 @@ class Rhythmbox(base.ThreadPoolText):
 
     def now_playing(self):
         """Return a string with the details of the now-playing or paused song."""
-        now_playing = subprocess.run([
-            'rhythmbox-client',
-            f"--print-playing-format={self.format_options}" if self.format_options else "--print-playing"
-        ], capture_output=True, text=True).stdout.strip()
+        now_playing = subprocess.run(
+            ['rhythmbox-client', f"--print-playing-format={self.format}"],
+            text=True,
+            capture_output=True
+        ).stdout.strip()
 
         status = subprocess.run(["playerctl", "--player=rhythmbox", "status"], capture_output=True, text=True).stdout.strip()
 
