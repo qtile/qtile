@@ -13,9 +13,9 @@
 
 import subprocess
 
-from functools import partial
-
 from libqtile import pangocffi
+
+from libqtile.lazy import lazy
 from libqtile.widget import base
 
 
