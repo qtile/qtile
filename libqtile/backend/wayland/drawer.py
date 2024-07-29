@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import cairocffi
-from wlroots.util.region import PixmanRegion32
 
 from libqtile.backend.base import drawer
 
@@ -46,7 +45,11 @@ class Drawer(drawer.Drawer):
             height = self._win.height - offsety
 
         # Paint recorded operations to our window's underlying ImageSurface
-        with cairocffi.Context(self._win.surface) as context:
+        # Allocation could have failed, NULL check
+        if not self._win.surface:
+            return
+        surface = cairocffi.Surface._from_pointer(self._win.surface, True)
+        with cairocffi.Context(surface) as context:
             context.set_operator(cairocffi.OPERATOR_SOURCE)
             # Adjust the source surface position by src_x and src_y e.g. if we want
             # to render part of the surface in a different position
@@ -54,8 +57,4 @@ class Drawer(drawer.Drawer):
             context.rectangle(offsetx, offsety, width, height)
             context.fill()
 
-        damage = PixmanRegion32()
-        damage.init_rect(offsetx, offsety, width, height)
-        # TODO: do we really need to `set_buffer` here? would be good to just set damage
-        self._win._scene_buffer.set_buffer_with_damage(self._win.wlr_buffer, damage)
-        damage.fini()
+        self._win.set_buffer_with_damage(offsetx, offsety, width, height)
