@@ -70,6 +70,18 @@
           xorg.libX11
           wlroots_0_17
 
+          # wayland backend
+          wayland-scanner
+          wayland-protocols
+
+          # generate compile_commands.json
+          bear
+
+          # clang-format for formatting
+          clang-tools
+
+          wlroots_0_19
+
           # test/backend/wayland/test_window.py
           gtk-layer-shell
           imagemagick

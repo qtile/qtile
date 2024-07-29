@@ -36,6 +36,16 @@ let
       pkg = pkgs.libdrm;
       header-dir = "libdrm";
     }
+    {
+      varname = "CAIRO";
+      pkg = pkgs.cairo;
+      header-dir = "cairo";
+    }
+    {
+      varname = "WLROOTS";
+      pkg = pkgs.wlroots_0_19;
+      header-dir = "wlroots-0.19";
+    }
   ];
 
   # Internal implementation

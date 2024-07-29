@@ -19,6 +19,15 @@ let
     in
     "${symver}+${flakever}.flake";
 
+  removeOldDeps =
+    dep:
+    !(pkgs.lib.hasAttr "pname" dep)
+    || (
+      dep.pname != pkgs.python3Packages.pywlroots.pname
+      && dep.pname != pkgs.python3Packages.pywayland.pname
+      && dep.pname != pkgs.python3Packages.xkbcommon.pname
+    );
+
   qtile-override-func =
     qtile-prev:
     {
@@ -38,6 +47,17 @@ let
       postPatch = "";
 
       patches = [ ];
+    }
+    // {
+      propagatedBuildInputs =
+        with pkgs;
+        [
+          wayland-scanner
+          wayland-protocols
+          python3Packages.cffi
+          python3Packages.xcffib
+        ]
+        ++ (pkgs.lib.filter removeOldDeps qtile-prev.propagatedBuildInputs);
     };
 in
 {
