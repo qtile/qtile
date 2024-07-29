@@ -1,8 +1,5 @@
-"""
-CFFI definitions for implementing wlr_buffer with cairo surfaces
-"""
+#include "cairo-buffer.h"
 
-SOURCE = """
 #include <drm_fourcc.h>
 #include <wlr/interfaces/wlr_buffer.h>
 
@@ -17,8 +14,8 @@ static void handle_destroy(struct wlr_buffer *wlr_buffer) {
     free(buffer);
 }
 
-static bool handle_begin_data_ptr_access(struct wlr_buffer *wlr_buffer,
-        uint32_t flags, void **data, uint32_t *format, size_t *stride) {
+static bool handle_begin_data_ptr_access(struct wlr_buffer *wlr_buffer, uint32_t flags, void **data,
+                                         uint32_t *format, size_t *stride) {
     struct cairo_buffer *buffer = wl_container_of(wlr_buffer, buffer, base);
     *data = buffer->data;
     *stride = buffer->stride;
@@ -47,8 +44,3 @@ struct wlr_buffer *cairo_buffer_create(int width, int height, size_t stride, voi
     cairo_buffer->stride = stride;
     return &cairo_buffer->base;
 }
-"""
-
-CDEF = """
-struct wlr_buffer *cairo_buffer_create(int width, int height, size_t stride, void *data);
-"""
