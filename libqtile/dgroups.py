@@ -253,7 +253,7 @@ class DGroups:
                 self.sort_groups()
             del self.timeout[client]
 
-        if group.persist:
+        if group is not None and group.persist:
             return
 
         logger.debug("Deleting %s in %ss", group, self.delay)
