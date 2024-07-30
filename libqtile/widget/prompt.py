@@ -711,7 +711,14 @@ class Prompt(base._TextBox):
         )
 
     @expose_command()
-    def exec_general(self, prompt, object_name, cmd_name, selector=None, completer=None):
+    def exec_general(
+        self,
+        prompt: str,
+        object_name: str,
+        cmd_name: str,
+        selector: str | int | None = None,
+        completer: AbstractCompleter | None = None,
+    ):
         """
         Execute a cmd of any object. For example layout, group, window, widget
         , etc with a string that is obtained from start_input.

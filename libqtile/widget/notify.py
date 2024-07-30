@@ -170,7 +170,7 @@ class Notify(base._TextBox):
         self.bar.draw()
 
     @expose_command()
-    def clear(self, reason=ClosedReason.dismissed):
+    def clear(self, reason: int = ClosedReason.dismissed):
         """Clear the notification"""
         if notifier is None:
             return
