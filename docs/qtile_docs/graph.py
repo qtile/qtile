@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from dataclasses import dataclass
+from math import cos, pi, sin
 
 from docutils.parsers.rst import Directive, directives
 from qtile_docs.base import SimpleDirectiveMixin
@@ -58,54 +59,80 @@ class Node:
         }
 
 
+def calc_vertex_position(number_nodes, include_origin=True, radius=2, offset=0, rounding=2):
+    """
+    Generator to calculate x, y coordinates for vertices on a regular polygon.
+
+    Use this to set position for nodes on the command object graph map.
+
+    The function has more parameters than are probably needed but this allows flexibility
+    for future changes ;)
+    """
+    if include_origin:
+        yield 0, 0
+        number_nodes -= 1
+
+    theta = 2 * pi / number_nodes
+    for n in range(number_nodes):
+        angle = n * theta
+        x = round(radius * sin(angle + offset), rounding)
+        y = round(radius * cos(angle + offset), rounding)
+        yield x, y
+
+
 ROOT = graph.CommandGraphRoot()
 
+NODE_COUNT = 9  # Includes root
+
+node_position = calc_vertex_position(NODE_COUNT, offset=pi / 2)
 
 # Define our nodes with their positions, colours and link to API docs page.
 NODES = [
-    Node(ROOT, 0, 0, "Gray", "DarkGray", "root.html"),
-    Node(graph._BarGraphNode, -1.94, -0.44, "Violet", "Purple", "bars.html"),
+    Node(ROOT, *next(node_position), "Gray", "DarkGray", "root.html"),
     Node(
         graph._CoreGraphNode,
-        -1.56,
-        1.24,
-        "SlateBlue1",
-        "SlateBlue",
+        *next(node_position),
+        "Violet",
+        "Purple",
         "backend.html",
     ),
+    Node(graph._WindowGraphNode, *next(node_position), "Tomato", "Red", "windows.html"),
     Node(
         graph._GroupGraphNode,
-        1.56,
-        1.24,
+        *next(node_position),
         "Orange",
         "OrangeRed",
         "groups.html",
     ),
     Node(
         graph._LayoutGraphNode,
-        1.94,
-        -0.44,
+        *next(node_position),
         "Gold",
         "Goldenrod",
         "layouts.html",
     ),
     Node(
         graph._ScreenGraphNode,
-        0.86,
-        -1.8,
+        *next(node_position),
         "LimeGreen",
         "DarkGreen",
         "screens.html",
     ),
     Node(
         graph._WidgetGraphNode,
-        -0.86,
-        -1.8,
+        *next(node_position),
         "LightBlue",
         "Blue",
         "widgets.html",
     ),
-    Node(graph._WindowGraphNode, 0, 2, "Tomato", "Red", "windows.html"),
+    Node(
+        graph._ExtensionGraphNode,
+        *next(node_position),
+        "RoyalBlue",
+        "RoyalBlue3",
+        "extension.html",
+    ),
+    Node(graph._BarGraphNode, *next(node_position), "SlateBlue1", "SlateBlue", "bars.html"),
 ]
 
 
