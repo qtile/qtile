@@ -146,11 +146,17 @@ class Columns(Layout):
         ("border_width", 2, "Border width."),
         ("single_border_width", None, "Border width for single window."),
         ("border_on_single", False, "Draw a border when there is one only window."),
-        ("margin", 0, "Margin of the layout (int or list of ints [N E S W])."),
+        ("margin", 0, "Margin around the windows (int or list of ints [N E S W])."),
         (
             "margin_on_single",
             None,
-            "Margin when only one window. (int or list of ints [N E S W])",
+            "Margin when there is only one window (int or list of ints [N E S W]).",
+        ),
+        ("gap", 0, "Gap between the windows (int or list of ints [X Y])."),
+        (
+            "gap_on_single",
+            None,
+            "Gap when there is only one window (int or list of ints [X Y]).",
         ),
         ("split", True, "New columns presentation mode."),
         ("num_columns", 2, "Preferred number of columns."),
@@ -185,6 +191,8 @@ class Columns(Layout):
 
         if self.margin_on_single is None:
             self.margin_on_single = self.margin
+        if self.gap_on_single is None:
+            self.gap_on_single = self.gap
         self.columns = [_Column(self.split, self.insert_position)]
         self.current = 0
         if self.align not in (Columns._left, Columns._right):
@@ -291,49 +299,78 @@ class Columns(Layout):
         return self.columns[self.current].cw
 
     def configure(self, client: Window, screen_rect: ScreenRect) -> None:
-        pos = 0
+        "Position client based on order and sizes"
+
+        # percentage_of_space: percentage of the available space when
+        #                      divided equally among the clients
+        # available_space: the size of the available space in pixels
+        # clients_in_space: number of clients that are going to share the space
+        def get_pixels_from_relative_size(percentage_of_space, available_space, clients_in_space):
+            return round(0.01 * percentage_of_space * available_space / clients_in_space)
+
+        # percentage of the space occupied by the windows to the left of the client
+        pos_x = 0
         for col in self.columns:
             if client in col:
                 break
-            pos += col.width
+            pos_x += col.width
         else:
             client.hide()
             return
 
+        # percentage of the space occupied by the windows above the client
+        pos_y = 0
+        for c in col:
+            if client == c:
+                break
+            pos_y += col.heights[c]
+
+        # clients border color
         if client.has_focus:
             color = self.border_focus if col.split else self.border_focus_stack
         else:
             color = self.border_normal if col.split else self.border_normal_stack
 
-        is_single = len(self.columns) == 1 and (len(col) == 1 or not col.split)
-        border = self.single_border_width if is_single else self.border_width
-        margin_size = self.margin_on_single if is_single else self.margin
+        border = self.border_width
+        margin = self.margin
+        gap = self.gap
 
-        width = int(0.5 + col.width * screen_rect.width * 0.01 / len(self.columns))
-        x = screen_rect.x + int(0.5 + pos * screen_rect.width * 0.01 / len(self.columns))
+        # only show one client
+        if len(self.columns) == 1 and (len(col) == 1 or not col.split):
+            border = self.single_border_width if self.border_on_single else 0
+            margin = self.margin_on_single
+            gap = self.gap_on_single
 
+        gap_x, gap_y = [gap] * 2 if isinstance(gap, int) else gap
+
+        x_offset = screen_rect.x + gap_x
+        y_offset = screen_rect.y + gap_y
+        usable_width = screen_rect.width - gap_x
+        usable_height = screen_rect.height - gap_y
+
+        num_clients_horizontally = len(self.columns)
+        width = (
+            get_pixels_from_relative_size(col.width, usable_width, num_clients_horizontally)
+            - 2 * border
+            - gap_x
+        )
+        x = x_offset + get_pixels_from_relative_size(
+            pos_x, usable_width, num_clients_horizontally
+        )
+
+        y = y_offset
         if col.split:
-            pos = 0
-            for c in col:
-                if client == c:
-                    break
-                pos += col.heights[c]
-            height = int(0.5 + col.heights[client] * screen_rect.height * 0.01 / len(col))
-            y = screen_rect.y + int(0.5 + pos * screen_rect.height * 0.01 / len(col))
-            client.place(
-                x, y, width - 2 * border, height - 2 * border, border, color, margin=margin_size
+            num_clients_vertically = len(col)
+            height = get_pixels_from_relative_size(
+                col.heights[client], usable_height, num_clients_vertically
             )
-            client.unhide()
-        elif client == col.cw:
-            client.place(
-                x,
-                screen_rect.y,
-                width - 2 * border,
-                screen_rect.height - 2 * border,
-                border,
-                color,
-                margin=margin_size,
-            )
+            y += get_pixels_from_relative_size(pos_y, usable_height, num_clients_vertically)
+        else:
+            height = usable_height
+        height -= 2 * border + gap_y
+
+        if col.split or client == col.cw:
+            client.place(x, y, width, height, border, color, margin=margin)
             client.unhide()
         else:
             client.hide()
