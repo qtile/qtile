@@ -4,3 +4,4 @@ Comment=Qtile Session
 Exec=qtile start -b wayland
 Type=Application
 Keywords=wm;tiling
+Icon=
