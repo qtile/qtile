@@ -477,6 +477,29 @@ async def _send_dbus_message(
     return bus, msg
 
 
+async def add_match_rule(
+    bus: MessageBus, preserve: bool = False, **kwargs: str | None
+) -> tuple[MessageBus, Message]:
+    rule = ",".join("{}='{}'".format(k, v) for k, v in kwargs.items() if v)
+
+    logger.debug("Adding dbus match rule: %s", rule)
+
+    bus, msg = await _send_dbus_message(
+        False,
+        MessageType.METHOD_CALL,
+        "org.freedesktop.DBus",
+        "org.freedesktop.DBus",
+        "/org/freedesktop/DBus",
+        "AddMatch",
+        "s",
+        [rule],
+        bus=bus,
+        preserve=preserve,
+    )
+
+    return bus, msg
+
+
 async def add_signal_receiver(
     callback: Callable,
     session_bus: bool = False,
@@ -510,36 +533,35 @@ async def add_signal_receiver(
             )
             return False
 
+    if use_bus is None:
+        if session_bus:
+            bus_type = BusType.SESSION
+        else:
+            bus_type = BusType.SYSTEM
+
+        try:
+            bus = await MessageBus(bus_type=bus_type).connect()
+        except (AuthError, Exception):
+            logger.warning("Unable to connect to dbus.")
+            return False
+    else:
+        bus = use_bus
+
     match_args = {
-        "sender": bus_name,
-        "member": signal_name,
-        "path": path,
+        "type": "signal",
         "interface": dbus_interface,
+        "path": path,
+        "member": signal_name,
+        "sender": bus_name,
     }
 
-    rule = "type='signal',"
-    rule += ",".join("{}='{}'".format(k, v) for k, v in match_args.items() if v)
-
-    logger.debug("Adding dbus match rule: %s", rule)
-
-    bus, msg = await _send_dbus_message(
-        session_bus,
-        MessageType.METHOD_CALL,
-        "org.freedesktop.DBus",
-        "org.freedesktop.DBus",
-        "/org/freedesktop/DBus",
-        "AddMatch",
-        "s",
-        [rule],
-        bus=use_bus,
-        preserve=preserve,
-    )
+    bus, msg = await add_match_rule(bus, preserve=preserve, **match_args)
 
     # Check if message sent successfully
     if bus and msg and msg.message_type == MessageType.METHOD_RETURN:
 
         def match_message(msg: Message, match_args: dict[str, str | None]) -> bool:
-            return msg._matches(**{k: v for k, v in match_args.items() if v})
+            return msg._matches(**{k: v for k, v in match_args.items() if (v and k != "type")})
 
         async def resolve_sender(signal_msg: Message) -> tuple[str, Message]:
             """Looks up a pretty bus name to retrieve the unique name."""
