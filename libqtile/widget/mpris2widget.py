@@ -165,6 +165,11 @@ class Mpris2(base._TextBox):
             "Function that takes three inputs (h, m, s) and creates a string to display time. "
             "Default function will display mm:ss and hh:mm:ss if time is greater than 1 hour.",
         ),
+        (
+            "position_poll_interval",
+            5,
+            "Number of ticks before widget checks position with player. Lower number improves accuracy of position timer.",
+        ),
     ]
 
     def __init__(self, **config):
@@ -215,6 +220,7 @@ class Mpris2(base._TextBox):
         self._position_timer: asyncio.TimerHandle | None = None
         self.position = 0
         self.metadata: dict[str, str] = {}
+        self._tick = 0
 
     @property
     def player(self) -> str:
@@ -283,6 +289,7 @@ class Mpris2(base._TextBox):
         # Check if the current player has closed
         if new_owner == "" and name == self._current_player:
             self._current_player = None
+            self.is_playing = False
             self.update("")
 
             # Cancel any scheduled background poll
@@ -291,30 +298,51 @@ class Mpris2(base._TextBox):
     def _properties_changed(self, message):
         create_task(self.process_message(message))
 
-    def _set_position(self, message):
+    @property
+    def position_delay(self):
+        delay = 1
+        if not self._tick:
+            _, rem = divmod(self.position, 1e6)
+            rem /= 1e6
+            if rem > 0:
+                delay = rem
+
+        return delay
+
+    def _set_position(self, message, seeked=True):
         # if not self.needs_position:
         #     return
 
         self.position = message.body[0] // 1000000
+        self._tick = 0
 
         self._reset_position_timer()
 
         if self.needs_position and self.is_playing:
-            self._position_timer = self.timeout_add(1, self._position_tick)
+            self._position_timer = self.timeout_add(
+                self.position_delay if seeked else 1, self._position_tick
+            )
 
     def _reset_position_timer(self):
         if self._position_timer is not None:
             self._position_timer.cancel()
 
     def _position_tick(self):
-        self.position += 1
+        self._tick = (self._tick + 1) % self.position_poll_interval
+        delay = self.position_delay
+        if delay == 1:
+            self.position += 1
+
+        if not self._tick:
+            task = create_task(self._poll_position())
+            task.add_done_callback(self._poll_position_callback)
 
         self.metadata["position"] = self.time_formatter(*_to_hms(self.position))
         self.set_track_info()
         self.do_display()
 
         if self.is_playing:
-            self._position_timer = self.timeout_add(1, self._position_tick)
+            self._position_timer = self.timeout_add(self.position_delay, self._position_tick)
 
     async def process_message(self, message):
         current_player = message.sender
@@ -368,6 +396,28 @@ class Mpris2(base._TextBox):
         if message.body:
             self._current_player = message.sender
             self.parse_message(self.objname, message.body[0], [])
+
+    async def _poll_position(self):
+        message = await self._send_message(
+            self.objname if self.objname else self._current_player,
+            PROPERTIES_INTERFACE,
+            MPRIS_PATH,
+            "Get",
+            "ss",
+            [MPRIS_PLAYER, "Position"],
+        )
+
+        if message.message_type == MessageType.METHOD_RETURN:
+            return message
+
+        return None
+
+    def _poll_position_callback(self, task):
+        result = task.result()
+        if result:
+            # GetProperties returns a Variant but _set_position expects an int
+            result.body = [result.body[0].value]
+            self._set_position(result, False)
 
     def _set_background_poll(self, poll=True):
         if self._background_poll is not None:
