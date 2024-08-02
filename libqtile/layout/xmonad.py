@@ -14,6 +14,7 @@
 # Copyright (c) 2014 dequis
 # Copyright (c) 2014 Florian Scherf
 # Copyright (c) 2017 Dirk Hartmann
+# Copyright (c) 2024 Marco Paganini (auto_maximization code).
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -108,6 +109,21 @@ class MonadTall(_SimpleLayoutBase):
     methods. As mentioned the main pane is considered the top of the stack;
     moving up is counter-clockwise and moving down is clockwise.
 
+    ::
+
+        ---------------------          ---------------------
+        |            |      |          |            |      |
+        |            |______|          |            |Focus |
+        |            |      |          |            |      |
+        |            |______|          |            |______|
+        |            |      |          |            |______|
+        |            |      |          |            |      |
+        ---------------------          ---------------------
+
+    Setting ``auto_maximize`` will cause the focused secondary pane to be
+    automatically maximized on focus. The non-maximized panes will shrink to
+    the height specified by ``min_secondary_size``.
+
     The opposite is true if the layout is "flipped".
 
     ::
@@ -150,6 +166,7 @@ class MonadTall(_SimpleLayoutBase):
         Key([modkey], "n", lazy.layout.reset()),
         Key([modkey, "shift"], "n", lazy.layout.normalize()),
         Key([modkey], "o", lazy.layout.maximize()),
+        Key([modkey, "shift"], "s", lazy.layout.toggle_auto_maximize()),
         Key([modkey, "shift"], "space", lazy.layout.flip()),
     """
 
@@ -157,6 +174,7 @@ class MonadTall(_SimpleLayoutBase):
     _right = 1
 
     defaults = [
+        ("auto_maximize", False, "Maximize secondary windows on focus."),
         ("border_focus", "#ff0000", "Border colour(s) for the focused window."),
         ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
         ("border_width", 2, "Border width."),
@@ -243,10 +261,26 @@ class MonadTall(_SimpleLayoutBase):
         self.clients.add_client(client, client_position=self.new_client_position)
         self.do_normalize = True
 
+    def focus(self, client):
+        super().focus(client)
+        # Only maximize the window in the secondary pane when focus is *not* in
+        # the main pane. Doing so in the main pane causes the last secondary
+        # window to always be in focus when switching from secondary -> main.
+        if self.focused != 0:
+            self._maximize_focused_secondary()
+
     def remove(self, client: Window) -> Window | None:
         "Remove client from layout"
+        p = super().remove(client)
         self.do_normalize = True
-        return self.clients.remove(client)
+        # When auto_maximize is set and the user closes the first (topmost)
+        # secondary window, focus goes back to the main window. In this case,
+        # we WANT to force redraw of the windows in the secondary pane so we
+        # get a maximized topmost window again.
+        if self.auto_maximize and self.focused == 0 and len(self.clients) > 2:
+            # This will also trigger secondary maximization, if needed.
+            self.focus(self.clients[1])
+        return p
 
     @expose_command()
     def set_ratio(self, ratio):
@@ -274,6 +308,14 @@ class MonadTall(_SimpleLayoutBase):
         if self.align == self._right:
             self.align = self._left
         self.normalize(redraw)
+
+    @expose_command()
+    def toggle_auto_maximize(self):
+        "Toggle auto maximize secondary window on focus."
+        self.auto_maximize = not self.auto_maximize
+        self.normalize(True)
+        if self.focused != 0:
+            self._maximize_focused_secondary()
 
     def _maximize_main(self):
         "Toggle the main pane between min and max size"
@@ -304,6 +346,41 @@ class MonadTall(_SimpleLayoutBase):
         # otherwise maximize
         else:
             self._grow_secondary(maxed_size)
+
+    def _maximize_focused_secondary(self):
+        "Maximize the 'non-maximized' focused secondary pane"
+
+        # If auto_maximize is off, return immediately.
+        if not self.auto_maximize:
+            return
+
+        # if we have 1 or 2 panes, do nothing.
+        if len(self.clients) < 3:
+            return
+
+        # Recalculate relative_sizes
+        self.normalize(redraw=False)
+        if len(self.relative_sizes) == 0:
+            return
+
+        # If the focused window (self.focused) is 0 (main pane), adjust
+        # focused to work directly on the secondary pane windows.
+        focused = max(1, self.focused)
+
+        n = len(self.clients) - 2  # total shrinking clients
+        # total size of collapsed secondaries
+        collapsed_size = self.min_secondary_size * n
+        nidx = max(0, focused - 1)  # focused size index
+        # total height of maximized secondary
+        maxed_size = self.group.screen.dheight - collapsed_size
+
+        # Maximize if window is not already maximized.
+        if (
+            abs(self._get_absolute_size_from_relative(self.relative_sizes[nidx]) - maxed_size)
+            >= self.change_size
+        ):
+            self._grow_secondary(maxed_size)
+            self.group.layout_all()
 
     @expose_command()
     def maximize(self):
