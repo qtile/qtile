@@ -304,14 +304,15 @@ class Mpris2(base._TextBox):
         if not self._tick:
             _, rem = divmod(self.position, 1e6)
             rem /= 1e6
+            rem = 1 - rem
             if rem > 0:
                 delay = rem
 
         return delay
 
-    def _set_position(self, message, seeked=True):
-        # if not self.needs_position:
-        #     return
+    def _set_position(self, message):
+        if not self.needs_position:
+            return
 
         self.position = message.body[0] // 1000000
         self._tick = 0
@@ -319,30 +320,28 @@ class Mpris2(base._TextBox):
         self._reset_position_timer()
 
         if self.needs_position and self.is_playing:
-            self._position_timer = self.timeout_add(
-                self.position_delay if seeked else 1, self._position_tick
-            )
+            self._position_timer = self.timeout_add(self.position_delay, self._position_tick)
 
     def _reset_position_timer(self):
         if self._position_timer is not None:
             self._position_timer.cancel()
 
     def _position_tick(self):
+        if not self.is_playing:
+            return
+
         self._tick = (self._tick + 1) % self.position_poll_interval
-        delay = self.position_delay
-        if delay == 1:
-            self.position += 1
 
         if not self._tick:
             task = create_task(self._poll_position())
             task.add_done_callback(self._poll_position_callback)
 
+        self.position += 1
         self.metadata["position"] = self.time_formatter(*_to_hms(self.position))
         self.set_track_info()
         self.do_display()
 
-        if self.is_playing:
-            self._position_timer = self.timeout_add(self.position_delay, self._position_tick)
+        self._position_timer = self.timeout_add(self.position_delay, self._position_tick)
 
     async def process_message(self, message):
         current_player = message.sender
@@ -417,7 +416,7 @@ class Mpris2(base._TextBox):
         if result:
             # GetProperties returns a Variant but _set_position expects an int
             result.body = [result.body[0].value]
-            self._set_position(result, False)
+            self._set_position(result)
 
     def _set_background_poll(self, poll=True):
         if self._background_poll is not None:
