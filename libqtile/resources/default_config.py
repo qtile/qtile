@@ -25,7 +25,6 @@
 # SOFTWARE.
 
 from libqtile import bar, layout, qtile, widget
-from libqtile.backend.wayland.inputs import InputConfig
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
 from libqtile.utils import guess_terminal
@@ -212,9 +211,13 @@ auto_minimize = True
 
 # When using the Wayland backend, this can be used to configure input devices.
 # By default the numlock is on by default.
-wl_input_rules = {
-    "type:keyboard": InputConfig(kb_numlock=True),
-}
+wl_input_rules = None
+if qtile.core.name == "wayland":
+    from libqtile.backend.wayland.inputs import InputConfig
+
+    wl_input_rules = {
+        "type:keyboard": InputConfig(kb_numlock=True),
+    }
 
 # xcursor theme (string or None) and size (integer) for Wayland backend
 wl_xcursor_theme = None
