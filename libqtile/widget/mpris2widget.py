@@ -221,6 +221,8 @@ class Mpris2(base._TextBox):
         self.position = 0
         self.metadata: dict[str, str] = {}
         self._tick = 0
+        self._rate = 1
+        self._wanted_properties = ["Metadata", "PlaybackStatus"]
 
     @property
     def player(self) -> str:
@@ -258,6 +260,9 @@ class Mpris2(base._TextBox):
             self.bus.add_message_handler(self._handler)
 
         self.needs_position = "{position}" in self.format
+
+        if self.needs_position:
+            self._wanted_properties.append("Rate")
 
         # If the user has specified a player to be monitored, we can poll it now.
         if self.objname is not None:
@@ -308,7 +313,7 @@ class Mpris2(base._TextBox):
             if rem > 0:
                 delay = rem
 
-        return delay
+        return delay / self._rate
 
     def _set_position(self, message):
         if not self.needs_position:
@@ -453,10 +458,17 @@ class Mpris2(base._TextBox):
         if not self.configured:
             return
 
-        if "Metadata" not in changed_properties and "PlaybackStatus" not in changed_properties:
+        for wanted in self._wanted_properties:
+            if wanted in changed_properties:
+                break
+        else:
             return
 
         self.displaytext = ""
+
+        rate = changed_properties.get("Rate")
+        if rate:
+            self._rate = rate.value
 
         playbackstatus = getattr(changed_properties.get("PlaybackStatus"), "value", None)
         if playbackstatus:
