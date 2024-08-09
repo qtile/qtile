@@ -103,6 +103,15 @@ def test_wlan_display(minimal_conf_noscreen, manager_nospawn, patched_wlan, kwar
     assert text == expected
 
 
+def test_wlan_display_escape_essid(
+    minimal_conf_noscreen, manager_nospawn, patched_wlan, monkeypatch
+):
+    """Test escaping of pango markup in ESSID"""
+    monkeypatch.setitem(MockIwlib.DATA["wlan0"], "ESSID", b"A&B")
+    widget = patched_wlan.Wlan(format="{essid}")
+    assert widget.poll() == "A&amp;B"
+
+
 @pytest.mark.parametrize(
     "kwargs,state,expected",
     [
