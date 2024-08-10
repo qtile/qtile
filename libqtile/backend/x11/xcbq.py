@@ -402,6 +402,7 @@ class Xinerama:
 class RandR:
     def __init__(self, conn):
         self.ext = conn.conn(xcffib.randr.key)
+        self.ext.SelectInput(conn.default_screen.root.wid, xcffib.randr.NotifyMask.ScreenChange)
 
     def query_crtcs(self, root):
         infos = []
@@ -410,9 +411,6 @@ class RandR:
 
             infos.append(ScreenRect(crtc_info.x, crtc_info.y, crtc_info.width, crtc_info.height))
         return infos
-
-    def enable_screen_change_notifications(self, conn):
-        self.ext.SelectInput(conn.default_screen.root.wid, xcffib.randr.NotifyMask.ScreenChange)
 
 
 class XFixes:
@@ -496,9 +494,6 @@ class Connection:
             return pseudoscreens
         elif hasattr(self, "randr"):
             return self.randr.query_crtcs(self.screens[0].root.wid)
-
-    def enable_screen_change_notifications(self):
-        self.randr.enable_screen_change_notifications(self)
 
     def finalize(self):
         self.cursors.finalize()
