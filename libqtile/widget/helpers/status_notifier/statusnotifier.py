@@ -17,7 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import os
 from functools import partial
 from pathlib import Path
 
@@ -243,10 +242,12 @@ class StatusNotifierItem:  # noqa: E303
             return
 
         try:
-            icon_path = await self.item.get_icon_theme_path()
-            self.icon = self._get_custom_icon(icon_name, icon_path)
+            icon_path = Path(await self.item.get_icon_theme_path())
         except (AttributeError, DBusError):
-            pass
+            icon_path = None
+
+        if icon_path:
+            self.icon = self._get_custom_icon(icon_name, icon_path)
 
         if not self.icon:
             self.icon = self._get_xdg_icon(icon_name)
@@ -275,10 +276,31 @@ class StatusNotifierItem:  # noqa: E303
         self._create_task_and_draw(self._get_icon("Overlay"))
 
     def _get_custom_icon(self, icon_name, icon_path):
+        icon = None
         for ext in [".png", ".svg"]:
-            path = os.path.join(icon_path, icon_name + ext)
-            if os.path.isfile(path):
-                return Img.from_path(path)
+            path = icon_path / f"{icon_name}{ext}"
+            if path.is_file():
+                icon = path
+                break
+
+        else:
+            # No icon found at the image path, let's search recursively
+            glob = icon_path.rglob(f"{icon_name}.*")
+            found = [icon for icon in glob if icon.is_file()]
+
+            # Found a matching icon in subfolder
+            if found:
+                # We'd prefer an svg file
+                svg = [icon for icon in found if icon.suffix.lower() == ".svg"]
+                if svg:
+                    icon = svg[0]
+                else:
+                    # If not, we'll take what there is
+                    # NOTE: not clear how we can handle multiple matches with different icon sizes 16x16, 32x32 etc
+                    icon = found[0]
+
+        if icon is not None:
+            return Img.from_path(icon.resolve().as_posix())
 
         return None
 
