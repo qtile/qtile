@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from contextlib import suppress
 from functools import partial
 from pathlib import Path
 
@@ -689,13 +690,16 @@ class StatusNotifierHost:  # noqa: E303
         self, on_item_added=None, on_item_removed=None, on_icon_changed=None
     ):
         if on_item_added is not None:
-            self._on_item_added.remove(on_item_added)
+            with suppress(ValueError):
+                self._on_item_added.remove(on_item_added)
 
         if on_item_removed is not None:
-            self._on_item_removed.remove(on_item_removed)
+            with suppress(ValueError):
+                self._on_item_removed.remove(on_item_removed)
 
         if on_icon_changed is not None:
-            self._on_icon_changed.remove(on_icon_changed)
+            with suppress(ValueError):
+                self._on_icon_changed.remove(on_icon_changed)
 
 
 host = StatusNotifierHost()  # noqa: E303
