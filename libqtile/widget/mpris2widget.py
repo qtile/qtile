@@ -170,6 +170,7 @@ class Mpris2(base._TextBox):
             5,
             "Number of ticks before widget checks position with player. Lower number improves accuracy of position timer.",
         ),
+        ("poll_on_start", False, "Looks for a currently playing player when widget starts."),
     ]
 
     def __init__(self, **config):
@@ -267,6 +268,10 @@ class Mpris2(base._TextBox):
         # If the user has specified a player to be monitored, we can poll it now.
         if self.objname is not None:
             await self._check_player()
+        elif self.poll_on_start:
+            self._current_player, message = await self._check_for_active_player()
+            if self._current_player:
+                self.parse_message(self._current_player, message.body[0], [])
 
     def _handler(self, message):
         # Returning True stops dbus_next from applying other message handlers
@@ -377,13 +382,55 @@ class Mpris2(base._TextBox):
 
         return message
 
+    async def _check_for_active_player(self):
+        players = await self._find_players()
+        if not players:
+            return None, None
+
+        async def status(player):
+            props, message = await self._get_player_properties(player)
+            if "PlaybackStatus" not in props:
+                return message.sender, message, 4
+
+            match props["PlaybackStatus"].value:
+                case "Playing":
+                    val = 1
+                case "Paused":
+                    val = 2
+                case "Stopped":
+                    val = 3
+                case _:
+                    val = 4
+
+            return message.sender, message, val
+
+        found = [await status(player) for player in players]
+        active = list(filter(lambda x: x[2] < 4, found))
+        if not active:
+            return None, None
+
+        active.sort(key=lambda x: x[2])
+        return active[0][:2]
+
     async def _check_player(self):
         """Check for player at startup and retrieve metadata."""
-        if not (self.objname or self._current_player):
+        player = self.objname or self._current_player
+        if not player:
             return
 
+        props, message = await self._get_player_properties(player)
+
+        if not props:
+            self._current_player = None
+            self.update("")
+            return
+
+        self._current_player = message.sender
+        self.parse_message(player, props, [])
+
+    async def _get_player_properties(self, player):
         message = await self._send_message(
-            self.objname if self.objname else self._current_player,
+            player,
             PROPERTIES_INTERFACE,
             MPRIS_PATH,
             "GetAll",
@@ -391,15 +438,25 @@ class Mpris2(base._TextBox):
             [MPRIS_PLAYER],
         )
 
-        # If we get an error here it will be because the player object doesn't exist
         if message.message_type != MessageType.METHOD_RETURN:
-            self._current_player = None
-            self.update("")
-            return
+            return {}, message
 
-        if message.body:
-            self._current_player = message.sender
-            self.parse_message(self.objname, message.body[0], [])
+        return message.body[0], message
+
+    async def _find_players(self):
+        message = await self._send_message(
+            "org.freedesktop.DBus",
+            "org.freedesktop.DBus",
+            "/org/freedesktop/DBus",
+            "ListNames",
+            "",
+            [],
+        )
+
+        if message.message_type != MessageType.METHOD_RETURN:
+            return []
+
+        return [name for name in message.body[0] if name.startswith("org.mpris.MediaPlayer2")]
 
     async def _poll_position(self):
         message = await self._send_message(
@@ -577,3 +634,12 @@ class Mpris2(base._TextBox):
         d = base._TextBox.info(self)
         d.update(dict(isplaying=self.is_playing, player=self.player))
         return d
+
+    def finalize(self):
+        if self._position_timer is not None:
+            self._position_timer.cancel()
+
+        if self._background_poll is not None:
+            self._background_poll.cancel()
+
+        base._TextBox.finalize(self)
