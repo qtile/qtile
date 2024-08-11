@@ -2,6 +2,11 @@ Qtile x.xx.x, released xxxx-xx-xx:
     * features
     * bugfixes
 
+Qtile 0.28.0, released 2024-08-01:
+    * bugfixes
+        - various bug fixes to widgets from previous releases
+        - fix xrandr commands racing with qtile startup
+
 Qtile 0.27.0, released 2024-07-12:
     * features
         - Make default `Plasma` add mode dynamic
