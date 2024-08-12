@@ -243,12 +243,12 @@ class StatusNotifierItem:  # noqa: E303
             return
 
         try:
-            icon_path = Path(await self.item.get_icon_theme_path())
+            icon_path = await self.item.get_icon_theme_path()
         except (AttributeError, DBusError):
             icon_path = None
 
         if icon_path:
-            self.icon = self._get_custom_icon(icon_name, icon_path)
+            self.icon = self._get_custom_icon(icon_name, Path(icon_path))
 
         if not self.icon:
             self.icon = self._get_xdg_icon(icon_name)
