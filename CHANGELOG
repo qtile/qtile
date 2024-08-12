@@ -2,7 +2,11 @@ Qtile x.xx.x, released xxxx-xx-xx:
     * features
     * bugfixes
 
-Qtile 0.28.0, released 2024-08-01:
+Qtile 0.28.1, released 2024-08-12:
+    * bugfixes
+        - fix a crash in the StatusNotifier widget #4959 #4960
+
+Qtile 0.28.0, released 2024-08-11:
     * bugfixes
         - various bug fixes to widgets from previous releases
         - fix xrandr commands racing with qtile startup
