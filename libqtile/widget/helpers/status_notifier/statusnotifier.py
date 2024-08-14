@@ -42,6 +42,8 @@ from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.utils import add_signal_receiver, create_task
 
+ICON_FORMATS = [".png", ".svg"]
+
 # StatusNotifier seems to have two potential interface names.
 # While KDE appears to be the default, we should also listen
 # for items on freedesktop.
@@ -237,21 +239,26 @@ class StatusNotifierItem:  # noqa: E303
         # need to catch an error if we can't read it.
         # We can't use hasattr to check this as the method will be created
         # where we've used the default XML spec to provide the object introspection
+        icon_name = ""
         try:
             icon_name = await self.item.get_icon_name()
         except DBusError:
             return
 
-        try:
-            icon_path = await self.item.get_icon_theme_path()
-        except (AttributeError, DBusError):
-            icon_path = None
+        # We only need to do these searches if there's an icon name provided by
+        # the app. We also don't want to do the recursive lookup with an empty
+        # icon name as, otherwise, the glob will match things that are not images.
+        if icon_name:
+            try:
+                icon_path = await self.item.get_icon_theme_path()
+            except (AttributeError, DBusError):
+                icon_path = None
 
-        if icon_path:
-            self.icon = self._get_custom_icon(icon_name, Path(icon_path))
+            if icon_path:
+                self.icon = self._get_custom_icon(icon_name, Path(icon_path))
 
-        if not self.icon:
-            self.icon = self._get_xdg_icon(icon_name)
+            if not self.icon:
+                self.icon = self._get_xdg_icon(icon_name)
 
         if not self.icon and fallback:
             # Use fallback icon libqtile/resources/status_notifier/fallback_icon.png
@@ -278,7 +285,7 @@ class StatusNotifierItem:  # noqa: E303
 
     def _get_custom_icon(self, icon_name, icon_path):
         icon = None
-        for ext in [".png", ".svg"]:
+        for ext in ICON_FORMATS:
             path = icon_path / f"{icon_name}{ext}"
             if path.is_file():
                 icon = path
@@ -287,7 +294,9 @@ class StatusNotifierItem:  # noqa: E303
         else:
             # No icon found at the image path, let's search recursively
             glob = icon_path.rglob(f"{icon_name}.*")
-            found = [icon for icon in glob if icon.is_file()]
+            found = [
+                icon for icon in glob if icon.is_file() and icon.suffix.lower() in ICON_FORMATS
+            ]
 
             # Found a matching icon in subfolder
             if found:
