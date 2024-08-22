@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import os
+from contextlib import suppress
 from functools import partial
 from pathlib import Path
 
@@ -41,6 +41,8 @@ except ImportError:
 from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.utils import add_signal_receiver, create_task
+
+ICON_FORMATS = [".png", ".svg"]
 
 # StatusNotifier seems to have two potential interface names.
 # While KDE appears to be the default, we should also listen
@@ -237,19 +239,26 @@ class StatusNotifierItem:  # noqa: E303
         # need to catch an error if we can't read it.
         # We can't use hasattr to check this as the method will be created
         # where we've used the default XML spec to provide the object introspection
+        icon_name = ""
         try:
             icon_name = await self.item.get_icon_name()
         except DBusError:
             return
 
-        try:
-            icon_path = await self.item.get_icon_theme_path()
-            self.icon = self._get_custom_icon(icon_name, icon_path)
-        except (AttributeError, DBusError):
-            pass
+        # We only need to do these searches if there's an icon name provided by
+        # the app. We also don't want to do the recursive lookup with an empty
+        # icon name as, otherwise, the glob will match things that are not images.
+        if icon_name:
+            try:
+                icon_path = await self.item.get_icon_theme_path()
+            except (AttributeError, DBusError):
+                icon_path = None
 
-        if not self.icon:
-            self.icon = self._get_xdg_icon(icon_name)
+            if icon_path:
+                self.icon = self._get_custom_icon(icon_name, Path(icon_path))
+
+            if not self.icon:
+                self.icon = self._get_xdg_icon(icon_name)
 
         if not self.icon and fallback:
             # Use fallback icon libqtile/resources/status_notifier/fallback_icon.png
@@ -275,10 +284,33 @@ class StatusNotifierItem:  # noqa: E303
         self._create_task_and_draw(self._get_icon("Overlay"))
 
     def _get_custom_icon(self, icon_name, icon_path):
-        for ext in [".png", ".svg"]:
-            path = os.path.join(icon_path, icon_name + ext)
-            if os.path.isfile(path):
-                return Img.from_path(path)
+        icon = None
+        for ext in ICON_FORMATS:
+            path = icon_path / f"{icon_name}{ext}"
+            if path.is_file():
+                icon = path
+                break
+
+        else:
+            # No icon found at the image path, let's search recursively
+            glob = icon_path.rglob(f"{icon_name}.*")
+            found = [
+                icon for icon in glob if icon.is_file() and icon.suffix.lower() in ICON_FORMATS
+            ]
+
+            # Found a matching icon in subfolder
+            if found:
+                # We'd prefer an svg file
+                svg = [icon for icon in found if icon.suffix.lower() == ".svg"]
+                if svg:
+                    icon = svg[0]
+                else:
+                    # If not, we'll take what there is
+                    # NOTE: not clear how we can handle multiple matches with different icon sizes 16x16, 32x32 etc
+                    icon = found[0]
+
+        if icon is not None:
+            return Img.from_path(icon.resolve().as_posix())
 
         return None
 
@@ -667,13 +699,16 @@ class StatusNotifierHost:  # noqa: E303
         self, on_item_added=None, on_item_removed=None, on_icon_changed=None
     ):
         if on_item_added is not None:
-            self._on_item_added.remove(on_item_added)
+            with suppress(ValueError):
+                self._on_item_added.remove(on_item_added)
 
         if on_item_removed is not None:
-            self._on_item_removed.remove(on_item_removed)
+            with suppress(ValueError):
+                self._on_item_removed.remove(on_item_removed)
 
         if on_icon_changed is not None:
-            self._on_icon_changed.remove(on_icon_changed)
+            with suppress(ValueError):
+                self._on_icon_changed.remove(on_icon_changed)
 
 
 host = StatusNotifierHost()  # noqa: E303

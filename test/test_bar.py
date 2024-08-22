@@ -103,9 +103,9 @@ def test_completion():
     assert c.actual().endswith(r)
 
     c.reset()
-    assert c.complete("/bi") == "/bin/"
+    assert c.complete("/et") == "/etc/"
     c.reset()
-    assert c.complete("/bin") != "/bin/"
+    assert c.complete("/etc") != "/etc/"
     c.reset()
 
     home_dir = os.path.expanduser("~")
@@ -128,8 +128,8 @@ def test_completion():
     assert c.complete("z", aliases={"z": "a"}) == "z"
     assert c.actual() == "a"
     c.reset()
-    assert c.complete("/bi", aliases={"z": "a"}) == "/bin/"
-    assert c.actual() == "/bin"
+    assert c.complete("/et", aliases={"z": "a"}) == "/etc/"
+    assert c.actual() == "/etc"
     c.reset()
 
 

@@ -37,7 +37,7 @@ CMD_DICT = {
     "Guix": ("guix upgrade --dry-run", 0),
     "Ubuntu": ("aptitude search ~U", 0),
     "Fedora": ("dnf list updates -q", 1),
-    "FreeBSD": ("pkg_version -I -l '<'", 0),
+    "FreeBSD": ("pkg upgrade -n | awk '/\t/ { print $0 }'", 0),
     "Mandriva": ("urpmq --auto-select", 0),
     "Void": ("xbps-install -nuMS", 0),
 }

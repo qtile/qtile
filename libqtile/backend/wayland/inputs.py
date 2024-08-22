@@ -39,12 +39,13 @@ except ModuleNotFoundError:
     _has_ffi = False
 
 if TYPE_CHECKING:
+    from asyncio import TimerHandle
     from typing import Any
 
     from pywayland.server import Listener
     from wlroots.wlr_types import InputDevice
     from wlroots.wlr_types.keyboard import Keyboard as WlrKeyboard
-    from wlroots.wlr_types.keyboard import KeyboardKeyEvent
+    from wlroots.wlr_types.keyboard import KeyboardKeyEvent, KeyboardModifier
 
     from libqtile.backend.wayland.core import Core
 
@@ -210,6 +211,8 @@ class Keyboard(_Device):
         self.seat = core.seat
         self.keyboard = keyboard
         self.grabbed_keys = core.grabbed_keys
+        self.repeat_delay_future: TimerHandle | None = None
+        self.repeat_rate_future: TimerHandle | None = None
 
         self.keyboard.set_repeat_info(25, 600)
         self.xkb_context = xkb.Context()
@@ -246,12 +249,26 @@ class Keyboard(_Device):
         self.seat.set_keyboard(self.keyboard)
         self.seat.keyboard_notify_modifiers(self.keyboard.modifiers)
 
+    def _on_repeat_key(self, keysyms: list[int], mods: KeyboardModifier) -> None:
+        repeat_rate = self.keyboard._ptr.repeat_info.rate
+        if self.repeat_delay_future is None or repeat_rate <= 0:
+            return
+        # when the repeat rate is set to 25 it means that we need to repeat the key 25 times per second
+        # so divide 1 by the repeat rate
+        self.repeat_rate_future = self.qtile.call_later(
+            1 / repeat_rate, self._on_repeat_key, keysyms, mods
+        )
+        for keysym in keysyms:
+            if (keysym, mods) in self.grabbed_keys:
+                if self.qtile.process_key_event(keysym, mods)[1]:
+                    return
+
     def _on_key(self, _listener: Listener, event: KeyboardKeyEvent) -> None:
         self.qtile = self.core.qtile
 
         self.core.idle.notify_activity(self.seat)
 
-        if event.state == KEY_PRESSED and not self.core.exclusive_client:
+        if not self.core.exclusive_client:
             # translate libinput keycode -> xkbcommon
             keycode = event.keycode + 8
             layout_index = lib.xkb_state_key_get_layout(self.keyboard._ptr.xkb_state, keycode)
@@ -264,11 +281,32 @@ class Keyboard(_Device):
             )
             keysyms = [xkb_keysym[0][i] for i in range(nsyms)]
             mods = self.keyboard.modifier
-            for keysym in keysyms:
-                if (keysym, mods) in self.grabbed_keys:
-                    if self.qtile.process_key_event(keysym, mods)[1]:
-                        return
+            handled = False
+            should_repeat = False
+            if event.state == KEY_PRESSED:
+                for keysym in keysyms:
+                    if (keysym, mods) in self.grabbed_keys:
+                        should_repeat = True
+                        if self.qtile.process_key_event(keysym, mods)[1]:
+                            handled = True
+                            break
 
+            repeat_delay = self.keyboard._ptr.repeat_info.delay
+            if should_repeat and repeat_delay > 0:
+                # repeat delay is the delay in ms, whereas call_later expects the delay in seconds
+                self.repeat_delay_future = self.qtile.call_later(
+                    repeat_delay / 1000, self._on_repeat_key, keysyms, mods
+                )
+            else:
+                if self.repeat_delay_future is not None:
+                    self.repeat_delay_future.cancel()
+                    self.repeat_delay_future = None
+                if self.repeat_rate_future is not None:
+                    self.repeat_rate_future.cancel()
+                    self.repeat_rate_future = None
+
+            if handled:
+                return
             if self.core.focused_internal:
                 self.core.focused_internal.process_key_press(keysym)
                 return

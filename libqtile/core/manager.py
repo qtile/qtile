@@ -311,6 +311,8 @@ class Qtile(CommandObject):
         shutdown, these are finalized and then regenerated when reloading the config.
         """
         try:
+            for widget in self.widgets_map.values():
+                widget.finalize()
             self.widgets_map.clear()
 
             # For layouts we need to finalize each clone of a layout in each group
@@ -319,7 +321,8 @@ class Qtile(CommandObject):
                     layout.finalize()
 
             for screen in self.screens:
-                screen.finalize()
+                for gap in screen.gaps:
+                    gap.finalize()
         except:  # noqa: E722
             logger.exception("exception during finalize")
         hook.clear()
@@ -419,7 +422,9 @@ class Qtile(CommandObject):
 
         for screen in self.screens:
             if screen not in screens:
-                screen.finalize()
+                for gap in screen.gaps:
+                    if isinstance(gap, bar.Bar) and gap.window:
+                        gap.finalize()
 
         self.screens = screens
 
@@ -578,9 +583,12 @@ class Qtile(CommandObject):
         label: str | None = None,
         index: int | None = None,
         screen_affinity: int | None = None,
+        persist: bool | None = False,
     ) -> bool:
         if name not in self.groups_map.keys():
-            g = _Group(name, layout, label=label, screen_affinity=screen_affinity)
+            g = _Group(
+                name, layout, label=label, screen_affinity=screen_affinity, persist=persist
+            )
             if index is None:
                 self.groups.append(g)
             else:
@@ -601,25 +609,28 @@ class Qtile(CommandObject):
         # one group per screen is needed
         if len(self.groups) == len(self.screens):
             raise ValueError("Can't delete all groups.")
+
         if name in self.groups_map.keys():
             group = self.groups_map[name]
-            if group.screen and group.screen.previous_group:
-                target = group.screen.previous_group
-            else:
-                target = group.get_previous_group()
 
-            # Find a group that's not currently on a screen to bring to the
-            # front. This will terminate because of our check above.
-            while target.screen:
-                target = target.get_previous_group()
+            # Find a group that's not currently on a screen to bring to the front.
+            target = group.get_previous_group(skip_managed=True)
+
+            # move windows to other group
             for i in list(group.windows):
                 i.togroup(target.name)
+
+            # if group to be deleted is currently active
             if self.current_group.name == name:
+                # switch to target group
                 self.current_screen.set_group(target, save_prev=False)
+
             self.groups.remove(group)
             del self.groups_map[name]
+
             hook.fire("delgroup", name)
             hook.fire("changegroup")
+
             self.update_desktops()
 
     def register_widget(self, w: _Widget) -> None:
@@ -973,7 +984,7 @@ class Qtile(CommandObject):
 
         return self._eventloop.call_soon_threadsafe(f)
 
-    def call_later(self, delay: int, func: Callable, *args: Any) -> asyncio.TimerHandle:
+    def call_later(self, delay: int | float, func: Callable, *args: Any) -> asyncio.TimerHandle:
         """Another event loop proxy, see `call_soon`."""
 
         def f() -> None:
@@ -1690,10 +1701,11 @@ class Qtile(CommandObject):
         layout: str | None = None,
         layouts: list[Layout] | None = None,
         index: int | None = None,
+        persist: bool | None = False,
     ) -> bool:
         """Add a group with the given name"""
         return self.add_group(
-            name=group, layout=layout, layouts=layouts, label=label, index=index
+            name=group, layout=layout, layouts=layouts, label=label, index=index, persist=persist
         )
 
     @expose_command()

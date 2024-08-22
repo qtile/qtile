@@ -151,12 +151,12 @@ def check_config(args):
             except CheckError:
                 valid = False
 
-    if valid:
-        print("Your config can be loaded by Qtile.")
-    else:
-        print(
-            "Your config is valid python but has type checking errors. This may result in unexpected behaviour."
-        )
+        if valid:
+            print("Your config can be loaded by Qtile.")
+        else:
+            print(
+                "Your config is valid python but has type checking errors. This may result in unexpected behaviour."
+            )
 
 
 def add_subcommand(subparsers, parents):

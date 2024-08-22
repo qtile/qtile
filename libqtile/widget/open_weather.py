@@ -27,7 +27,7 @@ from urllib.parse import urlencode
 from libqtile.widget.generic_poll_text import GenPollUrl
 
 # See documentation: https://openweathermap.org/current
-QUERY_URL = "http://api.openweathermap.org/data/2.5/weather?"
+QUERY_URL = "https://api.openweathermap.org/data/2.5/weather?"
 DEFAULT_APP_ID = "7834197c2338888258f8cb94ae14ef49"
 
 

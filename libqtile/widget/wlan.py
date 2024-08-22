@@ -29,6 +29,7 @@
 import iwlib
 
 from libqtile.log_utils import logger
+from libqtile.pangocffi import markup_escape_text
 from libqtile.widget import base
 
 
@@ -99,7 +100,9 @@ class Wlan(base.InLoopPollText):
                         return self.disconnected_message
                 else:
                     return self.disconnected_message
-            return self.format.format(essid=essid, quality=quality, percent=(quality / 70))
+            return self.format.format(
+                essid=markup_escape_text(essid), quality=quality, percent=(quality / 70)
+            )
         except EnvironmentError:
             logger.error(
                 "Probably your wlan device is switched off or "
