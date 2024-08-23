@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from types import FunctionType
     from typing import Any, Literal
 
     from libqtile.config import Group, Key, Mouse, Rule, Screen
@@ -56,7 +57,7 @@ class Config:
     dgroups_key_binder: Any
     dgroups_app_rules: list[Rule]
     follow_mouse_focus: bool
-    focus_on_window_activation: Literal["focus", "smart", "urgent", "never"]
+    focus_on_window_activation: Literal["focus", "smart", "urgent", "never"] | FunctionType
     cursor_warp: bool
     layouts: list[Layout]
     floating_layout: Layout

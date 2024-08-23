@@ -118,7 +118,7 @@ configuration variables that control specific aspects of Qtile's behavior:
       - Floating windows are kept above tiled windows (Currently x11 only. Wayland support coming soon.)
     * - ``focus_on_window_activation``
       - ``'smart'``
-      - Behavior of the _NET_ACTIVATE_WINDOW message sent by applications
+      - Behavior of the _NET_ACTIVE_WINDOW message sent by applications
 
         - urgent: urgent flag is set for the window
 
@@ -127,6 +127,11 @@ configuration variables that control specific aspects of Qtile's behavior:
         - smart: automatically focus if the window is in the current group
 
         - never: never automatically focus any window that requests it
+
+        - can also be a function which takes the window as an argument:
+            - returns True: focus window
+
+            - returns False: doesn't do anything
     * - ``follow_mouse_focus``
       - ``True``
       - Controls whether or not focus follows the mouse around as it moves

@@ -5,6 +5,7 @@ import contextlib
 import inspect
 import traceback
 from itertools import islice
+from types import FunctionType
 from typing import TYPE_CHECKING
 
 import xcffib
@@ -2147,7 +2148,11 @@ class Window(_Window, base.Window):
                 self.bring_to_front()
             else:  # XCB_EWMH_CLIENT_SOURCE_TYPE_OTHER
                 focus_behavior = self.qtile.config.focus_on_window_activation
-                if focus_behavior == "focus":
+                if (
+                    focus_behavior == "focus"
+                    or type(focus_behavior) is FunctionType
+                    and focus_behavior(self)
+                ):
                     logger.debug("Focusing window")
                     # Windows belonging to a scratchpad need to be toggled properly
                     if isinstance(self.group, ScratchPad):
