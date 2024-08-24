@@ -62,12 +62,24 @@ def test_change_state_via_message(xmanager, conn):
     assert not xmanager.c.window.info()["minimized"]
 
 
+def set_urgent(w):
+    w.urgent = True
+    hook.fire("client_urgent_hint_changed", w)
+    return False
+
+
 class UrgentConfig(BareConfig):
     focus_on_window_activation = "urgent"
 
 
 class SmartConfig(BareConfig):
     focus_on_window_activation = "smart"
+
+
+class FuncConfig(BareConfig):
+    # must be a static method here because otherwise it gets turned into a MethodType (we need a FunctionType)
+    # this is only an issue in this test and not the real config file
+    focus_on_window_activation = staticmethod(set_urgent)
 
 
 @dualmonitor
@@ -114,6 +126,24 @@ def test_urgent_hook_fire(xmanager_nospawn):
     xmanager_nospawn.terminate()
 
     assert xmanager_nospawn.hook_fired.value == 2
+
+    # test that a custom function also fires the hook
+    xmanager_nospawn.start(FuncConfig, no_spawn=True)
+
+    xmanager_nospawn.test_window("one")
+    window_info = xmanager_nospawn.c.window.info()
+    xmanager_nospawn.c.window.toscreen(1)
+
+    # send activate window message
+    ev = xcffib.xproto.ClientMessageEvent.synthetic(
+        32, window_info["id"], conn.atoms["_NET_ACTIVE_WINDOW"], data
+    )
+    conn.default_screen.root.send_event(ev, mask=xcffib.xproto.EventMask.SubstructureRedirect)
+    conn.xsync()
+
+    xmanager_nospawn.terminate()
+
+    assert xmanager_nospawn.hook_fired.value == 3
 
 
 @manager_config
