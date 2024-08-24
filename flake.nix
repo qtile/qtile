@@ -8,7 +8,7 @@
   outputs = { self, nixpkgs }: let
     supportedSystems = [
       "x86_64-linux"
-      "aarch64_linux"
+      "aarch64-linux"
     ];
 
     forAllSystems = function:
