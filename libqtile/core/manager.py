@@ -236,9 +236,10 @@ class Qtile(CommandObject):
             self.finalize()
             self.core.remove_listener()
 
-    def stop(self) -> None:
+    def stop(self, exitcode: int = 0) -> None:
         hook.fire("shutdown")
         lifecycle.behavior = lifecycle.behavior.TERMINATE
+        lifecycle.exitcode = exitcode
         self.core.graceful_shutdown()
         self._stop()
 
@@ -1442,9 +1443,16 @@ class Qtile(CommandObject):
         return dictionary
 
     @expose_command()
-    def shutdown(self) -> None:
-        """Quit Qtile"""
-        self.stop()
+    def shutdown(self, exitcode: int = 0) -> None:
+        """Quit Qtile
+
+        Parameters
+        ==========
+        exitcode :
+            Set exit status of Qtile. Can be e.g. used to make login managers
+            poweroff or restart the system. (default: 0)
+        """
+        self.stop(exitcode)
 
     @expose_command()
     def switch_groups(self, namea: str, nameb: str) -> None:
