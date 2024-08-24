@@ -6,13 +6,13 @@
   };
 
   outputs = { self, nixpkgs }: let
-    forAllSystems = [
+    supportedSystems = [
       "aarch64-darwin"
       "x86_64-darwin"
     ];
 
     forAllSystems = function:
-      nixpkgs.lib.genAttrs defaultSystems
+      nixpkgs.lib.genAttrs supportedSystems
       (system: function nixpkgs.legacyPackages.${system});
 
   in {
