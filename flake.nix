@@ -42,54 +42,7 @@
             export PYTHONPATH=$(readlink -f .):$PYTHONPATH
           '';
         };
-        common-python-deps = ps:
-          with ps; [
-            # deps for running, same as NixOS package
-            (cairocffi.override {withXcffib = true;})
-            dbus-next
-            iwlib
-            mpd2
-            psutil
-            pulsectl-asyncio
-            pygobject3
-            python-dateutil
-            pywayland
-            pywlroots
-            pyxdg
-            xcffib
-            xkbcommon
-
-            # building ffi
-            setuptools
-
-            # migrate
-            libcst
-
-            # tests
-            coverage
-            pytest
-          ];
-        common-system-deps = with pkgs; [
-          # Gdk namespaces
-          wrapGAppsHook
-          gobject-introspection
-
-          ## system deps
-          libinput
-          libxkbcommon
-          xorg.xcbutilwm
-
-          # x11 deps
-          xorg.xorgserver
-          xorg.libX11
-
-          # wayland deps
-          wayland
-          wlroots_0_17
-          # test/backend/wayland/test_window.py
-          gtk-layer-shell
-
-          # some targets scripts run
+        common-system-deps = [
           (
             pkgs.writeScriptBin "qtile-run-tests-wayland" ''
               ./scripts/ffibuild -v
@@ -107,15 +60,8 @@
       in {
         name = "default";
         value = pkgs.mkShell {
-          packages =
-            with pkgs; [
-              (python3.withPackages (
-                ps:
-                  (common-python-deps ps)
-              ))
-              pre-commit
-            ]
-            ++ common-system-deps;
+          inputsFrom = [ pkgs.qtile ];
+          packages = common-system-deps;
           inherit (common-shell) env shellHook;
         };
       }
