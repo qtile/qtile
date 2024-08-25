@@ -1,5 +1,6 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
+        - A Nix flake has been added which can be used by Nix(OS) users to update to the latest version easily
     * bugfixes
 
 Qtile 0.28.1, released 2024-08-12:
