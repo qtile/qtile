@@ -23,6 +23,7 @@
 # SOFTWARE.
 
 import os
+import sys
 import tempfile
 from pathlib import Path
 
@@ -152,7 +153,7 @@ def test_prompt(manager, monkeypatch):
     manager.c.widget["prompt"].fake_keypress("Tab")
 
     script = Path(__file__).parent / "scripts" / "window.py"
-    manager.c.spawncmd(":", aliases={"w": script.as_posix()})
+    manager.c.spawncmd(":", aliases={"w": f"{sys.executable} {script.as_posix()}"})
     manager.c.widget["prompt"].fake_keypress("w")
     manager.c.widget["prompt"].fake_keypress("Return")
 
