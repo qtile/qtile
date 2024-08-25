@@ -180,25 +180,22 @@ class XWindow(Window[xwayland.Surface]):
             self.finalize_listener(self.surface.surface.commit_event)
 
     def unhide(self) -> None:
-        if self not in self.core.pending_windows:
-            if self.group and self.group.screen:
-                # Only when mapping does the xwayland_surface have a wlr_surface that we can
-                # listen for commits on and create a tree for.
-                self.add_listener(self.surface.surface.commit_event, self._on_commit)
-                if not self.tree:
-                    self.tree = SceneTree.subsurface_tree_create(
-                        self.container, self.surface.surface
-                    )
-                    self.tree.node.set_position(self.borderwidth, self.borderwidth)
+        if self not in self.core.pending_windows and (self.group and self.group.screen):
+            # Only when mapping does the xwayland_surface have a wlr_surface that we can
+            # listen for commits on and create a tree for.
+            self.add_listener(self.surface.surface.commit_event, self._on_commit)
+            if not self.tree:
+                self.tree = SceneTree.subsurface_tree_create(self.container, self.surface.surface)
+                self.tree.node.set_position(self.borderwidth, self.borderwidth)
 
-                self.container.node.set_enabled(enabled=True)
-                # Hack: This is to fix pointer focus on xwayland dialogs
-                # We previously did bring_to_front here but then that breaks fullscreening (xwayland windows will always be on top)
-                # So we now only restack the surface
-                # This means that if the dialog is behind the xwayland toplevel (and bring front click being false), focus might break
-                # We need to fix this properly with z layering
-                self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
-                return
+            self.container.node.set_enabled(enabled=True)
+            # Hack: This is to fix pointer focus on xwayland dialogs
+            # We previously did bring_to_front here but then that breaks fullscreening (xwayland windows will always be on top)
+            # So we now only restack the surface
+            # This means that if the dialog is behind the xwayland toplevel (and bring front click being false), focus might break
+            # We need to fix this properly with z layering
+            self.surface.restack(None, 0)  # XCB_STACK_MODE_ABOVE
+            return
 
         # This is the first time this window has mapped, so we need to do some initial
         # setup.
@@ -352,12 +349,8 @@ class XWindow(Window[xwayland.Surface]):
             self.float_x = x - self.group.screen.x
             self.float_y = y - self.group.screen.y
 
-        if width < 1:
-            width = 1
-
-        if height < 1:
-            height = 1
-
+        width = max(width, 1)
+        height = max(height, 1)
         place_changed = any(
             [self.x != x, self.y != y, self._width != width, self._height != height]
         )

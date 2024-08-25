@@ -41,10 +41,10 @@ class _WinStack(_ClientList):
         self.split = autosplit
 
     def toggle_split(self):
-        self.split = False if self.split else True
+        self.split = not self.split
 
     def __str__(self):
-        return "_WinStack: %s, %s" % (self.cw, str([client.name for client in self.clients]))
+        return f"_WinStack: {self.cw}, {[client.name for client in self.clients]}"
 
     @expose_command()
     def info(self) -> dict[str, Any]:
@@ -92,7 +92,7 @@ class Stack(Layout):
         if self.num_stacks <= 0:
             # Catch stupid mistakes early and generate a useful message
             raise ValueError("num_stacks must be at least 1")
-        self.stacks = [_WinStack(autosplit=self.autosplit) for i in range(self.num_stacks)]
+        self.stacks = [_WinStack(autosplit=self.autosplit) for _ in range(self.num_stacks)]
 
     @property
     def current_stack(self):
@@ -115,7 +115,7 @@ class Stack(Layout):
     def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)
         # These are mutable
-        c.stacks = [_WinStack(autosplit=self.autosplit) for i in self.stacks]
+        c.stacks = [_WinStack(autosplit=self.autosplit) for _ in self.stacks]
         return c
 
     def _find_next(self, lst, offset):
@@ -210,12 +210,10 @@ class Stack(Layout):
                 break
         if self.stacks[current_offset].cw:
             return self.stacks[current_offset].cw
-        else:
-            n = self._find_next(
-                list(reversed(self.stacks)), len(self.stacks) - current_offset - 1
-            )
-            if n:
-                return n.cw
+        if n := self._find_next(
+            list(reversed(self.stacks)), len(self.stacks) - current_offset - 1
+        ):
+            return n.cw
         return None
 
     def configure(self, client: Window, screen_rect: ScreenRect) -> None:
@@ -229,22 +227,15 @@ class Stack(Layout):
             return
 
         if client.has_focus:
-            if self.border_focus_stack:
-                if s.split:
-                    px = self.border_focus
-                else:
-                    px = self.border_focus_stack
-            else:
-                px = self.border_focus
+            px = (
+                self.border_focus
+                if self.border_focus_stack and s.split or not self.border_focus_stack
+                else self.border_focus_stack
+            )
+        elif self.border_normal_stack and s.split or not self.border_normal_stack:
+            px = self.border_normal
         else:
-            if self.border_normal_stack:
-                if s.split:
-                    px = self.border_normal
-                else:
-                    px = self.border_normal_stack
-            else:
-                px = self.border_normal
-
+            px = self.border_normal_stack
         column_width = int(screen_rect.width / len(self.stacks))
         xoffset = screen_rect.x + i * column_width
         window_width = column_width - 2 * self.border_width
@@ -263,20 +254,19 @@ class Stack(Layout):
                 margin=self.margin,
             )
             client.unhide()
+        elif client == s.cw:
+            client.place(
+                xoffset,
+                screen_rect.y,
+                window_width,
+                screen_rect.height - 2 * self.border_width,
+                self.border_width,
+                px,
+                margin=self.margin,
+            )
+            client.unhide()
         else:
-            if client == s.cw:
-                client.place(
-                    xoffset,
-                    screen_rect.y,
-                    window_width,
-                    screen_rect.height - 2 * self.border_width,
-                    self.border_width,
-                    px,
-                    margin=self.margin,
-                )
-                client.unhide()
-            else:
-                client.hide()
+            client.hide()
 
     def get_windows(self):
         return self.clients

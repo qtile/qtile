@@ -93,21 +93,21 @@ class CryptoTicker(GenPollUrl):
         try:
             GenPollUrl._configure(self, qtile, bar)
             self.query_url = self.QUERY_URL_DICT[self.api][0]
-        except KeyError:
+        except KeyError as e:
             apis = sorted(self.QUERY_URL_DICT.keys())
             logger.error(
                 "%s is not a valid API. Use one of the list: %s.",
                 self.api,
                 apis,
             )
-            raise ConfigError("Unknown provider passed as 'api' to CryptoTicker")
+            raise ConfigError("Unknown provider passed as 'api' to CryptoTicker") from e
 
     @property
     def url(self):
         return self.query_url.format(self.crypto, self.currency)
 
     def parse(self, body):
-        variables = dict()
+        variables = {}
         variables["crypto"] = self.crypto
         variables["symbol"] = self.symbol
         variables["amount"] = self.QUERY_URL_DICT[self.api][1](body)

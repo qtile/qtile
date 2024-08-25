@@ -65,7 +65,7 @@ class WindowTabs(base._TextBox):
         for w in self.bar.screen.group.windows:
             try:
                 name = self.parse_text(w.name if w and w.name else "")
-            except:  # noqa: E722
+            except Exception:
                 logger.exception("parse_text function failed:")
                 name = w.name if w and w.name else "(unnamed)"
             state = ""

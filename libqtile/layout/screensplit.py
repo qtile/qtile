@@ -52,12 +52,11 @@ class Split:
             raise ValueError("ScreenSplit layouts cannot be nested.")
 
         if matches:
-            if isinstance(matches, list):
-                if not all(isinstance(m, _Match) for m in matches):
-                    raise ValueError("Invalid object in 'matches'.")
-            else:
+            if not isinstance(matches, list):
                 raise ValueError("'matches' must be a list of 'Match' objects.")
 
+            if not all(isinstance(m, _Match) for m in matches):
+                raise ValueError("Invalid object in 'matches'.")
         self.name = name
         self.rect = rect
         self.layout = layout
@@ -126,8 +125,8 @@ class ScreenSplit(Layout):
         for s in self.splits:
             try:
                 split_obj = Split(**s)
-            except TypeError:
-                raise ValueError("Splits must define 'name', 'rect' and 'layout'.")
+            except TypeError as e:
+                raise ValueError("Splits must define 'name', 'rect' and 'layout'.") from e
             splits.append(split_obj)
         self.splits = splits
 

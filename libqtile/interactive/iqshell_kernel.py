@@ -78,7 +78,7 @@ class QshKernel(Kernel):
             "matches": [],
             "cursor_start": 0,
             "cursor_end": cursor_pos,
-            "metadata": dict(),
+            "metadata": {},
         }
 
         if not code or code[-1] == " ":
@@ -97,7 +97,7 @@ class QshKernel(Kernel):
             "matches": sorted(matches),
             "cursor_start": start,
             "cursor_end": cursor_pos,
-            "metadata": dict(),
+            "metadata": {},
         }
 
 

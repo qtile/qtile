@@ -499,8 +499,7 @@ class TreeTab(Layout):
     def get_windows(self):
         clients = []
         for section in self._tree.children:
-            for window in section.children:
-                clients.append(window.window)
+            clients.extend(window.window for window in section.children)
         return clients
 
     @expose_command()
@@ -566,11 +565,9 @@ class TreeTab(Layout):
     @expose_command("down")
     def next(self) -> None:
         """Switch down in the window list"""
-        win = None
-        if self._focused:
-            win = self._nodes[self._focused].get_next_window()
-        if not win:
-            win = self._tree.get_first_window()
+        win = (
+            self._nodes[self._focused].get_next_window() if self._focused else None
+        ) or self._tree.get_first_window()
         if win:
             self.group.focus(win.window, False)
         self._focused = win.window if win else None
@@ -578,11 +575,9 @@ class TreeTab(Layout):
     @expose_command("up")
     def previous(self) -> None:
         """Switch up in the window list"""
-        win = None
-        if self._focused:
-            win = self._nodes[self._focused].get_prev_window()
-        if not win:
-            win = self._tree.get_last_window()
+        win = (
+            self._nodes[self._focused].get_prev_window() if self._focused else None
+        ) or self._tree.get_last_window()
         if win:
             self.group.focus(win.window, False)
         self._focused = win.window if win else None

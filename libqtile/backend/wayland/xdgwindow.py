@@ -269,12 +269,8 @@ class XdgWindow(Window[XdgSurface]):
             self.float_x = x - self.group.screen.x
             self.float_y = y - self.group.screen.y
 
-        if width < 1:
-            width = 1
-
-        if height < 1:
-            height = 1
-
+        width = max(width, 1)
+        height = max(height, 1)
         geom = self.surface.get_geometry()
         geom_changed = any(
             [

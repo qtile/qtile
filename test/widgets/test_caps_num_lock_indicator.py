@@ -62,8 +62,7 @@ class MockCapsNumLockIndicator:
 
         if cmd[1:] == ["q"]:
             track = cls.info[cls.index]
-            output = "\n".join(track)
-            return output
+            return "\n".join(track)
 
 
 def no_op(*args, **kwargs):

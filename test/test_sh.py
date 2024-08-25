@@ -122,7 +122,7 @@ def test_complete(manager):
 
     assert sh._complete("cd l", "l") == ["layout/"]
     assert sh._complete("cd layout/", "layout/") == [
-        "layout/" + x for x in ["group", "window", "screen", "0"]
+        f"layout/{x}" for x in ["group", "window", "screen", "0"]
     ]
     assert sh._complete("cd layout/", "layout/g") == ["layout/group/"]
 

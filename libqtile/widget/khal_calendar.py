@@ -80,11 +80,11 @@ class KhalCalendar(base.ThreadPoolText):
 
         # parse khal output for the next seven days
         # and get the next event
-        args = ["khal", "list", "now", str(self.lookahead) + "d"]
+        args = ["khal", "list", "now", f"{str(self.lookahead)}d"]
         cal = subprocess.Popen(args, stdout=subprocess.PIPE)
         output = cal.communicate()[0].decode("utf-8")
         if output == "No events\n":
-            return "No appointments in next " + str(self.lookahead) + " days"
+            return f"No appointments in next {str(self.lookahead)} days"
         output = output.split("\n")
 
         date = "unknown"

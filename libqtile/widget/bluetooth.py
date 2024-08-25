@@ -122,9 +122,9 @@ class BluetoothDevice(_BluetoothBase):
         """Helper method to call appropriate method based on device status."""
         if self.connected:
             await self.disconnect()
-        elif self.paired and not self.connected:
+        elif self.paired:
             await self.connect()
-        elif not self.paired:
+        else:
             await self.pair_and_connect()
 
     @property
@@ -202,7 +202,7 @@ class BluetoothDevice(_BluetoothBase):
 
         if self._connected:
             self._status = DeviceState.CONNECTED
-        elif self._paired and not self._connected:
+        elif self._paired:
             self._status = DeviceState.PAIRED
         else:
             self._status = DeviceState.UNPAIRED
@@ -407,8 +407,7 @@ class Bluetooth(base._TextBox, base.MarginMixin):
     async def get_proxy(self, path):
         """Provides proxy object after introspecting the given path."""
         device_introspection = await self.bus.introspect(BLUEZ_SERVICE, path)
-        proxy = self.bus.get_proxy_object(BLUEZ_SERVICE, path, device_introspection)
-        return proxy
+        return self.bus.get_proxy_object(BLUEZ_SERVICE, path, device_introspection)
 
     async def _get_managed_objects(self):
         """
@@ -569,11 +568,10 @@ class Bluetooth(base._TextBox, base.MarginMixin):
             # set device.
             if not self.device_found and self.device is not None:
                 for i, (obj, _) in enumerate(self._lines):
-                    if isinstance(obj, BluetoothDevice):
-                        if self.device in obj.path:
-                            self._line_index = i
-                            self.device_found = True
-                            break
+                    if isinstance(obj, BluetoothDevice) and self.device in obj.path:
+                        self._line_index = i
+                        self.device_found = True
+                        break
 
             self.show_line()
         else:

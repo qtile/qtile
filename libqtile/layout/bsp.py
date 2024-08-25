@@ -45,16 +45,14 @@ class _BspNode:
     def __iter__(self) -> Generator[_BspNode, None, None]:
         yield self
         for child in self.children:
-            for c in child:
-                yield c
+            yield from child
 
     def clients(self) -> Generator[Window, None, None]:
         if self.client:
             yield self.client
         else:
             for child in self.children:
-                for c in child.clients():
-                    yield c
+                yield from child.clients()
 
     def _shortest(self, length: int) -> tuple[_BspNode, int]:
         if len(self.children) == 0:
@@ -79,7 +77,7 @@ class _BspNode:
         self.children[1 - idx].client = self.client
         self.children[idx].client = client
         self.client = None
-        self.split_horizontal = True if self.w > self.h * ratio else False
+        self.split_horizontal = self.w > self.h * ratio
         return self.children[idx]
 
     def remove(self, child: _BspNode) -> _BspNode:
@@ -218,18 +216,18 @@ class Bsp(Layout):
         self.current = node.insert(client, int(self.lower_right), self.ratio)
 
     def remove(self, client):
-        node = self.get_node(client)
-        if node:
-            if node.parent:
-                node = node.parent.remove(node)
-                newclient = next(node.clients(), None)
-                if newclient is None:
-                    self.current = self.root
-                else:
-                    self.current = self.get_node(newclient)
-                return newclient
-            node.client = None
-            self.current = self.root
+        if not (node := self.get_node(client)):
+            return
+        if node.parent:
+            node = node.parent.remove(node)
+            newclient = next(node.clients(), None)
+            if newclient is None:
+                self.current = self.root
+            else:
+                self.current = self.get_node(newclient)
+            return newclient
+        node.client = None
+        self.current = self.root
 
     def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         self.root.calc_geom(screen_rect.x, screen_rect.y, screen_rect.width, screen_rect.height)

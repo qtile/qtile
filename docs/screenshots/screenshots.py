@@ -40,14 +40,14 @@ class Client:
             self.color += 1
         if isinstance(color, int):
             color = Client.COLORS[color]
-        self.client.spawn("xterm +ls -hold -e printf '\e]11;{}\007'".format(color))  # noqa: W605
+        self.client.spawn(rf"xterm +ls -hold -e printf '\e]11;{color}\007'")
 
     def prepare_layout(self, layout, windows, commands=None):
         # set selected layout
         self.client.group.setlayout(layout)
 
         # spawn windows
-        for i in range(windows):
+        for _ in range(windows):
             self.spawn_window()
             time.sleep(0.05)
 
@@ -89,9 +89,9 @@ class Screenshooter:
 
     def shoot(self, numbered=True, compress="lossless"):
         if numbered:
-            output_path = "{}.{}.png".format(self.output_prefix, self.number)
+            output_path = f"{self.output_prefix}.{self.number}.png"
         else:
-            output_path = "{}.png".format(self.output_prefix)
+            output_path = f"{self.output_prefix}.png"
         thumbnail_path = output_path.replace(".png", "-thumb.png")
 
         # take screenshot with scrot
@@ -141,12 +141,7 @@ class Screenshooter:
 
         # last screenshot lasts two seconds in the gif, to see when the loop ends
         animate_command.extend(
-            [
-                "-delay",
-                "2x1",
-                animate_command.pop(),
-                "{}.gif".format(self.output_prefix),
-            ]
+            ["-delay", "2x1", animate_command.pop(), f"{self.output_prefix}.gif"]
         )
 
         subprocess.call(animate_command)

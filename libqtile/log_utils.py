@@ -71,9 +71,9 @@ class ColorFormatter(Formatter):
         )
         for color, value in self.colors.items():
             message = (
-                message.replace("$" + color, self.color_seq % (value + 30))
-                .replace("$BG" + color, self.color_seq % (value + 40))
-                .replace("$BG-" + color, self.color_seq % (value + 40))
+                message.replace(f"${color}", self.color_seq % (value + 30))
+                .replace(f"$BG{color}", self.color_seq % (value + 40))
+                .replace(f"$BG-{color}", self.color_seq % (value + 40))
             )
         return message + self.reset_seq
 

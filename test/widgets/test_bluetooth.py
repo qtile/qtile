@@ -253,7 +253,7 @@ def widget(monkeypatch):
 @pytest.fixture
 def bluetooth_manager(request, widget, dbus_thread, manager_nospawn):
     class BluetoothConfig(BareConfig):
-        screens = [Screen(top=Bar([widget(**getattr(request, "param", dict()))], 20))]
+        screens = [Screen(top=Bar([widget(**getattr(request, "param", {}))], 20))]
 
     manager_nospawn.start(BluetoothConfig)
 

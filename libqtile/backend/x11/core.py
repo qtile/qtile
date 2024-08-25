@@ -482,12 +482,12 @@ class Core(base.Core):
         if isinstance(key.key, str):
             keysym = xcbq.keysyms.get(key.key.lower())
             if not keysym:
-                raise utils.QtileError("Unknown keysym: %s" % key.key)
+                raise utils.QtileError(f"Unknown keysym: {key.key}")
 
         else:
             keysym = self.conn.code_to_syms[key.key][0]
             if not keysym:
-                raise utils.QtileError("Unknown keycode: %s" % key.key)
+                raise utils.QtileError(f"Unknown keycode: {key.key}")
 
         modmask = xcbq.translate_masks(key.modifiers)
 
@@ -779,15 +779,14 @@ class Core(base.Core):
         win = self.qtile.windows_map.get(event.window)
 
         if win and getattr(win, "group", None):
-            try:
+            # In case xcffib.xproto.WindowError occurs,
+            # this means that the window has probably been destroyed,
+            # but we haven't yet seen the DestroyNotify (it is likely
+            # next in the queue). So, we just let these errors pass
+            # since the window is dead.
+            with contextlib.suppress(xcffib.xproto.WindowError):
                 win.hide()
                 win.state = window.WithdrawnState  # type: ignore
-            except xcffib.xproto.WindowError:
-                # This means that the window has probably been destroyed,
-                # but we haven't yet seen the DestroyNotify (it is likely
-                # next in the queue). So, we just let these errors pass
-                # since the window is dead.
-                pass
             # Clear these atoms as per spec
             win.window.conn.conn.core.DeleteProperty(
                 win.wid, win.window.conn.atoms["_NET_WM_STATE"]
@@ -868,6 +867,7 @@ class Core(base.Core):
                 window.bring_to_front()
 
             try:
+                # probably clicked an internal window
                 if window.group.screen is not qtile.current_screen:
                     qtile.focus_screen(window.group.screen.index, warp=False)
                 qtile.current_group.focus(window, False)
@@ -904,11 +904,9 @@ class Core(base.Core):
 
         # Give the windows a chance to shut down nicely.
         for pid in pids:
-            try:
+            # in case of an OSError, it might have died recently
+            with contextlib.suppress(OSError):
                 os.kill(pid, signal.SIGTERM)
-            except OSError:
-                # might have died recently
-                pass
 
         def still_alive(pid):
             # most pids will not be children, so we can't use wait()

@@ -242,9 +242,12 @@ class RatioTile(_SimpleLayoutBase):
         if not self.last_screen or self.last_screen != screen:
             self.last_screen = screen
             self.dirty = True
-        if self.last_size and not self.dirty:
-            if screen.width != self.last_size[0] or screen.height != self.last_size[1]:
-                self.dirty = True
+        if (
+            self.last_size
+            and not self.dirty
+            and (screen.width != self.last_size[0] or screen.height != self.last_size[1])
+        ):
+            self.dirty = True
         if self.dirty:
             gi = GridInfo(self.ratio, len(self.clients), screen.width, screen.height)
             self.last_size = (screen.width, screen.height)

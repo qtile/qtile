@@ -90,9 +90,11 @@ def no_op(*args, **kwargs):
 
 @pytest.mark.parametrize("widget_class,kwargs", parameters)
 def test_widget_init_config(manager_nospawn, minimal_conf_noscreen, widget_class, kwargs):
-    if widget_class in exclusive_backend:
-        if exclusive_backend[widget_class] != manager_nospawn.backend.name:
-            pytest.skip("Unsupported backend")
+    if (
+        widget_class in exclusive_backend
+        and exclusive_backend[widget_class] != manager_nospawn.backend.name
+    ):
+        pytest.skip("Unsupported backend")
 
     widget = widget_class(**kwargs)
     widget.draw = no_op
@@ -124,9 +126,11 @@ def test_widget_init_config(manager_nospawn, minimal_conf_noscreen, widget_class
 def test_widget_init_config_vertical_bar(
     manager_nospawn, minimal_conf_noscreen, widget_class, kwargs
 ):
-    if widget_class in exclusive_backend:
-        if exclusive_backend[widget_class] != manager_nospawn.backend.name:
-            pytest.skip("Unsupported backend")
+    if (
+        widget_class in exclusive_backend
+        and exclusive_backend[widget_class] != manager_nospawn.backend.name
+    ):
+        pytest.skip("Unsupported backend")
 
     widget = widget_class(**kwargs)
     widget.draw = no_op

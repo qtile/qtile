@@ -203,13 +203,12 @@ class _Widget(CommandObject, configurable.Configurable):
         return self.offsety
 
     def _test_orientation_compatibility(self, horizontal):
-        if horizontal:
-            if not self.orientations & ORIENTATION_HORIZONTAL:
-                raise confreader.ConfigError(
-                    self.__class__.__name__
-                    + " is not compatible with the orientation of the bar."
-                )
-        elif not self.orientations & ORIENTATION_VERTICAL:
+        if (
+            horizontal
+            and not self.orientations & ORIENTATION_HORIZONTAL
+            or not horizontal
+            and not self.orientations & ORIENTATION_VERTICAL
+        ):
             raise confreader.ConfigError(
                 self.__class__.__name__ + " is not compatible with the orientation of the bar."
             )
@@ -393,7 +392,7 @@ class _Widget(CommandObject, configurable.Configurable):
                 create_task(method)
             else:
                 method(*method_args)
-        except:  # noqa: E722
+        except Exception:
             logger.exception("got exception from widget timer")
 
     def create_mirror(self):
@@ -517,7 +516,7 @@ class _TextBox(_Widget):
     @text.setter
     def text(self, value):
         if len(value) > self.max_chars > 0:
-            value = value[: self.max_chars] + "…"
+            value = f"{value[:self.max_chars]}…"
         self._text = value
         if self.layout:
             self.layout.text = self.formatted_text
@@ -604,19 +603,17 @@ class _TextBox(_Widget):
             self._should_scroll = False
 
     def calculate_length(self):
-        if self.text:
-            if self.bar.horizontal:
-                return min(self.layout.width, self.bar.width) + self.actual_padding * 2
-            else:
-                return min(self.layout.width, self.bar.height) + self.actual_padding * 2
-        else:
+        if not self.text:
             return 0
+        if self.bar.horizontal:
+            return min(self.layout.width, self.bar.width) + self.actual_padding * 2
+        else:
+            return min(self.layout.width, self.bar.height) + self.actual_padding * 2
 
     def can_draw(self):
-        can_draw = (
+        return (
             self.layout is not None and not self.layout.finalized() and self.offsetx is not None
         )  # if the bar hasn't placed us yet
-        return can_draw
 
     def draw(self):
         if not self.can_draw():
@@ -937,8 +934,8 @@ class Mirror(_Widget):
     def __init__(self, reflection, **config):
         _Widget.__init__(self, reflection.length, **config)
         self.reflects = reflection
-        self._length = 0
         self.length_type = self.reflects.length_type
+        self._length = 0
         if self.length_type is bar.STATIC:
             self._length = self.reflects._length
 

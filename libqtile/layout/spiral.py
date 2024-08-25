@@ -160,9 +160,12 @@ class Spiral(_SimpleLayoutBase):
             self.last_screen = screen
             self.dirty = True
 
-        if self.last_size and not self.dirty:
-            if screen.width != self.last_size[0] or screen.height != self.last_size[1]:
-                self.dirty = True
+        if (
+            self.last_size
+            and not self.dirty
+            and (screen.width != self.last_size[0] or screen.height != self.last_size[1])
+        ):
+            self.dirty = True
 
         if self.dirty:
             self.layout_info = self.get_spiral(screen.x, screen.y, screen.width, screen.height)

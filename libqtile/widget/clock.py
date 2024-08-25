@@ -87,9 +87,7 @@ class Clock(base.InLoopPollText):
                     " of these libraries, or give it a"
                     " datetime.tzinfo instance."
                 )
-        elif timezone is None:
-            pass
-        else:
+        elif timezone is not None:
             logger.warning("Invalid timezone value %s.", timezone)
 
         return None

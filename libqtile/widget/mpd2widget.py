@@ -286,7 +286,7 @@ class Mpd2(base.ThreadPoolText):
         song_info["fulltime"] = song_info["time"]
         del song_info["time"]
 
-        song_info.update(status)
+        song_info |= status
         if song_info["updating_db"] == self.undefined_value:
             song_info["updating_db"] = "0"
         if not callable(self.prepare_status["repeat"]):

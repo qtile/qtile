@@ -122,7 +122,7 @@ def rgb(x: ColorType) -> tuple[float, float, float, float]:
             x = x[1:]
         if "." in x:
             x, alpha_str = x.split(".")
-            alpha = float("0." + alpha_str)
+            alpha = float(f"0.{alpha_str}")
         else:
             alpha = 1.0
         if len(x) not in (3, 6, 8):
@@ -131,7 +131,7 @@ def rgb(x: ColorType) -> tuple[float, float, float, float]:
             # Multiplying by 17: 0xA * 17 = 0xAA etc.
             vals = tuple(int(i, 16) * 17 for i in x)
         else:
-            vals = tuple(int(i, 16) for i in (x[0:2], x[2:4], x[4:6]))
+            vals = tuple(int(i, 16) for i in (x[:2], x[2:4], x[4:6]))
         if len(x) == 8:
             alpha = int(x[6:8], 16) / 255.0
         vals += (alpha,)  # type: ignore
@@ -172,7 +172,7 @@ def is_valid_colors(color: ColorsType) -> bool:
     if not isinstance(color, list):
         color = [color]
     try:
-        list(rgb(c) for c in color)
+        [rgb(c) for c in color]
         return True
     except (ValueError, TypeError):
         return False
@@ -228,7 +228,7 @@ def describe_attributes(obj: Any, attrs: list[str], func: Callable = lambda x: x
     for attr in attrs:
         value = getattr(obj, attr, None)
         if func(value):
-            pairs.append("%s=%s" % (attr, value))
+            pairs.append(f"{attr}={value}")
 
     return ", ".join(pairs)
 

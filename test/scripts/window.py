@@ -156,7 +156,10 @@ if __name__ == "__main__":
     win = Gtk.Window(title=title)
     win.set_default_size(100, 100)
 
-    if window_type == "notification":
+    if window_type == "normal":
+        win.set_type_hint(Gdk.WindowTypeHint.NORMAL)
+
+    elif window_type == "notification":
         if os.environ["GDK_BACKEND"] == "wayland":
             try:
                 gi.require_version("GtkLayerShell", "0.1")
@@ -168,9 +171,6 @@ if __name__ == "__main__":
 
         else:
             win.set_type_hint(Gdk.WindowTypeHint.NOTIFICATION)
-
-    elif window_type == "normal":
-        win.set_type_hint(Gdk.WindowTypeHint.NORMAL)
 
     if sni:
         bus = PatchedMessageBus().connect_sync()

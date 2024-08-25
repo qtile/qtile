@@ -29,7 +29,7 @@ from libqtile.widget import plasma
 def plasma_manager(manager_nospawn, request):
     class PlasmaConfig(Config):
         layouts = [layout.Plasma()]
-        screens = [Screen(top=Bar([plasma.Plasma(**getattr(request, "param", dict()))], 30))]
+        screens = [Screen(top=Bar([plasma.Plasma(**getattr(request, "param", {}))], 30))]
 
     manager_nospawn.start(PlasmaConfig)
 

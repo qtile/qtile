@@ -31,12 +31,7 @@ def has_deps(backend: str) -> list[str]:
     if backend not in CORES:
         raise QtileError(f"Backend {backend} does not exist")
 
-    not_found = []
-    for dep in CORES[backend]:
-        if not importlib.util.find_spec(dep):
-            not_found.append(dep)
-
-    return not_found
+    return [dep for dep in CORES[backend] if not importlib.util.find_spec(dep)]
 
 
 def get_core(backend: str, *args: Any) -> Core:

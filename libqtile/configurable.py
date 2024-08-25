@@ -45,7 +45,7 @@ class Configurable:
             return value
         else:
             cname = self.__class__.__name__
-            raise AttributeError("%s has no attribute: %s" % (cname, name))
+            raise AttributeError(f"{cname} has no attribute: {name}")
 
     def _find_default(self, name):
         """Returns a tuple (found, value)"""
@@ -66,7 +66,7 @@ class ExtraFallback:
 
     def __init__(self, name, fallback):
         self.name = name
-        self.hidden_attribute = "_" + name
+        self.hidden_attribute = f"_{name}"
         self.fallback = fallback
 
     def __get__(self, instance, owner=None):

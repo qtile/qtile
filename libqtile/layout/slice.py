@@ -297,7 +297,7 @@ class Slice(Layout):
         return cmds
 
     def get_windows(self):
-        clients = list()
+        clients = []
         for layout in self._get_layouts():
             if layout.get_windows() is not None:
                 clients.extend(layout.get_windows())

@@ -130,22 +130,20 @@ class Floating(Layout):
                 win.maximized = True
             elif win.fullscreen:
                 win.fullscreen = True
-            else:
-                # If the window hasn't been floated before, it will be configured in
-                # .configure()
-                if win.float_x is not None and win.float_y is not None:
-                    # By default, place window at same offset from top corner
-                    new_x = new_screen.x + win.float_x
-                    new_y = new_screen.y + win.float_y
-                    # make sure window isn't off screen left/right...
-                    new_x = min(new_x, new_screen.x + new_screen.width - win.width)
-                    new_x = max(new_x, new_screen.x)
-                    # and up/down
-                    new_y = min(new_y, new_screen.y + new_screen.height - win.height)
-                    new_y = max(new_y, new_screen.y)
+            # If the window hasn't been floated before, it will be configured in
+            # .configure()
+            elif win.float_x is not None and win.float_y is not None:
+                new_y = new_screen.y + win.float_y
+                new_x = new_screen.x + win.float_x
+                # make sure window isn't off screen left/right...
+                new_x = min(new_x, new_screen.x + new_screen.width - win.width)
+                new_x = max(new_x, new_screen.x)
+                # and up/down
+                new_y = min(new_y, new_screen.y + new_screen.height - win.height)
+                new_y = max(new_y, new_screen.y)
 
-                    win.x = new_x
-                    win.y = new_y
+                win.x = new_x
+                win.y = new_y
             win.group = new_screen.group
 
     def focus_first(self, group=None):
@@ -304,11 +302,10 @@ class Floating(Layout):
 
     @expose_command()
     def info(self) -> dict[str, Any]:
-        d = dict(
+        return dict(
             name=self.name,
             clients=[c.name for c in self.clients],
         )
-        return d
 
     @expose_command()
     def next(self) -> None:

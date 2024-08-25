@@ -254,7 +254,7 @@ class MaskMap:
                     values.append(getattr(val, "_maskvalue", val))
                 del kwargs[s]
         if kwargs:
-            raise ValueError("Unknown mask names: %s" % list(kwargs.keys()))
+            raise ValueError(f"Unknown mask names: {list(kwargs.keys())}")
         return mask, values
 
 
@@ -357,9 +357,8 @@ class Screen(_Wrapper):
             return
 
         for i in allowed:
-            if i.depth == depth:
-                if i.visuals:
-                    return i.visuals[0]
+            if i.depth == depth and i.visuals:
+                return i.visuals[0]
 
 
 class Colormap:
@@ -483,7 +482,7 @@ class Connection:
     def pseudoscreens(self):
         if hasattr(self, "xinerama"):
             pseudoscreens = []
-            for i, s in enumerate(self.xinerama.query_screens()):
+            for s in self.xinerama.query_screens():
                 scr = ScreenRect(
                     s.x_org,
                     s.y_org,
@@ -595,9 +594,7 @@ class Connection:
         return self.conn.get_setup()
 
     def extensions(self):
-        return set(
-            i.name.to_string().lower() for i in self.conn.core.ListExtensions().reply().names
-        )
+        return {i.name.to_string().lower() for i in self.conn.core.ListExtensions().reply().names}
 
     def fixup_focus(self):
         """
@@ -767,11 +764,7 @@ def get_keysym(key: str) -> int:
 
 
 def translate_modifiers(mask: int) -> list[str]:
-    r = []
-    for k, v in ModMasks.items():
-        if mask & v:
-            r.append(k)
-    return r
+    return [k for k, v in ModMasks.items() if mask & v]
 
 
 def translate_masks(modifiers: list[str]) -> int:

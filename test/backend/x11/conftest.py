@@ -86,7 +86,7 @@ class Xephyr:
         """
         # get a new display
         display, self.display_file = xcffib.testing.find_display()
-        self.display = ":{}".format(display)
+        self.display = f":{display}"
 
         # build up arguments
         args = [
@@ -96,19 +96,18 @@ class Xephyr:
             self.display,
             "-ac",
             "-screen",
-            "{}x{}".format(WIDTH, HEIGHT),
+            f"{WIDTH}x{HEIGHT}",
         ]
         if self.outputs == 2:
             args.extend(
                 [
                     "-origin",
-                    "%s,0" % self.xoffset,
+                    f"{self.xoffset},0",
                     "-screen",
-                    "%sx%s" % (SECOND_WIDTH, SECOND_HEIGHT),
+                    f"{SECOND_WIDTH}x{SECOND_HEIGHT}",
+                    "+xinerama",
                 ]
             )
-            args.extend(["+xinerama"])
-
         self.proc = subprocess.Popen(args)
 
         if can_connect_x11(self.display, ok=lambda: self.proc.poll() is None):
@@ -137,11 +136,9 @@ class Xephyr:
         self.proc = None
 
         # clean up the lock file for the display we allocated
-        try:
+        with contextlib.suppress(OSError):
             self.display_file.close()
             os.remove(xcffib.testing.lock_path(int(self.display[1:])))
-        except OSError:
-            pass
 
 
 @contextlib.contextmanager

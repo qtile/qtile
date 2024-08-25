@@ -147,7 +147,7 @@ class Cmus(base.ThreadPoolText):
                 if line.startswith("set"):
                     break
                 for data in info:
-                    match = data + " "
+                    match = f"{data} "
                     if match in line:
                         index = line.index(data)
                         if index < 5:

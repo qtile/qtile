@@ -404,7 +404,7 @@ class Node:
             return
         nodes_left = nodes[:]
         space_left = space
-        if space < occupied:
+        if space_left < occupied:
             for node in nodes:
                 if node.min_size_bound != node.min_size:
                     continue
@@ -615,8 +615,8 @@ class Node:
         restorables = self.root.restorables
         try:
             parent, idx, sizes, fixed, flip = restorables[node.payload]
-        except KeyError:
-            raise NotRestorableError()  # pylint: disable=raise-missing-from
+        except KeyError as e:
+            raise NotRestorableError() from e
         if parent not in self.root:
             # Don't try to restore if parent is not part of the tree anymore
             raise NotRestorableError()
@@ -883,17 +883,9 @@ class Plasma(Layout):
             return True
 
         if self.add_mode is not None:
-            if self.add_mode & AddMode.HORIZONTAL:
-                return True
-            else:
-                return False
-
+            return bool(self.add_mode & AddMode.HORIZONTAL)
         if self.focused_node.parent is None:
-            if self.focused_node.orient is Orient.HORIZONTAL:
-                return True
-            else:
-                return False
-
+            return self.focused_node.orient is Orient.HORIZONTAL
         return self.focused_node.parent.horizontal
 
     @property
@@ -902,10 +894,7 @@ class Plasma(Layout):
 
     @property
     def split(self):
-        if self.add_mode is not None and self.add_mode & AddMode.SPLIT:
-            return True
-
-        return False
+        return bool(self.add_mode is not None and self.add_mode & AddMode.SPLIT)
 
     @expose_command
     def info(self):
@@ -925,11 +914,7 @@ class Plasma(Layout):
         return clone
 
     def get_windows(self):
-        clients = []
-        for leaf in self.root.all_leafs:
-            if leaf.payload is not None:
-                clients.append(leaf.payload)
-        return clients
+        return [leaf.payload for leaf in self.root.all_leafs if leaf.payload is not None]
 
     def add_client(self, client):
         new = Node(client)

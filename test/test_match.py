@@ -29,7 +29,7 @@ from libqtile.confreader import Config
 @pytest.fixture(scope="function")
 def manager(manager_nospawn, request):
     class MatchConfig(Config):
-        rules = getattr(request, "param", list())
+        rules = getattr(request, "param", [])
         if not isinstance(rules, (list, tuple)):
             rules = [rules]
 

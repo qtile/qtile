@@ -32,17 +32,14 @@ socket_path = tempfile.NamedTemporaryFile().name
 
 def run_qtile(backend):
     cmd = os.path.join(repo_path, "bin/qtile")
-    args = [cmd, "start", "-s", socket_path]
-    args.extend(["-b", backend.name])
-
+    args = [cmd, "start", "-s", socket_path, *["-b", backend.name]]
     env = os.environ.copy()
     if backend.name == "wayland":
-        env.update(backend.env)
+        env |= backend.env
 
     proc = subprocess.Popen(args, env=env, stdout=subprocess.PIPE)
     out, err = proc.communicate(timeout=10)
-    exitcode = proc.returncode
-    return exitcode
+    return proc.returncode
 
 
 def stop_qtile(code):
@@ -52,8 +49,7 @@ def stop_qtile(code):
         args.extend(["-a", str(code)])
     proc = subprocess.Popen(args, stdout=subprocess.PIPE)
     proc.communicate(timeout=10)
-    exitcode = proc.returncode
-    return exitcode
+    return proc.returncode
 
 
 def deferred_stop(code=0):

@@ -700,9 +700,8 @@ class Core(base.Core, wlrq.HasListeners):
             self._pressed_button_count += 1
             if self._implicit_grab is None:
                 found = self._focus_by_click()
-        else:
-            if self._pressed_button_count > 0:  # sanity check
-                self._pressed_button_count -= 1
+        elif self._pressed_button_count > 0:  # sanity check
+            self._pressed_button_count -= 1
 
         if self._implicit_grab is not None:
             self.seat.pointer_notify_button(event.time_msec, event.button, event.button_state)
@@ -748,11 +747,13 @@ class Core(base.Core, wlrq.HasListeners):
             event.unaccel_delta_y,
         )
 
-        if self.active_pointer_constraint:
-            if not self.active_pointer_constraint.rect.contains_point(
+        if (
+            self.active_pointer_constraint
+            and not self.active_pointer_constraint.rect.contains_point(
                 self.cursor.x + dx, self.cursor.y + dy
-            ):
-                return
+            )
+        ):
+            return
 
         self.cursor.move(dx, dy)
 
@@ -886,9 +887,7 @@ class Core(base.Core, wlrq.HasListeners):
         ):
             self.focus_window(None)
 
-        # If another client has pointer focus, unfocus that too.
-        found = self._under_pointer()
-        if found:
+        if found := self._under_pointer():
             win, _, _, _ = found
 
             # If we have a client who exclusively gets input, no other client's
@@ -926,15 +925,14 @@ class Core(base.Core, wlrq.HasListeners):
                     return
                 self._blanked_outputs.remove(output)
 
-        else:
-            if wlr_output.enabled:
-                wlr_output.enable(enable=False)
-                try:
-                    wlr_output.commit()
-                except RuntimeError:
-                    logger.warning("Couldn't disable output %s", wlr_output.name)
-                    return
-                self._blanked_outputs.add(output)
+        elif wlr_output.enabled:
+            wlr_output.enable(enable=False)
+            try:
+                wlr_output.commit()
+            except RuntimeError:
+                logger.warning("Couldn't disable output %s", wlr_output.name)
+                return
+            self._blanked_outputs.add(output)
 
     def _on_new_layer_surface(self, _listener: Listener, layer_surface: LayerSurfaceV1) -> None:
         logger.debug("Signal: layer_shell new_surface_event")
@@ -959,8 +957,7 @@ class Core(base.Core, wlrq.HasListeners):
 
         # Set the default XWayland cursor
         if xcursor := self._cursor_manager.get_xcursor("default"):
-            image = next(xcursor.images, None)
-            if image:
+            if image := next(xcursor.images, None):
                 self._xwayland.set_cursor(
                     image._ptr.buffer,
                     image._ptr.width * 4,
@@ -988,8 +985,7 @@ class Core(base.Core, wlrq.HasListeners):
             logger.debug("Ignoring focus request (focus_on_window_activation='never')")
             return
 
-        surface = event.surface
-        if surface:
+        if surface := event.surface:
             xdg_surface = XdgSurface.try_from_surface(surface)
             if xdg_surface is not None:
                 if win := xdg_surface.data:
@@ -1055,8 +1051,7 @@ class Core(base.Core, wlrq.HasListeners):
             self.qtile.process_button_motion(cx_int, cy_int)
 
         if len(self.get_enabled_outputs()) > 1:
-            current_wlr_output = self.output_layout.output_at(cx, cy)
-            if current_wlr_output:
+            if current_wlr_output := self.output_layout.output_at(cx, cy):
                 current_output = current_wlr_output.data
                 if self._current_output is not current_output:
                     self._current_output = current_output
@@ -1068,26 +1063,23 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _focus_pointer(self, cx: int, cy: int, motion: int | None = None) -> None:
         assert self.qtile is not None
-        found = self._under_pointer()
-
-        if found:
+        if found := self._under_pointer():
             win, surface, sx, sy = found
 
-            if self.exclusive_client:
-                # If we have a client who exclusively gets input, no other client's
-                # surfaces are allowed to get pointer input.
-                if isinstance(win, base.Internal) or not win.belongs_to_client(
-                    self.exclusive_client
-                ):
-                    # Moved to an internal or unrelated window
-                    if self._hovered_window is not win:
-                        logger.debug(
-                            "Pointer focus withheld from window not owned by exclusive client."
-                        )
-                        self.cursor.set_xcursor(self._cursor_manager, "default")
-                        self.seat.pointer_notify_clear_focus()
-                        self._hovered_window = win
-                    return
+            # If we have a client who exclusively gets input, no other client's
+            # surfaces are allowed to get pointer input.
+            if self.exclusive_client and (
+                isinstance(win, base.Internal) or not win.belongs_to_client(self.exclusive_client)
+            ):
+                # Moved to an internal or unrelated window
+                if self._hovered_window is not win:
+                    logger.debug(
+                        "Pointer focus withheld from window not owned by exclusive client."
+                    )
+                    self.cursor.set_xcursor(self._cursor_manager, "default")
+                    self.seat.pointer_notify_clear_focus()
+                    self._hovered_window = win
+                return
 
             if isinstance(win, window.Internal):
                 if self._hovered_window is win:
@@ -1119,12 +1111,11 @@ class Core(base.Core, wlrq.HasListeners):
                 self.seat.pointer_notify_enter(surface, sx, sy)
                 if motion is not None:
                     self.seat.pointer_notify_motion(motion, sx, sy)
-            else:
-                # The pointer is on the border of a client's window
-                if self.seat.pointer_state.focused_surface:
-                    # We just moved out of a client's surface
-                    self.cursor.set_xcursor(self._cursor_manager, "default")
-                    self.seat.pointer_notify_clear_focus()
+            # The pointer is on the border of a client's window
+            elif self.seat.pointer_state.focused_surface:
+                # We just moved out of a client's surface
+                self.cursor.set_xcursor(self._cursor_manager, "default")
+                self.seat.pointer_notify_clear_focus()
 
             if win is not self.qtile.current_window:
                 if self._hovered_window is not win:
@@ -1147,20 +1138,19 @@ class Core(base.Core, wlrq.HasListeners):
 
             self._hovered_window = win
 
-        else:
-            # There is no window under the pointer
-            if self._hovered_window:
-                if isinstance(self._hovered_window, window.Internal):
-                    # We just moved out of an Internal
-                    self._hovered_window.process_pointer_leave(
-                        cx - self._hovered_window.x,
-                        cy - self._hovered_window.y,
-                    )
-                else:
-                    # We just moved out of a Window or Static
-                    self.cursor.set_xcursor(self._cursor_manager, "default")
-                    self.seat.pointer_notify_clear_focus()
-                self._hovered_window = None
+        # There is no window under the pointer
+        elif self._hovered_window:
+            if isinstance(self._hovered_window, window.Internal):
+                # We just moved out of an Internal
+                self._hovered_window.process_pointer_leave(
+                    cx - self._hovered_window.x,
+                    cy - self._hovered_window.y,
+                )
+            else:
+                # We just moved out of a Window or Static
+                self.cursor.set_xcursor(self._cursor_manager, "default")
+                self.seat.pointer_notify_clear_focus()
+            self._hovered_window = None
 
     def _process_cursor_button(self, button: int, pressed: bool) -> bool:
         assert self.qtile is not None
@@ -1204,6 +1194,7 @@ class Core(base.Core, wlrq.HasListeners):
         # Map input device to output if required.
         if output_name := pointer.Pointer.from_input_device(wlr_device).output_name:
             target_output = None
+
             for output in self.get_enabled_outputs():
                 if output_name == output.wlr_output.name:
                     target_output = output.wlr_output
@@ -1340,9 +1331,8 @@ class Core(base.Core, wlrq.HasListeners):
         if self.focused_internal:
             self.focused_internal = None
 
-        if isinstance(win, layer.LayerStatic):
-            if not win.surface.current.keyboard_interactive:
-                return
+        if isinstance(win, layer.LayerStatic) and not win.surface.current.keyboard_interactive:
+            return
 
         if isinstance(win, xwindow.XStatic):
             if win.surface.override_redirect and not win.surface.or_surface_wants_focus():
@@ -1402,14 +1392,14 @@ class Core(base.Core, wlrq.HasListeners):
         if found:
             win, surface, sx, sy = found
 
-            if self.exclusive_client:
-                # If we have a client who exclusively gets input, no other client's
-                # surfaces are allowed to get focus.
-                if isinstance(win, base.Internal) or not win.belongs_to_client(
-                    self.exclusive_client
-                ):
-                    logger.debug("Focus withheld from window not owned by exclusive client.")
-                    return None
+            # If we have a client who exclusively gets input, no other client's
+            # surfaces are allowed to get focus.
+
+            if self.exclusive_client and (
+                isinstance(win, base.Internal) or not win.belongs_to_client(self.exclusive_client)
+            ):
+                logger.debug("Focus withheld from window not owned by exclusive client.")
+                return None
 
             if self.qtile.config.bring_front_click is True:
                 win.bring_to_front()
@@ -1426,10 +1416,8 @@ class Core(base.Core, wlrq.HasListeners):
                     self.qtile.focus_screen(win.group.screen.index, warp=False)
                 self.qtile.current_group.focus(win, False)
 
-        else:
-            screen = self.qtile.find_screen(int(self.cursor.x), int(self.cursor.y))
-            if screen:
-                self.qtile.focus_screen(screen.index, warp=False)
+        elif screen := self.qtile.find_screen(int(self.cursor.x), int(self.cursor.y)):
+            self.qtile.focus_screen(screen.index, warp=False)
 
         return found
 

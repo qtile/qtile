@@ -457,8 +457,8 @@ class Window(_Window, metaclass=ABCMeta):
         else:
             try:
                 screen = self.qtile.screens[index]
-            except IndexError:
-                raise CommandError("No such screen: %d" % index)
+            except IndexError as e:
+                raise CommandError("No such screen: %d" % index) from e
         self.togroup(screen.group.name)
 
     @expose_command()
@@ -527,7 +527,7 @@ class Internal(_Window, metaclass=ABCMeta):
     """An Internal window belonging to Qtile."""
 
     def __repr__(self):
-        return "Internal(wid=%s)" % self.wid
+        return f"Internal(wid={self.wid})"
 
     @abstractmethod
     def create_drawer(self, width: int, height: int) -> Drawer:

@@ -31,7 +31,7 @@ def ss_manager(manager_nospawn, request):
     class ScreenSplitConfig(Config):
         auto_fullscreen = True
         groups = [libqtile.config.Group("a")]
-        layouts = [layout.ScreenSplit(**getattr(request, "param", dict()))]
+        layouts = [layout.ScreenSplit(**getattr(request, "param", {}))]
         floating_layout = libqtile.resources.default_config.floating_layout
         keys = []
         mouse = []

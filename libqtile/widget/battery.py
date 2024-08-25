@@ -132,8 +132,8 @@ class _FreeBSDBattery(_Battery):
     def update_status(self) -> BatteryStatus:
         try:
             info = check_output(["acpiconf", "-i", self.battery]).decode("utf-8")
-        except CalledProcessError:
-            raise RuntimeError("acpiconf exited incorrectly")
+        except CalledProcessError as e:
+            raise RuntimeError("acpiconf exited incorrectly") from e
 
         stat_match = re.search(r"State:\t+([a-z]+)", info)
 
@@ -162,16 +162,14 @@ class _FreeBSDBattery(_Battery):
         else:
             raise RuntimeError("Could not get battery power!")
 
-        time_re = re.search(r"Remaining time:\t+([0-9]+:[0-9]+|unknown)", info)
-        if time_re:
-            if time_re.group(1) == "unknown":
-                time = 0
-            else:
-                hours, _, minutes = time_re.group(1).partition(":")
-                time = int(hours) * 3600 + int(minutes) * 60
-        else:
+        if not (time_re := re.search(r"Remaining time:\t+([0-9]+:[0-9]+|unknown)", info)):
             raise RuntimeError("Could not get remaining battery time!")
 
+        if time_re[1] == "unknown":
+            time = 0
+        else:
+            hours, _, minutes = time_re.group(1).partition(":")
+            time = int(hours) * 3600 + int(minutes) * 60
         return BatteryStatus(
             state,
             percent=percent,
@@ -261,7 +259,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(_LinuxBattery.defaults)
         if isinstance(self.battery, int):
-            self.battery = "BAT{}".format(self.battery)
+            self.battery = f"BAT{self.battery}"
         self.charge_threshold_supported = True
 
     def _get_battery_name(self):
@@ -314,7 +312,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
                 self.filenames[name] = filename
                 return value
 
-        raise RuntimeError("Unable to read status for {}".format(name))
+        raise RuntimeError(f"Unable to read status for {name}")
 
     def set_battery_charge_thresholds(self, start, end):
         if not self.charge_threshold_supported:
@@ -352,12 +350,12 @@ class _LinuxBattery(_Battery, configurable.Configurable):
             self.set_battery_charge_thresholds(charge_start_threshold, charge_end_threshold)
         stat = self._get_param("status_file")[0]
 
-        if stat == "Full":
-            state = BatteryState.FULL
-        elif stat == "Charging":
+        if stat == "Charging":
             state = BatteryState.CHARGING
         elif stat == "Discharging":
             state = BatteryState.DISCHARGING
+        elif stat == "Full":
+            state = BatteryState.FULL
         elif stat == "Not charging":
             state = BatteryState.NOT_CHARGING
         else:
@@ -389,7 +387,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
             voltage = float(self._get_param("voltage_now_file")[0])
             power = voltage * power / 1e12
         elif power_unit == "uW":
-            power = power / 1e6
+            power /= 1e6
 
         return BatteryStatus(
             state=state,
@@ -507,7 +505,7 @@ class Battery(base.ThreadPoolText):
         try:
             status = self._battery.update_status()
         except RuntimeError as e:
-            return "Error: {}".format(e)
+            return f"Error: {e}"
 
         if self.notify_below:
             percent = int(status.percent * 100)

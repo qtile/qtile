@@ -245,9 +245,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     def hide(self) -> None:
         self.container.node.set_enabled(enabled=False)
         seat = self.core.seat
-        if not seat.destroyed:
-            if self.surface.surface == seat.keyboard_state.focused_surface:
-                seat.keyboard_clear_focus()
+        if self.surface.surface == seat.keyboard_state.focused_surface and not seat.destroyed:
+            seat.keyboard_clear_focus()
 
     def get_wm_class(self) -> list | None:
         if self._wm_class:
@@ -285,11 +284,11 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         """
         if group_name is None:
             group = self.qtile.current_group
-        else:
-            if group_name not in self.qtile.groups_map:
-                raise CommandError("No such group: %s" % group_name)
+        elif group_name in self.qtile.groups_map:
             group = self.qtile.groups_map[group_name]
 
+        else:
+            raise CommandError(f"No such group: {group_name}")
         if self.group is group:
             if toggle and self.group.screen.previous_group:
                 group = self.group.screen.previous_group
@@ -486,10 +485,9 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
                 screen.dheight - 2 * bw,
                 new_float_state=FloatStates.MAXIMIZED,
             )
-        else:
-            if self._float_state == FloatStates.MAXIMIZED:
-                self._restore_geometry()
-                self.floating = False
+        elif self._float_state == FloatStates.MAXIMIZED:
+            self._restore_geometry()
+            self.floating = False
 
         if self.ftm_handle:
             self.ftm_handle.set_maximized(do_maximize)
@@ -503,9 +501,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         if do_minimize:
             if self._float_state != FloatStates.MINIMIZED:
                 self._reconfigure_floating(new_float_state=FloatStates.MINIMIZED)
-        else:
-            if self._float_state == FloatStates.MINIMIZED:
-                self.floating = False
+        elif self._float_state == FloatStates.MINIMIZED:
+            self.floating = False
 
         if self.ftm_handle:
             self.ftm_handle.set_minimized(do_minimize)
@@ -537,11 +534,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             h = self._height
         h += dh
 
-        if h < 0:
-            h = 0
-        if w < 0:
-            w = 0
-
+        h = max(h, 0)
+        w = max(w, 0)
         screen = self.qtile.find_closest_screen(x + w // 2, y + h // 2)
         if self.group and screen is not None and screen != self.group.screen:
             self.group.remove(self, force=True)
@@ -625,7 +619,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             if self.group:
                 return True, list(range(len(self.group.layouts)))
             return None
-        if name == "screen":
+        elif name == "screen":
             if self.group and self.group.screen:
                 return True, []
         return None
@@ -1133,10 +1127,12 @@ class PointerConstraint(HasListeners):
         owner = None
 
         for win in core.qtile.windows_map.values():
-            if isinstance(win, (Window | Static)):
-                if win.surface.surface == self.wlr_constraint.surface:
-                    owner = win
-                    break
+            if (
+                isinstance(win, (Window | Static))
+                and win.surface.surface == self.wlr_constraint.surface
+            ):
+                owner = win
+                break
 
         if owner is None:
             logger.error("No window found for pointer constraints. Please report.")

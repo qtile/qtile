@@ -71,17 +71,18 @@ class Memory(base.ThreadPoolText):
     def poll(self):
         mem = psutil.virtual_memory()
         swap = psutil.swap_memory()
-        val = {}
-        val["MemUsed"] = mem.used / self.calc_mem
-        val["MemTotal"] = mem.total / self.calc_mem
-        val["MemFree"] = mem.free / self.calc_mem
-        val["Available"] = mem.available / self.calc_mem
-        val["NotAvailable"] = (mem.total - mem.available) / self.calc_mem
-        val["MemPercent"] = mem.percent
-        val["Buffers"] = mem.buffers / self.calc_mem
-        val["Active"] = mem.active / self.calc_mem
-        val["Inactive"] = mem.inactive / self.calc_mem
-        val["Shmem"] = mem.shared / self.calc_mem
+        val = {
+            "MemUsed": mem.used / self.calc_mem,
+            "MemTotal": mem.total / self.calc_mem,
+            "MemFree": mem.free / self.calc_mem,
+            "Available": mem.available / self.calc_mem,
+            "NotAvailable": (mem.total - mem.available) / self.calc_mem,
+            "MemPercent": mem.percent,
+            "Buffers": mem.buffers / self.calc_mem,
+            "Active": mem.active / self.calc_mem,
+            "Inactive": mem.inactive / self.calc_mem,
+            "Shmem": mem.shared / self.calc_mem,
+        }
         val["SwapTotal"] = swap.total / self.calc_swap
         val["SwapFree"] = swap.free / self.calc_swap
         val["SwapUsed"] = swap.used / self.calc_swap

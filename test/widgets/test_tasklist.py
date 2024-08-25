@@ -58,7 +58,7 @@ no_xdg = pytest.mark.parametrize("override_xdg", [False], indirect=True)
 def tasklist_manager(request, manager_nospawn, override_xdg, monkeypatch):
     monkeypatch.setattr("libqtile.widget.tasklist.has_xdg", override_xdg)
 
-    config = getattr(request, "param", dict())
+    config = getattr(request, "param", {})
 
     class TasklistConfig(Config):
         auto_fullscreen = True

@@ -90,7 +90,7 @@ class Clipboard(base._TextBox):
 
                 text = text.strip()
                 if self.max_width is not None and len(text) > self.max_width:
-                    text = text[: self.max_width] + "..."
+                    text = f"{text[:self.max_width]}..."
 
             self.text = pangocffi.markup_escape_text(text)
 

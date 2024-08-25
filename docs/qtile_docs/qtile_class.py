@@ -57,7 +57,7 @@ class QtileClass(SimpleDirectiveMixin, Directive):
             if not hasattr(klass, "defaults"):
                 continue
             klass_defaults = getattr(klass, "defaults")
-            defaults.update({d[0]: d[1:] for d in klass_defaults})
+            defaults |= {d[0]: d[1:] for d in klass_defaults}
         # turn the dict into a list of ("value", "default", "description") tuples
         defaults = [
             (k, sphinx_escape(v[0]), sphinx_escape(v[1])) for k, v in sorted(defaults.items())
@@ -81,7 +81,7 @@ class QtileClass(SimpleDirectiveMixin, Directive):
             except (FileNotFoundError, json.JSONDecodeError):
                 shots = {}
 
-            widget_shots = shots.get(class_name.lower(), dict())
+            widget_shots = shots.get(class_name.lower(), {})
         else:
             widget_shots = {}
 
@@ -112,5 +112,4 @@ class QtileClass(SimpleDirectiveMixin, Directive):
             ]
 
         rst = qtile_class_template.render(**context)
-        for line in rst.splitlines():
-            yield line
+        yield from rst.splitlines()

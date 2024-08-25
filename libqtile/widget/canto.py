@@ -52,8 +52,7 @@ class Canto(base.ThreadPoolText):
             arg = "-a"
             if self.fetch:
                 arg += "u"
-            output = self.all_format.format(number=self.call_process(["canto", arg])[:-1])
-            return output
+            return self.all_format.format(number=self.call_process(["canto", arg])[:-1])
         else:
             if self.fetch:
                 call(["canto", "-u"])

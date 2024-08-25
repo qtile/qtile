@@ -102,7 +102,7 @@ class Maildir(base.ThreadPoolText):
         if color is None:  # default to self.foreground
             return s
 
-        return s.join(('<span foreground="{}">'.format(color), "</span>"))
+        return s.join((f'<span foreground="{color}">', "</span>"))
 
     def format_text(self, state: dict[str, int]) -> str:
         """Converts the state of the subfolders to a string

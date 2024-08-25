@@ -44,7 +44,7 @@ def tidy_args(method):
 
 def command_nodes(argument):
     """Validator for directive options. Ensures argument is a valid command graph node."""
-    return directives.choice(argument, ["root"] + [node for node in _COMMAND_GRAPH_MAP])
+    return directives.choice(argument, ["root"] + list(_COMMAND_GRAPH_MAP))
 
 
 class SimpleDirectiveMixin:

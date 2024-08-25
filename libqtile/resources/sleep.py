@@ -36,7 +36,7 @@ except ImportError:
     has_dbus = False
 
 LOGIND_SERVICE = "org.freedesktop.login1"
-LOGIND_INTERFACE = LOGIND_SERVICE + ".Manager"
+LOGIND_INTERFACE = f"{LOGIND_SERVICE}.Manager"
 LOGIND_PATH = "/org/freedesktop/login1"
 
 

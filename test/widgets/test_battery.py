@@ -217,7 +217,7 @@ def test_images_good(tmpdir, fake_bar, svg_img_as_pypath):
     This theme path does contain all of the required images.
     """
     for name in BatteryIcon.icon_names:
-        target = tmpdir.join(name + ".svg")
+        target = tmpdir.join(f"{name}.svg")
         svg_img_as_pypath.copy(target)
 
     batt = BatteryIcon(theme_path=str(tmpdir))

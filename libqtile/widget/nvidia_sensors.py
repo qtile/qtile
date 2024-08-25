@@ -51,16 +51,14 @@ class NvidiaSensors(base.ThreadPoolText):
         )
 
     def _parse_format_string(self):
-        return {sensor for sensor in re.findall("{(.+?)}", self.format)}
+        return set(re.findall("{(.+?)}", self.format))
 
     def poll(self):
         sensors = self._parse_format_string()
         if not _all_sensors_names_correct(sensors):
             return "Wrong sensor name"
         bus_id = f"-i {self.gpu_bus_id}" if self.gpu_bus_id else ""
-        command = "nvidia-smi {} --query-gpu={} --format=csv,noheader".format(
-            bus_id, ",".join(sensors_mapping[sensor] for sensor in sensors)
-        )
+        command = f'nvidia-smi {bus_id} --query-gpu={",".join(sensors_mapping[sensor] for sensor in sensors)} --format=csv,noheader'
         try:
             sensors_data = [dict(zip(sensors, gpu)) for gpu in self._get_sensors_data(command)]
             for gpu in sensors_data:

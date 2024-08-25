@@ -65,7 +65,7 @@ def sni_config(request, manager_nospawn):
         screens = [
             libqtile.config.Screen(
                 top=libqtile.bar.Bar(
-                    [libqtile.widget.StatusNotifier(**getattr(request, "param", dict()))],
+                    [libqtile.widget.StatusNotifier(**getattr(request, "param", {}))],
                     50,
                 ),
             )

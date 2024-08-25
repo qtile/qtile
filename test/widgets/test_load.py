@@ -36,7 +36,7 @@ class MockPsutil(ModuleType):
 
 @pytest.fixture
 def load_manager(monkeypatch, manager_nospawn, minimal_conf_noscreen, request):
-    widget_config = getattr(request, "param", dict())
+    widget_config = getattr(request, "param", {})
 
     monkeypatch.setitem(sys.modules, "psutil", MockPsutil("psutil"))
     from libqtile.widget import load

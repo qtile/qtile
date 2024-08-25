@@ -58,7 +58,7 @@ class WaylandBackend(Backend):
 
     def create(self):
         """This is used to instantiate the Core"""
-        os.environ.update(self.env)
+        os.environ |= self.env
         return self.core(*self.args)
 
     def configure(self, manager):

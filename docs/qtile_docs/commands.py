@@ -96,13 +96,13 @@ class QtileCommands(SimpleDirectiveMixin, Directive):
         # Get the node on the command graph
         node = self.options.get("object-node", "")
 
-        if not node:
-            # cmd-obj needs the root note to be specified
-            cmdobj.append("cmd")
-        else:
+        if node:
             lazy += f".{node}"
             cmdobj.append(node)
 
+        else:
+            # cmd-obj needs the root note to be specified
+            cmdobj.append("cmd")
         # Give an example of an object selector
         if "object-selector-name" in self.options:
             name = obj.__name__.lower()
@@ -122,9 +122,7 @@ class QtileCommands(SimpleDirectiveMixin, Directive):
         lazy += ".<command>()"
         cmdobj.extend(["-f", "<command>"])
 
-        interfaces = {"lazy": lazy, "cmdobj": " ".join(cmdobj)}
-
-        return interfaces
+        return {"lazy": lazy, "cmdobj": " ".join(cmdobj)}
 
     def make_rst(self):
         module = importlib.import_module(self.arguments[0])
@@ -159,5 +157,4 @@ class QtileCommands(SimpleDirectiveMixin, Directive):
                 "interfaces": self.make_interface_syntax(obj),
             }
             rst = qtile_commands_template.render(**context)
-            for line in rst.splitlines():
-                yield line
+            yield from rst.splitlines()

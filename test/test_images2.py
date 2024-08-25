@@ -85,9 +85,7 @@ def compare_images_all_metrics(test_img, reference_img):
     Use imagemagick to calculate distortion using all metrics
     listed as fields in ImgDistortion.
     """
-    vals = []
-    for metric in ImgDistortion._fields:
-        vals.append(compare_images(test_img, reference_img, metric))
+    vals = [compare_images(test_img, reference_img, metric) for metric in ImgDistortion._fields]
     return ImgDistortion._make(vals)
 
 
@@ -102,8 +100,8 @@ def svg_img(request):
 def comparison_images(svg_img):
     "Return a tuple of paths to the bad and good comparison images, respectively."
     name = svg_img.name
-    path_good = path.join(DATA_DIR, "comparison_images", name + "_good.png")
-    path_bad = path.join(DATA_DIR, "comparison_images", name + "_bad.png")
+    path_good = path.join(DATA_DIR, "comparison_images", f"{name}_good.png")
+    path_bad = path.join(DATA_DIR, "comparison_images", f"{name}_bad.png")
     return path_bad, path_good
 
 
@@ -125,7 +123,7 @@ def test_svg_scaling(svg_img, distortion_bad, comparison_images, tmpdir):
 
     name = svg_img.name
     svg_img.scale(width_factor=20, lock_aspect_ratio=True)
-    surf = cairocffi.SVGSurface(str(dpath(name + ".svg")), svg_img.width, svg_img.height)
+    surf = cairocffi.SVGSurface(str(dpath(f"{name}.svg")), svg_img.width, svg_img.height)
     ctx = cairocffi.Context(surf)
 
     ctx.save()
@@ -133,7 +131,7 @@ def test_svg_scaling(svg_img, distortion_bad, comparison_images, tmpdir):
     ctx.paint()
     ctx.restore()
 
-    test_png_path = str(dpath(name + ".png"))
+    test_png_path = str(dpath(f"{name}.png"))
     surf.write_to_png(test_png_path)
     surf.finish()
     distortion = compare_images_all_metrics(test_png_path, path_good)

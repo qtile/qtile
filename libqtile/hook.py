@@ -130,7 +130,7 @@ class HookHandlerCollection:
 
 class Subscribe(HookHandlerCollection):
     def _subscribe(self, event: str, func: Callable) -> Callable:
-        registry = subscriptions.setdefault(self.registry_name, dict())
+        registry = subscriptions.setdefault(self.registry_name, {})
         lst = registry.setdefault(event, [])
         if func not in lst:
             lst.append(func)
@@ -144,14 +144,14 @@ class Unsubscribe(HookHandlerCollection):
     """
 
     def _subscribe(self, event: str, func: Callable) -> None:
-        registry = subscriptions.setdefault(self.registry_name, dict())
+        registry = subscriptions.setdefault(self.registry_name, {})
         lst = registry.setdefault(event, [])
         try:
             lst.remove(func)
-        except ValueError:
+        except ValueError as e:
             raise utils.QtileError(
                 "Tried to unsubscribe a hook that was not currently subscribed"
-            )
+            ) from e
 
 
 class Registry:
@@ -174,7 +174,7 @@ class Registry:
 
     def fire(self, event, *args, **kwargs):
         if event not in self.subscribe.hooks:
-            raise utils.QtileError("Unknown event: %s" % event)
+            raise utils.QtileError(f"Unknown event: {event}")
         # Do not fire for Internal windows
         if any(isinstance(arg, backend.base.window.Internal) for arg in args):
             return
@@ -183,7 +183,7 @@ class Registry:
         # but there are no hook subscriptions. This is not an issue for qtile core but
         # third party libraries will need this to prevent KeyErrors when firing hooks
         if self.name not in subscriptions:
-            subscriptions[self.name] = dict()
+            subscriptions[self.name] = {}
         for i in subscriptions[self.name].get(event, []):
             try:
                 if asyncio.iscoroutinefunction(i):
@@ -192,7 +192,7 @@ class Registry:
                     _fire_async_event(i)
                 else:
                     i(*args, **kwargs)
-            except:  # noqa: E722
+            except Exception:
                 logger.exception("Error in hook %s", event)
 
 

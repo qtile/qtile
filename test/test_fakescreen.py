@@ -36,7 +36,11 @@ FONTSIZE = 13
 CHAM1 = "8AE234"
 CHAM3 = "4E9A06"
 GRAPH_KW = dict(
-    line_width=1, graph_color=CHAM3, fill_color=CHAM3 + ".3", border_width=1, border_color=CHAM3
+    line_width=1,
+    graph_color=CHAM3,
+    fill_color=f"{CHAM3}.3",
+    border_width=1,
+    border_color=CHAM3,
 )
 
 # screens look like this
@@ -249,7 +253,7 @@ def test_float_change_screens(manager):
     manager.test_window("tiled")
     manager.test_window("float")
     manager.c.window.toggle_floating()
-    assert set(manager.c.group.info()["windows"]) == set(("tiled", "float"))
+    assert set(manager.c.group.info()["windows"]) == {"tiled", "float"}
     assert manager.c.group.info()["floating_info"]["clients"] == ["float"]
     assert manager.c.window.info()["width"] == 100
     assert manager.c.window.info()["height"] == 100
@@ -266,7 +270,7 @@ def test_float_change_screens(manager):
     assert manager.c.screen.info() == {"y": 0, "x": 500, "index": 1, "width": 300, "height": 380}
     manager.c.group["a"].toscreen()
     assert manager.c.group.info()["name"] == "a"
-    assert set(manager.c.group.info()["windows"]) == set(("tiled", "float"))
+    assert set(manager.c.group.info()["windows"]) == {"tiled", "float"}
     assert manager.c.window.info()["name"] == "float"
     # width/height unchanged
     assert manager.c.window.info()["width"] == 100
@@ -283,7 +287,7 @@ def test_float_change_screens(manager):
     assert manager.c.group.info()["name"] == "c"
     manager.c.group["a"].toscreen()
     assert manager.c.group.info()["name"] == "a"
-    assert set(manager.c.group.info()["windows"]) == set(("tiled", "float"))
+    assert set(manager.c.group.info()["windows"]) == {"tiled", "float"}
     assert manager.c.window.info()["name"] == "float"
     # width/height unchanged
     assert manager.c.window.info()["width"] == 100
@@ -304,7 +308,7 @@ def test_float_change_screens(manager):
     assert manager.c.group.info()["name"] == "d"
     manager.c.group["a"].toscreen()
     assert manager.c.group.info()["name"] == "a"
-    assert set(manager.c.group.info()["windows"]) == set(("tiled", "float"))
+    assert set(manager.c.group.info()["windows"]) == {"tiled", "float"}
     assert manager.c.window.info()["name"] == "float"
     # width/height unchanged
     assert manager.c.window.info()["width"] == 100
@@ -319,7 +323,7 @@ def test_float_change_screens(manager):
     assert manager.c.group.info()["name"] == "b"
     manager.c.group["a"].toscreen()
     assert manager.c.group.info()["name"] == "a"
-    assert set(manager.c.group.info()["windows"]) == set(("tiled", "float"))
+    assert set(manager.c.group.info()["windows"]) == {"tiled", "float"}
     assert manager.c.window.info()["name"] == "float"
     # back to the original location
     assert manager.c.window.info()["width"] == 100
@@ -385,7 +389,7 @@ def test_hammer_tile(manager):
     # change to tile layout
     manager.c.next_layout()
     manager.c.next_layout()
-    for i in range(7):
+    for _ in range(7):
         manager.test_window("one")
     for i in range(30):
         manager.c.to_screen((i + 1) % 4)
@@ -405,7 +409,7 @@ def test_hammer_tile(manager):
 def test_hammer_ratio_tile(manager):
     # change to ratio tile layout
     manager.c.next_layout()
-    for i in range(7):
+    for _ in range(7):
         manager.test_window("one")
     for i in range(30):
         manager.c.to_screen((i + 1) % 4)
@@ -425,7 +429,7 @@ def test_hammer_ratio_tile(manager):
 def test_ratio_to_fourth_screen(manager):
     # change to ratio tile layout
     manager.c.next_layout()
-    for i in range(7):
+    for _ in range(7):
         manager.test_window("one")
     manager.c.to_screen(1)
     manager.c.group["a"].toscreen()

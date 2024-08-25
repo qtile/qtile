@@ -479,7 +479,7 @@ def test_next_layout(manager):
 
 @manager_config
 def test_setlayout(manager):
-    assert not manager.c.layout.info()["name"] == "max"
+    assert manager.c.layout.info()["name"] != "max"
     manager.c.group.setlayout("max")
     assert manager.c.layout.info()["name"] == "max"
 
@@ -586,7 +586,7 @@ def test_static(manager):
 def test_match(manager):
     manager.test_window("one")
     assert manager.c.window.info()["name"] == "one"
-    assert not manager.c.window.info()["name"] == "nonexistent"
+    assert manager.c.window.info()["name"] != "nonexistent"
 
 
 @manager_config
@@ -1301,4 +1301,4 @@ def test_widget_duplicate_warnings(logger, manager):
         assert w in records[0].msg
 
     # Check this message level was info
-    assert all([r.levelno == logging.INFO for r in records])
+    assert all(r.levelno == logging.INFO for r in records)

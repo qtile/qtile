@@ -106,9 +106,7 @@ class MockCmusRemoteProcess:
         if cmd[1:] == ["-C", "status"]:
             track = cls.info[cls.index]
             track.extend(cls.EXTRA)
-            output = "\n".join(track)
-            return output
-
+            return "\n".join(track)
         elif cmd[1] == "-p":
             cls.info[cls.index][0] = "status playing"
 
@@ -132,7 +130,7 @@ class MockCmusRemoteProcess:
 
 @pytest.fixture
 def cmus_manager(manager_nospawn, monkeypatch, minimal_conf_noscreen, request):
-    widget_config = getattr(request, "param", dict())
+    widget_config = getattr(request, "param", {})
 
     MockCmusRemoteProcess.reset()
     monkeypatch.setattr("libqtile.widget.cmus.subprocess", MockCmusRemoteProcess)

@@ -35,7 +35,7 @@ screens = [
     ),
 ]
 
-widget_defaults = dict()
+widget_defaults = {}
 
 mouse = [
     Drag(

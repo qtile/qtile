@@ -61,9 +61,7 @@ def dnd_manager(manager_nospawn, request, patched_dnd):
     class GroupConfig(Config):
         screens = [
             Screen(
-                top=Bar(
-                    [patched_dnd(update_interval=10, **getattr(request, "param", dict()))], 30
-                )
+                top=Bar([patched_dnd(update_interval=10, **getattr(request, "param", {}))], 30)
             )
         ]
 

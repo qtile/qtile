@@ -68,13 +68,10 @@ class Drawer(drawer.Drawer):
         # Make sure geometry doesn't extend beyond texture
         if width is None:
             width = self.width
-        if width > self._win.width - offsetx:
-            width = self._win.width - offsetx
+        width = min(width, self._win.width - offsetx)
         if height is None:
             height = self.height
-        if height > self._win.height - offsety:
-            height = self._win.height - offsety
-
+        height = min(height, self._win.height - offsety)
         # Paint recorded operations to our window's underlying ImageSurface
         with cairocffi.Context(self._win.surface) as context:
             context.set_operator(cairocffi.OPERATOR_SOURCE)

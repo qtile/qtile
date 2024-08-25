@@ -68,16 +68,7 @@ class MockMocpProcess:
 
         arg = cmd[1]
 
-        if arg == "-i":
-            output = "\n".join(
-                "{k}: {v}".format(k=k, v=v) for k, v in cls.info[cls.index].items()
-            )
-            return output
-
-        elif arg == "-p":
-            cls.info[cls.index]["State"] = "PLAY"
-
-        elif arg == "-G":
+        if arg == "-G":
             if cls.info[cls.index]["State"] == "PLAY":
                 cls.info[cls.index]["State"] = "PAUSE"
 
@@ -86,6 +77,11 @@ class MockMocpProcess:
 
         elif arg == "-f":
             cls.index = (cls.index + 1) % len(cls.info)
+
+        elif arg == "-i":
+            return "\n".join("{k}: {v}".format(k=k, v=v) for k, v in cls.info[cls.index].items())
+        elif arg == "-p":
+            cls.info[cls.index]["State"] = "PLAY"
 
         elif arg == "-r":
             cls.index = (cls.index - 1) % len(cls.info)

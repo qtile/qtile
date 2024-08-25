@@ -59,9 +59,7 @@ class DoNotDisturb(base.InLoopPollText):
 
     def dunst_status(self):
         status = check_output(["dunstctl", "is-paused"]).strip()
-        if status == b"true":
-            return True
-        return False
+        return status == b"true"
 
     def poll(self):
         check = None
@@ -69,11 +67,7 @@ class DoNotDisturb(base.InLoopPollText):
             check = self.dunst_status()
         elif callable(self.poll_function):
             check = self.poll_function()
-        else:
-            if not self.status_retrieved_error:
-                logger.error("Custom poll function cannot be called")
-                self.status_retrieved_error = True
-        if check:
-            return self.enabled_icon
-        else:
-            return self.disabled_icon
+        elif not self.status_retrieved_error:
+            logger.error("Custom poll function cannot be called")
+            self.status_retrieved_error = True
+        return self.enabled_icon if check else self.disabled_icon

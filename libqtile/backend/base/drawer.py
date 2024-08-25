@@ -327,10 +327,9 @@ class Drawer:
 
     def textlayout(self, text, colour, font_family, font_size, font_shadow, markup=False, **kw):
         """Get a text layout"""
-        textlayout = TextLayout(
+        return TextLayout(
             self, text, colour, font_family, font_size, font_shadow, markup=markup, **kw
         )
-        return textlayout
 
     def max_layout_size(self, texts, font_family, font_size, markup=False):
         sizelayout = self.textlayout("", "ffffff", font_family, font_size, None, markup=markup)
@@ -529,11 +528,10 @@ class TextFrame:
                 self.drawer.rounded_fillrect(*opts)
             else:
                 self.drawer.fillrect(*opts)
+        elif rounded:
+            self.drawer.rounded_rectangle(*opts)
         else:
-            if rounded:
-                self.drawer.rounded_rectangle(*opts)
-            else:
-                self.drawer.rectangle(*opts)
+            self.drawer.rectangle(*opts)
         self.drawer.ctx.stroke()
         self.layout.draw(x + self.pad_left, y + self.pad_top)
 

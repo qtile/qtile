@@ -223,17 +223,15 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         # Enforce markup and new string format behaviour when
         # at least one markup_* option is used.
         # Mixing non markup and markup may cause problems.
-        if (
-            self.markup_minimized
-            or self.markup_maximized
-            or self.markup_floating
-            or self.markup_focused
-            or self.markup_focused_floating
-        ):
-            enforce_markup = True
-        else:
-            enforce_markup = False
-
+        enforce_markup = bool(
+            (
+                self.markup_minimized
+                or self.markup_maximized
+                or self.markup_floating
+                or self.markup_focused
+                or self.markup_focused_floating
+            )
+        )
         if window is None:
             pass
         elif window.minimized:
@@ -262,7 +260,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if callable(self.parse_text):
             try:
                 window_name = self.parse_text(window_name)
-            except:  # noqa: E722
+            except Exception:
                 logger.exception("parse_text function failed:")
 
         # Emulate default widget behavior if markup_str is None
@@ -274,7 +272,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             window_name = pangocffi.markup_escape_text(window_name)
             return markup_str.format(window_name)
 
-        return "%s%s" % (state, window_name)
+        return f"{state}{window_name}"
 
     @property
     def windows(self):
@@ -321,7 +319,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         # Obey title_width_method if specified
         if self.title_width_method == "uniform":
             width_uniform = width_total // window_count
-            width_boxes = [width_uniform for w in range(window_count)]
+            width_boxes = [width_uniform for _ in range(window_count)]
         else:
             # Default behaviour: calculated width for each task according to
             # icon and task name consisting
@@ -344,7 +342,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if width_sum > width_total:
             # sum the width of tasks shorter than calculated average
             # and calculate a ratio to shrink boxes greater than width_avg
-            width_shorter_sum = sum([w for w in width_boxes if w < width_avg])
+            width_shorter_sum = sum(w for w in width_boxes if w < width_avg)
 
             ratio = (width_total - width_shorter_sum) / (width_sum - width_shorter_sum)
             # determine new box widths by shrinking boxes greater than avg
@@ -354,10 +352,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
     def calculate_length(self):
         width = 0
-        box_widths = [box[3] for box in self.calc_box_widths()]
-        if box_widths:
+        if box_widths := [box[3] for box in self.calc_box_widths()]:
             width += self.spacing * len(box_widths) - 1
-            width += sum(w for w in box_widths)
+            width += sum(box_widths)
 
         return width
 
@@ -497,11 +494,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         icon = icons[0]
         width, height = map(int, icon[0].split("x"))
 
-        img = cairocffi.ImageSurface.create_for_data(
+        return cairocffi.ImageSurface.create_for_data(
             icon[1], cairocffi.FORMAT_ARGB32, width, height
         )
-
-        return img
 
     def _get_theme_icon(self, window):
         classes = window.get_wm_class()
@@ -512,7 +507,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         icon = None
 
         for cl in classes:
-            for app in set([cl, cl.lower()]):
+            for app in {cl, cl.lower()}:
                 icon = getIconPath(app, theme=self.theme_path)
                 if icon is not None:
                     break
@@ -531,8 +526,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if not getattr(window, "icons", False) and self.theme_mode is None:
             return None
 
-        cache = self._icons_cache.get(window.wid)
-        if cache:
+        if cache := self._icons_cache.get(window.wid):
             return cache
 
         surface = None
@@ -542,8 +536,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             img = self._get_class_icon(window)
 
         if self.theme_mode == "preferred" or (self.theme_mode == "fallback" and img is None):
-            xdg_img = self._get_theme_icon(window)
-            if xdg_img:
+            if xdg_img := self._get_theme_icon(window):
                 img = xdg_img
 
         if img is not None:

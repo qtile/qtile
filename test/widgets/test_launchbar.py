@@ -24,7 +24,7 @@ from libqtile import widget
 
 
 class MockXDG(ModuleType):
-    def getIconPath(*args, **kwargs):  # noqa: N802
+    def getIconPath(self, **kwargs):  # noqa: N802
         pass
 
 

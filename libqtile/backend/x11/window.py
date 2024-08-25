@@ -92,7 +92,7 @@ _NET_WM_STATE_TOGGLE = 2
 
 def _geometry_getter(attr):
     def get_attr(self):
-        if getattr(self, "_" + attr) is None:
+        if getattr(self, f"_{attr}") is None:
             g = self.window.get_geometry()
             # trigger the geometry setter on all these
             self.x = g.x
@@ -100,7 +100,7 @@ def _geometry_getter(attr):
             self.width = g.width
             self.height = g.height
             self.depth = g.depth
-        return getattr(self, "_" + attr)
+        return getattr(self, f"_{attr}")
 
     return get_attr
 
@@ -113,7 +113,7 @@ def _geometry_setter(attr):
             logger.error("!!!! setting %s to a non-int %s; please report this!", attr, value)
             logger.error("".join(stack_trace[:-1]))
             value = int(value)
-        setattr(self, "_" + attr, value)
+        setattr(self, f"_{attr}", value)
 
     return f
 
@@ -303,7 +303,7 @@ class XWindow:
         mask, values = xcbq.ConfigureMasks(**kwargs)
         # older versions of xcb pack everything into unsigned ints "=I"
         # since 1.12, uses switches to pack things sensibly
-        if float(".".join(xcffib.__xcb_proto_version__.split(".")[0:2])) < 1.12:
+        if float(".".join(xcffib.__xcb_proto_version__.split(".")[:2])) < 1.12:
             values = [i & 0xFFFFFFFF for i in values]
         return self.conn.conn.core.ConfigureWindow(self.wid, mask, values)
 
@@ -327,10 +327,10 @@ class XWindow:
         if name in xcbq.PropertyMap:
             if type or format:
                 raise ValueError("Over-riding default type or format for property.")
-            type, format = xcbq.PropertyMap[name]
-        else:
-            if None in (type, format):
-                raise ValueError("Must specify type and format for unknown property.")
+            else:
+                type, format = xcbq.PropertyMap[name]
+        elif None in (type, format):
+            raise ValueError("Must specify type and format for unknown property.")
 
         try:
             if isinstance(value, str):
@@ -555,18 +555,16 @@ class _Window:
         return self._group
 
     def has_fixed_ratio(self) -> bool:
-        try:
+        with contextlib.suppress(KeyError):
             if (
                 "PAspect" in self.hints["flags"]
                 and self.hints["min_aspect"] == self.hints["max_aspect"]
             ):
                 return True
-        except KeyError:
-            pass
         return False
 
     def has_fixed_size(self) -> bool:
-        try:
+        with contextlib.suppress(KeyError):
             if (
                 "PMinSize" in self.hints["flags"]
                 and "PMaxSize" in self.hints["flags"]
@@ -574,16 +572,12 @@ class _Window:
                 and 0 < self.hints["min_height"] == self.hints["max_height"]
             ):
                 return True
-        except KeyError:
-            pass
         return False
 
     def has_user_set_position(self):
-        try:
+        with contextlib.suppress(KeyError):
             if "USPosition" in self.hints["flags"] or "PPosition" in self.hints["flags"]:
                 return True
-        except KeyError:
-            pass
         return False
 
     def update_name(self):
@@ -949,11 +943,7 @@ class _Window:
         active_window = self.qtile.core._root.get_property(
             "_NET_ACTIVE_WINDOW", "WINDOW", unpack=int
         )
-        if active_window and active_window[0] == self.window.wid:
-            focus = True
-        else:
-            focus = False
-
+        focus = bool(active_window and active_window[0] == self.window.wid)
         desktop = _type == "desktop"
         below = "_NET_WM_STATE_BELOW" in state
         dock = _type == "dock"
@@ -1105,16 +1095,16 @@ class _Window:
                 above = False
 
             # Don't think we should end up here but, if we do...
-            else:
-                # Put the window above the highest window if we're raising it
-                if up:
-                    sibling = stack[-1]
-                    above = True
 
-                # or below the lowest window if we're lowering the window
-                else:
-                    sibling = stack[0]
-                    above = False
+            # Put the window above the highest window if we're raising it
+            elif up:
+                sibling = stack[-1]
+                above = True
+
+            # or below the lowest window if we're lowering the window
+            else:
+                sibling = stack[0]
+                above = False
 
         else:
             # Window has moved to a lower layer state
@@ -1368,10 +1358,7 @@ class _Window:
         props = self.window.list_properties()
         normalhints = self.window.get_wm_normal_hints()
         hints = self.window.get_wm_hints()
-        protocols = []
-        for i in self.window.get_wm_protocols():
-            protocols.append(i)
-
+        protocols = list(self.window.get_wm_protocols())
         state = self.window.get_wm_state()
 
         float_info = {
@@ -1404,7 +1391,6 @@ class _Window:
             self.kept_above = not self.kept_above
         else:
             self.kept_above = enable
-
         self.change_layer(top_bottom=True, up=True)
 
     @expose_command()
@@ -1413,7 +1399,6 @@ class _Window:
             self.kept_below = not self.kept_below
         else:
             self.kept_below = enable
-
         self.change_layer(top_bottom=True, up=False)
 
     @expose_command()
@@ -1755,10 +1740,8 @@ class Window(_Window, base.Window):
 
     @property
     def wants_to_fullscreen(self):
-        try:
+        with contextlib.suppress(xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             return "fullscreen" in self.window.get_net_wm_state()
-        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
-            pass
         return False
 
     @expose_command()
@@ -1775,7 +1758,7 @@ class Window(_Window, base.Window):
             return
 
         # update fullscreen _NET_WM_STATE
-        atom = set([self.qtile.core.conn.atoms["_NET_WM_STATE_FULLSCREEN"]])
+        atom = {self.qtile.core.conn.atoms["_NET_WM_STATE_FULLSCREEN"]}
         prev_state = set(self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
 
         if do_full:
@@ -1835,10 +1818,9 @@ class Window(_Window, base.Window):
                 screen.dheight - 2 * bw,
                 new_float_state=FloatStates.MAXIMIZED,
             )
-        else:
-            if self._float_state == FloatStates.MAXIMIZED:
-                self._restore_geometry()
-                self.floating = False
+        elif self._float_state == FloatStates.MAXIMIZED:
+            self._restore_geometry()
+            self.floating = False
 
     @property
     def minimized(self):
@@ -1849,9 +1831,8 @@ class Window(_Window, base.Window):
         if do_minimize:
             if self._float_state != FloatStates.MINIMIZED:
                 self._enablefloating(new_float_state=FloatStates.MINIMIZED)
-        else:
-            if self._float_state == FloatStates.MINIMIZED:
-                self.floating = False
+        elif self._float_state == FloatStates.MINIMIZED:
+            self.floating = False
 
     @expose_command()
     def toggle_minimize(self):
@@ -1906,11 +1887,8 @@ class Window(_Window, base.Window):
             self.height = h
         self.height += dh
 
-        if self.height < 0:
-            self.height = 0
-        if self.width < 0:
-            self.width = 0
-
+        self.height = max(self.height, 0)
+        self.width = max(self.width, 0)
         screen = self.qtile.find_closest_screen(
             self.x + self.width // 2, self.y + self.height // 2
         )
@@ -1997,7 +1975,7 @@ class Window(_Window, base.Window):
         else:
             group = self.qtile.groups_map.get(group_name)
             if group is None:
-                raise CommandError("No such group: %s" % group_name)
+                raise CommandError(f"No such group: {group_name}")
 
         if self.group is group:
             if toggle and self.group.screen.previous_group:
@@ -2089,9 +2067,7 @@ class Window(_Window, base.Window):
         icon = list(map(ord, icon.value))
 
         icons = {}
-        while True:
-            if not icon:
-                break
+        while not not icon:
             size = icon[:8]
             if len(size) != 8 or not size[0] or not size[4]:
                 break
@@ -2111,7 +2087,7 @@ class Window(_Window, base.Window):
                 arr[i + 1] = int(arr[i + 1] * mult)
                 arr[i + 2] = int(arr[i + 2] * mult)
             icon = icon[next_pix:]
-            icons["%sx%s" % (width, height)] = arr
+            icons[f"{width}x{height}"] = arr
         self.icons = icons
         hook.fire("net_wm_icon_change", self)
 
@@ -2136,7 +2112,7 @@ class Window(_Window, base.Window):
                 elif action == _NET_WM_STATE_ADD:
                     current_state.add(prop)
                 elif action == _NET_WM_STATE_TOGGLE:
-                    current_state ^= set([prop])  # toggle :D
+                    current_state ^= {prop}  # toggle :D
 
             self.window.set_property("_NET_WM_STATE", list(current_state))
         elif atoms["_NET_ACTIVE_WINDOW"] == opcode:
@@ -2261,7 +2237,7 @@ class Window(_Window, base.Window):
             if self.group:
                 return True, list(range(len(self.group.layouts)))
             return None
-        if name == "screen":
+        elif name == "screen":
             if self.group and self.group.screen:
                 return True, []
         return None

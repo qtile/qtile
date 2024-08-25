@@ -31,5 +31,4 @@ class QtileHooks(SimpleDirectiveMixin, Directive):
         obj = import_class(module, class_name)
         for method in sorted(obj.hooks):
             rst = qtile_hooks_template.render(method=method)
-            for line in rst.splitlines():
-                yield line
+            yield from rst.splitlines()

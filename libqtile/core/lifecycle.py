@@ -30,7 +30,7 @@ class LifeCycle:
                 argv.append("--no-spawn")
             argv = [s for s in argv if not s.startswith("--with-state")]
             if self.state_file is not None:
-                argv.append("--with-state=" + self.state_file)
+                argv.append(f"--with-state={self.state_file}")
             logger.warning("Restarting Qtile with os.execv(...)")
             # No other code will execute after the following line does
             os.execv(sys.executable, argv)
@@ -40,8 +40,6 @@ class LifeCycle:
             # calling os._exit prevents later injected atexit handlers from running
             if self.exitcode:
                 os._exit(self.exitcode)
-        elif self.behavior is Behavior.NONE:
-            pass
 
 
 lifecycle = LifeCycle()

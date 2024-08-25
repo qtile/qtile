@@ -77,12 +77,12 @@ class Canvas:
 def tree(node, level=0):
     res = "{indent}{name} {orient} {repr_} {pos} {size} {parent}\n".format(
         indent=level * 4 * " ",
-        name="%s" % (node.payload or "*"),
+        name=f'{node.payload or "*"}',
         orient="H" if node.horizontal else "V",
-        repr_="%s" % repr(node),
+        repr_=f"{repr(node)}",
         pos="%g*%g@%g:%g" % (node.width, node.height, node.x, node.y),
-        size="size: %s%s" % (node.size, " (auto)" if node.flexible else ""),
-        parent="p: %s" % node.parent,
+        size=f'size: {node.size}{" (auto)" if node.flexible else ""}',
+        parent=f"p: {node.parent}",
     )
     for child in node:
         res += tree(child, level + 1)
@@ -114,8 +114,7 @@ def create_nodes(string):
 
 @pytest.fixture
 def root():
-    root = Node("root", 0, 0, 120, 50)
-    return root
+    return Node("root", 0, 0, 120, 50)
 
 
 @pytest.fixture
@@ -1433,7 +1432,7 @@ def load_grid(request):
 @pytest.fixture
 def plasma(manager_nospawn, request, load_grid):
     class PlasmaConfig(Config):
-        layouts = [Plasma(**getattr(request, "param", dict()))]
+        layouts = [Plasma(**getattr(request, "param", {}))]
         screens = [Screen()]
 
     manager_nospawn.start(PlasmaConfig)

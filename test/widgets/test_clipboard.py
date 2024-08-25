@@ -35,7 +35,7 @@ def clipboard_cleared(widget):
 
 @pytest.fixture
 def clipboard_manager(request, minimal_conf_noscreen, manager_nospawn):
-    widget = libqtile.widget.Clipboard(**getattr(request, "param", dict()))
+    widget = libqtile.widget.Clipboard(**getattr(request, "param", {}))
     config = minimal_conf_noscreen
     config.screens = [Screen(top=Bar([widget], 10))]
     manager_nospawn.start(config)

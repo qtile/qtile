@@ -46,8 +46,8 @@ def generate_widget_screenshots():
     this_dir = os.path.dirname(__file__)
     try:
         run(["make", "-C", this_dir, "genwidgetscreenshots"], check=True)
-    except CalledProcessError:
-        raise Exception("Widget screenshots failed to build.")
+    except CalledProcessError as e:
+        raise Exception("Widget screenshots failed to build.") from e
 
 
 def setup(app):

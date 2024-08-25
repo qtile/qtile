@@ -33,8 +33,7 @@ from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 def spawn_cmd(title):
     script = Path(__file__).parent / "scripts" / "window.py"
-    cmd = f"{sys.executable} {script.as_posix()} --name TestWindow {title} normal"
-    return cmd
+    return f"{sys.executable} {script.as_posix()} --name TestWindow {title} normal"
 
 
 class ScratchPadBaseConfic(Config):

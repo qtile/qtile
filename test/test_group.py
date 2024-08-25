@@ -56,12 +56,11 @@ def test_window_order(manager):
     # Add windows one by one
     for win in windows_name:
         windows[win] = manager.test_window(win)
-
     # Windows must be sorted in the same order as they were created
     assert windows_name == manager.c.group.info()["windows"]
 
     # Randomly remove 5 windows and see if orders remains persistant
-    for i in range(5):
+    for _ in range(5):
         win_to_remove = random.choice(windows_name)
         windows_name.remove(win_to_remove)
         manager.kill_window(windows[win_to_remove])

@@ -6,7 +6,7 @@ from libqtile import widget
 def test_thermal_zone_getting_value():
     # Create temporary zone file
     tmp = "/var/tmp/qtile/test/widgets/thermal_zone"
-    zone_file = tmp + "/sys/class/thermal/thermal_zone0/temp"
+    zone_file = f"{tmp}/sys/class/thermal/thermal_zone0/temp"
     os.makedirs(os.path.dirname(zone_file), exist_ok=True)
 
     class FakeLayout:

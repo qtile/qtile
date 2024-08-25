@@ -122,14 +122,13 @@ class Drawer(drawer.Drawer):
             self._gc = None
 
     def _create_xcb_surface(self):
-        surface = cairocffi.XCBSurface(
+        return cairocffi.XCBSurface(
             self.qtile.core.conn.conn,
             self._pixmap,
             self._visual,
             self.width,
             self.height,
         )
-        return surface
 
     def _free_xcb_surface(self):
         if self._xcb_surface is not None:

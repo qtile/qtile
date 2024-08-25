@@ -98,11 +98,10 @@ class CommandClient:
             raise SelectError("Not valid child", name, self._current_node.selectors)
 
         normalized_selector = _normalize_item(name, selector) if selector is not None else None
-        if normalized_selector is not None:
-            if not self._command.has_item(self._current_node, name, normalized_selector):
-                raise SelectError(
-                    "Item not available in object", name, self._current_node.selectors
-                )
+        if normalized_selector is not None and not self._command.has_item(
+            self._current_node, name, normalized_selector
+        ):
+            raise SelectError("Item not available in object", name, self._current_node.selectors)
 
         next_node = self._current_node.navigate(name, normalized_selector)
         return self.__class__(self._command, current_node=next_node)

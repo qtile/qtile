@@ -200,11 +200,11 @@ def test_stack_shuffle(manager):
 
     stack = manager.c.layout.info()["stacks"][0]
     assert stack["clients"][stack["current"]] == "three"
-    for i in range(5):
+    for _ in range(5):
         manager.c.layout.shuffle_up()
         stack = manager.c.layout.info()["stacks"][0]
         assert stack["clients"][stack["current"]] == "three"
-    for i in range(5):
+    for _ in range(5):
         manager.c.layout.shuffle_down()
         stack = manager.c.layout.info()["stacks"][0]
         assert stack["clients"][stack["current"]] == "three"

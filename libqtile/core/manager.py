@@ -160,7 +160,7 @@ class Qtile(CommandObject):
                     with open(self._state, "rb") as f:
                         st = pickle.load(f)
                         st.apply(self)
-                except:  # noqa: E722
+                except Exception:
                     logger.exception("failed restoring state")
                 finally:
                     os.remove(self._state)
@@ -274,7 +274,7 @@ class Qtile(CommandObject):
     def dump_state(self, buf: Any) -> None:
         try:
             pickle.dump(QtileState(self), buf, protocol=0)
-        except:  # noqa: E722
+        except Exception:
             logger.exception("Unable to pickle qtile state")
 
     @expose_command()
@@ -324,7 +324,7 @@ class Qtile(CommandObject):
             for screen in self.screens:
                 for gap in screen.gaps:
                     gap.finalize()
-        except:  # noqa: E722
+        except Exception:
             logger.exception("exception during finalize")
         hook.clear()
 
@@ -819,7 +819,7 @@ class Qtile(CommandObject):
     def process_button_click(self, button_code: int, modmask: int, x: int, y: int) -> bool:
         handled = False
         for m in self._mouse_map[button_code]:
-            if not m.modmask == modmask:
+            if m.modmask != modmask:
                 continue
 
             if isinstance(m, Click):
@@ -871,14 +871,13 @@ class Qtile(CommandObject):
         ox, oy, rx, ry, cmd = self._drag
         dx = x - ox
         dy = y - oy
-        if dx or dy:
-            for i in cmd:
-                if i.check(self):
-                    status, val = self.server.call(
-                        (i.selectors, i.name, i.args + (rx + dx, ry + dy), i.kwargs, False)
-                    )
-                    if status in (interface.ERROR, interface.EXCEPTION):
-                        logger.error("Mouse command error %s: %s", i.name, val)
+        for i in cmd:
+            if dx and i.check(self) or not dx and dy and i.check(self):
+                status, val = self.server.call(
+                    (i.selectors, i.name, i.args + (rx + dx, ry + dy), i.kwargs, False)
+                )
+                if status in (interface.ERROR, interface.EXCEPTION):
+                    logger.error("Mouse command error %s: %s", i.name, val)
 
     def warp_to_screen(self) -> None:
         if self.current_screen:
@@ -907,14 +906,18 @@ class Qtile(CommandObject):
             self.current_window.togroup(group)
 
     def _items(self, name: str) -> ItemT:
-        if name == "group":
+        if name == "bar":
+            return False, [x.position for x in self.current_screen.gaps if isinstance(x, bar.Bar)]
+        elif name == "core":
+            return True, []
+        elif name == "group":
             return True, list(self.groups_map.keys())
         elif name == "layout":
             return True, list(range(len(self.current_group.layouts)))
+        elif name == "screen":
+            return True, list(range(len(self.screens)))
         elif name == "widget":
             return False, list(self.widgets_map.keys())
-        elif name == "bar":
-            return False, [x.position for x in self.current_screen.gaps if isinstance(x, bar.Bar)]
         elif name == "window":
             windows: list[str | int]
             windows = [
@@ -923,47 +926,40 @@ class Qtile(CommandObject):
                 if isinstance(v, CommandObject) and not isinstance(v, _Widget)
             ]
             return True, windows
-        elif name == "screen":
-            return True, list(range(len(self.screens)))
-        elif name == "core":
-            return True, []
         return None
 
     def _select(self, name: str, sel: str | int | None) -> CommandObject | None:
-        if name == "group":
+        if name == "bar":
+            gap = getattr(self.current_screen, sel)  # type: ignore
+            if isinstance(gap, bar.Bar):
+                return gap
+        elif name == "core":
+            return self.core
+        elif name == "group":
             if sel is None:
                 return self.current_group
             else:
                 return self.groups_map.get(sel)  # type: ignore
         elif name == "layout":
-            if sel is None:
-                return self.current_group.layout
-            else:
-                return lget(self.current_group.layouts, int(sel))
+            return (
+                self.current_group.layout
+                if sel is None
+                else lget(self.current_group.layouts, int(sel))
+            )
+        elif name == "screen":
+            return self.current_screen if sel is None else lget(self.screens, int(sel))
         elif name == "widget":
             return self.widgets_map.get(sel)  # type: ignore
-        elif name == "bar":
-            gap = getattr(self.current_screen, sel)  # type: ignore
-            if isinstance(gap, bar.Bar):
-                return gap
         elif name == "window":
             if sel is None:
                 return self.current_window
-            else:
-                windows: dict[str | int, base.WindowType]
-                windows = {
-                    k: v
-                    for k, v in self.windows_map.items()
-                    if isinstance(v, CommandObject) and not isinstance(v, _Widget)
-                }
-                return windows.get(sel)
-        elif name == "screen":
-            if sel is None:
-                return self.current_screen
-            else:
-                return lget(self.screens, int(sel))
-        elif name == "core":
-            return self.core
+            windows: dict[str | int, base.WindowType]
+            windows = {
+                k: v
+                for k, v in self.windows_map.items()
+                if isinstance(v, CommandObject) and not isinstance(v, _Widget)
+            }
+            return windows.get(sel)
         return None
 
     def call_soon(self, func: Callable, *args: Any) -> asyncio.Handle:
@@ -1100,11 +1096,7 @@ class Qtile(CommandObject):
         def walk_binding(k: Key | KeyChord, mode: str) -> None:
             nonlocal rows
             modifiers = ", ".join(k.modifiers)
-            if isinstance(k.key, int):
-                name = hex(k.key)
-            else:
-                name = k.key
-
+            name = hex(k.key) if isinstance(k.key, int) else k.key
             if isinstance(k, Key):
                 if not k.commands:
                     return
@@ -1129,12 +1121,8 @@ class Qtile(CommandObject):
                 )
                 return
             if isinstance(k, KeyChord):
-                new_mode_s = k.name if k.name else "<unnamed>"
-                new_mode = (
-                    k.name
-                    if mode == "<root>"
-                    else "{}>{}".format(mode, k.name if k.name else "_")
-                )
+                new_mode_s = k.name or "<unnamed>"
+                new_mode = k.name if mode == "<root>" else "{}>{}".format(mode, k.name or "_")
                 rows.append([mode, name, modifiers, "", "Enter {:s} mode".format(new_mode_s)])
                 for s in k.submappings:
                     walk_binding(s, new_mode)
@@ -1206,7 +1194,7 @@ class Qtile(CommandObject):
     @expose_command()
     def get_screens(self) -> list[dict[str, Any]]:
         """Return a list of dictionaries providing information on all screens"""
-        lst = [
+        return [
             dict(
                 index=i.index,
                 group=i.group.name if i.group is not None else None,
@@ -1223,7 +1211,6 @@ class Qtile(CommandObject):
             )
             for i in self.screens
         ]
-        return lst
 
     @expose_command()
     def simulate_keypress(self, modifiers: list[str], key: str) -> None:
@@ -1247,7 +1234,7 @@ class Qtile(CommandObject):
         try:
             self.core.simulate_keypress(modifiers, key)
         except utils.QtileError as e:
-            raise CommandError(str(e))
+            raise CommandError(str(e)) from e
 
     @expose_command()
     def validate_config(self) -> None:
@@ -1259,9 +1246,7 @@ class Qtile(CommandObject):
             send_notification("Configuration check", "No error found!")
 
     @expose_command()
-    def spawn(
-        self, cmd: list[str] | str, shell: bool = False, env: dict[str, str] = dict()
-    ) -> int:
+    def spawn(self, cmd: list[str] | str, shell: bool = False, env: dict[str, str] = {}) -> int:
         """
         Spawn a new process.
 
@@ -1670,30 +1655,31 @@ class Qtile(CommandObject):
         """
 
         def f(cmd: str) -> None:
-            if cmd:
-                # c here is used in eval() below
-                q = QtileCommandInterface(self)
-                c = InteractiveCommandClient(q)  # noqa: F841
-                try:
-                    cmd_arg = str(cmd).split(" ")
-                except AttributeError:
-                    return
-                cmd_len = len(cmd_arg)
-                if cmd_len == 0:
-                    logger.debug("No command entered.")
-                    return
-                try:
-                    result = eval("c.{0:s}".format(cmd))
-                except (CommandError, CommandException, AttributeError):
-                    logger.exception("Command errored:")
-                    result = None
-                if result is not None:
-                    from pprint import pformat
+            if not cmd:
+                return
+            # c here is used in eval() below
+            q = QtileCommandInterface(self)
+            c = InteractiveCommandClient(q)  # noqa: F841
+            try:
+                cmd_arg = cmd.split(" ")
+            except AttributeError:
+                return
+            cmd_len = len(cmd_arg)
+            if cmd_len == 0:
+                logger.debug("No command entered.")
+                return
+            try:
+                result = eval("c.{0:s}".format(cmd))
+            except (CommandError, CommandException, AttributeError):
+                logger.exception("Command errored:")
+                result = None
+            if result is not None:
+                from pprint import pformat
 
-                    message = pformat(result)
-                    if messenger:
-                        self.spawn('{0:s} "{1:s}"'.format(messenger, message))
-                    logger.debug(result)
+                message = pformat(result)
+                if messenger:
+                    self.spawn('{0:s} "{1:s}"'.format(messenger, message))
+                logger.debug(result)
 
         mb = self.widgets_map[widget]
         if not mb:

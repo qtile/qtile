@@ -154,16 +154,13 @@ class Tile(_SimpleLayoutBase):
                 master_match = [master_match]
             masters = []
             for c in self.clients:
-                for match in master_match:
-                    if match.compare(c):
-                        masters.append(c)
+                masters.extend(c for match in master_match if match.compare(c))
             for client in reversed(masters):
                 self.clients.remove(client)
                 self.clients.append_head(client)
 
     def clone(self, group: _Group) -> Self:
-        c = _SimpleLayoutBase.clone(self, group)
-        return c
+        return _SimpleLayoutBase.clone(self, group)
 
     def add_client(self, client, offset_to_current=1):
         if self.add_after_last:
@@ -175,11 +172,11 @@ class Tile(_SimpleLayoutBase):
         self.reset_master()
 
     def configure(self, client: Window, screen_rect: ScreenRect) -> None:
-        screen_width = screen_rect.width
-        screen_height = screen_rect.height
         border_width = self.border_width
         if self.clients and client in self.clients:
             pos = self.clients.index(client)
+            screen_width = screen_rect.width
+            screen_height = screen_rect.height
             if client in self.master_windows:
                 w = (
                     int(screen_width * self.ratio_size)

@@ -184,7 +184,7 @@ class CurrentLayoutIcon(base._TextBox):
             (layout for group in self.qtile.config.groups for layout in group.layouts),
         )
 
-        return set((layout.name, layout.__class__.__name__.lower()) for layout in layouts)
+        return {(layout.name, layout.__class__.__name__.lower()) for layout in layouts}
 
     def _update_icon_paths(self):
         self.icon_paths = []
@@ -205,7 +205,7 @@ class CurrentLayoutIcon(base._TextBox):
     def find_icon_file_path(self, layout_name):
         for icon_path in self.icon_paths:
             for extension in ["png", "svg"]:
-                icon_filename = "layout-{}.{}".format(layout_name, extension)
+                icon_filename = f"layout-{layout_name}.{extension}"
                 icon_file_path = os.path.join(icon_path, icon_filename)
                 if os.path.isfile(icon_file_path):
                     return icon_file_path

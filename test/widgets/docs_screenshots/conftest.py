@@ -182,7 +182,7 @@ def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, 
             dest.write_to_png(target)
 
     # Get the widget and config
-    config = getattr(request, "param", dict())
+    config = getattr(request, "param", {})
     wdgt = ScreenshotWidget(**{**widget_config, **config})
     name = wdgt.name
 

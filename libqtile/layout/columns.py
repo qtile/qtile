@@ -390,9 +390,8 @@ class Columns(Layout):
         if self.wrap_focus_columns:
             if len(self.columns) > 1:
                 self.current = (self.current - 1) % len(self.columns)
-        else:
-            if self.current > 0:
-                self.current = self.current - 1
+        elif self.current > 0:
+            self.current = self.current - 1
         self.group.focus(self.cc.cw, True)
 
     @expose_command()
@@ -400,9 +399,8 @@ class Columns(Layout):
         if self.wrap_focus_columns:
             if len(self.columns) > 1:
                 self.current = (self.current + 1) % len(self.columns)
-        else:
-            if len(self.columns) - 1 > self.current:
-                self.current = self.current + 1
+        elif len(self.columns) - 1 > self.current:
+            self.current = self.current + 1
         self.group.focus(self.cc.cw, True)
 
     def want_wrap(self, col):
@@ -416,9 +414,8 @@ class Columns(Layout):
         if self.want_wrap(col):
             if len(col) > 1:
                 col.current_index -= 1
-        else:
-            if col.current_index > 0:
-                col.current_index -= 1
+        elif col.current_index > 0:
+            col.current_index -= 1
         self.group.focus(col.cw, True)
 
     @expose_command()
@@ -427,9 +424,8 @@ class Columns(Layout):
         if self.want_wrap(col):
             if len(col) > 1:
                 col.current_index += 1
-        else:
-            if col.current_index < len(col) - 1:
-                col.current_index += 1
+        elif col.current_index < len(col) - 1:
+            col.current_index += 1
         self.group.focus(col.cw, True)
 
     @expose_command()

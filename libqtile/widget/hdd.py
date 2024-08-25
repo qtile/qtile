@@ -42,7 +42,7 @@ class HDD(base.ThreadPoolText):
         self._prev = 0
 
     def poll(self):
-        variables = dict()
+        variables = {}
         # Field index 9 contains the number of milliseconds the device has been performing I/O operations
         with open(self.path) as f:
             io_ticks = int(f.read().split()[9])

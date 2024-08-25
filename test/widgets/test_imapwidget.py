@@ -42,7 +42,7 @@ class FakeIMAP(ModuleType):
             if not (self.username and self.password):
                 return False, None
 
-            return ("OK", ['"{}" (UNSEEN 2)'.format(path).encode()])
+            return "OK", [f'"{path}" (UNSEEN 2)'.encode()]
 
         def logout(self):
             pass
@@ -56,10 +56,9 @@ class FakeKeyring(ModuleType):
         if self.valid:
             return "password"
 
-        else:
-            if self.error:
-                return "Gnome Keyring Error"
-            return None
+        if self.error:
+            return "Gnome Keyring Error"
+        return None
 
 
 @pytest.fixture()

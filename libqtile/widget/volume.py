@@ -141,7 +141,7 @@ class Volume(base._TextBox):
         if self.device is not None:
             cmd.extend(["-D", str(self.device)])
 
-        cmd.extend([x for x in args])
+        cmd.extend(list(args))
         return subprocess.list2cmdline(cmd)
 
     def button_press(self, x, y, button):
@@ -189,7 +189,7 @@ class Volume(base._TextBox):
                 self.text = self.emoji_list[1]
             elif self.volume < 80:
                 self.text = self.emoji_list[2]
-            elif self.volume >= 80:
+            else:
                 self.text = self.emoji_list[3]
         else:
             self.text = (
@@ -249,7 +249,7 @@ class Volume(base._TextBox):
             volume_up_cmd = self.volume_up_command
         else:
             volume_up_cmd = self.create_amixer_command(
-                "-q", "sset", self.channel, "{}%+".format(self.step)
+                "-q", "sset", self.channel, f"{self.step}%+"
             )
 
         subprocess.call(volume_up_cmd, shell=True)
@@ -260,7 +260,7 @@ class Volume(base._TextBox):
             volume_down_cmd = self.volume_down_command
         else:
             volume_down_cmd = self.create_amixer_command(
-                "-q", "sset", self.channel, "{}%-".format(self.step)
+                "-q", "sset", self.channel, f"{self.step}%-"
             )
 
         subprocess.call(volume_down_cmd, shell=True)

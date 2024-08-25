@@ -52,10 +52,9 @@ class SkipFile(Exception):
 
 def version_tuple(value: str) -> tuple[int, ...]:
     try:
-        val = tuple(int(x) for x in value.split("."))
-        return val
-    except TypeError:
-        raise argparse.ArgumentTypeError("Cannot parse version string.")
+        return tuple(int(x) for x in value.split("."))
+    except TypeError as e:
+        raise argparse.ArgumentTypeError("Cannot parse version string.") from e
 
 
 def file_and_backup(config_dir: str) -> Iterator[tuple[str, str]]:
@@ -151,9 +150,7 @@ class QtileMigrate:
             migrator = m()
             migrator.migrate(source)
 
-            diff = migrator.show_diff(self.args.no_colour)
-
-            if diff:
+            if diff := migrator.show_diff(self.args.no_colour):
                 if self.args.show_diff or not self.args.yes:
                     print(f"{m.ID}: {m.show_summary()}\n")
                     print(f"{diff}\n")
@@ -194,14 +191,13 @@ class QtileMigrate:
         else:
             do_save = True
 
-        if do_save:
-            if isinstance(source, libcst.metadata.MetadataWrapper):
-                source = source.module
-            Path(f"{path}").write_text(source.code)
-            print("Saved!")
-            return True
-        else:
+        if not do_save:
             return False
+        if isinstance(source, libcst.metadata.MetadataWrapper):
+            source = source.module
+        Path(f"{path}").write_text(source.code)
+        print("Saved!")
+        return True
 
     def run_migrations(self) -> None:
         backups = []
@@ -216,8 +212,7 @@ class QtileMigrate:
                 try:
                     shutil.copyfile(py, backup)
                     backups.append(backup)
-                    changed = self.migrate(py)
-                    if changed:
+                    if self.migrate(py):
                         changed_files.append(py)
                 except SkipFile:
                     backups.remove(backup)

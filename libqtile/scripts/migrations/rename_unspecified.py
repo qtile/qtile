@@ -50,7 +50,7 @@ class RenameUnspecifiedTransformer(MigrationTransformer):
         if len(new_names) == len(original_node.names):
             return original_node
         self.lint(original_node, "'UNSPECIFIED' can be dropped")
-        if len(new_names) == 0:
+        if not new_names:
             return cst.RemoveFromParent()
         return updated_node.with_changes(names=new_names)
 

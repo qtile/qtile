@@ -87,13 +87,12 @@ class Plasma(base._TextBox):
             else:
                 mode = self.horizontal
                 self._mode = AddMode.HORIZONTAL
+        elif layout.split:
+            mode = self.vertical_split
+            self._mode = AddMode.VERTICAL | AddMode.SPLIT
         else:
-            if layout.split:
-                mode = self.vertical_split
-                self._mode = AddMode.VERTICAL | AddMode.SPLIT
-            else:
-                mode = self.vertical
-                self._mode = AddMode.VERTICAL
+            mode = self.vertical
+            self._mode = AddMode.VERTICAL
 
         self.update(self.format.format(mode=mode))
 

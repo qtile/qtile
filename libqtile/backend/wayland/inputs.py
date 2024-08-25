@@ -173,7 +173,7 @@ class _Device(ABC, HasListeners):
         name = device.name
         if name == " " or not name.isprintable():
             name = "_"
-        type_key = "type:" + device.type.name.lower()
+        type_key = f"type:{device.type.name.lower()}"
         identifier = "%d:%d:%s" % (device.vendor, device.product, name)
 
         if type_key == "type:pointer" and lib is not None:
@@ -225,11 +225,10 @@ class Keyboard(_Device):
     def finalize(self) -> None:
         super().finalize()
         self.core.keyboards.remove(self)
-        if self.core.seat.get_keyboard() == self.keyboard:
+        if self.core.seat.get_keyboard() == self.keyboard and self.core.keyboards:
             # If this is the active keyboard and we have other keyboards enabled, set
             # the previous keyboard as the new active keyboard.
-            if self.core.keyboards:
-                self.seat.set_keyboard(self.core.keyboards[-1].keyboard)
+            self.seat.set_keyboard(self.core.keyboards[-1].keyboard)
 
     def set_keymap(self, layout: str | None, options: str | None, variant: str | None) -> None:
         """
@@ -357,24 +356,27 @@ class Pointer(_Device):
         if config.drag_lock is not None:
             lib.libinput_device_config_tap_set_drag_lock_enabled(handle, int(config.drag_lock))
 
-        if config.dwt is not None:
-            if lib.libinput_device_config_dwt_is_available(handle):
-                lib.libinput_device_config_dwt_set_enabled(handle, int(config.dwt))
+        if config.dwt is not None and lib.libinput_device_config_dwt_is_available(handle):
+            lib.libinput_device_config_dwt_set_enabled(handle, int(config.dwt))
 
-        if config.left_handed is not None:
-            if lib.libinput_device_config_left_handed_is_available(handle):
-                lib.libinput_device_config_left_handed_set(handle, int(config.left_handed))
+        if (
+            config.left_handed is not None
+            and lib.libinput_device_config_left_handed_is_available(handle)
+        ):
+            lib.libinput_device_config_left_handed_set(handle, int(config.left_handed))
 
         if config.middle_emulation is not None:
             lib.libinput_device_config_middle_emulation_set_enabled(
                 handle, int(config.middle_emulation)
             )
 
-        if config.natural_scroll is not None:
-            if lib.libinput_device_config_scroll_has_natural_scroll(handle):
-                lib.libinput_device_config_scroll_set_natural_scroll_enabled(
-                    handle, int(config.natural_scroll)
-                )
+        if (
+            config.natural_scroll is not None
+            and lib.libinput_device_config_scroll_has_natural_scroll(handle)
+        ):
+            lib.libinput_device_config_scroll_set_natural_scroll_enabled(
+                handle, int(config.natural_scroll)
+            )
 
         if SCROLL_METHODS.get(config.scroll_method):
             lib.libinput_device_config_scroll_set_method(
@@ -394,8 +396,7 @@ class Pointer(_Device):
             if config.tap is not None:
                 lib.libinput_device_config_tap_set_enabled(handle, int(config.tap))
 
-            if config.tap_button_map is not None:
-                if TAP_MAPS.get(config.tap_button_map):
-                    lib.libinput_device_config_tap_set_button_map(
-                        handle, TAP_MAPS.get(config.tap_button_map)
-                    )
+            if config.tap_button_map is not None and TAP_MAPS.get(config.tap_button_map):
+                lib.libinput_device_config_tap_set_button_map(
+                    handle, TAP_MAPS.get(config.tap_button_map)
+                )

@@ -112,7 +112,7 @@ def mpd2_manager(manager_nospawn, monkeypatch, minimal_conf_noscreen, request):
     config.screens = [
         libqtile.config.Screen(
             top=libqtile.bar.Bar(
-                [widget.Mpd2(**getattr(request, "param", dict()))],
+                [widget.Mpd2(**getattr(request, "param", {}))],
                 50,
             ),
         )

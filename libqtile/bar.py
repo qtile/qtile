@@ -512,14 +512,12 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 offset += i.length
 
     def get_widget_in_position(self, x: int, y: int) -> _Widget | None:
-        if self.horizontal:
-            for i in self.widgets:
+        for i in self.widgets:
+            if self.horizontal:
                 if x < i.offsetx + i.length:
                     return i
-        else:
-            for i in self.widgets:
-                if y < i.offsety + i.length:
-                    return i
+            elif y < i.offsety + i.length:
+                return i
         return None
 
     def process_button_click(self, x: int, y: int, button: int) -> None:
@@ -716,18 +714,19 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         return self._size != 0
 
     def show(self, is_show: bool = True) -> None:
-        if is_show != self.is_show():
-            if is_show:
-                self._size = self._saved_size
-                if self.window:
-                    self.window.unhide()
-            else:
-                self._saved_size = self._size
-                self._size = 0
-                if self.window:
-                    self.window.hide()
-            if self.screen and self.screen.group:
-                self.screen.group.layout_all()
+        if is_show == self.is_show():
+            return
+        if is_show:
+            self._size = self._saved_size
+            if self.window:
+                self.window.unhide()
+        else:
+            self._saved_size = self._size
+            self._size = 0
+            if self.window:
+                self.window.hide()
+        if self.screen and self.screen.group:
+            self.screen.group.layout_all()
 
     def adjust_reserved_space(self, size: int) -> None:
         if self._size:

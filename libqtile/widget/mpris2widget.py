@@ -292,7 +292,7 @@ class Mpris2(base._TextBox):
             return
 
         message = await self._send_message(
-            self.objname if self.objname else self._current_player,
+            self.objname or self._current_player,
             PROPERTIES_INTERFACE,
             MPRIS_PATH,
             "GetAll",
@@ -393,7 +393,7 @@ class Mpris2(base._TextBox):
         task.add_done_callback(self._task_callback)
 
     async def _send_player_cmd(self, cmd: str) -> Message | None:
-        message = await self._send_message(
+        return await self._send_message(
             self._current_player,
             MPRIS_PLAYER,
             MPRIS_PATH,
@@ -401,8 +401,6 @@ class Mpris2(base._TextBox):
             "",
             [],
         )
-
-        return message
 
     def _task_callback(self, task: asyncio.Task) -> None:
         message = task.result()

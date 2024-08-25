@@ -99,10 +99,7 @@ class KeyboardPNGFactory:
     def calculate_pos(self, x, y):
         pos = Pos(x, y)
 
-        key_pos = {}
-        for c in "`1234567890-=":
-            key_pos[c] = pos.get_pos(c)
-
+        key_pos = {c: pos.get_pos(c) for c in "`1234567890-="}
         key_pos["Backspace"] = pos.get_pos("Backspace")
         pos.next_row()
 
@@ -211,10 +208,7 @@ class KeyboardPNGFactory:
         surface.write_to_png(filename)
 
     def draw_button(self, context, key, x, y, width, height):
-        fn = False
-        if key[:4] == "XF86":
-            fn = True
-
+        fn = key[:4] == "XF86"
         if key in LEGEND:
             if key == "modifiers":
                 self.rgb_red(context)
@@ -269,8 +263,8 @@ class KeyboardPNGFactory:
         printable = last_word = words.pop()
         while len(words):
             last_word = words.pop()
-            if len(printable + " " + last_word) < c_width:
-                printable += " " + last_word
+            if len(f"{printable} {last_word}") < c_width:
+                printable += f" {last_word}"
                 continue
 
             context.show_text(printable)
@@ -337,7 +331,7 @@ class KInfo:
 
         if len(cmd.args):
             if isinstance(cmd.args[0], str):
-                command += " " + cmd.args[0]
+                command += f" {cmd.args[0]}"
 
         return command
 

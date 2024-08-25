@@ -187,7 +187,7 @@ class QtileGraph(SimpleDirectiveMixin, Directive):
     def make_rst(self):
         self.graph_name = self.options.get("root", "all")
         if self.graph_name == "all":
-            self.visible_nodes = [n for n in NODES_MAP]
+            self.visible_nodes = list(NODES_MAP)
             self.visible_routes = ROUTES[:]
         else:
             linked_nodes, linked_routes = self.find_linked_nodes_routes(self.graph_name)
@@ -195,13 +195,10 @@ class QtileGraph(SimpleDirectiveMixin, Directive):
             self.visible_nodes.extend(linked_nodes)
             self.visible_routes = linked_routes
 
-        graph = []
-        graph.append(f"strict digraph {self.graph_name} {{")
-        graph.append('bgcolor="transparent"')
+        graph = [f"strict digraph {self.graph_name} {{", 'bgcolor="transparent"']
         graph.extend(self.make_nodes())
         graph.extend(self.make_routes())
         graph.append("}")
 
         rst = qtile_graph_template.render(graph=graph)
-        for line in rst.splitlines():
-            yield line
+        yield from rst.splitlines()

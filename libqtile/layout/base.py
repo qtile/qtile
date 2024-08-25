@@ -320,21 +320,20 @@ class _ClientList:
         Use parameter 'client_position' to insert the given client at 4 specific
         positions: top, bottom, after_current, before_current.
         """
-        if client_position is not None:
-            if client_position == "after_current":
-                return self.add_client(client, offset_to_current=1)
-            elif client_position == "before_current":
-                return self.add_client(client, offset_to_current=0)
-            elif client_position == "top":
-                self.append_head(client)
-            else:  # ie client_position == "bottom"
-                self.append(client)
-        else:
+        if client_position is None:
             pos = max(0, self._current_idx + offset_to_current)
             if pos < len(self.clients):
                 self.clients.insert(pos, client)
             else:
                 self.clients.append(client)
+        elif client_position == "after_current":
+            return self.add_client(client, offset_to_current=1)
+        elif client_position == "before_current":
+            return self.add_client(client, offset_to_current=0)
+        elif client_position == "top":
+            self.append_head(client)
+        else:  # ie client_position == "bottom"
+            self.append(client)
         self.current_client = client
 
     def append_head(self, client: Window) -> None:

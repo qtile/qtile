@@ -132,9 +132,7 @@ def can_connect_qtile(socket_path, *, ok=None):
     ipc_command = command.interface.IPCCommandInterface(ipc_client)
     client = command.client.InteractiveCommandClient(ipc_command)
     val = client.status()
-    if val == "OK":
-        return True
-    return False
+    return val == "OK"
 
 
 class TestManager:
@@ -293,9 +291,7 @@ class TestManager:
             proc = subprocess.Popen(args, env=env)
 
         def failed():
-            if proc.poll() is not None:
-                return True
-            return False
+            return proc.poll() is not None
 
         self.create_window(spawn, failed=failed)
         self.testwindows.append(proc)
@@ -364,4 +360,4 @@ class TestManager:
 def assert_window_died(client, window_info):
     client.sync()
     wid = window_info["id"]
-    assert wid not in set([x["id"] for x in client.windows()])
+    assert wid not in {x["id"] for x in client.windows()}
