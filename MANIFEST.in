@@ -8,6 +8,9 @@ include builder.py
 
 exclude .coveragerc
 exclude .pylintrc
+exclude flake.nix
+exclude flake.lock
+exclude nix/*
 exclude tox.ini
 exclude requirements.txt
 exclude requirements-dev.txt
