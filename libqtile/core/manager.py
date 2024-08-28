@@ -1765,7 +1765,7 @@ class Qtile(CommandObject):
         position :
             one of: "top", "bottom", "left", "right", or "all" (default: "all")
         screen :
-            one of: "current", "all" (default: "all")
+            one of: "current", "all" (default: "current")
         """
         to_mod = [self.current_screen]
         if screen == "all":
