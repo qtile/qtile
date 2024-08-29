@@ -517,6 +517,29 @@ hooks: list[Hook] = [
         """,
     ),
     Hook(
+        "group_window_remove",
+        """Called when a window is removed from a group
+
+        **Arguments**
+
+            * ``Group`` removing the window
+            * ``Window`` removed from the group
+
+        Example:
+
+        .. code:: python
+
+          from libqtile import hook
+          from libqtile.utils import send_notification
+
+
+          @hook.subscribe.group_window_remove
+          def group_window_remove(group, window):
+              send_notification("qtile", f"Window {window.name} removed from {group.name}")
+
+        """,
+    ),
+    Hook(
         "client_new",
         """
         Called before Qtile starts managing a new client
