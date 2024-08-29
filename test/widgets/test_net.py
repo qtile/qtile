@@ -65,7 +65,7 @@ def patch_net(fake_qtile, monkeypatch, fake_window):
             format="{interface}: U {up}{up_suffix} {up_cumulative}{up_cumulative_suffix} D "
             "{down}{down_suffix} {down_cumulative}{down_cumulative_suffix} T {total}"
             "{total_suffix} {total_cumulative}{total_cumulative_suffix}",
-            **kwargs
+            **kwargs,
         )
         fakebar = FakeBar([widget], window=fake_window)
         widget._configure(fake_qtile, fakebar)

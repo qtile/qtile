@@ -25,6 +25,7 @@
 """
 Slice layout. Serves as example of delegating layouts (or sublayouts)
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

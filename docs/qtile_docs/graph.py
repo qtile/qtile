@@ -20,10 +20,10 @@
 from dataclasses import dataclass
 
 from docutils.parsers.rst import Directive, directives
-from qtile_docs.base import SimpleDirectiveMixin
-from qtile_docs.templates import qtile_graph_template
 
 from libqtile.command import graph
+from qtile_docs.base import SimpleDirectiveMixin
+from qtile_docs.templates import qtile_graph_template
 
 DISABLED_COLOUR = "Gray"
 

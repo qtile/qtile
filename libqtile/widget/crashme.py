@@ -55,4 +55,4 @@ class _CrashMe(base._TextBox):
         if button == 1:
             1 / 0
         elif button == 3:
-            self.text = "<span>\xC3GError"
+            self.text = "<span>\xc3GError"

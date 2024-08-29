@@ -443,12 +443,10 @@ class _ClientList:
         return len(self.clients)
 
     @overload
-    def __getitem__(self, i: int) -> Window | None:
-        ...
+    def __getitem__(self, i: int) -> Window | None: ...
 
     @overload
-    def __getitem__(self, i: slice) -> list[Window]:
-        ...
+    def __getitem__(self, i: slice) -> list[Window]: ...
 
     def __getitem__(self, i: int | slice) -> Window | None | list[Window]:
         if isinstance(i, slice):

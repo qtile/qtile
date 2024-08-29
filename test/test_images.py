@@ -2,6 +2,7 @@
 test_images.py contains unittests for libqtile.images.Img
 and its supporting code.
 """
+
 import os
 from glob import glob
 from os import path
