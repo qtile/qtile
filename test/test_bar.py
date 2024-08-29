@@ -187,7 +187,7 @@ def test_textbox(manager):
 def test_textbox_errors(manager):
     manager.c.widget["text"].update(None)
     manager.c.widget["text"].update("".join(chr(i) for i in range(255)))
-    manager.c.widget["text"].update("V\xE2r\xE2na\xE7\xEE")
+    manager.c.widget["text"].update("V\xe2r\xe2na\xe7\xee")
     manager.c.widget["text"].update("\ua000")
 
 

@@ -19,10 +19,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from docutils.parsers.rst import Directive
-from qtile_docs.base import SimpleDirectiveMixin
-from qtile_docs.templates import qtile_hooks_template
 
 from libqtile.utils import import_class
+from qtile_docs.base import SimpleDirectiveMixin
+from qtile_docs.templates import qtile_hooks_template
 
 
 class QtileHooks(SimpleDirectiveMixin, Directive):

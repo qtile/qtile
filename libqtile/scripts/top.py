@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 """
-    Command-line top like for qtile
+Command-line top like for qtile
 """
 
 import curses

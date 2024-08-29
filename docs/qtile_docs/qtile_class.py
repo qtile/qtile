@@ -24,11 +24,11 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 from docutils.parsers.rst import Directive, directives
-from qtile_docs.base import SimpleDirectiveMixin, sphinx_escape
-from qtile_docs.templates import qtile_class_template
 
 from libqtile import command, configurable, widget
 from libqtile.utils import import_class
+from qtile_docs.base import SimpleDirectiveMixin, sphinx_escape
+from qtile_docs.templates import qtile_class_template
 
 
 class QtileClass(SimpleDirectiveMixin, Directive):

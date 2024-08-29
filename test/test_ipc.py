@@ -29,8 +29,7 @@ def test_ipc_json_encoder_supports_sets():
 
 
 def test_ipc_json_throws_error_on_unsupported_field():
-    class NonSerializableType:
-        ...
+    class NonSerializableType: ...
 
     with pytest.raises(
         ValueError,
@@ -44,8 +43,7 @@ def test_ipc_json_throws_error_on_unsupported_field():
 
 
 def test_ipc_marshall_error_on_unsupported_field():
-    class NonSerializableType:
-        ...
+    class NonSerializableType: ...
 
     with pytest.raises(ValueError, match="unmarshallable object"):
         _IPC.pack({"foo": NonSerializableType()})

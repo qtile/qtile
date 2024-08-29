@@ -266,10 +266,10 @@ def lazify_imports(
     """
     __all__ = tuple(registry.keys())
 
-    def __dir__() -> tuple[str, ...]:
+    def __dir__() -> tuple[str, ...]:  # noqa: N807
         return __all__
 
-    def __getattr__(name: str) -> Any:
+    def __getattr__(name: str) -> Any:  # noqa: N807
         if name not in registry:
             raise AttributeError
         module_path = "{}.{}".format(package, registry[name])
