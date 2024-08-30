@@ -35,7 +35,7 @@ from dbus_next.constants import MessageType
 from libqtile import pangocffi
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
-from libqtile.utils import _send_dbus_message, add_signal_receiver, create_task
+from libqtile.utils import _send_dbus_message, add_match_rule, create_task
 from libqtile.widget import base
 
 if TYPE_CHECKING:
@@ -46,6 +46,17 @@ MPRIS_OBJECT = "org.mpris.MediaPlayer2"
 MPRIS_PLAYER = "org.mpris.MediaPlayer2.Player"
 PROPERTIES_INTERFACE = "org.freedesktop.DBus.Properties"
 MPRIS_REGEX = re.compile(r"(\{(.*?):(.*?)(:.*?)?\})")
+
+
+def _to_hms(secs):
+    h, s = divmod(secs, 60 * 60)
+    m, s = divmod(s, 60)
+    s = int(s)
+    return int(h), int(m), int(s)
+
+
+def hms(h, m, s):
+    return "{h_string}{m:02d}:{s:02d}".format(h_string=f"{h:02d}:" if h else "", m=m, s=s)
 
 
 class Mpris2Formatter(string.Formatter):
@@ -81,13 +92,7 @@ class Mpris2Formatter(string.Formatter):
             return self._default
 
     def parse(self, format_string):
-        """
-        Replaces first colon in format string with an underscore.
-
-        This will cause issues if any identifier is provided that does not
-        contain a colon. This should not happen according to the MPRIS2
-        specification!
-        """
+        """Replaces first colon in format string with an underscore."""
         format_string = MPRIS_REGEX.sub(r"{\2_\3\4}", format_string)
         return string.Formatter.parse(self, format_string)
 
@@ -113,7 +118,6 @@ class Mpris2(base._TextBox):
     """
 
     defaults = [
-        ("name", "audacious", "Name of the MPRIS widget."),
         (
             "objname",
             None,
@@ -155,6 +159,18 @@ class Mpris2(base._TextBox):
             0,
             "Periodic background polling interval of player (0 to disable polling).",
         ),
+        (
+            "time_formatter",
+            hms,
+            "Function that takes three inputs (h, m, s) and creates a string to display time. "
+            "Default function will display mm:ss and hh:mm:ss if time is greater than 1 hour.",
+        ),
+        (
+            "position_poll_interval",
+            5,
+            "Number of ticks before widget checks position with player. Lower number improves accuracy of position timer.",
+        ),
+        ("poll_on_start", False, "Looks for a currently playing player when widget starts."),
     ]
 
     def __init__(self, **config):
@@ -202,6 +218,12 @@ class Mpris2(base._TextBox):
         self.player_names: dict[str, str] = {}
         self._background_poll: asyncio.TimerHandle | None = None
         self.bus: MessageBus | None = None
+        self._position_timer: asyncio.TimerHandle | None = None
+        self.position = 0
+        self.metadata: dict[str, str] = {}
+        self._tick = 0
+        self._rate = 1
+        self._wanted_properties = ["Metadata", "PlaybackStatus"]
 
     @property
     def player(self) -> str:
@@ -211,34 +233,62 @@ class Mpris2(base._TextBox):
             return self.player_names.get(self._current_player, "Unknown")
 
     async def _config_async(self):
-        # These two listeners create separate bus connections. Each connection only has one
-        # callback so we don't need any logic to identify the message and the appropriate
-        # handler in this code.
+        self.bus = await MessageBus().connect()
 
-        # Set up a listener for NameOwner changes so we can remove players when they close
-        await add_signal_receiver(
-            self._name_owner_changed,
-            session_bus=True,
-            signal_name="NameOwnerChanged",
-            dbus_interface="org.freedesktop.DBus",
+        noc = await add_match_rule(
+            self.bus, type="signal", member="NameOwnerChanged", interface="org.freedesktop.DBus"
         )
-
-        # Listen out for signals from any Mpris2 compatible player
-        subscribe = await add_signal_receiver(
-            self.message,
-            session_bus=True,
-            signal_name="PropertiesChanged",
-            bus_name=self.objname,
+        pc = await add_match_rule(
+            self.bus,
+            type="signal",
+            member="PropertiesChanged",
+            sender=self.objname,
             path="/org/mpris/MediaPlayer2",
-            dbus_interface="org.freedesktop.DBus.Properties",
+            interface="org.freedesktop.DBus.Properties",
+        )
+        seeked = await add_match_rule(
+            self.bus,
+            type="signal",
+            member="Seeked",
+            sender=self.objname,
+            path="/org/mpris/MediaPlayer2",
+            interface="org.mpris.MediaPlayer2.Player",
         )
 
-        if not subscribe:
-            logger.warning("Unable to add signal receiver for Mpris2 players")
+        if not (noc and pc and seeked):
+            logger.warning("Unable to add signal receivers for Mpris2 players")
+        else:
+            self.bus.add_message_handler(self._handler)
+
+        self.needs_position = "{position}" in self.format
+
+        if self.needs_position:
+            self._wanted_properties.append("Rate")
 
         # If the user has specified a player to be monitored, we can poll it now.
         if self.objname is not None:
             await self._check_player()
+        elif self.poll_on_start:
+            self._current_player, message = await self._check_for_active_player()
+            if self._current_player:
+                self.parse_message(self._current_player, message.body[0], [])
+
+    def _handler(self, message):
+        # Returning True stops dbus_next from applying other message handlers
+        # so we use a flag to check whether we've handled received messages or not.
+        handled = False
+
+        if message.member == "NameOwnerChanged":
+            self._name_owner_changed(message)
+            handled = True
+        elif message.member == "PropertiesChanged":
+            self._properties_changed(message)
+            handled = True
+        elif message.member == "Seeked":
+            self._set_position(message)
+            handled = True
+
+        return handled
 
     def _name_owner_changed(self, message):
         # We need to track when an interface has been removed from the bus
@@ -249,13 +299,59 @@ class Mpris2(base._TextBox):
         # Check if the current player has closed
         if new_owner == "" and name == self._current_player:
             self._current_player = None
+            self.is_playing = False
             self.update("")
 
             # Cancel any scheduled background poll
             self._set_background_poll(False)
 
-    def message(self, message):
+    def _properties_changed(self, message):
         create_task(self.process_message(message))
+
+    @property
+    def position_delay(self):
+        delay = 1
+        if not self._tick:
+            _, rem = divmod(self.position, 1e6)
+            rem /= 1e6
+            rem = 1 - rem
+            if rem > 0:
+                delay = rem
+
+        return delay / self._rate
+
+    def _set_position(self, message):
+        if not self.needs_position:
+            return
+
+        self.position = message.body[0] // 1000000
+        self._tick = 0
+
+        self._reset_position_timer()
+
+        if self.needs_position and self.is_playing:
+            self._position_timer = self.timeout_add(self.position_delay, self._position_tick)
+
+    def _reset_position_timer(self):
+        if self._position_timer is not None:
+            self._position_timer.cancel()
+
+    def _position_tick(self):
+        if not self.is_playing:
+            return
+
+        self._tick = (self._tick + 1) % self.position_poll_interval
+
+        if not self._tick:
+            task = create_task(self._poll_position())
+            task.add_done_callback(self._poll_position_callback)
+
+        self.position += 1
+        self.metadata["position"] = self.time_formatter(*_to_hms(self.position))
+        self.set_track_info()
+        self.do_display()
+
+        self._position_timer = self.timeout_add(self.position_delay, self._position_tick)
 
     async def process_message(self, message):
         current_player = message.sender
@@ -286,13 +382,55 @@ class Mpris2(base._TextBox):
 
         return message
 
+    async def _check_for_active_player(self):
+        players = await self._find_players()
+        if not players:
+            return None, None
+
+        async def status(player):
+            props, message = await self._get_player_properties(player)
+            if "PlaybackStatus" not in props:
+                return message.sender, message, 4
+
+            match props["PlaybackStatus"].value:
+                case "Playing":
+                    val = 1
+                case "Paused":
+                    val = 2
+                case "Stopped":
+                    val = 3
+                case _:
+                    val = 4
+
+            return message.sender, message, val
+
+        found = [await status(player) for player in players]
+        active = list(filter(lambda x: x[2] < 4, found))
+        if not active:
+            return None, None
+
+        active.sort(key=lambda x: x[2])
+        return active[0][:2]
+
     async def _check_player(self):
         """Check for player at startup and retrieve metadata."""
-        if not (self.objname or self._current_player):
+        player = self.objname or self._current_player
+        if not player:
             return
 
+        props, message = await self._get_player_properties(player)
+
+        if not props:
+            self._current_player = None
+            self.update("")
+            return
+
+        self._current_player = message.sender
+        self.parse_message(player, props, [])
+
+    async def _get_player_properties(self, player):
         message = await self._send_message(
-            self.objname if self.objname else self._current_player,
+            player,
             PROPERTIES_INTERFACE,
             MPRIS_PATH,
             "GetAll",
@@ -300,15 +438,47 @@ class Mpris2(base._TextBox):
             [MPRIS_PLAYER],
         )
 
-        # If we get an error here it will be because the player object doesn't exist
         if message.message_type != MessageType.METHOD_RETURN:
-            self._current_player = None
-            self.update("")
-            return
+            return {}, message
 
-        if message.body:
-            self._current_player = message.sender
-            self.parse_message(self.objname, message.body[0], [])
+        return message.body[0], message
+
+    async def _find_players(self):
+        message = await self._send_message(
+            "org.freedesktop.DBus",
+            "org.freedesktop.DBus",
+            "/org/freedesktop/DBus",
+            "ListNames",
+            "",
+            [],
+        )
+
+        if message.message_type != MessageType.METHOD_RETURN:
+            return []
+
+        return [name for name in message.body[0] if name.startswith("org.mpris.MediaPlayer2")]
+
+    async def _poll_position(self):
+        message = await self._send_message(
+            self.objname if self.objname else self._current_player,
+            PROPERTIES_INTERFACE,
+            MPRIS_PATH,
+            "Get",
+            "ss",
+            [MPRIS_PLAYER, "Position"],
+        )
+
+        if message.message_type == MessageType.METHOD_RETURN:
+            return message
+
+        return None
+
+    def _poll_position_callback(self, task):
+        result = task.result()
+        if result:
+            # GetProperties returns a Variant but _set_position expects an int
+            result.body = [result.body[0].value]
+            self._set_position(result)
 
     def _set_background_poll(self, poll=True):
         if self._background_poll is not None:
@@ -345,20 +515,46 @@ class Mpris2(base._TextBox):
         if not self.configured:
             return
 
-        if "Metadata" not in changed_properties and "PlaybackStatus" not in changed_properties:
+        for wanted in self._wanted_properties:
+            if wanted in changed_properties:
+                break
+        else:
             return
 
         self.displaytext = ""
 
-        metadata = changed_properties.get("Metadata")
-        if metadata:
-            self.track_info = self.get_track_info(metadata.value)
+        rate = changed_properties.get("Rate")
+        if rate:
+            self._rate = rate.value
 
         playbackstatus = getattr(changed_properties.get("PlaybackStatus"), "value", None)
         if playbackstatus:
             self.is_playing = playbackstatus == "Playing"
             self.status = self.prefixes.get(playbackstatus, "{track}")
 
+            if self.needs_position:
+                if self.is_playing and self._position_timer is None:
+                    self._position_timer = self.timeout_add(1, self._position_tick)
+                elif not self.is_playing and self._position_timer is not None:
+                    self._position_timer.cancel()
+                    self._position_timer = None
+
+        metadata = changed_properties.get("Metadata")
+        if metadata:
+            self.metadata = self.get_track_info(metadata.value)
+            if self.needs_position:
+                self.metadata["position"] = self.time_formatter(*_to_hms(self.position))
+            self.set_track_info()
+
+        self.do_display()
+
+        if self.poll_interval:
+            self._set_background_poll()
+
+    def set_track_info(self):
+        self.track_info = self._formatter.format(self.format, **self.metadata).replace("\n", "")
+
+    def do_display(self):
         if not self.track_info:
             self.track_info = self.no_metadata_text
 
@@ -367,22 +563,19 @@ class Mpris2(base._TextBox):
         if self.text != self.displaytext:
             self.update(self.displaytext)
 
-        if self.poll_interval:
-            self._set_background_poll()
-
-    def get_track_info(self, metadata: dict[str, Variant]) -> str:
-        self.metadata = {}
+    def get_track_info(self, metadata: dict[str, Variant]) -> dict[str, str]:
+        m = {}
         for key in metadata:
             new_key = key
             val = getattr(metadata.get(key), "value", None)
             if isinstance(val, str):
-                self.metadata[new_key] = val
+                m[new_key] = val
             elif isinstance(val, list):
-                self.metadata[new_key] = self.separator.join(
-                    (y for y in val if isinstance(y, str))
-                )
+                m[new_key] = self.separator.join((y for y in val if isinstance(y, str)))
+            elif key == "mpris:length" and isinstance(val, int):
+                m[new_key] = self.time_formatter(*_to_hms(val // 1e6))
 
-        return self._formatter.format(self.format, **self.metadata).replace("\n", "")
+        return m
 
     def _player_cmd(self, cmd: str) -> None:
         if self._current_player is None:
@@ -441,3 +634,12 @@ class Mpris2(base._TextBox):
         d = base._TextBox.info(self)
         d.update(dict(isplaying=self.is_playing, player=self.player))
         return d
+
+    def finalize(self):
+        if self._position_timer is not None:
+            self._position_timer.cancel()
+
+        if self._background_poll is not None:
+            self._background_poll.cancel()
+
+        base._TextBox.finalize(self)
