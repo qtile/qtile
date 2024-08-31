@@ -544,7 +544,7 @@ class MonadTall(_SimpleLayoutBase):
         """
         left = amt  # track unused shrink amount
         # for each client before specified index
-        for idx in range(0, cidx):
+        for idx in range(cidx):
             # shrink by whatever is left-over of original amount
             left -= left - self._shrink(idx, left)
         # return unused shrink amount
@@ -564,7 +564,7 @@ class MonadTall(_SimpleLayoutBase):
         per_amt = amt / cidx
         left = amt  # track unused shrink amount
         # for each client before specified index
-        for idx in range(0, cidx):
+        for idx in range(cidx):
             # shrink by equal amount and track left-over
             left -= per_amt - self._shrink(idx, per_amt)
         # apply non-equal shrinkage secondary pass
@@ -698,7 +698,7 @@ class MonadTall(_SimpleLayoutBase):
         """
         # split grow amount among number of clients
         per_amt = amt / cidx
-        for idx in range(0, cidx):
+        for idx in range(cidx):
             self._grow(idx, per_amt)
 
     def grow_down_shared(self, cidx, amt):

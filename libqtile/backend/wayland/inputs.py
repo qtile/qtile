@@ -202,7 +202,6 @@ class _Device(ABC, HasListeners):
     @abstractmethod
     def configure(self, configs: dict[str, InputConfig]) -> None:
         """Applies ``InputConfig`` rules to this input device."""
-        pass
 
 
 class Keyboard(_Device):

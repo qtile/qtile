@@ -90,7 +90,6 @@ class _Battery(ABC):
 
         Raises RuntimeError on error.
         """
-        pass
 
 
 def load_battery(**config) -> _Battery:
