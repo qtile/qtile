@@ -79,7 +79,7 @@ class QSh:
             options = self._builtins + self._command_client.commands
             lst = [i for i in options if i.startswith(arg)]
             return lst
-        elif buf.startswith("cd ") or buf.startswith("ls "):
+        elif buf.startswith(("cd ", "ls ")):
             path, sep, last = arg.rpartition("/")
             node, rest_path = self._find_path(path)
 

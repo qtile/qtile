@@ -69,7 +69,7 @@ class AbstractCompleter(metaclass=abc.ABCMeta):
         The completer can optionally support aliases, which map strings to commands. The
         completer should include the aliases in the completion results.
         """
-        pass  # pragma: no cover
+        # pragma: no cover
 
 
 class NullCompleter(AbstractCompleter):

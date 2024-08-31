@@ -110,17 +110,14 @@ class Backend(metaclass=ABCMeta):
 
     def configure(self, manager):
         """This is used to do any post-startup configuration with the manager"""
-        pass
 
     @abstractmethod
     def fake_click(self, x, y):
         """Click at the specified coordinates"""
-        pass
 
     @abstractmethod
     def get_all_windows(self):
         """Get a list of all windows in ascending order of Z position"""
-        pass
 
 
 @Retry(ignore_exceptions=(ipc.IPCError,), return_on_fail=True)

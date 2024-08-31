@@ -56,6 +56,7 @@ select = [
 	"I",       # isort
 	"N",       # pep8-naming
 	"G",       # flake8-logging-format
+	"PIE",     # flake8-pie
 ]
 
 ignore = [
