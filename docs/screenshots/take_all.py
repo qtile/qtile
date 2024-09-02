@@ -414,9 +414,7 @@ def take(name, layout, spec):
             try:
                 client.run_layout_command(command)
             except Exception:
-                errors.append(
-                    f"While running command {command}:\n{traceback.format_exc()}"
-                )
+                errors.append(f"While running command {command}:\n{traceback.format_exc()}")
                 break
             time.sleep(0.05)
             screen.shoot()

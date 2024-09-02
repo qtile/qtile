@@ -81,9 +81,7 @@ def get_stats(scr, c, group_by="lineno", limit=10, seconds=1.5, force_start=Fals
         scr.addstr(
             1,
             0,
-            "{:<3s} {:<40s} {:<30s} {:<16s}".format(
-                "#", "Line", "Memory", " " * (max_x - 71)
-            ),
+            "{:<3s} {:<40s} {:<30s} {:<16s}".format("#", "Line", "Memory", " " * (max_x - 71)),
             curses.A_BOLD | curses.A_REVERSE,
         )
 

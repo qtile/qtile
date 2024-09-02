@@ -334,9 +334,7 @@ class QSh:
             try:
                 return self._command_client.call(cmd, *cmd_args)
             except CommandException as e:
-                return (
-                    f"Caught command exception (is the command invoked incorrectly?): {e}\n"
-                )
+                return f"Caught command exception (is the command invoked incorrectly?): {e}\n"
 
         return f"Invalid command: {line}"
 
