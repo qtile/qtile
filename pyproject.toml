@@ -47,6 +47,7 @@ readme = {file = "README.rst"}
 [tool.ruff]
 line-length = 98
 exclude = ["libqtile/_ffi.*.py", "libqtile/backend/x11/_ffi.*.py", "test/configs/syntaxerr.py"]
+target-version = "py310"
 
 [tool.ruff.lint]
 select = [
