@@ -220,16 +220,19 @@ class Qtile(CommandObject):
         faulthandler.register(signal.SIGUSR2, all_threads=True)
 
         try:
-            async with LoopContext(
-                {
-                    signal.SIGTERM: self.stop,
-                    signal.SIGINT: self.stop,
-                    signal.SIGHUP: self.stop,
-                    signal.SIGUSR1: self.reload_config,
-                }
-            ), ipc.Server(
-                self._prepare_socket_path(self.socket_path),
-                self.server.call,
+            async with (
+                LoopContext(
+                    {
+                        signal.SIGTERM: self.stop,
+                        signal.SIGINT: self.stop,
+                        signal.SIGHUP: self.stop,
+                        signal.SIGUSR1: self.reload_config,
+                    }
+                ),
+                ipc.Server(
+                    self._prepare_socket_path(self.socket_path),
+                    self.server.call,
+                ),
             ):
                 await self._stopped_event.wait()
         finally:

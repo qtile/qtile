@@ -1,6 +1,5 @@
 __version_info__ = ...  # type: list
 
-
 class FFI:
     def cdef(self, csource, override=False, packed=False): ...
     def compile(self, tmpdir=".", verbose=0, target=None, debug=None): ...
