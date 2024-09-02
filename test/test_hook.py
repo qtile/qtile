@@ -30,6 +30,7 @@ import libqtile.utils
 from libqtile import hook
 from libqtile.resources import default_config
 from test.conftest import BareConfig
+from test.helpers import Retry
 
 # TODO: more tests required.
 # 1. Check all hooks that can be fired
@@ -267,6 +268,12 @@ class CallGroupname:
         self.groupname = groupname
 
 
+@Retry(ignore_exceptions=(AssertionError))
+def assert_groupname(mgr_nospawn, groupname):
+    _, _groupname = mgr_nospawn.c.eval("self.config.test.groupname")
+    assert _groupname == groupname
+
+
 @pytest.mark.usefixtures("hook_fixture")
 def test_addgroup(manager_nospawn):
     class AddgroupConfig(BareConfig):
@@ -274,8 +281,7 @@ def test_addgroup(manager_nospawn):
         hook.subscribe.addgroup(test)
 
     manager_nospawn.start(AddgroupConfig)
-    _, groupname = manager_nospawn.c.eval("self.config.test.groupname")
-    assert groupname == "d"
+    assert_groupname(manager_nospawn, "d")
 
 
 @pytest.mark.usefixtures("hook_fixture")
@@ -286,8 +292,7 @@ def test_delgroup(manager_nospawn):
 
     manager_nospawn.start(DelgroupConfig)
     manager_nospawn.c.delgroup("d")
-    _, groupname = manager_nospawn.c.eval("self.config.test.groupname")
-    assert groupname == "d"
+    assert_groupname(manager_nospawn, "d")
 
 
 class CallGroupWindow:
@@ -300,6 +305,14 @@ class CallGroupWindow:
         self.window = win.name
 
 
+@Retry(ignore_exceptions=(AssertionError))
+def assert_group_window(mgr_nospawn, group, window):
+    _, _group = mgr_nospawn.c.eval("self.config.test.group")
+    _, _window = mgr_nospawn.c.eval("self.config.test.window")
+    assert _group == group
+    assert _window == window
+
+
 @pytest.mark.usefixtures("hook_fixture")
 def test_group_window_add(manager_nospawn):
     class AddGroupWindowConfig(BareConfig):
@@ -308,10 +321,7 @@ def test_group_window_add(manager_nospawn):
 
     manager_nospawn.start(AddGroupWindowConfig)
     manager_nospawn.test_window("Test Window")
-    _, group = manager_nospawn.c.eval("self.config.test.group")
-    _, window = manager_nospawn.c.eval("self.config.test.window")
-    assert group == "a"
-    assert window == "Test Window"
+    assert_group_window(manager_nospawn, "a", "Test Window")
 
 
 @pytest.mark.usefixtures("hook_fixture")
@@ -323,10 +333,7 @@ def test_group_window_remove(manager_nospawn):
     manager_nospawn.start(RemoveGroupWindowConfig)
     manager_nospawn.test_window("Test Window")
     manager_nospawn.c.window.kill()
-    _, group = manager_nospawn.c.eval("self.config.test.group")
-    _, window = manager_nospawn.c.eval("self.config.test.window")
-    assert group == "a"
-    assert window == "Test Window"
+    assert_group_window(manager_nospawn, "a", "Test Window")
 
 
 class CallClient:
@@ -337,6 +344,12 @@ class CallClient:
         self.client = client.name
 
 
+@Retry(ignore_exceptions=(AssertionError))
+def assert_client(mgr_nospawn, client):
+    _, _client = mgr_nospawn.c.eval("self.config.test.client")
+    assert _client == client
+
+
 @pytest.mark.usefixtures("hook_fixture")
 def test_client_new(manager_nospawn):
     class ClientNewConfig(BareConfig):
@@ -345,8 +358,7 @@ def test_client_new(manager_nospawn):
 
     manager_nospawn.start(ClientNewConfig)
     manager_nospawn.test_window("Test Client")
-    _, client = manager_nospawn.c.eval("self.config.test.client")
-    assert client == "Test Client"
+    assert_client(manager_nospawn, "Test Client")
 
 
 @pytest.mark.usefixtures("hook_fixture")
@@ -357,13 +369,11 @@ def test_client_managed(manager_nospawn):
 
     manager_nospawn.start(ClientManagedConfig)
     manager_nospawn.test_window("Test Client")
-    _, client = manager_nospawn.c.eval("self.config.test.client")
-    assert client == "Test Client"
+    assert_client(manager_nospawn, "Test Client")
     manager_nospawn.test_window("Test Static")
     manager_nospawn.c.group.focus_back()
     manager_nospawn.c.window.static()
-    _, client = manager_nospawn.c.eval("self.config.test.client")
-    assert client == "Test Client"
+    assert_client(manager_nospawn, "Test Client")
 
 
 @pytest.mark.usefixtures("hook_fixture")
@@ -375,8 +385,7 @@ def test_client_killed(manager_nospawn):
     manager_nospawn.start(ClientKilledConfig)
     manager_nospawn.test_window("Test Client")
     manager_nospawn.c.window.kill()
-    _, client = manager_nospawn.c.eval("self.config.test.client")
-    assert client == "Test Client"
+    assert_client(manager_nospawn, "Test Client")
 
 
 @pytest.mark.usefixtures("hook_fixture")
@@ -387,9 +396,7 @@ def test_client_focus(manager_nospawn):
 
     manager_nospawn.start(ClientFocusConfig)
     manager_nospawn.test_window("Test Client")
-    _, client = manager_nospawn.c.eval("self.config.test.client")
-    assert client == "Test Client"
+    assert_client(manager_nospawn, "Test Client")
     manager_nospawn.test_window("Test Focus")
     manager_nospawn.c.group.focus_back()
-    _, client = manager_nospawn.c.eval("self.config.test.client")
-    assert client == "Test Client"
+    assert_client(manager_nospawn, "Test Client")
