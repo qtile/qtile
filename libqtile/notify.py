@@ -62,7 +62,7 @@ if has_dbus:
         def register_capabilities(self, capabilities):
             if isinstance(capabilities, str):
                 self._capabilities.add(capabilities)
-            elif isinstance(capabilities, (tuple, list, set)):
+            elif isinstance(capabilities, tuple | list | set):
                 self._capabilities.update(set(capabilities))
 
         @method()

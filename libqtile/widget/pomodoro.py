@@ -171,7 +171,7 @@ class Pomodoro(base.ThreadPoolText):
 
                 self._send_notification(
                     "normal",
-                    "Please continue on %s! End Time: " % status
+                    f"Please continue on {status}! End Time: "
                     + self.end_time.strftime("%H:%M"),
                 )
 

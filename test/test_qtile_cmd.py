@@ -107,13 +107,13 @@ def test_qtile_cmd(manager):
     wid = manager.c.window.info()["id"]
 
     for obj in ["window", "group", "screen"]:
-        assert run_qtile_cmd("-s {} -o {} -f info".format(manager.sockfile, obj))
+        assert run_qtile_cmd(f"-s {manager.sockfile} -o {obj} -f info")
 
-    layout = run_qtile_cmd("-s {} -o layout -f info".format(manager.sockfile))
+    layout = run_qtile_cmd(f"-s {manager.sockfile} -o layout -f info")
     assert layout["name"] == "stack"
     assert layout["group"] == "a"
 
-    window = run_qtile_cmd("-s {} -o window {} -f info".format(manager.sockfile, wid))
+    window = run_qtile_cmd(f"-s {manager.sockfile} -o window {wid} -f info")
     assert window["id"] == wid
     assert window["name"] == "foo"
     assert window["group"] == "a"
@@ -124,7 +124,7 @@ def test_qtile_cmd(manager):
     assert group["layouts"] == ["stack", "stack", "stack"]
     assert group["focus"] == "foo"
 
-    assert run_qtile_cmd("-s {} -o screen {} -f info".format(manager.sockfile, 0)) == {
+    assert run_qtile_cmd(f"-s {manager.sockfile} -o screen {0} -f info") == {
         "height": 600,
         "index": 0,
         "width": 800,
@@ -143,7 +143,7 @@ def test_qtile_cmd(manager):
 def test_display_kb(manager):
     from pprint import pprint
 
-    cmd = "-s {} -o root -f display_kb".format(manager.sockfile)
+    cmd = f"-s {manager.sockfile} -o root -f display_kb"
     table = run_qtile_cmd(cmd)
     print(table)
     pprint(table)

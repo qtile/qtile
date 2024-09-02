@@ -131,9 +131,9 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok=True)
     name = args.name or "_".join(args.commands) or args.layout
     if args.comment:
-        name += "-{}".format(args.comment)
+        name += f"-{args.comment}"
     output_prefix = os.path.join(output_dir, name)
-    print("Shooting {}".format(output_prefix))
+    print(f"Shooting {output_prefix}")
 
     # run commands and take a screenshot between each, animate into a gif at the end
     screen = Screenshooter(output_prefix, args.geometry, args.delay)

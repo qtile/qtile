@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2010-2011 Aldo Cortesi
 # Copyright (c) 2010 Philip Kranz
 # Copyright (c) 2011 Mounier Florian
@@ -155,7 +154,7 @@ class QshCompleter(AbstractCompleter):
             if len(self.path) > 0:
                 self.path += "."
 
-            contains_cmd = "self.client.%s_contains" % self.path
+            contains_cmd = f"self.client.{self.path}_contains"
             try:
                 contains = eval(contains_cmd)
             except AttributeError:
@@ -164,7 +163,7 @@ class QshCompleter(AbstractCompleter):
                 if obj.lower().startswith(term):
                     self.lookup.append((obj, obj))
 
-            commands_cmd = "self.client.%scommands()" % self.path
+            commands_cmd = f"self.client.{self.path}commands()"
             try:
                 commands = eval(commands_cmd)
             except (CommandError, AttributeError):
@@ -307,7 +306,7 @@ class CommandCompleter:
                 for d in dirs:
                     try:
                         d = os.path.expanduser(d)
-                        for cmd in glob.iglob(os.path.join(d, "%s*" % txt)):
+                        for cmd in glob.iglob(os.path.join(d, f"{txt}*")):
                             if self.executable(cmd):
                                 self.lookup.append(
                                     (os.path.basename(cmd), cmd),
@@ -515,9 +514,9 @@ class Prompt(base._TextBox):
 
     def _highlight_text(self, text) -> str:
         color = utils.hex(self.cursor_color)
-        text = '<span foreground="{0}">{1}</span>'.format(color, text)
+        text = f'<span foreground="{color}">{text}</span>'
         if self.show_cursor:
-            text = "<u>{}</u>".format(text)
+            text = f"<u>{text}</u>"
         return text
 
     def _update(self) -> None:
@@ -531,7 +530,7 @@ class Prompt(base._TextBox):
                 for text in (txt1, txt2, txt3):
                     text = pangocffi.markup_escape_text(text)
                 txt2 = self._highlight_text(txt2)
-                self.text = "{0}{1}{2}{3}".format(txt1, txt2, txt3, cursor)
+                self.text = f"{txt1}{txt2}{txt3}{cursor}"
             else:
                 self.text = pangocffi.markup_escape_text(self.text)
                 self.text += self._highlight_text(cursor)

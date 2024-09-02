@@ -17,13 +17,12 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from collections.abc import Callable
 from contextlib import suppress
 from functools import partial
 from pathlib import Path
 
 # dbus_next is incompatible with deferred type evaluation
-from typing import Callable, List, Optional
-
 import cairocffi
 from dbus_next import InterfaceNotFoundError, InvalidBusNameError, InvalidObjectPathError
 from dbus_next.aio import MessageBus
@@ -470,13 +469,13 @@ class StatusNotifierWatcher(ServiceInterface):  # noqa: E303
 
     def __init__(self, service: str):
         super().__init__(service)
-        self._items: List[str] = []
-        self._hosts: List[str] = []
+        self._items: list[str] = []
+        self._hosts: list[str] = []
         self.service = service
-        self.on_item_added: Optional[Callable] = None
-        self.on_host_added: Optional[Callable] = None
-        self.on_item_removed: Optional[Callable] = None
-        self.on_host_removed: Optional[Callable] = None
+        self.on_item_added: Callable | None = None
+        self.on_host_added: Callable | None = None
+        self.on_item_removed: Callable | None = None
+        self.on_host_removed: Callable | None = None
 
     async def start(self):
         # Set up and register the service on ths bus
@@ -606,20 +605,20 @@ class StatusNotifierHost:  # noqa: E303
     """
 
     def __init__(self):
-        self.watchers: List[StatusNotifierWatcher] = []
-        self.items: List[StatusNotifierItem] = []
+        self.watchers: list[StatusNotifierWatcher] = []
+        self.items: list[StatusNotifierItem] = []
         self.name = "qtile"
         self.icon_theme: str = None
         self.started = False
-        self._on_item_added: List[Callable] = []
-        self._on_item_removed: List[Callable] = []
-        self._on_icon_changed: List[Callable] = []
+        self._on_item_added: list[Callable] = []
+        self._on_item_removed: list[Callable] = []
+        self._on_icon_changed: list[Callable] = []
 
     async def start(
         self,
-        on_item_added: Optional[Callable] = None,
-        on_item_removed: Optional[Callable] = None,
-        on_icon_changed: Optional[Callable] = None,
+        on_item_added: Callable | None = None,
+        on_item_removed: Callable | None = None,
+        on_icon_changed: Callable | None = None,
     ):
         """
         Starts the host if not already started.

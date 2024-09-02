@@ -31,7 +31,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from random import randint
 from shutil import which
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 try:
     from dbus_next import AuthError, Message, Variant
@@ -44,10 +44,11 @@ except ImportError:
 
 from libqtile.log_utils import logger
 
-ColorType = Union[str, tuple[int, int, int], tuple[int, int, int, float]]
-ColorsType = Union[ColorType, list[ColorType]]
+ColorType = str | tuple[int, int, int] | tuple[int, int, int, float]
+ColorsType = ColorType | list[ColorType]
 if TYPE_CHECKING:
-    from typing import Any, Callable, Coroutine, TypeVar
+    from collections.abc import Callable, Coroutine
+    from typing import Any, TypeVar
 
     T = TypeVar("T")
 
@@ -111,7 +112,7 @@ def rgb(x: ColorType) -> tuple[float, float, float, float]:
 
     Which is returned as (1.0, 0.0, 0.0, 0.5).
     """
-    if isinstance(x, (tuple, list)):
+    if isinstance(x, tuple | list):
         if len(x) == 4:
             alpha = x[-1]
         else:
@@ -141,7 +142,7 @@ def rgb(x: ColorType) -> tuple[float, float, float, float]:
 
 def hex(x: ColorType) -> str:
     r, g, b, _ = rgb(x)
-    return "#%02x%02x%02x" % (int(r * 255), int(g * 255), int(b * 255))
+    return f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
 
 
 def has_transparency(colour: ColorsType) -> bool:
@@ -151,7 +152,7 @@ def has_transparency(colour: ColorsType) -> bool:
     Where a list of colours is passed, returns True if any
     colour is not fully opaque.
     """
-    if isinstance(colour, (str, tuple)):
+    if isinstance(colour, str | tuple):
         return rgb(colour)[3] < 1
     return any(has_transparency(c) for c in colour)
 
@@ -160,7 +161,7 @@ def remove_transparency(colour: ColorsType):  # type: ignore
     """
     Returns a tuple of (r, g, b) with no alpha.
     """
-    if isinstance(colour, (str, tuple)):
+    if isinstance(colour, str | tuple):
         return tuple(x * 255.0 for x in rgb(colour)[:3])
     return [remove_transparency(c) for c in colour]
 
@@ -228,7 +229,7 @@ def describe_attributes(obj: Any, attrs: list[str], func: Callable = lambda x: x
     for attr in attrs:
         value = getattr(obj, attr, None)
         if func(value):
-            pairs.append("%s=%s" % (attr, value))
+            pairs.append(f"{attr}={value}")
 
     return ", ".join(pairs)
 
@@ -272,7 +273,7 @@ def lazify_imports(
     def __getattr__(name: str) -> Any:  # noqa: N807
         if name not in registry:
             raise AttributeError
-        module_path = "{}.{}".format(package, registry[name])
+        module_path = f"{package}.{registry[name]}"
         return import_class(module_path, name, fallback=fallback)
 
     return __all__, __dir__, __getattr__
@@ -518,7 +519,7 @@ async def add_signal_receiver(
     }
 
     rule = "type='signal',"
-    rule += ",".join("{}='{}'".format(k, v) for k, v in match_args.items() if v)
+    rule += ",".join(f"{k}='{v}'" for k, v in match_args.items() if v)
 
     logger.debug("Adding dbus match rule: %s", rule)
 

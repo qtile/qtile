@@ -778,7 +778,7 @@ def test_multiple_borders(xmanager):
     cmd = ["import", "-border", "-window", str(wid), "-crop", "5x1+0+4", "-depth", "8", name]
     subprocess.run(cmd, env={"DISPLAY": xmanager.display})
 
-    with open(name, "r") as f:
+    with open(name) as f:
         data = f.readlines()
     os.unlink(name)
 

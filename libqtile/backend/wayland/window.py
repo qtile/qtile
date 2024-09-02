@@ -65,7 +65,7 @@ if typing.TYPE_CHECKING:
 S = typing.TypeVar("S", bound=PtrHasData)
 
 
-@functools.lru_cache()
+@functools.lru_cache
 def _rgb(color: ColorType) -> ffi.CData:
     """Helper to create and cache float[4] arrays for border painting"""
     if isinstance(color, ffi.CData):
@@ -287,7 +287,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             group = self.qtile.current_group
         else:
             if group_name not in self.qtile.groups_map:
-                raise CommandError("No such group: %s" % group_name)
+                raise CommandError(f"No such group: {group_name}")
             group = self.qtile.groups_map[group_name]
 
         if self.group is group:
@@ -1113,7 +1113,7 @@ class Internal(_Base, base.Internal):
         self.tree.node.raise_to_top()
 
 
-WindowType = typing.Union[Window, Static, Internal]
+WindowType = Window | Static | Internal
 
 
 class PointerConstraint(HasListeners):

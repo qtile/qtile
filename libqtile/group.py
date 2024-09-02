@@ -363,7 +363,7 @@ class _Group(CommandObject):
             for i in self.windows:
                 if i.wid == sel:
                     return i
-        raise RuntimeError("Invalid selection: {}".format(name))
+        raise RuntimeError(f"Invalid selection: {name}")
 
     @expose_command()
     def setlayout(self, layout):
@@ -573,4 +573,4 @@ class _Group(CommandObject):
         hook.fire("changegroup")
 
     def __repr__(self):
-        return "<group.Group (%r)>" % self.name
+        return f"<group.Group ({self.name!r})>"

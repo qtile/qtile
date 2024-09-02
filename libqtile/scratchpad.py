@@ -372,7 +372,7 @@ class ScratchPad(group._Group):
         elif name in self._dropdownconfig:
             return self._dropdownconfig[name].info()
         else:
-            raise ValueError('No DropDown named "%s".' % name)
+            raise ValueError(f'No DropDown named "{name}".')
 
     def get_state(self):
         """

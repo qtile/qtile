@@ -197,7 +197,7 @@ class TestManager:
             return
         if rpipe.poll(0.1):
             error = rpipe.recv()
-            raise AssertionError("Error launching qtile, traceback:\n%s" % error)
+            raise AssertionError(f"Error launching qtile, traceback:\n{error}")
         raise AssertionError("Error launching qtile")
 
     def create_manager(self, config_class):

@@ -43,7 +43,8 @@ except ModuleNotFoundError:
     pass
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
+    from collections.abc import Callable
+    from typing import Any
 
     from pywayland.server import Signal
     from wlroots import xwayland
@@ -108,7 +109,7 @@ def translate_masks(modifiers: list[str]) -> int:
         try:
             masks.append(ModMasks[i.lower()])
         except KeyError as e:
-            raise WlrQError("Unknown modifier: %s" % i) from e
+            raise WlrQError(f"Unknown modifier: {i}") from e
     if masks:
         return functools.reduce(operator.or_, masks)
     else:
@@ -136,7 +137,7 @@ class Painter:
         try:
             with open(image_path, "rb") as f:
                 image, _ = cairocffi.pixbuf.decode_to_image_surface(f.read())
-        except IOError:
+        except OSError:
             logger.exception("Could not load wallpaper:")
             return
 

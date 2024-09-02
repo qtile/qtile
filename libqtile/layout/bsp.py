@@ -23,7 +23,8 @@ from libqtile.command.base import expose_command
 from libqtile.layout.base import Layout
 
 if TYPE_CHECKING:
-    from typing import Any, Generator, Self
+    from collections.abc import Generator
+    from typing import Any, Self
 
     from libqtile.backend.base import Window
     from libqtile.config import ScreenRect
@@ -45,16 +46,14 @@ class _BspNode:
     def __iter__(self) -> Generator[_BspNode, None, None]:
         yield self
         for child in self.children:
-            for c in child:
-                yield c
+            yield from child
 
     def clients(self) -> Generator[Window, None, None]:
         if self.client:
             yield self.client
         else:
             for child in self.children:
-                for c in child.clients():
-                    yield c
+                yield from child.clients()
 
     def _shortest(self, length: int) -> tuple[_BspNode, int]:
         if len(self.children) == 0:

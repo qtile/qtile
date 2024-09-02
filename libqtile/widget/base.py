@@ -35,7 +35,7 @@ import asyncio
 import copy
 import math
 import subprocess
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from libqtile import bar, configurable, confreader
 from libqtile.command import interface
@@ -280,7 +280,7 @@ class _Widget(CommandObject, configurable.Configurable):
         self.mouse_callbacks = defaults
 
     def button_press(self, x, y, button):
-        name = "Button{0}".format(button)
+        name = f"Button{button}"
         if name in self.mouse_callbacks:
             cmd = self.mouse_callbacks[name]
             if isinstance(cmd, LazyCall):
@@ -302,7 +302,7 @@ class _Widget(CommandObject, configurable.Configurable):
         """
         w = q.widgets_map.get(name)
         if not w:
-            raise CommandError("No such widget: %s" % name)
+            raise CommandError(f"No such widget: {name}")
         return w
 
     def _items(self, name: str) -> ItemT:
@@ -714,7 +714,7 @@ class _TextBox(_Widget):
     @expose_command()
     def set_font(
         self,
-        font: Union[str, None] = None,
+        font: str | None = None,
         fontsize: int = 0,
         fontshadow: ColorType = "",
     ):

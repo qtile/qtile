@@ -80,7 +80,7 @@ class Wallpaper(base._TextBox):
                     map(self.get_path, os.listdir(os.path.expanduser(self.directory))),
                 )
             )
-        except IOError as e:
+        except OSError as e:
             logger.exception("I/O error(%s): %s", e.errno, e.strerror)
 
     def set_wallpaper(self):

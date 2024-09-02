@@ -45,7 +45,7 @@ class Node:
     def children(self):
         return self.node.children
 
-    def node_args(self, enabled=True, highlight=False, relative_url=str()):
+    def node_args(self, enabled=True, highlight=False, relative_url=""):
         """Returns a dict of arguments that can be formatted for graphviz."""
         return {
             "pos": f"{self.x},{self.y}!",
@@ -203,5 +203,4 @@ class QtileGraph(SimpleDirectiveMixin, Directive):
         graph.append("}")
 
         rst = qtile_graph_template.render(graph=graph)
-        for line in rst.splitlines():
-            yield line
+        yield from rst.splitlines()

@@ -40,7 +40,7 @@ from libqtile.log_utils import logger
 from libqtile.resources.sleep import inhibitor
 
 if TYPE_CHECKING:
-    from typing import Callable
+    from collections.abc import Callable
 
     HookHandler = Callable[[Callable], Callable]
 
@@ -174,7 +174,7 @@ class Registry:
 
     def fire(self, event, *args, **kwargs):
         if event not in self.subscribe.hooks:
-            raise utils.QtileError("Unknown event: %s" % event)
+            raise utils.QtileError(f"Unknown event: {event}")
         # Do not fire for Internal windows
         if any(isinstance(arg, backend.base.window.Internal) for arg in args):
             return

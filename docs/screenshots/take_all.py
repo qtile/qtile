@@ -415,7 +415,7 @@ def take(name, layout, spec):
                 client.run_layout_command(command)
             except Exception:
                 errors.append(
-                    "While running command {}:\n{}".format(command, traceback.format_exc())
+                    f"While running command {command}:\n{traceback.format_exc()}"
                 )
                 break
             time.sleep(0.05)
@@ -449,7 +449,7 @@ def get_selection(args):
             names = names.split(",")
             for name in names:
                 if name not in specs[layout]:
-                    errors.append("There is no spec for {}:{}".format(layout, name))
+                    errors.append(f"There is no spec for {layout}:{name}")
             selection.append((layout, names))
         else:
             if arg not in specs:
