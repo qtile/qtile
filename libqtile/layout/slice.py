@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2011 Florian Mounier
 # Copyright (c) 2012, 2015 Tycho Andersen
 # Copyright (c) 2013 Tao Sauvage
@@ -37,7 +36,8 @@ from libqtile.layout.base import Layout
 from libqtile.layout.max import Max
 
 if TYPE_CHECKING:
-    from typing import Any, Self, Sequence
+    from collections.abc import Sequence
+    from typing import Any, Self
 
     from libqtile.group import _Group
 

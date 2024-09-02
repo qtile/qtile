@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###################################################################
 # This widget will display the next appointment on your calendar in
 # the qtile status bar. Appointments within the "reminder" time will be

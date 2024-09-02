@@ -46,5 +46,4 @@ class QtileMigrations(SimpleDirectiveMixin, Directive):
         elif "help" in self.options:
             rst = qtile_migrations_full_template.render(**context)
 
-        for line in rst.splitlines():
-            yield line
+        yield from rst.splitlines()

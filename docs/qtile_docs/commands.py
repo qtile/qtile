@@ -159,5 +159,4 @@ class QtileCommands(SimpleDirectiveMixin, Directive):
                 "interfaces": self.make_interface_syntax(obj),
             }
             rst = qtile_commands_template.render(**context)
-            for line in rst.splitlines():
-                yield line
+            yield from rst.splitlines()

@@ -35,11 +35,11 @@ from libqtile.configurable import Configurable
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import Callable, Optional
+    from collections.abc import Callable
 
     from libqtile.command.graph import SelectorType
 
-    ItemT = Optional[tuple[bool, list[str | int]]]
+    ItemT = tuple[bool, list[str | int]] | None
 
 
 def expose_command(name: Callable | str | list[str] | None = None) -> Callable:
@@ -90,7 +90,7 @@ class SelectError(Exception):
     """Error raised in resolving a command graph object"""
 
     def __init__(self, err_string: str, name: str, selectors: list[SelectorType]):
-        super().__init__("{}, name: {}, selectors: {}".format(err_string, name, selectors))
+        super().__init__(f"{err_string}, name: {name}, selectors: {selectors}")
         self.name = name
         self.selectors = selectors
 
@@ -302,7 +302,7 @@ class CommandObject(metaclass=abc.ABCMeta):
             spec = name + signature
             htext = inspect.getdoc(command) or ""
             return spec + "\n" + htext
-        raise CommandError("No such command: %s" % name)
+        raise CommandError(f"No such command: {name}")
 
     def _get_command_signature(self, command: Callable) -> str:
         signature = inspect.signature(command)

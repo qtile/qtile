@@ -49,7 +49,7 @@ def notification(subject, body, urgency=None, timeout=None):
         cmds += ["-u", urg_level]
 
     if timeout:
-        cmds += ["-t", "{}".format(timeout)]
+        cmds += ["-t", f"{timeout}"]
 
     cmds += [subject, body]
 

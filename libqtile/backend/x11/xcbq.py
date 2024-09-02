@@ -254,7 +254,7 @@ class MaskMap:
                     values.append(getattr(val, "_maskvalue", val))
                 del kwargs[s]
         if kwargs:
-            raise ValueError("Unknown mask names: %s" % list(kwargs.keys()))
+            raise ValueError(f"Unknown mask names: {list(kwargs.keys())}")
         return mask, values
 
 
@@ -613,7 +613,7 @@ class Connection:
                 xcffib.xproto.Time.CurrentTime,
             )
 
-    @functools.lru_cache()
+    @functools.lru_cache
     def color_pixel(self, name):
         pixel = self.screens[0].default_colormap.alloc_color(name).pixel
         return pixel | 0xFF << 24
@@ -637,8 +637,8 @@ class Painter:
         # necessary size of the root window by looking at the
         # pseudoscreens attribute and calculating the max x and y extents.
         root_windows = screen.qtile.core.conn.pseudoscreens
-        width = max((win.x + win.width for win in root_windows))
-        height = max((win.y + win.height for win in root_windows))
+        width = max(win.x + win.width for win in root_windows)
+        height = max(win.y + win.height for win in root_windows)
 
         try:
             root_pixmap = self.default_screen.root.get_property(
@@ -723,7 +723,7 @@ class Painter:
         try:
             with open(image_path, "rb") as f:
                 image, _ = cairocffi.pixbuf.decode_to_image_surface(f.read())
-        except IOError:
+        except OSError:
             logger.exception("Could not load wallpaper:")
             return
 
@@ -762,7 +762,7 @@ class Painter:
 def get_keysym(key: str) -> int:
     keysym = keysyms.get(key.lower())
     if not keysym:
-        raise XCBQError("Unknown key: %s" % key)
+        raise XCBQError(f"Unknown key: {key}")
     return keysym
 
 
@@ -784,7 +784,7 @@ def translate_masks(modifiers: list[str]) -> int:
         try:
             masks.append(ModMasks[i.lower()])
         except KeyError as e:
-            raise XCBQError("Unknown modifier: %s" % i) from e
+            raise XCBQError(f"Unknown modifier: {i}") from e
     if masks:
         return functools.reduce(operator.or_, masks)
     else:

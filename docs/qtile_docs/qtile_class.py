@@ -76,7 +76,7 @@ class QtileClass(SimpleDirectiveMixin, Directive):
                 / "shots.json"
             )
             try:
-                with open(index, "r") as f:
+                with open(index) as f:
                     shots = json.load(f)
             except (FileNotFoundError, json.JSONDecodeError):
                 shots = {}
@@ -112,5 +112,4 @@ class QtileClass(SimpleDirectiveMixin, Directive):
             ]
 
         rst = qtile_class_template.render(**context)
-        for line in rst.splitlines():
-            yield line
+        yield from rst.splitlines()

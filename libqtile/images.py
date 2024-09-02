@@ -237,7 +237,7 @@ class Img:
             raise ValueError(
                 "Can't rescale with locked aspect ratio "
                 "and give width_factor and height_factor."
-                " {}, {}".format(width_factor, height_factor)
+                f" {width_factor}, {height_factor}"
             )
         width0, height0 = initial_size
         if width_factor:
@@ -288,14 +288,7 @@ class Img:
             pass
 
     def __repr__(self):
-        return "<{cls_name}: {name!r}, {width}x{height}@{theta:.1f}deg, {path!r}>".format(
-            cls_name=self.__class__.__name__,
-            name=self.name,
-            width=self.width,
-            height=self.height,
-            path=self.path,
-            theta=self.theta,
-        )
+        return f"<{self.__class__.__name__}: {self.name!r}, {self.width}x{self.height}@{self.theta:.1f}deg, {self.path!r}>"
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):

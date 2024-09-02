@@ -134,13 +134,11 @@ def run_function(client: CommandClient, funcname: str, args: list[str]) -> str:
         print("error: Sorry no function ", funcname)
         sys.exit(1)
     except CommandError as e:
-        print("error: Command '{}' returned error: {}".format(funcname, str(e)))
+        print(f"error: Command '{funcname}' returned error: {str(e)}")
         sys.exit(1)
     except CommandException as e:
         print(
-            "error: Sorry cannot run function '{}' with arguments {}: {}".format(
-                funcname, args, str(e)
-            )
+            f"error: Sorry cannot run function '{funcname}' with arguments {args}: {str(e)}"
         )
         sys.exit(1)
 

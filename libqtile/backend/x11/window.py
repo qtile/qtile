@@ -1997,7 +1997,7 @@ class Window(_Window, base.Window):
         else:
             group = self.qtile.groups_map.get(group_name)
             if group is None:
-                raise CommandError("No such group: %s" % group_name)
+                raise CommandError(f"No such group: {group_name}")
 
         if self.group is group:
             if toggle and self.group.screen.previous_group:
@@ -2111,7 +2111,7 @@ class Window(_Window, base.Window):
                 arr[i + 1] = int(arr[i + 1] * mult)
                 arr[i + 2] = int(arr[i + 2] * mult)
             icon = icon[next_pix:]
-            icons["%sx%s" % (width, height)] = arr
+            icons[f"{width}x{height}"] = arr
         self.icons = icons
         hook.fire("net_wm_icon_change", self)
 

@@ -96,7 +96,7 @@ def type_check_config_args(config_file):
         subprocess.check_call(["mypy", config_file])
         print("Config file type checking succeeded!")
     except subprocess.CalledProcessError as e:
-        print("Config file type checking failed: {}".format(e))
+        print(f"Config file type checking failed: {e}")
         raise CheckError()
 
 
@@ -113,7 +113,7 @@ def check_deps() -> None:
 
 
 def check_config(args):
-    print("Checking Qtile config at: {}".format(args.configfile))
+    print(f"Checking Qtile config at: {args.configfile}")
     print("Checking if config is valid python...")
 
     try:

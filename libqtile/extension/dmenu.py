@@ -75,7 +75,7 @@ class Dmenu(base.RunCommand):
             font = self.dmenu_font
         elif self.font:
             if self.fontsize:
-                font = "{}-{}".format(self.font, self.fontsize)
+                font = f"{self.font}-{self.fontsize}"
             else:
                 font = self.font
         self.configured_command.extend(("-fn", font))

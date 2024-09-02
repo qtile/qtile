@@ -1,6 +1,5 @@
-from typing import List  # noqa: F401
+__version_info__ = ...  # type: list
 
-__version_info__ = ...  # type: List
 
 class FFI:
     def cdef(self, csource, override=False, packed=False): ...

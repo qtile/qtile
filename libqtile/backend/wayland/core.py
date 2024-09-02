@@ -110,7 +110,8 @@ except ModuleNotFoundError:
     print("Warning: Wayland backend not built. Backend will not run.")
 
 if TYPE_CHECKING:
-    from typing import Any, Generator
+    from collections.abc import Generator
+    from typing import Any
 
     from cairocffi import ImageSurface
     from pywayland.server import Listener
@@ -867,7 +868,7 @@ class Core(base.Core, wlrq.HasListeners):
         logger.debug("Signal: idle_inhibitor new_inhibitor")
 
         for win in self.qtile.windows_map.values():
-            if isinstance(win, (window.Window, window.Static)):
+            if isinstance(win, window.Window | window.Static):
                 win.surface.for_each_surface(win.add_idle_inhibitor, idle_inhibitor)
                 if idle_inhibitor.data:
                     # We break if the .data attribute was set, because that tells us

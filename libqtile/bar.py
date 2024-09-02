@@ -770,4 +770,4 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 self.window.keep_above(enable=True)
 
 
-BarType = typing.Union[Bar, Gap]
+BarType = Bar | Gap

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2011-2012 Dustin Lacewell
 # Copyright (c) 2011 Mounier Florian
 # Copyright (c) 2012 Craig Barnes

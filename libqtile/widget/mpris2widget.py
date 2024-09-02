@@ -379,7 +379,7 @@ class Mpris2(base._TextBox):
                 self.metadata[new_key] = val
             elif isinstance(val, list):
                 self.metadata[new_key] = self.separator.join(
-                    (y for y in val if isinstance(y, str))
+                    y for y in val if isinstance(y, str)
                 )
 
         return self._formatter.format(self.format, **self.metadata).replace("\n", "")

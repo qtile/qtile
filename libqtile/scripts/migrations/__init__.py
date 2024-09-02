@@ -25,11 +25,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Type
-
     from libqtile.scripts.migrations._base import _QtileMigrator
 
-MIGRATIONS: list[Type[_QtileMigrator]] = []
+MIGRATIONS: list[type[_QtileMigrator]] = []
 MIGRATION_FOLDER = Path(__file__).parent
 
 

@@ -29,7 +29,8 @@ from libqtile.layout.base import Layout
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
+    from collections.abc import Callable
+    from typing import Any
 
     from libqtile.backend.base import Window
     from libqtile.group import _Group
@@ -42,10 +43,10 @@ class Split:
         self, *, name: str, rect: Rect, layout: Layout, matches: list[_Match] = list()
     ) -> None:
         # Check that rect is correctly defined
-        if not isinstance(rect, (tuple, list)):
+        if not isinstance(rect, tuple | list):
             raise ValueError("Split rect should be a list/tuple.")
 
-        if len(rect) != 4 or not all(isinstance(x, (float, int)) for x in rect):
+        if len(rect) != 4 or not all(isinstance(x, float | int) for x in rect):
             raise ValueError("Split rect should have 4 float/int members.")
 
         if isinstance(layout, ScreenSplit):

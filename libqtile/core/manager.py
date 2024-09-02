@@ -59,7 +59,8 @@ from libqtile.utils import cancel_tasks, get_cache_dir, lget, remove_dbus_rules,
 from libqtile.widget.base import _Widget
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Literal
+    from collections.abc import Callable
+    from typing import Any, Literal
 
     from libqtile.command.base import ItemT
     from libqtile.confreader import Config
@@ -1075,7 +1076,7 @@ class Qtile(CommandObject):
 
             def getformat(self) -> tuple[str, int]:
                 format_string = " ".join(
-                    "%-{0:d}s".format(max_col_size + 2) for max_col_size in self.max_col_size
+                    f"%-{max_col_size + 2:d}s" for max_col_size in self.max_col_size
                 )
                 return format_string + "\n", len(self.max_col_size)
 
@@ -1113,7 +1114,7 @@ class Qtile(CommandObject):
                         for value in k.commands[0].args
                     ]
                     + [
-                        "%s = %s" % (keyword, repr(value))
+                        f"{keyword} = {repr(value)}"
                         for keyword, value in k.commands[0].kwargs.items()
                     ]
                 )
@@ -1122,7 +1123,7 @@ class Qtile(CommandObject):
                         mode,
                         name,
                         modifiers,
-                        "{:s}({:s})".format(k.commands[0].name, allargs),
+                        f"{k.commands[0].name:s}({allargs:s})",
                         k.desc,
                     ]
                 )
@@ -1134,11 +1135,11 @@ class Qtile(CommandObject):
                     if mode == "<root>"
                     else "{}>{}".format(mode, k.name if k.name else "_")
                 )
-                rows.append([mode, name, modifiers, "", "Enter {:s} mode".format(new_mode_s)])
+                rows.append([mode, name, modifiers, "", f"Enter {new_mode_s:s} mode"])
                 for s in k.submappings:
                     walk_binding(s, new_mode)
                 return
-            raise TypeError("Unexpected type: {}".format(type(k)))
+            raise TypeError(f"Unexpected type: {type(k)}")
 
         for k in self.config.keys:
             walk_binding(k, "<root>")
@@ -1413,7 +1414,7 @@ class Qtile(CommandObject):
         return [
             i.info()
             for i in self.windows_map.values()
-            if not isinstance(i, (base.Internal, _Widget)) and isinstance(i, CommandObject)
+            if not isinstance(i, base.Internal | _Widget) and isinstance(i, CommandObject)
         ]
 
     @expose_command()
@@ -1682,7 +1683,7 @@ class Qtile(CommandObject):
                     logger.debug("No command entered.")
                     return
                 try:
-                    result = eval("c.{0:s}".format(cmd))
+                    result = eval(f"c.{cmd:s}")
                 except (CommandError, CommandException, AttributeError):
                     logger.exception("Command errored:")
                     result = None
@@ -1691,7 +1692,7 @@ class Qtile(CommandObject):
 
                     message = pformat(result)
                     if messenger:
-                        self.spawn('{0:s} "{1:s}"'.format(messenger, message))
+                        self.spawn(f'{messenger:s} "{message:s}"')
                     logger.debug(result)
 
         mb = self.widgets_map[widget]

@@ -267,14 +267,14 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         # Emulate default widget behavior if markup_str is None
         if enforce_markup and markup_str is None:
-            markup_str = "%s{}" % (state)
+            markup_str = f"{state}{{}}"
 
         if markup_str is not None:
             self.markup = True
             window_name = pangocffi.markup_escape_text(window_name)
             return markup_str.format(window_name)
 
-        return "%s%s" % (state, window_name)
+        return f"{state}{window_name}"
 
     @property
     def windows(self):

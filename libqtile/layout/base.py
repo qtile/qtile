@@ -31,7 +31,8 @@ from libqtile.command.interface import CommandError
 from libqtile.config import ScreenRect
 
 if TYPE_CHECKING:
-    from typing import Any, Iterator, Self, Sequence
+    from collections.abc import Iterator, Sequence
+    from typing import Any, Self
 
     from libqtile.command.base import ItemT
     from libqtile.group import _Group

@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 # Copyright (c) 2011 Mounier Florian
 # Copyright (c) 2011 Paul Colomiets
 # Copyright (c) 2012 roger
@@ -38,7 +37,8 @@ from libqtile.config import ScreenRect
 from libqtile.layout.base import Layout
 
 if TYPE_CHECKING:
-    from typing import Any, Self, Sequence
+    from collections.abc import Sequence
+    from typing import Any, Self
 
     from libqtile.backend import base
     from libqtile.group import _Group
@@ -98,7 +98,7 @@ class TreeNode:
     def add_superscript(self, title):
         """Prepend superscript denoting the number of hidden children"""
         if not self.expanded and self.children:
-            return "{:d}".format(len(self.children)).translate(to_superscript) + title
+            return f"{len(self.children):d}".translate(to_superscript) + title
         return title
 
     def get_first_window(self):
