@@ -6,3 +6,9 @@
 
 # enabled and fixed flaek8-pie rules (#4985)
 65a3d20e2a2423a650bbaa9d5e21dc44fd9366a7
+
+# initial black -> ruff
+13bee8befc81c1d5738c795b6b707e7ac26c616c
+
+# initial black run
+5fed8371bdd32a185b8e7f1abd37e01a511f05b9
