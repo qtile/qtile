@@ -22,6 +22,7 @@ exclude Makefile
 exclude dev.sh
 exclude logo.png
 exclude .readthedocs.yaml
+exclude .git-blame-ignore-revs
 
 graft libqtile/resources
 graft libqtile/widget/helpers
