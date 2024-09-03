@@ -30,6 +30,7 @@ import libqtile.utils
 from libqtile import hook
 from libqtile.resources import default_config
 from test.conftest import BareConfig
+from test.helpers import Retry
 
 # TODO: more tests required.
 # 1. Check all hooks that can be fired
@@ -257,3 +258,145 @@ def test_user_hook(manager_nospawn):
     # Check hooked function with a single arg
     manager.c.fire_user_hook("define_text", "C")
     assert manager.custom_text.value == "C"
+
+
+class CallGroupname:
+    def __init__(self):
+        self.groupname = ""
+
+    def __call__(self, groupname):
+        self.groupname = groupname
+
+
+@Retry(ignore_exceptions=(AssertionError))
+def assert_groupname(mgr_nospawn, groupname):
+    _, _groupname = mgr_nospawn.c.eval("self.config.test.groupname")
+    assert _groupname == groupname
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_addgroup(manager_nospawn):
+    class AddgroupConfig(BareConfig):
+        test = CallGroupname()
+        hook.subscribe.addgroup(test)
+
+    manager_nospawn.start(AddgroupConfig)
+    assert_groupname(manager_nospawn, "d")
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_delgroup(manager_nospawn):
+    class DelgroupConfig(BareConfig):
+        test = CallGroupname()
+        hook.subscribe.delgroup(test)
+
+    manager_nospawn.start(DelgroupConfig)
+    manager_nospawn.c.delgroup("d")
+    assert_groupname(manager_nospawn, "d")
+
+
+class CallGroupWindow:
+    def __init__(self):
+        self.window = ""
+        self.group = ""
+
+    def __call__(self, group, win):
+        self.group = group.name
+        self.window = win.name
+
+
+@Retry(ignore_exceptions=(AssertionError))
+def assert_group_window(mgr_nospawn, group, window):
+    _, _group = mgr_nospawn.c.eval("self.config.test.group")
+    _, _window = mgr_nospawn.c.eval("self.config.test.window")
+    assert _group == group
+    assert _window == window
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_group_window_add(manager_nospawn):
+    class AddGroupWindowConfig(BareConfig):
+        test = CallGroupWindow()
+        hook.subscribe.group_window_add(test)
+
+    manager_nospawn.start(AddGroupWindowConfig)
+    manager_nospawn.test_window("Test Window")
+    assert_group_window(manager_nospawn, "a", "Test Window")
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_group_window_remove(manager_nospawn):
+    class RemoveGroupWindowConfig(BareConfig):
+        test = CallGroupWindow()
+        hook.subscribe.group_window_remove(test)
+
+    manager_nospawn.start(RemoveGroupWindowConfig)
+    manager_nospawn.test_window("Test Window")
+    manager_nospawn.c.window.kill()
+    assert_group_window(manager_nospawn, "a", "Test Window")
+
+
+class CallClient:
+    def __init__(self):
+        self.client = ""
+
+    def __call__(self, client):
+        self.client = client.name
+
+
+@Retry(ignore_exceptions=(AssertionError))
+def assert_client(mgr_nospawn, client):
+    _, _client = mgr_nospawn.c.eval("self.config.test.client")
+    assert _client == client
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_client_new(manager_nospawn):
+    class ClientNewConfig(BareConfig):
+        test = CallClient()
+        hook.subscribe.client_new(test)
+
+    manager_nospawn.start(ClientNewConfig)
+    manager_nospawn.test_window("Test Client")
+    assert_client(manager_nospawn, "Test Client")
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_client_managed(manager_nospawn):
+    class ClientManagedConfig(BareConfig):
+        test = CallClient()
+        hook.subscribe.client_managed(test)
+
+    manager_nospawn.start(ClientManagedConfig)
+    manager_nospawn.test_window("Test Client")
+    assert_client(manager_nospawn, "Test Client")
+    manager_nospawn.test_window("Test Static")
+    manager_nospawn.c.group.focus_back()
+    manager_nospawn.c.window.static()
+    assert_client(manager_nospawn, "Test Client")
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_client_killed(manager_nospawn):
+    class ClientKilledConfig(BareConfig):
+        test = CallClient()
+        hook.subscribe.client_killed(test)
+
+    manager_nospawn.start(ClientKilledConfig)
+    manager_nospawn.test_window("Test Client")
+    manager_nospawn.c.window.kill()
+    assert_client(manager_nospawn, "Test Client")
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_client_focus(manager_nospawn):
+    class ClientFocusConfig(BareConfig):
+        test = CallClient()
+        hook.subscribe.client_focus(test)
+
+    manager_nospawn.start(ClientFocusConfig)
+    manager_nospawn.test_window("Test Client")
+    assert_client(manager_nospawn, "Test Client")
+    manager_nospawn.test_window("Test Focus")
+    manager_nospawn.c.group.focus_back()
+    assert_client(manager_nospawn, "Test Client")
