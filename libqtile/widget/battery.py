@@ -363,7 +363,9 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         charge_start_threshold = 0
         charge_end_threshold = 100
         now = 0.0
+        now_total = 0.0
         full = 0.0
+        full_total = 0.0
         power = 0.0
         power_acc = 0.0  # accumulated values of power_now
         percent = 0.0
@@ -442,16 +444,20 @@ class _LinuxBattery(_Battery, configurable.Configurable):
                 power_str, power_unit = self._get_param("power_now_file", bat)
                 # the units of energy is uWh or uAh, multiply to get to uWs or uAs
                 now = 3600 * float(now_str)
+                now_total += now
                 full = 3600 * float(full_str)
+                full_total += full
                 power = float(power_str)
 
                 if now_unit != full_unit:
                     raise RuntimeError("Current and full energy units do not match")
-                if full == 0:
+                """ if full == 0:
                     percent += 0.0
                 else:
                     percent += now / full
+                """
 
+                
                 if power == 0:
                     time += 0
                 elif state == BatteryState.DISCHARGING:
@@ -469,7 +475,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
 
         return BatteryStatus(
             state=state,
-            percent=percent / len(bats),
+            percent = now_total/full_total, 
             power=power_acc,
             time=time,
             charge_start_threshold=charge_start_threshold,
@@ -536,11 +542,7 @@ class Battery(base.ThreadPoolText):
         ("low_foreground", "FF0000", "Font color on low battery"),
         ("low_background", None, "Background color on low battery"),
         ("update_interval", 60, "Seconds between status updates"),
-        (
-            "battery",
-            -1,
-            "Which battery should be monitored (battery number or name). The default value include all the batteries installed",
-        ),
+        ("battery",-1,"Which battery should be monitored (battery number or name). The default value include all the batteries installed"),
         ("notify_below", None, "Send a notification below this battery level."),
         ("notification_timeout", 10, "Time in seconds to display notification. 0 for no expiry."),
     ]
