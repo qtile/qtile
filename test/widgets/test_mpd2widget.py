@@ -127,39 +127,39 @@ def test_mpd2_widget_display_and_actions(mpd2_manager):
     assert widget.info()["text"] == "⏸ Rick Astley/Never gonna give you up [-----]"
 
     # Button 1 toggles state
-    mpd2_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+    mpd2_manager.c.bar["top"].fake_button_press(0, 0, 1)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "▶ Rick Astley/Never gonna give you up [-----]"
 
     # Button 3 stops
-    mpd2_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 3)
+    mpd2_manager.c.bar["top"].fake_button_press(0, 0, 3)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "■ Rick Astley/Never gonna give you up [-----]"
 
     # Button 1 toggles state
-    mpd2_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+    mpd2_manager.c.bar["top"].fake_button_press(0, 0, 1)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "▶ Rick Astley/Never gonna give you up [-----]"
 
-    mpd2_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+    mpd2_manager.c.bar["top"].fake_button_press(0, 0, 1)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "⏸ Rick Astley/Never gonna give you up [-----]"
 
     # Button 5 is "next"
-    mpd2_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 5)
+    mpd2_manager.c.bar["top"].fake_button_press(0, 0, 5)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "⏸ Neil Diamond/Sweet Caroline [-----]"
 
-    mpd2_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 5)
+    mpd2_manager.c.bar["top"].fake_button_press(0, 0, 5)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "⏸ Fred Again../Marea [-----]"
 
     # Button 4 is previous
-    mpd2_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 4)
+    mpd2_manager.c.bar["top"].fake_button_press(0, 0, 4)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "⏸ Neil Diamond/Sweet Caroline [-----]"
 
-    mpd2_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 4)
+    mpd2_manager.c.bar["top"].fake_button_press(0, 0, 4)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "⏸ Rick Astley/Never gonna give you up [-----]"
 

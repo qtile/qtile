@@ -73,7 +73,6 @@ BACKGROUND_NORMAL = "111111"
 BACKGROUND_URGENT = "222222"
 BACKGROUND_LOW = "333333"
 
-
 URGENT = "#ff00ff"
 LOW = "#cccccc"
 
@@ -299,7 +298,7 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
     assert result == "None"
 
     # Clicking on notification dismisses it
-    manager_nospawn.c.bar["top"].fake_button_press(0, "top", 0, 0, button=1)
+    manager_nospawn.c.bar["top"].fake_button_press(0, 0, button=1)
 
     # Signal listener should get the id and close reason
     # id is 1 and dismiss reason is ClosedReason.dismissed which is 2
@@ -310,7 +309,7 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
     _, res = manager_nospawn.c.eval(notification_with_actions)
 
     # Right-clicking on notification invokes it
-    manager_nospawn.c.bar["top"].fake_button_press(0, "top", 0, 0, button=3)
+    manager_nospawn.c.bar["top"].fake_button_press(0, 0, button=3)
 
     # Signal listener should get the id and close reason
     # id is 2 (as it is the second notification) and action is "default"

@@ -122,5 +122,5 @@ def test_mode_change(plasma_manager):
         assert text() == mode
 
     for mode in ["HS", "V", "VS", "H"]:
-        plasma_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+        plasma_manager.c.bar["top"].fake_button_press(0, 0, 1)
         assert text() == mode
