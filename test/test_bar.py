@@ -195,7 +195,7 @@ def test_textbox_errors(manager):
 def test_groupbox_button_press(manager):
     manager.c.group["ccc"].toscreen()
     assert manager.c.get_groups()["a"]["screen"] is None
-    manager.c.bar["bottom"].fake_button_press(0, "bottom", 10, 10, 1)
+    manager.c.bar["bottom"].fake_button_press(10, 10, 1)
     assert manager.c.get_groups()["a"]["screen"] == 0
 
 

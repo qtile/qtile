@@ -45,12 +45,12 @@ def test_trigger_and_cancel(manager_nospawn, minimal_conf_noscreen):
     assert w["text"] == "[ shutdown ]"
 
     # Click widget to start countdown
-    topbar.fake_button_press(0, "top", 0, 0, button=1)
+    topbar.fake_button_press(0, 0, button=1)
     w = topbar.info()["widgets"][0]
     assert w["text"] == "[ 4 seconds ]"
 
     # Click widget again to cancel countdown
-    topbar.fake_button_press(0, "top", 0, 0, button=1)
+    topbar.fake_button_press(0, 0, button=1)
     w = topbar.info()["widgets"][0]
     assert w["text"] == "[ shutdown ]"
 
@@ -66,7 +66,7 @@ def test_exit(manager_nospawn, minimal_conf_noscreen):
     topbar = manager_nospawn.c.bar["top"]
 
     # Click widget to start countdown
-    topbar.fake_button_press(0, "top", 0, 0, button=1)
+    topbar.fake_button_press(0, 0, button=1)
 
     # Trying to access bar should now give IPCError or a ConnectionResetError
     # as qtile has shutdown

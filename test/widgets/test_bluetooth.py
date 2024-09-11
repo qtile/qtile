@@ -272,7 +272,7 @@ def test_defaults(bluetooth_manager):
         return widget.info()["text"]
 
     def click():
-        bluetooth_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+        bluetooth_manager.c.bar["top"].fake_button_press(0, 0, 1)
 
     # Show prefix plus list of connected devices (1 connected at startup)
     wait_for_text(widget, "BT Speaker")
@@ -304,7 +304,7 @@ def test_device_actions(bluetooth_manager):
         return widget.info()["text"]
 
     def click():
-        bluetooth_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+        bluetooth_manager.c.bar["top"].fake_button_press(0, 0, 1)
 
     wait_for_text(widget, "BT Speaker")
     widget.scroll_down()
@@ -344,7 +344,7 @@ def test_adapter_actions(bluetooth_manager):
         return widget.info()["text"]
 
     def click():
-        bluetooth_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+        bluetooth_manager.c.bar["top"].fake_button_press(0, 0, 1)
 
     wait_for_text(widget, "BT Speaker")
 
@@ -393,7 +393,7 @@ def test_custom_symbols(bluetooth_manager):
         return widget.info()["text"]
 
     def click():
-        bluetooth_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+        bluetooth_manager.c.bar["top"].fake_button_press(0, 0, 1)
 
     wait_for_text(widget, "BT Speaker")
 

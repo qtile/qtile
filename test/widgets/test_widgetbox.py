@@ -111,10 +111,10 @@ def test_widgetbox_mouse_click(manager_nospawn, minimal_conf_noscreen):
     topbar = manager_nospawn.c.bar["top"]
     assert len(topbar.info()["widgets"]) == 1
 
-    topbar.fake_button_press(0, "top", 0, 0, button=1)
+    topbar.fake_button_press(0, 0, button=1)
     assert len(topbar.info()["widgets"]) == 2
 
-    topbar.fake_button_press(0, "top", 0, 0, button=1)
+    topbar.fake_button_press(0, 0, button=1)
     assert len(topbar.info()["widgets"]) == 1
 
 
