@@ -13,6 +13,7 @@ Here are Qtile's additional dependencies that may be required for tests:
 Dependency        Ubuntu Package      Needed for
 ================= =================== ==================================================
 pytest_           python3-pytest      Running tests
+pre-commit_       pre-commit          Running linters
 PyGObject         python3-gi          Running tests (test windows)
 Xephyr_           xserver-xephyr      Testing with X11 backend (optional, see below)
 mypy              python3-mypy        Testing ``qtile check`` (optional)
@@ -25,6 +26,7 @@ xvfb              xvfb                Testing with X11 headless (optional)
 
 .. _pytest: https://docs.pytest.org
 .. _Xephyr: https://freedesktop.org/wiki/Software/Xephyr
+.. _pre-commit: https://pre-commit.com/
 
 
 Backends
@@ -95,12 +97,12 @@ In practice, the development cycle looks something like this:
 1. make minor code change
 #. run appropriate test: ``pytest tests/test_module.py`` or ``pytest -k PATTERN``
 #. GOTO 1, until hackage is complete
-#. run entire test suite: ``pytest``
-#. commit
+#. run entire test suite to make sure you didn't break anything else: ``pytest``
+#. try to commit, get changes and feedback from the pre-commit hooks
+#. GOTO 5, until your changes actually get committed
 
-Of course, your patches should also pass the unit tests as well (i.e.
-``make check``). These will be run by ci on every pull request so you
-can see whether or not your contribution passes.
+Tests and pre-commit hooks will be run by our CI on every pull request
+as well so you can see whether or not your contribution passes.
 
 Coding style
 ============
@@ -108,9 +110,10 @@ Coding style
 While not all of our code follows `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_,
 we do try to adhere to it where possible. All new code should be PEP8 compliant.
 
-The ``make lint`` command will run a linter with our configuration over libqtile
-to ensure your patch complies with reasonable formatting constraints. We also
-request that git commit messages follow the
+The ``make lint`` command (or ``pre-commit run -a``) will run our linters and
+formatters with our configuration over the whole libqtile to ensure your patch
+complies with reasonable formatting constraints. We also request that git commit
+messages follow the
 `standard format <https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>`_.
 
 Logging
@@ -136,14 +139,6 @@ Also, keep in mind that any other level than DEBUG is aimed at users who don't
 necessarily have advanced programming knowledge; adapt your message
 accordingly. If it can't make sense to your grandma, it's probably meant to be
 a DEBUG message.
-
-Deprecation policy
-==================
-
-When a widget API is changed, you should deprecate the change using
-``libqtile.widget.base.deprecated`` to warn users, in addition to adding it to
-the appropriate place in the changelog. We will typically remove deprecated
-APIs one tag after they are deprecated.
 
 Using Xephyr
 ============

@@ -1,5 +1,6 @@
 import json
 import subprocess
+from http.client import HTTPException
 from typing import Any
 from urllib.error import URLError
 from urllib.request import Request, urlopen
@@ -85,6 +86,8 @@ class GenPollUrl(base.ThreadPoolText):
             body = self.fetch()
         except URLError:
             return "No network"
+        except HTTPException:
+            return "Request failed"
 
         try:
             text = self.parse(body)

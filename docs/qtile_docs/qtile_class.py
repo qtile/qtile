@@ -24,11 +24,11 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 from docutils.parsers.rst import Directive, directives
-from qtile_docs.base import SimpleDirectiveMixin, sphinx_escape
-from qtile_docs.templates import qtile_class_template
 
 from libqtile import command, configurable, widget
 from libqtile.utils import import_class
+from qtile_docs.base import SimpleDirectiveMixin, sphinx_escape
+from qtile_docs.templates import qtile_class_template
 
 
 class QtileClass(SimpleDirectiveMixin, Directive):
@@ -76,9 +76,9 @@ class QtileClass(SimpleDirectiveMixin, Directive):
                 / "shots.json"
             )
             try:
-                with open(index, "r") as f:
+                with open(index) as f:
                     shots = json.load(f)
-            except json.JSONDecodeError:
+            except (FileNotFoundError, json.JSONDecodeError):
                 shots = {}
 
             widget_shots = shots.get(class_name.lower(), dict())
@@ -112,5 +112,4 @@ class QtileClass(SimpleDirectiveMixin, Directive):
             ]
 
         rst = qtile_class_template.render(**context)
-        for line in rst.splitlines():
-            yield line
+        yield from rst.splitlines()

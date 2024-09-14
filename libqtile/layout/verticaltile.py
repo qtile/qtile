@@ -18,9 +18,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
+
+if TYPE_CHECKING:
+    from typing import Self
+
+    from libqtile.backend.base import Window
+    from libqtile.group import _Group
 
 
 class VerticalTile(_SimpleLayoutBase):
@@ -28,7 +37,7 @@ class VerticalTile(_SimpleLayoutBase):
 
     The available height gets divided by the number of panes, if no pane is
     maximized. If one pane has been maximized, the available height gets split
-    in master- and secondary area. The maximized pane (master pane) gets the
+    in master and secondary area. The maximized pane (master pane) gets the
     full height of the master area and the other panes (secondary panes) share
     the remaining space.  The master area (at default 75%) can grow and shrink
     via keybindings.
@@ -53,17 +62,17 @@ class VerticalTile(_SimpleLayoutBase):
         |               |                |       3       |   |
         -----------------                -----------------  ---
 
-    Normal behavior. No              One maximized pane in the master area
-    maximized pane. No               and two secondary panes in the
-    specific areas.                  secondary area.
+        Normal behavior.                 One maximized pane in the master area
+        No maximized pane.               and two secondary panes in the
+        No specific areas.               secondary area.
 
     ::
 
-        -----------------------------------  In some cases VerticalTile can be
+        -----------------------------------  In some cases, VerticalTile can be
         |                                 |  useful on horizontal mounted
-        |                1                |  monitors two.
-        |                                 |  For example if you want to have a
-        |---------------------------------|  webbrowser and a shell below it.
+        |                1                |  monitors too.
+        |                                 |  For example, if you want to have a
+        |---------------------------------|  web browser and a shell below it.
         |                                 |
         |                2                |
         |                                 |
@@ -108,12 +117,12 @@ class VerticalTile(_SimpleLayoutBase):
     def add_client(self, window):
         return self.clients.add_client(window, 1)
 
-    def remove(self, window):
+    def remove(self, window: Window) -> Window | None:
         if self.maximized is window:
             self.maximized = None
         return self.clients.remove(window)
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         c = _SimpleLayoutBase.clone(self, group)
         c.maximized = None
         return c
@@ -177,11 +186,11 @@ class VerticalTile(_SimpleLayoutBase):
             self.group.layout_all()
 
     @expose_command("up")
-    def previous(self):
+    def previous(self) -> None:
         _SimpleLayoutBase.previous(self)
 
     @expose_command("down")
-    def next(self):
+    def next(self) -> None:
         _SimpleLayoutBase.next(self)
 
     @expose_command()

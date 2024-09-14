@@ -8,8 +8,11 @@ setuptools_scm
 sphinx<7.0.0
 sphinx_rtd_theme
 funcparserlib==1.0.0a0
-sphinxcontrib-seqdiag
 numpydoc
 pytest
 PyGObject
 dbus-next
+cairocffi>=1.6.0
+xcffib>=1.4.0
+libcst>=1.0.0
+readthedocs-sphinx-ext

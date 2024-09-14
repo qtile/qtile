@@ -40,6 +40,7 @@ class FakePsutil(ModuleType):
             self.used = 2534260736  # 2,474,864K, 2,417M, 2.36G
             self.total = 8180686848  # 7,988,952K, 7,802M, 7.72G
             self.free = 2354114560
+            self.available = 5646426112
             self.percent = 39.4
             self.buffers = 346394624
             self.active = 1132359680

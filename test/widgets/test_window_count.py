@@ -86,6 +86,10 @@ def test_window_count(manager_nospawn, minimal_conf_noscreen):
     manager_nospawn.c.group["a"].toscreen()
     assert int(manager_nospawn.c.widget["windowcount"].get()) == 2
 
+    # Move a window and check text
+    manager_nospawn.c.window.togroup("b")
+    assert int(manager_nospawn.c.widget["windowcount"].get()) == 1
+
     # Close all windows and check count is 0 and widget not displayed
     manager_nospawn.kill_window(one)
     manager_nospawn.kill_window(two)

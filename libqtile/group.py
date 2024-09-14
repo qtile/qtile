@@ -48,7 +48,8 @@ class _Group(CommandObject):
     A group is identified by its name but displayed in GroupBox widget by its label.
     """
 
-    def __init__(self, name, layout=None, label=None):
+    def __init__(self, name, layout=None, label=None, screen_affinity=None, persist=False):
+        self.screen_affinity = screen_affinity
         self.name = name
         self.label = name if label is None else label
         self.custom_layout = layout  # will be set on _configure
@@ -66,6 +67,7 @@ class _Group(CommandObject):
         self.screen = None
         self.current_layout = None
         self.last_focused = None
+        self.persist = persist
 
     def _configure(self, layouts, floating_layout, qtile):
         self.screen = None
@@ -127,7 +129,7 @@ class _Group(CommandObject):
                 return
         logger.error("No such layout: %s", layout)
 
-    def use_layout(self, index):
+    def use_layout(self, index: int):
         assert -len(self.layouts) <= index < len(self.layouts), "layout index out of bounds"
         self.layout.hide()
         self.current_layout = index % len(self.layouts)
@@ -256,6 +258,8 @@ class _Group(CommandObject):
             win._float_state = FloatStates.FULLSCREEN
         elif self.floating_layout.match(win) and not win.fullscreen:
             win._float_state = FloatStates.FLOATING
+            if self.qtile.config.floats_kept_above:
+                win.keep_above(enable=True)
         if win.floating and not win.fullscreen:
             self.floating_layout.add_client(win)
         if not win.floating or win.fullscreen:
@@ -267,6 +271,7 @@ class _Group(CommandObject):
 
     def remove(self, win, force=False):
         self.windows.remove(win)
+        hook.fire("group_window_remove", self, win)
         hadfocus = self._remove_from_focus_history(win)
         win.group = None
 
@@ -358,7 +363,7 @@ class _Group(CommandObject):
             for i in self.windows:
                 if i.wid == sel:
                     return i
-        raise RuntimeError("Invalid selection: {}".format(name))
+        raise RuntimeError(f"Invalid selection: {name}")
 
     @expose_command()
     def setlayout(self, layout):
@@ -568,4 +573,4 @@ class _Group(CommandObject):
         hook.fire("changegroup")
 
     def __repr__(self):
-        return "<group.Group (%r)>" % self.name
+        return f"<group.Group ({self.name!r})>"

@@ -18,21 +18,24 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 from __future__ import annotations
 
 import copy
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 from libqtile import configurable
+from libqtile.backend.base import Window
 from libqtile.command.base import CommandObject, expose_command
 from libqtile.command.interface import CommandError
+from libqtile.config import ScreenRect
 
 if TYPE_CHECKING:
-    from typing import Any
+    from collections.abc import Iterator, Sequence
+    from typing import Any, Self
 
     from libqtile.command.base import ItemT
+    from libqtile.group import _Group
 
 
 class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
@@ -40,7 +43,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
 
     defaults: list[tuple[str, Any, str]] = []
 
-    def __init__(self, **config):
+    def __init__(self, **config: Any) -> None:
         # name is a little odd; we can't resolve it until the class is defined
         # (i.e., we can't figure it out to define it in Layout.defaults), so
         # we resolve it here instead.
@@ -51,15 +54,28 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(Layout.defaults)
 
-    def layout(self, windows, screen_rect):
-        assert windows, "let's eliminate unnecessary calls"
+        self._group: _Group | None = None
+
+    def layout(self, windows: Sequence[Window], screen_rect: ScreenRect) -> None:
         for i in windows:
             self.configure(i, screen_rect)
 
-    def finalize(self):
+    def finalize(self) -> None:
         pass
 
-    def clone(self, group):
+    @property
+    def group(self) -> _Group:
+        """
+        Returns the group this layout is attached to.
+
+        Layouts start out unattached, and are attached when the group is configured and
+        each layout is cloned for every group.
+        """
+        if self._group is None:
+            raise RuntimeError("Layout group accessed too early")
+        return self._group
+
+    def clone(self, group: _Group) -> Self:
         """Duplicate a layout
 
         Make a copy of this layout. This is done to provide each group with a
@@ -71,7 +87,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
             Group to attach new layout instance to.
         """
         c = copy.copy(self)
-        c.group = group
+        c._group = group
         return c
 
     def _items(self, name: str) -> ItemT:
@@ -81,49 +97,45 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
             return True, []
         return None
 
-    def _select(self, name, sel):
+    def _select(self, name: str, sel: str | int | None) -> CommandObject | None:
         if name == "screen":
             return self.group.screen
         elif name == "group":
             return self.group
+        return None
 
-    def show(self, screen_rect):
+    def show(self, screen_rect: ScreenRect) -> None:
         """Called when layout is being shown"""
-        pass
 
-    def hide(self):
+    def hide(self) -> None:
         """Called when layout is being hidden"""
-        pass
 
-    def swap(self, c1, c2):
+    def swap(self, c1: Window, c2: Window) -> None:
         """Swap the two given clients c1 and c2"""
         raise CommandError(f"layout: {self.name} does not support swapping windows")
 
-    def focus(self, client):
+    def focus(self, client: Window) -> None:
         """Called whenever the focus changes"""
-        pass
 
-    def blur(self):
+    def blur(self) -> None:
         """Called whenever focus is gone from this layout"""
-        pass
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         """Returns a dictionary of layout information"""
         return dict(name=self.name, group=self.group.name if self.group else None)
 
     @abstractmethod
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:
         """Called whenever a window is added to the group
 
         Called whether the layout is current or not. The layout should just add
         the window to its internal datastructures, without mapping or
         configuring.
         """
-        pass
 
     @abstractmethod
-    def remove(self, client):
+    def remove(self, client: Window) -> Window | None:
         """Called whenever a window is removed from the group
 
         Called whether the layout is current or not. The layout should just
@@ -132,10 +144,9 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
 
         Returns the "next" window that should gain focus or None.
         """
-        pass
 
     @abstractmethod
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         """Configure the layout
 
         This method should:
@@ -144,30 +155,27 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
               `.place()` method.
             - Call either `.hide()` or `.unhide()` on the window.
         """
-        pass
 
     @abstractmethod
-    def focus_first(self):
+    def focus_first(self) -> Window | None:
         """Called when the first client in Layout shall be focused.
 
         This method should:
             - Return the first client in Layout, if any.
             - Not focus the client itself, this is done by caller.
         """
-        pass
 
     @abstractmethod
-    def focus_last(self):
+    def focus_last(self) -> Window | None:
         """Called when the last client in Layout shall be focused.
 
         This method should:
             - Return the last client in Layout, if any.
             - Not focus the client itself, this is done by caller.
         """
-        pass
 
     @abstractmethod
-    def focus_next(self, win):
+    def focus_next(self, win: Window) -> Window | None:
         """Called when the next client in Layout shall be focused.
 
         This method should:
@@ -184,10 +192,9 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         win:
             The currently focused client.
         """
-        pass
 
     @abstractmethod
-    def focus_previous(self, win):
+    def focus_previous(self, win: Window) -> Window | None:
         """Called when the previous client in Layout shall be focused.
 
         This method should:
@@ -204,14 +211,13 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         win:
             The currently focused client.
         """
+
+    @abstractmethod
+    def next(self) -> None:
         pass
 
     @abstractmethod
-    def next(self):
-        pass
-
-    @abstractmethod
-    def previous(self):
+    def previous(self) -> None:
         pass
 
 
@@ -229,46 +235,45 @@ class _ClientList:
     The collection implements focus_xxx methods as desired for Group.
     """
 
-    def __init__(self):
-        self._current_idx = 0
-        self.clients = []
+    def __init__(self) -> None:
+        self._current_idx: int = 0
+        self.clients: list[Window] = []
 
     @property
-    def current_index(self):
+    def current_index(self) -> int:
         return self._current_idx
 
     @current_index.setter
-    def current_index(self, x):
+    def current_index(self, x: int) -> None:
         if len(self):
             self._current_idx = abs(x % len(self))
         else:
             self._current_idx = 0
-        return self._current_idx
 
     @property
-    def current_client(self):
+    def current_client(self) -> Window | None:
         if not self.clients:
             return None
         return self.clients[self._current_idx]
 
     @current_client.setter
-    def current_client(self, client):
+    def current_client(self, client: Window) -> None:
         self._current_idx = self.clients.index(client)
 
-    def focus(self, client):
+    def focus(self, client: Window) -> None:
         """
         Mark the given client as the current focused client in collection.
         This is equivalent to setting current_client.
         """
         self.current_client = client
 
-    def focus_first(self):
+    def focus_first(self) -> Window | None:
         """
         Returns the first client in collection.
         """
         return self[0]
 
-    def focus_next(self, win):
+    def focus_next(self, win: Window) -> Window | None:
         """
         Returns the client next from win in collection.
         """
@@ -277,13 +282,13 @@ class _ClientList:
         except IndexError:
             return None
 
-    def focus_last(self):
+    def focus_last(self) -> Window | None:
         """
         Returns the last client in collection.
         """
         return self[-1]
 
-    def focus_previous(self, win):
+    def focus_previous(self, win: Window) -> Window | None:
         """
         Returns the client previous to win in collection.
         """
@@ -292,7 +297,9 @@ class _ClientList:
             return self[idx - 1]
         return None
 
-    def add_client(self, client, offset_to_current=0, client_position=None):
+    def add_client(
+        self, client: Window, offset_to_current: int = 0, client_position: str | None = None
+    ) -> None:
         """
         Insert the given client into collection at position of the current.
 
@@ -320,24 +327,24 @@ class _ClientList:
                 self.clients.append(client)
         self.current_client = client
 
-    def append_head(self, client):
+    def append_head(self, client: Window) -> None:
         """
         Append the given client in front of list.
         """
         self.clients.insert(0, client)
 
-    def append(self, client):
+    def append(self, client: Window) -> None:
         """
         Append the given client to the end of the collection.
         """
         self.clients.append(client)
 
-    def remove(self, client):
+    def remove(self, client: Window) -> Window | None:
         """
         Remove the given client from collection.
         """
         if client not in self.clients:
-            return
+            return None
         idx = self.clients.index(client)
         del self.clients[idx]
         if len(self) == 0:
@@ -345,7 +352,9 @@ class _ClientList:
         elif idx <= self._current_idx:
             self._current_idx = max(0, self._current_idx - 1)
 
-    def rotate_up(self, maintain_index=True):
+        return self[self._current_idx]
+
+    def rotate_up(self, maintain_index: bool = True) -> None:
         """
         Rotate the list. The first client is moved to last position.
         If maintain_index is True the current_index is adjusted,
@@ -356,7 +365,7 @@ class _ClientList:
             if maintain_index:
                 self.current_index -= 1
 
-    def rotate_down(self, maintain_index=True):
+    def rotate_down(self, maintain_index: bool = True) -> None:
         """
         Rotate the list. The last client is moved to first position.
         If maintain_index is True the current_index is adjusted,
@@ -367,10 +376,10 @@ class _ClientList:
             if maintain_index:
                 self.current_index += 1
 
-    def swap(self, c1, c2, focus=1):
+    def swap(self, c1: Window, c2: Window, focus: int = 1) -> None:
         """
         Swap the two given clients in list.
-        The optional argument 'focus' can be 1, 2 or anything else.
+        The optional argument 'focus' can be 1 or 2.
         In case of 1, the first client c1 is focused, in case of 2 the c2 and
         the current_index is not changed otherwise.
         """
@@ -382,7 +391,7 @@ class _ClientList:
         elif focus == 2:
             self.current_index = i2
 
-    def shuffle_up(self, maintain_index=True):
+    def shuffle_up(self, maintain_index: bool = True) -> None:
         """
         Shuffle the list. The current client swaps position with its predecessor.
         If maintain_index is True the current_index is adjusted,
@@ -390,11 +399,11 @@ class _ClientList:
         """
         idx = self._current_idx
         if idx > 0:
-            self.clients[idx], self.clients[idx - 1] = self[idx - 1], self[idx]
+            self.clients[idx], self.clients[idx - 1] = self.clients[idx - 1], self.clients[idx]
             if maintain_index:
                 self.current_index -= 1
 
-    def shuffle_down(self, maintain_index=True):
+    def shuffle_down(self, maintain_index: bool = True) -> None:
         """
         Shuffle the list. The current client swaps position with its successor.
         If maintain_index is True the current_index is adjusted,
@@ -402,13 +411,13 @@ class _ClientList:
         """
         idx = self._current_idx
         if idx + 1 < len(self.clients):
-            self.clients[idx], self.clients[idx + 1] = self[idx + 1], self[idx]
+            self.clients[idx], self.clients[idx + 1] = self.clients[idx + 1], self.clients[idx]
             if maintain_index:
                 self.current_index += 1
 
-    def join(self, other, offset_to_current=0):
+    def join(self, other: _ClientList, offset_to_current: int = 0) -> None:
         """
-        Add clients from 'other' _WindowCollection to self.
+        Add clients from 'other' _ClientList to self.
         'offset_to_current' works as described for add()
         """
         pos = max(0, self.current_index + offset_to_current)
@@ -417,35 +426,43 @@ class _ClientList:
         else:
             self.clients.extend(other.clients)
 
-    def index(self, client):
+    def index(self, client: Window) -> int:
         return self.clients.index(client)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.clients)
 
-    def __getitem__(self, i):
+    @overload
+    def __getitem__(self, i: int) -> Window | None: ...
+
+    @overload
+    def __getitem__(self, i: slice) -> list[Window]: ...
+
+    def __getitem__(self, i: int | slice) -> Window | None | list[Window]:
+        if isinstance(i, slice):
+            return self.clients[i]
         try:
             return self.clients[i]
         except IndexError:
             return None
 
-    def __setitem__(self, i, value):
+    def __setitem__(self, i: int, value: Window) -> None:
         self.clients[i] = value
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Window]:
         return self.clients.__iter__()
 
-    def __contains__(self, client):
+    def __contains__(self, client: Window) -> bool:
         return client in self.clients
 
-    def __str__(self):
+    def __str__(self) -> str:
         curr = self.current_client
-        return "_WindowCollection: " + ", ".join(
+        return "_ClientList: " + ", ".join(
             [("[%s]" if c == curr else "%s") % c.name for c in self.clients]
         )
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         return dict(
             clients=[c.name for c in self.clients],
             current=self._current_idx,
@@ -461,59 +478,60 @@ class _SimpleLayoutBase(Layout):
     Basic Layouts like Max and Matrix are based on this class
     """
 
-    def __init__(self, **config):
+    def __init__(self, **config: Any) -> None:
         Layout.__init__(self, **config)
         self.clients = _ClientList()
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)
         c.clients = _ClientList()
         return c
 
-    def focus(self, client):
+    def focus(self, client: Window) -> None:
         self.clients.current_client = client
-        self.group.layout_all()
 
-    def focus_first(self):
+    def focus_first(self) -> Window | None:
         return self.clients.focus_first()
 
-    def focus_last(self):
+    def focus_last(self) -> Window | None:
         return self.clients.focus_last()
 
-    def focus_next(self, window):
+    def focus_next(self, window: Window) -> Window | None:
         return self.clients.focus_next(window)
 
-    def focus_previous(self, window):
+    def focus_previous(self, window: Window) -> Window | None:
         return self.clients.focus_previous(window)
 
-    def previous(self):
+    def previous(self) -> None:
         if self.clients.current_client is None:
             return
         client = self.focus_previous(self.clients.current_client) or self.focus_last()
         self.group.focus(client, True)
 
-    def swap(self, window1, window2):
+    def swap(self, window1: Window, window2: Window) -> None:
         self.clients.swap(window1, window2)
         self.group.layout_all()
         self.group.focus(window1)
 
-    def next(self):
+    def next(self) -> None:
         if self.clients.current_client is None:
             return
         client = self.focus_next(self.clients.current_client) or self.focus_first()
         self.group.focus(client, True)
 
-    def add_client(self, client, offset_to_current=0, client_position=None):
-        return self.clients.add_client(client, offset_to_current, client_position)
+    def add_client(
+        self, client: Window, offset_to_current: int = 0, client_position: str | None = None
+    ) -> None:
+        self.clients.add_client(client, offset_to_current, client_position)
 
-    def remove(self, client):
+    def remove(self, client: Window) -> Window | None:
         return self.clients.remove(client)
 
-    def get_windows(self):
+    def get_windows(self) -> list[Window]:
         return self.clients.clients
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = Layout.info(self)
         d.update(self.clients.info())
         return d

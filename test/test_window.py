@@ -1,6 +1,6 @@
 import pytest
 
-from libqtile import config, layout, resources
+from libqtile import bar, config, layout, resources, widget
 from libqtile.confreader import Config
 from test.conftest import BareConfig, dualmonitor
 from test.layouts.layout_utils import assert_focused
@@ -305,3 +305,31 @@ def test_set_position(manager):
 
     # Also check if there is only one client now
     assert len(manager.c.layout.info()["clients"]) == 1
+
+
+class WindowNameConfig(BareConfig):
+    screens = [
+        config.Screen(
+            bottom=bar.Bar(
+                [
+                    widget.WindowName(),
+                ],
+                20,
+            ),
+        ),
+    ]
+    layouts = [layout.Columns()]
+
+
+@pytest.mark.parametrize("manager", [WindowNameConfig], indirect=True)
+def test_focus_switch(manager):
+    def _wnd(name):
+        return manager.c.window[{w["name"]: w["id"] for w in manager.c.windows()}[name]]
+
+    manager.test_window("One")
+    manager.test_window("Two")
+
+    assert manager.c.widget["windowname"].info()["text"] == "Two"
+
+    _wnd("One").focus()
+    assert manager.c.widget["windowname"].info()["text"] == "One"

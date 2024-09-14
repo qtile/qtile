@@ -28,7 +28,9 @@
 from __future__ import annotations
 
 import os.path
+import re
 import sys
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from libqtile import configurable, hook, utils
@@ -37,8 +39,8 @@ from libqtile.command.base import CommandObject, expose_command
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    import re
-    from typing import Any, Callable, Iterable
+    from collections.abc import Callable, Iterable
+    from typing import Any
 
     from libqtile.backend import base
     from libqtile.bar import BarType
@@ -47,6 +49,7 @@ if TYPE_CHECKING:
     from libqtile.group import _Group
     from libqtile.layout.base import Layout
     from libqtile.lazy import LazyCall
+    from libqtile.utils import ColorType
 
 
 class Key:
@@ -60,7 +63,8 @@ class Key:
         ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
         ``"mod4"``, ``"mod5"``.
     key:
-        A key specification, e.g. ``"a"``, ``"Tab"``, ``"Return"``, ``"space"``.
+        A key specification, e.g. ``"a"``, ``"Tab"``, ``"Return"``, ``"space"``. Also accepts
+        an integer value representing a keycode.
     commands:
         One or more :class:`LazyCall` objects to evaluate in sequence upon keypress. Multiple
         commands should be separated by commas.
@@ -74,7 +78,7 @@ class Key:
     def __init__(
         self,
         modifiers: list[str],
-        key: str,
+        key: str | int,
         *commands: LazyCall,
         desc: str = "",
         swallow: bool = True,
@@ -86,7 +90,7 @@ class Key:
         self.swallow = swallow
 
     def __repr__(self) -> str:
-        return "<Key (%s, %s)>" % (self.modifiers, self.key)
+        return f"<Key ({self.modifiers}, {self.key})>"
 
 
 class KeyChord:
@@ -100,7 +104,8 @@ class KeyChord:
         ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
         ``"mod4"``, ``"mod5"``.
     key:
-        A key specification, e.g. ``"a"``, ``"Tab"``, ``"Return"``, ``"space"``.
+        A key specification, e.g. ``"a"``, ``"Tab"``, ``"Return"``, ``"space"``. Also accepts
+        an integer value representing a keycode.
     submappings:
         A list of :class:`Key` or :class:`KeyChord` declarations to bind in this chord.
     mode:
@@ -122,7 +127,7 @@ class KeyChord:
     def __init__(
         self,
         modifiers: list[str],
-        key: str,
+        key: str | int,
         submappings: list[Key | KeyChord],
         mode: bool | str = False,
         name: str = "",
@@ -150,7 +155,7 @@ class KeyChord:
         self.swallow = swallow
 
     def __repr__(self) -> str:
-        return "<KeyChord (%s, %s)>" % (self.modifiers, self.key)
+        return f"<KeyChord ({self.modifiers}, {self.key})>"
 
 
 class Mouse:
@@ -200,7 +205,7 @@ class Drag(Mouse):
         self.warp_pointer = warp_pointer
 
     def __repr__(self) -> str:
-        return "<Drag (%s, %s)>" % (self.modifiers, self.button)
+        return f"<Drag ({self.modifiers}, {self.button})>"
 
 
 class Click(Mouse):
@@ -221,7 +226,7 @@ class Click(Mouse):
     """
 
     def __repr__(self) -> str:
-        return "<Click (%s, %s)>" % (self.modifiers, self.button)
+        return f"<Click ({self.modifiers}, {self.button})>"
 
 
 class EzConfig:
@@ -270,7 +275,7 @@ class EzConfig:
             raise utils.QtileError(msg % spec)
 
         if len(keys) > 1:
-            msg = "Key chains are not supported: %s" % spec
+            msg = f"Key chains are not supported: {spec}"
             raise utils.QtileError(msg)
 
         return mods, keys[0]
@@ -347,7 +352,7 @@ class EzClick(EzConfig, Click):
 
     def __init__(self, btndef: str, *commands: LazyCall) -> None:
         modkeys, button = self.parse(btndef)
-        button = "Button%s" % button
+        button = f"Button{button}"
         super().__init__(modkeys, button, *commands)
 
 
@@ -368,25 +373,16 @@ class EzDrag(EzConfig, Drag):
 
     def __init__(self, btndef: str, *commands: LazyCall, start: LazyCall | None = None) -> None:
         modkeys, button = self.parse(btndef)
-        button = "Button%s" % button
+        button = f"Button{button}"
         super().__init__(modkeys, button, *commands, start=start)
 
 
+@dataclass
 class ScreenRect:
-    def __init__(self, x: int, y: int, width: int, height: int) -> None:
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-
-    def __repr__(self) -> str:
-        return "<%s %d,%d %d,%d>" % (
-            self.__class__.__name__,
-            self.x,
-            self.y,
-            self.width,
-            self.height,
-        )
+    x: int
+    y: int
+    width: int
+    height: int
 
     def hsplit(self, columnwidth: int) -> tuple[ScreenRect, ScreenRect]:
         assert 0 < columnwidth < self.width
@@ -404,12 +400,16 @@ class ScreenRect:
 
 
 class Screen(CommandObject):
-    """
+    r"""
     A physical screen, and its associated paraphernalia.
 
-    Define a screen with a given set of :class:`Bar`s of a specific geometry. Also,
+    Define a screen with a given set of :class:`Bar`\s of a specific geometry. Also,
     ``x``, ``y``, ``width``, and ``height`` aren't specified usually unless you are
     using 'fake screens'.
+
+    The ``background`` parameter, if given, should be a valid single colour. This will
+    paint a solid background colour to the screen. Note, the setting is ignored if
+    ``wallpaper`` is also set (see below).
 
     The ``wallpaper`` parameter, if given, should be a path to an image file. How this
     image is painted to the screen is specified by the ``wallpaper_mode`` parameter. By
@@ -418,10 +418,7 @@ class Screen(CommandObject):
     resized to fill it. If the mode is ``"stretch"``, the image is stretched to fit all
     of it into the screen.
 
-    The ``x11_drag_polling_rate`` parameter specifies the rate for drag events in the X11
-    backend. By default this is set to 120, but if you prefer it you can set it lower for
-    better performance or higher if you have a high refresh rate monitor. 120 would mean
-    that we handle a drag event 120 times per second.
+    The ``x11_drag_polling_rate`` parameter specifies the rate for drag events in the X11 backend. By default this is set to None, indicating no limit. Because in the X11 backend we already handle motion notify events later, the performance should already be okay. However, to limit these events further you can use this variable and e.g. set it to your monitor refresh rate. 60 would mean that we handle a drag event 60 times per second.
 
     """
 
@@ -434,9 +431,10 @@ class Screen(CommandObject):
         bottom: BarType | None = None,
         left: BarType | None = None,
         right: BarType | None = None,
+        background: ColorType | None = None,
         wallpaper: str | None = None,
         wallpaper_mode: str | None = None,
-        x11_drag_polling_rate: int = 120,
+        x11_drag_polling_rate: int | None = None,
         x: int | None = None,
         y: int | None = None,
         width: int | None = None,
@@ -446,6 +444,7 @@ class Screen(CommandObject):
         self.bottom = bottom
         self.left = left
         self.right = right
+        self.background = background
         self.wallpaper = wallpaper
         self.wallpaper_mode = wallpaper_mode
         self.x11_drag_polling_rate = x11_drag_polling_rate
@@ -476,12 +475,15 @@ class Screen(CommandObject):
         self.width = width
         self.height = height
 
-        self.set_group(group)
         for i in self.gaps:
             i._configure(qtile, self, reconfigure=reconfigure_gaps)
+        self.set_group(group)
+
         if self.wallpaper:
             self.wallpaper = os.path.expanduser(self.wallpaper)
             self.paint(self.wallpaper, self.wallpaper_mode)
+        elif self.background:
+            self.qtile.fill_screen(self, self.background)
 
     def paint(self, path: str, mode: str | None = None) -> None:
         if self.qtile:
@@ -493,27 +495,31 @@ class Screen(CommandObject):
 
     @property
     def dx(self) -> int:
-        return self.x + self.left.size if self.left else self.x
+        if self.left and getattr(self.left, "reserve", True):
+            return self.x + self.left.size
+        return self.x
 
     @property
     def dy(self) -> int:
-        return self.y + self.top.size if self.top else self.y
+        if self.top and getattr(self.top, "reserve", True):
+            return self.y + self.top.size
+        return self.y
 
     @property
     def dwidth(self) -> int:
         val = self.width
-        if self.left:
+        if self.left and getattr(self.left, "reserve", True):
             val -= self.left.size
-        if self.right:
+        if self.right and getattr(self.right, "reserve", True):
             val -= self.right.size
         return val
 
     @property
     def dheight(self) -> int:
         val = self.height
-        if self.top:
+        if self.top and getattr(self.top, "reserve", True):
             val -= self.top.size
-        if self.bottom:
+        if self.bottom and getattr(self.bottom, "reserve", True):
             val -= self.bottom.size
         return val
 
@@ -642,7 +648,7 @@ class Screen(CommandObject):
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
                 bar.draw()
-        self.qtile.call_soon(self.group.layout_all)
+        self.group.layout_all()
 
     @expose_command()
     def info(self) -> dict[str, int]:
@@ -764,7 +770,7 @@ class Group:
                 "screen_affinity",
             ],
         )
-        return "<config.Group %r (%s)>" % (self.name, attrs)
+        return f"<config.Group {self.name!r} ({attrs})>"
 
 
 class ScratchPad(Group):
@@ -811,13 +817,105 @@ class ScratchPad(Group):
         self.single = single
 
     def __repr__(self) -> str:
-        return "<config.ScratchPad %r (%s)>" % (
+        return "<config.ScratchPad {!r} ({})>".format(
             self.name,
             ", ".join(dd.name for dd in self.dropdowns),
         )
 
 
-class Match:
+def convert_deprecated_list(vals: list[str], name: str) -> re.Pattern:
+    # make a regex with OR on word boundaries
+    regex_input = r"^({})$".format("|".join(map(re.escape, vals)))
+    logger.warning(
+        "Your Match with the %s property is using lists which are deprecated, replace Match(%s=%s) with Match(%s=re.compile(r\"%s\")) after importing the 're' module",
+        name,
+        name,
+        vals,
+        name,
+        regex_input,
+    )
+    return re.compile(regex_input)
+
+
+class _Match:
+    """Base class to implement bitwise logic methods for Match objects."""
+
+    def compare(self, client: base.Window) -> bool:
+        return True
+
+    def __invert__(self) -> InvertMatch:
+        return InvertMatch(self)
+
+    def __and__(self, other: _Match) -> MatchAll:
+        if not isinstance(other, _Match):
+            raise TypeError
+
+        return MatchAll(self, other)
+
+    def __or__(self, other: _Match) -> MatchAny:
+        if not isinstance(other, _Match):
+            raise TypeError
+
+        return MatchAny(self, other)
+
+    def __xor__(self, other: _Match) -> MatchOnlyOne:
+        if not isinstance(other, _Match):
+            raise TypeError
+
+        return MatchOnlyOne(self, other)
+
+
+class InvertMatch(_Match):
+    """Wrapper to invert the result of the comparison."""
+
+    def __init__(self, match: _Match):
+        self.match = match
+
+    def compare(self, client: base.Window) -> bool:
+        return not self.match.compare(client)
+
+    def __repr__(self) -> str:
+        return f"<InvertMatch({self.match!r})>"
+
+
+class MatchAll(_Match):
+    """Wrapper to check if all comparisons return True."""
+
+    def __init__(self, *matches: _Match):
+        self.matches = matches
+
+    def compare(self, client: base.Window) -> bool:
+        return all(m.compare(client) for m in self.matches)
+
+    def __repr__(self) -> str:
+        return f"<MatchAll({self.matches!r})>"
+
+
+class MatchAny(MatchAll):
+    """Wrapper to check if at least one of the comparisons returns True."""
+
+    def compare(self, client: base.Window) -> bool:
+        return any(m.compare(client) for m in self.matches)
+
+    def __repr__(self) -> str:
+        return f"<MatchAny({self.matches!r})>"
+
+
+class MatchOnlyOne(_Match):
+    """Wrapper to check if only one of the two comparisons returns True."""
+
+    def __init__(self, match1: _Match, match2: _Match):
+        self.match1 = match1
+        self.match2 = match2
+
+    def compare(self, client: base.Window) -> bool:
+        return self.match1.compare(client) != self.match2.compare(client)
+
+    def __repr__(self) -> str:
+        return f"<MatchOnlyOne({self.match1!r}, {self.match2!r})>"
+
+
+class Match(_Match):
     """
     Window properties to compare (match) with a window.
 
@@ -828,7 +926,7 @@ class Match:
     against and returns a boolean.
 
     For some properties, :class:`Match` supports both regular expression objects (i.e.
-    the result of ``re.compile()``) or strings (match as an "include"-match). If a
+    the result of ``re.compile()``) or strings (match as an exact string). If a
     window matches all specified values, it is considered a match.
 
     Parameters
@@ -836,7 +934,7 @@ class Match:
     title:
         Match against the WM_NAME atom (X11) or title (Wayland).
     wm_class:
-        Match against the second string in WM_CLASS atom (X11) or app ID (Wayland).
+        Match against any value in the whole WM_CLASS atom (X11) or app ID (Wayland).
     role:
         Match against the WM_ROLE atom (X11 only).
     wm_type:
@@ -867,10 +965,18 @@ class Match:
         self._rules: dict[str, Any] = {}
 
         if title is not None:
+            if isinstance(title, list):  # type: ignore
+                title = convert_deprecated_list(title, "title")  # type: ignore
             self._rules["title"] = title
         if wm_class is not None:
+            if isinstance(wm_class, list):  # type: ignore
+                wm_class = convert_deprecated_list(wm_class, "wm_class")  # type: ignore
             self._rules["wm_class"] = wm_class
         if wm_instance_class is not None:
+            if isinstance(wm_instance_class, list):  # type: ignore
+                wm_instance_class = convert_deprecated_list(  # type: ignore
+                    wm_instance_class, "wm_instance_class"
+                )
             self._rules["wm_instance_class"] = wm_instance_class
         if wid is not None:
             self._rules["wid"] = wid
@@ -878,14 +984,18 @@ class Match:
             try:
                 self._rules["net_wm_pid"] = int(net_wm_pid)
             except ValueError:
-                error = 'Invalid rule for net_wm_pid: "%s" only int allowed' % str(net_wm_pid)
+                error = f'Invalid rule for net_wm_pid: "{str(net_wm_pid)}" only int allowed'
                 raise utils.QtileError(error)
         if func is not None:
             self._rules["func"] = func
 
         if role is not None:
+            if isinstance(role, list):  # type: ignore
+                role = convert_deprecated_list(role, "role")  # type: ignore
             self._rules["role"] = role
         if wm_type is not None:
+            if isinstance(wm_type, list):  # type: ignore
+                wm_type = convert_deprecated_list(wm_type, "wm_type")  # type: ignore
             self._rules["wm_type"] = wm_type
 
     @staticmethod
@@ -895,16 +1005,14 @@ class Match:
         elif name == "wm_class":
 
             def predicate(other) -> bool:  # type: ignore
-                # match as an "include"-match on any of the received classes
-                match = getattr(other, "match", lambda v: v in other)
+                match = getattr(other, "match", lambda v: v == other)
                 return value and any(match(v) for v in value)
 
             return predicate
         else:
 
             def predicate(other) -> bool:  # type: ignore
-                # match as an "include"-match
-                match = getattr(other, "match", lambda v: v in other)
+                match = getattr(other, "match", lambda v: v == other)
                 return match(value)
 
             return predicate
@@ -952,7 +1060,7 @@ class Match:
                 callback(c)
 
     def __repr__(self) -> str:
-        return "<Match %s>" % self._rules
+        return f"<Match {self._rules}>"
 
 
 class Rule:
@@ -977,13 +1085,13 @@ class Rule:
 
     def __init__(
         self,
-        match: Match | list[Match],
+        match: _Match | list[_Match],
         group: _Group | None = None,
         float: bool = False,
         intrusive: bool = False,
         break_on_match: bool = True,
     ) -> None:
-        if isinstance(match, Match):
+        if isinstance(match, _Match):
             self.matchlist = [match]
         else:
             self.matchlist = match
@@ -999,7 +1107,7 @@ class Rule:
         actions = utils.describe_attributes(
             self, ["group", "float", "intrusive", "break_on_match"]
         )
-        return "<Rule match=%r actions=(%s)>" % (self.matchlist, actions)
+        return f"<Rule match={self.matchlist!r} actions=({actions})>"
 
 
 class DropDown(configurable.Configurable):
@@ -1049,7 +1157,7 @@ class DropDown(configurable.Configurable):
         ),
     )
 
-    def __init__(self, name: str, cmd: str, **config: dict[str, Any]) -> None:
+    def __init__(self, name: str, cmd: str, **config: Any) -> None:
         """
         Initialize :class:`DropDown` window wrapper.
 
