@@ -1,5 +1,7 @@
 [build-system]
 requires = [
+    "cffi>=1.1.0",
+    "cairocffi[xcb]>=1.6.0",
     "setuptools>=60",
     "setuptools-scm>=7.0",
     "wheel",
@@ -21,6 +23,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Desktop Environment :: Window Managers",
@@ -88,7 +91,7 @@ default-section = "third-party"
 
 [tool.mypy]
 mypy_path = "stubs"
-python_version = "3.11"
+python_version = "3.13"
 warn_unused_configs = true
 warn_unused_ignores = true
 warn_unreachable = true
@@ -119,4 +122,6 @@ python_files = "test_*.py"
 testpaths = ["test"]
 filterwarnings = [
     "error:::libqtile",
+    "error:::test",
+    "ignore:::dbus_next",
 ]

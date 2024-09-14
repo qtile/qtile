@@ -579,15 +579,12 @@ def test_client_focus(manager_nospawn):
 @pytest.mark.usefixtures("hook_fixture")
 def test_client_mouse_enter(manager_nospawn):
     class ClientMouseEnterConfig(BareConfig):
-        cursor_warp = True  # wayland backend
         test = CallWindow()
         hook.subscribe.client_mouse_enter(test)
 
     manager_nospawn.start(ClientMouseEnterConfig)
     manager_nospawn.test_window("Test Client")
-    manager_nospawn.test_window("Test MouseEnter")  # wayland backend
-    manager_nospawn.c.next_layout()  # wayland backend
-    manager_nospawn.backend.fake_click(0, 0)  # x11 backend
+    manager_nospawn.backend.fake_click(0, 0)
     assert_window(manager_nospawn, "Test Client")
 
 

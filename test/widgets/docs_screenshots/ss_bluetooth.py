@@ -19,7 +19,7 @@
 # SOFTWARE.
 import pytest
 
-from test.widgets.test_bluetooth import dbus_thread, wait_for_text, widget  # noqa: F401
+from test.widgets.test_bluetooth import fake_dbus_daemon, wait_for_text, widget  # noqa: F401
 
 
 @pytest.mark.parametrize(
@@ -29,7 +29,7 @@ from test.widgets.test_bluetooth import dbus_thread, wait_for_text, widget  # no
     ],
     indirect=True,
 )
-def ss_bluetooth(dbus_thread, screenshot_manager):  # noqa: F811
+def ss_bluetooth(fake_dbus_daemon, screenshot_manager):  # noqa: F811
     w = screenshot_manager.c.widget["bluetooth"]
     wait_for_text(w, "BT Speaker")
     screenshot_manager.take_screenshot()

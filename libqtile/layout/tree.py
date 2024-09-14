@@ -735,7 +735,9 @@ class TreeTab(Layout):
     def _create_drawer(self, screen_rect):
         # Create a new drawer object if the screen is a different height
         # e.g. if moving between screens with different resolutions
-        if self._drawer is not None and self._drawer.height != screen_rect.height:
+        if self._drawer is not None and (
+            self._drawer.height != screen_rect.height or self.panel_width != self._drawer.width
+        ):
             self._drawer.finalize()
             self._drawer = None
 

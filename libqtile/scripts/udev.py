@@ -1,4 +1,3 @@
-import argparse
 import glob
 import os
 import shutil
@@ -36,7 +35,7 @@ def udev(options):
 
 
 def add_subcommand(subparsers, parents):
-    parser = subparsers.add_parser("udev", parents=parents, help=argparse.SUPPRESS)
+    parser = subparsers.add_parser("udev", parents=parents)
     parser.add_argument("kind", choices=["backlight", "battery"])
     parser.add_argument("--device")
     parser.add_argument("--group", default="sudo")

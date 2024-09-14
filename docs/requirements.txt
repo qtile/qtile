@@ -7,4 +7,4 @@ numpydoc
 pytest
 xcffib >= 1.4.0
 PyGObject
-dbus-next
+dbus-fast

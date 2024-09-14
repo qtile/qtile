@@ -232,6 +232,9 @@ class Core(base.Core):
                 w for w in self.qtile.windows_map.values() if isinstance(w, window.Window)
             ]
             for managed_win in managed_wins:
+                if managed_win.group and managed_win in managed_win.group.windows:
+                    # Remove window from old group
+                    managed_win.group.remove(managed_win)
                 managed_win.set_group()
             return
 
@@ -946,3 +949,8 @@ class Core(base.Core):
             self.last_focused.change_layer()
 
         self.last_focused = win
+
+    @property
+    def hovered_window(self) -> base.WindowType | None:
+        _hovered_window = self.conn.conn.core.QueryPointer(self._root.wid).reply().child
+        return self.qtile.windows_map.get(_hovered_window)
