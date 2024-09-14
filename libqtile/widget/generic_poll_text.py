@@ -105,6 +105,7 @@ class GenPollCommand(base.ThreadPoolText):
         ("update_interval", 60, "update time in seconds"),
         ("cmd", None, "command line as a string or list of arguments to execute"),
         ("shell", False, "run command through shell to enable piping and shell expansion"),
+        ("parse", None, "Function to parse output of command"),
     ]
 
     def __init__(self, **config):
@@ -122,4 +123,7 @@ class GenPollCommand(base.ThreadPoolText):
             text=True,
             shell=self.shell,
         )
+        if self.parse:
+            return self.parse(process.stdout)
+
         return process.stdout.strip()

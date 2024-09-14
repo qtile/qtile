@@ -30,6 +30,7 @@ import shlex
 import shutil
 import signal
 import subprocess
+import sys
 import tempfile
 from collections import defaultdict
 from logging.handlers import RotatingFileHandler
@@ -220,15 +221,19 @@ class Qtile(CommandObject):
         faulthandler.register(signal.SIGUSR2, all_threads=True)
 
         try:
+            signals = {
+                signal.SIGTERM: self.stop,
+                signal.SIGINT: self.stop,
+                signal.SIGHUP: self.stop,
+                signal.SIGUSR1: self.reload_config,
+            }
+            if self.core.name == "x11":
+                # the wayland backend installs its own SIGCHLD handler after
+                # the XWayland X server has initialized (as a workaround). the
+                # x11 backend can just do it here.
+                signals[signal.SIGCHLD] = utils.reap_zombies
             async with (
-                LoopContext(
-                    {
-                        signal.SIGTERM: self.stop,
-                        signal.SIGINT: self.stop,
-                        signal.SIGHUP: self.stop,
-                        signal.SIGUSR1: self.reload_config,
-                    }
-                ),
+                LoopContext(signals),
                 ipc.Server(
                     self._prepare_socket_path(self.socket_path),
                     self.server.call,
@@ -325,8 +330,7 @@ class Qtile(CommandObject):
                     layout.finalize()
 
             for screen in self.screens:
-                for gap in screen.gaps:
-                    gap.finalize()
+                screen.finalize_gaps()
         except:  # noqa: E722
             logger.exception("exception during finalize")
         hook.clear()
@@ -819,6 +823,12 @@ class Qtile(CommandObject):
                 closest_screen = s
         return closest_screen or self.screens[0]
 
+    def _focus_hovered_window(self) -> None:
+        window = self.core.hovered_window
+        if window:
+            if isinstance(window, base.Window):
+                window.focus()
+
     def process_button_click(self, button_code: int, modmask: int, x: int, y: int) -> bool:
         handled = False
         for m in self._mouse_map[button_code]:
@@ -826,6 +836,8 @@ class Qtile(CommandObject):
                 continue
 
             if isinstance(m, Click):
+                if self.config.follow_mouse_focus == "click_or_drag_only":
+                    self._focus_hovered_window()
                 for i in m.commands:
                     if i.check(self):
                         status, val = self.server.call(
@@ -837,6 +849,8 @@ class Qtile(CommandObject):
             elif (
                 isinstance(m, Drag) and self.current_window and not self.current_window.fullscreen
             ):
+                if self.config.follow_mouse_focus == "click_or_drag_only":
+                    self._focus_hovered_window()
                 if m.start:
                     i = m.start
                     status, val = self.server.call((i.selectors, i.name, i.args, i.kwargs, False))
@@ -1301,82 +1315,34 @@ class Qtile(CommandObject):
             logger.error("couldn't find `%s`", to_lookup)
             return -1
 
-        r, w = os.pipe()
-        pid = os.fork()
-        if pid < 0:
-            os.close(r)
-            os.close(w)
-            return pid
+        if len(env) == 0:
+            env = os.environ.copy()
+            # if qtile was installed in a virutal env, we don't
+            # necessarily want to propagate that to children
+            # applications, since it may change e.g. the behavior
+            # of shells that spawn python applications
+            env.pop("VIRTUAL_ENV", None)
 
-        if pid == 0:
-            os.close(r)
+        # std{in,out,err} should be /dev/null
+        with open("/dev/null") as null:
+            file_actions: list[tuple] = [
+                (os.POSIX_SPAWN_DUP2, 0, null.fileno()),
+                (os.POSIX_SPAWN_DUP2, 1, null.fileno()),
+                (os.POSIX_SPAWN_DUP2, 2, null.fileno()),
+            ]
 
-            # close qtile's stdin, stdout, stderr so the called process doesn't
-            # pollute our xsession-errors.
-            os.close(0)
-            os.close(1)
-            os.close(2)
+            if sys.version_info.major >= 3 and sys.version_info.minor >= 13:
+                # we should close all fds so that child processes don't
+                # accidentally write to our x11 event loop or whatever; we never
+                # used to do this, so it seems fine to only do it on python 3.13 or
+                # above, where this nice API to do it exists.
+                file_actions.append((os.POSIX_SPAWN_CLOSEFROM, 3))  # type: ignore
 
-            pid2 = os.fork()
-            if pid2 == 0:
-                os.close(w)
-                try:
-                    # if qtile was installed in a virutal env, we don't
-                    # necessarily want to propagate that to children
-                    # applications, since it may change e.g. the behavior
-                    # of shells that spawn python applications
-                    del os.environ["VIRTUAL_ENV"]
-                except KeyError:
-                    pass
-
-                for k, v in env.items():
-                    os.environ[k] = v
-
-                # Open /dev/null as stdin, stdout, stderr
-                try:
-                    fd = os.open(os.devnull, os.O_RDWR)
-                except OSError:
-                    # This shouldn't happen, catch it just in case
-                    pass
-                else:
-                    # For Python >=3.4, need to set file descriptor to inheritable
-                    try:
-                        os.set_inheritable(fd, True)
-                    except AttributeError:
-                        pass
-
-                    # Again, this shouldn't happen, but we should just check
-                    if fd > 0:
-                        os.dup2(fd, 0)
-
-                    os.dup2(fd, 1)
-                    os.dup2(fd, 2)
-
-                try:
-                    os.execvp(args[0], args)
-                except OSError:
-                    # can't log here since we forked :(
-                    pass
-
-                os._exit(1)
-            else:
-                # Here it doesn't matter if fork failed or not, we just write
-                # its return code and exit.
-                os.write(w, str(pid2).encode())
-                os.close(w)
-
-                # sys.exit raises SystemExit, which will then be caught by our
-                # top level catchall and we'll end up with two qtiles; os._exit
-                # actually calls exit.
-                os._exit(0)
-        else:
-            os.close(w)
-            os.waitpid(pid, 0)
-
-            # 1024 bytes should be enough for any pid. :)
-            pid = int(os.read(r, 1024))
-            os.close(r)
-            return pid
+            try:
+                return os.posix_spawnp(args[0], args, env, file_actions=file_actions)
+            except OSError as e:
+                logger.warning("failed to execute: %s: %s", str(args), str(e))
+                return -1
 
     @expose_command()
     def status(self) -> Literal["OK"]:
@@ -1412,8 +1378,8 @@ class Qtile(CommandObject):
         self.focus_screen((self.screens.index(self.current_screen) - 1) % len(self.screens))
 
     @expose_command()
-    def swap_screens(self, reverse=False):
-        """Switch groups between active screens"""
+    def swap_screens(self, reverse = False):
+        """Rotate groups between active screens"""
         prev_group = None
         screens = self.screens[::-1] if reverse else self.screens
         for screen in screens:

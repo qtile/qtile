@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 import tempfile
 from multiprocessing import Value
@@ -775,7 +776,17 @@ def test_multiple_borders(xmanager):
     wid = xmanager.c.window.info()["id"]
 
     name = os.path.join(tempfile.gettempdir(), "test_multiple_borders.txt")
-    cmd = ["import", "-border", "-window", str(wid), "-crop", "5x1+0+4", "-depth", "8", name]
+    cmd = [
+        shutil.which("import"),
+        "-border",
+        "-window",
+        str(wid),
+        "-crop",
+        "5x1+0+4",
+        "-depth",
+        "8",
+        name,
+    ]
     subprocess.run(cmd, env={"DISPLAY": xmanager.display})
 
     with open(name) as f:
@@ -1053,3 +1064,12 @@ def test_move_float_above_tiled(xmanager):
 
     _wnd("two").toggle_floating()
     assert _clients() == ["one", "three", "two"]
+
+
+def test_multiple_wm_types(xmanager):
+    conn = xcbq.Connection(xmanager.display)
+    w = conn.create_window(50, 50, 50, 50)
+    normal = conn.atoms["_NET_WM_WINDOW_TYPE_NORMAL"]
+    kde_override = conn.atoms["_KDE_NET_WM_WINDOW_TYPE_OVERRIDE"]
+    w.set_property("_NET_WM_WINDOW_TYPE", [kde_override, normal])
+    assert w.get_wm_type() == "normal"

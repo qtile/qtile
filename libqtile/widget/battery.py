@@ -450,7 +450,21 @@ class Battery(base.ThreadPoolText):
         ("unknown_char", "?", "Character to indicate the battery status is unknown"),
         ("format", "{char} {percent:2.0%} {hour:d}:{min:02d} {watt:.2f} W", "Display format"),
         ("hide_threshold", None, "Hide the text when there is enough energy 0 <= x < 1"),
-        ("show_short_text", True, 'Show "Full" or "Empty" rather than formated text'),
+        (
+            "full_short_text",
+            "Full",
+            "Short text to indicate battery is full; see `show_short_text`",
+        ),
+        (
+            "empty_short_text",
+            "Empty",
+            "Short text to indicate battery is empty; see `show_short_text`",
+        ),
+        (
+            "show_short_text",
+            True,
+            "Show only characters rather than formatted text when battery is full or empty",
+        ),
         ("low_percentage", 0.10, "Indicates when to use the low_foreground color 0 < x < 1"),
         ("low_foreground", "FF0000", "Font color on low battery"),
         ("low_background", None, "Background color on low battery"),
@@ -550,13 +564,13 @@ class Battery(base.ThreadPoolText):
             char = self.discharge_char
         elif status.state == BatteryState.FULL:
             if self.show_short_text:
-                return "Full"
+                return self.full_short_text
             char = self.full_char
         elif status.state == BatteryState.EMPTY or (
             status.state == BatteryState.UNKNOWN and status.percent == 0
         ):
             if self.show_short_text:
-                return "Empty"
+                return self.empty_short_text
             char = self.empty_char
         elif status.state == BatteryState.NOT_CHARGING:
             char = self.not_charging_char

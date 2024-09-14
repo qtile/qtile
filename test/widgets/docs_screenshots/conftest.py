@@ -31,6 +31,14 @@ from libqtile.command.base import expose_command
 from libqtile.config import Group, Screen
 
 
+@pytest.fixture(scope="function")
+def vertical(request):
+    yield getattr(request, "param", False)
+
+
+vertical_bar = pytest.mark.parametrize("vertical", [True], indirect=True)
+
+
 @pytest.fixture(scope="session")
 def target():
     folder = Path(__file__).parent / "screenshots"
@@ -94,7 +102,7 @@ def target():
 
 
 @pytest.fixture
-def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, target):
+def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, target, vertical):
     """
     Create a manager instance for the screenshots. Individual "tests" should only call
     `screenshot_manager.take_screenshot()` but the destination path is also available in
@@ -190,11 +198,16 @@ def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, 
     def filename():
         return target(name, config)
 
+    # define bars
+    position = "left" if vertical else "top"
+    bar1 = {position: ScreenshotBar([wdgt], 32)}
+    bar2 = {position: ScreenshotBar([], 32)}
+
     # Add the widget to our config
     minimal_conf_noscreen.groups = [Group(i) for i in "123456789"]
     minimal_conf_noscreen.fake_screens = [
-        Screen(top=ScreenshotBar([wdgt], 32), x=0, y=0, width=300, height=300),
-        Screen(top=ScreenshotBar([], 32), x=0, y=300, width=300, height=300),
+        Screen(**bar1, x=0, y=0, width=300, height=300),
+        Screen(**bar2, x=0, y=300, width=300, height=300),
     ]
 
     manager_nospawn.start(minimal_conf_noscreen)
@@ -205,3 +218,7 @@ def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, 
     manager_nospawn.take_screenshot = lambda f=filename: ss_widget.take_screenshot(f())
 
     yield manager_nospawn
+
+
+def widget_config(params):
+    return pytest.mark.parametrize("screenshot_manager", params, indirect=True)

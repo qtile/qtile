@@ -281,8 +281,16 @@ class XWindow:
         """
         r = self.get_property("_NET_WM_WINDOW_TYPE", "ATOM", unpack=int)
         if r:
-            name = self.conn.atoms.get_name(r[0])
-            return xcbq.WindowTypes.get(name, name)
+            first_name = None
+            for i, a in enumerate(r):
+                name = self.conn.atoms.get_name(a)
+                if i == 0:
+                    first_name = name
+                qtile_type = xcbq.WindowTypes.get(name, None)
+                if qtile_type is not None:
+                    return qtile_type
+            return first_name
+        return None
 
     def get_net_wm_state(self):
         r = self.get_property("_NET_WM_STATE", "ATOM", unpack=int)
@@ -1241,7 +1249,11 @@ class _Window:
 
     @property
     def can_steal_focus(self):
-        return self.window.get_wm_type() != "notification"
+        return super().can_steal_focus and self.window.get_wm_type() != "notification"
+
+    @can_steal_focus.setter
+    def can_steal_focus(self, can_steal_focus: bool) -> None:
+        self._can_steal_focus = can_steal_focus
 
     def _do_focus(self):
         """
@@ -1716,7 +1728,7 @@ class Window(_Window, base.Window):
         tiled = [win.window.wid for win in (self.group.tiled_windows if self.group else [])]
         tiled_stack = [wid for wid in stack if wid in tiled and wid != self.window.wid]
         if do_float and self._float_state == FloatStates.NOT_FLOATING:
-            if self.group and self.group.screen:
+            if self.is_placed():
                 screen = self.group.screen
                 self._enablefloating(
                     screen.x + self.float_x,
@@ -2043,7 +2055,7 @@ class Window(_Window, base.Window):
 
     def handle_EnterNotify(self, e):  # noqa: N802
         hook.fire("client_mouse_enter", self)
-        if self.qtile.config.follow_mouse_focus:
+        if self.qtile.config.follow_mouse_focus is True:
             if self.group.current_window != self:
                 self.group.focus(self, False)
             if self.group.screen and self.qtile.current_screen != self.group.screen:

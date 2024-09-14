@@ -1,6 +1,0 @@
-#!/bin/bash
-
-source ~/.bashrc
-source ~/.xinitrc
-source ~/.virtualenvs/qtile/bin/activate
-python ~/.virtualenvs/qtile/bin/qtile start
