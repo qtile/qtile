@@ -47,7 +47,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
     from libqtile.config import Screen
-    from libqtile.core.manager import Qtile
 
 _IGNORED_EVENTS = {
     xcffib.xproto.CreateNotifyEvent,
