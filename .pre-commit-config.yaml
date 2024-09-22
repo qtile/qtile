@@ -16,3 +16,7 @@ repos:
     rev: v2.10
     hooks:
       - id: vulture
+  - repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.381
+    hooks:
+    - id: pyright
