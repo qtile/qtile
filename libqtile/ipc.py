@@ -19,10 +19,10 @@
 # SOFTWARE.
 
 """
-    A simple IPC mechanism for communicating between two local processes. We
-    use marshal to serialize data - this means that both client and server must
-    run the same Python version, and that clients must be trusted (as
-    un-marshalling untrusted data can result in arbitrary code execution).
+A simple IPC mechanism for communicating between two local processes. We
+use marshal to serialize data - this means that both client and server must
+run the same Python version, and that clients must be trusted (as
+un-marshalling untrusted data can result in arbitrary code execution).
 """
 
 from __future__ import annotations
@@ -181,7 +181,7 @@ class Client:
                 asyncio.open_unix_connection(path=self.socket_path), timeout=3
             )
         except (ConnectionRefusedError, FileNotFoundError):
-            raise IPCError("Could not open {}".format(self.socket_path))
+            raise IPCError(f"Could not open {self.socket_path}")
 
         try:
             send_data = _IPC.pack(msg, is_json=self.is_json)
@@ -244,7 +244,7 @@ class Server:
             writer.close()
             await writer.wait_closed()
 
-    async def __aenter__(self) -> "Server":
+    async def __aenter__(self) -> Server:
         """Start and return the server"""
         await self.start()
         return self

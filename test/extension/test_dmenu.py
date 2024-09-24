@@ -109,5 +109,4 @@ def test_j4dmenu_configuration_options():
         extension = J4DmenuDesktop(**config)
         extension._configure(None)
         index = extension.configured_command.index(output[0])
-        print(extension.configured_command)
         assert output == extension.configured_command[index : index + len(output)]

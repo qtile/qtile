@@ -35,6 +35,8 @@ def test_text_battery_charging(monkeypatch):
         percent=0.5,
         power=15.0,
         time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
     )
 
     with monkeypatch.context() as manager:
@@ -51,6 +53,8 @@ def test_text_battery_discharging(monkeypatch):
         percent=0.5,
         power=15.0,
         time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
     )
 
     with monkeypatch.context() as manager:
@@ -67,6 +71,8 @@ def test_text_battery_full(monkeypatch):
         percent=0.5,
         power=15.0,
         time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
     )
 
     with monkeypatch.context() as manager:
@@ -90,6 +96,8 @@ def test_text_battery_empty(monkeypatch):
         percent=0.5,
         power=15.0,
         time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
     )
 
     with monkeypatch.context() as manager:
@@ -111,6 +119,8 @@ def test_text_battery_empty(monkeypatch):
         percent=0.0,
         power=15.0,
         time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
     )
 
     with monkeypatch.context() as manager:
@@ -121,12 +131,32 @@ def test_text_battery_empty(monkeypatch):
     assert text == "Empty"
 
 
+def test_text_battery_not_charging(monkeypatch):
+    loaded_bat = BatteryStatus(
+        state=BatteryState.NOT_CHARGING,
+        percent=0.5,
+        power=15.0,
+        time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
+    )
+
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
+        batt = Battery()
+
+    text = batt.poll()
+    assert text == "* 50% 0:28 15.00 W"
+
+
 def test_text_battery_unknown(monkeypatch):
     loaded_bat = BatteryStatus(
         state=BatteryState.UNKNOWN,
         percent=0.5,
         power=15.0,
         time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
     )
 
     with monkeypatch.context() as manager:
@@ -143,6 +173,8 @@ def test_text_battery_hidden(monkeypatch):
         percent=0.5,
         power=15.0,
         time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
     )
 
     with monkeypatch.context() as manager:
@@ -217,12 +249,16 @@ def test_battery_background(fake_qtile, fake_window, monkeypatch):
         percent=0.5,
         power=15.0,
         time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
     )
     low = BatteryStatus(
         state=BatteryState.DISCHARGING,
         percent=0.1,
         power=15.0,
         time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
     )
 
     low_background = "ff0000"
@@ -242,3 +278,74 @@ def test_battery_background(fake_qtile, fake_window, monkeypatch):
     batt._battery._status = ok
     batt.poll()
     assert batt.background == background
+
+
+def test_charge_control(fake_qtile, fake_window, monkeypatch):
+    start = 0
+    end = 100
+
+    def save_battery_percentage(self, charge_start_threshold, charge_end_threshold):
+        nonlocal start
+        nonlocal end
+
+        start = charge_start_threshold
+        end = charge_end_threshold
+
+    with monkeypatch.context() as manager:
+        manager.setattr(
+            battery._LinuxBattery, "set_battery_charge_thresholds", save_battery_percentage
+        )
+        batt = Battery(charge_controller=lambda: (5, 10))
+
+        fakebar = FakeBar([batt], window=fake_window)
+        batt._configure(fake_qtile, fakebar)
+        batt.poll()
+
+        assert start == 5
+        assert end == 10
+
+
+def test_charge_control_disabled(fake_qtile, fake_window, monkeypatch):
+    start = 4
+    end = 7
+
+    def save_battery_percentage(self, charge_start_threshold, charge_end_threshold):
+        raise "should not be called"
+
+    with monkeypatch.context() as manager:
+        manager.setattr(
+            battery._LinuxBattery, "set_battery_charge_thresholds", save_battery_percentage
+        )
+        batt = Battery(charge_controller=None)
+
+        fakebar = FakeBar([batt], window=fake_window)
+        batt._configure(fake_qtile, fakebar)
+        batt.poll()
+
+        assert start == 4
+        assert end == 7
+
+
+def test_charge_control_force_charge(fake_qtile, fake_window, monkeypatch):
+    start = 4
+    end = 7
+
+    def save_battery_percentage(self, charge_start_threshold, charge_end_threshold):
+        nonlocal start
+        nonlocal end
+
+        start = charge_start_threshold
+        end = charge_end_threshold
+
+    with monkeypatch.context() as manager:
+        manager.setattr(
+            battery._LinuxBattery, "set_battery_charge_thresholds", save_battery_percentage
+        )
+        batt = Battery(charge_controller=lambda: (0, 90), force_charge=True)
+
+        fakebar = FakeBar([batt], window=fake_window)
+        batt._configure(fake_qtile, fakebar)
+        batt.poll()
+
+        assert start == 0
+        assert end == 100

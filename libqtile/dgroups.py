@@ -29,8 +29,8 @@ import collections
 
 import libqtile.hook
 from libqtile.backend.base import Static
-from libqtile.command import lazy
 from libqtile.config import Group, Key, Match, Rule
+from libqtile.lazy import lazy
 from libqtile.log_utils import logger
 
 
@@ -115,7 +115,13 @@ class DGroups:
         rule = Rule(group.matches, group=group.name)
         self.rules.append(rule)
         if start:
-            self.qtile.add_group(group.name, group.layout, group.layouts, group.label)
+            self.qtile.add_group(
+                group.name,
+                group.layout,
+                group.layouts,
+                group.label,
+                screen_affinity=group.screen_affinity,
+            )
 
     def _setup_groups(self):
         for group in self.groups:
@@ -247,5 +253,9 @@ class DGroups:
                 self.sort_groups()
             del self.timeout[client]
 
+        if group is not None and group.persist:
+            return
+
         logger.debug("Deleting %s in %ss", group, self.delay)
-        self.timeout[client] = self.qtile.call_later(self.delay, delete_client)
+        if client not in self.timeout:
+            self.timeout[client] = self.qtile.call_later(self.delay, delete_client)

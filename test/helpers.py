@@ -9,6 +9,7 @@ import functools
 import logging
 import multiprocessing
 import os
+import signal
 import subprocess
 import sys
 import tempfile
@@ -109,17 +110,14 @@ class Backend(metaclass=ABCMeta):
 
     def configure(self, manager):
         """This is used to do any post-startup configuration with the manager"""
-        pass
 
     @abstractmethod
     def fake_click(self, x, y):
         """Click at the specified coordinates"""
-        pass
 
     @abstractmethod
     def get_all_windows(self):
         """Get a list of all windows in ascending order of Z position"""
-        pass
 
 
 @Retry(ignore_exceptions=(ipc.IPCError,), return_on_fail=True)
@@ -199,7 +197,7 @@ class TestManager:
             return
         if rpipe.poll(0.1):
             error = rpipe.recv()
-            raise AssertionError("Error launching qtile, traceback:\n%s" % error)
+            raise AssertionError(f"Error launching qtile, traceback:\n{error}")
         raise AssertionError("Error launching qtile")
 
     def create_manager(self, config_class):
@@ -227,10 +225,14 @@ class TestManager:
             self.proc.join(10)
 
             if self.proc.is_alive():
+                # uh oh, we're hung somewhere. give it another second to print
+                # some stack traces
+                os.kill(self.proc.pid, signal.SIGUSR2)
+                self.proc.join(1)
                 print("Killing qtile forcefully", file=sys.stderr)
                 # desperate times... this probably messes with multiprocessing...
                 try:
-                    os.kill(self.proc.pid, 9)
+                    os.kill(self.proc.pid, signal.SIGKILL)
                     self.proc.join()
                 except OSError:
                     # The process may have died due to some other error
@@ -317,7 +319,15 @@ class TestManager:
         if not success():
             raise AssertionError("Window could not be killed...")
 
-    def test_window(self, name, floating=False, wm_type="normal", export_sni=False):
+    def test_window(
+        self,
+        name,
+        floating=False,
+        wm_type="normal",
+        new_title="",
+        urgent_hint=False,
+        export_sni=False,
+    ):
         """
         Create a simple window in X or Wayland. If `floating` is True then the wmclass
         is set to "dialog", which triggers auto-floating based on `default_float_rules`.
@@ -333,7 +343,9 @@ class TestManager:
         python = sys.executable
         path = Path(__file__).parent / "scripts" / "window.py"
         wmclass = "dialog" if floating else "TestWindow"
-        args = [python, path, "--name", wmclass, name, wm_type]
+        args = [python, path, "--name", wmclass, name, wm_type, new_title]
+        if urgent_hint:
+            args.append("urgent_hint")
         if export_sni:
             args.append("export_sni_interface")
         return self._spawn_window(*args)

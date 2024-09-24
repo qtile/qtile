@@ -43,16 +43,13 @@ class Backlight(base.InLoopPollText):
     """A simple widget to show the current brightness of a monitor.
 
     If the change_command parameter is set to None, the widget will attempt to
-    use the interface at /sys/class to change brightness. Depending on the
-    setup, the user may need to be added to the video group to have permission
-    to write to this interface. This depends on having the correct udev rules
-    the brightness file; these are typically installed alongside brightness
-    tools such as brightnessctl (which changes the group to 'video') so
-    installing that is an easy way to get it working.
+    use the interface at /sys/class to change brightness. This depends on
+    having the correct udev rules, so be sure Qtile's udev rules are installed
+    correctly.
 
     You can also bind keyboard shortcuts to the backlight widget with:
 
-    .. code-block: python
+    .. code-block:: python
 
         from libqtile.widget import backlight
         Key(
@@ -85,6 +82,7 @@ class Backlight(base.InLoopPollText):
         ("step", 10, "Percent of backlight every scroll changed"),
         ("format", "{percent:2.0%}", "Display format"),
         ("change_command", "xbacklight -set {0}", "Execute command to change value"),
+        ("min_brightness", 0, "Minimum brightness percentage"),
     ]
 
     def __init__(self, **config):
@@ -117,11 +115,11 @@ class Backlight(base.InLoopPollText):
 
     def _load_file(self, path):
         try:
-            with open(path, "r") as f:
+            with open(path) as f:
                 return float(f.read().strip())
         except FileNotFoundError:
             logger.debug("Failed to get %s", path)
-            raise RuntimeError("Unable to read status for {}".format(os.path.basename(path)))
+            raise RuntimeError(f"Unable to read status for {os.path.basename(path)}")
 
     def _get_info(self):
         brightness = self._load_file(self.brightness_file)
@@ -132,7 +130,7 @@ class Backlight(base.InLoopPollText):
         try:
             percent = self._get_info()
         except RuntimeError as e:
-            return "Error: {}".format(e)
+            return f"Error: {e}"
 
         return self.format.format(percent=percent)
 
@@ -157,7 +155,7 @@ class Backlight(base.InLoopPollText):
             return
         new = now = self._get_info() * 100
         if direction is ChangeDirection.DOWN:
-            new = max(now - step, 0)
+            new = max(now - step, self.min_brightness)
         elif direction is ChangeDirection.UP:
             new = min(now + step, 100)
         if new != now:

@@ -22,11 +22,11 @@ import importlib
 import inspect
 
 from docutils.parsers.rst import Directive, directives
-from qtile_docs.base import SimpleDirectiveMixin, command_nodes
-from qtile_docs.templates import qtile_commands_template
 
 from libqtile import command
 from libqtile.utils import import_class
+from qtile_docs.base import SimpleDirectiveMixin, command_nodes
+from qtile_docs.templates import qtile_commands_template
 
 
 class QtileCommands(SimpleDirectiveMixin, Directive):
@@ -159,5 +159,4 @@ class QtileCommands(SimpleDirectiveMixin, Directive):
                 "interfaces": self.make_interface_syntax(obj),
             }
             rst = qtile_commands_template.render(**context)
-            for line in rst.splitlines():
-                yield line
+            yield from rst.splitlines()

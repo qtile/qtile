@@ -57,9 +57,7 @@ only the dependencies of one of these is required.
 +-------------------+-------------------------+-----------------------------------------+
 | CFFI_             | python3-cffi            | Bars and popups                         |
 +-------------------+-------------------------+-----------------------------------------+
-| cairocffi_        | python3-cairocffi       | Drawing on bars and popups (if using    |
-|                   |                         | X11 install xcffib BEFORE installing    |
-|                   |                         | cairocffi, see below)                   |
+| cairocffi_        | python3-cairocffi       | Drawing on bars and popups              |
 +-------------------+-------------------------+-----------------------------------------+
 | libpangocairo     | libpangocairo-1.0-0     | Writing on bars and popups              |
 +-------------------+-------------------------+-----------------------------------------+
@@ -93,20 +91,6 @@ only the dependencies of one of these is required.
 .. _dbus-next: https://python-dbus-next.readthedocs.io/en/latest/index.html
 
 
-cairocffi
----------
-
-Qtile uses cairocffi_ for drawing on status bars and popup windows. Under X11,
-cairocffi requires XCB support via xcffib, which you should be sure to have
-installed **before** installing cairocffi; otherwise, the needed cairo-xcb
-bindings will not be built. Once you've got the dependencies installed, you can
-use the latest version on PyPI:
-
-.. code-block:: bash
-
-    pip install --no-cache-dir cairocffi
-
-
 Qtile
 -----
 
@@ -116,6 +100,13 @@ With the dependencies in place, you can now install the stable version of qtile 
 
    pip install qtile
 
+Or with sets of dependencies:
+
+.. code-block:: bash
+
+   pip install qtile[wayland]  # for Wayland dependencies
+   pip install qtile[widgets]  # for all widget dependencies
+   pip install qtile[all]      # for all dependencies
 
 Or install qtile-git with:
 
@@ -124,11 +115,7 @@ Or install qtile-git with:
     git clone https://github.com/qtile/qtile.git
     cd qtile
     pip install .
-
-As long as the necessary libraries are in place, this can be done at any point,
-however, it is recommended that you first install xcffib to ensure the
-cairo-xcb bindings are built (X11 only) (see above).
-
+    pip install --config-setting backend=wayland .  # adds wayland dependencies
 
 .. _starting-qtile:
 
@@ -164,14 +151,6 @@ be to start through a loop to save running applications:
         qtile
     done
 
-Finally, if you're a gnome user, you can start integrate Qtile into Gnome's
-session manager and use gnome as usual.
-
-.. toctree::
-    :maxdepth: 1
-
-    without-dm
-    gnome
 
 Wayland
 =======
@@ -184,7 +163,7 @@ pywayland, pywlroots and python-xkbcommon. Also note that we may not have yet
 caught up with the latest wlroots release ourselves.
 
 .. note::
-   The currently supported wlroots and pylwroots versions are 0.15.x.
+   We currently support wlroots>=0.17.0,<0.18.0, pywlroots>=0.17.0,<0.18.0 and pywayland >= 0.4.17.
 
 With the Wayland dependencies in place, Qtile can be run either from a TTY, or
 within an existing X11 or Wayland session where it will run inside a nested
@@ -196,3 +175,46 @@ window:
 
 See the :ref:`Wayland <wayland>` page for more information on running Qtile as
 a Wayland compositor.
+
+Similar to the xsession example above, a wayland session file can be used to start qtile
+from a login manager. To use this, you should create a `qtile-wayland.desktop
+<https://github.com/qtile/qtile/blob/master/resources/qtile-wayland.desktop>`_ file in
+``/usr/share/wayland-sessions``.
+
+udev rules
+==========
+
+Qtile has widgets that support managing various kinds of hardware (LCD
+backlight, keyboard backlight, battery charge thresholds) via the kernel's
+exposed sysfs endpoints. However, to make this work, Qtile needs permission to
+write to these files. There is a udev rules file at
+``/resources/99-qtile.rules`` in the tree, which users installing from source
+will want to install at ``/etc/udev/rules.d/`` on their system. By default,
+this rules file changes the group of the relevant files to the ``sudo`` group,
+and changes the file mode to be g+w (i.e. writable by all members of the sudo
+group). The theory here is that most systems qtile is installed on will also
+have the primary user in the ``sudo`` group. However, you can change this to
+whatever you like with the ``--group`` argument; see the sample udev rules.
+
+Note that this file invokes Qtile's hidden ``udev`` from udevd, so udevd will
+need ``qtile`` in its ``$PATH``. For distro packaging this shouldn't be a
+problem, since /usr/bin is typically in udev's path. However, for users that
+installed from source, you may need to modify the udev script to be one that
+sources your virtualenv and then invokes qtile (or just invoke it via its
+hardcoded path if you installed it with ``--break-system-packages``), e.g.:
+
+.. code-block:: bash
+
+    # create a wrapper script that loads the right stuff from our home directory; since
+    # udev will run this script as root, it has no idea about how we've installed qtile
+    mkdir -p $HOME/.local/bin
+    tee $HOME/.local/bin/qtile-udev-wrapper <<- EOF
+    #!/bin/sh
+
+    export PYTHONPATH=$HOME/.local/lib/python$(python3 --version | awk -F '[ .]' '{print $2 "." $3}')/site-packages
+    $HOME/.local/bin/qtile $@
+    EOF
+
+    # copy the in-tree udev rules file to the right place to make udev see it,
+    # and change the rules to point at our wrapper script above.
+    sed "s,qtile,$HOME/.local/bin/qtile-udev-wrapper,g" ./resources/99-qtile.rules | sudo tee /etc/udev/rules.d/99-qtile.rules

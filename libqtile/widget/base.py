@@ -42,7 +42,7 @@ from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandObject, expose_command
 from libqtile.lazy import LazyCall
 from libqtile.log_utils import logger
-from libqtile.utils import create_task
+from libqtile.utils import ColorType, create_task
 
 if TYPE_CHECKING:
     from typing import Any
@@ -170,8 +170,9 @@ class _Widget(CommandObject, configurable.Configurable):
             raise confreader.ConfigError("Widget width must be an int")
 
         self.configured = False
-        self._futures: list[asyncio.TimerHandle] = []
+        self._futures: list[asyncio.Handle] = []
         self._mirrors: set[_Widget] = set()
+        self.finalized = False
 
     @property
     def length(self):
@@ -187,12 +188,12 @@ class _Widget(CommandObject, configurable.Configurable):
     def width(self):
         if self.bar.horizontal:
             return self.length
-        return self.bar.size - (self.bar.border_width[1] + self.bar.border_width[3])
+        return self.bar.width
 
     @property
     def height(self):
         if self.bar.horizontal:
-            return self.bar.size - (self.bar.border_width[0] + self.bar.border_width[2])
+            return self.bar.height
         return self.length
 
     @property
@@ -216,7 +217,6 @@ class _Widget(CommandObject, configurable.Configurable):
     def timer_setup(self):
         """This is called exactly once, after the widget has been configured
         and timers are available to be set up."""
-        pass
 
     def _configure(self, qtile, bar):
         self._test_orientation_compatibility(bar.horizontal)
@@ -224,9 +224,18 @@ class _Widget(CommandObject, configurable.Configurable):
         self.qtile = qtile
         self.bar = bar
         self.drawer = bar.window.create_drawer(self.bar.width, self.bar.height)
+
+        # Clear this flag as widget may be restarted (e.g. if screen removed and re-added)
+        self.finalized = False
+
+        # Timers are added to futures list so they can be cancelled if the `finalize` method is
+        # called before the timers have fired.
         if not self.configured:
-            self.qtile.call_soon(self.timer_setup)
-            self.qtile.call_soon(create_task, self._config_async())
+            timer = self.qtile.call_soon(self.timer_setup)
+            async_timer = self.qtile.call_soon(asyncio.create_task, self._config_async())
+
+            # Add these to our list of futures so they can be cancelled.
+            self._futures.extend([timer, async_timer])
 
     async def _config_async(self):
         """
@@ -237,7 +246,6 @@ class _Widget(CommandObject, configurable.Configurable):
         wish to initialise the relevant code (e.g. connections to dbus
         using dbus_next) here.
         """
-        pass
 
     def finalize(self):
         for future in self._futures:
@@ -245,6 +253,11 @@ class _Widget(CommandObject, configurable.Configurable):
         if hasattr(self, "layout") and self.layout:
             self.layout.finalize()
         self.drawer.finalize()
+        self.finalized = True
+
+        # Reset configuration status so the widget can be reconfigured
+        # e.g. when screen is re-added
+        self.configured = False
 
     def clear(self):
         self.drawer.set_source_rgb(self.bar.background)
@@ -267,13 +280,13 @@ class _Widget(CommandObject, configurable.Configurable):
         self.mouse_callbacks = defaults
 
     def button_press(self, x, y, button):
-        name = "Button{0}".format(button)
+        name = f"Button{button}"
         if name in self.mouse_callbacks:
             cmd = self.mouse_callbacks[name]
             if isinstance(cmd, LazyCall):
                 if cmd.check(self.qtile):
                     status, val = self.qtile.server.call(
-                        (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
+                        (cmd.selectors, cmd.name, cmd.args, cmd.kwargs, False)
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("Mouse callback command error %s: %s", cmd.name, val)
@@ -289,7 +302,7 @@ class _Widget(CommandObject, configurable.Configurable):
         """
         w = q.widgets_map.get(name)
         if not w:
-            raise CommandError("No such widget: %s" % name)
+            raise CommandError(f"No such widget: {name}")
         return w
 
     def _items(self, name: str) -> ItemT:
@@ -327,6 +340,10 @@ class _Widget(CommandObject, configurable.Configurable):
         """
         This method calls ``.call_later`` with given arguments.
         """
+        # Don't add timers for finalised widgets
+        if self.finalized:
+            return
+
         future = self.qtile.call_later(seconds, self._wrapper, method, *method_args)
 
         self._futures.append(future)
@@ -342,10 +359,27 @@ class _Widget(CommandObject, configurable.Configurable):
 
     def _remove_dead_timers(self):
         """Remove completed and cancelled timers from the list."""
+
+        def is_ready(timer):
+            return timer in self.qtile._eventloop._ready
+
         self._futures = [
             timer
             for timer in self._futures
-            if not (timer.cancelled() or timer.when() < self.qtile._eventloop.time())
+            # Filter out certain handles...
+            if not (
+                timer.cancelled()
+                # Once a scheduled timer is ready to be run its _scheduled flag is set to False
+                # and it's added to the loop's `_ready` queue
+                or (
+                    isinstance(timer, asyncio.TimerHandle)
+                    and not timer._scheduled
+                    and not is_ready(timer)
+                )
+                # Callbacks scheduled via `call_soon` are put into the loop's `_ready` queue
+                # and are removed once they've been executed
+                or (isinstance(timer, asyncio.Handle) and not is_ready(timer))
+            )
         ]
 
     def _wrapper(self, method, *method_args):
@@ -364,7 +398,7 @@ class _Widget(CommandObject, configurable.Configurable):
         return Mirror(self, background=self.background)
 
     def clone(self):
-        return copy.copy(self)
+        return copy.deepcopy(self)
 
     def mouse_enter(self, x, y):
         pass
@@ -410,9 +444,6 @@ class _Widget(CommandObject, configurable.Configurable):
                 del self._old_draw
 
 
-UNSPECIFIED = bar.Obj("UNSPECIFIED")
-
-
 class _TextBox(_Widget):
     """
     Base class for widgets that are just boxes containing text.
@@ -429,10 +460,9 @@ class _TextBox(_Widget):
         (
             "fmt",
             "{}",
-            "To format the string returned by the widget. For example, if the clock widget \
-             returns '08:46' we can do fmt='time {}' do print 'time 08:46' on the widget. \
-             To format the individual strings like hour and minutes use the format paramater \
-             of the widget (if it has one)",
+            "Format to apply to the string returned by the widget. Main purpose: applying markup. "
+            "For a widget that returns ``foo``, using ``fmt='<i>{}</i>'`` would give you ``<i>foo</i>``. "
+            "To control what the widget outputs in the first place, use the ``format`` paramater of the widget (if it has one).",
         ),
         ("max_chars", 0, "Maximum number of characters to display in widget."),
         (
@@ -682,16 +712,21 @@ class _TextBox(_Widget):
         self.update("")
 
     @expose_command()
-    def set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED, fontshadow=UNSPECIFIED):
+    def set_font(
+        self,
+        font: str | None = None,
+        fontsize: int = 0,
+        fontshadow: ColorType = "",
+    ):
         """
         Change the font used by this widget. If font is None, the current
         font is used.
         """
-        if font is not UNSPECIFIED:
+        if font is not None:
             self.font = font
-        if fontsize is not UNSPECIFIED:
+        if fontsize != 0:
             self.fontsize = fontsize
-        if fontshadow is not UNSPECIFIED:
+        if fontshadow != "":
             self.fontshadow = fontshadow
         self.bar.draw()
 
@@ -704,6 +739,13 @@ class _TextBox(_Widget):
 
     def update(self, text):
         """Update the widget text."""
+        # Don't try to update text in dead layouts
+        # This is mainly required for ThreadPoolText based widgets as the
+        # polling function cannot be cancelled and so may be called after the widget
+        # is finalised.
+        if not self.can_draw():
+            return
+
         if self.text == text:
             return
         if text is None:
@@ -811,7 +853,7 @@ class ThreadPoolText(_TextBox):
                         self.timeout_add(self.update_interval, self.timer_setup)
 
                 except Exception:
-                    logger.exception("Failed to reschedule.")
+                    logger.exception("Failed to reschedule timer for %s.", self.name)
             else:
                 logger.warning("%s's poll() returned None, not rescheduling", self.name)
 
@@ -895,6 +937,8 @@ class Mirror(_Widget):
         self.reflects = reflection
         self._length = 0
         self.length_type = self.reflects.length_type
+        if self.length_type is bar.STATIC:
+            self._length = self.reflects._length
 
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
@@ -917,7 +961,9 @@ class Mirror(_Widget):
         self._length = value
 
     def draw(self):
-        self.drawer.clear(self.reflects.background or self.bar.background)
+        if self.length <= 0:
+            return
+        self.drawer.clear_rect()
         self.reflects.drawer.paint_to(self.drawer)
         self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
 

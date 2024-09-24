@@ -56,15 +56,15 @@ to our `issue tracker <https://github.com/qtile/qtile/issues>`_ on GitHub.
     Pull requests are not considered complete until they include all of the
     following:
 
-    * **Code** that conforms to PEP8 and is formatted by `black
-      <https://black.readthedocs.io>`_.
+    * **Code** that conforms to our linters and formatters.
+      Run ``pre-commit install`` to install pre-commit hooks that will
+      make sure your code is compliant before any commit.
     * **Unit tests** that pass locally and in our CI environment (More below).
       *Please add unit tests* to ensure that your code works and stays working!
     * **Documentation** updates on an as needed basis.
     * A ``qtile migrate`` **migration** is required for config-breaking changes.
-      See `migrate.py <https://github.com/qtile/qtile/blob/libqtile/scripts/migrate.py>`_
-      for examples and consult the `bowler documentation <https://pybowler.io>`_
-      for detailed help and documentation.
+      See :doc:`here <commands/shell/qtile-migrate>` 
+      for current migrations and see below for further information.
     * **Code** that does not include *unrelated changes*. Examples for this are
       formatting changes, replacing quotes or whitespace in other parts of the
       code or "fixing" linter warnings popping up in your editor on existing
@@ -126,22 +126,36 @@ Running tests locally
 This section gives an overview about ``tox`` so that you don't have to search
 `its documentation <https://tox.readthedocs.io/en/latest/>`_ just to get
 started.
+
 Checks are grouped in so-called ``environments``. Some of them are configured to
 check that the code works (the usual unit test, e.g. ``py39``, ``pypy3``),
 others make sure that your code conforms to the style guide (``pep8``,
 ``codestyle``, ``mypy``). A third kind of test verifies that the documentation
 and packaging processes work (``docs``, ``docstyle``, ``packaging``).
 
+We have configured ``tox`` to run the full suite of tests whenever a pull request
+is submitted/updated. To reduce the amount of time taken by these tests, we have
+created separate environments for both python versions and backends (e.g. tests for
+x11 and wayland run in parallel for each python version that we currently support).
+
+These environments were designed with automation in mind so there are separate
+``test`` environments which should be used for running qtile's tests locally. By default,
+tests will only run on x11 backend (but see below for information on how to set the
+backend).
+
 The following examples show how to run tests locally:
-   * To run the functional tests, use ``tox -e py39`` (or a different
-     environment). You can specify to only run a specific test file or even a
-     specific test within that file with the following commands:
+   * To run the functional tests, use ``tox -e test``. You can specify to only
+     run a specific test file or even a specific test within that file with
+     the following commands:
 
      .. code-block:: bash
 
-        tox -e py39 # Run all tests with python 3.9 as the interpreter
-        tox -e py39 -- -x test/widgets/test_widgetbox.py  # run a single file
-        tox -e py39 -- -x test/widgets/test_widgetbox.py::test_widgetbox_widget
+        tox -e test # Run all tests in default python version
+        tox -e test -- -x test/widgets/test_widgetbox.py  # run a single file
+        tox -e test -- -x test/widgets/test_widgetbox.py::test_widgetbox_widget
+        tox -e test -- --backend=wayland --backend=x11  # run tests on both backends
+        tox -e test-both  # same as above 
+        tox -e test-wayland  # Just run tests on wayland backend
 
    * To run style and building checks, use ``tox -e docs,packaging,pep8,...``.
      You can use ``-p auto`` to run the environments in parallel.
@@ -153,3 +167,36 @@ The following examples show how to run tests locally:
         that don't pass the tests are considered incomplete. Don't forget that
         this does not only include the functionality, but the style, typing
         annotations (if necessary) and documentation as well!
+
+Writing migrations
+------------------
+
+Migrations are needed when a commit introduces a change which makes a breaking change to
+a user's config. Examples include renaming classes, methods, arguments and moving modules or
+class definitions.
+
+Where these changes are made, it is strongly encouraged to support the old syntax where possible
+and warn the user about the deprecations.
+
+Whether or not a deprecation warning is provided, a migration script should be provided that will
+modify the user's config when they run ``qtile migrate``.
+
+Click here for detailed instructions on :doc:`how-to-migrate`.
+
+.. toctree::
+    :maxdepth: 1
+    :hidden:
+
+    how-to-migrate
+
+Deprecation Policy
+------------------
+
+Interfaces that have been deprecated for at least two years after the first
+release containing the deprecation notice can be deleted. Since all new
+breaking changes should have a migration, users can use ``qtile migrate`` to
+bootstrap across versions when migrations are deleted if necessary.
+
+Deprecated interfaces that do not have a migration (i.e. whose deprecation was
+noted before the migration feature was introduced) are all fair game to be
+deleted, since the migration feature is more than two years old.

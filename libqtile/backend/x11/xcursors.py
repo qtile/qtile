@@ -1,11 +1,5 @@
+from libqtile.backend.x11.xcursors_ffi import xcursors_ffi as ffi
 from libqtile.log_utils import logger
-
-try:
-    from libqtile.backend.x11._ffi_xcursors import ffi
-except ImportError:
-    raise ImportError(
-        "No module named libqtile.backend.x11._ffi_xcursors, be sure to run `./scripts/ffibuild`"
-    )
 
 
 # Stolen from samurai-x
@@ -110,7 +104,7 @@ class Cursors(dict):
     def _setup_xcursor_binding(self):
         try:
             xcursor = ffi.dlopen("libxcb-cursor.so.0")
-        except OSError:
+        except Exception:
             logger.info("xcb-cursor not found, fallback to font pointer")
             return False
 

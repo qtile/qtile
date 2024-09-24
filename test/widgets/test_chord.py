@@ -111,7 +111,10 @@ def test_chord_widget(fake_window, fake_qtile):
     assert chord.background == BASE_BACKGROUND
     assert chord.foreground == BASE_FOREGROUND
 
-    # Finalize the widget to prevent segfault
+    # Finalize the widget to prevent segfault (the drawer needs to be finalised)
+    # We clear the _futures attribute as there are no real timers in it and calls
+    # to `cancel()` them will fail.
+    chord._futures = []
     chord.finalize()
 
 

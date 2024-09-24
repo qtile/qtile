@@ -42,6 +42,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
     defaults: list[tuple[str, Any, str]] = [
         ("borderwidth", 3, "Current group border width"),
         ("center_aligned", True, "center-aligned group box"),
+        ("markup", False, "Whether or not to use pango markup"),
     ]
 
     def __init__(self, **config):
@@ -52,7 +53,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
 
     def box_width(self, groups):
         width, _ = self.drawer.max_layout_size(
-            [self.fmt.format(i.label) for i in groups], self.font, self.fontsize
+            [self.fmt.format(i.label) for i in groups], self.font, self.fontsize, self.markup
         )
         return width + self.padding_x * 2 + self.borderwidth * 2
 
@@ -64,7 +65,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
             self.fontsize = max(calc, 1)
 
         self.layout = self.drawer.textlayout(
-            "", "ffffff", self.font, self.fontsize, self.fontshadow
+            "", "ffffff", self.font, self.fontsize, self.fontshadow, markup=self.markup
         )
         self.setup_hooks()
 
@@ -243,8 +244,6 @@ class GroupBox(_GroupBase):
     def __init__(self, **config):
         _GroupBase.__init__(self, **config)
         self.add_defaults(GroupBox.defaults)
-        if self.spacing is None:
-            self.spacing = self.margin_x
         self.clicked = None
         self.click = None
 
@@ -257,6 +256,11 @@ class GroupBox(_GroupBase):
                 }
             )
         self.add_callbacks(default_callbacks)
+
+    def _configure(self, qtile, bar):
+        _GroupBase._configure(self, qtile, bar)
+        if self.spacing is None:
+            self.spacing = self.margin_x
 
     @property
     def groups(self):
@@ -341,7 +345,7 @@ class GroupBox(_GroupBase):
         return width
 
     def group_has_urgent(self, group):
-        return len([w for w in group.windows if w.urgent]) > 0
+        return any(w.urgent for w in group.windows)
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)

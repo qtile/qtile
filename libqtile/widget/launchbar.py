@@ -21,31 +21,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-"""
-This module define a widget that displays icons to launch softwares or commands
-when clicked -- a launchbar.
-Only png icon files are displayed, not xpm because cairo doesn't support
-loading of xpm file.
-The order of displaying (from left to right) is in the order of the list.
-
-If no icon was found for the name provided and if default_icon is set to None
-then the name is printed instead. If default_icon is defined then this icon is
-displayed instead.
-
-To execute a software:
- - ('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode')
-To execute a python command in qtile, begin with by 'qshell:'
- - ('logout', 'qshell:self.qtile.shutdown()', 'logout from qtile')
-
-
-"""
 from __future__ import annotations
 
 import os.path
 
 import cairocffi
-from xdg.IconTheme import getIconPath
+
+try:
+    from xdg.IconTheme import getIconPath
+
+    has_xdg = True
+except ImportError:
+    has_xdg = False
 
 from libqtile import bar
 from libqtile.images import Img
@@ -55,11 +42,23 @@ from libqtile.widget import base
 
 class LaunchBar(base._Widget):
     """
-    A widget that display icons to launch the associated command.
+    This module defines a widget that displays icons to launch softwares or commands
+    when clicked -- a launchbar.
+    Only png icon files are displayed, not xpm because cairo doesn't support
+    loading of xpm file.
+    The order of displaying (from left to right) is in the order of the list.
 
-    Text will displayed when no icon is found.
+    If no icon was found for the name provided and if default_icon is set to None
+    then the name is printed instead. If default_icon is defined then this icon is
+    displayed instead.
 
-    Widget requirements: `pyxdg <https://pypi.org/project/pyxdg/>`__.
+    To execute a software:
+     - ('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode')
+    To execute a python command in qtile, begin with by 'qshell:'
+     - ('/path/to/icon.png', 'qshell:self.qtile.shutdown()', 'logout from qtile')
+
+
+    Optional requirements: `pyxdg <https://pypi.org/project/pyxdg/>`__ for finding the icon path if it is not provided in the ``progs`` tuple.
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
@@ -77,13 +76,18 @@ class LaunchBar(base._Widget):
         (
             "progs",
             [],
-            "A list of tuples (software_name, command_to_execute, comment), for example:"
+            "A list of tuples (software_name or icon_path, command_to_execute, comment), for example:"
             " [('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode'), "
-            " ('logout', 'qshell:self.qtile.shutdown()', 'logout from qtile')]",
+            " ('/path/to/icon.png', 'qshell:self.qtile.shutdown()', 'logout from qtile')]",
         ),
         ("text_only", False, "Don't use any icons."),
         ("icon_size", None, "Size of icons. ``None`` to fit to bar."),
         ("padding_y", 0, "Vertical adjustment for icons."),
+        (
+            "theme_path",
+            None,
+            "Path to icon theme to be used by pyxdg for icons. ``None`` will use default icon theme.",
+        ),
     ]
 
     def __init__(
@@ -186,17 +190,25 @@ class LaunchBar(base._Widget):
     def _lookup_icon(self, name):
         """Search for the icon corresponding to one command."""
         self.icons_files[name] = None
+
+        # expands ~ if name is a path and does nothing if not
+        ipath = os.path.expanduser(name)
+
         # if the software_name is directly an absolute path icon file
-        if os.path.isabs(name):
+        if os.path.isabs(ipath):
             # name start with '/' thus it's an absolute path
-            root, ext = os.path.splitext(name)
-            if ext == ".png":
-                self.icons_files[name] = name if os.path.isfile(name) else None
+            root, ext = os.path.splitext(ipath)
+            img_extensions = [".tif", ".tiff", ".bmp", ".jpg", ".jpeg", ".gif", ".png", ".svg"]
+            if ext in img_extensions:
+                self.icons_files[name] = ipath if os.path.isfile(ipath) else None
             else:
                 # try to add the extension
-                self.icons_files[name] = name + ".png" if os.path.isfile(name + ".png") else None
-        else:
-            self.icons_files[name] = getIconPath(name)
+                for extension in img_extensions:
+                    if os.path.isfile(ipath + extension):
+                        self.icons_files[name] = ipath + extension
+                        break
+        elif has_xdg:
+            self.icons_files[name] = getIconPath(name, theme=self.theme_path)
         # no search method found an icon, so default icon
         if self.icons_files[name] is None:
             self.icons_files[name] = self.default_icon
@@ -253,19 +265,12 @@ class LaunchBar(base._Widget):
                 )
             else:
                 # display an icon
-                self.drawer.ctx.save()
+                # Translate to vertically centre the icon
                 self.drawer.ctx.translate(0, self._icon_padding + self.padding_y)
                 self.drawer.ctx.set_source(self.surfaces[name])
                 self.drawer.ctx.paint()
-                self.drawer.ctx.restore()
 
             self.drawer.ctx.restore()
-
-            self.drawer.draw(
-                offsetx=self.offset + xoffset,
-                offsety=self.offsety,
-                width=icon_width + self.padding,
-            )
 
             xoffset += icon_width + self.padding
 

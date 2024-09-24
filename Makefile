@@ -12,7 +12,7 @@ check: ## Run the test suite
 
 .PHONY: lint
 lint: ## Check the source code
-	TOXENV=codestyle,pep8,vulture,mypy tox
+	pre-commit run -a
 
 .PHONY: clean
 clean: ## Clean generated files
@@ -21,3 +21,8 @@ clean: ## Clean generated files
 .PHONY: run-ffibuild
 run-ffibuild: ## Build FFI modules
 	./scripts/ffibuild
+
+.PHONY: update-flake
+update-flake: ## Update the Nix flake.lock file, requires Nix installed with flake support, see: https://nixos.wiki/wiki/Flakes
+	nix flake update
+

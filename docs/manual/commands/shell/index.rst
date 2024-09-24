@@ -11,6 +11,7 @@ repository are also documented below.
 
     qtile start <qtile-start>
     qtile shell <qtile-shell>
+    qtile migrate <qtile-migrate>
     qtile cmd-obj <qtile-cmd>
     qtile run-cmd <qtile-run>
     qtile top <qtile-top>

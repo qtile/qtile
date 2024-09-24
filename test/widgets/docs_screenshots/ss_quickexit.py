@@ -33,5 +33,5 @@ def widget():
 def ss_quickexit(screenshot_manager):
     screenshot_manager.take_screenshot()
 
-    screenshot_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, button=1)
+    screenshot_manager.c.bar["top"].fake_button_press(0, 0, button=1)
     screenshot_manager.take_screenshot()

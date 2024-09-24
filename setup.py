@@ -7,6 +7,7 @@
 # Copyright (c) 2014 roger
 # Copyright (c) 2014 Pedro Algarvio
 # Copyright (c) 2014-2015 Tycho Andersen
+# Copyright (c) 2023 Matt Colligan
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,85 +26,42 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+import importlib
 import sys
-import textwrap
+from pathlib import Path
 
 from setuptools import setup
-from setuptools.command.install import install
+
+ROOT = Path(__file__).parent.resolve()
+sys.path.insert(0, ROOT.as_posix())
 
 
-class CheckCairoXcb(install):
-    def cairo_xcb_check(self):
-        try:
-            from cairocffi import cairo
-
-            cairo.cairo_xcb_surface_create
-            return True
-        except AttributeError:
-            return False
-
-    def finalize_options(self):
-        if not self.cairo_xcb_check():
-
-            print(
-                textwrap.dedent(
-                    """
-
-            It looks like your cairocffi was not built with xcffib support.  To fix this:
-
-              - Ensure a recent xcffib is installed (pip install 'xcffib>=0.5.0')
-              - The pip cache is cleared (remove ~/.cache/pip, if it exists)
-              - Reinstall cairocffi, either:
-
-                  pip install --no-deps --ignore-installed cairocffi
-
-                or
-
-                  pip uninstall cairocffi && pip install cairocffi
-            """
-                )
-            )
-
-            sys.exit(1)
-        install.finalize_options(self)
+def can_import(module):
+    try:
+        importlib.import_module(module)
+    except Exception:
+        return False
+    return True
 
 
 def get_cffi_modules():
-    cffi_modules = [
-        "libqtile/pango_ffi_build.py:pango_ffi",
-        "libqtile/backend/x11/xcursors_ffi_build.py:xcursors_ffi",
-    ]
-    try:
-        from cffi.error import PkgConfigError
-        from cffi.pkgconfig import call
-    except ImportError:
-        # technically all ffi defined above wont be built
+    # Check we have cffi around. If not, none of these will get built.
+    if not can_import("cffi.pkgconfig"):
         print("CFFI package is missing")
-    else:
-        try:
-            call("libpulse", "--libs")
-        except PkgConfigError:
-            print("Failed to find pulseaudio headers. " "PulseVolume widget will be unavailable")
-        else:
-            cffi_modules.append("libqtile/widget/pulseaudio_ffi.py:pulseaudio_ffi")
-    try:
-        import wlroots.ffi_build
+        return
 
-        cffi_modules.append(
-            "libqtile/backend/wayland/libinput_ffi_build.py:libinput_ffi",
-        )
-    except ImportError:
-        print(
-            "Failed to find pywlroots. "
-            "Wayland backend libinput configuration will be unavailable."
-        )
-        pass
+    cffi_modules = []
+
+    # Wayland backend dependencies
+    if can_import("wlroots.ffi_build"):
+        cffi_modules.append("libqtile/backend/wayland/cffi/build.py:ffi")
+    else:
+        print("Failed to find pywlroots. Wayland backend dependencies not built.")
+
     return cffi_modules
 
 
 setup(
-    cmdclass={"install": CheckCairoXcb},
     use_scm_version=True,
     cffi_modules=get_cffi_modules(),
     include_package_data=True,

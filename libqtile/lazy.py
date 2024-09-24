@@ -24,12 +24,13 @@ from typing import TYPE_CHECKING
 from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.graph import CommandGraphCall, CommandGraphNode
 from libqtile.command.interface import CommandInterface
+from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import Iterable
+    from collections.abc import Callable, Iterable
 
     from libqtile.command.graph import SelectorType
-    from libqtile.config import Match
+    from libqtile.config import _Match
 
 
 class LazyCall:
@@ -49,10 +50,12 @@ class LazyCall:
         self._args = args
         self._kwargs = kwargs
 
-        self._focused: Match | None = None
+        self._focused: _Match | None = None
         self._if_no_focused: bool = False
         self._layouts: set[str] = set()
-        self._when_floating = True
+        self._when_floating: bool | None = None
+        self._condition: bool | None = None
+        self._func: Callable[[], bool] = lambda: True
 
     def __call__(self, *args, **kwargs):
         """Convenience method to allow users to pass arguments to
@@ -93,14 +96,16 @@ class LazyCall:
 
     def when(
         self,
-        focused: Match | None = None,
+        focused: _Match | None = None,
         if_no_focused: bool = False,
         layout: Iterable[str] | str | None = None,
-        when_floating: bool = True,
-    ) -> "LazyCall":
-        """Enable call only for given layout(s) and floating state
+        when_floating: bool | None = None,
+        func: Callable | None = None,
+        condition: bool | None = None,
+    ) -> LazyCall:
+        """Enable call only for matching criteria.
 
-        Parameters
+        Keyword parameters
         ----------
         focused: Match or None
             Match criteria to enable call for the current window.
@@ -117,10 +122,21 @@ class LazyCall:
             If None, enable the call for all layouts.
         when_floating: bool
             Enable call when the current window is floating.
+        func: callable
+            Enable call when the result of the callable evaluates to True
+        condition: a boolean value to determine whether the lazy object should
+            be run. Unlike 'func', the condition is evaluated once when the config
+            file is first loaded.
+
         """
         self._focused = focused
 
         self._if_no_focused = if_no_focused
+
+        self._condition = condition
+
+        if func is not None:
+            self._func = func
 
         if layout is not None:
             self._layouts = {layout} if isinstance(layout, str) else set(layout)
@@ -131,6 +147,9 @@ class LazyCall:
     def check(self, q) -> bool:
         cur_win_floating = q.current_window and q.current_window.floating
 
+        if self._condition is False:
+            return False
+
         if self._focused:
             if q.current_window and not self._focused.compare(q.current_window):
                 return False
@@ -138,11 +157,24 @@ class LazyCall:
             if not q.current_window and not self._if_no_focused:
                 return False
 
-        if cur_win_floating and not self._when_floating:
+        if cur_win_floating and self._when_floating is False:
+            return False
+
+        if not cur_win_floating and self._when_floating:
             return False
 
         if self._layouts and q.current_layout.name not in self._layouts:
             return False
+
+        if self._func is not None:
+            try:
+                result = self._func()
+            except Exception:
+                logger.exception("Error when running function in lazy call. Ignoring.")
+                result = True
+
+            if not result:
+                return False
 
         return True
 
