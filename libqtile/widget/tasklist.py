@@ -291,7 +291,11 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     @property
     def max_width(self):
         width = self.bar.width
-        width -= sum(w.width for w in self.bar.widgets if w is not self)
+        width -= sum(
+            w.width
+            for w in self.bar.widgets
+            if w is not self and w.length_type != libqtile.bar.STRETCH
+        )
         return width
 
     def calc_box_widths(self):
