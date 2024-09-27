@@ -33,7 +33,8 @@ jobs:
                   libdbus-1-dev libgirepository1.0-dev gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-gudev-1.0 graphviz \
                   imagemagick git xserver-xephyr xterm xvfb dbus-x11 libnotify-bin \
                   libxcb-composite0-dev libxcb-icccm4-dev libxcb-res0-dev libxcb-render0-dev libxcb-res0-dev \
-                  libxcb-xfixes0-dev vlc volumeicon-alsa libxkbcommon-dev python-gi-dev tox libcairo2-dev
+                  libxcb-xfixes0-dev vlc volumeicon-alsa libxkbcommon-dev python-gi-dev tox libcairo2-dev \
+                  gir1.2-gdkpixbuf-2.0 librsvg2-dev
                 pip -q install --break-system-packages tox-gh-actions
             - name: Install wayland
               if: ${{ matrix.backend == 'wayland' }}
