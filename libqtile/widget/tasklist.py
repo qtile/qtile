@@ -104,17 +104,17 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         (
             "txt_minimized",
             "_ ",
-            "Text representation of the minimized window state. " 'e.g., "_ " or "\U0001F5D5 "',
+            "Text representation of the minimized window state. " 'e.g., "_ " or "\U0001f5d5 "',
         ),
         (
             "txt_maximized",
             "[] ",
-            "Text representation of the maximized window state. " 'e.g., "[] " or "\U0001F5D6 "',
+            "Text representation of the maximized window state. " 'e.g., "[] " or "\U0001f5d6 "',
         ),
         (
             "txt_floating",
             "V ",
-            "Text representation of the floating window state. " 'e.g., "V " or "\U0001F5D7 "',
+            "Text representation of the floating window state. " 'e.g., "V " or "\U0001f5d7 "',
         ),
         (
             "markup_normal",
@@ -267,14 +267,14 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         # Emulate default widget behavior if markup_str is None
         if enforce_markup and markup_str is None:
-            markup_str = "%s{}" % (state)
+            markup_str = f"{state}{{}}"
 
         if markup_str is not None:
             self.markup = True
             window_name = pangocffi.markup_escape_text(window_name)
             return markup_str.format(window_name)
 
-        return "%s%s" % (state, window_name)
+        return f"{state}{window_name}"
 
     @property
     def windows(self):
@@ -291,7 +291,11 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     @property
     def max_width(self):
         width = self.bar.width
-        width -= sum(w.width for w in self.bar.widgets if w is not self)
+        width -= sum(
+            w.width
+            for w in self.bar.widgets
+            if w is not self and w.length_type != libqtile.bar.STRETCH
+        )
         return width
 
     def calc_box_widths(self):

@@ -69,16 +69,16 @@ def test_screensplit_scroll_actions(manager):
     manager.c.next_layout()
     assert widget.info()["text"] == "top (max)"
 
-    bar.fake_button_press(0, "top", 0, 0, 4)
+    bar.fake_button_press(0, 0, 4)
     assert widget.info()["text"] == "bottom (columns)"
 
-    bar.fake_button_press(0, "top", 0, 0, 4)
+    bar.fake_button_press(0, 0, 4)
     assert widget.info()["text"] == "top (max)"
 
-    bar.fake_button_press(0, "top", 0, 0, 5)
+    bar.fake_button_press(0, 0, 5)
     assert widget.info()["text"] == "bottom (columns)"
 
-    bar.fake_button_press(0, "top", 0, 0, 5)
+    bar.fake_button_press(0, 0, 5)
     assert widget.info()["text"] == "top (max)"
 
 

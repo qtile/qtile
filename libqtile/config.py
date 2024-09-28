@@ -39,7 +39,8 @@ from libqtile.command.base import CommandObject, expose_command
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Iterable
+    from collections.abc import Callable, Iterable
+    from typing import Any
 
     from libqtile.backend import base
     from libqtile.bar import BarType
@@ -89,7 +90,7 @@ class Key:
         self.swallow = swallow
 
     def __repr__(self) -> str:
-        return "<Key (%s, %s)>" % (self.modifiers, self.key)
+        return f"<Key ({self.modifiers}, {self.key})>"
 
 
 class KeyChord:
@@ -154,7 +155,7 @@ class KeyChord:
         self.swallow = swallow
 
     def __repr__(self) -> str:
-        return "<KeyChord (%s, %s)>" % (self.modifiers, self.key)
+        return f"<KeyChord ({self.modifiers}, {self.key})>"
 
 
 class Mouse:
@@ -204,7 +205,7 @@ class Drag(Mouse):
         self.warp_pointer = warp_pointer
 
     def __repr__(self) -> str:
-        return "<Drag (%s, %s)>" % (self.modifiers, self.button)
+        return f"<Drag ({self.modifiers}, {self.button})>"
 
 
 class Click(Mouse):
@@ -225,7 +226,7 @@ class Click(Mouse):
     """
 
     def __repr__(self) -> str:
-        return "<Click (%s, %s)>" % (self.modifiers, self.button)
+        return f"<Click ({self.modifiers}, {self.button})>"
 
 
 class EzConfig:
@@ -274,7 +275,7 @@ class EzConfig:
             raise utils.QtileError(msg % spec)
 
         if len(keys) > 1:
-            msg = "Key chains are not supported: %s" % spec
+            msg = f"Key chains are not supported: {spec}"
             raise utils.QtileError(msg)
 
         return mods, keys[0]
@@ -351,7 +352,7 @@ class EzClick(EzConfig, Click):
 
     def __init__(self, btndef: str, *commands: LazyCall) -> None:
         modkeys, button = self.parse(btndef)
-        button = "Button%s" % button
+        button = f"Button{button}"
         super().__init__(modkeys, button, *commands)
 
 
@@ -372,7 +373,7 @@ class EzDrag(EzConfig, Drag):
 
     def __init__(self, btndef: str, *commands: LazyCall, start: LazyCall | None = None) -> None:
         modkeys, button = self.parse(btndef)
-        button = "Button%s" % button
+        button = f"Button{button}"
         super().__init__(modkeys, button, *commands, start=start)
 
 
@@ -769,7 +770,7 @@ class Group:
                 "screen_affinity",
             ],
         )
-        return "<config.Group %r (%s)>" % (self.name, attrs)
+        return f"<config.Group {self.name!r} ({attrs})>"
 
 
 class ScratchPad(Group):
@@ -816,7 +817,7 @@ class ScratchPad(Group):
         self.single = single
 
     def __repr__(self) -> str:
-        return "<config.ScratchPad %r (%s)>" % (
+        return "<config.ScratchPad {!r} ({})>".format(
             self.name,
             ", ".join(dd.name for dd in self.dropdowns),
         )
@@ -874,7 +875,7 @@ class InvertMatch(_Match):
         return not self.match.compare(client)
 
     def __repr__(self) -> str:
-        return "<InvertMatch(%r)>" % self.match
+        return f"<InvertMatch({self.match!r})>"
 
 
 class MatchAll(_Match):
@@ -887,7 +888,7 @@ class MatchAll(_Match):
         return all(m.compare(client) for m in self.matches)
 
     def __repr__(self) -> str:
-        return "<MatchAll(%r)>" % (self.matches,)
+        return f"<MatchAll({self.matches!r})>"
 
 
 class MatchAny(MatchAll):
@@ -897,7 +898,7 @@ class MatchAny(MatchAll):
         return any(m.compare(client) for m in self.matches)
 
     def __repr__(self) -> str:
-        return "<MatchAny(%r)>" % (self.matches,)
+        return f"<MatchAny({self.matches!r})>"
 
 
 class MatchOnlyOne(_Match):
@@ -911,7 +912,7 @@ class MatchOnlyOne(_Match):
         return self.match1.compare(client) != self.match2.compare(client)
 
     def __repr__(self) -> str:
-        return "<MatchOnlyOne(%r, %r)>" % (self.match1, self.match2)
+        return f"<MatchOnlyOne({self.match1!r}, {self.match2!r})>"
 
 
 class Match(_Match):
@@ -983,7 +984,7 @@ class Match(_Match):
             try:
                 self._rules["net_wm_pid"] = int(net_wm_pid)
             except ValueError:
-                error = 'Invalid rule for net_wm_pid: "%s" only int allowed' % str(net_wm_pid)
+                error = f'Invalid rule for net_wm_pid: "{str(net_wm_pid)}" only int allowed'
                 raise utils.QtileError(error)
         if func is not None:
             self._rules["func"] = func
@@ -1059,7 +1060,7 @@ class Match(_Match):
                 callback(c)
 
     def __repr__(self) -> str:
-        return "<Match %s>" % self._rules
+        return f"<Match {self._rules}>"
 
 
 class Rule:
@@ -1106,7 +1107,7 @@ class Rule:
         actions = utils.describe_attributes(
             self, ["group", "float", "intrusive", "break_on_match"]
         )
-        return "<Rule match=%r actions=(%s)>" % (self.matchlist, actions)
+        return f"<Rule match={self.matchlist!r} actions=({actions})>"
 
 
 class DropDown(configurable.Configurable):

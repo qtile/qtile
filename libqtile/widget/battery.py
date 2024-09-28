@@ -63,17 +63,13 @@ class BatteryState(Enum):
     UNKNOWN = 6
 
 
-BatteryStatus = NamedTuple(
-    "BatteryStatus",
-    [
-        ("state", BatteryState),
-        ("percent", float),
-        ("power", float),
-        ("time", int),
-        ("charge_start_threshold", int),
-        ("charge_end_threshold", int),
-    ],
-)
+class BatteryStatus(NamedTuple):
+    state: BatteryState
+    percent: float
+    power: float
+    time: int
+    charge_start_threshold: int
+    charge_end_threshold: int
 
 
 class _Battery(ABC):
@@ -90,7 +86,6 @@ class _Battery(ABC):
 
         Raises RuntimeError on error.
         """
-        pass
 
 
 def load_battery(**config) -> _Battery:
@@ -278,7 +273,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(_LinuxBattery.defaults)
         if isinstance(self.battery, int):
-            self.battery = "BAT{}".format(self.battery)
+            self.battery = f"BAT{self.battery}"
         self.charge_threshold_supported = True
 
     def _get_battery_name(self):
@@ -301,7 +296,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
             value_type = ""
 
         try:
-            with open(path, "r") as f:
+            with open(path) as f:
                 return f.read().strip(), value_type
         except OSError as e:
             logger.debug("Failed to read '%s':", path, exc_info=True)
@@ -332,7 +327,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
                 self.filenames[name] = filename
                 return value
 
-        raise RuntimeError("Unable to read status for {}".format(name))
+        raise RuntimeError(f"Unable to read status for {name}")
 
     def set_battery_charge_thresholds(self, start, end, battery):
         if not self.charge_threshold_supported:
@@ -589,7 +584,7 @@ class Battery(base.ThreadPoolText):
         try:
             status = self._battery.update_status()
         except RuntimeError as e:
-            return "Error: {}".format(e)
+            return f"Error: {e}"
 
         if self.notify_below:
             percent = int(status.percent * 100)
@@ -597,7 +592,7 @@ class Battery(base.ThreadPoolText):
                 if not self._has_notified:
                     send_notification(
                         "Warning",
-                        "Battery at {0:2.0%}".format(status.percent),
+                        f"Battery at {status.percent:2.0%}",
                         urgent=True,
                         timeout=self.timeout,
                     )

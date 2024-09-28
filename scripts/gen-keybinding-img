@@ -418,7 +418,7 @@ if __name__ == "__main__":
         if not modifier:
             filename = "no_modifier.png"
         else:
-            filename = "{}.png".format(modifier)
+            filename = f"{modifier}.png"
 
         output_file = os.path.abspath(os.path.join(output_dir, filename))
         f = KeyboardPNGFactory(modifier, keys)

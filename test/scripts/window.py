@@ -5,7 +5,7 @@ This creates a minimal window using GTK that works the same in both X11 or Wayla
 GTK sets the window class via `--name <class>`, and then we manually set the window
 title and type. Therefore this is intended to be called as:
 
-    python window.py --name <class> <title> <type>
+    python window.py --name <class> <title> <type> <new_title>
 
 where <type> is "normal" or "notification"
 
@@ -155,6 +155,26 @@ if __name__ == "__main__":
 
     win = Gtk.Window(title=title)
     win.set_default_size(100, 100)
+
+    if len(sys.argv) > 3 and sys.argv[3]:
+
+        def gtk_set_title(*args):
+            win.set_title(sys.argv[3])
+
+        # Time before renaming title
+        GLib.timeout_add(500, gtk_set_title)
+
+    if "urgent_hint" in sys.argv:
+
+        def gtk_set_urgency_hint(*args):
+            win.set_urgency_hint(True)
+
+        # Time before changing urgency
+        GLib.timeout_add(500, gtk_set_urgency_hint)
+
+    icon = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", "logo.png"))
+    if os.path.isfile(icon):
+        win.set_icon_from_file(icon)
 
     if window_type == "notification":
         if os.environ["GDK_BACKEND"] == "wayland":

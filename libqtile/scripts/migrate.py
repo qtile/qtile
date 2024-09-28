@@ -31,7 +31,7 @@ from libqtile.scripts.migrations import MIGRATIONS, load_migrations
 from libqtile.utils import get_config_file
 
 if TYPE_CHECKING:
-    from typing import Iterator
+    from collections.abc import Iterator
 
 BACKUP_SUFFIX = ".migrate.bak"
 

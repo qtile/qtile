@@ -62,7 +62,7 @@ if has_dbus:
         def register_capabilities(self, capabilities):
             if isinstance(capabilities, str):
                 self._capabilities.add(capabilities)
-            elif isinstance(capabilities, (tuple, list, set)):
+            elif isinstance(capabilities, tuple | list | set):
                 self._capabilities.update(set(capabilities))
 
         @method()
@@ -73,8 +73,8 @@ if has_dbus:
             app_icon: "s",  # type:ignore  # noqa: F821
             summary: "s",  # type:ignore  # noqa: F821
             body: "s",  # type:ignore  # noqa: F821
-            actions: "as",  # type:ignore  # noqa: F821
-            hints: "a{sv}",  # type:ignore  # noqa: F821
+            actions: "as",  # type:ignore  # noqa: F722, F821
+            hints: "a{sv}",  # type:ignore  # noqa: F722, F821
             timeout: "i",  # type:ignore  # noqa: F821
         ) -> "u":  # type:ignore  # noqa: F821
             notif = Notification(
@@ -83,18 +83,22 @@ if has_dbus:
             return self.manager.add(notif)
 
         @method()
-        def CloseNotification(self, nid: "u"):  # type:ignore  # noqa: N802, F821
+        def CloseNotification(self, nid: "u"):  # type:ignore  # noqa: F821, N802
             self.manager.close(nid)
 
         @signal()
         def NotificationClosed(  # noqa: N802
-            self, nid: "u", reason: "u"  # type: ignore  # noqa: F821
+            self,
+            nid: "u",  # type: ignore  # noqa: F821
+            reason: "u",  # type: ignore  # noqa: F821
         ) -> "uu":  # type: ignore  # noqa: F821
             return [nid, reason]
 
         @signal()
         def ActionInvoked(  # noqa: N802
-            self, nid: "u", action_key: "s"  # type: ignore  # noqa: F821
+            self,
+            nid: "u",  # type: ignore  # noqa: F821
+            action_key: "s",  # type: ignore  # noqa: F821
         ) -> "us":  # type:ignore  # noqa: N802, F821
             return [nid, action_key]
 

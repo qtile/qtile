@@ -43,9 +43,8 @@ from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandException, CommandObject, expose_command
 from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import IPCCommandServer, QtileCommandInterface
-from libqtile.config import Click, Drag, Key, KeyChord, Match, Mouse, Rule
+from libqtile.config import Click, Drag, Key, KeyChord, Match, Mouse, Rule, Screen, ScreenRect
 from libqtile.config import ScratchPad as ScratchPadConfig
-from libqtile.config import Screen, ScreenRect
 from libqtile.core.lifecycle import lifecycle
 from libqtile.core.loop import LoopContext, QtileEventLoopPolicy
 from libqtile.core.state import QtileState
@@ -60,7 +59,8 @@ from libqtile.utils import cancel_tasks, get_cache_dir, lget, remove_dbus_rules,
 from libqtile.widget.base import _Widget
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Literal
+    from collections.abc import Callable
+    from typing import Any, Literal
 
     from libqtile.command.base import ItemT
     from libqtile.confreader import Config
@@ -220,25 +220,29 @@ class Qtile(CommandObject):
         faulthandler.register(signal.SIGUSR2, all_threads=True)
 
         try:
-            async with LoopContext(
-                {
-                    signal.SIGTERM: self.stop,
-                    signal.SIGINT: self.stop,
-                    signal.SIGHUP: self.stop,
-                    signal.SIGUSR1: self.reload_config,
-                }
-            ), ipc.Server(
-                self._prepare_socket_path(self.socket_path),
-                self.server.call,
+            async with (
+                LoopContext(
+                    {
+                        signal.SIGTERM: self.stop,
+                        signal.SIGINT: self.stop,
+                        signal.SIGHUP: self.stop,
+                        signal.SIGUSR1: self.reload_config,
+                    }
+                ),
+                ipc.Server(
+                    self._prepare_socket_path(self.socket_path),
+                    self.server.call,
+                ),
             ):
                 await self._stopped_event.wait()
         finally:
             self.finalize()
             self.core.remove_listener()
 
-    def stop(self) -> None:
+    def stop(self, exitcode: int = 0) -> None:
         hook.fire("shutdown")
         lifecycle.behavior = lifecycle.behavior.TERMINATE
+        lifecycle.exitcode = exitcode
         self.core.graceful_shutdown()
         self._stop()
 
@@ -1075,7 +1079,7 @@ class Qtile(CommandObject):
 
             def getformat(self) -> tuple[str, int]:
                 format_string = " ".join(
-                    "%-{0:d}s".format(max_col_size + 2) for max_col_size in self.max_col_size
+                    f"%-{max_col_size + 2:d}s" for max_col_size in self.max_col_size
                 )
                 return format_string + "\n", len(self.max_col_size)
 
@@ -1113,7 +1117,7 @@ class Qtile(CommandObject):
                         for value in k.commands[0].args
                     ]
                     + [
-                        "%s = %s" % (keyword, repr(value))
+                        f"{keyword} = {repr(value)}"
                         for keyword, value in k.commands[0].kwargs.items()
                     ]
                 )
@@ -1122,7 +1126,7 @@ class Qtile(CommandObject):
                         mode,
                         name,
                         modifiers,
-                        "{:s}({:s})".format(k.commands[0].name, allargs),
+                        f"{k.commands[0].name:s}({allargs:s})",
                         k.desc,
                     ]
                 )
@@ -1134,11 +1138,11 @@ class Qtile(CommandObject):
                     if mode == "<root>"
                     else "{}>{}".format(mode, k.name if k.name else "_")
                 )
-                rows.append([mode, name, modifiers, "", "Enter {:s} mode".format(new_mode_s)])
+                rows.append([mode, name, modifiers, "", f"Enter {new_mode_s:s} mode"])
                 for s in k.submappings:
                     walk_binding(s, new_mode)
                 return
-            raise TypeError("Unexpected type: {}".format(type(k)))
+            raise TypeError(f"Unexpected type: {type(k)}")
 
         for k in self.config.keys:
             walk_binding(k, "<root>")
@@ -1413,7 +1417,7 @@ class Qtile(CommandObject):
         return [
             i.info()
             for i in self.windows_map.values()
-            if not isinstance(i, (base.Internal, _Widget)) and isinstance(i, CommandObject)
+            if not isinstance(i, base.Internal | _Widget) and isinstance(i, CommandObject)
         ]
 
     @expose_command()
@@ -1442,9 +1446,16 @@ class Qtile(CommandObject):
         return dictionary
 
     @expose_command()
-    def shutdown(self) -> None:
-        """Quit Qtile"""
-        self.stop()
+    def shutdown(self, exitcode: int = 0) -> None:
+        """Quit Qtile
+
+        Parameters
+        ==========
+        exitcode :
+            Set exit status of Qtile. Can be e.g. used to make login managers
+            poweroff or restart the system. (default: 0)
+        """
+        self.stop(exitcode)
 
     @expose_command()
     def switch_groups(self, namea: str, nameb: str) -> None:
@@ -1675,7 +1686,7 @@ class Qtile(CommandObject):
                     logger.debug("No command entered.")
                     return
                 try:
-                    result = eval("c.{0:s}".format(cmd))
+                    result = eval(f"c.{cmd:s}")
                 except (CommandError, CommandException, AttributeError):
                     logger.exception("Command errored:")
                     result = None
@@ -1684,7 +1695,7 @@ class Qtile(CommandObject):
 
                     message = pformat(result)
                     if messenger:
-                        self.spawn('{0:s} "{1:s}"'.format(messenger, message))
+                        self.spawn(f'{messenger:s} "{message:s}"')
                     logger.debug(result)
 
         mb = self.widgets_map[widget]
@@ -1748,6 +1759,7 @@ class Qtile(CommandObject):
     def hide_show_bar(
         self,
         position: Literal["top", "bottom", "left", "right", "all"] = "all",
+        screen: Literal["current", "all"] = "current",
     ) -> None:
         """Toggle visibility of a given bar
 
@@ -1755,16 +1767,28 @@ class Qtile(CommandObject):
         ==========
         position :
             one of: "top", "bottom", "left", "right", or "all" (default: "all")
+        screen :
+            one of: "current", "all" (default: "current")
         """
+        to_mod = [self.current_screen]
+        if screen == "all":
+            to_mod = self.screens
+        for s in to_mod:
+            self.hide_show_bar_screen(s, position)
+
+    def hide_show_bar_screen(
+        self,
+        screen: Screen,
+        position: Literal["top", "bottom", "left", "right", "all"] = "all",
+    ) -> None:
         if position in ["top", "bottom", "left", "right"]:
-            bar = getattr(self.current_screen, position)
+            bar = getattr(screen, position)
             if bar:
                 bar.show(not bar.is_show())
                 self.current_group.layout_all()
             else:
                 logger.warning("Not found bar in position '%s' for hide/show.", position)
         elif position == "all":
-            screen = self.current_screen
             is_show = None
             for bar in [screen.left, screen.right, screen.top, screen.bottom]:
                 if isinstance(bar, libqtile.bar.Bar):

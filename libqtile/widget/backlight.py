@@ -115,11 +115,11 @@ class Backlight(base.InLoopPollText):
 
     def _load_file(self, path):
         try:
-            with open(path, "r") as f:
+            with open(path) as f:
                 return float(f.read().strip())
         except FileNotFoundError:
             logger.debug("Failed to get %s", path)
-            raise RuntimeError("Unable to read status for {}".format(os.path.basename(path)))
+            raise RuntimeError(f"Unable to read status for {os.path.basename(path)}")
 
     def _get_info(self):
         brightness = self._load_file(self.brightness_file)
@@ -130,7 +130,7 @@ class Backlight(base.InLoopPollText):
         try:
             percent = self._get_info()
         except RuntimeError as e:
-            return "Error: {}".format(e)
+            return f"Error: {e}"
 
         return self.format.format(percent=percent)
 

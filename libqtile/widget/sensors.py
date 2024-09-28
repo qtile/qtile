@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 # Copyright (c) 2012 TiN
 # Copyright (c) 2012, 2014 Tycho Andersen
 # Copyright (c) 2013 Tao Sauvage

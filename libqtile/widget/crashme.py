@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2012 Florian Mounier
 # Copyright (c) 2012 roger
 # Copyright (c) 2013 Tao Sauvage
@@ -55,4 +54,4 @@ class _CrashMe(base._TextBox):
         if button == 1:
             1 / 0
         elif button == 3:
-            self.text = "<span>\xC3GError"
+            self.text = "<span>\xc3GError"

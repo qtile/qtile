@@ -98,7 +98,7 @@ class Net(base.ThreadPoolText):
                 self.interface = [self.interface]
             else:
                 raise AttributeError(
-                    "Invalid Argument passed: %s\nAllowed Types: list, str, None" % self.interface
+                    f"Invalid Argument passed: {self.interface}\nAllowed Types: list, str, None"
                 )
         self.stats = self.get_stats()
 

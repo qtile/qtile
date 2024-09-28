@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 # Copyright (c) 2020 Himanshu Chauhan
 # Copyright (c) 2020 Stephan Ehlers
 #
@@ -290,7 +289,7 @@ class OpenWeather(GenPollUrl):
         try:
             rp = _OpenWeatherResponseParser(response, self.dateformat, self.timeformat)
         except OpenWeatherResponseError as e:
-            return "Error {}".format(e.resp_code)
+            return f"Error {e.resp_code}"
 
         data = rp.data
         data["units_temperature"] = "C" if self.metric else "F"

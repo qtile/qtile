@@ -218,19 +218,19 @@ def test_cmus_buttons(cmus_manager):
 
     # Play next track
     # Non-local file source
-    topbar.fake_button_press(0, "top", 0, 0, button=4)
+    topbar.fake_button_press(0, 0, button=4)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "♫ Neil Diamond - Sweet Caroline"
 
     # Play next track
     # Stream source so widget just displays stream info
-    topbar.fake_button_press(0, "top", 0, 0, button=4)
+    topbar.fake_button_press(0, 0, button=4)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "♫ tomjones"
 
     # Play previous track
     # Non-local file source
-    topbar.fake_button_press(0, "top", 0, 0, button=5)
+    topbar.fake_button_press(0, 0, button=5)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "♫ Neil Diamond - Sweet Caroline"
 

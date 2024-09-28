@@ -30,7 +30,7 @@ from libqtile.confreader import Config
 def manager(manager_nospawn, request):
     class MatchConfig(Config):
         rules = getattr(request, "param", list())
-        if not isinstance(rules, (list, tuple)):
+        if not isinstance(rules, list | tuple):
             rules = [rules]
 
         screens = [Screen()]

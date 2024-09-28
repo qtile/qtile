@@ -35,7 +35,7 @@ import asyncio
 import copy
 import math
 import subprocess
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from libqtile import bar, configurable, confreader
 from libqtile.command import interface
@@ -217,7 +217,6 @@ class _Widget(CommandObject, configurable.Configurable):
     def timer_setup(self):
         """This is called exactly once, after the widget has been configured
         and timers are available to be set up."""
-        pass
 
     def _configure(self, qtile, bar):
         self._test_orientation_compatibility(bar.horizontal)
@@ -247,7 +246,6 @@ class _Widget(CommandObject, configurable.Configurable):
         wish to initialise the relevant code (e.g. connections to dbus
         using dbus_next) here.
         """
-        pass
 
     def finalize(self):
         for future in self._futures:
@@ -282,7 +280,7 @@ class _Widget(CommandObject, configurable.Configurable):
         self.mouse_callbacks = defaults
 
     def button_press(self, x, y, button):
-        name = "Button{0}".format(button)
+        name = f"Button{button}"
         if name in self.mouse_callbacks:
             cmd = self.mouse_callbacks[name]
             if isinstance(cmd, LazyCall):
@@ -304,7 +302,7 @@ class _Widget(CommandObject, configurable.Configurable):
         """
         w = q.widgets_map.get(name)
         if not w:
-            raise CommandError("No such widget: %s" % name)
+            raise CommandError(f"No such widget: {name}")
         return w
 
     def _items(self, name: str) -> ItemT:
@@ -716,7 +714,7 @@ class _TextBox(_Widget):
     @expose_command()
     def set_font(
         self,
-        font: Union[str, None] = None,
+        font: str | None = None,
         fontsize: int = 0,
         fontshadow: ColorType = "",
     ):

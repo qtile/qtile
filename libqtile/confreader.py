@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from types import FunctionType
     from typing import Any, Literal
 
     from libqtile.config import Group, Key, Mouse, Rule, Screen
@@ -56,7 +57,7 @@ class Config:
     dgroups_key_binder: Any
     dgroups_app_rules: list[Rule]
     follow_mouse_focus: bool
-    focus_on_window_activation: Literal["focus", "smart", "urgent", "never"]
+    focus_on_window_activation: Literal["focus", "smart", "urgent", "never"] | FunctionType
     cursor_warp: bool
     layouts: list[Layout]
     floating_layout: Layout
@@ -151,11 +152,11 @@ class Config:
         # need to ignore the errors here about missing attributes.
         for k in self.keys:
             if isinstance(k.key, str) and k.key.lower() not in valid_keys:
-                raise ConfigError("No such key: %s" % k.key)
+                raise ConfigError(f"No such key: {k.key}")
             for m in k.modifiers:
                 if m.lower() not in valid_mods:
-                    raise ConfigError("No such modifier: %s" % m)
+                    raise ConfigError(f"No such modifier: {m}")
         for ms in self.mouse:
             for m in ms.modifiers:
                 if m.lower() not in valid_mods:
-                    raise ConfigError("No such modifier: %s" % m)
+                    raise ConfigError(f"No such modifier: {m}")

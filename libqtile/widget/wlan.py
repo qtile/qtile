@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2012 Sebastian Bechtel
 # Copyright (c) 2013 Tao Sauvage
 # Copyright (c) 2014 Sebastian Kricner
@@ -87,7 +86,7 @@ class Wlan(base.InLoopPollText):
                 if self.use_ethernet:
                     try:
                         with open(
-                            f"/sys/class/net/{self.ethernet_interface}/operstate", "r"
+                            f"/sys/class/net/{self.ethernet_interface}/operstate"
                         ) as statfile:
                             if statfile.read().strip() == "up":
                                 return self.ethernet_message
@@ -103,7 +102,7 @@ class Wlan(base.InLoopPollText):
             return self.format.format(
                 essid=markup_escape_text(essid), quality=quality, percent=(quality / 70)
             )
-        except EnvironmentError:
+        except OSError:
             logger.error(
                 "Probably your wlan device is switched off or "
                 " otherwise not present in your system."

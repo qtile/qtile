@@ -86,7 +86,7 @@ class Xephyr:
         """
         # get a new display
         display, self.display_file = xcffib.testing.find_display()
-        self.display = ":{}".format(display)
+        self.display = f":{display}"
 
         # build up arguments
         args = [
@@ -96,15 +96,15 @@ class Xephyr:
             self.display,
             "-ac",
             "-screen",
-            "{}x{}".format(WIDTH, HEIGHT),
+            f"{WIDTH}x{HEIGHT}",
         ]
         if self.outputs == 2:
             args.extend(
                 [
                     "-origin",
-                    "%s,0" % self.xoffset,
+                    f"{self.xoffset},0",
                     "-screen",
-                    "%sx%s" % (SECOND_WIDTH, SECOND_HEIGHT),
+                    f"{SECOND_WIDTH}x{SECOND_HEIGHT}",
                 ]
             )
             args.extend(["+xinerama"])

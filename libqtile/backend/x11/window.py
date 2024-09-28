@@ -5,6 +5,7 @@ import contextlib
 import inspect
 import traceback
 from itertools import islice
+from types import FunctionType
 from typing import TYPE_CHECKING
 
 import xcffib
@@ -1996,7 +1997,7 @@ class Window(_Window, base.Window):
         else:
             group = self.qtile.groups_map.get(group_name)
             if group is None:
-                raise CommandError("No such group: %s" % group_name)
+                raise CommandError(f"No such group: {group_name}")
 
         if self.group is group:
             if toggle and self.group.screen.previous_group:
@@ -2110,7 +2111,7 @@ class Window(_Window, base.Window):
                 arr[i + 1] = int(arr[i + 1] * mult)
                 arr[i + 2] = int(arr[i + 2] * mult)
             icon = icon[next_pix:]
-            icons["%sx%s" % (width, height)] = arr
+            icons[f"{width}x{height}"] = arr
         self.icons = icons
         hook.fire("net_wm_icon_change", self)
 
@@ -2147,7 +2148,11 @@ class Window(_Window, base.Window):
                 self.bring_to_front()
             else:  # XCB_EWMH_CLIENT_SOURCE_TYPE_OTHER
                 focus_behavior = self.qtile.config.focus_on_window_activation
-                if focus_behavior == "focus":
+                if (
+                    focus_behavior == "focus"
+                    or type(focus_behavior) is FunctionType
+                    and focus_behavior(self)
+                ):
                     logger.debug("Focusing window")
                     # Windows belonging to a scratchpad need to be toggled properly
                     if isinstance(self.group, ScratchPad):

@@ -116,7 +116,7 @@ class StatusNotifier(base._Widget):
         icon = self.find_icon_at_pos(x, y)
         self.selected_item = icon if icon else None
 
-        name = "Button{0}".format(button)
+        name = f"Button{button}"
         if name in self.mouse_callbacks:
             self.mouse_callbacks[name]()
 

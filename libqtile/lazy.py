@@ -27,7 +27,7 @@ from libqtile.command.interface import CommandInterface
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import Callable, Iterable
+    from collections.abc import Callable, Iterable
 
     from libqtile.command.graph import SelectorType
     from libqtile.config import _Match
@@ -102,7 +102,7 @@ class LazyCall:
         when_floating: bool | None = None,
         func: Callable | None = None,
         condition: bool | None = None,
-    ) -> "LazyCall":
+    ) -> LazyCall:
         """Enable call only for matching criteria.
 
         Keyword parameters

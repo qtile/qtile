@@ -145,7 +145,7 @@ class CheckUpdates(base.ThreadPoolText):
             num_updates += self.restart_indicator
 
         self.layout.colour = self.colour_have_updates
-        return self.display_format.format(**{"updates": num_updates})
+        return self.display_format.format(updates=num_updates)
 
     def poll(self):
         # type: () -> str

@@ -433,6 +433,8 @@ For example, the Mpris2 widget uses the following code:
 interfaces. Refer to the `dbus-next documentation <https://python-dbus-next.readthedocs.io/en/latest/>`_
 for more information on how to use the module.
 
+.. _mouse-events:
+
 Mouse events
 ============
 
@@ -650,7 +652,7 @@ An example screenshot file is below:
 The ``widget`` fixture returns the widget class (not an instance of the widget). Any monkeypatching
 of the widget should be included in this fixture.
 
-The screenshot function (here, called ``ss_wttr``) must take an argument called ``screenshot_manager``. 
+The screenshot function (here, called ``ss_wttr``) must take an argument called ``screenshot_manager``.
 The function can also be parameterized, in which case, each dict object will be used
 to configure the widget for the screenshot (and the configuration will be displayed in the docs). If
 you want to include parameterizations but also want to show the default configuration, you should include

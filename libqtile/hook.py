@@ -40,7 +40,7 @@ from libqtile.log_utils import logger
 from libqtile.resources.sleep import inhibitor
 
 if TYPE_CHECKING:
-    from typing import Callable
+    from collections.abc import Callable
 
     HookHandler = Callable[[Callable], Callable]
 
@@ -174,7 +174,7 @@ class Registry:
 
     def fire(self, event, *args, **kwargs):
         if event not in self.subscribe.hooks:
-            raise utils.QtileError("Unknown event: %s" % event)
+            raise utils.QtileError(f"Unknown event: {event}")
         # Do not fire for Internal windows
         if any(isinstance(arg, backend.base.window.Internal) for arg in args):
             return
@@ -513,6 +513,29 @@ hooks: list[Hook] = [
           @hook.subscribe.group_window_add
           def group_window_add(group, window):
               send_notification("qtile", f"Window {window.name} added to {group.name}")
+
+        """,
+    ),
+    Hook(
+        "group_window_remove",
+        """Called when a window is removed from a group
+
+        **Arguments**
+
+            * ``Group`` removing the window
+            * ``Window`` removed from the group
+
+        Example:
+
+        .. code:: python
+
+          from libqtile import hook
+          from libqtile.utils import send_notification
+
+
+          @hook.subscribe.group_window_remove
+          def group_window_remove(group, window):
+              send_notification("qtile", f"Window {window.name} removed from {group.name}")
 
         """,
     ),

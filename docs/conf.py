@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Qtile documentation build configuration file, created by
 # sphinx-quickstart on Sat Feb 11 15:20:21 2012.

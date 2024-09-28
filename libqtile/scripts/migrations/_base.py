@@ -29,7 +29,8 @@ import libcst.matchers as m
 from libqtile.scripts.migrations import MIGRATIONS
 
 if TYPE_CHECKING:
-    from typing import ClassVar, Collection, Type
+    from collections.abc import Collection
+    from typing import ClassVar
 
     from libcst.metadata.base_provider import ProviderT
 
@@ -96,7 +97,7 @@ class MigrationHelper:
     and provides some helper functions.
     """
 
-    METADATA_DEPENDENCIES: ClassVar[Collection["ProviderT"]] = (
+    METADATA_DEPENDENCIES: ClassVar[Collection[ProviderT]] = (
         libcst.metadata.PositionProvider,
         libcst.metadata.ParentNodeProvider,
     )
@@ -137,7 +138,7 @@ class RenamerTransformer(MigrationTransformer):
 
     def leave_Name(self, original_node, updated_node):  # noqa: N802
         if original_node.value == self.from_to[0]:
-            self.lint(original_node, "'{0}' should be replaced with '{1}'.".format(*self.from_to))
+            self.lint(original_node, "'{}' should be replaced with '{}'.".format(*self.from_to))
             return updated_node.with_changes(value=self.from_to[1])
         return original_node
 
@@ -174,7 +175,7 @@ class _QtileMigrator:
     TESTS: list[Change] = []
 
     # Set the name of the visitor/transformer here
-    visitor: Type[MigrationVisitor] | Type[MigrationTransformer] | None = None
+    visitor: type[MigrationVisitor] | type[MigrationTransformer] | None = None
 
     def __init__(self) -> None:
         self._lint_lines: list[LintLine] = []

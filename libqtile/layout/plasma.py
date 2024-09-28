@@ -139,7 +139,7 @@ class Node:
         info = self.payload or ""
         if self:
             info += " +%d" % len(self)
-        return "<Node %s %x>" % (info, id(self))
+        return f"<Node {info} {id(self):x}>"
 
     # Define dunder methods to treat Node objects like an iterable
     def __contains__(self, node):

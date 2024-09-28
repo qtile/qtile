@@ -54,6 +54,6 @@ def test_configerrorwidget(manager_nospawn, minimal_conf_noscreen, position):
     assert w["text"] == "Widget crashed: BadWidget (click to hide)"
 
     # Clicking on widget hides it so let's check it works
-    testbar.fake_button_press(0, position, 0, 0, button=1)
+    testbar.fake_button_press(0, 0, button=1)
     w = testbar.info()["widgets"][0]
     assert w["text"] == ""

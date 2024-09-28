@@ -42,5 +42,5 @@ def test_lazy_callback(manager_nospawn, minimal_conf_noscreen):
     topbar = manager_nospawn.c.bar["top"]
     assert topbar.widget["textbox"].info()["text"] == "Testing"
 
-    topbar.fake_button_press(0, "top", 0, 0, button=1)
+    topbar.fake_button_press(0, 0, button=1)
     assert topbar.widget["textbox"].info()["text"] == "LazyCall"

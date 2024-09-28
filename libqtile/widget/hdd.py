@@ -38,7 +38,7 @@ class HDD(base.ThreadPoolText):
     def __init__(self, **config):
         super().__init__("", **config)
         self.add_defaults(HDD.defaults)
-        self.path = "/sys/block/{dev}/stat".format(dev=self.device)
+        self.path = f"/sys/block/{self.device}/stat"
         self._prev = 0
 
     def poll(self):

@@ -16,8 +16,8 @@ def set_file_perms(p, options):
 
 
 def do_backlight_setup(options):
-    set_file_perms("/sys/class/backlight/{}/brightness".format(options.device), options)
-    set_file_perms("/sys/class/leds/{}/brightness".format(options.device), options)
+    set_file_perms(f"/sys/class/backlight/{options.device}/brightness", options)
+    set_file_perms(f"/sys/class/leds/{options.device}/brightness", options)
 
 
 def do_battery_setup(options):
@@ -32,7 +32,7 @@ def udev(options):
     elif options.kind == "battery":
         do_battery_setup(options)
     else:
-        raise "Unknown udev option {}".format(options.kind)
+        raise f"Unknown udev option {options.kind}"
 
 
 def add_subcommand(subparsers, parents):

@@ -2,7 +2,7 @@
 
 **A full-featured, hackable tiling window manager written and configured in Python**
 
-|website| |pypi| |ci| |rtd| |license| |black| |coverage|
+|website| |pypi| |ci| |rtd| |license| |ruff| |coverage|
 
 Features
 ========
@@ -70,9 +70,9 @@ Please also consider submitting useful scripts etc. to the qtile-examples repo
 .. |license| image:: https://img.shields.io/github/license/qtile/qtile.svg
     :alt: License
     :target: https://github.com/qtile/qtile/blob/master/LICENSE
-.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+.. |ruff| image:: https://img.shields.io/badge/code%20style-ruff-000000.svg
     :alt: Codestyle
-    :target: https://github.com/psf/black
+    :target: https://github.com/astral-sh/ruff
 .. |coverage| image:: https://coveralls.io/repos/github/qtile/qtile/badge.svg
     :alt: Coverage
     :target: https://coveralls.io/github/qtile/qtile

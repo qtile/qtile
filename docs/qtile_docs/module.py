@@ -22,10 +22,10 @@ import importlib
 import inspect
 
 from docutils.parsers.rst import Directive, directives
-from qtile_docs.base import SimpleDirectiveMixin
-from qtile_docs.templates import qtile_module_template
 
 from libqtile.utils import import_class
+from qtile_docs.base import SimpleDirectiveMixin
+from qtile_docs.templates import qtile_module_template
 
 
 class QtileModule(SimpleDirectiveMixin, Directive):

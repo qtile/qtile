@@ -236,7 +236,7 @@ def test_tasklist_click_task(tasklist_manager):
     # which should focus the window
     # margin is set to 0 as value set by widget_defaults means text would otherwise
     # mean text does not start at x=0
-    tasklist_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+    tasklist_manager.c.bar["top"].fake_button_press(0, 0, 1)
     assert tasklist_manager.c.window.info()["name"] == "One"
 
 

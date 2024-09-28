@@ -79,10 +79,10 @@ def tree(node, level=0):
         indent=level * 4 * " ",
         name="%s" % (node.payload or "*"),
         orient="H" if node.horizontal else "V",
-        repr_="%s" % repr(node),
-        pos="%g*%g@%g:%g" % (node.width, node.height, node.x, node.y),
-        size="size: %s%s" % (node.size, " (auto)" if node.flexible else ""),
-        parent="p: %s" % node.parent,
+        repr_=f"{repr(node)}",
+        pos=f"{node.width:g}*{node.height:g}@{node.x:g}:{node.y:g}",
+        size="size: {}{}".format(node.size, " (auto)" if node.flexible else ""),
+        parent=f"p: {node.parent}",
     )
     for child in node:
         res += tree(child, level + 1)
@@ -1478,7 +1478,7 @@ def test_init():
 def test_focus(root):
     layout = Plasma()
     layout.root = root
-    a, b, c, d = [Client(x) for x in "abcd"]
+    a, b, c, d = (Client(x) for x in "abcd")
     layout.add_client(a)
     layout.add_client(b)
     layout.add_client(c)

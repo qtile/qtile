@@ -26,7 +26,6 @@ class Core(CommandObject, metaclass=ABCMeta):
     @abstractmethod
     def name(self) -> str:
         """The name of the backend"""
-        pass
 
     def _items(self, name: str) -> ItemT:
         return None

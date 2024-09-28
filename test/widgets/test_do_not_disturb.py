@@ -80,15 +80,15 @@ def test_dnd(dnd_manager):
     widget = dnd_manager.c.widget["donotdisturb"]
     assert widget.info()["text"] == "O"
 
-    dnd_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+    dnd_manager.c.bar["top"].fake_button_press(0, 0, 1)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "X"
 
-    dnd_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+    dnd_manager.c.bar["top"].fake_button_press(0, 0, 1)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "O"
 
-    dnd_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+    dnd_manager.c.bar["top"].fake_button_press(0, 0, 1)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "X"
 
@@ -116,6 +116,6 @@ def test_dnd_custom_icons(dnd_manager):
     widget = dnd_manager.c.widget["donotdisturb"]
     assert widget.info()["text"] == "+"
 
-    dnd_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+    dnd_manager.c.bar["top"].fake_button_press(0, 0, 1)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "-"

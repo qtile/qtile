@@ -21,8 +21,8 @@
 # SOFTWARE.
 
 """
-    Command-line tool to expose qtile.command functionality to shell.
-    This can be used standalone or in other shell scripts.
+Command-line tool to expose qtile.command functionality to shell.
+This can be used standalone or in other shell scripts.
 """
 
 from __future__ import annotations
@@ -134,14 +134,10 @@ def run_function(client: CommandClient, funcname: str, args: list[str]) -> str:
         print("error: Sorry no function ", funcname)
         sys.exit(1)
     except CommandError as e:
-        print("error: Command '{}' returned error: {}".format(funcname, str(e)))
+        print(f"error: Command '{funcname}' returned error: {str(e)}")
         sys.exit(1)
     except CommandException as e:
-        print(
-            "error: Sorry cannot run function '{}' with arguments {}: {}".format(
-                funcname, args, str(e)
-            )
-        )
+        print(f"error: Sorry cannot run function '{funcname}' with arguments {args}: {str(e)}")
         sys.exit(1)
 
     return ret

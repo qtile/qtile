@@ -23,6 +23,7 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
+from test.helpers import Retry
 from test.layouts.layout_utils import assert_dimensions, assert_focus_path, assert_focused
 
 
@@ -96,6 +97,22 @@ class MonadTallMarginsConfig(Config):
 
 monadtallmargins_config = pytest.mark.parametrize(
     "manager", [MonadTallMarginsConfig], indirect=True
+)
+
+
+class MonadTallStackedConfig(Config):
+    auto_fullscreen = True
+    groups = [libqtile.config.Group("a")]
+    layouts = [layout.MonadTall(auto_maximize=True)]
+    floating_layout = libqtile.resources.default_config.floating_layout
+    keys = []
+    mouse = []
+    screens = []
+    follow_mouse_focus = False
+
+
+monadtallstacked_config = pytest.mark.parametrize(
+    "manager", [MonadTallStackedConfig], indirect=True
 )
 
 
@@ -579,6 +596,101 @@ def test_tall_set_and_reset(manager):
 
     manager.c.layout.reset()
     assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 596)
+
+
+@monadtallstacked_config
+def test_tall_stacked_add_two_clients(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 796, 596)
+
+    manager.test_window("two")
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 596)
+
+    manager.test_window("three")
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 400, 85, 396, 511)
+
+    manager.c.layout.next()
+    assert_focused(manager, "one")
+    assert_dimensions(manager, 0, 0, 396, 596)
+
+
+@monadtallstacked_config
+def test_tall_stacked_toggle_auto_maximize(manager):
+    # Initial setting: auto_maximize on
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 796, 596)
+
+    manager.test_window("two")
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 596)
+
+    manager.test_window("three")
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 400, 85, 396, 511)
+
+    manager.c.layout.next()
+    assert_focused(manager, "one")
+    assert_dimensions(manager, 0, 0, 396, 596)
+
+    # Turn off auto_maximize
+    manager.c.layout.toggle_auto_maximize()
+
+    assert_focused(manager, "one")
+    assert_dimensions(manager, 0, 0, 396, 596)
+
+    manager.c.layout.next()
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 296)
+
+    manager.c.layout.next()
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 400, 300, 396, 296)
+
+    # Turn auto_maximize back on
+    manager.c.layout.toggle_auto_maximize()
+
+    manager.c.layout.next()
+    assert_focused(manager, "one")
+    assert_dimensions(manager, 0, 0, 396, 596)
+
+    manager.c.layout.next()
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 511)
+
+    manager.c.layout.next()
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 400, 85, 396, 511)
+
+
+@monadtallstacked_config
+def test_tall_stacked_window_kill(manager):
+    @Retry(ignore_exceptions=(AssertionError))
+    def assert_window_count(num):
+        assert len(manager.c.windows()) == num
+
+    manager.test_window("one")
+    assert_focused(manager, "one")
+
+    manager.test_window("two")
+    assert_focused(manager, "two")
+
+    manager.test_window("three")
+    assert_focused(manager, "three")
+
+    manager.c.layout.previous()
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 511)
+
+    manager.c.window.kill()
+    assert_window_count(2)
+    assert_focused(manager, "one")
+    assert_dimensions(manager, 0, 0, 396, 596)
+
+    manager.c.layout.next()
+    assert_focused(manager, "three")
     assert_dimensions(manager, 400, 0, 396, 596)
 
 
