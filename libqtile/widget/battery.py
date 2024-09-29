@@ -363,7 +363,6 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         full_total = 0.0
         power = 0.0
         power_acc = 0.0  # accumulated values of power_now
-        percent = 0.0
         time = 0  # seconds
         state = BatteryState.UNKNOWN
         bats: Any = []
@@ -452,7 +451,6 @@ class _LinuxBattery(_Battery, configurable.Configurable):
                     percent += now / full
                 """
 
-                
                 if power == 0:
                     time += 0
                 elif state == BatteryState.DISCHARGING:
@@ -470,7 +468,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
 
         return BatteryStatus(
             state=state,
-            percent = now_total/full_total, 
+            percent=now_total / full_total,
             power=power_acc,
             time=time,
             charge_start_threshold=charge_start_threshold,
@@ -537,7 +535,11 @@ class Battery(base.ThreadPoolText):
         ("low_foreground", "FF0000", "Font color on low battery"),
         ("low_background", None, "Background color on low battery"),
         ("update_interval", 60, "Seconds between status updates"),
-        ("battery",-1,"Which battery should be monitored (battery number or name). The default value include all the batteries installed"),
+        (
+            "battery",
+            -1,
+            "Which battery should be monitored (battery number or name). The default value include all the batteries installed",
+        ),
         ("notify_below", None, "Send a notification below this battery level."),
         ("notification_timeout", 10, "Time in seconds to display notification. 0 for no expiry."),
     ]
