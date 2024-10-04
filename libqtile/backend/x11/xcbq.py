@@ -402,7 +402,6 @@ class Xinerama:
 class RandR:
     def __init__(self, conn):
         self.ext = conn.conn(xcffib.randr.key)
-        self.ext.SelectInput(conn.default_screen.root.wid, xcffib.randr.NotifyMask.ScreenChange)
 
     def query_crtcs(self, root):
         infos = []
@@ -419,6 +418,9 @@ class RandR:
 
             infos.append(ScreenRect(crtc_info.x, crtc_info.y, crtc_info.width, crtc_info.height))
         return infos
+
+    def enable_screen_change_notifications(self, conn):
+        self.ext.SelectInput(conn.default_screen.root.wid, xcffib.randr.NotifyMask.ScreenChange)
 
 
 class XFixes:
@@ -503,6 +505,14 @@ class Connection:
                 pseudoscreens.append(scr)
             return pseudoscreens
         raise Exception("no randr or xinerama?")
+
+    def enable_screen_change_notifications(self):
+        if not hasattr(self, "randr"):
+            logger.warning(
+                "no randr configured for this X server, screen change notifications disabled"
+            )
+            return
+        self.randr.enable_screen_change_notifications(self)
 
     def finalize(self):
         self.cursors.finalize()

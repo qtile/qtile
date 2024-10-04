@@ -147,13 +147,6 @@ class Qtile(CommandObject):
         for button in self.config.mouse:
             self.grab_button(button)
 
-        # no_spawn is set after the very first startup; we only want to run the
-        # startup hook once.
-        if not self.no_spawn:
-            hook.fire("startup_once")
-            self.no_spawn = True
-        hook.fire("startup")
-
         if self._state:
             if isinstance(self._state, str):
                 try:
@@ -169,6 +162,18 @@ class Qtile(CommandObject):
 
         self.core.on_config_load(initial)
 
+        if self.config.reconfigure_screens:
+            hook.subscribe.screen_change(self.reconfigure_screens)
+
+        # no_spawn is set after the very first startup; we only want to run the
+        # startup hook once. Note that this needs to happen *after* the config
+        # is loaded and we have subscribed reconfigure_screens() in case people
+        # do xrandr style manipulation in this hook.
+        if not self.no_spawn:
+            hook.fire("startup_once")
+            self.no_spawn = True
+        hook.fire("startup")
+
         if self._state:
             for screen in self.screens:
                 screen.group.layout.show(screen.get_rect())
@@ -176,9 +181,6 @@ class Qtile(CommandObject):
         self._state = None
         self.update_desktops()
         hook.subscribe.setgroup(self.update_desktops)
-
-        if self.config.reconfigure_screens:
-            hook.subscribe.screen_change(self.reconfigure_screens)
 
         # Start the sleep inhibitor process to listen to sleep signals
         # NB: the inhibitor will only connect to the dbus service if the
