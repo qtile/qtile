@@ -307,7 +307,7 @@ class Keyboard(_Device):
             if handled:
                 return
             if self.core.focused_internal:
-                self.core.focused_internal.process_key_press(keysym)
+                self.core.focused_internal.process_key_press(keycode)
                 return
 
         self.seat.keyboard_notify_key(event)
