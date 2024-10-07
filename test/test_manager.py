@@ -599,15 +599,15 @@ def test_default_float(manager):
     assert manager.c.group.info()["focus"] == "float"
     assert manager.c.window.info()["width"] == 100
     assert manager.c.window.info()["height"] == 100
-    assert manager.c.window.info()["x"] == 350
-    assert manager.c.window.info()["y"] == 240
+    assert manager.c.window.info()["x"] == 350  # (800 - 100) / 2
+    assert manager.c.window.info()["y"] == 250  # (600 - 100) /2
     assert manager.c.window.info()["floating"] is True
 
     manager.c.window.move_floating(10, 20)
     assert manager.c.window.info()["width"] == 100
     assert manager.c.window.info()["height"] == 100
     assert manager.c.window.info()["x"] == 360
-    assert manager.c.window.info()["y"] == 260
+    assert manager.c.window.info()["y"] == 270
     assert manager.c.window.info()["floating"] is True
 
     manager.c.window.set_position_floating(10, 20)
