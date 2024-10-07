@@ -458,6 +458,12 @@ class Core(base.Core, wlrq.HasListeners):
     def display_name(self) -> str:
         return self.socket.decode()
 
+    @property
+    def xdisplay_name(self) -> str:
+        if not self._xwayland:
+            return ""
+        return self._xwayland.display_name or ""
+
     def _on_request_set_selection(
         self, _listener: Listener, event: seat.RequestSetSelectionEvent
     ) -> None:
