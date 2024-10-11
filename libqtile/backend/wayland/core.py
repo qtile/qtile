@@ -1127,12 +1127,12 @@ class Core(base.Core, wlrq.HasListeners):
                     self.cursor.set_xcursor(self._cursor_manager, "default")
                     self.seat.pointer_notify_clear_focus()
 
-            if win is not self.qtile.current_window:
-                if self._hovered_window is not win:
-                    # We only want to fire client_mouse_enter once, so check
-                    # self._hovered_window.
-                    hook.fire("client_mouse_enter", win)
+            if self._hovered_window is not win:
+                # We only want to fire client_mouse_enter once, so check
+                # self._hovered_window.
+                hook.fire("client_mouse_enter", win)
 
+            if win is not self.qtile.current_window:
                 if motion is not None and self.qtile.config.follow_mouse_focus:
                     if isinstance(win, window.Static):
                         self.qtile.focus_screen(win.screen.index, False)
