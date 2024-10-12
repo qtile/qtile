@@ -170,3 +170,15 @@ class WidgetBox(base._TextBox):
         """Close the widgetbox."""
         if self.box_is_open:
             self.toggle()
+
+    def finalize(self):
+        # If the box isn't open then the widgets are not in the bar's list
+        # so we need to finalize them separately
+        if not self.box_is_open:
+            for widget in self.widgets:
+                try:
+                    widget.finalize()
+                except:  # noqa: E722
+                    logger.exception(
+                        "exception during finalisation of widgetbox widget (%s)", widget.name
+                    )
