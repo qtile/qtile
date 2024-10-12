@@ -123,9 +123,7 @@ class _Group(CommandObject):
         """
         for index, obj in enumerate(self.layouts):
             if obj.name == layout:
-                self.current_layout = index
-                hook.fire("layout_change", self.layouts[self.current_layout], self)
-                self.layout_all()
+                self.use_layout(index)
                 return
         logger.error("No such layout: %s", layout)
 
@@ -135,8 +133,9 @@ class _Group(CommandObject):
         self.current_layout = index % len(self.layouts)
         hook.fire("layout_change", self.layouts[self.current_layout], self)
         self.layout_all()
-        screen_rect = self.screen.get_rect()
-        self.layout.show(screen_rect)
+        if self.screen is not None:
+            screen_rect = self.screen.get_rect()
+            self.layout.show(screen_rect)
 
     def use_next_layout(self):
         self.use_layout((self.current_layout + 1) % (len(self.layouts)))
