@@ -46,7 +46,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
 _IGNORED_EVENTS = {
-    xcffib.xproto.CreateNotifyEvent,
     xcffib.xproto.FocusInEvent,
     xcffib.xproto.KeyReleaseEvent,
     # DWM handles this to help "broken focusing windows".
@@ -169,6 +168,8 @@ class Core(base.Core):
         self._last_motion_time = 0
 
         self.last_focused: base.Window | None = None
+
+        self.override_redirect_map: dict[int, window._Window] = {}
 
     @property
     def name(self):
@@ -311,7 +312,6 @@ class Core(base.Core):
                 event = self.conn.conn.poll_for_event()
                 if not event:
                     break
-
                 if event.__class__ in _IGNORED_EVENTS:
                     continue
 
@@ -596,10 +596,11 @@ class Core(base.Core):
         self, x: int, y: int, width: int, height: int, desired_depth: int | None = 32
     ) -> base.Internal:
         assert self.qtile is not None
-
         win = self.conn.create_window(x, y, width, height, desired_depth)
         internal = window.Internal(win, self.qtile, desired_depth)
         internal.place(x, y, width, height, 0, None)
+        if win.wid in self.override_redirect_map:
+            del self.override_redirect_map[win.wid]
         self.qtile.manage(internal)
         return internal
 
@@ -730,6 +731,9 @@ class Core(base.Core):
     def handle_MapRequest(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
+        if event.window in self.override_redirect_map:
+            del self.override_redirect_map[event.window]
+
         xwin = window.XWindow(self.conn, event.window)
         try:
             attrs = xwin.get_attributes()
@@ -765,8 +769,24 @@ class Core(base.Core):
             self.update_client_lists()
             win.change_layer()
 
+    def handle_CreateNotify(self, event) -> None:  # noqa: N802
+        # Wait until qtile has started (so we don't capture root windows)
+        if self.qtile is None or not self.qtile.no_spawn:
+            return
+
+        # Internal windows are added to the windows_map before this method is run
+        if event.window in self.qtile.windows_map:
+            return
+
+        xwin = window.XWindow(self.conn, event.window)
+        win = window._Window(xwin, self.qtile)
+        self.override_redirect_map[event.window] = win
+
     def handle_DestroyNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
+
+        if event.window in self.override_redirect_map:
+            del self.override_redirect_map[event.window]
 
         self.qtile.unmanage(event.window)
         self.update_client_lists()
