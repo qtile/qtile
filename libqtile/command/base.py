@@ -336,7 +336,7 @@ class CommandObject(metaclass=abc.ABCMeta):
     def function(self, function, *args, **kwargs) -> None:
         """Call a function with current object as argument"""
         try:
-            function(self, *args, **kwargs)
+            return function(self, *args, **kwargs)
         except Exception:
             error = traceback.format_exc()
             logger.error('Exception calling "%s":\n%s', function, error)
