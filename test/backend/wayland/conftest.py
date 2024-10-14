@@ -66,6 +66,7 @@ class WaylandBackend(Backend):
         success, display = manager.c.eval("self.core.display_name")
         assert success
         self.env["WAYLAND_DISPLAY"] = display
+        self.env["DISPLAY"] = manager.c.eval("self.core.xdisplay_name")[1]
 
     def fake_click(self, x, y):
         """Click at the specified coordinates"""
