@@ -108,6 +108,7 @@ class Xephyr:
                 ]
             )
             args.extend(["+xinerama"])
+            args.extend(["-extension", "RANDR"])
 
         self.proc = subprocess.Popen(args)
 
