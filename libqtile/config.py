@@ -219,9 +219,9 @@ class Click(Mouse):
         ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
         ``"mod4"``, ``"mod5"``.
     button:
-        The button used to start dragging e.g. ``"Button1"``.
+        The button used to click e.g. ``"Button1"``.
     commands:
-        A list :class:`LazyCall` objects to evaluate in sequence upon drag.
+        A list :class:`LazyCall` objects to evaluate in sequence upon click.
 
     """
 
