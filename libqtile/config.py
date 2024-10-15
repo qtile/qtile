@@ -189,6 +189,9 @@ class Drag(Mouse):
     warp_pointer:
         A :class:`bool` indicating if the pointer should be warped to the bottom right of the window
         at the start of dragging. (Default: `False`)
+    hovered:
+        A :class:`bool` indicating if focus should be changed to the window
+        under the mouse before dragging. (Default: `False`)
 
     """
 
@@ -199,10 +202,12 @@ class Drag(Mouse):
         *commands: LazyCall,
         start: LazyCall | None = None,
         warp_pointer: bool = False,
+        hovered: bool = False,
     ) -> None:
         super().__init__(modifiers, button, *commands)
         self.start = start
         self.warp_pointer = warp_pointer
+        self.hovered = hovered
 
     def __repr__(self) -> str:
         return f"<Drag ({self.modifiers}, {self.button})>"
@@ -219,11 +224,24 @@ class Click(Mouse):
         ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
         ``"mod4"``, ``"mod5"``.
     button:
-        The button used to start dragging e.g. ``"Button1"``.
+        The button used to click e.g. ``"Button1"``.
     commands:
-        A list :class:`LazyCall` objects to evaluate in sequence upon drag.
+        A list :class:`LazyCall` objects to evaluate in sequence upon click.
+    hovered:
+        A :class:`bool` indicating if focus should be changed to the window
+        under the mouse before clicking. (Default: `False`)
 
     """
+
+    def __init__(
+        self,
+        modifiers: list[str],
+        button: str,
+        *commands: LazyCall,
+        hovered: bool = False,
+    ) -> None:
+        super().__init__(modifiers, button, *commands)
+        self.hovered = hovered
 
     def __repr__(self) -> str:
         return f"<Click ({self.modifiers}, {self.button})>"
