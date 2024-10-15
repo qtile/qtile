@@ -1133,7 +1133,7 @@ class Core(base.Core, wlrq.HasListeners):
                 hook.fire("client_mouse_enter", win)
 
             if win is not self.qtile.current_window:
-                if motion is not None and self.qtile.config.follow_mouse_focus:
+                if motion is not None and self.qtile.config.follow_mouse_focus is True:
                     if isinstance(win, window.Static):
                         self.qtile.focus_screen(win.screen.index, False)
                     else:
@@ -1695,3 +1695,7 @@ class Core(base.Core, wlrq.HasListeners):
     def get_mouse_position(self) -> tuple[int, int]:
         """Get mouse coordinates."""
         return int(self.cursor.x), int(self.cursor.y)
+
+    @property
+    def hovered_window(self) -> base.WindowType | None:
+        return self._hovered_window

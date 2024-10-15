@@ -1,6 +1,7 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
         - Add `SwayNC` widget to interact with Sway Notification Centre (wayland only)
+        - New `click_or_drag_only` option for follow_mouse_focus to change the focus to the window under the mouse when click or drag
     * bugfixes
 
 Qtile 0.29.0, released 2024-10-19:
