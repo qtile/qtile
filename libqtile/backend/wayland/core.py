@@ -1695,3 +1695,7 @@ class Core(base.Core, wlrq.HasListeners):
     def get_mouse_position(self) -> tuple[int, int]:
         """Get mouse coordinates."""
         return int(self.cursor.x), int(self.cursor.y)
+
+    @property
+    def hovered_window(self) -> base.WindowType | None:
+        return self._hovered_window
