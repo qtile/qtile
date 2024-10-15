@@ -135,7 +135,9 @@ configuration variables that control specific aspects of Qtile's behavior:
     * - ``follow_mouse_focus``
       - ``True``
       - Controls whether or not focus follows the mouse around as it moves
-        across windows in a layout.
+        across windows in a layout. Otherwise set this to ``"click_or_drag_only"``
+        to change focus only when doing a :class:`~libqtile.config.Click` or
+        :class:`~libqtile.config.Drag` action.
     * - ``widget_defaults``
       - ``dict(font='sans', fontsize=12, padding=3)``
       - Default settings for bar widgets.
