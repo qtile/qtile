@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from libqtile.backend import base
 from libqtile.extension.dmenu import Dmenu
 from libqtile.scratchpad import ScratchPad
 
@@ -29,7 +30,11 @@ class WindowList(Dmenu):
 
     defaults = [
         ("item_format", "{group}.{id}: {window}", "the format for the menu items"),
-        ("all_groups", True, "If True, list windows from all groups; otherwise only from the current group"),
+        (
+            "all_groups",
+            True,
+            "If True, list windows from all groups; otherwise only from the current group",
+        ),
         ("dmenu_lines", "80", "Give lines vertically. Set to None get inline"),
     ]
 
@@ -42,14 +47,15 @@ class WindowList(Dmenu):
         self.item_to_win = {}
 
         if self.all_groups:
-            windows = self.qtile.windows_map.values()
+            windows = [w for w in self.qtile.windows_map.values() if isinstance(w, base.Window)]
         else:
             windows = self.qtile.current_group.windows
 
         for win in windows:
             if win.group and not isinstance(win.group, ScratchPad):
                 item = self.item_format.format(
-                    group=win.group.label or win.group.name, id=id, window=win.name)
+                    group=win.group.label or win.group.name, id=id, window=win.name
+                )
                 self.item_to_win[item] = win
                 id += 1
 
@@ -58,7 +64,7 @@ class WindowList(Dmenu):
         out = super().run(items=self.item_to_win.keys())
 
         try:
-            sout = out.rstrip('\n')
+            sout = out.rstrip("\n")
         except AttributeError:
             # out is not a string (for example it's a Popen object returned
             # by super(WindowList, self).run() when there are no menu items to

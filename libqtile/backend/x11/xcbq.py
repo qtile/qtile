@@ -31,13 +31,16 @@
 # SOFTWARE.
 
 """
-    A minimal EWMH-aware OO layer over xcffib. This is NOT intended to be
-    complete - it only implements the subset of functionalty needed by qtile.
+A minimal EWMH-aware OO layer over xcffib. This is NOT intended to be
+complete - it only implements the subset of functionalty needed by qtile.
 """
+
+from __future__ import annotations
+
+import contextlib
 import functools
 import operator
-import typing
-from itertools import chain, islice, repeat
+from itertools import chain, repeat
 
 import cairocffi
 import cairocffi.pixbuf
@@ -49,26 +52,17 @@ import xcffib.xproto
 from xcffib.xfixes import SelectionEventMask
 from xcffib.xproto import CW, EventMask, WindowClass
 
-from libqtile import xkeysyms
+from libqtile.backend.x11 import window
 from libqtile.backend.x11.xcursors import Cursors
+from libqtile.backend.x11.xkeysyms import keysyms
+from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
-from libqtile.utils import hex
-
-keysyms = xkeysyms.keysyms
+from libqtile.utils import QtileError, hex, rgb
 
 
-class XCBQError(Exception):
+class XCBQError(QtileError):
     pass
 
-
-def rdict(d):
-    r = {}
-    for k, v in d.items():
-        r.setdefault(v, []).append(k)
-    return r
-
-
-rkeysyms = rdict(xkeysyms.keysyms)
 
 # Keyboard modifiers bitmask values from X Protocol
 ModMasks = {
@@ -85,71 +79,74 @@ ModMasks = {
 AllButtonsMask = 0b11111 << 8
 ButtonMotionMask = 1 << 13
 ButtonReleaseMask = 1 << 3
+PointerMotionHintMask = 1 << 7
 
 NormalHintsFlags = {
-    "USPosition": 1,     # User-specified x, y
-    "USSize": 2,         # User-specified width, height
-    "PPosition": 4,      # Program-specified position
-    "PSize": 8,          # Program-specified size
-    "PMinSize": 16,      # Program-specified minimum size
-    "PMaxSize": 32,      # Program-specified maximum size
-    "PResizeInc": 64,    # Program-specified resize increments
-    "PAspect": 128,      # Program-specified min and max aspect ratios
-    "PBaseSize": 256,    # Program-specified base size
+    "USPosition": 1,  # User-specified x, y
+    "USSize": 2,  # User-specified width, height
+    "PPosition": 4,  # Program-specified position
+    "PSize": 8,  # Program-specified size
+    "PMinSize": 16,  # Program-specified minimum size
+    "PMaxSize": 32,  # Program-specified maximum size
+    "PResizeInc": 64,  # Program-specified resize increments
+    "PAspect": 128,  # Program-specified min and max aspect ratios
+    "PBaseSize": 256,  # Program-specified base size
     "PWinGravity": 512,  # Program-specified window gravity
 }
 
 HintsFlags = {
-    "InputHint": 1,          # input
-    "StateHint": 2,          # initial_state
-    "IconPixmapHint": 4,     # icon_pixmap
-    "IconWindowHint": 8,     # icon_window
+    "InputHint": 1,  # input
+    "StateHint": 2,  # initial_state
+    "IconPixmapHint": 4,  # icon_pixmap
+    "IconWindowHint": 8,  # icon_window
     "IconPositionHint": 16,  # icon_x & icon_y
-    "IconMaskHint": 32,      # icon_mask
-    "WindowGroupHint": 64,   # window_group
-    "MessageHint": 128,      # (this bit is obsolete)
-    "UrgencyHint": 256,      # urgency
+    "IconMaskHint": 32,  # icon_mask
+    "WindowGroupHint": 64,  # window_group
+    "MessageHint": 128,  # (this bit is obsolete)
+    "UrgencyHint": 256,  # urgency
 }
 
 # http://standards.freedesktop.org/wm-spec/latest/ar01s05.html#idm139870830002400
 WindowTypes = {
-    '_NET_WM_WINDOW_TYPE_DESKTOP': "desktop",
-    '_NET_WM_WINDOW_TYPE_DOCK': "dock",
-    '_NET_WM_WINDOW_TYPE_TOOLBAR': "toolbar",
-    '_NET_WM_WINDOW_TYPE_MENU': "menu",
-    '_NET_WM_WINDOW_TYPE_UTILITY': "utility",
-    '_NET_WM_WINDOW_TYPE_SPLASH': "splash",
-    '_NET_WM_WINDOW_TYPE_DIALOG': "dialog",
-    '_NET_WM_WINDOW_TYPE_DROPDOWN_MENU': "dropdown",
-    '_NET_WM_WINDOW_TYPE_POPUP_MENU': "menu",
-    '_NET_WM_WINDOW_TYPE_TOOLTIP': "tooltip",
-    '_NET_WM_WINDOW_TYPE_NOTIFICATION': "notification",
-    '_NET_WM_WINDOW_TYPE_COMBO': "combo",
-    '_NET_WM_WINDOW_TYPE_DND': "dnd",
-    '_NET_WM_WINDOW_TYPE_NORMAL': "normal",
+    "_NET_WM_WINDOW_TYPE_DESKTOP": "desktop",
+    "_NET_WM_WINDOW_TYPE_DOCK": "dock",
+    "_NET_WM_WINDOW_TYPE_TOOLBAR": "toolbar",
+    "_NET_WM_WINDOW_TYPE_MENU": "menu",
+    "_NET_WM_WINDOW_TYPE_UTILITY": "utility",
+    "_NET_WM_WINDOW_TYPE_SPLASH": "splash",
+    "_NET_WM_WINDOW_TYPE_DIALOG": "dialog",
+    "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU": "dropdown",
+    "_NET_WM_WINDOW_TYPE_POPUP_MENU": "menu",
+    "_NET_WM_WINDOW_TYPE_TOOLTIP": "tooltip",
+    "_NET_WM_WINDOW_TYPE_NOTIFICATION": "notification",
+    "_NET_WM_WINDOW_TYPE_COMBO": "combo",
+    "_NET_WM_WINDOW_TYPE_DND": "dnd",
+    "_NET_WM_WINDOW_TYPE_NORMAL": "normal",
 }
 
 # http://standards.freedesktop.org/wm-spec/latest/ar01s05.html#idm139870829988448
 net_wm_states = (
-    '_NET_WM_STATE_MODAL',
-    '_NET_WM_STATE_STICKY',
-    '_NET_WM_STATE_MAXIMIZED_VERT',
-    '_NET_WM_STATE_MAXIMIZED_HORZ',
-    '_NET_WM_STATE_SHADED',
-    '_NET_WM_STATE_SKIP_TASKBAR',
-    '_NET_WM_STATE_SKIP_PAGER',
-    '_NET_WM_STATE_HIDDEN',
-    '_NET_WM_STATE_FULLSCREEN',
-    '_NET_WM_STATE_ABOVE',
-    '_NET_WM_STATE_BELOW',
-    '_NET_WM_STATE_DEMANDS_ATTENTION',
-    '_NET_WM_STATE_FOCUSED',
+    "_NET_WM_STATE_MODAL",
+    "_NET_WM_STATE_STICKY",
+    "_NET_WM_STATE_MAXIMIZED_VERT",
+    "_NET_WM_STATE_MAXIMIZED_HORZ",
+    "_NET_WM_STATE_SHADED",
+    "_NET_WM_STATE_SKIP_TASKBAR",
+    "_NET_WM_STATE_SKIP_PAGER",
+    "_NET_WM_STATE_HIDDEN",
+    "_NET_WM_STATE_FULLSCREEN",
+    "_NET_WM_STATE_ABOVE",
+    "_NET_WM_STATE_BELOW",
+    "_NET_WM_STATE_DEMANDS_ATTENTION",
+    "_NET_WM_STATE_FOCUSED",
 )
 
 WindowStates = {
-    None: 'normal',
-    '_NET_WM_STATE_FULLSCREEN': 'fullscreen',
-    '_NET_WM_STATE_DEMANDS_ATTENTION': 'urgent'
+    None: "normal",
+    "_NET_WM_STATE_FULLSCREEN": "fullscreen",
+    "_NET_WM_STATE_MAXIMIZED_VERT": "maximized",
+    "_NET_WM_STATE_MAXIMIZED_HORZ": "maximized",
+    "_NET_WM_STATE_DEMANDS_ATTENTION": "urgent",
 }
 
 # Maps property names to types and formats.
@@ -165,13 +162,15 @@ PropertyMap = {
     "_NET_NUMBER_OF_DESKTOPS": ("CARDINAL", 32),
     "_NET_CURRENT_DESKTOP": ("CARDINAL", 32),
     "_NET_DESKTOP_NAMES": ("UTF8_STRING", 8),
+    "_NET_DESKTOP_VIEWPORT": ("CARDINAL", 32),
     "_NET_WORKAREA": ("CARDINAL", 32),
     "_NET_ACTIVE_WINDOW": ("WINDOW", 32),
     "_NET_WM_DESKTOP": ("CARDINAL", 32),
     "_NET_WM_STRUT": ("CARDINAL", 32),
     "_NET_WM_STRUT_PARTIAL": ("CARDINAL", 32),
     "_NET_WM_WINDOW_OPACITY": ("CARDINAL", 32),
-    "_NET_WM_WINDOW_TYPE": ("CARDINAL", 32),
+    "_NET_WM_WINDOW_TYPE": ("ATOM", 32),
+    "_NET_FRAME_EXTENTS": ("CARDINAL", 32),
     # Net State
     "_NET_WM_STATE": ("ATOM", 32),
     # Xembed
@@ -179,52 +178,61 @@ PropertyMap = {
     # ICCCM
     "WM_STATE": ("WM_STATE", 32),
     # Qtile-specific properties
-    "QTILE_INTERNAL": ("CARDINAL", 32)
+    "QTILE_INTERNAL": ("CARDINAL", 32),
 }
 for _name in net_wm_states:
-    PropertyMap[_name] = ('ATOM', 32)
+    PropertyMap[_name] = ("ATOM", 32)
 
 # TODO add everything required here:
 # http://standards.freedesktop.org/wm-spec/latest/ar01s03.html
 SUPPORTED_ATOMS = [
     # From http://standards.freedesktop.org/wm-spec/latest/ar01s03.html
-    '_NET_SUPPORTED',
-    '_NET_CLIENT_LIST',
-    '_NET_CLIENT_LIST_STACKING',
-    '_NET_CURRENT_DESKTOP',
-    '_NET_ACTIVE_WINDOW',
-    '_NET_SUPPORTING_WM_CHECK',
+    "_NET_SUPPORTED",
+    "_NET_CLIENT_LIST",
+    "_NET_CLIENT_LIST_STACKING",
+    "_NET_CURRENT_DESKTOP",
+    "_NET_DESKTOP_VIEWPORT",
+    "_NET_ACTIVE_WINDOW",
+    "_NET_SUPPORTING_WM_CHECK",
     # From http://standards.freedesktop.org/wm-spec/latest/ar01s05.html
-    '_NET_WM_NAME',
-    '_NET_WM_VISIBLE_NAME',
-    '_NET_WM_ICON_NAME',
-    '_NET_WM_DESKTOP',
-    '_NET_WM_WINDOW_TYPE',
-    '_NET_WM_STATE',
-    '_NET_WM_STRUT_PARTIAL',
-    '_NET_WM_PID',
+    "_NET_WM_NAME",
+    "_NET_WM_VISIBLE_NAME",
+    "_NET_WM_ICON_NAME",
+    "_NET_WM_DESKTOP",
+    "_NET_WM_WINDOW_TYPE",
+    "_NET_WM_STATE",
+    "_NET_WM_STRUT_PARTIAL",
+    "_NET_WM_PID",
 ]
 SUPPORTED_ATOMS.extend(WindowTypes.keys())
 SUPPORTED_ATOMS.extend(net_wm_states)
 
 XCB_CONN_ERRORS = {
-    1: 'XCB_CONN_ERROR',
-    2: 'XCB_CONN_CLOSED_EXT_NOTSUPPORTED',
-    3: 'XCB_CONN_CLOSED_MEM_INSUFFICIENT',
-    4: 'XCB_CONN_CLOSED_REQ_LEN_EXCEED',
-    5: 'XCB_CONN_CLOSED_PARSE_ERR',
-    6: 'XCB_CONN_CLOSED_INVALID_SCREEN',
-    7: 'XCB_CONN_CLOSED_FDPASSING_FAILED',
+    1: "XCB_CONN_ERROR",
+    2: "XCB_CONN_CLOSED_EXT_NOTSUPPORTED",
+    3: "XCB_CONN_CLOSED_MEM_INSUFFICIENT",
+    4: "XCB_CONN_CLOSED_REQ_LEN_EXCEED",
+    5: "XCB_CONN_CLOSED_PARSE_ERR",
+    6: "XCB_CONN_CLOSED_INVALID_SCREEN",
+    7: "XCB_CONN_CLOSED_FDPASSING_FAILED",
 }
+
+# Some opcodes from xproto.h, used for faking input.
+XCB_KEY_PRESS = 2
+XCB_KEY_RELEASE = 3
+XCB_BUTTON_PRESS = 4
+XCB_BUTTON_RELEASE = 5
+XCB_MOTION_NOTIFY = 6
 
 
 class MaskMap:
     """
-        A general utility class that encapsulates the way the bitmask/listofvalue idiom
-        works in X protocol. It understands a special attribute _maskvalue on
-        objects, which will be used instead of the object value if present.
-        This lets us pass in a Font object, rather than Font.fid, for example.
+    A general utility class that encapsulates the way the bitmask/listofvalue idiom
+    works in X protocol. It understands a special attribute _maskvalue on
+    objects, which will be used instead of the object value if present.
+    This lets us pass in a Font object, rather than Font.fid, for example.
     """
+
     def __init__(self, obj):
         self.mmap = []
         for i in dir(obj):
@@ -234,9 +242,9 @@ class MaskMap:
 
     def __call__(self, **kwargs):
         """
-            kwargs: keys should be in the mmap name set
+        kwargs: keys should be in the mmap name set
 
-            Returns a (mask, values) tuple.
+        Returns a (mask, values) tuple.
         """
         mask = 0
         values = []
@@ -248,7 +256,7 @@ class MaskMap:
                     values.append(getattr(val, "_maskvalue", val))
                 del kwargs[s]
         if kwargs:
-            raise ValueError("Unknown mask names: %s" % list(kwargs.keys()))
+            raise ValueError(f"Unknown mask names: {list(kwargs.keys())}")
         return mask, values
 
 
@@ -302,25 +310,58 @@ class _Wrapper:
 
 class Screen(_Wrapper):
     """
-        This represents an actual X screen.
+    This represents an actual X screen.
     """
+
     def __init__(self, conn, screen):
         _Wrapper.__init__(self, screen)
         self.default_colormap = Colormap(conn, screen.default_colormap)
-        self.root = Window(conn, self.root)
+        self.root = window.XWindow(conn, self.root)
 
+        self._visuals = {}
 
-class PseudoScreen:
-    """
-        This may be a Xinerama screen or a RandR CRTC, both of which are
-        rectangular sections of an actual Screen.
-    """
-    def __init__(self, conn, x, y, width, height):
-        self.conn = conn
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
+        # Get visuals for 32 and 24 bit
+        for d in [32, 24, self.root_depth]:
+            if d not in self._visuals:
+                visual = self.get_visual_for_depth(self, d)
+                if visual:
+                    self._visuals[d] = visual
+
+    def _get_depth_and_visual(self, desired_depth):
+        """
+        Returns a tuple of (depth, visual) for the requested
+        depth.
+
+        Falls back to the root depth and visual if the requested
+        depth is unavailable.
+        """
+        if desired_depth in self._visuals:
+            return desired_depth, self._visuals[desired_depth]
+
+        logger.info(
+            "%s bit colour depth not available. Falling back to root depth: %s.",
+            desired_depth,
+            self.root_depth,
+        )
+        return self.root_depth, self._visuals[self.root_depth]
+
+    @staticmethod
+    def get_visual_for_depth(screen, depth):
+        """
+        Returns the visual object of the screen @ some depth
+
+        For an ARGB visual -> depth=32
+        For a RGB visual   -> depth=24
+        """
+        allowed = screen.allowed_depths
+        if depth not in [x.depth for x in allowed]:
+            logger.warning("Unsupported colour depth: %s", depth)
+            return
+
+        for i in allowed:
+            if i.depth == depth:
+                if i.visuals:
+                    return i.visuals[0]
 
 
 class Colormap:
@@ -330,18 +371,21 @@ class Colormap:
 
     def alloc_color(self, color):
         """
-            Flexible color allocation.
+        Flexible color allocation.
         """
         try:
-            return self.conn.conn.core.AllocNamedColor(
-                self.cid, len(color), color
-            ).reply()
+            return self.conn.conn.core.AllocNamedColor(self.cid, len(color), color).reply()
         except xcffib.xproto.NameError:
 
             def x8to16(i):
-                return 0xffff * (i & 0xff) // 0xff
+                return 0xFFFF * (i & 0xFF) // 0xFF
 
-            color = hex(color)
+            try:
+                color = hex(color)
+            except ValueError:
+                logger.error("Colormap failed to allocate %s", color)
+                color = "#ff0000"
+
             r = x8to16(int(color[-6] + color[-5], 16))
             g = x8to16(int(color[-4] + color[-3], 16))
             b = x8to16(int(color[-2] + color[-1], 16))
@@ -360,402 +404,32 @@ class Xinerama:
 class RandR:
     def __init__(self, conn):
         self.ext = conn.conn(xcffib.randr.key)
-        self.ext.SelectInput(
-            conn.default_screen.root.wid,
-            xcffib.randr.NotifyMask.ScreenChange
-        )
+        self.ext.SelectInput(conn.default_screen.root.wid, xcffib.randr.NotifyMask.ScreenChange)
 
     def query_crtcs(self, root):
-        crtc_list = []
+        infos = []
         for crtc in self.ext.GetScreenResources(root).reply().crtcs:
             crtc_info = self.ext.GetCrtcInfo(crtc, xcffib.CurrentTime).reply()
-            crtc_dict = {
-                "x": crtc_info.x,
-                "y": crtc_info.y,
-                "width": crtc_info.width,
-                "height": crtc_info.height,
-            }
-            crtc_list.append(crtc_dict)
-        return crtc_list
+
+            infos.append(ScreenRect(crtc_info.x, crtc_info.y, crtc_info.width, crtc_info.height))
+        return infos
 
 
 class XFixes:
-    selection_mask = SelectionEventMask.SetSelectionOwner | \
-        SelectionEventMask.SelectionClientClose | \
-        SelectionEventMask.SelectionWindowDestroy
+    selection_mask = (
+        SelectionEventMask.SetSelectionOwner
+        | SelectionEventMask.SelectionClientClose
+        | SelectionEventMask.SelectionWindowDestroy
+    )
 
     def __init__(self, conn):
         self.conn = conn
         self.ext = conn.conn(xcffib.xfixes.key)
-        self.ext.QueryVersion(xcffib.xfixes.MAJOR_VERSION,
-                              xcffib.xfixes.MINOR_VERSION)
+        self.ext.QueryVersion(xcffib.xfixes.MAJOR_VERSION, xcffib.xfixes.MINOR_VERSION)
 
     def select_selection_input(self, window, selection="PRIMARY"):
         _selection = self.conn.atoms[selection]
-        self.conn.xfixes.ext.SelectSelectionInput(window.wid,
-                                                  _selection,
-                                                  self.selection_mask)
-
-
-class NetWmState:
-    """NetWmState is a descriptor for _NET_WM_STATE_* properties"""
-    def __init__(self, prop_name):
-        self.prop_name = prop_name
-
-    def __get__(self, xcbq_win, cls):
-        try:
-            atom = self.atom
-        except AttributeError:
-            atom = xcbq_win.conn.atoms[self.prop_name]
-            self.atom = atom
-        reply = xcbq_win.get_property('_NET_WM_STATE', 'ATOM', unpack=int)
-        if atom in reply:
-            return True
-        return False
-
-    def __set__(self, xcbq_win, value):
-        try:
-            atom = self.atom
-        except AttributeError:
-            atom = xcbq_win.conn.atoms[self.prop_name]
-            self.atom = atom
-
-        value = bool(value)
-        reply = list(xcbq_win.get_property('_NET_WM_STATE', 'ATOM', unpack=int))
-        is_set = atom in reply
-        if is_set and not value:
-            reply.remove(atom)
-            xcbq_win.set_property('_NET_WM_STATE', reply)
-        elif value and not is_set:
-            reply.append(atom)
-            xcbq_win.set_property('_NET_WM_STATE', reply)
-        return
-
-
-class Window:
-    def __init__(self, conn, wid):
-        self.conn = conn
-        self.wid = wid
-
-    def _property_string(self, r):
-        """Extract a string from a window property reply message"""
-        return r.value.to_string()
-
-    def _property_utf8(self, r):
-        return r.value.to_utf8()
-
-    def send_event(self, synthevent, mask=EventMask.NoEvent):
-        self.conn.conn.core.SendEvent(False, self.wid, mask, synthevent.pack())
-
-    def kill_client(self):
-        self.conn.conn.core.KillClient(self.wid)
-
-    def set_input_focus(self):
-        self.conn.conn.core.SetInputFocus(
-            xcffib.xproto.InputFocus.PointerRoot,
-            self.wid,
-            xcffib.xproto.Time.CurrentTime
-        )
-
-    def warp_pointer(self, x, y):
-        """Warps the pointer to the location `x`, `y` on the window"""
-        self.conn.conn.core.WarpPointer(
-            0, self.wid,  # src_window, dst_window
-            0, 0,         # src_x, src_y
-            0, 0,         # src_width, src_height
-            x, y          # dest_x, dest_y
-        )
-
-    def get_name(self):
-        """Tries to retrieve a canonical window name.
-
-        We test the following properties in order of preference:
-            - _NET_WM_VISIBLE_NAME
-            - _NET_WM_NAME
-            - WM_NAME.
-        """
-        r = self.get_property("_NET_WM_VISIBLE_NAME", "UTF8_STRING")
-        if r:
-            return self._property_utf8(r)
-
-        r = self.get_property("_NET_WM_NAME", "UTF8_STRING")
-        if r:
-            return self._property_utf8(r)
-
-        r = self.get_property(xcffib.xproto.Atom.WM_NAME, "UTF8_STRING")
-        if r:
-            return self._property_utf8(r)
-
-        r = self.get_property(
-            xcffib.xproto.Atom.WM_NAME,
-            xcffib.xproto.GetPropertyType.Any
-        )
-        if r:
-            return self._property_string(r)
-
-    def get_wm_hints(self):
-        wm_hints = self.get_property("WM_HINTS", xcffib.xproto.GetPropertyType.Any)
-        if wm_hints:
-            atoms_list = wm_hints.value.to_atoms()
-            flags = {k for k, v in HintsFlags.items() if atoms_list[0] & v}
-            return {
-                "flags": flags,
-                "input": atoms_list[1] if "InputHint" in flags else None,
-                "initial_state": atoms_list[2] if "StateHing" in flags else None,
-                "icon_pixmap": atoms_list[3] if "IconPixmapHint" in flags else None,
-                "icon_window": atoms_list[4] if "IconWindowHint" in flags else None,
-                "icon_x": atoms_list[5] if "IconPositionHint" in flags else None,
-                "icon_y": atoms_list[6] if "IconPositionHint" in flags else None,
-                "icon_mask": atoms_list[7] if "IconMaskHint" in flags else None,
-                "window_group": atoms_list[8] if 'WindowGroupHint' in flags else None,
-            }
-
-    def get_wm_normal_hints(self):
-        wm_normal_hints = self.get_property(
-            "WM_NORMAL_HINTS",
-            xcffib.xproto.GetPropertyType.Any
-        )
-        if wm_normal_hints:
-            atom_list = wm_normal_hints.value.to_atoms()
-            flags = {k for k, v in NormalHintsFlags.items() if atom_list[0] & v}
-            hints = {
-                "flags": flags,
-                "min_width": atom_list[5],
-                "min_height": atom_list[6],
-                "max_width": atom_list[7],
-                "max_height": atom_list[8],
-                "width_inc": atom_list[9],
-                "height_inc": atom_list[10],
-                "min_aspect": (atom_list[11], atom_list[12]),
-                "max_aspect": (atom_list[13], atom_list[14])
-            }
-
-            # WM_SIZE_HINTS is potentially extensible (append to the end only)
-            iterator = islice(hints, 15, None)
-            hints["base_width"] = next(iterator, hints["min_width"])
-            hints["base_height"] = next(iterator, hints["min_height"])
-            hints["win_gravity"] = next(iterator, 1)
-            return hints
-
-    def get_wm_protocols(self):
-        wm_protocols = self.get_property("WM_PROTOCOLS", "ATOM", unpack=int)
-        if wm_protocols is not None:
-            return {self.conn.atoms.get_name(wm_protocol) for wm_protocol in wm_protocols}
-        return set()
-
-    def get_wm_state(self):
-        return self.get_property("WM_STATE", xcffib.xproto.GetPropertyType.Any, unpack=int)
-
-    def get_wm_class(self):
-        """Return an (instance, class) tuple if WM_CLASS exists, or None"""
-        r = self.get_property("WM_CLASS", "STRING")
-        if r:
-            s = self._property_string(r)
-            return tuple(s.strip("\0").split("\0"))
-        return tuple()
-
-    def get_wm_window_role(self):
-        r = self.get_property("WM_WINDOW_ROLE", "STRING")
-        if r:
-            return self._property_string(r)
-
-    def get_wm_transient_for(self):
-        r = self.get_property("WM_TRANSIENT_FOR", "WINDOW", unpack=int)
-
-        if r:
-            return r[0]
-
-    def get_wm_icon_name(self):
-        r = self.get_property("_NET_WM_ICON_NAME", "UTF8_STRING")
-        if r:
-            return self._property_utf8(r)
-
-        r = self.get_property("WM_ICON_NAME", "STRING")
-        if r:
-            return self._property_utf8(r)
-
-    def get_wm_client_machine(self):
-        r = self.get_property("WM_CLIENT_MACHINE", "STRING")
-        if r:
-            return self._property_utf8(r)
-
-    def get_geometry(self):
-        q = self.conn.conn.core.GetGeometry(self.wid)
-        return q.reply()
-
-    def get_wm_desktop(self):
-        r = self.get_property("_NET_WM_DESKTOP", "CARDINAL", unpack=int)
-
-        if r:
-            return r[0]
-
-    def get_wm_type(self):
-        """
-        http://standards.freedesktop.org/wm-spec/wm-spec-latest.html#id2551529
-        """
-        r = self.get_property('_NET_WM_WINDOW_TYPE', "ATOM", unpack=int)
-        if r:
-            name = self.conn.atoms.get_name(r[0])
-            return WindowTypes.get(name, name)
-
-    def get_net_wm_state(self):
-        r = self.get_property('_NET_WM_STATE', "ATOM", unpack=int)
-        if r:
-            names = [self.conn.atoms.get_name(p) for p in r]
-            return [WindowStates.get(n, n) for n in names]
-        return []
-
-    def get_net_wm_pid(self):
-        r = self.get_property("_NET_WM_PID", unpack=int)
-        if r:
-            return r[0]
-
-    def configure(self, **kwargs):
-        """
-        Arguments can be: x, y, width, height, border, sibling, stackmode
-        """
-        mask, values = ConfigureMasks(**kwargs)
-        # older versions of xcb pack everything into unsigned ints "=I"
-        # since 1.12, uses switches to pack things sensibly
-        if float(".".join(xcffib.__xcb_proto_version__.split(".")[0: 2])) < 1.12:
-            values = [i & 0xffffffff for i in values]
-        return self.conn.conn.core.ConfigureWindow(self.wid, mask, values)
-
-    def set_attribute(self, **kwargs):
-        mask, values = AttributeMasks(**kwargs)
-        self.conn.conn.core.ChangeWindowAttributesChecked(
-            self.wid, mask, values
-        )
-
-    def set_cursor(self, name):
-        cursor_id = self.conn.cursors[name]
-        mask, values = AttributeMasks(cursor=cursor_id)
-        self.conn.conn.core.ChangeWindowAttributesChecked(
-            self.wid, mask, values
-        )
-
-    def set_property(self, name, value, type=None, format=None):
-        """
-        Parameters
-        ==========
-        name : String Atom name
-        type : String Atom name
-        format : 8, 16, 32
-        """
-        if name in PropertyMap:
-            if type or format:
-                raise ValueError(
-                    "Over-riding default type or format for property."
-                )
-            type, format = PropertyMap[name]
-        else:
-            if None in (type, format):
-                raise ValueError(
-                    "Must specify type and format for unknown property."
-                )
-
-        try:
-            if isinstance(value, str):
-                # xcffib will pack the bytes, but we should encode them properly
-                value = value.encode()
-            else:
-                # if this runs without error, the value is already a list, don't wrap it
-                next(iter(value))
-        except StopIteration:
-            # The value was an iterable, just empty
-            value = []
-        except TypeError:
-            # the value wasn't an iterable and wasn't a string, so let's
-            # wrap it.
-            value = [value]
-
-        try:
-            self.conn.conn.core.ChangePropertyChecked(
-                xcffib.xproto.PropMode.Replace,
-                self.wid,
-                self.conn.atoms[name],
-                self.conn.atoms[type],
-                format,  # Format - 8, 16, 32
-                len(value),
-                value
-            ).check()
-        except xcffib.xproto.WindowError:
-            logger.debug(
-                'X error in SetProperty (wid=%r, prop=%r), ignoring',
-                self.wid, name)
-
-    def get_property(self, prop, type=None, unpack=None):
-        """Return the contents of a property as a GetPropertyReply
-
-        If unpack is specified, a tuple of values is returned.  The type to
-        unpack, either `str` or `int` must be specified.
-        """
-        if type is None:
-            if prop not in PropertyMap:
-                raise ValueError(
-                    "Must specify type for unknown property."
-                )
-            else:
-                type, _ = PropertyMap[prop]
-
-        try:
-            r = self.conn.conn.core.GetProperty(
-                False, self.wid,
-                self.conn.atoms[prop]
-                if isinstance(prop, str)
-                else prop,
-                self.conn.atoms[type]
-                if isinstance(type, str)
-                else type,
-                0, (2 ** 32) - 1
-            ).reply()
-        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
-            logger.debug(
-                'X error in GetProperty (wid=%r, prop=%r), ignoring',
-                self.wid, prop)
-            if unpack:
-                return []
-            return None
-
-        if not r.value_len:
-            if unpack:
-                return []
-            return None
-        elif unpack:
-            # Should we allow more options for unpacking?
-            if unpack is int:
-                return r.value.to_atoms()
-            elif unpack is str:
-                return r.value.to_string()
-        else:
-            return r
-
-    def list_properties(self):
-        r = self.conn.conn.core.ListProperties(self.wid).reply()
-        return [self.conn.atoms.get_name(i) for i in r.atoms]
-
-    def map(self):
-        self.conn.conn.core.MapWindow(self.wid)
-
-    def unmap(self):
-        self.conn.conn.core.UnmapWindowUnchecked(self.wid)
-
-    def get_attributes(self):
-        return self.conn.conn.core.GetWindowAttributes(self.wid).reply()
-
-    def query_tree(self):
-        q = self.conn.conn.core.QueryTree(self.wid).reply()
-        root = None
-        parent = None
-        if q.root:
-            root = Window(self.conn, q.root)
-        if q.parent:
-            parent = Window(self.conn, q.parent)
-        return root, parent, [Window(self.conn, i) for i in q.children]
-
-    def paint_borders(self, color):
-        if color:
-            self.set_attribute(borderpixel=self.conn.color_pixel(color))
+        self.conn.xfixes.ext.SelectSelectionInput(window.wid, _selection, self.selection_mask)
 
 
 class Connection:
@@ -787,30 +461,41 @@ class Connection:
         self.modmap = None
         self.refresh_modmap()
 
+        self._cmaps = {}
+
+    def colormap(self, desired_depth):
+        if desired_depth in self._cmaps:
+            return self._cmaps[desired_depth]
+
+        _, visual = self.default_screen._get_depth_and_visual(desired_depth)
+
+        cmap = self.conn.generate_id()
+        self.conn.core.CreateColormap(
+            xcffib.xproto.ColormapAlloc._None,
+            cmap,
+            self.default_screen.root.wid,
+            visual.visual_id,
+            is_checked=True,
+        ).check()
+
+        self._cmaps[desired_depth] = cmap
+        return cmap
+
     @property
     def pseudoscreens(self):
-        pseudoscreens = []
         if hasattr(self, "xinerama"):
+            pseudoscreens = []
             for i, s in enumerate(self.xinerama.query_screens()):
-                scr = PseudoScreen(
-                    self,
+                scr = ScreenRect(
                     s.x_org,
                     s.y_org,
                     s.width,
                     s.height,
                 )
                 pseudoscreens.append(scr)
+            return pseudoscreens
         elif hasattr(self, "randr"):
-            for i in self.randr.query_crtcs(self.screens[0].root.wid):
-                scr = PseudoScreen(
-                    self,
-                    i["x"],
-                    i["y"],
-                    i["width"],
-                    i["height"],
-                )
-                pseudoscreens.append(scr)
-        return pseudoscreens
+            return self.randr.query_crtcs(self.screens[0].root.wid)
 
     def finalize(self):
         self.cursors.finalize()
@@ -824,8 +509,9 @@ class Connection:
 
         assert len(q.keysyms) % q.keysyms_per_keycode == 0
         for i in range(len(q.keysyms) // q.keysyms_per_keycode):
-            self.code_to_syms[first + i] = \
-                q.keysyms[i * q.keysyms_per_keycode:(i + 1) * q.keysyms_per_keycode]
+            self.code_to_syms[first + i] = q.keysyms[
+                i * q.keysyms_per_keycode : (i + 1) * q.keysyms_per_keycode
+            ]
 
         sym_to_codes = {}
         for k, s in self.code_to_syms.items():
@@ -859,33 +545,42 @@ class Connection:
         return self.sym_to_codes.get(keysym, [0])
 
     def keycode_to_keysym(self, keycode, modifier):
-        if keycode >= len(self.code_to_syms) or \
-                modifier >= len(self.code_to_syms[keycode]):
+        if keycode >= len(self.code_to_syms) or modifier >= len(self.code_to_syms[keycode]):
             return 0
         return self.code_to_syms[keycode][modifier]
 
-    def create_window(self, x, y, width, height):
+    def create_window(self, x, y, width, height, desired_depth=32):
+        depth, visual = self.default_screen._get_depth_and_visual(desired_depth)
+
         wid = self.conn.generate_id()
+
+        value_mask = CW.BackPixmap | CW.BorderPixel | CW.EventMask | CW.Colormap
+        values = [
+            xcffib.xproto.BackPixmap._None,
+            0,
+            EventMask.StructureNotify | EventMask.Exposure,
+            self.colormap(depth),
+        ]
+
         self.conn.core.CreateWindow(
-            self.default_screen.root_depth,
+            depth,
             wid,
             self.default_screen.root.wid,
-            x, y, width, height, 0,
+            x,
+            y,
+            width,
+            height,
+            0,
             WindowClass.InputOutput,
-            self.default_screen.root_visual,
-            CW.BackPixel | CW.EventMask,
-            [
-                self.default_screen.black_pixel,
-                EventMask.StructureNotify | EventMask.Exposure
-            ]
+            visual.visual_id,
+            value_mask,
+            values,
         )
-        return Window(self, wid)
+        return window.XWindow(self, wid)
 
     def disconnect(self):
-        try:
+        with contextlib.suppress(xcffib.ConnectionException):
             self.conn.disconnect()
-        except xcffib.ConnectionException:
-            logger.error("Failed to disconnect, connection already failed?")
         self._connected = False
 
     def flush(self):
@@ -903,8 +598,7 @@ class Connection:
 
     def extensions(self):
         return set(
-            i.name.to_string().lower()
-            for i in self.conn.core.ListExtensions().reply().names
+            i.name.to_string().lower() for i in self.conn.core.ListExtensions().reply().names
         )
 
     def fixup_focus(self):
@@ -921,10 +615,10 @@ class Connection:
                 xcffib.xproto.Time.CurrentTime,
             )
 
-    @functools.lru_cache()
+    @functools.lru_cache
     def color_pixel(self, name):
         pixel = self.screens[0].default_colormap.alloc_color(name).pixel
-        return pixel | 0xff << 24
+        return pixel | 0xFF << 24
 
 
 class Painter:
@@ -935,32 +629,42 @@ class Painter:
         self.default_screen = self.screens[self.conn.pref_screen]
         self.conn.core.SetCloseDownMode(xcffib.xproto.CloseDown.RetainPermanent)
         self.atoms = AtomCache(self)
+        self.width = -1
+        self.height = -1
+        self.root_pixmap_id = None
 
-    def paint(self, screen, image_path, mode=None):
+    def _get_root_pixmap_and_surface(self, screen):
+        # Querying the screen dimensions via the xcffib connection does not
+        # take account of any screen scaling. We can therefore work out the
+        # necessary size of the root window by looking at the
+        # pseudoscreens attribute and calculating the max x and y extents.
+        root_windows = screen.qtile.core.conn.pseudoscreens
+        width = max(win.x + win.width for win in root_windows)
+        height = max(win.y + win.height for win in root_windows)
+
         try:
-            with open(image_path, 'rb') as f:
-                image, _ = cairocffi.pixbuf.decode_to_image_surface(f.read())
-        except IOError as e:
-            logger.error('Wallpaper: %s' % e)
-            return
+            root_pixmap = self.default_screen.root.get_property(
+                "_XROOTPMAP_ID", xcffib.xproto.Atom.PIXMAP, int
+            )
+        except xcffib.ConnectionException:
+            root_pixmap = None
 
-        root_pixmap = self.default_screen.root.get_property(
-            '_XROOTPMAP_ID', xcffib.xproto.Atom.PIXMAP, int
-        )
         if not root_pixmap:
             root_pixmap = self.default_screen.root.get_property(
-                'ESETROOT_PMAP_ID', xcffib.xproto.Atom.PIXMAP, int
+                "ESETROOT_PMAP_ID", xcffib.xproto.Atom.PIXMAP, int
             )
-        if root_pixmap:
+        if root_pixmap and (self.width == width and self.height == height):
             root_pixmap = root_pixmap[0]
         else:
+            self.width = width
+            self.height = height
             root_pixmap = self.conn.generate_id()
             self.conn.core.CreatePixmap(
                 self.default_screen.root_depth,
                 root_pixmap,
                 self.default_screen.root.wid,
-                self.default_screen.width_in_pixels,
-                self.default_screen.height_in_pixels,
+                self.width,
+                self.height,
             )
 
         for depth in self.default_screen.allowed_depths:
@@ -968,16 +672,69 @@ class Painter:
                 if visual.visual_id == self.default_screen.root_visual:
                     root_visual = visual
                     break
+
         surface = cairocffi.xcb.XCBSurface(
-            self.conn, root_pixmap, root_visual,
-            self.default_screen.width_in_pixels,
-            self.default_screen.height_in_pixels,
+            self.conn, root_pixmap, root_visual, self.width, self.height
         )
+
+        return root_pixmap, surface
+
+    def _update_root_pixmap(self, root_pixmap):
+        self.conn.core.ChangeProperty(
+            xcffib.xproto.PropMode.Replace,
+            self.default_screen.root.wid,
+            self.atoms["_XROOTPMAP_ID"],
+            xcffib.xproto.Atom.PIXMAP,
+            32,
+            1,
+            [root_pixmap],
+        )
+        self.conn.core.ChangeProperty(
+            xcffib.xproto.PropMode.Replace,
+            self.default_screen.root.wid,
+            self.atoms["ESETROOT_PMAP_ID"],
+            xcffib.xproto.Atom.PIXMAP,
+            32,
+            1,
+            [root_pixmap],
+        )
+        self.conn.core.ChangeWindowAttributes(
+            self.default_screen.root.wid, CW.BackPixmap, [root_pixmap]
+        )
+        self.conn.core.ClearArea(0, self.default_screen.root.wid, 0, 0, self.width, self.height)
+        self.conn.flush()
+
+        # now that we have drawn the new pixmap, free the old one
+        if self.root_pixmap_id is not None and self.root_pixmap_id != root_pixmap:
+            self.conn.core.FreePixmap(self.root_pixmap_id)
+        self.root_pixmap_id = root_pixmap
+
+    def fill(self, screen, background):
+        root_pixmap, surface = self._get_root_pixmap_and_surface(screen)
+
+        with cairocffi.Context(surface) as ctx:
+            ctx.translate(screen.x, screen.y)
+            ctx.rectangle(0, 0, screen.width, screen.height)
+            ctx.set_source_rgba(*rgb(background))
+            ctx.fill()
+
+        surface.finish()
+        self._update_root_pixmap(root_pixmap)
+
+    def paint(self, screen, image_path, mode=None):
+        try:
+            with open(image_path, "rb") as f:
+                image, _ = cairocffi.pixbuf.decode_to_image_surface(f.read())
+        except OSError:
+            logger.exception("Could not load wallpaper:")
+            return
+
+        root_pixmap, surface = self._get_root_pixmap_and_surface(screen)
 
         context = cairocffi.Context(surface)
         with context:
             context.translate(screen.x, screen.y)
-            if mode == 'fill':
+            if mode == "fill":
                 context.rectangle(0, 0, screen.width, screen.height)
                 context.clip()
                 image_w = image.get_width()
@@ -987,11 +744,9 @@ class Painter:
                     context.scale(width_ratio)
                 else:
                     height_ratio = screen.height / image_h
-                    context.translate(
-                        - (image_w * height_ratio - screen.width) // 2, 0
-                    )
+                    context.translate(-(image_w * height_ratio - screen.width) // 2, 0)
                     context.scale(height_ratio)
-            elif mode == 'stretch':
+            elif mode == "stretch":
                 context.scale(
                     sx=screen.width / image.get_width(),
                     sy=screen.height / image.get_height(),
@@ -999,43 +754,21 @@ class Painter:
             context.set_source_surface(image)
             context.paint()
 
-        self.conn.core.ChangeProperty(
-            xcffib.xproto.PropMode.Replace,
-            self.default_screen.root.wid,
-            self.atoms['_XROOTPMAP_ID'],
-            xcffib.xproto.Atom.PIXMAP,
-            32, 1, [root_pixmap]
-        )
-        self.conn.core.ChangeProperty(
-            xcffib.xproto.PropMode.Replace,
-            self.default_screen.root.wid,
-            self.atoms['ESETROOT_PMAP_ID'],
-            xcffib.xproto.Atom.PIXMAP,
-            32, 1, [root_pixmap]
-        )
-        self.conn.core.ChangeWindowAttributes(
-            self.default_screen.root.wid,
-            xcffib.xproto.CW.BackPixmap, [root_pixmap]
-        )
-        self.conn.core.ClearArea(
-            0, self.default_screen.root.wid, 0, 0,
-            self.default_screen.width_in_pixels,
-            self.default_screen.height_in_pixels
-        )
-        self.conn.flush()
+        surface.finish()
+        self._update_root_pixmap(root_pixmap)
 
     def __del__(self):
         self.conn.disconnect()
 
 
 def get_keysym(key: str) -> int:
-    keysym = keysyms.get(key)
+    keysym = keysyms.get(key.lower())
     if not keysym:
-        raise XCBQError("Unknown key: %s" % key)
+        raise XCBQError(f"Unknown key: {key}")
     return keysym
 
 
-def translate_modifiers(mask: int) -> typing.List[str]:
+def translate_modifiers(mask: int) -> list[str]:
     r = []
     for k, v in ModMasks.items():
         if mask & v:
@@ -1043,7 +776,7 @@ def translate_modifiers(mask: int) -> typing.List[str]:
     return r
 
 
-def translate_masks(modifiers: typing.List[str]) -> int:
+def translate_masks(modifiers: list[str]) -> int:
     """
     Translate a modifier mask specified as a list of strings into an or-ed
     bit representation.
@@ -1051,9 +784,9 @@ def translate_masks(modifiers: typing.List[str]) -> int:
     masks = []
     for i in modifiers:
         try:
-            masks.append(ModMasks[i])
+            masks.append(ModMasks[i.lower()])
         except KeyError as e:
-            raise XCBQError("Unknown modifier: %s" % i) from e
+            raise XCBQError(f"Unknown modifier: {i}") from e
     if masks:
         return functools.reduce(operator.or_, masks)
     else:

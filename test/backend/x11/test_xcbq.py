@@ -1,22 +1,13 @@
-import os
-
 import pytest
 import xcffib
 import xcffib.testing
 
-from libqtile.backend.x11 import xcbq
+from libqtile.backend.x11 import window, xcbq
 
 
-@pytest.fixture(scope='function', autouse=True)
-def xdisplay(request):
-    with xcffib.testing.XvfbTest(width=1280, height=720):
-        yield os.environ['DISPLAY']
-
-
-def test_new_window(xdisplay):
-    conn = xcbq.Connection(xdisplay)
+def test_new_window(conn):
     win = conn.create_window(1, 2, 640, 480)
-    assert isinstance(win, xcbq.Window)
+    assert isinstance(win, window.XWindow)
     geom = win.get_geometry()
     assert geom.x == 1
     assert geom.y == 2
@@ -29,7 +20,7 @@ def test_new_window(xdisplay):
 
 def test_masks():
     cfgmasks = xcbq.ConfigureMasks
-    d = {'x': 1, 'y': 2, 'width': 640, 'height': 480}
+    d = {"x": 1, "y": 2, "width": 640, "height": 480}
     mask, vals = cfgmasks(**d)
     assert set(vals) == set(d.values())
     with pytest.raises(ValueError):

@@ -22,6 +22,7 @@
 import os
 
 from libqtile import bar
+from libqtile.command.base import expose_command
 from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.widget import base
@@ -29,6 +30,7 @@ from libqtile.widget import base
 
 class Image(base._Widget, base.MarginMixin):
     """Display a PNG image on the bar"""
+
     orientations = base.ORIENTATION_BOTH
     defaults = [
         ("scale", True, "Enable/Disable image scaling"),
@@ -36,14 +38,7 @@ class Image(base._Widget, base.MarginMixin):
         ("filename", None, "Image filename. Can contain '~'"),
     ]
 
-    def __init__(self, length=bar.CALCULATED, width=None, **config):
-        # 'width' was replaced by 'length' since the widget can be installed in
-        # vertical bars
-        if width is not None:
-            logger.warning('width kwarg or positional argument is '
-                           'deprecated. Please use length.')
-            length = width
-
+    def __init__(self, length=bar.CALCULATED, **config):
         base._Widget.__init__(self, length, **config)
         self.add_defaults(Image.defaults)
         self.add_defaults(base.MarginMixin.defaults)
@@ -53,6 +48,9 @@ class Image(base._Widget, base.MarginMixin):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
+        self._update_image()
+
+    def _update_image(self):
         self.img = None
 
         if not self.filename:
@@ -62,7 +60,7 @@ class Image(base._Widget, base.MarginMixin):
         self.filename = os.path.expanduser(self.filename)
 
         if not os.path.exists(self.filename):
-            logger.warning("Image does not exist: {}".format(self.filename))
+            logger.warning("Image does not exist: %s", self.filename)
             return
 
         img = Img.from_path(self.filename)
@@ -89,9 +87,9 @@ class Image(base._Widget, base.MarginMixin):
         self.drawer.ctx.restore()
 
         if self.bar.horizontal:
-            self.drawer.draw(offsetx=self.offset, width=self.width)
+            self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
         else:
-            self.drawer.draw(offsety=self.offset, height=self.width)
+            self.drawer.draw(offsety=self.offset, offsetx=self.offsetx, height=self.width)
 
     def calculate_length(self):
         if self.img is None:
@@ -101,3 +99,14 @@ class Image(base._Widget, base.MarginMixin):
             return self.img.width + (self.margin_x * 2)
         else:
             return self.img.height + (self.margin_y * 2)
+
+    @expose_command()
+    def update(self, filename):
+        old_length = self.calculate_length()
+        self.filename = filename
+        self._update_image()
+
+        if self.calculate_length() == old_length:
+            self.draw()
+        else:
+            self.bar.draw()

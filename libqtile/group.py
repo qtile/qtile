@@ -26,14 +26,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import contextlib
+from __future__ import annotations
 
-import xcffib
-import xcffib.xproto
+from typing import TYPE_CHECKING
 
-from libqtile import hook, utils, window
-from libqtile.command.base import CommandObject, ItemT
+from libqtile import hook, utils
+from libqtile.backend.base import FloatStates
+from libqtile.command.base import CommandObject, expose_command
 from libqtile.log_utils import logger
+
+if TYPE_CHECKING:
+    from libqtile.command.base import ItemT
 
 
 class _Group(CommandObject):
@@ -44,11 +47,14 @@ class _Group(CommandObject):
 
     A group is identified by its name but displayed in GroupBox widget by its label.
     """
-    def __init__(self, name, layout=None, label=None):
+
+    def __init__(self, name, layout=None, label=None, screen_affinity=None, persist=False):
+        self.screen_affinity = screen_affinity
         self.name = name
         self.label = name if label is None else label
         self.custom_layout = layout  # will be set on _configure
-        self.windows = set()
+        self.windows = []
+        self.tiled_windows = set()
         self.qtile = None
         self.layouts = []
         self.floating_layout = None
@@ -60,12 +66,14 @@ class _Group(CommandObject):
         self.focus_history = []
         self.screen = None
         self.current_layout = None
+        self.last_focused = None
+        self.persist = persist
 
     def _configure(self, layouts, floating_layout, qtile):
         self.screen = None
         self.current_layout = 0
         self.focus_history = []
-        self.windows = set()
+        self.windows = []
         self.qtile = qtile
         self.layouts = [i.clone(self) for i in layouts]
         self.floating_layout = floating_layout
@@ -115,24 +123,19 @@ class _Group(CommandObject):
         """
         for index, obj in enumerate(self.layouts):
             if obj.name == layout:
-                self.current_layout = index
-                hook.fire(
-                    "layout_change",
-                    self.layouts[self.current_layout],
-                    self
-                )
-                self.layout_all()
+                self.use_layout(index)
                 return
-        logger.error("No such layout: {}".format(layout))
+        logger.error("No such layout: %s", layout)
 
-    def use_layout(self, index):
+    def use_layout(self, index: int):
         assert -len(self.layouts) <= index < len(self.layouts), "layout index out of bounds"
         self.layout.hide()
         self.current_layout = index % len(self.layouts)
         hook.fire("layout_change", self.layouts[self.current_layout], self)
         self.layout_all()
-        screen_rect = self.screen.get_rect()
-        self.layout.show(screen_rect)
+        if self.screen is not None:
+            screen_rect = self.screen.get_rect()
+            self.layout.show(screen_rect)
 
     def use_next_layout(self):
         self.use_layout((self.current_layout + 1) % (len(self.layouts)))
@@ -147,26 +150,25 @@ class _Group(CommandObject):
         to it.
         """
         if self.screen and self.windows:
-            with self.disable_mask(xcffib.xproto.EventMask.EnterWindow):
+            with self.qtile.core.masked():
                 normal = [x for x in self.windows if not x.floating]
-                floating = [
-                    x for x in self.windows
-                    if x.floating and not x.minimized
-                ]
+                floating = [x for x in self.windows if x.floating and not x.minimized]
                 screen_rect = self.screen.get_rect()
                 if normal:
                     try:
                         self.layout.layout(normal, screen_rect)
                     except Exception:
-                        logger.exception("Exception in layout %s",
-                                         self.layout.name)
+                        logger.exception("Exception in layout %s", self.layout.name)
                 if floating:
                     self.floating_layout.layout(floating, screen_rect)
-                if self.current_window and \
-                        self.screen == self.qtile.current_screen:
+                if self.current_window and self.screen == self.qtile.current_screen:
                     self.current_window.focus(warp)
+                else:
+                    # Screen has lost focus so we reset record of focused window so
+                    # focus will warp when screen is focused again
+                    self.last_focused = None
 
-    def _set_screen(self, screen):
+    def set_screen(self, screen, warp=True):
         """Set this group's screen to screen"""
         if screen == self.screen:
             return
@@ -174,7 +176,7 @@ class _Group(CommandObject):
         if self.screen:
             # move all floating guys offset to new screen
             self.floating_layout.to_screen(self, self.screen)
-            self.layout_all(warp=self.qtile.config.cursor_warp)
+            self.layout_all(warp=warp and self.qtile.config.cursor_warp)
             screen_rect = self.screen.get_rect()
             self.floating_layout.show(screen_rect)
             self.layout.show(screen_rect)
@@ -183,20 +185,10 @@ class _Group(CommandObject):
 
     def hide(self):
         self.screen = None
-        with self.disable_mask(xcffib.xproto.EventMask.EnterWindow |
-                               xcffib.xproto.EventMask.FocusChange |
-                               xcffib.xproto.EventMask.LeaveWindow):
+        with self.qtile.core.masked():
             for i in self.windows:
                 i.hide()
             self.layout.hide()
-
-    @contextlib.contextmanager
-    def disable_mask(self, mask):
-        for i in self.windows:
-            i._disable_mask(mask)
-        yield
-        for i in self.windows:
-            i._reset_mask()
 
     def focus(self, win, warp=True, force=False):
         """Focus the given window
@@ -222,7 +214,13 @@ class _Group(CommandObject):
         if win:
             if win not in self.windows:
                 return
+
+            # ignore focus events if window is the current window
+            if win is self.last_focused:
+                warp = False
+
             self.current_window = win
+            self.last_focused = self.current_window
             if win.floating:
                 for layout in self.layouts:
                     layout.blur()
@@ -234,65 +232,76 @@ class _Group(CommandObject):
             hook.fire("focus_change")
             self.layout_all(warp)
 
+    @expose_command()
     def info(self):
+        """Returns a dictionary of info for this group"""
         return dict(
             name=self.name,
             label=self.label,
             focus=self.current_window.name if self.current_window else None,
+            tiled_windows={i.name for i in self.tiled_windows},
             windows=[i.name for i in self.windows],
             focus_history=[i.name for i in self.focus_history],
             layout=self.layout.name,
             layouts=[i.name for i in self.layouts],
             floating_info=self.floating_layout.info(),
-            screen=self.screen.index if self.screen else None
+            screen=self.screen.index if self.screen else None,
         )
 
     def add(self, win, focus=True, force=False):
         hook.fire("group_window_add", self, win)
-        self.windows.add(win)
+        if win not in self.windows:
+            self.windows.append(win)
         win.group = self
-        try:
-            if 'fullscreen' in win.window.get_net_wm_state() and \
-                    self.qtile.config.auto_fullscreen:
-                win._float_state = window.FULLSCREEN
-            elif self.floating_layout.match(win):
-                # !!! tell it to float, can't set floating
-                # because it's too early
-                # so just set the flag underneath
-                win._float_state = window.FLOATING
-        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
-            pass  # doesn't matter
-        if win.floating:
-            self.floating_layout.add(win)
-        else:
+        if self.qtile.config.auto_fullscreen and win.wants_to_fullscreen:
+            win._float_state = FloatStates.FULLSCREEN
+        elif self.qtile.config.auto_fullscreen and win.wants_to_maximize:
+            win._float_state = FloatStates.MAXIMIZED
+        elif self.floating_layout.match(win) and not win.fullscreen:
+            win._float_state = FloatStates.FLOATING
+            if self.qtile.config.floats_kept_above:
+                win.keep_above(enable=True)
+        if win.floating and not win.fullscreen:
+            self.floating_layout.add_client(win)
+        if not win.floating or win.fullscreen:
+            self.tiled_windows.add(win)
             for i in self.layouts:
-                i.add(win)
+                i.add_client(win)
         if focus:
             self.focus(win, warp=True, force=force)
 
     def remove(self, win, force=False):
         self.windows.remove(win)
+        hook.fire("group_window_remove", self, win)
         hadfocus = self._remove_from_focus_history(win)
         win.group = None
 
         if win.floating:
             nextfocus = self.floating_layout.remove(win)
 
-            nextfocus = nextfocus or \
-                self.current_window or \
-                self.layout.focus_first() or \
-                self.floating_layout.focus_first(group=self)
-        else:
+            nextfocus = (
+                nextfocus
+                or self.current_window
+                or self.layout.focus_first()
+                or self.floating_layout.focus_first(group=self)
+            )
+        # Remove from the tiled layouts if it was not floating or fullscreen
+        if not win.floating or win.fullscreen:
             for i in self.layouts:
                 if i is self.layout:
                     nextfocus = i.remove(win)
                 else:
                     i.remove(win)
 
-            nextfocus = nextfocus or \
-                self.floating_layout.focus_first(group=self) or \
-                self.current_window or \
-                self.layout.focus_first()
+            nextfocus = (
+                nextfocus
+                or self.floating_layout.focus_first(group=self)
+                or self.current_window
+                or self.layout.focus_first()
+            )
+
+            if win in self.tiled_windows:
+                self.tiled_windows.remove(win)
 
         # a notification may not have focus
         if hadfocus:
@@ -309,19 +318,27 @@ class _Group(CommandObject):
                 # already floating
                 pass
             else:
-                for i in self.layouts:
-                    i.remove(win)
+                # Remove from the tiled windows list if the window is not fullscreen
+                if not win.fullscreen:
+                    self.tiled_windows.remove(win)
+                    # Remove the window from the layout if it is not fullscreen
+                    for i in self.layouts:
+                        i.remove(win)
+                        if win is self.current_window:
+                            i.blur()
+                    self.floating_layout.add_client(win)
                     if win is self.current_window:
-                        i.blur()
-                self.floating_layout.add(win)
-                if win is self.current_window:
-                    self.floating_layout.focus(win)
+                        self.floating_layout.focus(win)
         else:
             self.floating_layout.remove(win)
             self.floating_layout.blur()
-            for i in self.layouts:
-                i.add(win)
-                if win is self.current_window:
+            # A window that was fullscreen should only be added if it was not a tiled window
+            if win not in self.tiled_windows:
+                for i in self.layouts:
+                    i.add_client(win)
+                self.tiled_windows.add(win)
+            if win is self.current_window:
+                for i in self.layouts:
                     i.focus(win)
         self.layout_all()
 
@@ -331,7 +348,7 @@ class _Group(CommandObject):
         if name == "screen" and self.screen is not None:
             return True, []
         if name == "window":
-            return self.current_window is not None, [i.window.wid for i in self.windows]
+            return self.current_window is not None, [i.wid for i in self.windows]
         return None
 
     def _select(self, name, sel):
@@ -345,18 +362,16 @@ class _Group(CommandObject):
             if sel is None:
                 return self.current_window
             for i in self.windows:
-                if i.window.wid == sel:
+                if i.wid == sel:
                     return i
-        raise RuntimeError("Invalid selection: {}".format(name))
+        raise RuntimeError(f"Invalid selection: {name}")
 
-    def cmd_setlayout(self, layout):
+    @expose_command()
+    def setlayout(self, layout):
         self.layout = layout
 
-    def cmd_info(self):
-        """Returns a dictionary of info for this group"""
-        return self.info()
-
-    def cmd_toscreen(self, screen=None, toggle=True):
+    @expose_command()
+    def toscreen(self, screen=None, toggle=False):
         """Pull a group to a specified screen.
 
         Parameters
@@ -422,13 +437,15 @@ class _Group(CommandObject):
     def get_next_group(self, skip_empty=False, skip_managed=False):
         return self._get_group(1, skip_empty, skip_managed)
 
-    def cmd_unminimize_all(self):
+    @expose_command()
+    def unminimize_all(self):
         """Unminimise all windows in this group"""
         for win in self.windows:
             win.minimized = False
         self.layout_all()
 
-    def cmd_next_window(self):
+    @expose_command()
+    def next_window(self):
         """
         Focus the next window in group.
 
@@ -439,16 +456,21 @@ class _Group(CommandObject):
         if not self.windows:
             return
         if self.current_window.floating:
-            nxt = self.floating_layout.focus_next(self.current_window) or \
-                self.layout.focus_first() or \
-                self.floating_layout.focus_first(group=self)
+            nxt = (
+                self.floating_layout.focus_next(self.current_window)
+                or self.layout.focus_first()
+                or self.floating_layout.focus_first(group=self)
+            )
         else:
-            nxt = self.layout.focus_next(self.current_window) or \
-                self.floating_layout.focus_first(group=self) or \
-                self.layout.focus_first()
+            nxt = (
+                self.layout.focus_next(self.current_window)
+                or self.floating_layout.focus_first(group=self)
+                or self.layout.focus_first()
+            )
         self.focus(nxt, True)
 
-    def cmd_prev_window(self):
+    @expose_command()
+    def prev_window(self):
         """
         Focus the previous window in group.
 
@@ -459,16 +481,21 @@ class _Group(CommandObject):
         if not self.windows:
             return
         if self.current_window.floating:
-            nxt = self.floating_layout.focus_previous(self.current_window) or \
-                self.layout.focus_last() or \
-                self.floating_layout.focus_last(group=self)
+            nxt = (
+                self.floating_layout.focus_previous(self.current_window)
+                or self.layout.focus_last()
+                or self.floating_layout.focus_last(group=self)
+            )
         else:
-            nxt = self.layout.focus_previous(self.current_window) or \
-                self.floating_layout.focus_last(group=self) or \
-                self.layout.focus_last()
+            nxt = (
+                self.layout.focus_previous(self.current_window)
+                or self.floating_layout.focus_last(group=self)
+                or self.layout.focus_last()
+            )
         self.focus(nxt, True)
 
-    def cmd_focus_back(self):
+    @expose_command()
+    def focus_back(self):
         """
         Focus the window that had focus before the current one got it.
 
@@ -483,7 +510,8 @@ class _Group(CommandObject):
         else:
             self.focus(win)
 
-    def cmd_focus_by_name(self, name):
+    @expose_command()
+    def focus_by_name(self, name):
         """
         Focus the first window with the given name. Do nothing if the name is
         not found.
@@ -493,7 +521,8 @@ class _Group(CommandObject):
                 self.focus(win)
                 break
 
-    def cmd_info_by_name(self, name):
+    @expose_command()
+    def info_by_name(self, name):
         """
         Get the info for the first window with the given name without giving it
         focus. Do nothing if the name is not found.
@@ -502,11 +531,40 @@ class _Group(CommandObject):
             if win.name == name:
                 return win.info()
 
-    def cmd_switch_groups(self, name):
-        """Switch position of current group with name"""
-        self.qtile.cmd_switch_groups(self.name, name)
+    @expose_command()
+    def focus_by_index(self, index: int) -> None:
+        """
+        Change to the window at the specified index in the current group.
+        """
+        windows = self.windows
+        if index < 0 or index > len(windows) - 1:
+            return
 
-    def cmd_set_label(self, label):
+        self.focus(windows[index])
+
+    @expose_command()
+    def swap_window_order(self, new_location: int) -> None:
+        """
+        Change the order of the current window within the current group.
+        """
+        if new_location < 0 or new_location > len(self.windows) - 1:
+            return
+
+        windows = self.windows
+        current_window_index = windows.index(self.current_window)
+
+        windows[current_window_index], windows[new_location] = (
+            windows[new_location],
+            windows[current_window_index],
+        )
+
+    @expose_command()
+    def switch_groups(self, name):
+        """Switch position of current group with name"""
+        self.qtile.switch_groups(self.name, name)
+
+    @expose_command()
+    def set_label(self, label):
         """
         Set the display name of current group to be used in GroupBox widget.
         If label is None, the name of the group is used as display name.
@@ -516,4 +574,4 @@ class _Group(CommandObject):
         hook.fire("changegroup")
 
     def __repr__(self):
-        return "<group.Group (%r)>" % self.name
+        return f"<group.Group ({self.name!r})>"

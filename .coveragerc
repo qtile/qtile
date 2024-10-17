@@ -1,8 +1,13 @@
 [run]
 source = libqtile
+concurrency = multiprocessing
+parallel = true
+sigterm = true
+dynamic_context = test_function
 
 [report]
 omit =
     libqtile/interactive/*
     libqtile/scripts/*
     libqtile/ffi_build.py
+    test/*

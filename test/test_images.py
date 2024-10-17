@@ -2,6 +2,7 @@
 test_images.py contains unittests for libqtile.images.Img
 and its supporting code.
 """
+
 import os
 from glob import glob
 from os import path
@@ -13,35 +14,35 @@ import pytest
 from libqtile import images
 
 TEST_DIR = path.dirname(os.path.abspath(__file__))
-DATA_DIR = path.join(TEST_DIR, 'data')
-PNGS = glob(path.join(DATA_DIR, '*', '*.png'))
-SVGS = glob(path.join(DATA_DIR, '*', '*.svg'))
-ALL_IMAGES = glob(path.join(DATA_DIR, '*', '*'))
+DATA_DIR = path.join(TEST_DIR, "data")
+PNGS = glob(path.join(DATA_DIR, "*", "*.png"))
+SVGS = glob(path.join(DATA_DIR, "*", "*.svg"))
+ALL_IMAGES = glob(path.join(DATA_DIR, "*", "*"))
 
 
 @pytest.fixture(
-    scope='function',
+    scope="function",
     params=ALL_IMAGES,
 )
 def path_n_bytes_image(request):
     fpath = request.param
-    with open(fpath, 'rb') as fobj:
+    with open(fpath, "rb") as fobj:
         bobj = fobj.read()
     return fpath, bobj
 
 
 @pytest.fixture(
-    scope='function',
+    scope="function",
     params=PNGS,
 )
 def path_n_bytes_image_pngs(request):
     fpath = request.param
-    with open(fpath, 'rb') as fobj:
+    with open(fpath, "rb") as fobj:
         bobj = fobj.read()
     return fpath, bobj
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def png_img():
     return images.Img.from_path(PNGS[0])
 
@@ -50,12 +51,12 @@ def test_get_cairo_surface(path_n_bytes_image):
     path, bytes_image = path_n_bytes_image
     surf_info = images.get_cairo_surface(bytes_image)
     assert isinstance(surf_info.surface, cairocffi.ImageSurface)
-    assert path.split('.')[-1].lower() == surf_info.file_type
+    assert path.split(".")[-1].lower() == surf_info.file_type
 
 
 def test_get_cairo_surface_bad_input():
     with pytest.raises(cairocffi.pixbuf.ImageLoadingError):
-        images.get_cairo_surface(b'asdfasfdi3')
+        images.get_cairo_surface(b"asdfasfdi3")
 
 
 def assert_approx_equal(vec0, vec1):
@@ -121,18 +122,15 @@ class TestImg:
         img = images.Img(bytes_image)
         assert isinstance(img.pattern, cairocffi.SurfacePattern)
 
-    def test_pattern_resize(self, path_n_bytes_image_pngs):
+    def test_surface_resize(self, path_n_bytes_image_pngs):
         path, bytes_image = path_n_bytes_image_pngs
         img = images.Img.from_path(path)
-        assert isinstance(img.pattern, cairocffi.SurfacePattern)
-        t_matrix = img.pattern.get_matrix().as_tuple()
-        assert_approx_equal(t_matrix, (1.0, 0.0, 0.0, 1.0))
+        original_width = img.width
+        original_height = img.height
         img.width = 2.0 * img.default_size.width
-        t_matrix = img.pattern.get_matrix().as_tuple()
-        assert_approx_equal(t_matrix, (0.5, 0.0, 0.0, 1.0))
+        assert img.surface.get_width() == 2 * original_width
         img.height = 3.0 * img.default_size.height
-        t_matrix = img.pattern.get_matrix().as_tuple()
-        assert_approx_equal(t_matrix, (0.5, 0.0, 0.0, 1.0/3.0))
+        assert img.surface.get_height() == 3 * original_height
 
     def test_pattern_rotate(self, path_n_bytes_image):
         path, bytes_image = path_n_bytes_image
@@ -144,6 +142,7 @@ class TestImg:
         img.theta = 45.0
         t_matrix = img.pattern.get_matrix().as_tuple()
         from math import sqrt
+
         s2o2 = sqrt(2) / 2.0
         assert_approx_equal(t_matrix, (s2o2, s2o2, -s2o2, s2o2))
         del img.theta
@@ -206,25 +205,25 @@ class TestImgResize:
 
 
 class TestLoader:
-    @pytest.fixture(scope='function')
+    @pytest.fixture(scope="function")
     def loader(self):
-        png_dir = path.join(DATA_DIR, 'png')
-        svg_dir = path.join(DATA_DIR, 'svg')
+        png_dir = path.join(DATA_DIR, "png")
+        svg_dir = path.join(DATA_DIR, "svg")
         return images.Loader(svg_dir, png_dir)
 
     def test_audio_volume_muted(self, loader):
-        name = 'audio-volume-muted'
+        name = "audio-volume-muted"
         result = loader(name)
         assert isinstance(result[name], images.Img)
-        assert result[name].path.endswith('.svg')
+        assert result[name].path.endswith(".svg")
 
     def test_audio_volume_muted_png(self, loader):
-        name = 'audio-volume-muted.png'
+        name = "audio-volume-muted.png"
         result = loader(name)
         assert isinstance(result[name], images.Img)
-        assert result[name].path.endswith('.png')
+        assert result[name].path.endswith(".png")
 
     def test_load_file_missing(self, loader):
-        names = ('audio-asdlfjasdvolume-muted', 'audio-volume-muted')
+        names = ("audio-asdlfjasdvolume-muted", "audio-volume-muted")
         with pytest.raises(images.LoadingError):
             loader(*names)

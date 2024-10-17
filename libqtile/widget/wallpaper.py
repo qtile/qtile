@@ -24,7 +24,6 @@ import os
 import random
 import subprocess
 
-from libqtile import bar
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
@@ -33,17 +32,28 @@ class Wallpaper(base._TextBox):
     defaults = [
         ("directory", "~/Pictures/wallpapers/", "Wallpaper Directory"),
         ("wallpaper", None, "Wallpaper"),
-        ("wallpaper_command", ['feh', '--bg-fill'], "Wallpaper command. If None, the"
-            "wallpaper will be painted without the use of a helper."),
-        ("random_selection", False, "If set, use random initial wallpaper and "
-         "randomly cycle through the wallpapers."),
+        (
+            "wallpaper_command",
+            ["feh", "--bg-fill"],
+            "Wallpaper command. If None, the"
+            "wallpaper will be painted without the use of a helper.",
+        ),
+        (
+            "random_selection",
+            False,
+            "If set, use random initial wallpaper and " "randomly cycle through the wallpapers.",
+        ),
         ("label", None, "Use a fixed label instead of image name."),
-        ("option", "fill", "How to fit the wallpaper when wallpaper_command is"
-            "None. None, 'fill' or 'stretch'."),
+        (
+            "option",
+            "fill",
+            "How to fit the wallpaper when wallpaper_command is"
+            "None. None, 'fill' or 'stretch'.",
+        ),
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, 'empty', width=bar.CALCULATED, **config)
+        base._TextBox.__init__(self, "empty", **config)
         self.add_defaults(Wallpaper.defaults)
         self.index = 0
         self.images = []
@@ -51,7 +61,7 @@ class Wallpaper(base._TextBox):
         if self.random_selection:  # Random selection after reading all files
             self.index = random.randint(0, len(self.images) - 1)
 
-        self.add_callbacks({'Button1': self.set_wallpaper})
+        self.add_callbacks({"Button1": self.set_wallpaper})
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
@@ -65,11 +75,12 @@ class Wallpaper(base._TextBox):
         try:
             # get path of all files in the directory
             self.images = list(
-                filter(os.path.isfile,
-                       map(self.get_path,
-                           os.listdir(
-                               os.path.expanduser(self.directory)))))
-        except IOError as e:
+                filter(
+                    os.path.isfile,
+                    map(self.get_path, os.listdir(os.path.expanduser(self.directory))),
+                )
+            )
+        except OSError as e:
             logger.exception("I/O error(%s): %s", e.errno, e.strerror)
 
     def set_wallpaper(self):

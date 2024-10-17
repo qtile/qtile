@@ -1,7 +1,10 @@
 setuptools_scm
-sphinx
+# Sphinx 7.0.0 is not currently supported by the sphinx RTD theme
+sphinx<7.0.0
 sphinx_rtd_theme
-sphinxcontrib-seqdiag
+funcparserlib==1.0.0a0
 numpydoc
-
--r ../requirements.txt
+pytest
+xcffib >= 1.4.0
+PyGObject
+dbus-next

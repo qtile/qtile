@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 # Copyright (c) 2012 TiN
 # Copyright (c) 2012, 2014 Tycho Andersen
 # Copyright (c) 2013 Tao Sauvage
@@ -24,10 +23,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import re
-from subprocess import CalledProcessError
+import psutil
 
-from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
@@ -38,38 +35,37 @@ class ThermalSensor(base.InLoopPollText):
     You can get a list of the tag_sensors executing "sensors" in your terminal.
     Then you can choose which you want, otherwise it will display the first
     available.
+
+    Widget requirements: psutil_.
+
+    .. _psutil: https://pypi.org/project/psutil/
     """
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
-        ('metric', True, 'True to use metric/C, False to use imperial/F'),
-        ('show_tag', False, 'Show tag sensor'),
-        ('update_interval', 2, 'Update interval in seconds'),
-        ('tag_sensor', None,
-            'Tag of the temperature sensor. For example: "temp1" or "Core 0"'),
         (
-            'threshold',
-            70,
-            'If the current temperature value is above, '
-            'then change to foreground_alert colour'
+            "format",
+            "{temp:.1f}{unit}",
+            "Display string format. Three options available: "
+            "``{temp}`` - temperature, "
+            "``{tag}`` - tag of the temperature sensor, and "
+            "``{unit}`` - °C or °F",
         ),
-        ('foreground_alert', 'ff0000', 'Foreground colour alert'),
+        ("metric", True, "True to use metric/C, False to use imperial/F"),
+        ("update_interval", 2, "Update interval in seconds"),
+        ("tag_sensor", None, 'Tag of the temperature sensor. For example: "temp1" or "Core 0"'),
+        (
+            "threshold",
+            70,
+            "If the current temperature value is above, "
+            "then change to foreground_alert colour",
+        ),
+        ("foreground_alert", "ff0000", "Foreground colour alert"),
     ]
 
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(ThermalSensor.defaults)
-        self.sensors_temp = re.compile(
-            (r"\n([\w ]+):"  # Sensor tag name
-             r"\s+[+|-]"     # temp signed
-             r"(\d+\.\d+)"   # temp value
-             "({degrees}"   # degree symbol match
-             "[C|F])"       # Celsius or Fahrenheit
-             ).format(degrees=u"\xb0"),
-            re.UNICODE | re.VERBOSE
-        )
-        self.value_temp = re.compile(r"\d+\.\d+")
         temp_values = self.get_temp_sensors()
-        self.foreground_normal = self.foreground
 
         if temp_values is None:
             self.data = "sensors command not found"
@@ -80,45 +76,44 @@ class ThermalSensor(base.InLoopPollText):
                 self.tag_sensor = k
                 break
 
-    def get_temp_sensors(self):
-        """calls the unix `sensors` command with `-f` flag if user has specified that
-        the output should be read in Fahrenheit.
-        """
-        command = ["sensors", ]
-        if not self.metric:
-            command.append("-f")
-        try:
-            sensors_out = self.call_process(command)
-            if not sensors_out:
-                return None
-        except FileNotFoundError:
-            return None
-        except CalledProcessError:
-            return ""
-        return self._format_sensors_output(sensors_out)
+    def _configure(self, qtile, bar):
+        self.unit = "°C" if self.metric else "°F"
+        base.InLoopPollText._configure(self, qtile, bar)
+        self.foreground_normal = self.foreground
 
-    def _format_sensors_output(self, sensors_out):
-        """formats output of unix `sensors` command into a dict of
-        {<sensor_name>: (<temperature>, <temperature symbol>), ..etc..}
+    def get_temp_sensors(self):
         """
-        temperature_values = {}
-        logger.debug(self.sensors_temp.findall(sensors_out))
-        for name, temp, symbol in self.sensors_temp.findall(sensors_out):
-            name = name.strip()
-            temperature_values[name] = temp, symbol
-        return temperature_values
+        Reads temperatures from sys-fs via psutil.
+        Output will be read Fahrenheit if user has specified it to be.
+        """
+
+        temperature_list = {}
+        temps = psutil.sensors_temperatures(fahrenheit=not self.metric)
+        empty_index = 0
+        for kernel_module in temps:
+            for sensor in temps[kernel_module]:
+                label = sensor.label
+                if not label:
+                    label = "{}-{}".format(
+                        kernel_module if kernel_module else "UNKNOWN", str(empty_index)
+                    )
+                    empty_index += 1
+                temperature_list[label] = sensor.current
+
+        return temperature_list
 
     def poll(self):
         temp_values = self.get_temp_sensors()
-        if temp_values is None:
-            return False
-        text = ""
-        if self.show_tag and self.tag_sensor is not None:
-            text = self.tag_sensor + ": "
-        text += "".join(temp_values.get(self.tag_sensor, ['N/A']))
-        temp_value = float(temp_values.get(self.tag_sensor, [0])[0])
+
+        # Temperature not available
+        if (temp_values is None) or (self.tag_sensor not in temp_values):
+            return "N/A"
+
+        temp_value = temp_values.get(self.tag_sensor)
         if temp_value > self.threshold:
             self.layout.colour = self.foreground_alert
         else:
             self.layout.colour = self.foreground_normal
-        return text
+
+        val = dict(temp=temp_value, tag=self.tag_sensor, unit=self.unit)
+        return self.format.format(**val)

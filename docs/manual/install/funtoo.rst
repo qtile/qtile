@@ -39,4 +39,4 @@ you need to avoid extra dependencies thanks to these useflags.
 Visit `Funtoo Qtile documentation`_ for more details on Qtile installation on
 Funtoo.
 
-.. _Funtoo Qtile documentation: http://www.funtoo.org/Package:Qtile
+.. _Funtoo Qtile documentation: https://www.funtoo.org/Package:Qtile

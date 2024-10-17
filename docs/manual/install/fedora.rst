@@ -1,10 +1,12 @@
 ====================
-Installing on Fedora
+Installing on Fedora 40 or later.
 ====================
+Both Qtile X11 and Wayland stable versions can be installed via the DNF Package Manager.
 
-Stable versions of Qtile are currently packaged for current versions of Fedora.
-To install this package, run:
+If you want to pick a specific version(Such as the wayland version) then double-click Tab after "qtile".
 
 .. code-block:: bash
 
-    dnf -y install qtile
+   dnf install qtile
+
+

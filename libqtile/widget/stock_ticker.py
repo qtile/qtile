@@ -21,6 +21,7 @@
 import locale
 from urllib.parse import urlencode
 
+from libqtile.log_utils import logger
 from libqtile.widget.generic_poll_text import GenPollUrl
 
 
@@ -39,34 +40,36 @@ class StockTicker(GenPollUrl):
         widget.StockTicker(apikey=..., symbol="AMZN")
 
         # Display BTC
-        widget.StockTicker(apikey=..., function="DIGITAL_CURRENCY_INTRADAY", symbol="BTC", market="USD")
+        widget.StockTicker(
+            apikey=..., function="DIGITAL_CURRENCY_INTRADAY", symbol="BTC", market="USD"
+        )
     """
 
     defaults = [
         ("interval", "1min", "The default latency to query"),
-        ("function", "TIME_SERIES_INTRADAY", "The default API function to query"),
+        ("func", "TIME_SERIES_INTRADAY", "The default API function to query"),
+        ("function", "TIME_SERIES_INTRADAY", "DEPRECATED: Use `func`."),
     ]
 
     def __init__(self, **config):
+        if "function" in config:
+            logger.warning("`function` parameter is deprecated. Please rename to `func`")
+            config["func"] = config.pop("function")
         GenPollUrl.__init__(self, **config)
         self.add_defaults(StockTicker.defaults)
-        self.sign = locale.localeconv()['currency_symbol']
-        self.query = {
-            "interval": self.interval,
-            "outputsize": "compact",
-            "function": self.function
-        }
+        self.sign = locale.localeconv()["currency_symbol"]
+        self.query = {"interval": self.interval, "outputsize": "compact", "function": self.func}
         for k, v in config.items():
             self.query[k] = v
 
     @property
     def url(self):
-        url = 'https://www.alphavantage.co/query?' + urlencode(self.query)
+        url = "https://www.alphavantage.co/query?" + urlencode(self.query)
         return url
 
     def parse(self, body):
         last = None
-        for k, v in body['Meta Data'].items():
+        for k, v in body["Meta Data"].items():
             # In instead of ==, because of the number prefix that is inconsistent
             if "Last Refreshed" in k:
                 last = v
@@ -84,7 +87,7 @@ class StockTicker(GenPollUrl):
         price = None
         for k, v in other[last].items():
             if "price" in k or "close" in k:
-                price = "{:0.2f}".format(float(v))
+                price = f"{float(v):0.2f}"
                 break
 
-        return "{symbol}: {sign}{price}".format(symbol=self.symbol, sign=self.sign, price=price)
+        return f"{self.symbol}: {self.sign}{price}"

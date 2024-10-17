@@ -27,45 +27,55 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
 
-import warnings
+from typing import TYPE_CHECKING
 
-from libqtile.config import Match
+from libqtile.command.base import expose_command
+from libqtile.config import Match, _Match
 from libqtile.layout.base import Layout
-from libqtile.log_utils import logger
+
+if TYPE_CHECKING:
+    from typing import Any
+
+    from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
 
 
 class Floating(Layout):
     """
     Floating layout, which does nothing with windows but handles focus order
     """
-    default_float_rules = [
-        Match(wm_type='utility'),
-        Match(wm_type='notification'),
-        Match(wm_type='toolbar'),
-        Match(wm_type='splash'),
-        Match(wm_type='dialog'),
-        Match(wm_class='file_progress'),
-        Match(wm_class='confirm'),
-        Match(wm_class='dialog'),
-        Match(wm_class='download'),
-        Match(wm_class='error'),
-        Match(wm_class='notification'),
-        Match(wm_class='splash'),
-        Match(wm_class='toolbar'),
-        Match(func=lambda c: c.has_fixed_size())
+
+    default_float_rules: list[_Match] = [
+        Match(wm_type="utility"),
+        Match(wm_type="notification"),
+        Match(wm_type="toolbar"),
+        Match(wm_type="splash"),
+        Match(wm_type="dialog"),
+        Match(wm_class="file_progress"),
+        Match(wm_class="confirm"),
+        Match(wm_class="dialog"),
+        Match(wm_class="download"),
+        Match(wm_class="error"),
+        Match(wm_class="notification"),
+        Match(wm_class="splash"),
+        Match(wm_class="toolbar"),
+        Match(func=lambda c: c.has_fixed_size()),
+        Match(func=lambda c: c.has_fixed_ratio()),
     ]
 
     defaults = [
-        ("border_focus", "#0000ff", "Border colour for the focused window."),
-        ("border_normal", "#000000", "Border colour for un-focused windows."),
+        ("border_focus", "#0000ff", "Border colour(s) for the focused window."),
+        ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
         ("border_width", 1, "Border width."),
         ("max_border_width", 0, "Border width for maximize."),
         ("fullscreen_border_width", 0, "Border width for fullscreen."),
-        ("name", "floating", "Name of this layout."),
     ]
 
-    def __init__(self, float_rules=None, no_reposition_rules=None, **config):
+    def __init__(
+        self, float_rules: list[_Match] | None = None, no_reposition_rules=None, **config
+    ):
         """
         If you have certain apps that you always want to float you can provide
         ``float_rules`` to do so. ``float_rules`` are a list of
@@ -81,6 +91,11 @@ class Floating(Layout):
             from libqtile.config import Match
             float_rules=[Match(wm_class="skype"), Match(wm_class="gimp")]
 
+        The following ``Match`` will float all windows that are transient windows for a
+        parent window:
+
+            Match(func=lambda c: bool(c.is_transient_for()))
+
         Specify these in the ``floating_layout`` in your config.
 
         Floating layout will try to center most of floating windows by default,
@@ -90,32 +105,11 @@ class Floating(Layout):
         correct location on the screen.
         """
         Layout.__init__(self, **config)
-        self.clients = []
-        self.focused = None
-        self.group = None
+        self.clients: list[Window] = []
+        self.focused: Window | None = None
 
         if float_rules is None:
             float_rules = self.default_float_rules
-        else:
-            warned = False
-            for index, rule in enumerate(float_rules):
-                if isinstance(rule, Match):
-                    continue
-
-                if not warned:
-                    message = "Non-config.Match objects in float_rules are " \
-                              "deprecated"
-                    warnings.warn(message, DeprecationWarning)
-                    logger.warning(message)
-                    warned = True
-
-                match = Match(
-                    title=rule.get("wname"), wm_class=rule.get("wmclass"),
-                    role=rule.get("role"), wm_type=rule.get("wm_type"),
-                    wm_instance_class=rule.get("wm_instance_class"),
-                    net_wm_pid=rule.get("net_wm_pid"))
-
-                float_rules[index] = match
 
         self.float_rules = float_rules
         self.no_reposition_rules = no_reposition_rules or []
@@ -137,15 +131,12 @@ class Floating(Layout):
             elif win.fullscreen:
                 win.fullscreen = True
             else:
-                # catch if the client hasn't been configured
-                try:
+                # If the window hasn't been floated before, it will be configured in
+                # .configure()
+                if win.float_x is not None and win.float_y is not None:
                     # By default, place window at same offset from top corner
                     new_x = new_screen.x + win.float_x
                     new_y = new_screen.y + win.float_y
-                except AttributeError:
-                    # this will be handled in .configure()
-                    pass
-                else:
                     # make sure window isn't off screen left/right...
                     new_x = min(new_x, new_screen.x + new_screen.width - win.width)
                     new_x = max(new_x, new_screen.x)
@@ -166,14 +157,15 @@ class Floating(Layout):
         if clients:
             return clients[0]
 
-    def focus_next(self, win):
+    def focus_next(self, win: Window) -> Window | None:
         if win not in self.clients or win.group is None:
-            return
+            return None
 
         clients = self.find_clients(win.group)
         idx = clients.index(win)
         if len(clients) > idx + 1:
             return clients[idx + 1]
+        return None
 
     def focus_last(self, group=None):
         if group is None:
@@ -193,10 +185,10 @@ class Floating(Layout):
         if idx > 0:
             return clients[idx - 1]
 
-    def focus(self, client):
+    def focus(self, client: Window) -> None:
         self.focused = client
 
-    def blur(self):
+    def blur(self) -> None:
         self.focused = None
 
     def on_screen(self, client, screen_rect):
@@ -211,8 +203,8 @@ class Floating(Layout):
         return True
 
     def compute_client_position(self, client, screen_rect):
-        """ recompute client.x and client.y, returning whether or not to place
-        this client above other windows or not """
+        """recompute client.x and client.y, returning whether or not to place
+        this client above other windows or not"""
         above = True
 
         if client.has_user_set_position() and not self.on_screen(client, screen_rect):
@@ -221,12 +213,11 @@ class Floating(Layout):
             client.y = screen_rect.y + client.y
         if not client.has_user_set_position() or not self.on_screen(client, screen_rect):
             # client has not been properly placed before or it is off screen
-            transient_for = client.window.get_wm_transient_for()
-            win = client.group.qtile.windows_map.get(transient_for)
-            if win is not None:
+            transient_for = client.is_transient_for()
+            if transient_for is not None:
                 # if transient for a window, place in the center of the window
-                center_x = win.x + win.width / 2
-                center_y = win.y + win.height / 2
+                center_x = transient_for.x + transient_for.width / 2
+                center_y = transient_for.y + transient_for.height / 2
                 above = False
             else:
                 center_x = screen_rect.x + screen_rect.width / 2
@@ -248,7 +239,7 @@ class Floating(Layout):
             client.y = int(round(y))
         return above
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         if client.has_focus:
             bc = self.border_focus
         else:
@@ -263,25 +254,22 @@ class Floating(Layout):
 
         # 'sun-awt-X11-XWindowPeer' is a dropdown used in Java application,
         # don't reposition it anywhere, let Java app to control it
-        cls = client.window.get_wm_class() or ''
-        is_java_dropdown = 'sun-awt-X11-XWindowPeer' in cls
+        cls = client.get_wm_class() or ""
+        is_java_dropdown = "sun-awt-X11-XWindowPeer" in cls
         if is_java_dropdown:
             client.paint_borders(bc, bw)
-            client.cmd_bring_to_front()
+            client.bring_to_front()
 
         # alternatively, users may have asked us explicitly to leave the client alone
         elif any(m.compare(client) for m in self.no_reposition_rules):
             client.paint_borders(bc, bw)
-            client.cmd_bring_to_front()
+            client.bring_to_front()
 
         else:
             above = False
 
             # We definitely have a screen here, so let's be sure we'll float on screen
-            try:
-                client.float_x
-                client.float_y
-            except AttributeError:
+            if client.float_x is None or client.float_y is None:
                 # this window hasn't been placed before, let's put it in a sensible spot
                 above = self.compute_client_position(client, screen_rect)
 
@@ -293,16 +281,17 @@ class Floating(Layout):
                 bw,
                 bc,
                 above,
+                respect_hints=True,
             )
         client.unhide()
 
-    def add(self, client):
+    def add_client(self, client: Window) -> None:
         self.clients.append(client)
         self.focused = client
 
-    def remove(self, client):
+    def remove(self, client: Window) -> Window | None:
         if client not in self.clients:
-            return
+            return None
 
         next_focus = self.focus_next(client)
         if client is self.focused:
@@ -310,15 +299,23 @@ class Floating(Layout):
         self.clients.remove(client)
         return next_focus
 
-    def info(self):
-        d = Layout.info(self)
-        d["clients"] = [c.name for c in self.clients]
+    def get_windows(self):
+        return self.clients
+
+    @expose_command()
+    def info(self) -> dict[str, Any]:
+        d = dict(
+            name=self.name,
+            clients=[c.name for c in self.clients],
+        )
         return d
 
-    def cmd_next(self):
+    @expose_command()
+    def next(self) -> None:
         # This can't ever be called, but implement the abstract method
         pass
 
-    def cmd_previous(self):
+    @expose_command()
+    def previous(self) -> None:
         # This can't ever be called, but implement the abstract method
         pass

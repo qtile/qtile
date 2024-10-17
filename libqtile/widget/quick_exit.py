@@ -17,41 +17,38 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-from libqtile import bar
+from libqtile.command.base import expose_command
 from libqtile.widget import base
 
 
 class QuickExit(base._TextBox):
     """
-    A button of exiting the running qtile easily. When clicked this button, a countdown
-    start. If the button pushed with in the countdown again, the qtile shutdown.
+    A button to shut down Qtile. When clicked, a countdown starts. Clicking
+    the button again stops the countdown and prevents Qtile from shutting down.
     """
 
     defaults = [
-        ('default_text', '[ shutdown ]', 'A text displayed as a button'),
-        ('countdown_format', '[ {} seconds ]', 'This text is showed when counting down.'),
-        ('timer_interval', 1, 'A countdown interval.'),
-        ('countdown_start', 5, 'Time to accept the second pushing.'),
+        ("default_text", "[ shutdown ]", "The text displayed on the button."),
+        ("countdown_format", "[ {} seconds ]", "The text displayed when counting down."),
+        ("timer_interval", 1, "The countdown interval."),
+        ("countdown_start", 5, "The number to count down from."),
     ]
 
-    def __init__(self, widget=bar.CALCULATED, **config):
-        base._TextBox.__init__(self, '', widget, **config)
+    def __init__(self, **config):
+        base._TextBox.__init__(self, "", **config)
         self.add_defaults(QuickExit.defaults)
 
         self.is_counting = False
         self.text = self.default_text
         self.countdown = self.countdown_start
-        self.__call_later_funcs = []
 
-        self.add_callbacks({'Button1': self.cmd_trigger})
+        self.add_callbacks({"Button1": self.trigger})
 
     def __reset(self):
         self.is_counting = False
         self.countdown = self.countdown_start
         self.text = self.default_text
-        for f in self.__call_later_funcs:
-            f.cancel()
+        self.timer.cancel()
 
     def update(self):
         if not self.is_counting:
@@ -59,15 +56,15 @@ class QuickExit(base._TextBox):
 
         self.countdown -= 1
         self.text = self.countdown_format.format(self.countdown)
-        func = self.timeout_add(self.timer_interval, self.update)
-        self.__call_later_funcs.append(func)
+        self.timer = self.timeout_add(self.timer_interval, self.update)
         self.draw()
 
         if self.countdown == 0:
             self.qtile.stop()
             return
 
-    def cmd_trigger(self):
+    @expose_command()
+    def trigger(self):
         if not self.is_counting:
             self.is_counting = True
             self.update()

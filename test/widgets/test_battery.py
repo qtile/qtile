@@ -1,15 +1,9 @@
-import cairocffi
 import pytest
 
 from libqtile import images
 from libqtile.widget import battery
-from libqtile.widget.battery import (
-    Battery,
-    BatteryIcon,
-    BatteryState,
-    BatteryStatus,
-)
-from test.widgets.conftest import TEST_DIR
+from libqtile.widget.battery import Battery, BatteryIcon, BatteryState, BatteryStatus
+from test.widgets.conftest import TEST_DIR, FakeBar
 
 
 class DummyBattery:
@@ -39,8 +33,10 @@ def test_text_battery_charging(monkeypatch):
     loaded_bat = BatteryStatus(
         state=BatteryState.CHARGING,
         percent=0.5,
-        power=15.,
+        power=15.0,
         time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
     )
 
     with monkeypatch.context() as manager:
@@ -55,8 +51,10 @@ def test_text_battery_discharging(monkeypatch):
     loaded_bat = BatteryStatus(
         state=BatteryState.DISCHARGING,
         percent=0.5,
-        power=15.,
+        power=15.0,
         time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
     )
 
     with monkeypatch.context() as manager:
@@ -71,8 +69,10 @@ def test_text_battery_full(monkeypatch):
     loaded_bat = BatteryStatus(
         state=BatteryState.FULL,
         percent=0.5,
-        power=15.,
+        power=15.0,
         time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
     )
 
     with monkeypatch.context() as manager:
@@ -94,8 +94,10 @@ def test_text_battery_empty(monkeypatch):
     loaded_bat = BatteryStatus(
         state=BatteryState.EMPTY,
         percent=0.5,
-        power=15.,
+        power=15.0,
         time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
     )
 
     with monkeypatch.context() as manager:
@@ -114,9 +116,11 @@ def test_text_battery_empty(monkeypatch):
 
     loaded_bat = BatteryStatus(
         state=BatteryState.UNKNOWN,
-        percent=0.,
-        power=15.,
+        percent=0.0,
+        power=15.0,
         time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
     )
 
     with monkeypatch.context() as manager:
@@ -127,12 +131,32 @@ def test_text_battery_empty(monkeypatch):
     assert text == "Empty"
 
 
+def test_text_battery_not_charging(monkeypatch):
+    loaded_bat = BatteryStatus(
+        state=BatteryState.NOT_CHARGING,
+        percent=0.5,
+        power=15.0,
+        time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
+    )
+
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
+        batt = Battery()
+
+    text = batt.poll()
+    assert text == "* 50% 0:28 15.00 W"
+
+
 def test_text_battery_unknown(monkeypatch):
     loaded_bat = BatteryStatus(
         state=BatteryState.UNKNOWN,
         percent=0.5,
-        power=15.,
+        power=15.0,
         time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
     )
 
     with monkeypatch.context() as manager:
@@ -147,8 +171,10 @@ def test_text_battery_hidden(monkeypatch):
     loaded_bat = BatteryStatus(
         state=BatteryState.DISCHARGING,
         percent=0.5,
-        power=15.,
+        power=15.0,
         time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
     )
 
     with monkeypatch.context() as manager:
@@ -191,16 +217,16 @@ def test_images_good(tmpdir, fake_bar, svg_img_as_pypath):
     This theme path does contain all of the required images.
     """
     for name in BatteryIcon.icon_names:
-        target = tmpdir.join(name + '.svg')
+        target = tmpdir.join(name + ".svg")
         svg_img_as_pypath.copy(target)
 
     batt = BatteryIcon(theme_path=str(tmpdir))
     batt.fontsize = 12
     batt.bar = fake_bar
     batt.setup_images()
-    assert len(batt.surfaces) == len(BatteryIcon.icon_names)
-    for name, surfpat in batt.surfaces.items():
-        assert isinstance(surfpat, cairocffi.SurfacePattern)
+    assert len(batt.images) == len(BatteryIcon.icon_names)
+    for name, img in batt.images.items():
+        assert isinstance(img, images.Img)
 
 
 def test_images_default(fake_bar):
@@ -212,6 +238,114 @@ def test_images_default(fake_bar):
     batt.fontsize = 12
     batt.bar = fake_bar
     batt.setup_images()
-    assert len(batt.surfaces) == len(BatteryIcon.icon_names)
-    for name, surfpat in batt.surfaces.items():
-        assert isinstance(surfpat, cairocffi.SurfacePattern)
+    assert len(batt.images) == len(BatteryIcon.icon_names)
+    for name, img in batt.images.items():
+        assert isinstance(img, images.Img)
+
+
+def test_battery_background(fake_qtile, fake_window, monkeypatch):
+    ok = BatteryStatus(
+        state=BatteryState.DISCHARGING,
+        percent=0.5,
+        power=15.0,
+        time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
+    )
+    low = BatteryStatus(
+        state=BatteryState.DISCHARGING,
+        percent=0.1,
+        power=15.0,
+        time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
+    )
+
+    low_background = "ff0000"
+    background = "000000"
+
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", dummy_load_battery(ok))
+        batt = Battery(low_percentage=0.2, low_background=low_background, background=background)
+
+    fakebar = FakeBar([batt], window=fake_window)
+    batt._configure(fake_qtile, fakebar)
+
+    assert batt.background == background
+    batt._battery._status = low
+    batt.poll()
+    assert batt.background == low_background
+    batt._battery._status = ok
+    batt.poll()
+    assert batt.background == background
+
+
+def test_charge_control(fake_qtile, fake_window, monkeypatch):
+    start = 0
+    end = 100
+
+    def save_battery_percentage(self, charge_start_threshold, charge_end_threshold):
+        nonlocal start
+        nonlocal end
+
+        start = charge_start_threshold
+        end = charge_end_threshold
+
+    with monkeypatch.context() as manager:
+        manager.setattr(
+            battery._LinuxBattery, "set_battery_charge_thresholds", save_battery_percentage
+        )
+        batt = Battery(charge_controller=lambda: (5, 10))
+
+        fakebar = FakeBar([batt], window=fake_window)
+        batt._configure(fake_qtile, fakebar)
+        batt.poll()
+
+        assert start == 5
+        assert end == 10
+
+
+def test_charge_control_disabled(fake_qtile, fake_window, monkeypatch):
+    start = 4
+    end = 7
+
+    def save_battery_percentage(self, charge_start_threshold, charge_end_threshold):
+        raise "should not be called"
+
+    with monkeypatch.context() as manager:
+        manager.setattr(
+            battery._LinuxBattery, "set_battery_charge_thresholds", save_battery_percentage
+        )
+        batt = Battery(charge_controller=None)
+
+        fakebar = FakeBar([batt], window=fake_window)
+        batt._configure(fake_qtile, fakebar)
+        batt.poll()
+
+        assert start == 4
+        assert end == 7
+
+
+def test_charge_control_force_charge(fake_qtile, fake_window, monkeypatch):
+    start = 4
+    end = 7
+
+    def save_battery_percentage(self, charge_start_threshold, charge_end_threshold):
+        nonlocal start
+        nonlocal end
+
+        start = charge_start_threshold
+        end = charge_end_threshold
+
+    with monkeypatch.context() as manager:
+        manager.setattr(
+            battery._LinuxBattery, "set_battery_charge_thresholds", save_battery_percentage
+        )
+        batt = Battery(charge_controller=lambda: (0, 90), force_charge=True)
+
+        fakebar = FakeBar([batt], window=fake_window)
+        batt._configure(fake_qtile, fakebar)
+        batt.poll()
+
+        assert start == 0
+        assert end == 100

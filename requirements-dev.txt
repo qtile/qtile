@@ -1,7 +1,8 @@
-flake8
-flake8-isort
-flake8-tidy-imports
-mypy
-pep8-naming
+libcst
+dbus-next
 psutil
+coverage
 pytest-cov
+tox
+pre-commit
+PyGObject

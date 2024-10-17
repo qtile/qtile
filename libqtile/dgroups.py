@@ -28,17 +28,20 @@
 import collections
 
 import libqtile.hook
-from libqtile.command import lazy
+from libqtile.backend.base import Static
 from libqtile.config import Group, Key, Match, Rule
+from libqtile.lazy import lazy
 from libqtile.log_utils import logger
 
 
 def simple_key_binder(mod, keynames=None):
     """Bind keys to mod+group position or to the keys specified as second argument"""
+
     def func(dgroup):
         # unbind all
         for key in dgroup.keys[:]:
             dgroup.qtile.ungrab_key(key)
+            dgroup.qtile.config.keys.remove(key)
             dgroup.keys.remove(key)
 
         if keynames:
@@ -52,14 +55,9 @@ def simple_key_binder(mod, keynames=None):
             name = group.name
             key = Key([mod], keyname, lazy.group[name].toscreen())
             key_s = Key([mod, "shift"], keyname, lazy.window.togroup(name))
-            key_c = Key(
-                [mod, "control"],
-                keyname,
-                lazy.group.switch_groups(name)
-            )
-            dgroup.keys.append(key)
-            dgroup.keys.append(key_s)
-            dgroup.keys.append(key_c)
+            key_c = Key([mod, "control"], keyname, lazy.group.switch_groups(name))
+            dgroup.keys.extend([key, key_s, key_c])
+            dgroup.qtile.config.keys.extend([key, key_s, key_c])
             dgroup.qtile.grab_key(key)
             dgroup.qtile.grab_key(key_s)
             dgroup.qtile.grab_key(key_c)
@@ -69,6 +67,7 @@ def simple_key_binder(mod, keynames=None):
 
 class DGroups:
     """Dynamic Groups"""
+
     def __init__(self, qtile, dgroups, key_binder=None, delay=1):
         self.qtile = qtile
 
@@ -79,7 +78,7 @@ class DGroups:
         self.rules_map = {}
         self.last_rule_id = 0
 
-        for rule in getattr(qtile.config, 'dgroups_app_rules', []):
+        for rule in getattr(qtile.config, "dgroups_app_rules", []):
             self.add_rule(rule)
 
         self.keys = []
@@ -116,7 +115,13 @@ class DGroups:
         rule = Rule(group.matches, group=group.name)
         self.rules.append(rule)
         if start:
-            self.qtile.add_group(group.name, group.layout, group.layouts, group.label)
+            self.qtile.add_group(
+                group.name,
+                group.layout,
+                group.layouts,
+                group.label,
+                screen_affinity=group.screen_affinity,
+            )
 
     def _setup_groups(self):
         for group in self.groups:
@@ -128,7 +133,7 @@ class DGroups:
                 else:
                     spawns = group.spawn
                 for spawn in spawns:
-                    pid = self.qtile.cmd_spawn(spawn)
+                    pid = self.qtile.spawn(spawn)
                     self.add_rule(Rule(Match(net_wm_pid=pid), group.name))
 
     def _setup_hooks(self):
@@ -136,12 +141,8 @@ class DGroups:
         libqtile.hook.subscribe.client_new(self._add)
         libqtile.hook.subscribe.client_killed(self._del)
         if self.key_binder:
-            libqtile.hook.subscribe.setgroup(
-                lambda: self.key_binder(self)
-            )
-            libqtile.hook.subscribe.changegroup(
-                lambda: self.key_binder(self)
-            )
+            libqtile.hook.subscribe.setgroup(lambda: self.key_binder(self))
+            libqtile.hook.subscribe.changegroup(lambda: self.key_binder(self))
 
     def _addgroup(self, group_name):
         if group_name not in self.groups_map:
@@ -149,11 +150,11 @@ class DGroups:
 
     def _add(self, client):
         if client in self.timeout:
-            logger.info('Remove dgroup source')
+            logger.debug("Remove dgroup source")
             self.timeout.pop(client).cancel()
 
         # ignore static windows
-        if client.defunct:
+        if isinstance(client, Static):
             return
 
         # ignore windows whose groups is already set (e.g. from another hook or
@@ -185,7 +186,7 @@ class DGroups:
                     group = self.groups_map.get(rule.group)
                     if group and group_added:
                         for k, v in list(group.layout_opts.items()):
-                            if isinstance(v, collections.Callable):
+                            if isinstance(v, collections.abc.Callable):
                                 v(group_obj.layout)
                             else:
                                 setattr(group_obj.layout, k, v)
@@ -194,7 +195,7 @@ class DGroups:
                             self.qtile.screens[affinity].set_group(group_obj)
 
                 if rule.float:
-                    client.enablefloating()
+                    client.enable_floating()
 
                 if rule.intrusive:
                     intrusive = rule.intrusive
@@ -205,11 +206,12 @@ class DGroups:
         # If app doesn't have a group
         if not group_set:
             current_group = self.qtile.current_group.name
-            if current_group in self.groups_map and \
-                    self.groups_map[current_group].exclusive and \
-                    not intrusive:
-
-                wm_class = client.window.get_wm_class()
+            if (
+                current_group in self.groups_map
+                and self.groups_map[current_group].exclusive
+                and not intrusive
+            ):
+                wm_class = client.get_wm_class()
 
                 if wm_class:
                     if len(wm_class) > 1:
@@ -219,7 +221,7 @@ class DGroups:
 
                     group_name = wm_class
                 else:
-                    group_name = client.name or 'Unnamed'
+                    group_name = client.name or "Unnamed"
 
                 self.add_dgroup(Group(group_name, persist=False), start=True)
                 client.togroup(group_name)
@@ -233,19 +235,27 @@ class DGroups:
             libqtile.hook.fire("changegroup")
 
     def _del(self, client):
+        # ignore static windows
+        if isinstance(client, Static):
+            return
+
         group = client.group
 
         def delete_client():
             # Delete group if empty and don't persist
-            if group and group.name in self.groups_map and \
-                    not self.groups_map[group.name].persist and \
-                    len(group.windows) <= 0:
+            if (
+                group
+                and group.name in self.groups_map
+                and not self.groups_map[group.name].persist
+                and len(group.windows) <= 0
+            ):
                 self.qtile.delete_group(group.name)
                 self.sort_groups()
             del self.timeout[client]
 
-        # Wait the delay until really delete the group
-        logger.info('Add dgroup timer with delay {}s'.format(self.delay))
-        self.timeout[client] = self.qtile.call_later(
-            self.delay, delete_client
-        )
+        if group is not None and group.persist:
+            return
+
+        logger.debug("Deleting %s in %ss", group, self.delay)
+        if client not in self.timeout:
+            self.timeout[client] = self.qtile.call_later(self.delay, delete_client)

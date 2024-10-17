@@ -26,29 +26,38 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+import libqtile
+from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
+
+if TYPE_CHECKING:
+    from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
 
 
 class Zoomy(_SimpleLayoutBase):
     """A layout with single active windows, and few other previews at the right"""
+
     defaults = [
         ("columnwidth", 150, "Width of the right column"),
-        ("property_name", "ZOOM", "Property to set on zoomed window"),
-        ("property_small", "0.1", "Property value to set on zoomed window"),
-        ("property_big", "1.0", "Property value to set on normal window"),
+        ("property_name", "ZOOM", "Property to set on zoomed window (X11 only)"),
+        ("property_small", "0.1", "Property value to set on zoomed window (X11 only)"),
+        ("property_big", "1.0", "Property value to set on normal window (X11 only)"),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])"),
-        ("name", "zoomy", "Name of this layout."),
     ]
 
     def __init__(self, **config):
         _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(Zoomy.defaults)
 
-    def add(self, client):
+    def add_client(self, client: Window) -> None:  # type: ignore[override]
         self.clients.append_head(client)
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         left, right = screen_rect.hsplit(screen_rect.width - self.columnwidth)
         if client is self.clients.current_client:
             client.place(
@@ -91,23 +100,28 @@ class Zoomy(_SimpleLayoutBase):
         client.unhide()
 
     def focus(self, win):
-        if (self.clients.current_client and
-            self.property_name and
-            self.clients.current_client.window.get_property(
-                self.property_name, "UTF8_STRING") is not None):
+        if self.property_name and libqtile.qtile.core.name != "x11":
+            self.property_name = ""
 
+        if (
+            self.clients.current_client
+            and self.property_name
+            and self.clients.current_client.window.get_property(self.property_name, "UTF8_STRING")
+            is not None
+        ):
             self.clients.current_client.window.set_property(
-                self.property_name,
-                self.property_small,
-                "UTF8_STRING", format=8)
+                self.property_name, self.property_small, "UTF8_STRING", format=8
+            )
         _SimpleLayoutBase.focus(self, win)
         if self.property_name:
-            win.window.set_property(self.property_name,
-                                    self.property_big,
-                                    "UTF8_STRING", format=8)
+            win.window.set_property(
+                self.property_name, self.property_big, "UTF8_STRING", format=8
+            )
 
-    cmd_next = _SimpleLayoutBase.next
-    cmd_down = _SimpleLayoutBase.next
+    @expose_command("down")
+    def next(self) -> None:
+        _SimpleLayoutBase.next(self)
 
-    cmd_previous = _SimpleLayoutBase.previous
-    cmd_up = _SimpleLayoutBase.previous
+    @expose_command("up")
+    def previous(self) -> None:
+        _SimpleLayoutBase.previous(self)

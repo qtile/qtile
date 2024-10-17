@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Feature request
+    about: Propose any new features here on our ideas board
+    url: https://github.com/qtile/qtile/discussions/categories/ideas
+  - name: Question
+    about: Ask the community a question
+    url: https://github.com/qtile/qtile#community

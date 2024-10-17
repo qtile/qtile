@@ -30,7 +30,6 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
@@ -40,7 +39,7 @@ class StackConfig(Config):
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
         libqtile.config.Group("c"),
-        libqtile.config.Group("d")
+        libqtile.config.Group("d"),
     ]
     layouts = [
         layout.Stack(num_stacks=2),
@@ -53,8 +52,7 @@ class StackConfig(Config):
     follow_mouse_focus = False
 
 
-def stack_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [StackConfig], indirect=True)(x))
+stack_config = pytest.mark.parametrize("manager", [StackConfig], indirect=True)
 
 
 def _stacks(manager):
@@ -81,7 +79,7 @@ def test_stack_commands(manager):
 
     manager.c.layout.delete()
     assert _stacks(manager) == [["one", "three", "two"]]
-    info = manager.c.groups()["a"]
+    info = manager.c.get_groups()["a"]
     assert info["focus"] == "one"
     manager.c.layout.delete()
     assert len(_stacks(manager)) == 1
@@ -94,7 +92,7 @@ def test_stack_commands(manager):
 
 
 @stack_config
-def test_stack_cmd_down(manager):
+def test_stack_down(manager):
     manager.c.layout.down()
 
 
@@ -104,7 +102,7 @@ def test_stack_addremove(manager):
     manager.c.layout.next()
     two = manager.test_window("two")
     three = manager.test_window("three")
-    assert _stacks(manager) == [['one'], ['three', 'two']]
+    assert _stacks(manager) == [["one"], ["three", "two"]]
     assert manager.c.layout.info()["current_stack"] == 1
     manager.kill_window(three)
     assert manager.c.layout.info()["current_stack"] == 1
@@ -141,35 +139,35 @@ def test_stack_nextprev(manager):
     two = manager.test_window("two")
     three = manager.test_window("three")
 
-    assert manager.c.groups()["a"]["focus"] == "three"
+    assert manager.c.get_groups()["a"]["focus"] == "three"
     manager.c.layout.next()
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
 
     manager.c.layout.previous()
-    assert manager.c.groups()["a"]["focus"] == "three"
+    assert manager.c.get_groups()["a"]["focus"] == "three"
     manager.c.layout.previous()
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
 
     manager.c.layout.next()
     manager.c.layout.next()
     manager.c.layout.next()
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
 
     manager.kill_window(three)
     manager.c.layout.next()
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
     manager.c.layout.previous()
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
     manager.c.layout.next()
     manager.kill_window(two)
     manager.c.layout.next()
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
 
     manager.kill_window(one)
     manager.c.layout.next()
-    assert manager.c.groups()["a"]["focus"] is None
+    assert manager.c.get_groups()["a"]["focus"] is None
     manager.c.layout.previous()
-    assert manager.c.groups()["a"]["focus"] is None
+    assert manager.c.get_groups()["a"]["focus"] is None
 
 
 @stack_config
@@ -244,9 +242,9 @@ def test_stack_window_focus_cycle(manager):
     manager.test_window("three")
 
     # test preconditions, stack adds clients at pos of current
-    assert manager.c.layout.info()['clients'] == ['three', 'one', 'two']
+    assert manager.c.layout.info()["clients"] == ["three", "one", "two"]
     # last added window has focus
     assert_focused(manager, "three")
 
     # assert window focus cycle, according to order in layout
-    assert_focus_path(manager, 'one', 'two', 'float1', 'float2', 'three')
+    assert_focus_path(manager, "one", "two", "float1", "float2", "three")

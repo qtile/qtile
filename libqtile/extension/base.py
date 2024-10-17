@@ -1,4 +1,5 @@
 # Copyright (c) 2017 Dario Giovannetti
+# Copyright (c) 2021 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -17,26 +18,29 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
+import re
 import shlex
 from subprocess import PIPE, Popen
-from typing import Any, List, Tuple  # noqa: F401
+from typing import Any
 
 from libqtile import configurable
+from libqtile.log_utils import logger
+
+RGB = re.compile(r"^#?([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$")
 
 
 class _Extension(configurable.Configurable):
     """Base Extension class"""
 
-    installed_extensions = []  # type: List
+    installed_extensions = []  # type: list
 
     defaults = [
         ("font", "sans", "defines the font name to be used"),
         ("fontsize", None, "defines the font size to be used"),
-        ("background", None, "defines the normal background color"),
-        ("foreground", None, "defines the normal foreground color"),
-        ("selected_background", None, "defines the selected background color"),
-        ("selected_foreground", None, "defines the selected foreground color"),
+        ("background", None, "defines the normal background color (#RGB or #RRGGBB)"),
+        ("foreground", None, "defines the normal foreground color (#RGB or #RRGGBB)"),
+        ("selected_background", None, "defines the selected background color (#RGB or #RRGGBB)"),
+        ("selected_foreground", None, "defines the selected foreground color (#RGB or #RRGGBB)"),
     ]
 
     def __init__(self, **config):
@@ -44,8 +48,34 @@ class _Extension(configurable.Configurable):
         self.add_defaults(_Extension.defaults)
         _Extension.installed_extensions.append(self)
 
+    def _check_colors(self):
+        """
+        dmenu needs colours to be in #rgb or #rrggbb format.
+
+        Checks colour value, removes invalid values and adds # if missing.
+
+        NB This should not be called in _Extension.__init__ as _Extension.global_defaults
+        may not have been set at this point.
+        """
+        for c in ["background", "foreground", "selected_background", "selected_foreground"]:
+            col = getattr(self, c, None)
+            if col is None:
+                continue
+
+            if not isinstance(col, str) or not RGB.match(col):
+                logger.warning(
+                    "Invalid extension '%s' color: %s. Must be #RGB or #RRGGBB string.", c, col
+                )
+                setattr(self, c, None)
+                continue
+
+            if not col.startswith("#"):
+                col = f"#{col}"
+                setattr(self, c, col)
+
     def _configure(self, qtile):
         self.qtile = qtile
+        self._check_colors()
 
     def run(self):
         """
@@ -62,19 +92,21 @@ class RunCommand(_Extension):
     interact with the qtile object.
 
     Also consider simply using lazy.spawn() or writing a
-    `client <http://docs.qtile.org/en/latest/manual/commands/scripting.html>`_.
+    `client <https://docs.qtile.org/en/latest/manual/commands/advanced.html#client-server-scripting-model>`_.
     """
-    defaults = [
+
+    defaults: list[tuple[str, Any, str]] = [
         # NOTE: Do not use a list as a default value, since it would be shared
         #       among all the objects inheriting this class, and if one of them
         #       modified it, all the other objects would see the modified list;
         #       use a string or a tuple instead, which are immutable
         ("command", None, "the command to be launched (string or list with arguments)"),
-    ]  # type: List[Tuple[str, Any, str]]
+    ]
 
     def __init__(self, **config):
         _Extension.__init__(self, **config)
         self.add_defaults(RunCommand.defaults)
+        self.configured_command = None
 
     def run(self):
         """

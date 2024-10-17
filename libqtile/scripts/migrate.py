@@ -16,167 +16,270 @@
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-import filecmp
+from __future__ import annotations
+
+import argparse
 import os
 import os.path
 import shutil
 import sys
+from glob import glob
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+from libqtile.scripts.migrations import MIGRATIONS, load_migrations
+from libqtile.utils import get_config_file
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 BACKUP_SUFFIX = ".migrate.bak"
 
+
 try:
-    import bowler
+    import libcst
 except ImportError:
     pass
 
 
-def rename_hook(config, fro, to):
-    # could match on dotted_name< 'hook' '.' 'subscribe' '.' '{name}' >
-    # but the replacement gets more complicated...
-    selector = "'{name}'".format(name=fro)
-    q = bowler.Query(config).select_pattern(selector)
-    q.current.kwargs["name"] = fro
-    return q.rename(to)
+class AbortMigration(Exception):
+    pass
 
 
-def client_name_updated(config):
-    """ Rename window_name_change -> client_name_updated"""
-    return rename_hook(config, "window_name_change", "client_name_updated")
+class SkipFile(Exception):
+    pass
 
 
-def tile_master_windows_rename(config):
-    return (
-        bowler.Query(config)
-        .select_function("Tile")
-        .modify_argument("masterWindows", "master_length")
-    )
+def version_tuple(value: str) -> tuple[int, ...]:
+    try:
+        val = tuple(int(x) for x in value.split("."))
+        return val
+    except TypeError:
+        raise argparse.ArgumentTypeError("Cannot parse version string.")
 
 
-def threaded_poll_text_rename(config):
-    return (
-        bowler.Query(config)
-        .select_class("ThreadedPollText")
-        .rename("ThreadPoolText")
-    )
+def file_and_backup(config_dir: str) -> Iterator[tuple[str, str]]:
+    if os.path.isfile(config_dir):
+        config_dir = os.path.dirname(config_dir)
+    for py in glob(os.path.join(config_dir, "*.py")):
+        backup = py + BACKUP_SUFFIX
+        yield py, backup
 
 
-def pacman_to_checkupdates(config):
-    return (
-        bowler.Query(config)
-        .select_class("Pacman")
-        .rename("CheckUpdates")
-    )
-
-
-def hook_main_function(config):
-    def modify_main(node, capture, filename):
-        main = capture.get("function_def")
-        if main.prev_sibling:
-            for leaf in main.prev_sibling.leaves():
-                if "startup" == leaf.value:
-                    return
-        args = capture.get("function_arguments")
-        if args:
-            args[0].remove()
-            main.prefix += "from libqtile import hook, qtile\n"
-            main.prefix += "@hook.subscribe.startup\n"
-
-    return (
-        bowler.Query(config)
-        .select_function("main")
-        .is_def()
-        .modify(modify_main)
-    )
-
-
-# Deprecated new_at_current key replaced by new_client_position.
-# In the node, we want to change the key name
-# and adapts its value depending of the previous value :
-#   new_at_current=True => new_client_position=before_current
-#   new_at_current<>True => new_client_position=after_current
-def update_node_nac(node, capture, filename):
-    key = capture.get("k")
-    key.value = "new_client_position"
-    val = capture.get("v")
-    if val.value == "True":
-        val.value = "'before_current'"
-    else:
-        val.value = "'after_current'"
-
-
-def new_at_current_to_new_client_position(config):
-    old_pattern = """
-        argument< k="new_at_current" "=" v=any >
+class QtileMigrate:
     """
-    return (
-        bowler.Query(config)
-        .select(old_pattern)
-        .modify(update_node_nac)
-    )
+    May be overkill to use a class here but we can store state (i.e. args)
+    without needing to pass them around all the time.
+    """
 
+    def __call__(self, args: argparse.Namespace) -> None:
+        """
+        This is called by ArgParse when we run `qtile migrate`. The parsed options are
+        passed as an argument.
+        """
+        if "libcst" not in sys.modules:
+            print("libcst can't be found. Unable to migrate config file.")
+            print("Please install it and try again.")
+            sys.exit(1)
 
-MIGRATIONS = [
-    client_name_updated,
-    tile_master_windows_rename,
-    threaded_poll_text_rename,
-    pacman_to_checkupdates,
-    hook_main_function,
-    new_at_current_to_new_client_position,
-]
+        self.args = args
+        self.filter_migrations()
 
+        if self.args.list_migrations:
+            self.list_migrations()
+            return
+        elif self.args.info:
+            self.show_migration_info()
+            return
+        else:
+            self.run_migrations()
 
-MODULE_RENAMES = [
-    ("libqtile.command_graph", "libqtile.command.graph"),
-    ("libqtile.command_client", "libqtile.command.client"),
-    ("libqtile.command_interface", "libqtile.command.interface"),
-    ("libqtile.command_object", "libqtile.command.object"),
-]
+    def filter_migrations(self) -> None:
+        load_migrations()
+        if self.args.run_migrations:
+            self.migrations = [m for m in MIGRATIONS if m.ID in self.args.run_migrations]
+        elif self.args.after_version:
+            self.migrations = [m for m in MIGRATIONS if m.get_version() > self.args.after_version]
+        else:
+            self.migrations = MIGRATIONS
 
-for (fro, to) in MODULE_RENAMES:
-    def f(config, fro=fro, to=to):
-        return (
-            bowler.Query(config)
-            .select_module(fro)
-            .rename(to)
-        )
-    MIGRATIONS.append(f)
+        if not self.migrations:
+            sys.exit("No migrations found.")
 
+    def list_migrations(self) -> None:
+        width = max(len(m.ID) for m in self.migrations) + 4
 
-def do_migrate(args):
-    if "bowler" not in sys.modules:
-        print("bowler can't be found, not migrating config file")
-        print("install it and try again")
-        sys.exit(1)
+        ordered = sorted(self.migrations, key=lambda m: (m.get_version(), m.ID))
 
-    backup = args.config + BACKUP_SUFFIX
-    shutil.copyfile(args.config, backup)
+        print(f"ID{' ' * (width - 2)}{'After Version':<15}Summary")
+        for m in ordered:
+            summary = m.show_summary().replace("``", "'")
+            print(f"{m.ID:<{width}}{m.AFTER_VERSION:^15}{summary}")
 
-    for m in MIGRATIONS:
-        m(args.config).execute(interactive=args.interactive, write=True)
+    def show_migration_info(self) -> None:
+        migration_id = self.args.info
+        migration = [m for m in MIGRATIONS if m.ID == migration_id]
+        if not migration:
+            print(f"Unknown migration: {migration_id}")
+            sys.exit(1)
 
-    if filecmp.cmp(args.config, backup, shallow=False):
-        print("Config unchanged.")
-        os.remove(backup)
+        print(f"{migration_id}:")
+        print(migration[0].show_help())
+
+    def get_source(self, path: str) -> libcst.metadata.MetadataWrapper:
+        module = libcst.parse_module(Path(path).read_text())
+        return libcst.metadata.MetadataWrapper(module)
+
+    def lint(self, path: str) -> None:
+        print(f"{path}:")
+        source = self.get_source(path)
+        lint_lines = []
+
+        for m in self.migrations:
+            migrator = m()
+            migrator.migrate(source)
+            lint_lines.extend(migrator.show_lint())
+
+        lint_lines.sort()
+        print("\n".join(map(str, lint_lines)))
+
+    def migrate(self, path: str) -> bool:
+        source: libcst.metadata.MetadataWrapper | libcst.Module = self.get_source(path)
+        changed = False
+
+        for m in self.migrations:
+            migrator = m()
+            migrator.migrate(source)
+
+            diff = migrator.show_diff(self.args.no_colour)
+
+            if diff:
+                if self.args.show_diff or not self.args.yes:
+                    print(f"{m.ID}: {m.show_summary()}\n")
+                    print(f"{diff}\n")
+
+                if self.args.yes:
+                    assert migrator.updated is not None
+                    source = libcst.metadata.MetadataWrapper(migrator.updated)
+                    changed = True
+
+                else:
+                    while (
+                        a := input("Apply changes? (y)es, (n)o, (s)kip file, (q)uit. ").lower()
+                    ) not in ("y", "n", "s", "q"):
+                        print("Unexpected response. Try again.")
+
+                    if a == "y":
+                        assert migrator.updated is not None
+                        source = libcst.metadata.MetadataWrapper(migrator.updated)
+                        changed = True
+                    elif a == "n":
+                        assert migrator.original is not None
+                        source = migrator.original
+                    elif a == "s":
+                        raise SkipFile
+                    elif a == "q":
+                        raise AbortMigration
+
+        if not changed:
+            return False
+
+        if not self.args.yes:
+            while (save := input(f"Save all changes to {path}? (y)es, (n)o. ").lower()) not in (
+                "y",
+                "n",
+            ):
+                print("Unexpected response. Try again.")
+            do_save = save == "y"
+        else:
+            do_save = True
+
+        if do_save:
+            if isinstance(source, libcst.metadata.MetadataWrapper):
+                source = source.module
+            Path(f"{path}").write_text(source.code)
+            print("Saved!")
+            return True
+        else:
+            return False
+
+    def run_migrations(self) -> None:
+        backups = []
+        changed_files = []
+        aborted = False
+
+        for py, backup in file_and_backup(self.args.config):
+            if self.args.lint:
+                self.lint(py)
+                continue
+            else:
+                try:
+                    shutil.copyfile(py, backup)
+                    backups.append(backup)
+                    changed = self.migrate(py)
+                    if changed:
+                        changed_files.append(py)
+                except SkipFile:
+                    backups.remove(backup)
+                    continue
+                except AbortMigration:
+                    aborted = True
+                    break
+
+        if aborted:
+            print("Migration aborted. Reverting changes.")
+            for f in changed_files:
+                shutil.copyfile(f + BACKUP_SUFFIX, f)
+
+        elif backups:
+            print("Finished. Backup files have not been deleted.")
 
 
 def add_subcommand(subparsers, parents):
     parser = subparsers.add_parser(
-        "migrate",
-        parents=parents,
-        help="Migrate a configuration file to the current API"
+        "migrate", parents=parents, help="Migrate a configuration file to the current API."
     )
     parser.add_argument(
         "-c",
         "--config",
         action="store",
-        default=os.path.expanduser(
-            os.path.join(os.getenv("XDG_CONFIG_HOME", "~/.config"), "qtile", "config.py")
-        ),
-        help="Use the specified configuration file",
+        default=get_config_file(),
+        help="Use the specified configuration file (migrates every .py file in this directory).",
     )
     parser.add_argument(
-        "--interactive",
+        "--yes",
         action="store_true",
-        help="Interactively apply diff (similar to git add -p)",
+        help="Automatically apply diffs with no confirmation.",
     )
-    parser.set_defaults(func=do_migrate)
+    parser.add_argument(
+        "--show-diff", action="store_true", help="When used with --yes, will still output diff."
+    )
+    parser.add_argument(
+        "--lint", action="store_true", help="Providing linting output but don't update config."
+    )
+    parser.add_argument(
+        "--list-migrations", action="store_true", help="List available migrations."
+    )
+    parser.add_argument(
+        "--info",
+        metavar="ID",
+        help="Show detailed info for the migration with the given ID",
+    )
+    parser.add_argument(
+        "--after-version",
+        metavar="VERSION",
+        type=version_tuple,
+        help="Run migrations introduced after VERSION.",
+    )
+    parser.add_argument(
+        "-r",
+        "--run-migrations",
+        type=lambda value: value.split(","),
+        metavar="ID",
+        help="Run named migration[s]. Comma separated list for multiple migrations",
+    )
+    parser.add_argument(
+        "--no-colour", action="store_true", help="Do not use colour in diff output."
+    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity")
+    parser.set_defaults(func=QtileMigrate())

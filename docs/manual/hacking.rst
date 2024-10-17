@@ -7,27 +7,42 @@ Hacking on Qtile
 Requirements
 ============
 
-Any reasonably recent version of these should work, so you can probably just
-install them from your package manager.
+Here are Qtile's additional dependencies that may be required for tests:
 
-* `pytest <https://docs.pytest.org>`_
-* `Xephyr <https://freedesktop.org/wiki/Software/Xephyr/>`_
-* ``xrandr``, ``xcalc``, ``xeyes`` and ``xclock`` (``x11-apps`` on Ubuntu)
+================= =================== ==================================================
+Dependency        Ubuntu Package      Needed for
+================= =================== ==================================================
+pytest_           python3-pytest      Running tests
+pre-commit_       pre-commit          Running linters
+PyGObject         python3-gi          Running tests (test windows)
+Xephyr_           xserver-xephyr      Testing with X11 backend (optional, see below)
+mypy              python3-mypy        Testing ``qtile check`` (optional)
+imagemagick>=6.8  imagemagick         ``test/test_images*`` (optional)
+gtk-layer-shell   libgtk-layer-shell0 Testing notification windows in Wayland (optional)
+dbus-launch       dbus-x11            Testing dbus-using widgets (optional)
+notifiy-send      libnotify-bin       Testing ``Notify`` widget (optional)
+xvfb              xvfb                Testing with X11 headless (optional)
+================= =================== ==================================================
 
-On Ubuntu, if testing on Python 3, this can be done with:
+.. _pytest: https://docs.pytest.org
+.. _Xephyr: https://freedesktop.org/wiki/Software/Xephyr
+.. _pre-commit: https://pre-commit.com/
+
+
+Backends
+--------
+
+The test suite can be run using the X11 or Wayland backend, or both.  By
+default, only the X11 backend is used for tests. To test a single backend or
+both backends, specify as arguments to pytest:
 
 .. code-block:: bash
 
-    sudo apt-get install python3-pytest xserver-xephyr x11-apps
+    pytest --backend wayland  # Test just Wayland backend
+    pytest --backend x11 --backend wayland  # Test both
 
-On ArchLinux, the X11 requirements are installed with:
-
-.. code-block:: bash
-
-    sudo pacman -S xorg-xrandr xorg-xcalc xorg-xeyes xorg-xclock
-
-To build the documentation, you will also need to install `graphviz <https://www.graphviz.org/download/>`_.
-On ArchLinux, you can install it with ``sudo pacman -S graphviz``.
+Testing with the X11 backend requires Xephyr_ (and xvfb for headless mode) in addition to the core
+dependencies.
 
 
 Building cffi module
@@ -55,11 +70,24 @@ Deactivate it with the ``deactivate`` command.
 Building the documentation
 ==========================
 
+To build the documentation, you will also need to install `graphviz
+<https://www.graphviz.org/download/>`_.
+
 Go into the ``docs/`` directory and run ``pip install -r requirements.txt``.
 
 Build the documentation with ``make html``.
 
 Check the result by opening ``_build/html/index.html`` in your browser.
+
+.. note::
+
+  To speed up local testing, screenshots are not generated each time the documentation
+  is built.
+
+  You can enable screenshots by setting the ``QTILE_BUILD_SCREENSHOTS`` environmental
+  variable at build time e.g. ``QTILE_BUILD_SCREENSHOTS=1 make html``. You can also
+  export the variable so it will apply to all local builds ``export QTILE_BUILD_SCREENSHOTS=1``
+  (but remember to unset it if you want to skip building screenshots).
 
 Development and testing
 =======================
@@ -69,12 +97,12 @@ In practice, the development cycle looks something like this:
 1. make minor code change
 #. run appropriate test: ``pytest tests/test_module.py`` or ``pytest -k PATTERN``
 #. GOTO 1, until hackage is complete
-#. run entire test suite: ``pytest``
-#. commit
+#. run entire test suite to make sure you didn't break anything else: ``pytest``
+#. try to commit, get changes and feedback from the pre-commit hooks
+#. GOTO 5, until your changes actually get committed
 
-Of course, your patches should also pass the unit tests as well (i.e.
-``make check``). These will be run by ci on every pull request so you
-can see whether or not your contribution passes.
+Tests and pre-commit hooks will be run by our CI on every pull request
+as well so you can see whether or not your contribution passes.
 
 Coding style
 ============
@@ -82,18 +110,35 @@ Coding style
 While not all of our code follows `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_,
 we do try to adhere to it where possible. All new code should be PEP8 compliant.
 
-The ``make lint`` command will run a linter with our configuration over libqtile
-to ensure your patch complies with reasonable formatting constraints. We also
-request that git commit messages follow the
+The ``make lint`` command (or ``pre-commit run -a``) will run our linters and
+formatters with our configuration over the whole libqtile to ensure your patch
+complies with reasonable formatting constraints. We also request that git commit
+messages follow the
 `standard format <https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>`_.
 
-Deprecation policy
-==================
+Logging
+=======
 
-When a widget API is changed, you should deprecate the change using
-``libqtile.widget.base.deprecated`` to warn users, in addition to adding it to
-the appropriate place in the changelog. We will typically remove deprecated
-APIs one tag after they are deprecated.
+Logs are important to us because they are our best way to see what Qtile is
+doing when something abnormal happens. However, our goal is not to have as many
+logs as possible, as this hinders readability. What we want are relevant logs.
+
+To decide which log level to use, refer to the following scenarios:
+
+* ERROR: a problem affects the behavior of Qtile in a way that is noticeable to
+  the end user, and we can't work around it.
+* WARNING: a problem causes Qtile to operate in a suboptimal manner.
+* INFO: the state of Qtile has changed.
+* DEBUG: information is worth giving to help the developer better understand
+  which branch the process is in.
+
+Be careful not to overuse DEBUG and clutter the logs. No information should be
+duplicated between two messages.
+
+Also, keep in mind that any other level than DEBUG is aimed at users who don't
+necessarily have advanced programming knowledge; adapt your message
+accordingly. If it can't make sense to your grandma, it's probably meant to be
+a DEBUG message.
 
 Using Xephyr
 ============
@@ -244,69 +289,3 @@ Here are a number of resources that may come in handy:
 * `Inter-Client Conventions Manual <https://tronche.com/gui/x/icccm/>`_
 * `Extended Window Manager Hints <https://specifications.freedesktop.org/wm-spec/wm-spec-latest.html>`_
 * `A reasonable basic Xlib Manual <https://tronche.com/gui/x/xlib/>`_
-
-
-Troubleshoot
-============
-
-Cairo errors
-------------
-
-When running the Xephyr script (``./scripts/xephyr``), you might see tracebacks
-with attribute errors like the following or similar::
-
-    AttributeError: cffi library 'libcairo.so.2' has no function, constant or global variable named 'cairo_xcb_surface_create'
-
-If it happens, it might be because the ``cairocffi`` and ``xcffib`` dependencies
-were installed in the wrong order.
-
-To fix this:
-
-1. uninstall them from your environment: with ``pip uninstall cairocffi xcffib``
-   if using a virtualenv, or with your system package-manager if you installed
-   the development version of Qtile system-wide.
-#. re-install them sequentially (again, with pip or with your package-manager)::
-
-    pip install xcffib
-    pip install --no-cache-dir cairocffi
-
-See `this issue comment`_ for more information.
-
-.. _`this issue comment`: https://github.com/qtile/qtile/issues/994#issuecomment-497984551
-
-If you are using your system package-manager and the issue still happens,
-the packaging of ``cairocffi`` might be broken for your distribution.
-Try to contact the persons responsible for ``cairocffi``'s packaging
-on your distribution, or to install it from the sources with ``xcffib``
-available.
-
-Fonts errors
-------------
-
-When running the test suite or the Xephyr script (``./scripts/xephyr``),
-you might see errors in the output like the following or similar:
-
-* Xephyr script::
-
-    xterm: cannot load font "-Misc-Fixed-medium-R-*-*-13-120-75-75-C-120-ISO10646-1"
-    xterm: cannot load font "-misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1"
-
-* ``pytest``::
-
-    ---------- Captured stderr call ----------
-    Warning: Cannot convert string "8x13" to type FontStruct
-    Warning: Unable to load any usable ISO8859 font
-    Warning: Unable to load any usable ISO8859 font
-    Error: Aborting: no font found
-
-    -------- Captured stderr teardown --------
-    Qtile exited with exitcode: -9
-
-If it happens, it might be because you're missing fonts on your system.
-
-On ArchLinux, you can fix this by installing ``xorg-fonts-misc``::
-
-    sudo pacman -S xorg-fonts-misc
-
-Try to search for "xorg fonts misc" with your distribution name on the internet
-to find how to install them.

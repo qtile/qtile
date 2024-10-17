@@ -22,8 +22,8 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
-from test.layouts.layout_utils import assert_focus_path, assert_focused
+from test.helpers import HEIGHT, WIDTH
+from test.layouts.layout_utils import assert_dimensions, assert_focus_path, assert_focused
 
 
 class ColumnsConfig(Config):
@@ -32,10 +32,12 @@ class ColumnsConfig(Config):
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
         libqtile.config.Group("c"),
-        libqtile.config.Group("d")
+        libqtile.config.Group("d"),
     ]
     layouts = [
         layout.Columns(num_columns=3),
+        layout.Columns(margin_on_single=10),
+        layout.Columns(margin_on_single=[10, 20, 30, 40]),
     ]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
@@ -44,12 +46,37 @@ class ColumnsConfig(Config):
     follow_mouse_focus = False
 
 
-def columns_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [ColumnsConfig], indirect=True)(x))
+class ColumnsSingleBorderDisabledConfig(ColumnsConfig):
+    layouts = [layout.Columns(border_on_single=False, single_border_width=2, border_width=4)]
+
+
+class ColumnsSingleBorderEnabledConfig(ColumnsConfig):
+    layouts = [layout.Columns(border_on_single=True, single_border_width=2, border_width=4)]
+
+
+class ColumnsLeftAlign(ColumnsConfig):
+    layouts = [layout.Columns(align=layout.Columns._left, border_width=0)]
+
+
+class ColumnsInitialRatio(ColumnsConfig):
+    layouts = [
+        layout.Columns(initial_ratio=3, border_width=0),
+        layout.Columns(initial_ratio=3, align=layout.Columns._left, border_width=0),
+    ]
+
+
+columns_config = pytest.mark.parametrize("manager", [ColumnsConfig], indirect=True)
+columns_single_border_disabled_config = pytest.mark.parametrize(
+    "manager", [ColumnsSingleBorderDisabledConfig], indirect=True
+)
+columns_single_border_enabled_config = pytest.mark.parametrize(
+    "manager", [ColumnsSingleBorderEnabledConfig], indirect=True
+)
+columns_left_align = pytest.mark.parametrize("manager", [ColumnsLeftAlign], indirect=True)
+columns_initial_ratio = pytest.mark.parametrize("manager", [ColumnsInitialRatio], indirect=True)
+
 
 # This currently only tests the window focus cycle
-
-
 @columns_config
 def test_columns_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
@@ -63,15 +90,15 @@ def test_columns_window_focus_cycle(manager):
     manager.test_window("four")
 
     # test preconditions, columns adds clients at pos after current, in two stacks
-    columns = manager.c.layout.info()['columns']
-    assert columns[0]['clients'] == ['one']
-    assert columns[1]['clients'] == ['two']
-    assert columns[2]['clients'] == ['four', 'three']
+    columns = manager.c.layout.info()["columns"]
+    assert columns[0]["clients"] == ["one"]
+    assert columns[1]["clients"] == ["two"]
+    assert columns[2]["clients"] == ["four", "three"]
     # last added window has focus
     assert_focused(manager, "four")
 
     # assert window focus cycle, according to order in layout
-    assert_focus_path(manager, 'three', 'float1', 'float2', 'one', 'two', 'four')
+    assert_focus_path(manager, "three", "float1", "float2", "one", "two", "four")
 
 
 @columns_config
@@ -82,30 +109,30 @@ def test_columns_swap_column_left(manager):
     manager.test_window("4")
 
     # test preconditions
-    columns = manager.c.layout.info()['columns']
-    assert columns[0]['clients'] == ['1']
-    assert columns[1]['clients'] == ['2']
-    assert columns[2]['clients'] == ['4', '3']
+    columns = manager.c.layout.info()["columns"]
+    assert columns[0]["clients"] == ["1"]
+    assert columns[1]["clients"] == ["2"]
+    assert columns[2]["clients"] == ["4", "3"]
     assert_focused(manager, "4")
 
     # assert columns are swapped left
     manager.c.layout.swap_column_left()
-    columns = manager.c.layout.info()['columns']
-    assert columns[0]['clients'] == ['1']
-    assert columns[1]['clients'] == ['4', '3']
-    assert columns[2]['clients'] == ['2']
+    columns = manager.c.layout.info()["columns"]
+    assert columns[0]["clients"] == ["1"]
+    assert columns[1]["clients"] == ["4", "3"]
+    assert columns[2]["clients"] == ["2"]
 
     manager.c.layout.swap_column_left()
-    columns = manager.c.layout.info()['columns']
-    assert columns[0]['clients'] == ['4', '3']
-    assert columns[1]['clients'] == ['1']
-    assert columns[2]['clients'] == ['2']
+    columns = manager.c.layout.info()["columns"]
+    assert columns[0]["clients"] == ["4", "3"]
+    assert columns[1]["clients"] == ["1"]
+    assert columns[2]["clients"] == ["2"]
 
     manager.c.layout.swap_column_left()
-    columns = manager.c.layout.info()['columns']
-    assert columns[0]['clients'] == ['2']
-    assert columns[1]['clients'] == ['1']
-    assert columns[2]['clients'] == ['4', '3']
+    columns = manager.c.layout.info()["columns"]
+    assert columns[0]["clients"] == ["2"]
+    assert columns[1]["clients"] == ["1"]
+    assert columns[2]["clients"] == ["4", "3"]
 
 
 @columns_config
@@ -116,26 +143,156 @@ def test_columns_swap_column_right(manager):
     manager.test_window("4")
 
     # test preconditions
-    assert manager.c.layout.info()['columns'][0]['clients'] == ['1']
-    assert manager.c.layout.info()['columns'][1]['clients'] == ['2']
-    assert manager.c.layout.info()['columns'][2]['clients'] == ['4', '3']
+    assert manager.c.layout.info()["columns"][0]["clients"] == ["1"]
+    assert manager.c.layout.info()["columns"][1]["clients"] == ["2"]
+    assert manager.c.layout.info()["columns"][2]["clients"] == ["4", "3"]
     assert_focused(manager, "4")
 
     # assert columns are swapped right
     manager.c.layout.swap_column_right()
-    columns = manager.c.layout.info()['columns']
-    assert columns[0]['clients'] == ['4', '3']
-    assert columns[1]['clients'] == ['2']
-    assert columns[2]['clients'] == ['1']
+    columns = manager.c.layout.info()["columns"]
+    assert columns[0]["clients"] == ["4", "3"]
+    assert columns[1]["clients"] == ["2"]
+    assert columns[2]["clients"] == ["1"]
 
     manager.c.layout.swap_column_right()
-    columns = manager.c.layout.info()['columns']
-    assert columns[0]['clients'] == ['2']
-    assert columns[1]['clients'] == ['4', '3']
-    assert columns[2]['clients'] == ['1']
+    columns = manager.c.layout.info()["columns"]
+    assert columns[0]["clients"] == ["2"]
+    assert columns[1]["clients"] == ["4", "3"]
+    assert columns[2]["clients"] == ["1"]
 
     manager.c.layout.swap_column_right()
-    columns = manager.c.layout.info()['columns']
-    assert columns[0]['clients'] == ['2']
-    assert columns[1]['clients'] == ['1']
-    assert columns[2]['clients'] == ['4', '3']
+    columns = manager.c.layout.info()["columns"]
+    assert columns[0]["clients"] == ["2"]
+    assert columns[1]["clients"] == ["1"]
+    assert columns[2]["clients"] == ["4", "3"]
+
+
+@columns_config
+def test_columns_margins_single(manager):
+    manager.test_window("1")
+
+    # no margin
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == WIDTH
+    assert info["height"] == HEIGHT
+
+    # single margin for all sides
+    manager.c.next_layout()
+    info = manager.c.window.info()
+    assert info["x"] == 10
+    assert info["y"] == 10
+    assert info["width"] == WIDTH - 20
+    assert info["height"] == HEIGHT - 20
+
+    # one margin for each side (N E S W)
+    manager.c.next_layout()
+    info = manager.c.window.info()
+    assert info["x"] == 40
+    assert info["y"] == 10
+    assert info["width"] == WIDTH - 60
+    assert info["height"] == HEIGHT - 40
+
+
+@columns_single_border_disabled_config
+def test_columns_single_border_disabled(manager):
+    manager.test_window("1")
+    assert_dimensions(manager, 0, 0, WIDTH, HEIGHT)
+    manager.test_window("2")
+    assert_dimensions(manager, WIDTH / 2, 0, WIDTH / 2 - 8, HEIGHT - 8)
+
+
+@columns_single_border_enabled_config
+def test_columns_single_border_enabled(manager):
+    manager.test_window("1")
+    assert_dimensions(manager, 0, 0, WIDTH - 4, HEIGHT - 4)
+    manager.test_window("2")
+    assert_dimensions(manager, WIDTH / 2, 0, WIDTH / 2 - 8, HEIGHT - 8)
+
+
+@columns_left_align
+def test_columns_left_align(manager):
+    # window 1: fullscreen
+    manager.test_window("1")
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == WIDTH
+    assert info["height"] == HEIGHT
+
+    # window 2: left
+    manager.test_window("2")
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == WIDTH / 2
+    assert info["height"] == HEIGHT
+
+    # window 3: top left
+    manager.test_window("3")
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == WIDTH / 2
+    assert info["height"] == HEIGHT / 2
+
+
+@columns_initial_ratio
+def test_columns_initial_ratio_right(manager):
+    manager.test_window("1")
+    manager.test_window("2")
+
+    # initial_ratio is 3 (i.e. main column is 3 times size of secondary column)
+    # so secondary column is 1/4 of screen width
+    info = manager.c.window.info()
+    assert info["x"] == 3 * WIDTH / 4
+    assert info["y"] == 0
+    assert info["width"] == WIDTH / 4
+    assert info["height"] == HEIGHT
+
+    # Growing right means secondary column is now smaller
+    manager.c.layout.grow_right()
+    info = manager.c.window.info()
+    assert info["width"] < WIDTH / 4
+
+    # Reset to restore initial_ratio
+    manager.c.layout.reset()
+    info = manager.c.window.info()
+    assert info["width"] == WIDTH / 4
+
+    # Normalize to make columns equal
+    manager.c.layout.normalize()
+    info = manager.c.window.info()
+    assert info["width"] == WIDTH / 2
+
+
+@columns_initial_ratio
+def test_columns_initial_ratio_left(manager):
+    manager.c.next_layout()
+    manager.test_window("1")
+    manager.test_window("2")
+
+    # initial_ratio is 3 (i.e. main column is 3 times size of secondary column)
+    # so secondary column is 1/4 of screen width
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == WIDTH / 4
+    assert info["height"] == HEIGHT
+
+    # Growing right means secondary column is now smaller
+    manager.c.layout.grow_left()
+    info = manager.c.window.info()
+    assert info["width"] < WIDTH / 4
+
+    # Reset to restore initial_ratio
+    manager.c.layout.reset()
+    info = manager.c.window.info()
+    assert info["width"] == WIDTH / 4
+
+    # Normalize to make columns equal
+    manager.c.layout.normalize()
+    info = manager.c.window.info()
+    assert info["width"] == WIDTH / 2

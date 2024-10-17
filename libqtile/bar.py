@@ -18,19 +18,34 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Union
+from __future__ import annotations
 
-from libqtile import configurable, drawer, window
-from libqtile.command.base import CommandObject, ItemT
+import typing
+from collections import defaultdict
+
+from libqtile import configurable, hook
+from libqtile.command.base import CommandObject, expose_command
 from libqtile.log_utils import logger
+from libqtile.utils import has_transparency, is_valid_colors
+
+if typing.TYPE_CHECKING:
+    import asyncio
+    from typing import Any
+
+    from libqtile.backend.base import Drawer, Internal, WindowType
+    from libqtile.command.base import ItemT
+    from libqtile.config import Screen
+    from libqtile.core.manager import Qtile
+    from libqtile.utils import ColorsType
+    from libqtile.widget.base import _Widget
+
+NESW = ("top", "right", "bottom", "left")
 
 
-class Gap(CommandObject):
+class Gap:
     """A gap placed along one of the edges of the screen
 
-    If a gap has been defined, Qtile will avoid covering it with windows. The
-    most probable reason for configuring a gap is to make space for a
-    third-party bar or other static window.
+    Qtile will avoid covering gaps with windows.
 
     Parameters
     ==========
@@ -38,100 +53,110 @@ class Gap(CommandObject):
         The "thickness" of the gap, i.e. the height of a horizontal gap, or the
         width of a vertical gap.
     """
-    def __init__(self, size):
-        """
-        """
+
+    def __init__(self, size: int) -> None:
         # 'size' corresponds to the height of a horizontal gap, or the width
         # of a vertical gap
-        self.size = size
-        self.initial_size = size
-        # 'length' corresponds to the width of a horizontal gap, or the height
+        self._size = size
+        self._initial_size = size
+        # '_length' corresponds to the width of a horizontal gap, or the height
         # of a vertical gap
-        self.length = None
-        self.qtile = None
-        self.screen = None
-        self.x = None
-        self.y = None
-        self.width = None
-        self.height = None
-        self.horizontal = None
+        self._length: int = 0
+        self.qtile: Qtile | None = None
+        self.screen: Screen | None = None
+        self.x: int = 0
+        self.y: int = 0
+        self.width: int = 0
+        self.height: int = 0
+        self.horizontal: bool = False
 
-    def _configure(self, qtile, screen):
+        # Additional reserved around the gap/bar, used when space is dynamically
+        # reserved e.g. by third-party bars.
+        self.margin: list[int] = [0, 0, 0, 0]  # [N, E, S, W]
+
+    def _configure(self, qtile: Qtile, screen: Screen, reconfigure: bool = False) -> None:
         self.qtile = qtile
         self.screen = screen
+        self._size = self._initial_size
         # If both horizontal and vertical gaps are present, screen corners are
         # given to the horizontal ones
         if screen.top is self:
-            self.x = screen.x
-            self.y = screen.y
-            self.length = screen.width
-            self.width = self.length
-            self.height = self.initial_size
+            self.x = screen.x + self.margin[3]
+            self.y = screen.y + self.margin[0]
+            self._length = screen.width - self.margin[1] - self.margin[3]
+            self.width = self._length
+            self.height = self._initial_size
             self.horizontal = True
+            self._size += self.margin[0] + self.margin[2]
         elif screen.bottom is self:
-            self.x = screen.x
-            self.y = screen.dy + screen.dheight
-            self.length = screen.width
-            self.width = self.length
-            self.height = self.initial_size
+            self.x = screen.x + self.margin[3]
+            self.y = screen.dy + screen.dheight - self.margin[2]
+            self._length = screen.width - self.margin[1] - self.margin[3]
+            self.width = self._length
+            self.height = self._initial_size
             self.horizontal = True
+            self._size += self.margin[0] + self.margin[2]
         elif screen.left is self:
-            self.x = screen.x
-            self.y = screen.dy
-            self.length = screen.dheight
-            self.width = self.initial_size
-            self.height = self.length
+            self.x = screen.x + self.margin[3]
+            self.y = screen.dy + self.margin[0]
+            self._length = screen.dheight - self.margin[0] - self.margin[2]
+            self.width = self._initial_size
+            self.height = self._length
             self.horizontal = False
+            self._size += self.margin[1] + self.margin[3]
         else:  # right
-            self.x = screen.dx + screen.dwidth
-            self.y = screen.dy
-            self.length = screen.dheight
-            self.width = self.initial_size
-            self.height = self.length
+            self.x = screen.dx + screen.dwidth - self.margin[1]
+            self.y = screen.dy + self.margin[0]
+            self._length = screen.dheight - self.margin[0] - self.margin[2]
+            self.width = self._initial_size
+            self.height = self._length
             self.horizontal = False
+            self._size += self.margin[1] + self.margin[3]
 
-    def draw(self):
+    def draw(self) -> None:
         pass
 
-    def finalize(self):
+    def finalize(self) -> None:
         pass
 
-    def geometry(self):
+    def geometry(self) -> tuple[int, int, int, int]:
         return (self.x, self.y, self.width, self.height)
 
-    def _items(self, name: str) -> ItemT:
-        if name == "screen" and self.screen is not None:
-            return True, []
-        return None
-
-    def _select(self, name, sel):
-        if name == "screen":
-            return self.screen
+    @property
+    def size(self) -> int:
+        # Enforce immutability of gap.size/bar.size
+        return self._size
 
     @property
-    def position(self):
-        for i in ["top", "bottom", "left", "right"]:
+    def position(self) -> str:
+        for i in NESW:
             if getattr(self.screen, i) is self:
                 return i
+        assert False, "Not reached"
 
-    def info(self):
+    def adjust_reserved_space(self, size: int) -> None:
+        for i, side in enumerate(NESW):
+            if getattr(self.screen, side) is self:
+                self.margin[i] += size
+            if self.margin[i] < 0:
+                raise ValueError("Gap/Bar can't reserve negative space.")
+
+    @expose_command()
+    def info(self) -> dict[str, Any]:
+        """
+        Info for this object.
+        """
         return dict(position=self.position)
-
-    def cmd_info(self):
-        """
-            Info for this object.
-        """
-        return self.info()
 
 
 class Obj:
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         self.name = name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.name
 
 
@@ -140,7 +165,7 @@ CALCULATED = Obj("CALCULATED")
 STATIC = Obj("STATIC")
 
 
-class Bar(Gap, configurable.Configurable):
+class Bar(Gap, configurable.Configurable, CommandObject):
     """A bar, which can contain widgets
 
     Parameters
@@ -151,138 +176,293 @@ class Bar(Gap, configurable.Configurable):
         The "thickness" of the bar, i.e. the height of a horizontal bar, or the
         width of a vertical bar.
     """
+
     defaults = [
         ("background", "#000000", "Background colour."),
         ("opacity", 1, "Bar window opacity."),
         ("margin", 0, "Space around bar as int or list of ints [N E S W]."),
+        ("border_color", "#000000", "Border colour as str or list of str [N E S W]"),
+        ("border_width", 0, "Width of border as int of list of ints [N E S W]"),
+        (
+            "reserve",
+            True,
+            "Reserve screen space (when set to 'False', bar will be drawn above windows).",
+        ),
     ]
 
-    def __init__(self, widgets, size, **config):
+    def __init__(self, widgets: list[_Widget], size: int, **config: Any) -> None:
         Gap.__init__(self, size)
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(Bar.defaults)
-        self.widgets = widgets
-        self.saved_focus = None
-        self.cursor_in = None
-        self.window = None
-        self.size_calculated = 0
+        # We need to create a new widget list here as users may have the same list for multiple
+        # screens. In that scenario, if we replace the widget with a mirror, it replaces it in every
+        # bar as python is referring to the same list.
+        self.widgets = widgets.copy()
+        self.window: Internal | None = None
+        self.drawer: Drawer
+        self._configured = False
+        self._draw_queued = False
+        self.future: asyncio.Handle | None = None
 
-        self.queued_draws = 0
+        # The part of the margins that was reserved by clients
+        self._reserved_space: list[int] = [0, 0, 0, 0]  # [N, E, S, W]
+        self._reserved_space_updated = False
 
-    def _configure(self, qtile, screen):
-        Gap._configure(self, qtile, screen)
+        # Size saved when hiding the bar
+        self._saved_size = 0
 
-        if self.margin:
-            if isinstance(self.margin, int):
-                self.margin = [self.margin] * 4
-            if self.horizontal:
-                self.x += self.margin[3]
-                self.width -= self.margin[1] + self.margin[3]
-                self.length = self.width
-                if self.size == self.initial_size:
-                    self.size += self.margin[0] + self.margin[2]
-                if self.screen.top is self:
-                    self.y += self.margin[0]
+        # Previous window when the bar grabs the keyboard
+        self._saved_focus: WindowType | None = None
+
+        # Track widgets that are receiving input
+        self._has_cursor: _Widget | None = None
+        self._has_keyboard: _Widget | None = None
+
+        # Because Gap.__init__ also sets self.margin
+        self.margin = config.get("margin", self.margin)
+
+        # Hacky solution that shows limitations of typing Configurable. We want the
+        # option to accept `int | list[int]` but the attribute to be `list[int]`.
+        self.margin: list[int]
+        if isinstance(self.margin, int):  # type: ignore [unreachable]
+            self.margin = [self.margin] * 4  # type: ignore [unreachable]
+
+        self.border_width: list[int]
+        if isinstance(self.border_width, int):  # type: ignore [unreachable]
+            self.border_width = [self.border_width] * 4  # type: ignore [unreachable]
+
+        self.border_color: ColorsType
+
+        # Check if colours are valid but don't convert to rgba here
+        if is_valid_colors(self.border_color):
+            if not isinstance(self.border_color, list):
+                self.border_color = [self.border_color] * 4
+        else:
+            logger.warning("Invalid border_color specified. Borders will not be displayed.")
+            self.border_width = [0, 0, 0, 0]
+
+    def _configure(self, qtile: Qtile, screen: Screen, reconfigure: bool = False) -> None:
+        """
+        Configure the bar. `reconfigure` is set to True when screen dimensions
+        change, forcing a recalculation of the bar's dimensions.
+        """
+        # We only want to adjust margin sizes once unless there's new space being
+        # reserved or we're reconfiguring the bar because the screen has changed
+        if not self._configured or self._reserved_space_updated or reconfigure:
+            Gap._configure(self, qtile, screen)
+
+            if any(self.margin) or any(self.border_width) or self._reserved_space_updated:
+                # Increase the margin size for the border. The border will be drawn
+                # in this space so the empty space will just be the margin.
+                margin = [b + s for b, s in zip(self.border_width, self._reserved_space)]
+
+                if self.horizontal:
+                    self.x += margin[3] - self.border_width[3]
+                    self.width -= margin[1] + margin[3]
+                    self._length = self.width
+                    self._size += margin[0] + margin[2]
+                    if screen.top is self:
+                        self.y += margin[0] - self.border_width[0]
+                    else:
+                        self.y -= margin[2] + self.border_width[2]
+
                 else:
-                    self.y -= self.margin[2]
-            else:
-                self.y += self.margin[0]
-                self.height -= self.margin[0] + self.margin[2]
-                self.length = self.height
-                self.size += self.margin[1] + self.margin[3]
-                if self.screen.left is self:
-                    self.x += self.margin[3]
-                else:
-                    self.x -= self.margin[1]
+                    self.y += margin[0] - self.border_width[0]
+                    self.height -= margin[0] + margin[2]
+                    self._length = self.height
+                    self._size += margin[1] + margin[3]
+                    if screen.left is self:
+                        self.x += margin[3] - self.border_width[3]
+                    else:
+                        self.x -= margin[1] + self.border_width[1]
 
-        for w in self.widgets:
-            # Executing _test_orientation_compatibility later, for example in
-            # the _configure() method of each widget, would still pass
-            # test/test_bar.py but a segfault would be raised when nosetests is
-            # about to exit
-            w._test_orientation_compatibility(self.horizontal)
+            if screen.bottom is self and not self.reserve:
+                self.y -= self.height + self.margin[2]
+            elif screen.right is self and not self.reserve:
+                self.x -= self.width + self.margin[1]
+
+            self._reserved_space_updated = False
+
+        width = self.width + (self.border_width[1] + self.border_width[3])
+        height = self.height + (self.border_width[0] + self.border_width[2])
 
         if self.window:
-            self.window.place(self.x, self.y, self.width, self.height, 0, None)
-            self.crashed_widgets = []
-            for i in self.widgets:
-                self._configure_widget(i)
-
-            self._remove_crashed_widgets()
+            # We get _configure()-ed with an existing window when screens are getting
+            # reconfigured but this screen is present both before and after
+            self.window.place(self.x, self.y, width, height, 0, None)
 
         else:
-            self.window = window.Internal.create(
-                self.qtile,
-                self.x, self.y, self.width, self.height,
-                self.opacity
-            )
+            # Whereas we won't have a window if we're startup up for the first time or
+            # the window has been killed by us no longer using the bar's screen
 
-            self.drawer = drawer.Drawer(
-                self.qtile,
-                self.window.window.wid,
-                self.width,
-                self.height
-            )
-            self.drawer.clear(self.background)
+            # X11 only:
+            # To preserve correct display of SysTray widget, we need a 24-bit
+            # window where the user requests an opaque bar.
+            if qtile.core.name == "x11":
+                depth = (
+                    32
+                    if has_transparency(self.background)
+                    else qtile.core.conn.default_screen.root_depth
+                )
 
-            self.window.handle_Expose = self.handle_Expose
-            self.window.handle_ButtonPress = self.handle_ButtonPress
-            self.window.handle_ButtonRelease = self.handle_ButtonRelease
-            self.window.handle_EnterNotify = self.handle_EnterNotify
-            self.window.handle_LeaveNotify = self.handle_LeaveNotify
-            self.window.handle_MotionNotify = self.handle_MotionNotify
-            qtile.windows_map[self.window.window.wid] = self.window
+                self.window = qtile.core.create_internal(  # type: ignore [call-arg]
+                    self.x, self.y, width, height, depth
+                )
+
+            else:
+                self.window = qtile.core.create_internal(self.x, self.y, width, height)
+
+            self.window.opacity = self.opacity
             self.window.unhide()
 
-            self.crashed_widgets = []
+            self.window.process_window_expose = self.draw
+            self.window.process_button_click = self.process_button_click
+            self.window.process_button_release = self.process_button_release
+            self.window.process_pointer_enter = self.process_pointer_enter
+            self.window.process_pointer_leave = self.process_pointer_leave
+            self.window.process_pointer_motion = self.process_pointer_motion
+            self.window.process_key_press = self.process_key_press
+
+        if hasattr(self, "drawer"):
+            self.drawer.width = width
+            self.drawer.height = height
+        else:
+            self.drawer = self.window.create_drawer(width, height)
+        self.drawer.clear(self.background)
+
+        crashed_widgets: set[_Widget] = set()
+        qtile.renamed_widgets = []
+        if self._configured:
+            for i in self.widgets:
+                if not self._configure_widget(i):
+                    crashed_widgets.add(i)
+        else:
             for idx, i in enumerate(self.widgets):
-                if i.configured:
+                # Create a mirror if this widget is already configured but isn't a Mirror
+                # We don't do isinstance(i, Mirror) because importing Mirror (at the top)
+                # would give a circular import as libqtile.widget.base imports lbqtile.bar
+                if i.configured and i.__class__.__name__ != "Mirror":
                     i = i.create_mirror()
                     self.widgets[idx] = i
-                success = self._configure_widget(i)
-                if success:
+                if self._configure_widget(i):
                     qtile.register_widget(i)
+                else:
+                    crashed_widgets.add(i)
 
-            self._remove_crashed_widgets()
+        # Alert the user that we've renamed some widgets
+        if qtile.renamed_widgets:
+            logger.info(
+                "The following widgets were renamed in qtile.widgets_map: %s "
+                "To bind commands, rename the widget or use lazy.widget[new_name].",
+                ", ".join(qtile.renamed_widgets),
+            )
+            qtile.renamed_widgets.clear()
 
-        self._resize(self.length, self.widgets)
+        hook.subscribe.setgroup(self.set_layer)
+        hook.subscribe.startup_complete(self.set_layer)
 
-    def _configure_widget(self, widget):
-        configured = True
+        self._remove_crashed_widgets(crashed_widgets)
+        self.draw()
+        self._resize(self._length, self.widgets)
+        self._configured = True
+
+    def _configure_widget(self, widget: _Widget) -> bool:
+        assert self.qtile is not None
+
+        if widget.supported_backends and (self.qtile.core.name not in widget.supported_backends):
+            logger.warning(
+                "Widget removed: %s does not support %s.",
+                widget.__class__.__name__,
+                self.qtile.core.name,
+            )
+            return False
+
         try:
             widget._configure(self.qtile, self)
-        except Exception as e:
-            logger.error(
-                "{} widget crashed during _configure with "
-                "error: {}".format(widget.__class__.__name__, repr(e))
+
+            if self.horizontal:
+                widget.offsety = self.border_width[0]
+            else:
+                widget.offsetx = self.border_width[3]
+
+            widget.configured = True
+        except Exception:
+            logger.exception(
+                "%s widget crashed during _configure with error:", widget.__class__.__name__
             )
-            self.crashed_widgets.append(widget)
-            configured = False
+            return False
 
-        return configured
+        return True
 
-    def _remove_crashed_widgets(self):
-        if self.crashed_widgets:
-            from libqtile.widget.config_error import ConfigErrorWidget
+    def _remove_crashed_widgets(self, crashed_widgets: set[_Widget]) -> None:
+        if not crashed_widgets:
+            return
 
-        for i in self.crashed_widgets:
+        assert self.qtile is not None
+        from libqtile.widget.config_error import ConfigErrorWidget
+
+        for i in crashed_widgets:
             index = self.widgets.index(i)
-            crash = ConfigErrorWidget(widget=i)
-            crash._configure(self.qtile, self)
-            self.widgets.insert(index, crash)
+
+            # Widgets that aren't available on the current backend should not
+            # be shown as "crashed" as the behaviour is expected. Only notify
+            # for genuine crashes.
+            if not i.supported_backends or (self.qtile.core.name in i.supported_backends):
+                crash = ConfigErrorWidget(widget=i)
+                crash._configure(self.qtile, self)
+                if self.horizontal:
+                    crash.offsety = self.border_width[0]
+                else:
+                    crash.offsetx = self.border_width[3]
+                self.widgets.insert(index, crash)
+
             self.widgets.remove(i)
 
-    def finalize(self):
-        self.drawer.finalize()
+    def _items(self, name: str) -> ItemT:
+        if name == "screen" and self.screen is not None:
+            return True, []
+        elif name == "widget" and self.widgets:
+            return False, [w.name for w in self.widgets]
+        return None
 
-    def _resize(self, length, widgets):
-        stretches = [i for i in widgets if i.length_type == STRETCH]
+    def _select(self, name: str, sel: str | int | None) -> CommandObject | None:
+        if name == "screen":
+            return self.screen
+        elif name == "widget":
+            for widget in self.widgets:
+                if widget.name == sel:
+                    return widget
+        return None
+
+    def finalize(self) -> None:
+        if self.future:
+            self.future.cancel()
+        self.drawer.finalize()
+        if self.window:
+            self.window.kill()
+            self.window = None
+        self.widgets.clear()
+
+    def _resize(self, length: int, widgets: list[_Widget]) -> None:
+        # We want consecutive stretch widgets to split one 'block' of space between them
+        stretches = []
+        consecutive_stretches: defaultdict[_Widget, list[_Widget]] = defaultdict(list)
+        prev_stretch: _Widget | None = None
+        for widget in widgets:
+            if widget.length_type == STRETCH:
+                if prev_stretch:
+                    consecutive_stretches[prev_stretch].append(widget)
+                else:
+                    stretches.append(widget)
+                    prev_stretch = widget
+            else:
+                prev_stretch = None
+
         if stretches:
-            stretchspace = length - sum(
-                [i.length for i in widgets if i.length_type != STRETCH]
-            )
+            stretchspace = length - sum(i.length for i in widgets if i.length_type != STRETCH)
             stretchspace = max(stretchspace, 0)
             num_stretches = len(stretches)
+
             if num_stretches == 1:
                 stretches[0].length = stretchspace
             else:
@@ -291,12 +471,13 @@ class Bar(Gap, configurable.Configurable):
                 for i in widgets:
                     if i.length_type != STRETCH:
                         block += i.length
-                    else:
+                    elif i in stretches:  # False for consecutive_stretches
                         blocks.append(block)
                         block = 0
                 if block:
                     blocks.append(block)
                 interval = length // num_stretches
+
                 for idx, i in enumerate(stretches):
                     if idx == 0:
                         i.length = interval - blocks[0] - blocks[1] // 2
@@ -305,174 +486,285 @@ class Bar(Gap, configurable.Configurable):
                     else:
                         i.length = int(interval - blocks[idx] / 2 - blocks[idx + 1] / 2)
                     stretchspace -= i.length
+
                 stretches[0].length += stretchspace // 2
                 stretches[-1].length += stretchspace - stretchspace // 2
 
-        offset = 0
+            for i, followers in consecutive_stretches.items():
+                length = i.length // (len(followers) + 1)
+                rem = i.length - length
+                i.length = length
+                for f in followers:
+                    f.length = length
+                    rem -= length
+                i.length += rem
+
         if self.horizontal:
+            offset = self.border_width[3]
             for i in widgets:
                 i.offsetx = offset
-                i.offsety = 0
                 offset += i.length
         else:
+            offset = self.border_width[0]
             for i in widgets:
-                i.offsetx = 0
                 i.offsety = offset
                 offset += i.length
 
-    def handle_Expose(self, e):  # noqa: N802
-        self.draw()
-
-    def get_widget_in_position(self, e):
+    def get_widget_in_position(self, x: int, y: int) -> _Widget | None:
         if self.horizontal:
             for i in self.widgets:
-                if e.event_x < i.offsetx + i.length:
+                if x < i.offsetx + i.length:
                     return i
         else:
             for i in self.widgets:
-                if e.event_y < i.offsety + i.length:
+                if y < i.offsety + i.length:
                     return i
+        return None
 
-    def handle_ButtonPress(self, e):  # noqa: N802
-        widget = self.get_widget_in_position(e)
+    def process_button_click(self, x: int, y: int, button: int) -> None:
+        assert self.qtile is not None
+
+        # If we're clicking on a bar that's not on the current screen, focus that screen
+        if self.screen and self.screen is not self.qtile.current_screen:
+            if self.qtile.core.name == "x11" and self.qtile.current_window:
+                self.qtile.current_window._grab_click()
+            index = self.qtile.screens.index(self.screen)
+            self.qtile.focus_screen(index, warp=False)
+
+        widget = self.get_widget_in_position(x, y)
         if widget:
             widget.button_press(
-                e.event_x - widget.offsetx,
-                e.event_y - widget.offsety,
-                e.detail
+                x - widget.offsetx,
+                y - widget.offsety,
+                button,
             )
 
-    def handle_ButtonRelease(self, e):  # noqa: N802
-        widget = self.get_widget_in_position(e)
+    def process_button_release(self, x: int, y: int, button: int) -> None:
+        widget = self.get_widget_in_position(x, y)
         if widget:
             widget.button_release(
-                e.event_x - widget.offsetx,
-                e.event_y - widget.offsety,
-                e.detail
+                x - widget.offsetx,
+                y - widget.offsety,
+                button,
             )
 
-    def handle_EnterNotify(self, e):  # noqa: N802
-        widget = self.get_widget_in_position(e)
+    def process_pointer_enter(self, x: int, y: int) -> None:
+        widget = self.get_widget_in_position(x, y)
         if widget:
             widget.mouse_enter(
-                e.event_x - widget.offsetx,
-                e.event_y - widget.offsety,
+                x - widget.offsetx,
+                y - widget.offsety,
             )
-        self.cursor_in = widget
+        self._has_cursor = widget
 
-    def handle_LeaveNotify(self, e):  # noqa: N802
-        if self.cursor_in:
-            self.cursor_in.mouse_leave(
-                e.event_x - self.cursor_in.offsetx,
-                e.event_y - self.cursor_in.offsety,
+    def process_pointer_leave(self, x: int, y: int) -> None:
+        if self._has_cursor:
+            self._has_cursor.mouse_leave(
+                x - self._has_cursor.offsetx,
+                y - self._has_cursor.offsety,
             )
-            self.cursor_in = None
+            self._has_cursor = None
 
-    def handle_MotionNotify(self, e):  # noqa: N802
-        widget = self.get_widget_in_position(e)
-        if widget and self.cursor_in and widget is not self.cursor_in:
-            self.cursor_in.mouse_leave(
-                e.event_x - self.cursor_in.offsetx,
-                e.event_y - self.cursor_in.offsety,
+    def process_pointer_motion(self, x: int, y: int) -> None:
+        widget = self.get_widget_in_position(x, y)
+        if widget and self._has_cursor and widget is not self._has_cursor:
+            self._has_cursor.mouse_leave(
+                x - self._has_cursor.offsetx,
+                y - self._has_cursor.offsety,
             )
             widget.mouse_enter(
-                e.event_x - widget.offsetx,
-                e.event_y - widget.offsety,
+                x - widget.offsetx,
+                y - widget.offsety,
             )
-        self.cursor_in = widget
+        self._has_cursor = widget
 
-    def widget_grab_keyboard(self, widget):
-        """
-            A widget can call this method to grab the keyboard focus
-            and receive keyboard messages. When done,
-            widget_ungrab_keyboard() must be called.
-        """
-        self.window.handle_KeyPress = widget.handle_KeyPress
-        self.saved_focus = self.qtile.current_window
-        self.window.window.set_input_focus()
+    def process_key_press(self, keycode: int) -> None:
+        if self._has_keyboard:
+            self._has_keyboard.process_key_press(keycode)
 
-    def widget_ungrab_keyboard(self):
+    def widget_grab_keyboard(self, widget: _Widget) -> None:
         """
-            Removes the widget's keyboard handler.
+        A widget can call this method to grab the keyboard focus
+        and receive keyboard messages. When done,
+        widget_ungrab_keyboard() must be called.
         """
-        del self.window.handle_KeyPress
-        if self.saved_focus is not None:
-            self.saved_focus.window.set_input_focus()
+        assert self.qtile is not None
 
-    def draw(self):
+        self._has_keyboard = widget
+        self._saved_focus = self.qtile.current_window
+        if self.window:
+            self.window.focus(False)
+
+    def widget_ungrab_keyboard(self) -> None:
+        """
+        Removes keyboard focus from the widget.
+        """
+        if self._saved_focus is not None:
+            self._saved_focus.focus(False)
+        self._has_keyboard = None
+
+    def draw(self) -> None:
+        assert self.qtile is not None
+
         if not self.widgets:
             return  # calling self._actual_draw in this case would cause a NameError.
-        if self.queued_draws == 0:
-            self.qtile.call_soon(self._actual_draw)
-        self.queued_draws += 1
+        if not self._draw_queued:
+            # Delay actually drawing the bar until the event loop is idle, and only once
+            # even if this method is called multiple times during the same task.
+            self.future = self.qtile.call_soon(self._actual_draw)
+            self._draw_queued = True
 
-    def _actual_draw(self):
-        self.queued_draws = 0
-        self._resize(self.length, self.widgets)
+    def _actual_draw(self) -> None:
+        self._draw_queued = False
+        self._resize(self._length, self.widgets)
+        # We draw the border before the widgets
+        if any(self.border_width):
+            # The border is drawn "outside" of the bar (i.e. not in the space that the
+            # widgets occupy) so we need to add the additional space
+            width = self.width + self.border_width[1] + self.border_width[3]
+            height = self.height + self.border_width[0] + self.border_width[2]
+
+            # line_opts is a list of tuples where each tuple represents the borders
+            # in the order N, E, S, W. The border tuple contains two pairs of
+            # co-ordinates for the start and end of the border.
+            rects = [
+                (0, 0, width, self.border_width[0]),
+                (
+                    width - (self.border_width[1]),
+                    self.border_width[0],
+                    self.border_width[1],
+                    height - self.border_width[0] - self.border_width[2],
+                ),
+                (0, height - self.border_width[2], width, self.border_width[2]),
+                (
+                    0,
+                    self.border_width[0],
+                    self.border_width[3],
+                    height - self.border_width[0] - self.border_width[2],
+                ),
+            ]
+
+            for border_width, colour, rect in zip(self.border_width, self.border_color, rects):
+                if not border_width:
+                    continue
+
+                # Draw the border
+                self.drawer.clear_rect(*rect)
+                self.drawer.ctx.rectangle(*rect)
+                self.drawer.set_source_rgb(colour)  # type: ignore[arg-type]
+                self.drawer.ctx.fill()
+                src_x, src_y, width, height = rect
+
+                self.drawer.draw(
+                    offsetx=src_x,
+                    offsety=src_y,
+                    width=width,
+                    height=height,
+                    src_x=src_x,
+                    src_y=src_y,
+                )
+
         for i in self.widgets:
             i.draw()
-        end = i.offset + i.length  # pylint: disable=undefined-loop-variable
-        # we verified that self.widgets is not empty in self.draw(), see above.
-        if end < self.length:
-            if self.horizontal:
-                self.drawer.draw(offsetx=end, width=self.length - end)
-            else:
-                self.drawer.draw(offsety=end, height=self.length - end)
 
-    def info(self):
+        # We need to check if there is any unoccupied space in the bar
+        # This can happen where there are no SPACER-type widgets to fill
+        # empty space.
+        # In that scenario, we fill the empty space with the bar background colour
+        # We do this, instead of just filling the bar completely at the start of this
+        # method to avoid flickering.
+
+        # Widgets are offset by the top/left border but this is not included in self._length
+        # so we adjust the end of the bar area for this offset
+        if self.horizontal:
+            bar_end = self._length + self.border_width[3]
+        else:
+            bar_end = self._length + self.border_width[0]
+
+        widget_end = i.offset + i.length
+
+        if widget_end < bar_end:
+            # Defines a rectangle for the area enclosed by the bar's borders and the end of the
+            # last widget.
+            if self.horizontal:
+                rect = (widget_end, self.border_width[0], bar_end - widget_end, self.height)
+            else:
+                rect = (self.border_width[3], widget_end, self.width, bar_end - widget_end)
+
+            # Clear that area (i.e. don't clear borders) and fill with background colour
+            self.drawer.clear_rect(*rect)
+            self.drawer.ctx.rectangle(*rect)
+            self.drawer.set_source_rgb(self.background)
+            self.drawer.ctx.fill()
+            x, y, w, h = rect
+            self.drawer.draw(offsetx=x, offsety=y, height=h, width=w, src_x=x, src_y=y)
+
+    @expose_command()
+    def info(self) -> dict[str, Any]:
         return dict(
-            size=self.size,
-            length=self.length,
+            size=self._size,
+            length=self._length,
             width=self.width,
             height=self.height,
             position=self.position,
             widgets=[i.info() for i in self.widgets],
-            window=self.window.window.wid
+            window=self.window.wid if self.window else None,
         )
 
-    def is_show(self):
-        return self.size != 0
+    def is_show(self) -> bool:
+        return self._size != 0
 
-    def show(self, is_show=True):
+    def show(self, is_show: bool = True) -> None:
         if is_show != self.is_show():
             if is_show:
-                self.size = self.size_calculated
-                self.window.unhide()
+                self._size = self._saved_size
+                if self.window:
+                    self.window.unhide()
             else:
-                self.size_calculated = self.size
-                self.size = 0
-                self.window.hide()
-            self.screen.group.layout_all()
+                self._saved_size = self._size
+                self._size = 0
+                if self.window:
+                    self.window.hide()
+            if self.screen and self.screen.group:
+                self.screen.group.layout_all()
 
-    def adjust_for_strut(self, size):
-        if self.size:
-            self.size = self.initial_size
-        if not self.margin:
-            self.margin = [0, 0, 0, 0]
-        if self.screen.top is self:
-            self.margin[0] += size
-        elif self.screen.bottom is self:
-            self.margin[2] += size
-        elif self.screen.left is self:
-            self.margin[3] += size
-        else:  # right
-            self.margin[1] += size
+    def adjust_reserved_space(self, size: int) -> None:
+        if self._size:
+            # is this necessary?
+            self._size = self._initial_size
 
-    def cmd_fake_button_press(self, screen, position, x, y, button=1):
+        for i, side in enumerate(NESW):
+            if getattr(self.screen, side) is self:
+                self._reserved_space[i] += size
+            if self._reserved_space[i] < 0:
+                raise ValueError("Gap/Bar can't reserve negative space.")
+
+        self._reserved_space_updated = True
+
+    @expose_command()
+    def fake_button_press(self, x: int, y: int, button: int = 1) -> None:
         """
-            Fake a mouse-button-press on the bar. Co-ordinates are relative
-            to the top-left corner of the bar.
+        Fake a mouse-button-press on the bar. Coordinates are relative
+        to the top-left corner of the bar.
 
-            :screen The integer screen offset
-            :position One of "top", "bottom", "left", or "right"
+        Parameters
+        ==========
+        x :
+            X coordinate of the mouse button press.
+        y :
+            Y coordinate of the mouse button press.
+        button:
+            Mouse button, for more details, see :ref:`mouse-events`.
         """
-        class _Fake:
-            pass
-        fake = _Fake()
-        fake.event_x = x
-        fake.event_y = y
-        fake.detail = button
-        self.handle_ButtonPress(fake)
+        self.process_button_click(x, y, button)
+
+    def set_layer(self) -> None:
+        if self.window:
+            if self.reserve:
+                self.window.keep_below(enable=True)
+            else:
+                # Bar is not reserving screen space so let's keep above other windows
+                self.window.keep_above(enable=True)
 
 
-BarType = Union[Bar, Gap]
+BarType = Bar | Gap

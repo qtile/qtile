@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2016 Tycho Andersen
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,7 +20,6 @@
 
 import datetime
 
-from libqtile.widget import base
 from libqtile.widget.generic_poll_text import GenPollUrl
 
 
@@ -39,24 +37,22 @@ class IdleRPG(GenPollUrl):
     .. _xmltodict: https://pypi.org/project/xmltodict/
     """
 
-    orientations = base.ORIENTATION_HORIZONTAL
-
     defaults = [
-        ('format', 'IdleRPG: {online} TTL: {ttl}', 'Display format'),
-        ('json', False, 'Not json :)'),
-        ('xml', True, 'Is XML :)'),
+        ("format", "IdleRPG: {online} TTL: {ttl}", "Display format"),
     ]
 
     def __init__(self, **config):
         GenPollUrl.__init__(self, **config)
         self.add_defaults(IdleRPG.defaults)
+        self.json = False
+        self.xml = True
 
     def parse(self, body):
         formatted = {}
-        for k, v in body['player'].items():
-            if k == 'ttl':
+        for k, v in body["player"].items():
+            if k == "ttl":
                 formatted[k] = str(datetime.timedelta(seconds=int(v)))
-            elif k == 'online':
+            elif k == "online":
                 formatted[k] = "online" if v == "1" else "offline"
             else:
                 formatted[k] = v

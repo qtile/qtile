@@ -1,3 +1,4 @@
-cairocffi >= 0.9.0
+cairocffi >= 1.6.0
 cffi >= 1.1.0
-xcffib >= 0.10.1
+xcffib >= 1.4.0
+pycairo >= 1.25.1

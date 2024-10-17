@@ -1,0 +1,58 @@
+name: "Report an issue"
+description: "Our tracker for bugs and other issues with the core project"
+labels: ["status: unconfirmed"]
+body:
+  - type: markdown
+    attributes:
+     value: |
+       Hey, thank you for taking the time to submit this issue!
+
+       Please note that this tracker is only for bugs or other issues with the core project.
+  - type: textarea
+    attributes:
+      label: "Issue description"
+      description: "Describe your issue in details here. If you can reproduce the issue deterministically, please write a step-by-step guide."
+      placeholder: |
+        I tried to do X, but Y happened, and I expected Z. I think this is a bug.
+
+        Here are the steps to reproduce:
+        1. run command A
+        2. do action B
+        3. observe issue
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "Version"
+      description: "Please paste the output of `qtile --version` here."
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: "Backend"
+      description: "On which backend(s) does the issue occur?"
+      multiple: true
+      options:
+        - "X11 (default)"
+        - "Wayland (experimental)"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "Config"
+      description: "If relevant, paste your `~/.config/qtile/config.py` here."
+      render: python
+  - type: textarea
+    attributes:
+      label: "Logs"
+      description: "You can paste **relevant logs** from `~/.local/share/qtile/qtile.log` here."
+      render: text
+  - type: checkboxes
+    attributes:
+      label: "Required"
+      description: "Please make sure you agree with these statements:"
+      options:
+        - label: "I have searched past issues to see if this bug has already been reported, and it hasn't been."
+          required: true
+        - label: "I understand that people give their precious time for free, and thus I've done my very best to make this problem as easy as possible to investigate."
+          required: true

@@ -22,7 +22,6 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
@@ -32,11 +31,9 @@ class BspConfig(Config):
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
         libqtile.config.Group("c"),
-        libqtile.config.Group("d")
+        libqtile.config.Group("d"),
     ]
-    layouts = [
-        layout.Bsp(),
-    ]
+    layouts = [layout.Bsp(), layout.Bsp(margin_on_single=10), layout.Bsp(wrap_clients=True)]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
@@ -44,8 +41,7 @@ class BspConfig(Config):
     follow_mouse_focus = False
 
 
-def bsp_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [BspConfig], indirect=True)(x))
+bsp_config = pytest.mark.parametrize("manager", [BspConfig], indirect=True)
 
 # This currently only tests the window focus cycle
 
@@ -62,9 +58,57 @@ def test_bsp_window_focus_cycle(manager):
     manager.test_window("three")
 
     # test preconditions, columns adds clients at pos of current, in two stacks
-    assert manager.c.layout.info()['clients'] == ['one', 'three', 'two']
+    assert manager.c.layout.info()["clients"] == ["one", "three", "two"]
     # last added window has focus
     assert_focused(manager, "three")
 
     # assert window focus cycle, according to order in layout
-    assert_focus_path(manager, 'two', 'float1', 'float2', 'one', 'three')
+    assert_focus_path(manager, "two", "float1", "float2", "one", "three")
+
+
+@bsp_config
+def test_bsp_margin_on_single(manager):
+    manager.test_window("one")
+
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+
+    manager.c.next_layout()
+    info = manager.c.window.info()
+    assert info["x"] == 10
+    assert info["y"] == 10
+
+    manager.test_window("two")
+    # No longer single window so margin reverts to "margin" which is 0
+    info = manager.c.window.info()
+    assert info["x"] == 0
+
+
+@bsp_config
+def test_bsp_wrap_clients(manager):
+    manager.test_window("one")
+    manager.test_window("two")
+
+    # Default has no wrapping
+    assert_focused(manager, "two")
+    manager.c.layout.next()
+    assert_focused(manager, "two")
+    manager.c.layout.previous()
+    assert_focused(manager, "one")
+    manager.c.layout.previous()
+    assert_focused(manager, "one")
+
+    # Switch to layout with wrapping enabled
+    manager.c.next_layout()
+    manager.c.next_layout()
+
+    assert_focused(manager, "one")
+    manager.c.layout.next()
+    assert_focused(manager, "two")
+    # Layout should wrap here
+    manager.c.layout.next()
+    assert_focused(manager, "one")
+    # and here
+    manager.c.layout.previous()
+    assert_focused(manager, "two")

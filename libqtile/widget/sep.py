@@ -23,32 +23,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
 class Sep(base._Widget):
     """A visible widget separator"""
+
     orientations = base.ORIENTATION_BOTH
     defaults = [
         ("padding", 2, "Padding on either side of separator."),
         ("linewidth", 1, "Width of separator line."),
         ("foreground", "888888", "Separator line colour."),
-        (
-            "size_percent",
-            80,
-            "Size as a percentage of bar size (0-100)."
-        ),
+        ("size_percent", 80, "Size as a percentage of bar size (0-100)."),
     ]
 
-    def __init__(self, height_percent=None, **config):
-        # 'height_percent' was replaced by 'size_percent' since the widget can
-        # be installed in vertical bars
-        if height_percent is not None:
-            logger.warning('height_percent kwarg or positional argument is '
-                           'deprecated. Please use size_percent.')
-            config["size_percent"] = height_percent
-
+    def __init__(self, **config):
         length = config.get("padding", 2) * 2 + config.get("linewidth", 1)
         base._Widget.__init__(self, length, **config)
         self.add_defaults(Sep.defaults)
@@ -63,9 +52,9 @@ class Sep(base._Widget):
                 float(self.length) / 2,
                 margin_top,
                 self.bar.height - margin_top,
-                linewidth=self.linewidth
+                linewidth=self.linewidth,
             )
-            self.drawer.draw(offsetx=self.offset, width=self.length)
+            self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
         else:
             margin_left = (self.bar.width / float(100) * (100 - self.size_percent)) / 2.0
             self.drawer.draw_hbar(
@@ -73,6 +62,6 @@ class Sep(base._Widget):
                 margin_left,
                 self.bar.width - margin_left,
                 float(self.length) / 2,
-                linewidth=self.linewidth
+                linewidth=self.linewidth,
             )
-            self.drawer.draw(offsety=self.offset, height=self.length)
+            self.drawer.draw(offsety=self.offset, offsetx=self.offsetx, height=self.length)

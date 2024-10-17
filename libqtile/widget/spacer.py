@@ -25,7 +25,6 @@
 # SOFTWARE.
 
 from libqtile import bar
-from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
@@ -43,21 +42,12 @@ class Spacer(base._Widget):
     width :
         DEPRECATED, same as ``length``.
     """
+
     orientations = base.ORIENTATION_BOTH
-    defaults = [
-        ("background", None, "Widget background color")
-    ]
+    defaults = [("background", None, "Widget background color")]
 
-    def __init__(self, length=bar.STRETCH, width=None, **config):
-        """
-        """
-        # 'width' was replaced by 'length' since the widget can be installed in
-        # vertical bars
-        if width is not None:
-            logger.warning('width kwarg or positional argument is '
-                           'deprecated. Please use length.')
-            length = width
-
+    def __init__(self, length=bar.STRETCH, **config):
+        """ """
         base._Widget.__init__(self, length, **config)
         self.add_defaults(Spacer.defaults)
 
@@ -65,6 +55,6 @@ class Spacer(base._Widget):
         if self.length > 0:
             self.drawer.clear(self.background or self.bar.background)
             if self.bar.horizontal:
-                self.drawer.draw(offsetx=self.offset, width=self.length)
+                self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
             else:
-                self.drawer.draw(offsety=self.offset, height=self.length)
+                self.drawer.draw(offsety=self.offset, offsetx=self.offsetx, height=self.length)

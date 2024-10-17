@@ -1,105 +1,222 @@
 #!/usr/bin/env python3
-# Copyright (c) 2011 Florian Mounier
-# Copyright (c) 2014 Sean Vig
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 """
-    This program is carefully crafted to exercise a number of corner-cases in
-    Qtile.
+This creates a minimal window using GTK that works the same in both X11 or Wayland.
 
-    Usage:
-        window.py DISPLAY WINDOW_NAME [WINDOW_TYPE]
+GTK sets the window class via `--name <class>`, and then we manually set the window
+title and type. Therefore this is intended to be called as:
+
+    python window.py --name <class> <title> <type> <new_title>
+
+where <type> is "normal" or "notification"
+
+The window will close itself if it receives any key or button press events.
 """
-import sys
-import time
+# flake8: noqa
 
-import xcffib
-import xcffib.xproto
+# This is needed otherwise the window will use any Wayland session it can find even if
+# WAYLAND_DISPLAY is not set.
+import os
 
-for i in range(20):
-    try:
-        conn = xcffib.connect(display=sys.argv[1])
-    except xcffib.ConnectionException:
-        time.sleep(0.1)
-        continue
-    except Exception as v:
-        print("Error opening test window: ", type(v), v, file=sys.stderr)
-        sys.exit(1)
-    break
+if os.environ.get("WAYLAND_DISPLAY"):
+    os.environ["GDK_BACKEND"] = "wayland"
 else:
-    print("Could not open window on display %s" % (sys.argv[1]), file=sys.stderr)
-    sys.exit(1)
+    os.environ["GDK_BACKEND"] = "x11"
 
-screen = conn.get_setup().roots[conn.pref_screen]
+# Disable GTK ATK bridge, which appears to trigger errors with e.g. test_strut_handling
+# https://wiki.gnome.org/Accessibility/Documentation/GNOME2/Mechanics
+os.environ["NO_AT_BRIDGE"] = "1"
 
-window = conn.generate_id()
-background = conn.core.AllocColor(screen.default_colormap, 0x2828, 0x8383, 0xCECE).reply().pixel  # Color "#2883ce"
-conn.core.CreateWindow(xcffib.CopyFromParent, window, screen.root,
-                       100, 100, 100, 100, 1,
-                       xcffib.xproto.WindowClass.InputOutput, screen.root_visual,
-                       xcffib.xproto.CW.BackPixel | xcffib.xproto.CW.EventMask,
-                       [background, xcffib.xproto.EventMask.StructureNotify | xcffib.xproto.EventMask.Exposure])
+import sys
+from pathlib import Path
 
-conn.core.ChangeProperty(xcffib.xproto.PropMode.Replace,
-                         window, xcffib.xproto.Atom.WM_NAME,
-                         xcffib.xproto.Atom.STRING, 8, len(sys.argv[2]),
-                         sys.argv[2])
+import gi
 
-wm_protocols = "WM_PROTOCOLS"
-wm_protocols = conn.core.InternAtom(0, len(wm_protocols), wm_protocols).reply().atom
+gi.require_version("Gdk", "3.0")
+gi.require_version("Gtk", "3.0")
+from dbus_next import Message
+from dbus_next.auth import Authenticator
+from dbus_next.constants import MessageType, PropertyAccess
+from dbus_next.glib.message_bus import MessageBus, _AuthLineSource
+from dbus_next.service import ServiceInterface, dbus_property, method, signal
+from gi.repository import Gdk, GLib, Gtk
 
-wm_delete_window = "WM_DELETE_WINDOW"
-wm_delete_window = conn.core.InternAtom(0, len(wm_delete_window), wm_delete_window).reply().atom
+ICON = Path(__file__).parent / "qtile_icon.rgba"
 
-conn.core.ChangeProperty(xcffib.xproto.PropMode.Replace,
-                         window, wm_protocols,
-                         xcffib.xproto.Atom.ATOM, 32, 1,
-                         [wm_delete_window])
 
-if len(sys.argv) > 3:
-    wm_type_atom = "_NET_WM_WINDOW_TYPE"
-    wm_type_atom = conn.core.InternAtom(0, len(wm_type_atom), wm_type_atom).reply().atom
-    wm_type = "_NET_WM_WINDOW_TYPE_" + sys.argv[3].upper()
-    wm_type = conn.core.InternAtom(0, len(wm_type), wm_type).reply().atom
-    conn.core.ChangeProperty(xcffib.xproto.PropMode.Replace,
-                             window, wm_type_atom,
-                             xcffib.xproto.Atom.ATOM, 32, 1,
-                             [wm_type])
+# This patch is needed to address the issue described here:
+# https://github.com/altdesktop/python-dbus-next/issues/113
+# Once dbus_next 0.2.4 is released, the patch can be removed.
+class PatchedMessageBus(MessageBus):
+    def _authenticate(self, authenticate_notify):
+        self._stream.write(b"\0")
+        first_line = self._auth._authentication_start()
+        if first_line is not None:
+            if type(first_line) is not str:
+                raise AuthError("authenticator gave response not type str")
+            self._stream.write(f"{first_line}\r\n".encode())
+            self._stream.flush()
 
-conn.core.ConfigureWindow(window,
-                          xcffib.xproto.ConfigWindow.X | xcffib.xproto.ConfigWindow.Y |
-                          xcffib.xproto.ConfigWindow.Width | xcffib.xproto.ConfigWindow.Height |
-                          xcffib.xproto.ConfigWindow.BorderWidth,
-                          [0, 0, 100, 100, 1])
-conn.core.MapWindow(window)
-conn.flush()
-conn.core.ConfigureWindow(window,
-                          xcffib.xproto.ConfigWindow.X | xcffib.xproto.ConfigWindow.Y |
-                          xcffib.xproto.ConfigWindow.Width | xcffib.xproto.ConfigWindow.Height |
-                          xcffib.xproto.ConfigWindow.BorderWidth,
-                          [0, 0, 100, 100, 1])
+        def line_notify(line):
+            try:
+                resp = self._auth._receive_line(line)
+                self._stream.write(Authenticator._format_line(resp))
+                self._stream.flush()
+                if resp == "BEGIN":
+                    self._readline_source.destroy()
+                    authenticate_notify(None)
+                    return True
+            except Exception as e:
+                authenticate_notify(e)
+                return True
 
-try:
-    while 1:
-        event = conn.wait_for_event()
-        if event.__class__ == xcffib.xproto.ClientMessageEvent:
-            if conn.core.GetAtomName(event.data.data32[0]).reply().name.to_string() == "WM_DELETE_WINDOW":
+        readline_source = _AuthLineSource(self._stream)
+        readline_source.set_callback(line_notify)
+        readline_source.add_unix_fd(self._fd, GLib.IO_IN)
+        readline_source.attach(self._main_context)
+        self._readline_source = readline_source
+
+
+class SNItem(ServiceInterface):
+    """
+    Simplified StatusNotifierItem interface.
+
+    Only exports methods, properties and signals required by
+    StatusNotifier widget.
+    """
+
+    def __init__(self, window, *args):
+        ServiceInterface.__init__(self, *args)
+        self.window = window
+        self.fullscreen = False
+
+        with open(ICON, "rb") as f:
+            self.icon = f.read()
+
+        arr = bytearray(self.icon)
+        for i in range(0, len(arr), 4):
+            r, g, b, a = arr[i : i + 4]
+            arr[i] = a
+            arr[i + 1 : i + 4] = bytearray([r, g, b])
+
+        self.icon = bytes(arr)
+
+    @method()
+    def Activate(self, x: "i", y: "i"):
+        if self.fullscreen:
+            self.window.unfullscreen()
+        else:
+            self.window.fullscreen()
+
+        self.fullscreen = not self.fullscreen
+
+    @dbus_property(PropertyAccess.READ)
+    def IconName(self) -> "s":
+        return ""
+
+    @dbus_property(PropertyAccess.READ)
+    def IconPixmap(self) -> "a(iiay)":
+        return [[32, 32, self.icon]]
+
+    @dbus_property(PropertyAccess.READ)
+    def AttentionIconPixmap(self) -> "a(iiay)":
+        return []
+
+    @dbus_property(PropertyAccess.READ)
+    def OverlayIconPixmap(self) -> "a(iiay)":
+        return []
+
+    @signal()
+    def NewIcon(self):
+        pass
+
+    @signal()
+    def NewAttentionIcon(self):
+        pass
+
+    @signal()
+    def NewOverlayIcon(self):
+        pass
+
+
+if __name__ == "__main__":
+    # GTK consumes the `--name <class>` args
+    if len(sys.argv) > 1:
+        title = sys.argv[1]
+    else:
+        title = "TestWindow"
+
+    if len(sys.argv) > 2:
+        window_type = sys.argv[2]
+    else:
+        window_type = "normal"
+
+    # Check if we want to export a StatusNotifierItem interface
+    sni = "export_sni_interface" in sys.argv
+
+    win = Gtk.Window(title=title)
+    win.set_default_size(100, 100)
+
+    if len(sys.argv) > 3 and sys.argv[3]:
+
+        def gtk_set_title(*args):
+            win.set_title(sys.argv[3])
+
+        # Time before renaming title
+        GLib.timeout_add(500, gtk_set_title)
+
+    if "urgent_hint" in sys.argv:
+
+        def gtk_set_urgency_hint(*args):
+            win.set_urgency_hint(True)
+
+        # Time before changing urgency
+        GLib.timeout_add(500, gtk_set_urgency_hint)
+
+    icon = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", "logo.png"))
+    if os.path.isfile(icon):
+        win.set_icon_from_file(icon)
+
+    if window_type == "notification":
+        if os.environ["GDK_BACKEND"] == "wayland":
+            try:
+                gi.require_version("GtkLayerShell", "0.1")
+                from gi.repository import GtkLayerShell
+            except ValueError:
                 sys.exit(1)
-except xcffib.XcffibException:
-    pass
+            win.add(Gtk.Label(label="This is a test notification"))
+            GtkLayerShell.init_for_window(win)
+
+        else:
+            win.set_type_hint(Gdk.WindowTypeHint.NOTIFICATION)
+
+    elif window_type == "normal":
+        win.set_type_hint(Gdk.WindowTypeHint.NORMAL)
+
+    if sni:
+        bus = PatchedMessageBus().connect_sync()
+
+        item = SNItem(win, "org.kde.StatusNotifierItem")
+
+        # Export interfaces on the bus
+        bus.export("/StatusNotifierItem", item)
+
+        # Request the service name
+        bus.request_name_sync(f"test.qtile.window-{title.replace(' ','-')}")
+
+        msg = bus.call_sync(
+            Message(
+                message_type=MessageType.METHOD_CALL,
+                destination="org.freedesktop.StatusNotifierWatcher",
+                interface="org.freedesktop.StatusNotifierWatcher",
+                path="/StatusNotifierWatcher",
+                member="RegisterStatusNotifierItem",
+                signature="s",
+                body=[bus.unique_name],
+            )
+        )
+
+    win.connect("destroy", Gtk.main_quit)
+    win.connect("key-press-event", Gtk.main_quit)
+    win.show_all()
+
+    Gtk.main()

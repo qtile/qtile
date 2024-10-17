@@ -72,35 +72,35 @@ def cmd(x):
 
 
 def test_ezkey():
-    key = config.EzKey('M-A-S-a', cmd, cmd)
-    modkey, altkey = (config.EzConfig.modifier_keys[i] for i in 'MA')
-    assert key.modifiers == [modkey, altkey, 'shift']
-    assert key.key == 'a'
+    key = config.EzKey("M-A-S-a", cmd, cmd)
+    modkey, altkey = (config.EzConfig.modifier_keys[i] for i in "MA")
+    assert key.modifiers == [modkey, altkey, "shift"]
+    assert key.key == "a"
     assert key.commands == (cmd, cmd)
 
-    key = config.EzKey('M-<Tab>', cmd)
+    key = config.EzKey("M-<Tab>", cmd)
     assert key.modifiers == [modkey]
-    assert key.key == 'Tab'
+    assert key.key == "Tab"
     assert key.commands == (cmd,)
 
     with pytest.raises(utils.QtileError):
-        config.EzKey('M--', cmd)
+        config.EzKey("M--", cmd)
 
     with pytest.raises(utils.QtileError):
-        config.EzKey('Z-Z-z', cmd)
+        config.EzKey("Z-Z-z", cmd)
 
     with pytest.raises(utils.QtileError):
-        config.EzKey('asdf', cmd)
+        config.EzKey("asdf", cmd)
 
     with pytest.raises(utils.QtileError):
-        config.EzKey('M-a-A', cmd)
+        config.EzKey("M-a-A", cmd)
 
 
 def test_ezclick_ezdrag():
-    btn = config.EzClick('M-1', cmd)
-    assert btn.button == 'Button1'
-    assert btn.modifiers == [config.EzClick.modifier_keys['M']]
+    btn = config.EzClick("M-1", cmd)
+    assert btn.button == "Button1"
+    assert btn.modifiers == [config.EzClick.modifier_keys["M"]]
 
-    btn = config.EzDrag('A-2', cmd)
-    assert btn.button == 'Button2'
-    assert btn.modifiers == [config.EzClick.modifier_keys['A']]
+    btn = config.EzDrag("A-2", cmd)
+    assert btn.button == "Button2"
+    assert btn.modifiers == [config.EzClick.modifier_keys["A"]]

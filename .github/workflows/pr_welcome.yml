@@ -1,0 +1,24 @@
+name: PR Greetings
+
+on: [pull_request_target]
+
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          pr-message: >+
+            Thank you for opening your first PR into Qtile!
+
+            If you have not heard from us in a while, please feel free to ping
+            one of the devs or anyone who has commented on the PR, as sometimes
+            things fall through the cracks.
+
+            You can also join the chat room for real-time discussion, see the
+            [community links](https://github.com/qtile/qtile#community).
+
+            For details on what PRs might need to include before we will merge them please see [the
+            docs](http://docs.qtile.org/en/stable/manual/contributing.html#submit-a-pull-request).

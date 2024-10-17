@@ -6,11 +6,13 @@ help: ## Show this help
 
 .PHONY: check
 check: ## Run the test suite
-	TOXENV=py38 tox
+	@PY=`python --version | sed 's/.*\.\([0-9]*\)\..*/py3\1/'`; \
+		echo TOXENV=$$PY tox; \
+		TOXENV=$$PY tox
 
 .PHONY: lint
 lint: ## Check the source code
-	TOXENV=format,pep8,vulture,mypy tox
+	pre-commit run -a
 
 .PHONY: clean
 clean: ## Clean generated files
@@ -19,3 +21,8 @@ clean: ## Clean generated files
 .PHONY: run-ffibuild
 run-ffibuild: ## Build FFI modules
 	./scripts/ffibuild
+
+.PHONY: update-flake
+update-flake: ## Update the Nix flake.lock file, requires Nix installed with flake support, see: https://nixos.wiki/wiki/Flakes
+	nix flake update
+

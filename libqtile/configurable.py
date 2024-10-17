@@ -19,11 +19,10 @@
 # SOFTWARE.
 
 import copy
-from typing import Dict
 
 
 class Configurable:
-    global_defaults = {}  # type: Dict
+    global_defaults = {}  # type: dict
 
     def __init__(self, **config):
         self._variable_defaults = {}
@@ -35,9 +34,7 @@ class Configurable:
         # value. If a mutable value were set and it were changed in one place
         # it would affect all other instances, since this is typically called
         # on __init__
-        self._variable_defaults.update(
-            (d[0], copy.copy(d[1])) for d in defaults
-        )
+        self._variable_defaults.update((d[0], copy.copy(d[1])) for d in defaults)
 
     def __getattr__(self, name):
         if name == "_variable_defaults":
@@ -48,7 +45,7 @@ class Configurable:
             return value
         else:
             cname = self.__class__.__name__
-            raise AttributeError("%s has no attribute: %s" % (cname, name))
+            raise AttributeError(f"{cname} has no attribute: {name}")
 
     def _find_default(self, name):
         """Returns a tuple (found, value)"""

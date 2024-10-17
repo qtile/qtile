@@ -21,28 +21,32 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import bar, hook
+from libqtile import bar, hook, pangocffi
 from libqtile.backend.x11 import xcbq
 from libqtile.widget import base
 
 
 class Clipboard(base._TextBox):
     """Display current clipboard contents"""
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
-        ("selection", "CLIPBOARD",
-            "the selection to display(CLIPBOARD or PRIMARY)"),
-        ("max_width", 10, "maximum number of characters to display "
-            "(None for all, useful when width is bar.STRETCH)"),
-        ("timeout", 10,
-            "Default timeout (seconds) for display text, None to keep forever"),
-        ("blacklist", ["keepassx"],
+        ("selection", "CLIPBOARD", "the selection to display(CLIPBOARD or PRIMARY)"),
+        (
+            "max_width",
+            10,
+            "maximum number of characters to display "
+            "(None for all, useful when width is bar.STRETCH)",
+        ),
+        ("timeout", 10, "Default timeout (seconds) for display text, None to keep forever"),
+        (
+            "blacklist",
+            ["keepassx"],
             "list with blacklisted wm_class, sadly not every "
             "clipboard window sets them, keepassx does."
             "Clipboard contents from blacklisted wm_classes "
-            "will be replaced by the value of ``blacklist_text``."),
-        ("blacklist_text", "***********",
-            "text to display when the wm_class is blacklisted")
+            "will be replaced by the value of ``blacklist_text``.",
+        ),
+        ("blacklist_text", "***********", "text to display when the wm_class is blacklisted"),
     ]
 
     def __init__(self, width=bar.CALCULATED, **config):
@@ -66,7 +70,7 @@ class Clipboard(base._TextBox):
         if owner_id in self.qtile.windows_map:
             owner = self.qtile.windows_map[owner_id].window
         else:
-            owner = xcbq.Window(self.qtile.conn, owner_id)
+            owner = xcbq.window.XWindow(self.qtile.core.conn, owner_id)
 
         owner_class = owner.get_wm_class()
         if owner_class:
@@ -86,9 +90,9 @@ class Clipboard(base._TextBox):
 
                 text = text.strip()
                 if self.max_width is not None and len(text) > self.max_width:
-                    text = text[:self.max_width] + "..."
+                    text = text[: self.max_width] + "..."
 
-            self.text = text
+            self.text = pangocffi.markup_escape_text(text)
 
             if self.timeout_id:
                 self.timeout_id.cancel()

@@ -24,9 +24,20 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import math
+from __future__ import annotations
 
+import math
+from typing import TYPE_CHECKING
+
+from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
+
+if TYPE_CHECKING:
+    from typing import Any, Self
+
+    from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
+    from libqtile.group import _Group
 
 
 class Matrix(_SimpleLayoutBase):
@@ -36,18 +47,19 @@ class Matrix(_SimpleLayoutBase):
     can also be changed interactively.
     """
 
+    columns: int
+
     defaults = [
-        ("border_focus", "#0000ff", "Border colour for the focused window."),
-        ("border_normal", "#000000", "Border colour for un-focused windows."),
+        ("border_focus", "#0000ff", "Border colour(s) for the focused window."),
+        ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
         ("border_width", 1, "Border width."),
-        ("name", "matrix", "Name of this layout."),
+        ("columns", 2, "Number of columns"),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])"),
     ]
 
-    def __init__(self, columns=2, **config):
+    def __init__(self, **config):
         _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(Matrix.defaults)
-        self.columns = columns
 
     @property
     def rows(self):
@@ -57,23 +69,21 @@ class Matrix(_SimpleLayoutBase):
     @property
     def row(self):
         """Calc row index of current client"""
-        return (self.clients.current_index // self.columns)
+        return self.clients.current_index // self.columns
 
     @property
     def column(self):
         """Calc column index of current client"""
         return self.clients.current_index % self.columns
 
-    def info(self):
+    @expose_command()
+    def info(self) -> dict[str, Any]:
         d = _SimpleLayoutBase.info(self)
-        d["rows"] = [
-            [win.name for win in self.get_row(i)]
-            for i in range(self.rows)
-        ]
+        d["rows"] = [[win.name for win in self.get_row(i)] for i in range(self.rows)]
         d["current_window"] = self.column, self.row
         return d
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         c = _SimpleLayoutBase.clone(self, group)
         c.columns = self.columns
         return c
@@ -81,25 +91,20 @@ class Matrix(_SimpleLayoutBase):
     def get_row(self, row):
         """Get all clients in given row"""
         assert row < self.rows
-        return self.clients[
-            row * self.columns: row * self.columns + self.columns
-        ]
+        return self.clients[row * self.columns : row * self.columns + self.columns]
 
     def get_column(self, column):
         """Get all clients in given column"""
         assert column < self.columns
-        return [
-            self.clients[i]
-            for i in range(column, len(self.clients), self.columns)
-        ]
+        return [self.clients[i] for i in range(column, len(self.clients), self.columns)]
 
-    def add(self, client):
+    def add_client(self, client: Window) -> None:  # type: ignore[override]
         """Add client to Layout.
         Note that for Matrix the clients are appended at end of list.
         If needed a new row in matrix is created"""
         return self.clients.append(client)
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         if client not in self.clients:
             return
         idx = self.clients.index(client)
@@ -129,8 +134,13 @@ class Matrix(_SimpleLayoutBase):
         )
         client.unhide()
 
-    cmd_previous = _SimpleLayoutBase.previous
-    cmd_next = _SimpleLayoutBase.next
+    @expose_command()
+    def previous(self) -> None:
+        _SimpleLayoutBase.previous(self)
+
+    @expose_command()
+    def next(self) -> None:
+        _SimpleLayoutBase.next(self)
 
     def horizontal_traversal(self, direction):
         """
@@ -152,28 +162,34 @@ class Matrix(_SimpleLayoutBase):
         self.clients.current_index = row * self.columns + column
         self.group.focus(self.clients.current_client)
 
-    def cmd_left(self):
+    @expose_command()
+    def left(self):
         """Switch to the next window on current row"""
         self.horizontal_traversal(-1)
 
-    def cmd_right(self):
+    @expose_command()
+    def right(self):
         """Switch to the next window on current row"""
         self.horizontal_traversal(+1)
 
-    def cmd_up(self):
+    @expose_command()
+    def up(self):
         """Switch to the previous window in current column"""
         self.vertical_traversal(-1)
 
-    def cmd_down(self):
+    @expose_command()
+    def down(self):
         """Switch to the next window in current column"""
         self.vertical_traversal(+1)
 
-    def cmd_delete(self):
+    @expose_command()
+    def delete(self):
         """Decrease number of columns"""
         self.columns -= 1
         self.group.layout_all()
 
-    def cmd_add(self):
+    @expose_command()
+    def add(self):
         """Increase number of columns"""
         self.columns += 1
         self.group.layout_all()

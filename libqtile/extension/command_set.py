@@ -18,8 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from os import system
-
 from libqtile.extension.dmenu import Dmenu
 
 
@@ -44,6 +42,23 @@ class CommandSet(Dmenu):
             pre_commands=['[ $(mocp -i | wc -l) -lt 1 ] && mocp -S'],
             **Theme.dmenu))),
 
+
+    ex. CommandSet inside another CommandSet
+
+    .. code-block:: python
+
+        CommandSet(
+            commands={
+                "Hello": CommandSet(
+                    commands={
+                        "World": "echo 'Hello, World!'"
+                    },
+                    **Theme.dmenu
+                )
+            },
+        **Theme.dmenu
+        )
+
     """
 
     defaults = [
@@ -61,12 +76,12 @@ class CommandSet(Dmenu):
 
         if self.pre_commands:
             for cmd in self.pre_commands:
-                system(cmd)
+                self.qtile.spawn(cmd)
 
-        out = super(CommandSet, self).run(items=self.commands.keys())
+        out = super().run(items=self.commands.keys())
 
         try:
-            sout = out.rstrip('\n')
+            sout = out.rstrip("\n")
         except AttributeError:
             # out is not a string (for example it's a Popen object returned
             # by super(WindowList, self).run() when there are no menu items to
@@ -76,4 +91,9 @@ class CommandSet(Dmenu):
         if sout not in self.commands:
             return
 
-        system(self.commands[sout])
+        command = self.commands[sout]
+
+        if isinstance(command, str):
+            self.qtile.spawn(command)
+        elif isinstance(command, CommandSet):
+            command.run()

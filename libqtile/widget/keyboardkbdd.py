@@ -22,8 +22,6 @@
 
 import re
 
-from dbus_next.constants import MessageType
-
 from libqtile.log_utils import logger
 from libqtile.utils import add_signal_receiver
 from libqtile.widget import base
@@ -34,17 +32,26 @@ class KeyboardKbdd(base.ThreadPoolText):
 
     kbdd should be installed and running, you can get it from:
     https://github.com/qnikst/kbdd
+
+    The widget also requires dbus-next_.
+
+    .. _dbus-next: https://pypi.org/project/dbus-next/
     """
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
         ("update_interval", 1, "Update interval in seconds."),
-        ("configured_keyboards", ["us", "ir"],
-         "your predefined list of keyboard layouts."
-         "example: ['us', 'ir', 'es']"),
-        ("colours", None,
-         "foreground colour for each layout"
-         "either 'None' or a list of colours."
-         "example: ['ffffff', 'E6F0AF']. ")
+        (
+            "configured_keyboards",
+            ["us", "ir"],
+            "your predefined list of keyboard layouts." "example: ['us', 'ir', 'es']",
+        ),
+        (
+            "colours",
+            None,
+            "foreground colour for each layout"
+            "either 'None' or a list of colours."
+            "example: ['ffffff', 'E6F0AF']. ",
+        ),
     ]
 
     def __init__(self, **config):
@@ -53,29 +60,34 @@ class KeyboardKbdd(base.ThreadPoolText):
         self.keyboard = self.configured_keyboards[0]
         self.is_kbdd_running = self._check_kbdd()
         if not self.is_kbdd_running:
-            logger.error('Please check if kbdd is running')
             self.keyboard = "N/A"
 
     def _check_kbdd(self):
-        running_list = self.call_process(["ps", "axw"])
+        try:
+            running_list = self.call_process(["ps", "axw"])
+        except FileNotFoundError:
+            logger.error("'ps' is not installed. Cannot check if kbdd is running.")
+            return False
+
         if re.search("kbdd", running_list):
             self.keyboard = self.configured_keyboards[0]
             return True
+
+        logger.error("kbdd is not running.")
         return False
 
     async def _config_async(self):
-        subscribed = await add_signal_receiver(self._signal_received,
-                                               session_bus=True,
-                                               signal_name="layoutChanged",
-                                               dbus_interface="ru.gentoo.kbdd")
+        subscribed = await add_signal_receiver(
+            self._signal_received,
+            session_bus=True,
+            signal_name="layoutChanged",
+            dbus_interface="ru.gentoo.kbdd",
+        )
 
         if not subscribed:
             logger.warning("Could not subscribe to kbdd signal.")
 
     def _signal_received(self, message):
-        if message.message_type != MessageType.SIGNAL:
-            return
-
         self._layout_changed(*message.body)
 
     def _layout_changed(self, layout_changed):
@@ -90,11 +102,13 @@ class KeyboardKbdd(base.ThreadPoolText):
         if isinstance(self.colours, list):
             try:
                 self.layout.colour = self.colours[index]
-            except ValueError:
-                self._setColour(index - 1)
+            except IndexError:
+                self._set_colour(index - 1)
         else:
-            logger.error('variable "colours" should be a list, to set a\
-                            colour for all layouts, use "foreground".')
+            logger.error(
+                'variable "colours" should be a list, to set a\
+                            colour for all layouts, use "foreground".'
+            )
 
     def poll(self):
         if not self.is_kbdd_running:

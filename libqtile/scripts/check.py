@@ -18,27 +18,26 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Set the locale before any widgets or anything are imported, so any widget
-# whose defaults depend on a reasonable locale sees something reasonable.
 import shutil
 import subprocess
 import sys
 import tempfile
-from os import environ, getenv, path
+import traceback
+from os import environ, path
 
 from libqtile import confreader
+from libqtile.utils import get_config_file
+
+
+class CheckError(Exception):
+    pass
 
 
 def type_check_config_vars(tempdir, config_name):
-    if shutil.which("stubtest") is None:
-        print("stubtest not found, can't type check config file\n"
-              "install it and try again")
-        return
-
     # write a .pyi file to tempdir:
-    f = open(path.join(tempdir, config_name+".pyi"), "w")
+    f = open(path.join(tempdir, config_name + ".pyi"), "w")
     f.write(confreader.config_pyi_header)
-    for (name, type_) in confreader.Config.settings_keys:
+    for name, type_ in confreader.Config.__annotations__.items():
         f.write(name)
         f.write(": ")
         f.write(type_)
@@ -59,7 +58,7 @@ def type_check_config_vars(tempdir, config_name):
     )
     stdout, stderr = p.communicate()
     missing_vars = []
-    for line in (stdout+stderr).split("\n"):
+    for line in (stdout + stderr).split("\n"):
         # filter out stuff that users didn't specify; they'll be imported from
         # the default config
         if "is not present at runtime" in line:
@@ -72,13 +71,15 @@ def type_check_config_vars(tempdir, config_name):
         whitelist.write("\n")
     whitelist.close()
 
-    p = subprocess.Popen([
+    p = subprocess.Popen(
+        [
             "stubtest",
             # ignore variables that the user creates in their config that
             # aren't in our default config list
             "--ignore-missing-stub",
             # use our whitelist to ignore stuff users didn't specify
-            "--whitelist", whitelist.name,
+            "--whitelist",
+            whitelist.name,
             config_name,
         ],
         cwd=tempdir,
@@ -87,59 +88,87 @@ def type_check_config_vars(tempdir, config_name):
     )
     p.wait()
     if p.returncode != 0:
-        sys.exit(1)
+        raise CheckError()
 
 
 def type_check_config_args(config_file):
-    if shutil.which("mypy") is None:
-        print("mypy not found, can't type check config file"
-              "install it and try again")
-        return
     try:
-        # we want to use Literal, which is in 3.8. If people have a mypy that
-        # is too old, they can upgrade; this is an optional check anyways.
-        subprocess.check_call(["mypy", "--python-version=3.8", config_file])
-        print("config file type checking succeeded")
+        subprocess.check_call(["mypy", config_file])
+        print("Config file type checking succeeded!")
     except subprocess.CalledProcessError as e:
-        print("config file type checking failed: {}".format(e))
-        sys.exit(1)
+        print(f"Config file type checking failed: {e}")
+        raise CheckError()
+
+
+def check_deps() -> None:
+    ok = True
+
+    for dep in ["mypy", "stubtest"]:
+        if shutil.which(dep) is None:
+            print(f"{dep} was not found in PATH. Please install it, add to PATH and try again.")
+            ok = False
+
+    if not ok:
+        raise CheckError()
 
 
 def check_config(args):
-    print("checking qtile config file {}".format(args.configfile))
+    print(f"Checking Qtile config at: {args.configfile}")
+    print("Checking if config is valid python...")
 
-    # need to do all the checking in a tempdir because we need to write stuff
-    # for stubtest
-    with tempfile.TemporaryDirectory() as tempdir:
-        shutil.copytree(path.dirname(args.configfile), tempdir, dirs_exist_ok=True)
-        tmp_path = path.join(tempdir, path.basename(args.configfile))
+    try:
+        # can we load the config?
+        config = confreader.Config(args.configfile)
+        config.load()
+        config.validate()
+    except Exception:
+        print(traceback.format_exc())
+        sys.exit("Errors found in config. Exiting check.")
 
-        # are the top level config variables the right type?
-        module_name = path.splitext(path.basename(args.configfile))[0]
-        type_check_config_vars(tempdir, module_name)
+    try:
+        check_deps()
+    except CheckError:
+        print("Missing dependencies. Skipping type checking.")
+    else:
+        # need to do all the checking in a tempdir because we need to write stuff
+        # for stubtest
+        print("Type checking config file...")
+        valid = True
+        with tempfile.TemporaryDirectory() as tempdir:
+            shutil.copytree(path.dirname(args.configfile), tempdir, dirs_exist_ok=True)
+            tmp_path = path.join(tempdir, path.basename(args.configfile))
 
-        # are arguments passed to qtile APIs correct?
-        type_check_config_args(tmp_path)
+            # are the top level config variables the right type?
+            module_name = path.splitext(path.basename(args.configfile))[0]
+            try:
+                type_check_config_vars(tempdir, module_name)
+            except CheckError:
+                valid = False
 
-    # can we load the config?
-    config = confreader.Config(args.configfile)
-    config.load()
-    config.validate()
-    print("config file can be loaded by qtile")
+            # are arguments passed to qtile APIs correct?
+            try:
+                type_check_config_args(tmp_path)
+            except CheckError:
+                valid = False
+
+        if valid:
+            print("Your config can be loaded by Qtile.")
+        else:
+            print(
+                "Your config is valid python but has type checking errors. This may result in unexpected behaviour."
+            )
 
 
 def add_subcommand(subparsers, parents):
     parser = subparsers.add_parser(
-        "check",
-        parents=parents,
-        help="Check a configuration file for errors"
+        "check", parents=parents, help="Check a configuration file for errors."
     )
     parser.add_argument(
-        "-c", "--config",
+        "-c",
+        "--config",
         action="store",
-        default=path.expanduser(path.join(
-            getenv('XDG_CONFIG_HOME', '~/.config'), 'qtile', 'config.py')),
+        default=get_config_file(),
         dest="configfile",
-        help='Use the specified configuration file',
+        help="Use the specified configuration file.",
     )
     parser.set_defaults(func=check_config)

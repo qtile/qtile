@@ -15,35 +15,47 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from libqtile.command.base import expose_command
 from libqtile.layout.base import Layout
 
+if TYPE_CHECKING:
+    from collections.abc import Generator
+    from typing import Any, Self
 
-class _BspNode():
-    def __init__(self, parent=None):
+    from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
+    from libqtile.group import _Group
+
+
+class _BspNode:
+    def __init__(self, parent: _BspNode | None = None) -> None:
         self.parent = parent
-        self.children = []
-        self.split_horizontal = None
-        self.split_ratio = 50
-        self.client = None
-        self.x = self.y = 0
-        self.w = 16
-        self.h = 9
+        self.children: list[_BspNode] = []
+        self.split_horizontal: bool = False
+        self.split_ratio: float = 50
+        self.client: Window | None = None
+        self.x: int = 0
+        self.y: int = 0
+        self.w: int = 16
+        self.h: int = 9
 
-    def __iter__(self):
+    def __iter__(self) -> Generator[_BspNode, None, None]:
         yield self
         for child in self.children:
-            for c in child:
-                yield c
+            yield from child
 
-    def clients(self):
+    def clients(self) -> Generator[Window, None, None]:
         if self.client:
             yield self.client
         else:
             for child in self.children:
-                for c in child.clients():
-                    yield c
+                yield from child.clients()
 
-    def _shortest(self, length):
+    def _shortest(self, length: int) -> tuple[_BspNode, int]:
         if len(self.children) == 0:
             return self, length
 
@@ -54,10 +66,11 @@ class _BspNode():
             return child1, length1
         return child0, length0
 
-    def get_shortest(self):
-        return self._shortest(0)[0]
+    def get_shortest(self) -> _BspNode:
+        node, _ = self._shortest(0)
+        return node
 
-    def insert(self, client, idx, ratio):
+    def insert(self, client: Window, idx: int, ratio: float) -> _BspNode:
         if self.client is None:
             self.client = client
             return self
@@ -68,7 +81,7 @@ class _BspNode():
         self.split_horizontal = True if self.w > self.h * ratio else False
         return self.children[idx]
 
-    def remove(self, child):
+    def remove(self, child: _BspNode) -> _BspNode:
         keep = self.children[1 if child is self.children[0] else 0]
         self.children = keep.children
         for c in self.children:
@@ -78,7 +91,7 @@ class _BspNode():
         self.client = keep.client
         return self
 
-    def distribute(self):
+    def distribute(self) -> tuple[int, int]:
         if len(self.children) == 0:
             return 1, 1
         h0, v0 = self.children[0].distribute()
@@ -93,7 +106,7 @@ class _BspNode():
             self.split_ratio = 100 * v0 / v
         return h, v
 
-    def calc_geom(self, x, y, w, h):
+    def calc_geom(self, x: int, y: int, w: int, h: int) -> None:
         self.x = x
         self.y = y
         self.w = w
@@ -147,17 +160,27 @@ class Bsp(Layout):
         Key([mod, "shift"], "n", lazy.layout.normalize()),
         Key([mod], "Return", lazy.layout.toggle_split()),
     """
+
     defaults = [
-        ("name", "bsp", "Name of this layout."),
-        ("border_focus", "#881111", "Border colour for the focused window."),
-        ("border_normal", "#220000", "Border colour for un-focused windows."),
+        ("border_focus", "#881111", "Border colour(s) for the focused window."),
+        ("border_normal", "#220000", "Border colour(s) for un-focused windows."),
         ("border_width", 2, "Border width."),
+        ("border_on_single", False, "Draw border when there is only one window."),
+        (
+            "margin_on_single",
+            None,
+            "Margin when there is only one window (int or list of ints [N E S W], 'None' to use 'margin' value).",
+        ),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])."),
-        ("ratio", 1.6,
-         "Width/height ratio that defines the partition direction."),
+        ("ratio", 1.6, "Width/height ratio that defines the partition direction."),
         ("grow_amount", 10, "Amount by which to grow a window/column."),
         ("lower_right", True, "New client occupies lower or right subspace."),
         ("fair", True, "New clients are inserted in the shortest branch."),
+        (
+            "wrap_clients",
+            False,
+            "Whether client list should be wrapped when using ``next`` and ``previous`` commands.",
+        ),
     ]
 
     def __init__(self, **config):
@@ -165,27 +188,31 @@ class Bsp(Layout):
         self.add_defaults(Bsp.defaults)
         self.root = _BspNode()
         self.current = self.root
+        if self.margin_on_single is None:
+            self.margin_on_single = self.margin
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)
         c.root = _BspNode()
         c.current = c.root
         return c
 
-    def info(self):
-        return dict(
-            name=self.name,
-            clients=[c.name for c in self.root.clients()])
+    def get_windows(self):
+        return list(self.root.clients())
+
+    @expose_command()
+    def info(self) -> dict[str, Any]:
+        return dict(name=self.name, clients=[c.name for c in self.root.clients()])
 
     def get_node(self, client):
         for node in self.root:
             if client is node.client:
                 return node
 
-    def focus(self, client):
+    def focus(self, client: Window) -> None:
         self.current = self.get_node(client)
 
-    def add(self, client):
+    def add_client(self, client: Window) -> None:
         node = self.root.get_shortest() if self.fair else self.current
         self.current = node.insert(client, int(self.lower_right), self.ratio)
 
@@ -203,12 +230,13 @@ class Bsp(Layout):
             node.client = None
             self.current = self.root
 
-    def configure(self, client, screen_rect):
-        self.root.calc_geom(screen_rect.x, screen_rect.y, screen_rect.width,
-                            screen_rect.height)
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
+        self.root.calc_geom(screen_rect.x, screen_rect.y, screen_rect.width, screen_rect.height)
         node = self.get_node(client)
         color = self.border_focus if client.has_focus else self.border_normal
-        border = 0 if node is self.root else self.border_width
+        border = 0 if node is self.root and not self.border_on_single else self.border_width
+        margin = self.margin_on_single if node is self.root else self.margin
+
         if node is not None:
             client.place(
                 node.x,
@@ -217,42 +245,52 @@ class Bsp(Layout):
                 node.h - 2 * border,
                 border,
                 color,
-                margin=self.margin)
+                margin=margin,
+            )
         client.unhide()
 
-    def cmd_toggle_split(self):
+    @expose_command()
+    def toggle_split(self):
         if self.current.parent:
             self.current.parent.split_horizontal = not self.current.parent.split_horizontal
         self.group.layout_all()
 
-    def focus_first(self):
+    def focus_first(self) -> Window | None:
         return next(self.root.clients(), None)
 
-    def focus_last(self):
+    def focus_last(self) -> Window | None:
         clients = list(self.root.clients())
         return clients[-1] if len(clients) else None
 
-    def focus_next(self, client):
+    def focus_next(self, client: Window, wrap: bool = False) -> Window | None:
         clients = list(self.root.clients())
         if client in clients:
             idx = clients.index(client)
-            if idx + 1 < len(clients):
-                return clients[idx + 1]
+            if not wrap and idx + 1 < len(clients):
+                return clients[(idx + 1)]
+            elif wrap:
+                return clients[(idx + 1) % len(clients)]
+        return None
 
-    def focus_previous(self, client):
+    def focus_previous(self, client: Window, wrap: bool = False) -> Window | None:
         clients = list(self.root.clients())
         if client in clients:
             idx = clients.index(client)
-            if idx > 0:
-                return clients[idx - 1]
+            if not wrap and idx > 0:
+                return clients[(idx - 1)]
+            elif wrap:
+                return clients[(idx - 1) % len(clients)]
+        return None
 
-    def cmd_next(self):
-        client = self.focus_next(self.current)
+    @expose_command()
+    def next(self) -> None:
+        client = self.focus_next(self.current.client, wrap=self.wrap_clients)
         if client:
             self.group.focus(client, True)
 
-    def cmd_previous(self):
-        client = self.focus_previous(self.current)
+    @expose_command()
+    def previous(self) -> None:
+        client = self.focus_previous(self.current.client, wrap=self.wrap_clients)
         if client:
             self.group.focus(client, True)
 
@@ -320,27 +358,32 @@ class Bsp(Layout):
             child = parent
             parent = child.parent
 
-    def cmd_left(self):
+    @expose_command()
+    def left(self):
         node = self.find_left()
         if node:
             self.group.focus(node.client, True)
 
-    def cmd_right(self):
+    @expose_command()
+    def right(self):
         node = self.find_right()
         if node:
             self.group.focus(node.client, True)
 
-    def cmd_up(self):
+    @expose_command()
+    def up(self):
         node = self.find_up()
         if node:
             self.group.focus(node.client, True)
 
-    def cmd_down(self):
+    @expose_command()
+    def down(self):
         node = self.find_down()
         if node:
             self.group.focus(node.client, True)
 
-    def cmd_shuffle_left(self):
+    @expose_command()
+    def shuffle_left(self):
         node = self.find_left()
         if node:
             node.client, self.current.client = self.current.client, node.client
@@ -358,7 +401,8 @@ class Bsp(Layout):
             self.current = node
             self.group.layout_all()
 
-    def cmd_shuffle_right(self):
+    @expose_command()
+    def shuffle_right(self):
         node = self.find_right()
         if node:
             node.client, self.current.client = self.current.client, node.client
@@ -376,7 +420,8 @@ class Bsp(Layout):
             self.current = node
             self.group.layout_all()
 
-    def cmd_shuffle_up(self):
+    @expose_command()
+    def shuffle_up(self):
         node = self.find_up()
         if node:
             node.client, self.current.client = self.current.client, node.client
@@ -394,7 +439,8 @@ class Bsp(Layout):
             self.current = node
             self.group.layout_all()
 
-    def cmd_shuffle_down(self):
+    @expose_command()
+    def shuffle_down(self):
         node = self.find_down()
         if node:
             node.client, self.current.client = self.current.client, node.client
@@ -412,55 +458,56 @@ class Bsp(Layout):
             self.current = node
             self.group.layout_all()
 
-    def cmd_grow_left(self):
+    @expose_command()
+    def grow_left(self):
         child = self.current
         parent = child.parent
         while parent:
             if parent.split_horizontal and child is parent.children[1]:
-                parent.split_ratio = max(5,
-                                         parent.split_ratio - self.grow_amount)
+                parent.split_ratio = max(5, parent.split_ratio - self.grow_amount)
                 self.group.layout_all()
                 break
             child = parent
             parent = child.parent
 
-    def cmd_grow_right(self):
+    @expose_command()
+    def grow_right(self):
         child = self.current
         parent = child.parent
         while parent:
             if parent.split_horizontal and child is parent.children[0]:
-                parent.split_ratio = min(95,
-                                         parent.split_ratio + self.grow_amount)
+                parent.split_ratio = min(95, parent.split_ratio + self.grow_amount)
                 self.group.layout_all()
                 break
             child = parent
             parent = child.parent
 
-    def cmd_grow_up(self):
+    @expose_command()
+    def grow_up(self):
         child = self.current
         parent = child.parent
         while parent:
             if not parent.split_horizontal and child is parent.children[1]:
-                parent.split_ratio = max(5,
-                                         parent.split_ratio - self.grow_amount)
+                parent.split_ratio = max(5, parent.split_ratio - self.grow_amount)
                 self.group.layout_all()
                 break
             child = parent
             parent = child.parent
 
-    def cmd_grow_down(self):
+    @expose_command()
+    def grow_down(self):
         child = self.current
         parent = child.parent
         while parent:
             if not parent.split_horizontal and child is parent.children[0]:
-                parent.split_ratio = min(95,
-                                         parent.split_ratio + self.grow_amount)
+                parent.split_ratio = min(95, parent.split_ratio + self.grow_amount)
                 self.group.layout_all()
                 break
             child = parent
             parent = child.parent
 
-    def cmd_flip_left(self):
+    @expose_command()
+    def flip_left(self):
         child = self.current
         parent = child.parent
         while parent:
@@ -471,7 +518,8 @@ class Bsp(Layout):
             child = parent
             parent = child.parent
 
-    def cmd_flip_right(self):
+    @expose_command()
+    def flip_right(self):
         child = self.current
         parent = child.parent
         while parent:
@@ -482,7 +530,8 @@ class Bsp(Layout):
             child = parent
             parent = child.parent
 
-    def cmd_flip_up(self):
+    @expose_command()
+    def flip_up(self):
         child = self.current
         parent = child.parent
         while parent:
@@ -493,7 +542,8 @@ class Bsp(Layout):
             child = parent
             parent = child.parent
 
-    def cmd_flip_down(self):
+    @expose_command()
+    def flip_down(self):
         child = self.current
         parent = child.parent
         while parent:
@@ -504,7 +554,8 @@ class Bsp(Layout):
             child = parent
             parent = child.parent
 
-    def cmd_normalize(self):
+    @expose_command()
+    def normalize(self):
         distribute = True
         for node in self.root:
             if node.split_ratio != 50:

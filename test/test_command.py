@@ -2,6 +2,7 @@
 # Copyright (c) 2012, 2014 Tycho Andersen
 # Copyright (c) 2013 Craig Barnes
 # Copyright (c) 2014 Sean Vig
+# Copyright (c) 2021 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,28 +21,33 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 import pytest
 
 import libqtile.bar
 import libqtile.config
 import libqtile.confreader
 import libqtile.layout
+import libqtile.log_utils
 import libqtile.widget
-from libqtile.command.base import CommandObject
-from libqtile.command.interface import CommandError
+from libqtile.command.base import CommandObject, expose_command
+from libqtile.command.client import CommandClient
+from libqtile.command.interface import CommandError, IPCCommandInterface
 from libqtile.confreader import Config
+from libqtile.ipc import Client, IPCError
 from libqtile.lazy import lazy
+from test.conftest import dualmonitor
 
 
 class CallConfig(Config):
     keys = [
         libqtile.config.Key(
-            ["control"], "j",
+            ["control"],
+            "j",
             lazy.layout.down(),
         ),
         libqtile.config.Key(
-            ["control"], "k",
+            ["control"],
+            "k",
             lazy.layout.up(),
         ),
     ]
@@ -60,8 +66,9 @@ class CallConfig(Config):
             bottom=libqtile.bar.Bar(
                 [
                     libqtile.widget.GroupBox(),
+                    libqtile.widget.TextBox(),
                 ],
-                20
+                20,
             ),
         )
     ]
@@ -75,25 +82,56 @@ call_config = pytest.mark.parametrize("manager", [CallConfig], indirect=True)
 def test_layout_filter(manager):
     manager.test_window("one")
     manager.test_window("two")
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
     manager.c.simulate_keypress(["control"], "j")
-    assert manager.c.groups()["a"]["focus"] == "one"
+    assert manager.c.get_groups()["a"]["focus"] == "one"
     manager.c.simulate_keypress(["control"], "k")
-    assert manager.c.groups()["a"]["focus"] == "two"
+    assert manager.c.get_groups()["a"]["focus"] == "two"
 
 
-class TestCommands(CommandObject):
+@call_config
+def test_param_hoisting(manager):
+    manager.test_window("two")
+
+    client = Client(manager.sockfile)
+    command = IPCCommandInterface(client)
+    cmd_client = CommandClient(command)
+
+    # 'zomg' is not a valid warp command
+    with pytest.raises(IPCError):
+        cmd_client.navigate("window", None).call("focus", warp="zomg", lifted=True)
+
+    cmd_client.navigate("window", None).call("focus", warp=False, lifted=True)
+
+    # 'zomg' is not a valid bar position
+    with pytest.raises(IPCError):
+        cmd_client.call("hide_show_bar", position="zomg", lifted=True)
+
+    cmd_client.call("hide_show_bar", position="top", lifted=True)
+
+    # 'zomg' is not a valid font size
+    with pytest.raises(IPCError):
+        cmd_client.navigate("widget", "textbox").call("set_font", fontsize="zomg", lifted=True)
+
+    cmd_client.navigate("widget", "textbox").call("set_font", fontsize=12, lifted=True)
+
+
+class FakeCommandObject(CommandObject):
     @staticmethod
-    def cmd_one():
+    @expose_command()
+    def one():
         pass
 
-    def cmd_one_self(self):
+    @expose_command()
+    def one_self(self):
         pass
 
-    def cmd_two(self, a):
+    @expose_command()
+    def two(self, a):
         pass
 
-    def cmd_three(self, a, b=99):
+    @expose_command()
+    def three(self, a, b=99):
         pass
 
     def _items(self, name):
@@ -104,22 +142,28 @@ class TestCommands(CommandObject):
 
 
 def test_doc():
-    c = TestCommands()
-    assert "one()" in c.cmd_doc("one")
-    assert "one_self()" in c.cmd_doc("one_self")
-    assert "two(a)" in c.cmd_doc("two")
-    assert "three(a, b=99)" in c.cmd_doc("three")
+    c = FakeCommandObject()
+    assert "one()" in c.doc("one")
+    assert "one_self()" in c.doc("one_self")
+    assert "two(a)" in c.doc("two")
+    assert "three(a, b=99)" in c.doc("three")
 
 
 def test_commands():
-    c = TestCommands()
-    assert len(c.cmd_commands()) == 9
+    c = FakeCommandObject()
+    assert len(c.commands()) == 9
 
 
 def test_command():
-    c = TestCommands()
+    c = FakeCommandObject()
     assert c.command("one")
     assert not c.command("nonexistent")
+
+
+class DecoratedTextBox(libqtile.widget.TextBox):
+    @expose_command("mapped")
+    def exposed(self):
+        return "OK"
 
 
 class ServerConfig(Config):
@@ -143,17 +187,17 @@ class ServerConfig(Config):
                 [
                     libqtile.widget.TextBox(name="one"),
                 ],
-                20
+                20,
             ),
         ),
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
-                    libqtile.widget.TextBox(name="two"),
+                    DecoratedTextBox(name="two"),
                 ],
-                20
+                20,
             ),
-        )
+        ),
     ]
 
 
@@ -168,6 +212,11 @@ def test_cmd_commands(manager):
 
 
 @server_config
+def test_cmd_eval_namespace(manager):
+    assert manager.c.eval("__name__") == (True, "libqtile.core.manager")
+
+
+@server_config
 def test_call_unknown(manager):
     with pytest.raises(libqtile.command.client.SelectError, match="Not valid child or command"):
         manager.c.nonexistent
@@ -177,6 +226,7 @@ def test_call_unknown(manager):
         manager.c.layout.nonexistent
 
 
+@dualmonitor
 @server_config
 def test_items_qtile(manager):
     v = manager.c.items("group")
@@ -187,7 +237,7 @@ def test_items_qtile(manager):
 
     v = manager.c.items("widget")
     assert not v[0]
-    assert sorted(v[1]) == ['one', 'two']
+    assert sorted(v[1]) == ["one", "two"]
 
     assert manager.c.items("bar") == (False, ["bottom"])
     t, lst = manager.c.items("window")
@@ -197,6 +247,7 @@ def test_items_qtile(manager):
     assert manager.c.items("screen") == (True, [0, 1])
 
 
+@dualmonitor
 @server_config
 def test_select_qtile(manager):
     assert manager.c.layout.info()["group"] == "a"
@@ -238,6 +289,7 @@ def test_items_group(manager):
     assert group.items("screen") == (True, [])
 
 
+@dualmonitor
 @server_config
 def test_select_group(manager):
     group = manager.c.group
@@ -302,6 +354,7 @@ def test_items_bar(manager):
     assert manager.c.bar["bottom"].items("screen") == (True, [])
 
 
+@dualmonitor
 @server_config
 def test_select_bar(manager):
     assert manager.c.screen[1].bar["bottom"].screen.info()["index"] == 1
@@ -330,6 +383,7 @@ def test_select_layout(manager):
         layout.group["a"]
 
 
+@dualmonitor
 @server_config
 def test_items_window(manager):
     manager.test_window("test")
@@ -341,6 +395,7 @@ def test_items_window(manager):
     assert window.items("screen") == (True, [])
 
 
+@dualmonitor
 @server_config
 def test_select_window(manager):
     manager.test_window("test")
@@ -370,3 +425,71 @@ def test_select_widget(manager):
     assert widget.bar.info()["position"] == "bottom"
     with pytest.raises(libqtile.command.client.SelectError, match="Item not available in object"):
         widget.bar["bottom"]
+
+
+def test_core_node(manager, backend_name):
+    assert manager.c.core.info()["backend"] == backend_name
+
+
+def test_lazy_arguments(manager_nospawn):
+    # Decorated function to be bound to key presses
+    @lazy.function
+    def test_func(qtile, value, multiplier=1):
+        qtile.test_func_output = value * multiplier
+
+    config = ServerConfig
+    config.keys = [
+        libqtile.config.Key(
+            ["control"],
+            "j",
+            test_func(10),
+        ),
+        libqtile.config.Key(["control"], "k", test_func(5, multiplier=100)),
+    ]
+
+    manager_nospawn.start(config)
+
+    manager_nospawn.c.simulate_keypress(["control"], "j")
+    _, val = manager_nospawn.c.eval("self.test_func_output")
+    assert val == "10"
+
+    manager_nospawn.c.simulate_keypress(["control"], "k")
+    _, val = manager_nospawn.c.eval("self.test_func_output")
+    assert val == "500"
+
+
+def test_decorators_direct_call():
+    widget = DecoratedTextBox()
+    undecorated = libqtile.widget.TextBox()
+
+    cmds = ["exposed", "mapped"]
+
+    for cmd in cmds:
+        # Check new command is exposed
+        assert cmd in widget.commands()
+        # Check commands are not in widget with same parent class
+        assert cmd not in undecorated.commands()
+
+    assert widget.exposed() == "OK"
+    assert widget.mapped() == "OK"
+
+
+def test_decorators_deprecated_direct_call():
+    widget = DecoratedTextBox()
+    assert widget.cmd_exposed() == "OK"
+
+
+def test_decorators_deprecated_method():
+    class CmdWidget(libqtile.widget.TextBox):
+        def cmd_exposed(self):
+            pass
+
+    assert "exposed" in CmdWidget().commands()
+
+
+@dualmonitor
+@server_config
+def test_decorators_manager_call(manager):
+    widget = manager.c.widget["two"]
+    assert widget.exposed() == "OK"
+    assert widget.mapped() == "OK"

@@ -1,3 +1,25 @@
+# Copyright (c) 2021 elParaguayo
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Widget specific tests
+
 import pytest
 
 import libqtile.bar
@@ -5,7 +27,10 @@ import libqtile.config
 import libqtile.confreader
 import libqtile.layout
 import libqtile.widget as widgets
+from libqtile.widget.base import ORIENTATION_BOTH, ORIENTATION_VERTICAL
+from libqtile.widget.clock import Clock
 from libqtile.widget.crashme import _CrashMe
+from test.widgets.conftest import FakeBar
 
 # This file runs a very simple test to check that widgets can be initialised
 # and that keyword arguments are added to default values.
@@ -23,8 +48,7 @@ from libqtile.widget.crashme import _CrashMe
 # Widgets listed here will replace the default values.
 # This should be used as a last resort - any failure may indicate an
 # underlying issue in the widget that should be resolved.
-overrides = [
-]
+overrides = []
 
 # Some widgets are not included in __init__.py
 # They can be included in the tests by adding their details here
@@ -33,19 +57,20 @@ extras = [
 ]
 
 # To skip a test entirely, list the widget class here
-no_test = [
-    widgets.Mirror,  # Mirror requires a reflection object
-    widgets.PulseVolume
-]
+no_test = [widgets.Mirror, widgets.PulseVolume]  # Mirror requires a reflection object
+no_test += [widgets.ImapWidget]  # Requires a configured username
+
+# To test a widget only under one backend, list the widget class here
+exclusive_backend = {
+    widgets.Systray: "x11",
+}
 
 ################################################################################
 # Do not edit below this line
 ################################################################################
 
 # Build default list of all widgets and assign simple keyword argument
-parameters = [
-    (getattr(widgets, w), {"dummy_parameter": 1}) for w in widgets.__all__
-]
+parameters = [(getattr(widgets, w), {"dummy_parameter": 1}) for w in widgets.__all__]
 
 # Replace items in default list with overrides
 for ovr in overrides:
@@ -63,18 +88,12 @@ def no_op(*args, **kwargs):
     pass
 
 
-class MinimalConf(libqtile.confreader.Config):
-    auto_fullscreen = False
-    keys = []
-    mouse = []
-    groups = [libqtile.config.Group("a")]
-    layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
-    floating_layout = libqtile.resources.default_config.floating_layout
-    screens = []
-
-
 @pytest.mark.parametrize("widget_class,kwargs", parameters)
-def test_widget_init_config(manager_nospawn, widget_class, kwargs):
+def test_widget_init_config(manager_nospawn, minimal_conf_noscreen, widget_class, kwargs):
+    if widget_class in exclusive_backend:
+        if exclusive_backend[widget_class] != manager_nospawn.backend.name:
+            pytest.skip("Unsupported backend")
+
     widget = widget_class(**kwargs)
     widget.draw = no_op
 
@@ -83,20 +102,60 @@ def test_widget_init_config(manager_nospawn, widget_class, kwargs):
         assert getattr(widget, k) == v
 
     # Test configuration
-    config = MinimalConf
-    config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar([widget], 10)
-        )
-    ]
+    config = minimal_conf_noscreen
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([widget], 10))]
 
     manager_nospawn.start(config)
 
     i = manager_nospawn.c.bar["top"].info()
 
     # Check widget is registered by checking names of widgets in bar
-    allowed_names = [
-        widget.name,
-        "<no name>"  # systray is called "<no name>" as it subclasses _Window
-    ]
-    assert i["widgets"][0]["name"] in allowed_names
+    assert i["widgets"][0]["name"] == widget.name
+
+
+@pytest.mark.parametrize(
+    "widget_class,kwargs",
+    [
+        param
+        for param in parameters
+        if param[0]().orientations in [ORIENTATION_BOTH, ORIENTATION_VERTICAL]
+    ],
+)
+def test_widget_init_config_vertical_bar(
+    manager_nospawn, minimal_conf_noscreen, widget_class, kwargs
+):
+    if widget_class in exclusive_backend:
+        if exclusive_backend[widget_class] != manager_nospawn.backend.name:
+            pytest.skip("Unsupported backend")
+
+    widget = widget_class(**kwargs)
+    widget.draw = no_op
+
+    # If widget inits ok then kwargs will now be attributes
+    for k, v in kwargs.items():
+        assert getattr(widget, k) == v
+
+    # Test configuration
+    config = minimal_conf_noscreen
+    config.screens = [libqtile.config.Screen(left=libqtile.bar.Bar([widget], 10))]
+
+    manager_nospawn.start(config)
+
+    i = manager_nospawn.c.bar["left"].info()
+
+    # Check widget is registered by checking names of widgets in bar
+    assert i["widgets"][0]["name"] == widget.name
+
+
+@pytest.mark.parametrize("widget_class,kwargs", parameters)
+def test_widget_init_config_set_width(widget_class, kwargs):
+    widget = widget_class(width=50)
+    assert widget
+
+
+def test_incompatible_orientation(fake_qtile, fake_window):
+    clk1 = Clock()
+    clk1.orientations = ORIENTATION_VERTICAL
+    fakebar = FakeBar([clk1], window=fake_window)
+    with pytest.raises(libqtile.confreader.ConfigError):
+        clk1._configure(fake_qtile, fakebar)

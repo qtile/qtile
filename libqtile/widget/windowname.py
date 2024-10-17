@@ -25,16 +25,33 @@
 # SOFTWARE.
 
 from libqtile import bar, hook, pangocffi
+from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
 class WindowName(base._TextBox):
     """Displays the name of the window that currently has focus"""
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
-        ('for_current_screen', False, 'instead of this bars screen use currently active screen'),
-        ('empty_group_string', ' ', 'string to display when no windows are focused on current group'),
-        ('format', '{state}{name}', 'format of the text'),
+        ("for_current_screen", False, "instead of this bars screen use currently active screen"),
+        (
+            "empty_group_string",
+            " ",
+            "string to display when no windows are focused on current group",
+        ),
+        ("format", "{state}{name}", "format of the text"),
+        (
+            "parse_text",
+            None,
+            "Function to parse and modify window names. "
+            "e.g. function in config that removes excess "
+            "strings from window name: "
+            "def my_func(text)"
+            '    for string in [" - Chromium", " - Firefox"]:'
+            '        text = text.replace(string, "")'
+            "   return text"
+            "then set option parse_text=my_func",
+        ),
     ]
 
     def __init__(self, width=bar.STRETCH, **config):
@@ -46,30 +63,46 @@ class WindowName(base._TextBox):
         hook.subscribe.client_name_updated(self.hook_response)
         hook.subscribe.focus_change(self.hook_response)
         hook.subscribe.float_change(self.hook_response)
+        hook.subscribe.current_screen_change(self.hook_response_current_screen)
 
-        @hook.subscribe.current_screen_change
-        def on_screen_changed():
-            if self.for_current_screen:
-                self.hook_response()
+    def remove_hooks(self):
+        hook.unsubscribe.client_name_updated(self.hook_response)
+        hook.unsubscribe.focus_change(self.hook_response)
+        hook.unsubscribe.float_change(self.hook_response)
+        hook.unsubscribe.current_screen_change(self.hook_response_current_screen)
 
     def hook_response(self, *args):
         if self.for_current_screen:
             w = self.qtile.current_screen.group.current_window
         else:
             w = self.bar.screen.group.current_window
-        state = ''
+        state = ""
         if w:
             if w.maximized:
-                state = '[] '
+                state = "[] "
             elif w.minimized:
-                state = '_ '
+                state = "_ "
             elif w.floating:
-                state = 'V '
+                state = "V "
             var = {}
             var["state"] = state
             var["name"] = w.name
-            var["class"] = w.window.get_wm_class()[0] if len(w.window.get_wm_class()) > 0 else ""
+            if callable(self.parse_text):
+                try:
+                    var["name"] = self.parse_text(var["name"])
+                except:  # noqa: E722
+                    logger.exception("parse_text function failed:")
+            wm_class = w.get_wm_class()
+            var["class"] = wm_class[0] if wm_class else ""
             unescaped = self.format.format(**var)
         else:
             unescaped = self.empty_group_string
         self.update(pangocffi.markup_escape_text(unescaped))
+
+    def hook_response_current_screen(self, *args):
+        if self.for_current_screen:
+            self.hook_response()
+
+    def finalize(self):
+        self.remove_hooks()
+        base._TextBox.finalize(self)

@@ -23,11 +23,19 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import re
-
 import cairocffi
 
-from libqtile import bar, hook, pangocffi
+try:
+    from xdg.IconTheme import getIconPath
+
+    has_xdg = True
+except ImportError:
+    has_xdg = False
+
+import libqtile.bar
+from libqtile import hook, pangocffi
+from libqtile.images import Img
+from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
@@ -36,17 +44,17 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
     Contrary to WindowTabs this is an interactive widget.  The window that
     currently has focus is highlighted.
+
+    Optional requirements: `pyxdg <https://pypi.org/project/pyxdg/>`__ is needed
+    to use theme icons and to display icons on Wayland.
     """
+
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("font", "sans", "Default font"),
         ("fontsize", None, "Font size. Calculated if None."),
         ("foreground", "ffffff", "Foreground colour"),
-        (
-            "fontshadow",
-            None,
-            "font shadow color, default is None(no shadow)"
-        ),
+        ("fontshadow", None, "font shadow color, default is None(no shadow)"),
         ("borderwidth", 2, "Current group border width"),
         ("border", "215578", "Border colour"),
         ("rounded", True, "To round or not to round borders"),
@@ -54,99 +62,132 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             "highlight_method",
             "border",
             "Method of highlighting (one of 'border' or 'block') "
-            "Uses `*_border` color settings"
+            "Uses `*_border` color settings",
         ),
         ("urgent_border", "FF0000", "Urgent border color"),
         (
             "urgent_alert_method",
             "border",
-            "Method for alerting you of WM urgent "
-            "hints (one of 'border' or 'text')"
+            "Method for alerting you of WM urgent " "hints (one of 'border' or 'text')",
         ),
         (
             "unfocused_border",
             None,
             "Border color for unfocused windows. "
             "Affects only hightlight_method 'border' and 'block'. "
-            "Defaults to None, which means no special color."
+            "Defaults to None, which means no special color.",
         ),
         (
             "max_title_width",
             None,
-            "Max size in pixels of task title."
-            "(if set to None, as much as available.)"
+            "Max size in pixels of task title." "(if set to None, as much as available.)",
         ),
-
         (
             "title_width_method",
             None,
             "Method to compute the width of task title. (None, 'uniform'.)"
-            "Defaults to None, the normal behaviour."
+            "Defaults to None, the normal behaviour.",
         ),
         (
-            "spacing",
+            "parse_text",
             None,
-            "Spacing between tasks."
-            "(if set to None, will be equal to margin_x)"
+            "Function to parse and modify window names. "
+            "e.g. function in config that removes excess "
+            "strings from window name: "
+            "def my_func(text)"
+            '    for string in [" - Chromium", " - Firefox"]:'
+            '        text = text.replace(string, "")'
+            "   return text"
+            "then set option parse_text=my_func",
+        ),
+        ("spacing", None, "Spacing between tasks." "(if set to None, will be equal to margin_x)"),
+        (
+            "txt_minimized",
+            "_ ",
+            "Text representation of the minimized window state. " 'e.g., "_ " or "\U0001f5d5 "',
         ),
         (
-            'txt_minimized',
-            '_ ',
-            'Text representation of the minimized window state. '
-            'e.g., "_ " or "\U0001F5D5 "'
+            "txt_maximized",
+            "[] ",
+            "Text representation of the maximized window state. " 'e.g., "[] " or "\U0001f5d6 "',
         ),
         (
-            'txt_maximized',
-            '[] ',
-            'Text representation of the maximized window state. '
-            'e.g., "[] " or "\U0001F5D6 "'
+            "txt_floating",
+            "V ",
+            "Text representation of the floating window state. " 'e.g., "V " or "\U0001f5d7 "',
         ),
         (
-            'txt_floating',
-            'V ',
-            'Text representation of the floating window state. '
-            'e.g., "V " or "\U0001F5D7 "'
-        ),
-        (
-            'markup_normal',
+            "markup_normal",
             None,
-            'Text markup of the normal window state. Supports pangomarkup with markup=True.'
-            'e.g., "{}" or "<span underline="low">{}</span>"'
+            "Text markup of the normal window state. Supports pangomarkup with markup=True."
+            'e.g., "{}" or "<span underline="low">{}</span>"',
         ),
         (
-            'markup_minimized',
+            "markup_minimized",
             None,
-            'Text markup of the minimized window state. Supports pangomarkup with markup=True.'
-            'e.g., "{}" or "<span underline="low">{}</span>"'
+            "Text markup of the minimized window state. Supports pangomarkup with markup=True."
+            'e.g., "{}" or "<span underline="low">{}</span>"',
         ),
         (
-            'markup_maximized',
+            "markup_maximized",
             None,
-            'Text markup of the maximized window state. Supports pangomarkup with markup=True.'
-            'e.g., "{}" or "<span underline="low">{}</span>"'
+            "Text markup of the maximized window state. Supports pangomarkup with markup=True."
+            'e.g., "{}" or "<span underline="low">{}</span>"',
         ),
         (
-            'markup_floating',
+            "markup_floating",
             None,
-            'Text markup of the floating window state. Supports pangomarkup with markup=True.'
-            'e.g., "{}" or "<span underline="low">{}</span>"'
+            "Text markup of the floating window state. Supports pangomarkup with markup=True."
+            'e.g., "{}" or "<span underline="low">{}</span>"',
         ),
         (
-            'markup_focused',
+            "markup_focused",
             None,
-            'Text markup of the focused window state. Supports pangomarkup with markup=True.'
-            'e.g., "{}" or "<span underline="low">{}</span>"'
+            "Text markup of the focused window state. Supports pangomarkup with markup=True."
+            'e.g., "{}" or "<span underline="low">{}</span>"',
         ),
         (
-            'icon_size',
+            "markup_focused_floating",
             None,
-            'Icon size. '
-            '(Calculated if set to None. Icons are hidden if set to 0.)'
+            "Text markup of the focused and floating window state. Supports pangomarkup with markup=True."
+            'e.g., "{}" or "<span underline="low">{}</span>"',
+        ),
+        (
+            "icon_size",
+            None,
+            "Icon size. " "(Calculated if set to None. Icons are hidden if set to 0.)",
+        ),
+        (
+            "theme_mode",
+            None,
+            "When to use theme icons. `None` = never, `preferred` = use if available, "
+            "`fallback` = use if app does not provide icon directly. "
+            "`preferred` and `fallback` have identical behaviour on Wayland.",
+        ),
+        (
+            "theme_path",
+            None,
+            "Path to icon theme to be used by pyxdg for icons. ``None`` will use default icon theme.",
+        ),
+        (
+            "window_name_location",
+            False,
+            "Whether to show the location of the window in the title.",
+        ),
+        (
+            "window_name_location_offset",
+            0,
+            "The offset given to the window location",
+        ),
+        (
+            "stretch",
+            True,
+            "Widget fills available space in bar. Set to `False` to limit widget width to size of its contents.",
         ),
     ]
 
     def __init__(self, **config):
-        base._Widget.__init__(self, bar.STRETCH, **config)
+        base._Widget.__init__(self, libqtile.bar.STRETCH, **config)
         self.add_defaults(TaskList.defaults)
         self.add_defaults(base.PaddingMixin.defaults)
         self.add_defaults(base.MarginMixin.defaults)
@@ -157,19 +198,15 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if self.spacing is None:
             self.spacing = self.margin_x
 
-        self.add_callbacks({'Button1': self.select_window})
+        self.add_callbacks({"Button1": self.select_window})
 
     def box_width(self, text):
         """
         calculate box width for given text.
         If max_title_width is given, the returned width is limited to it.
         """
-        if self.markup:
-            text = re.sub('<[^<]+?>', '', text)
         width, _ = self.drawer.max_layout_size(
-            [text],
-            self.font,
-            self.fontsize
+            [text], self.font, self.fontsize, markup=self.markup
         )
         width = width + 2 * (self.padding_x + self.borderwidth)
         return width
@@ -180,14 +217,19 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         Depending on its state minimized, maximized and floating
         appropriate characters are prepended.
         """
-        state = ''
+        state = ""
         markup_str = self.markup_normal
 
         # Enforce markup and new string format behaviour when
         # at least one markup_* option is used.
         # Mixing non markup and markup may cause problems.
-        if self.markup_minimized or self.markup_maximized\
-                or self.markup_floating or self.markup_focused:
+        if (
+            self.markup_minimized
+            or self.markup_maximized
+            or self.markup_floating
+            or self.markup_focused
+            or self.markup_focused_floating
+        ):
             enforce_markup = True
         else:
             enforce_markup = False
@@ -200,28 +242,61 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         elif window.maximized:
             state = self.txt_maximized
             markup_str = self.markup_maximized
+        elif window is window.group.current_window:
+            if window.floating:
+                state = self.txt_floating
+                markup_str = self.markup_focused_floating or self.markup_floating
+            else:
+                markup_str = self.markup_focused
         elif window.floating:
             state = self.txt_floating
             markup_str = self.markup_floating
-        elif window is window.group.current_window:
-            markup_str = self.markup_focused
 
-        window_name = window.name if window and window.name else "?"
+        window_location = (
+            f"[{window.group.windows.index(window) + self.window_name_location_offset}] "
+            if self.window_name_location
+            else ""
+        )
+        window_name = window_location + window.name if window and window.name else "?"
+
+        if callable(self.parse_text):
+            try:
+                window_name = self.parse_text(window_name)
+            except:  # noqa: E722
+                logger.exception("parse_text function failed:")
 
         # Emulate default widget behavior if markup_str is None
         if enforce_markup and markup_str is None:
-            markup_str = "%s{}" % (state)
+            markup_str = f"{state}{{}}"
 
         if markup_str is not None:
             self.markup = True
             window_name = pangocffi.markup_escape_text(window_name)
             return markup_str.format(window_name)
 
-        return "%s%s" % (state, window_name)
+        return f"{state}{window_name}"
 
     @property
     def windows(self):
+        if self.qtile.core.name == "x11":
+            windows = []
+            for w in self.bar.screen.group.windows:
+                wm_states = list(w.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
+                skip_taskbar = w.qtile.core.conn.atoms["_NET_WM_STATE_SKIP_TASKBAR"]
+                if w.window.get_wm_type() in ("normal", None) and skip_taskbar not in wm_states:
+                    windows.append(w)
+            return windows
         return self.bar.screen.group.windows
+
+    @property
+    def max_width(self):
+        width = self.bar.width
+        width -= sum(
+            w.width
+            for w in self.bar.widgets
+            if w is not self and w.length_type != libqtile.bar.STRETCH
+        )
+        return width
 
     def calc_box_widths(self):
         """
@@ -237,8 +312,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             return []
 
         # Determine available and max average width for task name boxes.
-        width_total = (self.width - 2 * self.margin_x -
-                       (window_count - 1) * self.spacing)
+        width_total = self.max_width - 2 * self.margin_x - (window_count - 1) * self.spacing
         width_avg = width_total / window_count
 
         names = [self.get_taskname(w) for w in windows]
@@ -256,9 +330,13 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             # Default behaviour: calculated width for each task according to
             # icon and task name consisting
             # of state abbreviation and window name
-            width_boxes = [(self.box_width(names[idx]) +
-                            ((self.icon_size + self.padding_x) if icons[idx] else 0))
-                           for idx in range(window_count)]
+            width_boxes = [
+                (
+                    self.box_width(names[idx])
+                    + ((self.icon_size + self.padding_x) if icons[idx] else 0)
+                )
+                for idx in range(window_count)
+            ]
 
         # Obey max_title_width if specified
         if self.max_title_width:
@@ -272,31 +350,49 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             # and calculate a ratio to shrink boxes greater than width_avg
             width_shorter_sum = sum([w for w in width_boxes if w < width_avg])
 
-            ratio = ((width_total - width_shorter_sum) /
-                     (width_sum - width_shorter_sum))
+            ratio = (width_total - width_shorter_sum) / (width_sum - width_shorter_sum)
             # determine new box widths by shrinking boxes greater than avg
-            width_boxes = [(w if w < width_avg else w * ratio)
-                           for w in width_boxes]
+            width_boxes = [(w if w < width_avg else w * ratio) for w in width_boxes]
 
         return zip(windows, icons, names, width_boxes)
 
+    def calculate_length(self):
+        width = 0
+        box_widths = [box[3] for box in self.calc_box_widths()]
+        if box_widths:
+            width += self.spacing * len(box_widths) - 1
+            width += sum(w for w in box_widths)
+
+        return width
+
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
+
+        if not self.stretch:
+            self.length_type = libqtile.bar.CALCULATED
+
+        if not has_xdg and self.theme_mode is not None:
+            logger.warning("You must install pyxdg to use theme icons.")
+            self.theme_mode = None
+
+        if self.theme_mode and self.theme_mode not in ["preferred", "fallback"]:
+            logger.warning(
+                "Unexpected theme_mode (%s). Theme icons will be disabled.", self.theme_mode
+            )
+            self.theme_mode = None
+
+        if qtile.core.name == "wayland" and self.theme_mode is None and self.icon_size != 0:
+            # Disable icons
+            self.icon_size = 0
+
         if self.icon_size is None:
-            self.icon_size = self.bar.height - 2 * (self.borderwidth +
-                                                    self.margin_y)
+            self.icon_size = self.bar.height - 2 * (self.borderwidth + self.margin_y)
 
         if self.fontsize is None:
-            calc = self.bar.height - self.margin_y * 2 - \
-                self.borderwidth * 2 - self.padding_y * 2
+            calc = self.bar.height - self.margin_y * 2 - self.borderwidth * 2 - self.padding_y * 2
             self.fontsize = max(calc, 1)
         self.layout = self.drawer.textlayout(
-            "",
-            "ffffff",
-            self.font,
-            self.fontsize,
-            self.fontshadow,
-            wrap=False
+            "", "ffffff", self.font, self.fontsize, self.fontshadow, wrap=False
         )
         self.setup_hooks()
 
@@ -305,7 +401,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             self.bar.draw()
 
     def remove_icon_cache(self, window):
-        wid = window.window.wid
+        wid = window.wid
         if wid in self._icons_cache:
             self._icons_cache.pop(wid)
 
@@ -334,20 +430,34 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if width is not None:
             self.layout.width = width
 
-    def drawbox(self, offset, text, bordercolor, textcolor,
-                width=None, rounded=False, block=False, icon=None):
+    def drawbox(
+        self,
+        offset,
+        text,
+        bordercolor,
+        textcolor,
+        width=None,
+        rounded=False,
+        block=False,
+        icon=None,
+    ):
         self.drawtext(text, textcolor, width)
 
         icon_padding = (self.icon_size + self.padding_x) if icon else 0
         padding_x = [self.padding_x + icon_padding, self.padding_x]
 
-        framed = self.layout.framed(
-            self.borderwidth,
-            bordercolor,
-            padding_x,
-            self.padding_y
-        )
-        if block:
+        if bordercolor is None:
+            # border colour is set to None when we don't want to draw a border at all
+            # Rather than dealing with alpha blending issues, we just set border width
+            # to 0.
+            border_width = 0
+            framecolor = self.background or self.bar.background
+        else:
+            border_width = self.borderwidth
+            framecolor = bordercolor
+
+        framed = self.layout.framed(border_width, framecolor, padding_x, self.padding_y)
+        if block and bordercolor is not None:
             framed.draw_fill(offset, self.margin_y, rounded)
         else:
             framed.draw(offset, self.margin_y, rounded)
@@ -376,43 +486,83 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             if window is not current_win:
                 window.group.focus(window, False)
                 if window.floating:
-                    window.cmd_bring_to_front()
+                    window.bring_to_front()
             else:
                 window.toggle_minimize()
 
-    def get_window_icon(self, window):
-        if not window.icons:
+    def _get_class_icon(self, window):
+        if not getattr(window, "icons", False):
             return None
-
-        cache = self._icons_cache.get(window.window.wid)
-        if cache:
-            return cache
 
         icons = sorted(
             iter(window.icons.items()),
-            key=lambda x: abs(self.icon_size - int(x[0].split("x")[0]))
+            key=lambda x: abs(self.icon_size - int(x[0].split("x")[0])),
         )
         icon = icons[0]
         width, height = map(int, icon[0].split("x"))
 
         img = cairocffi.ImageSurface.create_for_data(
-            icon[1],
-            cairocffi.FORMAT_ARGB32,
-            width,
-            height
+            icon[1], cairocffi.FORMAT_ARGB32, width, height
         )
 
-        surface = cairocffi.SurfacePattern(img)
+        return img
 
-        scaler = cairocffi.Matrix()
+    def _get_theme_icon(self, window):
+        classes = window.get_wm_class()
 
-        if height != self.icon_size:
-            sp = height / self.icon_size
-            height = self.icon_size
-            width /= sp
-            scaler.scale(sp, sp)
-        surface.set_matrix(scaler)
-        self._icons_cache[window.window.wid] = surface
+        if not classes:
+            return None
+
+        icon = None
+
+        for cl in classes:
+            for app in set([cl, cl.lower()]):
+                icon = getIconPath(app, theme=self.theme_path)
+                if icon is not None:
+                    break
+            else:
+                continue
+            break
+
+        if not icon:
+            return None
+
+        img = Img.from_path(icon)
+
+        return img.surface
+
+    def get_window_icon(self, window):
+        if not getattr(window, "icons", False) and self.theme_mode is None:
+            return None
+
+        cache = self._icons_cache.get(window.wid)
+        if cache:
+            return cache
+
+        surface = None
+        img = None
+
+        if self.qtile.core.name == "x11":
+            img = self._get_class_icon(window)
+
+        if self.theme_mode == "preferred" or (self.theme_mode == "fallback" and img is None):
+            xdg_img = self._get_theme_icon(window)
+            if xdg_img:
+                img = xdg_img
+
+        if img is not None:
+            surface = cairocffi.SurfacePattern(img)
+            height = img.get_height()
+            width = img.get_width()
+            scaler = cairocffi.Matrix()
+            if height != self.icon_size:
+                sp = height / self.icon_size
+                height = self.icon_size
+                width /= sp
+                scaler.scale(sp, sp)
+            surface.set_matrix(scaler)
+
+        self._icons_cache[window.wid] = surface
         return surface
 
     def draw_icon(self, surface, offset):
@@ -420,7 +570,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             return
 
         x = offset + self.borderwidth + self.padding_x
-        y = self.padding_y + self.borderwidth
+        y = (self.height - self.icon_size) // 2
 
         self.drawer.ctx.save()
         self.drawer.ctx.translate(x, y)
@@ -443,27 +593,27 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 border = self.border
                 text_color = border
             else:
-                border = self.unfocused_border or (self.background or
-                                                   self.bar.background)
+                border = self.unfocused_border or None
                 text_color = self.foreground
 
-            if self.highlight_method == 'text':
-                border = self.bar.background
+            if self.highlight_method == "text":
+                border = None
             else:
                 text_color = self.foreground
 
-            textwidth = (bw - 2 * self.padding_x -
-                         ((self.icon_size + self.padding_x) if icon else 0))
+            textwidth = (
+                bw - 2 * self.padding_x - ((self.icon_size + self.padding_x) if icon else 0)
+            )
             self.drawbox(
                 offset,
                 task,
                 border,
                 text_color,
                 rounded=self.rounded,
-                block=(self.highlight_method == 'block'),
+                block=(self.highlight_method == "block"),
                 width=textwidth,
                 icon=icon,
             )
-            offset += (bw + self.spacing)
+            offset += bw + self.spacing
 
-        self.drawer.draw(offsetx=self.offset, width=self.width)
+        self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)

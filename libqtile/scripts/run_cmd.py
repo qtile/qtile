@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 """
-    Command-line wrapper to run commands and add rules to new windows
+Command-line wrapper to run commands and add rules to new windows
 """
 
 import argparse
@@ -38,13 +38,21 @@ def run_cmd(opts) -> None:
     client = ipc.Client(socket)
     root = graph.CommandGraphRoot()
 
-    proc = subprocess.Popen(opts.cmd)
-    match_args = {"net_wm_pid": proc.pid}
-    rule_args = {"float": opts.float, "intrusive": opts.intrusive,
-                 "group": opts.group, "break_on_match": not opts.dont_break}
+    cmd = [opts.cmd]
+    if opts.args:
+        cmd.extend(opts.args)
 
-    cmd = root.call("add_rule")
-    _, rule_id = client.send((root.selectors, cmd.name, (match_args, rule_args), {}))
+    proc = subprocess.Popen(cmd)
+    match_args = {"net_wm_pid": proc.pid}
+    rule_args = {
+        "float": opts.float,
+        "intrusive": opts.intrusive,
+        "group": opts.group,
+        "break_on_match": not opts.dont_break,
+    }
+
+    graph_cmd = root.call("add_rule")
+    _, rule_id = client.send((root.selectors, graph_cmd.name, (match_args, rule_args), {}))
 
     def remove_rule() -> None:
         cmd = root.call("remove_rule")
@@ -57,35 +65,27 @@ def run_cmd(opts) -> None:
 
 def add_subcommand(subparsers, parents):
     parser = subparsers.add_parser(
-        "run-cmd",
-        parents=parents,
-        help="A wrapper around the command graph"
+        "run-cmd", parents=parents, help="A wrapper around the command graph."
+    )
+    parser.add_argument("-s", "--socket", help="Use specified socket for IPC.")
+    parser.add_argument(
+        "-i", "--intrusive", action="store_true", help="If the new window should be intrusive."
     )
     parser.add_argument(
-        '-s',
-        '--socket',
-        help='Use specified communication socket.')
+        "-f", "--float", action="store_true", help="If the new window should be floating."
+    )
     parser.add_argument(
-        '-i',
-        '--intrusive',
-        action='store_true',
-        help='If the new window should be intrusive.')
+        "-b",
+        "--dont-break",
+        action="store_true",
+        help="Do not break on match (keep applying rules).",
+    )
+    parser.add_argument("-g", "--group", help="Set the window group.")
+    parser.add_argument("cmd", help="Command to execute.")
     parser.add_argument(
-        '-f',
-        '--float',
-        action='store_true',
-        help='If the new window should be float.')
-    parser.add_argument(
-        '-b',
-        '--dont-break',
-        action='store_true',
-        help='Do not break on match (keep applying rules).')
-    parser.add_argument(
-        '-g',
-        '--group',
-        help='Set the window group.')
-    parser.add_argument(
-        'cmd',
+        "args",
         nargs=argparse.REMAINDER,
-        help='Command to execute')
+        metavar="[args ...]",
+        help="Optional arguments to pass to command.",
+    )
     parser.set_defaults(func=run_cmd)

@@ -43,12 +43,12 @@ from libqtile.log_utils import logger
 from libqtile.widget import base
 
 __all__ = [
-    'CPUGraph',
-    'MemoryGraph',
-    'SwapGraph',
-    'NetGraph',
-    'HDDGraph',
-    'HDDBusyGraph',
+    "CPUGraph",
+    "MemoryGraph",
+    "SwapGraph",
+    "NetGraph",
+    "HDDGraph",
+    "HDDBusyGraph",
 ]
 
 
@@ -96,12 +96,13 @@ class _Graph(base._Widget):
         return self.graphwidth / float(self.samples)
 
     def _for_each_step(self, values):
-        for index, val in enumerate(itertools.islice(
-            values,
-            max(int(-(self.graphwidth / self.step()) + len(values)), 0),
-            len(values),
-        )):
-            yield index, val
+        yield from enumerate(
+            itertools.islice(
+                values,
+                max(int(-(self.graphwidth / self.step()) + len(values)), 0),
+                len(values),
+            )
+        )
 
     def _prepare_context(self):
         self.drawer.ctx.set_line_join(cairocffi.LINE_JOIN_ROUND)
@@ -131,20 +132,19 @@ class _Graph(base._Widget):
             self.drawer.ctx.line_to(x + index * self.step(), y - self.val(val))
         self.drawer.ctx.stroke_preserve()
         self.drawer.ctx.line_to(
-            x + (len(values) - 1) * self.step(),
-            y - 1 + self.line_width / 2.0
+            x + (len(values) - 1) * self.step(), y - 1 + self.line_width / 2.0
         )
         self.drawer.ctx.line_to(x, y - 1 + self.line_width / 2.0)
         self.drawer.set_source_rgb(self.fill_color)
         self.drawer.ctx.fill()
 
     def val(self, val):
-        if self.start_pos == 'bottom':
+        if self.start_pos == "bottom":
             return val
-        elif self.start_pos == 'top':
+        elif self.start_pos == "top":
             return -val
         else:
-            raise ValueError("Unknown starting position: %s." % self.start_pos)
+            raise ValueError(f"Unknown starting position: {self.start_pos}.")
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
@@ -160,10 +160,10 @@ class _Graph(base._Widget):
             self.drawer.ctx.stroke()
         x = self.margin_x + self.border_width
         y = self.margin_y + self.border_width
-        if self.start_pos == 'bottom':
+        if self.start_pos == "bottom":
             y += self.graphheight
-        elif not self.start_pos == 'top':
-            raise ValueError("Unknown starting position: %s." % self.start_pos)
+        elif not self.start_pos == "top":
+            raise ValueError(f"Unknown starting position: {self.start_pos}.")
         k = 1.0 / (self.maxvalue or 1)
         scaled = [self.graphheight * val * k for val in reversed(self.values)]
 
@@ -174,9 +174,9 @@ class _Graph(base._Widget):
         elif self.type == "linefill":
             self.draw_linefill(x, y, scaled)
         else:
-            raise ValueError("Unknown graph type: %s." % self.type)
+            raise ValueError(f"Unknown graph type: {self.type}.")
 
-        self.drawer.draw(offsetx=self.offset, width=self.width)
+        self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
 
     def push(self, value):
         if self.lag_cycles > self.samples:
@@ -185,7 +185,7 @@ class _Graph(base._Widget):
             self.lag_cycles = 1
 
         self.values = ([value] * min(self.samples, self.lag_cycles)) + self.values
-        self.values = self.values[:self.samples]
+        self.values = self.values[: self.samples]
 
         if not self.fixed_upper_bound:
             self.maxvalue = max(self.values)
@@ -211,6 +211,7 @@ class CPUGraph(_Graph):
 
     .. _psutil: https://pypi.org/project/psutil/
     """
+
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("core", "all", "Which core to show (all/0/1/2/...)"),
@@ -225,10 +226,9 @@ class CPUGraph(_Graph):
         self.oldvalues = self._getvalues()
 
     def _getvalues(self):
-
         if isinstance(self.core, int):
             if self.core > psutil.cpu_count() - 1:
-                raise ValueError("No such core: {}".format(self.core))
+                raise ValueError(f"No such core: {self.core}")
             cpu = psutil.cpu_times(percpu=True)[self.core]
         else:
             cpu = psutil.cpu_times()
@@ -264,31 +264,30 @@ class MemoryGraph(_Graph):
 
     .. _psutil: https://pypi.org/project/psutil/
     """
+
     orientations = base.ORIENTATION_HORIZONTAL
     fixed_upper_bound = True
 
     def __init__(self, **config):
         _Graph.__init__(self, **config)
         val = self._getvalues()
-        self.maxvalue = val['MemTotal']
+        self.maxvalue = val["MemTotal"]
 
-        mem = val['MemTotal'] - val['MemFree'] - val['Buffers'] - val['Cached']
+        mem = val["MemTotal"] - val["MemFree"] - val["Buffers"] - val["Cached"]
         self.fulfill(mem)
 
     def _getvalues(self):
         val = {}
         mem = psutil.virtual_memory()
-        val['MemTotal'] = int(mem.total / 1024 / 1024)
-        val['MemFree'] = int(mem.free / 1024 / 1024)
-        val['Buffers'] = int(mem.buffers / 1024 / 1024)
-        val['Cached'] = int(mem.cached / 1024 / 1024)
+        val["MemTotal"] = int(mem.total / 1024 / 1024)
+        val["MemFree"] = int(mem.free / 1024 / 1024)
+        val["Buffers"] = int(mem.buffers / 1024 / 1024)
+        val["Cached"] = int(mem.cached / 1024 / 1024)
         return val
 
     def update_graph(self):
         val = self._getvalues()
-        self.push(
-            val['MemTotal'] - val['MemFree'] - val['Buffers'] - val['Cached']
-        )
+        self.push(val["MemTotal"] - val["MemFree"] - val["Buffers"] - val["Cached"])
 
 
 class SwapGraph(_Graph):
@@ -298,31 +297,32 @@ class SwapGraph(_Graph):
 
     .. _psutil: https://pypi.org/project/psutil/
     """
+
     orientations = base.ORIENTATION_HORIZONTAL
     fixed_upper_bound = True
 
     def __init__(self, **config):
         _Graph.__init__(self, **config)
         val = self._getvalues()
-        self.maxvalue = val['SwapTotal']
-        swap = val['SwapTotal'] - val['SwapFree']
+        self.maxvalue = val["SwapTotal"]
+        swap = val["SwapTotal"] - val["SwapFree"]
         self.fulfill(swap)
 
     def _getvalues(self):
         val = {}
         swap = psutil.swap_memory()
-        val['SwapTotal'] = int(swap.total / 1024 / 1024)
-        val['SwapFree'] = int(swap.free / 1024 / 1024)
+        val["SwapTotal"] = int(swap.total / 1024 / 1024)
+        val["SwapFree"] = int(swap.free / 1024 / 1024)
         return val
 
     def update_graph(self):
         val = self._getvalues()
 
-        swap = val['SwapTotal'] - val['SwapFree']
+        swap = val["SwapTotal"] - val["SwapFree"]
 
         # can change, swapon/off
-        if self.maxvalue != val['SwapTotal']:
-            self.maxvalue = val['SwapTotal']
+        if self.maxvalue != val["SwapTotal"]:
+            self.maxvalue = val["SwapTotal"]
             self.fulfill(swap)
         self.push(swap)
 
@@ -333,13 +333,10 @@ class NetGraph(_Graph):
     Widget requirements: psutil_.
 
     .. _psutil: https://pypi.org/project/psutil/"""
+
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        (
-            "interface",
-            "auto",
-            "Interface to display info for ('auto' for detection)"
-        ),
+        ("interface", "auto", "Interface to display info for ('auto' for detection)"),
         ("bandwidth_type", "down", "down(load)/up(load)"),
     ]
 
@@ -351,12 +348,11 @@ class NetGraph(_Graph):
                 self.interface = self.get_main_iface()
             except RuntimeError:
                 logger.warning(
-                    "NetGraph - Automatic interface detection failed, "
-                    "falling back to 'eth0'"
+                    "NetGraph - Automatic interface detection failed, falling back to 'eth0'"
                 )
                 self.interface = "eth0"
         if self.bandwidth_type != "down" and self.bandwidth_type != "up":
-            raise ValueError("bandwidth type {} not known!".format(self.bandwidth_type))
+            raise ValueError(f"bandwidth type {self.bandwidth_type} not known!")
         self.bytes = 0
         self.bytes = self._get_values()
 
@@ -375,7 +371,6 @@ class NetGraph(_Graph):
 
     @staticmethod
     def get_main_iface():
-
         # XXX: psutil doesn't have the facility to get the main interface,
         # so I'll just return the interface that has received the most traffic.
         #
@@ -392,12 +387,10 @@ class NetGraph(_Graph):
 
 class HDDGraph(_Graph):
     """Display HDD free or used space graph"""
+
     fixed_upper_bound = True
     orientations = base.ORIENTATION_HORIZONTAL
-    defaults = [
-        ("path", "/", "Partition mount point."),
-        ("space_type", "used", "free/used")
-    ]
+    defaults = [("path", "/", "Partition mount point."), ("space_type", "used", "free/used")]
 
     def __init__(self, **config):
         _Graph.__init__(self, **config)
@@ -409,7 +402,7 @@ class HDDGraph(_Graph):
 
     def _get_values(self):
         stats = statvfs(self.path)
-        if self.space_type == 'used':
+        if self.space_type == "used":
             return (stats.f_blocks - stats.f_bfree) * stats.f_frsize
         else:
             return stats.f_bavail * stats.f_frsize
@@ -426,17 +419,14 @@ class HDDBusyGraph(_Graph):
     based on ``io_ticks``'s value.  See
     https://www.kernel.org/doc/Documentation/block/stat.txt
     """
+
     orientations = base.ORIENTATION_HORIZONTAL
-    defaults = [
-        ("device", "sda", "Block device to display info for")
-    ]
+    defaults = [("device", "sda", "Block device to display info for")]
 
     def __init__(self, **config):
         _Graph.__init__(self, **config)
         self.add_defaults(HDDBusyGraph.defaults)
-        self.path = '/sys/block/{dev}/stat'.format(
-            dev=self.device
-        )
+        self.path = f"/sys/block/{self.device}/stat"
         self._prev = 0
 
     def _get_values(self):
@@ -444,7 +434,7 @@ class HDDBusyGraph(_Graph):
             # io_ticks is field number 9
             with open(self.path) as f:
                 io_ticks = int(f.read().split()[9])
-        except IOError:
+        except OSError:
             return 0
         activity = io_ticks - self._prev
         self._prev = io_ticks

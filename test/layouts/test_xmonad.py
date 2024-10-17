@@ -23,22 +23,14 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
-from test.conftest import no_xinerama
-from test.layouts.layout_utils import (
-    assert_dimensions,
-    assert_focus_path,
-    assert_focused,
-)
+from test.helpers import Retry
+from test.layouts.layout_utils import assert_dimensions, assert_focus_path, assert_focused
 
 
 class MonadTallConfig(Config):
     auto_fullscreen = True
-    groups = [
-        libqtile.config.Group("a")
-    ]
-    layouts = [
-        layout.MonadTall()
-    ]
+    groups = [libqtile.config.Group("a")]
+    layouts = [layout.MonadTall()]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
@@ -46,18 +38,13 @@ class MonadTallConfig(Config):
     follow_mouse_focus = False
 
 
-def monadtall_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadTallConfig], indirect=True)(x))
+monadtall_config = pytest.mark.parametrize("manager", [MonadTallConfig], indirect=True)
 
 
 class MonadTallNCPBeforeCurrentConfig(Config):
     auto_fullscreen = True
-    groups = [
-        libqtile.config.Group("a")
-    ]
-    layouts = [
-        layout.MonadTall(new_client_position='before_current')
-    ]
+    groups = [libqtile.config.Group("a")]
+    layouts = [layout.MonadTall(new_client_position="before_current")]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
@@ -65,18 +52,15 @@ class MonadTallNCPBeforeCurrentConfig(Config):
     follow_mouse_focus = False
 
 
-def monadtallncpbeforecurrent_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadTallNCPBeforeCurrentConfig], indirect=True)(x))
+monadtallncpbeforecurrent_config = pytest.mark.parametrize(
+    "manager", [MonadTallNCPBeforeCurrentConfig], indirect=True
+)
 
 
 class MonadTallNCPAfterCurrentConfig(Config):
     auto_fullscreen = True
-    groups = [
-        libqtile.config.Group("a")
-    ]
-    layouts = [
-        layout.MonadTall(new_client_position="after_current")
-    ]
+    groups = [libqtile.config.Group("a")]
+    layouts = [layout.MonadTall(new_client_position="after_current")]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
@@ -84,37 +68,26 @@ class MonadTallNCPAfterCurrentConfig(Config):
     follow_mouse_focus = False
 
 
-def monadtallncpaftercurrent_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadTallNCPAfterCurrentConfig], indirect=True)(x))
+monadtallncpaftercurrent_config = pytest.mark.parametrize(
+    "manager", [MonadTallNCPAfterCurrentConfig], indirect=True
+)
 
 
 class MonadTallNewCLientPositionBottomConfig(Config):
     auto_fullscreen = True
-    groups = [
-        libqtile.config.Group("a")
-    ]
-    layouts = [
-        layout.MonadTall(new_client_position="bottom")
-    ]
+    groups = [libqtile.config.Group("a")]
+    layouts = [layout.MonadTall(new_client_position="bottom")]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
     follow_mouse_focus = False
-
-
-def monadtallnewclientpositionbottom_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadTallNewCLientPositionBottomConfig], indirect=True)(x))
 
 
 class MonadTallMarginsConfig(Config):
     auto_fullscreen = True
-    groups = [
-        libqtile.config.Group("a")
-    ]
-    layouts = [
-        layout.MonadTall(margin=4)
-    ]
+    groups = [libqtile.config.Group("a")]
+    layouts = [layout.MonadTall(margin=4)]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
@@ -122,18 +95,31 @@ class MonadTallMarginsConfig(Config):
     follow_mouse_focus = False
 
 
-def monadtallmargins_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadTallMarginsConfig], indirect=True)(x))
+monadtallmargins_config = pytest.mark.parametrize(
+    "manager", [MonadTallMarginsConfig], indirect=True
+)
+
+
+class MonadTallStackedConfig(Config):
+    auto_fullscreen = True
+    groups = [libqtile.config.Group("a")]
+    layouts = [layout.MonadTall(auto_maximize=True)]
+    floating_layout = libqtile.resources.default_config.floating_layout
+    keys = []
+    mouse = []
+    screens = []
+    follow_mouse_focus = False
+
+
+monadtallstacked_config = pytest.mark.parametrize(
+    "manager", [MonadTallStackedConfig], indirect=True
+)
 
 
 class MonadWideConfig(Config):
     auto_fullscreen = True
-    groups = [
-        libqtile.config.Group("a")
-    ]
-    layouts = [
-        layout.MonadWide()
-    ]
+    groups = [libqtile.config.Group("a")]
+    layouts = [layout.MonadWide()]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
@@ -141,37 +127,24 @@ class MonadWideConfig(Config):
     follow_mouse_focus = False
 
 
-def monadwide_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadWideConfig], indirect=True)(x))
+monadwide_config = pytest.mark.parametrize("manager", [MonadWideConfig], indirect=True)
 
 
 class MonadWideNewClientPositionTopConfig(Config):
     auto_fullscreen = True
-    groups = [
-        libqtile.config.Group("a")
-    ]
-    layouts = [
-        layout.MonadWide(new_client_position="top")
-    ]
+    groups = [libqtile.config.Group("a")]
+    layouts = [layout.MonadWide(new_client_position="top")]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
     follow_mouse_focus = False
-
-
-def monadwidenewclientpositiontop_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadWideNewClientPositionTopConfig], indirect=True)(x))
 
 
 class MonadWideMarginsConfig(Config):
     auto_fullscreen = True
-    groups = [
-        libqtile.config.Group("a")
-    ]
-    layouts = [
-        layout.MonadWide(margin=4)
-    ]
+    groups = [libqtile.config.Group("a")]
+    layouts = [layout.MonadWide(margin=4)]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
@@ -179,153 +152,149 @@ class MonadWideMarginsConfig(Config):
     follow_mouse_focus = False
 
 
-def monadwidemargins_config(x):
-    return no_xinerama(pytest.mark.parametrize("manager", [MonadWideMarginsConfig], indirect=True)(x))
-
-
 @monadtall_config
 def test_tall_add_clients(manager):
-    manager.test_window('one')
-    manager.test_window('two')
-    assert manager.c.layout.info()["main"] == 'one'
-    assert manager.c.layout.info()["secondary"] == ['two']
-    assert_focused(manager, 'two')
+    manager.test_window("one")
+    manager.test_window("two")
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["two"]
+    assert_focused(manager, "two")
 
-    manager.test_window('three')
-    assert manager.c.layout.info()["main"] == 'one'
-    assert manager.c.layout.info()["secondary"] == ['two', 'three']
-    assert_focused(manager, 'three')
+    manager.test_window("three")
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["two", "three"]
+    assert_focused(manager, "three")
 
     manager.c.layout.previous()
-    assert_focused(manager, 'two')
+    assert_focused(manager, "two")
 
-    manager.test_window('four')
-    assert manager.c.layout.info()["main"] == 'one'
-    assert manager.c.layout.info()["secondary"] == ['two', 'four', 'three']
-    assert_focused(manager, 'four')
+    manager.test_window("four")
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["two", "four", "three"]
+    assert_focused(manager, "four")
 
 
 @monadtallncpbeforecurrent_config
 def test_tall_add_clients_before_current(manager):
-    """ Test add client with new_client_position = before_current. """
-    manager.test_window('one')
-    manager.test_window('two')
-    manager.test_window('three')
-    assert manager.c.layout.info()["main"] == 'three'
-    assert manager.c.layout.info()["secondary"] == ['two', 'one']
+    """Test add client with new_client_position = before_current."""
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
+    assert manager.c.layout.info()["main"] == "three"
+    assert manager.c.layout.info()["secondary"] == ["two", "one"]
     manager.c.layout.next()
-    assert_focused(manager, 'two')
-    manager.test_window('four')
-    assert manager.c.layout.info()["main"] == 'three'
-    assert manager.c.layout.info()["secondary"] == ['four', 'two', 'one']
-    assert_focused(manager, 'four')
+    assert_focused(manager, "two")
+    manager.test_window("four")
+    assert manager.c.layout.info()["main"] == "three"
+    assert manager.c.layout.info()["secondary"] == ["four", "two", "one"]
+    assert_focused(manager, "four")
 
 
 @monadtallncpaftercurrent_config
 def test_tall_add_clients_after_current(manager):
-    manager.test_window('one')
-    manager.test_window('two')
-    manager.test_window('three')
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
     manager.c.layout.previous()
-    assert_focused(manager, 'two')
-    manager.test_window('four')
-    assert manager.c.layout.info()["main"] == 'one'
-    assert manager.c.layout.info()["secondary"] == ['two', 'four', 'three']
-    assert_focused(manager, 'four')
+    assert_focused(manager, "two")
+    manager.test_window("four")
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["two", "four", "three"]
+    assert_focused(manager, "four")
 
 
-@monadtallnewclientpositionbottom_config
+@pytest.mark.parametrize("manager", [MonadTallNewCLientPositionBottomConfig], indirect=True)
 def test_tall_add_clients_at_bottom(manager):
-    manager.test_window('one')
-    manager.test_window('two')
-    manager.test_window('three')
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
     manager.c.layout.previous()
-    assert_focused(manager, 'two')
-    manager.test_window('four')
-    assert manager.c.layout.info()["main"] == 'one'
-    assert manager.c.layout.info()["secondary"] == ['two', 'three', 'four']
+    assert_focused(manager, "two")
+    manager.test_window("four")
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["two", "three", "four"]
 
 
 @monadwide_config
 def test_wide_add_clients(manager):
-    manager.test_window('one')
-    manager.test_window('two')
-    assert manager.c.layout.info()["main"] == 'one'
-    assert manager.c.layout.info()["secondary"] == ['two']
-    assert_focused(manager, 'two')
+    manager.test_window("one")
+    manager.test_window("two")
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["two"]
+    assert_focused(manager, "two")
 
-    manager.test_window('three')
-    assert manager.c.layout.info()["main"] == 'one'
-    assert manager.c.layout.info()["secondary"] == ['two', 'three']
-    assert_focused(manager, 'three')
+    manager.test_window("three")
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["two", "three"]
+    assert_focused(manager, "three")
 
     manager.c.layout.previous()
-    assert_focused(manager, 'two')
+    assert_focused(manager, "two")
 
-    manager.test_window('four')
-    assert manager.c.layout.info()["main"] == 'one'
-    assert manager.c.layout.info()["secondary"] == ['two', 'four', 'three']
-    assert_focused(manager, 'four')
+    manager.test_window("four")
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["two", "four", "three"]
+    assert_focused(manager, "four")
 
 
-@monadwidenewclientpositiontop_config
+@pytest.mark.parametrize("manager", [MonadWideNewClientPositionTopConfig], indirect=True)
 def test_wide_add_clients_new_client_postion_top(manager):
-    manager.test_window('one')
-    manager.test_window('two')
-    assert manager.c.layout.info()["main"] == 'two'
-    assert manager.c.layout.info()["secondary"] == ['one']
-    assert_focused(manager, 'two')
+    manager.test_window("one")
+    manager.test_window("two")
+    assert manager.c.layout.info()["main"] == "two"
+    assert manager.c.layout.info()["secondary"] == ["one"]
+    assert_focused(manager, "two")
 
-    manager.test_window('three')
-    assert manager.c.layout.info()["main"] == 'three'
-    assert manager.c.layout.info()["secondary"] == ['two', 'one']
-    assert_focused(manager, 'three')
+    manager.test_window("three")
+    assert manager.c.layout.info()["main"] == "three"
+    assert manager.c.layout.info()["secondary"] == ["two", "one"]
+    assert_focused(manager, "three")
 
     manager.c.layout.next()
-    assert_focused(manager, 'two')
+    assert_focused(manager, "two")
 
-    manager.test_window('four')
-    assert manager.c.layout.info()["main"] == 'four'
-    assert manager.c.layout.info()["secondary"] == ['three', 'two', 'one']
-    assert_focused(manager, 'four')
+    manager.test_window("four")
+    assert manager.c.layout.info()["main"] == "four"
+    assert manager.c.layout.info()["secondary"] == ["three", "two", "one"]
+    assert_focused(manager, "four")
 
 
 @monadtallmargins_config
 def test_tall_margins(manager):
-    manager.test_window('one')
+    manager.test_window("one")
     assert_dimensions(manager, 4, 4, 788, 588)
 
-    manager.test_window('two')
-    assert_focused(manager, 'two')
+    manager.test_window("two")
+    assert_focused(manager, "two")
     assert_dimensions(manager, 404, 4, 388, 588)
 
     manager.c.layout.previous()
-    assert_focused(manager, 'one')
+    assert_focused(manager, "one")
     assert_dimensions(manager, 4, 4, 392, 588)
 
 
-@monadwidemargins_config
+@pytest.mark.parametrize("manager", [MonadWideMarginsConfig], indirect=True)
 def test_wide_margins(manager):
-    manager.test_window('one')
+    manager.test_window("one")
     assert_dimensions(manager, 4, 4, 788, 588)
 
-    manager.test_window('two')
-    assert_focused(manager, 'two')
+    manager.test_window("two")
+    assert_focused(manager, "two")
     assert_dimensions(manager, 4, 304, 788, 288)
 
     manager.c.layout.previous()
-    assert_focused(manager, 'one')
+    assert_focused(manager, "one")
     assert_dimensions(manager, 4, 4, 788, 292)
 
 
 @monadtall_config
 def test_tall_growmain_solosecondary(manager):
-    manager.test_window('one')
+    manager.test_window("one")
     assert_dimensions(manager, 0, 0, 796, 596)
 
-    manager.test_window('two')
+    manager.test_window("two")
     manager.c.layout.previous()
-    assert_focused(manager, 'one')
+    assert_focused(manager, "one")
 
     assert_dimensions(manager, 0, 0, 396, 596)
     manager.c.layout.grow()
@@ -347,12 +316,12 @@ def test_tall_growmain_solosecondary(manager):
 
 @monadwide_config
 def test_wide_growmain_solosecondary(manager):
-    manager.test_window('one')
+    manager.test_window("one")
     assert_dimensions(manager, 0, 0, 796, 596)
 
-    manager.test_window('two')
+    manager.test_window("two")
     manager.c.layout.previous()
-    assert_focused(manager, 'one')
+    assert_focused(manager, "one")
 
     assert_dimensions(manager, 0, 0, 796, 296)
     manager.c.layout.grow()
@@ -374,14 +343,14 @@ def test_wide_growmain_solosecondary(manager):
 
 @monadtall_config
 def test_tall_growmain_multiplesecondary(manager):
-    manager.test_window('one')
+    manager.test_window("one")
     assert_dimensions(manager, 0, 0, 796, 596)
 
-    manager.test_window('two')
-    manager.test_window('three')
+    manager.test_window("two")
+    manager.test_window("three")
     manager.c.layout.previous()
     manager.c.layout.previous()
-    assert_focused(manager, 'one')
+    assert_focused(manager, "one")
 
     assert_dimensions(manager, 0, 0, 396, 596)
     manager.c.layout.grow()
@@ -403,14 +372,14 @@ def test_tall_growmain_multiplesecondary(manager):
 
 @monadwide_config
 def test_wide_growmain_multiplesecondary(manager):
-    manager.test_window('one')
+    manager.test_window("one")
     assert_dimensions(manager, 0, 0, 796, 596)
 
-    manager.test_window('two')
-    manager.test_window('three')
+    manager.test_window("two")
+    manager.test_window("three")
     manager.c.layout.previous()
     manager.c.layout.previous()
-    assert_focused(manager, 'one')
+    assert_focused(manager, "one")
 
     assert_dimensions(manager, 0, 0, 796, 296)
     manager.c.layout.grow()
@@ -432,11 +401,11 @@ def test_wide_growmain_multiplesecondary(manager):
 
 @monadtall_config
 def test_tall_growsecondary_solosecondary(manager):
-    manager.test_window('one')
+    manager.test_window("one")
     assert_dimensions(manager, 0, 0, 796, 596)
 
-    manager.test_window('two')
-    assert_focused(manager, 'two')
+    manager.test_window("two")
+    assert_focused(manager, "two")
 
     assert_dimensions(manager, 400, 0, 396, 596)
     manager.c.layout.grow()
@@ -458,11 +427,11 @@ def test_tall_growsecondary_solosecondary(manager):
 
 @monadwide_config
 def test_wide_growsecondary_solosecondary(manager):
-    manager.test_window('one')
+    manager.test_window("one")
     assert_dimensions(manager, 0, 0, 796, 596)
 
-    manager.test_window('two')
-    assert_focused(manager, 'two')
+    manager.test_window("two")
+    assert_focused(manager, "two")
 
     assert_dimensions(manager, 0, 300, 796, 296)
     manager.c.layout.grow()
@@ -484,13 +453,13 @@ def test_wide_growsecondary_solosecondary(manager):
 
 @monadtall_config
 def test_tall_growsecondary_multiplesecondary(manager):
-    manager.test_window('one')
+    manager.test_window("one")
     assert_dimensions(manager, 0, 0, 796, 596)
 
-    manager.test_window('two')
-    manager.test_window('three')
+    manager.test_window("two")
+    manager.test_window("three")
     manager.c.layout.previous()
-    assert_focused(manager, 'two')
+    assert_focused(manager, "two")
 
     assert_dimensions(manager, 400, 0, 396, 296)
     # Grow 20 pixels
@@ -512,13 +481,13 @@ def test_tall_growsecondary_multiplesecondary(manager):
 
 @monadwide_config
 def test_wide_growsecondary_multiplesecondary(manager):
-    manager.test_window('one')
+    manager.test_window("one")
     assert_dimensions(manager, 0, 0, 796, 596)
 
-    manager.test_window('two')
-    manager.test_window('three')
+    manager.test_window("two")
+    manager.test_window("three")
     manager.c.layout.previous()
-    assert_focused(manager, 'two')
+    assert_focused(manager, "two")
 
     assert_dimensions(manager, 0, 300, 396, 296)
     # Grow 20 pixels
@@ -540,202 +509,379 @@ def test_wide_growsecondary_multiplesecondary(manager):
 
 @monadtall_config
 def test_tall_flip(manager):
-    manager.test_window('one')
-    manager.test_window('two')
-    manager.test_window('three')
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
 
     # Check all the dimensions
     manager.c.layout.next()
-    assert_focused(manager, 'one')
+    assert_focused(manager, "one")
     assert_dimensions(manager, 0, 0, 396, 596)
 
     manager.c.layout.next()
-    assert_focused(manager, 'two')
+    assert_focused(manager, "two")
     assert_dimensions(manager, 400, 0, 396, 296)
 
     manager.c.layout.next()
-    assert_focused(manager, 'three')
+    assert_focused(manager, "three")
     assert_dimensions(manager, 400, 300, 396, 296)
 
     # Now flip it and do it again
     manager.c.layout.flip()
 
     manager.c.layout.next()
-    assert_focused(manager, 'one')
+    assert_focused(manager, "one")
     assert_dimensions(manager, 400, 0, 396, 596)
 
     manager.c.layout.next()
-    assert_focused(manager, 'two')
+    assert_focused(manager, "two")
     assert_dimensions(manager, 0, 0, 396, 296)
 
     manager.c.layout.next()
-    assert_focused(manager, 'three')
+    assert_focused(manager, "three")
     assert_dimensions(manager, 0, 300, 396, 296)
 
 
 @monadwide_config
 def test_wide_flip(manager):
-    manager.test_window('one')
-    manager.test_window('two')
-    manager.test_window('three')
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
 
     # Check all the dimensions
     manager.c.layout.next()
-    assert_focused(manager, 'one')
+    assert_focused(manager, "one")
     assert_dimensions(manager, 0, 0, 796, 296)
 
     manager.c.layout.next()
-    assert_focused(manager, 'two')
+    assert_focused(manager, "two")
     assert_dimensions(manager, 0, 300, 396, 296)
 
     manager.c.layout.next()
-    assert_focused(manager, 'three')
+    assert_focused(manager, "three")
     assert_dimensions(manager, 400, 300, 396, 296)
 
     # Now flip it and do it again
     manager.c.layout.flip()
 
     manager.c.layout.next()
-    assert_focused(manager, 'one')
+    assert_focused(manager, "one")
     assert_dimensions(manager, 0, 300, 796, 296)
 
     manager.c.layout.next()
-    assert_focused(manager, 'two')
+    assert_focused(manager, "two")
     assert_dimensions(manager, 0, 0, 396, 296)
 
     manager.c.layout.next()
-    assert_focused(manager, 'three')
+    assert_focused(manager, "three")
     assert_dimensions(manager, 400, 0, 396, 296)
 
 
 @monadtall_config
+def test_tall_set_and_reset(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 796, 596)
+
+    manager.test_window("two")
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 596)
+
+    manager.c.layout.set_ratio(0.75)
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 600, 0, 196, 596)
+
+    manager.c.layout.set_ratio(0.25)
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 200, 0, 596, 596)
+
+    manager.c.layout.reset()
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 596)
+
+
+@monadtallstacked_config
+def test_tall_stacked_add_two_clients(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 796, 596)
+
+    manager.test_window("two")
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 596)
+
+    manager.test_window("three")
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 400, 85, 396, 511)
+
+    manager.c.layout.next()
+    assert_focused(manager, "one")
+    assert_dimensions(manager, 0, 0, 396, 596)
+
+
+@monadtallstacked_config
+def test_tall_stacked_toggle_auto_maximize(manager):
+    # Initial setting: auto_maximize on
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 796, 596)
+
+    manager.test_window("two")
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 596)
+
+    manager.test_window("three")
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 400, 85, 396, 511)
+
+    manager.c.layout.next()
+    assert_focused(manager, "one")
+    assert_dimensions(manager, 0, 0, 396, 596)
+
+    # Turn off auto_maximize
+    manager.c.layout.toggle_auto_maximize()
+
+    assert_focused(manager, "one")
+    assert_dimensions(manager, 0, 0, 396, 596)
+
+    manager.c.layout.next()
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 296)
+
+    manager.c.layout.next()
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 400, 300, 396, 296)
+
+    # Turn auto_maximize back on
+    manager.c.layout.toggle_auto_maximize()
+
+    manager.c.layout.next()
+    assert_focused(manager, "one")
+    assert_dimensions(manager, 0, 0, 396, 596)
+
+    manager.c.layout.next()
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 511)
+
+    manager.c.layout.next()
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 400, 85, 396, 511)
+
+
+@monadtallstacked_config
+def test_tall_stacked_window_kill(manager):
+    @Retry(ignore_exceptions=(AssertionError))
+    def assert_window_count(num):
+        assert len(manager.c.windows()) == num
+
+    manager.test_window("one")
+    assert_focused(manager, "one")
+
+    manager.test_window("two")
+    assert_focused(manager, "two")
+
+    manager.test_window("three")
+    assert_focused(manager, "three")
+
+    manager.c.layout.previous()
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 511)
+
+    manager.c.window.kill()
+    assert_window_count(2)
+    assert_focused(manager, "one")
+    assert_dimensions(manager, 0, 0, 396, 596)
+
+    manager.c.layout.next()
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 400, 0, 396, 596)
+
+
+@monadwide_config
+def test_wide_set_and_reset(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 796, 596)
+
+    manager.test_window("two")
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 0, 300, 796, 296)
+
+    manager.c.layout.set_ratio(0.75)
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 0, 450, 796, 146)
+
+    manager.c.layout.set_ratio(0.25)
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 0, 150, 796, 446)
+
+    manager.c.layout.reset()
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 0, 300, 796, 296)
+
+
+@monadtall_config
 def test_tall_shuffle(manager):
-    manager.test_window('one')
-    manager.test_window('two')
-    manager.test_window('three')
-    manager.test_window('four')
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
+    manager.test_window("four")
 
-    assert manager.c.layout.info()['main'] == 'one'
-    assert manager.c.layout.info()['secondary'] == ['two', 'three', 'four']
-
-    manager.c.layout.shuffle_up()
-    assert manager.c.layout.info()['main'] == 'one'
-    assert manager.c.layout.info()['secondary'] == ['two', 'four', 'three']
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["two", "three", "four"]
 
     manager.c.layout.shuffle_up()
-    assert manager.c.layout.info()['main'] == 'one'
-    assert manager.c.layout.info()['secondary'] == ['four', 'two', 'three']
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["two", "four", "three"]
 
     manager.c.layout.shuffle_up()
-    assert manager.c.layout.info()['main'] == 'four'
-    assert manager.c.layout.info()['secondary'] == ['one', 'two', 'three']
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["four", "two", "three"]
+
+    manager.c.layout.shuffle_up()
+    assert manager.c.layout.info()["main"] == "four"
+    assert manager.c.layout.info()["secondary"] == ["one", "two", "three"]
 
 
 @monadwide_config
 def test_wide_shuffle(manager):
-    manager.test_window('one')
-    manager.test_window('two')
-    manager.test_window('three')
-    manager.test_window('four')
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
+    manager.test_window("four")
 
-    assert manager.c.layout.info()['main'] == 'one'
-    assert manager.c.layout.info()['secondary'] == ['two', 'three', 'four']
-
-    manager.c.layout.shuffle_up()
-    assert manager.c.layout.info()['main'] == 'one'
-    assert manager.c.layout.info()['secondary'] == ['two', 'four', 'three']
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["two", "three", "four"]
 
     manager.c.layout.shuffle_up()
-    assert manager.c.layout.info()['main'] == 'one'
-    assert manager.c.layout.info()['secondary'] == ['four', 'two', 'three']
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["two", "four", "three"]
 
     manager.c.layout.shuffle_up()
-    assert manager.c.layout.info()['main'] == 'four'
-    assert manager.c.layout.info()['secondary'] == ['one', 'two', 'three']
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["four", "two", "three"]
+
+    manager.c.layout.shuffle_up()
+    assert manager.c.layout.info()["main"] == "four"
+    assert manager.c.layout.info()["secondary"] == ["one", "two", "three"]
 
 
 @monadtall_config
 def test_tall_swap(manager):
-    manager.test_window('one')
-    manager.test_window('two')
-    manager.test_window('three')
-    manager.test_window('focused')
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
+    manager.test_window("focused")
 
-    assert manager.c.layout.info()['main'] == 'one'
-    assert manager.c.layout.info()['secondary'] == ['two', 'three', 'focused']
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["two", "three", "focused"]
 
     # Swap a secondary left, left aligned
     manager.c.layout.swap_left()
-    assert manager.c.layout.info()['main'] == 'focused'
-    assert manager.c.layout.info()['secondary'] == ['two', 'three', 'one']
+    assert manager.c.layout.info()["main"] == "focused"
+    assert manager.c.layout.info()["secondary"] == ["two", "three", "one"]
 
     # Swap a main right, left aligned
     manager.c.layout.swap_right()
-    assert manager.c.layout.info()['main'] == 'two'
-    assert manager.c.layout.info()['secondary'] == ['focused', 'three', 'one']
+    assert manager.c.layout.info()["main"] == "two"
+    assert manager.c.layout.info()["secondary"] == ["focused", "three", "one"]
 
     # flip over
     manager.c.layout.flip()
     manager.c.layout.shuffle_down()
-    assert manager.c.layout.info()['main'] == 'two'
-    assert manager.c.layout.info()['secondary'] == ['three', 'focused', 'one']
+    assert manager.c.layout.info()["main"] == "two"
+    assert manager.c.layout.info()["secondary"] == ["three", "focused", "one"]
 
     # Swap secondary right, right aligned
     manager.c.layout.swap_right()
-    assert manager.c.layout.info()['main'] == 'focused'
-    assert manager.c.layout.info()['secondary'] == ['three', 'two', 'one']
+    assert manager.c.layout.info()["main"] == "focused"
+    assert manager.c.layout.info()["secondary"] == ["three", "two", "one"]
 
     # Swap main left, right aligned
     manager.c.layout.swap_left()
-    assert manager.c.layout.info()['main'] == 'three'
-    assert manager.c.layout.info()['secondary'] == ['focused', 'two', 'one']
+    assert manager.c.layout.info()["main"] == "three"
+    assert manager.c.layout.info()["secondary"] == ["focused", "two", "one"]
 
     # Do swap main
     manager.c.layout.swap_main()
-    assert manager.c.layout.info()['main'] == 'focused'
-    assert manager.c.layout.info()['secondary'] == ['three', 'two', 'one']
+    assert manager.c.layout.info()["main"] == "focused"
+    assert manager.c.layout.info()["secondary"] == ["three", "two", "one"]
+
+    # Since the focused window is already to the right this swap shouldn't
+    # change the position of the windows
+    # The swap function will try to get all windows to the right of the
+    # focused window, which will result in a empty list that could cause
+    # an error if not handled
+
+    # Swap againts right edge
+    manager.c.layout.swap_right()
+    assert manager.c.layout.info()["main"] == "focused"
+    assert manager.c.layout.info()["secondary"] == ["three", "two", "one"]
+
+    # Same as above but for the swap_left function
+
+    # Swap againts left edge
+    manager.c.layout.swap_left()
+    manager.c.layout.swap_left()
+    assert manager.c.layout.info()["main"] == "three"
+    assert manager.c.layout.info()["secondary"] == ["focused", "two", "one"]
 
 
 @monadwide_config
 def test_wide_swap(manager):
-    manager.test_window('one')
-    manager.test_window('two')
-    manager.test_window('three')
-    manager.test_window('focused')
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
+    manager.test_window("focused")
 
-    assert manager.c.layout.info()['main'] == 'one'
-    assert manager.c.layout.info()['secondary'] == ['two', 'three', 'focused']
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["two", "three", "focused"]
 
     # Swap a secondary up
     manager.c.layout.swap_right()  # equivalent to swap_down
-    assert manager.c.layout.info()['main'] == 'focused'
-    assert manager.c.layout.info()['secondary'] == ['two', 'three', 'one']
+    assert manager.c.layout.info()["main"] == "focused"
+    assert manager.c.layout.info()["secondary"] == ["two", "three", "one"]
 
     # Swap a main down
     manager.c.layout.swap_left()  # equivalent to swap up
-    assert manager.c.layout.info()['main'] == 'two'
-    assert manager.c.layout.info()['secondary'] == ['focused', 'three', 'one']
+    assert manager.c.layout.info()["main"] == "two"
+    assert manager.c.layout.info()["secondary"] == ["focused", "three", "one"]
 
     # flip over
     manager.c.layout.flip()
     manager.c.layout.shuffle_down()
-    assert manager.c.layout.info()['main'] == 'two'
-    assert manager.c.layout.info()['secondary'] == ['three', 'focused', 'one']
+    assert manager.c.layout.info()["main"] == "two"
+    assert manager.c.layout.info()["secondary"] == ["three", "focused", "one"]
 
     # Swap secondary down
     manager.c.layout.swap_left()
-    assert manager.c.layout.info()['main'] == 'focused'
-    assert manager.c.layout.info()['secondary'] == ['three', 'two', 'one']
+    assert manager.c.layout.info()["main"] == "focused"
+    assert manager.c.layout.info()["secondary"] == ["three", "two", "one"]
 
     # Swap main up
     manager.c.layout.swap_right()
-    assert manager.c.layout.info()['main'] == 'three'
-    assert manager.c.layout.info()['secondary'] == ['focused', 'two', 'one']
+    assert manager.c.layout.info()["main"] == "three"
+    assert manager.c.layout.info()["secondary"] == ["focused", "two", "one"]
 
     # Do swap main
     manager.c.layout.swap_main()
-    assert manager.c.layout.info()['main'] == 'focused'
-    assert manager.c.layout.info()['secondary'] == ['three', 'two', 'one']
+    assert manager.c.layout.info()["main"] == "focused"
+    assert manager.c.layout.info()["secondary"] == ["three", "two", "one"]
+
+    # Since the focused window is already to the left this swap shouldn't
+    # change the position of the windows
+    # The swap function will try to get all windows to the left of the
+    # focused window, which will result in a empty list that could cause
+    # an error if not handled
+
+    # Swap againts left edge
+    manager.c.layout.swap_left()
+    assert manager.c.layout.info()["main"] == "focused"
+    assert manager.c.layout.info()["secondary"] == ["three", "two", "one"]
+
+    # Same as above but for the swap_right function
+
+    # Swap againts right edge
+    manager.c.layout.swap_right()
+    manager.c.layout.swap_right()
+    assert manager.c.layout.info()["main"] == "three"
+    assert manager.c.layout.info()["secondary"] == ["focused", "two", "one"]
 
 
 @monadtall_config
@@ -750,13 +896,13 @@ def test_tall_window_focus_cycle(manager):
     manager.test_window("three")
 
     # test preconditions
-    assert manager.c.layout.info()['clients'] == ['one', 'two', 'three']
+    assert manager.c.layout.info()["clients"] == ["one", "two", "three"]
     # last added window has focus
     assert_focused(manager, "three")
 
     # starting from the last tiled client, we first cycle through floating ones,
     # and afterwards through the tiled
-    assert_focus_path(manager, 'float1', 'float2', 'one', 'two', 'three')
+    assert_focus_path(manager, "float1", "float2", "one", "two", "three")
 
 
 @monadwide_config
@@ -771,9 +917,145 @@ def test_wide_window_focus_cycle(manager):
     manager.test_window("three")
 
     # test preconditions
-    assert manager.c.layout.info()['clients'] == ['one', 'two', 'three']
+    assert manager.c.layout.info()["clients"] == ["one", "two", "three"]
     # last added window has focus
     assert_focused(manager, "three")
 
     # assert window focus cycle, according to order in layout
-    assert_focus_path(manager, 'float1', 'float2', 'one', 'two', 'three')
+    assert_focus_path(manager, "float1", "float2", "one", "two", "three")
+
+
+# MonadThreeCol
+class MonadThreeColConfig(Config):
+    auto_fullscreen = True
+    groups = [libqtile.config.Group("a")]
+    layouts = [layout.MonadThreeCol()]
+    floating_layout = libqtile.resources.default_config.floating_layout
+    keys = []
+    mouse = []
+    screens = []
+    follow_mouse_focus = False
+
+
+monadthreecol_config = pytest.mark.parametrize("manager", [MonadThreeColConfig], indirect=True)
+
+
+@monadthreecol_config
+def test_three_col_add_clients(manager):
+    manager.test_window("one")
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == dict(left=[], right=[])
+
+    manager.test_window("two")
+    assert manager.c.layout.info()["main"] == "two"
+    assert manager.c.layout.info()["secondary"] == dict(left=["one"], right=[])
+    assert_focused(manager, "two")
+
+    manager.test_window("three")
+    assert manager.c.layout.info()["main"] == "three"
+    assert manager.c.layout.info()["secondary"] == dict(left=["two"], right=["one"])
+    assert_focused(manager, "three")
+
+    manager.test_window("four")
+    assert manager.c.layout.info()["main"] == "four"
+    assert manager.c.layout.info()["secondary"] == dict(left=["three", "two"], right=["one"])
+    assert_focused(manager, "four")
+
+    manager.test_window("five")
+    assert manager.c.layout.info()["main"] == "five"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["four", "three"], right=["two", "one"]
+    )
+    assert_focused(manager, "five")
+
+    manager.c.layout.next()
+    assert_focused(manager, "four")
+    manager.c.layout.next()
+    assert_focused(manager, "three")
+    manager.c.layout.next()
+    assert_focused(manager, "two")
+    manager.c.layout.next()
+    assert_focused(manager, "one")
+
+
+@monadthreecol_config
+def test_three_col_shuffle(manager):
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
+    manager.test_window("four")
+    manager.test_window("five")
+
+    manager.c.layout.shuffle_right()
+    assert manager.c.layout.info()["main"] == "two"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["four", "three"], right=["five", "one"]
+    )
+    assert_focused(manager, "five")
+
+    manager.c.layout.shuffle_down()
+    assert manager.c.layout.info()["main"] == "two"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["four", "three"], right=["one", "five"]
+    )
+    assert_focused(manager, "five")
+
+    manager.c.layout.shuffle_left()
+    assert manager.c.layout.info()["main"] == "five"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["four", "three"], right=["one", "two"]
+    )
+    assert_focused(manager, "five")
+
+    manager.c.layout.shuffle_left()
+    assert manager.c.layout.info()["main"] == "four"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["five", "three"], right=["one", "two"]
+    )
+    assert_focused(manager, "five")
+
+    manager.c.layout.shuffle_down()
+    assert manager.c.layout.info()["main"] == "four"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["three", "five"], right=["one", "two"]
+    )
+    assert_focused(manager, "five")
+
+    manager.c.layout.shuffle_up()
+    assert manager.c.layout.info()["main"] == "four"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["five", "three"], right=["one", "two"]
+    )
+    assert_focused(manager, "five")
+
+    manager.c.layout.shuffle_right()
+    assert manager.c.layout.info()["main"] == "five"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["four", "three"], right=["one", "two"]
+    )
+    assert_focused(manager, "five")
+
+
+@monadthreecol_config
+def test_three_col_swap_main(manager):
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
+    manager.test_window("four")
+    manager.test_window("five")
+
+    manager.c.layout.next()
+    manager.c.layout.swap_main()
+    assert manager.c.layout.info()["main"] == "four"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["five", "three"], right=["two", "one"]
+    )
+    assert_focused(manager, "four")
+
+    manager.c.layout.next()
+    manager.c.layout.swap_main()
+    assert manager.c.layout.info()["main"] == "five"
+    assert manager.c.layout.info()["secondary"] == dict(
+        left=["four", "three"], right=["two", "one"]
+    )
+    assert_focused(manager, "five")

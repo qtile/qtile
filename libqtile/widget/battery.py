@@ -29,21 +29,28 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import os
 import platform
 import re
-import warnings
-from abc import ABC, abstractclassmethod
+from abc import ABC, abstractmethod
 from enum import Enum, unique
 from pathlib import Path
 from subprocess import CalledProcessError, check_output
-from typing import Any, Dict, List, NamedTuple, Optional, Tuple
+from typing import TYPE_CHECKING, NamedTuple
 
 from libqtile import bar, configurable, images
+from libqtile.command.base import expose_command
 from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.utils import send_notification
 from libqtile.widget import base
+
+if TYPE_CHECKING:
+    from typing import Any
+
+    from libqtile.utils import ColorsType
 
 
 @unique
@@ -52,31 +59,33 @@ class BatteryState(Enum):
     DISCHARGING = 2
     FULL = 3
     EMPTY = 4
-    UNKNOWN = 5
+    NOT_CHARGING = 5
+    UNKNOWN = 6
 
 
-BatteryStatus = NamedTuple("BatteryStatus", [
-    ("state", BatteryState),
-    ("percent", float),
-    ("power", float),
-    ("time", int),
-])
+class BatteryStatus(NamedTuple):
+    state: BatteryState
+    percent: float
+    power: float
+    time: int
+    charge_start_threshold: int
+    charge_end_threshold: int
 
 
 class _Battery(ABC):
     """
-        Battery interface class specifying what member functions a
-        battery implementation should provide.
+    Battery interface class specifying what member functions a
+    battery implementation should provide.
     """
-    @abstractclassmethod
+
+    @abstractmethod
     def update_status(self) -> BatteryStatus:
         """Read the battery status
 
-            Reads the battery status from the system and returns the result.
+        Reads the battery status from the system and returns the result.
 
-            Raises RuntimeError on error.
+        Raises RuntimeError on error.
         """
-        pass
 
 
 def load_battery(**config) -> _Battery:
@@ -95,143 +104,184 @@ def load_battery(**config) -> _Battery:
     The configured _Battery for the current platform.
     """
     system = platform.system()
-    if system == 'FreeBSD':
-        return _FreeBSDBattery(str(config["battery"]))
-    elif system == 'Linux':
+    if system == "FreeBSD":
+        return _FreeBSDBattery(str(config.get("battery", 0)))
+    elif system == "Linux":
         return _LinuxBattery(**config)
     else:
-        raise RuntimeError('Unknown platform!')
+        raise RuntimeError("Unknown platform!")
 
 
 class _FreeBSDBattery(_Battery):
     """
-        A battery class compatible with FreeBSD. Reads battery status
-        using acpiconf.
+    A battery class compatible with FreeBSD. Reads battery status
+    using acpiconf.
 
-        Takes a battery setting containing the number of the battery
-        that should be monitored.
+    Takes a battery setting containing the number of the battery
+    that should be monitored.
     """
 
-    def __init__(self, battery='0') -> None:
+    def __init__(self, battery="0") -> None:
         self.battery = battery
 
     def update_status(self) -> BatteryStatus:
         try:
-            info = check_output(['acpiconf', '-i', self.battery]).decode('utf-8')
+            info = check_output(["acpiconf", "-i", self.battery]).decode("utf-8")
         except CalledProcessError:
-            raise RuntimeError('acpiconf exited incorrectly')
+            raise RuntimeError("acpiconf exited incorrectly")
 
-        stat_match = re.search(r'State:\t+([a-z]+)', info)
+        stat_match = re.search(r"State:\t+([a-z]+)", info)
 
         if stat_match is None:
-            raise RuntimeError('Could not get battery state!')
+            raise RuntimeError("Could not get battery state!")
 
         stat = stat_match.group(1)
-        if stat == 'charging':
+        if stat == "charging":
             state = BatteryState.CHARGING
-        elif stat == 'discharging':
+        elif stat == "discharging":
             state = BatteryState.DISCHARGING
-        elif stat == 'high':
+        elif stat == "high":
             state = BatteryState.FULL
         else:
             state = BatteryState.UNKNOWN
 
-        percent_re = re.search(r'Remaining capacity:\t+([0-9]+)', info)
+        percent_re = re.search(r"Remaining capacity:\t+([0-9]+)", info)
         if percent_re:
             percent = int(percent_re.group(1)) / 100
         else:
-            raise RuntimeError('Could not get battery percentage!')
+            raise RuntimeError("Could not get battery percentage!")
 
-        power_re = re.search(r'Present rate:\t+(?:[0-9]+ mA )*\(?([0-9]+) mW',
-                             info)
+        power_re = re.search(r"Present rate:\t+(?:[0-9]+ mA )*\(?([0-9]+) mW", info)
         if power_re:
             power = float(power_re.group(1)) / 1000
         else:
-            raise RuntimeError('Could not get battery power!')
+            raise RuntimeError("Could not get battery power!")
 
-        time_re = re.search(r'Remaining time:\t+([0-9]+:[0-9]+|unknown)',
-                            info)
+        time_re = re.search(r"Remaining time:\t+([0-9]+:[0-9]+|unknown)", info)
         if time_re:
-            if time_re.group(1) == 'unknown':
+            if time_re.group(1) == "unknown":
                 time = 0
             else:
-                hours, _, minutes = time_re.group(1).partition(':')
+                hours, _, minutes = time_re.group(1).partition(":")
                 time = int(hours) * 3600 + int(minutes) * 60
         else:
-            raise RuntimeError('Could not get remaining battery time!')
+            raise RuntimeError("Could not get remaining battery time!")
 
-        return BatteryStatus(state, percent=percent, power=power, time=time)
+        return BatteryStatus(
+            state,
+            percent=percent,
+            power=power,
+            time=time,
+            charge_start_threshold=0,
+            charge_end_threshold=100,
+        )
+
+
+def connected_to_thunderbolt():
+    try:
+        sysfs = "/sys/bus/thunderbolt/devices"
+        entries = os.listdir(sysfs)
+        for e in entries:
+            try:
+                name = Path(sysfs, e, "device_name").read_text()
+            except FileNotFoundError:
+                continue
+            else:
+                logger.debug("found dock %s", name)
+                return True
+    except OSError:
+        logger.debug("failed to detect thunderbot %s", exc_info=True)
+    return False
+
+
+def thunderbolt_smart_charge() -> tuple[int, int]:
+    # if we are thunderbolt docked, set the thresholds to 40/50, per
+    # https://support.lenovo.com/us/en/solutions/ht078208-how-can-i-increase-battery-life-thinkpad-and-lenovo-vbke-series-notebooks
+    if connected_to_thunderbolt():
+        return (40, 50)
+    return (0, 90)
 
 
 class _LinuxBattery(_Battery, configurable.Configurable):
     defaults = [
+        ("status_file", None, "Name of status file in /sys/class/power_supply/battery_name"),
         (
-            'status_file',
+            "energy_now_file",
             None,
-            'Name of status file in /sys/class/power_supply/battery_name'
+            "Name of file with the current energy in /sys/class/power_supply/battery_name",
         ),
         (
-            'energy_now_file',
+            "energy_full_file",
             None,
-            'Name of file with the current energy in /sys/class/power_supply/battery_name'
+            "Name of file with the maximum energy in /sys/class/power_supply/battery_name",
         ),
         (
-            'energy_full_file',
+            "power_now_file",
             None,
-            'Name of file with the maximum energy in /sys/class/power_supply/battery_name'
+            "Name of file with the current power draw in /sys/class/power_supply/battery_name",
         ),
         (
-            'power_now_file',
+            "charge_controller",
             None,
-            'Name of file with the current power draw in /sys/class/power_supply/battery_name'
-        )
+            """
+            A function that takes no arguments and returns (start, end) charge
+            thresholds, e.g. ``lambda: (0, 90)``; set to None to disable smart
+            charging.
+            """,
+        ),
+        (
+            "force_charge",
+            False,
+            "Whether or not to ignore the result of charge_controller() and charge to 100%",
+        ),
     ]
 
-    filenames = {}  # type: Dict
+    filenames: dict = {}
 
-    BAT_DIR = '/sys/class/power_supply'
+    BAT_DIR = "/sys/class/power_supply"
 
     BATTERY_INFO_FILES = {
-        'energy_now_file': ['energy_now', 'charge_now'],
-        'energy_full_file': ['energy_full', 'charge_full'],
-        'power_now_file': ['power_now', 'current_now'],
-        'voltage_now_file': ['voltage_now'],
-        'status_file': ['status'],
+        "energy_now_file": ["energy_now", "charge_now"],
+        "energy_full_file": ["energy_full", "charge_full"],
+        "power_now_file": ["power_now", "current_now"],
+        "voltage_now_file": ["voltage_now"],
+        "status_file": ["status"],
     }
 
     def __init__(self, **config):
-        _LinuxBattery.defaults.append(('battery',
-                                       self._get_battery_name(),
-                                       'ACPI name of a battery, usually BAT0'))
+        _LinuxBattery.defaults.append(
+            ("battery", self._get_battery_name(), "ACPI name of a battery, usually BAT0")
+        )
 
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(_LinuxBattery.defaults)
         if isinstance(self.battery, int):
-            self.battery = "BAT{}".format(self.battery)
+            self.battery = f"BAT{self.battery}"
+        self.charge_threshold_supported = True
 
     def _get_battery_name(self):
         if os.path.isdir(self.BAT_DIR):
-            bats = [f for f in os.listdir(self.BAT_DIR) if f.startswith('BAT')]
+            bats = [f for f in os.listdir(self.BAT_DIR) if f.startswith("BAT")]
             if bats:
                 return bats[0]
-        return 'BAT0'
+        return "BAT0"
 
-    def _load_file(self, name) -> Optional[Tuple[str, str]]:
+    def _load_file(self, name) -> tuple[str, str] | None:
         path = os.path.join(self.BAT_DIR, self.battery, name)
-        if 'energy' in name or 'power' in name:
-            value_type = 'uW'
-        elif 'charge' in name:
-            value_type = 'uAh'
-        elif 'current' in name:
-            value_type = 'uA'
+        if "energy" in name or "power" in name:
+            value_type = "uW"
+        elif "charge" in name:
+            value_type = "uAh"
+        elif "current" in name:
+            value_type = "uA"
         else:
-            value_type = ''
+            value_type = ""
 
         try:
-            with open(path, 'r') as f:
+            with open(path) as f:
                 return f.read().strip(), value_type
         except OSError as e:
-            logger.debug("Failed to read '{}': {}".format(path, e))
+            logger.debug("Failed to read '%s':", path, exc_info=True)
             if isinstance(e, FileNotFoundError):
                 # Let's try another file if this one doesn't exist
                 return None
@@ -239,7 +289,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
             # See https://github.com/qtile/qtile/pull/1516 for rationale
             return "-1", "N/A"
 
-    def _get_param(self, name) -> Tuple[str, str]:
+    def _get_param(self, name) -> tuple[str, str]:
         if name in self.filenames and self.filenames[name]:
             result = self._load_file(self.filenames[name])
             if result is not None:
@@ -259,10 +309,43 @@ class _LinuxBattery(_Battery, configurable.Configurable):
                 self.filenames[name] = filename
                 return value
 
-        raise RuntimeError("Unable to read status for {}".format(name))
+        raise RuntimeError(f"Unable to read status for {name}")
+
+    def set_battery_charge_thresholds(self, start, end):
+        if not self.charge_threshold_supported:
+            return
+
+        battery_dir = "/sys/class/power_supply"
+
+        path = os.path.join(battery_dir, self.battery, "charge_control_start_threshold")
+        try:
+            with open(path, "w+") as f:
+                f.write(str(start))
+        except FileNotFoundError:
+            self.charge_threshold_supported = False
+        except OSError:
+            logger.debug("Failed to write %s", path, exc_info=True)
+
+        path = os.path.join(battery_dir, self.battery, "charge_control_end_threshold")
+        try:
+            with open(path, "w+") as f:
+                f.write(str(end))
+        except FileNotFoundError:
+            self.charge_threshold_supported = False
+        except OSError:
+            logger.debug("Failed to write %s", path, exc_info=True)
+        return (start, end)
 
     def update_status(self) -> BatteryStatus:
-        stat = self._get_param('status_file')[0]
+        charge_start_threshold = 0
+        charge_end_threshold = 100
+        if self.charge_controller is not None and self.charge_threshold_supported:
+            (charge_start_threshold, charge_end_threshold) = self.charge_controller()
+            if self.force_charge:
+                charge_start_threshold = 0
+                charge_end_threshold = 100
+            self.set_battery_charge_thresholds(charge_start_threshold, charge_end_threshold)
+        stat = self._get_param("status_file")[0]
 
         if stat == "Full":
             state = BatteryState.FULL
@@ -270,12 +353,14 @@ class _LinuxBattery(_Battery, configurable.Configurable):
             state = BatteryState.CHARGING
         elif stat == "Discharging":
             state = BatteryState.DISCHARGING
+        elif stat == "Not charging":
+            state = BatteryState.NOT_CHARGING
         else:
             state = BatteryState.UNKNOWN
 
-        now_str, now_unit = self._get_param('energy_now_file')
-        full_str, full_unit = self._get_param('energy_full_file')
-        power_str, power_unit = self._get_param('power_now_file')
+        now_str, now_unit = self._get_param("energy_now_file")
+        full_str, full_unit = self._get_param("energy_full_file")
+        power_str, power_unit = self._get_param("power_now_file")
         # the units of energy is uWh or uAh, multiply to get to uWs or uAs
         now = 3600 * float(now_str)
         full = 3600 * float(full_str)
@@ -284,7 +369,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         if now_unit != full_unit:
             raise RuntimeError("Current and full energy units do not match")
         if full == 0:
-            percent = 0.
+            percent = 0.0
         else:
             percent = now / full
 
@@ -295,45 +380,108 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         else:
             time = int((full - now) / power)
 
-        if power_unit == 'uA':
-            voltage = float(self._get_param('voltage_now_file')[0])
+        if power_unit == "uA":
+            voltage = float(self._get_param("voltage_now_file")[0])
             power = voltage * power / 1e12
-        elif power_unit == 'uW':
+        elif power_unit == "uW":
             power = power / 1e6
 
-        return BatteryStatus(state=state, percent=percent, power=power, time=time)
+        return BatteryStatus(
+            state=state,
+            percent=percent,
+            power=power,
+            time=time,
+            charge_start_threshold=charge_start_threshold,
+            charge_end_threshold=charge_end_threshold,
+        )
 
 
 class Battery(base.ThreadPoolText):
-    """A text-based battery monitoring widget currently supporting FreeBSD"""
-    orientations = base.ORIENTATION_HORIZONTAL
+    """
+    A text-based battery monitoring widget supporting both Linux and FreeBSD.
+
+    The Linux version of this widget has functionality to charge "smartly"
+    (i.e. not to 100%) under user defined conditions, and provides some
+    implementations for doing so. For example, to only charge the battery to
+    90%, use:
+
+    .. code-block:: python
+
+        Battery(..., charge_controller: lambda (0, 90))
+
+    The battery widget also supplies some charging algorithms. To only charge
+    the battery between 40-50% while connected to a thunderbolt docking
+    station, but 90% all other times, use:
+
+    .. code-block:: python
+
+        from libqtile.widget.battery import thunderbolt_smart_charge
+        Battery(..., charge_controller: thunderbolt_smart_charge)
+
+    To temporarily disable/re-enable this (e.g. if you know you're
+    going mobile and need to charge) use either:
+
+    .. code-block:: bash
+
+        qtile cmd-obj -o bar top widget battery -f charge_to_full
+        qtile cmd-obj -o bar top widget battery -f charge_dynamically
+
+    or bind a key to:
+
+    .. code-block:: python
+
+        Key([mod, "shift"], "c", lazy.widget['battery'].charge_to_full())
+        Key([mod, "shift"], "x", lazy.widget['battery'].charge_dynamically())
+
+    note that this functionality requires qtile to be able to write to certain
+    files in sysfs, so make sure that qtile's udev rules are installed
+    correctly.
+    """
+
+    background: ColorsType | None
+    low_background: ColorsType | None
+
     defaults = [
-        ('charge_char', '^', 'Character to indicate the battery is charging'),
-        ('discharge_char', 'V', 'Character to indicate the battery is discharging'),
-        ('full_char', '=', 'Character to indicate the battery is full'),
-        ('empty_char', 'x', 'Character to indicate the battery is empty'),
-        ('unknown_char', '?', 'Character to indicate the battery status is unknown'),
-        ('format', '{char} {percent:2.0%} {hour:d}:{min:02d} {watt:.2f} W', 'Display format'),
-        ('hide_threshold', None, 'Hide the text when there is enough energy 0 <= x < 1'),
-        ('show_short_text', True, 'Show "Full" or "Empty" rather than formated text'),
-        ('low_percentage', 0.10, "Indicates when to use the low_foreground color 0 < x < 1"),
-        ('low_foreground', 'FF0000', 'Font color on low battery'),
-        ('update_interval', 60, 'Seconds between status updates'),
-        ('battery', 0, 'Which battery should be monitored (battery number or name)'),
-        ('notify_below', None, 'Send a notification below this battery level.'),
+        ("charge_char", "^", "Character to indicate the battery is charging"),
+        ("discharge_char", "V", "Character to indicate the battery is discharging"),
+        ("full_char", "=", "Character to indicate the battery is full"),
+        ("empty_char", "x", "Character to indicate the battery is empty"),
+        ("not_charging_char", "*", "Character to indicate the batter is not charging"),
+        ("unknown_char", "?", "Character to indicate the battery status is unknown"),
+        ("format", "{char} {percent:2.0%} {hour:d}:{min:02d} {watt:.2f} W", "Display format"),
+        ("hide_threshold", None, "Hide the text when there is enough energy 0 <= x < 1"),
+        ("show_short_text", True, 'Show "Full" or "Empty" rather than formated text'),
+        ("low_percentage", 0.10, "Indicates when to use the low_foreground color 0 < x < 1"),
+        ("low_foreground", "FF0000", "Font color on low battery"),
+        ("low_background", None, "Background color on low battery"),
+        ("update_interval", 60, "Seconds between status updates"),
+        ("battery", 0, "Which battery should be monitored (battery number or name)"),
+        ("notify_below", None, "Send a notification below this battery level."),
+        ("notification_timeout", 10, "Time in seconds to display notification. 0 for no expiry."),
     ]
 
     def __init__(self, **config) -> None:
-        if "update_delay" in config:
-            warnings.warn("Change from using update_delay to update_interval for battery widget, removed in 0.15",
-                          DeprecationWarning)
-            config["update_interval"] = config.pop("update_delay")
-
         base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(self.defaults)
 
         self._battery = self._load_battery(**config)
         self._has_notified = False
+        self.timeout = int(self.notification_timeout * 1000)
+
+    def _configure(self, qtile, bar):
+        if not self.low_background:
+            self.low_background = self.background
+        self.normal_background = self.background
+
+        base.ThreadPoolText._configure(self, qtile, bar)
+
+    @expose_command()
+    def charge_to_full(self):
+        self._battery.force_charge = True
+
+    @expose_command()
+    def charge_dynamically(self):
+        self._battery.force_charge = False
 
     @staticmethod
     def _load_battery(**config):
@@ -354,13 +502,18 @@ class Battery(base.ThreadPoolText):
         try:
             status = self._battery.update_status()
         except RuntimeError as e:
-            return 'Error: {}'.format(e)
+            return f"Error: {e}"
 
         if self.notify_below:
             percent = int(status.percent * 100)
             if percent < self.notify_below:
                 if not self._has_notified:
-                    send_notification("Warning", "Battery at {0}%".format(percent), urgent=True)
+                    send_notification(
+                        "Warning",
+                        f"Battery at {status.percent:2.0%}",
+                        urgent=True,
+                        timeout=self.timeout,
+                    )
                     self._has_notified = True
             elif self._has_notified:
                 self._has_notified = False
@@ -381,13 +534,15 @@ class Battery(base.ThreadPoolText):
             The string to display for the current status.
         """
         if self.hide_threshold is not None and status.percent > self.hide_threshold:
-            return ''
+            return ""
 
         if self.layout is not None:
             if status.state == BatteryState.DISCHARGING and status.percent < self.low_percentage:
                 self.layout.colour = self.low_foreground
+                self.background = self.low_background
             else:
                 self.layout.colour = self.foreground
+                self.background = self.normal_background
 
         if status.state == BatteryState.CHARGING:
             char = self.charge_char
@@ -397,11 +552,14 @@ class Battery(base.ThreadPoolText):
             if self.show_short_text:
                 return "Full"
             char = self.full_char
-        elif status.state == BatteryState.EMPTY or \
-                (status.state == BatteryState.UNKNOWN and status.percent == 0):
+        elif status.state == BatteryState.EMPTY or (
+            status.state == BatteryState.UNKNOWN and status.percent == 0
+        ):
             if self.show_short_text:
                 return "Empty"
             char = self.empty_char
+        elif status.state == BatteryState.NOT_CHARGING:
+            char = self.not_charging_char
         else:
             char = self.unknown_char
 
@@ -409,11 +567,7 @@ class Battery(base.ThreadPoolText):
         minute = (status.time // 60) % 60
 
         return self.format.format(
-            char=char,
-            percent=status.percent,
-            watt=status.power,
-            hour=hour,
-            min=minute
+            char=char, percent=status.percent, watt=status.power, hour=hour, min=minute
         )
 
 
@@ -427,39 +581,35 @@ class BatteryIcon(base._Widget):
     """Battery life indicator widget."""
 
     orientations = base.ORIENTATION_HORIZONTAL
-    defaults = [
-        ('battery', 0, 'Which battery should be monitored'),
-        ('update_interval', 60, 'Seconds between status updates'),
-        ('theme_path', default_icon_path(), 'Path of the icons'),
-    ]  # type: List[Tuple[str, Any, str]]
+    defaults: list[tuple[str, Any, str]] = [
+        ("battery", 0, "Which battery should be monitored"),
+        ("update_interval", 60, "Seconds between status updates"),
+        ("theme_path", default_icon_path(), "Path of the icons"),
+        ("scale", 1, "Scale factor relative to the bar height.  " "Defaults to 1"),
+        ("padding", 0, "Additional padding either side of the icon"),
+    ]
 
     icon_names = (
-        'battery-missing',
-        'battery-caution',
-        'battery-low',
-        'battery-good',
-        'battery-full',
-        'battery-caution-charging',
-        'battery-low-charging',
-        'battery-good-charging',
-        'battery-full-charging',
-        'battery-full-charged',
+        "battery-missing",
+        "battery-caution",
+        "battery-low",
+        "battery-good",
+        "battery-full",
+        "battery-caution-charging",
+        "battery-low-charging",
+        "battery-good-charging",
+        "battery-full-charging",
+        "battery-full-charged",
     )
 
     def __init__(self, **config) -> None:
-        if "update_delay" in config:
-            warnings.warn("Change from using update_delay to update_interval for battery widget, removed in 0.15",
-                          DeprecationWarning)
-            config["update_interval"] = config.pop("update_delay")
-
         base._Widget.__init__(self, length=bar.CALCULATED, **config)
         self.add_defaults(self.defaults)
+        self.scale: float = 1.0 / self.scale
 
-        self.length_type = bar.STATIC
-        self.length = 0
         self.image_padding = 0
-        self.surfaces = {}  # type: Dict[str, Img]
-        self.current_icon = 'battery-missing'
+        self.images: dict[str, Img] = {}
+        self.current_icon = "battery-missing"
 
         self._battery = self._load_battery(**config)
 
@@ -478,18 +628,22 @@ class BatteryIcon(base._Widget):
 
     def _configure(self, qtile, bar) -> None:
         base._Widget._configure(self, qtile, bar)
-        self.image_padding = 0
         self.setup_images()
-        self.image_padding = (self.bar.height - self.bar.height / 5) / 2
 
     def setup_images(self) -> None:
         d_imgs = images.Loader(self.theme_path)(*self.icon_names)
-        new_height = self.bar.height - self.image_padding
+
+        new_height = self.bar.height * self.scale
         for key, img in d_imgs.items():
             img.resize(height=new_height)
-            if img.width > self.length:
-                self.length = int(img.width + self.image_padding * 2)
-            self.surfaces[key] = img.pattern
+            self.images[key] = img
+
+    def calculate_length(self):
+        if not self.images:
+            return 0
+
+        icon = self.images[self.current_icon]
+        return icon.width + 2 * self.padding
 
     def update(self) -> None:
         status = self._battery.update_status()
@@ -500,27 +654,31 @@ class BatteryIcon(base._Widget):
 
     def draw(self) -> None:
         self.drawer.clear(self.background or self.bar.background)
-        self.drawer.ctx.set_source(self.surfaces[self.current_icon])
+        image = self.images[self.current_icon]
+        self.drawer.ctx.save()
+        self.drawer.ctx.translate(self.padding, (self.bar.height - image.height) // 2)
+        self.drawer.ctx.set_source(image.pattern)
         self.drawer.ctx.paint()
-        self.drawer.draw(offsetx=self.offset, width=self.length)
+        self.drawer.ctx.restore()
+        self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
 
     @staticmethod
     def _get_icon_key(status: BatteryStatus) -> str:
-        key = 'battery'
+        key = "battery"
 
         percent = status.percent
-        if percent < .2:
-            key += '-caution'
-        elif percent < .4:
-            key += '-low'
-        elif percent < .8:
-            key += '-good'
+        if percent < 0.2:
+            key += "-caution"
+        elif percent < 0.4:
+            key += "-low"
+        elif percent < 0.8:
+            key += "-good"
         else:
-            key += '-full'
+            key += "-full"
 
         state = status.state
         if state == BatteryState.CHARGING:
-            key += '-charging'
+            key += "-charging"
         elif state == BatteryState.FULL:
-            key += '-charged'
+            key += "-charged"
         return key

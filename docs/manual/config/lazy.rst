@@ -4,10 +4,16 @@
 Lazy objects
 ============
 
-The ``lazy.lazy`` object is a special helper object to specify a command for
-later execution. This object acts like the root of the object graph, which
-means that we can specify a key binding command with the same syntax used to
-call the command through a script or through :ref:`qshell`.
+Lazy objects are a way of executing any of the commands available in Qtile's
+:doc:`commands API </manual/commands/api/index>`. 
+
+The name "lazy" refers to the fact that the commands are not executed at the time of
+the call. Instead, the lazy object creates a reference to the relevant command and this
+is only executed when the relevant event is triggered (e.g. on a keypress).
+
+Typically, for config files, the commands are used to manipulate windows,
+layouts and groups as well application commands like exiting, restarting,
+reloading the config file etc.
 
 Example
 -------
@@ -15,7 +21,7 @@ Example
 ::
 
     from libqtile.config import Key
-    from libqtile.command import lazy
+    from libqtile.lazy import lazy
 
     keys = [
         Key(
@@ -28,14 +34,23 @@ Example
         )
     ]
 
+.. note::
+
+  As noted above, ``lazy`` calls do not call the
+  relevant command but only create a reference to it. While this makes it
+  ideal for binding commands to key presses and ``mouse_callbacks`` for
+  widgets, it also means that ``lazy`` calls cannot be included
+  in user-defined functions.
+
 Lazy functions
 ==============
 
 This is overview of the commonly used functions for the key bindings.  These
-functions can be called from commands on the :ref:`qtile_commands` object or on
+functions can be called from commands on the REPLACE object or on
 another object in the command tree.
 
-Some examples are given below.
+Some examples are given below. For a complete list of available commands, please
+refer to :doc:`/manual/commands/api/index`.
 
 General functions
 -----------------
@@ -50,8 +65,10 @@ General functions
       - Run the ``application``
     * - ``lazy.spawncmd()``
       - Open command prompt on the bar. See prompt widget.
+    * - ``lazy.reload_config()``
+      - Reload the config.
     * - ``lazy.restart()``
-      - Restart Qtile and reload its config. It won't close your windows
+      - Restart Qtile. In X11, it won't close your windows.
     * - ``lazy.shutdown()``
       - Close the whole Qtile
 
@@ -74,11 +91,15 @@ Group functions
       - Move to the group on the left
     * - ``lazy.screen.toggle_group()``
       - Move to the last visited group
+    * - ``lazy.group.next_window()``
+      - Switch window focus to next window in group
+    * - ``lazy.group.prev_window()``
+      - Switch window focus to previous window in group
     * - ``lazy.group["group_name"].toscreen()``
       - Move to the group called ``group_name``.
-        Takes an optional ``toggle`` parameter (defaults to True).
-        If this group is already on the screen, then the group is toggled
-        with last used
+        Takes an optional ``toggle`` parameter (defaults to False).
+        If this group is already on the screen, it does nothing by default;
+        to toggle with the last used group instead, use ``toggle=True``.
     * - ``lazy.layout.increase_ratio()``
       - Increase the space for master window at the expense of slave windows
     * - ``lazy.layout.decrease_ratio()``
@@ -103,6 +124,36 @@ Window functions
       - Put the focused window to/from floating mode
     * - ``lazy.window.toggle_fullscreen()``
       - Put the focused window to/from fullscreen mode
+    * - ``lazy.window.move_up()``
+      - Move the window above the next window in the stack.
+    * - ``lazy.window.move_down()``
+      - Move the window below the previous window in the stack.
+    * - ``lazy.window.move_to_top()``
+      - Move the window above all other windows with similar priority
+        (i.e. a "normal" window will not be moved above a ``kept_above`` window).
+    * - ``lazy.window.move_to_bottom()``
+      - Move the window below all other windows with similar priority
+        (i.e. a "normal" window will not be moved below a ``kept_below`` window).
+    * - ``lazy.window.keep_above()``
+      - Keep window above other windows.
+    * - ``lazy.window.keep_below()``
+      - Keep window below other windows.
+    * - ``lazy.window.bring_to_front()``
+      - Bring window above all other windows. Ignores ``kept_above`` priority.
+
+
+Screen functions
+----------------
+
+.. list-table::
+    :widths: 20 80
+    :header-rows: 1
+
+    * - function
+      - description
+    * - ``lazy.screen.set_wallpaper(path, mode=None)``
+      - Set the wallpaper to the specificied image. Possible modes: ``None`` no resizing,
+        ``'fill'`` centre and resize to fill screen, ``'stretch'`` stretch to fill screen.
 
 ScratchPad DropDown functions
 -----------------------------
@@ -116,6 +167,10 @@ ScratchPad DropDown functions
     * - ``lazy.group["group_name"].dropdown_toggle("name")``
       - Toggles the visibility of the specified DropDown window.
         On first use, the configured process is spawned.
+    * - ``lazy.group["group_name"].hide_all()``
+      - Hides all DropDown windows.
+    * - ``lazy.group["group_name"].dropdown_reconfigure("name", **configuration)``
+      - Update the configuration of the named DropDown.
 
 User-defined functions
 ----------------------
@@ -129,3 +184,67 @@ User-defined functions
     * - ``lazy.function(func, *args, **kwargs)``
       - Calls ``func(qtile, *args, **kwargs)``. NB. the ``qtile`` object is
         automatically passed as the first argument.
+
+Examples
+--------
+
+``lazy.function`` can also be used as a decorator for functions.
+
+::
+
+    from libqtile.config import Key
+    from libqtile.lazy import lazy
+
+    @lazy.function
+    def my_function(qtile):
+        ...
+
+    keys = [
+        Key(
+            ["mod1"], "k",
+            my_function
+        )
+    ]
+
+Additionally, you can pass arguments to user-defined function in one of two ways:
+
+1) In-line definition
+
+Arguments can be added to the ``lazy.function`` call.
+
+::
+
+    from libqtile.config import Key
+    from libqtile.lazy import lazy
+    from libqtile.log_utils import logger
+
+    def multiply(qtile, value, multiplier=10):
+        logger.warning(f"Multiplication results: {value * multiplier}")
+
+    keys = [
+        Key(
+            ["mod1"], "k",
+            lazy.function(multiply, 10, multiplier=2)
+        )
+    ]
+
+2) Decorator
+
+Arguments can also be passed to the decorated function.
+
+::
+
+    from libqtile.config import Key
+    from libqtile.lazy import lazy
+    from libqtile.log_utils import logger
+
+    @lazy.function
+    def multiply(qtile, value, multiplier=10):
+        logger.warning(f"Multiplication results: {value * multiplier}")
+
+    keys = [
+        Key(
+            ["mod1"], "k",
+            multiply(10, multiplier=2)
+        )
+    ]

@@ -31,7 +31,6 @@ class CPU(base.ThreadPoolText):
 
     .. _psutil: https://pypi.org/project/psutil/
     """
-    orientations = base.ORIENTATION_HORIZONTAL
 
     defaults = [
         ("update_interval", 1.0, "Update interval for the CPU widget"),
@@ -51,7 +50,10 @@ class CPU(base.ThreadPoolText):
 
         variables["load_percent"] = round(psutil.cpu_percent(), 1)
         freq = psutil.cpu_freq()
-        variables["freq_current"] = round(freq.current / 1000, 1)
+        if psutil.__version__ == "5.9.0":
+            variables["freq_current"] = round(freq.current, 1)
+        else:
+            variables["freq_current"] = round(freq.current / 1000, 1)
         variables["freq_max"] = round(freq.max / 1000, 1)
         variables["freq_min"] = round(freq.min / 1000, 1)
 

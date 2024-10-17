@@ -1,0 +1,124 @@
+[build-system]
+requires = [
+    "cffi>=1.1.0",
+    "cairocffi[xcb]>=1.6.0",
+    "setuptools>=60",
+    "setuptools-scm>=7.0",
+    "wheel",
+]
+backend-path=["."]
+build-backend = "builder"
+
+[project]
+name = "qtile"
+description = "A pure-Python tiling window manager."
+dynamic = ["version", "readme", "dependencies", "optional-dependencies"]
+license = {text = "MIT"}
+classifiers = [
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: BSD :: FreeBSD",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Desktop Environment :: Window Managers",
+]
+
+[project.urls]
+"Homepage" = "https://qtile.org"
+"Documentation" = "https://docs.qtile.org/"
+"Code" = "https://github.com/qtile/qtile/"
+"Issue tracker" = "https://github.com/qtile/qtile/issues"
+"Contributing" = "https://docs.qtile.org/en/latest/manual/contributing.html"
+
+[project.scripts]
+qtile = "libqtile.scripts.main:main"
+
+[tool.setuptools.packages.find]
+include = ["libqtile*"]
+
+[tool.setuptools_scm]
+
+[tool.setuptools.dynamic]
+readme = {file = "README.rst"}
+
+[tool.ruff]
+line-length = 98
+exclude = ["libqtile/_ffi.*.py", "libqtile/backend/x11/_ffi.*.py", "test/configs/syntaxerr.py"]
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+	"F",       # pyflakes
+	"E",       # pycodestyle errors
+	"W",       # pycodestyle warnings
+	"I",       # isort
+	"N",       # pep8-naming
+	"G",       # flake8-logging-format
+	"PIE",     # flake8-pie
+	"UP",      # pyupgrade
+]
+
+ignore = [
+    "E501",    # ignore due to conflict with formatter
+    "N818",    # exceptions don't need the Error suffix
+    "E741",    # allow ambiguous variable names
+]
+
+fixable = ["ALL"]
+
+[tool.ruff.lint.per-file-ignores]
+"stubs/*" = [
+    "N",       # naming conventions don't matter in stubs
+    "F403",    # star imports are okay in stubs
+    "F405",    # star imports are okay in stubs
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+known-first-party = ["libqtile", "test"]
+default-section = "third-party"
+
+[tool.mypy]
+mypy_path = "stubs"
+python_version = "3.11"
+warn_unused_configs = true
+warn_unused_ignores = true
+warn_unreachable = true
+no_implicit_optional = true
+disallow_untyped_defs = false
+disable_error_code = ["method-assign", "annotation-unchecked"]
+
+[[tool.mypy.overrides]]
+module = [
+    "libqtile.backend.wayland.*",
+    "libqtile.backend",
+    "libqtile.bar",
+    "libqtile.core.*",
+    "libqtile.config",
+    "libqtile.layout.base",
+    "libqtile.log_utils",
+    "libqtile.utils",
+]
+disallow_untyped_defs = true
+
+[tool.vulture]
+paths = ["libqtile"]
+exclude = ["test/configs/syntaxerr.py"]
+min_confidence = 100
+
+[tool.pytest.ini_options]
+python_files = "test_*.py"
+testpaths = ["test"]
+filterwarnings = [
+    "error:::libqtile",
+]

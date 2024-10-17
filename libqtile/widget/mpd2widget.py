@@ -6,7 +6,6 @@ This widget exists since python-mpd library is no longer supported.
 
 from collections import defaultdict
 from html import escape
-from socket import error as socket_error
 
 from mpd import CommandError, ConnectionError, MPDClient
 
@@ -18,23 +17,17 @@ from libqtile.widget import base
 # TODO: Volume inc/dec support
 keys = {
     # Left mouse button
-    "toggle": 1,
+    1: "toggle",
     # Right mouse button
-    "stop": 3,
+    3: "stop",
     # Scroll up
-    "previous": 4,
+    4: "previous",
     # Scroll down
-    "next": 5,
-    # User defined command
-    "command": None
+    5: "next",
 }
 
 # To display mpd state
-play_states = {
-    'play': '\u25b6',
-    'pause': '\u23F8',
-    'stop': '\u25a0'
-}
+play_states = {"play": "\u25b6", "pause": "\u23f8", "stop": "\u25a0"}
 
 
 def option(char):
@@ -43,46 +36,47 @@ def option(char):
 
     Deprecated.
     """
+
     def _convert(elements, key, space):
-        if key in elements and elements[key] != '0':
+        if key in elements and elements[key] != "0":
             elements[key] = char
         else:
             elements[key] = space
+
     return _convert
 
 
 # Changes to formatter will still use this dicitionary as a fallback
 prepare_status = {
-    'repeat': option('r'),
-    'random': option('z'),
-    'single': option('1'),
-    'consume': option('c'),
-    'updating_db': option('U')
+    "repeat": option("r"),
+    "random": option("z"),
+    "single": option("1"),
+    "consume": option("c"),
+    "updating_db": option("U"),
 }
 
 # dictionary for new formatting method.  This is now default.
-status_dict = {
-    'repeat': 'r',
-    'random': 'z',
-    'single': '1',
-    'consume': 'c',
-    'updating_db': 'U'
-}
+status_dict = {"repeat": "r", "random": "z", "single": "1", "consume": "c", "updating_db": "U"}
 
 default_idle_message = "MPD IDLE"
 
-default_idle_format = '{play_status} {idle_message}' +\
-                 '[{repeat}{random}{single}{consume}{updating_db}]'
+default_idle_format = (
+    "{play_status} {idle_message}" + "[{repeat}{random}{single}{consume}{updating_db}]"
+)
 
-default_format = '{play_status} {artist}/{title} ' +\
-                 '[{repeat}{random}{single}{consume}{updating_db}]'
+default_format = (
+    "{play_status} {artist}/{title} " + "[{repeat}{random}{single}{consume}{updating_db}]"
+)
+
+default_undefined_status_value = "Undefined"
 
 
-def default_cmd(): return None
+def default_cmd():
+    return None
 
 
 format_fns = {
-    'all': escape,
+    "all": escape,
 }
 
 
@@ -91,7 +85,7 @@ class Mpd2(base.ThreadPoolText):
 
     Parameters
     ==========
-    status_format :
+    status_format:
         format string to display status
 
         For a full list of values, see:
@@ -110,7 +104,7 @@ class Mpd2(base.ThreadPoolText):
             Note that the ``time`` property of the song renamed to ``fulltime``
             to prevent conflicts with status information during formating.
 
-    idle_format :
+    idle_format:
         format string to display status when no song is in queue.
 
         Default::
@@ -118,13 +112,22 @@ class Mpd2(base.ThreadPoolText):
             '{play_status} {idle_message} \
                 [{repeat}{random}{single}{consume}{updating_db}]'
 
-    idle_message :
+            Note that the ``artist`` key fallbacks to similar keys in specific order.
+            (``artist`` -> ``albumartist`` -> ``performer`` ->
+             -> ``composer`` -> ``conductor`` -> ``ensemble``)
+
+    idle_message:
         text to display instead of song information when MPD is idle.
         (i.e. no song in queue)
 
         Default:: "MPD IDLE"
 
-    prepare_status :
+    undefined_value:
+        text to display when status key is undefined
+
+        Default:: "Undefined"
+
+    prepare_status:
         dict of functions to replace values in status with custom characters.
 
         ``f(status, key, space_element) => str``
@@ -141,17 +144,17 @@ class Mpd2(base.ThreadPoolText):
                 'updating_db': 'U'
             }
 
-    format_fns :
+    format_fns:
         A dict of functions to format the various elements.
 
-        'Tag' : f(str) => str
+        'Tag': f(str) => str
 
         Default:: { 'all': lambda s: cgi.escape(s) }
 
         N.B. if 'all' is present, it is processed on every element of song_info
             before any other formatting is done.
 
-    mouse_buttons :
+    mouse_buttons:
         A dict of mouse button numbers to actions
 
     Widget requirements: python-mpd2_.
@@ -159,62 +162,56 @@ class Mpd2(base.ThreadPoolText):
     .. _python-mpd2: https://pypi.org/project/python-mpd2/
     """
 
-    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('update_interval', 1, 'Interval of update widget'),
-        ('host', 'localhost', 'Host of mpd server'),
-        ('port', 6600, 'Port of mpd server'),
-        ('password', None, 'Password for auth on mpd server'),
-        ('keys', keys, 'mouse button mapping. action -> b_num. deprecated.'),
-        ('mouse_buttons', {}, 'b_num -> action. replaces keys.'),
-        ('play_states', play_states, 'Play state mapping'),
-        ('format_fns', format_fns, 'Dictionary of format methods'),
-        ('command', default_cmd,
-            'command to be executed by mapped mouse button.'),
-        ('prepare_status', status_dict,
-            'characters to show the status of MPD'),
-        ('status_format', default_format, 'format for displayed song info.'),
-        ('idle_format', default_idle_format,
-            'format for status when mpd has no playlist.'),
-        ('idle_message', default_idle_message,
-            'text to display when mpd is idle.'),
-        ('timeout', 30, 'MPDClient timeout'),
-        ('idletimeout', 5, 'MPDClient idle command timeout'),
-        ('no_connection', 'No connection', 'Text when mpd is disconnected'),
-        ('color_progress', None, 'Text color to indicate track progress.'),
-        ('space', '-', 'Space keeper')
+        ("update_interval", 1, "Interval of update widget"),
+        ("host", "localhost", "Host of mpd server"),
+        ("port", 6600, "Port of mpd server"),
+        ("password", None, "Password for auth on mpd server"),
+        ("mouse_buttons", keys, "b_num -> action."),
+        ("play_states", play_states, "Play state mapping"),
+        ("format_fns", format_fns, "Dictionary of format methods"),
+        ("command", default_cmd, "command to be executed by mapped mouse button."),
+        ("prepare_status", status_dict, "characters to show the status of MPD"),
+        ("status_format", default_format, "format for displayed song info."),
+        ("idle_format", default_idle_format, "format for status when mpd has no playlist."),
+        ("idle_message", default_idle_message, "text to display when mpd is idle."),
+        (
+            "undefined_value",
+            default_undefined_status_value,
+            "text to display when status key is undefined.",
+        ),
+        ("timeout", 30, "MPDClient timeout"),
+        ("idletimeout", 5, "MPDClient idle command timeout"),
+        ("no_connection", "No connection", "Text when mpd is disconnected"),
+        ("color_progress", None, "Text color to indicate track progress."),
+        ("space", "-", "Space keeper"),
     ]
 
     def __init__(self, **config):
         """Constructor."""
-        super().__init__(None, **config)
+        super().__init__("", **config)
 
         self.add_defaults(Mpd2.defaults)
-        self.client = MPDClient()
-        self.client.timeout = self.timeout
-        self.client.idletimeout = self.idletimeout
         if self.color_progress:
             self.color_progress = utils.hex(self.color_progress)
 
-        # remap self.keys as mouse_buttons for new button_press functionality.
-        # so we don't break existing configurations.
-        # TODO: phase out use of self.keys in favor of self.mouse_buttons
-        if self.mouse_buttons == {}:
-            for k in self.keys:
-                if self.keys[k] is not None:
-                    self.mouse_buttons[self.keys[k]] = k
+    def _configure(self, qtile, bar):
+        super()._configure(qtile, bar)
+        self.client = MPDClient()
+        self.client.timeout = self.timeout
+        self.client.idletimeout = self.idletimeout
 
     @property
     def connected(self):
         """Attempt connection to mpd server."""
         try:
             self.client.ping()  # pylint: disable=E1101
-        except(socket_error, ConnectionError):
+        except (OSError, ConnectionError):
             try:
                 self.client.connect(self.host, self.port)
                 if self.password:
                     self.client.password(self.password)  # pylint: disable=E1101
-            except(socket_error, ConnectionError, CommandError):
+            except (OSError, ConnectionError, CommandError):
                 return False
         return True
 
@@ -250,7 +247,7 @@ class Mpd2(base.ThreadPoolText):
                 self.__try_call(m_name, self.client)
 
     def __try_call(self, attr_name, obj=None):
-        err1 = 'Class {Class} has no attribute {attr}.'
+        err1 = "Class {Class} has no attribute {attr}."
         err2 = 'attribute "{Class}.{attr}" is not callable.'
         context = obj or self
         try:
@@ -260,41 +257,40 @@ class Mpd2(base.ThreadPoolText):
                 err = err1.format(Class=type(context).__name__, attr=attr_name)
             else:
                 err = err2.format(Class=type(context).__name__, attr=attr_name)
-            logger.exception(err + " {}".format(e.args[0]))
+            logger.exception("%s %s", err, e.args[0])
 
     def toggle(self):
         """toggle play/pause."""
         status = self.client.status()  # pylint: disable=E1101
-        play_status = status['state']
+        play_status = status["state"]
 
-        if play_status == 'play':
+        if play_status == "play":
             self.client.pause()  # pylint: disable=E1101
         else:
             self.client.play()  # pylint: disable=E1101
 
     def formatter(self, status, current_song):
         """format song info."""
-        default = 'Undefined'
-        song_info = defaultdict(lambda: default)
-        song_info['play_status'] = self.play_states[status['state']]
+        song_info = defaultdict(lambda: self.undefined_value)
+        song_info["play_status"] = self.play_states[status["state"]]
 
-        if status['state'] == 'stop' and current_song == {}:
-            song_info['idle_message'] = self.idle_message
+        if status["state"] == "stop" and current_song == {}:
+            song_info["idle_message"] = self.idle_message
             fmt = self.idle_format
         else:
             fmt = self.status_format
 
         for k in current_song:
             song_info[k] = current_song[k]
-        song_info['fulltime'] = song_info['time']
-        del song_info['time']
+        song_info["fulltime"] = song_info["time"]
+        del song_info["time"]
 
         song_info.update(status)
-        if song_info['updating_db'] == default:
-            song_info['updating_db'] = '0'
-        if not callable(self.prepare_status['repeat']):
+        if song_info["updating_db"] == self.undefined_value:
+            song_info["updating_db"] = "0"
+        if not callable(self.prepare_status["repeat"]):
             for k in self.prepare_status:
-                if k in status and status[k] != '0':
+                if k in status and status[k] != "0":
                     # Much more direct.
                     song_info[k] = self.prepare_status[k]
                 else:
@@ -307,27 +303,43 @@ class Mpd2(base.ThreadPoolText):
         # 'elapsed' is always less than or equal to 'fulltime', if it exists.
         # Remaining should default to '00:00' if either or both are missing.
         # These values are also used for coloring text by progress, if wanted.
-        if 'remaining' in self.status_format or self.color_progress:
-            total = float(song_info['fulltime'])\
-                if song_info['fulltime'] != default else 0.0
-            elapsed = float(song_info['elapsed'])\
-                if song_info['elapsed'] != default else 0.0
-            song_info['remaining'] = "{:.2f}".format(float(total - elapsed))
+        if "remaining" in self.status_format or self.color_progress:
+            total = (
+                float(song_info["fulltime"])
+                if song_info["fulltime"] != self.undefined_value
+                else 0.0
+            )
+            elapsed = (
+                float(song_info["elapsed"])
+                if song_info["elapsed"] != self.undefined_value
+                else 0.0
+            )
+            song_info["remaining"] = f"{float(total - elapsed):.2f}"
+
+        if "song" in self.status_format and song_info["song"] != self.undefined_value:
+            song_info["currentsong"] = str(int(song_info["song"]) + 1)
+
+        if "artist" in self.status_format and song_info["artist"] == self.undefined_value:
+            artist_keys = ("albumartist", "performer", "composer", "conductor", "ensemble")
+            for key in artist_keys:
+                if song_info[key] != self.undefined_value:
+                    song_info["artist"] = song_info[key]
+                    break
 
         # mpd serializes tags containing commas as lists.
         for key in song_info:
             if isinstance(song_info[key], list):
-                song_info[key] = ', '.join(song_info[key])
+                song_info[key] = ", ".join(song_info[key])
 
         # Now we apply the user formatting to selected elements in song_info.
         # if 'all' is defined, it is applied first.
         # the reason for this is that, if the format functions do pango markup.
         # we don't want to do anything that would mess it up, e.g. `escape`ing.
-        if 'all' in self.format_fns:
+        if "all" in self.format_fns:
             for key in song_info:
-                song_info[key] = self.format_fns['all'](song_info[key])
+                song_info[key] = self.format_fns["all"](song_info[key])
         for fmt_fn in self.format_fns:
-            if fmt_fn in song_info and fmt_fn != 'all':
+            if fmt_fn in song_info and fmt_fn != "all":
                 song_info[fmt_fn] = self.format_fns[fmt_fn](song_info[fmt_fn])
 
         # fmt = self.status_format
@@ -336,12 +348,10 @@ class Mpd2(base.ThreadPoolText):
 
         formatted = fmt.format_map(song_info)
 
-        if self.color_progress and status['state'] != 'stop':
+        if self.color_progress and status["state"] != "stop":
             try:
                 progress = int(len(formatted) * elapsed / total)
-                formatted = '<span color="{0}">{1}</span>{2}'.format(
-                    self.color_progress, formatted[:progress], formatted[progress:],
-                )
+                formatted = f'<span color="{self.color_progress}">{formatted[:progress]}</span>{formatted[progress:]}'
             except (ZeroDivisionError, ValueError):
                 pass
 

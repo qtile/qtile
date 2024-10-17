@@ -7,24 +7,23 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/stale@v2.0.0
+    - uses: actions/stale@v9
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-        stale-issue-message: 'This issue is stale because it has been open 90 days with no activity. Remove stale label or comment or this will be closed in 30 days.'
-        stale-issue-label: 'stale'
-        exempt-issue-labels: 'in progress,task,bug,enhancement'
-        stale-pr-message: 'This PR is stale because it has been open 90 days with no activity. Remove stale label or comment or this will be closed in 30 days.'
-        stale-pr-label: 'stale'
-        exempt-pr-labels: 'in progress,task,bug,enhancement'
+        stale-issue-message: 'This issue is stale because it has been open 90 days with no activity. Remove the `status: stale` label or comment, or this will be closed in 30 days.'
+        stale-issue-label: 'status: stale'
+        exempt-issue-labels: 'kind: task,kind: bug,kind: enhancement'
+        stale-pr-message: 'This PR is stale because it has been open 90 days with no activity. Remove the `status: stale` label or comment, or this will be closed in 30 days.'
+        stale-pr-label: 'status: stale'
         days-before-stale: 90
         days-before-close: 30
-    - uses: actions/stale@v2.0.0
+    - uses: actions/stale@v9
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-        stale-issue-message: 'This issue is stale because it has been open 90 days with no activity. Remove stale label or comment or this will be closed in 30 days.'
-        stale-issue-label: 'stale'
-        stale-pr-message: 'This PR is stale because it has been open 90 days with no activity. Remove stale label or comment or this will be closed in 30 days.'
-        stale-pr-label: 'stale'
-        only-labels: 'unconfirmed'
+        stale-issue-message: 'This issue is stale because it has been open 90 days with no activity. Remove `status: stale` label or comment, or this will be closed in 30 days.'
+        stale-issue-label: 'status: stale'
+        stale-pr-message: 'This PR is stale because it has been open 90 days with no activity. Remove `status: stale` label or comment, or this will be closed in 30 days.'
+        stale-pr-label: 'status: stale'
+        only-labels: 'status: unconfirmed'
         days-before-stale: 90
         days-before-close: 30

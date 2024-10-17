@@ -18,18 +18,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 """
-    A command shell for Qtile.
+A command shell for Qtile.
 """
+
+from __future__ import annotations
 
 import fcntl
 import inspect
 import pprint
 import re
-import readline
 import struct
 import sys
 import termios
-from typing import Any, List, Optional, Tuple
+from importlib import import_module
+from typing import TYPE_CHECKING
 
 from libqtile.command.client import CommandClient
 from libqtile.command.interface import (
@@ -39,13 +41,16 @@ from libqtile.command.interface import (
     format_selectors,
 )
 
+if TYPE_CHECKING:
+    from typing import Any
+
 
 def terminal_width():
     width = None
     try:
         cr = struct.unpack("hh", fcntl.ioctl(0, termios.TIOCGWINSZ, "1234"))
         width = int(cr[1])
-    except (IOError, ImportError):
+    except (OSError, ImportError):
         pass
     return width or 80
 
@@ -54,23 +59,27 @@ class QSh:
     """Qtile shell instance"""
 
     def __init__(self, client: CommandInterface, completekey="tab") -> None:
+        # Readline is imported here to prevent issues with terminal resizing
+        # which would result from readline being imported when qtile is first
+        # started
+        self.readline = import_module("readline")
         self._command_client = CommandClient(client)
         self._completekey = completekey
         self._builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
 
-    def complete(self, arg, state) -> Optional[str]:
-        buf = readline.get_line_buffer()
+    def complete(self, arg, state) -> str | None:
+        buf = self.readline.get_line_buffer()
         completers = self._complete(buf, arg)
         if completers and state < len(completers):
             return completers[state]
         return None
 
-    def _complete(self, buf, arg) -> List[str]:
+    def _complete(self, buf, arg) -> list[str]:
         if not re.search(r" |\(", buf) or buf.startswith("help "):
             options = self._builtins + self._command_client.commands
             lst = [i for i in options if i.startswith(arg)]
             return lst
-        elif buf.startswith("cd ") or buf.startswith("ls "):
+        elif buf.startswith(("cd ", "ls ")):
             path, sep, last = arg.rpartition("/")
             node, rest_path = self._find_path(path)
 
@@ -90,7 +99,7 @@ class QSh:
 
     @property
     def prompt(self) -> str:
-        return "{} > ".format(format_selectors(self._command_client.selectors))
+        return f"{format_selectors(self._command_client.selectors)} > "
 
     def columnize(self, lst, update_termwidth=True) -> str:
         if update_termwidth:
@@ -107,12 +116,12 @@ class QSh:
             for i in range(rows):
                 # Because Python array slicing can go beyond the array bounds,
                 # we don't need to be careful with the values here
-                sl = lst[i * cols: (i + 1) * cols]
+                sl = lst[i * cols : (i + 1) * cols]
                 sl = [x + " " * (mx - len(x)) for x in sl]
                 ret.append("  ".join(sl))
         return "\n".join(ret)
 
-    def _ls(self, client: CommandClient, object_type: Optional[str]) -> Tuple[List[str], List[str]]:
+    def _ls(self, client: CommandClient, object_type: str | None) -> tuple[list[str], list[str]]:
         if object_type is not None:
             allow_root, items = client.items(object_type)
             str_items = [str(i) for i in items]
@@ -124,7 +133,7 @@ class QSh:
         else:
             return client.children, []
 
-    def _find_path(self, path: str) -> Tuple[Optional[CommandClient], Optional[str]]:
+    def _find_path(self, path: str) -> tuple[CommandClient | None, str | None]:
         """Find an object relative to the current node
 
         Finds and returns the command graph node that is defined relative to
@@ -136,7 +145,7 @@ class QSh:
 
     def _find_node(
         self, src: CommandClient, *paths: str
-    ) -> Tuple[Optional[CommandClient], Optional[str]]:
+    ) -> tuple[CommandClient | None, str | None]:
         """Find an object in the command graph
 
         Return the object in the command graph at the specified path relative
@@ -175,7 +184,7 @@ class QSh:
         next_node = src.navigate(path, None)
         return self._find_node(next_node, *next_path)
 
-    def do_cd(self, arg: Optional[str]) -> str:
+    def do_cd(self, arg: str | None) -> str:
         """Change to another path.
 
         Examples
@@ -198,12 +207,12 @@ class QSh:
         else:
             allow_root, _ = next_node.items(rest_path)
             if not allow_root:
-                return "Item required for {}".format(rest_path)
+                return f"Item required for {rest_path}"
             self._command_client = next_node.navigate(rest_path, None)
 
         return format_selectors(self._command_client.selectors) or "/"
 
-    def do_ls(self, arg: Optional[str]) -> str:
+    def do_ls(self, arg: str | None) -> str:
         """List contained items on a node.
 
         Examples
@@ -226,10 +235,8 @@ class QSh:
 
         objects, items = self._ls(node, rest_path)
 
-        formatted_ls = [
-            "{}{}/".format(base_path, i) for i in objects
-        ] + [
-            "{}[{}]/".format(base_path[:-1], i) for i in items
+        formatted_ls = [f"{base_path}{i}/" for i in objects] + [
+            f"{base_path[:-1]}[{i}]/" for i in items
         ]
         return self.columnize(formatted_ls)
 
@@ -250,11 +257,12 @@ class QSh:
         """
         return format_selectors(self._command_client.selectors) or "/"
 
-    def do_help(self, arg: Optional[str]) -> str:
+    def do_help(self, arg: str | None) -> str:
         """Give help on commands and builtins
 
-        When invoked without arguments, provides an overview of all commands.
-        When passed as an argument, also provides a detailed help on a specific command or builtin.
+        When invoked without arguments, provides an overview of all commands. When
+        passed as an argument, also provides a detailed help on a specific command or
+        builtin.
 
         Examples
         ========
@@ -290,7 +298,7 @@ class QSh:
             assert ret is not None
             return ret
         else:
-            return "No such command: %s" % arg
+            return f"No such command: {arg}"
 
     def do_exit(self, args) -> None:
         """Exit qshell"""
@@ -309,9 +317,9 @@ class QSh:
                 val = builtin(args)
                 return val
             else:
-                return "Invalid builtin: {}".format(cmd)
+                return f"Invalid builtin: {cmd}"
 
-        command_match = re.fullmatch(r"(?P<cmd>\w+)\((?P<args>[\w\s,]*)\)", line)
+        command_match = re.fullmatch(r"(?P<cmd>\w+)\((?P<args>.*)\)", line)
         if command_match:
             cmd = command_match.group("cmd")
             args = command_match.group("args")
@@ -321,19 +329,19 @@ class QSh:
                 cmd_args = ()
 
             if cmd not in self._command_client.commands:
-                return "Command does not exist: {}".format(cmd)
+                return f"Command does not exist: {cmd}"
 
             try:
                 return self._command_client.call(cmd, *cmd_args)
             except CommandException as e:
-                return "Caught command exception (is the command invoked incorrectly?): {}\n".format(e)
+                return f"Caught command exception (is the command invoked incorrectly?): {e}\n"
 
-        return "Invalid command: {}".format(line)
+        return f"Invalid command: {line}"
 
     def loop(self) -> None:
-        readline.set_completer(self.complete)
-        readline.parse_and_bind(self._completekey + ": complete")
-        readline.set_completer_delims(" ()|")
+        self.readline.set_completer(self.complete)
+        self.readline.parse_and_bind(self._completekey + ": complete")
+        self.readline.set_completer_delims(" ()|")
 
         while True:
             try:
@@ -347,7 +355,7 @@ class QSh:
             try:
                 val = self.process_line(line)
             except CommandError as e:
-                val = "Caught command error (is the current path still valid?): {}\n".format(e)
+                val = f"Caught command error (is the current path still valid?): {e}\n"
             if isinstance(val, str):
                 print(val)
             elif val:

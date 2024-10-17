@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 # Copyright (c) 2015, Roger Duran. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,22 +27,23 @@ class DF(base.ThreadPoolText):
 
     By default the widget only displays if the space is less than warn_space.
     """
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
-        ('partition', '/', 'the partition to check space'),
-        ('warn_color', 'ff0000', 'Warning color'),
-        ('warn_space', 2, 'Warning space in scale defined by the ``measure`` option.'),
-        ('visible_on_warn', True, 'Only display if warning'),
-        ('measure', "G", "Measurement (G, M, B)"),
-        ('format', '{p} ({uf}{m}|{r:.0f}%)',
-            'String format (p: partition, s: size, '
-            'f: free space, uf: user free space, m: measure, r: ratio (uf/s))'),
-        ('update_interval', 60, 'The update interval.'),
+        ("partition", "/", "the partition to check space"),
+        ("warn_color", "ff0000", "Warning color"),
+        ("warn_space", 2, "Warning space in scale defined by the ``measure`` option."),
+        ("visible_on_warn", True, "Only display if warning"),
+        ("measure", "G", "Measurement (G, M, B)"),
+        (
+            "format",
+            "{p} ({uf}{m}|{r:.0f}%)",
+            "String format (p: partition, s: size, "
+            "f: free space, uf: user free space, m: measure, r: ratio (uf/s))",
+        ),
+        ("update_interval", 60, "The update interval."),
     ]
 
-    measures = {"G": 1024 * 1024 * 1024,
-                "M": 1024 * 1024,
-                "B": 1024}
+    measures = {"G": 1024 * 1024 * 1024, "M": 1024 * 1024, "B": 1024}
 
     def __init__(self, **config):
         base.ThreadPoolText.__init__(self, "", **config)
@@ -70,8 +70,12 @@ class DF(base.ThreadPoolText):
             text = ""
         else:
             text = self.format.format(
-                p=self.partition, s=size, f=free,
-                uf=self.user_free, m=self.measure,
-                r=(size - self.user_free) / size * 100)
+                p=self.partition,
+                s=size,
+                f=free,
+                uf=self.user_free,
+                m=self.measure,
+                r=(size - self.user_free) / size * 100,
+            )
 
         return text

@@ -1,4 +1,299 @@
-Qtile 0.x.x, released xxxx-xx-xx:
+Qtile x.xx.x, released xxxx-xx-xx:
+    * features
+        - A Nix flake has been added which can be used by Nix(OS) users to update to the latest version easily
+        - Add `group_window_remove` hook when window is removed from group
+    * bugfixes
+        - Add returns to lazy.function and qtile.core.function
+
+Qtile 0.28.1, released 2024-08-12:
+    * bugfixes
+        - fix a crash in the StatusNotifier widget #4959 #4960
+
+Qtile 0.28.0, released 2024-08-11:
+    * bugfixes
+        - various bug fixes to widgets from previous releases
+        - fix xrandr commands racing with qtile startup
+
+Qtile 0.27.0, released 2024-07-12:
+    * features
+        - Make default `Plasma` add mode dynamic
+        - Add `background` parameter to `Screen` to paint a solid colour background
+        - Add ability to use key codes to bind keys. Will benefit users who change keyboard layouts but
+          wish to retain same bindings, irrespective of layout.
+        - Wayland: Add support for idle-notify-v1 protocol needed by swayidle.
+        - Wayland: Make keybinds repeat according to the keyboard's repeat rate and delay. Previously the keybinds did not repeat.
+
+    * bugfixes
+      - Fix `Plasma` layout with `ScreenSplit` by implementing `get_windows`
+      - Fix border bug in fullscreening/maximizing wayland windows
+      - Fix automatic fullscreening for many XWayland applications (e.g. games) by checking if they want to fullscreen on map
+
+Qtile 0.26.0, released 2024-05-21:
+    !!! breaking changes !!!
+      - this release drops support for python 3.9
+      - deleted the (very old) libqtile/command_* deprecation wrappers
+      - SIGUSR2 no longer restarts qtile, instead it dumps stack traces
+      - lazy.<object>.when(when_floating=X) now behaves differently: the lazy call will be executed
+        independently of the current window's float state by default, and can be limited to when it
+        is floating or tiled by passing when_floating as True or False respectively.
+      - Dropped support for KDE idle protocol on Wayland
+    !!! Notice for packagers - Wayland backend !!!
+      - Qtile's Wayland backend now requires wlroots 0.17.x, pywlroots 0.17.x and pywayland >= 0.4.17.
+    !!! Notice for pip package - Pypy !!!
+      - We currently do not build for pypy-3.10 as there seems to be a resolution error in either pypy or pip (https://github.com/pypy/pypy/issues/4956)
+    * features
+      - For Wayland you can now set the cursor theme and size to forcefully use in Qtile,
+        set `wl_xcursor_theme` and `wl_xcursor_size` in the configuration
+      - automatically lift types to their annotated type when specified via
+        the `qtile cmd-obj` command line
+      - Add `Plasma` layout. The original layout (https://github.com/numirias/qtile-plasma) appears to be unmaintained
+        so we have added this to the main codebase.
+      - Add ability to specify muted and unmuted formats for `Volume` and `PulseVolume` widgets.
+      - Add back server-side opacity support for Wayland backend
+    * bugfixes
+
+Qtile 0.25.0, released 2024-04-06:
+    * features
+      - The Battery widget now supports dynamic charge control, allowing for
+        protecting battery life.
+      - To support the above (plus the other widgets that modify sysfs), qtile
+        now ships with its own udev rules, located at
+        /resources/99-qtile.rules; distro packagers will probably want to
+        install this rule set.
+    * bugfixes
+      - Fix groups marked with `persist=False` not being deleted when their last window is moved to another group.
+      - Fallback icon in StatusNotifier widget
+
+Qtile 0.24.0, released 2024-01-20:
+    !!! config breakage/changes !!!
+      - Matches no longer use "include/substring" style matching. But match the string exactly. Previously on X11, if the WM_TYPE of a spawned window is e.g. dialog a match with wm_type dialognoonereadschangelogs would return true. Additionally a window with an empty WM_CLASS (which can happen) would match anything. If you rely this style of substring matching, pass a regex to your match or use a function with func=.
+        Using a list of strings inside Match with role, title, wm_class, wm_instance_class, wm_type are also deprecated, use a regex. Right now we replace the property with a regex if it's a list and warn with a deprecation message. You can use "qtile migrate" to migrate your config to this.
+    * features
+      - Change how `tox` runs tests. See https://docs.qtile.org/en/latest/manual/contributing.html#running-tests-locally
+      for more information on how to run tests locally.
+      - Add `ScreenSplit` layout which allows multiple layouts per screen. Also adds `ScreenSplit`
+        widget to display name of active split.
+      - Updated `Bluetooth` widget which allows users to manage multiple devices in a single widget
+      - Add `align` option to `Columns` layout so new windows can be added to left or right column.
+      - `.when()` have two new parameters:
+        - `func: Callable`: Enable call when the result of the callable evaluates to True
+        - `condition: bool`: a boolean value to determine whether the lazy object should be run. Unlike `func`, the
+          condition is evaluated once when the config file is first loaded.
+      - Add ability to have bar drawns over windows by adding `reserve=False` to bar's config to
+        stop the bar reserving screen space.
+      - Add ability for third-party code (widgets, layouts) to create hooks
+      - Add ability to create user-defined hooks which can be fired from external scripts
+    * bugfixes
+      - Fix two bugs in stacking transient windows in X11
+      - Checking configs containing `qtile.core.name` with `python config.py` don't fail anymore (but `qtile.core.name`
+        will be `None`)
+      - Fix an error if a wayland xwindow has unknown wm_type
+
+Qtile 0.23.0, released 2023-09-24:
+    !!! Dependency Changes !!!
+      - xcffib must be upgraded to >= 1.4.0
+      - cairocffi must be upgraded to >= 1.6.0
+      - New optional dependency `pulsectl-asyncio` required for `PulseVolume` widget
+    !!! Notice for packagers - wlroots (optional dependency) bump !!!
+      - Qtile's wayland backend now requires on wlroots 0.16 (and pywlroots 0.16)
+    !!! config breakage/changes !!!
+      - The `cmd_` prefix has been dropped from all commands (this means command names are common when accessed
+        via the command interface or internal python objects).
+      - Custom widgets should now expose command methods with the `@expose_command` decorator (available via
+        `from libqtile.command.base import expose_command`).
+      - Some commands have been renamed (in addition to dropping the 'cmd_' prefix):
+          `hints` -> `get_hints`
+          `groups` -> `get_groups`
+          `screens` -> `get_screens`
+      - Layouts need to rename some methods:
+        - `add` to `add_client`
+        - `cmd_next` to `next`
+        - `cmd_previous` to `previous`
+      - Layouts or widgets that redefine the `commands` property need to update the signature:
+          `@expose_command()`
+          `def commands(self) -> list[str]:`
+      - `Window.getsize` has been renamed `Window.get_size` (i.e. merged with the get_size command).
+      - `Window.getposition` has been renamed `Window.get_position` (i.e. merged with the get_position command).
+      - The `StockTicker` widget `function` option is being deprecated: rename it to `func`.
+      - The formatting of `NetWidget` has changed, if you use the `format` parameter in your config include
+        `up_suffix`, `total_suffix` and `down_suffix` to display the respective units.
+      - The `Notify` widget now has separate `default_timeout` properties for differenct urgency levels. Previously,
+        `default_timeout` was `None` which meant that there was no timeout for all notifications (unless this had been
+        set by the client sending the notification). Now, `default_timeout` is for normal urgency notifications and this
+        has been set to a default of 10 seconds. `default_timeout_urgent`, for critical notifications, has a timeout of `None`.
+      - The `PulseVolume` widget now depends on a third party library, `pulsectl-asyncio`, to interact with the pulse audio
+        server. Users will now see an `ImportError` until they install that library.
+    * features
+        - Add ability to set icon size in `LaunchBar` widget.
+        - Add 'warp_pointer' option to `Drag` that when set will warp the pointer to the bottom right of
+          the window when dragging begins.
+        - Add `currentsong` status to `Mpd2` widget.
+        - Add ability to disable group toggling in `GroupBox` widget
+        - Add ability to have different border color when windows are stacked in Stack layout. Requires
+          setting `border_focus_stack` and `border_normal_stack` variables.
+        - Add ability to have different single border width for Columns layout by setting 'single_border_width' key.
+        - Add ability to have different border and margin widths when VerticalTile layout only contains 1 window by
+          setting 'single_border_width' and 'single_margin' keys.
+        - New widget: GenPollCommand
+        - Add `format` and `play_icon` parameters for styling cmus widget.
+        - Add ability to add a group at a specified index
+        - Add ability to spawn the `WidgetBox` widget opened.
+        - Add ability to swap focused window based on index, and change the order of windows inside current group
+        - Add ability to update the widget only once if `update_interval` is None.
+        - Add `move_to_slice` command to move current window to single layout in `Slice` layout
+        - Made the `NetWidget` text formattable.
+        - Qtile no longer floods the log following X server disconnection, instead handling those errors.
+        - `Key` and `KeyChord` bindings now have another argument `swallow`.
+          It indicates whether or not the pressed keys should be passed on to the focused client.
+          By default the keys are not passed (swallowed), so this argument is set to `True`.
+          When set to `False`, the keys are passed to the focused client. A key is never swallowed if the
+          function is not executed, e.g. due to failing the `.when()` check.
+        - Add ability to set custom "Undefined" status key value to `Mpd2Widget`.
+        - `Mpd2Widget` now searches for artist name in all similar keys (i.e `albumartist`, `performer`, etc.).
+        - Add svg support to `CustomLayoutIcon`
+        - added layering controls for X11 (Wayland support coming soon!):
+          - `lazy.window.keep_above()/keep_below()` marks windows to be kept above/below other windows permanently.
+             Calling the functions with no arguments toggles the state, otherwise pass `enable=True` or `enable=False`.
+          - `lazy.window.move_up()/move_down()` moves windows up and down the z axis.
+          - added `only_focused` setting to Max layout, allowing to draw multiple clients on top of each other when
+            set to False
+        - Add `suspend` hook to run functions before system goes to sleep.
+        - Add ability to maximize window using header bar buttons.
+    * bugfixes
+        - Fix bug where Window.center() centers window on the wrong screen when using multiple monitors.
+        - Fix `Notify` bug when apps close notifications.
+        - Fix `CPU` precision bug with specific version of `psutil`
+        - Fix config being reevaluated twice during reload (e.g. all hooks from config were doubled)
+        - Fix `PulseVolume` high CPU usage when update_interval set to 0.
+        - Fix `Battery` widget on FreeBSD without explicit `battery` index given.
+        - Fix XMonad layout faulty call to nonexistent _shrink_up
+        - Fix setting tiled position by mouse for layouts using _SimpleLayoutBase. To support this in other layouts, add a swap method taking two windows.
+        - Fix unfullscreening bug in conjunction with Chromium based clients when auto_fullscreen is set to `False`.
+        - Ensure `CurrentLayoutIcon` expands paths for custom folders.
+        - Fix vertical alignment of icons in `TaskList` widget
+        - Fix laggy resize/positioning of floating windows in X11 by handling motion notify events later. We also introduced a cap setting if you want to limit these events further, e.g. for limiting resource usage. This is configurable with the x11_drag_polling_rate variable for each `Screen` which is set to None by default, indicating no cap.
+    * python version support
+        - We have added support for python 3.11 and pypy 3.9.
+        - python 3.7, 3.8 and pypy 3.7 are not longer supported.
+        - Fix bug where `StatusNotifier` does not update icons
+
+Qtile 0.22.0, released 2022-09-22:
+    !!! Config breakage !!!
+        - lazy.qtile.display_kb() no longer receives any arguments. If you passed it any arguments
+          (which were ignored previously), remove them.
+        - If you have a custom startup Python script that you use instead of `qtile start` and run init_log
+          manually, the signature has changed. Please check the source for the updated arguments.
+        - `KeyChord`'s signature has changed. ``mode`` is now a boolean to indicate whether the mode should persist.
+          The ``name`` parameter should be used to name the chord (e.g. for the ``Chord`` widget).
+    * features
+        - Add ability to draw borders and add margins to the `Max` layout.
+        - The default XWayland cursor is now set at startup to left_ptr, so an xsetroot call is not needed to
+          avoid the ugly X cursor.
+        - Wayland: primary clipboard should now behave same way as with X after selecting something it
+          should be copied into clipboard
+        - Add `resume` hook when computer resumes from sleep/suspend/hibernate.
+        - Add `text_only` option for `LaunchBar` widget.
+        - Add `force_update` command to `ThreadPoolText` widgets to simplify updating from key bindings
+        - Add scrolling ability to `_TextBox`-based widgets.
+        - Add player controls (via mouse callbacks) to `Mpris2` widget.
+        - Wayland: input inhibitor protocol support added (pywayland>=0.4.14 & pywlroots>=0.15.19)
+        - Add commands to control Pomodoro widget.
+        - Add icon theme support to `TaskList` widget (available on X11 and Wayland backends).
+        - Wayland: Use `qtile cmd-obj -o core -f get_inputs` to get input device identifiers for
+          configuring inputs. Also input configs will be updated by config reloads (pywlroots>=0.15.21)
+    * bugfixes
+        - Widgets that are incompatible with a backend (e.g. Systray on Wayland) will no longer show
+          as a ConfigError in the bar. Instead the widget is silently removed from the bar and a message
+          included in the logs.
+        - Reduce error messages in `StatusNotifier` widget from certain apps.
+        - Reset colours in `Chord` widget
+        - Prevent crash in `LaunchBar` when using SVG icons
+        - Improve scrolling in `Mpris2` widget (options to repeat scrolling etc.)
+
+Qtile 0.21.0, released 2022-03-23:
+    * features
+        - Add `lazy.window.center()` command to center a floating window on the screen.
+        - Wayland: added power-output-management-v1 protocol support, added idle protocol,
+          added idle inhibit protocol
+        - Add MonadThreeCol layout based on XMonad's ThreeColumns.
+        - Add `lazy.screen.set_wallpaper` command.
+        - Added ability to scale the battery icon's size
+        - Add Spiral layout
+        - Add `toggle` argument to `Window.togroup` with the same functionality as in `Group.toscreen`.
+        - Added `margin_on_single` and `border_on_single` to Bsp layout
+    * bugfixes
+        - Fix `Systray` crash on `reconfigure_screens`.
+        - Fix bug where widgets can't be mirrored in same bar.
+        - Fix various issues with setting fullscreen windows floating and vice versa.
+        - Fix a bug where a .when() check for lazy functions errors out when matching
+          on focused windows when none is focused. By default we do not match on focused windows,
+          to change this set `if_no_focused` to True.
+        - Widget with duplicate names will be automatically renamed by appending numeric suffixes
+        - Fix resizing of wallpaper when screen scale changes (X11)
+        - Two small bugfixes for `StatusNotifier` - better handling of Ayatana indicators
+        - Fix bug where StatusNotifierItem crashes due to invalid object paths (e.g. Zoom)
+
+Qtile 0.20.0, released 2022-01-24:
+    * features
+        - Add `place_right` option in the TreeTab layout to place the tab panel on the right side
+        - X11: Add support for _NET_DESKTOP_VIEWPORT. E.g. can be used by rofi to map on current output.
+        - Wayland: Bump wlroots version. 0.15.x wlroots and 0.15.2+ pywlroots are required.
+        - Add XWayland support to the Wayland backend. XWayland will start up as needed, if it is installed.
+    * bugfixes
+        - Remove non-commandable windows from IPC. Fixes bug where IPC would fail when trying to get info
+          on all windows but Systray has icons (which are non-commandable `_Window`s.)
+        - Fix bug where bars were not reconfigured correctly when screen layout changes.
+        - Fix a Wayland bug where layer-shell surface like dunst would freeze up and stop updating.
+        - Change timing of `screens_reconfigured` hook. Will now be called ONLY if `cmd_reconfigure_screens`
+          has been called and completed.
+        - Fix order of icons in Systray widget when restarting/reloading config.
+        - Fix rounding error in PulseVolume widget's reported volume.
+        - Fix bug where Volume widget did not load images where `theme_path` had been set in `widget_defaults`.
+        - Remove ability to have multiple `Systray` widgets. Additional `Systray` widgets will result in a
+          ConfigError.
+        - Release notification name from dbus when finalising `Notify` widget. This allows other notification
+          managers to request the name.
+        - Fix bug where `Battery` widget did not retrieve `background` from `widget_defaults`.
+        - Fix bug where widgets in a `WidgetBox` are rendered on top of bar borders.
+
+        - Add ability to swap focused window based on index, and change the order of windows inside current group
+Qtile 0.19.0, released 2021-12-22:
+    * features
+        - Add ability to draw borders to the Bar. Can customise size and colour per edge.
+        - Add `StatusNotifier` widget implementing the `StatusNotifierItem` specification.
+          NB Widget does not provide context menus.
+        - Add `total` bandwidth format value to the Net widget.
+        - Scratchpad groups could be defined as single so that only one of the scratchpad in the group is visible
+          at a given time.
+        - All scratchpads in a Scratchpad group can be hidden with hide_all() function.
+        - For saving states of scratchpads during restart, we use wids instead of pids.
+        - Scratchpads can now be defined with an optional matcher to match with window properties.
+        - `Qtile.cmd_reload_config` is added for reloading the config without completely restarting.
+        - Window.cmd_togroup's argument `groupName` should be changed to
+          `group_name`. For the time being a log warning is in place and a
+          migration is added. In the future `groupName` will fail.
+        - Add `min/max_ratio` to Tile layout and fix bug where windows can extend offscreen.
+        - Add ability for widget `mouse_callbacks` to take `lazy` calls (similar to keybindings)
+        - Add `aliases` to `lazy.spawncmd()` which takes a dictionary mapping convenient aliases
+          to full command lines.
+        - Add a new 'prefix' option to the net widget to display speeds with a static unit (e.g. MB).
+        - `lazy.group.toscreen()` now does not toggle groups by default. To get this behaviour back, use
+          `lazy.group.toscreen(toggle=True)`
+        - Tile layout has new `margin_on_single` and `border_on_single` option to specify
+          whether to draw margin and border when there is only one window.
+        - Thermal zone widget.
+        - Allow TextBox-based widgets to display in vertical bars.
+        - Added a focused attribute to `lazy.function.when` which can be used to Match on focused windows.
+        - Allow to update Image widget with update() function by giving a new path.
+    * bugfixes
+        - Windows are now properly re-ordered in the layouts when toggled on and off fullscreen
+
+Qtile 0.18.1, released 2021-09-16:
+    * features
+        - All layouts will accept a list of colors for border_* options with which
+          they will draw multiple borders on the appropriate windows.
+
+Qtile 0.18.0, released 2021-07-04:
     !!! Config breakage !!!
         - The `qtile` entry point doesn't run `qtile start` by default anymore
         - New optional dependency for dbus related features: dbus-next.
@@ -7,9 +302,13 @@ Qtile 0.x.x, released xxxx-xx-xx:
         - widget.BatteryIcon no longer has a fallback text mode; use
           widget.Battery instead
         - MonadX layout key new_at_current is deprecated, use new_client_position.
+        - `libqtile.window` has been moved to `libqtile.backend.x11.window`; a migration has been added for this.
     !!! deprecation warning !!!
         - 'main' config functions, deprecated in 0.16.1, will no longer be executed.
+    !!! Notice for packagers - new dependencies !!!
+        - Tests now require the 'dbus-next' python module plus 'dbus-launch' and 'notify-send' applications
     * features
+        - added transparency in x11 and wayland backends
         - added measure_mem and measure_swap attributes to memory widget to allow user to choose measurement units.
         - memory widget can now be displayed with decimal values
         - new "qtile migrate" command, which will attempt to upgrade previous
@@ -27,6 +326,13 @@ Qtile 0.x.x, released xxxx-xx-xx:
         - added new argument for CheckUpdates widget: `custom_command_modify` which allows user to modify the
           the line count of the output of `custom_command` with a lambda function (i.e. `lambda x: x-3`).
           Argument defaults to `lambda x: x` and is overridden by `distro` argument's internal lambda.
+        - added new argument for the WindowName, WindowTabs and Tasklist widgets: `parse_text` which allows users to
+          define a function that takes a window name as an input, modify it in some way (e.g. str.replace(), str.upper() or regex)
+          and show that modification on screen.
+        - A Wayland backend has been added which can be used by calling `qtile start -b wayland` directly in your TTY.
+          It requires the latest releases of wlroots, python-xkbcommon, pywayland and pywlroots. It is expected to be
+          unstable so please let us know if you find any bugs!
+        - The 'focus` argument to `Click` and `Drag` objects in your config are no longer necessary (and are ignored).
 
 Qtile 0.17.0, released 2021-02-13:
     !!! Python version breakage !!!

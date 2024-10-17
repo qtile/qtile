@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2011-2012 Dustin Lacewell
 # Copyright (c) 2011 Mounier Florian
 # Copyright (c) 2012 Craig Barnes
@@ -14,6 +13,7 @@
 # Copyright (c) 2014 dequis
 # Copyright (c) 2014 Florian Scherf
 # Copyright (c) 2017 Dirk Hartmann
+# Copyright (c) 2024 Marco Paganini (auto_maximization code).
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,10 +32,21 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
 
 import math
+from collections import namedtuple
+from typing import TYPE_CHECKING
 
+from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
+
+if TYPE_CHECKING:
+    from typing import Any, Self
+
+    from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
+    from libqtile.group import _Group
 
 
 class MonadTall(_SimpleLayoutBase):
@@ -45,8 +56,9 @@ class MonadTall(_SimpleLayoutBase):
 
     A main pane that contains a single window takes up a vertical portion of
     the screen_rect based on the ratio setting. This ratio can be adjusted with
-    the ``cmd_grow_main`` and ``cmd_shrink_main`` or, while the main pane is in
-    focus, ``cmd_grow`` and ``cmd_shrink``.
+    the ``grow_main`` and ``shrink_main`` or, while the main pane is in
+    focus, ``grow`` and ``shrink``. You may also set the ratio directly
+    with ``set_ratio``.
 
     ::
 
@@ -59,7 +71,7 @@ class MonadTall(_SimpleLayoutBase):
         |            |      |
         ---------------------
 
-    Using the ``cmd_flip`` method will switch which horizontal side the main
+    Using the ``flip`` method will switch which horizontal side the main
     pane will occupy. The main pane is considered the "top" of the stack.
 
     ::
@@ -77,7 +89,7 @@ class MonadTall(_SimpleLayoutBase):
 
     Occupying the rest of the screen_rect are one or more secondary panes.  The
     secondary panes will share the vertical space of the screen_rect however
-    they can be resized at will with the ``cmd_grow`` and ``cmd_shrink``
+    they can be resized at will with the ``grow`` and ``shrink``
     methods.  The other secondary panes will adjust their sizes to smoothly fill
     all of the space.
 
@@ -92,9 +104,24 @@ class MonadTall(_SimpleLayoutBase):
         |            |      |          |            |      |
         ---------------------          ---------------------
 
-    Panes can be moved with the ``cmd_shuffle_up`` and ``cmd_shuffle_down``
+    Panes can be moved with the ``shuffle_up`` and ``shuffle_down``
     methods. As mentioned the main pane is considered the top of the stack;
     moving up is counter-clockwise and moving down is clockwise.
+
+    ::
+
+        ---------------------          ---------------------
+        |            |      |          |            |      |
+        |            |______|          |            |Focus |
+        |            |      |          |            |      |
+        |            |______|          |            |______|
+        |            |      |          |            |______|
+        |            |      |          |            |      |
+        ---------------------          ---------------------
+
+    Setting ``auto_maximize`` will cause the focused secondary pane to be
+    automatically maximized on focus. The non-maximized panes will shrink to
+    the height specified by ``min_secondary_size``.
 
     The opposite is true if the layout is "flipped".
 
@@ -113,15 +140,15 @@ class MonadTall(_SimpleLayoutBase):
     Normalizing/Resetting:
 
     To restore all secondary client windows to their default size ratios
-    use the ``cmd_normalize`` method.
+    use the ``normalize`` method.
 
     To reset all client windows to their default sizes, including the primary
-    window, use the ``cmd_reset`` method.
+    window, use the ``reset`` method.
 
     Maximizing:
 
     To toggle a client window between its minimum and maximum sizes
-    simply use the ``cmd_maximize`` on a focused client.
+    simply use the ``maximize`` on a focused client.
 
     Suggested Bindings::
 
@@ -135,44 +162,57 @@ class MonadTall(_SimpleLayoutBase):
         Key([modkey, "shift"], "k", lazy.layout.shuffle_up()),
         Key([modkey], "i", lazy.layout.grow()),
         Key([modkey], "m", lazy.layout.shrink()),
-        Key([modkey], "n", lazy.layout.normalize()),
+        Key([modkey], "n", lazy.layout.reset()),
+        Key([modkey, "shift"], "n", lazy.layout.normalize()),
         Key([modkey], "o", lazy.layout.maximize()),
+        Key([modkey, "shift"], "s", lazy.layout.toggle_auto_maximize()),
         Key([modkey, "shift"], "space", lazy.layout.flip()),
     """
 
     _left = 0
     _right = 1
-    _med_ratio = 0.5
 
     defaults = [
-        ("border_focus", "#ff0000", "Border colour for the focused window."),
-        ("border_normal", "#000000", "Border colour for un-focused windows."),
+        ("auto_maximize", False, "Maximize secondary windows on focus."),
+        ("border_focus", "#ff0000", "Border colour(s) for the focused window."),
+        ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
         ("border_width", 2, "Border width."),
         ("single_border_width", None, "Border width for single window"),
         ("single_margin", None, "Margin size for single window"),
-        ("name", "xmonadtall", "Name of this layout."),
         ("margin", 0, "Margin of the layout"),
-        ("ratio", .5,
-            "The percent of the screen-space the master pane should occupy "
-            "by default."),
-        ("min_ratio", .25,
-            "The percent of the screen-space the master pane should occupy "
-            "at minimum."),
-        ("max_ratio", .75,
-            "The percent of the screen-space the master pane should occupy "
-            "at maximum."),
-        ("min_secondary_size", 85,
-            "minimum size in pixel for a secondary pane window "),
-        ("align", _left, "Which side master plane will be placed "
-            "(one of ``MonadTall._left`` or ``MonadTall._right``)"),
-        ("change_ratio", .05, "Resize ratio"),
+        (
+            "ratio",
+            0.5,
+            "The percent of the screen-space the master pane should occupy " "by default.",
+        ),
+        (
+            "min_ratio",
+            0.25,
+            "The percent of the screen-space the master pane should occupy " "at minimum.",
+        ),
+        (
+            "max_ratio",
+            0.75,
+            "The percent of the screen-space the master pane should occupy " "at maximum.",
+        ),
+        ("min_secondary_size", 85, "minimum size in pixel for a secondary pane window "),
+        (
+            "align",
+            _left,
+            "Which side master plane will be placed "
+            "(one of ``MonadTall._left`` or ``MonadTall._right``)",
+        ),
+        ("change_ratio", 0.05, "Resize ratio"),
         ("change_size", 20, "Resize change in pixels"),
-        ("new_client_position", "after_current",
-            "Place new windows : "
+        (
+            "new_client_position",
+            "after_current",
+            "Place new windows: "
             " after_current - after the active window."
             " before_current - before the active window,"
             " top - at the top of the stack,"
-            " bottom - at the bottom of the stack,"),
+            " bottom - at the bottom of the stack,",
+        ),
     ]
 
     def __init__(self, **config):
@@ -183,7 +223,18 @@ class MonadTall(_SimpleLayoutBase):
         if self.single_margin is None:
             self.single_margin = self.margin
         self.relative_sizes = []
-        self.screen_rect = None
+        self._screen_rect = None
+        self.default_ratio = self.ratio
+
+    # screen_rect is a property as the MonadThreeCol layout needs to perform
+    # additional actions when the attribute is modified
+    @property
+    def screen_rect(self):
+        return self._screen_rect
+
+    @screen_rect.setter
+    def screen_rect(self, value):
+        self._screen_rect = value
 
     @property
     def focused(self):
@@ -195,27 +246,50 @@ class MonadTall(_SimpleLayoutBase):
     def _get_absolute_size_from_relative(self, relative_size):
         return int(relative_size * self.screen_rect.height)
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         "Clone layout for other groups"
         c = _SimpleLayoutBase.clone(self, group)
-        c.sizes = []
         c.relative_sizes = []
         c.screen_rect = group.screen.get_rect() if group.screen else None
         c.ratio = self.ratio
         c.align = self.align
         return c
 
-    def add(self, client):
+    def add_client(self, client: Window) -> None:  # type: ignore[override]
         "Add client to layout"
-        self.clients.add(client, client_position=self.new_client_position)
+        self.clients.add_client(client, client_position=self.new_client_position)
         self.do_normalize = True
 
-    def remove(self, client):
+    def focus(self, client):
+        super().focus(client)
+        # Only maximize the window in the secondary pane when focus is *not* in
+        # the main pane. Doing so in the main pane causes the last secondary
+        # window to always be in focus when switching from secondary -> main.
+        if self.focused != 0:
+            self._maximize_focused_secondary()
+
+    def remove(self, client: Window) -> Window | None:
         "Remove client from layout"
+        p = super().remove(client)
         self.do_normalize = True
-        return self.clients.remove(client)
+        # When auto_maximize is set and the user closes the first (topmost)
+        # secondary window, focus goes back to the main window. In this case,
+        # we WANT to force redraw of the windows in the secondary pane so we
+        # get a maximized topmost window again.
+        if self.auto_maximize and self.focused == 0 and len(self.clients) > 2:
+            # This will also trigger secondary maximization, if needed.
+            self.focus(self.clients[1])
+        return p
 
-    def cmd_normalize(self, redraw=True):
+    @expose_command()
+    def set_ratio(self, ratio):
+        "Directly set the main pane ratio"
+        ratio = min(self.max_ratio, ratio)
+        self.ratio = max(self.min_ratio, ratio)
+        self.group.layout_all()
+
+    @expose_command()
+    def normalize(self, redraw=True):
         "Evenly distribute screen-space among secondary clients"
         n = len(self.clients) - 1  # exclude main client, 0
         # if secondary clients exist
@@ -226,16 +300,25 @@ class MonadTall(_SimpleLayoutBase):
             self.group.layout_all()
         self.do_normalize = False
 
-    def cmd_reset(self, redraw=True):
+    @expose_command()
+    def reset(self, ratio=None, redraw=True):
         "Reset Layout."
-        self.ratio = self._med_ratio
+        self.ratio = ratio or self.default_ratio
         if self.align == self._right:
             self.align = self._left
-        self.cmd_normalize(redraw)
+        self.normalize(redraw)
+
+    @expose_command()
+    def toggle_auto_maximize(self):
+        "Toggle auto maximize secondary window on focus."
+        self.auto_maximize = not self.auto_maximize
+        self.normalize(True)
+        if self.focused != 0:
+            self._maximize_focused_secondary()
 
     def _maximize_main(self):
         "Toggle the main pane between min and max size"
-        if self.ratio <= self._med_ratio:
+        if self.ratio <= 0.5 * (self.max_ratio + self.min_ratio):
             self.ratio = self.max_ratio
         else:
             self.ratio = self.min_ratio
@@ -250,21 +333,61 @@ class MonadTall(_SimpleLayoutBase):
         # total height of maximized secondary
         maxed_size = self.group.screen.dheight - collapsed_size
         # if maximized or nearly maximized
-        if abs(
-            self._get_absolute_size_from_relative(self.relative_sizes[nidx]) -
-            maxed_size
-        ) < self.change_size:
+        if (
+            abs(self._get_absolute_size_from_relative(self.relative_sizes[nidx]) - maxed_size)
+            < self.change_size
+        ):
             # minimize
             self._shrink_secondary(
-                self._get_absolute_size_from_relative(
-                    self.relative_sizes[nidx]
-                ) - self.min_secondary_size
+                self._get_absolute_size_from_relative(self.relative_sizes[nidx])
+                - self.min_secondary_size
             )
         # otherwise maximize
         else:
             self._grow_secondary(maxed_size)
 
-    def cmd_maximize(self):
+    def _maximize_focused_secondary(self):
+        "Maximize the 'non-maximized' focused secondary pane"
+
+        # Return immediately if no self.group.screen
+        # (this may happen when moving windows across screens.)
+        if self.group.screen is None:
+            return
+
+        # If auto_maximize is off, return immediately.
+        if not self.auto_maximize:
+            return
+
+        # if we have 1 or 2 panes, do nothing.
+        if len(self.clients) < 3:
+            return
+
+        # Recalculate relative_sizes
+        self.normalize(redraw=False)
+        if len(self.relative_sizes) == 0:
+            return
+
+        # If the focused window (self.focused) is 0 (main pane), adjust
+        # focused to work directly on the secondary pane windows.
+        focused = max(1, self.focused)
+
+        n = len(self.clients) - 2  # total shrinking clients
+        # total size of collapsed secondaries
+        collapsed_size = self.min_secondary_size * n
+        nidx = max(0, focused - 1)  # focused size index
+        # total height of maximized secondary
+        maxed_size = self.group.screen.dheight - collapsed_size
+
+        # Maximize if window is not already maximized.
+        if (
+            abs(self._get_absolute_size_from_relative(self.relative_sizes[nidx]) - maxed_size)
+            >= self.change_size
+        ):
+            self._grow_secondary(maxed_size)
+            self.group.layout_all()
+
+    @expose_command()
+    def maximize(self):
         "Grow the currently focused client to the max size"
         # if we have 1 or 2 panes or main pane is focused
         if len(self.clients) < 3 or self.focused == 0:
@@ -274,13 +397,13 @@ class MonadTall(_SimpleLayoutBase):
             self._maximize_secondary()
         self.group.layout_all()
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         "Position client based on order and sizes"
         self.screen_rect = screen_rect
 
         # if no sizes or normalize flag is set, normalize
         if not self.relative_sizes or self.do_normalize:
-            self.cmd_normalize(False)
+            self.normalize(False)
 
         # if client not in this layout
         if not self.clients or client not in self.clients:
@@ -339,14 +462,11 @@ class MonadTall(_SimpleLayoutBase):
             # secondary client
             width = width_shared - 2 * self.border_width
             # ypos is the sum of all clients above it
-            ypos = self.screen_rect.y + \
-                self._get_absolute_size_from_relative(
-                    sum(self.relative_sizes[:cidx - 1])
-                )
-            # get height from precalculated height list
-            height = self._get_absolute_size_from_relative(
-                self.relative_sizes[cidx - 1]
+            ypos = self.screen_rect.y + self._get_absolute_size_from_relative(
+                sum(self.relative_sizes[: cidx - 1])
             )
+            # get height from precalculated height list
+            height = self._get_absolute_size_from_relative(self.relative_sizes[cidx - 1])
             # fix double margin
             if cidx > 1:
                 ypos -= self.margin
@@ -372,29 +492,32 @@ class MonadTall(_SimpleLayoutBase):
                 px,
                 margin=[
                     self.margin,
-                    2*self.border_width,
-                    self.margin + 2*self.border_width,
-                    self.margin
+                    2 * self.border_width,
+                    self.margin + 2 * self.border_width,
+                    self.margin,
                 ],
             )
 
-    def info(self):
+    @expose_command()
+    def info(self) -> dict[str, Any]:
         d = _SimpleLayoutBase.info(self)
-        d.update(dict(
-            main=d['clients'][0] if self.clients else None,
-            secondary=d['clients'][1::] if self.clients else []))
+        d.update(
+            dict(
+                main=d["clients"][0] if self.clients else None,
+                secondary=d["clients"][1::] if self.clients else [],
+            )
+        )
         return d
 
     def get_shrink_margin(self, cidx):
         "Return how many remaining pixels a client can shrink"
         return max(
             0,
-            self._get_absolute_size_from_relative(
-                self.relative_sizes[cidx]
-            ) - self.min_secondary_size
+            self._get_absolute_size_from_relative(self.relative_sizes[cidx])
+            - self.min_secondary_size,
         )
 
-    def shrink(self, cidx, amt):
+    def _shrink(self, cidx, amt):
         """Reduce the size of a client
 
         Will only shrink the client until it reaches the configured minimum
@@ -403,12 +526,10 @@ class MonadTall(_SimpleLayoutBase):
         # get max resizable amount
         margin = self.get_shrink_margin(cidx)
         if amt > margin:  # too much
-            self.relative_sizes[cidx] -= \
-                self._get_relative_size_from_absolute(margin)
+            self.relative_sizes[cidx] -= self._get_relative_size_from_absolute(margin)
             return amt - margin
         else:
-            self.relative_sizes[cidx] -= \
-                self._get_relative_size_from_absolute(amt)
+            self.relative_sizes[cidx] -= self._get_relative_size_from_absolute(amt)
             return 0
 
     def shrink_up(self, cidx, amt):
@@ -422,9 +543,9 @@ class MonadTall(_SimpleLayoutBase):
         """
         left = amt  # track unused shrink amount
         # for each client before specified index
-        for idx in range(0, cidx):
+        for idx in range(cidx):
             # shrink by whatever is left-over of original amount
-            left -= left - self.shrink(idx, left)
+            left -= left - self._shrink(idx, left)
         # return unused shrink amount
         return left
 
@@ -442,9 +563,9 @@ class MonadTall(_SimpleLayoutBase):
         per_amt = amt / cidx
         left = amt  # track unused shrink amount
         # for each client before specified index
-        for idx in range(0, cidx):
+        for idx in range(cidx):
             # shrink by equal amount and track left-over
-            left -= per_amt - self.shrink(idx, per_amt)
+            left -= per_amt - self._shrink(idx, per_amt)
         # apply non-equal shrinkage secondary pass
         # in order to use up any left over shrink amounts
         left = self.shrink_up(cidx, left)
@@ -464,7 +585,7 @@ class MonadTall(_SimpleLayoutBase):
         # for each client after specified index
         for idx in range(cidx + 1, len(self.relative_sizes)):
             # shrink by current total left-over amount
-            left -= left - self.shrink(idx, left)
+            left -= left - self._shrink(idx, left)
         # return unused shrink amount
         return left
 
@@ -484,7 +605,7 @@ class MonadTall(_SimpleLayoutBase):
         # for each client after specified index
         for idx in range(cidx + 1, len(self.relative_sizes)):
             # shrink by equal amount and track left-over
-            left -= per_amt - self.shrink(idx, per_amt)
+            left -= per_amt - self._shrink(idx, per_amt)
         # apply non-equal shrinkage secondary pass
         # in order to use up any left over shrink amounts
         left = self.shrink_down(cidx, left)
@@ -519,29 +640,17 @@ class MonadTall(_SimpleLayoutBase):
             # get size index
             idx = self.focused - 1
             # shrink up and down
-            left -= half_change_size - self.shrink_up_shared(
-                idx,
-                half_change_size
-            )
-            left -= half_change_size - self.shrink_down_shared(
-                idx,
-                half_change_size
-            )
-            left -= half_change_size - self.shrink_up_shared(
-                idx,
-                half_change_size
-            )
-            left -= half_change_size - self.shrink_down_shared(
-                idx,
-                half_change_size
-            )
+            left -= half_change_size - self.shrink_up_shared(idx, half_change_size)
+            left -= half_change_size - self.shrink_down_shared(idx, half_change_size)
+            left -= half_change_size - self.shrink_up_shared(idx, half_change_size)
+            left -= half_change_size - self.shrink_down_shared(idx, half_change_size)
         # calculate how much shrinkage took place
         diff = amt - left
         # grow client by diff amount
-        self.relative_sizes[self.focused - 1] += \
-            self._get_relative_size_from_absolute(diff)
+        self.relative_sizes[self.focused - 1] += self._get_relative_size_from_absolute(diff)
 
-    def cmd_grow(self):
+    @expose_command()
+    def grow(self):
         """Grow current window
 
         Will grow the currently focused client reducing the size of those
@@ -556,7 +665,8 @@ class MonadTall(_SimpleLayoutBase):
             self._grow_secondary(self.change_size)
         self.group.layout_all()
 
-    def cmd_grow_main(self):
+    @expose_command()
+    def grow_main(self):
         """Grow main pane
 
         Will grow the main pane, reducing the size of clients in the secondary
@@ -565,7 +675,8 @@ class MonadTall(_SimpleLayoutBase):
         self._grow_main(self.change_ratio)
         self.group.layout_all()
 
-    def cmd_shrink_main(self):
+    @expose_command()
+    def shrink_main(self):
         """Shrink main pane
 
         Will shrink the main pane, increasing the size of clients in the
@@ -574,7 +685,7 @@ class MonadTall(_SimpleLayoutBase):
         self._shrink_main(self.change_ratio)
         self.group.layout_all()
 
-    def grow(self, cidx, amt):
+    def _grow(self, cidx, amt):
         "Grow secondary client by specified amount"
         self.relative_sizes[cidx] += self._get_relative_size_from_absolute(amt)
 
@@ -586,8 +697,8 @@ class MonadTall(_SimpleLayoutBase):
         """
         # split grow amount among number of clients
         per_amt = amt / cidx
-        for idx in range(0, cidx):
-            self.grow(idx, per_amt)
+        for idx in range(cidx):
+            self._grow(idx, per_amt)
 
     def grow_down_shared(self, cidx, amt):
         """Grow lower secondary clients
@@ -598,7 +709,7 @@ class MonadTall(_SimpleLayoutBase):
         # split grow amount among number of clients
         per_amt = amt / (len(self.relative_sizes) - 1 - cidx)
         for idx in range(cidx + 1, len(self.relative_sizes)):
-            self.grow(idx, per_amt)
+            self._grow(idx, per_amt)
 
     def _shrink_main(self, amt):
         """Will shrink the client that currently in the main pane"""
@@ -643,13 +754,18 @@ class MonadTall(_SimpleLayoutBase):
             self.grow_up_shared(idx, half_change)
             self.grow_down_shared(idx, half_change)
         # shrink client by total change
-        self.relative_sizes[self.focused - 1] -= \
-            self._get_relative_size_from_absolute(change)
+        self.relative_sizes[self.focused - 1] -= self._get_relative_size_from_absolute(change)
 
-    cmd_next = _SimpleLayoutBase.next
-    cmd_previous = _SimpleLayoutBase.previous
+    @expose_command("down")
+    def next(self) -> None:
+        _SimpleLayoutBase.next(self)
 
-    def cmd_shrink(self):
+    @expose_command("up")
+    def previous(self) -> None:
+        _SimpleLayoutBase.previous(self)
+
+    @expose_command()
+    def shrink(self):
         """Shrink current window
 
         Will shrink the currently focused client reducing the size of those
@@ -664,22 +780,22 @@ class MonadTall(_SimpleLayoutBase):
             self._shrink_secondary(self.change_size)
         self.group.layout_all()
 
-    cmd_up = cmd_previous
-    cmd_down = cmd_next
-
-    def cmd_shuffle_up(self):
+    @expose_command()
+    def shuffle_up(self):
         """Shuffle the client up the stack"""
         self.clients.shuffle_up()
         self.group.layout_all()
         self.group.focus(self.clients.current_client)
 
-    def cmd_shuffle_down(self):
+    @expose_command()
+    def shuffle_down(self):
         """Shuffle the client down the stack"""
         self.clients.shuffle_down()
         self.group.layout_all()
         self.group.focus(self.clients[self.focused])
 
-    def cmd_flip(self):
+    @expose_command()
+    def flip(self):
         """Flip the layout horizontally"""
         self.align = self._left if self.align == self._right else self._right
         self.group.layout_all()
@@ -688,40 +804,44 @@ class MonadTall(_SimpleLayoutBase):
         """Get closest window to a point x,y"""
         target = min(
             clients,
-            key=lambda c: math.hypot(c.info()["x"] - x, c.info()["y"] - y)
+            key=lambda c: math.hypot(c.x - x, c.y - y),
+            default=self.clients.current_client,
         )
         return target
 
-    def cmd_swap(self, window1, window2):
+    @expose_command()
+    def swap(self, window1: Window, window2: Window) -> None:
         """Swap two windows"""
-        self.clients.swap(window1, window2, 1)
-        self.group.layout_all()
-        self.group.focus(window1)
+        _SimpleLayoutBase.swap(self, window1, window2)
 
-    def cmd_swap_left(self):
+    @expose_command("shuffle_left")
+    def swap_left(self):
         """Swap current window with closest window to the left"""
         win = self.clients.current_client
         x, y = win.x, win.y
-        candidates = [c for c in self.clients if c.info()['x'] < x]
+        candidates = [c for c in self.clients if c.info()["x"] < x]
         target = self._get_closest(x, y, candidates)
-        self.cmd_swap(win, target)
+        self.swap(win, target)
 
-    def cmd_swap_right(self):
+    @expose_command("shuffle_right")
+    def swap_right(self):
         """Swap current window with closest window to the right"""
         win = self.clients.current_client
         x, y = win.x, win.y
-        candidates = [c for c in self.clients if c.info()['x'] > x]
+        candidates = [c for c in self.clients if c.info()["x"] > x]
         target = self._get_closest(x, y, candidates)
-        self.cmd_swap(win, target)
+        self.swap(win, target)
 
-    def cmd_swap_main(self):
+    @expose_command()
+    def swap_main(self):
         """Swap current window to main pane"""
         if self.align == self._left:
-            self.cmd_swap_left()
+            self.swap_left()
         elif self.align == self._right:
-            self.cmd_swap_right()
+            self.swap_right()
 
-    def cmd_left(self):
+    @expose_command()
+    def left(self):
         """Focus on the closest window to the left of the current window"""
         win = self.clients.current_client
         x, y = win.x, win.y
@@ -729,16 +849,14 @@ class MonadTall(_SimpleLayoutBase):
         self.clients.current_client = self._get_closest(x, y, candidates)
         self.group.focus(self.clients.current_client)
 
-    def cmd_right(self):
+    @expose_command()
+    def right(self):
         """Focus on the closest window to the right of the current window"""
         win = self.clients.current_client
         x, y = win.x, win.y
         candidates = [c for c in self.clients if c.info()["x"] > x]
         self.clients.current_client = self._get_closest(x, y, candidates)
         self.group.focus(self.clients.current_client)
-
-    cmd_shuffle_left = cmd_swap_left
-    cmd_shuffle_right = cmd_swap_right
 
 
 class MonadWide(MonadTall):
@@ -751,8 +869,8 @@ class MonadWide(MonadTall):
 
     A main pane that contains a single window takes up a horizontal
     portion of the screen_rect based on the ratio setting. This ratio can be
-    adjusted with the ``cmd_grow_main`` and ``cmd_shrink_main`` or,
-    while the main pane is in focus, ``cmd_grow`` and ``cmd_shrink``.
+    adjusted with the ``grow_main`` and ``shrink_main`` or,
+    while the main pane is in focus, ``grow`` and ``shrink``.
 
     ::
 
@@ -765,7 +883,7 @@ class MonadWide(MonadTall):
         |                   |
         ---------------------
 
-    Using the ``cmd_flip`` method will switch which vertical side the
+    Using the ``flip`` method will switch which vertical side the
     main pane will occupy. The main pane is considered the "top" of
     the stack.
 
@@ -784,8 +902,8 @@ class MonadWide(MonadTall):
 
     Occupying the rest of the screen_rect are one or more secondary panes.
     The secondary panes will share the horizontal space of the screen_rect
-    however they can be resized at will with the ``cmd_grow`` and
-    ``cmd_shrink`` methods. The other secondary panes will adjust their
+    however they can be resized at will with the ``grow`` and
+    ``shrink`` methods. The other secondary panes will adjust their
     sizes to smoothly fill all of the space.
 
     ::
@@ -799,7 +917,7 @@ class MonadWide(MonadTall):
         |     |       |     |          |   |           |   |
         ---------------------          ---------------------
 
-    Panes can be moved with the ``cmd_shuffle_up`` and ``cmd_shuffle_down``
+    Panes can be moved with the ``shuffle_up`` and ``shuffle_down``
     methods. As mentioned the main pane is considered the top of the
     stack; moving up is counter-clockwise and moving down is clockwise.
 
@@ -819,16 +937,16 @@ class MonadWide(MonadTall):
     Normalizing/Resetting:
 
     To restore all secondary client windows to their default size ratios
-    use the ``cmd_normalize`` method.
+    use the ``normalize`` method.
 
     To reset all client windows to their default sizes, including the primary
-    window, use the ``cmd_reset`` method.
+    window, use the ``reset`` method.
 
 
     Maximizing:
 
     To toggle a client window between its minimum and maximum sizes
-    simply use the ``cmd_maximize`` on a focused client.
+    simply use the ``maximize`` on a focused client.
 
     Suggested Bindings::
 
@@ -842,7 +960,8 @@ class MonadWide(MonadTall):
         Key([modkey, "shift"], "k", lazy.layout.shuffle_up()),
         Key([modkey], "i", lazy.layout.grow()),
         Key([modkey], "m", lazy.layout.shrink()),
-        Key([modkey], "n", lazy.layout.normalize()),
+        Key([modkey], "n", lazy.layout.reset()),
+        Key([modkey, "shift"], "n", lazy.layout.normalize()),
         Key([modkey], "o", lazy.layout.maximize()),
         Key([modkey, "shift"], "space", lazy.layout.flip()),
     """
@@ -865,15 +984,14 @@ class MonadWide(MonadTall):
         # total width of maximized secondary
         maxed_size = self.screen_rect.width - collapsed_size
         # if maximized or nearly maximized
-        if abs(
-            self._get_absolute_size_from_relative(self.relative_sizes[nidx]) -
-            maxed_size
-        ) < self.change_size:
+        if (
+            abs(self._get_absolute_size_from_relative(self.relative_sizes[nidx]) - maxed_size)
+            < self.change_size
+        ):
             # minimize
             self._shrink_secondary(
-                self._get_absolute_size_from_relative(
-                    self.relative_sizes[nidx]
-                ) - self.min_secondary_size
+                self._get_absolute_size_from_relative(self.relative_sizes[nidx])
+                - self.min_secondary_size
             )
         # otherwise maximize
         else:
@@ -908,14 +1026,11 @@ class MonadWide(MonadTall):
             # secondary client
             height = height_shared - 2 * self.border_width
             # xpos is the sum of all clients left of it
-            xpos = self.screen_rect.x + \
-                self._get_absolute_size_from_relative(
-                    sum(self.relative_sizes[:cidx - 1])
-                )
-            # get width from precalculated width list
-            width = self._get_absolute_size_from_relative(
-                self.relative_sizes[cidx - 1]
+            xpos = self.screen_rect.x + self._get_absolute_size_from_relative(
+                sum(self.relative_sizes[: cidx - 1])
             )
+            # get width from precalculated width list
+            width = self._get_absolute_size_from_relative(self.relative_sizes[cidx - 1])
             # fix double margin
             if cidx > 1:
                 xpos -= self.margin
@@ -941,8 +1056,8 @@ class MonadWide(MonadTall):
                 px,
                 margin=[
                     self.margin,
-                    self.margin + 2*self.border_width,
-                    2*self.border_width,
+                    self.margin + 2 * self.border_width,
+                    2 * self.border_width,
                     self.margin,
                 ],
             )
@@ -980,28 +1095,347 @@ class MonadWide(MonadTall):
             self.grow_up_shared(idx, half_change)
             self.grow_down_shared(idx, half_change)
         # shrink client by total change
-        self.relative_sizes[self.focused - 1] -= \
-            self._get_relative_size_from_absolute(change)
+        self.relative_sizes[self.focused - 1] -= self._get_relative_size_from_absolute(change)
 
-    def cmd_swap_left(self):
+    @expose_command()
+    def swap_left(self):
         """Swap current window with closest window to the down"""
         win = self.clients.current_client
         x, y = win.x, win.y
         candidates = [c for c in self.clients.clients if c.info()["y"] > y]
         target = self._get_closest(x, y, candidates)
-        self.cmd_swap(win, target)
+        self.swap(win, target)
 
-    def cmd_swap_right(self):
+    @expose_command()
+    def swap_right(self):
         """Swap current window with closest window to the up"""
         win = self.clients.current_client
         x, y = win.x, win.y
         candidates = [c for c in self.clients if c.info()["y"] < y]
         target = self._get_closest(x, y, candidates)
-        self.cmd_swap(win, target)
+        self.swap(win, target)
 
-    def cmd_swap_main(self):
+    @expose_command()
+    def swap_main(self):
         """Swap current window to main pane"""
         if self.align == self._up:
-            self.cmd_swap_right()
+            self.swap_right()
         elif self.align == self._down:
-            self.cmd_swap_left()
+            self.swap_left()
+
+
+class MonadThreeCol(MonadTall):
+    """Emulate the behavior of XMonad's ThreeColumns layout.
+
+    A layout similar to tall but with three columns. With an ultra wide display
+    this layout can be used for a huge main window - ideally at the center of the
+    screen - and up to six reasonable sized secondary windows.
+
+    Main-Pane:
+
+    A main pane that contains a single window takes up a vertical portion of
+    the screen_rect based on the ratio setting. This ratio can be adjusted with
+    the ``grow_main`` and ``shrink_main`` or, while the main pane is in
+    focus, ``grow`` and ``shrink``. The main pane can also be centered.
+
+    ::
+
+        ---------------------------    ---------------------------
+        |           |      |      |    |      |           |      |
+        |           |      |      |    |      |           |      |
+        |           |      |      |    |      |           |      |
+        |           |      |      |    |      |           |      |
+        |           |      |      |    |      |           |      |
+        |           |      |      |    |      |           |      |
+        ---------------------------    ---------------------------
+
+    Secondary-panes:
+
+    Occupying the rest of the screen_rect are one or more secondary panes.  The
+    secondary panes will be divided into two columns and share the vertical space
+    of each column. However they can be resized at will with the ``grow`` and
+    ``shrink`` methods. The other secondary panes will adjust their sizes to
+    smoothly fill all of the space.
+
+    ::
+
+        ---------------------------    ---------------------------
+        |           |      |      |    |           |______|      |
+        |           |______|      |    |           |      |      |
+        |           |      |______|    |           |      |______|
+        |           |______|      |    |           |      |      |
+        |           |      |      |    |           |______|      |
+        |           |      |      |    |           |      |      |
+        ---------------------------    ---------------------------
+
+    Panes can be moved with the ``shuffle_up`` and ``shuffle_down``
+    methods. As mentioned the main pane is considered the top of the stack;
+    moving up is counter-clockwise and moving down is clockwise. A secondary
+    pane can also be promoted to the main pane with the ``swap_main``
+    method.
+
+    Normalizing/Resetting:
+
+    To restore all secondary client windows to their default size ratios
+    use the ``normalize`` method.
+
+    To reset all client windows to their default sizes, including the primary
+    window, use the ``reset`` method.
+
+    Maximizing:
+
+    To maximized a client window simply use the ``maximize`` on a focused
+    client.
+    """
+
+    defaults = [
+        ("main_centered", True, "Place the main pane at the center of the screen"),
+        (
+            "new_client_position",
+            "top",
+            "Place new windows: "
+            " after_current - after the active window."
+            " before_current - before the active window,"
+            " top - at the top of the stack,"
+            " bottom - at the bottom of the stack,",
+        ),
+    ]
+
+    __column = namedtuple("__column", "name count start end")
+
+    def __init__(self, **config):
+        MonadTall.__init__(self, **config)
+        self.add_defaults(MonadThreeCol.defaults)
+
+    # mypy doesn't like the setter when the getter isn't present
+    # see https://github.com/python/mypy/issues/5936
+    @MonadTall.screen_rect.setter  # type: ignore[attr-defined]
+    def screen_rect(self, value):
+        # If the screen_rect size has change then we need to normalise secondary
+        # windows so they're resized to fill the new space correctly
+        if value != self._screen_rect:
+            self.do_normalize = True
+        self._screen_rect = value
+
+    def _configure_specific(self, client, screen_rect, border_color, index):
+        """Specific configuration for xmonad three columns."""
+        if index == 0:
+            self._configure_main(client)
+        elif self._get_column(index - 1).name == "left":
+            self._configure_left(client, index)
+        else:
+            self._configure_right(client, index)
+
+    def _configure_main(self, client):
+        """Configure the main client"""
+        width = self._get_main_width()
+        height = self.screen_rect.height
+        left = self.screen_rect.x
+        top = self.screen_rect.y
+
+        if self.main_centered and len(self.clients) > 2:
+            left += (self.screen_rect.width - width) // 2
+
+        self._place_client(client, left, top, width, height)
+
+    def _configure_left(self, client, index):
+        """Configure the left column"""
+        width = self._get_secondary_widths()[0]
+        height = self._get_secondary_height(index)
+        left = self.screen_rect.x
+        top = self.screen_rect.y + self._get_relative_sizes_above(index)
+
+        if not self.main_centered or len(self.clients) == 2:
+            left += self._get_main_width()
+
+        self._place_client(client, left, top, width, height)
+
+    def _configure_right(self, client, index):
+        """Configure the right column"""
+        widths = self._get_secondary_widths()
+        height = self._get_secondary_height(index)
+        left = self.screen_rect.x + widths[0] + self._get_main_width()
+        top = self.screen_rect.y + self._get_relative_sizes_above(index)
+
+        self._place_client(client, left, top, widths[1], height)
+
+    def _get_main_width(self):
+        """Calculate the main client's width"""
+        return int(self.screen_rect.width * self.ratio)
+
+    def _get_secondary_widths(self):
+        """Calculate secondary clients' widths"""
+        width = self.screen_rect.width - self._get_main_width()
+        if len(self.clients) == 2:
+            return [width, 0]
+
+        return self._split_integer(width, 2)
+
+    def _get_secondary_height(self, index):
+        """Return the height of the provided index"""
+        return self.relative_sizes[index - 1]
+
+    def _get_relative_sizes_above(self, index):
+        """Return the sum of the heights of all clients above the provided index"""
+        column = self._get_column(index - 1)
+        return sum(self.relative_sizes[column.start : index - 1])
+
+    def _place_client(self, client, left, top, width, height):
+        """Place a client on the screen
+
+        Will prevent double margins by applying east and south margins only
+        when the client is the rightmost or the bottommost window.
+        """
+
+        # Create a temporary margin list for the client
+        if isinstance(self.margin, int):
+            margin = [self.margin] * 4
+        else:
+            # We need to copy this list otherwise we'd be modifying self.margin!
+            margin = self.margin.copy()
+
+        rightmost = left + width - self.screen_rect.x + margin[1] >= self.screen_rect.width
+        bottommost = top + height - self.screen_rect.y + margin[2] >= self.screen_rect.height
+
+        if not rightmost:
+            margin[1] = 0
+        if not bottommost:
+            margin[2] = 0
+
+        client.place(
+            left,
+            top,
+            width - 2 * self.border_width,
+            height - 2 * self.border_width,
+            self.border_width,
+            self.border_focus if client.has_focus else self.border_normal,
+            margin=margin,
+        )
+
+    @expose_command()
+    def normalize(self, redraw=True):
+        """Evenly distribute screen-space among secondary clients"""
+        if self.screen_rect is not None:
+            self.relative_sizes = []
+
+            height = self.screen_rect.height
+            left, right = self._get_columns()
+
+            if left.count > 0:
+                self.relative_sizes += self._split_integer(height, left.count)
+            if right.count > 0:
+                self.relative_sizes += self._split_integer(height, right.count)
+
+        if redraw:
+            self.group.layout_all()
+        self.do_normalize = False
+
+    @expose_command()
+    def swap_main(self):
+        """Swap current window to main pane"""
+        self.swap(self.clients.current_client, self.clients[0])
+
+    def _maximize_secondary(self):
+        """Maximize the focused secondary pane"""
+        focused = self.focused - 1
+        column = self._get_column(focused)
+        if column.count == 1:
+            return
+
+        max_height = self.screen_rect.height - ((column.count - 1) * self.min_secondary_size)
+        for i in range(column.start, column.end):
+            self.relative_sizes[i] = max_height if i == focused else self.min_secondary_size
+
+    def _grow_secondary(self, amt):
+        """Grow the focused client in the secondary pane"""
+        self._resize_secondary(amt)
+
+    def _shrink_secondary(self, amt):
+        """Shrink the focused client in the secondary pane"""
+        self._resize_secondary(-amt)
+
+    def _resize_secondary(self, amt):
+        """Resize the focused secondary client
+
+        If amt is positive, the client will grow. Conversely, if it's negative,
+        the client will shrink. All other clients in the same column will get
+        grown/shrunk so to accommodate the new height.
+        """
+        focused = self.focused - 1
+        column = self._get_column(focused)
+
+        if column.count == 1:
+            return
+
+        # Resizing is accomplished by doing the following:
+        # - calculate how much each client in the column must shrink/grow
+        #   so that the focused window can grow/shrink.
+        # - iterate over all clients in the column and change their height
+        #   (grow or shrink) as long as they can still be resized (both main
+        #   and secondary windows).
+        min_height = self.min_secondary_size
+        idx = column.start
+        step = amt // (column.count - 1)
+        visited = 0
+        while amt != 0:
+            if idx != focused:
+                focused_new_height = self.relative_sizes[focused] + step
+                new_height = self.relative_sizes[idx] - step
+                if focused_new_height >= min_height and new_height >= min_height:
+                    self.relative_sizes[focused] += step
+                    self.relative_sizes[idx] -= step
+                    amt -= step
+                    visited += 1
+
+            idx += 1
+            if idx == column.end:
+                if visited == 0:
+                    break
+
+                idx = column.start
+                visited = 0
+
+        self.group.layout_all()
+
+    def _get_column(self, index):
+        """Get the column containing the provided index"""
+        left, right = self._get_columns()
+        return left if index < left.count else right
+
+    def _get_columns(self):
+        """Get all columns"""
+        clients = len(self.clients) - 1
+        clients = (clients // 2 + clients % 2, clients // 2)
+        return (
+            MonadThreeCol.__column(
+                name="left",
+                count=clients[0],
+                start=0,
+                end=clients[0],
+            ),
+            MonadThreeCol.__column(
+                name="right",
+                count=clients[1],
+                start=clients[0],
+                end=clients[0] + clients[1],
+            ),
+        )
+
+    def info(self) -> dict[str, Any]:
+        left, right = self._get_columns()
+        d = MonadTall.info(self)
+        d.update(
+            secondary=dict(
+                left=d["clients"][1 : left.end + 1] if left.count > 0 else [],
+                right=d["clients"][right.start + 1 :] if right.count > 0 else [],
+            )
+        )
+        return d
+
+    @staticmethod
+    def _split_integer(value, parts):
+        """Divide an integer into equal parts and distribute the remainder"""
+        result = [value // parts] * parts
+        for i in range(value % parts):
+            result[i] += 1
+        return result

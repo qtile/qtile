@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2015 Tycho Andersen
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,14 +23,16 @@
 import pytest
 
 from libqtile.bar import Bar
+from libqtile.command.base import expose_command
 from libqtile.config import Screen
-from libqtile.widget import TextBox, ThermalSensor
+from libqtile.widget import TextBox
 from test.conftest import BareConfig
 
 
 class ColorChanger(TextBox):
     count = 0
 
+    @expose_command()
     def update(self, text):
         self.count += 1
         if self.count % 2 == 0:
@@ -50,28 +51,8 @@ widget_conf = pytest.mark.parametrize("manager", [WidgetTestConf], indirect=True
 
 @widget_conf
 def test_textbox_color_change(manager):
-    manager.c.widget["colorchanger"].update('f')
+    manager.c.widget["colorchanger"].update("f")
     assert manager.c.widget["colorchanger"].info()["foreground"] == "0000ff"
 
-    manager.c.widget["colorchanger"].update('f')
+    manager.c.widget["colorchanger"].update("f")
     assert manager.c.widget["colorchanger"].info()["foreground"] == "ff0000"
-
-
-def test_thermalsensor_regex_compatibility():
-    sensors = ThermalSensor()
-    test_sensors_output = """
-    coretemp-isa-0000
-    Adapter: ISA adapter
-    Physical id 0:  +61.0°C  (high = +86.0°C, crit = +100.0°C)
-    Core 0:         +54.0°C  (high = +86.0°C, crit = +100.0°C)
-    Core 1:         +56.0°C  (high = +86.0°C, crit = +100.0°C)
-    Core 2:         +58.0°C  (high = +86.0°C, crit = +100.0°C)
-    Core 3:         +61.0°C  (high = +86.0°C, crit = +100.0°C)
-    """
-    sensors_detected = sensors._format_sensors_output(test_sensors_output)
-    assert sensors_detected["Physical id 0"] == ("61.0", "°C")
-    assert sensors_detected["Core 0"] == ("54.0", "°C")
-    assert sensors_detected["Core 1"] == ("56.0", "°C")
-    assert sensors_detected["Core 2"] == ("58.0", "°C")
-    assert sensors_detected["Core 3"] == ("61.0", "°C")
-    assert not ("Adapter" in sensors_detected.keys())

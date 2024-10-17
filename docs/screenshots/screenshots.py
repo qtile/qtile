@@ -23,9 +23,7 @@ class Client:
 
     def __init__(self):
         self.color = 0
-        self.client = InteractiveCommandClient(
-            IPCCommandInterface(IPCClient(find_sockfile()))
-        )
+        self.client = InteractiveCommandClient(IPCCommandInterface(IPCClient(find_sockfile())))
 
     def current_group(self):
         return self.client.group[self.client.group.info().get("name")]
@@ -42,7 +40,7 @@ class Client:
             self.color += 1
         if isinstance(color, int):
             color = Client.COLORS[color]
-        self.client.spawn("xterm +ls -hold -e printf '\e]11;{}\007'".format(color))
+        self.client.spawn(f"xterm +ls -hold -e printf '\e]11;{color}\007'")  # noqa: W605
 
     def prepare_layout(self, layout, windows, commands=None):
         # set selected layout
@@ -91,9 +89,9 @@ class Screenshooter:
 
     def shoot(self, numbered=True, compress="lossless"):
         if numbered:
-            output_path = "{}.{}.png".format(self.output_prefix, self.number)
+            output_path = f"{self.output_prefix}.{self.number}.png"
         else:
-            output_path = "{}.png".format(self.output_prefix)
+            output_path = f"{self.output_prefix}.png"
         thumbnail_path = output_path.replace(".png", "-thumb.png")
 
         # take screenshot with scrot
@@ -120,14 +118,13 @@ class Screenshooter:
             "--force",
             "--output",
             file_path,
-            file_path
+            file_path,
         ]
 
         try:
             subprocess.call(compress_command)
         except FileNotFoundError:
             pass
-
 
     def animate(self, delays=None, clear=False):
         # TODO: use delays to build animation with custom delay between each frame
@@ -148,7 +145,7 @@ class Screenshooter:
                 "-delay",
                 "2x1",
                 animate_command.pop(),
-                "{}.gif".format(self.output_prefix),
+                f"{self.output_prefix}.gif",
             ]
         )
 

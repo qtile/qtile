@@ -42,13 +42,13 @@ want to look at the ``startup`` and ``startup_once`` hooks. ``startup`` is
 emitted every time Qtile starts (including restarts), whereas ``startup_once``
 is only emitted on the very first startup.
 
-Let's create a file ``~/.config/qtile/autostart.sh`` that will set our desktop
-wallpaper and start a few programs when Qtile first runs.
+Let's create an executable file ``~/.config/qtile/autostart.sh`` that will
+start a few programs when Qtile first runs. Remember to `chmod +x ~/.config/qtile/autostart.sh` so
+that it can be executed.
 
 .. code-block:: bash
 
     #!/bin/sh
-    feh --bg-scale ~/images/wallpaper.jpg &
     pidgin &
     dropbox start &
 
@@ -59,10 +59,12 @@ We can then subscribe to ``startup_once`` to run this script:
     import os
     import subprocess
 
+    from libqtile import hook
+
     @hook.subscribe.startup_once
     def autostart():
         home = os.path.expanduser('~/.config/qtile/autostart.sh')
-        subprocess.call([home])
+        subprocess.call(home)
 
 Accessing the qtile object
 --------------------------
@@ -73,3 +75,15 @@ it can be imported into your config:
 .. code-block:: python
 
     from libqtile import qtile
+
+Async hooks
+-----------
+
+Hooks can also be defined as coroutine functions using ``async def``, which
+will run them asynchronously in the event loop:
+
+.. code-block:: python
+
+    @hook.subscribe.focus_change
+    async def _():
+        ...

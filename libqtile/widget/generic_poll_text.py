@@ -1,5 +1,8 @@
 import json
-from typing import Any, List, Tuple
+import subprocess
+from http.client import HTTPException
+from typing import Any
+from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from libqtile.log_utils import logger
@@ -10,6 +13,7 @@ try:
 
     def xmlparse(body):
         return xmltodict.parse(body)
+
 except ImportError:
     # TODO: we could implement a similar parser by hand, but i'm lazy, so let's
     # punt for now
@@ -19,9 +23,9 @@ except ImportError:
 
 class GenPollText(base.ThreadPoolText):
     """A generic text widget that polls using poll function to get the text"""
-    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
-        ('func', None, 'Poll Function'),
+        ("func", None, "Poll Function"),
     ]
 
     def __init__(self, **config):
@@ -36,25 +40,30 @@ class GenPollText(base.ThreadPoolText):
 
 class GenPollUrl(base.ThreadPoolText):
     """A generic text widget that polls an url and parses it using parse function"""
-    orientations = base.ORIENTATION_HORIZONTAL
-    defaults = [
-        ('url', None, 'Url'),
-        ('data', None, 'Post Data'),
-        ('parse', None, 'Parse Function'),
-        ('json', True, 'Is Json?'),
-        ('user_agent', 'Qtile', 'Set the user agent'),
-        ('headers', {}, 'Extra Headers'),
-        ('xml', False, 'Is XML?'),
-    ]  # type: List[Tuple[str, Any, str]]
+
+    defaults: list[tuple[str, Any, str]] = [
+        ("url", None, "Url"),
+        ("data", None, "Post Data"),
+        ("parse", None, "Parse Function"),
+        ("json", True, "Is Json?"),
+        ("user_agent", "Qtile", "Set the user agent"),
+        ("headers", {}, "Extra Headers"),
+        ("xml", False, "Is XML?"),
+    ]
 
     def __init__(self, **config):
         base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(GenPollUrl.defaults)
 
-    def fetch(self, url, data=None, headers=None, is_json=True, is_xml=False):
-        if headers is None:
-            headers = {}
-        req = Request(url, data, headers)
+        self.headers["User-agent"] = self.user_agent
+        if self.json:
+            self.headers["Content-Type"] = "application/json"
+
+        if self.data and not isinstance(self.data, str):
+            self.data = json.dumps(self.data).encode()
+
+    def fetch(self):
+        req = Request(self.url, self.data, self.headers)
         res = urlopen(req)
         charset = res.headers.get_content_charset()
 
@@ -62,10 +71,10 @@ class GenPollUrl(base.ThreadPoolText):
         if charset:
             body = body.decode(charset)
 
-        if is_json:
+        if self.json:
             body = json.loads(body)
 
-        if is_xml:
+        if self.xml:
             body = xmlparse(body)
         return body
 
@@ -73,21 +82,44 @@ class GenPollUrl(base.ThreadPoolText):
         if not self.parse or not self.url:
             return "Invalid config"
 
-        data = self.data
-        headers = {"User-agent": self.user_agent}
-        if self.json:
-            headers['Content-Type'] = 'application/json'
-
-        if data and not isinstance(data, str):
-            data = json.dumps(data).encode()
-
-        headers.update(self.headers)
-        body = self.fetch(self.url, data, headers, self.json, self.xml)
+        try:
+            body = self.fetch()
+        except URLError:
+            return "No network"
+        except HTTPException:
+            return "Request failed"
 
         try:
             text = self.parse(body)
         except Exception:
-            logger.exception('got exception polling widget')
+            logger.exception("got exception polling widget")
             text = "Can't parse"
 
         return text
+
+
+class GenPollCommand(base.ThreadPoolText):
+    """A generic text widget to display output from scripts or shell commands"""
+
+    defaults = [
+        ("update_interval", 60, "update time in seconds"),
+        ("cmd", None, "command line as a string or list of arguments to execute"),
+        ("shell", False, "run command through shell to enable piping and shell expansion"),
+    ]
+
+    def __init__(self, **config):
+        base.ThreadPoolText.__init__(self, "", **config)
+        self.add_defaults(GenPollCommand.defaults)
+
+    def _configure(self, qtile, bar):
+        base.ThreadPoolText._configure(self, qtile, bar)
+        self.add_callbacks({"Button1": self.force_update})
+
+    def poll(self):
+        process = subprocess.run(
+            self.cmd,
+            capture_output=True,
+            text=True,
+            shell=self.shell,
+        )
+        return process.stdout.strip()

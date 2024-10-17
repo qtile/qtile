@@ -201,13 +201,14 @@ components that make up the widget. Examples of displaying text, icons and
 drawings are set out below.
 
 It is important to note that the bar controls the placing of the widget by
-assigning the ``offsetx`` value (for horizontal orientations) and ``offsety``
-value (for vertical orientations). Widgets should use this at the end of the
-``draw`` method.
+assigning the ``offsetx`` value (for horizontal positioning) and ``offsety``
+value (for vertical positioning). Widgets should use this at the end of the
+``draw`` method. Both ``offsetx`` and ``offsety`` are required as both values will
+be set if the bar is drawing a border.
 
 .. code:: python
 
-    self.drawer.draw(offsetx=self.offsetx, width=self.width)
+    self.drawer.draw(offsetx=self.offsetx, offsety=self.offsety, width=self.width)
 
 .. note::
 
@@ -352,17 +353,11 @@ background. Usually this is done by including the following line at the start of
 The background can be a single colour or a list of colours which will result in a linear gradient
 from top to bottom.
 
-.. note:
-
-    Opacity is currently set at the window level and applies to the whole bar. As a result,
-    setting a completely transparent bar will result in the contents of the widget (text etc.)
-    also being transparent.
-
 Updating the widget
 ===================
 
 Widgets will usually need to update their content periodically. There are numerous ways
-that this can be done. Some of the most common are summarised below.
+that this can be done. Some of the most common ones are summarised below.
 
 Timers
 ------
@@ -407,7 +402,7 @@ Using dbus
 Qtile uses ``dbus-next`` for interacting with dbus.
 
 If you just want to listen for signals then Qtile provides a helper method called
-``add_signal_receiver`` which can subscribe to a signal and trigegr a callback
+``add_signal_receiver`` which can subscribe to a signal and trigger a callback
 whenever that signal is broadcast.
 
 .. note::
@@ -415,7 +410,7 @@ whenever that signal is broadcast.
     must make sure, where necessary, calls to dbus are made via coroutines.
 
     There is a ``_config_async`` coroutine in the base widget class which can
-    be overriden to provide an entry point for asyncio calls in your widget.
+    be overridden to provide an entry point for asyncio calls in your widget.
 
 For example, the Mpris2 widget uses the following code:
 
@@ -437,6 +432,111 @@ For example, the Mpris2 widget uses the following code:
 ``dbus-next`` can also be used to query properties, call methods etc. on dbus
 interfaces. Refer to the `dbus-next documentation <https://python-dbus-next.readthedocs.io/en/latest/>`_
 for more information on how to use the module.
+
+.. _mouse-events:
+
+Mouse events
+============
+
+By default, widgets handle button presses and will call any function that is bound to the button in the
+``mouse_callbacks`` dictionary. The dictionary keys are as follows:
+
+ - ``Button1``: Left click
+ - ``Button2``: Middle click
+ - ``Button3``: Right click
+ - ``Button4``: Scroll up
+ - ``Button5``: Scroll down
+ - ``Button6``: Scroll left
+ - ``Button7``: Scroll right
+
+You can then define your button bindings in your widget (e.g. in ``__init__``):
+
+.. code:: python
+
+    class MyWidget(widget.TextBox)
+
+        def __init__(self, *args, **config):
+            widget.TextBox.__init__(self, *args, **kwargs)
+            self.add_callbacks(
+                {
+                    "Button1": self.left_click_method,
+                    "Button3": self.right_click_method
+                }
+            )
+
+.. note::
+
+    As well as functions, you can also bind ``LazyCall`` objects to button presses.
+    For example:
+
+    .. code:: python
+
+        self.add_callbacks(
+            {
+                "Button1": lazy.spawn("xterm"),
+            }
+        )
+
+In addition to button presses, you can also respond to mouse enter and leave events.
+For example, to make a clock show a longer date when you put your mouse over it, you
+can do the following:
+
+.. code:: python
+
+    class MouseOverClock(widget.Clock):
+        defaults = [
+            (
+                "long_format",
+                "%A %d %B %Y | %H:%M",
+                "Format to show when mouse is over widget."
+            )
+        ]
+
+        def __init__(self, **config):
+            widget.Clock.__init__(self, **config)
+            self.add_defaults(MouseOverClock.defaults)
+            self.short_format = self.format
+
+        def mouse_enter(self, *args, **kwargs):
+            self.format = self.long_format
+            self.bar.draw()
+
+        def mouse_leave(self, *args, **kwargs):
+            self.format = self.short_format
+            self.bar.draw()
+
+Exposing commands to the IPC interface
+======================================
+
+If you want to control your widget via ``lazy`` or scripting commands (such as ``qtile cmd-obj``), you
+will need to expose the relevant methods in your widget. Exposing commands is done by adding the
+``@expose_command()`` decorator to your method. For example:
+
+.. code:: python
+
+    from libqtile.command.base import expose_command
+    from libqtile.widget import TextBox
+
+
+    class ExposedWidget(TextBox):
+
+        @expose_command()
+        def uppercase(self):
+            self.update(self.text.upper())
+
+Text in the ``ExposedWidget`` can now be made into upper case by calling ``lazy.widget["exposedwidget"].uppercase()``
+or ``qtile cmd-onj -o widget exposedwidget -f uppercase``.
+
+If you want to expose a method under multiple names, you can pass these additional names to the decorator. For
+example, decorating a method with:
+
+.. code:: python
+
+    @expose_command(["extra", "additional"])
+    def mymethod(self):
+        ...
+
+will make make the method visible under ``mymethod``, ``extra`` and ``additional``.
 
 Debugging
 =========
@@ -460,8 +560,14 @@ development.
     Debugging messages should be removed from your code before submitting pull
     requests.
 
+Submitting the widget to the official repo
+==========================================
+
+The following sections are only relevant for users who wish for their widgets to
+be submitted as a PR for inclusion in the main Qtile repo.
+
 Including the widget in libqtile.widget
-=======================================
+---------------------------------------
 
 You should include your widget in the ``widgets`` dict in ``libqtile.widget.__init__.py``.
 The relevant format is ``{"ClassName": "modulename"}``.
@@ -473,7 +579,7 @@ This has a number of benefits:
 - Inclusion in basic unit testing (see below)
 
 Testing
-=======
+-------
 
 Any new widgets should include an accompanying unit test.
 
@@ -485,6 +591,91 @@ However, where possible, it is strongly encouraged that widgets include addition
 tests that test specific functionality of the widget (e.g. reaction to hooks).
 
 See :ref:`unit-testing` for more.
+
+Documentation
+-------------
+
+It is really important that we maintain good documentation for Qtile. Any new widgets must
+therefore include sufficient documentation in order for users to understand how to
+use/configure the widget.
+
+The majority of the documentation is generated automatically from your module. The widget's
+docstring will be used as the description of the widget. Any parameters defined in the
+widget's ``defaults`` attribute will also be displayed. It is essential that there is a
+clear explanation of each new parameter defined by the widget.
+
+Screenshots
+~~~~~~~~~~~
+
+While not essential, it is strongly recommended that the documentation includes one or more
+screenshots.
+
+Screenshots can be generated automatically with a minimal amount of coding by using the fixtures
+created by Qtile's test suite.
+
+A screenshot file must satisfy the following criteria:
+
+ - Be named ``ss_[widgetname].py``
+ - Any function that takes a screenshot must be prefixed with ``ss_``
+ - Define a pytest fixture named ``widget``
+
+An example screenshot file is below:
+
+.. code:: python
+
+    import pytest
+
+    from libqtile.widget import wttr
+
+    RESPONSE = "London: +17°C"
+
+
+    @pytest.fixture
+    def widget(monkeypatch):
+        def result(self):
+            return RESPONSE
+
+        monkeypatch.setattr("libqtile.widget.wttr.Wttr.fetch", result)
+        yield wttr.Wttr
+
+
+    @pytest.mark.parametrize(
+        "screenshot_manager",
+        [
+            {"location": {"London": "Home"}}
+        ],
+        indirect=True
+    )
+    def ss_wttr(screenshot_manager):
+        screenshot_manager.take_screenshot()
+
+The ``widget`` fixture returns the widget class (not an instance of the widget). Any monkeypatching
+of the widget should be included in this fixture.
+
+The screenshot function (here, called ``ss_wttr``) must take an argument called ``screenshot_manager``.
+The function can also be parameterized, in which case, each dict object will be used
+to configure the widget for the screenshot (and the configuration will be displayed in the docs). If
+you want to include parameterizations but also want to show the default configuration, you should include
+an empty dict (``{}``) as the first object in the list.
+
+Taking a screenshot is then as simple as calling ``screenshot_manager.take_screenshot()``. The method
+can be called multiple times in the same function.
+
+``screenshot_manager.take_screenshot()`` only takes a picture of the widget. If you need to take a screenshot
+of the bar then you need a few extra steps:
+
+.. code:: python
+
+    def ss_bar_screenshot(screenshot_manager):
+        # Generate a filename for the screenshot
+        target = screenshot_manager.target()
+
+        # Get the bar object
+        bar = screenshot_manager.c.bar["top"]
+
+        # Take a screenshot. Will take screenshot of whole bar unless
+        # a `width` parameter is set.
+        bar.take_screenshot(target, width=width)
 
 Getting help
 ============

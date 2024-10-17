@@ -47,23 +47,22 @@
 # This is not intended to be a complete cffi-based pango binding.
 
 
-try:
-    from libqtile._ffi_pango import ffi
-except ImportError:
-    raise ImportError("No module named libqtile._ffi_pango, be sure to run `./scripts/ffibuild`")
+from libqtile.pango_ffi import pango_ffi as ffi
 
-gobject = ffi.dlopen('libgobject-2.0.so.0')
-pango = ffi.dlopen('libpango-1.0.so.0')
-pangocairo = ffi.dlopen('libpangocairo-1.0.so.0')
+gobject = ffi.dlopen("libgobject-2.0.so.0")  # type: ignore
+pango = ffi.dlopen("libpango-1.0.so.0")  # type: ignore
+pangocairo = ffi.dlopen("libpangocairo-1.0.so.0")  # type: ignore
 
 
 def patch_cairo_context(cairo_t):
     def create_layout():
         return PangoLayout(cairo_t._pointer)
+
     cairo_t.create_layout = create_layout
 
     def show_layout(layout):
         pangocairo.pango_cairo_show_layout(cairo_t._pointer, layout._pointer)
+
     cairo_t.show_layout = show_layout
 
     return cairo_t
@@ -75,9 +74,9 @@ units_from_double = pango.pango_units_from_double
 
 
 ALIGNMENTS = {
-    'left': pango.PANGO_ALIGN_LEFT,
-    'center': pango.PANGO_ALIGN_CENTER,
-    'right': pango.PANGO_ALIGN_RIGHT,
+    "left": pango.PANGO_ALIGN_LEFT,
+    "center": pango.PANGO_ALIGN_CENTER,
+    "right": pango.PANGO_ALIGN_RIGHT,
 }
 
 
@@ -87,8 +86,8 @@ class PangoLayout:
         self._pointer = pangocairo.pango_cairo_create_layout(cairo_t)
 
         def free(p):
-            p = ffi.cast("gpointer", p)
             gobject.g_object_unref(p)
+
         self._pointer = ffi.gc(self._pointer, free)
 
     def finalize(self):
@@ -115,7 +114,7 @@ class PangoLayout:
         pango.pango_layout_set_attributes(self._pointer, attrs)
 
     def set_text(self, text):
-        text = text.encode('utf-8')
+        text = text.encode("utf-8")
         pango.pango_layout_set_text(self._pointer, text, -1)
 
     def get_text(self):
@@ -180,11 +179,11 @@ def parse_markup(value, accel_marker=0):
     ret = pango.pango_parse_markup(value, -1, accel_marker, attr_list, text, ffi.NULL, error)
 
     if ret == 0:
-        raise Exception("parse_markup() failed for %s" % value)
+        raise Exception(f"parse_markup() failed for {value}")
 
     return attr_list[0], ffi.string(text[0]), chr(accel_marker)
 
 
 def markup_escape_text(text):
-    ret = gobject.g_markup_escape_text(text.encode('utf-8'), -1)
+    ret = gobject.g_markup_escape_text(text.encode("utf-8"), -1)
     return ffi.string(ret).decode()

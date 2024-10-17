@@ -21,72 +21,106 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
 
-"""
-This module define a widget that displays icons to launch softwares or commands
-when clicked -- a launchbar.
-Only png icon files are displayed, not xpm because cairo doesn't support
-loading of xpm file.
-The order of displaying (from left to right) is in the order of the list.
-
-If no icon was found for the name provided and if default_icon is set to None
-then the name is printed instead. If default_icon is defined then this icon is
-displayed instead.
-
-To execute a software:
- - ('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode')
-To execute a python command in qtile, begin with by 'qshell:'
- - ('logout', 'qshell:self.qtile.cmd_shutdown()', 'logout from qtile')
-
-
-"""
 import os.path
 
 import cairocffi
-from xdg.IconTheme import getIconPath
+
+try:
+    from xdg.IconTheme import getIconPath
+
+    has_xdg = True
+except ImportError:
+    has_xdg = False
 
 from libqtile import bar
+from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
 class LaunchBar(base._Widget):
-    """A widget that display icons to launch the associated command
-
-    Widget requirements: pyxdg_.
-
-    .. _pyxdg: https://freedesktop.org/wiki/Software/pyxdg/
-
-    Parameters
-    ==========
-    progs :
-        a list of tuples ``(software_name, command_to_execute, comment)``, for
-        example::
-
-            ('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode')
-            ('logout', 'qshell:self.qtile.cmd_shutdown()', 'logout from qtile')
     """
+    This module defines a widget that displays icons to launch softwares or commands
+    when clicked -- a launchbar.
+    Only png icon files are displayed, not xpm because cairo doesn't support
+    loading of xpm file.
+    The order of displaying (from left to right) is in the order of the list.
+
+    If no icon was found for the name provided and if default_icon is set to None
+    then the name is printed instead. If default_icon is defined then this icon is
+    displayed instead.
+
+    To execute a software:
+     - ('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode')
+    To execute a python command in qtile, begin with by 'qshell:'
+     - ('/path/to/icon.png', 'qshell:self.qtile.shutdown()', 'logout from qtile')
+
+
+    Optional requirements: `pyxdg <https://pypi.org/project/pyxdg/>`__ for finding the icon path if it is not provided in the ``progs`` tuple.
+    """
+
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('padding', 2, 'Padding between icons'),
-        ('default_icon', '/usr/share/icons/oxygen/256x256/mimetypes/'
-         'application-x-executable.png', 'Default icon not found'),
+        ("padding", 2, "Padding between icons"),
+        (
+            "default_icon",
+            "/usr/share/icons/oxygen/256x256/mimetypes/application-x-executable.png",
+            "Default icon not found",
+        ),
+        ("font", "sans", "Text font"),
+        ("fontsize", None, "Font pixel size. Calculated if None."),
+        ("fontshadow", None, "Font shadow color, default is None (no shadow)"),
+        ("foreground", "#ffffff", "Text colour."),
+        (
+            "progs",
+            [],
+            "A list of tuples (software_name or icon_path, command_to_execute, comment), for example:"
+            " [('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode'), "
+            " ('/path/to/icon.png', 'qshell:self.qtile.shutdown()', 'logout from qtile')]",
+        ),
+        ("text_only", False, "Don't use any icons."),
+        ("icon_size", None, "Size of icons. ``None`` to fit to bar."),
+        ("padding_y", 0, "Vertical adjustment for icons."),
+        (
+            "theme_path",
+            None,
+            "Path to icon theme to be used by pyxdg for icons. ``None`` will use default icon theme.",
+        ),
     ]
 
-    def __init__(self, progs=None, width=bar.CALCULATED, **config):
+    def __init__(
+        self, _progs: list[tuple[str, str, str]] | None = None, width=bar.CALCULATED, **config
+    ):
         base._Widget.__init__(self, width, **config)
-        if progs is None:
-            progs = []
         self.add_defaults(LaunchBar.defaults)
-        self.surfaces = {}
-        self.icons_files = {}
-        self.icons_widths = {}
-        self.icons_offsets = {}
+        self.surfaces: dict[str, Img | base._TextBox] = {}
+        self.icons_files: dict[str, str | None] = {}
+        self.icons_widths: dict[str, int] = {}
+        self.icons_offsets: dict[str, int] = {}
+
+        if _progs:
+            logger.warning(
+                "The use of a positional argument in LaunchBar is deprecated. "
+                "Please update your config to use progs=[...]."
+            )
+            config["progs"] = _progs
+
         # For now, ignore the comments but may be one day it will be useful
-        self.progs = dict(enumerate([{'name': prog[0], 'cmd': prog[1],
-                                      'comment': prog[2] if len(prog) > 2 else
-                                      None} for prog in progs]))
-        self.progs_name = set([prog['name'] for prog in self.progs.values()])
+        self.progs = dict(
+            enumerate(
+                [
+                    {
+                        "name": prog[0],
+                        "cmd": prog[1],
+                        "comment": prog[2] if len(prog) > 2 else None,
+                    }
+                    for prog in config.get("progs", list())
+                ]
+            )
+        )
+        self.progs_name = set([prog["name"] for prog in self.progs.values()])
         self.length_type = bar.STATIC
         self.length = 0
 
@@ -97,22 +131,29 @@ class LaunchBar(base._Widget):
         self.length = self.calculate_length()
 
     def setup_images(self):
-        """ Create image structures for each icon files. """
+        """Create image structures for each icon files."""
+        self._icon_size = self.icon_size if self.icon_size is not None else self.bar.height - 4
+        self._icon_padding = (self.bar.height - self._icon_size) // 2
+
         for img_name, iconfile in self.icons_files.items():
-            if iconfile is None:
-                logger.warning(
-                    'No icon found for application "%s" (%s) switch to text mode',
-                    img_name, iconfile)
+            if iconfile is None or self.text_only:
+                # Only warn the user that there's no icon if they haven't set text only mode
+                if not self.text_only:
+                    logger.warning(
+                        'No icon found for application "%s" (%s) switch to text mode',
+                        img_name,
+                        iconfile,
+                    )
                 # if no icon is found and no default icon was set, we just
                 # print the name, based on a textbox.
                 textbox = base._TextBox()
                 textbox._configure(self.qtile, self.bar)
                 textbox.layout = self.drawer.textlayout(
                     textbox.text,
-                    textbox.foreground,
-                    textbox.font,
-                    textbox.fontsize,
-                    textbox.fontshadow,
+                    self.foreground,
+                    self.font,
+                    self.fontsize,
+                    self.fontshadow,
                     markup=textbox.markup,
                 )
                 # the name will be displayed
@@ -123,18 +164,20 @@ class LaunchBar(base._Widget):
                 continue
             else:
                 try:
-                    img = cairocffi.ImageSurface.create_from_png(iconfile)
+                    img = Img.from_path(iconfile)
                 except cairocffi.Error:
-                    logger.exception('Error loading icon for application "%s" (%s)', img_name, iconfile)
+                    logger.exception(
+                        'Error loading icon for application "%s" (%s)', img_name, iconfile
+                    )
                     return
 
-            input_width = img.get_width()
-            input_height = img.get_height()
+            input_width = img.width
+            input_height = img.height
 
-            sp = input_height / (self.bar.height - 4)
+            sp = input_height / (self._icon_size)
             width = int(input_width / sp)
 
-            imgpat = cairocffi.SurfacePattern(img)
+            imgpat = cairocffi.SurfacePattern(img.surface)
             scaler = cairocffi.Matrix()
             scaler.scale(sp, sp)
             scaler.translate(self.padding * -1, -2)
@@ -145,25 +188,33 @@ class LaunchBar(base._Widget):
             self.icons_widths[img_name] = width
 
     def _lookup_icon(self, name):
-        """ Search for the icon corresponding to one command. """
+        """Search for the icon corresponding to one command."""
         self.icons_files[name] = None
+
+        # expands ~ if name is a path and does nothing if not
+        ipath = os.path.expanduser(name)
+
         # if the software_name is directly an absolute path icon file
-        if os.path.isabs(name):
+        if os.path.isabs(ipath):
             # name start with '/' thus it's an absolute path
-            root, ext = os.path.splitext(name)
-            if ext == '.png':
-                self.icons_files[name] = name if os.path.isfile(name) else None
+            root, ext = os.path.splitext(ipath)
+            img_extensions = [".tif", ".tiff", ".bmp", ".jpg", ".jpeg", ".gif", ".png", ".svg"]
+            if ext in img_extensions:
+                self.icons_files[name] = ipath if os.path.isfile(ipath) else None
             else:
                 # try to add the extension
-                self.icons_files[name] = name + '.png' if os.path.isfile(name + '.png') else None
-        else:
-            self.icons_files[name] = getIconPath(name)
+                for extension in img_extensions:
+                    if os.path.isfile(ipath + extension):
+                        self.icons_files[name] = ipath + extension
+                        break
+        elif has_xdg:
+            self.icons_files[name] = getIconPath(name, theme=self.theme_path)
         # no search method found an icon, so default icon
         if self.icons_files[name] is None:
             self.icons_files[name] = self.default_icon
 
     def lookup_icons(self):
-        """ Search for the icons corresponding to the commands to execute. """
+        """Search for the icons corresponding to the commands to execute."""
         if self.default_icon is not None:
             if not os.path.isfile(self.default_icon):
                 # if the default icon provided is not found, switch to
@@ -173,54 +224,60 @@ class LaunchBar(base._Widget):
             self._lookup_icon(name)
 
     def get_icon_in_position(self, x, y):
-        """ Determine which icon is clicked according to its position. """
+        """Determine which icon is clicked according to its position."""
         for i in self.progs:
-            if x < (self.icons_offsets[i] +
-                    self.icons_widths[self.progs[i]['name']] +
-                    self.padding / 2):
+            if x < (
+                self.icons_offsets[i]
+                + self.icons_widths[self.progs[i]["name"]]
+                + self.padding / 2
+            ):
                 return i
 
     def button_press(self, x, y, button):
-        """ Launch the associated command to the clicked icon. """
+        """Launch the associated command to the clicked icon."""
         base._Widget.button_press(self, x, y, button)
         if button == 1:
             icon = self.get_icon_in_position(x, y)
             if icon is not None:
-                cmd = self.progs[icon]['cmd']
-                if cmd.startswith('qshell:'):
+                cmd = self.progs[icon]["cmd"]
+                if cmd.startswith("qshell:"):
                     exec(cmd[7:].lstrip())
                 else:
-                    self.qtile.cmd_spawn(cmd)
+                    self.qtile.spawn(cmd)
             self.draw()
 
     def draw(self):
-        """ Draw the icons in the widget. """
+        """Draw the icons in the widget."""
         self.drawer.clear(self.background or self.bar.background)
         xoffset = 0
         for i in sorted(self.progs.keys()):
+            self.drawer.ctx.save()
+            self.drawer.ctx.translate(xoffset, 0)
             self.icons_offsets[i] = xoffset + self.padding
-            name = self.progs[i]['name']
+            name = self.progs[i]["name"]
             icon_width = self.icons_widths[name]
-            self.drawer.ctx.move_to(self.offset + xoffset, icon_width)
-            self.drawer.clear(self.background or self.bar.background)
             if isinstance(self.surfaces[name], base._TextBox):
                 # display the name if no icon was found and no default icon
                 textbox = self.surfaces[name]
                 textbox.layout.draw(
                     self.padding + textbox.actual_padding,
-                    int((self.bar.height - textbox.layout.height) / 2.0) + 1
+                    int((self.bar.height - textbox.layout.height) / 2.0) + 1,
                 )
             else:
                 # display an icon
+                # Translate to vertically centre the icon
+                self.drawer.ctx.translate(0, self._icon_padding + self.padding_y)
                 self.drawer.ctx.set_source(self.surfaces[name])
                 self.drawer.ctx.paint()
-            self.drawer.draw(offsetx=self.offset + xoffset,
-                             width=icon_width + self.padding)
+
+            self.drawer.ctx.restore()
+
             xoffset += icon_width + self.padding
-        if self.padding:
-            self.drawer.draw(offsetx=self.offset + xoffset, width=self.padding)
+
+        self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
 
     def calculate_length(self):
-        """ Compute the width of the widget according to each icon width. """
-        return sum(self.icons_widths[prg['name']] for prg in self.progs.values()) \
-            + self.padding * (len(self.progs) + 1)
+        """Compute the width of the widget according to each icon width."""
+        return sum(
+            self.icons_widths[prg["name"]] for prg in self.progs.values()
+        ) + self.padding * (len(self.progs) + 1)

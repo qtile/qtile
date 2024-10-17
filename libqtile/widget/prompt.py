@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2010-2011 Aldo Cortesi
 # Copyright (c) 2010 Philip Kranz
 # Copyright (c) 2011 Mounier Florian
@@ -31,17 +30,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import abc
 import glob
 import os
 import pickle
 import string
 from collections import deque
-from typing import List, Optional, Tuple
 
-from libqtile import bar, hook, pangocffi, utils, xkeysyms
-from libqtile.backend.x11 import xcbq
-from libqtile.command.base import CommandObject, SelectError
+from libqtile import hook, pangocffi, utils
+from libqtile.command.base import CommandObject, SelectError, expose_command
 from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import CommandError, QtileCommandInterface
 from libqtile.log_utils import logger
@@ -54,7 +53,7 @@ class AbstractCompleter(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def actual(self) -> Optional[str]:
+    def actual(self) -> str | None:
         pass
 
     @abc.abstractmethod
@@ -62,9 +61,14 @@ class AbstractCompleter(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def complete(self, txt: str) -> str:
-        """Perform the requested completion on the given text"""
-        pass  # pragma: no cover
+    def complete(self, txt: str, aliases: dict[str, str] | None = None) -> str:
+        """
+        Perform the requested completion on the given text.
+
+        The completer can optionally support aliases, which map strings to commands. The
+        completer should include the aliases in the completion results.
+        """
+        # pragma: no cover
 
 
 class NullCompleter(AbstractCompleter):
@@ -77,7 +81,7 @@ class NullCompleter(AbstractCompleter):
     def reset(self) -> None:
         pass
 
-    def complete(self, txt: str) -> str:
+    def complete(self, txt: str, _aliases: dict[str, str] | None = None) -> str:
         return txt
 
 
@@ -85,17 +89,17 @@ class FileCompleter(AbstractCompleter):
     def __init__(self, qtile, _testing=False) -> None:
         self._testing = _testing
         self.qtile = qtile
-        self.thisfinal = None  # type: Optional[str]
-        self.lookup = None  # type: Optional[List[Tuple[str, str]]]
+        self.thisfinal = None  # type: str | None
+        self.lookup = None  # type: list[tuple[str, str]] | None
         self.reset()
 
-    def actual(self) -> Optional[str]:
+    def actual(self) -> str | None:
         return self.thisfinal
 
     def reset(self) -> None:
         self.lookup = None
 
-    def complete(self, txt: str) -> str:
+    def complete(self, txt: str, _aliases: dict[str, str] | None = None) -> str:
         """Returns the next completion for txt, or None if there is no completion"""
         if self.lookup is None:
             self.lookup = []
@@ -129,28 +133,28 @@ class QshCompleter(AbstractCompleter):
     def __init__(self, qtile: CommandObject) -> None:
         q = QtileCommandInterface(qtile)
         self.client = InteractiveCommandClient(q)
-        self.thisfinal = None  # type: Optional[str]
+        self.thisfinal = None  # type: str | None
         self.reset()
 
-    def actual(self) -> Optional[str]:
+    def actual(self) -> str | None:
         return self.thisfinal
 
     def reset(self) -> None:
-        self.lookup = None  # type: Optional[List[Tuple[str, str]]]
-        self.path = ''
+        self.lookup = None  # type: list[tuple[str, str]] | None
+        self.path = ""
         self.offset = -1
 
-    def complete(self, txt: str) -> str:
+    def complete(self, txt: str, _aliases: dict[str, str] | None = None) -> str:
         txt = txt.lower()
         if self.lookup is None:
             self.lookup = []
-            path = txt.split('.')[:-1]
-            self.path = '.'.join(path)
-            term = txt.split('.')[-1]
+            path = txt.split(".")[:-1]
+            self.path = ".".join(path)
+            term = txt.split(".")[-1]
             if len(self.path) > 0:
-                self.path += '.'
+                self.path += "."
 
-            contains_cmd = 'self.client.%s_contains' % self.path
+            contains_cmd = f"self.client.{self.path}_contains"
             try:
                 contains = eval(contains_cmd)
             except AttributeError:
@@ -159,14 +163,14 @@ class QshCompleter(AbstractCompleter):
                 if obj.lower().startswith(term):
                     self.lookup.append((obj, obj))
 
-            commands_cmd = 'self.client.%scommands()' % self.path
+            commands_cmd = f"self.client.{self.path}commands()"
             try:
                 commands = eval(commands_cmd)
             except (CommandError, AttributeError):
                 commands = []
             for cmd in commands:
                 if cmd.lower().startswith(term):
-                    self.lookup.append((cmd + '()', cmd + '()'))
+                    self.lookup.append((cmd + "()", cmd + "()"))
 
             self.offset = -1
             self.lookup.append((term, term))
@@ -182,11 +186,11 @@ class QshCompleter(AbstractCompleter):
 class GroupCompleter(AbstractCompleter):
     def __init__(self, qtile: CommandObject) -> None:
         self.qtile = qtile
-        self.thisfinal = None  # type: Optional[str]
-        self.lookup = None  # type: Optional[List[Tuple[str, str]]]
+        self.thisfinal = None  # type: str | None
+        self.lookup = None  # type: list[tuple[str, str]] | None
         self.offset = -1
 
-    def actual(self) -> Optional[str]:
+    def actual(self) -> str | None:
         """Returns the current actual value"""
         return self.thisfinal
 
@@ -194,12 +198,12 @@ class GroupCompleter(AbstractCompleter):
         self.lookup = None
         self.offset = -1
 
-    def complete(self, txt: str) -> str:
+    def complete(self, txt: str, _aliases: dict[str, str] | None = None) -> str:
         """Returns the next completion for txt, or None if there is no completion"""
         txt = txt.lower()
         if not self.lookup:
             self.lookup = []
-            for group in self.qtile.groups_map.keys():  # type: ignore
+            for group in self.qtile.groups_map.keys():
                 if group.lower().startswith(txt):
                     self.lookup.append((group, group))
 
@@ -218,11 +222,11 @@ class GroupCompleter(AbstractCompleter):
 class WindowCompleter(AbstractCompleter):
     def __init__(self, qtile: CommandObject) -> None:
         self.qtile = qtile
-        self.thisfinal = None  # type: Optional[str]
-        self.lookup = None  # type: Optional[List[Tuple[str, str]]]
+        self.thisfinal = None  # type: str | None
+        self.lookup = None  # type: list[tuple[str, str]] | None
         self.offset = -1
 
-    def actual(self) -> Optional[str]:
+    def actual(self) -> str | None:
         """Returns the current actual value"""
         return self.thisfinal
 
@@ -230,11 +234,11 @@ class WindowCompleter(AbstractCompleter):
         self.lookup = None
         self.offset = -1
 
-    def complete(self, txt: str) -> str:
+    def complete(self, txt: str, _aliases: dict[str, str] | None = None) -> str:
         """Returns the next completion for txt, or None if there is no completion"""
         if self.lookup is None:
             self.lookup = []
-            for wid, window in self.qtile.windows_map.items():  # type: ignore
+            for wid, window in self.qtile.windows_map.items():
                 if window.group and window.name.lower().startswith(txt):
                     self.lookup.append((window.name, wid))
 
@@ -261,12 +265,12 @@ class CommandCompleter:
     DEFAULTPATH = "/bin:/usr/bin:/usr/local/bin"
 
     def __init__(self, qtile, _testing=False):
-        self.lookup = None  # type: Optional[List[Tuple[str, str]]]
+        self.lookup = None  # type: list[tuple[str, str]] | None
         self.offset = -1
-        self.thisfinal = None  # type: Optional[str]
+        self.thisfinal = None  # type: str | None
         self._testing = _testing
 
-    def actual(self) -> Optional[str]:
+    def actual(self) -> str | None:
         """Returns the current actual value"""
         return self.thisfinal
 
@@ -277,7 +281,7 @@ class CommandCompleter:
         self.lookup = None
         self.offset = -1
 
-    def complete(self, txt: str) -> str:
+    def complete(self, txt: str, aliases: dict[str, str] | None = None) -> str:
         """Returns the next completion for txt, or None if there is no completion"""
         if self.lookup is None:
             # Lookup is a set of (display value, actual value) tuples.
@@ -302,16 +306,19 @@ class CommandCompleter:
                 for d in dirs:
                     try:
                         d = os.path.expanduser(d)
-                        for cmd in glob.iglob(os.path.join(d, "%s*" % txt)):
+                        for cmd in glob.iglob(os.path.join(d, f"{txt}*")):
                             if self.executable(cmd):
                                 self.lookup.append(
-                                    (
-                                        os.path.basename(cmd),
-                                        cmd
-                                    ),
+                                    (os.path.basename(cmd), cmd),
                                 )
                     except OSError:
                         pass
+
+            if aliases:
+                for alias in aliases:
+                    if alias.startswith(txt):
+                        self.lookup.append((alias, aliases[alias]))
+
             self.lookup.sort()
             self.offset = -1
             self.lookup.append((txt, txt))
@@ -328,68 +335,46 @@ class Prompt(base._TextBox):
 
     Input should be started using the ``.start_input()`` method on this class.
     """
+
     completers = {
         "file": FileCompleter,
         "qshell": QshCompleter,
         "cmd": CommandCompleter,
         "group": GroupCompleter,
         "window": WindowCompleter,
-        None: NullCompleter
+        None: NullCompleter,
     }
-    orientations = base.ORIENTATION_HORIZONTAL
-    defaults = [("cursor", True, "Show a cursor"),
-                ("cursorblink", 0.5, "Cursor blink rate. 0 to disable."),
-                ("cursor_color", "bef098",
-                 "Color for the cursor and text over it."),
-                ("prompt", "{prompt}: ", "Text displayed at the prompt"),
-                ("record_history", True, "Keep a record of executed commands"),
-                ("max_history", 100,
-                 "Commands to keep in history. 0 for no limit."),
-                ("ignore_dups_history", False,
-                 "Don't store duplicates in history"),
-                ("bell_style", "audible",
-                 "Alert at the begin/end of the command history. " +
-                 "Possible values: 'audible', 'visual' and None."),
-                ("visual_bell_color", "ff0000",
-                 "Color for the visual bell (changes prompt background)."),
-                ("visual_bell_time", 0.2,
-                 "Visual bell duration (in seconds).")]
 
-    def __init__(self, name="prompt", **config) -> None:
-        base._TextBox.__init__(self, "", bar.CALCULATED, **config)
+    defaults = [
+        ("cursor", True, "Show a cursor"),
+        ("cursorblink", 0.5, "Cursor blink rate. 0 to disable."),
+        ("cursor_color", "bef098", "Color for the cursor and text over it."),
+        ("prompt", "{prompt}: ", "Text displayed at the prompt"),
+        ("record_history", True, "Keep a record of executed commands"),
+        ("max_history", 100, "Commands to keep in history. 0 for no limit."),
+        ("ignore_dups_history", False, "Don't store duplicates in history"),
+        (
+            "bell_style",
+            "audible",
+            "Alert at the begin/end of the command history. "
+            + "Possible values: 'audible' (X11 only), 'visual' and None.",
+        ),
+        ("visual_bell_color", "ff0000", "Color for the visual bell (changes prompt background)."),
+        ("visual_bell_time", 0.2, "Visual bell duration (in seconds)."),
+    ]
+
+    def __init__(self, **config) -> None:
+        base._TextBox.__init__(self, "", **config)
         self.add_defaults(Prompt.defaults)
-        self.name = name
         self.active = False
-        self.completer = None  # type: Optional[AbstractCompleter]
-        # Define key handlers (action to do when hit an specific key)
-        self.keyhandlers = {
-            xkeysyms.keysyms['Tab']: self._trigger_complete,
-            xkeysyms.keysyms['BackSpace']: self._delete_char(),
-            xkeysyms.keysyms['Delete']: self._delete_char(False),
-            xkeysyms.keysyms['KP_Delete']: self._delete_char(False),
-            xkeysyms.keysyms['Escape']: self._unfocus,
-            xkeysyms.keysyms['Return']: self._send_cmd,
-            xkeysyms.keysyms['KP_Enter']: self._send_cmd,
-            xkeysyms.keysyms['Up']: self._get_prev_cmd,
-            xkeysyms.keysyms['KP_Up']: self._get_prev_cmd,
-            xkeysyms.keysyms['Down']: self._get_next_cmd,
-            xkeysyms.keysyms['KP_Down']: self._get_next_cmd,
-            xkeysyms.keysyms['Left']: self._move_cursor(),
-            xkeysyms.keysyms['KP_Left']: self._move_cursor(),
-            xkeysyms.keysyms['Right']: self._move_cursor("right"),
-            xkeysyms.keysyms['KP_Right']: self._move_cursor("right"),
-        }
-        printables = {x: self._write_char for x in range(127) if
-                      chr(x) in string.printable}
-        self.keyhandlers.update(printables)
-        if self.bell_style == "visual":
-            self.original_background = self.background
+        self.completer = None  # type: AbstractCompleter | None
+        self.aliases: dict[str, str] | None = None
+
         # If history record is on, get saved history or create history record
         if self.record_history:
-            self.history_path = os.path.join(utils.get_cache_dir(),
-                                             'prompt_history')
+            self.history_path = os.path.join(utils.get_cache_dir(), "prompt_history")
             if os.path.exists(self.history_path):
-                with open(self.history_path, 'rb') as f:
+                with open(self.history_path, "rb") as f:
                     try:
                         self.history = pickle.load(f)
                         if self.ignore_dups_history:
@@ -398,22 +383,22 @@ class Prompt(base._TextBox):
                         # unfortunately, pickle doesn't wrap its errors, so we
                         # can't detect what's a pickle error and what's not.
                         logger.exception("failed to load prompt history")
-                        self.history = {x: deque(maxlen=self.max_history)
-                                        for x in self.completers}
+                        self.history = {
+                            x: deque(maxlen=self.max_history) for x in self.completers
+                        }
 
                     # self.history of size does not match.
                     if len(self.history) != len(self.completers):
-                        self.history = {x: deque(maxlen=self.max_history)
-                                        for x in self.completers}
+                        self.history = {
+                            x: deque(maxlen=self.max_history) for x in self.completers
+                        }
 
-                    if self.max_history != \
-                       self.history[list(self.history)[0]].maxlen:
-                        self.history = {x: deque(self.history[x],
-                                                 self.max_history)
-                                        for x in self.completers}
+                    if self.max_history != self.history[list(self.history)[0]].maxlen:
+                        self.history = {
+                            x: deque(self.history[x], self.max_history) for x in self.completers
+                        }
             else:
-                self.history = {x: deque(maxlen=self.max_history)
-                                for x in self.completers}
+                self.history = {x: deque(maxlen=self.max_history) for x in self.completers}
 
     def _configure(self, qtile, bar) -> None:
         self.markup = True
@@ -425,8 +410,45 @@ class Prompt(base._TextBox):
 
         hook.subscribe.client_focus(f)
 
-    def start_input(self, prompt, callback, complete=None,
-                    strict_completer=False, allow_empty_input=False) -> None:
+        # Define key handlers (action to do when a specific key is hit)
+        keyhandlers = {
+            "Tab": self._trigger_complete,
+            "BackSpace": self._delete_char(),
+            "Delete": self._delete_char(False),
+            "KP_Delete": self._delete_char(False),
+            "Escape": self._unfocus,
+            "Return": self._send_cmd,
+            "KP_Enter": self._send_cmd,
+            "Up": self._get_prev_cmd,
+            "KP_Up": self._get_prev_cmd,
+            "Down": self._get_next_cmd,
+            "KP_Down": self._get_next_cmd,
+            "Left": self._move_cursor(),
+            "KP_Left": self._move_cursor(),
+            "Right": self._move_cursor("right"),
+            "KP_Right": self._move_cursor("right"),
+        }
+        self.keyhandlers = {qtile.core.keysym_from_name(k): v for k, v in keyhandlers.items()}
+        printables = {x: self._write_char for x in range(127) if chr(x) in string.printable}
+        self.keyhandlers.update(printables)
+        self.tab = qtile.core.keysym_from_name("Tab")
+
+        self.bell_style: str
+        if self.bell_style == "audible" and qtile.core.name != "x11":
+            self.bell_style = "visual"
+            logger.warning("Prompt widget only supports audible bell under X11")
+        if self.bell_style == "visual":
+            self.original_background = self.background
+
+    def start_input(
+        self,
+        prompt,
+        callback,
+        complete=None,
+        strict_completer=False,
+        allow_empty_input=False,
+        aliases: dict[str, str] | None = None,
+    ) -> None:
         """Run the prompt
 
         Displays a prompt and starts to take one line of keyboard input from
@@ -452,6 +474,9 @@ class Prompt(base._TextBox):
             available.
         allow_empty_input :
             When True, an empty value will still call the callback function
+        aliases :
+            Dictionary mapping aliases to commands. If the entered command is a key in
+            this dict, the command it maps to will be executed instead.
         """
 
         if self.cursor and self.cursorblink and not self.active:
@@ -464,6 +489,7 @@ class Prompt(base._TextBox):
         self.show_cursor = self.cursor
         self.cursor_position = 0
         self.callback = callback
+        self.aliases = aliases
         self.completer = self.completers[complete](self.qtile)
         self.strict_completer = strict_completer
         self.allow_empty_input = allow_empty_input
@@ -475,10 +501,7 @@ class Prompt(base._TextBox):
 
     def calculate_length(self) -> int:
         if self.text:
-            width = min(
-                self.layout.width,
-                self.bar.width
-            ) + self.actual_padding * 2
+            width = min(self.layout.width, self.bar.width) + self.actual_padding * 2
             return width
         else:
             return 0
@@ -491,9 +514,9 @@ class Prompt(base._TextBox):
 
     def _highlight_text(self, text) -> str:
         color = utils.hex(self.cursor_color)
-        text = '<span foreground="{0}">{1}</span>'.format(color, text)
+        text = f'<span foreground="{color}">{text}</span>'
         if self.show_cursor:
-            text = '<u>{}</u>'.format(text)
+            text = f"<u>{text}</u>"
         return text
 
     def _update(self) -> None:
@@ -501,13 +524,13 @@ class Prompt(base._TextBox):
             self.text = self.archived_input or self.user_input
             cursor = pangocffi.markup_escape_text(" ")
             if self.cursor_position < len(self.text):
-                txt1 = self.text[:self.cursor_position]
+                txt1 = self.text[: self.cursor_position]
                 txt2 = self.text[self.cursor_position]
-                txt3 = self.text[self.cursor_position + 1:]
+                txt3 = self.text[self.cursor_position + 1 :]
                 for text in (txt1, txt2, txt3):
                     text = pangocffi.markup_escape_text(text)
                 txt2 = self._highlight_text(txt2)
-                self.text = "{0}{1}{2}{3}".format(txt1, txt2, txt3, cursor)
+                self.text = f"{txt1}{txt2}{txt3}{cursor}"
             else:
                 self.text = pangocffi.markup_escape_text(self.text)
                 self.text += self._highlight_text(cursor)
@@ -519,7 +542,7 @@ class Prompt(base._TextBox):
     def _trigger_complete(self) -> None:
         # Trigger the auto completion in user input
         assert self.completer is not None
-        self.user_input = self.completer.complete(self.user_input)
+        self.user_input = self.completer.complete(self.user_input, self.aliases)
         self.cursor_position = len(self.user_input)
 
     def _history_to_input(self) -> None:
@@ -532,8 +555,8 @@ class Prompt(base._TextBox):
 
     def _insert_before_cursor(self, charcode) -> None:
         # Insert a character (given their charcode) in input, before the cursor
-        txt1 = self.user_input[:self.cursor_position]
-        txt2 = self.user_input[self.cursor_position:]
+        txt1 = self.user_input[: self.cursor_position]
+        txt2 = self.user_input[self.cursor_position :]
         self.user_input = txt1 + chr(charcode) + txt2
         self.cursor_position += 1
 
@@ -546,13 +569,14 @@ class Prompt(base._TextBox):
             if not backspace and self.cursor_position == len(self.user_input):
                 self._alert()
             elif len(self.user_input) > 0 and self.cursor_position + step > -1:
-                txt1 = self.user_input[:self.cursor_position + step]
-                txt2 = self.user_input[self.cursor_position + step + 1:]
+                txt1 = self.user_input[: self.cursor_position + step]
+                txt2 = self.user_input[self.cursor_position + step + 1 :]
                 self.user_input = txt1 + txt2
                 if step:
                     self.cursor_position += step
             else:
                 self._alert()
+
         return f
 
     def _write_char(self):
@@ -587,14 +611,14 @@ class Prompt(base._TextBox):
                 if self.position < self.max_history:
                     self.position += 1
                 os.makedirs(os.path.dirname(self.history_path), exist_ok=True)
-                with open(self.history_path, mode='wb') as f:
+                with open(self.history_path, mode="wb") as f:
                     pickle.dump(self.history, f, protocol=2)
             self.callback(self.user_input)
 
     def _alert(self):
         # Fire an alert (audible or visual), if bell style is not None.
         if self.bell_style == "audible":
-            self.qtile.conn.conn.core.Bell(0)
+            self.qtile.core.conn.conn.core.Bell(0)
         elif self.bell_style == "visual":
             self.background = self.visual_bell_color
             self.timeout_add(self.visual_bell_time, self._stop_visual_alert)
@@ -654,21 +678,16 @@ class Prompt(base._TextBox):
         # Return the action (a function) to do according the pressed key (k).
         self.key = k
         if k in self.keyhandlers:
-            if k != xkeysyms.keysyms['Tab']:
+            if k != self.tab:
                 self.actual_value = self.completer.actual()
                 self.completer.reset()
             return self.keyhandlers[k]
 
-    def handle_KeyPress(self, e):  # noqa: N802
-        """KeyPress handler for the minibuffer.
+    def process_key_press(self, keysym: int):
+        """Key press handler for the minibuffer.
 
         Currently only supports ASCII characters.
         """
-        mask = xcbq.ModMasks["shift"] | xcbq.ModMasks["lock"]
-        state = 1 if e.state & mask else 0
-
-        keysym = self.qtile.conn.code_to_syms[e.detail][state]
-
         handle_key = self._get_keyhandler(keysym)
 
         if handle_key:
@@ -676,16 +695,12 @@ class Prompt(base._TextBox):
             del self.key
         self._update()
 
-    def cmd_fake_keypress(self, key):
-        class Dummy:
-            pass
-        d = Dummy()
-        keysym = xcbq.keysyms[key]
-        d.detail = self.qtile.conn.keysym_to_keycode(keysym)[0]
-        d.state = 0
-        self.handle_KeyPress(d)
+    @expose_command()
+    def fake_keypress(self, key: str) -> None:
+        self.process_key_press(self.qtile.core.keysym_from_name(key))
 
-    def cmd_info(self):
+    @expose_command()
+    def info(self):
         """Returns a dictionary of info for this object"""
         return dict(
             name=self.name,
@@ -694,8 +709,8 @@ class Prompt(base._TextBox):
             active=self.active,
         )
 
-    def cmd_exec_general(
-            self, prompt, object_name, cmd_name, selector=None, completer=None):
+    @expose_command()
+    def exec_general(self, prompt, object_name, cmd_name, selector=None, completer=None):
         """
         Execute a cmd of any object. For example layout, group, window, widget
         , etc with a string that is obtained from start_input.
@@ -742,14 +757,13 @@ class Prompt(base._TextBox):
 
     def _dedup_history(self):
         """Filter the history deque, clearing all duplicate values."""
-        self.history = {x: self._dedup_deque(self.history[x])
-                        for x in self.completers}
+        self.history = {x: self._dedup_deque(self.history[x]) for x in self.completers}
 
     def _dedup_deque(self, dq):
-        return deque(_LastUpdatedOrderedDict.fromkeys(dq))
+        return deque(_LastUpdatedOrdereddict.fromkeys(dq))
 
 
-class _LastUpdatedOrderedDict(dict):
+class _LastUpdatedOrdereddict(dict):
     """Store items in the order the keys were last added."""
 
     def __setitem__(self, key, value):

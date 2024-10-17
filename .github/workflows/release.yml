@@ -1,0 +1,334 @@
+name: Publish to PyPI
+on:
+  push:
+    branches-ignore: ['*']
+    tags: ['*']
+  release:
+    types: [published]
+jobs:
+  build-wayland:
+    name: Build Wayland libraries
+    runs-on: ubuntu-latest
+    container: quay.io/pypa/manylinux_2_28_x86_64
+    env:
+      libdrm-version: "2.4.114"
+      seatd-version: "0.6.3"
+      pixman-version: "0.42.0"
+      xkbcommon-version: "1.7.0"
+      xwayland-version: "22.1.9"
+      xcvt-version: "0.1.2"
+      inputproto-version: "2021.5"
+      wayland-protocols-version: "1.32"
+      wayland-version: "1.22.0"
+      wlroots-version: "0.17.3"
+    steps:
+      - name: Install dependencies
+        run: |
+          yum -y install \
+            hwdata \
+            python3-pip \
+            libepoxy-devel \
+            libffi-devel \
+            libinput-devel \
+            libpciaccess-devel \
+            libtirpc-devel \
+            libudev-devel \
+            libXdmcp-devel \
+            libXfont2-devel \
+            libxkbcommon-x11-devel \
+            libxkbfile-devel \
+            libxml2-devel \
+            libxshmfence-devel \
+            mesa-libEGL-devel \
+            mesa-libgbm-devel \
+            openssl-devel \
+            xcb-util-devel \
+            xcb-util-image-devel \
+            xcb-util-keysyms-devel \
+            xcb-util-renderutil-devel \
+            xcb-util-wm-devel \
+            xorg-x11-font-utils \
+            xorg-x11-xtrans-devel \
+            ninja-build \
+            wget
+      - name: Set environment variables
+        run: |
+          echo "CPATH=${HOME}/wayland/usr/include" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=${HOME}/wayland/usr/lib" >> $GITHUB_ENV
+          echo "LIBRARY_PATH=${HOME}/wayland/usr/lib" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=${HOME}/wayland/usr/share/pkgconfig:${HOME}/wayland/usr/lib/pkgconfig" >> $GITHUB_ENV
+      - name: Download and unpack Wayland source
+        run: |
+          wget $WAYLAND_URL
+          wget $WAYLAND_PROTOCOLS_URL
+          wget $XKBCOMMON_URL
+          wget $XCVT_URL
+          wget $INPUTPROTO_URL
+          wget $XWAYLAND_URL
+          wget $LIBDRM_URL
+          wget -O seatd.tar.gz $SEATD_URL
+          wget $PIXMAN_URL
+          wget -O wlroots.tar.gz $WLROOTS_URL
+          tar -xJf wayland-${{ env.wayland-version }}.tar.xz
+          tar -xJf wayland-protocols-${{ env.wayland-protocols-version }}.tar.xz
+          tar -xzf xkbcommon-${{ env.xkbcommon-version }}.tar.gz
+          tar -xzf xorgproto-xorgproto-${{ env.inputproto-version }}.tar.gz
+          tar -xzf libxcvt-libxcvt-${{ env.xcvt-version }}.tar.gz
+          tar -xzf xserver-xwayland-${{ env.xwayland-version }}.tar.gz
+          tar -xzf drm-libdrm-${{ env.libdrm-version }}.tar.gz
+          tar -xjf pixman-pixman-${{ env.pixman-version }}.tar.bz2
+          tar -xzf seatd.tar.gz
+          tar -xzf wlroots.tar.gz
+        env:
+          WAYLAND_URL: https://gitlab.freedesktop.org/wayland/wayland/-/releases/${{ env.wayland-version }}/downloads/wayland-${{ env.wayland-version }}.tar.xz
+          WAYLAND_PROTOCOLS_URL: https://gitlab.freedesktop.org/wayland/wayland-protocols/-/releases/${{ env.wayland-protocols-version }}/downloads/wayland-protocols-${{ env.wayland-protocols-version }}.tar.xz
+          XKBCOMMON_URL: https://github.com/xkbcommon/libxkbcommon/archive/refs/tags/xkbcommon-${{ env.xkbcommon-version }}.tar.gz
+          XWAYLAND_URL: https://gitlab.freedesktop.org/xorg/xserver/-/archive/xwayland-${{ env.xwayland-version }}/xserver-xwayland-${{ env.xwayland-version }}.tar.gz
+          XCVT_URL: https://gitlab.freedesktop.org/xorg/lib/libxcvt/-/archive/libxcvt-${{ env.xcvt-version }}/libxcvt-libxcvt-${{ env.xcvt-version }}.tar.gz
+          INPUTPROTO_URL: https://gitlab.freedesktop.org/xorg/proto/xorgproto/-/archive/xorgproto-${{ env.inputproto-version}}/xorgproto-xorgproto-${{ env.inputproto-version}}.tar.gz
+          LIBDRM_URL: https://gitlab.freedesktop.org/mesa/drm/-/archive/libdrm-${{ env.libdrm-version }}/drm-libdrm-${{ env.libdrm-version }}.tar.gz
+          SEATD_URL: https://git.sr.ht/~kennylevinsen/seatd/archive/${{ env.seatd-version }}.tar.gz
+          PIXMAN_URL: https://gitlab.freedesktop.org/pixman/pixman/-/archive/pixman-${{ env.pixman-version }}/pixman-pixman-${{ env.pixman-version }}.tar.bz2
+          WLROOTS_URL: https://gitlab.freedesktop.org/wlroots/wlroots/-/archive/${{ env.wlroots-version }}/wlroots-${{ env.wlroots-version }}.tar.gz
+      - name: Install meson
+        run: |
+          pip3 install meson
+      - name: Build wayland
+        working-directory: wayland-${{ env.wayland-version }}
+        run: |
+          meson build --prefix=/usr -Ddocumentation=false
+          ninja -C build
+          DESTDIR=~/wayland ninja -C build install
+          ninja -C build install
+      - name: Build wayland-protocols
+        working-directory: wayland-protocols-${{ env.wayland-protocols-version }}
+        run: |
+          meson build --prefix=/usr
+          ninja -C build
+          DESTDIR=~/wayland ninja -C build install
+          ninja -C build install
+      - name: Build xkbcommon
+        working-directory: libxkbcommon-xkbcommon-${{ env.xkbcommon-version }}
+        run: |
+          meson build --prefix=/usr -Denable-x11=false -Dxkb-config-root=/usr/share/X11/xkb -Dx-locale-root=/usr/share/X11/locale
+          ninja -C build
+          DESTDIR=~/wayland ninja -C build install
+          ninja -C build install
+      - name: Build libdrm
+        working-directory: drm-libdrm-${{ env.libdrm-version }}
+        run: |
+          meson build --prefix=/usr
+          ninja -C build
+          DESTDIR=~/wayland ninja -C build install
+          ninja -C build install
+      - name: Build seatd
+        working-directory: seatd-${{ env.seatd-version }}
+        run: |
+          meson build --prefix=/usr
+          ninja -C build
+          DESTDIR=~/wayland ninja -C build install
+          ninja -C build install
+      - name: Build pixman
+        working-directory: pixman-pixman-${{ env.pixman-version }}
+        run: |
+          meson build --prefix=/usr
+          ninja -C build
+          DESTDIR=~/wayland ninja -C build install
+          ninja -C build install
+      - name: Build inputproto
+        working-directory: xorgproto-xorgproto-${{ env.inputproto-version }}
+        run: |
+          meson build --prefix=/usr
+          ninja -C build
+          DESTDIR=~/wayland ninja -C build install
+          ninja -C build install
+      - name: Build libxcvt
+        working-directory: libxcvt-libxcvt-${{ env.xcvt-version }}
+        run: |
+          meson build --prefix=/usr
+          ninja -C build
+          DESTDIR=~/wayland ninja -C build install
+          ninja -C build install
+      - name: Build xwayland
+        working-directory: xserver-xwayland-${{ env.xwayland-version }}
+        run: |
+          meson build --prefix=/usr
+          ninja -C build
+          DESTDIR=~/wayland ninja -C build install
+          ninja -C build install
+      - name: Build wlroots
+        working-directory: wlroots-${{ env.wlroots-version }}
+        run: |
+          meson build --prefix=/usr -Dxwayland=enabled
+          ninja -C build
+          DESTDIR=~/wayland ninja -C build install
+      - name: Create artifact
+        run: tar czf ~/wayland.tar.gz -C ${HOME}/wayland/ .
+      - name: Upload built libraries
+        uses: actions/upload-artifact@v4
+        with:
+          name: wayland
+          path: ~/wayland.tar.gz
+          if-no-files-found: error
+  build-wheel:
+    name: Build wheels
+    runs-on: ubuntu-latest
+    needs: build-wayland
+    container: quay.io/pypa/manylinux_2_28_x86_64
+    strategy:
+      matrix:
+        python-version: ["cp3.10", "cp3.11", "cp3.12"]
+    steps:
+      - name: Install dependencies
+        run: |
+          dnf install -y \
+          cairo-devel \
+          libffi-devel \
+          libudev-devel \
+          libinput-devel \
+          libpciaccess \
+          mesa-libEGL \
+          mesa-libgbm \
+          xcb-util \
+          xcb-util-image \
+          xcb-util-keysyms \
+          xcb-util-renderutil \
+          xcb-util-wm-devel
+      - name: Download wayland libraries
+        uses: actions/download-artifact@v4
+        with:
+          name: wayland
+      - name: Unpack wayland artifact
+        run: tar xf wayland.tar.gz -C /
+      - uses: actions/checkout@v4
+      - name: Set environment variables
+        run: |
+          PYTHON_ROOT=$(find /opt/python -name ${PYTHON_VERSION/./}-*)
+          echo "${PYTHON_ROOT}/bin" >> $GITHUB_PATH
+        shell: bash
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+      - name: Build wheels
+        run: |
+          python -m pip install cffi build auditwheel
+          python -m build --config-setting backend=wayland --wheel .
+          ls dist/
+          auditwheel show dist/qtile-*.whl
+          auditwheel repair --plat manylinux_2_28_x86_64 -w output_wheels dist/qtile-*.whl
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.python-version }}
+          path: output_wheels/qtile*.whl
+  test-wheel:
+    name: Test wheels
+    runs-on: ubuntu-latest
+    needs: build-wheel
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - name: Download wheels
+        if: ${{ matrix.manual-version == '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: wheels-cp${{ matrix.python-version }}
+      - name: Download wheels (manual)
+        if: ${{ matrix.manual-version != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: wheels-${{ matrix.manual-version }}
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install wheel
+        run: pip install qtile-*.whl
+      - name: Check installation
+        run: qtile -h
+  build-source:
+    name: Build source
+    runs-on: ubuntu-latest
+    container: quay.io/pypa/manylinux_2_28_x86_64
+    env:
+      python-version: "cp3.12"
+    steps:
+      - name: Install dependencies
+        run: dnf install -y cairo-devel libffi-devel
+      - uses: actions/checkout@v4
+      - name: Set environment variables
+        run: |
+          PYTHON_ROOT=$(find /opt/python -name ${PYTHON_VERSION/./}-*)
+          echo "${PYTHON_ROOT}/bin" >> $GITHUB_PATH
+        shell: bash
+        env:
+          PYTHON_VERSION: ${{ env.python-version }}
+      - name: Build source
+        run: |
+          python -m pip install build
+          python -m build --sdist .
+      - name: Upload source
+        uses: actions/upload-artifact@v4
+        with:
+          name: source
+          path: dist/*.tar.gz
+  upload-wheel:
+    name: Upload wheels
+    runs-on: ubuntu-latest
+    needs: [test-wheel, build-source]
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - name: Download wheels
+        if: ${{ matrix.manual-version == '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: wheels-cp${{ matrix.python-version }}
+          path: dist/
+      - name: Download wheels (manual)
+        if: ${{ matrix.manual-version != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: wheels-${{ matrix.manual-version }}
+          path: dist/
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        if: github.event_name == 'release'
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Publish package to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        if: github.event_name == 'push'
+        with:
+          user: __token__
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+  upload-source:
+    name: Upload source
+    runs-on: ubuntu-latest
+    needs: [test-wheel, build-source]
+    env:
+      python-version: "cp3.12"
+    steps:
+      - name: Download source
+        uses: actions/download-artifact@v4
+        with:
+          name: source
+          path: dist/
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        if: github.event_name == 'release'
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Publish package to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        if: github.event_name == 'push'
+        with:
+          user: __token__
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true

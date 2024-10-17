@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2018 Juan Riquelme González
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,8 +27,7 @@ from libqtile.widget import base
 class CapsNumLockIndicator(base.ThreadPoolText):
     """Really simple widget to show the current Caps/Num Lock state."""
 
-    orientations = base.ORIENTATION_HORIZONTAL
-    defaults = [('update_interval', 0.5, 'Update Time in seconds.')]
+    defaults = [("update_interval", 0.5, "Update Time in seconds.")]
 
     def __init__(self, **config):
         base.ThreadPoolText.__init__(self, "", **config)
@@ -38,9 +36,10 @@ class CapsNumLockIndicator(base.ThreadPoolText):
     def get_indicators(self):
         """Return a list with the current state of the keys."""
         try:
-            output = self.call_process(['xset', 'q'])
+            output = self.call_process(["xset", "q"])
         except subprocess.CalledProcessError as err:
-            output = err.output.decode()
+            output = err.output
+            return []
         if output.startswith("Keyboard"):
             indicators = re.findall(r"(Caps|Num)\s+Lock:\s*(\w*)", output)
             return indicators
