@@ -2,6 +2,7 @@ Qtile x.xx.x, released xxxx-xx-xx:
     * features
         - A Nix flake has been added which can be used by Nix(OS) users to update to the latest version easily
         - Add `group_window_remove` hook when window is removed from group
+        - New `click_or_drag_only` option for follow_mouse_focus to change the focus to the window under the mouse when click or drag
     * bugfixes
         - Add returns to lazy.function and qtile.core.function
 
