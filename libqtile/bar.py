@@ -408,13 +408,14 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             # be shown as "crashed" as the behaviour is expected. Only notify
             # for genuine crashes.
             if not i.supported_backends or (self.qtile.core.name in i.supported_backends):
-                crash = ConfigErrorWidget(widget=i)
-                crash._configure(self.qtile, self)
-                if self.horizontal:
-                    crash.offsety = self.border_width[0]
-                else:
-                    crash.offsetx = self.border_width[3]
-                self.widgets.insert(index, crash)
+                if not i.hide_crash:
+                    crash = ConfigErrorWidget(widget=i)
+                    crash._configure(self.qtile, self)
+                    if self.horizontal:
+                        crash.offsety = self.border_width[0]
+                    else:
+                        crash.offsetx = self.border_width[3]
+                    self.widgets.insert(index, crash)
 
             self.widgets.remove(i)
 
