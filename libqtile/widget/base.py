@@ -146,6 +146,7 @@ class _Widget(CommandObject, configurable.Configurable):
             {},
             "Dict of mouse button press callback functions. Accepts functions and ``lazy`` calls.",
         ),
+        ("hide_crash", False, "Don't display error in bar if widget crashes on startup."),
     ]
 
     def __init__(self, length, **config):
