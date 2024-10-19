@@ -297,11 +297,6 @@ class Window(_Window, metaclass=ABCMeta):
         """Does this window want to be fullscreen?"""
         return False
 
-    @property
-    def wants_to_maximize(self) -> bool:
-        """Does this window want to be maximize?"""
-        return False
-
     def match(self, match: config._Match) -> bool:
         """Compare this window against a Match instance."""
         return match.compare(self)
