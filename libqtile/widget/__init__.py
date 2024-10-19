@@ -85,6 +85,7 @@ widgets = {
     "StatusNotifier": "statusnotifier",
     "StockTicker": "stock_ticker",
     "SwapGraph": "graph",
+    "SwayNC": "swaync",
     "Systray": "systray",
     "TaskList": "tasklist",
     "TextBox": "textbox",
