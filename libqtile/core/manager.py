@@ -1421,7 +1421,7 @@ class Qtile(CommandObject):
                 prev_group = screen.group
                 continue
             screen.set_group(prev_group)
-            self.cmd_next_screen()
+            self.next_screen()
 
     def windows(self) -> list[dict[str, Any]]:
         """Return info for each client window"""
