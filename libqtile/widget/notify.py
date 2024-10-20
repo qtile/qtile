@@ -219,5 +219,6 @@ class Notify(base._TextBox):
             self._invoke()
 
     def finalize(self):
-        notifier.unregister(self.update, on_close=self.on_close)
+        if notifier is not None:
+            notifier.unregister(self.update, on_close=self.on_close)
         base._TextBox.finalize(self)
