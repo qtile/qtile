@@ -110,8 +110,8 @@ class MultiScreenManagerConfig(ManagerConfig):
     ]
 
 
-manager_config = pytest.mark.parametrize("qtile", [ManagerConfig], indirect=True)
-multi_screen_manager_config = pytest.mark.parametrize("qtile", [MultiScreenManagerConfig], indirect=True)
+manager_config = pytest.mark.parametrize("manager", [ManagerConfig], indirect=True)
+multi_screen_manager_config = pytest.mark.parametrize("manager", [MultiScreenManagerConfig], indirect=True)
 
 
 @dualmonitor
