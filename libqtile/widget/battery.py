@@ -121,55 +121,72 @@ class _FreeBSDBattery(_Battery):
     that should be monitored.
     """
 
-    def __init__(self, battery="0") -> None:
+    def __init__(self, battery="-1") -> None:
         self.battery = battery
 
     def update_status(self) -> BatteryStatus:
-        try:
-            info = check_output(["acpiconf", "-i", self.battery]).decode("utf-8")
-        except CalledProcessError:
-            raise RuntimeError("acpiconf exited incorrectly")
+        state = BatteryState.UNKNOWN
+        percent = 0
+        power = 0.0
+        time = 0
 
-        stat_match = re.search(r"State:\t+([a-z]+)", info)
+        numbat = int(
+            check_output(["sysctl", "hw.acpi.battery.units"]).decode("utf-8").split(":")[1]
+        )  # we get the number of batteries
+        for bat in range(numbat):
+            if bat == int(self.battery) or int(self.battery) < 0:
+                try:
+                    info = check_output(["acpiconf", "-i", str(bat)]).decode("utf-8")
+                except CalledProcessError:
+                    raise RuntimeError("acpiconf exited incorrectly")
 
-        if stat_match is None:
-            raise RuntimeError("Could not get battery state!")
+                stat_match = re.search(r"State:\t+([a-z]+)", info)
 
-        stat = stat_match.group(1)
-        if stat == "charging":
-            state = BatteryState.CHARGING
-        elif stat == "discharging":
-            state = BatteryState.DISCHARGING
-        elif stat == "high":
-            state = BatteryState.FULL
+                if stat_match is None:
+                    raise RuntimeError("Could not get battery state!")
+
+                stat = stat_match.group(1)
+                if stat == "charging":
+                    state = BatteryState.CHARGING
+                elif stat == "discharging":
+                    if state != BatteryState.CHARGING:
+                        state = BatteryState.DISCHARGING
+                elif stat == "high":
+                    if state != BatteryState.CHARGING and state != BatteryState.DISCHARGING:
+                        state = BatteryState.FULL
+                else:
+                    state = BatteryState.UNKNOWN
+
+                percent_re = re.search(r"Remaining capacity:\t+([0-9]+)", info)
+                if percent_re:
+                    percent += int(percent_re.group(1))
+                else:
+                    raise RuntimeError("Could not get battery percentage!")
+
+                power_re = re.search(r"Present rate:\t+(?:[0-9]+ mA )*\(?([0-9]+) mW", info)
+                if power_re:
+                    power += float(power_re.group(1)) / 1000
+                else:
+                    raise RuntimeError("Could not get battery power!")
+
+                time_re = re.search(r"Remaining time:\t+([0-9]+:[0-9]+|unknown)", info)
+                if time_re:
+                    if time_re.group(1) == "unknown":
+                        time = 0
+                    else:
+                        hours, _, minutes = time_re.group(1).partition(":")
+                        time += int(hours) * 3600 + int(minutes) * 60
+                else:
+                    raise RuntimeError("Could not get remaining battery time!")
+
+        if int(self.battery) < 0:
+            total = numbat
         else:
-            state = BatteryState.UNKNOWN
-
-        percent_re = re.search(r"Remaining capacity:\t+([0-9]+)", info)
-        if percent_re:
-            percent = int(percent_re.group(1)) / 100
-        else:
-            raise RuntimeError("Could not get battery percentage!")
-
-        power_re = re.search(r"Present rate:\t+(?:[0-9]+ mA )*\(?([0-9]+) mW", info)
-        if power_re:
-            power = float(power_re.group(1)) / 1000
-        else:
-            raise RuntimeError("Could not get battery power!")
-
-        time_re = re.search(r"Remaining time:\t+([0-9]+:[0-9]+|unknown)", info)
-        if time_re:
-            if time_re.group(1) == "unknown":
-                time = 0
-            else:
-                hours, _, minutes = time_re.group(1).partition(":")
-                time = int(hours) * 3600 + int(minutes) * 60
-        else:
-            raise RuntimeError("Could not get remaining battery time!")
+            total = 1
 
         return BatteryStatus(
             state,
-            percent=percent,
+            percent=percent / (total * 100),
             power=power,
             time=time,
             charge_start_threshold=0,
@@ -263,11 +280,12 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         if os.path.isdir(self.BAT_DIR):
             bats = [f for f in os.listdir(self.BAT_DIR) if f.startswith("BAT")]
             if bats:
-                return bats[0]
+                bats.sort()
+                return bats
         return "BAT0"
 
-    def _load_file(self, name) -> tuple[str, str] | None:
-        path = os.path.join(self.BAT_DIR, self.battery, name)
+    def _load_file(self, name, battery) -> tuple[str, str] | None:
+        path = os.path.join(self.BAT_DIR, battery, name)
         if "energy" in name or "power" in name:
             value_type = "uW"
         elif "charge" in name:
@@ -289,9 +307,9 @@ class _LinuxBattery(_Battery, configurable.Configurable):
             # See https://github.com/qtile/qtile/pull/1516 for rationale
             return "-1", "N/A"
 
-    def _get_param(self, name) -> tuple[str, str]:
+    def _get_param(self, name, battery) -> tuple[str, str]:
         if name in self.filenames and self.filenames[name]:
-            result = self._load_file(self.filenames[name])
+            result = self._load_file(self.filenames[name], battery)
             if result is not None:
                 return result
 
@@ -304,20 +322,20 @@ class _LinuxBattery(_Battery, configurable.Configurable):
 
         # Iterate over the possibilities, and return the first valid value
         for filename in file_list:
-            value = self._load_file(filename)
+            value = self._load_file(filename, battery)
             if value is not None:
                 self.filenames[name] = filename
                 return value
 
         raise RuntimeError(f"Unable to read status for {name}")
 
-    def set_battery_charge_thresholds(self, start, end):
+    def set_battery_charge_thresholds(self, start, end, battery):
         if not self.charge_threshold_supported:
             return
 
         battery_dir = "/sys/class/power_supply"
 
-        path = os.path.join(battery_dir, self.battery, "charge_control_start_threshold")
+        path = os.path.join(battery_dir, battery, "charge_control_start_threshold")
         try:
             with open(path, "w+") as f:
                 f.write(str(start))
@@ -326,7 +344,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         except OSError:
             logger.debug("Failed to write %s", path, exc_info=True)
 
-        path = os.path.join(battery_dir, self.battery, "charge_control_end_threshold")
+        path = os.path.join(battery_dir, battery, "charge_control_end_threshold")
         try:
             with open(path, "w+") as f:
                 f.write(str(end))
@@ -339,57 +357,119 @@ class _LinuxBattery(_Battery, configurable.Configurable):
     def update_status(self) -> BatteryStatus:
         charge_start_threshold = 0
         charge_end_threshold = 100
-        if self.charge_controller is not None and self.charge_threshold_supported:
-            (charge_start_threshold, charge_end_threshold) = self.charge_controller()
-            if self.force_charge:
-                charge_start_threshold = 0
-                charge_end_threshold = 100
-            self.set_battery_charge_thresholds(charge_start_threshold, charge_end_threshold)
-        stat = self._get_param("status_file")[0]
+        now = 0.0
+        now_total = 0.0
+        full = 0.0
+        full_total = 0.0
+        power = 0.0
+        power_acc = 0.0  # accumulated values of power_now
+        time = 0  # seconds
+        state = BatteryState.UNKNOWN
+        bats: Any = []
 
-        if stat == "Full":
-            state = BatteryState.FULL
-        elif stat == "Charging":
-            state = BatteryState.CHARGING
-        elif stat == "Discharging":
-            state = BatteryState.DISCHARGING
-        elif stat == "Not charging":
-            state = BatteryState.NOT_CHARGING
+        if isinstance(self.battery, list):
+            batnum = -1
+            bats = getattr(self, "battery", None)
+        elif int(self.battery[3:]) < 0:
+            batnum = -1
+            bats = self.defaults[6][1]
         else:
-            state = BatteryState.UNKNOWN
+            batnum = self.battery[3:]
+            bats.append(self.battery)
 
-        now_str, now_unit = self._get_param("energy_now_file")
-        full_str, full_unit = self._get_param("energy_full_file")
-        power_str, power_unit = self._get_param("power_now_file")
-        # the units of energy is uWh or uAh, multiply to get to uWs or uAs
-        now = 3600 * float(now_str)
-        full = 3600 * float(full_str)
-        power = float(power_str)
+        for bat in bats:
+            if int(batnum) < 0 or self.battery == bat:
+                if self.charge_controller is not None and self.charge_threshold_supported:
+                    (charge_start_threshold, charge_end_threshold) = self.charge_controller()
+                    if self.force_charge:
+                        charge_start_threshold = 0
+                        charge_end_threshold = 100
+                    self.set_battery_charge_thresholds(
+                        charge_start_threshold, charge_end_threshold, bat
+                    )
+                stat = self._get_param("status_file", bat)[0]
 
-        if now_unit != full_unit:
-            raise RuntimeError("Current and full energy units do not match")
-        if full == 0:
-            percent = 0.0
-        else:
-            percent = now / full
+                if state == BatteryState.FULL:
+                    if stat == "Charging":
+                        state = BatteryState.CHARGING
+                    elif stat == "Discharging":
+                        state = BatteryState.DISCHARGING
+                elif state == BatteryState.CHARGING:
+                    pass  # this status have high priority over the rest
+                elif state == BatteryState.DISCHARGING:
+                    if stat == "Charging":
+                        continue
+                elif state == BatteryState.EMPTY:
+                    if stat == "Full":
+                        state = BatteryState.FULL
+                    elif stat == "Charging":
+                        state = BatteryState.CHARGING
+                    elif stat == "Dischaging":
+                        state = BatteryState.DISCHARGING
+                    elif stat == "Not charging":
+                        state = BatteryState.NOT_CHARGING
+                    else:
+                        pass  # other status values keep the value of state
+                elif state == BatteryState.NOT_CHARGING:
+                    if stat == "Full":
+                        state = BatteryState.FULL
+                    if stat == "Charging":
+                        state = BatteryState.CHARGING
+                    if stat == "Discharging":
+                        state = BatteryState.DISCHARGING
+                    if stat == "Empty":
+                        state = BatteryState.EMPTY
+                    else:
+                        pass  # other status values keep the value of state
+                else:
+                    if stat == "Full":
+                        state = BatteryState.FULL
+                    if stat == "Charging":
+                        state = BatteryState.CHARGING
+                    if stat == "Discharging":
+                        state = BatteryState.DISCHARGING
+                    if stat == "Empty":
+                        state = BatteryState.EMPTY
+                    else:
+                        pass  # other status values keep the value of state
 
-        if power == 0:
-            time = 0
-        elif state == BatteryState.DISCHARGING:
-            time = int(now / power)
-        else:
-            time = int((full - now) / power)
+                now_str, now_unit = self._get_param("energy_now_file", bat)
+                full_str, full_unit = self._get_param("energy_full_file", bat)
+                power_str, power_unit = self._get_param("power_now_file", bat)
+                # the units of energy is uWh or uAh, multiply to get to uWs or uAs
+                now = 3600 * float(now_str)
+                now_total += now
+                full = 3600 * float(full_str)
+                full_total += full
+                power = float(power_str)
 
-        if power_unit == "uA":
-            voltage = float(self._get_param("voltage_now_file")[0])
-            power = voltage * power / 1e12
-        elif power_unit == "uW":
-            power = power / 1e6
+                if now_unit != full_unit:
+                    raise RuntimeError("Current and full energy units do not match")
+                """ if full == 0:
+                    percent += 0.0
+                else:
+                    percent += now / full
+                """
+
+                if power == 0:
+                    time += 0
+                elif state == BatteryState.DISCHARGING:
+                    time += int(now / power)
+                else:
+                    time += int((full - now) / power)
+
+                if power_unit == "uA":
+                    voltage = float(self._get_param("voltage_now_file", bat)[0])
+                    power = voltage * power / 1e12
+                elif power_unit == "uW":
+                    power = power / 1e6
+
+                power_acc += power
 
         return BatteryStatus(
             state=state,
-            percent=percent,
-            power=power,
+            percent=now_total / full_total,
+            power=power_acc,
             time=time,
             charge_start_threshold=charge_start_threshold,
             charge_end_threshold=charge_end_threshold,
@@ -455,7 +535,11 @@ class Battery(base.ThreadPoolText):
         ("low_foreground", "FF0000", "Font color on low battery"),
         ("low_background", None, "Background color on low battery"),
         ("update_interval", 60, "Seconds between status updates"),
-        ("battery", 0, "Which battery should be monitored (battery number or name)"),
+        (
+            "battery",
+            -1,
+            "Which battery should be monitored (battery number or name). The default value include all the batteries installed",
+        ),
         ("notify_below", None, "Send a notification below this battery level."),
         ("notification_timeout", 10, "Time in seconds to display notification. 0 for no expiry."),
     ]
