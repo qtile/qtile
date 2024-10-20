@@ -194,10 +194,6 @@ def test_swap_screens(manager):
     assert gb["windows"] == ["one"]
 
     self.c.swap_screens()
-    print(self)
-    print(self.__dict__)
-    print(self.screens)
-    print(self.screens[0].__dict__)
     assert ga["windows"] == ["one"]
     assert gb["windows"] == ["two"]
     assert self.c.window.info()["name"] == "one"
