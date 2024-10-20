@@ -178,8 +178,7 @@ def test_to_screen(manager):
     assert manager.c.window.info()["name"] == "one"
 
 @multi_screen_manager_config
-def test_swap_screens(qtile):
-    self = qtile
+def test_swap_screens(manager):
 
     assert self.c.screen.info()["index"] == 0
     self.c.to_screen(1)
