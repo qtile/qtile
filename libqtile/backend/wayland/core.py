@@ -91,6 +91,7 @@ from wlroots.wlr_types.server_decoration import (
     ServerDecorationManager,
     ServerDecorationManagerMode,
 )
+from wlroots.wlr_types.session_lock_v1 import SessionLockManagerV1
 from wlroots.wlr_types.xdg_shell import XdgShell, XdgSurface, XdgSurfaceRole
 from xkbcommon import xkb
 
@@ -209,6 +210,15 @@ class Core(base.Core, wlrq.HasListeners):
         # Some devices are added early, so we need to remember to configure them
         self._pending_input_devices: list[inputs._Device] = []
         hook.subscribe.startup_complete(self._configure_pending_inputs)
+
+        # TODO
+        self._session_lock_manager = SessionLockManagerV1(self.display)
+        self.add_listener(
+            self._session_lock_manager.new_lock_event, self._on_session_lock_manager_new_lock
+        )
+        self.add_listener(
+            self._session_lock_manager.destroy_event, self._on_session_lock_manager_destroy
+        )
 
         self._input_inhibit_manager = InputInhibitManager(self.display)
         self.add_listener(
@@ -534,6 +544,8 @@ class Core(base.Core, wlrq.HasListeners):
             x = box.x + box.width / 2
             y = box.y + box.height / 2
             self.warp_pointer(x, y)
+
+        # TODO notify lockmanager if locked
 
     def _on_output_layout_change(
         self, _listener: Listener | None = None, _data: Any = None
@@ -875,6 +887,62 @@ class Core(base.Core, wlrq.HasListeners):
                     # that `win.add_idle_inhibitor` identified this inhibitor as
                     # belonging to that window.
                     break
+
+    def _on_session_lock_manager_new_lock(self, _listener: Listener, _data: Any) -> None:
+        # This request creates a session lock and asks the compositor to lock the session.
+        logger.debug("Signal: lock_manager new_lock")
+        session_lock = _data
+
+        self.add_listener(
+            session_lock.new_surface_event, self._on_session_lock_manager_lock_new_surface
+        )
+        self.add_listener(session_lock.unlock_event, self._on_session_lock_manager_lock_unlock)
+        self.add_listener(session_lock.destroy_event, self._on_session_lock_manager_lock_destroy)
+
+        # TODO lock here
+
+        # The compositor will send the ext_session_lock_v1.locked event
+        session_lock.send_locked()
+
+        self.session_lock = session_lock
+
+    def _on_session_lock_manager_destroy(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: lock_manager destroy")
+
+    def _on_session_lock_manager_lock_new_surface(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: lock_manager lock new surface")
+
+        session_lock_surface = _data
+        surface = session_lock_surface.surface
+
+        # FIXME
+        layer_surface = LayerSurfaceV1.try_from_wlr_surface(surface)
+        if not layer_surface:
+            logger.error("could not create layer surface")
+            return
+
+        wid = self.new_wid()
+        layer_static = layer.LayerStatic(self, self.qtile, layer_surface, wid)
+
+        self.qtile.manage(layer_static)
+
+        self.exclusive_layer = layer_static
+
+    def _on_session_lock_manager_lock_unlock(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: lock_manager lock unlock")
+
+        # unlock
+        self.exclusive_layer = None
+
+    def _on_session_lock_manager_lock_destroy(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: lock_manager lock destroy")
+
+        self.finalize_listener(self.session_lock.new_surface_event)
+        self.finalize_listener(self.session_lock.destroy_event)
+        self.finalize_listener(self.session_lock.unlock_event)
+
+        # unlock
+        self.exclusive_layer = None
 
     def _on_input_inhibitor_activate(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: input_inhibitor activate")
