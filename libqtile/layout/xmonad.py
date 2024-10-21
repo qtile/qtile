@@ -756,11 +756,11 @@ class MonadTall(_SimpleLayoutBase):
         # shrink client by total change
         self.relative_sizes[self.focused - 1] -= self._get_relative_size_from_absolute(change)
 
-    @expose_command("down")
+    @expose_command()
     def next(self) -> None:
         _SimpleLayoutBase.next(self)
 
-    @expose_command("up")
+    @expose_command()
     def previous(self) -> None:
         _SimpleLayoutBase.previous(self)
 
@@ -857,6 +857,16 @@ class MonadTall(_SimpleLayoutBase):
         candidates = [c for c in self.clients if c.info()["x"] > x]
         self.clients.current_client = self._get_closest(x, y, candidates)
         self.group.focus(self.clients.current_client)
+
+    @expose_command()
+    def up(self):
+        """Focus on the closest window above the current window"""
+        self.previous()
+
+    @expose_command()
+    def down(self):
+        """Focus on the closest window below the current window"""
+        self.next()
 
 
 class MonadWide(MonadTall):
@@ -1122,6 +1132,34 @@ class MonadWide(MonadTall):
             self.swap_right()
         elif self.align == self._down:
             self.swap_left()
+
+    @expose_command()
+    def left(self):
+        """Focus on the closest window to the left of the current window"""
+        self.previous()
+
+    @expose_command()
+    def right(self):
+        """Focus on the closest window to the right of the current window"""
+        self.next()
+
+    @expose_command()
+    def up(self):
+        """Focus on the closest window above the current window"""
+        win = self.clients.current_client
+        x, y = win.x, win.y
+        candidates = [c for c in self.clients if c.info()["y"] < y]
+        self.clients.current_client = self._get_closest(x, y, candidates)
+        self.group.focus(self.clients.current_client)
+
+    @expose_command()
+    def down(self):
+        """Focus on the closest window below the current window"""
+        win = self.clients.current_client
+        x, y = win.x, win.y
+        candidates = [c for c in self.clients if c.info()["y"] > y]
+        self.clients.current_client = self._get_closest(x, y, candidates)
+        self.group.focus(self.clients.current_client)
 
 
 class MonadThreeCol(MonadTall):

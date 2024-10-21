@@ -2,6 +2,7 @@ Qtile x.xx.x, released xxxx-xx-xx:
     * features
         - Add `SwayNC` widget to interact with Sway Notification Centre (wayland only)
     * bugfixes
+        - Make MonadWide layout up/down focus navigation behave like MonadTall's left/right
 
 Qtile 0.29.0, released 2024-10-19:
     * features
