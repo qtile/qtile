@@ -319,8 +319,25 @@ class KInfo:
         "toscreen": "to screen",
     }
 
+    KEY_MAP = {
+        "grave": "`",
+        "semicolon": ";",
+        "slash": "/",
+        "backslash": "\\",
+        "comma": ",",
+        "period": ".",
+        "bracketleft": "[",
+        "bracketright": "]",
+        "quote": "'",
+        "minus": "-",
+        "equals": "=",
+    }
+
     def __init__(self, key):
-        self.key = key.key
+        if key.key in self.KEY_MAP:
+            self.key = self.KEY_MAP[key.key]
+        else:
+            self.key = key.key
         self.command = self.get_command(key)
         self.scope = self.get_scope(key)
 
