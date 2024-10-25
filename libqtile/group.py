@@ -265,8 +265,10 @@ class _Group(CommandObject):
             self.tiled_windows.add(win)
             for i in self.layouts:
                 i.add_client(win)
-        if focus:
+        if focus or not self.current_window:
             self.focus(win, warp=True, force=force)
+        elif self.current_window:
+            self.focus(self.current_window, warp=False)
 
     def remove(self, win, force=False):
         self.windows.remove(win)
