@@ -548,6 +548,23 @@ def test_nextprevgroup(manager):
     assert manager.c.group.info()["name"] == start
 
 
+def test_nextprevgroup_reload(manager_nospawn):
+    manager_nospawn.start(lambda: BareConfig(file_path=configs_dir / "reloading.py"))
+    # Current group will become unmanaged after reloading
+    manager_nospawn.c.eval("self.old_group = self.current_group")
+    manager_nospawn.c.reload_config()
+    # Check that group has become unmanaged
+    manager_nospawn.c.eval("self.new_group = self.current_group")
+    assert "True" == manager_nospawn.c.eval("self.old_group != self.new_group")[1]
+    # Unmanaged group should not change the group in the screen
+    success, message = manager_nospawn.c.eval("self.old_group.screen.next_group()")
+    assert "True" == manager_nospawn.c.eval("self.new_group == self.current_group")[1]
+    assert success, message
+    success, message = manager_nospawn.c.eval("self.old_group.screen.prev_group()")
+    assert "True" == manager_nospawn.c.eval("self.new_group == self.current_group")[1]
+    assert success, message
+
+
 @manager_config
 def test_toggle_group(manager):
     manager.c.group["a"].toscreen()

@@ -232,6 +232,9 @@ class Core(base.Core):
                 w for w in self.qtile.windows_map.values() if isinstance(w, window.Window)
             ]
             for managed_win in managed_wins:
+                if managed_win.group and managed_win in managed_win.group.windows:
+                    # Remove window from old group
+                    managed_win.group.remove(managed_win)
                 managed_win.set_group()
             return
 

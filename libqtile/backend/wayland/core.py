@@ -1286,13 +1286,12 @@ class Core(base.Core, wlrq.HasListeners):
                             name = old_group[0]
                             if win.group.name == name:
                                 group = self.qtile.groups[i]
+                if win in win.group.windows:
+                    # Remove window from old group
+                    win.group.remove(win)
             if group is None:
                 # Falling back to current group if none found
                 group = self.qtile.current_group
-            if win.group and win in win.group.windows:
-                # It might not be in win.group.windows depending on how group state
-                # changed across a config reload
-                win.group.remove(win)
             group.add(win)
             if group == self.qtile.current_group:
                 win.unhide()
