@@ -425,9 +425,13 @@ class _Group(CommandObject):
                 return False
             return True
 
-        groups = [group for group in self.qtile.groups if match(group)]
-        index = (groups.index(self) + direction) % len(groups)
-        return groups[index]
+        try:
+            groups = [group for group in self.qtile.groups if match(group)]
+            index = (groups.index(self) + direction) % len(groups)
+            return groups[index]
+        except ValueError:
+            # group is not managed
+            return None
 
     def get_previous_group(self, skip_empty=False, skip_managed=False):
         return self._get_group(-1, skip_empty, skip_managed)
