@@ -3,6 +3,7 @@ Qtile x.xx.x, released xxxx-xx-xx:
         - Add `SwayNC` widget to interact with Sway Notification Centre (wayland only)
         - Add `swap` method to Plasma layout
         - New `click_or_drag_only` option for follow_mouse_focus to change the focus to the window under the mouse when click or drag
+        - Customize battery widget "Full" and "Empty" short text with `full_short_text` and `empty_short_text`
     * bugfixes
         - Make MonadWide layout up/down focus navigation behave like MonadTall's left/right
 
