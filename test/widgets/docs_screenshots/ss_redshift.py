@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Saath Satheeshkumar(saths008)
+# Copyright (c) 2024 Saath Satheeshkumar (saths008)
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +21,12 @@
 import pytest
 
 import libqtile.widget
-from test.widgets.test_redshift import get_mock_rs_driver
+from test.widgets.test_redshift import mock_run
 
 
 @pytest.fixture
 def widget(monkeypatch):
-    monkeypatch.setattr("libqtile.widget.redshift.Redshift._get_rs_driver", get_mock_rs_driver)
+    monkeypatch.setattr("subprocess.run", mock_run)
     yield libqtile.widget.redshift.Redshift
 
 
@@ -38,8 +38,16 @@ def widget(monkeypatch):
     indirect=True,
 )
 def ss_redshift(screenshot_manager):
+    def click():
+        screenshot_manager.c.bar["top"].fake_button_press(0, 0, 1)
+
     w = screenshot_manager.c.widget["redshift"]
 
-    for _ in range(4):
+    screenshot_manager.take_screenshot()
+
+    click()  # Enable so scrolling works
+
+    number_of_items = 4
+    for _ in range(number_of_items):
         screenshot_manager.take_screenshot()
         w.scroll_up()

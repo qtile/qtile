@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Saath Satheeshkumar(saths008)
+# Copyright (c) 2024 Saath Satheeshkumar (saths008)
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -17,7 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from types import ModuleType
 
 import pytest
 
@@ -26,30 +25,15 @@ from libqtile.confreader import Config
 from libqtile.widget import redshift
 
 
-class MockRedshiftDriver(ModuleType):
-    """
-    Helper class as redshift is not available in
-    the test environment, so without this mock the tests will crash
-    """
-
-    def enable(self, temperature, gamma: redshift.GammaGroup, brightness):
-        pass
-
-    def reset(self):
-        pass
-
-
-def get_mock_rs_driver(_):
-    return MockRedshiftDriver("redshift_driver")
+def mock_run(argv, check):
+    pass
 
 
 @pytest.fixture(scope="function")
 def patched_redshift(monkeypatch):
     class PatchedRedshift(redshift.Redshift):
         def __init__(self, **config):
-            monkeypatch.setattr(
-                "libqtile.widget.redshift.Redshift._get_rs_driver", get_mock_rs_driver
-            )
+            monkeypatch.setattr("subprocess.run", mock_run)
             redshift.Redshift.__init__(self, **config)
             self.name = "redshift"
 
@@ -102,26 +86,21 @@ def test_defaults(redshift_manager):
         "Brightness: 1.0",
         "Temperature: 1700",
         "Gamma: 1.0:1.0:1.0",
-        disabled_txt,
+        enabled_txt,
     ]
+
+    click()
 
     for _, val in enumerate(scroll_vals):
         widget.scroll_up()
         assert text() == val
 
-    # move enabled_txt to the first index
-    scroll_vals.remove(disabled_txt)
-    scroll_vals = [disabled_txt] + scroll_vals
-
-    for _, val in enumerate(reversed(scroll_vals)):
+    click()
+    for _ in range(len(scroll_vals)):
         widget.scroll_down()
-        assert text() == val
-
-    click()
-    assert text() == enabled_txt
-
-    click()
-    assert text() == disabled_txt
+        # Test that scroll only works when
+        # widget is enabled
+        assert text() == disabled_txt
 
 
 @config(disabled_txt="Redshift disabled", enabled_txt="Redshift enabled")
@@ -196,22 +175,100 @@ def test_changed_default_txt_fmted(redshift_manager):
     click()
     assert text() == enabled_txt
 
-    click()
-
     scroll_vals = [
         f"Brightness: {brightness}",
         f"Temperature: {temp}",
         f"Gamma: {gamma_val._redshift_fmt()}",
-        disabled_txt,
+        enabled_txt,
     ]
 
     for _, val in enumerate(scroll_vals):
         widget.scroll_up()
         assert text() == val
 
-    scroll_vals.remove(disabled_txt)
-    scroll_vals = [disabled_txt] + scroll_vals
+    scroll_vals.remove(enabled_txt)
+    scroll_vals = [enabled_txt] + scroll_vals
 
     for _, val in enumerate(reversed(scroll_vals)):
         widget.scroll_down()
         assert text() == val
+
+
+@config(
+    disabled_txt="Disabled",
+    enabled_txt="Enabled t:{temperature} b:{brightness}",
+    brightness=0.5,
+    brightness_step=0.2,
+    temperature=1200,
+    temperature_step=101,
+)
+def test_increase_decrease_temp_brightness(redshift_manager):
+    widget = redshift_manager.c.widget["redshift"]
+
+    def text():
+        return widget.info()["text"]
+
+    def click():
+        redshift_manager.c.bar["top"].fake_button_press(0, 0, 1)
+
+    def right_click():
+        redshift_manager.c.bar["top"].fake_button_press(0, 0, 3)
+
+    disabled_txt = "Disabled"
+    enabled_txt = "Enabled t:1200 b:0.5"
+
+    assert text() == disabled_txt
+
+    click()
+
+    assert text() == enabled_txt
+
+    widget.scroll_up()
+
+    # Test that the right click respects brightness boundaries
+    brightness_vals = [0.5, 0.7, 0.9, 1.0, 1.0, 1.0]
+    for _, val in enumerate(brightness_vals):
+        assert text() == f"Brightness: {val}"
+        right_click()
+
+    # Test that the left click respects brightness boundaries
+    brightness_vals = [1.0, 0.8, 0.6, 0.4, 0.2, 0.1, 0.1]
+    for _, val in enumerate(brightness_vals):
+        assert text() == f"Brightness: {val}"
+        click()
+
+    widget.scroll_down()  # Enabled
+
+    assert text() == "Enabled t:1200 b:0.1"
+
+    widget.scroll_down()  # Gamma
+    widget.scroll_down()  # Temperature
+
+    # Test that the right click respects temperature boundaries
+    temp_vals = [1200]
+
+    temp_lower_bound = 1000
+    temp_upper_bound = 25000
+    while temp_vals[-1] < temp_upper_bound:
+        new_temp_val = temp_vals[-1] + 101
+        new_temp_val = min(new_temp_val, temp_upper_bound)
+        temp_vals.append(new_temp_val)
+
+    for _, val in enumerate(temp_vals):
+        assert text() == f"Temperature: {val}"
+        right_click()
+
+    # Test that the left click respects temperature boundaries
+    temp_vals = [temp_upper_bound]
+    while temp_vals[-1] > temp_lower_bound:
+        new_temp_val = temp_vals[-1] - 101
+        new_temp_val = max(new_temp_val, temp_lower_bound)
+        temp_vals.append(new_temp_val)
+
+    for _, val in enumerate(temp_vals):
+        assert text() == f"Temperature: {val}"
+        click()
+
+    widget.scroll_up()  # Gamma
+    widget.scroll_up()  # Temperature
+    assert text() == "Enabled t:1000 b:0.1"

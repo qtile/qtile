@@ -61,7 +61,11 @@ no_test = [widgets.Mirror, widgets.PulseVolume]  # Mirror requires a reflection 
 no_test += [widgets.ImapWidget]  # Requires a configured username
 
 # To test a widget only under one backend, list the widget class here
-exclusive_backend = {widgets.Systray: "x11", widgets.SwayNC: "wayland"}
+exclusive_backend = {
+    widgets.Systray: "x11",
+    widgets.Redshift: "x11",
+    widgets.SwayNC: "wayland",
+}
 
 ################################################################################
 # Do not edit below this line
