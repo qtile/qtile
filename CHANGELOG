@@ -1,5 +1,6 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
+        - added support for multiple batteries to the battery widget
     * bugfixes
 
 Qtile 0.29.0, released 2024-10-19:
@@ -22,7 +23,7 @@ Qtile 0.28.1, released 2024-08-12:
 Qtile 0.28.0, released 2024-08-11:
     * bugfixes
         - various bug fixes to widgets from previous releases
-        - fix xrandr commands racing with qtile startup
+        - fix xrandr commands racing with qtile startup 
 
 Qtile 0.27.0, released 2024-07-12:
     * features
