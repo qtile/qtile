@@ -37,7 +37,7 @@ def spawn_cmd(title):
     return cmd
 
 
-class ScratchPadBaseConfic(Config):
+class ScratchPadBaseConfig(Config):
     auto_fullscreen = True
     screens = []
     groups = [
@@ -73,7 +73,7 @@ class ScratchPadBaseConfic(Config):
     mouse = []
 
 
-scratchpad_config = pytest.mark.parametrize("manager", [ScratchPadBaseConfic], indirect=True)
+scratchpad_config = pytest.mark.parametrize("manager", [ScratchPadBaseConfig], indirect=True)
 
 
 @Retry(ignore_exceptions=(KeyError,))
