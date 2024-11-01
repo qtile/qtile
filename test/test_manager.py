@@ -195,11 +195,11 @@ def test_togroup(manager):
 def test_resize(manager):
     manager.c.screen[0].resize(x=10, y=10, w=100, h=100)
 
-    @Retry(ignore_exceptions=(AssertionError), fail_msg="Screen didn't resize")
+    @Retry(ignore_exceptions=(AssertionError))
     def run():
         d = manager.c.screen[0].info()
-        assert d["width"] == 100
-        assert d["height"] == 100
+        assert d["width"] == 100, "screen did not resize"
+        assert d["height"] == 100, "screen did not resize"
         return d
 
     d = run()
