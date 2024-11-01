@@ -38,17 +38,16 @@ sleep_time = 0.1
 class Retry:
     def __init__(
         self,
-        fail_msg="retry failed!",
         ignore_exceptions=(),
         dt=sleep_time,
         tmax=max_sleep,
         return_on_fail=False,
     ):
-        self.fail_msg = fail_msg
         self.ignore_exceptions = ignore_exceptions
         self.dt = dt
         self.tmax = tmax
         self.return_on_fail = return_on_fail
+        self.last_failure = None
 
     def __call__(self, fn):
         @functools.wraps(fn)
@@ -60,8 +59,8 @@ class Retry:
             while time.time() <= tmax:
                 try:
                     return fn(*args, **kwargs)
-                except ignore_exceptions:
-                    pass
+                except ignore_exceptions as e:
+                    self.last_failure = e
                 except AssertionError:
                     break
                 time.sleep(dt)
@@ -69,7 +68,7 @@ class Retry:
             if self.return_on_fail:
                 return False
             else:
-                raise AssertionError(self.fail_msg)
+                raise self.last_failure
 
         return wrapper
 
@@ -259,12 +258,12 @@ class TestManager:
         start = len(client.windows())
         create()
 
-        @Retry(ignore_exceptions=(RuntimeError,), fail_msg="Window never appeared...")
+        @Retry(ignore_exceptions=(RuntimeError,))
         def success():
             while failed is None or not failed():
                 if len(client.windows()) > start:
                     return True
-            raise RuntimeError("not here yet")
+            raise RuntimeError("window has not appeared yet")
 
         return success()
 
@@ -367,8 +366,8 @@ class TestManager:
         assert len(seen) == len(screens), "Not all screens had an attached group."
 
 
-@Retry(ignore_exceptions=(AssertionError,), fail_msg="Window did not die!")
+@Retry(ignore_exceptions=(AssertionError,))
 def assert_window_died(client, window_info):
     client.sync()
     wid = window_info["id"]
-    assert wid not in set([x["id"] for x in client.windows()])
+    assert wid not in set([x["id"] for x in client.windows()]), f"window {wid} still here"
