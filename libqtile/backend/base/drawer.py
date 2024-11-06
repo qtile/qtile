@@ -312,6 +312,8 @@ class Drawer:
 
     def clear(self, colour):
         """Clears background of the Drawer and fills with specified colour."""
+        if self.ctx is None:
+            self._reset_surface()
         self.ctx.save()
 
         # Erase the background
