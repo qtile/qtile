@@ -78,6 +78,7 @@ widgets = {
     "Prompt": "prompt",
     "PulseVolume": "pulse_volume",
     "QuickExit": "quick_exit",
+    "Redshift": "redshift",
     "ScreenSplit": "screensplit",
     "Sep": "sep",
     "She": "she",
