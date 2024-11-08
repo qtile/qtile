@@ -281,8 +281,16 @@ class XWindow:
         """
         r = self.get_property("_NET_WM_WINDOW_TYPE", "ATOM", unpack=int)
         if r:
-            name = self.conn.atoms.get_name(r[0])
-            return xcbq.WindowTypes.get(name, name)
+            first_name = None
+            for i, a in enumerate(r):
+                name = self.conn.atoms.get_name(a)
+                if i == 0:
+                    first_name = name
+                qtile_type = xcbq.WindowTypes.get(name, None)
+                if qtile_type is not None:
+                    return qtile_type
+            return first_name
+        return None
 
     def get_net_wm_state(self):
         r = self.get_property("_NET_WM_STATE", "ATOM", unpack=int)
