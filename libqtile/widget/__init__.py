@@ -92,6 +92,7 @@ widgets = {
     "TextBox": "textbox",
     "ThermalSensor": "sensors",
     "ThermalZone": "thermal_zone",
+    "VerticalClock": "vertical_clock",
     "Volume": "volume",
     "Wallpaper": "wallpaper",
     "WidgetBox": "widgetbox",
