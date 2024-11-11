@@ -626,6 +626,7 @@ An example screenshot file is below:
     import pytest
 
     from libqtile.widget import wttr
+    from test.widgets.docs_screenshots.conftest import vertical_bar, widget_config
 
     RESPONSE = "London: +17°C"
 
@@ -639,14 +640,12 @@ An example screenshot file is below:
         yield wttr.Wttr
 
 
-    @pytest.mark.parametrize(
-        "screenshot_manager",
-        [
-            {"location": {"London": "Home"}}
-        ],
-        indirect=True
-    )
+    @widget_config([{"location": {"London": "Home"}}])
     def ss_wttr(screenshot_manager):
+        screenshot_manager.take_screenshot()
+
+    @vertical_bar
+    def ss_wttr_vertical(screenshot_manager):
         screenshot_manager.take_screenshot()
 
 The ``widget`` fixture returns the widget class (not an instance of the widget). Any monkeypatching
@@ -660,6 +659,9 @@ an empty dict (``{}``) as the first object in the list.
 
 Taking a screenshot is then as simple as calling ``screenshot_manager.take_screenshot()``. The method
 can be called multiple times in the same function.
+
+Screenshots can also be taken in a vertical bar orientation by using the ``@vertical_bar`` decorator as shown in
+the above example.
 
 ``screenshot_manager.take_screenshot()`` only takes a picture of the widget. If you need to take a screenshot
 of the bar then you need a few extra steps:
