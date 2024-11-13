@@ -769,7 +769,7 @@ class InLoopPollText(_TextBox):
     ThreadPoolText instead.
 
     ('fast' here means that this runs /in/ the event loop, so don't block! If
-    you want to run something nontrivial, use ThreadedPollWidget.)"""
+    you want to run something nontrivial, use ThreadPoolText.)"""
 
     defaults = [
         (
