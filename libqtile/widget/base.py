@@ -495,6 +495,11 @@ class _TextBox(_Widget):
             "When ``scroll=True`` the ``width`` parameter is a maximum width and, when text is shorter than this, the widget will resize. "
             "Setting ``scroll_fixed_width=True`` will force the widget to have a fixed width, regardless of the size of the text.",
         ),
+        (
+            "update_interval",
+            600,
+            "Update interval in seconds, if none, the widget updates only once.",
+        ),
     ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -771,18 +776,6 @@ class InLoopPollText(_TextBox):
     ('fast' here means that this runs /in/ the event loop, so don't block! If
     you want to run something nontrivial, use ThreadPoolText.)"""
 
-    defaults = [
-        (
-            "update_interval",
-            600,
-            "Update interval in seconds, if none, the widget updates only once.",
-        ),
-    ]  # type: list[tuple[str, Any, str]]
-
-    def __init__(self, default_text="N/A", **config):
-        _TextBox.__init__(self, default_text, **config)
-        self.add_defaults(InLoopPollText.defaults)
-
     def timer_setup(self):
         update_interval = self.tick()
         # If self.update_interval is defined and .tick() returns None, re-call
@@ -825,18 +818,6 @@ class ThreadPoolText(_TextBox):
 
     param: text - Initial text to display.
     """
-
-    defaults = [
-        (
-            "update_interval",
-            600,
-            "Update interval in seconds, if none, the widget updates only once.",
-        ),
-    ]  # type: list[tuple[str, Any, str]]
-
-    def __init__(self, text, **config):
-        super().__init__(text, **config)
-        self.add_defaults(ThreadPoolText.defaults)
 
     def timer_setup(self):
         def on_done(future):
