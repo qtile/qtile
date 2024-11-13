@@ -834,7 +834,7 @@ class ThreadPoolText(_TextBox):
         ),
     ]  # type: list[tuple[str, Any, str]]
 
-    def __init__(self, text, **config):
+    def __init__(self, text="N/A", **config):
         super().__init__(text, **config)
         self.add_defaults(ThreadPoolText.defaults)
 
