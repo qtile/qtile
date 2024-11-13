@@ -794,14 +794,6 @@ class InLoopPollText(_TextBox):
             self.timeout_add(update_interval, self.timer_setup)
         # If update_interval is False, we won't re-call
 
-    def _configure(self, qtile, bar):
-        should_tick = self.configured
-        _TextBox._configure(self, qtile, bar)
-
-        # Update when we are being re-configured.
-        if should_tick:
-            self.tick()
-
     def button_press(self, x, y, button):
         self.tick()
         _TextBox.button_press(self, x, y, button)
