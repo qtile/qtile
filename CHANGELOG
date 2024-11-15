@@ -12,7 +12,6 @@ Qtile 0.29.0, released 2024-10-19:
         - A Nix flake has been added which can be used by Nix(OS) users to update to the latest version easily
         - Add `group_window_remove` hook when window is removed from group
         - Switched to ruff for formatting
-        - Added a nix flake
     * bugfixes
         - Add returns to lazy.function and qtile.core.function
         - Fix a bug with newer versions of cairo breaking the bar
