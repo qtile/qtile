@@ -18,13 +18,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
 import shlex
 from subprocess import PIPE, Popen
 from typing import Any
 
 from libqtile import configurable
 from libqtile.log_utils import logger
-
 
 
 class _Extension(configurable.Configurable):
@@ -39,7 +39,7 @@ class _Extension(configurable.Configurable):
         self.add_defaults(_Extension.defaults)
         _Extension.installed_extensions.append(self)
 
-    def _configure(self, qtile):
+    def _configure(self, qtile) -> None:
         self.qtile = qtile
 
     def run(self):
@@ -73,7 +73,7 @@ class RunCommand(_Extension):
         self.add_defaults(RunCommand.defaults)
         self.configured_command = None
 
-    def run(self):
+    def run(self) -> Popen:
         """
         An extension can inherit this class, define configured_command and use
         the process object by overriding this method and using super():
