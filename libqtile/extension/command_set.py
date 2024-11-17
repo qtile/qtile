@@ -62,6 +62,7 @@ class CommandSet(Dmenu):
     """
 
     defaults = [
+        ("unlisted", None, "A function maybe returning a command for unlisted key"),
         ("commands", None, "dictionary of commands where key is runable command"),
         ("pre_commands", None, "list of commands to be executed before getting dmenu answer"),
     ]
@@ -71,7 +72,7 @@ class CommandSet(Dmenu):
         self.add_defaults(CommandSet.defaults)
 
     def run(self):
-        if not self.commands:
+        if not self.commands and not self.unlisted:
             return
 
         if self.pre_commands:
@@ -88,10 +89,14 @@ class CommandSet(Dmenu):
             # list
             return
 
-        if sout not in self.commands:
-            return
+        command = None
+        if sout in self.commands:
+            command = self.commands[sout]
+        elif self.unlisted:
+            command = self.unlisted(sout)
 
-        command = self.commands[sout]
+        if not command:
+            return
 
         if isinstance(command, str):
             self.qtile.spawn(command)
