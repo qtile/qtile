@@ -127,18 +127,21 @@ class Dmenu(base.RunCommand):
         if self.dmenu_height:
             self.configured_command.extend(("-h", str(self.dmenu_height)))
 
-    def run(self, items=None):
+    def run(self, items=None) -> str:
         if items and self.dmenu_lines:
             lines = min(len(items), int(self.dmenu_lines))
             self.configured_command.extend(("-l", str(lines)))
 
         proc = super().run()
 
+        input_str = None
         if items:
-            input_str = "\n".join([i for i in items]) + "\n"
-            return proc.communicate(str.encode(input_str))[0].decode("utf-8")
+            base = "\n".join([i for i in items]) + "\n"
+            input_str = str.encode(base)
 
-        return proc
+        out, _err = proc.communicate(input_str)
+
+        return out.decode("utf8")
 
 
 class DmenuRun(Dmenu):
