@@ -18,9 +18,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import re
 import shlex
 
 from libqtile.extension import base
+
+RGB = re.compile(r"^#?([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$")
 
 
 class Dmenu(base.RunCommand):
@@ -30,6 +33,12 @@ class Dmenu(base.RunCommand):
     """
 
     defaults = [
+        ("font", "sans", "defines the font name to be used"),
+        ("fontsize", None, "defines the font size to be used"),
+        ("background", None, "defines the normal background color (#RGB or #RRGGBB)"),
+        ("foreground", None, "defines the normal foreground color (#RGB or #RRGGBB)"),
+        ("selected_background", None, "defines the selected background color (#RGB or #RRGGBB)"),
+        ("selected_foreground", None, "defines the selected foreground color (#RGB or #RRGGBB)"),
         ("dmenu_font", None, "override the default 'font' and 'fontsize' options for dmenu"),
         # NOTE: Do not use a list as a default value, since it would be shared
         #       among all the objects inheriting this class, and if one of them
@@ -51,8 +60,34 @@ class Dmenu(base.RunCommand):
         base.RunCommand.__init__(self, **config)
         self.add_defaults(Dmenu.defaults)
 
+    def _check_colors(self):
+        """
+        dmenu needs colours to be in #rgb or #rrggbb format.
+
+        Checks colour value, removes invalid values and adds # if missing.
+
+        NB This should not be called in _Extension.__init__ as _Extension.global_defaults
+        may not have been set at this point.
+        """
+        for c in ["background", "foreground", "selected_background", "selected_foreground"]:
+            col = getattr(self, c, None)
+            if col is None:
+                continue
+
+            if not isinstance(col, str) or not RGB.match(col):
+                logger.warning(
+                    "Invalid extension '%s' color: %s. Must be #RGB or #RRGGBB string.", c, col
+                )
+                setattr(self, c, None)
+                continue
+
+            if not col.startswith("#"):
+                col = f"#{col}"
+                setattr(self, c, col)
+
     def _configure(self, qtile):
         base.RunCommand._configure(self, qtile)
+        self._check_colors()
 
         dmenu_command = self.dmenu_command or self.command
         if isinstance(dmenu_command, str):

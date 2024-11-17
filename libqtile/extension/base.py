@@ -18,7 +18,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import re
 import shlex
 from subprocess import PIPE, Popen
 from typing import Any
@@ -26,7 +25,6 @@ from typing import Any
 from libqtile import configurable
 from libqtile.log_utils import logger
 
-RGB = re.compile(r"^#?([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$")
 
 
 class _Extension(configurable.Configurable):
@@ -34,48 +32,15 @@ class _Extension(configurable.Configurable):
 
     installed_extensions = []  # type: list
 
-    defaults = [
-        ("font", "sans", "defines the font name to be used"),
-        ("fontsize", None, "defines the font size to be used"),
-        ("background", None, "defines the normal background color (#RGB or #RRGGBB)"),
-        ("foreground", None, "defines the normal foreground color (#RGB or #RRGGBB)"),
-        ("selected_background", None, "defines the selected background color (#RGB or #RRGGBB)"),
-        ("selected_foreground", None, "defines the selected foreground color (#RGB or #RRGGBB)"),
-    ]
+    defaults: list[tuple[str, Any, str]] = []
 
     def __init__(self, **config):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(_Extension.defaults)
         _Extension.installed_extensions.append(self)
 
-    def _check_colors(self):
-        """
-        dmenu needs colours to be in #rgb or #rrggbb format.
-
-        Checks colour value, removes invalid values and adds # if missing.
-
-        NB This should not be called in _Extension.__init__ as _Extension.global_defaults
-        may not have been set at this point.
-        """
-        for c in ["background", "foreground", "selected_background", "selected_foreground"]:
-            col = getattr(self, c, None)
-            if col is None:
-                continue
-
-            if not isinstance(col, str) or not RGB.match(col):
-                logger.warning(
-                    "Invalid extension '%s' color: %s. Must be #RGB or #RRGGBB string.", c, col
-                )
-                setattr(self, c, None)
-                continue
-
-            if not col.startswith("#"):
-                col = f"#{col}"
-                setattr(self, c, col)
-
     def _configure(self, qtile):
         self.qtile = qtile
-        self._check_colors()
 
     def run(self):
         """
