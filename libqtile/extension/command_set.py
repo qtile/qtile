@@ -24,6 +24,8 @@ from libqtile.extension.dmenu import Dmenu
 class CommandSet(Dmenu):
     """
     Give list of commands to be executed in dmenu style.
+    Commands can either be cmdline strings or callable functions.
+    Functions take two argument: qtile object and select command string.
 
     ex. manage mocp deamon:
 
@@ -59,11 +61,25 @@ class CommandSet(Dmenu):
         **Theme.dmenu
         )
 
+    ex. CommandSet with callables
+
+    .. code-block:: python
+
+
+        CommandSet(
+            commands = {
+                group.name: lambda qtile, name: qtile.group_map[name].toscreen
+                for group in groups
+            },
+            unlisted = lambda qtile, name: q.addgroup(name)
+        )
+
+
     """
 
     defaults = [
-        ("unlisted", None, "A function maybe returning a command for unlisted key"),
-        ("commands", None, "dictionary of commands where key is runable command"),
+        ("unlisted", None, "An optional function to handle unlisted command keys."),
+        ("commands", None, "dictionary of commands where key is runable command or a callable"),
         ("pre_commands", None, "list of commands to be executed before getting dmenu answer"),
     ]
 
@@ -89,16 +105,15 @@ class CommandSet(Dmenu):
             # list
             return
 
-        command = None
-        if sout in self.commands:
-            command = self.commands[sout]
-        elif self.unlisted:
-            command = self.unlisted(sout)
-
+        command = self.commands.get(sout)
         if not command:
+            if self.unlisted:
+                self.unlisted(self.qtile, sout)
             return
 
         if isinstance(command, str):
             self.qtile.spawn(command)
         elif isinstance(command, CommandSet):
             command.run()
+        elif callable(command):
+            command(self.qtile, sout)
