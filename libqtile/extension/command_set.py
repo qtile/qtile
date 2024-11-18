@@ -65,15 +65,29 @@ class CommandSet(Dmenu):
 
     .. code-block:: python
 
+        def dynamic_group_addnew(qtile, command):
+            name = f"special_{ command.lower() }"
+            if name not in qtile.groups_map:
+                qtile.addgroup(name, label=command, persist=False)
+            qtile.groups_map[name].toscreen()
 
         CommandSet(
-            commands = {
-                group.name: lambda qtile, name: qtile.group_map[name].toscreen
-                for group in groups
-            },
-            unlisted = lambda qtile, name: q.addgroup(name)
+            pre_commands = [ 
+              lambda self: # Pre-Commands are executed in extention context.
+                setattr(
+                   self,
+                  "commands",
+                  {
+                    group.label: lambda qtile, name: qtile.groups_map[f"special_{name}"].toscreen()
+                    for group in self.qtile.groups
+                    if group.name.startswith("special_")
+                  }
+                )
+            ],
+            commands = {},
+            unlisted = dynamic_group_addnew,
+            **Theme.dmenu
         )
-
 
     """
 
@@ -93,7 +107,10 @@ class CommandSet(Dmenu):
 
         if self.pre_commands:
             for cmd in self.pre_commands:
-                self.qtile.spawn(cmd)
+                if isinstance(cmd,str):
+                    self.qtile.spawn(cmd)
+                elif callable(cmd):
+                    cmd(self)
 
         out = super().run(items=self.commands.keys())
 
