@@ -269,8 +269,8 @@ class _Group(CommandObject):
             self.focus(win, warp=True, force=force)
 
     def remove(self, win, force=False):
-        self.windows.remove(win)
         hook.fire("group_window_remove", self, win)
+        self.windows.remove(win)
         hadfocus = self._remove_from_focus_history(win)
         win.group = None
 
