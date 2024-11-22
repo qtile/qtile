@@ -227,6 +227,7 @@ class Qtile(CommandObject):
                         signal.SIGINT: self.stop,
                         signal.SIGHUP: self.stop,
                         signal.SIGUSR1: self.reload_config,
+                        signal.SIGCHLD: self.reap_zombies,
                     }
                 ),
                 ipc.Server(
@@ -238,6 +239,17 @@ class Qtile(CommandObject):
         finally:
             self.finalize()
             self.core.remove_listener()
+
+    def reap_zombies(self) -> None:
+        try:
+            # One signal might mean mulitple children have exited. Reap everything
+            # that has exited, until there's nothing left.
+            while True:
+                wait_result = os.waitid(os.P_ALL, 0, os.WEXITED | os.WNOHANG)
+                if wait_result is None:
+                    return
+        except ChildProcessError:
+            pass
 
     def stop(self, exitcode: int = 0) -> None:
         hook.fire("shutdown")
