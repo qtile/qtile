@@ -1305,17 +1305,16 @@ def test_widget_duplicate_names(manager):
 
 
 @duplicate_widgets_config
-def test_widget_duplicate_warnings(logger, manager):
-    # Logging messages were created during setup so we need to access them
-    records = logger.get_records("setup")
+def test_widget_duplicate_warnings(manager):
+    records = manager.get_log_buffer().splitlines()
 
     # We need to filter out other potential log messages here
-    records = [r for r in records if r.msg.startswith("The following widgets")]
+    records = [r for r in records if "The following widgets" in r]
 
     assert len(records) == 1
 
     for w in ["prompt_1", "prompt_2", "groupbox_1", "groupbox_2", "foo_1"]:
-        assert w in records[0].msg
+        assert w in records[0]
 
     # Check this message level was info
-    assert all([r.levelno == logging.INFO for r in records])
+    assert all([r.startswith("INFO") for r in records])

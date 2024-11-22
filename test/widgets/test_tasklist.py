@@ -243,16 +243,16 @@ def test_tasklist_click_task(tasklist_manager):
 @xdg
 @configure_tasklist(theme_mode="non-existent-mode")
 @pytest.mark.xfail
-def test_tasklist_bad_theme_mode(tasklist_manager, logger):
-    msgs = [rec.msg for rec in logger.get_records("setup")]
+def test_tasklist_bad_theme_mode(tasklist_manager):
+    msgs = tasklist_manager.get_log_buffer()
     assert "Unexpected theme_mode (non-existent-mode). Theme icons will be disabled." in msgs
 
 
 @no_xdg
 @configure_tasklist(theme_mode="non-existent-mode")
 @pytest.mark.xfail
-def test_tasklist_no_xdg(tasklist_manager, logger):
-    msgs = [rec.msg for rec in logger.get_records("setup")]
+def test_tasklist_no_xdg(tasklist_manager):
+    msgs = tasklist_manager.get_log_buffer()
     assert "You must install pyxdg to use theme icons." in msgs
 
 
