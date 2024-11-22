@@ -207,15 +207,13 @@ scrolling_text_config = pytest.mark.parametrize("manager", [ScrollingTextConfig]
 
 
 @scrolling_text_config
-def test_text_scroll_no_width(logger, manager):
+def test_text_scroll_no_width(manager):
     """
     Scrolling text needs a fixed width. If this is not set a warning is provided and
     scrolling is disabled.
     """
-    records = [r for r in logger.get_records("setup") if r.msg.startswith("no_width")]
-    assert records
-    assert records[0].levelname == "WARNING"
-    assert records[0].msg == "no_width: You must specify a width when enabling scrolling."
+    logs = manager.get_log_buffer()
+    assert "WARNING - no_width: You must specify a width when enabling scrolling." in logs
     _, output = manager.c.widget["no_width"].eval("self.scroll")
     assert output == "False"
 

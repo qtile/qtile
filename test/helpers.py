@@ -32,6 +32,8 @@ HEIGHT = 600
 SECOND_WIDTH = 640
 SECOND_HEIGHT = 480
 
+LOG_PIPE_BUFFER_SIZE = 128 * 1024
+
 max_sleep = 5.0
 sleep_time = 0.1
 
@@ -151,6 +153,7 @@ class TestManager:
         self.proc = None
         self.c = None
         self.testwindows = []
+        self.logspipe = None
 
     def __enter__(self):
         """Set up resources"""
@@ -165,7 +168,18 @@ class TestManager:
         self.terminate()
         self._sockfile.close()
 
+    def get_log_buffer(self):
+        """Returns any logs that have been written to qtile's log buffer up to this point."""
+        # default pipe size on linux is 64k. we probably won't write
+        # 64k of logs, but in the event that we do, qtile will hang in
+        # write(). but thanks to e1d2dab16903 ("switch semantics of sigusr2
+        # to stack dumping") hopefully we will see it's hung in a log write and
+        # look at this. if we do write 64k of logs, we can do some F_SETPIPE_SZ
+        # fiddling with the buffer size to grow it to whatever github allows.
+        return os.read(self.logspipe, 64 * 1024).decode("utf-8")
+
     def start(self, config_class, no_spawn=False, state=None):
+        readlogs, writelogs = os.pipe()
         rpipe, wpipe = multiprocessing.Pipe()
 
         def run_qtile():
@@ -174,9 +188,14 @@ class TestManager:
                 os.environ.pop("WAYLAND_DISPLAY", None)
                 kore = self.backend.create()
                 os.environ.update(self.backend.env)
+
                 init_log(self.log_level)
-                if hasattr(self, "log_queue"):
-                    logger.addHandler(logging.handlers.QueueHandler(self.log_queue))
+                os.close(readlogs)
+                formatter = logging.Formatter("%(levelname)s - %(message)s")
+                handler = logging.StreamHandler(os.fdopen(writelogs, "w"))
+                handler.setFormatter(formatter)
+                logger.addHandler(handler)
+
                 Qtile(
                     kore,
                     config_class(),
@@ -189,6 +208,7 @@ class TestManager:
 
         self.proc = multiprocessing.Process(target=run_qtile)
         self.proc.start()
+        self.logspipe = readlogs
 
         # First, wait for socket to appear
         if can_connect_qtile(self.sockfile, ok=lambda: not rpipe.poll()):
