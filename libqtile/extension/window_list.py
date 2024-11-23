@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
 
 from libqtile.backend import base
 from libqtile.extension.dmenu import Dmenu
@@ -61,22 +62,11 @@ class WindowList(Dmenu):
 
     def run(self):
         self.list_windows()
-        out = super().run(items=self.item_to_win.keys())
+        out = self.run_dmenu(items=self.item_to_win.keys())
+        sout = out.rstrip("\n")
 
-        try:
-            sout = out.rstrip("\n")
-        except AttributeError:
-            # out is not a string (for example it's a Popen object returned
-            # by super(WindowList, self).run() when there are no menu items to
-            # list
-            return
-
-        try:
-            win = self.item_to_win[sout]
-        except KeyError:
-            # The selected window got closed while the menu was open?
-            return
-
-        screen = self.qtile.current_screen
-        screen.set_group(win.group)
-        win.group.focus(win)
+        win = self.item_to_win.get(sout)
+        if win:
+            screen = self.qtile.current_screen
+            screen.set_group(win.group)
+            win.group.focus(win)

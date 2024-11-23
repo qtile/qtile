@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import re
 import shlex
 
@@ -127,21 +129,23 @@ class Dmenu(base.RunCommand):
         if self.dmenu_height:
             self.configured_command.extend(("-h", str(self.dmenu_height)))
 
-    def run(self, items=None) -> str:
+    def run_dmenu(self, items: Optional[list[str]] = None) -> str:
         if items and self.dmenu_lines:
             lines = min(len(items), int(self.dmenu_lines))
             self.configured_command.extend(("-l", str(lines)))
 
-        proc = super().run()
-
         input_str = None
         if items:
-            base = "\n".join([i for i in items]) + "\n"
-            input_str = str.encode(base)
+            input_str = "\n".join([i for i in items]) + "\n"
 
-        out, _err = proc.communicate(input_str)
+        proc = self.get_command_process()
+
+        out, _err = self.run_command(proc, input_str)
 
         return out.decode("utf8")
+
+    def run(self) -> None:
+        self.run_dmenu()
 
 
 class DmenuRun(Dmenu):

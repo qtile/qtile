@@ -18,7 +18,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 from libqtile.extension.dmenu import Dmenu
+
+if TYPE_CHECKING:
+    from typing import Optional
 
 
 class CommandSet(Dmenu):
@@ -101,7 +107,7 @@ class CommandSet(Dmenu):
         Dmenu.__init__(self, **config)
         self.add_defaults(CommandSet.defaults)
 
-    def run(self):
+    def run(self) -> None:
         if not self.commands and not self.unlisted:
             return
 
@@ -112,7 +118,7 @@ class CommandSet(Dmenu):
                 elif callable(cmd):
                     cmd(self)
 
-        out = super().run(items=self.commands.keys())
+        out = self.run_dmenu(items=self.commands.keys())
         sout = out.rstrip("\n")
 
         command = self.commands.get(sout)

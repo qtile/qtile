@@ -19,12 +19,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import shlex
 from subprocess import PIPE, Popen
-from typing import Any
+from typing import TYPE_CHECKING
 
 from libqtile import configurable
 from libqtile.log_utils import logger
+
+if TYPE_CHECKING:
+    from typing import Any
+    from typing import Optional
 
 
 class _Extension(configurable.Configurable):
@@ -42,7 +48,7 @@ class _Extension(configurable.Configurable):
     def _configure(self, qtile) -> None:
         self.qtile = qtile
 
-    def run(self):
+    def run(self) -> None:
         """
         This method must be implemented by the subclasses.
         """
@@ -73,7 +79,7 @@ class RunCommand(_Extension):
         self.add_defaults(RunCommand.defaults)
         self.configured_command = None
 
-    def run(self) -> Popen:
+    def get_command_process(self) -> Popen:
         """
         An extension can inherit this class, define configured_command and use
         the process object by overriding this method and using super():
@@ -94,3 +100,18 @@ class RunCommand(_Extension):
         else:
             self.configured_command = self.command
         return Popen(self.configured_command, stdout=PIPE, stdin=PIPE)
+
+    def run_command(self, process: Popen, input_str: Optional[str] = None) -> tuple[str, str]:
+        """
+            Push `input_str` towards the process.
+            Wait for the process to finish.
+            Return stdout and stderr.
+        """
+        encoded_input = None
+        if input_str:
+            encoded_input = str.encode(input_str)
+        return process.communicate(encoded_input)
+
+    def run(self) -> None:
+        p = self.get_command_process()
+        p.run()
