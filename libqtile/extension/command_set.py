@@ -72,7 +72,7 @@ class CommandSet(Dmenu):
             qtile.groups_map[name].toscreen()
 
         CommandSet(
-            pre_commands = [ 
+            pre_commands = [
               lambda self: # Pre-Commands are executed in extention context.
                 setattr(
                    self,
@@ -113,14 +113,7 @@ class CommandSet(Dmenu):
                     cmd(self)
 
         out = super().run(items=self.commands.keys())
-
-        try:
-            sout = out.rstrip("\n")
-        except AttributeError:
-            # out is not a string (for example it's a Popen object returned
-            # by super(WindowList, self).run() when there are no menu items to
-            # list
-            return
+        sout = out.rstrip("\n")
 
         command = self.commands.get(sout)
         if not command:
