@@ -38,6 +38,33 @@ from libqtile.log_utils import logger
 if TYPE_CHECKING:
     from libqtile.command.base import ItemT
 
+class FocusLock():
+    """Global focus lock.
+
+    If the global focus lock is active, qtile attempts to keep the window
+    focus where it currently is until it is unlocked again.
+    """
+    _locks = []
+
+    @classmethod
+    def is_active(cls):
+        return bool(len(FocusLock._locks) != 0)
+
+    @classmethod
+    def get(cls):
+        return FocusLock._locks
+
+    @classmethod
+    def lock(cls, obj):
+        if obj:
+            FocusLock._locks.append(obj)
+
+    @classmethod
+    def unlock(cls, obj):
+        try:
+            FocusLock._locks.remove(obj)
+        except ValueError:
+            pass
 
 class _Group(CommandObject):
     """A container for a bunch of windows
@@ -161,7 +188,7 @@ class _Group(CommandObject):
                         logger.exception("Exception in layout %s", self.layout.name)
                 if floating:
                     self.floating_layout.layout(floating, screen_rect)
-                if self.current_window and self.screen == self.qtile.current_screen:
+                if self.current_window and self.screen == self.qtile.current_screen and not FocusLock.is_active():
                     self.current_window.focus(warp)
                 else:
                     # Screen has lost focus so we reset record of focused window so
@@ -210,6 +237,9 @@ class _Group(CommandObject):
         """
         if self.qtile._drag and not force:
             # don't change focus while dragging windows (unless forced)
+            return
+        if FocusLock.is_active():
+            self.layout_all(warp)
             return
         if win:
             if win not in self.windows:

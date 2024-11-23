@@ -45,6 +45,7 @@ from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import CommandError, QtileCommandInterface
 from libqtile.log_utils import logger
 from libqtile.widget import base
+from libqtile.group import FocusLock
 
 
 class AbstractCompleter(metaclass=abc.ABCMeta):
@@ -484,6 +485,7 @@ class Prompt(base._TextBox):
         self.display = self.prompt.format(prompt=prompt)
         self.display = pangocffi.markup_escape_text(self.display)
         self.active = True
+        FocusLock.lock(self)
         self.user_input = ""
         self.archived_input = ""
         self.show_cursor = self.cursor
@@ -588,6 +590,7 @@ class Prompt(base._TextBox):
     def _unfocus(self):
         # Remove focus from the widget
         self.active = False
+        FocusLock.unlock(self)
         self._update()
         self.bar.widget_ungrab_keyboard()
 
