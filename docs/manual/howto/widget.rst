@@ -221,7 +221,7 @@ Displaying text
 ---------------
 
 Text is displayed by using a ``drawer.TextLayout`` object. If all you are doing is
-displaying text then it's highly recommended that you use the ```base._TextBox``
+displaying text then it's highly recommended that you use the ``base._TextBox``
 superclass as this simplifies adding and updating text.
 
 If you wish to implement this manually then you can create a your own ``drawer.TextLayout``
