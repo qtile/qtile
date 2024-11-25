@@ -5,6 +5,7 @@ Defining them here rather than in conftest.py avoids issues with circular import
 between test/conftest.py and test/backend/<backend>/conftest.py files.
 """
 
+import faulthandler
 import functools
 import logging
 import multiprocessing
@@ -153,6 +154,8 @@ class TestManager:
 
     def __enter__(self):
         """Set up resources"""
+        faulthandler.enable(all_threads=True)
+        faulthandler.register(signal.SIGUSR2, all_threads=True)
         self._sockfile = tempfile.NamedTemporaryFile()
         self.sockfile = self._sockfile.name
         return self
