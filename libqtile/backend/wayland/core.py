@@ -23,6 +23,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import os
+import signal
 import time
 from collections import defaultdict
 from typing import TYPE_CHECKING, cast
@@ -101,7 +102,7 @@ from libqtile.backend.wayland.output import Output
 from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
-from libqtile.utils import QtileError
+from libqtile.utils import QtileError, reap_zombies
 
 try:
     # Continue if ffi not built, so that docs can be built without wayland deps.
@@ -371,12 +372,20 @@ class Core(base.Core, wlrq.HasListeners):
             self._on_xdg_activation_v1_request_activate,
         )
 
-        # Set up XWayland
+        # Set up XWayland. wlroots wants to fork() and waitpid() for the
+        # xwayland server:
+        # https://gitlab.freedesktop.org/wlroots/wlroots/-/commit/871646d22522141c45db2c0bfa1528d595bb69df
+        # so we need to delay installing our SIGCHLD handler so they can
+        # actually waitpid(). we install it in _on_xwayland_ready() or the
+        # exception handler, whichever is executed. This can be reverted if/when:
+        # https://gitlab.freedesktop.org/wlroots/wlroots/-/merge_requests/4926
+        # is merged.
         self._xwayland: xwayland.XWayland | None = None
         try:
             self._xwayland = xwayland.XWayland(self.display, self.compositor, True)
         except RuntimeError:
             logger.info("Failed to set up XWayland. Continuing without.")
+            asyncio.get_running_loop().add_signal_handler(signal.SIGCHLD, reap_zombies)
         else:
             os.environ["DISPLAY"] = self._xwayland.display_name or ""
             logger.info("Set up XWayland with DISPLAY=%s", os.environ["DISPLAY"])
@@ -954,6 +963,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_xwayland_ready(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xwayland ready")
+        asyncio.get_running_loop().add_signal_handler(signal.SIGCHLD, reap_zombies)
         assert self._xwayland is not None
         self._xwayland.set_seat(self.seat)
         self.xwayland_atoms: dict[int, str] = wlrq.get_xwayland_atoms(self._xwayland)

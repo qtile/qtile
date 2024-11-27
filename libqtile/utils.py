@@ -627,3 +627,18 @@ def remove_dbus_rules() -> None:
         # We need to manually close the socket until https://github.com/altdesktop/python-dbus-next/pull/148
         # gets merged. There's no error on multiple calls to 'close()'.
         bus._sock.close()
+
+
+def reap_zombies() -> None:
+    """
+    A SIGCHLD handler that reaps all zombies until there are no more.
+    """
+    try:
+        # One signal might mean mulitple children have exited. Reap everything
+        # that has exited, until there's nothing left.
+        while True:
+            wait_result = os.waitid(os.P_ALL, 0, os.WEXITED | os.WNOHANG)
+            if wait_result is None:
+                return
+    except ChildProcessError:
+        pass
