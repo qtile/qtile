@@ -221,16 +221,19 @@ class Qtile(CommandObject):
         faulthandler.register(signal.SIGUSR2, all_threads=True)
 
         try:
+            signals = {
+                signal.SIGTERM: self.stop,
+                signal.SIGINT: self.stop,
+                signal.SIGHUP: self.stop,
+                signal.SIGUSR1: self.reload_config,
+            }
+            if self.core.name == "x11":
+                # the wayland backend installs its own SIGCHLD handler after
+                # the XWayland X server has initialized (as a workaround). the
+                # x11 backend can just do it here.
+                signals[signal.SIGCHLD] = utils.reap_zombies
             async with (
-                LoopContext(
-                    {
-                        signal.SIGTERM: self.stop,
-                        signal.SIGINT: self.stop,
-                        signal.SIGHUP: self.stop,
-                        signal.SIGUSR1: self.reload_config,
-                        signal.SIGCHLD: self.reap_zombies,
-                    }
-                ),
+                LoopContext(signals),
                 ipc.Server(
                     self._prepare_socket_path(self.socket_path),
                     self.server.call,
@@ -240,17 +243,6 @@ class Qtile(CommandObject):
         finally:
             self.finalize()
             self.core.remove_listener()
-
-    def reap_zombies(self) -> None:
-        try:
-            # One signal might mean mulitple children have exited. Reap everything
-            # that has exited, until there's nothing left.
-            while True:
-                wait_result = os.waitid(os.P_ALL, 0, os.WEXITED | os.WNOHANG)
-                if wait_result is None:
-                    return
-        except ChildProcessError:
-            pass
 
     def stop(self, exitcode: int = 0) -> None:
         hook.fire("shutdown")
