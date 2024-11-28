@@ -73,29 +73,21 @@ def deferred_stop(code=0):
 # which is used to evaluate code coverage
 # and a second instance started by run_qtile,
 # which is used to test the actual exit code behavior
-def test_exitcode_default(manager):
+def test_exitcode_default(backend):
     thread = threading.Thread(target=deferred_stop)
     thread.daemon = False
     thread.start()
 
-    exitcode = run_qtile(manager.backend)
-
-    # shutdown qtile instance started by testmanager
-    manager.c.shutdown()
-
+    exitcode = run_qtile(backend)
     assert exitcode == 0
 
 
-def test_exitcode_explicit(manager):
+def test_exitcode_explicit(backend):
     code = 23
 
     thread = threading.Thread(target=deferred_stop, args=(code,))
     thread.daemon = False
     thread.start()
 
-    exitcode = run_qtile(manager.backend)
-
-    # shutdown qtile instance started by testmanager
-    manager.c.shutdown()
-
+    exitcode = run_qtile(backend)
     assert exitcode == code
