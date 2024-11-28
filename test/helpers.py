@@ -167,6 +167,8 @@ class TestManager:
         """Clean up resources"""
         self.terminate()
         self._sockfile.close()
+        if self.logspipe is not None:
+            os.close(self.logspipe)
 
     def get_log_buffer(self):
         """Returns any logs that have been written to qtile's log buffer up to this point."""
@@ -208,6 +210,7 @@ class TestManager:
 
         self.proc = multiprocessing.Process(target=run_qtile)
         self.proc.start()
+        os.close(writelogs)
         self.logspipe = readlogs
 
         # First, wait for socket to appear
