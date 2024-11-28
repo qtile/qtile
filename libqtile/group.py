@@ -143,11 +143,14 @@ class _Group(CommandObject):
     def use_previous_layout(self):
         self.use_layout((self.current_layout - 1) % (len(self.layouts)))
 
-    def layout_all(self, warp=False):
+    def layout_all(self, warp=False, focus=True):
         """Layout the floating layer, then the current layout.
 
-        If we have have a current_window give it focus, optionally moving warp
-        to it.
+        Parameters
+        ==========
+        focus :
+            If we have have a current_window give it focus, optionally moving warp
+            to it.
         """
         if self.screen and self.windows:
             with self.qtile.core.masked():
@@ -161,12 +164,13 @@ class _Group(CommandObject):
                         logger.exception("Exception in layout %s", self.layout.name)
                 if floating:
                     self.floating_layout.layout(floating, screen_rect)
-                if self.current_window and self.screen == self.qtile.current_screen:
-                    self.current_window.focus(warp)
-                else:
-                    # Screen has lost focus so we reset record of focused window so
-                    # focus will warp when screen is focused again
-                    self.last_focused = None
+                if focus:
+                    if self.current_window and self.screen == self.qtile.current_screen:
+                        self.current_window.focus(warp)
+                    else:
+                        # Screen has lost focus so we reset record of focused window so
+                        # focus will warp when screen is focused again
+                        self.last_focused = None
 
     def set_screen(self, screen, warp=True):
         """Set this group's screen to screen"""
@@ -267,6 +271,8 @@ class _Group(CommandObject):
                 i.add_client(win)
         if focus:
             self.focus(win, warp=True, force=force)
+        else:
+            self.layout_all(focus=False)
 
     def remove(self, win, force=False):
         hook.fire("group_window_remove", self, win)
