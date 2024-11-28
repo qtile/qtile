@@ -122,4 +122,6 @@ python_files = "test_*.py"
 testpaths = ["test"]
 filterwarnings = [
     "error:::libqtile",
+    "error:::test",
+    "ignore:::dbus_next",
 ]
