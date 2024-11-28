@@ -6,3 +6,4 @@ pytest-cov
 tox
 pre-commit
 PyGObject
+isort
