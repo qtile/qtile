@@ -1379,6 +1379,17 @@ class Qtile(CommandObject):
         self.focus_screen((self.screens.index(self.current_screen) - 1) % len(self.screens))
 
     @expose_command()
+    def swap_screens(self, reverse = False):
+        """Rotate groups between active screens"""
+        prev_group = None
+        screens = self.screens[::-1] if reverse else self.screens
+        for screen in screens:
+            if prev_group is None:
+                prev_group = screen.group
+                continue
+            screen.set_group(prev_group)
+            self.next_screen()
+
     def windows(self) -> list[dict[str, Any]]:
         """Return info for each client window"""
         return [
