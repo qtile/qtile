@@ -47,6 +47,7 @@
           # tests
           coverage
           pytest
+          isort
         ];
 
       tests = {
@@ -76,6 +77,7 @@
         wlroots_0_17
         # test/backend/wayland/test_window.py
         gtk-layer-shell
+        imagemagick
       ] ++ (builtins.attrValues tests);
     in {
       default = pkgs.mkShell {
