@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 import tempfile
 from multiprocessing import Value
@@ -775,7 +776,17 @@ def test_multiple_borders(xmanager):
     wid = xmanager.c.window.info()["id"]
 
     name = os.path.join(tempfile.gettempdir(), "test_multiple_borders.txt")
-    cmd = ["import", "-border", "-window", str(wid), "-crop", "5x1+0+4", "-depth", "8", name]
+    cmd = [
+        shutil.which("import"),
+        "-border",
+        "-window",
+        str(wid),
+        "-crop",
+        "5x1+0+4",
+        "-depth",
+        "8",
+        name,
+    ]
     subprocess.run(cmd, env={"DISPLAY": xmanager.display})
 
     with open(name) as f:
