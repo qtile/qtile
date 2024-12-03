@@ -25,11 +25,23 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from libqtile.command.base import CommandError
+
 
 def assert_focused(self, name):
     """Asserts that window with specified name is currently focused"""
     info = self.c.window.info()
     assert info["name"] == name, "Got {!r}, expected {!r}".format(info["name"], name)
+
+
+def assert_unfocused(self, name):
+    """Asserts that window with specified name is currently not focused"""
+    try:
+        info = self.c.window.info()
+    except CommandError:
+        # no current window, all unfocused
+        return
+    assert info["name"] != name, f"Got {name}, expected inequality."
 
 
 def assert_dimensions(self, x, y, w, h, win=None):
