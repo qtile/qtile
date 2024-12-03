@@ -1249,7 +1249,11 @@ class _Window:
 
     @property
     def can_steal_focus(self):
-        return self.window.get_wm_type() != "notification"
+        return super().can_steal_focus and self.window.get_wm_type() != "notification"
+
+    @can_steal_focus.setter
+    def can_steal_focus(self, can_steal_focus: bool) -> None:
+        self._can_steal_focus = can_steal_focus
 
     def _do_focus(self):
         """

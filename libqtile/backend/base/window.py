@@ -35,6 +35,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
         # Window.static sets this in case it is hooked to client_new to stop the
         # Window object from being managed, now that a Static is being used instead
         self.defunct: bool = False
+        self._can_steal_focus: bool = True
 
         self.base_x: int | None = None
         self.base_y: int | None = None
@@ -77,9 +78,14 @@ class _Window(CommandObject, metaclass=ABCMeta):
         return None
 
     @property
-    def can_steal_focus(self):
+    def can_steal_focus(self) -> bool:
         """Is it OK for this window to steal focus?"""
-        return True
+        return self._can_steal_focus
+
+    @can_steal_focus.setter
+    def can_steal_focus(self, can_steal_focus: bool) -> None:
+        """Can_steal_focus setter."""
+        self._can_steal_focus = can_steal_focus
 
     def has_fixed_ratio(self) -> bool:
         """Does this window want a fixed aspect ratio?"""
