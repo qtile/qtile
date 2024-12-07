@@ -27,9 +27,8 @@ import time
 from enum import Enum
 
 import pytest
-from dbus_fast._private.address import get_session_bus_address
 from dbus_fast.aio import MessageBus
-from dbus_fast.constants import PropertyAccess
+from dbus_fast.constants import BusType, PropertyAccess
 from dbus_fast.service import ServiceInterface, dbus_property, method
 
 from libqtile.bar import Bar
@@ -47,6 +46,11 @@ class DeviceState(Enum):
     UNPAIRED = 1
     PAIRED = 2
     CONNECTED = 3
+
+
+class ForceSessionBusType:
+    SESSION = BusType.SESSION
+    SYSTEM = BusType.SESSION
 
 
 class Device(ServiceInterface):
@@ -236,13 +240,9 @@ def fake_dbus_daemon(monkeypatch):
 @pytest.fixture
 def widget(monkeypatch):
     """Patch the widget to use the fake dbus service."""
-
-    def force_session_bus(bus_type):
-        return get_session_bus_address()
-
     monkeypatch.setattr("libqtile.widget.bluetooth.BLUEZ_SERVICE", BLUEZ_SERVICE)
     # Make dbus_fast always return the session bus address even if system bus is requested
-    monkeypatch.setattr("dbus_fast.message_bus.get_bus_address", force_session_bus)
+    monkeypatch.setattr("libqtile.widget.bluetooth.BusType", ForceSessionBusType)
 
     yield Bluetooth
 
