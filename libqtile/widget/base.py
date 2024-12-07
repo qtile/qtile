@@ -245,7 +245,7 @@ class _Widget(CommandObject, configurable.Configurable):
 
         Widgets that need to use asyncio coroutines after this point may
         wish to initialise the relevant code (e.g. connections to dbus
-        using dbus_next) here.
+        using dbus_fast) here.
         """
 
     def finalize(self):

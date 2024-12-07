@@ -27,10 +27,10 @@ import time
 from enum import Enum
 
 import pytest
-from dbus_next._private.address import get_session_bus_address
-from dbus_next.aio import MessageBus
-from dbus_next.constants import PropertyAccess
-from dbus_next.service import ServiceInterface, dbus_property, method
+from dbus_fast._private.address import get_session_bus_address
+from dbus_fast.aio import MessageBus
+from dbus_fast.constants import PropertyAccess
+from dbus_fast.service import ServiceInterface, dbus_property, method
 
 from libqtile.bar import Bar
 from libqtile.config import Screen
@@ -241,8 +241,8 @@ def widget(monkeypatch):
         return get_session_bus_address()
 
     monkeypatch.setattr("libqtile.widget.bluetooth.BLUEZ_SERVICE", BLUEZ_SERVICE)
-    # Make dbus_next always return the session bus address even if system bus is requested
-    monkeypatch.setattr("dbus_next.message_bus.get_bus_address", force_session_bus)
+    # Make dbus_fast always return the session bus address even if system bus is requested
+    monkeypatch.setattr("dbus_fast.message_bus.get_bus_address", force_session_bus)
 
     yield Bluetooth
 

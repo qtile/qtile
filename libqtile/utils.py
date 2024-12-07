@@ -34,9 +34,9 @@ from shutil import which
 from typing import TYPE_CHECKING
 
 try:
-    from dbus_next import AuthError, Message, Variant
-    from dbus_next.aio import MessageBus
-    from dbus_next.constants import BusType, MessageType
+    from dbus_fast import AuthError, Message, Variant
+    from dbus_fast.aio import MessageBus
+    from dbus_fast.constants import BusType, MessageType
 
     has_dbus = True
 except ImportError:
@@ -295,7 +295,7 @@ def send_notification(
     https://developer.gnome.org/notification-spec/
     """
     if not has_dbus:
-        logger.warning("dbus-next is not installed. Unable to send notifications.")
+        logger.warning("dbus-fast is not installed. Unable to send notifications.")
         return -1
 
     id_ = randint(10, 1000) if id_ is None else id_
@@ -430,7 +430,7 @@ async def _send_dbus_message(
     preserve: bool = False,
 ) -> tuple[MessageBus | None, Message | None]:
     """
-    Private method to send messages to dbus via dbus_next.
+    Private method to send messages to dbus via dbus_fast.
 
     An existing bus connection can be passed, if left empty, a new
     bus connection will be created.
@@ -454,7 +454,7 @@ async def _send_dbus_message(
     if isinstance(body, str):
         body = [body]
 
-    # Ignore types here: dbus-next has default values of `None` for certain
+    # Ignore types here: dbus-fast has default values of `None` for certain
     # parameters but the signature is `str` so passing `None` results in an
     # error in mypy.
     msg = await bus.call(
@@ -491,7 +491,7 @@ async def add_signal_receiver(
 ) -> bool:
     """
     Helper function which aims to recreate python-dbus's add_signal_receiver
-    method in dbus_next with asyncio calls.
+    method in dbus_fast with asyncio calls.
 
     If check_service is `True` the method will raise a wanrning and return False
     if the service is not visible on the bus. If the `bus_name` is None, no
@@ -500,7 +500,7 @@ async def add_signal_receiver(
     Returns True if subscription is successful.
     """
     if not has_dbus:
-        logger.warning("dbus-next is not installed. Unable to subscribe to signals")
+        logger.warning("dbus-fast is not installed. Unable to subscribe to signals")
         return False
 
     if bus_name and check_service:
@@ -540,7 +540,7 @@ async def add_signal_receiver(
     if bus and msg and msg.message_type == MessageType.METHOD_RETURN:
 
         def match_message(msg: Message, match_args: dict[str, str | None]) -> bool:
-            return msg._matches(**{k: v for k, v in match_args.items() if v})
+            return all(getattr(msg, k) == v for k, v in match_args.items() if v)
 
         async def resolve_sender(signal_msg: Message) -> tuple[str, Message]:
             """Looks up a pretty bus name to retrieve the unique name."""
