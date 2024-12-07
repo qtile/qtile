@@ -57,7 +57,7 @@ class MockMessage:
         self.body = body
 
 
-# dbus_next message data is stored in variants. The widget extracts the
+# dbus_fast message data is stored in variants. The widget extracts the
 # information via the `value` attribute so we just need to mock that here.
 class obj:  # noqa: N801
     def __init__(self, value):
@@ -102,13 +102,13 @@ NON_SIGNAL = playback_status("Paused", False)
 
 @pytest.fixture
 def patched_module(monkeypatch):
-    # Remove dbus_next.constants entry from modules. If it's not there, don't raise error
-    monkeypatch.delitem(sys.modules, "dbus_next.constants", raising=False)
-    monkeypatch.setitem(sys.modules, "dbus_next.constants", MockConstants("dbus_next.constants"))
+    # Remove dbus_fast.constants entry from modules. If it's not there, don't raise error
+    monkeypatch.delitem(sys.modules, "dbus_fast.constants", raising=False)
+    monkeypatch.setitem(sys.modules, "dbus_fast.constants", MockConstants("dbus_fast.constants"))
     from libqtile.widget import mpris2widget
 
     # Need to force reload of the module to ensure patched module is loaded
-    # This may only be needed if dbus_next is installed on testing system so helpful for
+    # This may only be needed if dbus_fast is installed on testing system so helpful for
     # local tests.
     reload(mpris2widget)
     monkeypatch.setattr("libqtile.widget.mpris2widget.add_signal_receiver", mock_signal_receiver)

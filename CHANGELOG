@@ -1,4 +1,7 @@
 Qtile x.xx.x, released xxxx-xx-xx:
+    !!! breaking changes !!!
+      - dbus-fast is now required for dbus support.
+        dbus-next was removed as the package is unmaintained.
     * features
         - Add `SwayNC` widget to interact with Sway Notification Centre (wayland only)
         - Add `swap` method to Plasma layout

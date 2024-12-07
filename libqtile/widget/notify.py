@@ -93,7 +93,7 @@ class Notify(base._TextBox):
             self.text, self.foreground, self.font, self.fontsize, self.fontshadow, markup=True
         )
         if notifier is None:
-            logger.warning("You must install dbus-next to use the Notify widget.")
+            logger.warning("You must install dbus-fast to use the Notify widget.")
 
         # Create a tuple of our default timeouts. Urgency is an integer of 0-2
         # (see https://specifications.freedesktop.org/notification-spec/notification-spec-latest.html#urgency-levels)

@@ -952,7 +952,7 @@ hooks: list[Hook] = [
         """
         Called when system wakes up from sleep, suspend or hibernate.
 
-        Relies on systemd's inhibitor dbus interface, via the dbus-next package.
+        Relies on systemd's inhibitor dbus interface, via the dbus-fast package.
 
         Note: the hook is not fired when resuming from shutdown/reboot events.
         Use the "startup" hooks for those scenarios.
@@ -968,7 +968,7 @@ hooks: list[Hook] = [
         """
         Called when system is about to sleep, suspend or hibernate.
 
-        Relies on systemd's inhibitor dbus interface, via the dbus-next package.
+        Relies on systemd's inhibitor dbus interface, via the dbus-fast package.
 
         When this hook is used, qtile will set an inhibitor that prevent the system
         from sleeping. The inhibitor is removed as soon as your function exits. You should therefore
