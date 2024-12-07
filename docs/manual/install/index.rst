@@ -61,7 +61,7 @@ only the dependencies of one of these is required.
 +-------------------+-------------------------+-----------------------------------------+
 | libpangocairo     | libpangocairo-1.0-0     | Writing on bars and popups              |
 +-------------------+-------------------------+-----------------------------------------+
-| dbus-next_        | --                      | Sending notifications with dbus         |
+| dbus-fast_        | --                      | Sending notifications with dbus         |
 |                   |                         | (optional).                             |
 +-------------------+-------------------------+-----------------------------------------+
 |                       **X11**                                                         |
@@ -88,7 +88,7 @@ only the dependencies of one of these is required.
 .. _pywayland: https://pywayland.readthedocs.io/en/latest/install.html
 .. _python-xkbcommon: https://github.com/sde1000/python-xkbcommon
 .. _cairocffi: https://cairocffi.readthedocs.io/en/stable/overview.html
-.. _dbus-next: https://python-dbus-next.readthedocs.io/en/latest/index.html
+.. _dbus-fast: https://dbus-fast.readthedocs.io/en/latest/
 
 
 Qtile

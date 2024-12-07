@@ -1,5 +1,5 @@
 libcst
-dbus-next
+dbus-fast
 psutil
 coverage
 pytest-cov

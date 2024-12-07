@@ -27,9 +27,9 @@ from libqtile.log_utils import logger
 from libqtile.utils import create_task
 
 try:
-    from dbus_next.aio import MessageBus
-    from dbus_next.constants import BusType
-    from dbus_next.errors import DBusError
+    from dbus_fast.aio import MessageBus
+    from dbus_fast.constants import BusType
+    from dbus_fast.errors import DBusError
 
     has_dbus = True
 except ImportError:
@@ -65,7 +65,7 @@ class Inhibitor:
         system is going down for sleep.
         """
         if not has_dbus:
-            logger.warning("dbus-next must be installed to listen to sleep signals")
+            logger.warning("dbus-fast must be installed to listen to sleep signals")
         self.sleep = True
 
     def want_resume(self) -> None:
@@ -74,7 +74,7 @@ class Inhibitor:
         system is waking from sleep.
         """
         if not has_dbus:
-            logger.warning("dbus-next must be installed to listen to resume signals")
+            logger.warning("dbus-fast must be installed to listen to resume signals")
         self.resume = True
 
     def start(self) -> None:
