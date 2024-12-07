@@ -11,7 +11,7 @@ funcparserlib==1.0.0a0
 numpydoc
 pytest
 PyGObject
-dbus-next
+dbus-fast
 cairocffi>=1.6.0
 xcffib>=1.4.0
 libcst>=1.0.0

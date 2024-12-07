@@ -28,9 +28,9 @@ import re
 import string
 from typing import TYPE_CHECKING
 
-from dbus_next import Message, Variant
-from dbus_next.aio import MessageBus
-from dbus_next.constants import MessageType
+from dbus_fast import Message, Variant
+from dbus_fast.aio import MessageBus
+from dbus_fast.constants import MessageType
 
 from libqtile import pangocffi
 from libqtile.command.base import expose_command
@@ -107,9 +107,9 @@ class Mpris2(base._TextBox):
     Basic mouse controls are also available: button 1 = play/pause,
     scroll up = next track, scroll down = previous track.
 
-    Widget requirements: dbus-next_.
+    Widget requirements: dbus-fast_.
 
-    .. _dbus-next: https://pypi.org/project/dbus-next/
+    .. _dbus-fast: https://pypi.org/project/dbus-fast/
     """
 
     defaults = [
