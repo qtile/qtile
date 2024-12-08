@@ -493,6 +493,16 @@ class Screen(CommandObject):
     def gaps(self) -> Iterable[BarType]:
         return (i for i in [self.top, self.bottom, self.left, self.right] if i)
 
+    def finalize_gaps(self) -> None:
+        def remove(attr: str) -> None:
+            gap = getattr(self, attr, None)
+            if gap is not None:
+                setattr(self, attr, None)
+                gap.finalize()
+
+        for attr in ["top", "bottom", "left", "right"]:
+            remove(attr)
+
     @property
     def dx(self) -> int:
         if self.left and getattr(self.left, "reserve", True):
