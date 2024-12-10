@@ -961,8 +961,8 @@ class Internal(_Base, base.Internal):
             self.wlr_buffer.drop()
 
         scale = self.qtile.config.wl_scale_factor
-        width = self._width * scale
-        height = self._height * scale
+        width = int(self._width * scale)
+        height = int(self._height * scale)
         surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, width, height)
         stride = surface.get_stride()
         data = cairocffi.cairo.cairo_image_surface_get_data(surface._pointer)
