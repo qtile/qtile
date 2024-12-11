@@ -33,9 +33,9 @@ class KeyboardKbdd(base.ThreadPoolText):
     kbdd should be installed and running, you can get it from:
     https://github.com/qnikst/kbdd
 
-    The widget also requires dbus-next_.
+    The widget also requires dbus-fast_.
 
-    .. _dbus-next: https://pypi.org/project/dbus-next/
+    .. _dbus-fast: https://pypi.org/project/dbus-fast/
     """
 
     defaults = [

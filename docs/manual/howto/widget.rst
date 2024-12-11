@@ -399,14 +399,14 @@ are passed to the callback function.
 Using dbus
 ----------
 
-Qtile uses ``dbus-next`` for interacting with dbus.
+Qtile uses ``dbus-fast`` for interacting with dbus.
 
 If you just want to listen for signals then Qtile provides a helper method called
 ``add_signal_receiver`` which can subscribe to a signal and trigger a callback
 whenever that signal is broadcast.
 
 .. note::
-    Qtile uses the ``asyncio`` based functions of ``dbus-next`` so your widget
+    Qtile uses the ``asyncio`` based functions of ``dbus-fast`` so your widget
     must make sure, where necessary, calls to dbus are made via coroutines.
 
     There is a ``_config_async`` coroutine in the base widget class which can
@@ -429,8 +429,8 @@ For example, the Mpris2 widget uses the following code:
                         path="/org/mpris/MediaPlayer2",
                         dbus_interface="org.freedesktop.DBus.Properties")
 
-``dbus-next`` can also be used to query properties, call methods etc. on dbus
-interfaces. Refer to the `dbus-next documentation <https://python-dbus-next.readthedocs.io/en/latest/>`_
+``dbus-fast`` can also be used to query properties, call methods etc. on dbus
+interfaces. Refer to the `dbus-fast documentation <https://python-dbus-fast.readthedocs.io/en/latest/>`_
 for more information on how to use the module.
 
 .. _mouse-events:

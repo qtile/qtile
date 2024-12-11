@@ -25,9 +25,9 @@
 from typing import Any
 
 try:
-    from dbus_next.aio import MessageBus
-    from dbus_next.constants import NameFlag, RequestNameReply
-    from dbus_next.service import ServiceInterface, method, signal
+    from dbus_fast.aio import MessageBus
+    from dbus_fast.constants import NameFlag, RequestNameReply
+    from dbus_fast.service import ServiceInterface, method, signal
 
     has_dbus = True
 except ImportError:
