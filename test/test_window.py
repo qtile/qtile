@@ -1,9 +1,9 @@
 import pytest
 
-from libqtile import config, layout, resources
+from libqtile import bar, config, hook, layout, log_utils, resources, widget
 from libqtile.confreader import Config
 from test.conftest import BareConfig, dualmonitor
-from test.layouts.layout_utils import assert_focused
+from test.layouts.layout_utils import assert_focused, assert_unfocused
 from test.test_manager import ManagerConfig
 
 bare_config = pytest.mark.parametrize("manager", [BareConfig], indirect=True)
@@ -305,3 +305,64 @@ def test_set_position(manager):
 
     # Also check if there is only one client now
     assert len(manager.c.layout.info()["clients"]) == 1
+
+
+class WindowNameConfig(BareConfig):
+    screens = [
+        config.Screen(
+            bottom=bar.Bar(
+                [
+                    widget.WindowName(),
+                ],
+                20,
+            ),
+        ),
+    ]
+    layouts = [layout.Columns()]
+
+
+@pytest.mark.parametrize("manager", [WindowNameConfig], indirect=True)
+def test_focus_switch(manager):
+    def _wnd(name):
+        return manager.c.window[{w["name"]: w["id"] for w in manager.c.windows()}[name]]
+
+    manager.test_window("One")
+    manager.test_window("Two")
+
+    assert manager.c.widget["windowname"].info()["text"] == "Two"
+
+    _wnd("One").focus()
+    assert manager.c.widget["windowname"].info()["text"] == "One"
+
+
+def set_steal_focus(win):
+    if win.name != "three":
+        win.can_steal_focus = False
+
+
+@pytest.fixture
+def hook_fixture():
+    log_utils.init_log()
+    yield
+    hook.clear()
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_can_steal_focus(manager_nospawn):
+    """
+    Test Window.can_steal_focus.
+    """
+
+    class AntiFocusStealConfig(BareConfig):
+        hook.subscribe.client_new(set_steal_focus)
+
+    manager_nospawn.start(AntiFocusStealConfig)
+    manager_nospawn.test_window("one")
+    assert_unfocused(manager_nospawn, "one")
+
+    manager_nospawn.test_window("two")
+    assert_unfocused(manager_nospawn, "one")
+    assert_unfocused(manager_nospawn, "two")
+
+    manager_nospawn.test_window("three")
+    assert_focused(manager_nospawn, "three")

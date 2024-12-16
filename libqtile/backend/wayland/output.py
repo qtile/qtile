@@ -20,29 +20,32 @@
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 
 from wlroots.util.box import Box
 from wlroots.util.clock import Timespec
 from wlroots.wlr_types import Output as wlrOutput
-from wlroots.wlr_types import SceneOutput
+from wlroots.wlr_types import OutputState, SceneOutput
 from wlroots.wlr_types.layer_shell_v1 import (
     LayerShellV1Layer,
     LayerSurfaceV1KeyboardInteractivity,
 )
+from wlroots.wlr_types.output import CustomMode
 
 from libqtile.backend.wayland.wlrq import HasListeners
+from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
     from typing import Any
 
     from pywayland.server import Listener
+    from wlroots.wlr_types.output import OutputEventRequestState
 
     from libqtile.backend.wayland.core import Core
     from libqtile.backend.wayland.layer import LayerStatic
     from libqtile.backend.wayland.window import WindowType
-    from libqtile.backend.wayland.wlrq import Dnd
     from libqtile.config import Screen
 
 
@@ -52,21 +55,40 @@ class Output(HasListeners):
         self.renderer = core.renderer
         self.wlr_output = wlr_output
         self._reserved_space = (0, 0, 0, 0)
-        self.scene_output = SceneOutput.create(core.scene, wlr_output)
 
         # These will get updated on the output layout's change event
         self.x = 0
         self.y = 0
 
-        # Initialise wlr_output
+        self.scene_output = SceneOutput.create(core.scene, wlr_output)
         wlr_output.init_render(core.allocator, core.renderer)
-        wlr_output.set_mode(wlr_output.preferred_mode())
-        wlr_output.enable()
-        wlr_output.commit()
+
+        # The output may be disabled, switch it on.
+        state = OutputState()
+        state.set_enabled(True)
+
+        # Select the output's preferred mode.
+        if mode := wlr_output.preferred_mode():
+            state.set_mode(mode)
+
+        # During tests, we want to fix the geometry of the 1 or 2 outputs.
+        if wlr_output.is_headless and "PYTEST_CURRENT_TEST" in os.environ:
+            if not core.get_enabled_outputs():
+                # First test output
+                state.set_custom_mode(CustomMode(width=800, height=600, refresh=0))
+            else:
+                # Second test output
+                state.set_custom_mode(CustomMode(width=640, height=480, refresh=0))
+
+        # Commit this initial state.
+        wlr_output.commit(state)
+        state.finish()
+
         wlr_output.data = self
 
         self.add_listener(wlr_output.destroy_event, self._on_destroy)
         self.add_listener(wlr_output.frame_event, self._on_frame)
+        self.add_listener(wlr_output.request_state_event, self._on_request_state)
 
         # The layers enum indexes into this list to get a list of surfaces
         self.layers: list[list[LayerStatic]] = [[] for _ in range(len(LayerShellV1Layer))]
@@ -77,7 +99,8 @@ class Output(HasListeners):
         self.scene_output.destroy()
 
     def __repr__(self) -> str:
-        return "<Output (%s, %s, %s, %s)>" % self.get_geometry()
+        i = self.get_screen_info()
+        return f"<Output ({i.x}, {i.y}, {i.width}, {i.height})>"
 
     @property
     def screen(self) -> Screen:
@@ -96,6 +119,7 @@ class Output(HasListeners):
         self.finalize()
 
     def _on_frame(self, _listener: Listener, _data: Any) -> None:
+        self.core.configure_node_opacity(self.core.windows_tree.node)
         try:
             self.scene_output.commit()
         except RuntimeError:
@@ -105,9 +129,13 @@ class Output(HasListeners):
         # Inform clients of the frame
         self.scene_output.send_frame_done(Timespec.get_monotonic_time())
 
-    def get_geometry(self) -> tuple[int, int, int, int]:
+    def _on_request_state(self, _listener: Listener, request: OutputEventRequestState) -> None:
+        logger.debug("Signal: output request_state")
+        self.wlr_output.commit(request.state)
+
+    def get_screen_info(self) -> ScreenRect:
         width, height = self.wlr_output.effective_resolution()
-        return int(self.x), int(self.y), width, height
+        return ScreenRect(int(self.x), int(self.y), width, height)
 
     def organise_layers(self) -> None:
         """Organise the positioning of layer shell surfaces."""
@@ -177,7 +205,7 @@ class Output(HasListeners):
                 None,
             )
 
-    def contains(self, rect: WindowType | Dnd) -> bool:
+    def contains(self, rect: WindowType) -> bool:
         """Returns whether the given window is visible on this output."""
         if rect.x + rect.width < self.x:
             return False

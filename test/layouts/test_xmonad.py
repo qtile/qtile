@@ -23,6 +23,7 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
+from test.helpers import Retry
 from test.layouts.layout_utils import assert_dimensions, assert_focus_path, assert_focused
 
 
@@ -96,6 +97,22 @@ class MonadTallMarginsConfig(Config):
 
 monadtallmargins_config = pytest.mark.parametrize(
     "manager", [MonadTallMarginsConfig], indirect=True
+)
+
+
+class MonadTallStackedConfig(Config):
+    auto_fullscreen = True
+    groups = [libqtile.config.Group("a")]
+    layouts = [layout.MonadTall(auto_maximize=True)]
+    floating_layout = libqtile.resources.default_config.floating_layout
+    keys = []
+    mouse = []
+    screens = []
+    follow_mouse_focus = False
+
+
+monadtallstacked_config = pytest.mark.parametrize(
+    "manager", [MonadTallStackedConfig], indirect=True
 )
 
 
@@ -582,6 +599,101 @@ def test_tall_set_and_reset(manager):
     assert_dimensions(manager, 400, 0, 396, 596)
 
 
+@monadtallstacked_config
+def test_tall_stacked_add_two_clients(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 796, 596)
+
+    manager.test_window("two")
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 596)
+
+    manager.test_window("three")
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 400, 85, 396, 511)
+
+    manager.c.layout.next()
+    assert_focused(manager, "one")
+    assert_dimensions(manager, 0, 0, 396, 596)
+
+
+@monadtallstacked_config
+def test_tall_stacked_toggle_auto_maximize(manager):
+    # Initial setting: auto_maximize on
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 796, 596)
+
+    manager.test_window("two")
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 596)
+
+    manager.test_window("three")
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 400, 85, 396, 511)
+
+    manager.c.layout.next()
+    assert_focused(manager, "one")
+    assert_dimensions(manager, 0, 0, 396, 596)
+
+    # Turn off auto_maximize
+    manager.c.layout.toggle_auto_maximize()
+
+    assert_focused(manager, "one")
+    assert_dimensions(manager, 0, 0, 396, 596)
+
+    manager.c.layout.next()
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 296)
+
+    manager.c.layout.next()
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 400, 300, 396, 296)
+
+    # Turn auto_maximize back on
+    manager.c.layout.toggle_auto_maximize()
+
+    manager.c.layout.next()
+    assert_focused(manager, "one")
+    assert_dimensions(manager, 0, 0, 396, 596)
+
+    manager.c.layout.next()
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 511)
+
+    manager.c.layout.next()
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 400, 85, 396, 511)
+
+
+@monadtallstacked_config
+def test_tall_stacked_window_kill(manager):
+    @Retry(ignore_exceptions=(AssertionError))
+    def assert_window_count(num):
+        assert len(manager.c.windows()) == num
+
+    manager.test_window("one")
+    assert_focused(manager, "one")
+
+    manager.test_window("two")
+    assert_focused(manager, "two")
+
+    manager.test_window("three")
+    assert_focused(manager, "three")
+
+    manager.c.layout.previous()
+    assert_focused(manager, "two")
+    assert_dimensions(manager, 400, 0, 396, 511)
+
+    manager.c.window.kill()
+    assert_window_count(2)
+    assert_focused(manager, "one")
+    assert_dimensions(manager, 0, 0, 396, 596)
+
+    manager.c.layout.next()
+    assert_focused(manager, "three")
+    assert_dimensions(manager, 400, 0, 396, 596)
+
+
 @monadwide_config
 def test_wide_set_and_reset(manager):
     manager.test_window("one")
@@ -811,6 +923,90 @@ def test_wide_window_focus_cycle(manager):
 
     # assert window focus cycle, according to order in layout
     assert_focus_path(manager, "float1", "float2", "one", "two", "three")
+
+
+@monadtall_config
+def test_tall_window_directional_focus(manager):
+    # setup 3 tiled and two floating clients
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("float1")
+    manager.c.window.toggle_floating()
+    manager.test_window("float2")
+    manager.c.window.toggle_floating()
+    manager.test_window("three")
+
+    # test preconditions
+    assert manager.c.layout.info()["clients"] == ["one", "two", "three"]
+    # last added window has focus
+    assert_focused(manager, "three")
+
+    # starting from the last tiled client, test that left/right focus changes go
+    # to the closest window in that direction (no cycling), and up/down cycles
+    # focus
+    manager.c.layout.left()
+    assert_focused(manager, "one")
+    manager.c.layout.left()
+    assert_focused(manager, "one")
+    manager.c.layout.right()
+    assert_focused(manager, "two")
+    manager.c.layout.right()
+    assert_focused(manager, "two")
+
+    manager.c.layout.down()
+    assert_focused(manager, "three")
+    manager.c.layout.down()
+    assert_focused(manager, "one")
+    manager.c.layout.down()
+    assert_focused(manager, "two")
+    manager.c.layout.up()
+    assert_focused(manager, "one")
+    manager.c.layout.up()
+    assert_focused(manager, "three")
+    manager.c.layout.up()
+    assert_focused(manager, "two")
+
+
+@monadwide_config
+def test_wide_window_directional_focus(manager):
+    # setup 3 tiled and two floating clients
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("float1")
+    manager.c.window.toggle_floating()
+    manager.test_window("float2")
+    manager.c.window.toggle_floating()
+    manager.test_window("three")
+
+    # test preconditions
+    assert manager.c.layout.info()["clients"] == ["one", "two", "three"]
+    # last added window has focus
+    assert_focused(manager, "three")
+
+    # starting from the last tiled client, test that up/down focus changes go to
+    # the closest window in that direction (no cycling), and left/right cycles
+    # focus
+    manager.c.layout.up()
+    assert_focused(manager, "one")
+    manager.c.layout.up()
+    assert_focused(manager, "one")
+    manager.c.layout.down()
+    assert_focused(manager, "two")
+    manager.c.layout.down()
+    assert_focused(manager, "two")
+
+    manager.c.layout.left()
+    assert_focused(manager, "one")
+    manager.c.layout.left()
+    assert_focused(manager, "three")
+    manager.c.layout.left()
+    assert_focused(manager, "two")
+    manager.c.layout.right()
+    assert_focused(manager, "three")
+    manager.c.layout.right()
+    assert_focused(manager, "one")
+    manager.c.layout.right()
+    assert_focused(manager, "two")
 
 
 # MonadThreeCol

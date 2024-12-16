@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
 import pytest
 
 import libqtile.config
@@ -24,9 +25,11 @@ from libqtile import bar, layout
 from libqtile.config import Screen
 from libqtile.confreader import Config
 from libqtile.widget.tasklist import TaskList
+from test.layouts.layout_utils import assert_focused
+from test.test_scratchpad import is_spawned, spawn_cmd
 
 
-class TestTaskList(TaskList):
+class TaskListTestWidget(TaskList):
     def __init__(self, *args, **kwargs):
         TaskList.__init__(self, *args, **kwargs)
         self._text = ""
@@ -59,12 +62,21 @@ def tasklist_manager(request, manager_nospawn, override_xdg, monkeypatch):
 
     class TasklistConfig(Config):
         auto_fullscreen = True
-        groups = [libqtile.config.Group("a"), libqtile.config.Group("b")]
+        groups = [
+            libqtile.config.ScratchPad(
+                "SCRATCHPAD",
+                dropdowns=[
+                    libqtile.config.DropDown("dd-a", spawn_cmd("dd-a"), on_focus_lost_hide=False),
+                ],
+            ),
+            libqtile.config.Group("a"),
+            libqtile.config.Group("b"),
+        ]
         layouts = [layout.Stack()]
         floating_layout = libqtile.resources.default_config.floating_layout
         keys = []
         mouse = []
-        screens = [Screen(top=bar.Bar([TestTaskList(name="tasklist", **config)], 28))]
+        screens = [Screen(top=bar.Bar([TaskListTestWidget(name="tasklist", **config)], 28))]
 
     manager_nospawn.start(TasklistConfig)
     yield manager_nospawn
@@ -102,6 +114,37 @@ def test_tasklist_defaults(tasklist_manager):
 
     tasklist_manager.c.window.toggle_minimize()
     assert widget.info()["text"] == "One|Two"
+
+
+def test_tasklist_skip_taskbar_defaults(tasklist_manager):
+    widget = tasklist_manager.c.widget["tasklist"]
+    tasklist_manager.c.group["SCRATCHPAD"].dropdown_reconfigure("dd-a")
+
+    tasklist_manager.test_window("one")
+    assert_focused(tasklist_manager, "one")
+
+    # dd-a has no window associated yet
+    assert "window" not in tasklist_manager.c.group["SCRATCHPAD"].dropdown_info("dd-a")
+
+    # First toggling: wait for window
+    tasklist_manager.c.group["SCRATCHPAD"].dropdown_toggle("dd-a")
+    is_spawned(tasklist_manager, "dd-a")
+    assert_focused(tasklist_manager, "dd-a")
+    assert (
+        tasklist_manager.c.group["SCRATCHPAD"].dropdown_info("dd-a")["window"]["name"] == "dd-a"
+    )
+
+    if tasklist_manager.c.core.info()["backend"] == "x11":
+        # check that window's _NET_WM_STATE contains _NET_WM_STATE_SKIP_TASKBAR
+        net_wm_state = tasklist_manager.c.window.eval(
+            'self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int)'
+        )[1]
+        skip_taskbar = tasklist_manager.c.window.eval(
+            'self.qtile.core.conn.atoms["_NET_WM_STATE_SKIP_TASKBAR"]'
+        )[1]
+        assert skip_taskbar in net_wm_state
+        assert tasklist_manager.c.window.eval("self.window.get_wm_type()")[1] == "normal"
+        assert widget.info()["text"] == "one"
 
 
 @configure_tasklist(txt_minimized="(min) ", txt_maximized="(max) ", txt_floating="(float) ")
@@ -165,6 +208,22 @@ def test_tasklist_custom_markup(tasklist_manager):
     assert widget.info()["text"] == "One|Two"
 
 
+@configure_tasklist(markup_focused="({})", markup_focused_floating="[{}]")
+def test_tasklist_focused_and_floating(tasklist_manager):
+    widget = tasklist_manager.c.widget["tasklist"]
+
+    tasklist_manager.test_window("One")
+    tasklist_manager.test_window("Two")
+    assert widget.info()["text"] == "One|(Two)"
+
+    # Test floating
+    tasklist_manager.c.window.toggle_floating()
+    assert widget.info()["text"] == "One|[Two]"
+
+    tasklist_manager.c.window.toggle_floating()
+    assert widget.info()["text"] == "One|(Two)"
+
+
 @configure_tasklist(margin=0)
 def test_tasklist_click_task(tasklist_manager):
     tasklist_manager.test_window("One")
@@ -177,21 +236,33 @@ def test_tasklist_click_task(tasklist_manager):
     # which should focus the window
     # margin is set to 0 as value set by widget_defaults means text would otherwise
     # mean text does not start at x=0
-    tasklist_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+    tasklist_manager.c.bar["top"].fake_button_press(0, 0, 1)
     assert tasklist_manager.c.window.info()["name"] == "One"
 
 
 @xdg
 @configure_tasklist(theme_mode="non-existent-mode")
 @pytest.mark.xfail
-def test_tasklist_bad_theme_mode(tasklist_manager, logger):
-    msgs = [rec.msg for rec in logger.get_records("setup")]
+def test_tasklist_bad_theme_mode(tasklist_manager):
+    msgs = tasklist_manager.get_log_buffer()
     assert "Unexpected theme_mode (non-existent-mode). Theme icons will be disabled." in msgs
 
 
 @no_xdg
 @configure_tasklist(theme_mode="non-existent-mode")
 @pytest.mark.xfail
-def test_tasklist_no_xdg(tasklist_manager, logger):
-    msgs = [rec.msg for rec in logger.get_records("setup")]
+def test_tasklist_no_xdg(tasklist_manager):
+    msgs = tasklist_manager.get_log_buffer()
     assert "You must install pyxdg to use theme icons." in msgs
+
+
+@configure_tasklist(stretch=False)
+def test_tasklist_no_stretch(tasklist_manager):
+    widget = tasklist_manager.c.widget["tasklist"]
+    tasklist_manager.test_window("One")
+    width_one = widget.info()["width"]
+
+    tasklist_manager.test_window("Two")
+    width_two = widget.info()["width"]
+
+    assert width_one != width_two

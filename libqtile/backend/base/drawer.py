@@ -75,9 +75,12 @@ class Drawer:
 
     def finalize(self):
         """Destructor/Clean up resources"""
-        self.background_surface = None
-        self.surface = None
-        self.last_surface = None
+        if hasattr(self, "surface"):
+            self.surface.finish()
+            delattr(self, "surface")
+        if hasattr(self, "last_surface"):
+            self.last_surface.finish()
+            delattr(self, "last_surface")
         self.ctx = None
 
     @property
@@ -109,6 +112,9 @@ class Drawer:
 
     def _reset_surface(self):
         """This creates a fresh surface and cairo context."""
+        if hasattr(self, "surface"):
+            self.surface.finish()
+
         self.surface = cairocffi.RecordingSurface(
             cairocffi.CONTENT_COLOR_ALPHA,
             None,
@@ -117,6 +123,8 @@ class Drawer:
 
     def _create_last_surface(self):
         """Creates a separate RecordingSurface for mirrors to access."""
+        if hasattr(self, "last_surface"):
+            self.last_surface.finish()
         self.last_surface = cairocffi.RecordingSurface(cairocffi.CONTENT_COLOR_ALPHA, None)
 
     @property
@@ -304,6 +312,8 @@ class Drawer:
 
     def clear(self, colour):
         """Clears background of the Drawer and fills with specified colour."""
+        if self.ctx is None:
+            self._reset_surface()
         self.ctx.save()
 
         # Erase the background
@@ -324,8 +334,8 @@ class Drawer:
         )
         return textlayout
 
-    def max_layout_size(self, texts, font_family, font_size):
-        sizelayout = self.textlayout("", "ffffff", font_family, font_size, None)
+    def max_layout_size(self, texts, font_family, font_size, markup=False):
+        sizelayout = self.textlayout("", "ffffff", font_family, font_size, None, markup=markup)
         widths, heights = [], []
         for i in texts:
             sizelayout.text = i

@@ -26,79 +26,110 @@ from libqtile.confreader import Config
 from test.layouts.layout_utils import assert_dimensions
 
 
-class ScreenSplitConfig(Config):
-    auto_fullscreen = True
-    groups = [libqtile.config.Group("a")]
-    layouts = [layout.ScreenSplit()]
-    floating_layout = libqtile.resources.default_config.floating_layout
-    keys = []
-    mouse = []
-    screens = []
-    follow_mouse_focus = False
+@pytest.fixture(scope="function")
+def ss_manager(manager_nospawn, request):
+    class ScreenSplitConfig(Config):
+        auto_fullscreen = True
+        groups = [libqtile.config.Group("a")]
+        layouts = [layout.ScreenSplit(**getattr(request, "param", dict()))]
+        floating_layout = libqtile.resources.default_config.floating_layout
+        keys = []
+        mouse = []
+        screens = []
+        follow_mouse_focus = False
+
+    manager_nospawn.start(ScreenSplitConfig)
+
+    yield manager_nospawn
 
 
-screensplit_config = pytest.mark.parametrize("manager", [ScreenSplitConfig], indirect=True)
+def ss_config(**kwargs):
+    return pytest.mark.parametrize("ss_manager", [kwargs], indirect=True)
 
 
-@screensplit_config
-def test_screensplit(manager):
+@ss_config()
+def test_screensplit(ss_manager):
     # Max layout is default, occupies top half of screen
-    assert manager.c.layout.info()["current_layout"] == "max"
-    manager.test_window("one")
-    assert_dimensions(manager, 0, 0, 800, 300)
-    manager.test_window("two")
-    assert_dimensions(manager, 0, 0, 800, 300)
-    assert manager.c.layout.info()["current_clients"] == ["one", "two"]
+    assert ss_manager.c.layout.info()["current_layout"] == "max"
+    ss_manager.test_window("one")
+    assert_dimensions(ss_manager, 0, 0, 800, 300)
+    ss_manager.test_window("two")
+    assert_dimensions(ss_manager, 0, 0, 800, 300)
+    assert ss_manager.c.layout.info()["current_clients"] == ["one", "two"]
 
-    manager.c.layout.next_split()
-    assert manager.c.layout.info()["current_layout"] == "columns"
-    assert manager.c.layout.info()["current_clients"] == []
+    ss_manager.c.layout.next_split()
+    assert ss_manager.c.layout.info()["current_layout"] == "columns"
+    assert ss_manager.c.layout.info()["current_clients"] == []
 
     # Columns layout has no border on single...
-    manager.test_window("three")
-    assert_dimensions(manager, 0, 300, 800, 300)
+    ss_manager.test_window("three")
+    assert_dimensions(ss_manager, 0, 300, 800, 300)
     # ... but a border of 2 when multiple windows
-    manager.test_window("four")
-    assert_dimensions(manager, 400, 300, 396, 296)
-    assert manager.c.layout.info()["current_clients"] == ["three", "four"]
+    ss_manager.test_window("four")
+    assert_dimensions(ss_manager, 400, 300, 396, 296)
+    assert ss_manager.c.layout.info()["current_clients"] == ["three", "four"]
 
-    manager.c.layout.next_split()
-    assert manager.c.layout.info()["current_layout"] == "max"
-    assert manager.c.layout.info()["current_clients"] == ["one", "two"]
+    ss_manager.c.layout.next_split()
+    assert ss_manager.c.layout.info()["current_layout"] == "max"
+    assert ss_manager.c.layout.info()["current_clients"] == ["one", "two"]
 
 
-@screensplit_config
-def test_commands_passthrough(manager):
-    assert manager.c.layout.info()["current_layout"] == "max"
-    assert "grow_left" not in manager.c.layout.commands()
+@ss_config()
+def test_commands_passthrough(ss_manager):
+    assert ss_manager.c.layout.info()["current_layout"] == "max"
+    assert "grow_left" not in ss_manager.c.layout.commands()
 
-    manager.c.layout.next_split()
-    assert manager.c.layout.info()["current_layout"] == "columns"
+    ss_manager.c.layout.next_split()
+    assert ss_manager.c.layout.info()["current_layout"] == "columns"
 
-    manager.test_window("one")
-    assert_dimensions(manager, 0, 300, 800, 300)
-    manager.test_window("two")
-    assert_dimensions(manager, 400, 300, 396, 296)
+    ss_manager.test_window("one")
+    assert_dimensions(ss_manager, 0, 300, 800, 300)
+    ss_manager.test_window("two")
+    assert_dimensions(ss_manager, 400, 300, 396, 296)
 
-    assert "grow_left" in manager.c.layout.commands()
+    assert "grow_left" in ss_manager.c.layout.commands()
     # Grow window by 40 pixels
-    manager.c.layout.grow_left()
-    assert_dimensions(manager, 360, 300, 436, 296)
+    ss_manager.c.layout.grow_left()
+    assert_dimensions(ss_manager, 360, 300, 436, 296)
 
 
-@screensplit_config
-def test_move_window_to_split(manager):
-    assert manager.c.layout.info()["current_layout"] == "max"
-    manager.test_window("one")
-    assert_dimensions(manager, 0, 0, 800, 300)
+@ss_config()
+def test_move_window_to_split(ss_manager):
+    assert ss_manager.c.layout.info()["current_layout"] == "max"
+    ss_manager.test_window("one")
+    assert_dimensions(ss_manager, 0, 0, 800, 300)
 
-    manager.c.layout.move_window_to_next_split()
-    assert manager.c.layout.info()["current_layout"] == "columns"
-    assert_dimensions(manager, 0, 300, 800, 300)
+    ss_manager.c.layout.move_window_to_next_split()
+    assert ss_manager.c.layout.info()["current_layout"] == "columns"
+    assert_dimensions(ss_manager, 0, 300, 800, 300)
 
-    manager.c.layout.move_window_to_previous_split()
-    assert manager.c.layout.info()["current_layout"] == "max"
-    assert_dimensions(manager, 0, 0, 800, 300)
+    ss_manager.c.layout.move_window_to_previous_split()
+    assert ss_manager.c.layout.info()["current_layout"] == "max"
+    assert_dimensions(ss_manager, 0, 0, 800, 300)
+
+
+@ss_config(
+    splits=[
+        {
+            "name": "no_match",
+            "rect": (0, 0, 1, 0.5),
+            "layout": layout.Max(),
+        },
+        {
+            "name": "match",
+            "rect": (0, 0.5, 1, 0.5),
+            "layout": layout.Spiral(),
+            "matches": [Match(title="test")],
+        },
+    ]
+)
+def test_match_window(ss_manager):
+    assert ss_manager.c.layout.info()["current_layout"] == "max"
+    ss_manager.test_window("one")
+    assert ss_manager.c.layout.info()["current_layout"] == "max"
+
+    ss_manager.test_window("test")
+    assert ss_manager.c.layout.info()["current_layout"] == "spiral"
 
 
 def test_invalid_splits():

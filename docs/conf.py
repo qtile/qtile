@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Qtile documentation build configuration file, created by
 # sphinx-quickstart on Sat Feb 11 15:20:21 2012.
@@ -50,6 +49,7 @@ MOCK_MODULES = [
     "pywayland.protocol.wayland",
     "pywayland.protocol.wayland.wl_output",
     "pywayland.server",
+    "pywayland.utils",
     "wlroots",
     "wlroots.helper",
     "wlroots.util",
@@ -60,12 +60,13 @@ MOCK_MODULES = [
     "wlroots.wlr_types",
     "wlroots.wlr_types.cursor",
     "wlroots.wlr_types.foreign_toplevel_management_v1",
-    "wlroots.wlr_types.idle",
     "wlroots.wlr_types.idle_inhibit_v1",
+    "wlroots.wlr_types.idle_notify_v1",
     "wlroots.wlr_types.keyboard",
     "wlroots.wlr_types.layer_shell_v1",
     "wlroots.wlr_types.output_management_v1",
     "wlroots.wlr_types.pointer_constraints_v1",
+    "wlroots.wlr_types.output",
     "wlroots.wlr_types.output_power_management_v1",
     "wlroots.wlr_types.scene",
     "wlroots.wlr_types.server_decoration",
@@ -352,3 +353,13 @@ graphviz_dot_args = ["-Lg"]
 def setup(app):
     app.add_css_file("no_scrollbars.css")
     app.add_css_file("split_code.css")
+
+
+# readthedocs config, see https://about.readthedocs.com/blog/2024/07/addons-by-default/
+# Define the canonical URL if you are using a custom domain on Read the Docs
+html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
+
+html_context = {}
+# Tell Jinja2 templates the build is running on Read the Docs
+if os.environ.get("READTHEDOCS", "") == "True":
+    html_context["READTHEDOCS"] = True

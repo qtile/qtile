@@ -298,7 +298,6 @@ def test_ratiotile_alternative_calculation(manager):
 
     for i in range(12):
         manager.test_window(str(i))
-        print(manager.c.layout.info()["layout_info"])
         if i == 0:
             assert manager.c.layout.info()["layout_info"] == [(0, 0, 800, 600)]
         elif i == 4:

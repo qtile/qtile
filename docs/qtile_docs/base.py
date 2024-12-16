@@ -66,6 +66,6 @@ class SimpleDirectiveMixin:
         node.document = self.state.document
         result = ViewList()
         for line in self.make_rst():
-            result.append(line, "<{0}>".format(self.__class__.__name__))
+            result.append(line, f"<{self.__class__.__name__}>")
         nested_parse_with_titles(self.state, result, node)
         return node.children

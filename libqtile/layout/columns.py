@@ -172,6 +172,7 @@ class Columns(Layout):
             "(one of ``Columns._left`` or ``Columns._right``). "
             "Ignored if 'fair=True'.",
         ),
+        ("initial_ratio", 1, "Ratio of first column to second column."),
     ]
 
     def __init__(self, **config):
@@ -226,6 +227,16 @@ class Columns(Layout):
     def cc(self):
         return self.columns[self.current]
 
+    def get_ratio_widths(self):
+        # Total width is 200
+        # main + secondary = 200
+        # main = secondary * ratio
+        # secondary column is therefore 200 / (1 + ratio)
+        # main column is 200 - secondary column
+        secondary = 200 // (1 + self.initial_ratio)
+        main = 200 - secondary
+        return main, secondary
+
     def add_column(self, prepend=False):
         c = _Column(self.split, self.insert_position)
         if prepend:
@@ -233,6 +244,10 @@ class Columns(Layout):
             self.current += 1
         else:
             self.columns.append(c)
+        if len(self.columns) == 2 and not self.fair:
+            main, secondary = self.get_ratio_widths()
+            self.cc.width = main
+            c.width = secondary
         return c
 
     def remove_column(self, col):
@@ -549,10 +564,29 @@ class Columns(Layout):
 
     @expose_command()
     def normalize(self):
+        """Give columns equal widths."""
         for col in self.columns:
             for client in col:
                 col.heights[client] = 100
             col.width = 100
+        self.group.layout_all()
+
+    @expose_command()
+    def reset(self):
+        """Resets column widths, respecting 'initial_ratio' value."""
+        if self.initial_ratio == 1 or len(self.columns) == 1 or self.fair:
+            self.normalize()
+            return
+
+        main, secondary = self.get_ratio_widths()
+
+        if self.align == Columns._right:
+            self.columns[0].width = main
+            self.columns[1].width = secondary
+        else:
+            self.columns[-1].width = main
+            self.columns[-2].width = secondary
+
         self.group.layout_all()
 
     def swap_column(self, src, dst):

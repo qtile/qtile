@@ -4,9 +4,13 @@ include README.rst
 include MANIFEST.in
 include CONTRIBUTING.md
 include .pre-commit-config.yaml
+include builder.py
 
 exclude .coveragerc
 exclude .pylintrc
+exclude flake.nix
+exclude flake.lock
+exclude nix/*
 exclude tox.ini
 exclude requirements.txt
 exclude requirements-dev.txt
@@ -18,8 +22,10 @@ exclude Makefile
 exclude dev.sh
 exclude logo.png
 exclude .readthedocs.yaml
+exclude .git-blame-ignore-revs
 
 graft libqtile/resources
+graft libqtile/widget/helpers
 graft resources
 graft test
 recursive-include libqtile *.typed

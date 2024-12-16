@@ -107,7 +107,7 @@ class CommandClient:
         next_node = self._current_node.navigate(name, normalized_selector)
         return self.__class__(self._command, current_node=next_node)
 
-    def call(self, name: str, *args, **kwargs) -> Any:
+    def call(self, name: str, *args, lifted=True, **kwargs) -> Any:
         """Resolve and invoke the call into the command graph
 
         Parameters
@@ -126,7 +126,7 @@ class CommandClient:
         if name not in self.commands:
             raise SelectError("Not valid child or command", name, self._current_node.selectors)
 
-        call = self._current_node.call(name)
+        call = self._current_node.call(name, lifted=lifted)
 
         return self._command.execute(call, args, kwargs)
 

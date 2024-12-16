@@ -6,7 +6,6 @@ This widget exists since python-mpd library is no longer supported.
 
 from collections import defaultdict
 from html import escape
-from socket import error as socket_error
 
 from mpd import CommandError, ConnectionError, MPDClient
 
@@ -28,7 +27,7 @@ keys = {
 }
 
 # To display mpd state
-play_states = {"play": "\u25b6", "pause": "\u23F8", "stop": "\u25a0"}
+play_states = {"play": "\u25b6", "pause": "\u23f8", "stop": "\u25a0"}
 
 
 def option(char):
@@ -207,12 +206,12 @@ class Mpd2(base.ThreadPoolText):
         """Attempt connection to mpd server."""
         try:
             self.client.ping()  # pylint: disable=E1101
-        except (socket_error, ConnectionError):
+        except (OSError, ConnectionError):
             try:
                 self.client.connect(self.host, self.port)
                 if self.password:
                     self.client.password(self.password)  # pylint: disable=E1101
-            except (socket_error, ConnectionError, CommandError):
+            except (OSError, ConnectionError, CommandError):
                 return False
         return True
 
@@ -315,7 +314,7 @@ class Mpd2(base.ThreadPoolText):
                 if song_info["elapsed"] != self.undefined_value
                 else 0.0
             )
-            song_info["remaining"] = "{:.2f}".format(float(total - elapsed))
+            song_info["remaining"] = f"{float(total - elapsed):.2f}"
 
         if "song" in self.status_format and song_info["song"] != self.undefined_value:
             song_info["currentsong"] = str(int(song_info["song"]) + 1)
@@ -352,11 +351,7 @@ class Mpd2(base.ThreadPoolText):
         if self.color_progress and status["state"] != "stop":
             try:
                 progress = int(len(formatted) * elapsed / total)
-                formatted = '<span color="{0}">{1}</span>{2}'.format(
-                    self.color_progress,
-                    formatted[:progress],
-                    formatted[progress:],
-                )
+                formatted = f'<span color="{self.color_progress}">{formatted[:progress]}</span>{formatted[progress:]}'
             except (ZeroDivisionError, ValueError):
                 pass
 

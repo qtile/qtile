@@ -27,11 +27,14 @@ from typing import TYPE_CHECKING, cast
 
 import cairocffi
 from pywayland.server import Listener
+from wlroots import ffi as wlr_ffi
+from wlroots import lib as wlr_lib
 from wlroots.wlr_types import Buffer, SceneBuffer, SceneTree, data_device_manager
 from wlroots.wlr_types.keyboard import KeyboardModifier
+from wlroots.wlr_types.scene import SceneRect
 
 from libqtile.log_utils import logger
-from libqtile.utils import QtileError
+from libqtile.utils import QtileError, rgb
 
 try:
     # Continue if ffi not built, so that docs can be built without wayland deps.
@@ -40,7 +43,8 @@ except ModuleNotFoundError:
     pass
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
+    from collections.abc import Callable
+    from typing import Any
 
     from pywayland.server import Signal
     from wlroots import xwayland
@@ -48,6 +52,7 @@ if TYPE_CHECKING:
 
     from libqtile.backend.wayland.core import Core
     from libqtile.config import Screen
+    from libqtile.utils import ColorType
 
 
 class WlrQError(QtileError):
@@ -104,7 +109,7 @@ def translate_masks(modifiers: list[str]) -> int:
         try:
             masks.append(ModMasks[i.lower()])
         except KeyError as e:
-            raise WlrQError("Unknown modifier: %s" % i) from e
+            raise WlrQError(f"Unknown modifier: {i}") from e
     if masks:
         return functools.reduce(operator.or_, masks)
     else:
@@ -115,48 +120,54 @@ class Painter:
     def __init__(self, core: Core):
         self.core = core
 
-    def paint(self, screen: Screen, image_path: str, mode: str | None = None) -> None:
-        try:
-            with open(image_path, "rb") as f:
-                image, _ = cairocffi.pixbuf.decode_to_image_surface(f.read())
-        except IOError:
-            logger.exception("Could not load wallpaper:")
-            return
-
-        surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, screen.width, screen.height)
-        with cairocffi.Context(surface) as context:
-            if mode == "fill":
-                context.rectangle(0, 0, screen.width, screen.height)
-                context.clip()
-                image_w = image.get_width()
-                image_h = image.get_height()
-                width_ratio = screen.width / image_w
-                if width_ratio * image_h >= screen.height:
-                    context.scale(width_ratio)
-                else:
-                    height_ratio = screen.height / image_h
-                    context.translate(-(image_w * height_ratio - screen.width) // 2, 0)
-                    context.scale(height_ratio)
-            elif mode == "stretch":
-                context.scale(
-                    sx=screen.width / image.get_width(),
-                    sy=screen.height / image.get_height(),
-                )
-            context.set_source_surface(image)
-            context.paint()
-
-        surface.flush()
-        stride = surface.get_stride()
-        data = cairocffi.cairo.cairo_image_surface_get_data(surface._pointer)
-        wlr_buffer = lib.cairo_buffer_create(screen.width, screen.height, stride, data)
-        if wlr_buffer == ffi.NULL:
-            raise RuntimeError("Couldn't allocate cairo buffer.")
-
+    def _clear_previous_background(self, screen: Screen) -> None:
         # Drop references to existing wallpaper if there is one
         if screen in self.core.wallpapers:
             old_scene_buffer, old_surface = self.core.wallpapers.pop(screen)
             old_scene_buffer.node.destroy()
-            old_surface.finish()
+            if old_surface is not None:
+                old_surface.finish()
+
+    def fill(self, screen: Screen, background: ColorType) -> None:
+        self._clear_previous_background(screen)
+        rect = SceneRect(self.core.wallpaper_tree, screen.width, screen.height, rgb(background))
+        self.core.wallpapers[screen] = (rect, None)
+
+    def paint(self, screen: Screen, image_path: str, mode: str | None = None) -> None:
+        try:
+            with open(image_path, "rb") as f:
+                image, _ = cairocffi.pixbuf.decode_to_image_surface(f.read())
+        except OSError:
+            logger.exception("Could not load wallpaper:")
+            return
+
+        image_w = image.get_width()
+        image_h = image.get_height()
+
+        # the dimensions of cairo are the full screen if the mode is not specified
+        # otherwise they are the image dimensions for fill and stretch mode
+        # the actual scaling of the image is then done with wlroots functions
+        # so that the GPU is used
+        cairo_w = image_w if mode in ["fill", "stretch"] else screen.width
+        cairo_h = image_h if mode in ["fill", "stretch"] else screen.height
+        surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, cairo_w, cairo_h)
+        with cairocffi.Context(surface) as context:
+            context.save()
+            context.set_operator(cairocffi.OPERATOR_SOURCE)
+            context.set_source_rgb(0, 0, 0)
+            context.rectangle(0, 0, cairo_w, cairo_h)
+            context.fill()
+            context.restore()
+            context.set_source_surface(image)
+            context.paint()
+        surface.flush()
+        stride = surface.get_stride()
+        data = cairocffi.cairo.cairo_image_surface_get_data(surface._pointer)
+        wlr_buffer = lib.cairo_buffer_create(cairo_w, cairo_h, stride, data)
+        if wlr_buffer == ffi.NULL:
+            raise RuntimeError("Couldn't allocate cairo buffer.")
+
+        self._clear_previous_background(screen)
 
         # We need to keep a reference to the surface so its data persists
         if scene_buffer := SceneBuffer.create(self.core.wallpaper_tree, Buffer(wlr_buffer)):
@@ -164,6 +175,35 @@ class Painter:
             self.core.wallpapers[screen] = (scene_buffer, surface)
         else:
             logger.warning("Failed to create wlr_scene_buffer.")
+            return
+
+        # Handle fill mode
+        if mode == "fill":
+            if image_w / image_h > screen.width / screen.height:
+                # image is wider than screen; clip left and right
+                new_w = image_h * screen.width / screen.height
+                side = (image_w - new_w) // 2
+                fbox = wlr_ffi.new("struct wlr_fbox *")
+                fbox.x = side
+                fbox.y = 0
+                fbox.width = image_w - 2 * side
+                fbox.height = image_h
+                wlr_lib.wlr_scene_buffer_set_source_box(scene_buffer._ptr, fbox)
+            elif image_w / image_h < screen.width / screen.height:
+                # image is taller than screen; clip top and bottom
+                new_h = image_w * screen.height / screen.width
+                side = (image_h - new_h) // 2
+                fbox = wlr_ffi.new("struct wlr_fbox *")
+                fbox.x = 0
+                fbox.y = side
+                fbox.width = image_w
+                fbox.height = image_h - 2 * side
+                wlr_lib.wlr_scene_buffer_set_source_box(scene_buffer._ptr, fbox)
+            wlr_lib.wlr_scene_buffer_set_dest_size(scene_buffer._ptr, screen.width, screen.height)
+        elif mode == "stretch":
+            wlr_lib.wlr_scene_buffer_set_dest_size(scene_buffer._ptr, screen.width, screen.height)
+        # Otherwise (mode is None), the image takes up its native size in
+        # layout coordinate pixels (which doesn't account for output scaling)
 
 
 class HasListeners:
@@ -199,40 +239,27 @@ class Dnd(HasListeners):
 
     def __init__(self, core: Core, wlr_drag: data_device_manager.Drag):
         self.core = core
-        self.x: float = core.cursor.x
-        self.y: float = core.cursor.y
-        self.width: int = 0  # Set upon surface commit
-        self.height: int = 0
-
         self.icon = cast(data_device_manager.DragIcon, wlr_drag.icon)
         self.add_listener(self.icon.destroy_event, self._on_destroy)
-        self.add_listener(self.icon.surface.commit_event, self._on_icon_commit)
+        self.node = SceneTree.drag_icon_create(core.drag_icon_tree, self.icon).node
 
-        tree = SceneTree.subsurface_tree_create(core.drag_icon_tree, self.icon.surface)
-        self.node = tree.node
-
+        # The data handle at .data is used for finding what's under the cursor when it's
+        # moved.
         self.data_handle = ffi.new_handle(self)
         self.node.data = self.data_handle
 
     def finalize(self) -> None:
         self.finalize_listeners()
         self.core.live_dnd = None
-        self.node.data = None
         self.node.destroy()
+        self.node.data = None
         self.data_handle = None
 
     def _on_destroy(self, _listener: Listener, _event: Any) -> None:
         logger.debug("Signal: wlr_drag destroy")
         self.finalize()
 
-    def _on_icon_commit(self, _listener: Listener, _event: Any) -> None:
-        self.width = self.icon.surface.current.width
-        self.height = self.icon.surface.current.height
-        self.position(self.core.cursor.x, self.core.cursor.y)
-
     def position(self, cx: float, cy: float) -> None:
-        self.x = cx
-        self.y = cy
         self.node.set_position(int(cx), int(cy))
 
 

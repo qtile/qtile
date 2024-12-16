@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 """
-    Command-line wrapper to run commands and add rules to new windows
+Command-line wrapper to run commands and add rules to new windows
 """
 
 import argparse
@@ -81,7 +81,7 @@ def add_subcommand(subparsers, parents):
         help="Do not break on match (keep applying rules).",
     )
     parser.add_argument("-g", "--group", help="Set the window group.")
-    parser.add_argument("cmd", help="Command to execute."),
+    parser.add_argument("cmd", help="Command to execute.")
     parser.add_argument(
         "args",
         nargs=argparse.REMAINDER,

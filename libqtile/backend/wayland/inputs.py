@@ -21,6 +21,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from functools import reduce
+from operator import or_
 from typing import TYPE_CHECKING
 
 from pywayland.protocol.wayland import WlKeyboard
@@ -39,12 +41,13 @@ except ModuleNotFoundError:
     _has_ffi = False
 
 if TYPE_CHECKING:
+    from asyncio import TimerHandle
     from typing import Any
 
     from pywayland.server import Listener
     from wlroots.wlr_types import InputDevice
     from wlroots.wlr_types.keyboard import Keyboard as WlrKeyboard
-    from wlroots.wlr_types.keyboard import KeyboardKeyEvent
+    from wlroots.wlr_types.keyboard import KeyboardKeyEvent, KeyboardModifier
 
     from libqtile.backend.wayland.core import Core
 
@@ -201,16 +204,16 @@ class _Device(ABC, HasListeners):
     @abstractmethod
     def configure(self, configs: dict[str, InputConfig]) -> None:
         """Applies ``InputConfig`` rules to this input device."""
-        pass
 
 
 class Keyboard(_Device):
     def __init__(self, core: Core, wlr_device: InputDevice, keyboard: WlrKeyboard):
         super().__init__(core, wlr_device)
-        self.qtile = core.qtile
         self.seat = core.seat
         self.keyboard = keyboard
         self.grabbed_keys = core.grabbed_keys
+        self.repeat_delay_future: TimerHandle | None = None
+        self.repeat_rate_future: TimerHandle | None = None
 
         self.keyboard.set_repeat_info(25, 600)
         self.xkb_context = xkb.Context()
@@ -223,7 +226,7 @@ class Keyboard(_Device):
     def finalize(self) -> None:
         super().finalize()
         self.core.keyboards.remove(self)
-        if self.core.seat.keyboard == self.keyboard:
+        if self.core.seat.get_keyboard() == self.keyboard:
             # If this is the active keyboard and we have other keyboards enabled, set
             # the previous keyboard as the new active keyboard.
             if self.core.keyboards:
@@ -240,21 +243,33 @@ class Keyboard(_Device):
                 layout=layout, options=options, variant=variant
             )
             self._keymaps[(layout, options, variant)] = keymap
+        self._state = keymap.state_new()
         self.keyboard.set_keymap(keymap)
 
     def _on_modifier(self, _listener: Listener, _data: Any) -> None:
         self.seat.set_keyboard(self.keyboard)
         self.seat.keyboard_notify_modifiers(self.keyboard.modifiers)
 
+    def _on_repeat_key(self, keysyms: list[int], mods: KeyboardModifier) -> None:
+        repeat_rate = self.keyboard._ptr.repeat_info.rate
+        if self.repeat_delay_future is None or repeat_rate <= 0:
+            return
+        # when the repeat rate is set to 25 it means that we need to repeat the key 25 times per second
+        # so divide 1 by the repeat rate
+        self.repeat_rate_future = self.qtile.call_later(
+            1 / repeat_rate, self._on_repeat_key, keysyms, mods
+        )
+        for keysym in keysyms:
+            if (keysym, mods) in self.grabbed_keys:
+                if self.qtile.process_key_event(keysym, mods)[1]:
+                    return
+
     def _on_key(self, _listener: Listener, event: KeyboardKeyEvent) -> None:
-        if self.qtile is None:
-            # shushes mypy
-            self.qtile = self.core.qtile
-            assert self.qtile is not None
+        self.qtile = self.core.qtile
 
         self.core.idle.notify_activity(self.seat)
 
-        if event.state == KEY_PRESSED and not self.core.exclusive_client:
+        if not self.core.exclusive_client:
             # translate libinput keycode -> xkbcommon
             keycode = event.keycode + 8
             layout_index = lib.xkb_state_key_get_layout(self.keyboard._ptr.xkb_state, keycode)
@@ -266,12 +281,33 @@ class Keyboard(_Device):
                 xkb_keysym,
             )
             keysyms = [xkb_keysym[0][i] for i in range(nsyms)]
-            mods = self.keyboard.modifier
-            for keysym in keysyms:
-                if (keysym, mods) in self.grabbed_keys:
-                    if self.qtile.process_key_event(keysym, mods)[1]:
-                        return
+            mods = reduce(or_, [k.keyboard.modifier for k in self.core.keyboards])
+            handled = False
+            should_repeat = False
+            if event.state == KEY_PRESSED:
+                for keysym in keysyms:
+                    if (keysym, mods) in self.grabbed_keys:
+                        should_repeat = True
+                        if self.qtile.process_key_event(keysym, mods)[1]:
+                            handled = True
+                            break
 
+            repeat_delay = self.keyboard._ptr.repeat_info.delay
+            if should_repeat and repeat_delay > 0:
+                # repeat delay is the delay in ms, whereas call_later expects the delay in seconds
+                self.repeat_delay_future = self.qtile.call_later(
+                    repeat_delay / 1000, self._on_repeat_key, keysyms, mods
+                )
+            else:
+                if self.repeat_delay_future is not None:
+                    self.repeat_delay_future.cancel()
+                    self.repeat_delay_future = None
+                if self.repeat_rate_future is not None:
+                    self.repeat_rate_future.cancel()
+                    self.repeat_rate_future = None
+
+            if handled:
+                return
             if self.core.focused_internal:
                 self.core.focused_internal.process_key_press(keysym)
                 return

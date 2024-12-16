@@ -18,10 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from docutils.parsers.rst import Directive, directives
-from qtile_docs.base import SimpleDirectiveMixin
-from qtile_docs.templates import qtile_migrations_full_template, qtile_migrations_template
 
 from libqtile.scripts.migrations import MIGRATIONS, load_migrations
+from qtile_docs.base import SimpleDirectiveMixin
+from qtile_docs.templates import qtile_migrations_full_template, qtile_migrations_template
 
 
 class QtileMigrations(SimpleDirectiveMixin, Directive):
@@ -46,5 +46,4 @@ class QtileMigrations(SimpleDirectiveMixin, Directive):
         elif "help" in self.options:
             rst = qtile_migrations_full_template.render(**context)
 
-        for line in rst.splitlines():
-            yield line
+        yield from rst.splitlines()

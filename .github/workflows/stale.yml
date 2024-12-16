@@ -7,7 +7,7 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/stale@v2.0.0
+    - uses: actions/stale@v9
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         stale-issue-message: 'This issue is stale because it has been open 90 days with no activity. Remove the `status: stale` label or comment, or this will be closed in 30 days.'
@@ -17,7 +17,7 @@ jobs:
         stale-pr-label: 'status: stale'
         days-before-stale: 90
         days-before-close: 30
-    - uses: actions/stale@v2.0.0
+    - uses: actions/stale@v9
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         stale-issue-message: 'This issue is stale because it has been open 90 days with no activity. Remove `status: stale` label or comment, or this will be closed in 30 days.'

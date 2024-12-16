@@ -69,9 +69,7 @@ class MockMocpProcess:
         arg = cmd[1]
 
         if arg == "-i":
-            output = "\n".join(
-                "{k}: {v}".format(k=k, v=v) for k, v in cls.info[cls.index].items()
-            )
+            output = "\n".join(f"{k}: {v}" for k, v in cls.info[cls.index].items())
             return output
 
         elif arg == "-p":
@@ -157,23 +155,23 @@ def test_moc_button_presses(manager_nospawn, minimal_conf_noscreen, monkeypatch)
     assert info()["text"] == "♫ Rick Astley - Never Gonna Give You Up"
 
     # Trigger next item and wait for update poll
-    topbar.fake_button_press(0, "top", 0, 0, button=4)
+    topbar.fake_button_press(0, 0, button=4)
     manager_nospawn.c.widget["moc"].eval("self.update(self.poll())")
     assert info()["text"] == "♫ Neil Diamond - Sweet Caroline"
 
     # Trigger next item and wait for update poll
     # This item's state is set to "STOP" so there's no track title
-    topbar.fake_button_press(0, "top", 0, 0, button=4)
+    topbar.fake_button_press(0, 0, button=4)
     manager_nospawn.c.widget["moc"].eval("self.update(self.poll())")
     assert info()["text"] == "♫"
 
     # Click to play it and get the information
-    topbar.fake_button_press(0, "top", 0, 0, button=1)
+    topbar.fake_button_press(0, 0, button=1)
     manager_nospawn.c.widget["moc"].eval("self.update(self.poll())")
     assert info()["text"] == "♫ Tom Jones - It's Not Unusual"
 
     # Trigger previous item and wait for update poll
-    topbar.fake_button_press(0, "top", 0, 0, button=5)
+    topbar.fake_button_press(0, 0, button=5)
     manager_nospawn.c.widget["moc"].eval("self.update(self.poll())")
     assert info()["text"] == "♫ Neil Diamond - Sweet Caroline"
 

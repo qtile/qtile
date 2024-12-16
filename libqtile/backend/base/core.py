@@ -5,6 +5,7 @@ import typing
 from abc import ABCMeta, abstractmethod
 
 from libqtile.command.base import CommandObject, expose_command
+from libqtile.config import ScreenRect
 
 if typing.TYPE_CHECKING:
     from typing import Any
@@ -19,12 +20,12 @@ if typing.TYPE_CHECKING:
 class Core(CommandObject, metaclass=ABCMeta):
     painter: Any
     supports_restarting: bool = True
+    qtile: Qtile
 
     @property
     @abstractmethod
     def name(self) -> str:
         """The name of the backend"""
-        pass
 
     def _items(self, name: str) -> ItemT:
         return None
@@ -42,7 +43,7 @@ class Core(CommandObject, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def setup_listener(self, qtile: Qtile) -> None:
+    def setup_listener(self) -> None:
         """Setup a listener for the given qtile instance"""
 
     @abstractmethod
@@ -53,7 +54,7 @@ class Core(CommandObject, metaclass=ABCMeta):
         """Set the current desktops of the window manager"""
 
     @abstractmethod
-    def get_screen_info(self) -> list[tuple[int, int, int, int]]:
+    def get_screen_info(self) -> list[ScreenRect]:
         """Get the screen information"""
 
     @abstractmethod

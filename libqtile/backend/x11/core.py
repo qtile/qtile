@@ -38,13 +38,12 @@ from libqtile import config, hook, utils
 from libqtile.backend import base
 from libqtile.backend.x11 import window, xcbq
 from libqtile.backend.x11.xkeysyms import keysyms
+from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 
 if TYPE_CHECKING:
-    from typing import Callable, Iterator
-
-    from libqtile.core.manager import Qtile
+    from collections.abc import Callable, Iterator
 
 _IGNORED_EVENTS = {
     xcffib.xproto.CreateNotifyEvent,
@@ -121,6 +120,7 @@ class Core(base.Core):
         self._wmname = "qtile"
         self._supporting_wm_check_window = self.conn.create_window(-1, -1, 1, 1)
         self._supporting_wm_check_window.set_property("_NET_WM_NAME", self._wmname)
+        self._supporting_wm_check_window.set_property("_NET_WM_PID", os.getpid())
         self._supporting_wm_check_window.set_property(
             "_NET_SUPPORTING_WM_CHECK", self._supporting_wm_check_window.wid
         )
@@ -151,7 +151,6 @@ class Core(base.Core):
         # setup the default cursor
         self._root.set_cursor("left_ptr")
 
-        self.qtile = None  # type: Qtile | None
         self._painter = None
         self._xtest = self.conn.conn(xcffib.xtest.key)
 
@@ -181,26 +180,15 @@ class Core(base.Core):
                 self._root.wid,
                 self.conn.atoms["_NET_SUPPORTING_WM_CHECK"],
             ).check()
-        self.qtile = None
+        if hasattr(self, "qtile"):
+            delattr(self, "qtile")
         self.conn.finalize()
 
-    def get_screen_info(self) -> list[tuple[int, int, int, int]]:
-        info = [(s.x, s.y, s.width, s.height) for s in self.conn.pseudoscreens]
-
-        if not info:
-            info.append(
-                (
-                    0,
-                    0,
-                    self.conn.default_screen.width_in_pixels,
-                    self.conn.default_screen.height_in_pixels,
-                )
-            )
-
+    def get_screen_info(self) -> list[ScreenRect]:
+        ps = self.conn.pseudoscreens
         if self.qtile:
             self._xpoll()
-
-        return info
+        return ps
 
     @property
     def wmname(self):
@@ -211,7 +199,7 @@ class Core(base.Core):
         self._wmname = wmname
         self._supporting_wm_check_window.set_property("_NET_WM_NAME", wmname)
 
-    def setup_listener(self, qtile: "Qtile") -> None:
+    def setup_listener(self) -> None:
         """Setup a listener for the given qtile instance
 
         :param qtile:
@@ -220,7 +208,6 @@ class Core(base.Core):
             The eventloop to use to listen to the file descriptor.
         """
         logger.debug("Adding io watch")
-        self.qtile = qtile
         self.fd = self.conn.conn.get_file_descriptor()
         asyncio.get_running_loop().add_reader(self.fd, self._xpoll)
 
@@ -241,9 +228,14 @@ class Core(base.Core):
 
         if not initial:
             # We are just reloading config
-            for win in self.qtile.windows_map.values():
-                if type(win) is window.Window:
-                    win.set_group()
+            managed_wins = [
+                w for w in self.qtile.windows_map.values() if isinstance(w, window.Window)
+            ]
+            for managed_win in managed_wins:
+                if managed_win.group and managed_win in managed_win.group.windows:
+                    # Remove window from old group
+                    managed_win.group.remove(managed_win)
+                managed_win.set_group()
             return
 
         # Qtile just started - scan for clients
@@ -387,7 +379,7 @@ class Core(base.Core):
         """
         assert self.qtile is not None
 
-        handler = "handle_{event_type}".format(event_type=event_type)
+        handler = f"handle_{event_type}"
         # Certain events expose the affected window id as an "event" attribute.
         event_events = [
             "EnterNotify",
@@ -490,11 +482,17 @@ class Core(base.Core):
 
     def lookup_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
         """Find the keysym and the modifier mask for the given key"""
-        try:
-            keysym = xcbq.get_keysym(key.key)
-            modmask = xcbq.translate_masks(key.modifiers)
-        except xcbq.XCBQError as err:
-            raise utils.QtileError(err)
+        if isinstance(key.key, str):
+            keysym = xcbq.keysyms.get(key.key.lower())
+            if not keysym:
+                raise utils.QtileError(f"Unknown keysym: {key.key}")
+
+        else:
+            keysym = self.conn.code_to_syms[key.key][0]
+            if not keysym:
+                raise utils.QtileError(f"Unknown keycode: {key.key}")
+
+        modmask = xcbq.translate_masks(key.modifiers)
 
         return keysym, modmask
 
@@ -656,7 +654,6 @@ class Core(base.Core):
 
     def handle_KeyPress(self, event, *, simulated=False) -> None:  # noqa: N802
         assert self.qtile is not None
-
         keysym = self.conn.code_to_syms[event.detail][0]
         key, handled = self.qtile.process_key_event(keysym, event.state & self._valid_mask)
 
@@ -952,3 +949,8 @@ class Core(base.Core):
             self.last_focused.change_layer()
 
         self.last_focused = win
+
+    @property
+    def hovered_window(self) -> base.WindowType | None:
+        _hovered_window = self.conn.conn.core.QueryPointer(self._root.wid).reply().child
+        return self.qtile.windows_map.get(_hovered_window)

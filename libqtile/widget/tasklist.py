@@ -23,8 +23,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import re
-
 import cairocffi
 
 try:
@@ -34,7 +32,8 @@ try:
 except ImportError:
     has_xdg = False
 
-from libqtile import bar, hook, pangocffi
+import libqtile.bar
+from libqtile import hook, pangocffi
 from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.widget import base
@@ -105,17 +104,17 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         (
             "txt_minimized",
             "_ ",
-            "Text representation of the minimized window state. " 'e.g., "_ " or "\U0001F5D5 "',
+            "Text representation of the minimized window state. " 'e.g., "_ " or "\U0001f5d5 "',
         ),
         (
             "txt_maximized",
             "[] ",
-            "Text representation of the maximized window state. " 'e.g., "[] " or "\U0001F5D6 "',
+            "Text representation of the maximized window state. " 'e.g., "[] " or "\U0001f5d6 "',
         ),
         (
             "txt_floating",
             "V ",
-            "Text representation of the floating window state. " 'e.g., "V " or "\U0001F5D7 "',
+            "Text representation of the floating window state. " 'e.g., "V " or "\U0001f5d7 "',
         ),
         (
             "markup_normal",
@@ -148,6 +147,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             'e.g., "{}" or "<span underline="low">{}</span>"',
         ),
         (
+            "markup_focused_floating",
+            None,
+            "Text markup of the focused and floating window state. Supports pangomarkup with markup=True."
+            'e.g., "{}" or "<span underline="low">{}</span>"',
+        ),
+        (
             "icon_size",
             None,
             "Icon size. " "(Calculated if set to None. Icons are hidden if set to 0.)",
@@ -174,10 +179,15 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             0,
             "The offset given to the window location",
         ),
+        (
+            "stretch",
+            True,
+            "Widget fills available space in bar. Set to `False` to limit widget width to size of its contents.",
+        ),
     ]
 
     def __init__(self, **config):
-        base._Widget.__init__(self, bar.STRETCH, **config)
+        base._Widget.__init__(self, libqtile.bar.STRETCH, **config)
         self.add_defaults(TaskList.defaults)
         self.add_defaults(base.PaddingMixin.defaults)
         self.add_defaults(base.MarginMixin.defaults)
@@ -195,9 +205,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         calculate box width for given text.
         If max_title_width is given, the returned width is limited to it.
         """
-        if self.markup:
-            text = re.sub("<[^<]+?>", "", text)
-        width, _ = self.drawer.max_layout_size([text], self.font, self.fontsize)
+        width, _ = self.drawer.max_layout_size(
+            [text], self.font, self.fontsize, markup=self.markup
+        )
         width = width + 2 * (self.padding_x + self.borderwidth)
         return width
 
@@ -218,6 +228,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             or self.markup_maximized
             or self.markup_floating
             or self.markup_focused
+            or self.markup_focused_floating
         ):
             enforce_markup = True
         else:
@@ -231,11 +242,15 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         elif window.maximized:
             state = self.txt_maximized
             markup_str = self.markup_maximized
+        elif window is window.group.current_window:
+            if window.floating:
+                state = self.txt_floating
+                markup_str = self.markup_focused_floating or self.markup_floating
+            else:
+                markup_str = self.markup_focused
         elif window.floating:
             state = self.txt_floating
             markup_str = self.markup_floating
-        elif window is window.group.current_window:
-            markup_str = self.markup_focused
 
         window_location = (
             f"[{window.group.windows.index(window) + self.window_name_location_offset}] "
@@ -252,24 +267,36 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         # Emulate default widget behavior if markup_str is None
         if enforce_markup and markup_str is None:
-            markup_str = "%s{}" % (state)
+            markup_str = f"{state}{{}}"
 
         if markup_str is not None:
             self.markup = True
             window_name = pangocffi.markup_escape_text(window_name)
             return markup_str.format(window_name)
 
-        return "%s%s" % (state, window_name)
+        return f"{state}{window_name}"
 
     @property
     def windows(self):
         if self.qtile.core.name == "x11":
-            return [
-                w
-                for w in self.bar.screen.group.windows
-                if w.window.get_wm_type() in ("normal", None)
-            ]
+            windows = []
+            for w in self.bar.screen.group.windows:
+                wm_states = list(w.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
+                skip_taskbar = w.qtile.core.conn.atoms["_NET_WM_STATE_SKIP_TASKBAR"]
+                if w.window.get_wm_type() in ("normal", None) and skip_taskbar not in wm_states:
+                    windows.append(w)
+            return windows
         return self.bar.screen.group.windows
+
+    @property
+    def max_width(self):
+        width = self.bar.width
+        width -= sum(
+            w.width
+            for w in self.bar.widgets
+            if w is not self and w.length_type != libqtile.bar.STRETCH
+        )
+        return width
 
     def calc_box_widths(self):
         """
@@ -285,7 +312,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             return []
 
         # Determine available and max average width for task name boxes.
-        width_total = self.width - 2 * self.margin_x - (window_count - 1) * self.spacing
+        width_total = self.max_width - 2 * self.margin_x - (window_count - 1) * self.spacing
         width_avg = width_total / window_count
 
         names = [self.get_taskname(w) for w in windows]
@@ -329,8 +356,20 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         return zip(windows, icons, names, width_boxes)
 
+    def calculate_length(self):
+        width = 0
+        box_widths = [box[3] for box in self.calc_box_widths()]
+        if box_widths:
+            width += self.spacing * len(box_widths) - 1
+            width += sum(w for w in box_widths)
+
+        return width
+
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
+
+        if not self.stretch:
+            self.length_type = libqtile.bar.CALCULATED
 
         if not has_xdg and self.theme_mode is not None:
             logger.warning("You must install pyxdg to use theme icons.")

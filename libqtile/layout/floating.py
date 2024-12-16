@@ -32,7 +32,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from libqtile.command.base import expose_command
-from libqtile.config import Match
+from libqtile.config import Match, _Match
 from libqtile.layout.base import Layout
 
 if TYPE_CHECKING:
@@ -47,7 +47,7 @@ class Floating(Layout):
     Floating layout, which does nothing with windows but handles focus order
     """
 
-    default_float_rules = [
+    default_float_rules: list[_Match] = [
         Match(wm_type="utility"),
         Match(wm_type="notification"),
         Match(wm_type="toolbar"),
@@ -74,7 +74,7 @@ class Floating(Layout):
     ]
 
     def __init__(
-        self, float_rules: list[Match] | None = None, no_reposition_rules=None, **config
+        self, float_rules: list[_Match] | None = None, no_reposition_rules=None, **config
     ):
         """
         If you have certain apps that you always want to float you can provide

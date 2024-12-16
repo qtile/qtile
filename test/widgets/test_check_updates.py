@@ -141,7 +141,7 @@ def test_update_available_with_execute(manager_nospawn, minimal_conf_noscreen, m
     assert topbar.info()["widgets"][0]["text"] == "Updates: 1"
 
     # Clicking the widget triggers the execute command
-    topbar.fake_button_press(0, "top", 0, 0, button=1)
+    topbar.fake_button_press(0, 0, button=1)
 
     # The second time we poll the widget, the update process is complete
     # and there are no more updates

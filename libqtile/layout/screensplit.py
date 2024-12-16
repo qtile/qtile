@@ -23,13 +23,14 @@ from typing import TYPE_CHECKING
 
 from libqtile import hook
 from libqtile.command.base import expose_command
-from libqtile.config import Match, ScreenRect
+from libqtile.config import ScreenRect, _Match
 from libqtile.layout import Columns, Max
 from libqtile.layout.base import Layout
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
+    from collections.abc import Callable
+    from typing import Any
 
     from libqtile.backend.base import Window
     from libqtile.group import _Group
@@ -39,13 +40,13 @@ if TYPE_CHECKING:
 
 class Split:
     def __init__(
-        self, *, name: str, rect: Rect, layout: Layout, matches: list[Match] = list()
+        self, *, name: str, rect: Rect, layout: Layout, matches: list[_Match] = list()
     ) -> None:
         # Check that rect is correctly defined
-        if not isinstance(rect, (tuple, list)):
+        if not isinstance(rect, tuple | list):
             raise ValueError("Split rect should be a list/tuple.")
 
-        if len(rect) != 4 or not all(isinstance(x, (float, int)) for x in rect):
+        if len(rect) != 4 or not all(isinstance(x, float | int) for x in rect):
             raise ValueError("Split rect should have 4 float/int members.")
 
         if isinstance(layout, ScreenSplit):
@@ -53,7 +54,7 @@ class Split:
 
         if matches:
             if isinstance(matches, list):
-                if not all(isinstance(m, Match) for m in matches):
+                if not all(isinstance(m, _Match) for m in matches):
                     raise ValueError("Invalid object in 'matches'.")
             else:
                 raise ValueError("'matches' must be a list of 'Match' objects.")
@@ -120,7 +121,7 @@ class ScreenSplit(Layout):
         self._split_index = 0
         self.layouts = {}
         self._move_win = None
-        self._has_matches = False
+        self._has_matches = None
         print(self.splits)
         splits = []
         for s in self.splits:
@@ -133,6 +134,13 @@ class ScreenSplit(Layout):
 
     def _should_check(self, win):
         return win not in self.layouts and self._move_win is None
+
+    @property
+    def has_matches(self):
+        if self._has_matches is None:
+            self._has_matches = any(split.matches for split in self.splits)
+
+        return self._has_matches
 
     @property
     def active_split(self):
@@ -201,7 +209,7 @@ class ScreenSplit(Layout):
         split = None
         # If this is a new window and we're not moving this window between splits
         # then we should check for match rules
-        if self._has_matches and self._should_check(win):
+        if self.has_matches and self._should_check(win):
             split = self._match_win(win)
 
         if split is not None:

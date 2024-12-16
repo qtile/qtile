@@ -29,9 +29,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any
-
-    from typing_extensions import Literal
+    from types import FunctionType
+    from typing import Any, Literal
 
     from libqtile.config import Group, Key, Mouse, Rule, Screen
     from libqtile.layout.base import Layout
@@ -43,7 +42,7 @@ class ConfigError(Exception):
 
 config_pyi_header = """
 from typing import Any
-from typing_extensions import Literal
+from typing import Literal
 from libqtile.config import Group, Key, Mouse, Rule, Screen
 from libqtile.layout.base import Layout
 
@@ -57,8 +56,8 @@ class Config:
     groups: list[Group]
     dgroups_key_binder: Any
     dgroups_app_rules: list[Rule]
-    follow_mouse_focus: bool
-    focus_on_window_activation: Literal["focus", "smart", "urgent", "never"]
+    follow_mouse_focus: bool | Literal["click_or_drag_only"]
+    focus_on_window_activation: Literal["focus", "smart", "urgent", "never"] | FunctionType
     cursor_warp: bool
     layouts: list[Layout]
     floating_layout: Layout
@@ -75,6 +74,8 @@ class Config:
     # doing so forces the import, creating a hard dependency for wlroots.
     wl_input_rules: dict[str, Any] | None
     wl_scale_factor: float
+    wl_xcursor_theme: str | None
+    wl_xcursor_size: int
 
     def __init__(self, file_path=None, **settings):
         """Create a Config() object from settings
@@ -116,8 +117,8 @@ class Config:
                     continue
 
                 # Check if the module is in the config folder or subfolder
-                # if so, reload it
-                if folder in subpath.parents:
+                # and the file still exists.  If so, reload it
+                if folder in subpath.parents and subpath.exists():
                     importlib.reload(module)
 
     def load(self):
@@ -151,12 +152,12 @@ class Config:
         # because they are dynamically resolved from the default_config. so we
         # need to ignore the errors here about missing attributes.
         for k in self.keys:
-            if k.key.lower() not in valid_keys:
-                raise ConfigError("No such key: %s" % k.key)
+            if isinstance(k.key, str) and k.key.lower() not in valid_keys:
+                raise ConfigError(f"No such key: {k.key}")
             for m in k.modifiers:
                 if m.lower() not in valid_mods:
-                    raise ConfigError("No such modifier: %s" % m)
+                    raise ConfigError(f"No such modifier: {m}")
         for ms in self.mouse:
             for m in ms.modifiers:
                 if m.lower() not in valid_mods:
-                    raise ConfigError("No such modifier: %s" % m)
+                    raise ConfigError(f"No such modifier: {m}")

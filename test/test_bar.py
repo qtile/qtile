@@ -23,6 +23,7 @@
 # SOFTWARE.
 
 import os
+import sys
 import tempfile
 from pathlib import Path
 
@@ -34,7 +35,9 @@ import libqtile.confreader
 import libqtile.layout
 import libqtile.widget
 from libqtile.command.base import CommandError
+from test.conftest import dualmonitor
 from test.helpers import BareConfig, Retry
+from test.layouts.layout_utils import assert_focused, assert_unfocused
 
 
 class GBConfig(libqtile.confreader.Config):
@@ -103,9 +106,9 @@ def test_completion():
     assert c.actual().endswith(r)
 
     c.reset()
-    assert c.complete("/bi") == "/bin/"
+    assert c.complete("/et") == "/etc/"
     c.reset()
-    assert c.complete("/bin") != "/bin/"
+    assert c.complete("/etc") != "/etc/"
     c.reset()
 
     home_dir = os.path.expanduser("~")
@@ -128,8 +131,8 @@ def test_completion():
     assert c.complete("z", aliases={"z": "a"}) == "z"
     assert c.actual() == "a"
     c.reset()
-    assert c.complete("/bi", aliases={"z": "a"}) == "/bin/"
-    assert c.actual() == "/bin"
+    assert c.complete("/et", aliases={"z": "a"}) == "/etc/"
+    assert c.actual() == "/etc"
     c.reset()
 
 
@@ -142,6 +145,9 @@ def test_draw(manager):
 
 @gb_config
 def test_prompt(manager, monkeypatch):
+    manager.test_window("one")
+    assert_focused(manager, "one")
+
     assert manager.c.widget["prompt"].info()["width"] == 0
     manager.c.spawncmd(":")
     manager.c.widget["prompt"].fake_keypress("a")
@@ -152,9 +158,12 @@ def test_prompt(manager, monkeypatch):
     manager.c.widget["prompt"].fake_keypress("Tab")
 
     script = Path(__file__).parent / "scripts" / "window.py"
-    manager.c.spawncmd(":", aliases={"w": script.as_posix()})
+    manager.c.spawncmd(":", aliases={"w": f"{sys.executable} {script.as_posix()}"})
     manager.c.widget["prompt"].fake_keypress("w")
+    manager.test_window("two")
+    assert_unfocused(manager, "two")
     manager.c.widget["prompt"].fake_keypress("Return")
+    assert_focused(manager, "one")
 
     @Retry(ignore_exceptions=(CommandError,))
     def is_spawned():
@@ -185,7 +194,7 @@ def test_textbox(manager):
 def test_textbox_errors(manager):
     manager.c.widget["text"].update(None)
     manager.c.widget["text"].update("".join(chr(i) for i in range(255)))
-    manager.c.widget["text"].update("V\xE2r\xE2na\xE7\xEE")
+    manager.c.widget["text"].update("V\xe2r\xe2na\xe7\xee")
     manager.c.widget["text"].update("\ua000")
 
 
@@ -193,7 +202,7 @@ def test_textbox_errors(manager):
 def test_groupbox_button_press(manager):
     manager.c.group["ccc"].toscreen()
     assert manager.c.get_groups()["a"]["screen"] is None
-    manager.c.bar["bottom"].fake_button_press(0, "bottom", 10, 10, 1)
+    manager.c.bar["bottom"].fake_button_press(10, 10, 1)
     assert manager.c.get_groups()["a"]["screen"] == 0
 
 
@@ -495,6 +504,139 @@ def test_bar_hide_show_with_margin(manager_nospawn):
     manager_nospawn.c.hide_show_bar("top")
     assert manager_nospawn.c.bar["top"].info().get("size") == 22
     assert manager_nospawn.c.windows()[0]["y"] == 22
+
+
+@pytest.mark.parametrize(
+    "position,dimensions",
+    [
+        ("all", (0, 0, 800, 600)),
+        ("top", (10, 0, 800 - (2 * 10), 600 - 10)),
+        ("bottom", (10, 10, 800 - (2 * 10), 600 - 10)),
+        ("left", (0, 10, 800 - 10, 600 - (2 * 10))),
+        ("right", (10, 10, 800 - 10, 600 - (2 * 10))),
+    ],
+)
+def test_bar_hide_show_single_screen(manager_nospawn, position, dimensions):
+    conf = GeomConf
+    conf.layouts = [libqtile.layout.Max()]
+    conf.screens = [
+        libqtile.config.Screen(
+            top=libqtile.bar.Bar([], 10),
+            bottom=libqtile.bar.Bar([], 10),
+            left=libqtile.bar.Bar([], 10),
+            right=libqtile.bar.Bar([], 10),
+        )
+    ]
+    manager_nospawn.start(conf)
+
+    # Dimensions of window with all 4 bars visible
+    default_dimensions = (10, 10, 800 - 2 * 10, 600 - 2 * 10)
+
+    def assert_dimensions(d=default_dimensions):
+        win_info = manager_nospawn.c.window.info()
+        win_x = win_info["x"]
+        win_y = win_info["y"]
+        win_w = win_info["width"]
+        win_h = win_info["height"]
+        assert (win_x, win_y, win_w, win_h) == d
+
+    manager_nospawn.test_window("one")
+    assert_dimensions()
+
+    # Hide bar
+    manager_nospawn.c.hide_show_bar(position=position)
+    assert_dimensions(dimensions)
+
+    # Show bar
+    manager_nospawn.c.hide_show_bar(position=position)
+    assert_dimensions()
+
+
+@dualmonitor
+@pytest.mark.parametrize(
+    "position,dimensions",
+    [
+        ("all", (0, 0, 800, 600)),
+        ("top", (10, 0, 800 - (2 * 10), 600 - 10)),
+        ("bottom", (10, 10, 800 - (2 * 10), 600 - 10)),
+        ("left", (0, 10, 800 - 10, 600 - (2 * 10))),
+        ("right", (10, 10, 800 - 10, 600 - (2 * 10))),
+    ],
+)
+def test_bar_hide_show_dual_screen(manager_nospawn, position, dimensions):
+    conf = GeomConf
+    conf.layouts = [libqtile.layout.Max()]
+    conf.screens = [
+        libqtile.config.Screen(
+            top=libqtile.bar.Bar([], 10),
+            bottom=libqtile.bar.Bar([], 10),
+            left=libqtile.bar.Bar([], 10),
+            right=libqtile.bar.Bar([], 10),
+        ),
+        libqtile.config.Screen(
+            top=libqtile.bar.Bar([], 10),
+            bottom=libqtile.bar.Bar([], 10),
+            left=libqtile.bar.Bar([], 10),
+            right=libqtile.bar.Bar([], 10),
+        ),
+    ]
+    manager_nospawn.start(conf)
+
+    # Dimensions of window with all 4 bars visible
+    default_dimensions = (10, 10, 800 - 2 * 10, 600 - 2 * 10)
+
+    def assert_dimensions(screen=0, d=default_dimensions):
+        win_info = manager_nospawn.c.screen[screen].window.info()
+        win_x = win_info["x"]
+        win_y = win_info["y"]
+        win_w = win_info["width"]
+        win_h = win_info["height"]
+        # Second screen is 600x480 @ x=800,y=0
+        # Adjust dimensions for this
+        if screen == 1:
+            d = (d[0] + 800, d[1], d[2] - (800 - 640), d[3] - (600 - 480))
+        assert (win_x, win_y, win_w, win_h) == d
+
+    manager_nospawn.test_window("one")
+    manager_nospawn.c.to_screen(1)
+    manager_nospawn.test_window("two")
+    assert_dimensions(screen=0)
+    assert_dimensions(screen=1)
+
+    # Test current screen
+    # Screen 0 - hidden, Screen 1 - shown
+    manager_nospawn.c.to_screen(0)
+    manager_nospawn.c.hide_show_bar(position=position)
+    assert_dimensions(screen=0, d=dimensions)
+    assert_dimensions(screen=1)
+
+    # Screen 0 - hidden, Screen 1 - hidden
+    manager_nospawn.c.to_screen(1)
+    manager_nospawn.c.hide_show_bar(position=position)
+    assert_dimensions(screen=0, d=dimensions)
+    assert_dimensions(screen=1, d=dimensions)
+
+    # Screen 0 - hidden, Screen 1 - shown
+    manager_nospawn.c.hide_show_bar(position=position)
+    assert_dimensions(screen=0, d=dimensions)
+    assert_dimensions(screen=1)
+
+    # Screen 0 - shown, Screen 1 - shown
+    manager_nospawn.c.to_screen(0)
+    manager_nospawn.c.hide_show_bar(position=position)
+    assert_dimensions(screen=0)
+    assert_dimensions(screen=1)
+
+    # Test all screens
+    # Screen 0 - hidden, Screen 1 - hidden
+    manager_nospawn.c.hide_show_bar(position=position, screen="all")
+    assert_dimensions(screen=0, d=dimensions)
+    assert_dimensions(screen=1, d=dimensions)
+
+    # Screen 0 - shown, Screen 1 - shown
+    manager_nospawn.c.hide_show_bar(position=position, screen="all")
+    assert_dimensions(screen=0)
+    assert_dimensions(screen=1)
 
 
 def test_bar_border_horizontal(manager_nospawn):

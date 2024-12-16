@@ -1,14 +1,17 @@
 import os
+import shutil
 import subprocess
 import tempfile
+from multiprocessing import Value
 
 import pytest
 import xcffib.xproto
 import xcffib.xtest
 
 import libqtile.config
-from libqtile import layout, utils
+from libqtile import hook, layout, utils
 from libqtile.backend.x11 import window, xcbq
+from libqtile.backend.x11.xcbq import Connection
 from test.conftest import dualmonitor
 from test.helpers import (
     HEIGHT,
@@ -58,6 +61,90 @@ def test_change_state_via_message(xmanager, conn):
     conn.default_screen.root.send_event(ev, mask=xcffib.xproto.EventMask.SubstructureRedirect)
     conn.xsync()
     assert not xmanager.c.window.info()["minimized"]
+
+
+def set_urgent(w):
+    w.urgent = True
+    hook.fire("client_urgent_hint_changed", w)
+    return False
+
+
+class UrgentConfig(BareConfig):
+    focus_on_window_activation = "urgent"
+
+
+class SmartConfig(BareConfig):
+    focus_on_window_activation = "smart"
+
+
+class FuncConfig(BareConfig):
+    # must be a static method here because otherwise it gets turned into a MethodType (we need a FunctionType)
+    # this is only an issue in this test and not the real config file
+    focus_on_window_activation = staticmethod(set_urgent)
+
+
+@dualmonitor
+def test_urgent_hook_fire(xmanager_nospawn):
+    xmanager_nospawn.display = xmanager_nospawn.backend.env["DISPLAY"]
+    conn = Connection(xmanager_nospawn.display)
+
+    xmanager_nospawn.hook_fired = Value("i", 0)
+
+    def _hook_test(val):
+        xmanager_nospawn.hook_fired.value += 1
+
+    hook.subscribe.client_urgent_hint_changed(_hook_test)
+
+    xmanager_nospawn.start(UrgentConfig)
+
+    xmanager_nospawn.test_window("one")
+    window_info = xmanager_nospawn.c.window.info()
+
+    # send activate window message
+    data = xcffib.xproto.ClientMessageData.synthetic([0, 0, 0, 0, 0], "IIIII")
+    ev = xcffib.xproto.ClientMessageEvent.synthetic(
+        32, window_info["id"], conn.atoms["_NET_ACTIVE_WINDOW"], data
+    )
+    conn.default_screen.root.send_event(ev, mask=xcffib.xproto.EventMask.SubstructureRedirect)
+    conn.xsync()
+
+    xmanager_nospawn.terminate()
+    assert xmanager_nospawn.hook_fired.value == 1
+
+    # test that focus_on_window_activation = "smart" also fires the hook
+    xmanager_nospawn.start(SmartConfig, no_spawn=True)
+
+    xmanager_nospawn.test_window("one")
+    window_info = xmanager_nospawn.c.window.info()
+    xmanager_nospawn.c.window.toscreen(1)
+
+    # send activate window message
+    ev = xcffib.xproto.ClientMessageEvent.synthetic(
+        32, window_info["id"], conn.atoms["_NET_ACTIVE_WINDOW"], data
+    )
+    conn.default_screen.root.send_event(ev, mask=xcffib.xproto.EventMask.SubstructureRedirect)
+    conn.xsync()
+    xmanager_nospawn.terminate()
+
+    assert xmanager_nospawn.hook_fired.value == 2
+
+    # test that a custom function also fires the hook
+    xmanager_nospawn.start(FuncConfig, no_spawn=True)
+
+    xmanager_nospawn.test_window("one")
+    window_info = xmanager_nospawn.c.window.info()
+    xmanager_nospawn.c.window.toscreen(1)
+
+    # send activate window message
+    ev = xcffib.xproto.ClientMessageEvent.synthetic(
+        32, window_info["id"], conn.atoms["_NET_ACTIVE_WINDOW"], data
+    )
+    conn.default_screen.root.send_event(ev, mask=xcffib.xproto.EventMask.SubstructureRedirect)
+    conn.xsync()
+
+    xmanager_nospawn.terminate()
+
+    assert xmanager_nospawn.hook_fired.value == 3
 
 
 @manager_config
@@ -689,10 +776,20 @@ def test_multiple_borders(xmanager):
     wid = xmanager.c.window.info()["id"]
 
     name = os.path.join(tempfile.gettempdir(), "test_multiple_borders.txt")
-    cmd = ["import", "-border", "-window", str(wid), "-crop", "5x1+0+4", "-depth", "8", name]
+    cmd = [
+        shutil.which("import"),
+        "-border",
+        "-window",
+        str(wid),
+        "-crop",
+        "5x1+0+4",
+        "-depth",
+        "8",
+        name,
+    ]
     subprocess.run(cmd, env={"DISPLAY": xmanager.display})
 
-    with open(name, "r") as f:
+    with open(name) as f:
         data = f.readlines()
     os.unlink(name)
 
@@ -967,3 +1064,12 @@ def test_move_float_above_tiled(xmanager):
 
     _wnd("two").toggle_floating()
     assert _clients() == ["one", "three", "two"]
+
+
+def test_multiple_wm_types(xmanager):
+    conn = xcbq.Connection(xmanager.display)
+    w = conn.create_window(50, 50, 50, 50)
+    normal = conn.atoms["_NET_WM_WINDOW_TYPE_NORMAL"]
+    kde_override = conn.atoms["_KDE_NET_WM_WINDOW_TYPE_OVERRIDE"]
+    w.set_property("_NET_WM_WINDOW_TYPE", [kde_override, normal])
+    assert w.get_wm_type() == "normal"

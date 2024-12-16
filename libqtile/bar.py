@@ -32,13 +32,12 @@ if typing.TYPE_CHECKING:
     import asyncio
     from typing import Any
 
-    from libqtile.backend.base import Internal, WindowType
+    from libqtile.backend.base import Drawer, Internal, WindowType
     from libqtile.command.base import ItemT
     from libqtile.config import Screen
     from libqtile.core.manager import Qtile
     from libqtile.utils import ColorsType
     from libqtile.widget.base import _Widget
-
 
 NESW = ("top", "right", "bottom", "left")
 
@@ -195,8 +194,12 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         Gap.__init__(self, size)
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(Bar.defaults)
-        self.widgets = widgets
+        # We need to create a new widget list here as users may have the same list for multiple
+        # screens. In that scenario, if we replace the widget with a mirror, it replaces it in every
+        # bar as python is referring to the same list.
+        self.widgets = widgets.copy()
         self.window: Internal | None = None
+        self.drawer: Drawer
         self._configured = False
         self._draw_queued = False
         self.future: asyncio.Handle | None = None
@@ -320,9 +323,11 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             self.window.process_pointer_motion = self.process_pointer_motion
             self.window.process_key_press = self.process_key_press
 
-        # We create a new drawer even if there's already a window to ensure the
-        # drawer is the right size.
-        self.drawer = self.window.create_drawer(width, height)
+        if hasattr(self, "drawer"):
+            self.drawer.width = width
+            self.drawer.height = height
+        else:
+            self.drawer = self.window.create_drawer(width, height)
         self.drawer.clear(self.background)
 
         crashed_widgets: set[_Widget] = set()
@@ -403,13 +408,14 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             # be shown as "crashed" as the behaviour is expected. Only notify
             # for genuine crashes.
             if not i.supported_backends or (self.qtile.core.name in i.supported_backends):
-                crash = ConfigErrorWidget(widget=i)
-                crash._configure(self.qtile, self)
-                if self.horizontal:
-                    crash.offsety = self.border_width[0]
-                else:
-                    crash.offsetx = self.border_width[3]
-                self.widgets.insert(index, crash)
+                if not i.hide_crash:
+                    crash = ConfigErrorWidget(widget=i)
+                    crash._configure(self.qtile, self)
+                    if self.horizontal:
+                        crash.offsety = self.border_width[0]
+                    else:
+                        crash.offsetx = self.border_width[3]
+                    self.widgets.insert(index, crash)
 
             self.widgets.remove(i)
 
@@ -433,30 +439,11 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         if self.future:
             self.future.cancel()
         self.drawer.finalize()
+        del self.drawer
         if self.window:
             self.window.kill()
             self.window = None
         self.widgets.clear()
-
-    def kill_window(self) -> None:
-        """Kill the window when the bar's screen is no longer being used."""
-        assert self.qtile is not None
-
-        if self.future:
-            self.future.cancel()
-
-        for name, w in self.qtile.widgets_map.copy().items():
-            if w in self.widgets:
-                w.finalize()
-                del self.qtile.widgets_map[name]
-        self.drawer.finalize()
-        if self.window:
-            self.window.kill()
-            self.window = None
-
-        # Reset some flags to allow the bar to be reconfigured as needed
-        self._configured = False
-        self._draw_queued = False
 
     def _resize(self, length: int, widgets: list[_Widget]) -> None:
         # We want consecutive stretch widgets to split one 'block' of space between them
@@ -757,22 +744,20 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         self._reserved_space_updated = True
 
     @expose_command()
-    def fake_button_press(
-        self, screen: int, position: str, x: int, y: int, button: int = 1
-    ) -> None:
+    def fake_button_press(self, x: int, y: int, button: int = 1) -> None:
         """
-        Fake a mouse-button-press on the bar. Co-ordinates are relative
+        Fake a mouse-button-press on the bar. Coordinates are relative
         to the top-left corner of the bar.
 
         Parameters
         ==========
-        widgets :
-            A list of widget objects.
-        size :
-            The "thickness" of the bar, i.e. the height of a horizontal bar, or the
-            width of a vertical bar.
+        x :
+            X coordinate of the mouse button press.
+        y :
+            Y coordinate of the mouse button press.
+        button:
+            Mouse button, for more details, see :ref:`mouse-events`.
         """
-        # TODO: drop the screen and position args, update relevant tests
         self.process_button_click(x, y, button)
 
     def set_layer(self) -> None:
@@ -784,4 +769,4 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 self.window.keep_above(enable=True)
 
 
-BarType = typing.Union[Bar, Gap]
+BarType = Bar | Gap

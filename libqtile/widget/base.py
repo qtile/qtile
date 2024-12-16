@@ -42,7 +42,7 @@ from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandObject, expose_command
 from libqtile.lazy import LazyCall
 from libqtile.log_utils import logger
-from libqtile.utils import create_task
+from libqtile.utils import ColorType, create_task
 
 if TYPE_CHECKING:
     from typing import Any
@@ -146,6 +146,7 @@ class _Widget(CommandObject, configurable.Configurable):
             {},
             "Dict of mouse button press callback functions. Accepts functions and ``lazy`` calls.",
         ),
+        ("hide_crash", False, "Don't display error in bar if widget crashes on startup."),
     ]
 
     def __init__(self, length, **config):
@@ -217,7 +218,6 @@ class _Widget(CommandObject, configurable.Configurable):
     def timer_setup(self):
         """This is called exactly once, after the widget has been configured
         and timers are available to be set up."""
-        pass
 
     def _configure(self, qtile, bar):
         self._test_orientation_compatibility(bar.horizontal)
@@ -247,7 +247,6 @@ class _Widget(CommandObject, configurable.Configurable):
         wish to initialise the relevant code (e.g. connections to dbus
         using dbus_next) here.
         """
-        pass
 
     def finalize(self):
         for future in self._futures:
@@ -282,13 +281,13 @@ class _Widget(CommandObject, configurable.Configurable):
         self.mouse_callbacks = defaults
 
     def button_press(self, x, y, button):
-        name = "Button{0}".format(button)
+        name = f"Button{button}"
         if name in self.mouse_callbacks:
             cmd = self.mouse_callbacks[name]
             if isinstance(cmd, LazyCall):
                 if cmd.check(self.qtile):
                     status, val = self.qtile.server.call(
-                        (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
+                        (cmd.selectors, cmd.name, cmd.args, cmd.kwargs, False)
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("Mouse callback command error %s: %s", cmd.name, val)
@@ -304,7 +303,7 @@ class _Widget(CommandObject, configurable.Configurable):
         """
         w = q.widgets_map.get(name)
         if not w:
-            raise CommandError("No such widget: %s" % name)
+            raise CommandError(f"No such widget: {name}")
         return w
 
     def _items(self, name: str) -> ItemT:
@@ -400,7 +399,7 @@ class _Widget(CommandObject, configurable.Configurable):
         return Mirror(self, background=self.background)
 
     def clone(self):
-        return copy.copy(self)
+        return copy.deepcopy(self)
 
     def mouse_enter(self, x, y):
         pass
@@ -444,9 +443,6 @@ class _Widget(CommandObject, configurable.Configurable):
                 # Deletes the reference to draw and falls back to the original
                 del self.draw
                 del self._old_draw
-
-
-UNSPECIFIED = bar.Obj("UNSPECIFIED")
 
 
 class _TextBox(_Widget):
@@ -717,16 +713,21 @@ class _TextBox(_Widget):
         self.update("")
 
     @expose_command()
-    def set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED, fontshadow=UNSPECIFIED):
+    def set_font(
+        self,
+        font: str | None = None,
+        fontsize: int = 0,
+        fontshadow: ColorType = "",
+    ):
         """
         Change the font used by this widget. If font is None, the current
         font is used.
         """
-        if font is not UNSPECIFIED:
+        if font is not None:
             self.font = font
-        if fontsize is not UNSPECIFIED:
+        if fontsize != 0:
             self.fontsize = fontsize
-        if fontshadow is not UNSPECIFIED:
+        if fontshadow != "":
             self.fontshadow = fontshadow
         self.bar.draw()
 
@@ -768,7 +769,7 @@ class InLoopPollText(_TextBox):
     ThreadPoolText instead.
 
     ('fast' here means that this runs /in/ the event loop, so don't block! If
-    you want to run something nontrivial, use ThreadedPollWidget.)"""
+    you want to run something nontrivial, use ThreadPoolText.)"""
 
     defaults = [
         (
@@ -792,14 +793,6 @@ class InLoopPollText(_TextBox):
         elif update_interval:
             self.timeout_add(update_interval, self.timer_setup)
         # If update_interval is False, we won't re-call
-
-    def _configure(self, qtile, bar):
-        should_tick = self.configured
-        _TextBox._configure(self, qtile, bar)
-
-        # Update when we are being re-configured.
-        if should_tick:
-            self.tick()
 
     def button_press(self, x, y, button):
         self.tick()
@@ -833,7 +826,7 @@ class ThreadPoolText(_TextBox):
         ),
     ]  # type: list[tuple[str, Any, str]]
 
-    def __init__(self, text, **config):
+    def __init__(self, text="N/A", **config):
         super().__init__(text, **config)
         self.add_defaults(ThreadPoolText.defaults)
 
@@ -937,6 +930,8 @@ class Mirror(_Widget):
         self.reflects = reflection
         self._length = 0
         self.length_type = self.reflects.length_type
+        if self.length_type is bar.STATIC:
+            self._length = self.reflects._length
 
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
@@ -959,7 +954,9 @@ class Mirror(_Widget):
         self._length = value
 
     def draw(self):
-        self.drawer.clear(self.reflects.background or self.bar.background)
+        if self.length <= 0:
+            return
+        self.drawer.clear_rect()
         self.reflects.drawer.paint_to(self.drawer)
         self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
 

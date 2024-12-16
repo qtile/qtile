@@ -31,15 +31,11 @@ from libqtile.scripts.migrations import MIGRATIONS, load_migrations
 from libqtile.utils import get_config_file
 
 if TYPE_CHECKING:
-    from typing import Iterator
+    from collections.abc import Iterator
+
+    import libcst
 
 BACKUP_SUFFIX = ".migrate.bak"
-
-
-try:
-    import libcst
-except ImportError:
-    pass
 
 
 class AbortMigration(Exception):
@@ -48,6 +44,21 @@ class AbortMigration(Exception):
 
 class SkipFile(Exception):
     pass
+
+
+def needs_libcst(func):
+    def _wrapper(*args, **kwargs):
+        if "libcst" not in sys.modules:
+            try:
+                global libcst
+                libcst = __import__("libcst", globals(), locals())
+            except ImportError:
+                print("libcst is needed for 'qtile migrate' commands.")
+                print("Please install it and try again.")
+                sys.exit(1)
+        func(*args, **kwargs)
+
+    return _wrapper
 
 
 def version_tuple(value: str) -> tuple[int, ...]:
@@ -72,16 +83,12 @@ class QtileMigrate:
     without needing to pass them around all the time.
     """
 
+    @needs_libcst
     def __call__(self, args: argparse.Namespace) -> None:
         """
         This is called by ArgParse when we run `qtile migrate`. The parsed options are
         passed as an argument.
         """
-        if "libcst" not in sys.modules:
-            print("libcst can't be found. Unable to migrate config file.")
-            print("Please install it and try again.")
-            sys.exit(1)
-
         self.args = args
         self.filter_migrations()
 

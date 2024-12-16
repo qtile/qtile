@@ -6,6 +6,7 @@ Img().
 Image similarity / distance is calculated using imagemagick's convert
 utility.
 """
+
 import subprocess as sp
 from collections import namedtuple
 from glob import glob

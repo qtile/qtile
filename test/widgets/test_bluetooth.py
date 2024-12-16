@@ -18,13 +18,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import asyncio
+import multiprocessing
 import os
 import shutil
 import signal
 import subprocess
 import time
 from enum import Enum
-from threading import Thread
 
 import pytest
 from dbus_next._private.address import get_session_bus_address
@@ -134,11 +134,8 @@ class Battery(ServiceInterface):
         return 75
 
 
-class Bluez(Thread):
-    """Class that runs fake UPower interface in a thread."""
-
-    def __init__(self, *args, **kwargs):
-        Thread.__init__(self, *args, **kwargs)
+class Bluez:
+    """Class that runs fake UPower interface."""
 
     async def start_server(self):
         """Connects to the bus and publishes 3 interfaces."""
@@ -190,7 +187,7 @@ class Bluez(Thread):
 
 
 @pytest.fixture()
-def dbus_thread(monkeypatch):
+def fake_dbus_daemon(monkeypatch):
     """Start a thread which publishes a fake bluez interface on dbus."""
     # for Github CI/Ubuntu, dbus-launch is provided by "dbus-x11" package
     launcher = shutil.which("dbus-launch")
@@ -222,9 +219,8 @@ def dbus_thread(monkeypatch):
             except ValueError:
                 pass
 
-    t = Bluez()
-    t.daemon = True
-    t.start()
+    p = multiprocessing.Process(target=Bluez().run)
+    p.start()
 
     # Pause for the dbus interface to come up
     time.sleep(1)
@@ -234,6 +230,7 @@ def dbus_thread(monkeypatch):
     # Stop the bus
     if pid:
         os.kill(pid, signal.SIGTERM)
+        p.kill()
 
 
 @pytest.fixture
@@ -251,7 +248,7 @@ def widget(monkeypatch):
 
 
 @pytest.fixture
-def bluetooth_manager(request, widget, dbus_thread, manager_nospawn):
+def bluetooth_manager(request, widget, fake_dbus_daemon, manager_nospawn):
     class BluetoothConfig(BareConfig):
         screens = [Screen(top=Bar([widget(**getattr(request, "param", dict()))], 20))]
 
@@ -272,7 +269,7 @@ def test_defaults(bluetooth_manager):
         return widget.info()["text"]
 
     def click():
-        bluetooth_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+        bluetooth_manager.c.bar["top"].fake_button_press(0, 0, 1)
 
     # Show prefix plus list of connected devices (1 connected at startup)
     wait_for_text(widget, "BT Speaker")
@@ -304,7 +301,7 @@ def test_device_actions(bluetooth_manager):
         return widget.info()["text"]
 
     def click():
-        bluetooth_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+        bluetooth_manager.c.bar["top"].fake_button_press(0, 0, 1)
 
     wait_for_text(widget, "BT Speaker")
     widget.scroll_down()
@@ -344,7 +341,7 @@ def test_adapter_actions(bluetooth_manager):
         return widget.info()["text"]
 
     def click():
-        bluetooth_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+        bluetooth_manager.c.bar["top"].fake_button_press(0, 0, 1)
 
     wait_for_text(widget, "BT Speaker")
 
@@ -393,7 +390,7 @@ def test_custom_symbols(bluetooth_manager):
         return widget.info()["text"]
 
     def click():
-        bluetooth_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+        bluetooth_manager.c.bar["top"].fake_button_press(0, 0, 1)
 
     wait_for_text(widget, "BT Speaker")
 
@@ -457,7 +454,6 @@ def test_default_text(bluetooth_manager):
 @pytest.mark.parametrize(
     "bluetooth_manager",
     [
-        {"hci": "/dev_22_22_22_22_22_22_22_22"},
         {"device": "/dev_22_22_22_22_22_22_22_22"},
     ],
     indirect=True,

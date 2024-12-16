@@ -229,6 +229,8 @@ class Drawer(drawer.Drawer):
         if height <= 0:
             height = self.height
 
+        self._check_xcb()
+
         # Using OPERATOR_CLEAR in a RecordingSurface does not clear the
         # XCBSurface so we clear the XCBSurface directly.
         with cairocffi.Context(self._xcb_surface) as ctx:

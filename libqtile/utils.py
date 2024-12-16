@@ -33,14 +33,6 @@ from random import randint
 from shutil import which
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from typing import Any, Callable, Coroutine, TypeVar, Union
-
-    ColorType = Union[str, tuple[int, int, int], tuple[int, int, int, float]]
-    ColorsType = Union[ColorType, list[ColorType]]
-
-    T = TypeVar("T")
-
 try:
     from dbus_next import AuthError, Message, Variant
     from dbus_next.aio import MessageBus
@@ -51,6 +43,16 @@ except ImportError:
     has_dbus = False
 
 from libqtile.log_utils import logger
+
+ColorType = str | tuple[int, int, int] | tuple[int, int, int, float]
+ColorsType = ColorType | list[ColorType]
+if TYPE_CHECKING:
+    from collections.abc import Callable, Coroutine
+    from typing import Any, TypeVar
+
+    T = TypeVar("T")
+
+dbus_bus_connections = set()
 
 # Create a list to collect references to tasks so they're not garbage collected
 # before they've run
@@ -110,7 +112,7 @@ def rgb(x: ColorType) -> tuple[float, float, float, float]:
 
     Which is returned as (1.0, 0.0, 0.0, 0.5).
     """
-    if isinstance(x, (tuple, list)):
+    if isinstance(x, tuple | list):
         if len(x) == 4:
             alpha = x[-1]
         else:
@@ -140,7 +142,7 @@ def rgb(x: ColorType) -> tuple[float, float, float, float]:
 
 def hex(x: ColorType) -> str:
     r, g, b, _ = rgb(x)
-    return "#%02x%02x%02x" % (int(r * 255), int(g * 255), int(b * 255))
+    return f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
 
 
 def has_transparency(colour: ColorsType) -> bool:
@@ -150,7 +152,7 @@ def has_transparency(colour: ColorsType) -> bool:
     Where a list of colours is passed, returns True if any
     colour is not fully opaque.
     """
-    if isinstance(colour, (str, tuple)):
+    if isinstance(colour, str | tuple):
         return rgb(colour)[3] < 1
     return any(has_transparency(c) for c in colour)
 
@@ -159,7 +161,7 @@ def remove_transparency(colour: ColorsType):  # type: ignore
     """
     Returns a tuple of (r, g, b) with no alpha.
     """
-    if isinstance(colour, (str, tuple)):
+    if isinstance(colour, str | tuple):
         return tuple(x * 255.0 for x in rgb(colour)[:3])
     return [remove_transparency(c) for c in colour]
 
@@ -227,7 +229,7 @@ def describe_attributes(obj: Any, attrs: list[str], func: Callable = lambda x: x
     for attr in attrs:
         value = getattr(obj, attr, None)
         if func(value):
-            pairs.append("%s=%s" % (attr, value))
+            pairs.append(f"{attr}={value}")
 
     return ", ".join(pairs)
 
@@ -265,13 +267,13 @@ def lazify_imports(
     """
     __all__ = tuple(registry.keys())
 
-    def __dir__() -> tuple[str, ...]:
+    def __dir__() -> tuple[str, ...]:  # noqa: N807
         return __all__
 
-    def __getattr__(name: str) -> Any:
+    def __getattr__(name: str) -> Any:  # noqa: N807
         if name not in registry:
             raise AttributeError
-        module_path = "{}.{}".format(package, registry[name])
+        module_path = f"{package}.{registry[name]}"
         return import_class(module_path, name, fallback=fallback)
 
     return __all__, __dir__, __getattr__
@@ -424,25 +426,33 @@ async def _send_dbus_message(
     signature: str,
     body: Any,
     negotiate_unix_fd: bool = False,
+    bus: MessageBus | None = None,
+    preserve: bool = False,
 ) -> tuple[MessageBus | None, Message | None]:
     """
     Private method to send messages to dbus via dbus_next.
 
+    An existing bus connection can be passed, if left empty, a new
+    bus connection will be created.
+
     Returns a tuple of the bus object and message response.
     """
-    if session_bus:
-        bus_type = BusType.SESSION
-    else:
-        bus_type = BusType.SYSTEM
+    if bus is None:
+        if session_bus:
+            bus_type = BusType.SESSION
+        else:
+            bus_type = BusType.SYSTEM
+
+        try:
+            bus = await MessageBus(
+                bus_type=bus_type, negotiate_unix_fd=negotiate_unix_fd
+            ).connect()
+        except (AuthError, Exception):
+            logger.warning("Unable to connect to dbus.")
+            return None, None
 
     if isinstance(body, str):
         body = [body]
-
-    try:
-        bus = await MessageBus(bus_type=bus_type, negotiate_unix_fd=negotiate_unix_fd).connect()
-    except (AuthError, Exception):
-        logger.warning("Unable to connect to dbus.")
-        return None, None
 
     # Ignore types here: dbus-next has default values of `None` for certain
     # parameters but the signature is `str` so passing `None` results in an
@@ -459,6 +469,12 @@ async def _send_dbus_message(
         )
     )
 
+    # Keep details of bus connections so we can close them on exit
+    # dbus_bus_connetions is a set so we don't need to worry about
+    # duplicates
+    if not preserve:
+        dbus_bus_connections.add(bus)
+
     return bus, msg
 
 
@@ -470,6 +486,8 @@ async def add_signal_receiver(
     bus_name: str | None = None,
     path: str | None = None,
     check_service: bool = False,
+    use_bus: MessageBus | None = None,
+    preserve: bool = False,
 ) -> bool:
     """
     Helper function which aims to recreate python-dbus's add_signal_receiver
@@ -494,14 +512,16 @@ async def add_signal_receiver(
             return False
 
     match_args = {
-        "type": "signal",
         "sender": bus_name,
         "member": signal_name,
         "path": path,
         "interface": dbus_interface,
     }
 
-    rule = ",".join("{}='{}'".format(k, v) for k, v in match_args.items() if v)
+    rule = "type='signal',"
+    rule += ",".join(f"{k}='{v}'" for k, v in match_args.items() if v)
+
+    logger.debug("Adding dbus match rule: %s", rule)
 
     bus, msg = await _send_dbus_message(
         session_bus,
@@ -511,12 +531,56 @@ async def add_signal_receiver(
         "/org/freedesktop/DBus",
         "AddMatch",
         "s",
-        rule,
+        [rule],
+        bus=use_bus,
+        preserve=preserve,
     )
 
     # Check if message sent successfully
     if bus and msg and msg.message_type == MessageType.METHOD_RETURN:
-        bus.add_message_handler(callback)
+
+        def match_message(msg: Message, match_args: dict[str, str | None]) -> bool:
+            return msg._matches(**{k: v for k, v in match_args.items() if v})
+
+        async def resolve_sender(signal_msg: Message) -> tuple[str, Message]:
+            """Looks up a pretty bus name to retrieve the unique name."""
+            _, sender_msg = await _send_dbus_message(
+                session_bus,
+                MessageType.METHOD_CALL,
+                "org.freedesktop.DBus",
+                "org.freedesktop.DBus",
+                "/org/freedesktop/DBus",
+                "GetNameOwner",
+                "s",
+                [match_args["sender"]],
+                bus=bus,
+            )
+
+            if sender_msg and sender_msg.message_type == MessageType.METHOD_RETURN:
+                return sender_msg.body[0], signal_msg
+
+            return "", signal_msg
+
+        def check_message(task: asyncio.Task) -> None:
+            new_match_args = match_args.copy()
+            new_sender, signal_message = task.result()
+            new_match_args["sender"] = new_sender
+            if match_message(signal_message, new_match_args):
+                callback(signal_message)
+
+        def signal_callback_wrapper(msg: Message) -> None:
+            """Custom wrapper to only run callback if message matches our rule."""
+            if msg.message_type == MessageType.SIGNAL:
+                if match_message(msg, match_args):
+                    callback(msg)
+                elif "sender" in match_args:
+                    # If the message didn't match and we're trying to match the sender
+                    # We may need to convert the pretty name to the bus's unique name first
+                    task = create_task(resolve_sender(msg))
+                    if task:
+                        task.add_done_callback(check_message)
+
+        bus.add_message_handler(signal_callback_wrapper)
         return True
 
     else:
@@ -548,3 +612,33 @@ async def find_dbus_service(service: str, session_bus: bool) -> bool:
     names = msg.body[0]
 
     return service in names
+
+
+def remove_dbus_rules() -> None:
+    # Disconnecting the bus connections is enough to remove the match rules.
+    while dbus_bus_connections:
+        bus = dbus_bus_connections.pop()
+        try:
+            bus.disconnect()
+        except OSError:
+            # Socket has already shut down
+            pass
+
+        # We need to manually close the socket until https://github.com/altdesktop/python-dbus-next/pull/148
+        # gets merged. There's no error on multiple calls to 'close()'.
+        bus._sock.close()
+
+
+def reap_zombies() -> None:
+    """
+    A SIGCHLD handler that reaps all zombies until there are no more.
+    """
+    try:
+        # One signal might mean mulitple children have exited. Reap everything
+        # that has exited, until there's nothing left.
+        while True:
+            wait_result = os.waitid(os.P_ALL, 0, os.WEXITED | os.WNOHANG)
+            if wait_result is None:
+                return
+    except ChildProcessError:
+        pass

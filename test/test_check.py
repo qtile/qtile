@@ -92,7 +92,7 @@ def test_check_good_key_arg():
     assert check_literal_config(
         """
         from libqtile.config import Key
-        from libqtile.command import lazy
+        from libqtile.lazy import lazy
 
         keys = [Key(["mod4"], "x", lazy.kill())]
         cursor_warp = True

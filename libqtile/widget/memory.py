@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2015 Jörg Thalheim (Mic92)
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -33,6 +32,8 @@ class Memory(base.ThreadPoolText):
     - ``MemUsed``: Memory in use.
     - ``MemTotal``: Total amount of memory.
     - ``MemFree``: Amount of memory free.
+    - ``Available``: Amount of memory available.
+    - ``NotAvailable``: Equal to ``MemTotal`` - ``MemAvailable``
     - ``MemPercent``: Memory in use as a percentage.
     - ``Buffers``: Buffer amount.
     - ``Active``: Active memory.
@@ -48,6 +49,7 @@ class Memory(base.ThreadPoolText):
     Widget requirements: psutil_.
 
     .. _psutil: https://pypi.org/project/psutil/
+
     """
 
     defaults = [
@@ -72,6 +74,8 @@ class Memory(base.ThreadPoolText):
         val["MemUsed"] = mem.used / self.calc_mem
         val["MemTotal"] = mem.total / self.calc_mem
         val["MemFree"] = mem.free / self.calc_mem
+        val["Available"] = mem.available / self.calc_mem
+        val["NotAvailable"] = (mem.total - mem.available) / self.calc_mem
         val["MemPercent"] = mem.percent
         val["Buffers"] = mem.buffers / self.calc_mem
         val["Active"] = mem.active / self.calc_mem
@@ -83,4 +87,5 @@ class Memory(base.ThreadPoolText):
         val["SwapPercent"] = swap.percent
         val["mm"] = self.measure_mem
         val["ms"] = self.measure_swap
+
         return self.format.format(**val)

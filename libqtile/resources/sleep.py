@@ -83,7 +83,6 @@ class Inhibitor:
         for a sleep or wake signal.
         """
         if not has_dbus:
-            logger.warning("dbus-next is not installed. Cannot run inhibitor process.")
             return
 
         if not (self.sleep or self.resume):
@@ -98,7 +97,14 @@ class Inhibitor:
         Attaches handler to the "PrepareForSleep" signal.
         """
         # Connect to bus and Manager interface
-        self.bus = await MessageBus(bus_type=BusType.SYSTEM, negotiate_unix_fd=True).connect()
+        try:
+            self.bus = await MessageBus(bus_type=BusType.SYSTEM, negotiate_unix_fd=True).connect()
+        except FileNotFoundError:
+            self.bus = None
+            logger.warning(
+                "Could not find logind service. Suspend and resume hooks will be unavailable."
+            )
+            return
 
         try:
             introspection = await self.bus.introspect(LOGIND_SERVICE, LOGIND_PATH)

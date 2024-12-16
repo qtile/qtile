@@ -58,6 +58,13 @@ class ColumnsLeftAlign(ColumnsConfig):
     layouts = [layout.Columns(align=layout.Columns._left, border_width=0)]
 
 
+class ColumnsInitialRatio(ColumnsConfig):
+    layouts = [
+        layout.Columns(initial_ratio=3, border_width=0),
+        layout.Columns(initial_ratio=3, align=layout.Columns._left, border_width=0),
+    ]
+
+
 columns_config = pytest.mark.parametrize("manager", [ColumnsConfig], indirect=True)
 columns_single_border_disabled_config = pytest.mark.parametrize(
     "manager", [ColumnsSingleBorderDisabledConfig], indirect=True
@@ -66,6 +73,7 @@ columns_single_border_enabled_config = pytest.mark.parametrize(
     "manager", [ColumnsSingleBorderEnabledConfig], indirect=True
 )
 columns_left_align = pytest.mark.parametrize("manager", [ColumnsLeftAlign], indirect=True)
+columns_initial_ratio = pytest.mark.parametrize("manager", [ColumnsInitialRatio], indirect=True)
 
 
 # This currently only tests the window focus cycle
@@ -229,3 +237,62 @@ def test_columns_left_align(manager):
     assert info["y"] == 0
     assert info["width"] == WIDTH / 2
     assert info["height"] == HEIGHT / 2
+
+
+@columns_initial_ratio
+def test_columns_initial_ratio_right(manager):
+    manager.test_window("1")
+    manager.test_window("2")
+
+    # initial_ratio is 3 (i.e. main column is 3 times size of secondary column)
+    # so secondary column is 1/4 of screen width
+    info = manager.c.window.info()
+    assert info["x"] == 3 * WIDTH / 4
+    assert info["y"] == 0
+    assert info["width"] == WIDTH / 4
+    assert info["height"] == HEIGHT
+
+    # Growing right means secondary column is now smaller
+    manager.c.layout.grow_right()
+    info = manager.c.window.info()
+    assert info["width"] < WIDTH / 4
+
+    # Reset to restore initial_ratio
+    manager.c.layout.reset()
+    info = manager.c.window.info()
+    assert info["width"] == WIDTH / 4
+
+    # Normalize to make columns equal
+    manager.c.layout.normalize()
+    info = manager.c.window.info()
+    assert info["width"] == WIDTH / 2
+
+
+@columns_initial_ratio
+def test_columns_initial_ratio_left(manager):
+    manager.c.next_layout()
+    manager.test_window("1")
+    manager.test_window("2")
+
+    # initial_ratio is 3 (i.e. main column is 3 times size of secondary column)
+    # so secondary column is 1/4 of screen width
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == WIDTH / 4
+    assert info["height"] == HEIGHT
+
+    # Growing right means secondary column is now smaller
+    manager.c.layout.grow_left()
+    info = manager.c.window.info()
+    assert info["width"] < WIDTH / 4
+
+    # Reset to restore initial_ratio
+    manager.c.layout.reset()
+    info = manager.c.window.info()
+    assert info["width"] == WIDTH / 4
+
+    # Normalize to make columns equal
+    manager.c.layout.normalize()
+    info = manager.c.window.info()
+    assert info["width"] == WIDTH / 2

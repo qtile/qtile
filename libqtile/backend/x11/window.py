@@ -5,6 +5,7 @@ import contextlib
 import inspect
 import traceback
 from itertools import islice
+from types import FunctionType
 from typing import TYPE_CHECKING
 
 import xcffib
@@ -280,8 +281,16 @@ class XWindow:
         """
         r = self.get_property("_NET_WM_WINDOW_TYPE", "ATOM", unpack=int)
         if r:
-            name = self.conn.atoms.get_name(r[0])
-            return xcbq.WindowTypes.get(name, name)
+            first_name = None
+            for i, a in enumerate(r):
+                name = self.conn.atoms.get_name(a)
+                if i == 0:
+                    first_name = name
+                qtile_type = xcbq.WindowTypes.get(name, None)
+                if qtile_type is not None:
+                    return qtile_type
+            return first_name
+        return None
 
     def get_net_wm_state(self):
         r = self.get_property("_NET_WM_STATE", "ATOM", unpack=int)
@@ -1040,6 +1049,9 @@ class _Window:
             )
         )
 
+        # Remove any windows that aren't in the server's stack
+        windows = list(filter(lambda w: w[0].wid in stack, windows))
+
         # Sort this list to match stacking order reported by server
         windows.sort(key=lambda w: stack.index(w[0].wid))
 
@@ -1237,7 +1249,11 @@ class _Window:
 
     @property
     def can_steal_focus(self):
-        return self.window.get_wm_type() != "notification"
+        return super().can_steal_focus and self.window.get_wm_type() != "notification"
+
+    @can_steal_focus.setter
+    def can_steal_focus(self, can_steal_focus: bool) -> None:
+        self._can_steal_focus = can_steal_focus
 
     def _do_focus(self):
         """
@@ -1327,11 +1343,11 @@ class _Window:
         self.qtile.core._root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
         self._ungrab_click()
 
-        if self.group:
-            self.group.current_window = self
-
         # Check if we need to restack a previously focused fullscreen window
         self.qtile.core.check_stacking(self)
+
+        if self.group and self.group.current_window is not self:
+            self.group.focus(self)
 
         hook.fire("client_focus", self)
 
@@ -1485,6 +1501,13 @@ class _Window:
             reply.remove(atom)
         self.window.set_property("_NET_WM_STATE", reply)
         self.change_layer(up=False)
+
+    @expose_command()
+    def bring_to_front(self):
+        if self.get_wm_type() != "desktop":
+            self.window.configure(stackmode=xcffib.xproto.StackMode.Above)
+            self.raise_children()
+            self.qtile.core.update_client_lists()
 
 
 class Internal(_Window, base.Internal):
@@ -1656,13 +1679,6 @@ class Static(_Window, base.Static):
         name = self.qtile.core.conn.atoms.get_name(e.atom)
         if name == "_NET_WM_STRUT_PARTIAL":
             self.update_strut()
-
-    @expose_command()
-    def bring_to_front(self):
-        if self.get_wm_type() != "desktop":
-            self.window.configure(stackmode=xcffib.xproto.StackMode.Above)
-            self.raise_children()
-            self.qtile.core.update_client_lists()
 
 
 class Window(_Window, base.Window):
@@ -1993,7 +2009,7 @@ class Window(_Window, base.Window):
         else:
             group = self.qtile.groups_map.get(group_name)
             if group is None:
-                raise CommandError("No such group: %s" % group_name)
+                raise CommandError(f"No such group: {group_name}")
 
         if self.group is group:
             if toggle and self.group.screen.previous_group:
@@ -2006,7 +2022,16 @@ class Window(_Window, base.Window):
             if self.group.screen:
                 # for floats remove window offset
                 self.x -= self.group.screen.x
+            group_ref = self.group
             self.group.remove(self)
+            if (
+                not self.qtile.dgroups.groups_map[group_ref.name].persist
+                and len(group_ref.windows) <= 1
+            ):
+                # set back original group so _del() can grab it
+                self.group = group_ref
+                self.qtile.dgroups._del(self)
+                self.group = None
 
         if group.screen and self.x < group.screen.x:
             self.x += group.screen.x
@@ -2030,7 +2055,7 @@ class Window(_Window, base.Window):
 
     def handle_EnterNotify(self, e):  # noqa: N802
         hook.fire("client_mouse_enter", self)
-        if self.qtile.config.follow_mouse_focus:
+        if self.qtile.config.follow_mouse_focus is True:
             if self.group.current_window != self:
                 self.group.focus(self, False)
             if self.group.screen and self.qtile.current_screen != self.group.screen:
@@ -2098,7 +2123,7 @@ class Window(_Window, base.Window):
                 arr[i + 1] = int(arr[i + 1] * mult)
                 arr[i + 2] = int(arr[i + 2] * mult)
             icon = icon[next_pix:]
-            icons["%sx%s" % (width, height)] = arr
+            icons[f"{width}x{height}"] = arr
         self.icons = icons
         hook.fire("net_wm_icon_change", self)
 
@@ -2132,12 +2157,24 @@ class Window(_Window, base.Window):
                 logger.debug("Focusing window by pager")
                 self.qtile.current_screen.set_group(self.group)
                 self.group.focus(self)
+                self.bring_to_front()
             else:  # XCB_EWMH_CLIENT_SOURCE_TYPE_OTHER
                 focus_behavior = self.qtile.config.focus_on_window_activation
-                if focus_behavior == "focus":
+                if (
+                    focus_behavior == "focus"
+                    or type(focus_behavior) is FunctionType
+                    and focus_behavior(self)
+                ):
                     logger.debug("Focusing window")
-                    self.qtile.current_screen.set_group(self.group)
-                    self.group.focus(self)
+                    # Windows belonging to a scratchpad need to be toggled properly
+                    if isinstance(self.group, ScratchPad):
+                        for dropdown in self.group.dropdowns.values():
+                            if dropdown.window is self:
+                                dropdown.show()
+                                break
+                    else:
+                        self.qtile.current_screen.set_group(self.group)
+                        self.group.focus(self)
                 elif focus_behavior == "smart":
                     if not self.group.screen:
                         logger.debug(
@@ -2146,14 +2183,23 @@ class Window(_Window, base.Window):
                         return
                     if self.group.screen == self.qtile.current_screen:
                         logger.debug("Focusing window")
-                        self.qtile.current_screen.set_group(self.group)
-                        self.group.focus(self)
+                        # Windows belonging to a scratchpad need to be toggled properly
+                        if isinstance(self.group, ScratchPad):
+                            for dropdown in self.group.dropdowns.values():
+                                if dropdown.window is self:
+                                    dropdown.show()
+                                    break
+                        else:
+                            self.qtile.current_screen.set_group(self.group)
+                            self.group.focus(self)
                     else:  # self.group.screen != self.qtile.current_screen:
                         logger.debug("Setting urgent flag for window")
                         self.urgent = True
+                        hook.fire("client_urgent_hint_changed", self)
                 elif focus_behavior == "urgent":
                     logger.debug("Setting urgent flag for window")
                     self.urgent = True
+                    hook.fire("client_urgent_hint_changed", self)
                 elif focus_behavior == "never":
                     logger.debug("Ignoring focus request (focus_on_window_activation='never')")
                 else:
@@ -2168,6 +2214,13 @@ class Window(_Window, base.Window):
                 self.minimized = False
             elif state == IconicState and self.qtile.config.auto_minimize:
                 self.minimized = True
+        elif atoms["_NET_WM_DESKTOP"] == opcode:
+            group_index = data.data32[0]
+            try:
+                group = self.qtile.groups[group_index]
+                self.togroup(group.name)
+            except (IndexError, TypeError):
+                logger.warning("Unexpected _NET_WM_DESKTOP value received: %s", group_index)
         else:
             logger.debug("Unhandled client message: %s", atoms.get_name(opcode))
 
@@ -2279,13 +2332,6 @@ class Window(_Window, base.Window):
     @expose_command()
     def disable_fullscreen(self):
         self.fullscreen = False
-
-    @expose_command()
-    def bring_to_front(self):
-        if self.get_wm_type() != "desktop":
-            self.window.configure(stackmode=xcffib.xproto.StackMode.Above)
-            self.raise_children()
-            self.qtile.core.update_client_lists()
 
     def _is_in_window(self, x, y, window):
         return window.edges[0] <= x <= window.edges[2] and window.edges[1] <= y <= window.edges[3]
