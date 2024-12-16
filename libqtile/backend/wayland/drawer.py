@@ -74,6 +74,11 @@ class Drawer(drawer.Drawer):
             height = self.height
         if height > self._win.height - offsety:
             height = self._win.height - offsety
+
+        # Despite checks for None above, mypy requires these aserts
+        assert width is not None
+        assert height is not None
+
         scale = self.qtile.config.wl_scale_factor
 
         # Paint recorded operations to our window's underlying ImageSurface
@@ -87,7 +92,9 @@ class Drawer(drawer.Drawer):
             context.fill()
 
         damage = PixmanRegion32()
-        damage.init_rect(offsetx * scale, offsety * scale, width * scale, height * scale)
+        damage.init_rect(
+            int(offsetx * scale), int(offsety * scale), int(width * scale), int(height * scale)
+        )
         # TODO: do we really need to `set_buffer` here? would be good to just set damage
         self._win._scene_buffer.set_buffer_with_damage(self._win.wlr_buffer, damage)
         damage.fini()
