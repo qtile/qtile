@@ -74,6 +74,11 @@ class Drawer(drawer.Drawer):
             height = self.height
         if height > self._win.height - offsety:
             height = self._win.height - offsety
+
+        # Despite checks for None above, mypy requires these aserts
+        assert width is not None
+        assert height is not None
+
         scale = self.qtile.config.wl_scale_factor
 
         # Paint recorded operations to our window's underlying ImageSurface
