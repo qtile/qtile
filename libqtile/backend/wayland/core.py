@@ -187,7 +187,7 @@ class Core(base.Core, wlrq.HasListeners):
         ) = wlroots_helper.build_compositor(self.display)
         self.socket = self.display.add_socket()
         os.environ["WAYLAND_DISPLAY"] = self.socket.decode()
-        logger.info("Starting core with WAYLAND_DISPLAY=%s", self.socket.decode())
+        logger.info("Start core with WAYLAND_DISPLAY=%s", os.environ["WAYLAND_DISPLAY"])
 
         # These windows have not been mapped yet; they'll get managed when mapped
         self.pending_windows: set[window.WindowType] = set()
@@ -465,7 +465,11 @@ class Core(base.Core, wlrq.HasListeners):
 
     @property
     def display_name(self) -> str:
-        return self.socket.decode()
+        return os.environ.get("WAYLAND_DISPLAY", "")
+
+    @property
+    def xdisplay_name(self) -> str:
+        return os.environ.get("DISPLAY", "")
 
     def _on_request_set_selection(
         self, _listener: Listener, event: seat.RequestSetSelectionEvent
