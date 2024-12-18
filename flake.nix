@@ -21,9 +21,7 @@
             nixpkgs-settings = {
               inherit system;
 
-              overlays = [
-                (import ./nix/overlays.nix self)
-              ];
+              overlays = [ (import ./nix/overlays.nix self) ];
             };
           in
           function (import nixpkgs nixpkgs-settings)
@@ -43,10 +41,22 @@
         {
           default = self.packages.${pkgs.system}.qtile;
 
-          qtile = qtile'.overrideAttrs (prev: {
-            name = "${qtile'.pname}-${qtile'.version}";
-            passthru.unwrapped = qtile';
-          });
+          qtile = qtile'.overrideAttrs (
+            prev:
+            let
+              remove-dbus-next = dep: dep.pname != pkgs.python3Packages.dbus-next.pname;
+
+              # seems like dependencies is a fancy wrapper on that one!
+              propagatedBuildInputs =
+                with pkgs.python3Packages;
+                [ dbus-fast ] ++ (pkgs.lib.filter remove-dbus-next prev.propagatedBuildInputs);
+            in
+            {
+              name = "${qtile'.pname}-${qtile'.version}";
+              inherit propagatedBuildInputs;
+              passthru.unwrapped = qtile';
+            }
+          );
         }
       );
 

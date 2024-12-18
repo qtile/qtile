@@ -26,16 +26,10 @@ self: final: prev: {
             # use the source of the git repo
             src = ./..;
             # for qtile migrate, not in nixpkgs yet
-            propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [
-              pprev.libcst
-              pprev.dbus-fast
-            ];
-            dependencies = prev.lib.filter (x: x != pprev.dbus-next) (old.propagatedBuildInputs or [ ]);
+            propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [ pprev.libcst ];
           }
         )).override
-          {
-            wlroots = prev.wlroots_0_17;
-          };
+          { wlroots = prev.wlroots_0_17; };
     })
   ];
   python3 =
