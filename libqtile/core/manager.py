@@ -919,7 +919,6 @@ class Qtile(CommandObject):
 
         # ... and make it the current window on the next screen.
         if self._drag and cw is not None:
-            cw.group = self.current_group
             self.current_group.current_window = cw
 
         if old != self.current_screen:
