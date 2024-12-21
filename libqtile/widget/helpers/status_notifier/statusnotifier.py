@@ -259,7 +259,11 @@ class StatusNotifierItem:  # noqa: E303
             if not self.icon:
                 self.icon = self._get_xdg_icon(icon_name)
 
-        if not self.icon and fallback:
+        if fallback:
+            for icon in ["Icon", "Attention", "Overlay"]:
+                await self._get_icon(icon)
+
+        if not self.has_icons and fallback:
             # Use fallback icon libqtile/resources/status_notifier/fallback_icon.png
             logger.warning("Could not find icon for '%s'. Using fallback icon.", icon_name)
             path = Path(__file__).parent / "fallback_icon.png"
