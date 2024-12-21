@@ -28,13 +28,12 @@ self: final: prev: {
             # for qtile migrate, not in nixpkgs yet
             propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [
               pprev.libcst
-              pprev.dbus-fast
             ];
-            dependencies = prev.lib.filter (x: x != pprev.dbus-next) (old.propagatedBuildInputs or [ ]);
           }
         )).override
           {
             wlroots = prev.wlroots_0_17;
+            dbus-next = prev.python3Packages.dbus-fast;
           };
     })
   ];
