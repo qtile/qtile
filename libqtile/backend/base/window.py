@@ -246,7 +246,7 @@ class Window(_Window, metaclass=ABCMeta):
 
     qtile: Qtile
 
-    # If float_x or float_y are None, the window has never floated
+    # If float_x or float_y are None, the window has never been placed
     float_x: int | None
     float_y: int | None
 
@@ -319,6 +319,15 @@ class Window(_Window, metaclass=ABCMeta):
     def has_user_set_position(self) -> bool:
         """Whether this window has user-defined geometry"""
         return False
+
+    def is_placed(self) -> bool:
+        """Whether this window has been placed, i.e. both float offsets are not None."""
+        return (
+            self.group is not None
+            and self.group.screen is not None
+            and self.float_x is not None
+            and self.float_y is not None
+        )
 
     def is_transient_for(self) -> WindowType | None:
         """What window is this window a transient window for?"""
