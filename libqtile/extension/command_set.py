@@ -18,12 +18,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 from libqtile.extension.dmenu import Dmenu
+
+if TYPE_CHECKING:
+    from typing import Optional
 
 
 class CommandSet(Dmenu):
     """
     Give list of commands to be executed in dmenu style.
+    Commands can either be cmdline strings or callable functions.
+    Functions take two argument: qtile object and select command string.
 
     ex. manage mocp deamon:
 
@@ -59,10 +67,39 @@ class CommandSet(Dmenu):
         **Theme.dmenu
         )
 
+    ex. CommandSet with callables
+
+    .. code-block:: python
+
+        def dynamic_group_addnew(qtile, command):
+            name = f"special_{ command.lower() }"
+            if name not in qtile.groups_map:
+                qtile.addgroup(name, label=command, persist=False)
+            qtile.groups_map[name].toscreen()
+
+        CommandSet(
+            pre_commands = [
+              lambda self: # Pre-Commands are executed in extention context.
+                setattr(
+                   self,
+                  "commands",
+                  {
+                    group.label: lambda qtile, name: qtile.groups_map[f"special_{name}"].toscreen()
+                    for group in self.qtile.groups
+                    if group.name.startswith("special_")
+                  }
+                )
+            ],
+            commands = {},
+            unlisted = dynamic_group_addnew,
+            **Theme.dmenu
+        )
+
     """
 
     defaults = [
-        ("commands", None, "dictionary of commands where key is runable command"),
+        ("unlisted", None, "An optional function to handle unlisted command keys."),
+        ("commands", None, "dictionary of commands where key is runable command or a callable"),
         ("pre_commands", None, "list of commands to be executed before getting dmenu answer"),
     ]
 
@@ -70,30 +107,29 @@ class CommandSet(Dmenu):
         Dmenu.__init__(self, **config)
         self.add_defaults(CommandSet.defaults)
 
-    def run(self):
-        if not self.commands:
+    def run(self) -> None:
+        if not self.commands and not self.unlisted:
             return
 
         if self.pre_commands:
             for cmd in self.pre_commands:
-                self.qtile.spawn(cmd)
+                if isinstance(cmd,str):
+                    self.qtile.spawn(cmd)
+                elif callable(cmd):
+                    cmd(self)
 
-        out = super().run(items=self.commands.keys())
+        out = self.run_dmenu(items=self.commands.keys())
+        sout = out.rstrip("\n")
 
-        try:
-            sout = out.rstrip("\n")
-        except AttributeError:
-            # out is not a string (for example it's a Popen object returned
-            # by super(WindowList, self).run() when there are no menu items to
-            # list
+        command = self.commands.get(sout)
+        if not command:
+            if self.unlisted:
+                self.unlisted(self.qtile, sout)
             return
-
-        if sout not in self.commands:
-            return
-
-        command = self.commands[sout]
 
         if isinstance(command, str):
             self.qtile.spawn(command)
         elif isinstance(command, CommandSet):
             command.run()
+        elif callable(command):
+            command(self.qtile, sout)
