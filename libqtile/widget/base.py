@@ -495,6 +495,7 @@ class _TextBox(_Widget):
             "When ``scroll=True`` the ``width`` parameter is a maximum width and, when text is shorter than this, the widget will resize. "
             "Setting ``scroll_fixed_width=True`` will force the widget to have a fixed width, regardless of the size of the text.",
         ),
+        ("rotate", True, "Rotate text in vertical bar."),
     ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -578,8 +579,11 @@ class _TextBox(_Widget):
             markup=self.markup,
         )
         if not isinstance(self._scroll_width, int) and self.scroll:
-            logger.warning("%s: You must specify a width when enabling scrolling.", self.name)
-            self.scroll = False
+            if not self.bar.horizontal and not self.rotate:
+                self._scroll_width = self.bar.width
+            else:
+                logger.warning("%s: You must specify a width when enabling scrolling.", self.name)
+                self.scroll = False
 
         if self.scroll:
             self.check_width()
@@ -607,7 +611,10 @@ class _TextBox(_Widget):
             if self.bar.horizontal:
                 return min(self.layout.width, self.bar.width) + self.actual_padding * 2
             else:
-                return min(self.layout.width, self.bar.height) + self.actual_padding * 2
+                if self.rotate:
+                    return min(self.layout.width, self.bar.height) + self.actual_padding * 2
+                else:
+                    return self.layout.height + self.actual_padding * 2
         else:
             return 0
 
@@ -625,7 +632,7 @@ class _TextBox(_Widget):
         # size = self.bar.height if self.bar.horizontal else self.bar.width
         self.drawer.ctx.save()
 
-        if not self.bar.horizontal:
+        if not self.bar.horizontal and self.rotate:
             # Left bar reads bottom to top
             if self.bar.screen.left is self.bar:
                 self.drawer.ctx.rotate(-90 * math.pi / 180.0)
