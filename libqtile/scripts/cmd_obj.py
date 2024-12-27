@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import argparse
 import itertools
-import pprint
+import json
 import sys
 import textwrap
 
@@ -177,7 +177,7 @@ def cmd_obj(args) -> None:
         else:
             ret = run_function(obj, args.function, args.args)
             if ret is not None:
-                pprint.pprint(ret)
+                print(json.dumps(ret, indent=2))
     else:
         print_base_objects()
         sys.exit(1)
