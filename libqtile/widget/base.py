@@ -525,6 +525,9 @@ class _TextBox(_Widget):
                 self.check_width()
                 self.reset_scroll()
 
+            if not self.bar.horizontal and not self.rotate:
+                self.layout.width = self.bar.width - 2 * self.actual_padding
+
     @property
     def formatted_text(self):
         return self.fmt.format(self._text)
@@ -588,18 +591,22 @@ class _TextBox(_Widget):
         if self.scroll:
             self.check_width()
 
+        if not self.bar.horizontal and not self.rotate:
+            self.layout.width = self.bar.width - 2 * self.actual_padding
+
     def check_width(self):
         """
         Check whether the widget needs to have calculated or fixed width
         and whether the text should be scrolled.
         """
         if self.layout.width > self._scroll_width:
-            self.length_type = bar.STATIC
-            self.length = self._scroll_width
+            if self.bar.horizontal or self.rotate:
+                self.length_type = bar.STATIC
+                self.length = self._scroll_width
             self._is_scrolling = True
             self._should_scroll = True
         else:
-            if self.scroll_fixed_width:
+            if self.scroll_fixed_width and (self.bar.horizontal or self.rotate):
                 self.length_type = bar.STATIC
                 self.length = self._scroll_width
             else:
@@ -654,7 +661,13 @@ class _TextBox(_Widget):
             )
             self.drawer.ctx.clip()
 
-        size = self.bar.height if self.bar.horizontal else self.bar.width
+        if self.bar.horizontal:
+            size = self.bar.height
+        else:
+            if self.rotate:
+                size = self.bar.width
+            else:
+                size = self.layout.height + self.actual_padding * 2
 
         self.layout.draw(
             (self.actual_padding or 0) - self._scroll_offset,
