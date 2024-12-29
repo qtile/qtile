@@ -520,12 +520,16 @@ class _TextBox(_Widget):
             value = value[: self.max_chars] + "…"
         self._text = value
         if self.layout:
+            # Reset the layout width
+            # Reason is because, if we've manually set the layout width,
+            # adding longer text will result in wrapping which increases the height of the layout.
+            del self.layout.width
             self.layout.text = self.formatted_text
             if self.scroll:
                 self.check_width()
                 self.reset_scroll()
 
-            if not self.bar.horizontal and not self.rotate:
+            elif not self.bar.horizontal and not self.rotate:
                 self.layout.width = self.bar.width - 2 * self.actual_padding
 
     @property
@@ -584,6 +588,7 @@ class _TextBox(_Widget):
         if not isinstance(self._scroll_width, int) and self.scroll:
             if not self.bar.horizontal and not self.rotate:
                 self._scroll_width = self.bar.width
+                self.scroll_fixed_width = self.bar.width
             else:
                 logger.warning("%s: You must specify a width when enabling scrolling.", self.name)
                 self.scroll = False
@@ -591,7 +596,7 @@ class _TextBox(_Widget):
         if self.scroll:
             self.check_width()
 
-        if not self.bar.horizontal and not self.rotate:
+        elif not self.bar.horizontal and not self.rotate:
             self.layout.width = self.bar.width - 2 * self.actual_padding
 
     def check_width(self):
@@ -606,7 +611,9 @@ class _TextBox(_Widget):
             self._is_scrolling = True
             self._should_scroll = True
         else:
-            if self.scroll_fixed_width and (self.bar.horizontal or self.rotate):
+            if not self.bar.horizontal and not self.rotate:
+                self.layout.width = self.scroll_fixed_width
+            elif self.scroll_fixed_width:
                 self.length_type = bar.STATIC
                 self.length = self._scroll_width
             else:
