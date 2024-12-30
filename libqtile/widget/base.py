@@ -784,7 +784,7 @@ class _TextBox(_Widget):
 
         # If our width hasn't changed, we just draw ourselves. Otherwise,
         # we draw the whole bar.
-        if self.layout.width == old_width:
+        if self.layout.width == old_width and (self.bar.horizontal or self.rotate):
             self.draw()
         else:
             self.bar.draw()
