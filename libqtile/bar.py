@@ -508,9 +508,12 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 offset += i.length
         else:
             offset = self.border_width[0]
+            sizing = ["Placing widgets"]
             for i in widgets:
+                sizing.append(f"{i.name} - {i.length_type}:{i.length}")
                 i.offsety = offset
                 offset += i.length
+                logger.warning("\n".join(sizing))
 
     def get_widget_in_position(self, x: int, y: int) -> _Widget | None:
         if self.horizontal:
