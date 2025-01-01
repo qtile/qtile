@@ -94,6 +94,7 @@ class Spiral(_SimpleLayoutBase):
         ("border_focus", "#0000ff", "Border colour(s) for the focused window."),
         ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
         ("border_width", 1, "Border width."),
+        ("border_on_single", True, "Draw border when there is only one window."),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])"),
         ("ratio", 1 / GOLDEN_RATIO, "Ratio of the tiles"),
         (
@@ -189,12 +190,17 @@ class Spiral(_SimpleLayoutBase):
 
         (x, y, w, h), margins = self._fix_double_margins(x, y, w, h)
 
+        if len(self.clients) == 1 and not self.border_on_single:
+            border_width = 0
+        else:
+            border_width = self.border_width
+
         win.place(
             x,
             y,
-            w - self.border_width * 2,
-            h - self.border_width * 2,
-            self.border_width,
+            w - border_width * 2,
+            h - border_width * 2,
+            border_width,
             bc,
             margin=margins,
         )
