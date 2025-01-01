@@ -22,6 +22,7 @@ import pytest
 import libqtile.config
 from libqtile import layout
 from libqtile.confreader import Config
+from test.helpers import HEIGHT, WIDTH
 from test.layouts.layout_utils import assert_dimensions
 
 
@@ -60,6 +61,15 @@ class AnticlockwiseConfig(SpiralConfig):
 
 
 anticlockwise_config = pytest.mark.parametrize("manager", [AnticlockwiseConfig], indirect=True)
+
+
+class SingleborderDisabledConfig(SpiralConfig):
+    layouts = [layout.Spiral(ratio=0.5, border_width=2, border_on_single=False)]
+
+
+singleborder_disabled_config = pytest.mark.parametrize(
+    "manager", [SingleborderDisabledConfig], indirect=True
+)
 
 
 @spiral_config
@@ -190,6 +200,14 @@ def test_spiral_bottom_anticlockwise(manager):
     assert_dimensions(manager, 0, 150, 398, 148)
     manager.test_window("five")
     assert_dimensions(manager, 200, 150, 198, 148)
+
+
+@singleborder_disabled_config
+def test_singleborder_disable(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, WIDTH, HEIGHT)
+    manager.test_window("two")
+    assert_dimensions(manager, 0, 0, WIDTH / 2 - 4, HEIGHT - 4)
 
 
 @spiral_config
