@@ -1861,6 +1861,10 @@ class Window(_Window, base.Window):
         if do_minimize:
             if self._float_state != FloatStates.MINIMIZED:
                 self._enablefloating(new_float_state=FloatStates.MINIMIZED)
+                for win in reversed(self.group.focus_history[:-1]):
+                    if not win.minimized:
+                        self.group.focus(win)
+                        break
         else:
             if self._float_state == FloatStates.MINIMIZED:
                 self.floating = False
