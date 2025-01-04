@@ -2080,15 +2080,14 @@ class Window(_Window, base.Window):
         else:
             width, height, x, y = self.width, self.height, self.x, self.y
 
-        if self.group and self.group.screen:
-            self.place(
-                x,
-                y,
-                width,
-                height,
-                self.borderwidth,
-                self.bordercolor,
-            )
+        self.place(
+            x,
+            y,
+            width,
+            height,
+            self.borderwidth,
+            self.bordercolor,
+        )
         self.update_state()
         return False
 
