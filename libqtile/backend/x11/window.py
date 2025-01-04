@@ -2089,6 +2089,7 @@ class Window(_Window, base.Window):
             self.bordercolor,
         )
         self.update_state()
+        self.unhide()
         return False
 
     def update_wm_net_icon(self):
