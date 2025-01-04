@@ -1694,7 +1694,7 @@ class Window(_Window, base.Window):
         self._wm_class: list[str] | None = None
         self.update_wm_class()
         self.update_name()
-        self.set_group()
+        self.togroup()
 
         # add window to the save-set, so it gets mapped when qtile dies
         qtile.core.conn.conn.core.ChangeSaveSet(SetMode.Insert, self.window.wid)
