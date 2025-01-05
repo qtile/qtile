@@ -372,13 +372,15 @@ class Qtile(CommandObject):
             config = self.config.fake_screens
         else:
             # Alias screens with the same x and y coordinates, taking largest
-            xywh = {}  # type: dict[tuple[int, int], tuple[int, int]]
+            xywhs = {}  # type: dict[tuple[int, int], tuple[int, int, float | None]]
             for info in self.core.get_screen_info():
                 pos = (info.x, info.y)
-                width, height = xywh.get(pos, (0, 0))
-                xywh[pos] = (max(width, info.width), max(height, info.height))
+                width, height, scale = xywhs.get(pos, (0, 0, 1.0))
+                # Could screens with same x and y coordinates also have different wlr_scale?
+                # How to handle?
+                xywhs[pos] = (max(width, info.width), max(height, info.height), info.scale)
 
-            screen_info = [ScreenRect(x, y, w, h) for (x, y), (w, h) in xywh.items()]
+            screen_info = [ScreenRect(x, y, w, h, s) for (x, y), (w, h, s) in xywhs.items()]
             config = self.config.screens
 
         for i, info in enumerate(screen_info):
@@ -425,6 +427,7 @@ class Qtile(CommandObject):
                 info.height,
                 grp,
                 reconfigure_gaps=reconfigure_gaps,
+                scale=info.scale,
             )
             screens.append(scr)
 
