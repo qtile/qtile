@@ -2,7 +2,7 @@
   description = "Qtile's flake, full-featured, hackable tiling window manager written and configured in Python";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
   };
 
   outputs =
@@ -41,22 +41,10 @@
         {
           default = self.packages.${pkgs.system}.qtile;
 
-          qtile = qtile'.overrideAttrs (
-            prev:
-            let
-              remove-dbus-next = dep: dep.pname != pkgs.python3Packages.dbus-next.pname;
-
-              # seems like dependencies is a fancy wrapper on that one!
-              propagatedBuildInputs =
-                with pkgs.python3Packages;
-                [ dbus-fast ] ++ (pkgs.lib.filter remove-dbus-next prev.propagatedBuildInputs);
-            in
-            {
-              name = "${qtile'.pname}-${qtile'.version}";
-              inherit propagatedBuildInputs;
-              passthru.unwrapped = qtile';
-            }
-          );
+          qtile = qtile'.overrideAttrs (prev: {
+            name = "${qtile'.pname}-${qtile'.version}";
+            passthru.unwrapped = qtile';
+          });
         }
       );
 
