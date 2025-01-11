@@ -372,13 +372,13 @@ class Spiral(_SimpleLayoutBase):
     @expose_command()
     def shuffle_down(self):
         if self.clients:
-            self.clients.rotate_down()
+            self.clients.shuffle_down()
             self.group.layout_all()
 
     @expose_command()
     def shuffle_up(self):
         if self.clients:
-            self.clients.rotate_up()
+            self.clients.shuffle_up()
             self.group.layout_all()
 
     @expose_command()
