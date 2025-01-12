@@ -1557,9 +1557,17 @@ class Core(base.Core, wlrq.HasListeners):
     def flush(self) -> None:
         self._poll()
 
-    def create_internal(self, x: int, y: int, width: int, height: int) -> base.Internal:
+    def create_internal(
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        scale: float | None = 1.0,
+    ) -> base.Internal:
         assert self.qtile is not None
-        internal = window.Internal(self, self.qtile, x, y, width, height)
+        scale = scale if scale is not None else 1.0
+        internal = window.Internal(self, self.qtile, x, y, width, height, scale)
         self.qtile.manage(internal)
         return internal
 

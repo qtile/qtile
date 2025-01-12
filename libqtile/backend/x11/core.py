@@ -596,7 +596,13 @@ class Core(base.Core):
             i._reset_mask()
 
     def create_internal(
-        self, x: int, y: int, width: int, height: int, desired_depth: int | None = 32
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        desired_depth: int | None = 32,
+        scale: float | None = None,
     ) -> base.Internal:
         assert self.qtile is not None
 

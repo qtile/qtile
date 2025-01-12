@@ -927,7 +927,16 @@ class Internal(_Base, base.Internal):
     Internal windows are simply textures controlled by the compositor.
     """
 
-    def __init__(self, core: Core, qtile: Qtile, x: int, y: int, width: int, height: int):
+    def __init__(
+        self,
+        core: Core,
+        qtile: Qtile,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        scale: float,
+    ):
         self.core = core
         self.qtile = qtile
         self._wid: int = self.core.new_wid()
@@ -935,6 +944,7 @@ class Internal(_Base, base.Internal):
         self.y: int = y
         self._width: int = width
         self._height: int = height
+        self._scale: float = scale
         self._opacity: float = 1.0
 
         # Store this object on the scene node for finding the window under the pointer.
@@ -985,6 +995,10 @@ class Internal(_Base, base.Internal):
     def unhide(self) -> None:
         self.tree.node.set_enabled(enabled=True)
 
+    @property
+    def scale(self) -> float:
+        return self._scale
+
     @expose_command()
     def focus(self, warp: bool = True) -> None:
         self.core.focus_window(self)
@@ -1009,6 +1023,7 @@ class Internal(_Base, base.Internal):
         above: bool = False,
         margin: int | list[int] | None = None,
         respect_hints: bool = False,
+        scale: float = 1.0,
     ) -> None:
         if above:
             self.bring_to_front()
@@ -1017,10 +1032,11 @@ class Internal(_Base, base.Internal):
         self.y = y
         self.tree.node.set_position(x, y)
 
-        if width != self._width or height != self._height:
-            # Changed size, we need to regenerate the buffer
+        if width != self._width or height != self._height or scale != self._scale:
+            # Changed size or scale, we need to regenerate the buffer
             self._width = width
             self._height = height
+            self._scale = scale
             self.wlr_buffer, self.surface = self._new_buffer()
 
     def paint_borders(self, colors: ColorsType | None, width: int) -> None:

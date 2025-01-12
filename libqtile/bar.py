@@ -306,7 +306,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 )
 
                 self.window = qtile.core.create_internal(  # type: ignore [call-arg]
-                    self.x, self.y, width, height, depth
+                    self.x, self.y, width, height, desired_depth=depth
                 )
 
             else:
