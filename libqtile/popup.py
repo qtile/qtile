@@ -67,8 +67,9 @@ class Popup(configurable.Configurable):
         self.add_defaults(Popup.defaults)
         self.qtile = qtile
 
+        self.scale = qtile.current_screen.scale
         self.win: Any = qtile.core.create_internal(
-            x, y, width, height
+            x, y, width, height, scale=self.scale
         )  # TODO: better annotate Internal
         self.win.opacity = self.opacity
         self.win.process_button_click = self.process_button_click
@@ -150,7 +151,14 @@ class Popup(configurable.Configurable):
 
     def place(self) -> None:
         self.win.place(
-            self.x, self.y, self.width, self.height, self.border_width, self.border, above=True
+            self.x,
+            self.y,
+            self.width,
+            self.height,
+            self.border_width,
+            self.border,
+            above=True,
+            scale=self.scale,
         )
 
     def unhide(self) -> None:
