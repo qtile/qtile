@@ -460,7 +460,7 @@ class TreeTab(Layout):
 
     def _create_panel(self, screen_rect):
         self._panel = self.group.qtile.core.create_internal(
-            screen_rect.x, screen_rect.y, self.panel_width, 100
+            screen_rect.x, screen_rect.y, self.panel_width, 100, scale=screen_rect.scale
         )
         self._create_drawer(screen_rect)
         self._panel.process_window_expose = self.draw_panel
@@ -483,7 +483,13 @@ class TreeTab(Layout):
     def configure(self, client: base.Window, screen_rect: ScreenRect) -> None:
         if self._nodes and client is self._focused:
             client.place(
-                screen_rect.x, screen_rect.y, screen_rect.width, screen_rect.height, 0, None
+                screen_rect.x,
+                screen_rect.y,
+                screen_rect.width,
+                screen_rect.height,
+                0,
+                None,
+                scale=screen_rect.scale,
             )
             client.unhide()
         else:
@@ -762,7 +768,13 @@ class TreeTab(Layout):
     def _resize_panel(self, screen_rect):
         if self._panel:
             self._panel.place(
-                screen_rect.x, screen_rect.y, screen_rect.width, screen_rect.height, 0, None
+                screen_rect.x,
+                screen_rect.y,
+                screen_rect.width,
+                screen_rect.height,
+                0,
+                None,
+                scale=screen_rect.scale,
             )
             self._create_drawer(screen_rect)
             self.draw_panel()
