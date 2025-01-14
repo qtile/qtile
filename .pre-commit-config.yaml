@@ -16,3 +16,7 @@ repos:
     rev: v2.10
     hooks:
       - id: vulture
+  - repo: https://github.com/NixOS/nixfmt
+    rev: 8d4bd69
+    hooks:
+      - id: nixfmt
