@@ -496,6 +496,12 @@ class _TextBox(_Widget):
             "Setting ``scroll_fixed_width=True`` will force the widget to have a fixed width, regardless of the size of the text.",
         ),
         ("rotate", True, "Rotate text in vertical bar."),
+        (
+            "vertical_text_direction", 
+            "default", 
+            "Override direction the text would read in, in a vertical bar"
+            "'default', 'top_to_bottom', 'bottom_to_top'"
+        ),
     ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -648,12 +654,18 @@ class _TextBox(_Widget):
 
         if not self.bar.horizontal and self.rotate:
             # Left bar reads bottom to top
-            if self.bar.screen.left is self.bar:
+            # Can be overriden to read bottom to top all the time with vertical_text_direction
+            if self.bar.screen.left is self.bar and \
+                    self.vertical_text_direction == "default" or \
+                    self.vertical_text_direction == "bottom_to_top":
                 self.drawer.ctx.rotate(-90 * math.pi / 180.0)
                 self.drawer.ctx.translate(-self.length, 0)
 
             # Right bar is top to bottom
-            else:
+            # Can be overriden to read top to bottom all the time with vertical_text_direction
+            elif self.bar.screen.right is self.bar and \
+                    self.vertical_text_direction == "default" or \
+                    self.vertical_text_direction == "top_to_bottom":
                 self.drawer.ctx.translate(self.bar.width, 0)
                 self.drawer.ctx.rotate(90 * math.pi / 180.0)
 
