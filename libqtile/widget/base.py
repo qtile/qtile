@@ -497,8 +497,8 @@ class _TextBox(_Widget):
         ),
         ("rotate", True, "Rotate text in vertical bar."),
         (
-            "vertical_text_direction", 
-            "default", 
+            "vertical_text_direction",
+            "default",
             "Override direction the text would read in, in a vertical bar"
             "'default', 'top_to_bottom', 'bottom_to_top'",
         ),
