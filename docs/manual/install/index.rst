@@ -198,23 +198,13 @@ whatever you like with the ``--group`` argument; see the sample udev rules.
 
 Note that this file invokes Qtile's hidden ``udev`` from udevd, so udevd will
 need ``qtile`` in its ``$PATH``. For distro packaging this shouldn't be a
-problem, since /usr/bin is typically in udev's path. However, for users that
-installed from source, you may need to modify the udev script to be one that
-sources your virtualenv and then invokes qtile (or just invoke it via its
-hardcoded path if you installed it with ``--break-system-packages``), e.g.:
+problem, since /usr/bin is typically in udev's path. Alternatively, users can
+install from source using uv, which will do all the right ``$PYTHONPATH``
+setup etc., so you only need to change the path to the final executable in the
+udev rules:
 
 .. code-block:: bash
 
-    # create a wrapper script that loads the right stuff from our home directory; since
-    # udev will run this script as root, it has no idea about how we've installed qtile
-    mkdir -p $HOME/.local/bin
-    tee $HOME/.local/bin/qtile-udev-wrapper <<- EOF
-    #!/bin/sh
-
-    export PYTHONPATH=$HOME/.local/lib/python$(python3 --version | awk -F '[ .]' '{print $2 "." $3}')/site-packages
-    $HOME/.local/bin/qtile $@
-    EOF
-
     # copy the in-tree udev rules file to the right place to make udev see it,
     # and change the rules to point at our wrapper script above.
-    sed "s,qtile,$HOME/.local/bin/qtile-udev-wrapper,g" ./resources/99-qtile.rules | sudo tee /etc/udev/rules.d/99-qtile.rules
+    sed "s,qtile,$HOME/.local/bin/qtile,g" ./resources/99-qtile.rules | sudo tee /etc/udev/rules.d/99-qtile.rules
