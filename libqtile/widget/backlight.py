@@ -71,12 +71,12 @@ class Backlight(base.InLoopPollText):
         (
             "brightness_file",
             "brightness",
-            "Name of file with the " "current brightness in /sys/class/backlight/backlight_name",
+            "Name of file with the current brightness in /sys/class/backlight/backlight_name",
         ),
         (
             "max_brightness_file",
             "max_brightness",
-            "Name of file with the " "maximum brightness in /sys/class/backlight/backlight_name",
+            "Name of file with the maximum brightness in /sys/class/backlight/backlight_name",
         ),
         ("update_interval", 0.2, "The delay in seconds between updates"),
         ("step", 10, "Percent of backlight every scroll changed"),

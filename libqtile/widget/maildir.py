@@ -39,7 +39,7 @@ class Maildir(base.ThreadPoolText):
         (
             "sub_folders",
             [{"path": "INBOX", "label": "Home mail"}, {"path": "spam", "label": "Home junk"}],
-            "List of subfolders to scan. Each subfolder is a dict of `path` " "and `label`.",
+            "List of subfolders to scan. Each subfolder is a dict of `path` and `label`.",
         ),
         ("separator", " ", "the string to put between the subfolder strings."),
         (
@@ -51,7 +51,7 @@ class Maildir(base.ThreadPoolText):
         (
             "hide_when_empty",
             False,
-            "Whether not to display anything if " "the subfolder has no new mail",
+            "Whether not to display anything if the subfolder has no new mail",
         ),
         ("empty_color", None, "Display color when no new mail is available"),
         ("nonempty_color", None, "Display color when new mail is available"),
