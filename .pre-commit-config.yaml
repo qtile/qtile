@@ -1,7 +1,7 @@
 exclude: "test/configs/syntaxerr.py"
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.2
+    rev: v0.9.2
     hooks:
       - id: ruff
         args: [--fix]
