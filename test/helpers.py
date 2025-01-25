@@ -264,7 +264,7 @@ class TestManager:
                     pass
 
             if self.proc.exitcode:
-                print("qtile exited with exitcode: %d" % self.proc.exitcode, file=sys.stderr)
+                print(f"qtile exited with exitcode: {self.proc.exitcode:d}", file=sys.stderr)
 
             self.proc = None
 
