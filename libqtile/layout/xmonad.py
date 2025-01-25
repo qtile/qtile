@@ -183,17 +183,17 @@ class MonadTall(_SimpleLayoutBase):
         (
             "ratio",
             0.5,
-            "The percent of the screen-space the master pane should occupy " "by default.",
+            "The percent of the screen-space the master pane should occupy by default.",
         ),
         (
             "min_ratio",
             0.25,
-            "The percent of the screen-space the master pane should occupy " "at minimum.",
+            "The percent of the screen-space the master pane should occupy at minimum.",
         ),
         (
             "max_ratio",
             0.75,
-            "The percent of the screen-space the master pane should occupy " "at maximum.",
+            "The percent of the screen-space the master pane should occupy at maximum.",
         ),
         ("min_secondary_size", 85, "minimum size in pixel for a secondary pane window "),
         (
