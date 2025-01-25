@@ -43,7 +43,7 @@ class KeyboardKbdd(base.ThreadPoolText):
         (
             "configured_keyboards",
             ["us", "ir"],
-            "your predefined list of keyboard layouts." "example: ['us', 'ir', 'es']",
+            "your predefined list of keyboard layouts.example: ['us', 'ir', 'es']",
         ),
         (
             "colours",

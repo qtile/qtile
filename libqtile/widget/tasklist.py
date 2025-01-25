@@ -61,14 +61,13 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         (
             "highlight_method",
             "border",
-            "Method of highlighting (one of 'border' or 'block') "
-            "Uses `*_border` color settings",
+            "Method of highlighting (one of 'border' or 'block') Uses `*_border` color settings",
         ),
         ("urgent_border", "FF0000", "Urgent border color"),
         (
             "urgent_alert_method",
             "border",
-            "Method for alerting you of WM urgent " "hints (one of 'border' or 'text')",
+            "Method for alerting you of WM urgent hints (one of 'border' or 'text')",
         ),
         (
             "unfocused_border",
@@ -80,7 +79,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         (
             "max_title_width",
             None,
-            "Max size in pixels of task title." "(if set to None, as much as available.)",
+            "Max size in pixels of task title.(if set to None, as much as available.)",
         ),
         (
             "title_width_method",
@@ -100,21 +99,21 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             "   return text"
             "then set option parse_text=my_func",
         ),
-        ("spacing", None, "Spacing between tasks." "(if set to None, will be equal to margin_x)"),
+        ("spacing", None, "Spacing between tasks.(if set to None, will be equal to margin_x)"),
         (
             "txt_minimized",
             "_ ",
-            "Text representation of the minimized window state. " 'e.g., "_ " or "\U0001f5d5 "',
+            'Text representation of the minimized window state. e.g., "_ " or "\U0001f5d5 "',
         ),
         (
             "txt_maximized",
             "[] ",
-            "Text representation of the maximized window state. " 'e.g., "[] " or "\U0001f5d6 "',
+            'Text representation of the maximized window state. e.g., "[] " or "\U0001f5d6 "',
         ),
         (
             "txt_floating",
             "V ",
-            "Text representation of the floating window state. " 'e.g., "V " or "\U0001f5d7 "',
+            'Text representation of the floating window state. e.g., "V " or "\U0001f5d7 "',
         ),
         (
             "markup_normal",
@@ -155,7 +154,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         (
             "icon_size",
             None,
-            "Icon size. " "(Calculated if set to None. Icons are hidden if set to 0.)",
+            "Icon size. (Calculated if set to None. Icons are hidden if set to 0.)",
         ),
         (
             "theme_mode",

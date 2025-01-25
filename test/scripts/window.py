@@ -201,7 +201,7 @@ if __name__ == "__main__":
         bus.export("/StatusNotifierItem", item)
 
         # Request the service name
-        bus.request_name_sync(f"test.qtile.window-{title.replace(' ','-')}")
+        bus.request_name_sync(f"test.qtile.window-{title.replace(' ', '-')}")
 
         msg = bus.call_sync(
             Message(

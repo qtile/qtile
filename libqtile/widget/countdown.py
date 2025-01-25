@@ -55,10 +55,10 @@ class Countdown(base.InLoopPollText):
             minutes, seconds = divmod(rem, 60)
 
         data = {
-            "D": "%02d" % days,
-            "H": "%02d" % hours,
-            "M": "%02d" % minutes,
-            "S": "%02d" % seconds,
+            "D": f"{days:02d}",
+            "H": f"{hours:02d}",
+            "M": f"{minutes:02d}",
+            "S": f"{seconds:02d}",
         }
 
         return self.format.format(**data)
