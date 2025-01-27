@@ -74,7 +74,7 @@ sudo ninja -C build install
 cd ../
 
 # Build seatd
-wget https://git.sr.ht/~kennylevinsen/seatd/archive/$SEATD.tar.gz
+wget https://github.com/kennylevinsen/seatd/archive/refs/tags/$SEATD.tar.gz
 tar -xzf $SEATD.tar.gz
 cd seatd-$SEATD
 meson build --prefix=/usr
