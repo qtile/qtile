@@ -132,6 +132,7 @@ class StatusNotifierItem:  # noqa: E303
         self.icon_theme = icon_theme
         self.icon = None
         self.path = path if path else STATUSNOTIFIER_PATH
+        self._get_local_icon_task = None
 
     def __eq__(self, other):
         # Convenience method to find Item in list by service path
@@ -270,12 +271,16 @@ class StatusNotifierItem:  # noqa: E303
             self.icon = Img.from_path(path.resolve().as_posix())
 
     def _create_task_and_draw(self, coro):
-        task = create_task(coro)
-        task.add_done_callback(self._redraw)
+        self._get_local_icon_task = create_task(coro)
+        self._get_local_icon_task.add_done_callback(self._redraw)
 
     def _update_local_icon(self):
-        self.icon = None
-        self._create_task_and_draw(self._get_local_icon())
+        if self._get_local_icon_task is not None and not self._get_local_icon_task.done():
+            self._get_local_icon_task.cancel()
+            self._get_local_icon_task.add_done_callback(lambda task: self._update_local_icon())
+        else:
+            self.icon = None
+            self._create_task_and_draw(self._get_local_icon())
 
     def _new_icon(self):
         self._create_task_and_draw(self._get_icon("Icon"))
@@ -360,7 +365,10 @@ class StatusNotifierItem:  # noqa: E303
 
         return arr
 
-    def _redraw(self, result):
+    def _redraw(self, task):
+        if task.cancelled():
+            return
+
         """Method to invalidate icon cache and redraw icons."""
         self._invalidate_icons()
         if self.on_icon_changed is not None:
