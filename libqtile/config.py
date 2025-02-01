@@ -219,9 +219,9 @@ class Click(Mouse):
         ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
         ``"mod4"``, ``"mod5"``.
     button:
-        The button used to start dragging e.g. ``"Button1"``.
+        The button used to click e.g. ``"Button1"``.
     commands:
-        A list :class:`LazyCall` objects to evaluate in sequence upon drag.
+        A list :class:`LazyCall` objects to evaluate in sequence upon click.
 
     """
 
@@ -493,6 +493,16 @@ class Screen(CommandObject):
     def gaps(self) -> Iterable[BarType]:
         return (i for i in [self.top, self.bottom, self.left, self.right] if i)
 
+    def finalize_gaps(self) -> None:
+        def remove(attr: str) -> None:
+            gap = getattr(self, attr, None)
+            if gap is not None:
+                setattr(self, attr, None)
+                gap.finalize()
+
+        for attr in ["top", "bottom", "left", "right"]:
+            remove(attr)
+
     @property
     def dx(self) -> int:
         if self.left and getattr(self.left, "reserve", True):
@@ -656,20 +666,22 @@ class Screen(CommandObject):
         return dict(index=self.index, width=self.width, height=self.height, x=self.x, y=self.y)
 
     @expose_command()
-    def next_group(self, skip_empty: bool = False, skip_managed: bool = False) -> None:
+    def next_group(
+        self, skip_empty: bool = False, skip_managed: bool = False, warp: bool = True
+    ) -> None:
         """Switch to the next group"""
-        n = self.group.get_next_group(skip_empty, skip_managed)
-        self.set_group(n)
-        return n.name
+        group = self.group.get_next_group(skip_empty, skip_managed)
+        self.set_group(group, warp=warp)
+        return group.name if group is not None else None
 
     @expose_command()
     def prev_group(
         self, skip_empty: bool = False, skip_managed: bool = False, warp: bool = True
     ) -> None:
         """Switch to the previous group"""
-        n = self.group.get_previous_group(skip_empty, skip_managed)
-        self.set_group(n, warp=warp)
-        return n.name
+        group = self.group.get_previous_group(skip_empty, skip_managed)
+        self.set_group(group, warp=warp)
+        return group.name if group is not None else None
 
     @expose_command()
     def toggle_group(self, group_name: str | None = None, warp: bool = True) -> None:

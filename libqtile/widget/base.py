@@ -245,7 +245,7 @@ class _Widget(CommandObject, configurable.Configurable):
 
         Widgets that need to use asyncio coroutines after this point may
         wish to initialise the relevant code (e.g. connections to dbus
-        using dbus_next) here.
+        using dbus_fast) here.
         """
 
     def finalize(self):
@@ -495,6 +495,7 @@ class _TextBox(_Widget):
             "When ``scroll=True`` the ``width`` parameter is a maximum width and, when text is shorter than this, the widget will resize. "
             "Setting ``scroll_fixed_width=True`` will force the widget to have a fixed width, regardless of the size of the text.",
         ),
+        ("rotate", True, "Rotate text in vertical bar."),
     ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -519,10 +520,17 @@ class _TextBox(_Widget):
             value = value[: self.max_chars] + "…"
         self._text = value
         if self.layout:
+            # Reset the layout width
+            # Reason is because, if we've manually set the layout width,
+            # adding longer text will result in wrapping which increases the height of the layout.
+            del self.layout.width
             self.layout.text = self.formatted_text
             if self.scroll:
                 self.check_width()
                 self.reset_scroll()
+
+            elif not self.bar.horizontal and not self.rotate:
+                self.layout.width = self.bar.width - 2 * self.actual_padding
 
     @property
     def formatted_text(self):
@@ -578,11 +586,18 @@ class _TextBox(_Widget):
             markup=self.markup,
         )
         if not isinstance(self._scroll_width, int) and self.scroll:
-            logger.warning("%s: You must specify a width when enabling scrolling.", self.name)
-            self.scroll = False
+            if not self.bar.horizontal and not self.rotate:
+                self._scroll_width = self.bar.width
+                self.scroll_fixed_width = self.bar.width
+            else:
+                logger.warning("%s: You must specify a width when enabling scrolling.", self.name)
+                self.scroll = False
 
         if self.scroll:
             self.check_width()
+
+        elif not self.bar.horizontal and not self.rotate:
+            self.layout.width = self.bar.width - 2 * self.actual_padding
 
     def check_width(self):
         """
@@ -590,12 +605,15 @@ class _TextBox(_Widget):
         and whether the text should be scrolled.
         """
         if self.layout.width > self._scroll_width:
-            self.length_type = bar.STATIC
-            self.length = self._scroll_width
+            if self.bar.horizontal or self.rotate:
+                self.length_type = bar.STATIC
+                self.length = self._scroll_width
             self._is_scrolling = True
             self._should_scroll = True
         else:
-            if self.scroll_fixed_width:
+            if not self.bar.horizontal and not self.rotate:
+                self.layout.width = self.scroll_fixed_width
+            elif self.scroll_fixed_width:
                 self.length_type = bar.STATIC
                 self.length = self._scroll_width
             else:
@@ -607,7 +625,10 @@ class _TextBox(_Widget):
             if self.bar.horizontal:
                 return min(self.layout.width, self.bar.width) + self.actual_padding * 2
             else:
-                return min(self.layout.width, self.bar.height) + self.actual_padding * 2
+                if self.rotate:
+                    return min(self.layout.width, self.bar.height) + self.actual_padding * 2
+                else:
+                    return self.layout.height + self.actual_padding * 2
         else:
             return 0
 
@@ -625,7 +646,7 @@ class _TextBox(_Widget):
         # size = self.bar.height if self.bar.horizontal else self.bar.width
         self.drawer.ctx.save()
 
-        if not self.bar.horizontal:
+        if not self.bar.horizontal and self.rotate:
             # Left bar reads bottom to top
             if self.bar.screen.left is self.bar:
                 self.drawer.ctx.rotate(-90 * math.pi / 180.0)
@@ -647,7 +668,13 @@ class _TextBox(_Widget):
             )
             self.drawer.ctx.clip()
 
-        size = self.bar.height if self.bar.horizontal else self.bar.width
+        if self.bar.horizontal:
+            size = self.bar.height
+        else:
+            if self.rotate:
+                size = self.bar.width
+            else:
+                size = self.layout.height + self.actual_padding * 2
 
         self.layout.draw(
             (self.actual_padding or 0) - self._scroll_offset,
@@ -757,7 +784,7 @@ class _TextBox(_Widget):
 
         # If our width hasn't changed, we just draw ourselves. Otherwise,
         # we draw the whole bar.
-        if self.layout.width == old_width:
+        if self.layout.width == old_width and (self.bar.horizontal or self.rotate):
             self.draw()
         else:
             self.bar.draw()
@@ -769,7 +796,7 @@ class InLoopPollText(_TextBox):
     ThreadPoolText instead.
 
     ('fast' here means that this runs /in/ the event loop, so don't block! If
-    you want to run something nontrivial, use ThreadedPollWidget.)"""
+    you want to run something nontrivial, use ThreadPoolText.)"""
 
     defaults = [
         (
@@ -793,14 +820,6 @@ class InLoopPollText(_TextBox):
         elif update_interval:
             self.timeout_add(update_interval, self.timer_setup)
         # If update_interval is False, we won't re-call
-
-    def _configure(self, qtile, bar):
-        should_tick = self.configured
-        _TextBox._configure(self, qtile, bar)
-
-        # Update when we are being re-configured.
-        if should_tick:
-            self.tick()
 
     def button_press(self, x, y, button):
         self.tick()
@@ -834,7 +853,7 @@ class ThreadPoolText(_TextBox):
         ),
     ]  # type: list[tuple[str, Any, str]]
 
-    def __init__(self, text, **config):
+    def __init__(self, text="N/A", **config):
         super().__init__(text, **config)
         self.add_defaults(ThreadPoolText.defaults)
 

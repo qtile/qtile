@@ -18,10 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import multiprocessing
 import os
 import subprocess
 import tempfile
-import threading
 import time
 
 import test
@@ -73,29 +73,21 @@ def deferred_stop(code=0):
 # which is used to evaluate code coverage
 # and a second instance started by run_qtile,
 # which is used to test the actual exit code behavior
-def test_exitcode_default(manager):
-    thread = threading.Thread(target=deferred_stop)
-    thread.daemon = False
-    thread.start()
+def test_exitcode_default(backend):
+    proc = multiprocessing.Process(target=deferred_stop)
+    proc.start()
 
-    exitcode = run_qtile(manager.backend)
-
-    # shutdown qtile instance started by testmanager
-    manager.c.shutdown()
-
+    exitcode = run_qtile(backend)
+    proc.join()
     assert exitcode == 0
 
 
-def test_exitcode_explicit(manager):
+def test_exitcode_explicit(backend):
     code = 23
 
-    thread = threading.Thread(target=deferred_stop, args=(code,))
-    thread.daemon = False
-    thread.start()
+    proc = multiprocessing.Process(target=deferred_stop, args=(code,))
+    proc.start()
 
-    exitcode = run_qtile(manager.backend)
-
-    # shutdown qtile instance started by testmanager
-    manager.c.shutdown()
-
+    exitcode = run_qtile(backend)
+    proc.join()
     assert exitcode == code

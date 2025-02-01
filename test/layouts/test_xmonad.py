@@ -925,6 +925,90 @@ def test_wide_window_focus_cycle(manager):
     assert_focus_path(manager, "float1", "float2", "one", "two", "three")
 
 
+@monadtall_config
+def test_tall_window_directional_focus(manager):
+    # setup 3 tiled and two floating clients
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("float1")
+    manager.c.window.toggle_floating()
+    manager.test_window("float2")
+    manager.c.window.toggle_floating()
+    manager.test_window("three")
+
+    # test preconditions
+    assert manager.c.layout.info()["clients"] == ["one", "two", "three"]
+    # last added window has focus
+    assert_focused(manager, "three")
+
+    # starting from the last tiled client, test that left/right focus changes go
+    # to the closest window in that direction (no cycling), and up/down cycles
+    # focus
+    manager.c.layout.left()
+    assert_focused(manager, "one")
+    manager.c.layout.left()
+    assert_focused(manager, "one")
+    manager.c.layout.right()
+    assert_focused(manager, "two")
+    manager.c.layout.right()
+    assert_focused(manager, "two")
+
+    manager.c.layout.down()
+    assert_focused(manager, "three")
+    manager.c.layout.down()
+    assert_focused(manager, "one")
+    manager.c.layout.down()
+    assert_focused(manager, "two")
+    manager.c.layout.up()
+    assert_focused(manager, "one")
+    manager.c.layout.up()
+    assert_focused(manager, "three")
+    manager.c.layout.up()
+    assert_focused(manager, "two")
+
+
+@monadwide_config
+def test_wide_window_directional_focus(manager):
+    # setup 3 tiled and two floating clients
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("float1")
+    manager.c.window.toggle_floating()
+    manager.test_window("float2")
+    manager.c.window.toggle_floating()
+    manager.test_window("three")
+
+    # test preconditions
+    assert manager.c.layout.info()["clients"] == ["one", "two", "three"]
+    # last added window has focus
+    assert_focused(manager, "three")
+
+    # starting from the last tiled client, test that up/down focus changes go to
+    # the closest window in that direction (no cycling), and left/right cycles
+    # focus
+    manager.c.layout.up()
+    assert_focused(manager, "one")
+    manager.c.layout.up()
+    assert_focused(manager, "one")
+    manager.c.layout.down()
+    assert_focused(manager, "two")
+    manager.c.layout.down()
+    assert_focused(manager, "two")
+
+    manager.c.layout.left()
+    assert_focused(manager, "one")
+    manager.c.layout.left()
+    assert_focused(manager, "three")
+    manager.c.layout.left()
+    assert_focused(manager, "two")
+    manager.c.layout.right()
+    assert_focused(manager, "three")
+    manager.c.layout.right()
+    assert_focused(manager, "one")
+    manager.c.layout.right()
+    assert_focused(manager, "two")
+
+
 # MonadThreeCol
 class MonadThreeColConfig(Config):
     auto_fullscreen = True

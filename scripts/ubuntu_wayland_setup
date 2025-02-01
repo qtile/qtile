@@ -12,7 +12,7 @@ WAYLAND=1.22.0
 WAYLAND_PROTOCOLS=1.32
 WLROOTS=0.17.3
 SEATD=0.6.4
-LIBDRM=2.4.120
+LIBDRM=2.4.121
 PIXMAN=0.42.0
 XWAYLAND=22.1.9
 HWDATA=0.364
@@ -74,7 +74,7 @@ sudo ninja -C build install
 cd ../
 
 # Build seatd
-wget https://git.sr.ht/~kennylevinsen/seatd/archive/$SEATD.tar.gz
+wget https://github.com/kennylevinsen/seatd/archive/refs/tags/$SEATD.tar.gz
 tar -xzf $SEATD.tar.gz
 cd seatd-$SEATD
 meson build --prefix=/usr

@@ -21,6 +21,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import asyncio
+
 import pytest
 
 import libqtile.bar
@@ -36,6 +38,7 @@ from libqtile.confreader import Config
 from libqtile.ipc import Client, IPCError
 from libqtile.lazy import lazy
 from test.conftest import dualmonitor
+from test.helpers import Retry
 
 
 class CallConfig(Config):
@@ -456,6 +459,28 @@ def test_lazy_arguments(manager_nospawn):
     manager_nospawn.c.simulate_keypress(["control"], "k")
     _, val = manager_nospawn.c.eval("self.test_func_output")
     assert val == "500"
+
+
+def test_lazy_function_coroutine(manager_nospawn):
+    """Test that lazy.function accepts coroutines."""
+
+    @Retry(ignore_exceptions=(AssertionError,))
+    def assert_func_text(manager, value):
+        _, text = manager.c.eval("self.test_func_output")
+        assert text == value
+
+    @lazy.function
+    async def test_async_func(qtile, value):
+        await asyncio.sleep(0.1)
+        qtile.test_func_output = value
+
+    config = ServerConfig
+    config.keys = [libqtile.config.Key(["control"], "k", test_async_func("qtile"))]
+
+    manager_nospawn.start(config)
+
+    manager_nospawn.c.simulate_keypress(["control"], "k")
+    assert_func_text(manager_nospawn, "qtile")
 
 
 def test_decorators_direct_call():

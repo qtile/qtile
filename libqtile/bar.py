@@ -439,6 +439,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         if self.future:
             self.future.cancel()
         self.drawer.finalize()
+        del self.drawer
         if self.window:
             self.window.kill()
             self.window = None

@@ -37,6 +37,7 @@ import libqtile.widget
 from libqtile.command.base import CommandError
 from test.conftest import dualmonitor
 from test.helpers import BareConfig, Retry
+from test.layouts.layout_utils import assert_focused, assert_unfocused
 
 
 class GBConfig(libqtile.confreader.Config):
@@ -144,6 +145,9 @@ def test_draw(manager):
 
 @gb_config
 def test_prompt(manager, monkeypatch):
+    manager.test_window("one")
+    assert_focused(manager, "one")
+
     assert manager.c.widget["prompt"].info()["width"] == 0
     manager.c.spawncmd(":")
     manager.c.widget["prompt"].fake_keypress("a")
@@ -156,7 +160,10 @@ def test_prompt(manager, monkeypatch):
     script = Path(__file__).parent / "scripts" / "window.py"
     manager.c.spawncmd(":", aliases={"w": f"{sys.executable} {script.as_posix()}"})
     manager.c.widget["prompt"].fake_keypress("w")
+    manager.test_window("two")
+    assert_unfocused(manager, "two")
     manager.c.widget["prompt"].fake_keypress("Return")
+    assert_focused(manager, "one")
 
     @Retry(ignore_exceptions=(CommandError,))
     def is_spawned():

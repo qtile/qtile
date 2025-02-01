@@ -22,13 +22,13 @@ from contextlib import suppress
 from functools import partial
 from pathlib import Path
 
-# dbus_next is incompatible with deferred type evaluation
+# dbus_fast is incompatible with deferred type evaluation
 import cairocffi
-from dbus_next import InterfaceNotFoundError, InvalidBusNameError, InvalidObjectPathError
-from dbus_next.aio import MessageBus
-from dbus_next.constants import PropertyAccess
-from dbus_next.errors import DBusError
-from dbus_next.service import ServiceInterface, dbus_property, method, signal
+from dbus_fast import InterfaceNotFoundError, InvalidBusNameError, InvalidObjectPathError
+from dbus_fast.aio import MessageBus
+from dbus_fast.constants import PropertyAccess
+from dbus_fast.errors import DBusError
+from dbus_fast.service import ServiceInterface, dbus_property, method, signal
 
 try:
     from xdg.IconTheme import getIconPath
@@ -175,7 +175,7 @@ class StatusNotifierItem:  # noqa: E303
         # Try to connect to the bus object and verify there's a valid
         # interface available
         # TODO: This may not ever fail given we've specified the underying
-        # schema so dbus-next has not attempted any introspection.
+        # schema so dbus-fast has not attempted any introspection.
         interface_found = False
         for interface in ITEM_INTERFACES:
             try:
@@ -259,7 +259,11 @@ class StatusNotifierItem:  # noqa: E303
             if not self.icon:
                 self.icon = self._get_xdg_icon(icon_name)
 
-        if not self.icon and fallback:
+        if fallback:
+            for icon in ["Icon", "Attention", "Overlay"]:
+                await self._get_icon(icon)
+
+        if not self.has_icons and fallback:
             # Use fallback icon libqtile/resources/status_notifier/fallback_icon.png
             logger.warning("Could not find icon for '%s'. Using fallback icon.", icon_name)
             path = Path(__file__).parent / "fallback_icon.png"

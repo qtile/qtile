@@ -1,14 +1,27 @@
 Qtile x.xx.x, released xxxx-xx-xx:
+    !!! breaking changes !!!
+        - Spiral layout: `shuffle_up` and `shuffle_down` commands now shuffle the focused window instead of rotating all windows.
     * features
         - added support for multiple batteries to the battery widget
     * bugfixes
+
+Qtile 0.30.0, released 2025-01-06:
+    !!! breaking changes !!!
+      - dbus-fast is now required for dbus support.
+        dbus-next was removed as the package is unmaintained.
+    * features
+        - Add `SwayNC` widget to interact with Sway Notification Centre (wayland only)
+        - Add `swap` method to Plasma layout
+        - New `click_or_drag_only` option for follow_mouse_focus to change the focus to the window under the mouse when click or drag
+        - Customize battery widget "Full" and "Empty" short text with `full_short_text` and `empty_short_text`
+    * bugfixes
+        - Make MonadWide layout up/down focus navigation behave like MonadTall's left/right
 
 Qtile 0.29.0, released 2024-10-19:
     * features
         - A Nix flake has been added which can be used by Nix(OS) users to update to the latest version easily
         - Add `group_window_remove` hook when window is removed from group
         - Switched to ruff for formatting
-        - Added a nix flake
     * bugfixes
         - Add returns to lazy.function and qtile.core.function
         - Fix a bug with newer versions of cairo breaking the bar
