@@ -67,6 +67,8 @@ class Drawer:
         self.ctx: cairocffi.Context
         self._reset_surface()
 
+        self.old_ink_extents: tuple[float, float, float, float] | None = None
+
         self._has_mirrors = False
 
         self.current_rect = (0, 0, 0, 0)
@@ -136,7 +138,13 @@ class Drawer:
         rect_changed = self.current_rect != self.previous_rect
 
         # Check if draw has content (would be False for completely transparent drawer)
-        ink_changed = any(not math.isclose(0.0, i) for i in self.surface.ink_extents())
+        ink_extents = self.surface.ink_extents()
+        if self.old_ink_extents is None:
+            ink_changed = True
+        else:
+            ink_changed = any(ink_extents[i] != self.old_ink_extents[i] for i in range(4))
+
+        self.old_ink_extents = ink_extents
 
         return ink_changed or rect_changed
 
