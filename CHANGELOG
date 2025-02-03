@@ -2,6 +2,7 @@ Qtile x.xx.x, released xxxx-xx-xx:
     !!! breaking changes !!!
         - Spiral layout: `shuffle_up` and `shuffle_down` commands now shuffle the focused window instead of rotating all windows.
     * features
+    - Add TunedManager Widget to show the currently active power profile and cycle through a list of configurable power profiles
     * bugfixes
 
 Qtile 0.30.0, released 2025-01-06:
