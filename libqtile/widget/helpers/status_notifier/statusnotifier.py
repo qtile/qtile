@@ -277,6 +277,7 @@ class StatusNotifierItem:  # noqa: E303
     def _update_local_icon(self):
         if self._get_local_icon_task is not None and not self._get_local_icon_task.done():
             self._get_local_icon_task.cancel()
+            self._get_local_icon_task.remove_done_callback(self._redraw)
             self._get_local_icon_task.add_done_callback(lambda task: self._update_local_icon())
         else:
             self.icon = None
@@ -365,10 +366,7 @@ class StatusNotifierItem:  # noqa: E303
 
         return arr
 
-    def _redraw(self, task):
-        if task.cancelled():
-            return
-
+    def _redraw(self, result):
         """Method to invalidate icon cache and redraw icons."""
         self._invalidate_icons()
         if self.on_icon_changed is not None:
