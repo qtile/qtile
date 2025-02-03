@@ -52,10 +52,6 @@ class Drawer:
     finally drawing all operations to a backend-specific target.
     """
 
-    # We need to track extent of drawing to know when to redraw.
-    previous_rect: tuple[int, int, int | None, int | None]
-    current_rect: tuple[int, int, int | None, int | None]
-
     def __init__(self, qtile: Qtile, win: Internal, width: int, height: int):
         self.qtile = qtile
         self._win = win
@@ -67,12 +63,8 @@ class Drawer:
         self.ctx: cairocffi.Context
         self._reset_surface()
 
-        self.old_ink_extents: tuple[float, float, float, float] | None = None
-
         self._has_mirrors = False
 
-        self.current_rect = (0, 0, 0, 0)
-        self.previous_rect = (-1, -1, -1, -1)
         self._enabled = True
 
     def finalize(self):
@@ -128,25 +120,6 @@ class Drawer:
         if hasattr(self, "last_surface"):
             self.last_surface.finish()
         self.last_surface = cairocffi.RecordingSurface(cairocffi.CONTENT_COLOR_ALPHA, None)
-
-    @property
-    def needs_update(self) -> bool:
-        # We can't test for the surface's ink_extents here on its own as a completely
-        # transparent background would not show any extents but we may still need to
-        # redraw (e.g. if a Spacer widget has changed position and/or size)
-        # Check if the size of the area being drawn has changed
-        rect_changed = self.current_rect != self.previous_rect
-
-        # Check if draw has content (would be False for completely transparent drawer)
-        ink_extents = self.surface.ink_extents()
-        if self.old_ink_extents is None:
-            ink_changed = True
-        else:
-            ink_changed = any(ink_extents[i] != self.old_ink_extents[i] for i in range(4))
-
-        self.old_ink_extents = ink_extents
-
-        return ink_changed or rect_changed
 
     def paint_to(self, drawer: Drawer) -> None:
         drawer.ctx.set_source_surface(self.last_surface)
