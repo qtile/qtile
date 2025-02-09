@@ -329,13 +329,46 @@ class _LinuxBattery(_Battery, configurable.Configurable):
 
         raise RuntimeError(f"Unable to read status for {name}")
 
-    def set_battery_charge_thresholds(self, start, end, battery):
+    def set_battery_charge_thresholds2(self, start, end):
         if not self.charge_threshold_supported:
             return
 
         battery_dir = "/sys/class/power_supply"
 
-        path = os.path.join(battery_dir, battery, "charge_control_start_threshold")
+        if isinstance(self.battery, list):
+            bats = getattr(self, "battery", None)
+        elif int(self.battery[3:]) < 0:
+            bats = self.defaults[6][1]
+        else:
+            bats.append(self.battery)
+
+        for bat in bats:
+            path = os.path.join(battery_dir, bat, "charge_control_start_threshold")
+            try:
+                with open(path, "w+") as f:
+                    f.write(str(start))
+            except FileNotFoundError:
+                self.charge_threshold_supported = False
+            except OSError:
+                logger.debug("Failed to write %s", path, exc_info=True)
+
+            path = os.path.join(battery_dir, bat, "charge_control_end_threshold")
+            try:
+                with open(path, "w+") as f:
+                    f.write(str(end))
+            except FileNotFoundError:
+                self.charge_threshold_supported = False
+            except OSError:
+                logger.debug("Failed to write %s", path, exc_info=True)
+        return (start, end)
+
+    def set_battery_charge_thresholds(self, start, end):
+        if not self.charge_threshold_supported:
+            return
+
+        battery_dir = "/sys/class/power_supply"
+
+        path = os.path.join(battery_dir, self.battery, "charge_control_start_threshold")
         try:
             with open(path, "w+") as f:
                 f.write(str(start))
@@ -344,7 +377,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         except OSError:
             logger.debug("Failed to write %s", path, exc_info=True)
 
-        path = os.path.join(battery_dir, battery, "charge_control_end_threshold")
+        path = os.path.join(battery_dir, self.battery, "charge_control_end_threshold")
         try:
             with open(path, "w+") as f:
                 f.write(str(end))
@@ -367,6 +400,13 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         state = BatteryState.UNKNOWN
         bats: Any = []
 
+        if self.charge_controller is not None and self.charge_threshold_supported:
+            (charge_start_threshold, charge_end_threshold) = self.charge_controller()
+            if self.force_charge:
+                charge_start_threshold = 0
+                charge_end_threshold = 100
+            self.set_battery_charge_thresholds(charge_start_threshold, charge_end_threshold)
+
         if isinstance(self.battery, list):
             batnum = -1
             bats = getattr(self, "battery", None)
@@ -378,17 +418,8 @@ class _LinuxBattery(_Battery, configurable.Configurable):
             bats.append(self.battery)
 
         for bat in bats:
+            stat = self._get_param("status_file", bat)[0]
             if int(batnum) < 0 or self.battery == bat:
-                if self.charge_controller is not None and self.charge_threshold_supported:
-                    (charge_start_threshold, charge_end_threshold) = self.charge_controller()
-                    if self.force_charge:
-                        charge_start_threshold = 0
-                        charge_end_threshold = 100
-                    self.set_battery_charge_thresholds(
-                        charge_start_threshold, charge_end_threshold, bat
-                    )
-                stat = self._get_param("status_file", bat)[0]
-
                 if state == BatteryState.FULL:
                     if stat == "Charging":
                         state = BatteryState.CHARGING
