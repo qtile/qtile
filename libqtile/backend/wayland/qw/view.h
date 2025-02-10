@@ -15,6 +15,9 @@ enum qw_view_state {
     MINIMIZED = 6,
 };
 
+typedef int (*request_fullscreen_cb_t)(bool fullscreen, void *userdata);
+typedef int (*request_maximize_cb_t)(bool maximize, void *userdata);
+
 struct qw_view {
     int x;
     int y;
@@ -24,8 +27,13 @@ struct qw_view {
     enum qw_view_state state;
     int wid;
     struct wlr_scene_tree *content_tree;
+    request_maximize_cb_t request_maximize_cb;
+    request_fullscreen_cb_t request_fullscreen_cb;
+    void *cb_data;
 
     struct wlr_scene_node *(*get_tree_node)(void *self);
+    void (*update_fullscreen)(void *self, bool fullscreen);
+    void (*update_maximized)(void *self, bool maximize);
     void (*place)(void *self, int x, int y, int width, int height, int bw, float (*bc)[4], int bn,
                   int above);
     void (*focus)(void *self, int warp);

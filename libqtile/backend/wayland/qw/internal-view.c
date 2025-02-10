@@ -1,5 +1,5 @@
-#include "internal-view.h"
 #include "cairo-buffer.h"
+#include "internal-view.h"
 #include "pixman.h"
 #include "server.h"
 #include "view.h"
@@ -65,7 +65,6 @@ static void qw_internal_view_place(void *self, int x, int y, int width, int heig
 }
 
 void qw_internal_view_focus(void *self, int above) {
-    struct qw_internal_view *view = (struct internal_view *)self;
     // TODO
 }
 
