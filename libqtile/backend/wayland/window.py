@@ -189,6 +189,22 @@ class Internal(Base, base.Internal):
             del self.qtile.windows_map[self.wid]
 
 
+@ffi.def_extern()
+def request_fullscreen_cb(view, userdata):
+    win = ffi.from_handle(userdata)
+    if win.handle_request_fullscreen(view):
+        return 1
+    return 0
+
+
+@ffi.def_extern()
+def request_maximize_cb(view, userdata):
+    win = ffi.from_handle(userdata)
+    if win.handle_request_maximize(view):
+        return 1
+    return 0
+
+
 class Window(Base, base.Window):
     def __init__(self, qtile: Qtile, ptr, wid):
         Base.__init__(self, qtile, ptr, wid)
@@ -201,6 +217,22 @@ class Window(Base, base.Window):
         self._float_width: int = 0
         self._float_height: int = 0
         self._float_state = FloatStates.NOT_FLOATING
+        # TODO: destroy?
+        self._userdata = ffi.new_handle(self)
+        ptr.cb_data = self._userdata
+        ptr.request_maximize_cb = lib.request_maximize_cb
+        ptr.request_fullscreen_cb = lib.request_fullscreen_cb
+
+    def handle_request_fullscreen(self, fullscreen):
+        if self.qtile.config.auto_fullscreen:
+            if self.fullscreen != fullscreen:
+                self.fullscreen = fullscreen
+                return True
+        return False
+
+    def handle_request_maximize(self, maximize):
+        self.maximized = maximize
+        return True
 
     @expose_command()
     def static(
@@ -339,8 +371,8 @@ class Window(Base, base.Window):
             self.floating = False
 
     def _update_fullscreen(self, do_full: bool) -> None:
-        # TODO
-        pass
+        if do_full != (self._float_state == FloatStates.FULLSCREEN):
+            self._ptr.update_fullscreen(self._ptr, do_full)
 
     @property
     def maximized(self) -> bool:
