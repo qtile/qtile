@@ -14,11 +14,14 @@ struct qw_xdg_view {
     struct qw_server *server;
     struct wlr_xdg_toplevel *xdg_toplevel;
     struct wlr_scene_tree *scene_tree;
+    struct wlr_box geom;
     struct wl_listener map;
     struct wl_listener unmap;
     struct wl_listener commit;
     struct wl_listener destroy;
-    // TODO: request_{move,resize,maximize,fullscreen}
+    struct wl_listener request_maximize;
+    struct wl_listener request_fullscreen;
+    // TODO: request_{move,resize}
     struct wl_listener decoration_request_mode;
     struct wl_listener decoration_destroy;
     struct wlr_xdg_toplevel_decoration_v1 *decoration;
