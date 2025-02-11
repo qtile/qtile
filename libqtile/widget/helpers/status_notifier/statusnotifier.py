@@ -132,7 +132,6 @@ class StatusNotifierItem:  # noqa: E303
         self.icon_theme = icon_theme
         self.icon = None
         self.path = path if path else STATUSNOTIFIER_PATH
-        self._get_local_icon_task = None
 
     def __eq__(self, other):
         # Convenience method to find Item in list by service path
@@ -254,10 +253,13 @@ class StatusNotifierItem:  # noqa: E303
             except (AttributeError, DBusError):
                 icon_path = None
 
+            icon = None
             if icon_path:
-                self.icon = self._get_custom_icon(icon_name, Path(icon_path))
+                icon = self._get_custom_icon(icon_name, Path(icon_path))
 
-            if not self.icon:
+            if icon:
+                self.icon = icon
+            else:
                 self.icon = self._get_xdg_icon(icon_name)
 
         if fallback:
@@ -271,17 +273,12 @@ class StatusNotifierItem:  # noqa: E303
             self.icon = Img.from_path(path.resolve().as_posix())
 
     def _create_task_and_draw(self, coro):
-        self._get_local_icon_task = create_task(coro)
-        self._get_local_icon_task.add_done_callback(self._redraw)
+        task = create_task(coro)
+        task.add_done_callback(self._redraw)
 
     def _update_local_icon(self):
-        if self._get_local_icon_task is not None and not self._get_local_icon_task.done():
-            self._get_local_icon_task.cancel()
-            self._get_local_icon_task.remove_done_callback(self._redraw)
-            self._get_local_icon_task.add_done_callback(lambda task: self._update_local_icon())
-        else:
-            self.icon = None
-            self._create_task_and_draw(self._get_local_icon())
+        self.icon = None
+        self._create_task_and_draw(self._get_local_icon())
 
     def _new_icon(self):
         self._create_task_and_draw(self._get_icon("Icon"))
