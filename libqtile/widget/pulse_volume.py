@@ -96,6 +96,10 @@ class PulseConnection:
         async for event in self.pulse.subscribe_events("sink", "server"):
             # Sink events will signify volume changes
             if event.facility == "sink":
+                # There's been a change to available sinks
+                # Update default sink details before querying the sink
+                if event.t in ("new", "remove"):
+                    await self.get_server_info()
                 await self.get_sink_info()
             # Server events include when the default sink changes
             elif event.facility == "server":
