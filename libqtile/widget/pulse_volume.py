@@ -209,10 +209,12 @@ class PulseVolume(Volume):
 
     async def _change_volume(self, volume):
         """Sets volume on default sink."""
+        await pulse.get_server_info()
         await pulse.pulse.volume_set_all_chans(pulse.default_sink, volume)
 
     async def _mute(self):
         """Toggles mute status of default sink."""
+        await pulse.get_server_info()
         await pulse.pulse.sink_mute(pulse.default_sink.index, not pulse.default_sink.mute)
 
     @expose_command()
