@@ -122,7 +122,6 @@ class ScreenSplit(Layout):
         self.layouts = {}
         self._move_win = None
         self._has_matches = None
-        print(self.splits)
         splits = []
         for s in self.splits:
             try:
