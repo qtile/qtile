@@ -149,8 +149,8 @@ class Unsubscribe(HookHandlerCollection):
         try:
             lst.remove(func)
         except ValueError:
-            raise utils.QtileError(
-                "Tried to unsubscribe a hook that was not currently subscribed"
+            logger.warning(
+                f"Tried to unsubscribe a hook ({event}) that was not currently subscribed."
             )
 
 
