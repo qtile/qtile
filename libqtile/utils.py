@@ -372,6 +372,7 @@ def guess_terminal(preference: str | Sequence | None = None) -> str | None:
         "lxterminal",
         "mate-terminal",
         "kitty",
+        "ghostty",
         "yakuake",
         "tilda",
         "guake",

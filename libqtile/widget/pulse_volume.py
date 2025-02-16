@@ -44,7 +44,7 @@ class PulseConnection:
         self.default_sink_name = None
         self.pulse = None
         self.configured = False
-        self.callbacks = []
+        self.callbacks = set()
         self.qtile = qtile
         self.timer = None
 
@@ -147,7 +147,7 @@ class PulseConnection:
         pulse server.
         """
         need_configure = not bool(self.callbacks)
-        self.callbacks.append(callback)
+        self.callbacks.add(callback)
 
         if need_configure:
             create_task(self._configure())
@@ -159,10 +159,7 @@ class PulseConnection:
         Removing the last client closes the connection with the
         pulse server and cancels future calls to connect.
         """
-        try:
-            self.callbacks.remove(callback)
-        except ValueError:
-            pass
+        self.callbacks.discard(callback)
 
         if not self.callbacks:
             self.pulse.close()
