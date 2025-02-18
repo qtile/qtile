@@ -497,8 +497,8 @@ class _TextBox(_Widget):
         ),
         ("rotate", True, "Rotate text in vertical bar."),
         (
-            "direction", 
-            "default", 
+            "direction",
+            "default",
             "Override the text direction in vertical bar, has no effect on text in horizontal bar."
             "default: text displayed based on vertical bar position (left/right)"
             "ttb: text read from top to bottom, btt: text read from bottom to top."
@@ -586,9 +586,12 @@ class _TextBox(_Widget):
         if self.fontsize is None:
             self.fontsize = self.bar.height - self.bar.height / 5
         if self.direction != "default" and self.direction != "ttb" and self.direction != "btt":
-            logger.warning("""Invalid value set for direction: %s
+            logger.warning(
+                """Invalid value set for direction: %s
                                Valid values are: default, ttb, btt
-                               direction set to default""", self.direction)
+                               direction set to default""",
+                self.direction,
+            )
             self.direction = "default"
         self.layout = self.drawer.textlayout(
             self.formatted_text,
@@ -663,20 +666,16 @@ class _TextBox(_Widget):
             # Left bar reads bottom to top
             # Can be overriden to read bottom to top all the time with vertical_text_direction
             if (
-                (self.bar.screen.left is self.bar
-                and self.direction == "default")
-                or self.direction == "btt"
-                ):
+                self.bar.screen.left is self.bar and self.direction == "default"
+            ) or self.direction == "btt":
                 self.drawer.ctx.rotate(-90 * math.pi / 180.0)
                 self.drawer.ctx.translate(-self.length, 0)
 
             # Right bar is top to bottom
             # Can be overriden to read top to bottom all the time with vertical_text_direction
             elif (
-                (self.bar.screen.right is self.bar
-                and self.direction == "default")
-                or self.direction == "ttb"
-                ):
+                self.bar.screen.right is self.bar and self.direction == "default"
+            ) or self.direction == "ttb":
                 self.drawer.ctx.translate(self.bar.width, 0)
                 self.drawer.ctx.rotate(90 * math.pi / 180.0)
 
