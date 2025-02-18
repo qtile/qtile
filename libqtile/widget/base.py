@@ -585,11 +585,10 @@ class _TextBox(_Widget):
         _Widget._configure(self, qtile, bar)
         if self.fontsize is None:
             self.fontsize = self.bar.height - self.bar.height / 5
-        if self.direction != "default" and self.direction != "ttb" and self.direction != "btt":
+        if self.direction not in ("default", "ttb", "btt"):
             logger.warning(
-                """Invalid value set for direction: %s
-                               Valid values are: default, ttb, btt
-                               direction set to default""",
+                "Invalid value set for direction: %s. Valid values are: 'default', 'ttb', 'btt'. "
+                "direction has been set to 'default'",
                 self.direction,
             )
             self.direction = "default"
