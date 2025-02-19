@@ -30,6 +30,7 @@ from libqtile import hook
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
 from libqtile.backend.wayland.window import Static, Window
+from libqtile.backend.x11.window import UrgencyHint
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 
@@ -65,6 +66,7 @@ class XWindow(Window[xwayland.Surface]):
         self.add_listener(surface.request_activate_event, self._on_request_activate)
         self.add_listener(surface.request_configure_event, self._on_request_configure)
         self.add_listener(surface.destroy_event, self._on_destroy)
+        self.add_listener(surface.set_hints_event, self._on_set_hints)
 
     def _on_associate(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xwindow associate")
@@ -167,6 +169,13 @@ class XWindow(Window[xwayland.Surface]):
         self._wm_class = self.surface.wm_class
         if self.ftm_handle:
             self.ftm_handle.set_app_id(self._wm_class or "")
+
+    def _on_set_hints(self, _listener: Listener, _data: Any) -> None:
+        logger.debug("Signal: xwindow set_hints")
+        if UrgencyHint & self.surface.hints.flags:
+            if self.qtile.current_window != self:
+                self._urgent = True
+                hook.fire("client_urgent_hint_changed", self)
 
     def hide(self) -> None:
         super().hide()

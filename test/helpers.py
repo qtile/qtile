@@ -365,12 +365,15 @@ class TestManager:
         Windows created with this method must have their process killed explicitly, no
         matter what type they are.
         """
+        os.environ.pop("GDK_BACKEND", None)
         python = sys.executable
         path = Path(__file__).parent / "scripts" / "window.py"
         wmclass = "dialog" if floating else "TestWindow"
         args = [python, path, "--name", wmclass, name, wm_type, new_title]
         if urgent_hint:
             args.append("urgent_hint")
+            # GTK urgent hint is only available for x11
+            os.environ["GDK_BACKEND"] = "x11"
         if export_sni:
             args.append("export_sni_interface")
         return self._spawn_window(*args)
