@@ -773,7 +773,9 @@ class Core(base.Core):
 
         self.qtile.unmanage(event.window)
         self.update_client_lists()
-        if self.qtile.current_window is None:
+
+        # Fixup focus is current window is None, or current_window attribute doesn't exist
+        if getattr(self.qtile, "current_window", None) is None:
             self.conn.fixup_focus()
 
     def handle_UnmapNotify(self, event) -> None:  # noqa: N802
@@ -800,7 +802,9 @@ class Core(base.Core):
             )
         self.qtile.unmanage(event.window)
         self.update_client_lists()
-        if self.qtile.current_window is None:
+
+        # Fixup focus is current window is None, or current_window attribute doesn't exist
+        if getattr(self.qtile, "current_window", None) is None:
             self.conn.fixup_focus()
 
     def handle_ScreenChangeNotify(self, event) -> None:  # noqa: N802
