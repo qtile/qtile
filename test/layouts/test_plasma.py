@@ -1045,7 +1045,7 @@ def test_resize_bubbles3(root, complex_grid):
 def test_resize_nested(root):
     a, b, c, d, e, f, g, h = create_nodes("a b c_abs d_abs e f g h_abs")
     nu1, nu2, nd, mu, md1, md2 = create_nodes("nu1_abs nu2_abs nd mu md1_abs md2")
-    ou1, ou2, od, pu, pd1, pd2 = create_nodes("ou1_abs ou2_abs od pu pd1_abs " "pd2_abs")
+    ou1, ou2, od, pu, pd1, pd2 = create_nodes("ou1_abs ou2_abs od pu pd1_abs pd2_abs")
     root.add_child(a)
     root.add_child(b)
     b.flip_with(c)
@@ -1140,7 +1140,7 @@ def test_resize_nested_balanced(root):
     Node.priority = Priority.BALANCED
     a, b, c, d, e, f, g, h = create_nodes("a b c_abs d_abs e f g h_abs")
     nu1, nu2, nd, mu, md1, md2 = create_nodes("nu1_abs nu2_abs nd mu md1_abs md2")
-    ou1, ou2, od, pu, pd1, pd2 = create_nodes("ou1_abs ou2_abs od pu pd1_abs " "pd2_abs")
+    ou1, ou2, od, pu, pd1, pd2 = create_nodes("ou1_abs ou2_abs od pu pd1_abs pd2_abs")
     root.add_child(a)
     root.add_child(b)
     b.flip_with(c)

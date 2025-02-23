@@ -57,7 +57,7 @@ class Wttr(GenPollUrl):
         (
             "lang",
             "en",
-            "Display text language. List of supported languages " "https://wttr.in/:translation",
+            "Display text language. List of supported languages https://wttr.in/:translation",
         ),
         (
             "location",
@@ -69,8 +69,7 @@ class Wttr(GenPollUrl):
         (
             "units",
             "m",
-            "``'m'`` - metric, ``'M'`` - show wind speed in m/s, "
-            "``'u'`` - United States units",
+            "``'m'`` - metric, ``'M'`` - show wind speed in m/s, ``'u'`` - United States units",
         ),
         (
             "update_interval",

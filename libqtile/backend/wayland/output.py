@@ -160,7 +160,7 @@ class Output(HasListeners):
         )
         delta = tuple(new - old for new, old in zip(new_reserved_space, self._reserved_space))
         if any(delta):
-            self.core.qtile.reserve_space(delta, self.screen)  # type: ignore
+            self.core.qtile.reserve_space(delta, self.screen)
             self._reserved_space = new_reserved_space
 
         for layer in reversed(LayerShellV1Layer):

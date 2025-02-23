@@ -672,7 +672,6 @@ class Screen(CommandObject):
         """Switch to the next group"""
         group = self.group.get_next_group(skip_empty, skip_managed)
         self.set_group(group, warp=warp)
-        return group.name if group is not None else None
 
     @expose_command()
     def prev_group(
@@ -681,7 +680,6 @@ class Screen(CommandObject):
         """Switch to the previous group"""
         group = self.group.get_previous_group(skip_empty, skip_managed)
         self.set_group(group, warp=warp)
-        return group.name if group is not None else None
 
     @expose_command()
     def toggle_group(self, group_name: str | None = None, warp: bool = True) -> None:
