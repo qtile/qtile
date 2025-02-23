@@ -176,7 +176,7 @@ class _Device(ABC, HasListeners):
         if name == " " or not name.isprintable():
             name = "_"
         type_key = "type:" + device.type.name.lower()
-        identifier = "%d:%d:%s" % (device.vendor, device.product, name)
+        identifier = f"{device.vendor}:{device.vendor}:{name}"
 
         if type_key == "type:pointer" and lib is not None:
             # This checks whether the pointer is a touchpad, so that we can target those

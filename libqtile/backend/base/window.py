@@ -251,7 +251,11 @@ class Window(_Window, metaclass=ABCMeta):
     float_y: int | None
 
     def __repr__(self):
-        return "%s(name=%r, wid=%i)" % (self.__class__.__name__, self.name, self.wid)
+        return f"{self.__class__.__name__}(name={self.name!r}, wid={self.wid})" % (
+            self.__class__.__name__,
+            self.name,
+            self.wid,
+        )
 
     @property
     @abstractmethod
@@ -473,7 +477,7 @@ class Window(_Window, metaclass=ABCMeta):
             try:
                 screen = self.qtile.screens[index]
             except IndexError:
-                raise CommandError("No such screen: %d" % index)
+                raise CommandError(f"No such screen: {index}")
         self.togroup(screen.group.name)
 
     @expose_command()
@@ -580,7 +584,7 @@ class Static(_Window, metaclass=ABCMeta):
     height: Any
 
     def __repr__(self):
-        return "%s(name=%r, wid=%i)" % (self.__class__.__name__, self.name, self.wid)
+        return f"{self.__class__.__name__}(name={self.name!r}, wid={self.wid})"
 
     @expose_command()
     def info(self) -> dict:

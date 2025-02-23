@@ -237,7 +237,7 @@ class GroupBox(_GroupBase):
             False,
             "Hide groups that have no windows and that are not displayed on any screen.",
         ),
-        ("spacing", None, "Spacing between groups" "(if set to None, will be equal to margin_x)"),
+        ("spacing", None, "Spacing between groups(if set to None, will be equal to margin_x)"),
         ("toggle", True, "Enable toggling of group when clicking on same group name"),
     ]
 

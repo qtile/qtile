@@ -119,7 +119,7 @@ class Xephyr:
             raise AssertionError("Unable to connect to running Xephyr")
         else:
             raise AssertionError(
-                "Unable to start Xephyr, quit with return code " f"{self.proc.returncode}"
+                f"Unable to start Xephyr, quit with return code {self.proc.returncode}"
             )
 
     def stop_xephyr(self):

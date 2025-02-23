@@ -29,14 +29,13 @@ class NvidiaSensors(base.ThreadPoolText):
         (
             "gpu_bus_id",
             "",
-            "GPU's Bus ID, ex: ``01:00.0``. If leave empty will display all " "available GPU's",
+            "GPU's Bus ID, ex: ``01:00.0``. If leave empty will display all available GPU's",
         ),
         ("update_interval", 2, "Update interval in seconds."),
         (
             "threshold",
             70,
-            "If the current temperature value is above, "
-            "then change to foreground_alert colour",
+            "If the current temperature value is above, then change to foreground_alert colour",
         ),
     ]
 
