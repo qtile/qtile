@@ -65,9 +65,16 @@ class Drawer(drawer.Drawer):
         if height > self._win.height - offsety:
             height = self._win.height - offsety
 
+        # Despite checks for None above, mypy requires these aserts
+        assert width is not None
+        assert height is not None
+
+        scale = self._win.scale
+
         # Paint recorded operations to our window's underlying ImageSurface
         with cairocffi.Context(self._win.surface) as context:
             context.set_operator(cairocffi.OPERATOR_SOURCE)
+            context.scale(scale, scale)
             # Adjust the source surface position by src_x and src_y e.g. if we want
             # to render part of the surface in a different position
             context.set_source_surface(self.surface, offsetx - src_x, offsety - src_y)
@@ -75,7 +82,9 @@ class Drawer(drawer.Drawer):
             context.fill()
 
         damage = PixmanRegion32()
-        damage.init_rect(offsetx, offsety, width, height)
+        damage.init_rect(
+            int(offsetx * scale), int(offsety * scale), int(width * scale), int(height * scale)
+        )
         # TODO: do we really need to `set_buffer` here? would be good to just set damage
         self._win._scene_buffer.set_buffer_with_damage(self._win.wlr_buffer, damage)
         damage.fini()
