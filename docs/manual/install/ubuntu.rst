@@ -1,31 +1,10 @@
 ==============================
-Installing on Debian or Ubuntu
+Installing on Ubuntu or Debian 11 (bullseye) or greater
 ==============================
 
-To install the latest stable version of Qtile on Ubuntu (newer than 20.04) and Debian 9:
-
-.. code-block:: bash
-
-   pip install xcffib
-   pip install qtile
-
-To install the git version see :ref:`installing-from-source`
-
-Note: As of Ubuntu 20.04 (Focal Fossa), the package has been outdated
-and removed from the Ubuntu's official package list.
-
-On other recent Ubuntu (17.04 or greater) and Debian unstable versions,
-there are Qtile packages available via:
-
-.. code-block:: bash
-
-    sudo apt-get install qtile
-
-Debian 11 (bullseye)
---------------------
-
-Debian 11 comes with the necessary packages for installing Qtile. Starting 
-from a minimal Debian installation, the following packages are required:
+Ubuntu and Debian >=11 comes with the necessary packages for installing Qtile.
+Starting from a minimal Debian installation, the following packages are
+required:
 
 .. code-block:: bash
 

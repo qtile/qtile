@@ -47,14 +47,11 @@
 # This is not intended to be a complete cffi-based pango binding.
 
 
-try:
-    from libqtile._ffi_pango import ffi
-except ImportError:
-    raise ImportError("No module named libqtile._ffi_pango, be sure to run `./scripts/ffibuild`")
+from libqtile.pango_ffi import pango_ffi as ffi
 
-gobject = ffi.dlopen("libgobject-2.0.so.0")
-pango = ffi.dlopen("libpango-1.0.so.0")
-pangocairo = ffi.dlopen("libpangocairo-1.0.so.0")
+gobject = ffi.dlopen("libgobject-2.0.so.0")  # type: ignore
+pango = ffi.dlopen("libpango-1.0.so.0")  # type: ignore
+pangocairo = ffi.dlopen("libpangocairo-1.0.so.0")  # type: ignore
 
 
 def patch_cairo_context(cairo_t):
@@ -89,7 +86,6 @@ class PangoLayout:
         self._pointer = pangocairo.pango_cairo_create_layout(cairo_t)
 
         def free(p):
-            p = ffi.cast("gpointer", p)
             gobject.g_object_unref(p)
 
         self._pointer = ffi.gc(self._pointer, free)
@@ -183,7 +179,7 @@ def parse_markup(value, accel_marker=0):
     ret = pango.pango_parse_markup(value, -1, accel_marker, attr_list, text, ffi.NULL, error)
 
     if ret == 0:
-        raise Exception("parse_markup() failed for %s" % value)
+        raise Exception(f"parse_markup() failed for {value}")
 
     return attr_list[0], ffi.string(text[0]), chr(accel_marker)
 

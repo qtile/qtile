@@ -26,7 +26,10 @@ from libqtile.layout.base import _SimpleLayoutBase
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Self
+
+    from libqtile.backend.base import Window
+    from libqtile.group import _Group
 
     Rect = tuple[int, int, int, int]
 
@@ -91,6 +94,7 @@ class Spiral(_SimpleLayoutBase):
         ("border_focus", "#0000ff", "Border colour(s) for the focused window."),
         ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
         ("border_width", 1, "Border width."),
+        ("border_on_single", True, "Draw border when there is only one window."),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])"),
         ("ratio", 1 / GOLDEN_RATIO, "Ratio of the tiles"),
         (
@@ -140,14 +144,14 @@ class Spiral(_SimpleLayoutBase):
         idx = order.index(self.main_pane)
         self.splits = order[idx : idx + 4]
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         return _SimpleLayoutBase.clone(self, group)
 
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:  # type: ignore[override]
         self.dirty = True
         self.clients.add_client(client, client_position=self.new_client_position)
 
-    def remove(self, w):
+    def remove(self, w: Window) -> Window | None:
         self.dirty = True
         return _SimpleLayoutBase.remove(self, w)
 
@@ -186,12 +190,17 @@ class Spiral(_SimpleLayoutBase):
 
         (x, y, w, h), margins = self._fix_double_margins(x, y, w, h)
 
+        if len(self.clients) == 1 and not self.border_on_single:
+            border_width = 0
+        else:
+            border_width = self.border_width
+
         win.place(
             x,
             y,
-            w - self.border_width * 2,
-            h - self.border_width * 2,
-            self.border_width,
+            w - border_width * 2,
+            h - border_width * 2,
+            border_width,
             bc,
             margin=margins,
         )
@@ -341,22 +350,14 @@ class Spiral(_SimpleLayoutBase):
         return d
 
     @expose_command("up")
-    def previous(self):
+    def previous(self) -> None:
         _SimpleLayoutBase.previous(self)
 
     @expose_command("down")
-    def next(self):
+    def next(self) -> None:
         _SimpleLayoutBase.next(self)
 
-    def _set_ratio(self, prop: str, value: float | str):
-        # We allow a str for 'value' as a string may be issued via IPC.
-        if not isinstance(value, (float, int)):
-            try:
-                value = float(value)
-            except ValueError:
-                logger.error("Invalid ratio value: %s", value)
-                return
-
+    def _set_ratio(self, prop: str, value: float):
         if not (0 <= value <= 1):
             logger.warning(
                 "Invalid value for %s: %s. Value must be between 0 and 1.", prop, value
@@ -364,18 +365,20 @@ class Spiral(_SimpleLayoutBase):
             return
 
         setattr(self, prop, value)
+        # Force layout to be recalculated
+        self.dirty = True
         self.group.layout_all()
 
     @expose_command()
     def shuffle_down(self):
         if self.clients:
-            self.clients.rotate_down()
+            self.clients.shuffle_down()
             self.group.layout_all()
 
     @expose_command()
     def shuffle_up(self):
         if self.clients:
-            self.clients.rotate_up()
+            self.clients.shuffle_up()
             self.group.layout_all()
 
     @expose_command()
@@ -405,12 +408,12 @@ class Spiral(_SimpleLayoutBase):
         self._set_ratio("main_pane_ratio", self.main_pane_ratio + self.ratio_increment)
 
     @expose_command()
-    def set_ratio(self, ratio: float | str):
+    def set_ratio(self, ratio: float):
         """Set the ratio for all windows."""
         self._set_ratio("ratio", ratio)
 
     @expose_command()
-    def set_master_ratio(self, ratio: float | str):
+    def set_master_ratio(self, ratio: float):
         """Set the ratio for the main window."""
         self._set_ratio("main_pane_ratio", ratio)
 
@@ -419,4 +422,6 @@ class Spiral(_SimpleLayoutBase):
         """Reset ratios to values set in config."""
         self.ratio = self.initial_ratio
         self.main_pane_ratio = self.initial_main_pane_ratio
+        # Force layout to be recalculated
+        self.dirty = True
         self.group.layout_all()

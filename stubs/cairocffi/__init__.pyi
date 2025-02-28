@@ -1,20 +1,17 @@
+from typing import Any
+
 from .constants import *
 from .context import Context as Context
-from .patterns import (
-    Gradient as Gradient,
-    LinearGradient as LinearGradient,
-    Pattern as Pattern,
-    RadialGradient as RadialGradient,
-    SolidPattern as SolidPattern,
-    SurfacePattern as SurfacePattern,
-)
-from .surfaces import (
-    ImageSurface as ImageSurface,
-    RecordingSurface as RecordingSurface,
-    Surface as Surface,
-)
+from .patterns import Gradient as Gradient
+from .patterns import LinearGradient as LinearGradient
+from .patterns import Pattern as Pattern
+from .patterns import RadialGradient as RadialGradient
+from .patterns import SolidPattern as SolidPattern
+from .patterns import SurfacePattern as SurfacePattern
+from .surfaces import ImageSurface as ImageSurface
+from .surfaces import RecordingSurface as RecordingSurface
+from .surfaces import Surface as Surface
 from .xcb import XCBSurface as XCBSurface
-from typing import Any
 
 VERSION: Any
 version: str

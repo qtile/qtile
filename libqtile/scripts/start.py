@@ -21,13 +21,20 @@
 
 # Set the locale before any widgets or anything are imported, so any widget
 # whose defaults depend on a reasonable locale sees something reasonable.
+from __future__ import annotations
+
 import locale
-from os import getenv, makedirs, path
+from os import makedirs, path
 from sys import exit
+from typing import TYPE_CHECKING
 
 import libqtile.backend
-from libqtile import confreader
+from libqtile import confreader, qtile
 from libqtile.log_utils import logger
+from libqtile.utils import get_config_file
+
+if TYPE_CHECKING:
+    from libqtile.core.manager import Qtile
 
 
 def rename_process():
@@ -47,7 +54,15 @@ def rename_process():
         pass
 
 
-def make_qtile(options):
+def make_qtile(options) -> Qtile | None:
+    qtile.core.name = options.backend
+    if missing_deps := libqtile.backend.has_deps(options.backend):
+        print(f"Backend '{options.backend}' missing required Python dependencies:")
+        for dep in missing_deps:
+            print("\t", dep)
+
+        return None
+
     kore = libqtile.backend.get_core(options.backend)
 
     if not path.isfile(options.configfile):
@@ -80,12 +95,16 @@ def make_qtile(options):
 
 def start(options):
     try:
-        locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
+        locale.setlocale(locale.LC_ALL, "")
     except locale.Error:
         pass
 
     rename_process()
     q = make_qtile(options)
+    if q is None:
+        logger.warning("Backend is missing required Python dependencies. Exiting.")
+        exit(1)
+
     try:
         q.loop()
     except Exception:
@@ -100,9 +119,7 @@ def add_subcommand(subparsers, parents):
         "-c",
         "--config",
         action="store",
-        default=path.expanduser(
-            path.join(getenv("XDG_CONFIG_HOME", "~/.config"), "qtile", "config.py")
-        ),
+        default=get_config_file(),
         dest="configfile",
         help="Use the specified configuration file.",
     )
@@ -133,7 +150,7 @@ def add_subcommand(subparsers, parents):
         "--backend",
         default="x11",
         dest="backend",
-        choices=libqtile.backend.CORES,
+        choices=libqtile.backend.CORES.keys(),
         help="Use specified backend.",
     )
     parser.set_defaults(func=start)

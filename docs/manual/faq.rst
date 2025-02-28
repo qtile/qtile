@@ -85,8 +85,19 @@ of binding keys to ``lazy.group[name].toscreen()``, use this:
 
 .. code-block:: python
 
-    def go_to_group(name: str) -> Callable:
-        def _inner(qtile: Qtile) -> None:
+    groups = [
+        # Screen affinity here is used to make
+        # sure the groups startup on the right screens
+        Group(name="1", screen_affinity=0),
+        Group(name="2", screen_affinity=0),
+        Group(name="3", screen_affinity=0),
+        Group(name="q", screen_affinity=1),
+        Group(name="w", screen_affinity=1),
+        Group(name="e", screen_affinity=1),
+    ]
+
+    def go_to_group(name: str):
+        def _inner(qtile):
             if len(qtile.screens) == 1:
                 qtile.groups_map[name].toscreen()
                 return
@@ -124,6 +135,9 @@ To be able to move windows across these groups which switching groups, a similar
 
         return _inner
 
+    for i in groups:
+        keys.append(Key([mod, "shift"], i.name, lazy.function(go_to_group_and_move_window(i.name))))
+
 If you use the ``GroupBox`` widget you can make it reflect this behaviour:
 
 .. code-block:: python
@@ -157,36 +171,6 @@ Where are the log files for Qtile?
 ==================================
 
 The log files for qtile are at ``~/.local/share/qtile/qtile.log``.
-
-Why do I get an ``AttributeError`` when building Qtile?
-=======================================================
-
-If you see this message:
-``AttributeError: cffi library 'libcairo.so.2' has no function, constant or global variable named 'cairo_xcb_surface_create'``
-when building Qtile then your Cairo version lacks XCB support.
-
-If it happens, it might be because the ``cairocffi`` and ``xcffib`` dependencies
-were installed in the wrong order.
-
-To fix this:
-
-1. uninstall them from your environment: with ``pip uninstall cairocffi xcffib``
-   if using a virtualenv, or with your system package-manager if you installed
-   the development version of Qtile system-wide.
-#. re-install them sequentially (again, with pip or with your package-manager)::
-
-    pip install xcffib
-    pip install --no-cache-dir cairocffi
-
-See `this issue comment`_ for more information.
-
-.. _`this issue comment`: https://github.com/qtile/qtile/issues/994#issuecomment-497984551
-
-If you are using your system package-manager and the issue still happens,
-the packaging of ``cairocffi`` might be broken for your distribution.
-Try to contact the persons responsible for ``cairocffi``'s packaging
-on your distribution, or to install it from the sources with ``xcffib``
-available.
 
 How can I match the bar with picom?
 ===================================

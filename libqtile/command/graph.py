@@ -26,12 +26,10 @@ abstract command graph
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Optional, Type
-
-    SelectorType = tuple[str, Optional[str | int]]
+    SelectorType = tuple[str, str | int | None]
 
 
 class CommandGraphNode(metaclass=abc.ABCMeta):
@@ -65,17 +63,17 @@ class CommandGraphNode(metaclass=abc.ABCMeta):
         """Navigate from the current node to the specified child"""
         if name in self.children:
             return _COMMAND_GRAPH_MAP[name](selector, self)
-        raise KeyError("Given node is not an object: {}".format(name))
+        raise KeyError(f"Given node is not an object: {name}")
 
-    def call(self, name: str) -> CommandGraphCall:
+    def call(self, name: str, lifted: bool = False) -> CommandGraphCall:
         """Execute the given call on the selected object"""
-        return CommandGraphCall(name, self)
+        return CommandGraphCall(name, self, lifted=lifted)
 
 
 class CommandGraphCall:
     """A call performed on a particular object in the command graph"""
 
-    def __init__(self, name: str, parent: CommandGraphNode) -> None:
+    def __init__(self, name: str, parent: CommandGraphNode, lifted: bool = False) -> None:
         """A command to be executed on the selected object
 
         A terminal node in the command graph, specifying an actual command to
@@ -90,6 +88,7 @@ class CommandGraphCall:
         """
         self._name = name
         self._parent = parent
+        self.lifted = lifted
 
     @property
     def name(self) -> str:
@@ -208,7 +207,7 @@ class _CoreGraphNode(CommandGraphObject):
     children: list[str] = []
 
 
-_COMMAND_GRAPH_MAP: dict[str, Type[CommandGraphObject]] = {
+_COMMAND_GRAPH_MAP: dict[str, type[CommandGraphObject]] = {
     "bar": _BarGraphNode,
     "group": _GroupGraphNode,
     "layout": _LayoutGraphNode,
@@ -219,4 +218,4 @@ _COMMAND_GRAPH_MAP: dict[str, Type[CommandGraphObject]] = {
 }
 
 
-GraphType = Union[CommandGraphNode, CommandGraphCall]
+GraphType = CommandGraphNode | CommandGraphCall

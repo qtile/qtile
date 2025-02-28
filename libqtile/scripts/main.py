@@ -1,23 +1,26 @@
 import argparse
 import logging
 import sys
+from pathlib import Path
 
 from libqtile.log_utils import get_default_log, init_log
-from libqtile.scripts import check, cmd_obj, migrate, run_cmd, shell, start, top
+from libqtile.scripts import check, cmd_obj, migrate, run_cmd, shell, start, top, udev
 
 try:
     # Python>3.7 can get the version from importlib
-    from importlib.metadata import distribution
+    from importlib.metadata import PackageNotFoundError, distribution
 
     VERSION = distribution("qtile").version
-except ModuleNotFoundError:
-    try:
-        # pkg_resources is required for 3.7
-        import pkg_resources
+except PackageNotFoundError:
+    VERSION = "dev"
 
-        VERSION = pkg_resources.require("qtile")[0].version
-    except (pkg_resources.DistributionNotFound, ModuleNotFoundError):
-        VERSION = "dev"
+
+def check_folder(value):
+    path = Path(value)
+    if not path.parent.is_dir():
+        raise argparse.ArgumentTypeError("Log path destination folder does not exist.")
+    # init_log expects a Path object so return `path` not `value`
+    return path
 
 
 def main():
@@ -31,7 +34,14 @@ def main():
         choices=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"),
         help="Set qtile log level",
     )
-
+    parent_parser.add_argument(
+        "-p",
+        "--log-path",
+        default=get_default_log(),
+        dest="log_path",
+        type=check_folder,
+        help="Set alternative qtile log path",
+    )
     main_parser = argparse.ArgumentParser(
         prog="qtile",
         description="A full-featured tiling window manager for X11 and Wayland.",
@@ -51,18 +61,21 @@ def main():
     cmd_obj.add_subcommand(subparsers, [parent_parser])
     check.add_subcommand(subparsers, [parent_parser])
     migrate.add_subcommand(subparsers, [parent_parser])
+    udev.add_subcommand(subparsers, [parent_parser])
 
     # `qtile help` should print help
     def print_help(options):
         main_parser.print_help()
 
-    help_ = subparsers.add_parser("help", help="Print help message and exit.")
+    help_ = subparsers.add_parser(
+        "help", help="Print help message and exit.", parents=[parent_parser]
+    )
     help_.set_defaults(func=print_help)
 
     options = main_parser.parse_args()
     if func := getattr(options, "func", None):
         log_level = getattr(logging, options.log_level)
-        init_log(log_level, log_path=get_default_log())
+        init_log(log_level, log_path=options.log_path)
         func(options)
     else:
         main_parser.print_usage()

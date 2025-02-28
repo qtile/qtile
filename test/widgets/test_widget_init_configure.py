@@ -27,7 +27,7 @@ import libqtile.config
 import libqtile.confreader
 import libqtile.layout
 import libqtile.widget as widgets
-from libqtile.widget.base import ORIENTATION_BOTH, ORIENTATION_VERTICAL
+from libqtile.widget.base import ORIENTATION_BOTH, ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL
 from libqtile.widget.clock import Clock
 from libqtile.widget.crashme import _CrashMe
 from test.widgets.conftest import FakeBar
@@ -58,10 +58,13 @@ extras = [
 
 # To skip a test entirely, list the widget class here
 no_test = [widgets.Mirror, widgets.PulseVolume]  # Mirror requires a reflection object
+no_test += [widgets.ImapWidget]  # Requires a configured username
 
 # To test a widget only under one backend, list the widget class here
 exclusive_backend = {
     widgets.Systray: "x11",
+    widgets.Redshift: "x11",
+    widgets.SwayNC: "wayland",
 }
 
 ################################################################################
@@ -87,7 +90,14 @@ def no_op(*args, **kwargs):
     pass
 
 
-@pytest.mark.parametrize("widget_class,kwargs", parameters)
+@pytest.mark.parametrize(
+    "widget_class,kwargs",
+    [
+        param
+        for param in parameters
+        if param[0]().orientations in [ORIENTATION_BOTH, ORIENTATION_HORIZONTAL]
+    ],
+)
 def test_widget_init_config(manager_nospawn, minimal_conf_noscreen, widget_class, kwargs):
     if widget_class in exclusive_backend:
         if exclusive_backend[widget_class] != manager_nospawn.backend.name:

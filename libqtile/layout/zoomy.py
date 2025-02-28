@@ -26,10 +26,17 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import libqtile
 from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
+
+if TYPE_CHECKING:
+    from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
 
 
 class Zoomy(_SimpleLayoutBase):
@@ -47,10 +54,10 @@ class Zoomy(_SimpleLayoutBase):
         _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(Zoomy.defaults)
 
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:  # type: ignore[override]
         self.clients.append_head(client)
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         left, right = screen_rect.hsplit(screen_rect.width - self.columnwidth)
         if client is self.clients.current_client:
             client.place(
@@ -112,9 +119,9 @@ class Zoomy(_SimpleLayoutBase):
             )
 
     @expose_command("down")
-    def next(self):
+    def next(self) -> None:
         _SimpleLayoutBase.next(self)
 
     @expose_command("up")
-    def previous(self):
+    def previous(self) -> None:
         _SimpleLayoutBase.previous(self)

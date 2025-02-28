@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Qtile documentation build configuration file, created by
 # sphinx-quickstart on Sat Feb 11 15:20:21 2012.
@@ -27,27 +26,30 @@ class Mock(MagicMock):
 
 MOCK_MODULES = [
     "libqtile._ffi_pango",
+    "libqtile.backend.wayland._ffi",
     "libqtile.backend.x11._ffi_xcursors",
-    "libqtile.widget._pulse_audio",
-    "cairocffi",
+    "cairocffi.ffi",
     "cairocffi.xcb",
     "cairocffi.pixbuf",
     "cffi",
     "dateutil",
     "dateutil.parser",
-    "dbus_next",
-    "dbus_next.aio",
-    "dbus_next.errors",
-    "dbus_next.service",
-    "dbus_next.constants",
+    "dbus_fast",
+    "dbus_fast.aio",
+    "dbus_fast.errors",
+    "dbus_fast.service",
+    "dbus_fast.constants",
     "iwlib",
     "keyring",
     "mpd",
     "psutil",
+    "pulsectl",
+    "pulsectl_asyncio",
     "pywayland",
     "pywayland.protocol.wayland",
     "pywayland.protocol.wayland.wl_output",
     "pywayland.server",
+    "pywayland.utils",
     "wlroots",
     "wlroots.helper",
     "wlroots.util",
@@ -58,18 +60,21 @@ MOCK_MODULES = [
     "wlroots.wlr_types",
     "wlroots.wlr_types.cursor",
     "wlroots.wlr_types.foreign_toplevel_management_v1",
-    "wlroots.wlr_types.idle",
     "wlroots.wlr_types.idle_inhibit_v1",
+    "wlroots.wlr_types.idle_notify_v1",
     "wlroots.wlr_types.keyboard",
     "wlroots.wlr_types.layer_shell_v1",
     "wlroots.wlr_types.output_management_v1",
     "wlroots.wlr_types.pointer_constraints_v1",
+    "wlroots.wlr_types.output",
     "wlroots.wlr_types.output_power_management_v1",
+    "wlroots.wlr_types.scene",
     "wlroots.wlr_types.server_decoration",
     "wlroots.wlr_types.virtual_keyboard_v1",
     "wlroots.wlr_types.virtual_pointer_v1",
     "wlroots.wlr_types.xdg_shell",
     "xcffib",
+    "xcffib.ffi",
     "xcffib.randr",
     "xcffib.render",
     "xcffib.wrappers",
@@ -102,7 +107,6 @@ extensions = [
     "sphinx.ext.graphviz",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
-    "sphinxcontrib.seqdiag",
     "numpydoc",
     "sphinx_qtile",
 ]
@@ -333,11 +337,12 @@ texinfo_documents = [
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 # texinfo_show_urls = 'footnote'
 
-# only import and set the theme if we're building docs locally
+html_theme = "sphinx_rtd_theme"
+
+# only import and set the theme path if we're building docs locally
 if not os.environ.get("READTHEDOCS"):
     import sphinx_rtd_theme
 
-    html_theme = "sphinx_rtd_theme"
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 
@@ -348,3 +353,13 @@ graphviz_dot_args = ["-Lg"]
 def setup(app):
     app.add_css_file("no_scrollbars.css")
     app.add_css_file("split_code.css")
+
+
+# readthedocs config, see https://about.readthedocs.com/blog/2024/07/addons-by-default/
+# Define the canonical URL if you are using a custom domain on Read the Docs
+html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
+
+html_context = {}
+# Tell Jinja2 templates the build is running on Read the Docs
+if os.environ.get("READTHEDOCS", "") == "True":
+    html_context["READTHEDOCS"] = True

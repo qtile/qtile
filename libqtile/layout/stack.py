@@ -17,8 +17,19 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from libqtile.command.base import expose_command
 from libqtile.layout.base import Layout, _ClientList
+
+if TYPE_CHECKING:
+    from typing import Any, Self
+
+    from libqtile.backend.base import Window
+    from libqtile.config import ScreenRect
+    from libqtile.group import _Group
 
 
 class _WinStack(_ClientList):
@@ -33,10 +44,10 @@ class _WinStack(_ClientList):
         self.split = False if self.split else True
 
     def __str__(self):
-        return "_WinStack: %s, %s" % (self.cw, str([client.name for client in self.clients]))
+        return f"_WinStack: {self.cw}, {str([client.name for client in self.clients])}"
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         info = _ClientList.info(self)
         info["split"] = self.split
         return info
@@ -101,7 +112,7 @@ class Stack(Layout):
             client_list.extend(stack.clients)
         return client_list
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)
         # These are mutable
         c.stacks = [_WinStack(autosplit=self.autosplit) for i in self.stacks]
@@ -137,52 +148,50 @@ class Stack(Layout):
         if n:
             self.group.focus(n.cw, True)
 
-    def focus(self, client):
+    def focus(self, client: Window) -> None:
         for i in self.stacks:
             if client in i:
                 i.focus(client)
 
-    def focus_first(self):
-        for i in self.stacks:
-            if i:
-                return i.focus_first()
+    def focus_first(self) -> Window | None:
+        if self.stacks:
+            return self.stacks[0].focus_first()
+        return None
 
-    def focus_last(self):
-        for i in reversed(self.stacks):
-            if i:
-                return i.focus_last()
+    def focus_last(self) -> Window | None:
+        if self.stacks:
+            return self.stacks[-1].focus_last()
+        return None
 
-    def focus_next(self, client):
+    def focus_next(self, client: Window) -> Window | None:
         iterator = iter(self.stacks)
         for i in iterator:
             if client in i:
-                next = i.focus_next(client)
-                if next:
-                    return next
+                if next_ := i.focus_next(client):
+                    return next_
                 break
         else:
-            return
+            return None
 
-        for i in iterator:
-            if i:
-                return i.focus_first()
+        if i := next(iterator, None):
+            return i.focus_first()
+        return None
 
-    def focus_previous(self, client):
-        iterator = iter(reversed(self.stacks))
+    def focus_previous(self, client: Window) -> Window | None:
+        iterator = reversed(self.stacks)
         for i in iterator:
             if client in i:
-                next = i.focus_previous(client)
-                if next:
-                    return next
+                if nxt := i.focus_previous(client):
+                    return nxt
                 break
         else:
-            return
+            return None
 
-        for i in iterator:
-            if i:
-                return i.focus_last()
+        if i := next(iterator, None):
+            return i.focus_last()
+        return None
 
-    def add_client(self, client):
+    def add_client(self, client: Window) -> None:
         for i in self.stacks:
             if not i:
                 i.add_client(client)
@@ -193,7 +202,7 @@ class Stack(Layout):
         else:
             self.current_stack.add_client(client)
 
-    def remove(self, client):
+    def remove(self, client: Window) -> Window | None:
         current_offset = self.current_stack_offset
         for i in self.stacks:
             if client in i:
@@ -207,8 +216,9 @@ class Stack(Layout):
             )
             if n:
                 return n.cw
+        return None
 
-    def configure(self, client, screen_rect):
+    def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         # pylint: disable=undefined-loop-variable
         # We made sure that self.stacks is not empty, so s is defined.
         for i, s in enumerate(self.stacks):
@@ -272,7 +282,7 @@ class Stack(Layout):
         return self.clients
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = Layout.info(self)
         d["stacks"] = [i.info() for i in self.stacks]
         d["current_stack"] = self.current_stack_offset
@@ -331,14 +341,14 @@ class Stack(Layout):
         self.group.layout_all()
 
     @expose_command()
-    def next(self):
+    def next(self) -> None:
         """Focus next stack"""
         return self.next_stack()
 
     @expose_command()
-    def previous(self):
+    def previous(self) -> None:
         """Focus previous stack"""
-        return self.previous_stack()
+        self.previous_stack()
 
     @expose_command()
     def client_to_next(self):

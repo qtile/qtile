@@ -14,11 +14,13 @@ Qtile looks in the following places for a configuration file, in order:
 * The location specified by the ``-c`` argument.
 * ``$XDG_CONFIG_HOME/qtile/config.py``, if it is set
 * ``~/.config/qtile/config.py``
+* first ``qtile/config.py`` found in ``$XDG_CONFIG_DIRS`` (defaults to ``/etc/xdg``)
 * It reads the module ``libqtile.resources.default_config``, included by
   default with every Qtile installation.
 
 Qtile will try to create the configuration file as a copy of the default
-config, if it doesn't exist yet.
+config, if it doesn't exist yet, this one will be placed inside of 
+``$XDG_CONFIG_HOME/qtile/config.py`` (if set) or ``~/.config/qtile/config.py``.
 
 Default Configuration
 =====================
@@ -56,6 +58,7 @@ mix!)
     mouse
     screens
     hooks
+    match
 
 In addition to the above variables, there are several other boolean
 configuration variables that control specific aspects of Qtile's behavior:
@@ -76,7 +79,11 @@ configuration variables that control specific aspects of Qtile's behavior:
       - ``False``
       - When clicked, should the window be brought to the front or not. If this
         is set to "floating_only", only floating windows will get affected (This
-        sets the X Stack Mode to Above.)
+        sets the X Stack Mode to Above.). This will ignore the layering rules and
+        will therefore bring windows above other windows, even if they have been set
+        as "kept_above". This may cause issues with docks and other similar apps as these
+        may end up hidden behind other windows. Setting this to ``False`` or ``"floating_only"``
+        may therefore be required when using these apps.
     * - ``cursor_warp``
       - ``False``
       - If true, the cursor follows the focus as directed by the keyboard,
@@ -106,9 +113,12 @@ configuration variables that control specific aspects of Qtile's behavior:
         custom floating rules among other things if you wish.
 
         See the configuration file for the default `float_rules`.
+    * - ``floats_kept_above``
+      - ``True``
+      - Floating windows are kept above tiled windows (Currently x11 only. Wayland support coming soon.)
     * - ``focus_on_window_activation``
       - ``'smart'``
-      - Behavior of the _NET_ACTIVATE_WINDOW message sent by applications
+      - Behavior of the _NET_ACTIVE_WINDOW message sent by applications
 
         - urgent: urgent flag is set for the window
 
@@ -117,10 +127,17 @@ configuration variables that control specific aspects of Qtile's behavior:
         - smart: automatically focus if the window is in the current group
 
         - never: never automatically focus any window that requests it
+
+        - can also be a function which takes the window as an argument:
+            - returns True: focus window
+
+            - returns False: doesn't do anything
     * - ``follow_mouse_focus``
       - ``True``
       - Controls whether or not focus follows the mouse around as it moves
-        across windows in a layout.
+        across windows in a layout. Otherwise set this to ``"click_or_drag_only"``
+        to change focus only when doing a :class:`~libqtile.config.Click` or
+        :class:`~libqtile.config.Drag` action.
     * - ``widget_defaults``
       - ``dict(font='sans', fontsize=12, padding=3)``
       - Default settings for bar widgets.

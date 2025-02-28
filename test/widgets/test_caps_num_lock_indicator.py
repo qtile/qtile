@@ -19,7 +19,6 @@
 # Widget specific tests
 
 import subprocess
-from typing import List
 
 import pytest
 
@@ -30,7 +29,7 @@ from test.widgets.conftest import FakeBar
 class MockCapsNumLockIndicator:
     CalledProcessError = None
 
-    info: List[List[str]] = []
+    info: list[list[str]] = []
     is_error = False
     index = 0
 

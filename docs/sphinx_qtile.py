@@ -30,6 +30,7 @@ from qtile_docs.collapsible import (
 from qtile_docs.commands import QtileCommands
 from qtile_docs.graph import QtileGraph
 from qtile_docs.hooks import QtileHooks
+from qtile_docs.migrations import QtileMigrations
 from qtile_docs.module import QtileModule
 from qtile_docs.qtile_class import QtileClass
 
@@ -62,5 +63,6 @@ def setup(app):
     app.add_directive("qtile_module", QtileModule)
     app.add_directive("qtile_commands", QtileCommands)
     app.add_directive("qtile_graph", QtileGraph)
+    app.add_directive("qtile_migrations", QtileMigrations)
     app.add_directive("collapsible", CollapsibleSection)
     app.add_node(CollapsibleNode, html=(visit_collapsible_node, depart_collapsible_node))

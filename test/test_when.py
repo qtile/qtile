@@ -27,11 +27,9 @@ from libqtile.lazy import lazy
 # Config with multiple keys and when checks
 class WhenConfig(Config):
     keys = [
-        config.Key(
-            ["control"],
-            "k",
-            lazy.window.toggle_floating(),
-        ),
+        config.Key(["control"], "k", lazy.window.toggle_floating()),
+        config.Key(["control"], "p", lazy.window.toggle_floating().when(when_floating=True)),
+        config.Key(["control"], "o", lazy.window.toggle_floating().when(when_floating=False)),
         config.Key(
             ["control"],
             "j",
@@ -54,6 +52,10 @@ class WhenConfig(Config):
                 focused=config.Match(wm_class="TestWindow"), if_no_focused=True
             ),
         ),
+        config.Key(["control"], "t", lazy.next_layout().when(condition=1 + 1 == 2)),
+        config.Key(["control"], "f", lazy.next_layout().when(condition=1 + 1 == 3)),
+        config.Key(["control", "shift"], "t", lazy.next_layout().when(func=lambda: True)),
+        config.Key(["control", "shift"], "f", lazy.next_layout().when(func=lambda: False)),
     ]
     layouts = [layout.MonadWide(), layout.MonadTall()]
 
@@ -79,6 +81,14 @@ def test_when(manager):
     manager.c.simulate_keypress(["control"], "j")
     assert not manager.c.window.info()["floating"]
 
+    # This keeps the window tiled as window is not floating
+    manager.c.simulate_keypress(["control"], "p")
+    assert not manager.c.window.info()["floating"]
+
+    # This sets the window floating as window is not floating
+    manager.c.simulate_keypress(["control"], "o")
+    assert manager.c.window.info()["floating"]
+
     # Kill the window to create an empty group
     manager.kill_window(one)
     prev_layout_info = manager.c.layout.info()
@@ -89,4 +99,22 @@ def test_when(manager):
 
     # This does go to the next layout as empty is matched
     manager.c.simulate_keypress(["control"], "m")
+    assert manager.c.layout.info() != prev_layout_info
+
+    # Test boolean argument
+    prev_layout_info = manager.c.layout.info()
+
+    manager.c.simulate_keypress(["control"], "f")
+    assert manager.c.layout.info() == prev_layout_info
+
+    manager.c.simulate_keypress(["control"], "t")
+    assert manager.c.layout.info() != prev_layout_info
+
+    # Test function argument
+    prev_layout_info = manager.c.layout.info()
+
+    manager.c.simulate_keypress(["control", "shift"], "f")
+    assert manager.c.layout.info() == prev_layout_info
+
+    manager.c.simulate_keypress(["control", "shift"], "t")
     assert manager.c.layout.info() != prev_layout_info
