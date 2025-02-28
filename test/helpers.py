@@ -5,6 +5,7 @@ Defining them here rather than in conftest.py avoids issues with circular import
 between test/conftest.py and test/backend/<backend>/conftest.py files.
 """
 
+import faulthandler
 import functools
 import logging
 import multiprocessing
@@ -31,6 +32,8 @@ HEIGHT = 600
 SECOND_WIDTH = 640
 SECOND_HEIGHT = 480
 
+LOG_PIPE_BUFFER_SIZE = 128 * 1024
+
 max_sleep = 5.0
 sleep_time = 0.1
 
@@ -38,17 +41,16 @@ sleep_time = 0.1
 class Retry:
     def __init__(
         self,
-        fail_msg="retry failed!",
         ignore_exceptions=(),
         dt=sleep_time,
         tmax=max_sleep,
         return_on_fail=False,
     ):
-        self.fail_msg = fail_msg
         self.ignore_exceptions = ignore_exceptions
         self.dt = dt
         self.tmax = tmax
         self.return_on_fail = return_on_fail
+        self.last_failure = None
 
     def __call__(self, fn):
         @functools.wraps(fn)
@@ -60,8 +62,8 @@ class Retry:
             while time.time() <= tmax:
                 try:
                     return fn(*args, **kwargs)
-                except ignore_exceptions:
-                    pass
+                except ignore_exceptions as e:
+                    self.last_failure = e
                 except AssertionError:
                     break
                 time.sleep(dt)
@@ -69,7 +71,7 @@ class Retry:
             if self.return_on_fail:
                 return False
             else:
-                raise AssertionError(self.fail_msg)
+                raise self.last_failure
 
         return wrapper
 
@@ -151,9 +153,12 @@ class TestManager:
         self.proc = None
         self.c = None
         self.testwindows = []
+        self.logspipe = None
 
     def __enter__(self):
         """Set up resources"""
+        faulthandler.enable(all_threads=True)
+        faulthandler.register(signal.SIGUSR2, all_threads=True)
         self._sockfile = tempfile.NamedTemporaryFile()
         self.sockfile = self._sockfile.name
         return self
@@ -162,8 +167,21 @@ class TestManager:
         """Clean up resources"""
         self.terminate()
         self._sockfile.close()
+        if self.logspipe is not None:
+            os.close(self.logspipe)
+
+    def get_log_buffer(self):
+        """Returns any logs that have been written to qtile's log buffer up to this point."""
+        # default pipe size on linux is 64k. we probably won't write
+        # 64k of logs, but in the event that we do, qtile will hang in
+        # write(). but thanks to e1d2dab16903 ("switch semantics of sigusr2
+        # to stack dumping") hopefully we will see it's hung in a log write and
+        # look at this. if we do write 64k of logs, we can do some F_SETPIPE_SZ
+        # fiddling with the buffer size to grow it to whatever github allows.
+        return os.read(self.logspipe, 64 * 1024).decode("utf-8")
 
     def start(self, config_class, no_spawn=False, state=None):
+        readlogs, writelogs = os.pipe()
         rpipe, wpipe = multiprocessing.Pipe()
 
         def run_qtile():
@@ -172,9 +190,14 @@ class TestManager:
                 os.environ.pop("WAYLAND_DISPLAY", None)
                 kore = self.backend.create()
                 os.environ.update(self.backend.env)
+
                 init_log(self.log_level)
-                if hasattr(self, "log_queue"):
-                    logger.addHandler(logging.handlers.QueueHandler(self.log_queue))
+                os.close(readlogs)
+                formatter = logging.Formatter("%(levelname)s - %(message)s")
+                handler = logging.StreamHandler(os.fdopen(writelogs, "w"))
+                handler.setFormatter(formatter)
+                logger.addHandler(handler)
+
                 Qtile(
                     kore,
                     config_class(),
@@ -187,6 +210,8 @@ class TestManager:
 
         self.proc = multiprocessing.Process(target=run_qtile)
         self.proc.start()
+        os.close(writelogs)
+        self.logspipe = readlogs
 
         # First, wait for socket to appear
         if can_connect_qtile(self.sockfile, ok=lambda: not rpipe.poll()):
@@ -259,12 +284,12 @@ class TestManager:
         start = len(client.windows())
         create()
 
-        @Retry(ignore_exceptions=(RuntimeError,), fail_msg="Window never appeared...")
+        @Retry(ignore_exceptions=(RuntimeError,))
         def success():
             while failed is None or not failed():
                 if len(client.windows()) > start:
                     return True
-            raise RuntimeError("not here yet")
+            raise RuntimeError("window has not appeared yet")
 
         return success()
 
@@ -367,8 +392,8 @@ class TestManager:
         assert len(seen) == len(screens), "Not all screens had an attached group."
 
 
-@Retry(ignore_exceptions=(AssertionError,), fail_msg="Window did not die!")
+@Retry(ignore_exceptions=(AssertionError,))
 def assert_window_died(client, window_info):
     client.sync()
     wid = window_info["id"]
-    assert wid not in set([x["id"] for x in client.windows()])
+    assert wid not in set([x["id"] for x in client.windows()]), f"window {wid} still here"

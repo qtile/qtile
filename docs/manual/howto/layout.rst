@@ -115,7 +115,7 @@ This is where the magic happens! This method is responsible for determining how 
 a window on the screen.
 
 This method should therefore configure the dimensions and borders of a window using the
-window's ```.place()``` method. The layout can also call either ``hide()`` or ``.unhide()``
+window's ``.place()`` method. The layout can also call either ``hide()`` or ``.unhide()``
 on the window.
 
 .. code:: python

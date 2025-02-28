@@ -82,6 +82,14 @@ def test_text_battery_full(monkeypatch):
     text = batt.poll()
     assert text == "Full"
 
+    full_short_text = "🔋"
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
+        batt = Battery(full_short_text=full_short_text)
+
+    text = batt.poll()
+    assert text == full_short_text
+
     with monkeypatch.context() as manager:
         manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery(show_short_text=False)
@@ -106,6 +114,14 @@ def test_text_battery_empty(monkeypatch):
 
     text = batt.poll()
     assert text == "Empty"
+
+    empty_short_text = "🪫"
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
+        batt = Battery(empty_short_text=empty_short_text)
+
+    text = batt.poll()
+    assert text == empty_short_text
 
     with monkeypatch.context() as manager:
         manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))

@@ -124,7 +124,3 @@ In the development shell, there are a few useful things:
 
 - `qtile-run-tests-wayland`: Run all Wayland tests
 - `qtile-run-tests-x11`: Run all X11 tests
-
-Furthermore nix build can also be used to run NixOS VM tests:
-
-- `nix build .\#checks.x86_64-linux.qtile` create a full nixos vm using Qemu, and take a screenshot of a opened terminal using a driver script

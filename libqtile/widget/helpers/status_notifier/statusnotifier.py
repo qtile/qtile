@@ -17,18 +17,19 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from asyncio import current_task
 from collections.abc import Callable
 from contextlib import suppress
 from functools import partial
 from pathlib import Path
 
-# dbus_next is incompatible with deferred type evaluation
+# dbus_fast is incompatible with deferred type evaluation
 import cairocffi
-from dbus_next import InterfaceNotFoundError, InvalidBusNameError, InvalidObjectPathError
-from dbus_next.aio import MessageBus
-from dbus_next.constants import PropertyAccess
-from dbus_next.errors import DBusError
-from dbus_next.service import ServiceInterface, dbus_property, method, signal
+from dbus_fast import InterfaceNotFoundError, InvalidBusNameError, InvalidObjectPathError
+from dbus_fast.aio import MessageBus
+from dbus_fast.constants import PropertyAccess
+from dbus_fast.errors import DBusError
+from dbus_fast.service import ServiceInterface, dbus_property, method, signal
 
 try:
     from xdg.IconTheme import getIconPath
@@ -132,6 +133,7 @@ class StatusNotifierItem:  # noqa: E303
         self.icon_theme = icon_theme
         self.icon = None
         self.path = path if path else STATUSNOTIFIER_PATH
+        self.last_icon_name = None
 
     def __eq__(self, other):
         # Convenience method to find Item in list by service path
@@ -175,7 +177,7 @@ class StatusNotifierItem:  # noqa: E303
         # Try to connect to the bus object and verify there's a valid
         # interface available
         # TODO: This may not ever fail given we've specified the underying
-        # schema so dbus-next has not attempted any introspection.
+        # schema so dbus-fast has not attempted any introspection.
         interface_found = False
         for interface in ITEM_INTERFACES:
             try:
@@ -248,18 +250,34 @@ class StatusNotifierItem:  # noqa: E303
         # the app. We also don't want to do the recursive lookup with an empty
         # icon name as, otherwise, the glob will match things that are not images.
         if icon_name:
+            if icon_name == self.last_icon_name:
+                current_task().remove_done_callback(self._redraw)
+                return
+
+            self.last_icon_name = icon_name
+            self.icon = None
+
             try:
                 icon_path = await self.item.get_icon_theme_path()
             except (AttributeError, DBusError):
                 icon_path = None
 
+            icon = None
             if icon_path:
-                self.icon = self._get_custom_icon(icon_name, Path(icon_path))
+                icon = self._get_custom_icon(icon_name, Path(icon_path))
 
-            if not self.icon:
+            if icon:
+                self.icon = icon
+            else:
                 self.icon = self._get_xdg_icon(icon_name)
+        else:
+            self.icon = None
 
-        if not self.icon and fallback:
+        if fallback:
+            for icon in ["Icon", "Attention", "Overlay"]:
+                await self._get_icon(icon)
+
+        if not self.has_icons and fallback:
             # Use fallback icon libqtile/resources/status_notifier/fallback_icon.png
             logger.warning("Could not find icon for '%s'. Using fallback icon.", icon_name)
             path = Path(__file__).parent / "fallback_icon.png"
@@ -270,7 +288,6 @@ class StatusNotifierItem:  # noqa: E303
         task.add_done_callback(self._redraw)
 
     def _update_local_icon(self):
-        self.icon = None
         self._create_task_and_draw(self._get_local_icon())
 
     def _new_icon(self):

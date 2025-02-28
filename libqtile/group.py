@@ -31,7 +31,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from libqtile import hook, utils
-from libqtile.backend.base import FloatStates
 from libqtile.command.base import CommandObject, expose_command
 from libqtile.log_utils import logger
 
@@ -123,9 +122,7 @@ class _Group(CommandObject):
         """
         for index, obj in enumerate(self.layouts):
             if obj.name == layout:
-                self.current_layout = index
-                hook.fire("layout_change", self.layouts[self.current_layout], self)
-                self.layout_all()
+                self.use_layout(index)
                 return
         logger.error("No such layout: %s", layout)
 
@@ -135,8 +132,9 @@ class _Group(CommandObject):
         self.current_layout = index % len(self.layouts)
         hook.fire("layout_change", self.layouts[self.current_layout], self)
         self.layout_all()
-        screen_rect = self.screen.get_rect()
-        self.layout.show(screen_rect)
+        if self.screen is not None:
+            screen_rect = self.screen.get_rect()
+            self.layout.show(screen_rect)
 
     def use_next_layout(self):
         self.use_layout((self.current_layout + 1) % (len(self.layouts)))
@@ -144,11 +142,14 @@ class _Group(CommandObject):
     def use_previous_layout(self):
         self.use_layout((self.current_layout - 1) % (len(self.layouts)))
 
-    def layout_all(self, warp=False):
+    def layout_all(self, warp=False, focus=True):
         """Layout the floating layer, then the current layout.
 
-        If we have have a current_window give it focus, optionally moving warp
-        to it.
+        Parameters
+        ==========
+        focus :
+            If we have have a current_window give it focus, optionally moving warp
+            to it.
         """
         if self.screen and self.windows:
             with self.qtile.core.masked():
@@ -162,12 +163,13 @@ class _Group(CommandObject):
                         logger.exception("Exception in layout %s", self.layout.name)
                 if floating:
                     self.floating_layout.layout(floating, screen_rect)
-                if self.current_window and self.screen == self.qtile.current_screen:
-                    self.current_window.focus(warp)
-                else:
-                    # Screen has lost focus so we reset record of focused window so
-                    # focus will warp when screen is focused again
-                    self.last_focused = None
+                if focus:
+                    if self.current_window and self.screen == self.qtile.current_screen:
+                        self.current_window.focus(warp)
+                    else:
+                        # Screen has lost focus so we reset record of focused window so
+                        # focus will warp when screen is focused again
+                        self.last_focused = None
 
     def set_screen(self, screen, warp=True):
         """Set this group's screen to screen"""
@@ -255,23 +257,23 @@ class _Group(CommandObject):
             self.windows.append(win)
         win.group = self
         if self.qtile.config.auto_fullscreen and win.wants_to_fullscreen:
-            win._float_state = FloatStates.FULLSCREEN
+            win.fullscreen = True
         elif self.floating_layout.match(win) and not win.fullscreen:
-            win._float_state = FloatStates.FLOATING
-            if self.qtile.config.floats_kept_above:
-                win.keep_above(enable=True)
+            win.floating = True
         if win.floating and not win.fullscreen:
             self.floating_layout.add_client(win)
-        if not win.floating or win.fullscreen:
+        else:
             self.tiled_windows.add(win)
             for i in self.layouts:
                 i.add_client(win)
         if focus:
             self.focus(win, warp=True, force=force)
+        else:
+            self.layout_all(focus=False)
 
     def remove(self, win, force=False):
-        self.windows.remove(win)
         hook.fire("group_window_remove", self, win)
+        self.windows.remove(win)
         hadfocus = self._remove_from_focus_history(win)
         win.group = None
 
@@ -426,9 +428,13 @@ class _Group(CommandObject):
                 return False
             return True
 
-        groups = [group for group in self.qtile.groups if match(group)]
-        index = (groups.index(self) + direction) % len(groups)
-        return groups[index]
+        try:
+            groups = [group for group in self.qtile.groups if match(group)]
+            index = (groups.index(self) + direction) % len(groups)
+            return groups[index]
+        except ValueError:
+            # group is not managed
+            return None
 
     def get_previous_group(self, skip_empty=False, skip_managed=False):
         return self._get_group(-1, skip_empty, skip_managed)

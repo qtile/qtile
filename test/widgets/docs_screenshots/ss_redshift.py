@@ -1,4 +1,4 @@
-# Copyright (c) 2023, elParaguayo. All rights reserved.
+# Copyright (c) 2024 Saath Satheeshkumar (saths008)
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -16,35 +16,38 @@
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import pytest
 
-from libqtile.scripts.migrations import MIGRATIONS, load_migrations
-from test.test_check import have_mypy, is_cpython
-
-pytestmark = pytest.mark.skipif(not is_cpython() or not have_mypy(), reason="needs mypy")
-
-migration_tests = []
-
-# We store a list of test IDs so that tests can be filtered during development
-# e.g. pytest -k MigrationID
-migration_ids = []
-
-load_migrations()
-
-for m in MIGRATIONS:
-    tests = []
-    for i, test in enumerate(m.TESTS):
-        if not test.check:
-            continue
-        tests.append((m.ID, test))
-        migration_ids.append(f"{m.ID}-{i}")
-
-    if not tests:
-        continue
-
-    migration_tests.extend(tests)
+import libqtile.widget
+from test.widgets.test_redshift import mock_run
 
 
-@pytest.mark.parametrize("migration_tester", migration_tests, indirect=True, ids=migration_ids)
-def test_check_all_migrations(migration_tester):
-    migration_tester.assert_check()
+@pytest.fixture
+def widget(monkeypatch):
+    monkeypatch.setattr("subprocess.run", mock_run)
+    yield libqtile.widget.redshift.Redshift
+
+
+@pytest.mark.parametrize(
+    "screenshot_manager",
+    [
+        {},
+    ],
+    indirect=True,
+)
+def ss_redshift(screenshot_manager):
+    def click():
+        screenshot_manager.c.bar["top"].fake_button_press(0, 0, 1)
+
+    w = screenshot_manager.c.widget["redshift"]
+
+    screenshot_manager.take_screenshot()
+
+    click()  # Enable so scrolling works
+
+    number_of_items = 4
+    for _ in range(number_of_items):
+        screenshot_manager.take_screenshot()
+        w.scroll_up()

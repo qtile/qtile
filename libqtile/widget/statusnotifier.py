@@ -120,34 +120,25 @@ class StatusNotifier(base._Widget):
         if name in self.mouse_callbacks:
             self.mouse_callbacks[name]()
 
+    def _draw_icon(self, icon, x, y):
+        self.drawer.ctx.set_source_surface(icon, x, y)
+        self.drawer.ctx.paint()
+
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
+        xoffset = self.padding if self.bar.horizontal else (self.bar.width - self.icon_size) // 2
+        yoffset = (self.bar.height - self.icon_size) // 2 if self.bar.horizontal else self.padding
 
-        if self.bar.horizontal:
-            xoffset = self.padding
-            yoffset = (self.bar.height - self.icon_size) // 2
+        for item in self.available_icons:
+            icon = item.get_icon(self.icon_size)
+            self._draw_icon(icon, xoffset, yoffset)
 
-            for item in self.available_icons:
-                icon = item.get_icon(self.icon_size)
-                self.drawer.ctx.set_source_surface(icon, xoffset, yoffset)
-                self.drawer.ctx.paint()
-
+            if self.bar.horizontal:
                 xoffset += self.icon_size + self.padding
-
-            self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
-
-        else:
-            xoffset = (self.bar.width - self.icon_size) // 2
-            yoffset = self.padding
-
-            for item in self.available_icons:
-                icon = item.get_icon(self.icon_size)
-                self.drawer.ctx.set_source_surface(icon, xoffset, yoffset)
-                self.drawer.ctx.paint()
-
+            else:
                 yoffset += self.icon_size + self.padding
 
-            self.drawer.draw(offsety=self.offset, offsetx=self.offsetx, height=self.length)
+        self.drawer.draw(offsetx=self.offsetx, offsety=self.offsety, width=self.length)
 
     def activate(self):
         """Primary action when clicking on an icon"""
