@@ -1377,6 +1377,18 @@ class Qtile(CommandObject):
             for w in group.windows:
                 w.group = group
 
+    @expose_command()
+    def swap_screens(self, reverse = False):
+        """Rotate groups between active screens"""
+        prev_group = None
+        screens = self.screens[::-1] if reverse else self.screens
+        for screen in screens:
+            if prev_group is None:
+                prev_group = screen.group
+                continue
+            screen.set_group(prev_group)
+            self.next_screen()
+
     def find_window(self, wid: int) -> None:
         window = self.windows_map.get(wid)
         if isinstance(window, base.Window) and window.group:
