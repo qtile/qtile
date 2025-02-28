@@ -28,9 +28,9 @@ import re
 import string
 from typing import TYPE_CHECKING
 
-from dbus_next import Message, Variant
-from dbus_next.aio import MessageBus
-from dbus_next.constants import MessageType
+from dbus_fast import Message, Variant
+from dbus_fast.aio import MessageBus
+from dbus_fast.constants import MessageType
 
 from libqtile import pangocffi
 from libqtile.command.base import expose_command
@@ -107,9 +107,9 @@ class Mpris2(base._TextBox):
     Basic mouse controls are also available: button 1 = play/pause,
     scroll up = next track, scroll down = previous track.
 
-    Widget requirements: dbus-next_.
+    Widget requirements: dbus-fast_.
 
-    .. _dbus-next: https://pypi.org/project/dbus-next/
+    .. _dbus-fast: https://pypi.org/project/dbus-fast/
     """
 
     defaults = [
@@ -128,7 +128,8 @@ class Mpris2(base._TextBox):
             "{xesam:title} - {xesam:album} - {xesam:artist}",
             "Format string for displaying metadata. "
             "See http://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata/#index5h3 "
-            "for available values",
+            "for available values. The special filed '{qtile:player}' can be used to display the "
+            "player name.",
         ),
         ("separator", ", ", "Separator for metadata fields that are a list."),
         (
@@ -379,6 +380,8 @@ class Mpris2(base._TextBox):
                 self.metadata[new_key] = val
             elif isinstance(val, list):
                 self.metadata[new_key] = self.separator.join(y for y in val if isinstance(y, str))
+        if self.player is not None:
+            self.metadata["qtile:player"] = self.player
 
         return self._formatter.format(self.format, **self.metadata).replace("\n", "")
 

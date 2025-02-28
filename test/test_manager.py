@@ -230,11 +230,11 @@ def test_togroup(manager):
 def test_resize(manager):
     manager.c.screen[0].resize(x=10, y=10, w=100, h=100)
 
-    @Retry(ignore_exceptions=(AssertionError), fail_msg="Screen didn't resize")
+    @Retry(ignore_exceptions=(AssertionError))
     def run():
         d = manager.c.screen[0].info()
-        assert d["width"] == 100
-        assert d["height"] == 100
+        assert d["width"] == 100, "screen did not resize"
+        assert d["height"] == 100, "screen did not resize"
         return d
 
     d = run()
@@ -581,6 +581,23 @@ def test_nextprevgroup(manager):
     assert manager.c.group.info()["name"] == ret
     ret = manager.c.screen.prev_group()
     assert manager.c.group.info()["name"] == start
+
+
+def test_nextprevgroup_reload(manager_nospawn):
+    manager_nospawn.start(lambda: BareConfig(file_path=configs_dir / "reloading.py"))
+    # Current group will become unmanaged after reloading
+    manager_nospawn.c.eval("self.old_group = self.current_group")
+    manager_nospawn.c.reload_config()
+    # Check that group has become unmanaged
+    manager_nospawn.c.eval("self.new_group = self.current_group")
+    assert "True" == manager_nospawn.c.eval("self.old_group != self.new_group")[1]
+    # Unmanaged group should not change the group in the screen
+    success, message = manager_nospawn.c.eval("self.old_group.screen.next_group()")
+    assert "True" == manager_nospawn.c.eval("self.new_group == self.current_group")[1]
+    assert success, message
+    success, message = manager_nospawn.c.eval("self.old_group.screen.prev_group()")
+    assert "True" == manager_nospawn.c.eval("self.new_group == self.current_group")[1]
+    assert success, message
 
 
 @manager_config
@@ -1323,17 +1340,16 @@ def test_widget_duplicate_names(manager):
 
 
 @duplicate_widgets_config
-def test_widget_duplicate_warnings(logger, manager):
-    # Logging messages were created during setup so we need to access them
-    records = logger.get_records("setup")
+def test_widget_duplicate_warnings(manager):
+    records = manager.get_log_buffer().splitlines()
 
     # We need to filter out other potential log messages here
-    records = [r for r in records if r.msg.startswith("The following widgets")]
+    records = [r for r in records if "The following widgets" in r]
 
     assert len(records) == 1
 
     for w in ["prompt_1", "prompt_2", "groupbox_1", "groupbox_2", "foo_1"]:
-        assert w in records[0].msg
+        assert w in records[0]
 
     # Check this message level was info
-    assert all([r.levelno == logging.INFO for r in records])
+    assert all([r.startswith("INFO") for r in records])

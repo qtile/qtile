@@ -52,11 +52,13 @@ def run_cmd(opts) -> None:
     }
 
     graph_cmd = root.call("add_rule")
-    _, rule_id = client.send((root.selectors, graph_cmd.name, (match_args, rule_args), {}))
+    # client.send(selectors, name, args, kwargs, lifted)
+    _, rule_id = client.send((root.selectors, graph_cmd.name, (match_args, rule_args), {}, False))
 
     def remove_rule() -> None:
         cmd = root.call("remove_rule")
-        client.send((root.selectors, cmd.name, (rule_id,), {}))
+        # client.send(selectors, name, args, kwargs, lifted)
+        client.send((root.selectors, cmd.name, (rule_id,), {}, False))
 
     atexit.register(remove_rule)
 

@@ -25,6 +25,7 @@ from math import isclose
 from typing import NamedTuple
 
 from libqtile import hook
+from libqtile.backend.base import Window
 from libqtile.command.base import expose_command
 from libqtile.hook import Hook, qtile_hooks
 from libqtile.layout.base import Layout
@@ -835,6 +836,20 @@ class Plasma(Layout):
         self._focused = None
         self._add_mode = None
         Node.priority = Priority.BALANCED if self.fair else Priority.FIXED
+
+    def swap(self, c1: Window, c2: Window) -> None:
+        node_c1 = node_c2 = None
+        for leaf in self.root.all_leafs:
+            if leaf.payload is not None:
+                if c1 == leaf.payload:
+                    node_c1 = leaf
+                elif c2 == leaf.payload:
+                    node_c2 = leaf
+            if node_c1 is not None and node_c2 is not None:
+                node_c1.payload, node_c2.payload = node_c2.payload, node_c1.payload
+                self.group.layout_all()
+                self.group.focus(c1)
+                return
 
     @staticmethod
     def convert_names(tree):

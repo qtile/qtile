@@ -25,6 +25,7 @@ The objects in the command graph and command resolution on the objects
 from __future__ import annotations
 
 import abc
+import asyncio
 import inspect
 import sys
 import traceback
@@ -33,6 +34,7 @@ from typing import TYPE_CHECKING
 
 from libqtile.configurable import Configurable
 from libqtile.log_utils import logger
+from libqtile.utils import create_task
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -333,10 +335,14 @@ class CommandObject(metaclass=abc.ABCMeta):
             return False, error
 
     @expose_command()
-    def function(self, function, *args, **kwargs) -> None:
+    def function(self, function, *args, **kwargs) -> asyncio.Task | None:
         """Call a function with current object as argument"""
         try:
-            return function(self, *args, **kwargs)
+            if asyncio.iscoroutinefunction(function):
+                return create_task(function(self, *args, **kwargs))
+            else:
+                return function(self, *args, **kwargs)
         except Exception:
             error = traceback.format_exc()
             logger.error('Exception calling "%s":\n%s', function, error)
+            return None

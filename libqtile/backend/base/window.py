@@ -35,6 +35,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
         # Window.static sets this in case it is hooked to client_new to stop the
         # Window object from being managed, now that a Static is being used instead
         self.defunct: bool = False
+        self._can_steal_focus: bool = True
 
         self.base_x: int | None = None
         self.base_y: int | None = None
@@ -77,9 +78,14 @@ class _Window(CommandObject, metaclass=ABCMeta):
         return None
 
     @property
-    def can_steal_focus(self):
+    def can_steal_focus(self) -> bool:
         """Is it OK for this window to steal focus?"""
-        return True
+        return self._can_steal_focus
+
+    @can_steal_focus.setter
+    def can_steal_focus(self, can_steal_focus: bool) -> None:
+        """Can_steal_focus setter."""
+        self._can_steal_focus = can_steal_focus
 
     def has_fixed_ratio(self) -> bool:
         """Does this window want a fixed aspect ratio?"""
@@ -240,7 +246,7 @@ class Window(_Window, metaclass=ABCMeta):
 
     qtile: Qtile
 
-    # If float_x or float_y are None, the window has never floated
+    # If float_x or float_y are None, the window has never been placed
     float_x: int | None
     float_y: int | None
 
@@ -297,11 +303,6 @@ class Window(_Window, metaclass=ABCMeta):
         """Does this window want to be fullscreen?"""
         return False
 
-    @property
-    def wants_to_maximize(self) -> bool:
-        """Does this window want to be maximize?"""
-        return False
-
     def match(self, match: config._Match) -> bool:
         """Compare this window against a Match instance."""
         return match.compare(self)
@@ -318,6 +319,15 @@ class Window(_Window, metaclass=ABCMeta):
     def has_user_set_position(self) -> bool:
         """Whether this window has user-defined geometry"""
         return False
+
+    def is_placed(self) -> bool:
+        """Whether this window has been placed, i.e. both float offsets are not None."""
+        return (
+            self.group is not None
+            and self.group.screen is not None
+            and self.float_x is not None
+            and self.float_y is not None
+        )
 
     def is_transient_for(self) -> WindowType | None:
         """What window is this window a transient window for?"""

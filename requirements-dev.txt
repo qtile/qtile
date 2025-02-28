@@ -1,8 +1,9 @@
 libcst
-dbus-next
+dbus-fast
 psutil
 coverage
 pytest-cov
 tox
 pre-commit
 PyGObject
+isort

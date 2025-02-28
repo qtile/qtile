@@ -241,8 +241,8 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
     # expose actions so we need a lower-level call
     notification_with_actions = textwrap.dedent(
         """
-        from dbus_next import Variant
-        from dbus_next.constants import MessageType
+        from dbus_fast import Variant
+        from dbus_fast.constants import MessageType
 
         from libqtile.utils import _send_dbus_message, create_task
 

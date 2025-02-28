@@ -23,6 +23,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import os
+import signal
 import time
 from collections import defaultdict
 from typing import TYPE_CHECKING, cast
@@ -101,7 +102,7 @@ from libqtile.backend.wayland.output import Output
 from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
-from libqtile.utils import QtileError
+from libqtile.utils import QtileError, reap_zombies
 
 try:
     # Continue if ffi not built, so that docs can be built without wayland deps.
@@ -371,12 +372,20 @@ class Core(base.Core, wlrq.HasListeners):
             self._on_xdg_activation_v1_request_activate,
         )
 
-        # Set up XWayland
+        # Set up XWayland. wlroots wants to fork() and waitpid() for the
+        # xwayland server:
+        # https://gitlab.freedesktop.org/wlroots/wlroots/-/commit/871646d22522141c45db2c0bfa1528d595bb69df
+        # so we need to delay installing our SIGCHLD handler so they can
+        # actually waitpid(). we install it in _on_xwayland_ready() or the
+        # exception handler, whichever is executed. This can be reverted if/when:
+        # https://gitlab.freedesktop.org/wlroots/wlroots/-/merge_requests/4926
+        # is merged.
         self._xwayland: xwayland.XWayland | None = None
         try:
             self._xwayland = xwayland.XWayland(self.display, self.compositor, True)
         except RuntimeError:
             logger.info("Failed to set up XWayland. Continuing without.")
+            asyncio.get_running_loop().add_signal_handler(signal.SIGCHLD, reap_zombies)
         else:
             os.environ["DISPLAY"] = self._xwayland.display_name or ""
             logger.info("Set up XWayland with DISPLAY=%s", os.environ["DISPLAY"])
@@ -954,6 +963,7 @@ class Core(base.Core, wlrq.HasListeners):
 
     def _on_xwayland_ready(self, _listener: Listener, _data: Any) -> None:
         logger.debug("Signal: xwayland ready")
+        asyncio.get_running_loop().add_signal_handler(signal.SIGCHLD, reap_zombies)
         assert self._xwayland is not None
         self._xwayland.set_seat(self.seat)
         self.xwayland_atoms: dict[int, str] = wlrq.get_xwayland_atoms(self._xwayland)
@@ -1133,7 +1143,7 @@ class Core(base.Core, wlrq.HasListeners):
                 hook.fire("client_mouse_enter", win)
 
             if win is not self.qtile.current_window:
-                if motion is not None and self.qtile.config.follow_mouse_focus:
+                if motion is not None and self.qtile.config.follow_mouse_focus is True:
                     if isinstance(win, window.Static):
                         self.qtile.focus_screen(win.screen.index, False)
                     else:
@@ -1286,13 +1296,12 @@ class Core(base.Core, wlrq.HasListeners):
                             name = old_group[0]
                             if win.group.name == name:
                                 group = self.qtile.groups[i]
+                if win in win.group.windows:
+                    # Remove window from old group
+                    win.group.remove(win)
             if group is None:
                 # Falling back to current group if none found
                 group = self.qtile.current_group
-            if win.group and win in win.group.windows:
-                # It might not be in win.group.windows depending on how group state
-                # changed across a config reload
-                win.group.remove(win)
             group.add(win)
             if group == self.qtile.current_group:
                 win.unhide()
@@ -1695,3 +1704,7 @@ class Core(base.Core, wlrq.HasListeners):
     def get_mouse_position(self) -> tuple[int, int]:
         """Get mouse coordinates."""
         return int(self.cursor.x), int(self.cursor.y)
+
+    @property
+    def hovered_window(self) -> base.WindowType | None:
+        return self._hovered_window

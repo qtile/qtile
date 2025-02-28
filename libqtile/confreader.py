@@ -56,7 +56,7 @@ class Config:
     groups: list[Group]
     dgroups_key_binder: Any
     dgroups_app_rules: list[Rule]
-    follow_mouse_focus: bool
+    follow_mouse_focus: bool | Literal["click_or_drag_only"]
     focus_on_window_activation: Literal["focus", "smart", "urgent", "never"] | FunctionType
     cursor_warp: bool
     layouts: list[Layout]
