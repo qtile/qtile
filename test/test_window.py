@@ -335,7 +335,7 @@ def test_focus_switch(manager):
     assert manager.c.widget["windowname"].info()["text"] == "One"
 
 
-def set_steal_focus(win):
+def set_steal_focus(group, win):
     if win.name != "three":
         win.can_steal_focus = False
 
@@ -354,7 +354,7 @@ def test_can_steal_focus(manager_nospawn):
     """
 
     class AntiFocusStealConfig(BareConfig):
-        hook.subscribe.client_new(set_steal_focus)
+        hook.subscribe.group_window_add(set_steal_focus)
 
     manager_nospawn.start(AntiFocusStealConfig)
     manager_nospawn.test_window("one")

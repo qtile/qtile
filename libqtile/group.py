@@ -251,7 +251,7 @@ class _Group(CommandObject):
             screen=self.screen.index if self.screen else None,
         )
 
-    def add(self, win, focus=True, force=False):
+    def add(self, win, force=False):
         hook.fire("group_window_add", self, win)
         if win not in self.windows:
             self.windows.append(win)
@@ -266,7 +266,7 @@ class _Group(CommandObject):
             self.tiled_windows.add(win)
             for i in self.layouts:
                 i.add_client(win)
-        if focus:
+        if win.can_steal_focus:
             self.focus(win, warp=True, force=force)
         else:
             self.layout_all(focus=False)

@@ -408,11 +408,11 @@ class Prompt(base._TextBox):
             if self.active and not win == self.bar.window:
                 self._unfocus()
 
-        def prevent_focus_steal(win):
+        def prevent_focus_steal(group, win):
             if self.active:
                 win.can_steal_focus = False
 
-        hook.subscribe.client_new(prevent_focus_steal)
+        hook.subscribe.group_window_add(prevent_focus_steal)
         hook.subscribe.client_focus(f)
 
         # Define key handlers (action to do when a specific key is hit)
