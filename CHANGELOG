@@ -1,6 +1,7 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     !!! breaking changes !!!
         - Spiral layout: `shuffle_up` and `shuffle_down` commands now shuffle the focused window instead of rotating all windows.
+        - `window.can_steal_focus = False` should be set in a `group_window_add` instead of the previously recommended `client_new` hook.
     * features
         - Add TunedManager Widget to show the currently active power profile and cycle through a list of configurable power profiles
     * bugfixes
