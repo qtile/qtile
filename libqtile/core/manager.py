@@ -735,7 +735,7 @@ class Qtile(CommandObject):
         if self.current_screen and isinstance(win, base.Window):
             # Window may have been bound to a group in the hook.
             if not win.group and self.current_screen.group:
-                self.current_screen.group.add(win, focus=win.can_steal_focus)
+                self.current_screen.group.add(win)
 
         hook.fire("client_managed", win)
 
