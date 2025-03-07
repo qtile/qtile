@@ -138,13 +138,18 @@ class Battery(ServiceInterface):
         return 75
 
 
+class QtileRoot(ServiceInterface):
+    def __init__(self):
+        super().__init__("org.qtile.root")
+
+
 class Bluez:
     """Class that runs fake UPower interface."""
 
     async def start_server(self):
         """Connects to the bus and publishes 3 interfaces."""
         bus = await MessageBus().connect()
-        root = ServiceInterface("org.qtile.root")
+        root = QtileRoot()
         bus.export("/", root)
 
         unpaired_device = Device(
