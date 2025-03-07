@@ -1,4 +1,8 @@
 Qtile x.xx.x, released xxxx-xx-xx:
+    * features
+    * bugfixes
+
+Qtile 0.31.0, released 2025-03-07:
     !!! breaking changes !!!
         - Spiral layout: `shuffle_up` and `shuffle_down` commands now shuffle the focused window instead of rotating all windows.
     * features
