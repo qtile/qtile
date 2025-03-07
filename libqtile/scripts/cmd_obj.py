@@ -84,7 +84,8 @@ def print_commands(prefix: str, obj: CommandClient) -> None:
     max_cmd = max(len(pcmd) for pcmd, _ in output)
 
     # Print formatted output
-    formatting = "{:<%d}\t{}" % (max_cmd + 1)
+    formatting = f"{{:<{max_cmd + 1}}}\t{{}}"
+
     for line in output:
         print(formatting.format(line[0], line[1]))
 

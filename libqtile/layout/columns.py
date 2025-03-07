@@ -83,9 +83,7 @@ class _Column(_ClientList):
         cur = self.current
         return "_Column: " + ", ".join(
             [
-                "[%s: %d]" % (c.name, self.heights[c])
-                if c == cur
-                else "%s: %d" % (c.name, self.heights[c])
+                f"[{c.name}: {self.heights:d}]" if c == cur else f"{c.name}: {self.heights:d}"
                 for c in self.clients
             ]
         )

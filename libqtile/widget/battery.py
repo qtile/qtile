@@ -599,7 +599,7 @@ class BatteryIcon(base._Widget):
         ("battery", 0, "Which battery should be monitored"),
         ("update_interval", 60, "Seconds between status updates"),
         ("theme_path", default_icon_path(), "Path of the icons"),
-        ("scale", 1, "Scale factor relative to the bar height.  " "Defaults to 1"),
+        ("scale", 1, "Scale factor relative to the bar height.  Defaults to 1"),
         ("padding", 0, "Additional padding either side of the icon"),
     ]
 
