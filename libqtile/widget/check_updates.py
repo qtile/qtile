@@ -36,7 +36,7 @@ CMD_DICT = {
     "Gentoo_eix": ("EIX_LIMIT=0 eix -u# --world", 0),
     "Guix": ("guix upgrade --dry-run", 0),
     "Ubuntu": ("aptitude search ~U", 0),
-    "Fedora": ("dnf list updates -q", 1),
+    "Fedora": ("dnf list --upgrades -q", 1),
     "FreeBSD": ("pkg upgrade -n | awk '/\t/ { print $0 }'", 0),
     "Mandriva": ("urpmq --auto-select", 0),
     "Void": ("xbps-install -nuMS", 0),
