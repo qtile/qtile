@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import argparse
 import itertools
-import pprint
+import json
 import sys
 import textwrap
 
@@ -38,6 +38,12 @@ from libqtile.command.client import CommandClient
 from libqtile.command.graph import CommandGraphRoot
 from libqtile.command.interface import IPCCommandInterface
 from libqtile.ipc import Client, find_sockfile
+
+
+def set_to_list(obj):
+    if isinstance(obj, set):
+        return list(obj)
+    raise TypeError
 
 
 def get_formated_info(obj: CommandClient, cmd: str, args=True, short=True) -> str:
@@ -177,7 +183,7 @@ def cmd_obj(args) -> None:
         else:
             ret = run_function(obj, args.function, args.args)
             if ret is not None:
-                pprint.pprint(ret)
+                print(json.dumps(ret, indent=2, default=set_to_list))
     else:
         print_base_objects()
         sys.exit(1)
