@@ -1,5 +1,6 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
+        - Add support for `single-pixel-buffer` protocol for wayland 
     * bugfixes
 
 Qtile 0.31.0, released 2025-03-07:
