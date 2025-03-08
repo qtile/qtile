@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import json
 import os
 import re
 import subprocess
@@ -89,16 +90,18 @@ class ServerConfig(Config):
 server_config = pytest.mark.parametrize("manager", [ServerConfig], indirect=True)
 
 
-def run_qtile_cmd(args, no_eval=False):
+def run_qtile_cmd(args, no_json_loads=False):
     cmd = os.path.join(os.path.dirname(__file__), "..", "bin", "qtile")
     argv = [cmd, "cmd-obj"]
     argv.extend(args.split())
     pipe = subprocess.Popen(argv, stdout=subprocess.PIPE)
     output, _ = pipe.communicate()
     output = output.decode()
-    if no_eval:
+    if not output:
+        return False
+    if no_json_loads:
         return output
-    return eval(output)  # as returned by pprint.pprint
+    return json.loads(output)
 
 
 @server_config
@@ -166,4 +169,6 @@ def test_cmd_obj_root_node(manager):
     cmd_no_root = base
     cmd_with_root = f"{base} -o root"
 
-    assert run_qtile_cmd(cmd_no_root, no_eval=True) == run_qtile_cmd(cmd_with_root, no_eval=True)
+    assert run_qtile_cmd(cmd_no_root, no_json_loads=True) == run_qtile_cmd(
+        cmd_with_root, no_json_loads=True
+    )

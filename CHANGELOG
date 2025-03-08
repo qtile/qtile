@@ -1,4 +1,6 @@
 Qtile x.xx.x, released xxxx-xx-xx:
+    !!! breaking changes !!!
+      - Output of `qtile cmd-obj` is now in JSON.
     * features
     * bugfixes
 
