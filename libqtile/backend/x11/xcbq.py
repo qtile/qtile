@@ -402,15 +402,25 @@ class Xinerama:
 class RandR:
     def __init__(self, conn):
         self.ext = conn.conn(xcffib.randr.key)
-        self.ext.SelectInput(conn.default_screen.root.wid, xcffib.randr.NotifyMask.ScreenChange)
 
     def query_crtcs(self, root):
         infos = []
-        for crtc in self.ext.GetScreenResources(root).reply().crtcs:
-            crtc_info = self.ext.GetCrtcInfo(crtc, xcffib.CurrentTime).reply()
+        for output in self.ext.GetScreenResources(root).reply().outputs:
+            info = self.ext.GetOutputInfo(output, xcffib.CurrentTime).reply()
+
+            # ignore disconnected monitors
+            if info.connection != xcffib.randr.Connection.Connected:
+                continue
+            if not info.crtc:
+                continue
+
+            crtc_info = self.ext.GetCrtcInfo(info.crtc, xcffib.CurrentTime).reply()
 
             infos.append(ScreenRect(crtc_info.x, crtc_info.y, crtc_info.width, crtc_info.height))
         return infos
+
+    def enable_screen_change_notifications(self, conn):
+        self.ext.SelectInput(conn.default_screen.root.wid, xcffib.randr.NotifyMask.ScreenChange)
 
 
 class XFixes:
@@ -481,7 +491,9 @@ class Connection:
 
     @property
     def pseudoscreens(self):
-        if hasattr(self, "xinerama"):
+        if hasattr(self, "randr"):
+            return self.randr.query_crtcs(self.screens[0].root.wid)
+        elif hasattr(self, "xinerama"):
             pseudoscreens = []
             for i, s in enumerate(self.xinerama.query_screens()):
                 scr = ScreenRect(
@@ -492,8 +504,15 @@ class Connection:
                 )
                 pseudoscreens.append(scr)
             return pseudoscreens
-        elif hasattr(self, "randr"):
-            return self.randr.query_crtcs(self.screens[0].root.wid)
+        raise Exception("no randr or xinerama?")
+
+    def enable_screen_change_notifications(self):
+        if not hasattr(self, "randr"):
+            logger.warning(
+                "no randr configured for this X server, screen change notifications disabled"
+            )
+            return
+        self.randr.enable_screen_change_notifications(self)
 
     def finalize(self):
         self.cursors.finalize()
