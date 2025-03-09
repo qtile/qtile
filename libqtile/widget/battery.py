@@ -518,7 +518,7 @@ class Battery(base.ThreadPoolText):
 
     .. code-block:: python
 
-        Battery(..., charge_controller: lambda (0, 90))
+        Battery(..., charge_controller=lambda: (0, 90))
 
     The battery widget also supplies some charging algorithms. To only charge
     the battery between 40-50% while connected to a thunderbolt docking
@@ -527,7 +527,7 @@ class Battery(base.ThreadPoolText):
     .. code-block:: python
 
         from libqtile.widget.battery import thunderbolt_smart_charge
-        Battery(..., charge_controller: thunderbolt_smart_charge)
+        Battery(..., charge_controller=thunderbolt_smart_charge)
 
     To temporarily disable/re-enable this (e.g. if you know you're
     going mobile and need to charge) use either:

@@ -735,7 +735,7 @@ class Qtile(CommandObject):
         if self.current_screen and isinstance(win, base.Window):
             # Window may have been bound to a group in the hook.
             if not win.group and self.current_screen.group:
-                self.current_screen.group.add(win, focus=win.can_steal_focus)
+                self.current_screen.group.add(win)
 
         hook.fire("client_managed", win)
 
@@ -1324,25 +1324,25 @@ class Qtile(CommandObject):
             env.pop("VIRTUAL_ENV", None)
 
         # std{in,out,err} should be /dev/null
-        null = os.open("/dev/null", os.O_RDONLY)
-        file_actions: list[tuple] = [
-            (os.POSIX_SPAWN_DUP2, 0, null),
-            (os.POSIX_SPAWN_DUP2, 1, null),
-            (os.POSIX_SPAWN_DUP2, 2, null),
-        ]
+        with open("/dev/null") as null:
+            file_actions: list[tuple] = [
+                (os.POSIX_SPAWN_DUP2, 0, null.fileno()),
+                (os.POSIX_SPAWN_DUP2, 1, null.fileno()),
+                (os.POSIX_SPAWN_DUP2, 2, null.fileno()),
+            ]
 
-        if sys.version_info.major >= 3 and sys.version_info.minor >= 13:
-            # we should close all fds so that child processes don't
-            # accidentally write to our x11 event loop or whatever; we never
-            # used to do this, so it seems fine to only do it on python 3.13 or
-            # above, where this nice API to do it exists.
-            file_actions.append((os.POSIX_SPAWN_CLOSEFROM, 3))  # type: ignore
+            if sys.version_info.major >= 3 and sys.version_info.minor >= 13:
+                # we should close all fds so that child processes don't
+                # accidentally write to our x11 event loop or whatever; we never
+                # used to do this, so it seems fine to only do it on python 3.13 or
+                # above, where this nice API to do it exists.
+                file_actions.append((os.POSIX_SPAWN_CLOSEFROM, 3))  # type: ignore
 
-        try:
-            return os.posix_spawnp(args[0], args, env, file_actions=file_actions)
-        except OSError as e:
-            logger.warning("failed to execute: %s: %s", str(args), str(e))
-            return -1
+            try:
+                return os.posix_spawnp(args[0], args, env, file_actions=file_actions)
+            except OSError as e:
+                logger.warning("failed to execute: %s: %s", str(args), str(e))
+                return -1
 
     @expose_command()
     def status(self) -> Literal["OK"]:

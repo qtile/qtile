@@ -496,6 +496,14 @@ class _TextBox(_Widget):
             "Setting ``scroll_fixed_width=True`` will force the widget to have a fixed width, regardless of the size of the text.",
         ),
         ("rotate", True, "Rotate text in vertical bar."),
+        (
+            "direction",
+            "default",
+            "Override the text direction in vertical bar, has no effect on text in horizontal bar."
+            "default: text displayed based on vertical bar position (left/right)"
+            "ttb: text read from top to bottom, btt: text read from bottom to top."
+            "'default', 'ttb', 'btt'",
+        ),
     ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -577,6 +585,13 @@ class _TextBox(_Widget):
         _Widget._configure(self, qtile, bar)
         if self.fontsize is None:
             self.fontsize = self.bar.height - self.bar.height / 5
+        if self.direction not in ("default", "ttb", "btt"):
+            logger.warning(
+                "Invalid value set for direction: %s. Valid values are: 'default', 'ttb', 'btt'. "
+                "direction has been set to 'default'",
+                self.direction,
+            )
+            self.direction = "default"
         self.layout = self.drawer.textlayout(
             self.formatted_text,
             self.foreground,
@@ -648,12 +663,18 @@ class _TextBox(_Widget):
 
         if not self.bar.horizontal and self.rotate:
             # Left bar reads bottom to top
-            if self.bar.screen.left is self.bar:
+            # Can be overriden to read bottom to top all the time with vertical_text_direction
+            if (
+                self.bar.screen.left is self.bar and self.direction == "default"
+            ) or self.direction == "btt":
                 self.drawer.ctx.rotate(-90 * math.pi / 180.0)
                 self.drawer.ctx.translate(-self.length, 0)
 
             # Right bar is top to bottom
-            else:
+            # Can be overriden to read top to bottom all the time with vertical_text_direction
+            elif (
+                self.bar.screen.right is self.bar and self.direction == "default"
+            ) or self.direction == "ttb":
                 self.drawer.ctx.translate(self.bar.width, 0)
                 self.drawer.ctx.rotate(90 * math.pi / 180.0)
 

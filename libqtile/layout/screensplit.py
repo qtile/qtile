@@ -122,7 +122,6 @@ class ScreenSplit(Layout):
         self.layouts = {}
         self._move_win = None
         self._has_matches = None
-        print(self.splits)
         splits = []
         for s in self.splits:
             try:
@@ -131,6 +130,7 @@ class ScreenSplit(Layout):
                 raise ValueError("Splits must define 'name', 'rect' and 'layout'.")
             splits.append(split_obj)
         self.splits = splits
+        self.hooks_set = False
 
     def _should_check(self, win):
         return win not in self.layouts and self._move_win is None
@@ -182,10 +182,14 @@ class ScreenSplit(Layout):
         )
 
     def _set_hooks(self) -> None:
-        hook.subscribe.focus_change(self.focus_split)
+        if not self.hooks_set:
+            hook.subscribe.focus_change(self.focus_split)
+            self.hooks_set = True
 
     def _unset_hooks(self) -> None:
-        hook.unsubscribe.focus_change(self.focus_split)
+        if self.hooks_set:
+            hook.unsubscribe.focus_change(self.focus_split)
+            self.hooks_set = False
 
     def _match_win(self, win: Window) -> Split | None:
         for split in self.splits:

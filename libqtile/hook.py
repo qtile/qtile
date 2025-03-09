@@ -149,8 +149,8 @@ class Unsubscribe(HookHandlerCollection):
         try:
             lst.remove(func)
         except ValueError:
-            raise utils.QtileError(
-                "Tried to unsubscribe a hook that was not currently subscribed"
+            logger.warning(
+                f"Tried to unsubscribe a hook ({event}) that was not currently subscribed."
             )
 
 
@@ -497,6 +497,8 @@ hooks: list[Hook] = [
         "group_window_add",
         """Called when a new window is added to a group
 
+        This hook can for example be used for focus decisions.
+
         **Arguments**
 
             * ``Group`` receiving the new window
@@ -507,13 +509,15 @@ hooks: list[Hook] = [
         .. code:: python
 
           from libqtile import hook
-          from libqtile.utils import send_notification
+          from libqtile import qtile
 
 
           @hook.subscribe.group_window_add
           def group_window_add(group, window):
-              send_notification("qtile", f"Window {window.name} added to {group.name}")
-
+              #disallow focus steals except if there's no focus
+              if not qtile.current_window:
+                  return
+              window.can_steal_focus = False
         """,
     ),
     Hook(
@@ -546,6 +550,7 @@ hooks: list[Hook] = [
 
         Use this hook to declare windows static, or add them to a group on
         startup. This hook is not called for internal windows.
+        Use ``group_window_add`` for focus decisions.
 
         **Arguments**
 

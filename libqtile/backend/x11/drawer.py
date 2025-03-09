@@ -160,14 +160,10 @@ class Drawer(drawer.Drawer):
             self._xcb_surface = self._create_xcb_surface()
 
     def _paint(self):
-        # Only attempt to run RecordingSurface's operations if ie actually need to
-        if self.needs_update:
-            # Paint RecordingSurface operations to the XCBSurface
-            ctx = cairocffi.Context(self._xcb_surface)
-            ctx.set_source_surface(self.surface, 0, 0)
-            ctx.paint()
-
-            self.previous_rect = self.current_rect
+        # Paint RecordingSurface operations to the XCBSurface
+        ctx = cairocffi.Context(self._xcb_surface)
+        ctx.set_source_surface(self.surface, 0, 0)
+        ctx.paint()
 
     def _draw(
         self,
@@ -178,8 +174,6 @@ class Drawer(drawer.Drawer):
         src_x: int = 0,
         src_y: int = 0,
     ):
-        self.current_rect = (offsetx, offsety, width, height)
-
         # If this is our first draw, create the gc
         if self._gc is None:
             self._gc = self._create_gc()
