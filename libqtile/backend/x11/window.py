@@ -488,6 +488,7 @@ class _Window:
         self.icons = {}
         window.set_attribute(eventmask=self._window_mask)
         self._group = None
+        self._layer = -1
 
         try:
             g = self.window.get_geometry()
@@ -515,7 +516,7 @@ class _Window:
         # https://specifications.freedesktop.org/wm-spec/1.3/ar01s07.html#STACKINGORDER
         # We assume a window starts off in the layer for "normal" windows, i.e. ones that
         # don't match the requirements to be in any of the other layers.
-        self.previous_layer = (False, False, True, False, False, False)
+        self.previous_layer = -2
 
         self.bordercolor = None
         self.state = NormalState
@@ -561,6 +562,17 @@ class _Window:
     @property
     def group(self):
         return self._group
+
+    @property
+    def layer(self) -> int:
+        if self._layer < 0:
+            self._layer = self.get_layering_information()
+
+        return self._layer
+
+    @layer.setter
+    def layer(self, value: int) -> None:
+        self._layer = value
 
     def has_fixed_ratio(self) -> bool:
         try:
@@ -714,6 +726,7 @@ class _Window:
             maximized=self._float_state == FloatStates.MAXIMIZED,
             minimized=self._float_state == FloatStates.MINIMIZED,
             fullscreen=self._float_state == FloatStates.FULLSCREEN,
+            stacking_layer=self.layer,
         )
 
     @property
@@ -926,7 +939,7 @@ class _Window:
         if send_notify:
             self.send_configure_notify(x, y, width, height)
 
-    def get_layering_information(self) -> tuple[bool, bool, bool, bool, bool, bool]:
+    def get_layering_information(self) -> int:
         """
         Get layer-related EMWH-flags
         https://specifications.freedesktop.org/wm-spec/1.3/ar01s07.html#STACKINGORDER
@@ -984,10 +997,10 @@ class _Window:
 
         # ...otherwise, we set to the highest matching layer.
         # Look for the highest matching level and then set all other levels to False
-        highest = max(i for i, state in enumerate(states) if state)
+        return max(i for i, state in enumerate(states) if state)
 
         # mypy can't work out that this gives us tuple[bool, bool, bool, bool, bool, bool]...
-        return tuple(i == highest for i in range(6))  # type: ignore
+        # return tuple(i == highest for i in range(6))  # type: ignore
 
     def change_layer(self, up=True, top_bottom=False):
         """Raise a window above its peers or move it below them, depending on 'up'.
@@ -1014,11 +1027,11 @@ class _Window:
         if parent is not None and not up:
             return
 
-        layering = self.get_layering_information()
+        layering = self.layer
 
         # Comparison of layer states: -1 if window is now in a lower state group,
         # 0 if it's in the same group and 1 if it's in a higher group
-        moved = (self.previous_layer > layering) - (layering > self.previous_layer)
+        moved = (self.previous_layer < layering) - (layering < self.previous_layer)
         self.previous_layer = layering
 
         stack = list(self.qtile.core._root.query_tree())
@@ -1043,7 +1056,7 @@ class _Window:
                 lambda w: (
                     w.window,
                     w.window.get_wm_transient_for(),
-                    w.get_layering_information(),
+                    w.layer,
                 ),
                 group_windows,
             )
@@ -1056,8 +1069,8 @@ class _Window:
         windows.sort(key=lambda w: stack.index(w[0].wid))
 
         # Get lists of windows on lower, higher or same "layer" as window
-        lower = [w[0].wid for w in windows if w[2] > layering]
-        higher = [w[0].wid for w in windows if w[2] < layering]
+        lower = [w[0].wid for w in windows if w[2] < layering]
+        higher = [w[0].wid for w in windows if w[2] > layering]
         same = [w[0].wid for w in windows if w[2] == layering]
 
         # We now need to identify the new position in the stack
@@ -1199,6 +1212,8 @@ class _Window:
         # Move window's children if we were moved upwards
         if above:
             self.raise_children(stack=stack)
+
+        self.qtile.core.force_stack()
 
         self.qtile.core.update_client_lists()
 

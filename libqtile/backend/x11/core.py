@@ -38,6 +38,7 @@ from libqtile import config, hook, utils
 from libqtile.backend import base
 from libqtile.backend.x11 import window, xcbq
 from libqtile.backend.x11.xkeysyms import keysyms
+from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
@@ -954,3 +955,31 @@ class Core(base.Core):
     def hovered_window(self) -> base.WindowType | None:
         _hovered_window = self.conn.conn.core.QueryPointer(self._root.wid).reply().child
         return self.qtile.windows_map.get(_hovered_window)
+
+    @expose_command
+    def stacking_info(self, sort=True):
+        root_tree = self._root.query_tree()
+        stack = []
+        for win in root_tree:
+            if win in self.qtile.windows_map:
+                w = self.qtile.windows_map[win]
+                stack.append((win, w.name, getattr(w, "layer", -1)))
+            else:
+                stack.append((win, "Unmanaged", -1))
+
+        return stack
+
+    @expose_command
+    def force_stack(self):
+        stack = self.conn.conn.core.ConfigureWindow
+        wins = self.stacking_info()
+        wins.sort(key=lambda w: w[2])
+        previous = wins[0][0]
+        stack(previous, *xcbq.ConfigureMasks(stackmode=xcffib.xproto.StackMode.Below))
+
+        for win in wins[1:]:
+            stack(
+                win[0],
+                *xcbq.ConfigureMasks(stackmode=xcffib.xproto.StackMode.Above, sibling=previous),
+            )
+            previous = win[0]
