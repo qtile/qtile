@@ -1,18 +1,18 @@
 exclude: "test/configs/syntaxerr.py"
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.2
+    rev: v0.9.10
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.6.1
+    rev: v1.15.0
     hooks:
       - id: mypy
         additional_dependencies: ["types-python-dateutil", "types-pytz"]
         files: "^libqtile\/.*"
   - repo: https://github.com/jendrikseipp/vulture
-    rev: v2.10
+    rev: v2.14
     hooks:
       - id: vulture

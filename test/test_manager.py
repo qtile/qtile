@@ -540,12 +540,10 @@ def test_delgroup(manager):
 
 @manager_config
 def test_nextprevgroup(manager):
-    start = manager.c.group.info()["name"]
-    ret = manager.c.screen.next_group()
-    assert manager.c.group.info()["name"] != start
-    assert manager.c.group.info()["name"] == ret
-    ret = manager.c.screen.prev_group()
-    assert manager.c.group.info()["name"] == start
+    manager.c.screen.next_group()
+    assert manager.c.group.info()["name"] == "b"
+    manager.c.screen.prev_group()
+    assert manager.c.group.info()["name"] == "a"
 
 
 def test_nextprevgroup_reload(manager_nospawn):
