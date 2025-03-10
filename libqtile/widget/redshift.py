@@ -80,8 +80,7 @@ class Redshift(_TextBox):
         (
             "brightness",
             1.0,
-            "Redshift brightness. "
-            "Brightness has a lower bound of 0.1 and an upper bound of 1.0",
+            "Redshift brightness. Brightness has a lower bound of 0.1 and an upper bound of 1.0",
         ),
         ("brightness_step", 0.1, "The amount to increase/decrease the brightness by. "),
         (
@@ -417,7 +416,9 @@ class Redshift(_TextBox):
         assert (
             self.brightness >= self.brightness_lower_lim
             and self.brightness <= self.brightness_upper_lim
-        ), f"redshift: self.brightness is not initialised within the acceptable range, see the widget defaults docs: {self.brightness}"
+        ), (
+            f"redshift: self.brightness is not initialised within the acceptable range, see the widget defaults docs: {self.brightness}"
+        )
 
     def _assert_gamma(self) -> GammaGroup:
         """
@@ -432,9 +433,9 @@ class Redshift(_TextBox):
         ]
         gamma_group = GammaGroup(self.gamma_red, self.gamma_green, self.gamma_blue)
         for _, val in enumerate(gamma_vals):
-            assert (
-                val >= self.gamma_lower_lim and val <= self.gamma_upper_lim
-            ), f"redshift: self.gamma_red, self.gamma_green or self.gamma_blue have not been initialised within the acceptable range, see the docs: {gamma_group}"
+            assert val >= self.gamma_lower_lim and val <= self.gamma_upper_lim, (
+                f"redshift: self.gamma_red, self.gamma_green or self.gamma_blue have not been initialised within the acceptable range, see the docs: {gamma_group}"
+            )
 
         return gamma_group
 
@@ -446,7 +447,9 @@ class Redshift(_TextBox):
         assert (
             self.temperature >= self.temperature_lower_lim
             and self.temperature <= self.temperature_upper_lim
-        ), f"redshift: self.temperature is not initialised within the acceptable range, see the docs: {self.temperature}"
+        ), (
+            f"redshift: self.temperature is not initialised within the acceptable range, see the docs: {self.temperature}"
+        )
 
     @expose_command
     def reset_redshift(self):

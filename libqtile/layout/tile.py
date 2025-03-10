@@ -75,13 +75,12 @@ class Tile(_SimpleLayoutBase):
         (
             "expand",
             True,
-            "Expand the master windows to the full screen width if no slaves " "are present.",
+            "Expand the master windows to the full screen width if no slaves are present.",
         ),
         (
             "ratio_increment",
             0.05,
-            "By which amount to change ratio when decrease_ratio or "
-            "increase_ratio are called.",
+            "By which amount to change ratio when decrease_ratio or increase_ratio are called.",
         ),
         (
             "add_on_top",
@@ -92,7 +91,7 @@ class Tile(_SimpleLayoutBase):
         (
             "add_after_last",
             False,
-            "Add new clients after all the others. If this is True, it " "overrides add_on_top.",
+            "Add new clients after all the others. If this is True, it overrides add_on_top.",
         ),
         (
             "shift_windows",

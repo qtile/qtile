@@ -56,8 +56,7 @@ class ThermalSensor(base.ThreadPoolText):
         (
             "threshold",
             70,
-            "If the current temperature value is above, "
-            "then change to foreground_alert colour",
+            "If the current temperature value is above, then change to foreground_alert colour",
         ),
         ("foreground_alert", "ff0000", "Foreground colour alert"),
     ]

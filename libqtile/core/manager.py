@@ -221,6 +221,7 @@ class Qtile(CommandObject):
         faulthandler.register(signal.SIGUSR2, all_threads=True)
 
         try:
+            signals: dict[signal.Signals, Callable]
             signals = {
                 signal.SIGTERM: self.stop,
                 signal.SIGINT: self.stop,
@@ -1336,7 +1337,7 @@ class Qtile(CommandObject):
                 # accidentally write to our x11 event loop or whatever; we never
                 # used to do this, so it seems fine to only do it on python 3.13 or
                 # above, where this nice API to do it exists.
-                file_actions.append((os.POSIX_SPAWN_CLOSEFROM, 3))  # type: ignore
+                file_actions.append((os.POSIX_SPAWN_CLOSEFROM, 3))
 
             try:
                 return os.posix_spawnp(args[0], args, env, file_actions=file_actions)
