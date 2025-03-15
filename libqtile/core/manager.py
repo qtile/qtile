@@ -1332,11 +1332,13 @@ class Qtile(CommandObject):
                 (os.POSIX_SPAWN_DUP2, 2, null.fileno()),
             ]
 
-            if sys.version_info.major >= 3 and sys.version_info.minor >= 13:
+            # this API is only available on python 3.13 or above, and only on platforms
+            # where posix_spawn_file_actions_addclosefrom_np() exists (only glibc on Linux).
+            if hasattr(os, "POSIX_SPAWN_CLOSEFROM"):
                 # we should close all fds so that child processes don't
                 # accidentally write to our x11 event loop or whatever; we never
-                # used to do this, so it seems fine to only do it on python 3.13 or
-                # above, where this nice API to do it exists.
+                # used to do this, so it seems fine to only do it where this nice
+                # API to do it exists.
                 file_actions.append((os.POSIX_SPAWN_CLOSEFROM, 3))
 
             try:
