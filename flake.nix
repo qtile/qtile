@@ -6,7 +6,10 @@
   };
 
   outputs =
-    { self, nixpkgs }:
+    {
+      self,
+      nixpkgs,
+    }:
     let
       supportedSystems = [
         "x86_64-linux"
@@ -29,6 +32,8 @@
 
     in
     {
+      formatter = forAllSystems (pkgs: pkgs.nixfmt-rfc-style);
+
       checks = forAllSystems (pkgs: pkgs.python3Packages.qtile.passthru.tests);
 
       overlays.default = import ./nix/overlays.nix self;
@@ -139,6 +144,8 @@
               [
                 (python3.withPackages common-python-deps)
                 pre-commit
+                cabal-install
+                ghc
               ]
               ++ common-system-deps;
           };
