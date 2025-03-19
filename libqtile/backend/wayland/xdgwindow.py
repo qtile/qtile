@@ -245,6 +245,7 @@ class XdgWindow(Window[XdgSurface]):
         above: bool = False,
         margin: int | list[int] | None = None,
         respect_hints: bool = False,
+        scale: float | None = None,
     ) -> None:
         # Adjust the placement to account for layout margins, if there are any.
         if margin is not None:

@@ -289,7 +289,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         if self.window:
             # We get _configure()-ed with an existing window when screens are getting
             # reconfigured but this screen is present both before and after
-            self.window.place(self.x, self.y, width, height, 0, None)
+            self.window.place(self.x, self.y, width, height, 0, None, scale=screen.scale)
 
         else:
             # Whereas we won't have a window if we're startup up for the first time or
@@ -306,11 +306,13 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 )
 
                 self.window = qtile.core.create_internal(  # type: ignore [call-arg]
-                    self.x, self.y, width, height, depth
+                    self.x, self.y, width, height, desired_depth=depth
                 )
 
             else:
-                self.window = qtile.core.create_internal(self.x, self.y, width, height)
+                self.window = qtile.core.create_internal(
+                    self.x, self.y, width, height, scale=screen.scale
+                )
 
             self.window.opacity = self.opacity
             self.window.unhide()

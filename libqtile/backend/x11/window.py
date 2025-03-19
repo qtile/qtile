@@ -832,6 +832,7 @@ class _Window:
         above=False,
         margin=None,
         respect_hints=False,
+        scale=None,
     ):
         """
         Places the window at the specified location with the given size.

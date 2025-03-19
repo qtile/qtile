@@ -383,19 +383,24 @@ class ScreenRect:
     y: int
     width: int
     height: int
+    scale: float | None = None
 
     def hsplit(self, columnwidth: int) -> tuple[ScreenRect, ScreenRect]:
         assert 0 < columnwidth < self.width
         return (
-            self.__class__(self.x, self.y, columnwidth, self.height),
-            self.__class__(self.x + columnwidth, self.y, self.width - columnwidth, self.height),
+            self.__class__(self.x, self.y, columnwidth, self.height, self.scale),
+            self.__class__(
+                self.x + columnwidth, self.y, self.width - columnwidth, self.height, self.scale
+            ),
         )
 
     def vsplit(self, rowheight: int) -> tuple[ScreenRect, ScreenRect]:
         assert 0 < rowheight < self.height
         return (
-            self.__class__(self.x, self.y, self.width, rowheight),
-            self.__class__(self.x, self.y + rowheight, self.width, self.height - rowheight),
+            self.__class__(self.x, self.y, self.width, rowheight, self.scale),
+            self.__class__(
+                self.x, self.y + rowheight, self.width, self.height - rowheight, self.scale
+            ),
         )
 
 
@@ -439,6 +444,7 @@ class Screen(CommandObject):
         y: int | None = None,
         width: int | None = None,
         height: int | None = None,
+        scale: float | None = None,
     ) -> None:
         self.top = top
         self.bottom = bottom
@@ -455,6 +461,7 @@ class Screen(CommandObject):
         self.y = y if y is not None else 0
         self.width = width if width is not None else 0
         self.height = height if height is not None else 0
+        self.scale = scale
         self.previous_group: _Group | None = None
 
     def _configure(
@@ -467,6 +474,7 @@ class Screen(CommandObject):
         height: int,
         group: _Group,
         reconfigure_gaps: bool = False,
+        scale: float | None = None,
     ) -> None:
         self.qtile = qtile
         self.index = index
@@ -474,6 +482,7 @@ class Screen(CommandObject):
         self.y = y
         self.width = width
         self.height = height
+        self.scale = scale
 
         for i in self.gaps:
             i._configure(qtile, self, reconfigure=reconfigure_gaps)
@@ -534,7 +543,7 @@ class Screen(CommandObject):
         return val
 
     def get_rect(self) -> ScreenRect:
-        return ScreenRect(self.dx, self.dy, self.dwidth, self.dheight)
+        return ScreenRect(self.dx, self.dy, self.dwidth, self.dheight, self.scale)
 
     def set_group(
         self, new_group: _Group | None, save_prev: bool = True, warp: bool = True
@@ -654,7 +663,7 @@ class Screen(CommandObject):
             w = self.width
         if h is None:
             h = self.height
-        self._configure(self.qtile, self.index, x, y, w, h, self.group)
+        self._configure(self.qtile, self.index, x, y, w, h, self.group, scale=self.scale)
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
                 bar.draw()

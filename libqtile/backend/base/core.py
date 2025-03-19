@@ -95,7 +95,15 @@ class Core(CommandObject, metaclass=ABCMeta):
         """A context manager to suppress window events while operating on many windows."""
         yield
 
-    def create_internal(self, x: int, y: int, width: int, height: int) -> Internal:
+    def create_internal(
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        *,
+        scale: float | None = None,
+    ) -> Internal:
         """Create an internal window controlled by Qtile."""
         raise NotImplementedError  # Only error when called, not when instantiating class
 

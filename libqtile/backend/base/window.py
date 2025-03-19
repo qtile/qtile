@@ -123,6 +123,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
         above=False,
         margin=None,
         respect_hints=False,
+        scale=None,
     ):
         """Place the window in the given position."""
 
