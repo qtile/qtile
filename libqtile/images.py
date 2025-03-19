@@ -159,12 +159,12 @@ class Img:
         self.path = path
 
     def _reset(self):
-        attrs = ("surface", "pattern")
-        for attr in attrs:
-            try:
-                delattr(self, attr)
-            except AttributeError:
-                pass
+        if hasattr(self, "surface"):
+            self.surface.finish()
+            del self.surface
+        if hasattr(self, "pattern"):
+            # patterns do not need to be finish()ed, only surfaces do
+            del self.pattern
 
     @classmethod
     def from_path(cls, image_path):
