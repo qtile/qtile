@@ -468,6 +468,16 @@ class Battery(base.ThreadPoolText):
         ("low_percentage", 0.10, "Indicates when to use the low_foreground color 0 < x < 1"),
         ("low_foreground", "FF0000", "Font color on low battery"),
         ("low_background", None, "Background color on low battery"),
+        (
+            "charging_foreground",
+            "00FF00",
+            "Font color on charging battery. Set to None to disable.",
+        ),
+        (
+            "charging_background",
+            None,
+            "Background color on charging battery. Set to None to disable.",
+        ),
         ("update_interval", 60, "Seconds between status updates"),
         ("battery", 0, "Which battery should be monitored (battery number or name)"),
         ("notify_below", None, "Send a notification below this battery level."),
@@ -554,6 +564,9 @@ class Battery(base.ThreadPoolText):
             if status.state == BatteryState.DISCHARGING and status.percent < self.low_percentage:
                 self.layout.colour = self.low_foreground
                 self.background = self.low_background
+            elif status.state == BatteryState.CHARGING:
+                self.layout.colour = self.charging_foreground or self.foreground
+                self.background = self.charging_background or self.normal_background
             else:
                 self.layout.colour = self.foreground
                 self.background = self.normal_background
