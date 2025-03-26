@@ -470,7 +470,7 @@ class Battery(base.ThreadPoolText):
         ("low_background", None, "Background color on low battery"),
         (
             "charging_foreground",
-            "00FF00",
+            None,
             "Font color on charging battery. Set to None to disable.",
         ),
         (
