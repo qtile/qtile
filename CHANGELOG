@@ -3,6 +3,7 @@ Qtile x.xx.x, released xxxx-xx-xx:
       - Output of `qtile cmd-obj` is now in JSON.
     * features
         - Add support for `single-pixel-buffer` protocol for wayland 
+        - Add charging foreground/background colors to Battery widget
     * bugfixes
       - `window.can_steal_focus = False` should be set in a `group_window_add` instead of the previously recommended `client_new` hook.
 
