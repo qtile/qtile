@@ -454,3 +454,33 @@ def test_low_foreground(fake_qtile, fake_window, monkeypatch):
 
     batt.poll()
     assert batt.layout.colour == low_foreground
+
+
+def test_no_charging_foreground(fake_qtile, fake_window, monkeypatch):
+    foreground = "#dddddd"
+    charging_foreground = None
+    low_foreground = "#ff0000"
+
+    loaded_bat = BatteryStatus(
+        state=BatteryState.CHARGING,
+        percent=0.5,
+        power=15.0,
+        time=1729,
+        charge_start_threshold=0,
+        charge_end_threshold=100,
+    )
+
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
+        batt = Battery(
+            foreground=foreground,
+            low_foreground=low_foreground,
+            charging_foreground=charging_foreground,
+            low_percentage=0.3,
+        )
+
+        fakebar = FakeBar([batt], window=fake_window)
+        batt._configure(fake_qtile, fakebar)
+
+    batt.poll()
+    assert batt.layout.colour == foreground
