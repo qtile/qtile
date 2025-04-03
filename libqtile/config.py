@@ -693,6 +693,21 @@ class Screen(CommandObject):
         """Set the wallpaper to the given file."""
         self.paint(path, mode)
 
+    def get_joining_edge(self, screen2: Screen) -> tuple[int, int, int, int] | None:
+        """
+        Returns a tuple of the coordinates of the border where the screen touches another screen.
+
+        Returns None if screens are not adjacent.
+        """
+        x1 = max(self.x, screen2.x)
+        y1 = max(self.y, screen2.y)
+        x2 = min(self.x + self.width, screen2.x + screen2.width)
+        y2 = min(self.y + self.height, screen2.y + screen2.height)
+        if x1 > x2 or y1 > y2:
+            return None
+
+        return (x1, y1, x2, y2)
+
 
 class Group:
     """
