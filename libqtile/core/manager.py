@@ -742,20 +742,16 @@ class Qtile(CommandObject):
     def unmanage(self, wid: int) -> None:
         c = self.windows_map.get(wid)
         if c:
-            group = None
+            # Fire the hook before removing the group from the window so hooked
+            # functions can access it
+            hook.fire("client_killed", c)
             if isinstance(c, base.Static):
                 if c.reserved_space:
                     self.free_reserved_space(c.reserved_space, c.screen)
             elif isinstance(c, base.Window):
                 if c.group:
-                    group = c.group
                     c.group.remove(c)
             del self.windows_map[wid]
-
-            if isinstance(c, base.Window):
-                # Put the group back on the window so hooked functions can access it.
-                c.group = group
-            hook.fire("client_killed", c)
 
     def find_screen(self, x: int, y: int) -> Screen | None:
         """Find a screen based on the x and y offset"""
