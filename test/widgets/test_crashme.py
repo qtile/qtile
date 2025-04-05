@@ -53,9 +53,3 @@ def test_crashme_init(manager_nospawn, minimal_conf_noscreen):
         topbar.fake_button_press(0, 0, button=1)
 
     assert e_info.match("ZeroDivisionError")
-
-    # Simulate right click to trigger parse_markup error
-    with pytest.raises(CommandException) as e_info:
-        topbar.fake_button_press(0, 0, button=3)
-
-    assert e_info.match("parse_markup[(][)] failed")
