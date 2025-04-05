@@ -457,6 +457,39 @@ class Screen(CommandObject):
         self.height = height if height is not None else 0
         self.previous_group: _Group | None = None
 
+    def __eq__(self, other: object) -> bool:
+        # When we trigger a reconfigure_screens(), _process_screens()
+        # re-creates the Screen() objects. Since we only replace qtile.screens,
+        # groups, widgets, etc. which have saved a reference to the Screen
+        # object will cause comparisons to fail even if a Screen object after
+        # reconfiguration represents the same geometry area, which is generally
+        # not what people expect.
+        #
+        # For example, this happens here:
+        # https://github.com/qtile/qtile/blob/42e03cdb6bbb6d88f0fd58927c6ec6258f625961/libqtile/group.py#L167-L168
+        # which does:
+        #
+        #     if self.current_window and self.screen == self.qtile.current_screen:
+        #         self.current_window.focus(warp)
+        #
+        # This will fail, because the group's object is stale, and we will not
+        # focus things correctly. This is one example, but there are several
+        # other object trees that save copies of the current screen.
+        #
+        # One problem with this approach is: if the reconfigure_screens() event
+        # comes as a result of a geometry change, this comparison will still
+        # fail. To fix this, we need to uniquely identify each Screen, which we
+        # can do via EDID info in some future work. For now, this makes things
+        # better than it was :)
+        if not isinstance(other, Screen):
+            return False
+        return (
+            other.x == self.x
+            and other.y == self.y
+            and other.width == self.width
+            and other.height == self.height
+        )
+
     def _configure(
         self,
         qtile: Qtile,
