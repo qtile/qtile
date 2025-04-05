@@ -38,6 +38,7 @@ import typing
 import cairocffi
 
 from libqtile import pangocffi, utils
+from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
     from libqtile.backend.base import Internal
@@ -400,8 +401,11 @@ class TextLayout:
             # pangocffi doesn't like None here, so we use "".
             if value is None:
                 value = ""
-            attrlist, value, accel_char = pangocffi.parse_markup(value)
-            self.layout.set_attributes(attrlist)
+            try:
+                attrlist, value, accel_char = pangocffi.parse_markup(value)
+                self.layout.set_attributes(attrlist)
+            except pangocffi.BadMarkup:
+                logger.warning("parse_markup() failed for {value}")
         self.layout.set_text(utils.scrub_to_utf8(value))
 
     @property
