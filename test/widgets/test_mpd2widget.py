@@ -39,6 +39,7 @@ class MockMPD(ModuleType):
             {"title": "Sweet Caroline", "artist": "Neil Diamond"},
             {"title": "Marea", "artist": "Fred Again.."},
             {},
+            {"title": "Sweden", "performer": "C418"},
         ]
 
         def __init__(self):
@@ -81,7 +82,6 @@ class MockMPD(ModuleType):
             self._status["state"] = "pause"
 
         def play(self):
-            print("PLAYING")
             self._status["state"] = "play"
 
         def stop(self):
@@ -105,8 +105,8 @@ class MockMPD(ModuleType):
 
 @pytest.fixture
 def mpd2_manager(manager_nospawn, monkeypatch, minimal_conf_noscreen, request):
-    # monkeypatch.setattr("libqtile.widget.mpd2widget.MPDClient", MockMPDClient)
     monkeypatch.setitem(sys.modules, "mpd", MockMPD("mpd"))
+    monkeypatch.setattr("libqtile.widget.mpd2widget.MPDClient", MockMPD.MPDClient)
 
     config = minimal_conf_noscreen
     config.screens = [
@@ -127,39 +127,39 @@ def test_mpd2_widget_display_and_actions(mpd2_manager):
     assert widget.info()["text"] == "⏸ Rick Astley/Never gonna give you up [-----]"
 
     # Button 1 toggles state
-    mpd2_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+    mpd2_manager.c.bar["top"].fake_button_press(0, 0, 1)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "▶ Rick Astley/Never gonna give you up [-----]"
 
     # Button 3 stops
-    mpd2_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 3)
+    mpd2_manager.c.bar["top"].fake_button_press(0, 0, 3)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "■ Rick Astley/Never gonna give you up [-----]"
 
     # Button 1 toggles state
-    mpd2_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+    mpd2_manager.c.bar["top"].fake_button_press(0, 0, 1)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "▶ Rick Astley/Never gonna give you up [-----]"
 
-    mpd2_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 1)
+    mpd2_manager.c.bar["top"].fake_button_press(0, 0, 1)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "⏸ Rick Astley/Never gonna give you up [-----]"
 
     # Button 5 is "next"
-    mpd2_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 5)
+    mpd2_manager.c.bar["top"].fake_button_press(0, 0, 5)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "⏸ Neil Diamond/Sweet Caroline [-----]"
 
-    mpd2_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 5)
+    mpd2_manager.c.bar["top"].fake_button_press(0, 0, 5)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "⏸ Fred Again../Marea [-----]"
 
     # Button 4 is previous
-    mpd2_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 4)
+    mpd2_manager.c.bar["top"].fake_button_press(0, 0, 4)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "⏸ Neil Diamond/Sweet Caroline [-----]"
 
-    mpd2_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, 4)
+    mpd2_manager.c.bar["top"].fake_button_press(0, 0, 4)
     widget.eval("self.update(self.poll())")
     assert widget.info()["text"] == "⏸ Rick Astley/Never gonna give you up [-----]"
 
@@ -191,7 +191,26 @@ def test_mpd2_widget_idle_message(mpd2_manager):
 @pytest.mark.parametrize(
     "mpd2_manager", [{"status_format": "{currentsong}: {artist}/{title}"}], indirect=True
 )
-def test_mpd_widget_current_song(mpd2_manager):
+def test_mpd2_widget_current_song(mpd2_manager):
     """Quick test to check currentsong info"""
     widget = mpd2_manager.c.widget["mpd2"]
     assert widget.info()["text"] == "1: Rick Astley/Never gonna give you up"
+
+
+@pytest.mark.parametrize(
+    "mpd2_manager",
+    [{"undefined_value": "Unknown", "status_format": "{title} ({year})"}],
+    indirect=True,
+)
+def test_mpd2_widget_custom_undefined_value(mpd2_manager):
+    """Quick test to check undefined_value option"""
+    widget = mpd2_manager.c.widget["mpd2"]
+    assert widget.info()["text"] == "Never gonna give you up (Unknown)"
+
+
+def test_mpd2_widget_dynamic_artist_value(mpd2_manager):
+    """Quick test to check dynamic artist value"""
+    widget = mpd2_manager.c.widget["mpd2"]
+    widget.eval("self.client._index = 4")
+    widget.eval("self.update(self.poll())")
+    assert widget.info()["text"] == "⏸ C418/Sweden [-----]"

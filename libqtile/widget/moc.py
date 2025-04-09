@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2015, zordsdavini
 #
 # This program is free software: you can redistribute it and/or modify
@@ -86,13 +85,13 @@ class Moc(base.ThreadPoolText):
             title = info["SongTitle"]
             artist = info["Artist"]
             if title and artist:
-                now_playing = "♫ {0} - {1}".format(artist, title)
+                now_playing = f"♫ {artist} - {title}"
             elif title:
-                now_playing = "♫ {0}".format(title)
+                now_playing = f"♫ {title}"
             else:
                 basename = os.path.basename(info["File"])
                 filename = os.path.splitext(basename)[0]
-                now_playing = "♫ {0}".format(filename)
+                now_playing = f"♫ {filename}"
 
             if self.status == "STOP":
                 now_playing = "♫"

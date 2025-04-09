@@ -6,103 +6,63 @@ on:
 
 jobs:
     build:
-        runs-on: ubuntu-20.04
-        name: "python ${{ matrix.python-version }}"
-        env:
-          WAYLAND: 1.20.0
-          WAYLAND_PROTOCOLS: 1.24
-          WLROOTS: 0.15.0
-          SEATD: 0.6.3
-          LIBDRM: 2.4.109
+        runs-on: ubuntu-24.04
+        name: "python ${{ matrix.python-version }} on ${{ matrix.backend }}"
         strategy:
             matrix:
                 # If you change one of these, be sure to update:
                 # - /tox.ini:[gh-actions]
-                # - /setup.cfg:[mypy]
-                # - /libqtile/scripts/check.py mypy argument
+                # - /pyproject.toml:[tool.mypy]
                 # If adding new python versions, consider also updating
                 # python version in .readthedocs.yaml
-                python-version: [pypy-3.9, 3.9, '3.10', '3.11']
+                # TODO: Add back pypy here and in release.yml once:
+                # https://github.com/pypy/pypy/issues/4956 is resolved
+                python-version: ['3.10', '3.11', '3.12', '3.13']
+                backend: ['x11', 'wayland']
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v4
             - name: Set up python ${{ matrix.python-version }}
-              uses: actions/setup-python@v2
+              uses: actions/setup-python@v5
               with:
                   python-version: ${{ matrix.python-version }}
             - name: Install dependencies
               run: |
                 sudo apt update
+                # Any Wayland-specific Ubuntu system dependencies should be installed from ./scripts/ubuntu_wayland_setup
                 sudo apt install --no-install-recommends \
                   libdbus-1-dev libgirepository1.0-dev gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-gudev-1.0 graphviz \
-                  imagemagick libpulse-dev git xserver-xephyr xterm xvfb ninja-build libegl1-mesa-dev \
-                  libgles2-mesa-dev libgbm-dev libinput-dev libxkbcommon-dev libpixman-1-dev libpciaccess-dev \
-                  dbus-x11 libnotify-bin \
-                  xwayland libxcb-composite0-dev libxcb-icccm4-dev libxcb-res0-dev \
-                  libxcb-render0-dev libxcb-res0-dev libxcb-xfixes0-dev vlc volumeicon-alsa
-                sudo pip -q install meson PyGObject
-                pip -q install "tox<4" tox-gh-actions 
-            - name: Build wayland
-              run: |
-                wget -q --no-check-certificate https://wayland.freedesktop.org/releases/wayland-$WAYLAND.tar.xz
-                tar -xJf wayland-$WAYLAND.tar.xz
-                cd wayland-$WAYLAND
-                meson build -Ddocumentation=false --prefix=/usr
-                ninja -C build
-                sudo ninja -C build install
-            - name: Build wayland-protocols
-              run: |
-                wget -q --no-check-certificate https://wayland.freedesktop.org/releases/wayland-protocols-$WAYLAND_PROTOCOLS.tar.xz
-                tar -xJf wayland-protocols-$WAYLAND_PROTOCOLS.tar.xz
-                cd wayland-protocols-$WAYLAND_PROTOCOLS
-                meson build -Dtests=false --prefix=/usr
-                ninja -C build
-                sudo ninja -C build install
-            - name: Build seatd
-              run: |
-                wget -q --no-check-certificate https://git.sr.ht/~kennylevinsen/seatd/archive/$SEATD.tar.gz
-                tar -xzf $SEATD.tar.gz
-                cd seatd-$SEATD
-                meson build --prefix=/usr
-                ninja -C build
-                sudo ninja -C build install
-            - name: Build libdrm
-              run: |
-                wget -q --no-check-certificate https://gitlab.freedesktop.org/mesa/drm/-/archive/libdrm-$LIBDRM/drm-libdrm-$LIBDRM.tar.gz
-                tar -xzf drm-libdrm-$LIBDRM.tar.gz
-                cd drm-libdrm-$LIBDRM
-                meson build --prefix=/usr
-                ninja -C build
-                sudo ninja -C build install
-            - name: Build wlroots
-              run: |
-                wget -q --no-check-certificate https://gitlab.freedesktop.org/wlroots/wlroots/-/archive/$WLROOTS/wlroots-$WLROOTS.tar.gz
-                tar -xzf wlroots-$WLROOTS.tar.gz
-                cd wlroots-$WLROOTS
-                meson build -Dexamples=false --prefix=/usr -Dxwayland=enabled
-                ninja -C build
-                sudo ninja -C build install
+                  imagemagick git xserver-xephyr xterm xvfb dbus-x11 libnotify-bin \
+                  libxcb-composite0-dev libxcb-icccm4-dev libxcb-res0-dev libxcb-render0-dev libxcb-res0-dev \
+                  libxcb-xfixes0-dev vlc volumeicon-alsa libxkbcommon-dev python-gi-dev tox libcairo2-dev \
+                  gir1.2-gdkpixbuf-2.0 librsvg2-dev
+                pip -q install --break-system-packages tox-gh-actions
+            - name: Install wayland
+              if: ${{ matrix.backend == 'wayland' }}
+              run: bash -x ./scripts/ubuntu_wayland_setup
             - name: Run Tests
               run: |
                 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
                 tox
+              env:
+                BACKEND: ${{ matrix.backend }}
             - name: Upload coverage data to coveralls.io
-              # For speed purposes, we don't do coverage reporting on pypy 3.9
-              if: ${{ matrix.python-version != 'pypy-3.9' }}
+              continue-on-error: true
               run: |
-                pip -q install coveralls
+                pip -q install coveralls >=3.3.0
                 coveralls --service=github
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
+                COVERALLS_FLAG_NAME: ${{ format('{0}-{1}', matrix.python-version, matrix.backend) }}
                 COVERALLS_PARALLEL: true
+                COVERALLS_SERVICE_JOB_ID: ${{ github.run_id }}
 
     coverage:
         name: Finalize Coverage
         needs: build
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-24.04
         steps:
             - name: Coveralls Finished
-              uses: coverallsapp/github-action@master
+              uses: coverallsapp/github-action@main
               with:
                 github-token: ${{ secrets.GITHUB_TOKEN }}
                 parallel-finished: true

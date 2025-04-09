@@ -1,5 +1,6 @@
-from .surfaces import Surface as Surface
 from typing import Any
+
+from .surfaces import Surface as Surface
 
 class XCBSurface(Surface):
     def __init__(

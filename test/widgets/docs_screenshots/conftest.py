@@ -31,6 +31,14 @@ from libqtile.command.base import expose_command
 from libqtile.config import Group, Screen
 
 
+@pytest.fixture(scope="function")
+def vertical(request):
+    yield getattr(request, "param", False)
+
+
+vertical_bar = pytest.mark.parametrize("vertical", [True], indirect=True)
+
+
 @pytest.fixture(scope="session")
 def target():
     folder = Path(__file__).parent / "screenshots"
@@ -94,7 +102,7 @@ def target():
 
 
 @pytest.fixture
-def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, target):
+def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, target, vertical):
     """
     Create a manager instance for the screenshots. Individual "tests" should only call
     `screenshot_manager.take_screenshot()` but the destination path is also available in
@@ -120,13 +128,19 @@ def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, 
             # We need the widget's name to be the name of the inherited class
             self.name = widget_class.__name__.lower()
 
+        def _configure(self, bar, screen):
+            widget_class._configure(self, bar, screen)
+
+            # By setting `has_mirrors` to True, the drawer will keep a copy of the latest
+            # contents in a separate RecordingSurface which we can access for our screenshots.
+            self.drawer.has_mirrors = True
+
         @expose_command()
         def take_screenshot(self, target):
             if not self.configured:
                 return
 
-            # Screenshots only run on X11
-            source = self.drawer._xcb_surface
+            source = self.drawer.last_surface
 
             dest = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, self.width, self.height)
             with cairocffi.Context(dest) as ctx:
@@ -136,6 +150,13 @@ def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, 
             dest.write_to_png(target)
 
     class ScreenshotBar(Bar):
+        def _configure(self, qtile, screen, **kwargs):
+            Bar._configure(self, qtile, screen, **kwargs)
+
+            # By setting `has_mirrors` to True, the drawer will keep a copy of the latest
+            # contents in a separate RecordingSurface which we can access for our screenshots.
+            self.drawer.has_mirrors = True
+
         @expose_command()
         def take_screenshot(self, target, x=0, y=0, width=None, height=None):
             """Takes a screenshot of the bar. The area can be selected."""
@@ -148,19 +169,16 @@ def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, 
             if height is None:
                 height = self.drawer.height
 
-            # Screenshots only run on X11
-            source = "_xcb_surface"
-
             # Widgets aren't drawn to the bar's drawer so we first need to render them all to a single surface
             bar_copy = cairocffi.ImageSurface(
                 cairocffi.FORMAT_ARGB32, self.drawer.width, self.drawer.height
             )
             with cairocffi.Context(bar_copy) as ctx:
-                ctx.set_source_surface(getattr(self.drawer, source))
+                ctx.set_source_surface(self.drawer.last_surface)
                 ctx.paint()
 
                 for i in self.widgets:
-                    ctx.set_source_surface(getattr(i.drawer, source), i.offsetx, i.offsety)
+                    ctx.set_source_surface(i.drawer.last_surface, i.offsetx, i.offsety)
                     ctx.paint()
 
             # Then we copy the desired area to our destination surface
@@ -180,11 +198,16 @@ def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, 
     def filename():
         return target(name, config)
 
+    # define bars
+    position = "left" if vertical else "top"
+    bar1 = {position: ScreenshotBar([wdgt], 32)}
+    bar2 = {position: ScreenshotBar([], 32)}
+
     # Add the widget to our config
     minimal_conf_noscreen.groups = [Group(i) for i in "123456789"]
     minimal_conf_noscreen.fake_screens = [
-        Screen(top=ScreenshotBar([wdgt], 32), x=0, y=0, width=300, height=300),
-        Screen(top=ScreenshotBar([], 32), x=0, y=300, width=300, height=300),
+        Screen(**bar1, x=0, y=0, width=300, height=300),
+        Screen(**bar2, x=0, y=300, width=300, height=300),
     ]
 
     manager_nospawn.start(minimal_conf_noscreen)
@@ -195,3 +218,7 @@ def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, 
     manager_nospawn.take_screenshot = lambda f=filename: ss_widget.take_screenshot(f())
 
     yield manager_nospawn
+
+
+def widget_config(params):
+    return pytest.mark.parametrize("screenshot_manager", params, indirect=True)

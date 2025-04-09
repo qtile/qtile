@@ -21,24 +21,15 @@ class Builder(NamedTuple):
 
 
 scripts = [
-    Builder("Pango interface", "./libqtile/pango_ffi_build.py", None),
     Builder(
-        "xcursors",
-        "./libqtile/backend/x11/xcursors_ffi_build.py",
-        "X11 backend",
-    ),
-    Builder("PulseAudio interface", "./libqtile/widget/pulseaudio_ffi.py", "PulseVolume widget"),
-    Builder(
-        "Wayland libinput interface",
-        "./libqtile/backend/wayland/libinput_ffi_build.py",
-        "Wayland backend input configurability",
+        "Wayland CFFI",
+        "./libqtile/backend/wayland/cffi/build.py",
+        "Wayland backend",
     ),
 ]
 
 
 def build(builder: Builder, verbose: bool) -> bool:
-    print("Building", builder.name)
-
     p = run(["python3", builder.path], capture_output=True)
 
     if p.returncode:

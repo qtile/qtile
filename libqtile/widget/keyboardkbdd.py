@@ -22,8 +22,6 @@
 
 import re
 
-from dbus_next.constants import MessageType
-
 from libqtile.log_utils import logger
 from libqtile.utils import add_signal_receiver
 from libqtile.widget import base
@@ -35,9 +33,9 @@ class KeyboardKbdd(base.ThreadPoolText):
     kbdd should be installed and running, you can get it from:
     https://github.com/qnikst/kbdd
 
-    The widget also requires dbus-next_.
+    The widget also requires dbus-fast_.
 
-    .. _dbus-next: https://pypi.org/project/dbus-next/
+    .. _dbus-fast: https://pypi.org/project/dbus-fast/
     """
 
     defaults = [
@@ -90,9 +88,6 @@ class KeyboardKbdd(base.ThreadPoolText):
             logger.warning("Could not subscribe to kbdd signal.")
 
     def _signal_received(self, message):
-        if message.message_type != MessageType.SIGNAL:
-            return
-
         self._layout_changed(*message.body)
 
     def _layout_changed(self, layout_changed):

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2011 Florian Mounier
 # Copyright (c) 2012, 2015 Tycho Andersen
 # Copyright (c) 2013 Tao Sauvage
@@ -22,13 +21,25 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 """
 Slice layout. Serves as example of delegating layouts (or sublayouts)
 """
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from libqtile.backend.base import Window
 from libqtile.command.base import expose_command
+from libqtile.config import ScreenRect
 from libqtile.layout.base import Layout
 from libqtile.layout.max import Max
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from typing import Any, Self
+
+    from libqtile.group import _Group
 
 
 class Single(Layout):
@@ -46,8 +57,9 @@ class Single(Layout):
         assert self.window is None
         self.window = window
 
-    def remove(self, window):
-        assert self.window is window
+    def remove(self, window: Window) -> None:
+        if self.window is not window:
+            raise ValueError("Cannot remove, window not managed by layout")
         self.window = None
 
     def configure(self, window, screen_rect):
@@ -71,36 +83,36 @@ class Single(Layout):
         """
         return self.window is None
 
-    def focus_first(self):
+    def focus_first(self) -> Window | None:
         self.focused = True
         return self.window
 
-    def focus_last(self):
+    def focus_last(self) -> Window | None:
         self.focused = True
         return self.window
 
-    def focus_next(self, window):
+    def focus_next(self, window: Window) -> Window | None:
         if self.focused:
             self.focused = False
             return None
         return self.window
 
-    def focus_previous(self, window):
+    def focus_previous(self, window: Window) -> Window | None:
         if self.focused:
             self.focused = False
             return None
         return self.window
 
-    def next(self):
+    def next(self) -> None:
         pass
 
-    def previous(self):
+    def previous(self) -> None:
         pass
 
     def get_windows(self):
         return self.window
 
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = Layout.info(self)
         d["window"] = self.window.name if self.window else ""
         return d
@@ -120,13 +132,15 @@ class Slice(Layout):
         ("fallback", Max(), "Layout to be used for the non-slice area."),
     ]
 
+    fallback: Layout
+
     def __init__(self, **config):
         self.layouts = {}
         Layout.__init__(self, **config)
         self.add_defaults(Slice.defaults)
         self._slice = Single()
 
-    def clone(self, group):
+    def clone(self, group: _Group) -> Self:
         res = Layout.clone(self, group)
         res._slice = self._slice.clone(group)
         res.fallback = self.fallback.clone(group)
@@ -152,7 +166,7 @@ class Slice(Layout):
         for lay, wins in grouped.items():
             lay.layout(wins, mapping[lay])
 
-    def layout(self, windows, screen_rect):
+    def layout(self, windows: Sequence[Window], screen_rect: ScreenRect) -> None:
         win, sub = self._get_screen_rects(screen_rect)
         self.delegate_layout(
             windows,
@@ -162,7 +176,7 @@ class Slice(Layout):
             },
         )
 
-    def show(self, screen_rect):
+    def show(self, screen_rect: ScreenRect) -> None:
         win, sub = self._get_screen_rects(screen_rect)
         self._slice.show(win)
         self.fallback.show(sub)
@@ -197,7 +211,7 @@ class Slice(Layout):
             self.fallback.add_client(win)
             self.layouts[win] = self.fallback
 
-    def remove(self, win):
+    def remove(self, win: Window) -> Window:
         lay = self.layouts.pop(win)
         focus = lay.remove(win)
         if not focus:
@@ -208,32 +222,34 @@ class Slice(Layout):
                 focus = layouts[idx].focus_first()
         return focus
 
-    def hide(self):
+    def hide(self) -> None:
         for lay in self._get_layouts():
             lay.hide()
 
     def focus(self, win):
         self.layouts[win].focus(win)
 
-    def blur(self):
+    def blur(self) -> None:
         for lay in self._get_layouts():
             lay.blur()
 
-    def focus_first(self):
+    def focus_first(self) -> Window | None:
         layouts = self._get_layouts()
         for lay in layouts:
             win = lay.focus_first()
             if win:
                 return win
+        return None
 
-    def focus_last(self):
+    def focus_last(self) -> None:
         layouts = self._get_layouts()
         for lay in reversed(layouts):
             win = lay.focus_last()
             if win:
                 return win
+        return None
 
-    def focus_next(self, win):
+    def focus_next(self, win: Window) -> Window | None:
         layouts = self._get_layouts()
         cur = self.layouts[win]
         focus = cur.focus_next(win)
@@ -244,7 +260,7 @@ class Slice(Layout):
                 focus = layouts[idx].focus_first()
         return focus
 
-    def focus_previous(self, win):
+    def focus_previous(self, win: Window) -> Window | None:
         layouts = self._get_layouts()
         cur = self.layouts[win]
         focus = cur.focus_previous(win)
@@ -268,11 +284,11 @@ class Slice(Layout):
         return super().__getattr__(name)
 
     @expose_command()
-    def next(self):
+    def next(self) -> None:
         self.fallback.next()
 
     @expose_command()
-    def previous(self):
+    def previous(self) -> None:
         self.fallback.previous()
 
     @expose_command()
@@ -310,7 +326,7 @@ class Slice(Layout):
         self.group.layout_all()
 
     @expose_command()
-    def info(self):
+    def info(self) -> dict[str, Any]:
         d = Layout.info(self)
         for layout in self._get_layouts():
             d[layout.name] = layout.info()
