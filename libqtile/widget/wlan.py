@@ -25,6 +25,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import subprocess
+
 import iwlib
 
 from libqtile.log_utils import logger
@@ -39,6 +41,28 @@ def get_status(interface_name):
     quality = interface["stats"]["quality"]
     essid = bytes(interface["ESSID"]).decode()
     return essid, quality
+
+
+def get_private_ip(interface_name):
+    try:
+        result = subprocess.run(
+            ["ip", "-brief", "addr", "show", "dev", interface_name],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError:
+        logger.exception(f"Couldn't get the IP for {interface_name}:")
+        return "N/A"
+
+    output = result.stdout.strip()
+    parts = output.split()
+    if len(parts) > 2 and parts[1] == "UP":
+        ip_address = parts[2].split("/")[0]
+        if ":" not in ip_address:
+            return ip_address
+
+    return "N/A"
 
 
 class Wlan(base.InLoopPollText):
@@ -82,8 +106,12 @@ class Wlan(base.InLoopPollText):
         try:
             essid, quality = get_status(self.interface)
             disconnected = essid is None
-            if disconnected:
+            ipaddr = "N/A"
+            if not disconnected:
+                ipaddr = get_private_ip(self.interface)
+            else:
                 if self.use_ethernet:
+                    ipaddr = get_private_ip(self.ethernet_interface)
                     try:
                         with open(
                             f"/sys/class/net/{self.ethernet_interface}/operstate"
@@ -100,7 +128,10 @@ class Wlan(base.InLoopPollText):
                 else:
                     return self.disconnected_message
             return self.format.format(
-                essid=markup_escape_text(essid), quality=quality, percent=(quality / 70)
+                essid=markup_escape_text(essid),
+                quality=quality,
+                percent=(quality / 70),
+                ipaddr=ipaddr,
             )
         except OSError:
             logger.error(
