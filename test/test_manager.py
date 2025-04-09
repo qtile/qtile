@@ -180,28 +180,28 @@ def test_to_screen(manager):
 
 
 @multi_screen_manager_config
-def test_swap_screens(manager):
-    assert self.c.screen.info()["index"] == 0
-    self.c.to_screen(1)
-    assert self.c.screen.info()["index"] == 1
-    self.test_window("one")
-    self.c.to_screen(0)
-    self.test_window("two")
+def test_shift_groups_between_screens(manager):
+    assert manager.c.screen.info()["index"] == 0
+    manager.c.to_screen(1)
+    assert manager.c.screen.info()["index"] == 1
+    manager.test_window("one")
+    manager.c.to_screen(0)
+    manager.test_window("two")
 
-    ga = self.c.groups()["a"]
+    ga = manager.c.groups()["a"]
     assert ga["windows"] == ["two"]
 
-    gb = self.c.groups()["b"]
+    gb = manager.c.groups()["b"]
     assert gb["windows"] == ["one"]
 
-    self.c.swap_screens()
+    manager.c.swap_screens()
     assert ga["windows"] == ["one"]
     assert gb["windows"] == ["two"]
-    assert self.c.window.info()["name"] == "one"
-    self.c.swap_screens()
+    assert manager.c.window.info()["name"] == "one"
+    manager.c.swap_screens()
     assert ga["windows"] == ["one"]
     assert gb["windows"] == ["two"]
-    assert self.c.window.info()["name"] == "one"
+    assert manager.c.window.info()["name"] == "one"
 
 
 @dualmonitor
