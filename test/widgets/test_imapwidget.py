@@ -88,14 +88,9 @@ def test_imapwidget_keyring_error(fake_qtile, monkeypatch, fake_window, patched_
     fakebar = FakeBar([imap], window=fake_window)
     imap._configure(fake_qtile, fakebar)
     text = imap.poll()
-    assert text == "Gnome Keyring Error"
+    assert text == "No password error"
 
 
-# Widget does not handle "password = None" elegantly.
-# It logs a message but doesn't set self.password.
-# The widget will then fail when it looks up this attribute and then
-# fail again when it tries to return self.text.
-# TO DO: Fix widget's handling of this scenario.
 def test_imapwidget_password_none(fake_qtile, monkeypatch, fake_window, patched_imap):
     patched_imap.keyring.valid = False
     patched_imap.keyring.error = False
@@ -103,6 +98,5 @@ def test_imapwidget_password_none(fake_qtile, monkeypatch, fake_window, patched_
     imap = patched_imap.ImapWidget(user="qtile")
     fakebar = FakeBar([imap], window=fake_window)
     imap._configure(fake_qtile, fakebar)
-    with pytest.raises(AttributeError):
-        with pytest.raises(UnboundLocalError):
-            imap.poll()
+    text = imap.poll()
+    assert text == "No password error"
