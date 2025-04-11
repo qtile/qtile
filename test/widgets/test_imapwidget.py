@@ -82,6 +82,16 @@ def test_imapwidget(fake_qtile, monkeypatch, fake_window, patched_imap):
     assert text == "INBOX: 2"
 
 
+def test_imapwidget_with_password(fake_qtile, monkeypatch, fake_window, patched_imap):
+    # keyring should not be called
+    patched_imap.keyring.valid = False
+    imap = patched_imap.ImapWidget(user="qtile", password="password")
+    fakebar = FakeBar([imap], window=fake_window)
+    imap._configure(fake_qtile, fakebar)
+    text = imap.poll()
+    assert text == "INBOX: 2"
+
+
 def test_imapwidget_keyring_error(fake_qtile, monkeypatch, fake_window, patched_imap):
     patched_imap.keyring.valid = False
     imap = patched_imap.ImapWidget(user="qtile")
