@@ -41,14 +41,13 @@ class Wallpaper(base._TextBox):
         (
             "random_selection",
             False,
-            "If set, use random initial wallpaper and " "randomly cycle through the wallpapers.",
+            "If set, use random initial wallpaper and randomly cycle through the wallpapers.",
         ),
         ("label", None, "Use a fixed label instead of image name."),
         (
             "option",
             "fill",
-            "How to fit the wallpaper when wallpaper_command is"
-            "None. None, 'fill' or 'stretch'.",
+            "How to fit the wallpaper when wallpaper_command isNone. None, 'fill' or 'stretch'.",
         ),
     ]
 

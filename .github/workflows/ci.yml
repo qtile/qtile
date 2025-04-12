@@ -30,7 +30,7 @@ jobs:
                 sudo apt update
                 # Any Wayland-specific Ubuntu system dependencies should be installed from ./scripts/ubuntu_wayland_setup
                 sudo apt install --no-install-recommends \
-                  libdbus-1-dev libgirepository1.0-dev gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-gudev-1.0 graphviz \
+                  libdbus-1-dev libgirepository-2.0-dev gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-gudev-1.0 graphviz \
                   imagemagick git xserver-xephyr xterm xvfb dbus-x11 libnotify-bin \
                   libxcb-composite0-dev libxcb-icccm4-dev libxcb-res0-dev libxcb-render0-dev libxcb-res0-dev \
                   libxcb-xfixes0-dev vlc volumeicon-alsa libxkbcommon-dev python-gi-dev tox libcairo2-dev \

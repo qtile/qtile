@@ -579,6 +579,16 @@ class Battery(base.ThreadPoolText):
         ("low_percentage", 0.10, "Indicates when to use the low_foreground color 0 < x < 1"),
         ("low_foreground", "FF0000", "Font color on low battery"),
         ("low_background", None, "Background color on low battery"),
+        (
+            "charging_foreground",
+            None,
+            "Font color on charging battery. Set to None to disable.",
+        ),
+        (
+            "charging_background",
+            None,
+            "Background color on charging battery. Set to None to disable.",
+        ),
         ("update_interval", 60, "Seconds between status updates"),
         (
             "battery",
@@ -669,6 +679,9 @@ class Battery(base.ThreadPoolText):
             if status.state == BatteryState.DISCHARGING and status.percent < self.low_percentage:
                 self.layout.colour = self.low_foreground
                 self.background = self.low_background
+            elif status.state == BatteryState.CHARGING:
+                self.layout.colour = self.charging_foreground or self.foreground
+                self.background = self.charging_background or self.normal_background
             else:
                 self.layout.colour = self.foreground
                 self.background = self.normal_background
@@ -714,7 +727,7 @@ class BatteryIcon(base._Widget):
         ("battery", 0, "Which battery should be monitored"),
         ("update_interval", 60, "Seconds between status updates"),
         ("theme_path", default_icon_path(), "Path of the icons"),
-        ("scale", 1, "Scale factor relative to the bar height.  " "Defaults to 1"),
+        ("scale", 1, "Scale factor relative to the bar height.  Defaults to 1"),
         ("padding", 0, "Additional padding either side of the icon"),
     ]
 

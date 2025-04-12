@@ -170,6 +170,10 @@ class FontDescription:
         return pango.pango_font_description_get_size(self._pointer)
 
 
+class BadMarkup(Exception):
+    pass
+
+
 def parse_markup(value, accel_marker=0):
     attr_list = ffi.new("PangoAttrList**")
     text = ffi.new("char**")
@@ -179,7 +183,7 @@ def parse_markup(value, accel_marker=0):
     ret = pango.pango_parse_markup(value, -1, accel_marker, attr_list, text, ffi.NULL, error)
 
     if ret == 0:
-        raise Exception(f"parse_markup() failed for {value}")
+        raise BadMarkup(f"parse_markup() failed for {value}")
 
     return attr_list[0], ffi.string(text[0]), chr(accel_marker)
 

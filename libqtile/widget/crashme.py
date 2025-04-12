@@ -53,5 +53,3 @@ class _CrashMe(base._TextBox):
     def button_press(self, x, y, button):
         if button == 1:
             1 / 0
-        elif button == 3:
-            self.text = "<span>\xc3GError"

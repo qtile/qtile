@@ -139,7 +139,7 @@ class Node:
     def __repr__(self):
         info = self.payload or ""
         if self:
-            info += " +%d" % len(self)
+            info += f" +{len(self):d}"
         return f"<Node {info} {id(self):x}>"
 
     # Define dunder methods to treat Node objects like an iterable

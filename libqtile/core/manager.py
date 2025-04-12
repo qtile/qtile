@@ -30,7 +30,6 @@ import shlex
 import shutil
 import signal
 import subprocess
-import sys
 import tempfile
 from collections import defaultdict
 from logging.handlers import RotatingFileHandler
@@ -221,6 +220,7 @@ class Qtile(CommandObject):
         faulthandler.register(signal.SIGUSR2, all_threads=True)
 
         try:
+            signals: dict[signal.Signals, Callable]
             signals = {
                 signal.SIGTERM: self.stop,
                 signal.SIGINT: self.stop,
@@ -742,20 +742,16 @@ class Qtile(CommandObject):
     def unmanage(self, wid: int) -> None:
         c = self.windows_map.get(wid)
         if c:
-            group = None
+            # Fire the hook before removing the group from the window so hooked
+            # functions can access it
+            hook.fire("client_killed", c)
             if isinstance(c, base.Static):
                 if c.reserved_space:
                     self.free_reserved_space(c.reserved_space, c.screen)
             elif isinstance(c, base.Window):
                 if c.group:
-                    group = c.group
                     c.group.remove(c)
             del self.windows_map[wid]
-
-            if isinstance(c, base.Window):
-                # Put the group back on the window so hooked functions can access it.
-                c.group = group
-            hook.fire("client_killed", c)
 
     def find_screen(self, x: int, y: int) -> Screen | None:
         """Find a screen based on the x and y offset"""
@@ -1331,12 +1327,14 @@ class Qtile(CommandObject):
                 (os.POSIX_SPAWN_DUP2, 2, null.fileno()),
             ]
 
-            if sys.version_info.major >= 3 and sys.version_info.minor >= 13:
+            # this API is only available on python 3.13 or above, and only on platforms
+            # where posix_spawn_file_actions_addclosefrom_np() exists (only glibc on Linux).
+            if hasattr(os, "POSIX_SPAWN_CLOSEFROM"):
                 # we should close all fds so that child processes don't
                 # accidentally write to our x11 event loop or whatever; we never
-                # used to do this, so it seems fine to only do it on python 3.13 or
-                # above, where this nice API to do it exists.
-                file_actions.append((os.POSIX_SPAWN_CLOSEFROM, 3))  # type: ignore
+                # used to do this, so it seems fine to only do it where this nice
+                # API to do it exists.
+                file_actions.append((os.POSIX_SPAWN_CLOSEFROM, 3))
 
             try:
                 return os.posix_spawnp(args[0], args, env, file_actions=file_actions)

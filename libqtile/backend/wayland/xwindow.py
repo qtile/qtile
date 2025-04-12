@@ -128,6 +128,9 @@ class XWindow(Window[xwayland.Surface]):
             self.core.pending_windows.add(self)
             self._wid = -1
             # Restore the listeners that we set up in __init__
+            self.add_listener(self.surface.associate_event, self._on_associate)
+            self.add_listener(self.surface.dissociate_event, self._on_dissociate)
+            self.add_listener(self.surface.request_activate_event, self._on_request_activate)
             self.add_listener(self.surface.request_configure_event, self._on_request_configure)
             self.add_listener(self.surface.destroy_event, self._on_destroy)
 
