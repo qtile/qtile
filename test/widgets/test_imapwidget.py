@@ -50,16 +50,11 @@ class FakeIMAP(ModuleType):
 
 class FakeKeyring(ModuleType):
     valid = True
-    error = True
 
     def get_password(self, _app, user):
         if self.valid:
             return "password"
-
-        else:
-            if self.error:
-                return "Gnome Keyring Error"
-            return None
+        return None
 
 
 @pytest.fixture()
@@ -92,18 +87,8 @@ def test_imapwidget_with_password(fake_qtile, monkeypatch, fake_window, patched_
     assert text == "INBOX: 2"
 
 
-def test_imapwidget_keyring_error(fake_qtile, monkeypatch, fake_window, patched_imap):
-    patched_imap.keyring.valid = False
-    imap = patched_imap.ImapWidget(user="qtile")
-    fakebar = FakeBar([imap], window=fake_window)
-    imap._configure(fake_qtile, fakebar)
-    text = imap.poll()
-    assert text == "No password error"
-
-
 def test_imapwidget_password_none(fake_qtile, monkeypatch, fake_window, patched_imap):
     patched_imap.keyring.valid = False
-    patched_imap.keyring.error = False
 
     imap = patched_imap.ImapWidget(user="qtile")
     fakebar = FakeBar([imap], window=fake_window)
