@@ -347,7 +347,7 @@ def test_charge_control_disabled(fake_qtile, fake_window, monkeypatch):
 def test_charge_control_force_charge(fake_qtile, fake_window, monkeypatch):
     start = 4
     end = 7
-    bat = 0
+    bat = 0  # multiple batteries support
 
     def save_battery_percentage(self, charge_start_threshold, charge_end_threshold, bat):
         nonlocal start
