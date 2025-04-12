@@ -93,7 +93,7 @@ class ImapWidget(base.ThreadPoolText):
 
     def poll(self):
         im = imaplib.IMAP4_SSL(self.server, 993)
-        if self.password == None:
+        if self.password is None:
             text = "No password error"
         else:
             im.login(self.user, self.password)
