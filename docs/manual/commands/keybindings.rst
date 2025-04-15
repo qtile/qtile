@@ -11,6 +11,7 @@ Default configuration
 .. LS_PNG
 .. image:: /_static/keybindings/mod4.png
 .. image:: /_static/keybindings/mod4-shift.png
+.. image:: /_static/keybindings/control-mod1.png
 .. image:: /_static/keybindings/mod4-control.png
 .. END_LS_PNG
 
