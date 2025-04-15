@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 # Copyright (c) 2020 Himanshu Chauhan
 # Copyright (c) 2020 Stephan Ehlers
 #
@@ -27,7 +26,7 @@ from urllib.parse import urlencode
 from libqtile.widget.generic_poll_text import GenPollUrl
 
 # See documentation: https://openweathermap.org/current
-QUERY_URL = "http://api.openweathermap.org/data/2.5/weather?"
+QUERY_URL = "https://api.openweathermap.org/data/2.5/weather?"
 DEFAULT_APP_ID = "7834197c2338888258f8cb94ae14ef49"
 
 
@@ -290,7 +289,7 @@ class OpenWeather(GenPollUrl):
         try:
             rp = _OpenWeatherResponseParser(response, self.dateformat, self.timeformat)
         except OpenWeatherResponseError as e:
-            return "Error {}".format(e.resp_code)
+            return f"Error {e.resp_code}"
 
         data = rp.data
         data["units_temperature"] = "C" if self.metric else "F"

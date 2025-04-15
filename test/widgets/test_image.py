@@ -100,7 +100,7 @@ def test_no_scale(manager_nospawn, minimal_conf_noscreen):
     assert info["widgets"][0]["width"] == 24
 
 
-def test_no_image(manager_nospawn, minimal_conf_noscreen, logger):
+def test_no_image(manager_nospawn, minimal_conf_noscreen):
     img = widget.Image()
 
     config = minimal_conf_noscreen
@@ -108,10 +108,10 @@ def test_no_image(manager_nospawn, minimal_conf_noscreen, logger):
 
     manager_nospawn.start(config)
 
-    assert "Image filename not set!" in logger.text
+    assert "Image filename not set!" in manager_nospawn.get_log_buffer()
 
 
-def test_invalid_path(manager_nospawn, minimal_conf_noscreen, logger):
+def test_invalid_path(manager_nospawn, minimal_conf_noscreen):
     filename = "/made/up/file.png"
     img = widget.Image(filename=filename)
 
@@ -120,4 +120,4 @@ def test_invalid_path(manager_nospawn, minimal_conf_noscreen, logger):
 
     manager_nospawn.start(config)
 
-    assert f"Image does not exist: {filename}" in logger.text
+    assert f"Image does not exist: {filename}" in manager_nospawn.get_log_buffer()

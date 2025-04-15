@@ -32,6 +32,21 @@ class Net(base.ThreadPoolText):
     """
     Displays interface down and up speed
 
+    The following fields are available in the `format` string:
+
+    - ``interface``: name of the interface
+    - ``down``: download speed
+    - ``down_suffix``: suffix for the download speed
+    - ``down_cumulative``: cumulative download traffic
+    - ``down_cumulative_suffix``: suffix for the cumulative download traffic
+    - ``up``: upload speed
+    - ``up_suffix``: suffix for the upload speed
+    - ``up_cumulative``: cumulative upload traffic
+    - ``up_cumulative_suffix``: suffix for the cumulative upload traffic
+    - ``total``: total speed
+    - ``total_suffix``: suffix for the total speed
+    - ``total_cumulative``: cumulative total traffic
+    - ``total_cumulative_suffix``: suffix for the cumulative total traffic
 
     Widget requirements: psutil_.
 
@@ -53,6 +68,11 @@ class Net(base.ThreadPoolText):
         ("update_interval", 1, "The update interval."),
         ("use_bits", False, "Use bits instead of bytes per second?"),
         ("prefix", None, "Use a specific prefix for the unit of the speed."),
+        (
+            "cumulative_prefix",
+            None,
+            "Use a specific prefix for the unit of the cumulative traffic.",
+        ),
     ]
 
     def __init__(self, **config):
@@ -78,23 +98,23 @@ class Net(base.ThreadPoolText):
                 self.interface = [self.interface]
             else:
                 raise AttributeError(
-                    "Invalid Argument passed: %s\nAllowed Types: list, str, None" % self.interface
+                    f"Invalid Argument passed: {self.interface}\nAllowed Types: list, str, None"
                 )
         self.stats = self.get_stats()
 
-    def convert_b(self, num_bytes: float) -> tuple[float, str]:
+    def convert_b(self, num_bytes: float, prefix: str | None = None) -> tuple[float, str]:
         """Converts the number of bytes to the correct unit"""
 
         num_bytes *= self.byte_multiplier
 
-        if self.prefix is None:
+        if prefix is None:
             if num_bytes > 0:
                 power = int(log(num_bytes) / log(self.factor))
                 power = min(power, len(self.units) - 1)
             else:
                 power = 0
         else:
-            power = self.allowed_prefixes.index(self.prefix)
+            power = self.allowed_prefixes.index(prefix)
 
         converted_bytes = num_bytes / self.factor**power
         unit = self.units[power]
@@ -135,19 +155,34 @@ class Net(base.ThreadPoolText):
                 down = down / self.update_interval
                 up = up / self.update_interval
                 total = total / self.update_interval
-                down, down_suffix = self.convert_b(down)
-                up, up_suffix = self.convert_b(up)
-                total, total_suffix = self.convert_b(total)
+                down, down_suffix = self.convert_b(down, self.prefix)
+                down_cumulative, down_cumulative_suffix = self.convert_b(
+                    new_stats[intf]["down"], self.cumulative_prefix
+                )
+                up, up_suffix = self.convert_b(up, self.prefix)
+                up_cumulative, up_cumulative_suffix = self.convert_b(
+                    new_stats[intf]["up"], self.cumulative_prefix
+                )
+                total, total_suffix = self.convert_b(total, self.prefix)
+                total_cumulative, total_cumulative_suffix = self.convert_b(
+                    new_stats[intf]["total"], self.cumulative_prefix
+                )
                 self.stats[intf] = new_stats[intf]
                 ret_stat.append(
                     self.format.format(
                         interface=intf,
                         down=down,
                         down_suffix=down_suffix,
+                        down_cumulative=down_cumulative,
+                        down_cumulative_suffix=down_cumulative_suffix,
                         up=up,
                         up_suffix=up_suffix,
+                        up_cumulative=up_cumulative,
+                        up_cumulative_suffix=up_cumulative_suffix,
                         total=total,
                         total_suffix=total_suffix,
+                        total_cumulative=total_cumulative,
+                        total_cumulative_suffix=total_cumulative_suffix,
                     )
                 )
 

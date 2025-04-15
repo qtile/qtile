@@ -40,8 +40,7 @@ for m in MIGRATIONS:
         migration_ids.append(f"{m.ID}-{i}")
 
     if not tests:
-        tests.append((m.ID, None))
-        migration_ids.append(f"{m.ID}-no-check-test")
+        continue
 
     migration_tests.extend(tests)
 

@@ -27,11 +27,9 @@ from libqtile.lazy import lazy
 # Config with multiple keys and when checks
 class WhenConfig(Config):
     keys = [
-        config.Key(
-            ["control"],
-            "k",
-            lazy.window.toggle_floating(),
-        ),
+        config.Key(["control"], "k", lazy.window.toggle_floating()),
+        config.Key(["control"], "p", lazy.window.toggle_floating().when(when_floating=True)),
+        config.Key(["control"], "o", lazy.window.toggle_floating().when(when_floating=False)),
         config.Key(
             ["control"],
             "j",
@@ -82,6 +80,14 @@ def test_when(manager):
     # This sets the window tiled as the class does match
     manager.c.simulate_keypress(["control"], "j")
     assert not manager.c.window.info()["floating"]
+
+    # This keeps the window tiled as window is not floating
+    manager.c.simulate_keypress(["control"], "p")
+    assert not manager.c.window.info()["floating"]
+
+    # This sets the window floating as window is not floating
+    manager.c.simulate_keypress(["control"], "o")
+    assert manager.c.window.info()["floating"]
 
     # Kill the window to create an empty group
     manager.kill_window(one)

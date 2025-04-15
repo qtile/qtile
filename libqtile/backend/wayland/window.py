@@ -65,7 +65,7 @@ if typing.TYPE_CHECKING:
 S = typing.TypeVar("S", bound=PtrHasData)
 
 
-@functools.lru_cache()
+@functools.lru_cache
 def _rgb(color: ColorType) -> ffi.CData:
     """Helper to create and cache float[4] arrays for border painting"""
     if isinstance(color, ffi.CData):
@@ -287,7 +287,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             group = self.qtile.current_group
         else:
             if group_name not in self.qtile.groups_map:
-                raise CommandError("No such group: %s" % group_name)
+                raise CommandError(f"No such group: {group_name}")
             group = self.qtile.groups_map[group_name]
 
         if self.group is group:
@@ -301,7 +301,17 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             if self.group.screen:
                 # for floats remove window offset
                 self.x -= self.group.screen.x
+            group_ref = self.group
             self.group.remove(self)
+            # delete groups with `persist=False`
+            if (
+                not self.qtile.dgroups.groups_map[group_ref.name].persist
+                and len(group_ref.windows) <= 1
+            ):
+                # set back original group so _del() can grab it
+                self.group = group_ref
+                self.qtile.dgroups._del(self)
+                self.group = None
 
         if group.screen and self.x < group.screen.x:
             self.x += group.screen.x
@@ -389,15 +399,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
 
     @opacity.setter
     def opacity(self, opacity: float) -> None:
-        if opacity < 1.0:
-            logger.warning(
-                "Sorry, transparency is not yet supported by the wlroots API used by "
-                "Qtile. Transparency can only be achieved if the client sets it."
-            )
-            # wlroots' scene graph doesn't support setting the opacity of trees/nodes by
-            # the compositor. See: https://gitlab.freedesktop.org/wlroots/wlroots/-/issues/3393
-            # If/when that becomes supported, this warning can be removed.
         self._opacity = opacity
+        self.core.configure_node_opacity(self.container.node)
 
     @property
     def floating(self) -> bool:
@@ -406,8 +409,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     @floating.setter
     def floating(self, do_float: bool) -> None:
         if do_float and self._float_state == FloatStates.NOT_FLOATING:
-            if self.group and self.group.screen:
-                screen = self.group.screen
+            if self.is_placed():
+                screen = self.group.screen  # type: ignore[union-attr] # see is_placed()
                 if not self._float_width:  # These might start as 0
                     self._float_width = self._width
                     self._float_height = self._height
@@ -594,7 +597,7 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             fullscreen=self._float_state == FloatStates.FULLSCREEN,
         )
 
-    def match(self, match: config.Match) -> bool:
+    def match(self, match: config._Match) -> bool:
         return match.compare(self)
 
     def add_idle_inhibitor(
@@ -1110,7 +1113,7 @@ class Internal(_Base, base.Internal):
         self.tree.node.raise_to_top()
 
 
-WindowType = typing.Union[Window, Static, Internal]
+WindowType = Window | Static | Internal
 
 
 class PointerConstraint(HasListeners):

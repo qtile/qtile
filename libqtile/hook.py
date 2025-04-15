@@ -35,12 +35,12 @@ import asyncio
 import contextlib
 from typing import TYPE_CHECKING
 
-from libqtile import utils
+from libqtile import backend, utils
 from libqtile.log_utils import logger
 from libqtile.resources.sleep import inhibitor
 
 if TYPE_CHECKING:
-    from typing import Callable
+    from collections.abc import Callable
 
     HookHandler = Callable[[Callable], Callable]
 
@@ -149,8 +149,8 @@ class Unsubscribe(HookHandlerCollection):
         try:
             lst.remove(func)
         except ValueError:
-            raise utils.QtileError(
-                "Tried to unsubscribe a hook that was not currently subscribed"
+            logger.warning(
+                f"Tried to unsubscribe a hook ({event}) that was not currently subscribed."
             )
 
 
@@ -174,7 +174,10 @@ class Registry:
 
     def fire(self, event, *args, **kwargs):
         if event not in self.subscribe.hooks:
-            raise utils.QtileError("Unknown event: %s" % event)
+            raise utils.QtileError(f"Unknown event: {event}")
+        # Do not fire for Internal windows
+        if any(isinstance(arg, backend.base.window.Internal) for arg in args):
+            return
         # We should check if the registry name is in the subscriptions dict
         # A name can disappear if the config is reloaded (which clears subscriptions)
         # but there are no hook subscriptions. This is not an issue for qtile core but
@@ -216,7 +219,7 @@ hooks: list[Hook] = [
 
 
           @hook.subscribe.startup_once
-          def autostart:
+          def autostart():
               script = os.path.expanduser("~/.config/qtile/autostart.sh")
               subprocess.run([script])
 
@@ -494,6 +497,8 @@ hooks: list[Hook] = [
         "group_window_add",
         """Called when a new window is added to a group
 
+        This hook can for example be used for focus decisions.
+
         **Arguments**
 
             * ``Group`` receiving the new window
@@ -504,12 +509,37 @@ hooks: list[Hook] = [
         .. code:: python
 
           from libqtile import hook
-          from libqtile.utils import send_notification
+          from libqtile import qtile
 
 
           @hook.subscribe.group_window_add
           def group_window_add(group, window):
-              send_notification("qtile", f"Window {window.name} added to {group.name}")
+              #disallow focus steals except if there's no focus
+              if not qtile.current_window:
+                  return
+              window.can_steal_focus = False
+        """,
+    ),
+    Hook(
+        "group_window_remove",
+        """Called when a window is removed from a group
+
+        **Arguments**
+
+            * ``Group`` removing the window
+            * ``Window`` removed from the group
+
+        Example:
+
+        .. code:: python
+
+          from libqtile import hook
+          from libqtile.utils import send_notification
+
+
+          @hook.subscribe.group_window_remove
+          def group_window_remove(group, window):
+              send_notification("qtile", f"Window {window.name} removed from {group.name}")
 
         """,
     ),
@@ -520,6 +550,7 @@ hooks: list[Hook] = [
 
         Use this hook to declare windows static, or add them to a group on
         startup. This hook is not called for internal windows.
+        Use ``group_window_add`` for focus decisions.
 
         **Arguments**
 
@@ -569,7 +600,8 @@ hooks: list[Hook] = [
     Hook(
         "client_killed",
         """
-        Called after a client has been unmanaged
+        Called after a client has been unmanaged. This hook is not called for
+        internal windows.
 
         **Arguments**
 
@@ -626,7 +658,7 @@ hooks: list[Hook] = [
             from libqtile import hook
             from libqtile.utils import send_notification
 
-            @hook.subscribe.client_killed
+            @hook.subscribe.client_mouse_enter
             def client_mouse_enter(client):
                 send_notification("qtile", f"Mouse has entered {client.name}")
 
@@ -845,8 +877,8 @@ hooks: list[Hook] = [
             from libqtile import hook
             from libqtile.utils import send_notification
 
-            @hook.subscribe.screen_change
-            def screen_change(event):
+            @hook.subscribe.screens_reconfigured
+            def screen_reconf():
                 send_notification("qtile", "Screens have been reconfigured.")
 
         """,
@@ -868,7 +900,7 @@ hooks: list[Hook] = [
             from libqtile.utils import send_notification
 
             @hook.subscribe.current_screen_change
-            def screen_change(event):
+            def screen_change():
                 send_notification("qtile", "Current screen change detected.")
 
         """,
@@ -925,7 +957,7 @@ hooks: list[Hook] = [
         """
         Called when system wakes up from sleep, suspend or hibernate.
 
-        Relies on systemd's inhibitor dbus interface, via the dbus-next package.
+        Relies on systemd's inhibitor dbus interface, via the dbus-fast package.
 
         Note: the hook is not fired when resuming from shutdown/reboot events.
         Use the "startup" hooks for those scenarios.
@@ -941,7 +973,7 @@ hooks: list[Hook] = [
         """
         Called when system is about to sleep, suspend or hibernate.
 
-        Relies on systemd's inhibitor dbus interface, via the dbus-next package.
+        Relies on systemd's inhibitor dbus interface, via the dbus-fast package.
 
         When this hook is used, qtile will set an inhibitor that prevent the system
         from sleeping. The inhibitor is removed as soon as your function exits. You should therefore

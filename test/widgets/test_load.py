@@ -54,13 +54,13 @@ def test_load_times_button_click(load_manager):
     widget = load_manager.c.widget["load"]
     assert widget.info()["text"] == "Load(1m):0.73"
 
-    load_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, button=1)
+    load_manager.c.bar["top"].fake_button_press(0, 0, button=1)
     assert widget.info()["text"] == "Load(5m):0.78"
 
-    load_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, button=1)
+    load_manager.c.bar["top"].fake_button_press(0, 0, button=1)
     assert widget.info()["text"] == "Load(15m):0.95"
 
-    load_manager.c.bar["top"].fake_button_press(0, "top", 0, 0, button=1)
+    load_manager.c.bar["top"].fake_button_press(0, 0, button=1)
     assert widget.info()["text"] == "Load(1m):0.73"
 
 

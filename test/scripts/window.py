@@ -5,7 +5,7 @@ This creates a minimal window using GTK that works the same in both X11 or Wayla
 GTK sets the window class via `--name <class>`, and then we manually set the window
 title and type. Therefore this is intended to be called as:
 
-    python window.py --name <class> <title> <type>
+    python window.py --name <class> <title> <type> <new_title>
 
 where <type> is "normal" or "notification"
 
@@ -33,11 +33,11 @@ import gi
 
 gi.require_version("Gdk", "3.0")
 gi.require_version("Gtk", "3.0")
-from dbus_next import Message
-from dbus_next.auth import Authenticator
-from dbus_next.constants import MessageType, PropertyAccess
-from dbus_next.glib.message_bus import MessageBus, _AuthLineSource
-from dbus_next.service import ServiceInterface, dbus_property, method, signal
+from dbus_fast import Message
+from dbus_fast.auth import Authenticator
+from dbus_fast.constants import MessageType, PropertyAccess
+from dbus_fast.glib.message_bus import MessageBus, _AuthLineSource
+from dbus_fast.service import ServiceInterface, dbus_property, method, signal
 from gi.repository import Gdk, GLib, Gtk
 
 ICON = Path(__file__).parent / "qtile_icon.rgba"
@@ -45,7 +45,7 @@ ICON = Path(__file__).parent / "qtile_icon.rgba"
 
 # This patch is needed to address the issue described here:
 # https://github.com/altdesktop/python-dbus-next/issues/113
-# Once dbus_next 0.2.4 is released, the patch can be removed.
+# Once dbus_fast incorporates this patch.
 class PatchedMessageBus(MessageBus):
     def _authenticate(self, authenticate_notify):
         self._stream.write(b"\0")
@@ -156,6 +156,26 @@ if __name__ == "__main__":
     win = Gtk.Window(title=title)
     win.set_default_size(100, 100)
 
+    if len(sys.argv) > 3 and sys.argv[3]:
+
+        def gtk_set_title(*args):
+            win.set_title(sys.argv[3])
+
+        # Time before renaming title
+        GLib.timeout_add(500, gtk_set_title)
+
+    if "urgent_hint" in sys.argv:
+
+        def gtk_set_urgency_hint(*args):
+            win.set_urgency_hint(True)
+
+        # Time before changing urgency
+        GLib.timeout_add(500, gtk_set_urgency_hint)
+
+    icon = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", "logo.png"))
+    if os.path.isfile(icon):
+        win.set_icon_from_file(icon)
+
     if window_type == "notification":
         if os.environ["GDK_BACKEND"] == "wayland":
             try:
@@ -181,7 +201,7 @@ if __name__ == "__main__":
         bus.export("/StatusNotifierItem", item)
 
         # Request the service name
-        bus.request_name_sync(f"test.qtile.window-{title.replace(' ','-')}")
+        bus.request_name_sync(f"test.qtile.window-{title.replace(' ', '-')}")
 
         msg = bus.call_sync(
             Message(

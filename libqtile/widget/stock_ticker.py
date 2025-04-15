@@ -87,7 +87,7 @@ class StockTicker(GenPollUrl):
         price = None
         for k, v in other[last].items():
             if "price" in k or "close" in k:
-                price = "{:0.2f}".format(float(v))
+                price = f"{float(v):0.2f}"
                 break
 
-        return "{symbol}: {sign}{price}".format(symbol=self.symbol, sign=self.sign, price=price)
+        return f"{self.symbol}: {self.sign}{price}"

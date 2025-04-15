@@ -62,8 +62,10 @@ def patch_net(fake_qtile, monkeypatch, fake_window):
         # Reload fixes cases where psutil may have been imported previously
         reload(net)
         widget = net.Net(
-            format="{interface}: U {up}{up_suffix} D {down}{down_suffix} T {total}{total_suffix}",
-            **kwargs
+            format="{interface}: U {up}{up_suffix} {up_cumulative}{up_cumulative_suffix} D "
+            "{down}{down_suffix} {down_cumulative}{down_cumulative_suffix} T {total}"
+            "{total_suffix} {total_cumulative}{total_cumulative_suffix}",
+            **kwargs,
         )
         fakebar = FakeBar([widget], window=fake_window)
         widget._configure(fake_qtile, fakebar)
@@ -76,19 +78,22 @@ def patch_net(fake_qtile, monkeypatch, fake_window):
 def test_net_defaults(patch_net):
     """Default: widget shows `all` interfaces"""
     net1 = patch_net()
-    assert net1.poll() == "all: U 40.0kB D 1.2MB T 1.24MB"
+    assert net1.poll() == "all: U 40.0kB 80.0kB D 1.2MB 2.4MB T 1.24MB 2.48MB"
 
 
 def test_net_single_interface(patch_net):
     """Display single named interface"""
     net2 = patch_net(interface="wlp58s0")
-    assert net2.poll() == "wlp58s0: U 40.0kB D 1.2MB T 1.24MB"
+    assert net2.poll() == "wlp58s0: U 40.0kB 160.0kB D 1.2MB 4.8MB T 1.24MB 4.96MB"
 
 
 def test_net_list_interface(patch_net):
     """Display multiple named interfaces"""
     net2 = patch_net(interface=["wlp58s0", "lo"])
-    assert net2.poll() == "wlp58s0: U 40.0kB D 1.2MB T 1.24MB lo: U 40.0kB D 1.2MB T 1.24MB"
+    assert net2.poll() == (
+        "wlp58s0: U 40.0kB 240.0kB D 1.2MB 7.2MB T 1.24MB 7.44MB lo: U 40.0kB "
+        "240.0kB D 1.2MB 7.2MB T 1.24MB 7.44MB"
+    )
 
 
 def test_net_invalid_interface(patch_net):
@@ -100,7 +105,7 @@ def test_net_invalid_interface(patch_net):
 def test_net_use_bits(patch_net):
     """Display all interfaces in bits rather than bytes"""
     net4 = patch_net(use_bits=True)
-    assert net4.poll() == "all: U 320.0kb D 9.6Mb T 9.92Mb"
+    assert net4.poll() == "all: U 320.0kb 2.56Mb D 9.6Mb 76.8Mb T 9.92Mb 79.36Mb"
 
 
 def test_net_convert_zero_b(patch_net):
@@ -112,7 +117,7 @@ def test_net_convert_zero_b(patch_net):
 def test_net_use_prefix(patch_net):
     """Tests `prefix` configurable option"""
     net6 = patch_net(prefix="M")
-    assert net6.poll() == "all: U 0.04MB D 1.2MB T 1.24MB"
+    assert net6.poll() == "all: U 0.04MB 440.0kB D 1.2MB 13.2MB T 1.24MB 13.64MB"
 
 
 # Untested: 128-129 - generic exception catching

@@ -140,14 +140,6 @@ necessarily have advanced programming knowledge; adapt your message
 accordingly. If it can't make sense to your grandma, it's probably meant to be
 a DEBUG message.
 
-Deprecation policy
-==================
-
-When a widget API is changed, you should deprecate the change using
-``libqtile.widget.base.deprecated`` to warn users, in addition to adding it to
-the appropriate place in the changelog. We will typically remove deprecated
-APIs one tag after they are deprecated.
-
 Using Xephyr
 ============
 

@@ -43,7 +43,7 @@ def ss_pomodoro(screenshot_manager):
     # Inactive
     screenshot_manager.take_screenshot()
 
-    bar.fake_button_press(0, "top", 0, 0, 3)
+    bar.fake_button_press(0, 0, 3)
     widget.eval("self.update(self.poll())")
 
     # Active

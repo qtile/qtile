@@ -42,6 +42,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
     defaults: list[tuple[str, Any, str]] = [
         ("borderwidth", 3, "Current group border width"),
         ("center_aligned", True, "center-aligned group box"),
+        ("markup", False, "Whether or not to use pango markup"),
     ]
 
     def __init__(self, **config):
@@ -52,7 +53,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
 
     def box_width(self, groups):
         width, _ = self.drawer.max_layout_size(
-            [self.fmt.format(i.label) for i in groups], self.font, self.fontsize
+            [self.fmt.format(i.label) for i in groups], self.font, self.fontsize, self.markup
         )
         return width + self.padding_x * 2 + self.borderwidth * 2
 
@@ -64,7 +65,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
             self.fontsize = max(calc, 1)
 
         self.layout = self.drawer.textlayout(
-            "", "ffffff", self.font, self.fontsize, self.fontshadow
+            "", "ffffff", self.font, self.fontsize, self.fontshadow, markup=self.markup
         )
         self.setup_hooks()
 
@@ -236,7 +237,7 @@ class GroupBox(_GroupBase):
             False,
             "Hide groups that have no windows and that are not displayed on any screen.",
         ),
-        ("spacing", None, "Spacing between groups" "(if set to None, will be equal to margin_x)"),
+        ("spacing", None, "Spacing between groups(if set to None, will be equal to margin_x)"),
         ("toggle", True, "Enable toggling of group when clicking on same group name"),
     ]
 

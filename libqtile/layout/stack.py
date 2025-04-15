@@ -44,7 +44,7 @@ class _WinStack(_ClientList):
         self.split = False if self.split else True
 
     def __str__(self):
-        return "_WinStack: %s, %s" % (self.cw, str([client.name for client in self.clients]))
+        return f"_WinStack: {self.cw}, {str([client.name for client in self.clients])}"
 
     @expose_command()
     def info(self) -> dict[str, Any]:

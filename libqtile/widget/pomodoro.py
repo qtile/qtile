@@ -140,11 +140,7 @@ class Pomodoro(base.ThreadPoolText):
         else:
             self.layout.colour = self.color_break
 
-        time_string = "%i:%i:%s" % (
-            time_left.seconds // 3600,
-            time_left.seconds % 3600 // 60,
-            time_left.seconds % 60,
-        )
+        time_string = f"{time_left.seconds // 3600:d}:{time_left.seconds % 3600 // 60:02d}:{time_left.seconds % 60:02d}"
         return self.prefix[self.status] + time_string
 
     @expose_command()
@@ -171,8 +167,7 @@ class Pomodoro(base.ThreadPoolText):
 
                 self._send_notification(
                     "normal",
-                    "Please continue on %s! End Time: " % status
-                    + self.end_time.strftime("%H:%M"),
+                    f"Please continue on {status}! End Time: " + self.end_time.strftime("%H:%M"),
                 )
 
     @expose_command()

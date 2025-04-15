@@ -28,9 +28,11 @@ import re
 import string
 from typing import TYPE_CHECKING
 
-from dbus_next import Message, Variant
-from dbus_next.constants import MessageType
+from dbus_fast import Message, Variant
+from dbus_fast.aio import MessageBus
+from dbus_fast.constants import MessageType
 
+from libqtile import pangocffi
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 from libqtile.utils import _send_dbus_message, add_signal_receiver, create_task
@@ -72,7 +74,9 @@ class Mpris2Formatter(string.Formatter):
         """
         kwargs = {k.replace(":", "_"): v for k, v in kwargs.items()}
         try:
-            return string.Formatter.get_value(self, key, args, kwargs)
+            return pangocffi.markup_escape_text(
+                string.Formatter.get_value(self, key, args, kwargs)
+            )
         except (IndexError, KeyError):
             return self._default
 
@@ -103,9 +107,9 @@ class Mpris2(base._TextBox):
     Basic mouse controls are also available: button 1 = play/pause,
     scroll up = next track, scroll down = previous track.
 
-    Widget requirements: dbus-next_.
+    Widget requirements: dbus-fast_.
 
-    .. _dbus-next: https://pypi.org/project/dbus-next/
+    .. _dbus-fast: https://pypi.org/project/dbus-fast/
     """
 
     defaults = [
@@ -124,7 +128,8 @@ class Mpris2(base._TextBox):
             "{xesam:title} - {xesam:album} - {xesam:artist}",
             "Format string for displaying metadata. "
             "See http://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata/#index5h3 "
-            "for available values",
+            "for available values. The special filed '{qtile:player}' can be used to display the "
+            "player name.",
         ),
         ("separator", ", ", "Separator for metadata fields that are a list."),
         (
@@ -197,6 +202,7 @@ class Mpris2(base._TextBox):
         self._current_player: str | None = None
         self.player_names: dict[str, str] = {}
         self._background_poll: asyncio.TimerHandle | None = None
+        self.bus: MessageBus | None = None
 
     @property
     def player(self) -> str:
@@ -206,6 +212,10 @@ class Mpris2(base._TextBox):
             return self.player_names.get(self._current_player, "Unknown")
 
     async def _config_async(self):
+        # These two listeners create separate bus connections. Each connection only has one
+        # callback so we don't need any logic to identify the message and the appropriate
+        # handler in this code.
+
         # Set up a listener for NameOwner changes so we can remove players when they close
         await add_signal_receiver(
             self._name_owner_changed,
@@ -246,9 +256,6 @@ class Mpris2(base._TextBox):
             self._set_background_poll(False)
 
     def message(self, message):
-        if message.message_type != MessageType.SIGNAL:
-            return
-
         create_task(self.process_message(message))
 
     async def process_message(self, message):
@@ -261,14 +268,31 @@ class Mpris2(base._TextBox):
 
         self.parse_message(*message.body)
 
+    async def _send_message(self, destination, interface, path, member, signature, body):
+        bus, message = await _send_dbus_message(
+            session_bus=True,
+            message_type=MessageType.METHOD_CALL,
+            destination=destination,
+            interface=interface,
+            path=path,
+            member=member,
+            signature=signature,
+            body=body,
+            bus=self.bus,
+        )
+
+        # We should reuse the same bus connection for repeated calls.
+        if self.bus is None:
+            self.bus = bus
+
+        return message
+
     async def _check_player(self):
         """Check for player at startup and retrieve metadata."""
         if not (self.objname or self._current_player):
             return
 
-        bus, message = await _send_dbus_message(
-            True,
-            MessageType.METHOD_CALL,
+        message = await self._send_message(
             self.objname if self.objname else self._current_player,
             PROPERTIES_INTERFACE,
             MPRIS_PATH,
@@ -276,9 +300,6 @@ class Mpris2(base._TextBox):
             "s",
             [MPRIS_PLAYER],
         )
-
-        if bus:
-            bus.disconnect()
 
         # If we get an error here it will be because the player object doesn't exist
         if message.message_type != MessageType.METHOD_RETURN:
@@ -298,9 +319,7 @@ class Mpris2(base._TextBox):
             self._background_poll = self.timeout_add(self.poll_interval, self._check_player)
 
     async def get_player_name(self, player):
-        bus, message = await _send_dbus_message(
-            True,
-            MessageType.METHOD_CALL,
+        message = await self._send_message(
             player,
             PROPERTIES_INTERFACE,
             MPRIS_PATH,
@@ -308,9 +327,6 @@ class Mpris2(base._TextBox):
             "ss",
             [MPRIS_OBJECT, "Identity"],
         )
-
-        if bus:
-            bus.disconnect()
 
         if message.message_type != MessageType.METHOD_RETURN:
             logger.warning("Could not retrieve identity of player on %s.", player)
@@ -363,9 +379,9 @@ class Mpris2(base._TextBox):
             if isinstance(val, str):
                 self.metadata[new_key] = val
             elif isinstance(val, list):
-                self.metadata[new_key] = self.separator.join(
-                    (y for y in val if isinstance(y, str))
-                )
+                self.metadata[new_key] = self.separator.join(y for y in val if isinstance(y, str))
+        if self.player is not None:
+            self.metadata["qtile:player"] = self.player
 
         return self._formatter.format(self.format, **self.metadata).replace("\n", "")
 
@@ -378,9 +394,7 @@ class Mpris2(base._TextBox):
         task.add_done_callback(self._task_callback)
 
     async def _send_player_cmd(self, cmd: str) -> Message | None:
-        bus, message = await _send_dbus_message(
-            True,
-            MessageType.METHOD_CALL,
+        message = await self._send_message(
             self._current_player,
             MPRIS_PLAYER,
             MPRIS_PATH,
@@ -388,9 +402,6 @@ class Mpris2(base._TextBox):
             "",
             [],
         )
-
-        if bus:
-            bus.disconnect()
 
         return message
 

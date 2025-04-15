@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 """
-    Command-line wrapper to run commands and add rules to new windows
+Command-line wrapper to run commands and add rules to new windows
 """
 
 import argparse
@@ -52,11 +52,13 @@ def run_cmd(opts) -> None:
     }
 
     graph_cmd = root.call("add_rule")
-    _, rule_id = client.send((root.selectors, graph_cmd.name, (match_args, rule_args), {}))
+    # client.send(selectors, name, args, kwargs, lifted)
+    _, rule_id = client.send((root.selectors, graph_cmd.name, (match_args, rule_args), {}, False))
 
     def remove_rule() -> None:
         cmd = root.call("remove_rule")
-        client.send((root.selectors, cmd.name, (rule_id,), {}))
+        # client.send(selectors, name, args, kwargs, lifted)
+        client.send((root.selectors, cmd.name, (rule_id,), {}, False))
 
     atexit.register(remove_rule)
 
@@ -81,7 +83,7 @@ def add_subcommand(subparsers, parents):
         help="Do not break on match (keep applying rules).",
     )
     parser.add_argument("-g", "--group", help="Set the window group.")
-    parser.add_argument("cmd", help="Command to execute."),
+    parser.add_argument("cmd", help="Command to execute.")
     parser.add_argument(
         "args",
         nargs=argparse.REMAINDER,

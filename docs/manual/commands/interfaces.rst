@@ -52,7 +52,7 @@ on how you intend to use it as each interface is suited to different scenarios.
 
 * The ``lazy`` interface is used in config scripts to bind commands to keys and
   mouse callbacks.
-* The ``qtile shell`` is a tool for exploring the graph my presenting it as a
+* The ``qtile shell`` is a tool for exploring the graph by presenting it as a
   file structure. It is not designed to be used for scripting.
 * For users creating shell scripts, the ``qtile cmd-obj`` interface would be
   the recommended choice.
@@ -118,7 +118,7 @@ CommandClient
 ~~~~~~~~~~~~~
 
 The ``CommandClient`` interface is a low-level python interface for accessing and navigating the
-command graph. The low-level nature means that navigation steps must be called explicityly,
+command graph. The low-level nature means that navigation steps must be called explicitly,
 rather than being inferred from the body of the calling command.
 
 For example:

@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING
 from libqtile import config, group, hook
 from libqtile.backend.base import FloatStates
 from libqtile.command.base import expose_command
-from libqtile.config import Match
+from libqtile.config import Match, _Match
 
 if TYPE_CHECKING:
     from libqtile.backend.base import Window
@@ -173,6 +173,19 @@ class DropDownToggler(WindowVisibilityToggler):
         self.y = ddconfig.y
         self.width = ddconfig.width
         self.height = ddconfig.height
+        self.border_width = window.qtile.config.floating_layout.border_width
+
+        # add "SKIP_TASKBAR" to _NET_WM_STATE atom (for X11)
+        if window.qtile.core.name == "x11":
+            net_wm_state = list(window.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
+            skip_taskbar = window.qtile.core.conn.atoms["_NET_WM_STATE_SKIP_TASKBAR"]
+            if net_wm_state:
+                if skip_taskbar not in net_wm_state:
+                    net_wm_state.append(skip_taskbar)
+            else:
+                net_wm_state = [skip_taskbar]
+            window.window.set_property("_NET_WM_STATE", net_wm_state)
+
         # Let's add the window to the scratchpad group.
         window.togroup(scratchpad_name)
         window.opacity = ddconfig.opacity
@@ -202,9 +215,9 @@ class DropDownToggler(WindowVisibilityToggler):
             y = int(screen.dy + self.y * screen.dheight)
             win.float_x = x
             win.float_y = y
-            width = int(screen.dwidth * self.width)
-            height = int(screen.dheight * self.height)
-            win.place(x, y, width, height, win.borderwidth, win.bordercolor, respect_hints=True)
+            width = int(screen.dwidth * self.width) - 2 * self.border_width
+            height = int(screen.dheight * self.height) - 2 * self.border_width
+            win.place(x, y, width, height, self.border_width, win.bordercolor, respect_hints=True)
             # Toggle the dropdown
             WindowVisibilityToggler.show(self)
 
@@ -231,7 +244,7 @@ class ScratchPad(group._Group):
         group._Group.__init__(self, name, label=label)
         self._dropdownconfig = {dd.name: dd for dd in dropdowns} if dropdowns is not None else {}
         self.dropdowns: dict[str, DropDownToggler] = {}
-        self._spawned: dict[str, Match] = {}
+        self._spawned: dict[str, _Match] = {}
         self._to_hide: list[str] = []
         self._single = single
 
@@ -299,7 +312,7 @@ class ScratchPad(group._Group):
         """
         hook method which is called if window float state is changed.
         If the current associated window is not floated (any more) the window
-        and process is detached from DRopDown, thus the next call to Show
+        and process is detached from DropDown, thus the next call to Show
         will spawn a new process.
         """
         name = None
@@ -360,7 +373,7 @@ class ScratchPad(group._Group):
         elif name in self._dropdownconfig:
             return self._dropdownconfig[name].info()
         else:
-            raise ValueError('No DropDown named "%s".' % name)
+            raise ValueError(f'No DropDown named "{name}".')
 
     def get_state(self):
         """

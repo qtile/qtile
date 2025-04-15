@@ -25,9 +25,7 @@
 
 # This test file covers the remaining widget code
 
-import sys
 from importlib import reload
-from types import ModuleType
 
 import pytest
 
@@ -36,11 +34,6 @@ from test.widgets.conftest import FakeBar
 
 async def mock_signal_receiver(*args, **kwargs):
     return True
-
-
-class Mockconstants(ModuleType):
-    class MessageType:
-        SIGNAL = 1
 
 
 class MockSpawn:
@@ -62,13 +55,11 @@ class MockMessage:
 
 @pytest.fixture
 def patched_widget(monkeypatch):
-    monkeypatch.setitem(sys.modules, "dbus_next.constants", Mockconstants("dbus_next.constants"))
     from libqtile.widget import keyboardkbdd
 
     reload(keyboardkbdd)
 
     # The next line shouldn't be necessary but I got occasional failures without it when testing locally
-    monkeypatch.setattr("libqtile.widget.keyboardkbdd.MessageType", Mockconstants.MessageType)
     monkeypatch.setattr(
         "libqtile.widget.keyboardkbdd.KeyboardKbdd.call_process", MockSpawn.call_process
     )
@@ -86,11 +77,6 @@ def test_keyboardkbdd_process_running(fake_qtile, patched_widget, fake_window):
 
     # Create a message with the index of the active keyboard
     message = MockMessage(body=1)
-    kbd._signal_received(message)
-    assert kbd.keyboard == "us"
-
-    # Test non-"signal" message
-    message = MockMessage(body=0, is_signal=False)
     kbd._signal_received(message)
     assert kbd.keyboard == "us"
 

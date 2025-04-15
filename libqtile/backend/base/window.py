@@ -5,7 +5,6 @@ import typing
 from abc import ABCMeta, abstractmethod
 
 from libqtile.command.base import CommandError, CommandObject, expose_command
-from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
     from typing import Any
@@ -36,6 +35,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
         # Window.static sets this in case it is hooked to client_new to stop the
         # Window object from being managed, now that a Static is being used instead
         self.defunct: bool = False
+        self._can_steal_focus: bool = True
 
         self.base_x: int | None = None
         self.base_y: int | None = None
@@ -78,9 +78,14 @@ class _Window(CommandObject, metaclass=ABCMeta):
         return None
 
     @property
-    def can_steal_focus(self):
+    def can_steal_focus(self) -> bool:
         """Is it OK for this window to steal focus?"""
-        return True
+        return self._can_steal_focus
+
+    @can_steal_focus.setter
+    def can_steal_focus(self, can_steal_focus: bool) -> None:
+        """Can_steal_focus setter."""
+        self._can_steal_focus = can_steal_focus
 
     def has_fixed_ratio(self) -> bool:
         """Does this window want a fixed aspect ratio?"""
@@ -218,6 +223,17 @@ class _Window(CommandObject, metaclass=ABCMeta):
         window.
         """
 
+    @abstractmethod
+    @expose_command()
+    def bring_to_front(self) -> None:
+        """
+        Bring the window to the front.
+
+        In X11, `bring_to_front` ignores all other layering rules and brings the
+        window to the very front. When that window loses focus, it will be stacked
+        again according the appropriate rules.
+        """
+
 
 class Window(_Window, metaclass=ABCMeta):
     """
@@ -230,12 +246,12 @@ class Window(_Window, metaclass=ABCMeta):
 
     qtile: Qtile
 
-    # If float_x or float_y are None, the window has never floated
+    # If float_x or float_y are None, the window has never been placed
     float_x: int | None
     float_y: int | None
 
     def __repr__(self):
-        return "%s(name=%r, wid=%i)" % (self.__class__.__name__, self.name, self.wid)
+        return f"{self.__class__.__name__!s}(name={self.name!r}, wid={self.wid:d})"
 
     @property
     @abstractmethod
@@ -287,7 +303,7 @@ class Window(_Window, metaclass=ABCMeta):
         """Does this window want to be fullscreen?"""
         return False
 
-    def match(self, match: config.Match) -> bool:
+    def match(self, match: config._Match) -> bool:
         """Compare this window against a Match instance."""
         return match.compare(self)
 
@@ -303,6 +319,15 @@ class Window(_Window, metaclass=ABCMeta):
     def has_user_set_position(self) -> bool:
         """Whether this window has user-defined geometry"""
         return False
+
+    def is_placed(self) -> bool:
+        """Whether this window has been placed, i.e. both float offsets are not None."""
+        return (
+            self.group is not None
+            and self.group.screen is not None
+            and self.float_x is not None
+            and self.float_y is not None
+        )
 
     def is_transient_for(self) -> WindowType | None:
         """What window is this window a transient window for?"""
@@ -395,21 +420,9 @@ class Window(_Window, metaclass=ABCMeta):
 
     @abstractmethod
     @expose_command()
-    def bring_to_front(self) -> None:
-        """
-        Bring the window to the front.
-
-        In X11, `bring_to_front` ignores all other layering rules and brings the
-        window to the very front. When that window loses focus, it will be stacked
-        again according the appropriate rules.
-        """
-
-    @abstractmethod
-    @expose_command()
     def togroup(
         self,
         group_name: str | None = None,
-        groupName: str | None = None,  # Deprecated  # noqa: N803
         switch_group: bool = False,
         toggle: bool = False,
     ) -> None:
@@ -419,9 +432,6 @@ class Window(_Window, metaclass=ABCMeta):
 
         If `toggle` is True and and the specified group is already on the screen,
         use the last used group as target instead.
-
-        `groupName` is deprecated and will be dropped soon. Please use `group_name`
-        instead.
 
         Examples
         ========
@@ -438,9 +448,6 @@ class Window(_Window, metaclass=ABCMeta):
 
             togroup("a", switch_group=True)
         """
-        if groupName is not None:
-            logger.warning("Window.togroup's groupName is deprecated; use group_name")
-            group_name = groupName
         self.togroup(group_name, switch_group=switch_group, toggle=toggle)
 
     @expose_command()
@@ -466,7 +473,7 @@ class Window(_Window, metaclass=ABCMeta):
             try:
                 screen = self.qtile.screens[index]
             except IndexError:
-                raise CommandError("No such screen: %d" % index)
+                raise CommandError(f"No such screen: {index:d}")
         self.togroup(screen.group.name)
 
     @expose_command()
@@ -535,7 +542,7 @@ class Internal(_Window, metaclass=ABCMeta):
     """An Internal window belonging to Qtile."""
 
     def __repr__(self):
-        return "Internal(wid=%s)" % self.wid
+        return f"Internal(wid={self.wid})"
 
     @abstractmethod
     def create_drawer(self, width: int, height: int) -> Drawer:
@@ -573,7 +580,7 @@ class Static(_Window, metaclass=ABCMeta):
     height: Any
 
     def __repr__(self):
-        return "%s(name=%r, wid=%i)" % (self.__class__.__name__, self.name, self.wid)
+        return f"{self.__class__.__name__!s}(name={self.name!r}, wid={self.wid:d})"
 
     @expose_command()
     def info(self) -> dict:
@@ -588,10 +595,5 @@ class Static(_Window, metaclass=ABCMeta):
             id=self.wid,
         )
 
-    @abstractmethod
-    @expose_command()
-    def bring_to_front(self) -> None:
-        """Bring the window to the front"""
 
-
-WindowType = typing.Union[Window, Internal, Static]
+WindowType = Window | Internal | Static

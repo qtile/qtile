@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2023 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -45,7 +44,7 @@ class PulseConnection:
         self.default_sink_name = None
         self.pulse = None
         self.configured = False
-        self.callbacks = []
+        self.callbacks = set()
         self.qtile = qtile
         self.timer = None
 
@@ -97,6 +96,10 @@ class PulseConnection:
         async for event in self.pulse.subscribe_events("sink", "server"):
             # Sink events will signify volume changes
             if event.facility == "sink":
+                # There's been a change to available sinks
+                # Update default sink details before querying the sink
+                if event.t in ("new", "remove"):
+                    await self.get_server_info()
                 await self.get_sink_info()
             # Server events include when the default sink changes
             elif event.facility == "server":
@@ -128,8 +131,6 @@ class PulseConnection:
 
         if self.default_sink:
             mute = self.default_sink.mute
-            if mute:
-                return -1, mute
             base = self.default_sink.base_volume
             if not base:
                 return -1, mute
@@ -150,7 +151,7 @@ class PulseConnection:
         pulse server.
         """
         need_configure = not bool(self.callbacks)
-        self.callbacks.append(callback)
+        self.callbacks.add(callback)
 
         if need_configure:
             create_task(self._configure())
@@ -162,10 +163,7 @@ class PulseConnection:
         Removing the last client closes the connection with the
         pulse server and cancels future calls to connect.
         """
-        try:
-            self.callbacks.remove(callback)
-        except ValueError:
-            pass
+        self.callbacks.discard(callback)
 
         if not self.callbacks:
             self.pulse.close()
@@ -204,7 +202,7 @@ class PulseVolume(Volume):
         Volume.__init__(self, **config)
         self.add_defaults(PulseVolume.defaults)
         self.volume = 0
-        self.mute = 0
+        self.is_mute = 0
         self._previous_state = (-1.0, -1)
 
     def _configure(self, qtile, bar):
@@ -247,11 +245,11 @@ class PulseVolume(Volume):
 
         create_task(self._change_volume(value))
 
-    def get_vals(self, vol, mute):
-        if (vol, mute) != self._previous_state:
+    def get_vals(self, vol, muted):
+        if (vol, muted) != self._previous_state:
             self.volume = vol
-            self.mute = mute
-            self._previous_state = (vol, mute)
+            self.is_mute = muted
+            self._previous_state = (vol, muted)
             self.update()
 
     def update(self):

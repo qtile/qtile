@@ -221,7 +221,7 @@ Displaying text
 ---------------
 
 Text is displayed by using a ``drawer.TextLayout`` object. If all you are doing is
-displaying text then it's highly recommended that you use the ```base._TextBox``
+displaying text then it's highly recommended that you use the ``base._TextBox``
 superclass as this simplifies adding and updating text.
 
 If you wish to implement this manually then you can create a your own ``drawer.TextLayout``
@@ -399,14 +399,14 @@ are passed to the callback function.
 Using dbus
 ----------
 
-Qtile uses ``dbus-next`` for interacting with dbus.
+Qtile uses ``dbus-fast`` for interacting with dbus.
 
 If you just want to listen for signals then Qtile provides a helper method called
 ``add_signal_receiver`` which can subscribe to a signal and trigger a callback
 whenever that signal is broadcast.
 
 .. note::
-    Qtile uses the ``asyncio`` based functions of ``dbus-next`` so your widget
+    Qtile uses the ``asyncio`` based functions of ``dbus-fast`` so your widget
     must make sure, where necessary, calls to dbus are made via coroutines.
 
     There is a ``_config_async`` coroutine in the base widget class which can
@@ -429,9 +429,11 @@ For example, the Mpris2 widget uses the following code:
                         path="/org/mpris/MediaPlayer2",
                         dbus_interface="org.freedesktop.DBus.Properties")
 
-``dbus-next`` can also be used to query properties, call methods etc. on dbus
-interfaces. Refer to the `dbus-next documentation <https://python-dbus-next.readthedocs.io/en/latest/>`_
+``dbus-fast`` can also be used to query properties, call methods etc. on dbus
+interfaces. Refer to the `dbus-fast documentation <https://python-dbus-fast.readthedocs.io/en/latest/>`_
 for more information on how to use the module.
+
+.. _mouse-events:
 
 Mouse events
 ============
@@ -624,6 +626,7 @@ An example screenshot file is below:
     import pytest
 
     from libqtile.widget import wttr
+    from test.widgets.docs_screenshots.conftest import vertical_bar, widget_config
 
     RESPONSE = "London: +17°C"
 
@@ -637,20 +640,18 @@ An example screenshot file is below:
         yield wttr.Wttr
 
 
-    @pytest.mark.parametrize(
-        "screenshot_manager",
-        [
-            {"location": {"London": "Home"}}
-        ],
-        indirect=True
-    )
+    @widget_config([{"location": {"London": "Home"}}])
     def ss_wttr(screenshot_manager):
+        screenshot_manager.take_screenshot()
+
+    @vertical_bar
+    def ss_wttr_vertical(screenshot_manager):
         screenshot_manager.take_screenshot()
 
 The ``widget`` fixture returns the widget class (not an instance of the widget). Any monkeypatching
 of the widget should be included in this fixture.
 
-The screenshot function (here, called ``ss_wttr``) must take an argument called ``screenshot_manager``. 
+The screenshot function (here, called ``ss_wttr``) must take an argument called ``screenshot_manager``.
 The function can also be parameterized, in which case, each dict object will be used
 to configure the widget for the screenshot (and the configuration will be displayed in the docs). If
 you want to include parameterizations but also want to show the default configuration, you should include
@@ -658,6 +659,9 @@ an empty dict (``{}``) as the first object in the list.
 
 Taking a screenshot is then as simple as calling ``screenshot_manager.take_screenshot()``. The method
 can be called multiple times in the same function.
+
+Screenshots can also be taken in a vertical bar orientation by using the ``@vertical_bar`` decorator as shown in
+the above example.
 
 ``screenshot_manager.take_screenshot()`` only takes a picture of the widget. If you need to take a screenshot
 of the bar then you need a few extra steps:

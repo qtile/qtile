@@ -3,7 +3,7 @@ import pytest
 
 from libqtile import bar, images
 from libqtile.widget import Volume
-from test.widgets.conftest import TEST_DIR
+from test.widgets.conftest import TEST_DIR, FakeBar
 
 
 def test_images_fail():
@@ -51,6 +51,10 @@ def test_emoji():
     vol._update_drawer()
     assert vol.text == "\U0001f50a"
 
+    vol.is_mute = True
+    vol._update_drawer()
+    assert vol.text == "\U0001f507"
+
 
 def test_text():
     fmt = "Volume: {}"
@@ -62,3 +66,38 @@ def test_text():
     vol.volume = 50
     vol._update_drawer()
     assert vol.text == "50%"
+
+
+def test_formats():
+    unmute_format = "Volume: {volume}%"
+    mute_format = "Volume: {volume}% M"
+    vol = Volume(unmute_format=unmute_format, mute_format=mute_format)
+    vol.volume = 50
+    vol._update_drawer()
+    assert vol.text == "Volume: 50%"
+
+    vol.is_mute = True
+    vol._update_drawer()
+    assert vol.text == "Volume: 50% M"
+
+
+def test_foregrounds(fake_qtile, fake_window):
+    foreground = "#dddddd"
+    mute_foreground = None
+
+    vol = Volume(foreground=foreground, mute_foreground=mute_foreground)
+    fakebar = FakeBar([vol], window=fake_window)
+    vol._configure(fake_qtile, fakebar)
+
+    vol.volume = 50
+    vol._update_drawer()
+    assert vol.foreground == foreground
+
+    vol.mute_foreground = mute_foreground = "#888888"
+    vol.is_mute = False
+    vol._update_drawer()
+    assert vol.foreground == foreground
+
+    vol.is_mute = True
+    vol._update_drawer()
+    assert vol.foreground == mute_foreground

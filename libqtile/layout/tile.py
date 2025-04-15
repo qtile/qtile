@@ -34,7 +34,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from libqtile.command.base import expose_command
-from libqtile.config import Match
+from libqtile.config import _Match
 from libqtile.layout.base import _SimpleLayoutBase
 
 if TYPE_CHECKING:
@@ -75,13 +75,12 @@ class Tile(_SimpleLayoutBase):
         (
             "expand",
             True,
-            "Expand the master windows to the full screen width if no slaves " "are present.",
+            "Expand the master windows to the full screen width if no slaves are present.",
         ),
         (
             "ratio_increment",
             0.05,
-            "By which amount to change ratio when decrease_ratio or "
-            "increase_ratio are called.",
+            "By which amount to change ratio when decrease_ratio or increase_ratio are called.",
         ),
         (
             "add_on_top",
@@ -92,7 +91,7 @@ class Tile(_SimpleLayoutBase):
         (
             "add_after_last",
             False,
-            "Add new clients after all the others. If this is True, it " "overrides add_on_top.",
+            "Add new clients after all the others. If this is True, it overrides add_on_top.",
         ),
         (
             "shift_windows",
@@ -150,7 +149,7 @@ class Tile(_SimpleLayoutBase):
             return
         if self.clients:
             master_match = match or self.master_match
-            if isinstance(master_match, Match):
+            if isinstance(master_match, _Match):
                 master_match = [master_match]
             masters = []
             for c in self.clients:

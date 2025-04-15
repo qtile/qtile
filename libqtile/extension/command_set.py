@@ -78,7 +78,7 @@ class CommandSet(Dmenu):
             for cmd in self.pre_commands:
                 self.qtile.spawn(cmd)
 
-        out = super(CommandSet, self).run(items=self.commands.keys())
+        out = super().run(items=self.commands.keys())
 
         try:
             sout = out.rstrip("\n")

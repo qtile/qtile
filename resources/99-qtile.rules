@@ -1,0 +1,26 @@
+# for controlling LCD backlight
+ACTION=="add", SUBSYSTEM=="backlight", RUN+="qtile udev --group sudo backlight --device %k"
+
+# keyboard backlight
+ACTION=="add", SUBSYSTEM=="leds",      RUN+="qtile udev --group sudo backlight --device %k"
+
+# fancy battery charge control, needs to be per ACPI implementation, so we need
+# to periodically check the kernel for more of these:
+#
+#     $ ~/packages/linux/drivers/platform/x86 master git grep -l charge_control_end_threshold
+#     asus-wmi.c
+#     huawei-wmi.c
+#     lg-laptop.c
+#     msi-ec.c
+#     system76_acpi.c
+#     thinkpad_acpi.c
+#     toshiba_acpi.c
+#
+# Last checked as of 6.8-rc4.
+ACTION=="add" KERNEL=="asus-wmi" RUN+="qtile udev --group sudo battery"
+ACTION=="add" KERNEL=="huawei-wmi" RUN+="qtile udev --group sudo battery"
+ACTION=="add" KERNEL=="lg-laptop" RUN+="qtile udev --group sudo battery"
+ACTION=="add" KERNEL=="msi-ec" RUN+="qtile udev --group sudo battery"
+ACTION=="add" KERNEL=="thinkpad_acpi" RUN+="qtile udev --group sudo battery"
+ACTION=="add" KERNEL=="system76_acpi" RUN+="qtile udev --group sudo battery"
+ACTION=="add" KERNEL=="toshiba_acpi" RUN+="qtile udev --group sudo battery"

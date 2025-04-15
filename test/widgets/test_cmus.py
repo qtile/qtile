@@ -26,7 +26,6 @@ import pytest
 
 import libqtile.config
 from libqtile.widget import cmus
-from test.widgets.conftest import FakeBar
 
 
 class MockCmusRemoteProcess:
@@ -66,8 +65,8 @@ class MockCmusRemoteProcess:
             [
                 "status playing",
                 "file http://playing/file/sweetcaroline.mp3",
-                "duration 222",
-                "position 14",
+                "duration -1",
+                "position -9",
                 "tag artist Neil Diamond",
                 "tag album Greatest Hits",
                 "tag title Sweet Caroline",
@@ -131,12 +130,10 @@ class MockCmusRemoteProcess:
         cls.call_process(cmd)
 
 
-def no_op(*args, **kwargs):
-    pass
-
-
 @pytest.fixture
-def patched_cmus(monkeypatch):
+def cmus_manager(manager_nospawn, monkeypatch, minimal_conf_noscreen, request):
+    widget_config = getattr(request, "param", dict())
+
     MockCmusRemoteProcess.reset()
     monkeypatch.setattr("libqtile.widget.cmus.subprocess", MockCmusRemoteProcess)
     monkeypatch.setattr(
@@ -146,104 +143,125 @@ def patched_cmus(monkeypatch):
         "libqtile.widget.cmus.base.ThreadPoolText.call_process",
         MockCmusRemoteProcess.call_process,
     )
-    return cmus
+
+    config = minimal_conf_noscreen
+    config.screens = [
+        libqtile.config.Screen(
+            top=libqtile.bar.Bar(
+                [cmus.Cmus(**widget_config)],
+                10,
+            ),
+        )
+    ]
+
+    manager_nospawn.start(config)
+    yield manager_nospawn
 
 
-def test_cmus(fake_qtile, patched_cmus, fake_window):
-    widget = patched_cmus.Cmus()
-    fakebar = FakeBar([widget], window=fake_window)
-    widget._configure(fake_qtile, fakebar)
-    text = widget.poll()
-    assert text == "♫ Rick Astley - Never Gonna Give You Up"
-    assert widget.layout.colour == widget.play_color
+def test_cmus(cmus_manager):
+    widget = cmus_manager.c.widget["cmus"]
 
-    widget.play()
-    text = widget.poll()
-    assert text == "♫ Rick Astley - Never Gonna Give You Up"
-    assert widget.layout.colour == widget.noplay_color
+    widget.eval("self.update(self.poll())")
+    assert widget.info()["text"] == "♫ Rick Astley - Never Gonna Give You Up"
+    assert widget.eval("self.layout.colour") == widget.eval("self.playing_color")
+
+    widget.eval("self.play()")
+    widget.eval("self.update(self.poll())")
+    assert widget.info()["text"] == "♫ Rick Astley - Never Gonna Give You Up"
+    assert widget.eval("self.layout.colour") == widget.eval("self.paused_color")
 
 
-def test_cmus_play_stopped(fake_qtile, patched_cmus, fake_window):
-    widget = patched_cmus.Cmus()
+def test_cmus_play_stopped(cmus_manager):
+    widget = cmus_manager.c.widget["cmus"]
 
     # Set track to a stopped item
-    MockCmusRemoteProcess.index = 2
-    fakebar = FakeBar([widget], window=fake_window)
-    widget._configure(fake_qtile, fakebar)
-    text = widget.poll()
+    widget.eval("subprocess.index = 2")
+    widget.eval("self.update(self.poll())")
 
     # It's stopped so colour should reflect this
-    assert text == "♫ tomjones"
-    assert widget.layout.colour == widget.noplay_color
+    assert widget.info()["text"] == "♫ tomjones"
+    assert widget.eval("self.layout.colour") == widget.eval("self.stopped_color")
 
-    widget.play()
-    text = widget.poll()
-    assert text == "♫ tomjones"
-    assert widget.layout.colour == widget.play_color
+    widget.eval("self.play()")
+    widget.eval("self.update(self.poll())")
+    assert widget.info()["text"] == "♫ tomjones"
+    assert widget.eval("self.layout.colour") == widget.eval("self.playing_color")
 
 
-def test_cmus_buttons(minimal_conf_noscreen, manager_nospawn, patched_cmus):
-    widget = patched_cmus.Cmus(update_interval=30)
-    config = minimal_conf_noscreen
-    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([widget], 10))]
-    manager_nospawn.start(config)
-    topbar = manager_nospawn.c.bar["top"]
+@pytest.mark.parametrize(
+    "cmus_manager",
+    [{"format": "{position} {duration} {position_percent} {remaining} {remaining_percent}"}],
+    indirect=True,
+)
+def test_cmus_times(cmus_manager):
+    widget = cmus_manager.c.widget["cmus"]
 
-    cmuswidget = manager_nospawn.c.widget["cmus"]
-    assert cmuswidget.info()["text"] == "♫ Rick Astley - Never Gonna Give You Up"
+    # Check item with valid position and duration
+    widget.eval("self.update(self.poll())")
+
+    # Check that times are correct
+    assert widget.info()["text"] == "00:14 03:42 6% 03:28 94%"
+
+    # Set track to an item with invalid position and duration
+    widget.eval("subprocess.index = 1")
+    widget.eval("self.update(self.poll())")
+
+    # Check that times are empty
+    assert widget.info()["text"].strip() == ""
+
+
+def test_cmus_buttons(cmus_manager):
+    topbar = cmus_manager.c.bar["top"]
+
+    widget = cmus_manager.c.widget["cmus"]
+    assert widget.info()["text"] == "♫ Rick Astley - Never Gonna Give You Up"
 
     # Play next track
-    # Non-local file source so widget just displays title
-    topbar.fake_button_press(0, "top", 0, 0, button=4)
-    cmuswidget.eval("self.update(self.poll())")
-    assert cmuswidget.info()["text"] == "♫ Sweet Caroline"
+    # Non-local file source
+    topbar.fake_button_press(0, 0, button=4)
+    widget.eval("self.update(self.poll())")
+    assert widget.info()["text"] == "♫ Neil Diamond - Sweet Caroline"
 
     # Play next track
     # Stream source so widget just displays stream info
-    topbar.fake_button_press(0, "top", 0, 0, button=4)
-    cmuswidget.eval("self.update(self.poll())")
-    assert cmuswidget.info()["text"] == "♫ tomjones"
+    topbar.fake_button_press(0, 0, button=4)
+    widget.eval("self.update(self.poll())")
+    assert widget.info()["text"] == "♫ tomjones"
 
     # Play previous track
-    # Non-local file source so widget just displays title
-    topbar.fake_button_press(0, "top", 0, 0, button=5)
-    cmuswidget.eval("self.update(self.poll())")
-    assert cmuswidget.info()["text"] == "♫ Sweet Caroline"
+    # Non-local file source
+    topbar.fake_button_press(0, 0, button=5)
+    widget.eval("self.update(self.poll())")
+    assert widget.info()["text"] == "♫ Neil Diamond - Sweet Caroline"
 
 
-def test_cmus_error_handling(fake_qtile, patched_cmus, fake_window):
-    widget = patched_cmus.Cmus()
-    MockCmusRemoteProcess.is_error = True
-    fakebar = FakeBar([widget], window=fake_window)
-    widget._configure(fake_qtile, fakebar)
-    text = widget.poll()
+def test_cmus_error_handling(cmus_manager):
+    widget = cmus_manager.c.widget["cmus"]
+    widget.eval("subprocess.is_error = True")
+    widget.eval("self.update(self.poll())")
 
     # Widget does nothing with error message so text is blank
     # TODO: update widget to show error?
-    assert text == ""
+    assert widget.info()["text"] == ""
 
 
-def test_escape_text(fake_qtile, patched_cmus, fake_window):
-    widget = patched_cmus.Cmus()
+def test_escape_text(cmus_manager):
+    widget = cmus_manager.c.widget["cmus"]
 
-    # Set track to a stopped item
-    MockCmusRemoteProcess.index = 3
-    fakebar = FakeBar([widget], window=fake_window)
-    widget._configure(fake_qtile, fakebar)
-    text = widget.poll()
+    # Set track to an item with a title which needs escaping
+    widget.eval("subprocess.index = 3")
+    widget.eval("self.update(self.poll())")
 
-    # It's stopped so colour should reflect this
-    assert text == "♫ Above &amp; Beyond - Always - Tinlicker Extended Mix"
+    # & should be escaped to &amp;
+    assert widget.info()["text"] == "♫ Above &amp; Beyond - Always - Tinlicker Extended Mix"
 
 
-def test_missing_metadata(fake_qtile, patched_cmus, fake_window):
-    widget = patched_cmus.Cmus()
+def test_missing_metadata(cmus_manager):
+    widget = cmus_manager.c.widget["cmus"]
 
     # Set track to one that's missing Title and Artist metadata
-    MockCmusRemoteProcess.index = 4
-    fakebar = FakeBar([widget], window=fake_window)
-    widget._configure(fake_qtile, fakebar)
-    text = widget.poll()
+    widget.eval("subprocess.index = 4")
+    widget.eval("self.update(self.poll())")
 
     # Displayed text should default to the name of the file
-    assert text == "♫ always.mp3"
+    assert widget.info()["text"] == "♫ always.mp3"

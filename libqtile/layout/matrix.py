@@ -31,7 +31,6 @@ from typing import TYPE_CHECKING
 
 from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
-from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
     from typing import Any, Self
@@ -48,6 +47,8 @@ class Matrix(_SimpleLayoutBase):
     can also be changed interactively.
     """
 
+    columns: int
+
     defaults = [
         ("border_focus", "#0000ff", "Border colour(s) for the focused window."),
         ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
@@ -56,15 +57,9 @@ class Matrix(_SimpleLayoutBase):
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])"),
     ]
 
-    def __init__(self, _columns: int | None = None, **config):
+    def __init__(self, **config):
         _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(Matrix.defaults)
-        if _columns:
-            logger.warning(
-                "The use of a positional argument in Matrix is deprecated. "
-                "Please update your config to use columns=..."
-            )
-            self.columns = _columns
 
     @property
     def rows(self):

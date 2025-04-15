@@ -17,21 +17,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import sys
 from importlib import reload
 
 import pytest
 
-from test.widgets.test_keyboardkbdd import Mockconstants, MockSpawn, mock_signal_receiver
+from test.widgets.test_keyboardkbdd import MockSpawn, mock_signal_receiver
 
 
 @pytest.fixture
 def widget(monkeypatch):
-    monkeypatch.setitem(sys.modules, "dbus_next.constants", Mockconstants("dbus_next.constants"))
     from libqtile.widget import keyboardkbdd
 
     reload(keyboardkbdd)
-    monkeypatch.setattr("libqtile.widget.keyboardkbdd.MessageType", Mockconstants.MessageType)
     monkeypatch.setattr(
         "libqtile.widget.keyboardkbdd.KeyboardKbdd.call_process", MockSpawn.call_process
     )

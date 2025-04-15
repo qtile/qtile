@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2011 Timo Schmiade
 # Copyright (c) 2012 Phil Jackson
 # Copyright (c) 2013 Tao Sauvage
@@ -40,7 +39,7 @@ class Maildir(base.ThreadPoolText):
         (
             "sub_folders",
             [{"path": "INBOX", "label": "Home mail"}, {"path": "spam", "label": "Home junk"}],
-            "List of subfolders to scan. Each subfolder is a dict of `path` " "and `label`.",
+            "List of subfolders to scan. Each subfolder is a dict of `path` and `label`.",
         ),
         ("separator", " ", "the string to put between the subfolder strings."),
         (
@@ -52,7 +51,7 @@ class Maildir(base.ThreadPoolText):
         (
             "hide_when_empty",
             False,
-            "Whether not to display anything if " "the subfolder has no new mail",
+            "Whether not to display anything if the subfolder has no new mail",
         ),
         ("empty_color", None, "Display color when no new mail is available"),
         ("nonempty_color", None, "Display color when new mail is available"),
@@ -102,7 +101,7 @@ class Maildir(base.ThreadPoolText):
         if color is None:  # default to self.foreground
             return s
 
-        return s.join(('<span foreground="{}">'.format(color), "</span>"))
+        return s.join((f'<span foreground="{color}">', "</span>"))
 
     def format_text(self, state: dict[str, int]) -> str:
         """Converts the state of the subfolders to a string

@@ -1,6 +1,4 @@
-from typing import List
-
-__version_info__ = ...  # type: List
+__version_info__ = ...  # type: list
 
 class FFI:
     def cdef(self, csource, override=False, packed=False): ...

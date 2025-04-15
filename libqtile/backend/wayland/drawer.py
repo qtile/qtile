@@ -55,16 +55,6 @@ class Drawer(drawer.Drawer):
         if offsetx > self._win.width:
             return
 
-        # We need to set the current draw area so we can compare to the previous one
-        self.current_rect = (offsetx, offsety, width, height)
-        # rect_changed = current_rect != self.previous_rect
-
-        if not self.needs_update:
-            return
-
-        # Keep track of latest rect covered by this drawwer
-        self.previous_rect = self.current_rect
-
         # Make sure geometry doesn't extend beyond texture
         if width is None:
             width = self.width

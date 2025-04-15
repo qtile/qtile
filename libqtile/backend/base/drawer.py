@@ -38,6 +38,7 @@ import typing
 import cairocffi
 
 from libqtile import pangocffi, utils
+from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
     from libqtile.backend.base import Internal
@@ -52,10 +53,6 @@ class Drawer:
     finally drawing all operations to a backend-specific target.
     """
 
-    # We need to track extent of drawing to know when to redraw.
-    previous_rect: tuple[int, int, int | None, int | None]
-    current_rect: tuple[int, int, int | None, int | None]
-
     def __init__(self, qtile: Qtile, win: Internal, width: int, height: int):
         self.qtile = qtile
         self._win = win
@@ -69,15 +66,16 @@ class Drawer:
 
         self._has_mirrors = False
 
-        self.current_rect = (0, 0, 0, 0)
-        self.previous_rect = (-1, -1, -1, -1)
         self._enabled = True
 
     def finalize(self):
         """Destructor/Clean up resources"""
-        self.background_surface = None
-        self.surface = None
-        self.last_surface = None
+        if hasattr(self, "surface"):
+            self.surface.finish()
+            delattr(self, "surface")
+        if hasattr(self, "last_surface"):
+            self.last_surface.finish()
+            delattr(self, "last_surface")
         self.ctx = None
 
     @property
@@ -109,6 +107,9 @@ class Drawer:
 
     def _reset_surface(self):
         """This creates a fresh surface and cairo context."""
+        if hasattr(self, "surface"):
+            self.surface.finish()
+
         self.surface = cairocffi.RecordingSurface(
             cairocffi.CONTENT_COLOR_ALPHA,
             None,
@@ -117,20 +118,9 @@ class Drawer:
 
     def _create_last_surface(self):
         """Creates a separate RecordingSurface for mirrors to access."""
+        if hasattr(self, "last_surface"):
+            self.last_surface.finish()
         self.last_surface = cairocffi.RecordingSurface(cairocffi.CONTENT_COLOR_ALPHA, None)
-
-    @property
-    def needs_update(self) -> bool:
-        # We can't test for the surface's ink_extents here on its own as a completely
-        # transparent background would not show any extents but we may still need to
-        # redraw (e.g. if a Spacer widget has changed position and/or size)
-        # Check if the size of the area being drawn has changed
-        rect_changed = self.current_rect != self.previous_rect
-
-        # Check if draw has content (would be False for completely transparent drawer)
-        ink_changed = any(not math.isclose(0.0, i) for i in self.surface.ink_extents())
-
-        return ink_changed or rect_changed
 
     def paint_to(self, drawer: Drawer) -> None:
         drawer.ctx.set_source_surface(self.last_surface)
@@ -304,6 +294,8 @@ class Drawer:
 
     def clear(self, colour):
         """Clears background of the Drawer and fills with specified colour."""
+        if self.ctx is None:
+            self._reset_surface()
         self.ctx.save()
 
         # Erase the background
@@ -324,8 +316,8 @@ class Drawer:
         )
         return textlayout
 
-    def max_layout_size(self, texts, font_family, font_size):
-        sizelayout = self.textlayout("", "ffffff", font_family, font_size, None)
+    def max_layout_size(self, texts, font_family, font_size, markup=False):
+        sizelayout = self.textlayout("", "ffffff", font_family, font_size, None, markup=markup)
         widths, heights = [], []
         for i in texts:
             sizelayout.text = i
@@ -409,8 +401,11 @@ class TextLayout:
             # pangocffi doesn't like None here, so we use "".
             if value is None:
                 value = ""
-            attrlist, value, accel_char = pangocffi.parse_markup(value)
-            self.layout.set_attributes(attrlist)
+            try:
+                attrlist, value, accel_char = pangocffi.parse_markup(value)
+                self.layout.set_attributes(attrlist)
+            except pangocffi.BadMarkup:
+                logger.warning("parse_markup() failed for {value}")
         self.layout.set_text(utils.scrub_to_utf8(value))
 
     @property

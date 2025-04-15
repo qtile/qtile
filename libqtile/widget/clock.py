@@ -20,11 +20,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
 
 import sys
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, tzinfo
 
+from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
@@ -60,11 +62,24 @@ class Clock(base.InLoopPollText):
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(Clock.defaults)
-        if isinstance(self.timezone, str):
+        self.timezone = self._lift_timezone(self.timezone)
+
+        if self.timezone is None:
+            logger.debug("Defaulting to the system local timezone.")
+
+    def _lift_timezone(self, timezone):
+        if isinstance(timezone, tzinfo):
+            return timezone
+        elif isinstance(timezone, str):
+            # Empty string can be used to force use of system time
+            if not timezone:
+                return None
+
+            # A string timezone needs to be converted to a tzinfo object
             if "pytz" in sys.modules:
-                self.timezone = pytz.timezone(self.timezone)
+                return pytz.timezone(timezone)
             elif "dateutil" in sys.modules:
-                self.timezone = dateutil.tz.gettz(self.timezone)
+                return dateutil.tz.gettz(timezone)
             else:
                 logger.warning(
                     "Clock widget can not infer its timezone from a"
@@ -72,8 +87,12 @@ class Clock(base.InLoopPollText):
                     " of these libraries, or give it a"
                     " datetime.tzinfo instance."
                 )
-        if self.timezone is None:
-            logger.debug("Defaulting to the system local timezone.")
+        elif timezone is None:
+            pass
+        else:
+            logger.warning("Invalid timezone value %s.", timezone)
+
+        return None
 
     def tick(self):
         self.update(self.poll())
@@ -88,3 +107,27 @@ class Clock(base.InLoopPollText):
         else:
             now = datetime.now(timezone.utc).astimezone()
         return (now + self.DELTA).strftime(self.format)
+
+    @expose_command
+    def update_timezone(self, timezone: str | tzinfo | None = None):
+        """
+        Force the clock to update timezone information.
+
+        If the method is called with no arguments then the widget will reload
+        the timzeone set on the computer (e.g. via ``timedatectl set-timezone ..``).
+        This will have no effect if you have previously set a ``timezone`` value.
+
+        Alternatively, you can pass a timezone string (e.g. ``"Europe/Lisbon"``) to change
+        the specified timezone. Setting this to an empty string will cause the clock
+        to rely on the system timezone.
+        """
+        self.timezone = self._lift_timezone(timezone)
+
+        # Force python to update timezone info (e.g. if system time has changed)
+        time.tzset()
+        self.update(self.poll())
+
+    @expose_command
+    def use_system_timezone(self):
+        """Force clock to use system timezone."""
+        self.update_timezone("")

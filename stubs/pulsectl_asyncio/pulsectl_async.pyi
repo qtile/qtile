@@ -1,5 +1,5 @@
 import asyncio
-from typing import AsyncIterator, Optional
+from collections.abc import AsyncIterator
 
 from _typeshed import Incomplete
 from pulsectl.pulsectl import PulseEventInfo
@@ -21,7 +21,7 @@ class PulseAsync:
         self,
         client_name: Incomplete | None = ...,
         server: Incomplete | None = ...,
-        loop: Optional[asyncio.AbstractEventLoop] = ...,
+        loop: asyncio.AbstractEventLoop | None = ...,
     ) -> None: ...
     event_types: Incomplete
     event_facilities: Incomplete
@@ -29,7 +29,7 @@ class PulseAsync:
     event_callback: Incomplete
     waiting_futures: Incomplete
     channel_list_enum: Incomplete
-    def init(self, loop: Optional[asyncio.AbstractEventLoop]): ...
+    def init(self, loop: asyncio.AbstractEventLoop | None): ...
     async def connect(
         self, autospawn: bool = ..., wait: bool = ..., timeout: Incomplete | None = ...
     ) -> None: ...

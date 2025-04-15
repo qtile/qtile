@@ -97,8 +97,11 @@ conditions are supported:
             lazy.layout.grow_down().when(layout='columns')
         ),
 
-        # Limit action to when the current window is not floating (default True)
+        # Limit action to when the current window is not floating
         Key([mod], "f", lazy.window.toggle_fullscreen().when(when_floating=False))
+
+        # Limit action to when the current window is floating
+        Key([mod], "f", lazy.window.toggle_fullscreen().when(when_floating=True))
 
         # Also matches are supported on the current window
         # For example to match on the wm_class for fullscreen do the following

@@ -142,11 +142,11 @@ def test_statusnotifier_left_click(manager_nospawn, sni_config):
         check_fullscreen(windows, False)
 
         # Left click will toggle fullscreen
-        manager_nospawn.c.bar["top"].fake_button_press(0, "top", 10, 0, 1)
+        manager_nospawn.c.bar["top"].fake_button_press(10, 0, 1)
         check_fullscreen(windows, True)
 
         # Left click again will restore window
-        manager_nospawn.c.bar["top"].fake_button_press(0, "top", 10, 0, 1)
+        manager_nospawn.c.bar["top"].fake_button_press(10, 0, 1)
         check_fullscreen(windows, False)
 
         manager_nospawn.kill_window(win)
@@ -178,11 +178,11 @@ def test_statusnotifier_left_click_vertical_bar(manager_nospawn, sni_config):
         check_fullscreen(windows, False)
 
         # Left click will toggle fullscreen
-        manager_nospawn.c.bar["left"].fake_button_press(0, "left", 0, 10, 1)
+        manager_nospawn.c.bar["left"].fake_button_press(0, 10, 1)
         check_fullscreen(windows, True)
 
         # Left click again will restore window
-        manager_nospawn.c.bar["left"].fake_button_press(0, "left", 0, 10, 1)
+        manager_nospawn.c.bar["left"].fake_button_press(0, 10, 1)
         check_fullscreen(windows, False)
 
         manager_nospawn.kill_window(win)

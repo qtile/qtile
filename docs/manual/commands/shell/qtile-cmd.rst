@@ -11,8 +11,7 @@ How it works
 
 As per :ref:`commands-api`, Qtile's command graph has seven nodes: ``layout``, ``window``, ``group``,
 ``bar``, ``widget``, ``screen``, and a special ``root`` node. These are the objects that can be accessed
-via ``qtile cmd-obj`` (NB the root node is called ``cmd`` when using the ``cmd-obj`` script to give it
-an addressable name).
+via ``qtile cmd-obj``.
 
 Running the command against a selected object without a function (``-f``) will run the ``help``
 command and list the commands available to the object. Commands shown with an asterisk ("*") require
@@ -76,12 +75,12 @@ Output of ``qtile cmd-obj -h``
 
     Examples:
      qtile cmd-obj
-     qtile cmd-obj -o cmd
-     qtile cmd-obj -o cmd -f prev_layout -i
-     qtile cmd-obj -o cmd -f prev_layout -a 3 # prev_layout on group 3
+     qtile cmd-obj -o root  # same as above, root node is default
+     qtile cmd-obj -o root -f prev_layout -i
+     qtile cmd-obj -o root -f prev_layout -a 3 # prev_layout on group 3
      qtile cmd-obj -o group 3 -f focus_back
      qtile cmd-obj -o widget textbox -f update -a "New text"
-     qtile cmd-obj -o cmd -f restart # restart qtile
+     qtile cmd-obj -f restart # restart qtile
 
 Output of ``qtile cmd-obj -o group 3``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -105,58 +104,58 @@ Output of ``qtile cmd-obj -o group 3``
     -o group 3 -f toscreen          * Pull a group to a specified screen.
     -o group 3 -f unminimize_all      Unminimise all windows in this group
 
-Output of ``qtile cmd-obj -o cmd``
+Output of ``qtile cmd-obj -o root``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: text
 
-    -o cmd -f add_rule              * Add a dgroup rule, returns rule_id needed to remove it
-    -o cmd -f addgroup              * Add a group with the given name
-    -o cmd -f commands                Returns a list of possible commands for this object
-    -o cmd -f critical                Set log level to CRITICAL
-    -o cmd -f debug                   Set log level to DEBUG
-    -o cmd -f delgroup              * Delete a group with the given name
-    -o cmd -f display_kb            * Display table of key bindings
-    -o cmd -f doc                   * Returns the documentation for a specified command name
-    -o cmd -f error                   Set log level to ERROR
-    -o cmd -f eval                  * Evaluates code in the same context as this function
-    -o cmd -f findwindow            * Launch prompt widget to find a window of the given name
-    -o cmd -f focus_by_click        * Bring a window to the front
-    -o cmd -f function              * Call a function with current object as argument
-    -o cmd -f get_info                Prints info for all groups
-    -o cmd -f get_state               Get pickled state for restarting qtile
-    -o cmd -f get_test_data           Returns any content arbitrarily set in the self.test_data attribute.
-    -o cmd -f groups                  Return a dictionary containing information for all groups
-    -o cmd -f hide_show_bar         * Toggle visibility of a given bar
-    -o cmd -f info                    Set log level to INFO
-    -o cmd -f internal_windows        Return info for each internal window (bars, for example)
-    -o cmd -f items                 * Returns a list of contained items for the specified name
-    -o cmd -f list_widgets            List of all addressible widget names
-    -o cmd -f next_layout           * Switch to the next layout.
-    -o cmd -f next_screen             Move to next screen
-    -o cmd -f next_urgent             Focus next window with urgent hint
-    -o cmd -f pause                   Drops into pdb
-    -o cmd -f prev_layout           * Switch to the previous layout.
-    -o cmd -f prev_screen             Move to the previous screen
-    -o cmd -f qtile_info              Returns a dictionary of info on the Qtile instance
-    -o cmd -f qtilecmd              * Execute a Qtile command using the client syntax
-    -o cmd -f remove_rule           * Remove a dgroup rule by rule_id
-    -o cmd -f restart                 Restart qtile
-    -o cmd -f run_extension         * Run extensions
-    -o cmd -f run_external          * Run external Python script
-    -o cmd -f screens                 Return a list of dictionaries providing information on all screens
-    -o cmd -f shutdown                Quit Qtile
-    -o cmd -f simulate_keypress     * Simulates a keypress on the focused window.
-    -o cmd -f spawn                 * Run cmd in a shell.
-    -o cmd -f spawncmd              * Spawn a command using a prompt widget, with tab-completion.
-    -o cmd -f status                  Return "OK" if Qtile is running
-    -o cmd -f switch_groups         * Switch position of groupa to groupb
-    -o cmd -f switchgroup           * Launch prompt widget to switch to a given group to the current screen
-    -o cmd -f sync                    Sync the X display. Should only be used for development
-    -o cmd -f to_layout_index       * Switch to the layout with the given index in self.layouts.
-    -o cmd -f to_screen             * Warp focus to screen n, where n is a 0-based screen number
-    -o cmd -f togroup               * Launch prompt widget to move current window to a given group
-    -o cmd -f tracemalloc_dump        Dump tracemalloc snapshot
-    -o cmd -f tracemalloc_toggle      Toggle tracemalloc status
-    -o cmd -f warning                 Set log level to WARNING
-    -o cmd -f windows                 Return info for each client window
+    -o root -f add_rule              * Add a dgroup rule, returns rule_id needed to remove it
+    -o root -f addgroup              * Add a group with the given name
+    -o root -f commands                Returns a list of possible commands for this object
+    -o root -f critical                Set log level to CRITICAL
+    -o root -f debug                   Set log level to DEBUG
+    -o root -f delgroup              * Delete a group with the given name
+    -o root -f display_kb            * Display table of key bindings
+    -o root -f doc                   * Returns the documentation for a specified command name
+    -o root -f error                   Set log level to ERROR
+    -o root -f eval                  * Evaluates code in the same context as this function
+    -o root -f findwindow            * Launch prompt widget to find a window of the given name
+    -o root -f focus_by_click        * Bring a window to the front
+    -o root -f function              * Call a function with current object as argument
+    -o root -f get_info                Prints info for all groups
+    -o root -f get_state               Get pickled state for restarting qtile
+    -o root -f get_test_data           Returns any content arbitrarily set in the self.test_data attribute.
+    -o root -f groups                  Return a dictionary containing information for all groups
+    -o root -f hide_show_bar         * Toggle visibility of a given bar
+    -o root -f info                    Set log level to INFO
+    -o root -f internal_windows        Return info for each internal window (bars, for example)
+    -o root -f items                 * Returns a list of contained items for the specified name
+    -o root -f list_widgets            List of all addressible widget names
+    -o root -f next_layout           * Switch to the next layout.
+    -o root -f next_screen             Move to next screen
+    -o root -f next_urgent             Focus next window with urgent hint
+    -o root -f pause                   Drops into pdb
+    -o root -f prev_layout           * Switch to the previous layout.
+    -o root -f prev_screen             Move to the previous screen
+    -o root -f qtile_info              Returns a dictionary of info on the Qtile instance
+    -o root -f qtilecmd              * Execute a Qtile command using the client syntax
+    -o root -f remove_rule           * Remove a dgroup rule by rule_id
+    -o root -f restart                 Restart qtile
+    -o root -f run_extension         * Run extensions
+    -o root -f run_external          * Run external Python script
+    -o root -f screens                 Return a list of dictionaries providing information on all screens
+    -o root -f shutdown                Quit Qtile
+    -o root -f simulate_keypress     * Simulates a keypress on the focused window.
+    -o root -f spawn                 * Run cmd in a shell.
+    -o root -f spawncmd              * Spawn a command using a prompt widget, with tab-completion.
+    -o root -f status                  Return "OK" if Qtile is running
+    -o root -f switch_groups         * Switch position of groupa to groupb
+    -o root -f switchgroup           * Launch prompt widget to switch to a given group to the current screen
+    -o root -f sync                    Sync the X display. Should only be used for development
+    -o root -f to_layout_index       * Switch to the layout with the given index in self.layouts.
+    -o root -f to_screen             * Warp focus to screen n, where n is a 0-based screen number
+    -o root -f togroup               * Launch prompt widget to move current window to a given group
+    -o root -f tracemalloc_dump        Dump tracemalloc snapshot
+    -o root -f tracemalloc_toggle      Toggle tracemalloc status
+    -o root -f warning                 Set log level to WARNING
+    -o root -f windows                 Return info for each client window

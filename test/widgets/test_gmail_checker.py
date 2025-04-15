@@ -41,7 +41,7 @@ class FakeIMAP(ModuleType):
             if not (self.username and self.password):
                 return False, None
 
-            return ("OK", ['("{}" (MESSAGES 10 UNSEEN 2)'.format(path).encode()])
+            return ("OK", [f'("{path}" (MESSAGES 10 UNSEEN 2)'.encode()])
 
 
 def test_gmail_checker_valid_response(fake_qtile, monkeypatch, fake_window):

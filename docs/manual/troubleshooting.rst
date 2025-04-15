@@ -49,7 +49,8 @@ Qtile's conversations with the X server. To capture one of these, create an
 This will put the xtrace output in Qtile's logfile as well. You can then
 demonstrate the bug, and paste the contents of this file into the bug report.
 
-Note that xtrace may be named ``x11trace`` on some platforms, for example, on Fedora.
+Note that xtrace may be named ``x11trace`` on some platforms, for example, on
+Fedora and Arch.
 
 .. _debugging-wayland:
 

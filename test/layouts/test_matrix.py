@@ -139,8 +139,3 @@ def test_unknown_client():
     # Without the return statement in "configure" the following
     # code would result in an error
     assert matrix.configure("fakeclient", None) is None
-
-
-def test_deprecated_configuration(caplog):
-    _ = layout.Matrix(2)
-    assert "The use of a positional argument in Matrix is deprecated." in caplog.text
