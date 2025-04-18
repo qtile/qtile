@@ -44,7 +44,7 @@ REPL:
 
     from libqtile.command.client import CommandClient
     c = CommandClient()
-    print(c.call("status")())
+    print(c.call("status"))
 
 Like the interactive client, the command client will automatically connect to a
 running Qtile instance.  Here, we first resolve the ``status()`` command with
