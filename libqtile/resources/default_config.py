@@ -212,6 +212,9 @@ auto_minimize = True
 # When using the Wayland backend, this can be used to configure input devices.
 wl_input_rules = None
 
+# When using the Wayland backend, render internal windows at this scaling factor.
+wl_scale_factor = 1
+
 # xcursor theme (string or None) and size (integer) for Wayland backend
 wl_xcursor_theme = None
 wl_xcursor_size = 24
