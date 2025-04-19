@@ -138,3 +138,4 @@ class Wlan(base.InLoopPollText):
                 "Probably your wlan device is switched off or "
                 " otherwise not present in your system."
             )
+            raise
