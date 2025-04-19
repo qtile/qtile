@@ -50,16 +50,11 @@ class FakeIMAP(ModuleType):
 
 class FakeKeyring(ModuleType):
     valid = True
-    error = True
 
     def get_password(self, _app, user):
         if self.valid:
             return "password"
-
-        else:
-            if self.error:
-                return "Gnome Keyring Error"
-            return None
+        return None
 
 
 @pytest.fixture()
@@ -82,27 +77,21 @@ def test_imapwidget(fake_qtile, monkeypatch, fake_window, patched_imap):
     assert text == "INBOX: 2"
 
 
-def test_imapwidget_keyring_error(fake_qtile, monkeypatch, fake_window, patched_imap):
+def test_imapwidget_with_password(fake_qtile, monkeypatch, fake_window, patched_imap):
+    # keyring should not be called
     patched_imap.keyring.valid = False
+    imap = patched_imap.ImapWidget(user="qtile", password="password")
+    fakebar = FakeBar([imap], window=fake_window)
+    imap._configure(fake_qtile, fakebar)
+    text = imap.poll()
+    assert text == "INBOX: 2"
+
+
+def test_imapwidget_password_none(fake_qtile, monkeypatch, fake_window, patched_imap):
+    patched_imap.keyring.valid = False
+
     imap = patched_imap.ImapWidget(user="qtile")
     fakebar = FakeBar([imap], window=fake_window)
     imap._configure(fake_qtile, fakebar)
     text = imap.poll()
-    assert text == "Gnome Keyring Error"
-
-
-# Widget does not handle "password = None" elegantly.
-# It logs a message but doesn't set self.password.
-# The widget will then fail when it looks up this attribute and then
-# fail again when it tries to return self.text.
-# TO DO: Fix widget's handling of this scenario.
-def test_imapwidget_password_none(fake_qtile, monkeypatch, fake_window, patched_imap):
-    patched_imap.keyring.valid = False
-    patched_imap.keyring.error = False
-
-    imap = patched_imap.ImapWidget(user="qtile")
-    fakebar = FakeBar([imap], window=fake_window)
-    imap._configure(fake_qtile, fakebar)
-    with pytest.raises(AttributeError):
-        with pytest.raises(UnboundLocalError):
-            imap.poll()
+    assert text == "No password error"
