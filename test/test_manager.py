@@ -99,7 +99,20 @@ class ManagerConfig(Config):
     reconfigure_screens = False
 
 
+class MultiScreenManagerConfig(ManagerConfig):
+    screens = [
+        libqtile.config.Screen(
+            bottom=libqtile.bar.Bar(
+                [libqtile.widget.GroupBox()], 20
+            ),
+        )
+        for _ in range(3)
+    ]
+
+
 manager_config = pytest.mark.parametrize("manager", [ManagerConfig], indirect=True)
+multi_screen_manager_config = pytest.mark.parametrize(
+    "manager", [MultiScreenManagerConfig], indirect=True)
 
 
 @dualmonitor
@@ -163,6 +176,31 @@ def test_to_screen(manager):
     manager.c.next_screen()
     assert manager.c.window.info()["name"] == "two"
     manager.c.prev_screen()
+    assert manager.c.window.info()["name"] == "one"
+
+
+@multi_screen_manager_config
+def test_shift_groups_between_screens(manager):
+    assert manager.c.screen.info()["index"] == 0
+    manager.c.to_screen(1)
+    assert manager.c.screen.info()["index"] == 1
+    manager.test_window("one")
+    manager.c.to_screen(0)
+    manager.test_window("two")
+
+    ga = manager.c.groups()["a"]
+    assert ga["windows"] == ["two"]
+
+    gb = manager.c.groups()["b"]
+    assert gb["windows"] == ["one"]
+
+    manager.c.swap_screens()
+    assert ga["windows"] == ["one"]
+    assert gb["windows"] == ["two"]
+    assert manager.c.window.info()["name"] == "one"
+    manager.c.swap_screens()
+    assert ga["windows"] == ["one"]
+    assert gb["windows"] == ["two"]
     assert manager.c.window.info()["name"] == "one"
 
 
