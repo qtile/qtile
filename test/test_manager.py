@@ -240,7 +240,7 @@ def test_too_few_groups(manager):
 
 
 class _ChordsConfig(Config):
-    groups = [libqtile.config.Group("a")]
+    groups = [libqtile.config.Group("a"), libqtile.config.Group("b")]
     layouts = [libqtile.layout.max.Max()]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = [
@@ -425,6 +425,27 @@ def test_spawn(manager):
 def test_spawn_list(manager):
     # Spawn something with a pid greater than init's
     assert int(manager.c.spawn(["echo", "true"])) > 1
+
+
+@manager_config
+def test_spawn_in_group(manager):
+    @Retry(ignore_exceptions=(AssertionError,))
+    def wait_for_window(empty=False):
+        assert (len(manager.c.windows()) > 0) is not empty
+
+    manager.c.spawn("xterm")
+    wait_for_window()
+    assert manager.c.group["a"].info()["windows"]
+    assert not manager.c.group["b"].info()["windows"]
+    manager.c.window.kill()
+    wait_for_window(empty=True)
+
+    manager.c.spawn("xterm", group="b")
+    wait_for_window()
+    assert manager.c.group["b"].info()["windows"]
+    assert not manager.c.group["a"].info()["windows"]
+    manager.c.group["b"].toscreen()
+    manager.c.window.kill()
 
 
 @manager_config

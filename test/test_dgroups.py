@@ -23,14 +23,12 @@ import time
 import pytest
 
 import libqtile
+from test.helpers import Retry
 
 
 class DGroupsConfig(libqtile.confreader.Config):
     auto_fullscreen = True
-    groups = [
-        libqtile.config.Group("a"),
-        libqtile.config.Group("b"),
-    ]
+    groups = [libqtile.config.Group("a"), libqtile.config.Group("b")]
     layouts = [libqtile.layout.MonadTall()]
     floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
@@ -38,7 +36,15 @@ class DGroupsConfig(libqtile.confreader.Config):
     screens = []
 
 
+class DGroupsSpawnConfig(DGroupsConfig):
+    groups = [
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b", spawn=["xterm"]),
+    ]
+
+
 dgroups_config = pytest.mark.parametrize("manager", [DGroupsConfig], indirect=True)
+dgroups_spawn_config = pytest.mark.parametrize("manager", [DGroupsSpawnConfig], indirect=True)
 
 
 @dgroups_config
@@ -83,3 +89,14 @@ def test_dgroup_nonpersist(manager):
 
     # check if dgroup does not exist anymore
     assert len(manager.c.get_groups()) == 2
+
+
+@dgroups_spawn_config
+def test_dgroup_spawn_in_group(manager):
+    @Retry(ignore_exceptions=(AssertionError,))
+    def wait_for_window():
+        assert len(manager.c.windows()) > 0
+
+    wait_for_window()
+    assert not manager.c.group["a"].info()["windows"]
+    assert manager.c.group["b"].info()["windows"]

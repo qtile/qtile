@@ -29,6 +29,7 @@ import pickle
 import shlex
 import shutil
 import signal
+import socket
 import subprocess
 import tempfile
 from collections import defaultdict
@@ -1275,7 +1276,11 @@ class Qtile(CommandObject):
 
     @expose_command()
     def spawn(
-        self, cmd: list[str] | str, shell: bool = False, env: dict[str, str] = dict()
+        self,
+        cmd: list[str] | str,
+        shell: bool = False,
+        env: dict[str, str] = dict(),
+        group: str | None = None,
     ) -> int:
         """
         Spawn a new process.
@@ -1289,6 +1294,8 @@ class Qtile(CommandObject):
             -c". This enables the use of shell syntax within the command (e.g. pipes).
         env:
             Dictionary of environmental variables to pass with command.
+        group:
+            Name of group in which to spawn process.
 
         Examples
         ========
@@ -1329,9 +1336,24 @@ class Qtile(CommandObject):
                 (os.POSIX_SPAWN_DUP2, 2, null.fileno()),
             ]
 
+            # To create a rule to move process to a specific group and manage race conditions
+            # we need to do the following:
+            # 1) Create a socket pair so we can communicate to child process
+            # 2) Spawn a "qtile launch" process and pass the file descriptor
+            # 3) Have "qtile launch" notify qtile that it's ready
+            # 4) Create a rule using the pid from step 2
+            # 5) Send a message over the socket to "qtile launch"
+            # 6) Once the message is received, "qtile launch" execs the desired process
+            if group is not None:
+                parent_sock, child_sock = socket.socketpair()
+                # socket pair fds are non-inheritable by default but we need this to survice
+                os.set_inheritable(child_sock.fileno(), True)
+
             # this API is only available on python 3.13 or above, and only on platforms
             # where posix_spawn_file_actions_addclosefrom_np() exists (only glibc on Linux).
-            if hasattr(os, "POSIX_SPAWN_CLOSEFROM"):
+            # where we're creating a rule to manage the group, we'll handle closing fds in
+            # `qtile launch`
+            if hasattr(os, "POSIX_SPAWN_CLOSEFROM") and group is None:
                 # we should close all fds so that child processes don't
                 # accidentally write to our x11 event loop or whatever; we never
                 # used to do this, so it seems fine to only do it where this nice
@@ -1339,7 +1361,28 @@ class Qtile(CommandObject):
                 file_actions.append((os.POSIX_SPAWN_CLOSEFROM, 3))
 
             try:
-                return os.posix_spawnp(args[0], args, env, file_actions=file_actions)
+                if group is not None:
+                    # As per step 2 (above) we want to launch the process via "qtile launch"
+                    args = ["qtile", "launch", "--fd", f"{child_sock.fileno()}"] + args
+                pid = os.posix_spawnp(args[0], args, env, file_actions=file_actions)
+                if group is not None:
+                    # Listen for READY message from `qtile launch`
+                    data = parent_sock.recv(5)
+
+                    if data != b"READY":
+                        logger.warning("Received unexpected data: {data!r}")
+
+                    # Create the group matching rule
+                    match_args = {"net_wm_pid": pid}
+                    rule_args = {"group": group, "one_time": True}
+                    self.add_rule(match_args=match_args, rule_args=rule_args)
+
+                    # Tell child process it can now spawn main proces as rule has been added
+                    parent_sock.send(b"OK")
+
+                    parent_sock.close()
+                    child_sock.close()
+                return pid
             except OSError as e:
                 logger.warning("failed to execute: %s: %s", str(args), str(e))
                 return -1
