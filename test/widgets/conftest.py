@@ -87,6 +87,7 @@ def minimal_conf_noscreen():
         layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
         floating_layout = libqtile.resources.default_config.floating_layout
         screens = []
+        reconfigure_screens = False
 
     return MinimalConf
 
