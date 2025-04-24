@@ -13,10 +13,10 @@ build-backend = "builder"
 name = "qtile"
 description = "A pure-Python tiling window manager."
 dynamic = ["version", "readme", "dependencies", "optional-dependencies"]
-license = {text = "MIT"}
+license = "MIT"
+license-files = [ "LICENSE" ]
 classifiers = [
     "Intended Audience :: End Users/Desktop",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: BSD :: FreeBSD",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3 :: Only",
