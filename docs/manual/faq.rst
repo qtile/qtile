@@ -42,7 +42,6 @@ starting your xterm with the "-wf" option, like so:
 Alternatively, you can just cycle through your layouts a few times, which
 usually seems to fix it.
 
-
 How do I know which modifier specification maps to which key?
 =============================================================
 
@@ -62,7 +61,6 @@ command. On my system, the output looks like this:
     mod3
     mod4        Super_L (0xce),  Hyper_L (0xcf)
     mod5        ISO_Level3_Shift (0x5c),  Mode_switch (0xcb)
-
 
 My "pointer mouse cursor" isn't the one I expect it to be!
 ==========================================================
@@ -113,11 +111,11 @@ of binding keys to ``lazy.group[name].toscreen()``, use this:
 
     for i in groups:
         keys.append(Key([mod], i.name, lazy.function(go_to_group(i.name))))
-        
-To be able to move windows across these groups which switching groups, a similar function can be used:
+
+To be able to move windows across these groups while switching groups, a similar function can be used:
 
 .. code-block:: python
-    
+
     def go_to_group_and_move_window(name: str):
         def _inner(qtile):
             if len(qtile.screens) == 1:
