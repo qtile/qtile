@@ -13,8 +13,8 @@ follows the available paths in the graph. This is what the graph looks like:
     :api_page_root: api/
 
 Each arrow can be read as "holds a reference to". So, we can see that a
-``widget`` object *holds a reference to* objects of type ``bar``, ``screen``
-and ``group``. Let's start with some simple examples of how the addressing
+``widget`` object *holds a reference to* objects of type ``bar`` and ``screen``. 
+Let's start with some simple examples of how the addressing
 works. Which particular objects we hold reference to depends on the context -
 for instance, widgets hold a reference to the screen that they appear on, and
 the bar they are attached to.
@@ -44,7 +44,7 @@ REPL:
 
     from libqtile.command.client import CommandClient
     c = CommandClient()
-    print(c.call("status")())
+    print(c.call("status"))
 
 Like the interactive client, the command client will automatically connect to a
 running Qtile instance.  Here, we first resolve the ``status()`` command with

@@ -48,6 +48,36 @@ def display():  # noqa: F841
         yield os.environ["DISPLAY"]
 
 
+def start_x11_and_poll_connection(args, display):
+    proc = subprocess.Popen(args)
+
+    if can_connect_x11(display, ok=lambda: proc.poll() is None):
+        return proc
+
+    # we weren't able to get a display up
+    if proc.poll() is None:
+        raise AssertionError(f"Unable to connect to running {args[0]}")
+    else:
+        raise AssertionError(
+            f"Unable to start {args[0]}, quit with return code {proc.returncode}"
+        )
+
+
+def stop_x11(proc, display, display_file):
+    # Kill xephyr only if it is running
+    if proc is not None:
+        if proc.poll() is None:
+            proc.kill()
+        proc.wait()
+
+    # clean up the lock file for the display we allocated
+    try:
+        display_file.close()
+        os.remove(xcffib.testing.lock_path(int(display[1:])))
+    except OSError:
+        pass
+
+
 class Xephyr:
     """Spawn Xephyr instance
 
@@ -55,7 +85,7 @@ class Xephyr:
     must be started, and then stopped.
     """
 
-    def __init__(self, outputs, xoffset=None):
+    def __init__(self, outputs, xoffset=None, xtrace=False):
         self.outputs = outputs
         if xoffset is None:
             self.xoffset = WIDTH
@@ -64,7 +94,13 @@ class Xephyr:
 
         self.proc = None  # Handle to Xephyr instance, subprocess.Popen object
         self.display = None
-        self.display_file = None
+        self.xephyr_display_file = None
+
+        self.xtrace = xtrace
+        self.xtrace_proc = None
+        self.xtrace_display = None
+        self.xtrace_display_file = None
+        self.xephyr_display = None
 
     def __enter__(self):
         try:
@@ -85,15 +121,16 @@ class Xephyr:
         which is used to setup the instance.
         """
         # get a new display
-        display, self.display_file = xcffib.testing.find_display()
+        display, self.xephyr_display_file = xcffib.testing.find_display()
         self.display = f":{display}"
+        self.xephyr_display = self.display
 
         # build up arguments
         args = [
             "Xephyr",
             "-name",
             "qtile_test",
-            self.display,
+            self.xephyr_display,
             "-ac",
             "-screen",
             f"{WIDTH}x{HEIGHT}",
@@ -108,40 +145,33 @@ class Xephyr:
                 ]
             )
             args.extend(["+xinerama"])
+            args.extend(["-extension", "RANDR"])
 
-        self.proc = subprocess.Popen(args)
+        start_x11_and_poll_connection(args, self.xephyr_display)
 
-        if can_connect_x11(self.display, ok=lambda: self.proc.poll() is None):
-            return
-
-        # we weren't able to get a display up
-        if self.proc.poll() is None:
-            raise AssertionError("Unable to connect to running Xephyr")
-        else:
-            raise AssertionError(
-                f"Unable to start Xephyr, quit with return code {self.proc.returncode}"
-            )
+        if self.xtrace:
+            # because we run Xephyr without auth and xtrace requires auth, we
+            # need to add some x11 auth here for the Xephyr display our xtrace
+            # will fail:
+            subprocess.check_call(["xauth", "generate", self.xephyr_display])
+            display, self.xtrace_display_file = xcffib.testing.find_display()
+            self.xtrace_display = f":{display}"
+            self.display = self.xtrace_display
+            args = [
+                "xtrace",
+                "--timestamps",
+                "-k",
+                "-d",
+                self.xephyr_display,
+                "-D",
+                self.xtrace_display,
+            ]
+            start_x11_and_poll_connection(args, self.xtrace_display)
 
     def stop_xephyr(self):
-        """Stop the Xephyr instance"""
-        # Xephyr must be started first
-        if self.proc is None:
-            return
-
-        # Kill xephyr only if it is running
-        if self.proc.poll() is None:
-            # We should always be able to kill xephyr nicely
-            self.proc.terminate()
-        self.proc.wait()
-
-        self.proc = None
-
-        # clean up the lock file for the display we allocated
-        try:
-            self.display_file.close()
-            os.remove(xcffib.testing.lock_path(int(self.display[1:])))
-        except OSError:
-            pass
+        stop_x11(self.proc, self.xephyr_display, self.xephyr_display_file)
+        if self.xtrace:
+            stop_x11(self.xtrace_proc, self.xtrace_display, self.xtrace_display_file)
 
 
 @contextlib.contextmanager

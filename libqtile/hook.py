@@ -108,7 +108,7 @@ class HookHandlerCollection:
     def __init__(self, registry_name: str, check_name=True):
         self.hooks: dict[str, HookHandler] = {}
         if check_name and registry_name in subscriptions:
-            raise NameError("A hook registry already exists with that name: {registry_name}")
+            raise NameError(f"A hook registry already exists with that name: {registry_name}")
         elif registry_name not in subscriptions:
             subscriptions[registry_name] = {}
         self.registry_name = registry_name
