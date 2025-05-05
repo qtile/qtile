@@ -490,6 +490,9 @@ class Screen(CommandObject):
             and other.height == self.height
         )
 
+    def __hash__(self) -> int:
+        return hash((self.x, self.y, self.width, self.height))
+
     def _configure(
         self,
         qtile: Qtile,
