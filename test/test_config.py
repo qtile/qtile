@@ -104,3 +104,13 @@ def test_ezclick_ezdrag():
     btn = config.EzDrag("A-2", cmd)
     assert btn.button == "Button2"
     assert btn.modifiers == [config.EzClick.modifier_keys["A"]]
+
+
+def test_screen_underbar_methods():
+    one = config.Screen(x=10, y=10, width=10, height=10)
+    two = config.Screen(x=20, y=20, width=20, height=20)
+
+    assert hash(one) != hash(two)
+    assert hash(one) == hash(one)
+    assert one != two
+    assert one == one
