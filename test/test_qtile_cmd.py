@@ -29,11 +29,17 @@ import libqtile.bar
 import libqtile.config
 import libqtile.layout
 import libqtile.widget
+from libqtile.command.base import expose_command
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
 
 
 class ServerConfig(Config):
+    class KwargWidget(libqtile.widget.base._TextBox):
+        @expose_command
+        def test_kwargs(self, *, a: int = 0):
+            return {"value": a}
+
     auto_fullscreen = True
     keys = [
         libqtile.config.Key(["mod4"], "Return", lazy.spawn("xterm")),
@@ -70,9 +76,7 @@ class ServerConfig(Config):
     screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
-                [
-                    libqtile.widget.TextBox(name="one"),
-                ],
+                [libqtile.widget.TextBox(name="one"), KwargWidget("")],
                 20,
             ),
         ),
@@ -172,3 +176,12 @@ def test_cmd_obj_root_node(manager):
     assert run_qtile_cmd(cmd_no_root, no_json_loads=True) == run_qtile_cmd(
         cmd_with_root, no_json_loads=True
     )
+
+
+@server_config
+def test_cmd_obj_kwarg(manager):
+    cmd = f"-s {manager.sockfile} -o widget kwargwidget -f test_kwargs -k a=2"
+    result = run_qtile_cmd(cmd)
+
+    # This confirms that value has correctly been converted to int
+    assert result["value"] == 2
