@@ -323,8 +323,14 @@ class QSh:
         if command_match:
             cmd = command_match.group("cmd")
             args = command_match.group("args")
+            cmd_args: tuple
             if args:
-                cmd_args = tuple(map(str.strip, args.split(",")))
+                if cmd == "eval":
+                    # For eval, the whole argument should be a single string of code
+                    # so we shouldn't split it.
+                    cmd_args = (args,)
+                else:
+                    cmd_args = tuple(map(str.strip, args.split(",")))
             else:
                 cmd_args = ()
 

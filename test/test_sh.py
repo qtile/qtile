@@ -134,3 +134,13 @@ def test_help(manager):
     sh = QSh(command)
     assert sh.do_help("nonexistent").startswith("No such command")
     assert sh.do_help("help")
+
+
+@sh_config
+def test_eval(manager):
+    client = ipc.Client(manager.sockfile)
+    command = IPCCommandInterface(client)
+    sh = QSh(command)
+    sh.process_line("eval(self._test_val=(1,2))")
+    _, result = sh.process_line("eval(self._test_val)")
+    assert result == "(1, 2)"
