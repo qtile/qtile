@@ -1694,7 +1694,7 @@ class Window(_Window, base.Window):
         self._wm_class: list[str] | None = None
         self.update_wm_class()
         self.update_name()
-        self.set_group()
+        self.togroup()
 
         # add window to the save-set, so it gets mapped when qtile dies
         qtile.core.conn.conn.core.ChangeSaveSet(SetMode.Insert, self.window.wid)
@@ -1861,6 +1861,10 @@ class Window(_Window, base.Window):
         if do_minimize:
             if self._float_state != FloatStates.MINIMIZED:
                 self._enablefloating(new_float_state=FloatStates.MINIMIZED)
+                for win in reversed(self.group.focus_history[:-1]):
+                    if not win.minimized:
+                        self.group.focus(win)
+                        break
         else:
             if self._float_state == FloatStates.MINIMIZED:
                 self.floating = False
@@ -2080,16 +2084,16 @@ class Window(_Window, base.Window):
         else:
             width, height, x, y = self.width, self.height, self.x, self.y
 
-        if self.group and self.group.screen:
-            self.place(
-                x,
-                y,
-                width,
-                height,
-                self.borderwidth,
-                self.bordercolor,
-            )
+        self.place(
+            x,
+            y,
+            width,
+            height,
+            self.borderwidth,
+            self.bordercolor,
+        )
         self.update_state()
+        self.unhide()
         return False
 
     def update_wm_net_icon(self):
