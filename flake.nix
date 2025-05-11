@@ -6,7 +6,10 @@
   };
 
   outputs =
-    { self, nixpkgs }:
+    {
+      self,
+      nixpkgs,
+    }:
     let
       supportedSystems = [
         "x86_64-linux"
@@ -26,9 +29,10 @@
           in
           function (import nixpkgs nixpkgs-settings)
         );
-
     in
     {
+      formatter = forAllSystems (pkgs: pkgs.nixfmt-rfc-style);
+
       checks = forAllSystems (pkgs: pkgs.python3Packages.qtile.passthru.tests);
 
       overlays.default = import ./nix/overlays.nix self;
