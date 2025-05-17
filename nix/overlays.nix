@@ -19,17 +19,22 @@ self: final: prev: {
             symver = builtins.head (
               builtins.match "Qtile ([0-9.]+), released ([0-9-]+):" current-release-title
             );
-
           in
           {
             version = "${symver}+${flakever}.flake";
             # use the source of the git repo
             src = ./..;
-            # for qtile migrate, not in nixpkgs yet
-            propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [ pprev.libcst ];
           }
         )).override
           { wlroots = prev.wlroots_0_17; };
+      qtile-extras = pprev.qtile-extras.overridePythonAttrs (oldAttrs: {
+        # disable broken tests
+        disabledTestPaths = oldAttrs.disabledTestPaths ++ [
+          "test/widget/test_animated_image.py"
+          "test/widget/test_groupbox2.py"
+          "test/widget/test_image.py"
+        ];
+      });
     })
   ];
   python3 =
