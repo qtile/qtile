@@ -490,6 +490,9 @@ class Screen(CommandObject):
             and other.height == self.height
         )
 
+    def __hash__(self) -> int:
+        return hash((self.x, self.y, self.width, self.height))
+
     def _configure(
         self,
         qtile: Qtile,
@@ -1123,6 +1126,8 @@ class Rule:
         Should we override the group's exclusive setting?
     break_on_match:
         Should we stop applying rules if this rule is matched?
+    one_time:
+        Should we delete rule once if it has been matched?
 
     """
 
@@ -1133,6 +1138,7 @@ class Rule:
         float: bool = False,
         intrusive: bool = False,
         break_on_match: bool = True,
+        one_time: bool = False,
     ) -> None:
         if isinstance(match, _Match):
             self.matchlist = [match]
@@ -1142,6 +1148,7 @@ class Rule:
         self.float = float
         self.intrusive = intrusive
         self.break_on_match = break_on_match
+        self.one_time = one_time
 
     def matches(self, w: base.Window) -> bool:
         return any(w.match(m) for m in self.matchlist)

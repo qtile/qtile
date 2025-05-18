@@ -23,13 +23,21 @@
 import pytest
 
 from libqtile import config, ipc, resources
+from libqtile.bar import Bar
+from libqtile.command.base import expose_command
 from libqtile.command.interface import IPCCommandInterface
 from libqtile.confreader import Config
 from libqtile.layout import Max
-from libqtile.sh import QSh
+from libqtile.sh import COMMA_MATCHER, QSh, split_args
+from libqtile.widget import TextBox
 
 
 class ShConfig(Config):
+    class ShellWidget(TextBox):
+        @expose_command
+        def return_args(self, *args: str, **kwargs: dict[str, str]):
+            return {"length": len(args), "args": list(args), "kwargs": kwargs}
+
     keys = []
     mouse = []
     groups = [
@@ -40,7 +48,7 @@ class ShConfig(Config):
         Max(),
     ]
     floating_layout = resources.default_config.floating_layout
-    screens = [config.Screen()]
+    screens = [config.Screen(top=Bar([ShellWidget("")], 20))]
 
 
 sh_config = pytest.mark.parametrize("manager", [ShConfig], indirect=True)
@@ -134,3 +142,54 @@ def test_help(manager):
     sh = QSh(command)
     assert sh.do_help("nonexistent").startswith("No such command")
     assert sh.do_help("help")
+
+
+@sh_config
+def test_eval(manager):
+    client = ipc.Client(manager.sockfile)
+    command = IPCCommandInterface(client)
+    sh = QSh(command)
+    sh.process_line("eval(self._test_val=(1,2))")
+    _, result = sh.process_line("eval(self._test_val)")
+    assert result == "(1, 2)"
+
+
+@pytest.mark.parametrize(
+    "input,output",
+    [
+        ("1, 2, 3", ["1", " 2", " 3"]),
+        ("1, 2, 3, '4, 5, 6'", ["1", " 2", " 3", " '4, 5, 6'"]),
+        ('1, "2, 3, 4", 5, 6', ["1", ' "2, 3, 4"', " 5", " 6"]),
+    ],
+)
+def test_comma_split_regex(input, output):
+    assert COMMA_MATCHER.split(input) == output
+
+
+@pytest.mark.parametrize(
+    "input,args,kwargs",
+    [
+        ("1, 2, 3", ["1", "2", "3"], {}),
+        ("1, 2, 3, '4, 5, 6'", ["1", "2", "3", "4, 5, 6"], {}),
+        ("1, 2, 3, 4=5", ["1", "2", "3"], {"4": "5"}),
+        ("1, 2, 3, 4='5, 6'", ["1", "2", "3"], {"4": "5, 6"}),
+        ("1, 2, 3, 4 = '5, 6'", ["1", "2", "3"], {"4": "5, 6"}),
+        ("1, 2, 3, 4='5=6'", ["1", "2", "3"], {"4": "5=6"}),
+    ],
+)
+def test_args_splitting(input, args, kwargs):
+    assert split_args(COMMA_MATCHER.split(input)) == (args, kwargs)
+
+
+@sh_config
+def test_comma_splitting(manager):
+    client = ipc.Client(manager.sockfile)
+    command = IPCCommandInterface(client)
+    sh = QSh(command)
+
+    assert sh.do_cd("widget/shellwidget") == "widget[shellwidget]"
+
+    result = sh.process_line("return_args(1, 2, '3, 4, 5', test_kwarg='test')")
+    assert result["length"] == 3
+    assert result["args"][2] == "3, 4, 5"
+    assert result["kwargs"] == {"test_kwarg": "test"}

@@ -118,7 +118,7 @@ def test_wlan_display_escape_essid(
         ({"interface": "wlan1", "use_ethernet": True}, "up", "eth"),
         ({"interface": "wlan1", "use_ethernet": True}, "down", "Disconnected"),
         (
-            {"interface": "wlan1", "use_ethernet": True, "ethernet_message": "Wired"},
+            {"interface": "wlan1", "use_ethernet": True, "ethernet_message_format": "Wired"},
             "up",
             "Wired",
         ),

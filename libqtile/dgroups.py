@@ -29,7 +29,7 @@ import collections
 
 import libqtile.hook
 from libqtile.backend.base import Static
-from libqtile.config import Group, Key, Match, Rule
+from libqtile.config import Group, Key, Rule
 from libqtile.lazy import lazy
 from libqtile.log_utils import logger
 
@@ -124,6 +124,12 @@ class DGroups:
             )
 
     def _setup_groups(self):
+        def launch_app(app, group):
+            def launcher():
+                self.qtile.spawn(app, group=group)
+
+            return launcher
+
         for group in self.groups:
             self.add_dgroup(group, group.init)
 
@@ -133,8 +139,7 @@ class DGroups:
                 else:
                     spawns = group.spawn
                 for spawn in spawns:
-                    pid = self.qtile.spawn(spawn)
-                    self.add_rule(Rule(Match(net_wm_pid=pid), group.name))
+                    libqtile.hook.subscribe.startup_once(launch_app(spawn, group=group.name))
 
     def _setup_hooks(self):
         libqtile.hook.subscribe.addgroup(self._addgroup)
@@ -164,6 +169,8 @@ class DGroups:
 
         group_set = False
         intrusive = False
+
+        delete_rules = []
 
         for rule in self.rules:
             # Matching Rules
@@ -200,8 +207,18 @@ class DGroups:
                 if rule.intrusive:
                     intrusive = rule.intrusive
 
+                if rule.one_time:
+                    delete_rules.append(rule)
+
                 if rule.break_on_match:
                     break
+
+        if delete_rules:
+            ids_to_delete = [
+                rule_id for rule_id, rule in self.rules_map.items() if rule in delete_rules
+            ]
+            for rule_id in ids_to_delete:
+                self.remove_rule(rule_id)
 
         # If app doesn't have a group
         if not group_set:

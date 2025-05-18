@@ -45,6 +45,31 @@ if TYPE_CHECKING:
     from typing import Any
 
 
+# From: https://stackoverflow.com/a/64333329/3087339
+# Matches commas that are not enclosed in quote marks
+COMMA_MATCHER = re.compile(r",(?=(?:[^\"']*[\"'][^\"']*[\"'])*[^\"']*$)")
+
+# Matches string in the form of "key=value" and stores results in
+# groups named "key" and "value"
+KWARG_MATCHER = re.compile(r"(?P<key>\w+)\s?=\s*(?P<value>.*)")
+
+
+def split_args(args):
+    pos_args = []
+    kwargs = {}
+    for arg in args:
+        if kwarg := KWARG_MATCHER.match(arg.strip()):
+            kwargs[kwarg.group("key")] = tidy_str(kwarg.group("value"))
+        else:
+            pos_args.append(tidy_str(arg))
+
+    return pos_args, kwargs
+
+
+def tidy_str(text):
+    return text.strip(""" "'\t\r\n""")
+
+
 def terminal_width():
     width = None
     try:
@@ -323,8 +348,17 @@ class QSh:
         if command_match:
             cmd = command_match.group("cmd")
             args = command_match.group("args")
+            cmd_args: tuple
+            kwargs: dict[str, str] = {}
             if args:
-                cmd_args = tuple(map(str.strip, args.split(",")))
+                if cmd == "eval":
+                    # For eval, the whole argument should be a single string of code
+                    # so we shouldn't split it.
+                    cmd_args = (args,)
+                else:
+                    # For everything else, we split by commas except where they
+                    # are enclosed in quotation marks (i.e. part of a string)
+                    cmd_args, kwargs = split_args(COMMA_MATCHER.split(args))
             else:
                 cmd_args = ()
 
@@ -332,7 +366,7 @@ class QSh:
                 return f"Command does not exist: {cmd}"
 
             try:
-                return self._command_client.call(cmd, *cmd_args)
+                return self._command_client.call(cmd, *cmd_args, **kwargs)
             except CommandException as e:
                 return f"Caught command exception (is the command invoked incorrectly?): {e}\n"
 

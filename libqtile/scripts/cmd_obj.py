@@ -40,6 +40,19 @@ from libqtile.command.interface import IPCCommandInterface
 from libqtile.ipc import Client, find_sockfile
 
 
+class KeyValDictAdd(argparse.Action):
+    def __call__(self, parser, args, values, option_string=None):  # noqa: F841
+        kwargs = {}
+        for value in values:
+            k, _, v = value.partition("=")
+            if not (k and v):
+                raise argparse.ArgumentError(self, f"{value} is not a valid key=value pair.")
+
+            kwargs[k] = v
+
+        setattr(args, self.dest, kwargs)
+
+
 def set_to_list(obj):
     if isinstance(obj, set):
         return list(obj)
@@ -132,10 +145,12 @@ def get_object(client: CommandClient, argv: list[str]) -> CommandClient:
     return client
 
 
-def run_function(client: CommandClient, funcname: str, args: list[str]) -> str:
+def run_function(
+    client: CommandClient, funcname: str, args: list[str], kwargs: dict[str, str]
+) -> str:
     "Run command with specified args on given object."
     try:
-        ret = client.call(funcname, *args, lifted=True)
+        ret = client.call(funcname, *args, **kwargs, lifted=True)
     except SelectError:
         print("error: Sorry no function ", funcname)
         sys.exit(1)
@@ -181,7 +196,7 @@ def cmd_obj(args) -> None:
         elif args.info:
             print(args.function + get_formated_info(obj, args.function, args=True, short=False))
         else:
-            ret = run_function(obj, args.function, args.args)
+            ret = run_function(obj, args.function, args.args, args.kwargs)
             if ret is not None:
                 print(json.dumps(ret, indent=2, default=set_to_list))
     else:
@@ -223,6 +238,15 @@ def add_subcommand(subparsers, parents):
     parser.add_argument("--function", "-f", default="help", help="Select function to execute.")
     parser.add_argument(
         "--args", "-a", nargs="+", default=[], help="Set arguments supplied to function."
+    )
+    parser.add_argument(
+        "--kwargs",
+        "-k",
+        metavar="KEY=VALUE",
+        nargs="+",
+        default={},
+        action=KeyValDictAdd,
+        help="Set keyword arguments as key=value pairs.",
     )
     parser.add_argument(
         "--info",
