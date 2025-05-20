@@ -232,6 +232,7 @@ class _Group(CommandObject):
                 self.floating_layout.blur()
                 for layout in self.layouts:
                     layout.focus(win)
+            win.minimized = False
             hook.fire("focus_change")
             self.layout_all(warp)
 
