@@ -1,6 +1,7 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     !!! breaking changes !!!
       - Output of `qtile cmd-obj` is now in JSON.
+      - added support for multiple batteries to the battery widget
     * features
         - Add support for `single-pixel-buffer` protocol for wayland 
         - Add charging foreground/background colors to Battery widget
@@ -48,7 +49,7 @@ Qtile 0.28.1, released 2024-08-12:
 Qtile 0.28.0, released 2024-08-11:
     * bugfixes
         - various bug fixes to widgets from previous releases
-        - fix xrandr commands racing with qtile startup
+        - fix xrandr commands racing with qtile startup 1
 
 Qtile 0.27.0, released 2024-07-12:
     * features
