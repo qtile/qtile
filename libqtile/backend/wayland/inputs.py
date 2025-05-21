@@ -272,11 +272,10 @@ class Keyboard(_Device):
         if not self.core.exclusive_client:
             # translate libinput keycode -> xkbcommon
             keycode = event.keycode + 8
-            layout_index = lib.xkb_state_key_get_layout(self.keyboard._ptr.xkb_state, keycode)
             nsyms = lib.xkb_keymap_key_get_syms_by_level(
                 self.keyboard._ptr.keymap,
                 keycode,
-                layout_index,
+                0,
                 0,
                 xkb_keysym,
             )
