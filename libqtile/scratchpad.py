@@ -93,10 +93,15 @@ class WindowVisibilityToggler:
         """
         Toggle the visibility of associated window. Either show() or hide().
         """
-        if not self.visible or not self.shown:
-            self.show()
-        else:
+        if self.window.has_focus:
             self.hide()
+        elif self.shown and self.visible:
+            win = self.window
+            win.bring_to_front()
+            win.focus(warp=True)
+            self.shown = True
+        else:
+            self.show()
 
     def show(self):
         """
