@@ -12,6 +12,7 @@ jobs:
     container: quay.io/pypa/manylinux_2_28_x86_64
     env:
       libdrm-version: "2.4.121"
+      libdrm-hash: "70c4f836ccffa972978bc58c9cc0434f85984be8"
       seatd-version: "0.6.4"
       pixman-version: "0.42.0"
       xkbcommon-version: "1.7.0"
@@ -115,7 +116,7 @@ jobs:
           DESTDIR=~/wayland ninja -C build install
           ninja -C build install
       - name: Build libdrm
-        working-directory: drm-libdrm-${{ env.libdrm-version }}
+        working-directory: libdrm-libdrm-${{ env.libdrm-version }}-${{ env.libdrm-hash }}
         run: |
           meson build --prefix=/usr
           ninja -C build
