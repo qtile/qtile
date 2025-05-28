@@ -132,6 +132,9 @@ configuration variables that control specific aspects of Qtile's behavior:
             - returns True: focus window
 
             - returns False: doesn't do anything
+    * - ``focus_previous_on_window_remove``
+      - ``False``
+      - If a window is closed, the next focused window is not always the previous window, depending on current window state. Set this to true if you want to focus previous window in all circumstances.
     * - ``follow_mouse_focus``
       - ``True``
       - Controls whether or not focus follows the mouse around as it moves
