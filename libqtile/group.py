@@ -272,6 +272,14 @@ class _Group(CommandObject):
             self.layout_all(focus=False)
 
     def remove(self, win, force=False):
+        index = self.focus_history.index(win)
+        try:
+            previous_win = self.focus_history[index - 1]
+        except IndexError:
+            previous_win = None
+        if not (previous_win in self.windows):
+            previous_win = None
+
         hook.fire("group_window_remove", self, win)
         self.windows.remove(win)
         hadfocus = self._remove_from_focus_history(win)
@@ -281,7 +289,8 @@ class _Group(CommandObject):
             nextfocus = self.floating_layout.remove(win)
 
             nextfocus = (
-                nextfocus
+                previous_win
+                or nextfocus
                 or self.current_window
                 or self.layout.focus_first()
                 or self.floating_layout.focus_first(group=self)
@@ -295,7 +304,8 @@ class _Group(CommandObject):
                     i.remove(win)
 
             nextfocus = (
-                nextfocus
+                previous_win
+                or nextfocus
                 or self.floating_layout.focus_first(group=self)
                 or self.current_window
                 or self.layout.focus_first()
