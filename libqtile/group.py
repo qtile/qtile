@@ -273,6 +273,18 @@ class _Group(CommandObject):
 
     def remove(self, win, force=False):
         hook.fire("group_window_remove", self, win)
+
+        if self.qtile.config.focus_previous_on_window_remove:
+            index = self.focus_history.index(win)
+            try:
+                previous_win = self.focus_history[index - 1]
+            except IndexError:
+                previous_win = None
+            if previous_win not in self.windows:
+                previous_win = None
+        else:
+            previous_win = None
+
         self.windows.remove(win)
         hadfocus = self._remove_from_focus_history(win)
         win.group = None
@@ -281,7 +293,8 @@ class _Group(CommandObject):
             nextfocus = self.floating_layout.remove(win)
 
             nextfocus = (
-                nextfocus
+                previous_win
+                or nextfocus
                 or self.current_window
                 or self.layout.focus_first()
                 or self.floating_layout.focus_first(group=self)
@@ -295,7 +308,8 @@ class _Group(CommandObject):
                     i.remove(win)
 
             nextfocus = (
-                nextfocus
+                previous_win
+                or nextfocus
                 or self.floating_layout.focus_first(group=self)
                 or self.current_window
                 or self.layout.focus_first()
