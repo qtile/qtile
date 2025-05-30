@@ -13,7 +13,6 @@ WAYLAND_PROTOCOLS=1.32
 WLROOTS=0.17.3
 SEATD=0.6.4
 LIBDRM=2.4.121
-LIBDRM_HASH=70c4f836ccffa972978bc58c9cc0434f85984be8
 PIXMAN=0.42.0
 XWAYLAND=22.1.9
 HWDATA=0.364
@@ -66,9 +65,9 @@ sudo ninja -C build install
 cd ../
 
 # Build libdrm
-wget https://gitlab.freedesktop.org/mesa/drm/-/archive/libdrm-$LIBDRM/drm-libdrm-$LIBDRM.tar.gz
-tar -xzf drm-libdrm-$LIBDRM.tar.gz
-cd libdrm-libdrm-$LIBDRM-$LIBDRM_HASH
+wget https://gitlab.freedesktop.org/mesa/libdrm/-/archive/libdrm-$LIBDRM/libdrm-libdrm-$LIBDRM.tar.gz
+tar -xzf libdrm-libdrm-$LIBDRM.tar.gz
+cd libdrm-libdrm-$LIBDRM
 meson build --prefix=/usr
 ninja -C build
 sudo ninja -C build install
