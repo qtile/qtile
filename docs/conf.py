@@ -80,6 +80,7 @@ MOCK_MODULES = [
     "xcffib.render",
     "xcffib.wrappers",
     "xcffib.xfixes",
+    "xcffib.xinput",
     "xcffib.xinerama",
     "xcffib.xproto",
     "xcffib.xtest",
