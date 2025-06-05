@@ -58,6 +58,7 @@ class Config:
     dgroups_app_rules: list[Rule]
     follow_mouse_focus: bool | Literal["click_or_drag_only"]
     focus_on_window_activation: Literal["focus", "smart", "urgent", "never"] | FunctionType
+    focus_previous_on_window_remove: bool
     cursor_warp: bool
     layouts: list[Layout]
     floating_layout: Layout
