@@ -40,7 +40,7 @@ def test_ping_success(monkeypatch, fake_qtile, fake_window):
     fakebar = FakeBar([netup], window=fake_window)
     netup._configure(fake_qtile, fakebar)
 
-    assert netup.poll() == "NET up"
+    assert netup.poll() == "NET " + netup.up_string
     assert netup.layout.colour == netup.up_foreground
 
 
@@ -57,5 +57,5 @@ def test_ping_fail(monkeypatch, fake_qtile, fake_window):
     fakebar = FakeBar([netup], window=fake_window)
     netup._configure(fake_qtile, fakebar)
 
-    assert netup.poll() == "NET down"
+    assert netup.poll() == "NET " + netup.down_string
     assert netup.layout.colour == netup.down_foreground

@@ -37,6 +37,8 @@ class NetUP(base.ThreadPoolText):
         ("display_fmt", "NET {0}", "Display format."),
         ("up_foreground", "FFFFFF", "Font color on up."),
         ("down_foreground", "FF0000", "Font color on down."),
+        ("up_string", "up", "String to display when host is up"),
+        ("down_string", "down", "String to display when host is down"),
     ]
 
     def __init__(self, **config):
@@ -52,6 +54,6 @@ class NetUP(base.ThreadPoolText):
             process = run(["ping", "-c", "1", self.host], stdout=DEVNULL, stderr=DEVNULL)
             if process.returncode == 0:
                 self.layout.colour = self.up_foreground
-                return self.display_fmt.format("up")
+                return self.display_fmt.format(self.up_string)
             self.layout.colour = self.down_foreground
-            return self.display_fmt.format("down")
+            return self.display_fmt.format(self.down_string)
