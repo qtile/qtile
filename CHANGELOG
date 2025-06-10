@@ -1,4 +1,8 @@
 Qtile x.xx.x, released xxxx-xx-xx:
+    * features
+    * bugfixes
+
+Qtile 0.32.0, released 2025-06-09:
     !!! breaking changes !!!
       - Output of `qtile cmd-obj` is now in JSON.
     * features
