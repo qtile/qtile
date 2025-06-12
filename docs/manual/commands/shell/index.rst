@@ -13,6 +13,7 @@ repository are also documented below.
     qtile shell <qtile-shell>
     qtile migrate <qtile-migrate>
     qtile cmd-obj <qtile-cmd>
+    qtile repl <qtile-repl>
     qtile run-cmd <qtile-run>
     qtile top <qtile-top>
     dqtile-cmd

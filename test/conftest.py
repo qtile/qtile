@@ -140,3 +140,8 @@ def fake_window():
             return drawer.Drawer(None, self, width, height)
 
     return FakeWindow()
+
+
+@pytest.fixture
+def anyio_backend():
+    return "asyncio"
