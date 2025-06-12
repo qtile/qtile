@@ -32,12 +32,16 @@ import itertools
 import json
 import sys
 import textwrap
+from typing import TYPE_CHECKING
 
 from libqtile.command.base import CommandError, CommandException, SelectError
 from libqtile.command.client import CommandClient
 from libqtile.command.graph import CommandGraphRoot
 from libqtile.command.interface import IPCCommandInterface
 from libqtile.ipc import Client, find_sockfile
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 class KeyValDictAdd(argparse.Action):
@@ -172,7 +176,7 @@ def print_base_objects() -> None:
     print("\n".join(actions))
 
 
-def cmd_obj(args) -> None:
+def cmd_obj(args, return_output=False) -> None | Any:
     "Runs tool according to specified arguments."
 
     if args.obj_spec:
@@ -197,11 +201,15 @@ def cmd_obj(args) -> None:
             print(args.function + get_formated_info(obj, args.function, args=True, short=False))
         else:
             ret = run_function(obj, args.function, args.args, args.kwargs)
+            if return_output:
+                return ret
             if ret is not None:
                 print(json.dumps(ret, indent=2, default=set_to_list))
     else:
         print_base_objects()
         sys.exit(1)
+
+    return None
 
 
 def add_subcommand(subparsers, parents):
