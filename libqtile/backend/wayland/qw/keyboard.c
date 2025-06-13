@@ -5,6 +5,7 @@
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/util/log.h>
 
+// Called when the keyboard device is destroyed
 static void qw_keyboard_handle_destroy(struct wl_listener *listener, void *data) {
     struct qw_keyboard *keyboard = wl_container_of(listener, keyboard, destroy);
     wl_list_remove(&keyboard->modifiers.link);
@@ -14,23 +15,32 @@ static void qw_keyboard_handle_destroy(struct wl_listener *listener, void *data)
     free(keyboard);
 }
 
+// Called on each key event (press/release)
 static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
     struct qw_keyboard *keyboard = wl_container_of(listener, keyboard, key);
     struct qw_server *server = keyboard->server;
     struct wlr_keyboard_key_event *event = data;
     struct wlr_seat *seat = server->seat;
 
+    // keycode offset by 8 as per evdev conventions
     uint32_t keycode = event->keycode + 8;
-    const xkb_keysym_t *syms;
+
     int layout_index = xkb_state_key_get_layout(keyboard->wlr_keyboard->xkb_state, keycode);
+
+    // Get the symbols for this key in the current layout and level 0
+    const xkb_keysym_t *syms;
     int nsyms = xkb_keymap_key_get_syms_by_level(keyboard->wlr_keyboard->keymap, keycode,
                                                  layout_index, 0, &syms);
 
     bool handled = false;
+    // Get current keyboard modifiers (shift, ctrl, alt, etc.)
     uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
+
+    // If key is pressed, call user callback for each symbol to check if handled
     if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
         for (int i = 0; i < nsyms; ++i) {
             // TODO: for efficiency maybe let c take control of the key list?
+            // If callback returns 1, event is handled; no further processing needed
             if (server->keyboard_key_cb(syms[i], modifiers, server->cb_data) == 1) {
                 handled = true;
                 break;
@@ -38,18 +48,21 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
         }
     }
 
+    // If not handled, forward the key event to the seat for default processing
     if (!handled) {
         wlr_seat_set_keyboard(seat, keyboard->wlr_keyboard);
         wlr_seat_keyboard_notify_key(seat, event->time_msec, event->keycode, event->state);
     }
 }
 
+// Called when keyboard modifiers change (shift, ctrl, etc.)
 static void keyboard_handle_modifiers(struct wl_listener *listener, void *data) {
     struct qw_keyboard *keyboard = wl_container_of(listener, keyboard, modifiers);
     wlr_seat_set_keyboard(keyboard->server->seat, keyboard->wlr_keyboard);
     wlr_seat_keyboard_notify_modifiers(keyboard->server->seat, &keyboard->wlr_keyboard->modifiers);
 }
 
+// Creates and initializes a new keyboard input device attached to the server
 void qw_server_keyboard_new(struct qw_server *server, struct wlr_input_device *device) {
     struct qw_keyboard *keyboard = calloc(1, sizeof(*keyboard));
     if (!keyboard) {
@@ -62,19 +75,25 @@ void qw_server_keyboard_new(struct qw_server *server, struct wlr_input_device *d
     keyboard->server = server;
     keyboard->wlr_keyboard = wlr_keyboard;
 
+    // Create new xkb context and default keymap
     struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     struct xkb_keymap *keymap =
         xkb_keymap_new_from_names(context, NULL, XKB_KEYMAP_COMPILE_NO_FLAGS);
 
+    // Assign the keymap to the keyboard and clean up refs
     wlr_keyboard_set_keymap(wlr_keyboard, keymap);
     xkb_keymap_unref(keymap);
     xkb_context_unref(context);
+
     wlr_keyboard_set_repeat_info(wlr_keyboard, 25, 600);
 
+    // Setup event listeners for modifiers, key events, and destruction
     keyboard->modifiers.notify = keyboard_handle_modifiers;
     wl_signal_add(&wlr_keyboard->events.modifiers, &keyboard->modifiers);
+
     keyboard->key.notify = qw_keyboard_handle_key;
     wl_signal_add(&wlr_keyboard->events.key, &keyboard->key);
+
     keyboard->destroy.notify = qw_keyboard_handle_destroy;
     wl_signal_add(&device->events.destroy, &keyboard->destroy);
 
