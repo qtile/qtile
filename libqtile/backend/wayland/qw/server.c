@@ -10,10 +10,13 @@
 #include "wayland-server-protocol.h"
 #include "xdg-view.h"
 
+// Get the file descriptor of the Wayland event loop (used for epoll integration)
 int qw_server_get_event_loop_fd(struct qw_server *server) {
     return wl_event_loop_get_fd(server->event_loop);
 }
 
+// Perform a single event loop iteration manually.
+// Used when you want control over dispatching (e.g., in embedded event loops).
 void qw_server_poll(struct qw_server *server) {
     if (!server->display) {
         return;
@@ -23,6 +26,7 @@ void qw_server_poll(struct qw_server *server) {
     wl_display_flush_clients(server->display);
 }
 
+// Cleanup routine to destroy the compositor and free resources.
 void qw_server_finalize(struct qw_server *server) {
     // TODO: what else to finalize?
     wl_display_destroy_clients(server->display);
@@ -34,6 +38,7 @@ void qw_server_finalize(struct qw_server *server) {
     wl_display_destroy(server->display);
 }
 
+// Call a callback for each active output, passing its position and dimensions.
 void qw_server_loop_output_dims(struct qw_server *server, output_dims_cb_t cb) {
     struct qw_output *o;
     wl_list_for_each(o, &server->outputs, link) {
@@ -46,6 +51,7 @@ void qw_server_loop_output_dims(struct qw_server *server, output_dims_cb_t cb) {
     }
 }
 
+// Initializes event loop and starts the Wayland backend
 void qw_server_start(struct qw_server *server) {
     server->event_loop = wl_display_get_event_loop(server->display);
     server->socket = wl_display_add_socket_auto(server->display);
@@ -62,8 +68,11 @@ void qw_server_start(struct qw_server *server) {
     wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s", server->socket);
 }
 
+// Stub function – maybe used for keymap introspection in the future
 const char *qw_server_get_sym_from_code(struct qw_server *server, int code) { return NULL; }
 
+// Handle when a new output (monitor/display) is connected.
+// Calls qw_server_output_new to add the new output to the server.
 static void qw_server_handle_new_output(struct wl_listener *listener, void *data) {
     struct qw_server *server = wl_container_of(listener, server, new_output);
     struct wlr_output *output = data;
@@ -71,6 +80,8 @@ static void qw_server_handle_new_output(struct wl_listener *listener, void *data
     qw_server_output_new(server, output);
 }
 
+// Handle changes in the output layout (like monitor arrangement).
+// Updates output configuration accordingly.
 static void qw_server_handle_output_layout_change(struct wl_listener *listener, void *data) {
     struct qw_server *server = wl_container_of(listener, server, output_layout_change);
     struct wlr_output_configuration_v1 *config = wlr_output_configuration_v1_create();
@@ -107,6 +118,8 @@ static void qw_server_handle_output_layout_change(struct wl_listener *listener, 
     server->on_screen_change_cb(server->cb_data);
 }
 
+// Reconfigure output(s) according to the provided configuration.
+// If apply == true, commit changes, else just test the configuration.
 static void qw_server_output_manager_reconfigure(struct qw_server *server,
                                                  struct wlr_output_configuration_v1 *config,
                                                  bool apply) {
@@ -155,22 +168,26 @@ static void qw_server_output_manager_reconfigure(struct qw_server *server,
     }
 }
 
+// Listener for output manager apply event (commit config)
 static void qw_server_handle_output_manager_apply(struct wl_listener *listener, void *data) {
     struct qw_server *server = wl_container_of(listener, server, output_manager_apply);
     struct wlr_output_configuration_v1 *config = (struct wlr_output_configuration_v1 *)data;
     qw_server_output_manager_reconfigure(server, config, true);
 }
 
+// Listener for output manager test event (test config)
 static void qw_server_handle_output_manager_test(struct wl_listener *listener, void *data) {
     struct qw_server *server = wl_container_of(listener, server, output_manager_test);
     struct wlr_output_configuration_v1 *config = (struct wlr_output_configuration_v1 *)data;
     qw_server_output_manager_reconfigure(server, config, false);
 }
 
+// Attach a new pointer device to the server's cursor
 static void qw_server_new_pointer(struct qw_server *server, struct wlr_input_device *device) {
     wlr_cursor_attach_input_device(server->cursor->cursor, device);
 }
 
+// Handle new input devices: keyboard or pointer
 static void qw_server_handle_new_input(struct wl_listener *listener, void *data) {
     struct qw_server *server = wl_container_of(listener, server, new_input);
     struct wlr_input_device *device = data;
@@ -191,17 +208,21 @@ static void qw_server_handle_new_input(struct wl_listener *listener, void *data)
     wlr_seat_set_capabilities(server->seat, caps);
 }
 
+// Handle new XDG toplevel window creation
 static void qw_server_handle_new_xdg_toplevel(struct wl_listener *listener, void *data) {
     struct qw_server *server = wl_container_of(listener, server, new_xdg_toplevel);
     struct wlr_xdg_toplevel *xdg_toplevel = data;
     qw_server_xdg_view_new(server, xdg_toplevel);
 }
 
+// Handle new window decoration requests for XDG toplevels
 static void qw_server_handle_new_decoration(struct wl_listener *listener, void *data) {
     struct wlr_xdg_toplevel_decoration_v1 *decoration = data;
     qw_xdg_view_decoration_new(decoration->toplevel->base->data, decoration);
 }
 
+// Return the view at the given layout coordinates, if any.
+// Also fills out surface and surface-local coords if found.
 struct qw_view *qw_server_view_at(struct qw_server *server, double lx, double ly,
                                   struct wlr_surface **surface, double *sx, double *sy) {
     struct wlr_scene_node *node = wlr_scene_node_at(&server->scene->tree.node, lx, ly, sx, sy);
@@ -223,6 +244,7 @@ struct qw_view *qw_server_view_at(struct qw_server *server, double lx, double ly
     return tree->node.data;
 }
 
+// Create and initialize the server object with all components and listeners.
 struct qw_server *qw_server_create() {
     wlr_log_init(WLR_INFO, NULL);
     struct qw_server *server = calloc(1, sizeof(*server));
