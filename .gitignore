@@ -61,3 +61,5 @@ docs/_static/screenshots/
 /tags
 
 uv.lock
+# ccls
+.ccls-cache/
