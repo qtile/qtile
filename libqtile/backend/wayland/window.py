@@ -166,7 +166,7 @@ class Internal(Base, base.Internal):
 
     @property
     def surface(self):
-        return self._internal_ptr.image_surface
+        return ffi.cast("void *", self._internal_ptr.image_surface)
 
     def finalize(self) -> None:
         self.hide()

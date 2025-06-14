@@ -265,7 +265,7 @@ struct qw_server *qw_server_create() {
     wlr_viewporter_create(server->display);
     wlr_single_pixel_buffer_manager_v1_create(server->display);
     wlr_fractional_scale_manager_v1_create(server->display, 1);
-    wlr_presentation_create(server->display, server->backend);
+    wlr_presentation_create(server->display, server->backend, 2);
     wlr_alpha_modifier_v1_create(server->display);
     server->scene = wlr_scene_create();
 
