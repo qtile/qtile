@@ -27,7 +27,7 @@ self: final: prev: {
             disabled = false;
           }
         )).override
-          { wlroots = prev.wlroots_0_18; };
+          { wlroots = prev.wlroots_0_19; };
     })
   ];
   python3 =
