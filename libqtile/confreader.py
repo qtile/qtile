@@ -75,6 +75,7 @@ class Config:
     wl_input_rules: dict[str, Any] | None
     wl_xcursor_theme: str | None
     wl_xcursor_size: int
+    repl_port: int
 
     def __init__(self, file_path=None, **settings):
         """Create a Config() object from settings
