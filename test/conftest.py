@@ -23,6 +23,7 @@
 
 import pytest
 
+import libqtile
 from libqtile.backend.base import drawer
 from test.helpers import BareConfig, TestManager
 
@@ -140,3 +141,22 @@ def fake_window():
             return drawer.Drawer(None, self, width, height)
 
     return FakeWindow()
+
+
+# Fixture that defines a minimal configuration that has no screens.
+# When used in a test, the function needs to receive a list of screens
+# (including bar and widgets) as an argument. This config can then be
+# passed to the manager to start.
+@pytest.fixture(scope="function")
+def minimal_conf_noscreen():
+    class MinimalConf(libqtile.confreader.Config):
+        auto_fullscreen = False
+        keys = []
+        mouse = []
+        groups = [libqtile.config.Group("a"), libqtile.config.Group("b")]
+        layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
+        floating_layout = libqtile.resources.default_config.floating_layout
+        screens = []
+        reconfigure_screens = False
+
+    return MinimalConf
