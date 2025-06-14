@@ -107,8 +107,7 @@ static void qw_xdg_view_place(void *self, int x, int y, int width, int height, i
     bool place_changed = xdg_view->base.x != x || xdg_view->base.y != y ||
                          xdg_view->base.width != width || xdg_view->base.height != height ||
                          state.width != width || state.height != height;
-    struct wlr_box geom;
-    wlr_xdg_surface_get_geometry(surface, &geom);
+    struct wlr_box geom = surface->geometry;
     bool geom_changed = xdg_view->geom.x != geom.x || xdg_view->geom.y != geom.y ||
                         xdg_view->geom.width != geom.width || xdg_view->geom.height != geom.height;
     bool needs_repos = place_changed || geom_changed;
