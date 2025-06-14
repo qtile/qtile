@@ -24,6 +24,7 @@ self: final: prev: {
             version = "${symver}+${flakever}.flake";
             # use the source of the git repo
             src = ./..;
+            disabled = false;
           }
         )).override
           { wlroots = prev.wlroots_0_17; };
