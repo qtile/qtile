@@ -820,6 +820,10 @@ class _Window:
     def get_pid(self):
         return self.window.get_net_wm_pid()
 
+    @property
+    def fullscreen(self):
+        return self._float_state == FloatStates.FULLSCREEN
+
     @expose_command()
     def place(
         self,
