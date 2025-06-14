@@ -104,7 +104,7 @@
             # clang-format for formatting
             clang-tools
 
-            wlroots_0_18
+            wlroots_0_19
             # test/backend/wayland/test_window.py
             gtk-layer-shell
             imagemagick
@@ -116,7 +116,7 @@
             QTILE_CAIRO_PATH = "${pkgs.cairo.dev}/include/cairo";
             QTILE_PIXMAN_PATH = "${pkgs.pixman}/include/pixman-1";
             QTILE_LIBDRM_PATH = "${pkgs.libdrm.dev}/include/libdrm";
-            QTILE_WLROOTS_PATH = "${pkgs.wlroots_0_18}/include/wlroots-0.18";
+            QTILE_WLROOTS_PATH = "${pkgs.wlroots_0_19}/include/wlroots-0.19";
 
             LD_LIBRARY_PATH = with pkgs;
               lib.makeLibraryPath [
