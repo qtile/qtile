@@ -1,9 +1,8 @@
-from cffi import FFI
-from pathlib import Path
-
-import cairocffi
 import os
 import subprocess
+from pathlib import Path
+
+from cffi import FFI
 
 qw_path = (Path(__file__).parent / ".." / "qw").resolve()
 
@@ -41,8 +40,8 @@ enum wlr_log_importance {
 extern "Python" void log_cb(enum wlr_log_importance importance,
                                        const char *log_str);
 // main callbacks
+typedef struct cairo_surface_t cairo_surface_t;
 typedef uint32_t xkb_keysym_t;
-typedef struct _cairo_surface cairo_surface_t;
 extern "Python" int keyboard_key_cb(xkb_keysym_t, uint32_t, void *userdata);
 extern "Python" void manage_view_cb(struct qw_view *view, void *userdata);
 extern "Python" void unmanage_view_cb(struct qw_view *view, void *userdata);

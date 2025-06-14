@@ -23,6 +23,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import cairocffi
+from cairocffi import ffi as cairo_ffi
 
 from libqtile.backend.base import drawer
 
@@ -68,7 +69,9 @@ class Drawer(drawer.Drawer):
         # Allocation could have failed, NULL check
         if not self._win.surface:
             return
-        surface = cairocffi.Surface._from_pointer(self._win.surface, True)
+
+        surface_ptr = cairo_ffi.cast("cairo_surface_t *", self._win.surface)
+        surface = cairocffi.Surface._from_pointer(surface_ptr, incref=True)
         with cairocffi.Context(surface) as context:
             context.set_operator(cairocffi.OPERATOR_SOURCE)
             # Adjust the source surface position by src_x and src_y e.g. if we want
