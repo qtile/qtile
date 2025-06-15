@@ -70,6 +70,7 @@ widgets = {
     "Mpris2": "mpris2widget",
     "Net": "net",
     "NetGraph": "graph",
+    "NetUP": "netup",
     "Notify": "notify",
     "NvidiaSensors": "nvidia_sensors",
     "OpenWeather": "open_weather",
