@@ -120,3 +120,9 @@ If you need to edit the commit message of the last commit you did, use::
 to open an editor giving you the possibility to reword the message. If you want
 to reword the message of an older commit or multiple commits, use
 ``git rebase -i`` as above with the ``reword`` command in the editor.
+
+
+.. toctree::
+    :maxdepth: 1
+
+    Releasing <../releasing>
