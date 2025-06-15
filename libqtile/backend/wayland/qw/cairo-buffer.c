@@ -9,11 +9,14 @@ struct cairo_buffer {
     size_t stride;
 };
 
+// Called when the buffer is destroyed, frees our cairo_buffer wrapper
 static void handle_destroy(struct wlr_buffer *wlr_buffer) {
     struct cairo_buffer *buffer = wl_container_of(wlr_buffer, buffer, base);
     free(buffer);
 }
 
+// Called when wlroots wants access to the raw pixel data
+// Provides pointer, stride, and pixel format
 static bool handle_begin_data_ptr_access(struct wlr_buffer *wlr_buffer, uint32_t flags, void **data,
                                          uint32_t *format, size_t *stride) {
     struct cairo_buffer *buffer = wl_container_of(wlr_buffer, buffer, base);
@@ -23,16 +26,20 @@ static bool handle_begin_data_ptr_access(struct wlr_buffer *wlr_buffer, uint32_t
     return true;
 }
 
+// Called after data access is done, no action needed here
 static void handle_end_data_ptr_access(struct wlr_buffer *wlr_buffer) {
     // This space is intentionally left blank
 }
 
+// wlroots buffer implementation with function pointers to our handlers
 static const struct wlr_buffer_impl cairo_buffer_impl = {
     .destroy = handle_destroy,
     .begin_data_ptr_access = handle_begin_data_ptr_access,
     .end_data_ptr_access = handle_end_data_ptr_access,
 };
 
+// Create a new cairo_buffer wrapping given pixel data and stride
+// Returns a pointer to the base wlroots buffer interface
 struct wlr_buffer *cairo_buffer_create(int width, int height, size_t stride, void *data) {
     struct cairo_buffer *cairo_buffer = calloc(1, sizeof(struct cairo_buffer));
     if (cairo_buffer == NULL) {

@@ -58,3 +58,6 @@ docs/_static/screenshots/
 
 # ViM tags
 /tags
+
+# ccls
+.ccls-cache/

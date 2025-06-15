@@ -4,8 +4,8 @@
 #include <wayland-server-core.h>
 #include <wlr/types/wlr_scene.h>
 
-// pretty much a copy of backend/base/window.py
 // TODO: avoid this duplication
+// View states representing window states, similar to backend/base/window.py
 enum qw_view_state {
     NOT_FLOATING = 1,
     FLOATING = 2,
@@ -15,7 +15,10 @@ enum qw_view_state {
     MINIMIZED = 6,
 };
 
+// Callback type for fullscreen request (true = enter fullscreen, false = exit)
 typedef int (*request_fullscreen_cb_t)(bool fullscreen, void *userdata);
+
+// Callback type for maximize request (true = maximize, false = unmaximize)
 typedef int (*request_maximize_cb_t)(bool maximize, void *userdata);
 
 struct qw_view {
@@ -23,14 +26,16 @@ struct qw_view {
     int y;
     int width;
     int height;
-    int bn;
+    int bn; // Number of border layers
     enum qw_view_state state;
-    int wid;
-    struct wlr_scene_tree *content_tree;
+    int wid;                             // Window identifier (e.g. X11 window id or similar)
+    struct wlr_scene_tree *content_tree; // Scene tree holding the view's content
+
     request_maximize_cb_t request_maximize_cb;
     request_fullscreen_cb_t request_fullscreen_cb;
-    void *cb_data;
+    void *cb_data; // User data passed to callbacks
 
+    // Methods, implemented as function pointers
     struct wlr_scene_node *(*get_tree_node)(void *self);
     void (*update_fullscreen)(void *self, bool fullscreen);
     void (*update_maximized)(void *self, bool maximize);
@@ -43,12 +48,14 @@ struct qw_view {
     void (*unhide)(void *self);
     int (*get_pid)(void *self);
 
-    // private data
+    // Private data: pointer to an array of 4 pointers to wlr_scene_rect for borders
     struct wlr_scene_rect *(*borders)[4];
 };
 
+// Free all border rectangles and clear border data
 void qw_view_cleanup_borders(struct qw_view *xdg_view);
 
+// Create and paint borders with specified colors, border width, and number of layers
 void qw_view_paint_borders(struct qw_view *xdg_view, float (*colors)[4], int width, int n);
 
 #endif /* VIEW_H */
