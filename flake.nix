@@ -45,10 +45,23 @@
         {
           default = self.packages.${pkgs.system}.qtile;
 
-          qtile = qtile'.overrideAttrs (prev: {
-            name = "${qtile'.pname}-${qtile'.version}";
-            passthru.unwrapped = qtile';
-          });
+          qtile = qtile'.overrideAttrs (
+            prev:
+            let
+              propagatedBuildInputs = with pkgs; [
+                wayland-scanner
+                wayland-protocols
+                python3Packages.cffi
+                python3Packages.cairocffi
+                python3Packages.xcffib
+              ];
+            in
+            {
+              name = "${qtile'.pname}-${qtile'.version}";
+              inherit propagatedBuildInputs;
+              passthru.unwrapped = qtile';
+            }
+          );
         }
       );
 
@@ -116,8 +129,10 @@
         {
           default = pkgs.mkShell {
             env = {
+              QTILE_CAIRO_PATH = "${pkgs.cairo.dev}/include/cairo";
               QTILE_PIXMAN_PATH = "${pkgs.pixman}/include/pixman-1";
               QTILE_LIBDRM_PATH = "${pkgs.libdrm.dev}/include/libdrm";
+              QTILE_WLROOTS_PATH = "${pkgs.wlroots_0_19}/include/wlroots-0.19";
 
               LD_LIBRARY_PATH =
                 with pkgs;
