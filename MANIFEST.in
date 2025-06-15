@@ -20,7 +20,6 @@ exclude libqtile/backend/wayland/_ffi*.*
 exclude libqtile/backend/wayland/_libinput*.*
 exclude Makefile
 exclude dev.sh
-exclude logo.png
 exclude .readthedocs.yaml
 exclude .git-blame-ignore-revs
 
