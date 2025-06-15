@@ -202,6 +202,10 @@ class Painter:
             wlr_lib.wlr_scene_buffer_set_dest_size(scene_buffer._ptr, screen.width, screen.height)
         elif mode == "stretch":
             wlr_lib.wlr_scene_buffer_set_dest_size(scene_buffer._ptr, screen.width, screen.height)
+        elif mode == "center":
+            target_x = (screen.width - image.get_width()) // 2
+            target_y = (screen.height - image.get_height()) // 2
+            scene_buffer.node.set_position(target_x, target_y)
         # Otherwise (mode is None), the image takes up its native size in
         # layout coordinate pixels (which doesn't account for output scaling)
 

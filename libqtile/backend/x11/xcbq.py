@@ -763,12 +763,19 @@ class Painter:
                     height_ratio = screen.height / image_h
                     context.translate(-(image_w * height_ratio - screen.width) // 2, 0)
                     context.scale(height_ratio)
+                context.set_source_surface(image)
             elif mode == "stretch":
                 context.scale(
                     sx=screen.width / image.get_width(),
                     sy=screen.height / image.get_height(),
                 )
-            context.set_source_surface(image)
+                context.set_source_surface(image)
+            elif mode == "center":
+                target_x = (screen.width - image.get_width()) / 2
+                target_y = (screen.height - image.get_height()) / 2
+                context.set_source_surface(image, x=target_x, y=target_y)
+            else:
+                context.set_source_surface(image)
             context.paint()
 
         surface.finish()
