@@ -1,9 +1,9 @@
 #include "keyboard.h"
 #include "server.h"
-#include "xkbcommon/xkbcommon.h"
 #include <stdlib.h>
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/util/log.h>
+#include <xkbcommon/xkbcommon.h>
 
 // Called when the keyboard device is destroyed
 static void qw_keyboard_handle_destroy(struct wl_listener *listener, void *data) {

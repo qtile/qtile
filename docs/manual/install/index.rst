@@ -75,14 +75,10 @@ only the dependencies of one of these is required.
 +-------------------+-------------------------+-----------------------------------------+
 | wlroots_          | libwlroots-dev          |  Wayland backend (see below)            |
 +-------------------+-------------------------+-----------------------------------------+
-+-------------------+-------------------------+-----------------------------------------+
-| python-xkbcommon_ | --                      |  required for wayland backeds           |
-+-------------------+-------------------------+-----------------------------------------+
 
 .. _CFFI: https://cffi.readthedocs.io/en/latest/installation.html
 .. _xcffib: https://github.com/tych0/xcffib#installation
 .. _wlroots: https://gitlab.freedesktop.org/wlroots/wlroots
-.. _python-xkbcommon: https://github.com/sde1000/python-xkbcommon
 .. _cairocffi: https://cairocffi.readthedocs.io/en/stable/overview.html
 .. _dbus-fast: https://dbus-fast.readthedocs.io/en/latest/
 
@@ -154,8 +150,7 @@ Wayland
 Qtile can be run as a Wayland compositor rather than an X11 window manager. For
 this, Qtile uses wlroots_, a compositor library which is undergoing fast
 development. Be aware that some distributions package outdated versions of
-wlroots. More up-to-date distributions such as Arch Linux may package
-python-xkbcommon. Also note that we may not have yet caught up with the latest
+wlroots. Also note that we may not have yet caught up with the latest
 wlroots release ourselves.
 
 With the Wayland dependencies in place, Qtile can be run either from a TTY, or
