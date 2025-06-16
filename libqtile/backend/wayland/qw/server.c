@@ -217,7 +217,7 @@ struct qw_view *qw_server_view_at(struct qw_server *server, double lx, double ly
     // TODO: fix when we have internal windows working
     *surface = scene_surface->surface;
     struct wlr_scene_tree *tree = node->parent;
-    while (!tree && !tree->node.data) {
+    while (tree && !tree->node.data) {
         tree = tree->node.parent;
     }
     return tree->node.data;
