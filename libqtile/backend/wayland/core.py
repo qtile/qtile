@@ -10,7 +10,6 @@ import sys
 import time
 from typing import TYPE_CHECKING
 
-from xkbcommon import xkb
 
 from libqtile import hook, log_utils
 from libqtile.backend import base
@@ -214,7 +213,7 @@ class Core(base.Core):
 
     def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
         if isinstance(key.key, str):
-            keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
+            keysym = lib.qwu_keysym_from_name(key.key.encode())
         else:
             keysym = self._get_sym_from_code(key.key)
         mask_key = translate_masks(key.modifiers)
@@ -223,7 +222,7 @@ class Core(base.Core):
 
     def ungrab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
         if isinstance(key.key, str):
-            keysym = xkb.keysym_from_name(key.key, case_insensitive=True)
+            keysym = lib.qwu_keysym_from_name(key.key.encode())
         else:
             keysym = self._get_sym_from_code(key.key)
         mask_key = translate_masks(key.modifiers)
