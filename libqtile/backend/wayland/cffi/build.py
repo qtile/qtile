@@ -62,7 +62,7 @@ for file in cdef_files:
         for line in f.readlines():
             if line.startswith("#"):
                 continue
-            if line.strip() == "// private data":
+            if line.strip().lower().startswith("// private data"):
                 in_private_data = True
                 CDEF += "    ...;\n"
                 continue
