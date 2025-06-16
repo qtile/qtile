@@ -326,9 +326,13 @@ struct qw_server *qw_server_create() {
     wl_signal_add(&server->xdg_decoration_mgr->events.new_toplevel_decoration,
                   &server->new_decoration);
 
-    // TODO: XDG activation, gamma control, power manager
-    // TODO: handle GPU resets
+    // TODO: handle activation request
 
+    wlr_scene_set_gamma_control_manager_v1(server->scene,
+                                           wlr_gamma_control_manager_v1_create(server->display));
+
+    // TODO: power manager
+    // TODO: handle GPU resets
     // TODO: setup listeners
 
     return server;
