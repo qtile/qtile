@@ -172,7 +172,9 @@ if __name__ == "__main__":
         # Time before changing urgency
         GLib.timeout_add(500, gtk_set_urgency_hint)
 
-    icon = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", "logo.png"))
+    icon = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../../libqtile/resources", "logo.png")
+    )
     if os.path.isfile(icon):
         win.set_icon_from_file(icon)
 

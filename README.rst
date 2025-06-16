@@ -52,7 +52,7 @@ Please also consider submitting useful scripts etc. to the qtile-examples repo
 .. _`tips & tricks`: https://docs.qtile.org/en/latest/manual/hacking.html
 .. _`guidelines`: https://docs.qtile.org/en/latest/manual/contributing.html
 
-.. |logo| image:: https://raw.githubusercontent.com/qtile/qtile/master/logo.png
+.. |logo| image:: https://raw.githubusercontent.com/qtile/qtile/master/libqtile/resources/logo.png
     :alt: Logo
     :target: https://qtile.org
 .. |website| image:: https://img.shields.io/badge/website-qtile.org-blue.svg

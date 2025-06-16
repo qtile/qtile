@@ -416,7 +416,10 @@ class Screen(CommandObject):
     default, the image will be placed at the screens origin and retain its own
     dimensions. If the mode is ``"fill"``, the image will be centred on the screen and
     resized to fill it. If the mode is ``"stretch"``, the image is stretched to fit all
-    of it into the screen.
+    of it into the screen. If the mode is ``"center"``, the image is centered
+    on the screen. The ``"background"`` painting is done before the image is
+    drawn, so you can set the background color for an image by setting
+    background here.
 
     The ``x11_drag_polling_rate`` parameter specifies the rate for drag events in the X11 backend. By default this is set to None, indicating no limit. Because in the X11 backend we already handle motion notify events later, the performance should already be okay. However, to limit these events further you can use this variable and e.g. set it to your monitor refresh rate. 60 would mean that we handle a drag event 60 times per second.
 
@@ -515,11 +518,11 @@ class Screen(CommandObject):
             i._configure(qtile, self, reconfigure=reconfigure_gaps)
         self.set_group(group)
 
-        if self.wallpaper:
+        if self.background is not None:
+            self.qtile.fill_screen(self, self.background)
+        if self.wallpaper is not None:
             self.wallpaper = os.path.expanduser(self.wallpaper)
             self.paint(self.wallpaper, self.wallpaper_mode)
-        elif self.background:
-            self.qtile.fill_screen(self, self.background)
 
     def paint(self, path: str, mode: str | None = None) -> None:
         if self.qtile:
