@@ -1,6 +1,8 @@
 #include "xdg-view.h"
 #include "server.h"
 #include "view.h"
+#include "wayland-server-core.h"
+#include "wayland-util.h"
 #include "wlr/types/wlr_xdg_decoration_v1.h"
 #include "xdg-shell-protocol.h"
 #include <stdlib.h>
@@ -37,6 +39,8 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
                                        keyboard->keycodes, keyboard->num_keycodes,
                                        &keyboard->modifiers);
     }
+
+    xdg_view->is_urgent = false;
 }
 
 // Handle the unmap event for the xdg_view (when it's hidden/unmapped)
@@ -205,6 +209,9 @@ void qw_xdg_view_focus(void *self, int above) {
         return; // Can't focus if not mapped
     }
     qw_xdg_view_do_focus(xdg_view, xdg_view->xdg_toplevel->base->surface);
+    if (xdg_view->is_urgent) {
+        xdg_view->is_urgent = false;
+    }
 }
 
 // Retrieve the PID of the client owning this xdg_view
@@ -303,6 +310,31 @@ static void qw_xdg_view_update_fullscreen(void *self, bool fullscreen) {
 static void qw_xdg_view_update_maximized(void *self, bool maximized) {
     struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
     wlr_xdg_toplevel_set_maximized(xdg_view->xdg_toplevel, maximized);
+}
+
+static void qw_xdg_activation_token_destroy(struct wl_listener *listener, void *data) {
+    struct qw_xdg_activation_token *token_data = wl_container_of(listener, token_data, destroy);
+    wl_list_remove(&token_data->destroy.link);
+    free(token_data);
+}
+
+void qw_xdg_activation_new_token(struct wl_listener *listener, void *data) {
+    struct wlr_xdg_activation_token_v1 *token = data;
+    struct qw_xdg_activation_token *token_data = calloc(1, sizeof(struct qw_xdg_activation_token));
+
+    if (token_data == NULL) {
+        wlr_log(WLR_ERROR, "Failed to allocate token data");
+        return;
+    }
+
+    // Assign boolean values
+    token_data->qw_valid_surface = token->surface != NULL;
+    token_data->qw_valid_seat = token->seat != NULL;
+
+    token->data = token_data;
+
+    token_data->destroy.notify = qw_xdg_activation_token_destroy;
+    wl_signal_add(&token->events.destroy, &token_data->destroy);
 }
 
 // Create a new qw_xdg_view for a given wlr_xdg_toplevel, setting up scene tree, listeners, and

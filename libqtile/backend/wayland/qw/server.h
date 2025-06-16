@@ -35,7 +35,7 @@
 #include <wlr/types/wlr_single_pixel_buffer_v1.h>
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_viewporter.h>
-#include <wlr/types/wlr_xdg_decoration_v1.h>
+#include <wlr/types/wlr_xdg_activation_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon.h>
@@ -100,6 +100,8 @@ enum qw_wallpaper_mode {
     WALLPAPER_MODE_CENTER,   // Don't resize - place in centre of screen
 };
 
+typedef void (*view_urgent_cb_t)(struct qw_view *view, void *userdata);
+
 // Main server struct containing Wayland and wlroots state and user callbacks
 struct qw_server {
     // Public API
@@ -111,6 +113,8 @@ struct qw_server {
     cursor_button_cb_t cursor_button_cb;
     on_screen_change_cb_t on_screen_change_cb;
     on_screen_reserve_space_cb_t on_screen_reserve_space_cb;
+    view_urgent_cb_t view_urgent_cb;
+    void *view_urgent_cb_data;
     void *cb_data;
 
     // Private data
@@ -143,6 +147,7 @@ struct qw_server {
     struct wlr_xdg_shell *xdg_shell;
     struct wlr_layer_shell_v1 *layer_shell;
     struct wlr_xdg_decoration_manager_v1 *xdg_decoration_mgr;
+    struct wlr_xdg_activation_v1 *activation;
     struct wl_listener new_xdg_toplevel;
     struct wl_listener new_decoration;
     struct wl_listener new_layer_surface;
@@ -151,6 +156,8 @@ struct qw_server {
     struct wlr_xwayland *xwayland;
     struct wl_listener new_xwayland_surface;
 #endif
+    struct wl_listener request_activate;
+    struct wl_listener new_token;
 };
 
 // Utility functions exposed by the server API
