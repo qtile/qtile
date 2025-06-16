@@ -1,6 +1,8 @@
 #include "xdg-view.h"
 #include "server.h"
 #include "view.h"
+#include "wayland-server-core.h"
+#include "wayland-util.h"
 #include "wlr/types/wlr_xdg_decoration_v1.h"
 #include "xdg-shell-protocol.h"
 #include <stdlib.h>
@@ -39,6 +41,8 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
                                        keyboard->keycodes, keyboard->num_keycodes,
                                        &keyboard->modifiers);
     }
+
+    xdg_view->is_urgent = false;
 }
 
 // Handle the unmap event for the xdg_view (when it's hidden/unmapped)
@@ -283,6 +287,66 @@ static void qw_xdg_view_update_fullscreen(void *self, bool fullscreen) {
 static void qw_xdg_view_update_maximized(void *self, bool maximized) {
     struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
     wlr_xdg_toplevel_set_maximized(xdg_view->xdg_toplevel, maximized);
+}
+
+inline int qw_resolve_surface_type(struct wlr_surface *surface, struct qw_xdg_view **out_view) {
+    struct wlr_xdg_surface *xdg_surface, *tmp_xdg_surface;
+
+    if (!surface)
+        return -1;
+
+    struct wlr_surface *root_surface = wlr_surface_get_root_surface(surface);
+    struct qw_xdg_view *view = NULL;
+    int type = -1;
+
+    xdg_surface = wlr_xdg_surface_try_from_wlr_surface(root_surface);
+    while (xdg_surface) {
+        tmp_xdg_surface = NULL;
+        switch (xdg_surface->role) {
+        case WLR_XDG_SURFACE_ROLE_POPUP:
+            if (!xdg_surface->popup->parent)
+                return -1;
+            tmp_xdg_surface = wlr_xdg_surface_try_from_wlr_surface(xdg_surface->popup->parent);
+            if (!tmp_xdg_surface) {
+                return qw_resolve_surface_type(xdg_surface->popup->parent, out_view);
+            }
+            xdg_surface = tmp_xdg_surface;
+            break;
+
+        case WLR_XDG_SURFACE_ROLE_TOPLEVEL:
+            view = (struct qw_xdg_view *)xdg_surface->data;
+            type = QW_SURFACE_TYPE_XDG_TOPLEVEL;
+            goto end;
+
+        case WLR_XDG_SURFACE_ROLE_NONE:
+            return -1;
+        }
+    }
+
+end:
+    if (out_view)
+        *out_view = view;
+    return type;
+}
+
+static void qw_xdg_activation_token_destroy(struct wl_listener *listener, void *data) {
+    struct qw_token_data *token_data = wl_container_of(listener, token_data, destroy);
+    wl_list_remove(&token_data->destroy.link);
+    free(token_data);
+}
+
+void qw_xdg_activation_new_token(struct wl_listener *listener, void *data) {
+    struct wlr_xdg_activation_token_v1 *token = data;
+    struct qw_token_data *token_data = calloc(1, sizeof(&token_data));
+
+    // Assign boolean values
+    token_data->qw_valid_surface = !!token->surface;
+    token_data->qw_valid_seat = !!token->seat;
+
+    token->data = token_data;
+
+    token_data->destroy.notify = qw_xdg_activation_token_destroy;
+    wl_signal_add(&token->events.destroy, &token_data->destroy);
 }
 
 // Create a new qw_xdg_view for a given wlr_xdg_toplevel, setting up scene tree, listeners, and
