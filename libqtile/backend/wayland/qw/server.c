@@ -344,7 +344,10 @@ struct qw_server *qw_server_create() {
     wl_signal_add(&server->activation->events.request_activate, &server->request_activate);
     // TODO: handle activation request
 
-    // TODO: gamma control, power manager
+    wlr_scene_set_gamma_control_manager_v1(server->scene,
+                                           wlr_gamma_control_manager_v1_create(server->display));
+
+    // TODO: power manager
     // TODO: handle GPU resets
 
     // TODO: setup listeners
