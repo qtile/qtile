@@ -65,6 +65,7 @@ struct wlr_cursor {
 // main callbacks
 typedef uint32_t xkb_keysym_t;
 typedef struct _cairo_surface cairo_surface_t;
+extern "Python" void view_urgent_cb(struct qw_view *view, void *userdata);
 extern "Python" int keyboard_key_cb(xkb_keysym_t, uint32_t, void *userdata);
 extern "Python" void manage_view_cb(struct qw_view *view, void *userdata);
 extern "Python" void unmanage_view_cb(struct qw_view *view, void *userdata);

@@ -172,6 +172,12 @@ def on_screen_reserve_space_cb(output, userdata):
     core.handle_screen_reserve_space(output)
 
 
+@ffi.def_extern()
+def view_urgent_cb(view, userdata):
+    core = ffi.from_handle(userdata)
+    core.handle_view_urgent(view)
+
+
 def get_wlr_log_level():
     if logger.level <= logging.DEBUG:
         return lib.WLR_DEBUG
@@ -213,6 +219,8 @@ class Core(base.Core):
         self.qw.cursor_button_cb = lib.cursor_button_cb
         self.qw.on_screen_change_cb = lib.on_screen_change_cb
         self.qw.on_screen_reserve_space_cb = lib.on_screen_reserve_space_cb
+        self.qw.view_urgent_cb = lib.view_urgent_cb
+        self.qw.view_urgent_cb_data = self._userdata
         lib.qw_server_start(self.qw)
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
 
@@ -420,6 +428,20 @@ class Core(base.Core):
                         self.qtile.focus_screen(win.group.screen.index, False)
 
         self._hovered_window = win
+
+    def handle_view_urgent(self, view):
+        """Handle view urgency notification"""
+        assert self.qtile is not None
+        wid = view.wid
+        win = self.qtile.windows_map.get(wid)
+
+        if win:
+            # Mark window as urgent in Qtile
+            win.urgent = True
+            hook.fire("client_urgent_hint_changed", win)
+
+            if self.qtile.config.focus_on_window_activation == "smart":
+                win.focus(False)
 
     def finalize(self) -> None:
         lib.qw_server_finalize(self.qw)
