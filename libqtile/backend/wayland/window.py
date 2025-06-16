@@ -1,13 +1,12 @@
-from typing import TYPE_CHECKING
-from libqtile import hook, utils
-from libqtile.group import _Group
-from libqtile.core.manager import Qtile
 import libqtile.backend.base.window as base
-from libqtile.backend.wayland.drawer import Drawer
+from libqtile import hook, utils
 from libqtile.backend.base import FloatStates
+from libqtile.backend.wayland.drawer import Drawer
 from libqtile.command.base import CommandError, expose_command
-from libqtile.utils import rgb, ColorsType
+from libqtile.core.manager import Qtile
+from libqtile.group import _Group
 from libqtile.log_utils import logger
+from libqtile.utils import ColorsType, rgb
 
 ffi = None
 lib = None
@@ -541,7 +540,7 @@ class Window(Base, base.Window):
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
                 self._float_state = FloatStates.FLOATING
         elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
-            self.reparent(lib.LAYER_LAYOUT);
+            self.reparent(lib.LAYER_LAYOUT)
             self._update_fullscreen(False)
             if self._float_state == FloatStates.FLOATING:
                 # store last size
@@ -764,7 +763,8 @@ class Static(Base, base.Static):
         self.y = 0
         self._width = 0
         self._height = 0
-        # TODO: opacity, idle_inhibitors, ftm, urgent
+        self._urgent = False
+        # TODO: opacity, idle_inhibitors, ftm
 
         self._userdata = ffi.new_handle(self)
         ptr.cb_data = self._userdata
@@ -825,5 +825,15 @@ class Static(Base, base.Static):
         info = base.Static.info(self)
         info["shell"] = ffi.string(self._ptr.shell).decode() if self._ptr.shell != ffi.NULL else "",
         return info
+
+    @property
+    def urgent(self):
+        return self._urgent
+
+    @urgent.setter
+    def urgent(self, value):
+        self._urgent = value
+        # Trigger UI updates (e.g., change border color)
+        self.group.mark_urgent(self, value)
 
 WindowType = Window | Internal | Static

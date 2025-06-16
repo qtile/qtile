@@ -1,9 +1,8 @@
-from cffi import FFI
-from pathlib import Path
-
-import cairocffi
 import os
 import subprocess
+from pathlib import Path
+
+from cffi import FFI
 
 QW_PATH = (Path(__file__).parent / ".." / "qw").resolve()
 
@@ -21,7 +20,10 @@ WAYLAND_PROTOCOLS = subprocess.run(
 QW_PROTO_IN_PATH = (QW_PATH / ".." / "proto").resolve()
 
 PROTOS = [
-    ["wlr-layer-shell-unstable-v1-protocol.h", f"{QW_PROTO_IN_PATH}/wlr-layer-shell-unstable-v1.xml"],
+    [
+        "wlr-layer-shell-unstable-v1-protocol.h",
+        f"{QW_PROTO_IN_PATH}/wlr-layer-shell-unstable-v1.xml",
+    ],
     ["xdg-shell-protocol.h", f"{WAYLAND_PROTOCOLS}/stable/xdg-shell/xdg-shell.xml"],
 ]
 
@@ -62,6 +64,7 @@ struct wlr_cursor {
 // main callbacks
 typedef uint32_t xkb_keysym_t;
 typedef struct _cairo_surface cairo_surface_t;
+extern "Python" void view_urgent_cb(struct qw_view *view, void *userdata);
 extern "Python" int keyboard_key_cb(xkb_keysym_t, uint32_t, void *userdata);
 extern "Python" void manage_view_cb(struct qw_view *view, void *userdata);
 extern "Python" void unmanage_view_cb(struct qw_view *view, void *userdata);
