@@ -7,6 +7,7 @@
 #include "keyboard.h"
 #include "output.h"
 #include "server.h"
+#include "wayland-server-core.h"
 #include "wayland-server-protocol.h"
 #include "xdg-view.h"
 
@@ -266,9 +267,21 @@ struct qw_server *qw_server_create() {
         free(server);
         return NULL;
     }
+
     // TODO: do
     // https://codeberg.org/dwl/dwl/src/commit/bd59573f07f27fff7870a1e1a70e72493bb42453/dwl.c#L2473-L2479
     // instead?
+
+    /* Qtile’s layout system renders and manipulates visuals dynamically — so having the allocator
+     * handled automatically gives:
+     *   - Efficient GPU-backed rendering (dmabuf or gbm)
+     *   - Fallback to wl_shm if needed
+     *   - Less manual memory plumbing = fewer bugs
+     *   - Cleaner backend logic for Python↔C interop
+     *
+     * For now we prefer this over the manual drm/dmabuf setup (as seen in dwl).
+     * If fine-grained control is ever needed, we can refactor later. */
+
     wlr_renderer_init_wl_display(server->renderer, server->display);
     server->allocator = wlr_allocator_autocreate(server->backend, server->renderer);
     if (!server->allocator) {
@@ -326,7 +339,12 @@ struct qw_server *qw_server_create() {
     wl_signal_add(&server->xdg_decoration_mgr->events.new_toplevel_decoration,
                   &server->new_decoration);
 
-    // TODO: XDG activation, gamma control, power manager
+    // Initializes the interface used to implement urgency hints
+    server->activation = wlr_xdg_activation_v1_create(server->display);
+    wl_signal_add(&server->activation->events.request_activate, &server->request_activate);
+    // TODO: handle activation request
+
+    // TODO: gamma control, power manager
     // TODO: handle GPU resets
 
     // TODO: setup listeners

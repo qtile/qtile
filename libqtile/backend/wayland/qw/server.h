@@ -29,6 +29,7 @@
 #include <wlr/types/wlr_single_pixel_buffer_v1.h>
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_viewporter.h>
+#include <wlr/types/wlr_xdg_activation_v1.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
@@ -93,9 +94,11 @@ struct qw_server {
     struct qw_cursor *cursor;
     struct wlr_xdg_shell *xdg_shell;
     struct wlr_xdg_decoration_manager_v1 *xdg_decoration_mgr;
+    struct wlr_xdg_activation_v1 *activation;
     struct wl_listener new_xdg_toplevel;
     struct wl_listener new_decoration;
     struct wl_listener request_cursor;
+    struct wl_listener request_activate;
 };
 
 // Utility functions exposed by the server API
