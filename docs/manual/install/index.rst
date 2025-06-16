@@ -75,9 +75,6 @@ only the dependencies of one of these is required.
 +-------------------+-------------------------+-----------------------------------------+
 | wlroots_          | libwlroots-dev          |  Wayland backend (see below)            |
 +-------------------+-------------------------+-----------------------------------------+
-| pywlroots_        | --                      |  python bindings for the wlroots library|
-+-------------------+-------------------------+-----------------------------------------+
-| pywayland_        | --                      |  python bindings for the wayland library|
 +-------------------+-------------------------+-----------------------------------------+
 | python-xkbcommon_ | --                      |  required for wayland backeds           |
 +-------------------+-------------------------+-----------------------------------------+
@@ -85,8 +82,6 @@ only the dependencies of one of these is required.
 .. _CFFI: https://cffi.readthedocs.io/en/latest/installation.html
 .. _xcffib: https://github.com/tych0/xcffib#installation
 .. _wlroots: https://gitlab.freedesktop.org/wlroots/wlroots
-.. _pywlroots: https://github.com/flacjacket/pywlroots
-.. _pywayland: https://pywayland.readthedocs.io/en/latest/install.html
 .. _python-xkbcommon: https://github.com/sde1000/python-xkbcommon
 .. _cairocffi: https://cairocffi.readthedocs.io/en/stable/overview.html
 .. _dbus-fast: https://dbus-fast.readthedocs.io/en/latest/
@@ -160,11 +155,8 @@ Qtile can be run as a Wayland compositor rather than an X11 window manager. For
 this, Qtile uses wlroots_, a compositor library which is undergoing fast
 development. Be aware that some distributions package outdated versions of
 wlroots. More up-to-date distributions such as Arch Linux may package
-pywayland, pywlroots and python-xkbcommon. Also note that we may not have yet
-caught up with the latest wlroots release ourselves.
-
-.. note::
-   We currently support wlroots>=0.17.0,<0.18.0, pywlroots>=0.17.0,<0.18.0 and pywayland >= 0.4.17.
+python-xkbcommon. Also note that we may not have yet caught up with the latest
+wlroots release ourselves.
 
 With the Wayland dependencies in place, Qtile can be run either from a TTY, or
 within an existing X11 or Wayland session where it will run inside a nested
