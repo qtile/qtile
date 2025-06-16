@@ -31,7 +31,6 @@
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_viewporter.h>
 #include <wlr/types/wlr_xdg_activation_v1.h>
-#include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon.h>
@@ -61,6 +60,8 @@ typedef void (*output_dims_cb_t)(int x, int y, int width, int height);
 // Callback for when screen configuration changes
 typedef void (*on_screen_change_cb_t)(void *userdata);
 
+typedef void (*view_urgent_cb_t)(struct qw_view *view, void *userdata);
+
 // Main server struct containing Wayland and wlroots state and user callbacks
 struct qw_server {
     // Public API
@@ -72,6 +73,8 @@ struct qw_server {
     cursor_button_cb_t cursor_button_cb;
     on_screen_change_cb_t on_screen_change_cb;
     void *cb_data;
+    view_urgent_cb_t view_urgent_cb;
+    void *cb_data_urgent;
 
     // Private data
     struct wl_event_loop *event_loop;
@@ -100,6 +103,7 @@ struct qw_server {
     struct wl_listener new_decoration;
     struct wl_listener request_cursor;
     struct wl_listener request_activate;
+    struct wl_listener new_token;
 };
 
 // Utility functions exposed by the server API
