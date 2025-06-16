@@ -5,8 +5,7 @@ requires = [
     "setuptools>=61",
     "setuptools-scm>=7.0",
 ]
-backend-path=["."]
-build-backend = "builder"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "qtile"
