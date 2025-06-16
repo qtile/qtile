@@ -66,3 +66,7 @@ int qw_util_get_modifier_code(const char *codestr) {
 
     return -1;
 }
+
+xkb_keysym_t qwu_keysym_from_name(const char *name) {
+	return xkb_keysym_from_name(name, XKB_KEYSYM_CASE_INSENSITIVE);
+}
