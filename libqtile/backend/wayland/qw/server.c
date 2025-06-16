@@ -2,6 +2,7 @@
 #include <wlr/backend/session.h>
 #include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_server_decoration.h>
+#include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
 
 #include "cursor.h"
@@ -366,15 +367,12 @@ static void qw_server_handle_new_xwayland_surface(struct wl_listener *listener, 
     qw_server_xwayland_view_new(server, xwayland_surface);
 }
 
-const char* qw_server_xwayland_display_name(struct qw_server *server) {
+const char *qw_server_xwayland_display_name(struct qw_server *server) {
     return server->xwayland->display_name;
 }
 #else
-const char* qw_server_xwayland_display_name(struct qw_server *server) {
-    return NULL;
-}
+const char *qw_server_xwayland_display_name(struct qw_server *server) { return NULL; }
 #endif
-
 
 // Return the view at the given layout coordinates, if any.
 // Also fills out surface and surface-local coords if found.
@@ -412,6 +410,65 @@ struct qw_view *qw_server_view_at(struct qw_server *server, double lx, double ly
 
 struct qw_cursor *qw_server_get_cursor(struct qw_server *server) { return server->cursor; }
 
+static void qw_handle_activation_request(struct wl_listener *listener, void *data) {
+    struct qw_server *server = wl_container_of(listener, server, request_activate);
+    struct wlr_xdg_activation_v1_request_activate_event *event = data;
+
+    if (event->token == NULL || event->token->data == NULL) {
+        wlr_log(WLR_INFO, "Activation request has no token or token data");
+        return;
+    }
+
+    struct qw_xdg_activation_token *token_data = event->token->data;
+
+    struct wlr_xdg_surface *xdg_surface = wlr_xdg_surface_try_from_wlr_surface(event->surface);
+
+    if (xdg_surface == NULL) {
+        wlr_log(WLR_INFO, "Activation request for unknown surface");
+        return;
+    }
+
+    // Get the view associated with the surface
+    struct qw_xdg_view *view = xdg_surface->data;
+
+    if (view == NULL) {
+        wlr_log(WLR_INFO, "Not activating surface - no view attached");
+        return;
+    }
+
+    if (!token_data->qw_valid_seat) {
+        wlr_log(WLR_INFO, "Denying focus request, seat wasn't supplied");
+        return;
+    }
+
+    if (!token_data->qw_valid_surface) {
+        wlr_log(WLR_INFO, "Denying focus request, surface wasn't set");
+        return;
+    }
+
+    // Mark as urgent if not focused
+    struct wlr_surface *focused = server->seat->keyboard_state.focused_surface;
+
+    if (focused == NULL) {
+        wlr_log(WLR_INFO, "No surface focused");
+    }
+
+    if (focused == event->surface) {
+        wlr_log(WLR_INFO, "Activation token invalid for surface");
+        return;
+    }
+
+    view->is_urgent = true;
+    wlr_log(WLR_INFO, "View marked urgent: %p", view);
+
+    if (server->view_urgent_cb != NULL) {
+        server->view_urgent_cb((struct qw_view *)view, server->view_urgent_cb_data);
+    }
+
+    wlr_log(WLR_INFO, "Activation token valid, focusing view");
+    qw_xdg_view_focus(view, 1);
+}
+
 void qw_server_set_keymap(struct qw_server *server, const char *layout, const char *options,
                           const char *variant) {
     struct qw_keyboard *keyboard;
@@ -442,6 +499,7 @@ struct qw_server *qw_server_create() {
         free(server);
         return NULL;
     }
+
     // TODO: do
     // https://codeberg.org/dwl/dwl/src/commit/bd59573f07f27fff7870a1e1a70e72493bb42453/dwl.c#L2473-L2479
     // instead?
@@ -508,20 +566,24 @@ struct qw_server *qw_server_create() {
     wl_signal_add(&server->xdg_decoration_mgr->events.new_toplevel_decoration,
                   &server->new_decoration);
 
-    // TODO: handle activation request
     server->layer_shell = wlr_layer_shell_v1_create(server->display, 3);
     server->new_layer_surface.notify = qw_server_handle_new_layer_surface;
     wl_signal_add(&server->layer_shell->events.new_surface, &server->new_layer_surface);
     server->renderer_lost.notify = qw_server_handle_renderer_lost;
     wl_signal_add(&server->renderer->events.lost, &server->renderer_lost);
 
-    #if WLR_HAS_XWAYLAND
+#if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
     server->new_xwayland_surface.notify = qw_server_handle_new_xwayland_surface;
     wl_signal_add(&server->xwayland->events.new_surface, &server->new_xwayland_surface);
-    #endif
+#endif
 
-    // TODO: XDG activation, gamma control, power manager
+    // Initializes the interface used to implement urgency hints
+    server->activation = wlr_xdg_activation_v1_create(server->display);
+    server->request_activate.notify = qw_handle_activation_request;
+    wl_signal_add(&server->activation->events.request_activate, &server->request_activate);
+    server->new_token.notify = qw_xdg_activation_new_token;
+    wl_signal_add(&server->activation->events.new_token, &server->new_token);
 
     wlr_scene_set_gamma_control_manager_v1(server->scene,
                                            wlr_gamma_control_manager_v1_create(server->display));

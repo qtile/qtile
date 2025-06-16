@@ -779,7 +779,8 @@ class Static(Base, base.Static):
         self.y = 0
         self._width = 0
         self._height = 0
-        # TODO: opacity, idle_inhibitors, ftm, urgent
+        self._urgent = False
+        # TODO: opacity, idle_inhibitors, ftm
 
         self._userdata = ffi.new_handle(self)
         ptr.cb_data = self._userdata
