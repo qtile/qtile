@@ -71,7 +71,7 @@ struct qw_server {
     on_screen_change_cb_t on_screen_change_cb;
     void *cb_data;
 
-    // private data
+    // Private data
     struct wl_event_loop *event_loop;
     struct wlr_compositor *compositor;
     struct wl_display *display;
