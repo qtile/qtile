@@ -71,6 +71,11 @@ void qw_server_start(struct qw_server *server) {
 // Stub function – maybe used for keymap introspection in the future
 const char *qw_server_get_sym_from_code(struct qw_server *server, int code) { return NULL; }
 
+void qw_server_keyboard_clear_focus(struct qw_server *server) {
+    struct wlr_seat *seat = server->seat;
+    wlr_seat_keyboard_clear_focus(seat);
+}
+
 // Handle when a new output (monitor/display) is connected.
 // Calls qw_server_output_new to add the new output to the server.
 static void qw_server_handle_new_output(struct wl_listener *listener, void *data) {

@@ -155,8 +155,12 @@ class Base(base._Window):
 
     @expose_command()
     def focus(self, warp: bool = True) -> None:
-        self._ptr.focus(self._ptr, int(warp))
+        self.qtile.core.focus_window(self)
 
+        # TODO
+        # Call core.warp_pointer() previously here
+
+        hook.fire("client_focus", self)
 
 class Internal(Base, base.Internal):
     def __init__(self, qtile: Qtile, ptr, wid):
@@ -537,3 +541,5 @@ class Window(Base, base.Window):
     @expose_command()
     def disable_fullscreen(self) -> None:
         self.fullscreen = False
+
+WindowType = Window | Internal # | Static

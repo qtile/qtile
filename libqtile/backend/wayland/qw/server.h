@@ -126,5 +126,6 @@ struct qw_server *qw_server_create();
 // sx and sy are surface-local coordinates of the point
 struct qw_view *qw_server_view_at(struct qw_server *server, double lx, double ly,
                                   struct wlr_surface **surface, double *sx, double *sy);
+void qw_server_keyboard_clear_focus(struct qw_server *server);
 
 #endif /* SERVER_H */

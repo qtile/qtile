@@ -33,7 +33,7 @@ from typing import TYPE_CHECKING
 
 from libqtile import hook, log_utils
 from libqtile.backend import base
-from libqtile.backend.wayland.window import Internal, Window
+from libqtile.backend.wayland.window import Internal, Window, WindowType
 from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
@@ -142,6 +142,9 @@ class Core(base.Core):
     supports_restarting: bool = False
 
     def __init__(self) -> None:
+        # this Internal window receives keyboard input, e.g. via the Prompt widget.
+        self.focused_internal: Internal | None = None
+
         """Setup the Wayland core backend"""
         log_utils.init_log(logger.level, log_path=log_utils.get_default_log(), logger=qw_logger)
         lib.qw_log_init(get_wlr_log_level(), lib.log_cb)
@@ -190,12 +193,30 @@ class Core(base.Core):
         self.qtile.unmanage(view.wid)
 
     def handle_keyboard_key(self, keysym, mask):
+        if self.focused_internal:
+            self.focused_internal.process_key_press(keysym)
+            return True
+
         if (keysym, mask) not in self.grabbed_keys:
             return False
+
         assert self.qtile is not None
         if self.qtile.process_key_event(keysym, mask)[1]:
             return True
+
         return False
+
+    def focus_window(self, win: WindowType) -> None:
+        if isinstance(win, base.Internal):
+            self.focused_internal = win
+            lib.qw_server_keyboard_clear_focus(self.qw)
+            return
+
+        if self.focused_internal:
+            self.focused_internal = None
+
+        # TODO logic imcomplete
+        win._ptr.focus(win._ptr, False)  # What is the second argument?
 
     def finalize(self) -> None:
         lib.qw_server_finalize(self.qw)
@@ -299,6 +320,10 @@ class Core(base.Core):
             self._poll()
             if not self.qtile.windows_map:
                 break
+
+    def keysym_from_name(self, name: str) -> int:
+        """Get the keysym for a key from its name"""
+        return lib.qwu_keysym_from_name(name.encode())
 
     @expose_command()
     def set_keymap(
