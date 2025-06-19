@@ -23,10 +23,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import os
+from pathlib import Path
 
 import cairocffi
 
 try:
+    from xdg.DesktopEntry import DesktopEntry
     from xdg.IconTheme import getIconPath
 
     has_xdg = True
@@ -38,6 +41,14 @@ from libqtile import hook, pangocffi
 from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.widget import base
+
+data_home = os.environ.get("XDG_DATA_HOME", "~/.local/share")
+
+DESKTOP_LOCATIONS = [
+    Path(data_home) / "applications",
+    Path("/usr/local/share/applications"),
+    Path("/usr/share/applications"),
+]
 
 
 class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
@@ -515,6 +526,33 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         return img
 
+    def _read_desktop_file(self, desktopfile):
+        icon = DesktopEntry(desktopfile).getIcon()
+        if icon and Path(icon).expanduser().exists():
+            return icon
+
+    def _find_desktop_entry(self, classes):
+        for p in DESKTOP_LOCATIONS:
+            for cl in classes:
+                for app in set([cl, cl.lower()]):
+                    f = (p / f"{app}.desktop").expanduser()
+                    if f.exists():
+                        icon = self._read_desktop_file(f)
+                        if icon:
+                            return icon
+
+    def _get_desktop_icon(self, window):
+        classes = window.get_wm_class()
+
+        if not classes:
+            return None
+
+        icon = self._find_desktop_entry(classes)
+
+        if icon:
+            img = Img.from_path(icon)
+            return img.surface
+
     def _get_theme_icon(self, window):
         classes = window.get_wm_class()
 
@@ -552,6 +590,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         if self.qtile.core.name == "x11":
             img = self._get_class_icon(window)
+
+        if img is None and has_xdg and self.theme_mode != "preferred":
+            img = self._get_desktop_icon(window)
 
         if self.theme_mode == "preferred" or (self.theme_mode == "fallback" and img is None):
             xdg_img = self._get_theme_icon(window)
