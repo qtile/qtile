@@ -519,7 +519,6 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         icon = DesktopEntry(desktopfile).getIcon()
         if icon and Path(icon).expanduser().exists():
             return icon
-        print(icon, Path(icon).expanduser().exists())
 
     def _find_desktop_entry(self, classes):
         for p in DESKTOP_LOCATIONS:
