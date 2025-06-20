@@ -57,8 +57,8 @@ class Command:
         self.obj_spec = obj_spec
         self.info = False
 
-    def __call__(self, return_output=False):
-        return cmd_obj(self, return_output=return_output)
+    def __call__(self):
+        return cmd_obj(self)
 
 
 # Calls to start and stop the qtile REPL server
