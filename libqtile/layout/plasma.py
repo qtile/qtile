@@ -18,6 +18,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import contextlib
 import copy
 import time
 from enum import Enum, Flag, auto
@@ -135,6 +136,7 @@ class Node:
         self.last_accessed = 0
         self.parent = None
         self.restorables = {}
+        hook.subscribe.client_killed(self._clean_restorables)
 
     def __repr__(self):
         info = self.payload or ""
@@ -606,6 +608,10 @@ class Node:
                 self.parent.add_child_after(node, self)
         else:
             self.flip_with(node)
+
+    def _clean_restorables(self, client):
+        with contextlib.suppress(KeyError):
+            del self.root.restorables[client]
 
     def restore(self, node):
         """Restore node.
