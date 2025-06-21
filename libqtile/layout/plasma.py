@@ -637,7 +637,10 @@ class Node:
             parent.add_child(node, idx=idx)
             node.size = sizes[0]
             if len(sizes) == 2:
-                node.siblings[0].size = sizes[1]
+                if node.siblings:
+                    node.siblings[0].size = sizes[1]
+                else:
+                    node.reset_size()
         if not fixed:
             node.reset_size()
         del restorables[node.payload]
