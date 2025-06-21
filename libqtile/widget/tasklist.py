@@ -23,6 +23,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import os
 from pathlib import Path
 
 import cairocffi
@@ -41,8 +42,10 @@ from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
+data_home = os.environ.get("XDG_DATA_HOME", "~/.local/share")
+
 DESKTOP_LOCATIONS = [
-    Path("~/.local/share/applications."),
+    Path(data_home) / "applications",
     Path("/usr/local/share/applications"),
     Path("/usr/share/applications"),
 ]
