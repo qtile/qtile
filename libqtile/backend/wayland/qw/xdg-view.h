@@ -26,7 +26,8 @@ struct qw_xdg_view {
     struct wl_listener destroy;
     struct wl_listener request_maximize;
     struct wl_listener request_fullscreen;
-    // TODO: add listeners for move and resize requests
+    struct wl_listener request_move;
+    struct wl_listener request_resize;
 
     // Listeners for client decoration protocol events
     struct wl_listener decoration_request_mode;
