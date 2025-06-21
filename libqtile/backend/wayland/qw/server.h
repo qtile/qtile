@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <getopt.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <wayland-server-core.h>
 #include <wlr/backend.h>
