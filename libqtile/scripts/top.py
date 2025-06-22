@@ -43,23 +43,17 @@ except ModuleNotFoundError:
     ENABLED = False
 
 
-class TraceNotStarted(Exception):
-    pass
-
-
 class TraceCantStart(Exception):
     pass
 
 
-def get_trace(c, force_start):
+def get_trace(c):
     (started, path) = c.tracemalloc_dump()
-    if force_start and not started:
+    if not started:
         c.tracemalloc_toggle()
         (started, path) = c.tracemalloc_dump()
         if not started:
             raise TraceCantStart
-    elif not started:
-        raise TraceNotStarted
 
     return Snapshot.load(path)
 
@@ -73,7 +67,7 @@ def filter_snapshot(snapshot):
     )
 
 
-def get_stats(scr, c, group_by="lineno", limit=10, seconds=1.5, force_start=False):
+def get_stats(scr, c, group_by="lineno", limit=10, seconds=1.5):
     (max_y, max_x) = scr.getmaxyx()
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
     while True:
@@ -85,7 +79,7 @@ def get_stats(scr, c, group_by="lineno", limit=10, seconds=1.5, force_start=Fals
             curses.A_BOLD | curses.A_REVERSE,
         )
 
-        snapshot = get_trace(c, force_start)
+        snapshot = get_trace(c)
         snapshot = filter_snapshot(snapshot)
         top_stats = snapshot.statistics(group_by)
         cnt = 1
@@ -121,8 +115,8 @@ def get_stats(scr, c, group_by="lineno", limit=10, seconds=1.5, force_start=Fals
         scr.erase()
 
 
-def raw_stats(c, group_by="lineno", limit=10, force_start=False):
-    snapshot = get_trace(c, force_start)
+def raw_stats(c, group_by="lineno", limit=10):
+    snapshot = get_trace(c)
     snapshot = filter_snapshot(snapshot)
     top_stats = snapshot.statistics(group_by)
 
@@ -149,7 +143,6 @@ def top(opts):
         raise Exception("Could not import tracemalloc")
     lines = opts.lines
     seconds = opts.seconds
-    force_start = opts.force_start
     if opts.socket is None:
         socket = ipc.find_sockfile()
     else:
@@ -162,23 +155,16 @@ def top(opts):
 
     try:
         if not opts.raw:
-            curses.wrapper(get_stats, c, limit=lines, seconds=seconds, force_start=force_start)
+            curses.wrapper(get_stats, c, limit=lines, seconds=seconds)
         else:
-            raw_stats(c, limit=lines, force_start=force_start)
-    except TraceNotStarted:
-        print(
-            "tracemalloc not started on qtile, start by setting "
-            "PYTHONTRACEMALLOC=1 before starting qtile"
-        )
-        print("or force start tracemalloc now, but you'll lose early traces")
-        sys.exit(1)
+            raw_stats(c, limit=lines)
     except TraceCantStart:
         print("Can't start tracemalloc on qtile, check the logs")
     except KeyboardInterrupt:
         sys.exit(1)
     except curses.error:
         print("Terminal too small for curses interface.")
-        raw_stats(c, limit=lines, force_start=force_start)
+        raw_stats(c, limit=lines)
 
 
 def add_subcommand(subparsers, parents):
@@ -203,13 +189,6 @@ def add_subcommand(subparsers, parents):
         dest="seconds",
         default=1.5,
         help="Refresh rate.",
-    )
-    parser.add_argument(
-        "--force-start",
-        dest="force_start",
-        action="store_true",
-        default=False,
-        help="Force start tracemalloc on Qtile.",
     )
     parser.add_argument(
         "-s", "--socket", type=str, dest="socket", help="Use specified socket for IPC."
