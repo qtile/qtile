@@ -222,3 +222,48 @@ class CurrentLayoutIcon(CurrentLayout):
             self.surfaces[layout_name] = img
 
         self.icons_loaded = True
+
+
+class CurrentLayoutIconOrText(CurrentLayoutIcon):
+    """
+    Either display the icon of the current layout or its name, imagine switching
+    between CurrentLayout and CurrentLayoutIcon with a click.
+    """
+
+    defaults = [
+        ("draw_icon_first", True, "Should draw icon or text when bar is initialized."),
+    ]
+
+    def __init__(self, **config):
+        super().__init__(**config)
+        self.add_defaults(CurrentLayoutIconOrText.defaults)
+
+    def _configure(self, qtile, bar):
+        super()._configure(qtile, bar)
+        self.image_length = self.length
+
+        self.add_callbacks(
+            {
+                "Button3": self.change_draw_method,
+            }
+        )
+
+    def change_draw_method(self):
+        self.draw_icon_first = not self.draw_icon_first
+        self.draw()
+        self.bar.draw()
+
+    def hook_response(self, layout, group):
+        if group.screen is not None and group.screen == self.bar.screen:
+            self.current_layout = layout.name
+            self.draw()
+            self.bar.draw()
+
+    def draw(self):
+        if self.draw_icon_first:
+            self.length = self.image_length
+            super().draw()
+        else:
+            self.text = self.current_layout
+            self.length = super().calculate_length()
+            base._TextBox.draw(self)

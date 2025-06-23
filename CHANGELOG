@@ -1,5 +1,6 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
+      - Add new widget CurrentLayoutIconOrText
     * bugfixes
 
 Qtile 0.32.0, released 2025-06-09:
