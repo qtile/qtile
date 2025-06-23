@@ -61,9 +61,15 @@ class CurrentLayout(base._TextBox):
             self.bar.draw()
 
     def setup_hooks(self):
+        """
+        Listens for layout change and performs a redraw when it occurs.
+        """
         hook.subscribe.layout_change(self.hook_response)
 
     def remove_hooks(self):
+        """
+        Listens for layout change and performs a redraw when it occurs.
+        """
         hook.unsubscribe.layout_change(self.hook_response)
 
     def finalize(self):
@@ -71,7 +77,7 @@ class CurrentLayout(base._TextBox):
         base._TextBox.finalize(self)
 
 
-class CurrentLayoutIcon(base._TextBox):
+class CurrentLayoutIcon(CurrentLayout):
     """
     Display the icon representing the current layout of the
     current group of the screen on which the bar containing the widget is.
@@ -115,40 +121,18 @@ class CurrentLayoutIcon(base._TextBox):
         self.length = 0
 
     def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
-        layout_id = self.bar.screen.group.current_layout
-        self.text = self.bar.screen.group.layouts[layout_id].name
+        super()._configure(qtile, bar)
         self.current_layout = self.text
         self.icons_loaded = False
         self.icon_paths = []
         self.surfaces = {}
         self._update_icon_paths()
         self._setup_images()
-        self._setup_hooks()
-
-        self.add_callbacks(
-            {
-                "Button1": qtile.next_layout,
-                "Button2": qtile.prev_layout,
-            }
-        )
 
     def hook_response(self, layout, group):
         if group.screen is not None and group.screen == self.bar.screen:
             self.current_layout = layout.name
             self.bar.draw()
-
-    def _setup_hooks(self):
-        """
-        Listens for layout change and performs a redraw when it occurs.
-        """
-        hook.subscribe.layout_change(self.hook_response)
-
-    def _remove_hooks(self):
-        """
-        Listens for layout change and performs a redraw when it occurs.
-        """
-        hook.unsubscribe.layout_change(self.hook_response)
 
     def draw(self):
         if self.icons_loaded:
@@ -238,7 +222,3 @@ class CurrentLayoutIcon(base._TextBox):
             self.surfaces[layout_name] = img
 
         self.icons_loaded = True
-
-    def finalize(self):
-        self._remove_hooks()
-        base._TextBox.finalize(self)
