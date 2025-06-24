@@ -99,15 +99,15 @@ With the dependencies in place, you can now install the stable version of qtile 
 
 .. code-block:: bash
 
-   pip install qtile
+   uv tool install qtile
 
 Or with sets of dependencies:
 
 .. code-block:: bash
 
-   pip install qtile[wayland]  # for Wayland dependencies
-   pip install qtile[widgets]  # for all widget dependencies
-   pip install qtile[all]      # for all dependencies
+   uv tool install qtile[wayland]  # for Wayland dependencies
+   uv tool install qtile[widgets]  # for all widget dependencies
+   uv tool install qtile[all]      # for all dependencies
 
 Or install qtile-git with:
 
@@ -115,8 +115,8 @@ Or install qtile-git with:
 
     git clone https://github.com/qtile/qtile.git
     cd qtile
-    pip install .
-    pip install --config-setting backend=wayland .  # adds wayland dependencies
+    uv tool install .
+    uv tool install --reinstall .[wayland]  # reinstall with wayland deps
 
 .. _starting-qtile:
 

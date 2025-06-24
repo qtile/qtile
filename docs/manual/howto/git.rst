@@ -50,7 +50,7 @@ The numeric pull request id can be found in the url or next to the title
 
 .. note:: Having the feature branch checked out doesn't mean that it is
    installed and will be loaded when you restart qtile. You might still need to
-   install it with ``pip``.
+   install it with ``uv``.
 
 I committed changes and the tests failed
 ========================================
