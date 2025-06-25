@@ -1,4 +1,6 @@
 Qtile x.xx.x, released xxxx-xx-xx:
+    !!! breaking changes !!!
+      - Remove CurrentLayoutIcon, functionality merged with CurrentLayout
     * features
     * bugfixes
 
