@@ -26,14 +26,6 @@ except PackageNotFoundError:
     VERSION = "dev"
 
 
-def check_folder(value):
-    path = Path(value)
-    if not path.parent.is_dir():
-        raise argparse.ArgumentTypeError("Log path destination folder does not exist.")
-    # init_log expects a Path object so return `path` not `value`
-    return path
-
-
 def main():
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument(
@@ -50,7 +42,7 @@ def main():
         "--log-path",
         default=get_default_log(),
         dest="log_path",
-        type=check_folder,
+        type=Path,
         help="Set alternative qtile log path",
     )
     main_parser = argparse.ArgumentParser(
