@@ -1544,6 +1544,7 @@ class Internal(_Window, base.Internal):
         if self.window.wid in self.qtile.windows_map:
             # It will be present during config reloads; absent during shutdown as this
             # will follow graceful_shutdown
+            del self.qtile.windows_map[self.wid]
             with contextlib.suppress(xcffib.ConnectionException):
                 self.qtile.core.conn.conn.core.DestroyWindow(self.window.wid)
 
