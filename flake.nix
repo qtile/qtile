@@ -48,7 +48,14 @@
           qtile = qtile'.overrideAttrs (
             prev:
             let
-              remove-pywlroots = dep: dep.pname != pkgs.python3Packages.pywlroots.pname;
+              removeOldDeps =
+                dep:
+                !(pkgs.lib.hasAttr "pname" dep)
+                || (
+                  dep.pname != pkgs.python3Packages.pywlroots.pname
+                  && dep.pname != pkgs.python3Packages.pywayland.pname
+                  && dep.pname != pkgs.python3Packages.xkbcommon.pname
+                );
 
               propagatedBuildInputs =
                 with pkgs;
@@ -58,7 +65,7 @@
                   python3Packages.cffi
                   python3Packages.xcffib
                 ]
-                ++ (pkgs.lib.filter remove-pywlroots prev.propagatedBuildInputs);
+                ++ (pkgs.lib.filter removeOldDeps prev.propagatedBuildInputs);
             in
             {
               name = "${qtile'.pname}-${qtile'.version}";

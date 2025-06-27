@@ -2,14 +2,27 @@
 #define XDG_VIEW_H
 
 // Include the generic view base struct and Wayland/WLRoots core and types
+#include "output.h"
 #include "view.h"
 #include <wayland-server-core.h>
+#include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_scene.h>
 #include <wlr/types/wlr_xdg_shell.h>
+
+#define QW_SURFACE_TYPE_XDG_TOPLEVEL 1
+#define QW_SURFACE_TYPE_LAYER_SHELL 2
+
+enum { XDGShell, LayerShell, X11 }; // client types
 
 // Forward declarations for server and decoration struct types
 struct qw_server;
 struct wlr_xdg_toplevel_decoration_v1;
+
+struct qw_token_data {
+    bool qw_valid_surface;
+    bool qw_valid_seat;
+    struct wl_listener destroy;
+};
 
 // Struct representing an XDG toplevel view in the compositor
 struct qw_xdg_view {
@@ -26,13 +39,15 @@ struct qw_xdg_view {
     struct wl_listener destroy;
     struct wl_listener request_maximize;
     struct wl_listener request_fullscreen;
-    // TODO: add listeners for move and resize requests
+    struct wl_listener request_move;
+    struct wl_listener request_resize;
 
     // Listeners for client decoration protocol events
     struct wl_listener decoration_request_mode;
     struct wl_listener decoration_destroy;
     struct wlr_xdg_toplevel_decoration_v1 *decoration;
 
+    bool is_urgent;
     bool mapped; // Is the view currently mapped (visible)?
 };
 
@@ -42,5 +57,9 @@ void qw_xdg_view_decoration_new(struct qw_xdg_view *xdg_view,
 
 // Create and initialize a new qw_xdg_view wrapping the given wlr_xdg_toplevel
 void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *xdg_toplevel);
+
+void qw_xdg_view_focus(void *self, int above);
+
+void qw_xdg_activation_new_token(struct wl_listener *listener, void *data);
 
 #endif /* XDG_VIEW_H */
