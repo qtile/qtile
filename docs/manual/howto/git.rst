@@ -50,7 +50,7 @@ The numeric pull request id can be found in the url or next to the title
 
 .. note:: Having the feature branch checked out doesn't mean that it is
    installed and will be loaded when you restart qtile. You might still need to
-   install it with ``pip``.
+   install it with ``uv``.
 
 I committed changes and the tests failed
 ========================================
@@ -120,3 +120,9 @@ If you need to edit the commit message of the last commit you did, use::
 to open an editor giving you the possibility to reword the message. If you want
 to reword the message of an older commit or multiple commits, use
 ``git rebase -i`` as above with the ``reword`` command in the editor.
+
+
+.. toctree::
+    :maxdepth: 1
+
+    Releasing <../releasing>

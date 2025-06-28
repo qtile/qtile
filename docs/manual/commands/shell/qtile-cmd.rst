@@ -105,7 +105,7 @@ Output of ``qtile cmd-obj -o group 3``
     -o group 3 -f unminimize_all      Unminimise all windows in this group
 
 Output of ``qtile cmd-obj -o root``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: text
 

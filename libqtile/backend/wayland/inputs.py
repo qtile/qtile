@@ -272,25 +272,28 @@ class Keyboard(_Device):
         if not self.core.exclusive_client:
             # translate libinput keycode -> xkbcommon
             keycode = event.keycode + 8
-            layout_index = lib.xkb_state_key_get_layout(self.keyboard._ptr.xkb_state, keycode)
             nsyms = lib.xkb_keymap_key_get_syms_by_level(
                 self.keyboard._ptr.keymap,
                 keycode,
-                layout_index,
+                0,
                 0,
                 xkb_keysym,
             )
             keysyms = [xkb_keysym[0][i] for i in range(nsyms)]
             mods = reduce(or_, [k.keyboard.modifier for k in self.core.keyboards])
-            handled = False
             should_repeat = False
+
             if event.state == KEY_PRESSED:
                 for keysym in keysyms:
                     if (keysym, mods) in self.grabbed_keys:
                         should_repeat = True
-                        if self.qtile.process_key_event(keysym, mods)[1]:
-                            handled = True
-                            break
+                        handled, _ = self.qtile.process_key_event(keysym, mods)
+                        if handled:
+                            return
+
+                if self.core.focused_internal:
+                    keysym = lib.xkb_state_key_get_one_sym(self.keyboard._ptr.xkb_state, keycode)
+                    self.core.focused_internal.process_key_press(keysym)
 
             repeat_delay = self.keyboard._ptr.repeat_info.delay
             if should_repeat and repeat_delay > 0:
@@ -305,12 +308,6 @@ class Keyboard(_Device):
                 if self.repeat_rate_future is not None:
                     self.repeat_rate_future.cancel()
                     self.repeat_rate_future = None
-
-            if handled:
-                return
-            if self.core.focused_internal:
-                self.core.focused_internal.process_key_press(keysym)
-                return
 
         self.seat.keyboard_notify_key(event)
 

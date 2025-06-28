@@ -7,7 +7,7 @@ Here is a short document about how to tag Qtile releases.
 1. create a "Release vX.XX.XX" commit. I like to thank all the contributors; I
    find that list with something like:
 
-.. bash::
+.. code-block:: bash
 
    git log --oneline --no-merges --format=%an $(git describe --tags --abbrev=0)..HEAD | sort -u
 
@@ -21,7 +21,7 @@ Be sure that you GPG-sign (i.e. the ``-S`` argument to ``git commit``) this comm
 
 3. Push your tag to qtile/qtile directly:
 
-.. bash::
+.. code-block:: bash
 
    git push origin vX.XX.XX
 

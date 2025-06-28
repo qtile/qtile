@@ -50,7 +50,7 @@ sudo apt-get install -y --no-install-recommends \
 wget https://gitlab.freedesktop.org/wayland/wayland/-/releases/$WAYLAND/downloads/wayland-$WAYLAND.tar.xz
 tar -xJf wayland-$WAYLAND.tar.xz
 cd wayland-$WAYLAND
-meson build -Ddocumentation=false --prefix=/usr
+meson setup build -Ddocumentation=false --prefix=/usr
 ninja -C build
 sudo ninja -C build install
 cd ../
@@ -59,16 +59,16 @@ cd ../
 wget https://gitlab.freedesktop.org/wayland/wayland-protocols/-/releases/$WAYLAND_PROTOCOLS/downloads/wayland-protocols-$WAYLAND_PROTOCOLS.tar.xz
 tar -xJf wayland-protocols-$WAYLAND_PROTOCOLS.tar.xz
 cd wayland-protocols-$WAYLAND_PROTOCOLS
-meson build -Dtests=false --prefix=/usr
+meson setup build -Dtests=false --prefix=/usr
 ninja -C build
 sudo ninja -C build install
 cd ../
 
 # Build libdrm
-wget https://gitlab.freedesktop.org/mesa/drm/-/archive/libdrm-$LIBDRM/drm-libdrm-$LIBDRM.tar.gz
-tar -xzf drm-libdrm-$LIBDRM.tar.gz
-cd drm-libdrm-$LIBDRM
-meson build --prefix=/usr
+wget https://gitlab.freedesktop.org/mesa/libdrm/-/archive/libdrm-$LIBDRM/libdrm-libdrm-$LIBDRM.tar.gz
+tar -xzf libdrm-libdrm-$LIBDRM.tar.gz
+cd libdrm-libdrm-$LIBDRM
+meson setup build --prefix=/usr
 ninja -C build
 sudo ninja -C build install
 cd ../
@@ -77,7 +77,7 @@ cd ../
 wget https://github.com/kennylevinsen/seatd/archive/refs/tags/$SEATD.tar.gz
 tar -xzf $SEATD.tar.gz
 cd seatd-$SEATD
-meson build --prefix=/usr
+meson setup build --prefix=/usr
 ninja -C build
 sudo ninja -C build install
 cd ../
@@ -86,7 +86,7 @@ cd ../
 wget https://gitlab.freedesktop.org/pixman/pixman/-/archive/pixman-$PIXMAN/pixman-pixman-$PIXMAN.tar.gz
 tar -xzf pixman-pixman-$PIXMAN.tar.gz
 cd pixman-pixman-$PIXMAN
-meson build --prefix=/usr
+meson setup build --prefix=/usr
 ninja -C build
 sudo ninja -C build install
 cd ../
@@ -104,7 +104,7 @@ cd ../
 wget https://gitlab.freedesktop.org/xorg/xserver/-/archive/xwayland-$XWAYLAND/xserver-xwayland-$XWAYLAND.tar.gz
 tar -xzf xserver-xwayland-$XWAYLAND.tar.gz
 cd xserver-xwayland-$XWAYLAND
-meson build --prefix=/usr
+meson setup build --prefix=/usr
 ninja -C build
 sudo ninja -C build install
 cd ../
@@ -113,7 +113,7 @@ cd ../
 wget https://gitlab.freedesktop.org/wlroots/wlroots/-/archive/$WLROOTS/wlroots-$WLROOTS.tar.gz
 tar -xzf wlroots-$WLROOTS.tar.gz
 cd wlroots-$WLROOTS
-meson build -Dexamples=false --prefix=/usr -Dxwayland=enabled
+meson setup build -Dexamples=false --prefix=/usr -Dxwayland=enabled
 ninja -C build
 sudo ninja -C build install
 cd ../

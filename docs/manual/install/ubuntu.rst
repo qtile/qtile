@@ -21,7 +21,9 @@ required:
 
    sudo apt install xserver-xorg xinit
    sudo apt install libpangocairo-1.0-0
-   sudo apt install python3-pip python3-xcffib python3-cairocffi
+   sudo apt install uv  # if your distro doesn't have uv, try:
+   # curl -LsSf https://astral.sh/uv/install.sh | sh
+
 
 
 Either Qtile can then be downloaded from the package index or the Github 
@@ -29,4 +31,4 @@ repository can be used, see :ref:`installing-from-source`:
 
 .. code-block:: bash
 
-   pip install qtile
+   uv tool install qtile

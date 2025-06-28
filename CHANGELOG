@@ -1,4 +1,8 @@
 Qtile x.xx.x, released xxxx-xx-xx:
+    * features
+    * bugfixes
+
+Qtile 0.32.0, released 2025-06-09:
     !!! breaking changes !!!
       - Output of `qtile cmd-obj` is now in JSON.
       - added support for multiple batteries to the battery widget
@@ -8,6 +12,7 @@ Qtile x.xx.x, released xxxx-xx-xx:
     * bugfixes
         - `window.can_steal_focus = False` should be set in a `group_window_add` instead of the previously recommended `client_new` hook.
         - Fix Xwayland popup windows that fail to reappear #5155
+        - Wayland: retain keybindings when switching keyboard layouts
 
 Qtile 0.31.0, released 2025-03-07:
     !!! breaking changes !!!
