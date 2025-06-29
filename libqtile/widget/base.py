@@ -577,7 +577,7 @@ class _TextBox(_Widget):
     @property
     def actual_padding(self):
         if self.padding is None:
-            return self.fontsize / 2
+            return self.fontsize // 2
         else:
             return self.padding
 
