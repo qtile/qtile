@@ -50,12 +50,18 @@ def override_xdg(request):
     return getattr(request, "param", False)
 
 
+@pytest.fixture
+def position(request):
+    return getattr(request, "param", "top")
+
+
 xdg = pytest.mark.parametrize("override_xdg", [True], indirect=True)
 no_xdg = pytest.mark.parametrize("override_xdg", [False], indirect=True)
+horizontal_and_vertical = pytest.mark.parametrize("position", ["top", "left"], indirect=True)
 
 
 @pytest.fixture
-def tasklist_manager(request, manager_nospawn, override_xdg, monkeypatch):
+def tasklist_manager(request, manager_nospawn, override_xdg, monkeypatch, position):
     monkeypatch.setattr("libqtile.widget.tasklist.has_xdg", override_xdg)
 
     config = getattr(request, "param", dict())
@@ -76,7 +82,9 @@ def tasklist_manager(request, manager_nospawn, override_xdg, monkeypatch):
         floating_layout = libqtile.resources.default_config.floating_layout
         keys = []
         mouse = []
-        screens = [Screen(top=bar.Bar([TaskListTestWidget(name="tasklist", **config)], 28))]
+        screens = [
+            Screen(**{position: bar.Bar([TaskListTestWidget(name="tasklist", **config)], 28)})
+        ]
 
     manager_nospawn.start(TasklistConfig)
     yield manager_nospawn
@@ -87,6 +95,7 @@ def configure_tasklist(**config):
     return pytest.mark.parametrize("tasklist_manager", [config], indirect=True)
 
 
+@horizontal_and_vertical
 def test_tasklist_defaults(tasklist_manager):
     widget = tasklist_manager.c.widget["tasklist"]
 
@@ -224,8 +233,13 @@ def test_tasklist_focused_and_floating(tasklist_manager):
     assert widget.info()["text"] == "One|(Two)"
 
 
+@pytest.mark.parametrize(
+    "position,coords",
+    [("top", (0, 0, 1)), ("right", (0, 0, 1)), ("left", (0, 599, 1))],
+    indirect=["position"],
+)
 @configure_tasklist(margin=0)
-def test_tasklist_click_task(tasklist_manager):
+def test_tasklist_click_task(tasklist_manager, position, coords):
     tasklist_manager.test_window("One")
     tasklist_manager.test_window("Two")
 
@@ -236,7 +250,7 @@ def test_tasklist_click_task(tasklist_manager):
     # which should focus the window
     # margin is set to 0 as value set by widget_defaults means text would otherwise
     # mean text does not start at x=0
-    tasklist_manager.c.bar["top"].fake_button_press(0, 0, 1)
+    tasklist_manager.c.bar[position].fake_button_press(*coords)
     assert tasklist_manager.c.window.info()["name"] == "One"
 
 
@@ -256,13 +270,14 @@ def test_tasklist_no_xdg(tasklist_manager):
     assert "You must install pyxdg to use theme icons." in msgs
 
 
+@horizontal_and_vertical
 @configure_tasklist(stretch=False)
-def test_tasklist_no_stretch(tasklist_manager):
+def test_tasklist_no_stretch(tasklist_manager, position):
     widget = tasklist_manager.c.widget["tasklist"]
     tasklist_manager.test_window("One")
-    width_one = widget.info()["width"]
+    width_one = widget.info()["length"]
 
     tasklist_manager.test_window("Two")
-    width_two = widget.info()["width"]
+    width_two = widget.info()["length"]
 
     assert width_one != width_two

@@ -23,6 +23,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import math
+
 import cairocffi
 
 try:
@@ -49,7 +51,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     to use theme icons and to display icons on Wayland.
     """
 
-    orientations = base.ORIENTATION_HORIZONTAL
+    orientations = base.ORIENTATION_BOTH
     defaults = [
         ("font", "sans", "Default font"),
         ("fontsize", None, "Font size. Calculated if None."),
@@ -194,20 +196,18 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         self._box_end_positions = []
         self.markup = False
         self.clicked = None
-        if self.spacing is None:
-            self.spacing = self.margin_x
 
         self.add_callbacks({"Button1": self.select_window})
 
     def box_width(self, text):
         """
-        calculate box width for given text.
+        Calculate box width for given text.
         If max_title_width is given, the returned width is limited to it.
         """
-        width, _ = self.drawer.max_layout_size(
+        width, height = self.drawer.max_layout_size(
             [text], self.font, self.fontsize, markup=self.markup
         )
-        width = width + 2 * (self.padding_x + self.borderwidth)
+        width = width + 2 * (self.padding_side + self.borderwidth)
         return width
 
     def get_taskname(self, window):
@@ -276,6 +276,42 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         return f"{state}{window_name}"
 
     @property
+    def widget_height(self):
+        if self.bar.horizontal:
+            return self.height
+        return self.width
+
+    @property
+    def widget_width(self):
+        if self.bar.horizontal:
+            return self.width
+        return self.height
+
+    @property
+    def padding_side(self):
+        if self.bar.horizontal:
+            return self.padding_x
+        return self.padding_y
+
+    @property
+    def padding_top(self):
+        if self.bar.horizontal:
+            return self.padding_y
+        return self.padding_x
+
+    @property
+    def margin_side(self):
+        if self.bar.horizontal:
+            return self.margin_x
+        return self.margin_y
+
+    @property
+    def margin_top(self):
+        if self.bar.horizontal:
+            return self.margin_y
+        return self.margin_x
+
+    @property
     def windows(self):
         if self.qtile.core.name == "x11":
             windows = []
@@ -289,9 +325,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
     @property
     def max_width(self):
-        width = self.bar.width
+        width = self.bar.width if self.bar.horizontal else self.bar.height
         width -= sum(
-            w.width
+            w.length
             for w in self.bar.widgets
             if w is not self and w.length_type != libqtile.bar.STRETCH
         )
@@ -311,7 +347,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             return []
 
         # Determine available and max average width for task name boxes.
-        width_total = self.max_width - 2 * self.margin_x - (window_count - 1) * self.spacing
+        width_total = self.max_width - 2 * self.margin_side - (window_count - 1) * self.spacing
         width_avg = width_total / window_count
 
         names = [self.get_taskname(w) for w in windows]
@@ -332,7 +368,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             width_boxes = [
                 (
                     self.box_width(names[idx])
-                    + ((self.icon_size + self.padding_x) if icons[idx] else 0)
+                    + ((self.icon_size + self.padding_side) if icons[idx] else 0)
                 )
                 for idx in range(window_count)
             ]
@@ -367,6 +403,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
 
+        if self.spacing is None:
+            self.spacing = self.margin_side
+
         if not self.stretch:
             self.length_type = libqtile.bar.CALCULATED
 
@@ -385,10 +424,15 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             self.icon_size = 0
 
         if self.icon_size is None:
-            self.icon_size = self.bar.height - 2 * (self.borderwidth + self.margin_y)
+            self.icon_size = self.widget_height - 2 * (self.borderwidth + self.margin_top)
 
         if self.fontsize is None:
-            calc = self.bar.height - self.margin_y * 2 - self.borderwidth * 2 - self.padding_y * 2
+            calc = (
+                self.widget_height
+                - self.margin_top * 2
+                - self.borderwidth * 2
+                - self.padding_top * 2
+            )
             self.fontsize = max(calc, 1)
         self.layout = self.drawer.textlayout(
             "", "ffffff", self.font, self.fontsize, self.fontshadow, wrap=False
@@ -442,8 +486,8 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     ):
         self.drawtext(text, textcolor, width)
 
-        icon_padding = (self.icon_size + self.padding_x) if icon else 0
-        padding_x = [self.padding_x + icon_padding, self.padding_x]
+        icon_padding = (self.icon_size + self.padding_side) if icon else 0
+        padding_x = [self.padding_side + icon_padding, self.padding_side]
 
         if bordercolor is None:
             # border colour is set to None when we don't want to draw a border at all
@@ -455,19 +499,26 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             border_width = self.borderwidth
             framecolor = bordercolor
 
-        framed = self.layout.framed(border_width, framecolor, padding_x, self.padding_y)
+        framed = self.layout.framed(border_width, framecolor, padding_x, self.padding_top)
         if block and bordercolor is not None:
-            framed.draw_fill(offset, self.margin_y, rounded)
+            framed.draw_fill(offset, self.margin_top, rounded)
         else:
-            framed.draw(offset, self.margin_y, rounded)
+            framed.draw(offset, self.margin_top, rounded)
 
         if icon:
             self.draw_icon(icon, offset)
 
     def get_clicked(self, x, y):
-        box_start = self.margin_x
+        box_start = self.margin_side
+        if self.bar.horizontal:
+            pos = x
+        else:
+            if self.bar.screen.left is self.bar:
+                pos = self.widget_width - y
+            else:
+                pos = y
         for box_end, win in zip(self._box_end_positions, self.windows):
-            if box_start <= x <= box_end:
+            if box_start <= pos <= box_end:
                 return win
             else:
                 box_start = box_end + self.spacing
@@ -568,8 +619,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if not surface:
             return
 
-        x = offset + self.borderwidth + self.padding_x
-        y = (self.height - self.icon_size) // 2
+        x = offset + self.borderwidth + self.padding_side
+        size = self.height if self.bar.horizontal else self.width
+        y = (size - self.icon_size) // 2
 
         self.drawer.ctx.save()
         self.drawer.ctx.translate(x, y)
@@ -579,7 +631,22 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
-        offset = self.margin_x
+        offset = self.margin_side
+        ctx = self.drawer.ctx
+        ctx.save()
+
+        if not self.bar.horizontal:
+            # Left bar reads bottom to top
+            # Can be overriden to read bottom to top all the time with vertical_text_direction
+            if self.bar.screen.left is self.bar:
+                ctx.rotate(-90 * math.pi / 180.0)
+                ctx.translate(-self.length, 0)
+
+            # Right bar is top to bottom
+            # Can be overriden to read top to bottom all the time with vertical_text_direction
+            else:
+                ctx.translate(self.bar.width, 0)
+                ctx.rotate(90 * math.pi / 180.0)
 
         self._box_end_positions = []
         for w, icon, task, bw in self.calc_box_widths():
@@ -601,7 +668,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 text_color = self.foreground
 
             textwidth = (
-                bw - 2 * self.padding_x - ((self.icon_size + self.padding_x) if icon else 0)
+                bw - 2 * self.padding_side - ((self.icon_size + self.padding_side) if icon else 0)
             )
             self.drawbox(
                 offset,
@@ -615,4 +682,8 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             )
             offset += bw + self.spacing
 
-        self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
+        ctx.restore()
+
+        self.drawer.draw(
+            offsetx=self.offsetx, offsety=self.offsety, width=self.width, height=self.height
+        )
