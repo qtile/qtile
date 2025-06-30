@@ -549,10 +549,10 @@ class _TextBox(_Widget):
         return self._foreground
 
     @foreground.setter
-    def foreground(self, fg):
-        self._foreground = fg
+    def foreground(self, value):
+        self._foreground = value
         if self.layout:
-            self.layout.colour = fg
+            self.layout.colour = value
 
     @property
     def font(self):
@@ -562,7 +562,17 @@ class _TextBox(_Widget):
     def font(self, value):
         self._font = value
         if self.layout:
-            self.layout.font = value
+            self.layout.font_family = value
+
+    @property
+    def fontsize(self):
+        return self._fontsize
+
+    @fontsize.setter
+    def fontsize(self, value):
+        self._fontsize = value
+        if self.layout:
+            self.layout.font_size = value
 
     @property
     def fontshadow(self):
@@ -573,6 +583,16 @@ class _TextBox(_Widget):
         self._fontshadow = value
         if self.layout:
             self.layout.font_shadow = value
+
+    @property
+    def markup(self):
+        return self._markup
+
+    @markup.setter
+    def markup(self, value):
+        self._markup = value
+        if self.layout:
+            self.layout.markup = value
 
     @property
     def actual_padding(self):
