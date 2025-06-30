@@ -104,8 +104,6 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         highlighted=False,
     ):
         self.layout.text = self.fmt.format(text)
-        self.layout.font_family = self.font
-        self.layout.font_size = self.fontsize
         self.layout.colour = textcolor
         if width is not None:
             self.layout.width = width
