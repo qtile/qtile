@@ -28,13 +28,6 @@ self: final: prev: {
           }
         )).override
           { wlroots = prev.wlroots_0_17; };
-
-      qtile-extras = pprev.qtile-extras.overridePythonAttrs (oldAttrs: {
-        # disable currentlayouticon test for https://github.com/qtile/qtile/pull/5302
-        disabledTestPaths = oldAttrs.disabledTestPaths ++ [
-          "test/widget/test_currentlayouticon.py"
-        ];
-      });
     })
   ];
   python3 =
