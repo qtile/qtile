@@ -408,9 +408,7 @@ class RandR:
         for output in self.ext.GetScreenResources(root).reply().outputs:
             info = self.ext.GetOutputInfo(output, xcffib.CurrentTime).reply()
 
-            # ignore disconnected monitors
-            if info.connection != xcffib.randr.Connection.Connected:
-                continue
+            # ignore outputs with no monitor plugged in
             if not info.crtc:
                 continue
 
