@@ -507,7 +507,10 @@ class _TextBox(_Widget):
     ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
-        self.layout = None
+        class EmptyLayout:
+            pass
+
+        self.layout = EmptyLayout()
         _Widget.__init__(self, width, **config)
         self.add_defaults(_TextBox.defaults)
         self.text = text
@@ -527,7 +530,7 @@ class _TextBox(_Widget):
         if len(value) > self.max_chars > 0:
             value = value[: self.max_chars] + "…"
         self._text = value
-        if self.layout:
+        if self.configured:
             # Reset the layout width
             # Reason is because, if we've manually set the layout width,
             # adding longer text will result in wrapping which increases the height of the layout.
@@ -546,53 +549,43 @@ class _TextBox(_Widget):
 
     @property
     def foreground(self):
-        return self._foreground
+        return self.layout.colour
 
     @foreground.setter
     def foreground(self, value):
-        self._foreground = value
-        if self.layout:
-            self.layout.colour = value
+        self.layout.colour = value
 
     @property
     def font(self):
-        return self._font
+        return self.layout.font_family
 
     @font.setter
     def font(self, value):
-        self._font = value
-        if self.layout:
-            self.layout.font_family = value
+        self.layout.font_family = value
 
     @property
     def fontsize(self):
-        return self._fontsize
+        return self.layout.font_size
 
     @fontsize.setter
     def fontsize(self, value):
-        self._fontsize = value
-        if self.layout:
-            self.layout.font_size = value
+        self.layout.font_size = value
 
     @property
     def fontshadow(self):
-        return self._fontshadow
+        return self.layout.font_shadow
 
     @fontshadow.setter
     def fontshadow(self, value):
-        self._fontshadow = value
-        if self.layout:
-            self.layout.font_shadow = value
+        self.layout.font_shadow = value
 
     @property
     def markup(self):
-        return self._markup
+        return self.layout.markup
 
     @markup.setter
     def markup(self, value):
-        self._markup = value
-        if self.layout:
-            self.layout.markup = value
+        self.layout.markup = value
 
     @property
     def actual_padding(self):
