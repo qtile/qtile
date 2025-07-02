@@ -71,6 +71,7 @@ def patch_cairo_context(cairo_t):
 ALIGN_CENTER = pango.PANGO_ALIGN_CENTER
 ELLIPSIZE_END = pango.PANGO_ELLIPSIZE_END
 units_from_double = pango.pango_units_from_double
+units_to_double = pango.pango_units_to_double
 
 
 ALIGNMENTS = {
