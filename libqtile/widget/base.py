@@ -38,6 +38,7 @@ import subprocess
 from typing import TYPE_CHECKING
 
 from libqtile import bar, configurable, confreader
+from libqtile.backend.base.drawer import TextLayoutHelper
 from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandObject, expose_command
 from libqtile.lazy import LazyCall
@@ -445,7 +446,7 @@ class _Widget(CommandObject, configurable.Configurable):
                 del self._old_draw
 
 
-class _TextBox(_Widget):
+class _TextBox(_Widget, TextLayoutHelper):
     """
     Base class for widgets that are just boxes containing text.
     """
@@ -507,10 +508,7 @@ class _TextBox(_Widget):
     ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
-        class EmptyLayout:
-            pass
-
-        self.layout = EmptyLayout()
+        TextLayoutHelper.__init__(self)
         _Widget.__init__(self, width, **config)
         self.add_defaults(_TextBox.defaults)
         self.text = text
@@ -546,46 +544,6 @@ class _TextBox(_Widget):
     @property
     def formatted_text(self):
         return self.fmt.format(self._text)
-
-    @property
-    def foreground(self):
-        return self.layout.colour
-
-    @foreground.setter
-    def foreground(self, value):
-        self.layout.colour = value
-
-    @property
-    def font(self):
-        return self.layout.font_family
-
-    @font.setter
-    def font(self, value):
-        self.layout.font_family = value
-
-    @property
-    def fontsize(self):
-        return self.layout.font_size
-
-    @fontsize.setter
-    def fontsize(self, value):
-        self.layout.font_size = value
-
-    @property
-    def fontshadow(self):
-        return self.layout.font_shadow
-
-    @fontshadow.setter
-    def fontshadow(self, value):
-        self.layout.font_shadow = value
-
-    @property
-    def markup(self):
-        return self.layout.markup
-
-    @markup.setter
-    def markup(self, value):
-        self.layout.markup = value
 
     @property
     def actual_padding(self):

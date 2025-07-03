@@ -535,3 +535,65 @@ class TextFrame:
     @property
     def width(self):
         return self.layout.width + self.pad_left + self.pad_right
+
+
+class EmptyLayout:
+    """
+    This class temporary serves as a placeholder for the layout.attributes
+    before it is overwritten by the real layout.
+    """
+
+
+class TextLayoutHelper:
+    """Define getters and setters as a shorthand to write to layout.attributes."""
+
+    def __init__(self):
+        self.layout = EmptyLayout()
+
+    @property
+    def text(self) -> str:
+        return self.layout.text
+
+    @text.setter
+    def text(self, value: str) -> None:
+        self.layout.text = value
+
+    @property
+    def foreground(self):
+        return self.layout.colour
+
+    @foreground.setter
+    def foreground(self, value):
+        self.layout.colour = value
+
+    @property
+    def font(self):
+        return self.layout.font_family
+
+    @font.setter
+    def font(self, value):
+        self.layout.font_family = value
+
+    @property
+    def fontsize(self):
+        return self.layout.font_size
+
+    @fontsize.setter
+    def fontsize(self, value):
+        self.layout.font_size = value
+
+    @property
+    def fontshadow(self):
+        return self.layout.font_shadow
+
+    @fontshadow.setter
+    def fontshadow(self, value):
+        self.layout.font_shadow = value
+
+    @property
+    def markup(self):
+        return self.layout.markup
+
+    @markup.setter
+    def markup(self, value):
+        self.layout.markup = value
