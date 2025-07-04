@@ -18,6 +18,7 @@ enum { XDGShell, LayerShell, X11 }; // client types
 struct qw_server;
 struct wlr_xdg_toplevel_decoration_v1;
 
+// Data for activation tokens — track validity and destruction listener
 struct qw_token_data {
     bool qw_valid_surface;
     bool qw_valid_seat;
@@ -58,8 +59,10 @@ void qw_xdg_view_decoration_new(struct qw_xdg_view *xdg_view,
 // Create and initialize a new qw_xdg_view wrapping the given wlr_xdg_toplevel
 void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *xdg_toplevel);
 
+// Focus this view, with option to control stacking order via 'above' flag
 void qw_xdg_view_focus(void *self, int above);
 
+// Handle new activation tokens for views (Wayland activation protocol)
 void qw_xdg_activation_new_token(struct wl_listener *listener, void *data);
 
 #endif /* XDG_VIEW_H */
