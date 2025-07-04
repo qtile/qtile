@@ -370,8 +370,8 @@ void qw_xdg_activation_new_token(struct wl_listener *listener, void *data) {
     wl_signal_add(&token->events.destroy, &token_data->destroy);
 }
 
-// Create a new qw_xdg_view for a given wlr_xdg_toplevel, setting up scene tree, listeners, and
-// callbacks
+/* Create a new qw_xdg_view for a given wlr_xdg_toplevel,
+ * setting up scene tree, listeners, and callbacks */
 void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *xdg_toplevel) {
     struct qw_xdg_view *xdg_view = calloc(1, sizeof(*xdg_view));
     if (!xdg_view) {
