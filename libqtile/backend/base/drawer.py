@@ -404,8 +404,8 @@ class TextLayout:
             try:
                 attrlist, value, accel_char = pangocffi.parse_markup(value)
                 self.layout.set_attributes(attrlist)
-            except pangocffi.BadMarkup:
-                logger.warning("parse_markup() failed for {value}")
+            except pangocffi.BadMarkup as e:
+                logger.warning(e)
         self.layout.set_text(utils.scrub_to_utf8(value))
 
     @property
