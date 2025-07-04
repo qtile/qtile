@@ -76,6 +76,16 @@ Please also consider submitting useful scripts etc. to the qtile-examples repo
     :alt: Coverage
     :target: https://coveralls.io/github/qtile/qtile
 
+Acknowledgements
+================
+
+Special thanks to the authors of `SwayWM`_, `LabWC`_, and `DWL`_, whose implementations 
+and source code served as inspiration and reference for protocol implementations and 
+architectural patterns while building the Wayland backend (`wayc`) for Qtile.
+
+.. _`SwayWM`: https://github.com/swaywm/sway/blob/master/LICENSE
+.. _`LabWC`: https://github.com/labwc/labwc/blob/master/LICENSE
+.. _`DWL`: https://codeberg.org/dwl/dwl/src/branch/main/LICENSE
 
 Maintainers
 ===========
