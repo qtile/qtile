@@ -488,16 +488,13 @@ class Battery(base.ThreadPoolText):
         base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(self.defaults)
 
-        self._battery = self._load_battery(**config)
-        self._has_notified = False
-        self.timeout = int(self.notification_timeout * 1000)
-
-    def _configure(self, qtile, bar):
         if not self.low_background:
             self.low_background = self.background
         self.normal_background = self.background
 
-        base.ThreadPoolText._configure(self, qtile, bar)
+        self._battery = self._load_battery(**config)
+        self._has_notified = False
+        self.timeout = int(self.notification_timeout * 1000)
 
     @expose_command()
     def charge_to_full(self):
