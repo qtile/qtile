@@ -300,6 +300,22 @@ class Core(base.Core):
             if not self.qtile.windows_map:
                 break
 
+    def simulate_keypress(self, modifiers: list[str], key: str) -> None:
+        """Simulates a keypress on the focused window."""
+        keysym = lib.qwu_keysym_from_name(key.encode())
+        mods = translate_masks(modifiers)
+
+        if (keysym, mods) in self.grabbed_keys:
+            assert self.qtile is not None
+            self.qtile.process_key_event(keysym, mods)
+            return
+
+        # Not sure if this is required. process_key_press() appears to be unimplemented in
+        # the original wayland backend
+        #
+        # if self.focused_internal:
+        #     self.focused_internal.process_key_press(keysym)
+
     @expose_command()
     def set_keymap(
         self,
