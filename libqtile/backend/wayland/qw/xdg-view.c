@@ -1,7 +1,11 @@
 #include "xdg-view.h"
+#include "cursor.h"
 #include "server.h"
 #include "view.h"
+#include "wayland-server-core.h"
+#include "wayland-util.h"
 #include "wlr/types/wlr_xdg_decoration_v1.h"
+#include "wlr/util/edges.h"
 #include "xdg-shell-protocol.h"
 #include <stdlib.h>
 
@@ -39,6 +43,8 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
                                        keyboard->keycodes, keyboard->num_keycodes,
                                        &keyboard->modifiers);
     }
+
+    xdg_view->is_urgent = false;
 }
 
 // Handle the unmap event for the xdg_view (when it's hidden/unmapped)
@@ -235,6 +241,60 @@ static void qw_xdg_view_handle_request_fullscreen(struct wl_listener *listener, 
     }
 }
 
+/* This function sets up an interactive move or resize operation, where the
+ * compositor stops propegating pointer events to clients and instead
+ * consumes them itself, to move or resize windows */
+static void qw_xdg_begin_interactive(struct qw_xdg_view *xdg_view, enum qw_cursor_mode mode,
+                                     uint32_t edges) {
+    struct qw_server *server = xdg_view->server;
+    server->cursor->xdg_view = xdg_view;
+    server->cursor->cursor_mode = mode;
+
+    if (mode == QW_CURSOR_MOVE) {
+        server->cursor->grab_x = server->cursor->cursor->x - xdg_view->scene_tree->node.x;
+        server->cursor->grab_y = server->cursor->cursor->y - xdg_view->scene_tree->node.y;
+    } else {
+        struct wlr_box *geo_box = &xdg_view->xdg_toplevel->base->geometry;
+
+        double border_x = (xdg_view->scene_tree->node.x + geo_box->x) +
+                          ((edges & WLR_EDGE_RIGHT) ? geo_box->width : 0);
+        double border_y = (xdg_view->scene_tree->node.y + geo_box->y) +
+                          ((edges & WLR_EDGE_BOTTOM) ? geo_box->height : 0);
+
+        server->cursor->grab_x = server->cursor->cursor->x - border_x;
+        server->cursor->grab_y = server->cursor->cursor->y - border_y;
+
+        server->cursor->grab_geobox = *geo_box;
+        server->cursor->grab_geobox.x += xdg_view->scene_tree->node.x;
+        server->cursor->grab_geobox.y += xdg_view->scene_tree->node.y;
+
+        server->cursor->resize_edges = edges;
+    }
+}
+
+static void qw_xdg_view_handle_request_move(struct wl_listener *listener, void *data) {
+    /* This event is raised when a client would like to begin an interactive
+     * move, typically because the user clicked on their client-side
+     * decorations.
+     * TODO: compositor should check the provided serial against a list of
+     * button press serials sent to this client, to prevent the client from
+     * requesting this whenever they want. */
+    struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, request_move);
+    qw_xdg_begin_interactive(xdg_view, QW_CURSOR_MOVE, 0);
+}
+
+static void qw_xdg_view_handle_request_resize(struct wl_listener *listener, void *data) {
+    /* This event is raised when a client would like to begin an interactive
+     * resize, typically because the user clicked on their client-side
+     * decorations.
+     * TODO: compositor should check the provided serial against a list of
+     * button press serials sent to this client, to prevent the client from
+     * requesting this whenever they want. */
+    struct wlr_xdg_toplevel_resize_event *event = data;
+    struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, request_resize);
+    qw_xdg_begin_interactive(xdg_view, QW_CURSOR_RESIZE, event->edges);
+}
+
 // Handle client decoration mode requests, enforce server-side decorations
 static void qw_xdg_view_handle_decoration_request_mode(struct wl_listener *listener, void *data) {
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, decoration_request_mode);
@@ -283,6 +343,31 @@ static void qw_xdg_view_update_fullscreen(void *self, bool fullscreen) {
 static void qw_xdg_view_update_maximized(void *self, bool maximized) {
     struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
     wlr_xdg_toplevel_set_maximized(xdg_view->xdg_toplevel, maximized);
+}
+
+static void qw_xdg_activation_token_destroy(struct wl_listener *listener, void *data) {
+    struct qw_token_data *token_data = wl_container_of(listener, token_data, destroy);
+    wl_list_remove(&token_data->destroy.link);
+    free(token_data);
+}
+
+void qw_xdg_activation_new_token(struct wl_listener *listener, void *data) {
+    struct wlr_xdg_activation_token_v1 *token = data;
+    struct qw_token_data *token_data = calloc(1, sizeof(struct qw_token_data));
+
+    if (!token_data) {
+        wlr_log(WLR_ERROR, "Failed to allocate token data");
+        return;
+    }
+
+    // Assign boolean values
+    token_data->qw_valid_surface = !!token->surface;
+    token_data->qw_valid_seat = !!token->seat;
+
+    token->data = token_data;
+
+    token_data->destroy.notify = qw_xdg_activation_token_destroy;
+    wl_signal_add(&token->events.destroy, &token_data->destroy);
 }
 
 // Create a new qw_xdg_view for a given wlr_xdg_toplevel, setting up scene tree, listeners, and
@@ -351,4 +436,8 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     wl_signal_add(&xdg_toplevel->events.request_maximize, &xdg_view->request_maximize);
     xdg_view->request_fullscreen.notify = qw_xdg_view_handle_request_fullscreen;
     wl_signal_add(&xdg_toplevel->events.request_fullscreen, &xdg_view->request_fullscreen);
+    xdg_view->request_move.notify = qw_xdg_view_handle_request_move;
+    wl_signal_add(&xdg_toplevel->events.request_move, &xdg_view->request_move);
+    xdg_view->request_resize.notify = qw_xdg_view_handle_request_resize;
+    wl_signal_add(&xdg_toplevel->events.request_resize, &xdg_view->request_resize);
 }
