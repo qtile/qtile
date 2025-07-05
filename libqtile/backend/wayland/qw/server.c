@@ -29,6 +29,14 @@ void qw_server_poll(struct qw_server *server) {
 // Cleanup routine to destroy the compositor and free resources.
 void qw_server_finalize(struct qw_server *server) {
     // TODO: what else to finalize?
+    wl_list_remove(&server->new_input.link);
+    wl_list_remove(&server->new_output.link);
+    wl_list_remove(&server->output_layout_change.link);
+    wl_list_remove(&server->output_manager_apply.link);
+    wl_list_remove(&server->output_manager_test.link);
+    wl_list_remove(&server->new_xdg_toplevel.link);
+    wl_list_remove(&server->new_decoration.link);
+
     wl_display_destroy_clients(server->display);
     wlr_scene_node_destroy(&server->scene->tree.node);
     qw_cursor_destroy(server->cursor);
