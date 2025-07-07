@@ -163,6 +163,8 @@ class Core(base.Core):
         wid = self.new_wid()
         view.wid = wid
         win = Window(self.qtile, view, wid)
+        if view.title != ffi.NULL:
+            win.name = ffi.string(view.title).decode()
         self.qtile.manage(win)
 
     def handle_unmanage_view(self, view):
