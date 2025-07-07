@@ -32,17 +32,17 @@ class RenameWidgetTransformer(RenamerTransformer):
     from_to = ("CurrentLayoutIcon", "CurrentLayout")
 
     @m.leave(m.Call(func=m.Attribute(attr=m.Name("CurrentLayoutIcon"))))
-    def add_draw_kwarg(self, original_node, updated_node) -> cst.Call:
-        """Adds 'icon_first' keyword argument to 'CurrentLayout'."""
+    def add_kwarg_mode(self, original_node, updated_node) -> cst.Call:
+        """Adds 'mode' keyword argument to 'CurrentLayout'."""
         self.lint(
             original_node,
-            "CurrentLayout should add 'icon_first' keyword argument to have "
+            "CurrentLayout should add 'mode' keyword argument to have "
             "the same functionality as previous CurrentLayoutIcon.",
         )
         draw_kwarg = (
             cst.Arg(
-                keyword=cst.Name("icon_first"),
-                value=cst.Name("True"),
+                keyword=cst.Name("mode"),
+                value=cst.SimpleString('"icon"'),
                 equal=EQUALS_NO_SPACE,
             ),
         )
@@ -73,7 +73,7 @@ class RenameCurrentLayoutIcon(_QtileMigrator):
     .. code:: python
 
       widgets=[
-          widget.CurrentLayout(icon_first=True),
+          widget.CurrentLayout(mode="icon"),
           ...
       ],
 
@@ -86,17 +86,17 @@ class RenameCurrentLayoutIcon(_QtileMigrator):
             """
             from libqtile import widget
 
-            widget.CurrentLayoutIcon(scale=1)
+            widget.CurrentLayoutIcon(font="sans")
             widget.CurrentLayoutIcon()
-            widget.CurrentLayout(fontsize=12)
+            widget.CurrentLayout(font="sans")
             widget.CurrentLayout()
             """,
             """
             from libqtile import widget
 
-            widget.CurrentLayout(icon_first=True, scale=1)
-            widget.CurrentLayout(icon_first=True)
-            widget.CurrentLayout(fontsize=12)
+            widget.CurrentLayout(mode="icon", font="sans")
+            widget.CurrentLayout(mode="icon")
+            widget.CurrentLayout(font="sans")
             widget.CurrentLayout()
             """,
         )
