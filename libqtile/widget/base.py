@@ -653,30 +653,32 @@ class _TextBox(_Widget):
         )  # if the bar hasn't placed us yet
         return can_draw
 
+    def rotate_drawer(self):
+        if self.bar.horizontal or not self.rotate:
+            return
+
+        # Left bar reads bottom to top
+        # Can be overriden to read bottom to top all the time with vertical_text_direction
+        if (
+            self.bar.screen.left is self.bar and self.direction == "default"
+        ) or self.direction == "btt":
+            self.drawer.ctx.rotate(-90 * math.pi / 180.0)
+            self.drawer.ctx.translate(-self.length, 0)
+
+        # Right bar is top to bottom
+        # Can be overriden to read top to bottom all the time with vertical_text_direction
+        elif (
+            self.bar.screen.right is self.bar and self.direction == "default"
+        ) or self.direction == "ttb":
+            self.drawer.ctx.translate(self.bar.width, 0)
+            self.drawer.ctx.rotate(90 * math.pi / 180.0)
+
     def draw(self):
         if not self.can_draw():
             return
         self.drawer.clear(self.background or self.bar.background)
-
-        # size = self.bar.height if self.bar.horizontal else self.bar.width
         self.drawer.ctx.save()
-
-        if not self.bar.horizontal and self.rotate:
-            # Left bar reads bottom to top
-            # Can be overriden to read bottom to top all the time with vertical_text_direction
-            if (
-                self.bar.screen.left is self.bar and self.direction == "default"
-            ) or self.direction == "btt":
-                self.drawer.ctx.rotate(-90 * math.pi / 180.0)
-                self.drawer.ctx.translate(-self.length, 0)
-
-            # Right bar is top to bottom
-            # Can be overriden to read top to bottom all the time with vertical_text_direction
-            elif (
-                self.bar.screen.right is self.bar and self.direction == "default"
-            ) or self.direction == "ttb":
-                self.drawer.ctx.translate(self.bar.width, 0)
-                self.drawer.ctx.rotate(90 * math.pi / 180.0)
+        self.rotate_drawer()
 
         # If we're scrolling, we clip the context to the scroll width less the padding
         # Move the text layout position (and we only see the clipped portion)
@@ -690,16 +692,15 @@ class _TextBox(_Widget):
             self.drawer.ctx.clip()
 
         if self.bar.horizontal:
-            size = self.bar.height
+            height = self.bar.height
+        elif self.rotate:
+            height = self.bar.width
         else:
-            if self.rotate:
-                size = self.bar.width
-            else:
-                size = self.layout.height + self.actual_padding * 2
+            height = self.layout.height + self.actual_padding * 2
 
         self.layout.draw(
             (self.actual_padding or 0) - self._scroll_offset,
-            int(size / 2.0 - self.layout.height / 2.0) + 1,
+            int(height / 2 - self.layout.height / 2) + 1,
         )
         self.drawer.ctx.restore()
 
