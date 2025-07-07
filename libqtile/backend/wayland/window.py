@@ -7,6 +7,7 @@ from libqtile.backend.wayland.drawer import Drawer
 from libqtile.backend.base import FloatStates
 from libqtile.command.base import CommandError, expose_command
 from libqtile.utils import rgb, ColorsType
+from libqtile.log_utils import logger
 
 ffi = None
 lib = None
@@ -72,8 +73,10 @@ class Base(base._Window):
     @expose_command()
     def info(self) -> dict:
         """Return a dictionary of info."""
-        # TODO: implement
-        return {}
+        # TODO: complete implementation
+        return dict(
+            name=self.name,
+        )
 
     @expose_command()
     def bring_to_front(self) -> None:
@@ -158,6 +161,7 @@ class Base(base._Window):
         self._ptr.focus(self._ptr, int(warp))
 
 
+
 class Internal(Base, base.Internal):
     def __init__(self, qtile: Qtile, ptr, wid):
         Base.__init__(self, qtile, lib.qw_internal_view_get_base(ptr), wid)
@@ -205,12 +209,16 @@ def request_maximize_cb(view, userdata):
     return 0
 
 
+@ffi.def_extern()
+def set_title_cb(title, userdata):
+    win = ffi.from_handle(userdata)
+    win.handle_set_title(ffi.string(title).decode())
+
+
 class Window(Base, base.Window):
     def __init__(self, qtile: Qtile, ptr, wid):
         Base.__init__(self, qtile, ptr, wid)
         base.Window.__init__(self)
-        # TODO
-        self.name = "TODO"
 
         self.float_x: int | None = None
         self.float_y: int | None = None
@@ -222,6 +230,7 @@ class Window(Base, base.Window):
         ptr.cb_data = self._userdata
         ptr.request_maximize_cb = lib.request_maximize_cb
         ptr.request_fullscreen_cb = lib.request_fullscreen_cb
+        ptr.set_title_cb = lib.set_title_cb
 
     def handle_request_fullscreen(self, fullscreen):
         if self.qtile.config.auto_fullscreen:
@@ -233,6 +242,13 @@ class Window(Base, base.Window):
     def handle_request_maximize(self, maximize):
         self.maximized = maximize
         return True
+
+    def handle_set_title(self, title):
+        logger.debug("Signal: xdgwindow set_title")
+        if title != self.name:
+            self.name = title
+            # TODO: Handle foreign-toplevel-management?
+            hook.fire("client_name_updated", self)
 
     @expose_command()
     def static(
