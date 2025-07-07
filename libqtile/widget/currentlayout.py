@@ -54,8 +54,6 @@ class CurrentLayout(base._TextBox):
     - built-in qtile icons
     """
 
-    orientations = base.ORIENTATION_HORIZONTAL
-
     defaults = [
         ("icon_first", False, "Should draw icon or text when bar is initialized."),
         ("scale", 1, "Scale factor relative to the bar height. Defaults to 1"),
@@ -133,17 +131,20 @@ class CurrentLayout(base._TextBox):
             surface = self.surfaces[self.current_layout]
         except KeyError:
             logger.error("No icon for layout %s", self.current_layout)
-        else:
-            self.drawer.clear(self.background or self.bar.background)
-            self.drawer.ctx.save()
-            self.drawer.ctx.translate(
-                (self.width - surface.width) / 2,
-                (self.bar.height - surface.height) / 2,
-            )
-            self.drawer.ctx.set_source(surface.pattern)
-            self.drawer.ctx.paint()
-            self.drawer.ctx.restore()
-            self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
+            return
+
+        self.drawer.clear(self.background or self.bar.background)
+        self.drawer.ctx.save()
+        self.drawer.ctx.translate(
+            (self.width - surface.width) / 2,
+            (self.height - surface.height) / 2,
+        )
+        self.drawer.ctx.set_source(surface.pattern)
+        self.drawer.ctx.paint()
+        self.drawer.ctx.restore()
+        self.drawer.draw(
+            offsetx=self.offsetx, offsety=self.offsety, width=self.width, height=self.height
+        )
 
     def _get_layout_names(self):
         """
@@ -186,6 +187,9 @@ class CurrentLayout(base._TextBox):
         """
         Loads layout icons.
         """
+        width = (self.bar.width - 2) * self.scale if not self.bar.horizontal else None
+        height = (self.bar.height - 2) * self.scale if self.bar.horizontal else None
+
         for names in self._get_layout_names():
             layout_name = names[0]
             # Python doesn't have an ordered set but we can use a dictionary instead
@@ -203,8 +207,7 @@ class CurrentLayout(base._TextBox):
 
             img = Img.from_path(icon_file_path)
 
-            new_height = (self.bar.height - 2) * self.scale
-            img.resize(height=new_height)
+            img.resize(width=width, height=height)
             if img.width > self.img_length:
                 self.img_length = img.width + self.actual_padding * 2
 

@@ -2,6 +2,7 @@ Qtile x.xx.x, released xxxx-xx-xx:
     !!! breaking changes !!!
       - Remove CurrentLayoutIcon, functionality merged with CurrentLayout
     * features
+      - Add support for orientation vertical to the new CurrentLayout widget
     * bugfixes
 
 Qtile 0.32.0, released 2025-06-09:
