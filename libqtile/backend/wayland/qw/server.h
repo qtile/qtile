@@ -4,9 +4,11 @@
 #include <assert.h>
 #include <getopt.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <wayland-server-core.h>
 #include <wlr/backend.h>
+#include <wlr/config.h>
 #include <wlr/render/allocator.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_alpha_modifier_v1.h>
@@ -15,6 +17,7 @@
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_export_dmabuf_v1.h>
 #include <wlr/types/wlr_fractional_scale_v1.h>
+#include <wlr/types/wlr_gamma_control_v1.h>
 #include <wlr/types/wlr_input_device.h>
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/types/wlr_output.h>
@@ -29,10 +32,13 @@
 #include <wlr/types/wlr_single_pixel_buffer_v1.h>
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_viewporter.h>
-#include <wlr/types/wlr_xdg_decoration_v1.h>
+#include <wlr/types/wlr_xdg_activation_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon.h>
+#if WLR_HAS_XWAYLAND
+#include "xwayland.h"
+#endif
 
 // Callback typedefs for input and view events
 
@@ -59,6 +65,8 @@ typedef void (*output_dims_cb_t)(int x, int y, int width, int height);
 // Callback for when screen configuration changes
 typedef void (*on_screen_change_cb_t)(void *userdata);
 
+typedef void (*view_urgent_cb_t)(struct qw_view *view, void *userdata);
+
 // Main server struct containing Wayland and wlroots state and user callbacks
 struct qw_server {
     // Public API
@@ -70,6 +78,8 @@ struct qw_server {
     cursor_button_cb_t cursor_button_cb;
     on_screen_change_cb_t on_screen_change_cb;
     void *cb_data;
+    view_urgent_cb_t view_urgent_cb;
+    void *cb_data_urgent;
 
     // Private data
     struct wl_event_loop *event_loop;
@@ -93,9 +103,12 @@ struct qw_server {
     struct qw_cursor *cursor;
     struct wlr_xdg_shell *xdg_shell;
     struct wlr_xdg_decoration_manager_v1 *xdg_decoration_mgr;
+    struct wlr_xdg_activation_v1 *activation;
     struct wl_listener new_xdg_toplevel;
     struct wl_listener new_decoration;
     struct wl_listener request_cursor;
+    struct wl_listener request_activate;
+    struct wl_listener new_token;
 };
 
 // Utility functions exposed by the server API
