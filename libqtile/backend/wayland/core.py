@@ -186,6 +186,8 @@ class Core(base.Core):
         wid = self.new_wid()
         view.wid = wid
         win = Window(self.qtile, view, wid)
+        if view.title != ffi.NULL:
+            win.name = ffi.string(view.title).decode()
         self.qtile.manage(win)
 
     def handle_unmanage_view(self, view):
@@ -324,6 +326,22 @@ class Core(base.Core):
     def keysym_from_name(self, name: str) -> int:
         """Get the keysym for a key from its name"""
         return lib.qwu_keysym_from_name(name.encode())
+
+    def simulate_keypress(self, modifiers: list[str], key: str) -> None:
+        """Simulates a keypress on the focused window."""
+        keysym = lib.qwu_keysym_from_name(key.encode())
+        mods = translate_masks(modifiers)
+
+        if (keysym, mods) in self.grabbed_keys:
+            assert self.qtile is not None
+            self.qtile.process_key_event(keysym, mods)
+            return
+
+        # Not sure if this is required. process_key_press() appears to be unimplemented in
+        # the original wayland backend
+        #
+        # if self.focused_internal:
+        #     self.focused_internal.process_key_press(keysym)
 
     @expose_command()
     def set_keymap(

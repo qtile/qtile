@@ -21,6 +21,9 @@ typedef int (*request_fullscreen_cb_t)(bool fullscreen, void *userdata);
 // Callback type for maximize request (true = maximize, false = unmaximize)
 typedef int (*request_maximize_cb_t)(bool maximize, void *userdata);
 
+// Callback type for title set or updated
+typedef void (*set_title_cb_t)(char* title, void *userdata);
+
 struct qw_view {
     int x;
     int y;
@@ -29,10 +32,12 @@ struct qw_view {
     int bn; // Number of border layers
     enum qw_view_state state;
     int wid;                             // Window identifier (e.g. X11 window id or similar)
+    char* title;
     struct wlr_scene_tree *content_tree; // Scene tree holding the view's content
 
     request_maximize_cb_t request_maximize_cb;
     request_fullscreen_cb_t request_fullscreen_cb;
+    set_title_cb_t set_title_cb;
     void *cb_data; // User data passed to callbacks
 
     // Methods, implemented as function pointers

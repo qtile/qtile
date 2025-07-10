@@ -59,6 +59,7 @@ static void qw_xdg_view_handle_destroy(struct wl_listener *listener, void *data)
     wl_list_remove(&xdg_view->destroy.link);
     wl_list_remove(&xdg_view->request_maximize.link);
     wl_list_remove(&xdg_view->request_fullscreen.link);
+    wl_list_remove(&xdg_view->set_title.link);
     // TODO: Remove request_move and request_resize listeners if added
 
     free(xdg_view);
@@ -90,6 +91,7 @@ static void qw_xdg_view_handle_commit(struct wl_listener *listener, void *data) 
     // On initial commit, set size and notify server to manage this view
     if (xdg_view->xdg_toplevel->base->initial_commit) {
         wlr_xdg_toplevel_set_size(xdg_view->xdg_toplevel, 0, 0);
+        xdg_view->base.title = xdg_view->xdg_toplevel->title;
         xdg_view->server->manage_view_cb((struct qw_view *)&xdg_view->base,
                                          xdg_view->server->cb_data);
     }
@@ -235,6 +237,15 @@ static void qw_xdg_view_handle_request_fullscreen(struct wl_listener *listener, 
     }
 }
 
+static void qw_xdg_view_handle_set_title(struct wl_listener *listener, void *data) {
+    struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, set_title);
+    xdg_view->base.title = xdg_view->xdg_toplevel->title;
+    // callback is not intialised until qtile window is initialised
+    if (xdg_view->base.set_title_cb && xdg_view->base.title) {
+         xdg_view->base.set_title_cb(xdg_view->base.title, xdg_view->base.cb_data);
+    }
+}
+
 // Handle client decoration mode requests, enforce server-side decorations
 static void qw_xdg_view_handle_decoration_request_mode(struct wl_listener *listener, void *data) {
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, decoration_request_mode);
@@ -351,4 +362,7 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     wl_signal_add(&xdg_toplevel->events.request_maximize, &xdg_view->request_maximize);
     xdg_view->request_fullscreen.notify = qw_xdg_view_handle_request_fullscreen;
     wl_signal_add(&xdg_toplevel->events.request_fullscreen, &xdg_view->request_fullscreen);
+
+    xdg_view->set_title.notify = qw_xdg_view_handle_set_title;
+    wl_signal_add(&xdg_toplevel->events.set_title, &xdg_view->set_title);
 }
