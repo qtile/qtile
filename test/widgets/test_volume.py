@@ -91,13 +91,13 @@ def test_foregrounds(fake_qtile, fake_window):
 
     vol.volume = 50
     vol._update_drawer()
-    assert vol.foreground == foreground
+    assert vol.layout.colour == foreground
 
     vol.mute_foreground = mute_foreground = "#888888"
     vol.is_mute = False
     vol._update_drawer()
-    assert vol.foreground == foreground
+    assert vol.layout.colour == foreground
 
     vol.is_mute = True
     vol._update_drawer()
-    assert vol.foreground == mute_foreground
+    assert vol.layout.colour == mute_foreground

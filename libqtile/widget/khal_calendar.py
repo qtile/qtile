@@ -110,8 +110,8 @@ class KhalCalendar(base.ThreadPoolText):
         data = "".join(filter(lambda x: x in string.printable, data))
         # colorize the event if it is within reminder time
         if (starttime - remtime <= now) and (endtime > now):
-            self.foreground = self.reminder_color
+            self.layout.colour = self.reminder_color
         else:
-            self.foreground = self.default_foreground
+            self.layout.colour = self.default_foreground
 
         return data
