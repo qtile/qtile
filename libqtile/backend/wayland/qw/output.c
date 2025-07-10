@@ -52,9 +52,19 @@ void qw_server_output_new(struct qw_server *server, struct wlr_output *wlr_outpu
     wlr_output_state_init(&state);
     wlr_output_state_set_enabled(&state, true);
 
-    struct wlr_output_mode *mode = wlr_output_preferred_mode(wlr_output);
-    if (mode) {
-        wlr_output_state_set_mode(&state, mode);
+    // During tests, we want to fix the geometry of the 1 or 2 outputs
+    if (getenv("PYTEST_CURRENT_TEST") && wlr_output_is_headless(wlr_output)) {
+        if (wl_list_empty(&server->outputs)) {
+            wlr_output_state_set_custom_mode(&state, 800, 600, 0);
+        }
+        else {
+            wlr_output_state_set_custom_mode(&state, 640, 480, 0);
+        }
+    } else {
+        struct wlr_output_mode *mode = wlr_output_preferred_mode(wlr_output);
+        if (mode) {
+            wlr_output_state_set_mode(&state, mode);
+        }
     }
 
     wlr_output_commit_state(wlr_output, &state);
@@ -74,7 +84,8 @@ void qw_server_output_new(struct qw_server *server, struct wlr_output *wlr_outpu
     output->destroy.notify = qw_output_handle_destroy;
     wl_signal_add(&wlr_output->events.destroy, &output->destroy);
 
-    wl_list_insert(&server->outputs, &output->link);
+    // Insert output at end of list
+    wl_list_insert(server->outputs.prev, &output->link);
 
     // Add the output to the output layout automatically and to the scene layout
     struct wlr_output_layout_output *l_output =
