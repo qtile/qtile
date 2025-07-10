@@ -159,8 +159,8 @@ class Core(base.Core):
         self.qw.cursor_button_cb = lib.cursor_button_cb
         self.qw.on_screen_change_cb = lib.on_screen_change_cb
         # During tests, we want to fix the geometry of the 1 or 2 outputs
-        if "PYTEST_CURRENT_TEST" in os.environ:
-            lib.qw_server_enable_test_env(self.qw)
+        #if "PYTEST_CURRENT_TEST" in os.environ:
+        #    lib.qw_server_enable_test_env(self.qw)
         lib.qw_server_start(self.qw)
 
     def new_wid(self) -> int:
