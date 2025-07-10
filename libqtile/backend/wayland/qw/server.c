@@ -244,10 +244,6 @@ struct qw_view *qw_server_view_at(struct qw_server *server, double lx, double ly
     return tree->node.data;
 }
 
-void qw_server_enable_test_env(struct qw_server *server) {
-    server->test_env = true;
-}
-
 // Create and initialize the server object with all components and listeners.
 struct qw_server *qw_server_create() {
     wlr_log_init(WLR_INFO, NULL);
