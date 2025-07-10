@@ -46,7 +46,7 @@ class Popup(configurable.Configurable):
         ("border", "#111111", "Border colour."),
         ("border_width", 0, "Line width of drawn borders."),
         ("font", "sans", "Font used in notifications."),
-        ("font_size", 14, "Size of font."),
+        ("fontsize", 14, "Size of font."),
         ("fontshadow", None, "Colour for text shadows, or None for no shadows."),
         ("horizontal_padding", 0, "Padding at sides of text."),
         ("vertical_padding", 0, "Padding at top and bottom of text."),
@@ -80,7 +80,7 @@ class Popup(configurable.Configurable):
             text="",
             colour=self.foreground,
             font_family=self.font,
-            font_size=self.font_size,
+            font_size=self.fontsize,
             font_shadow=self.fontshadow,
             wrap=self.wrap,
             markup=True,
@@ -114,24 +114,6 @@ class Popup(configurable.Configurable):
     def height(self, value: int) -> None:
         self.win.height = value
         self.drawer.height = value
-
-    @property
-    def text(self) -> str:
-        return self.layout.text
-
-    @text.setter
-    def text(self, value: str) -> None:
-        self.layout.text = value
-
-    @property
-    def foreground(self) -> ColorType:
-        return self._foreground
-
-    @foreground.setter
-    def foreground(self, value: ColorType) -> None:
-        self._foreground = value
-        if hasattr(self, "layout"):
-            self.layout.colour = value
 
     def set_border(self, color: ColorType) -> None:
         self.win.paint_borders(color, self.border_width)

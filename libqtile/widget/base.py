@@ -545,36 +545,6 @@ class _TextBox(_Widget):
         return self.fmt.format(self._text)
 
     @property
-    def foreground(self):
-        return self._foreground
-
-    @foreground.setter
-    def foreground(self, fg):
-        self._foreground = fg
-        if self.layout:
-            self.layout.colour = fg
-
-    @property
-    def font(self):
-        return self._font
-
-    @font.setter
-    def font(self, value):
-        self._font = value
-        if self.layout:
-            self.layout.font = value
-
-    @property
-    def fontshadow(self):
-        return self._fontshadow
-
-    @fontshadow.setter
-    def fontshadow(self, value):
-        self._fontshadow = value
-        if self.layout:
-            self.layout.font_shadow = value
-
-    @property
     def actual_padding(self):
         if self.padding is None:
             return self.fontsize // 2
@@ -777,12 +747,15 @@ class _TextBox(_Widget):
             self.fontsize = fontsize
         if fontshadow != "":
             self.fontshadow = fontshadow
+        if self.layout:
+            self.layout.font_family = self.font
+            self.layout.font_size = self.fontsize
+            self.layout.font_shadow = self.fontshadow
         self.bar.draw()
 
     @expose_command()
     def info(self):
         d = _Widget.info(self)
-        d["foreground"] = self.foreground
         d["text"] = self.formatted_text
         return d
 
