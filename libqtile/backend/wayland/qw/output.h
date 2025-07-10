@@ -2,6 +2,7 @@
 #define OUTPUT_H
 
 #include <wayland-server-core.h>
+#include <wlr/backend/headless.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_scene.h>
 
