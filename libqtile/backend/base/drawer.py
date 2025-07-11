@@ -419,8 +419,7 @@ class TextLayout:
         self._width = value
         self.layout.set_width(pangocffi.units_from_double(value))
 
-    @width.deleter
-    def width(self):
+    def reset_width(self):
         self._width = None
         self.layout.set_width(-1)
 
