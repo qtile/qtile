@@ -165,6 +165,8 @@ class Core(base.Core):
         win = Window(self.qtile, view, wid)
         if view.title != ffi.NULL:
             win.name = ffi.string(view.title).decode()
+        if view.app_id != ffi.NULL:
+            win._wm_class = ffi.string(view.app_id).decode()
         self.qtile.manage(win)
 
     def handle_unmanage_view(self, view):
