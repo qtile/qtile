@@ -1,13 +1,17 @@
 #include <stdlib.h>
 #include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_server_decoration.h>
+#include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
 
 #include "cursor.h"
 #include "keyboard.h"
 #include "output.h"
 #include "server.h"
+#include "view.h"
+#include "wayland-server-core.h"
 #include "wayland-server-protocol.h"
+#include "wlr/util/log.h"
 #include "xdg-view.h"
 
 // Get the file descriptor of the Wayland event loop (used for epoll integration)
@@ -252,6 +256,66 @@ struct qw_view *qw_server_view_at(struct qw_server *server, double lx, double ly
     return tree->node.data;
 }
 
+static void qw_handle_activation_request(struct wl_listener *listener, void *data) {
+    struct qw_server *server = wl_container_of(listener, server, request_activate);
+    struct wlr_xdg_activation_v1_request_activate_event *event = data;
+
+    if (!event->token || !event->token->data) {
+        wlr_log(WLR_INFO, "Activation request has no token or token data");
+        return;
+    }
+
+    struct qw_token_data *token_data = event->token->data;
+
+    struct wlr_xdg_surface *xdg_surface = wlr_xdg_surface_try_from_wlr_surface(event->surface);
+
+    if (xdg_surface == NULL) {
+        wlr_log(WLR_INFO, "Activation request for unknown surface");
+        return;
+    }
+
+    // Get the view associated with the surface
+    struct qw_xdg_view *view = xdg_surface->data;
+
+    if (!view) {
+        wlr_log(WLR_INFO, "Not activating surface - no view attached");
+        return;
+    }
+
+    if (!token_data->qw_valid_seat) {
+        wlr_log(WLR_INFO, "Denying focus request, seat wasn't supplied");
+        return;
+    }
+
+    if (!token_data->qw_valid_surface) {
+        wlr_log(WLR_INFO, "Denying focus request, surface wasn't set");
+        return;
+    }
+
+    // Mark as urgent if not focused
+    struct wlr_surface *focused = server->seat->keyboard_state.focused_surface;
+
+    if (focused == NULL) {
+        wlr_log(WLR_INFO, "No surface focused");
+    }
+
+    if (focused == event->surface) {
+        wlr_log(WLR_INFO, "Activation token invalid for surface");
+        return;
+    }
+
+    view->is_urgent = true;
+    wlr_log(WLR_INFO, "View marked urgent: %p", view);
+
+    // Notify compositor about urgency change
+    if (server->view_urgent_cb) {
+        server->view_urgent_cb((struct qw_view *)view, server->cb_data_urgent);
+    }
+
+    wlr_log(WLR_INFO, "Activation token valid, focusing view");
+    qw_xdg_view_focus(view, 1);
+}
+
 // Create and initialize the server object with all components and listeners.
 struct qw_server *qw_server_create() {
     wlr_log_init(WLR_INFO, NULL);
@@ -274,9 +338,21 @@ struct qw_server *qw_server_create() {
         free(server);
         return NULL;
     }
+
     // TODO: do
     // https://codeberg.org/dwl/dwl/src/commit/bd59573f07f27fff7870a1e1a70e72493bb42453/dwl.c#L2473-L2479
     // instead?
+
+    /* Qtile’s layout system renders and manipulates visuals dynamically — so having the allocator
+     * handled automatically gives:
+     *   - Efficient GPU-backed rendering (dmabuf or gbm)
+     *   - Fallback to wl_shm if needed
+     *   - Less manual memory plumbing = fewer bugs
+     *   - Cleaner backend logic for Python↔C interop
+     *
+     * For now we prefer this over the manual drm/dmabuf setup (as seen in dwl).
+     * If fine-grained control is ever needed, we can refactor later. */
+
     wlr_renderer_init_wl_display(server->renderer, server->display);
     server->allocator = wlr_allocator_autocreate(server->backend, server->renderer);
     if (!server->allocator) {
@@ -334,7 +410,15 @@ struct qw_server *qw_server_create() {
     wl_signal_add(&server->xdg_decoration_mgr->events.new_toplevel_decoration,
                   &server->new_decoration);
 
-    // TODO: XDG activation, gamma control, power manager
+    // Initializes the interface used to implement urgency hints
+    server->activation = wlr_xdg_activation_v1_create(server->display);
+    server->request_activate.notify = qw_handle_activation_request;
+    wl_signal_add(&server->activation->events.request_activate, &server->request_activate);
+
+    server->new_token.notify = qw_xdg_activation_new_token;
+    wl_signal_add(&server->activation->events.new_token, &server->new_token);
+
+    // TODO: gamma control, power manager
     // TODO: handle GPU resets
 
     // TODO: setup listeners
