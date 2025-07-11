@@ -589,7 +589,7 @@ class _TextBox(_Widget):
         """
         # Reset the layout width to let the layout calculate
         # the width based on the length of the text.
-        del self.layout.width
+        self.layout.reset_width()
         if self.layout.width > self._scroll_width:
             if self.bar.horizontal or self.rotate:
                 self.length_type = bar.STATIC
