@@ -97,8 +97,8 @@ class WindowVisibilityToggler:
             self.hide()
         elif self.shown and self.visible:
             win = self.window
+            self.window.group.focus(win, True)
             win.bring_to_front()
-            win.focus(warp=True)
             self.shown = True
         else:
             self.show()
@@ -120,6 +120,7 @@ class WindowVisibilityToggler:
             win._float_state = FloatStates.TOP
             # add to group and bring it to front.
             win.togroup()
+            win.focus(warp=True)
             win.bring_to_front()
             # toggle internal flag of visibility
             self.shown = True
