@@ -38,6 +38,7 @@ import subprocess
 from typing import TYPE_CHECKING
 
 from libqtile import bar, configurable, confreader
+from libqtile.backend.base.drawer import TextLayoutHelper
 from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandObject, expose_command
 from libqtile.lazy import LazyCall
@@ -445,7 +446,7 @@ class _Widget(CommandObject, configurable.Configurable):
                 del self._old_draw
 
 
-class _TextBox(_Widget):
+class _TextBox(_Widget, TextLayoutHelper):
     """
     Base class for widgets that are just boxes containing text.
     """
@@ -507,7 +508,7 @@ class _TextBox(_Widget):
     ]  # type: list[tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
-        self.layout = None
+        TextLayoutHelper.__init__(self)
         _Widget.__init__(self, width, **config)
         self.add_defaults(_TextBox.defaults)
         self.text = text
@@ -527,7 +528,7 @@ class _TextBox(_Widget):
         if len(value) > self.max_chars > 0:
             value = value[: self.max_chars] + "…"
         self._text = value
-        if self.layout:
+        if self.configured:
             # Reset the layout width
             # Reason is because, if we've manually set the layout width,
             # adding longer text will result in wrapping which increases the height of the layout.
@@ -543,36 +544,6 @@ class _TextBox(_Widget):
     @property
     def formatted_text(self):
         return self.fmt.format(self._text)
-
-    @property
-    def foreground(self):
-        return self._foreground
-
-    @foreground.setter
-    def foreground(self, fg):
-        self._foreground = fg
-        if self.layout:
-            self.layout.colour = fg
-
-    @property
-    def font(self):
-        return self._font
-
-    @font.setter
-    def font(self, value):
-        self._font = value
-        if self.layout:
-            self.layout.font = value
-
-    @property
-    def fontshadow(self):
-        return self._fontshadow
-
-    @fontshadow.setter
-    def fontshadow(self, value):
-        self._fontshadow = value
-        if self.layout:
-            self.layout.font_shadow = value
 
     @property
     def actual_padding(self):

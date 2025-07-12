@@ -376,8 +376,7 @@ class TextLayout:
         layout.set_alignment(pangocffi.ALIGN_CENTER)
         if not wrap:  # pango wraps by default
             layout.set_ellipsize(pangocffi.ELLIPSIZE_END)
-        desc = pangocffi.FontDescription.from_string(font_family)
-        desc.set_absolute_size(pangocffi.units_from_double(float(font_size)))
+        desc = pangocffi.FontDescription.from_string(f"{font_family} {font_size}px")
         layout.set_font_description(desc)
         self.font_shadow = font_shadow
         self.layout = layout
@@ -404,8 +403,8 @@ class TextLayout:
             try:
                 attrlist, value, accel_char = pangocffi.parse_markup(value)
                 self.layout.set_attributes(attrlist)
-            except pangocffi.BadMarkup:
-                logger.warning("parse_markup() failed for {value}")
+            except pangocffi.BadMarkup as e:
+                logger.warning(e)
         self.layout.set_text(utils.scrub_to_utf8(value))
 
     @property
@@ -446,12 +445,11 @@ class TextLayout:
     @property
     def font_size(self):
         d = self.fontdescription()
-        return d.get_size()
+        return pangocffi.units_to_double(int(d.get_size()))
 
     @font_size.setter
     def font_size(self, size):
         d = self.fontdescription()
-        d.set_size(size)
         d.set_absolute_size(pangocffi.units_from_double(size))
         self.layout.set_font_description(d)
 
@@ -537,3 +535,65 @@ class TextFrame:
     @property
     def width(self):
         return self.layout.width + self.pad_left + self.pad_right
+
+
+class EmptyLayout:
+    """
+    This class temporary serves as a placeholder for the layout.attributes
+    before it is overwritten by the real layout.
+    """
+
+
+class TextLayoutHelper:
+    """Define getters and setters as a shorthand to write to layout.attributes."""
+
+    def __init__(self):
+        self.layout = EmptyLayout()
+
+    @property
+    def text(self) -> str:
+        return self.layout.text
+
+    @text.setter
+    def text(self, value: str) -> None:
+        self.layout.text = value
+
+    @property
+    def foreground(self):
+        return self.layout.colour
+
+    @foreground.setter
+    def foreground(self, value):
+        self.layout.colour = value
+
+    @property
+    def font(self):
+        return self.layout.font_family
+
+    @font.setter
+    def font(self, value):
+        self.layout.font_family = value
+
+    @property
+    def fontsize(self):
+        return self.layout.font_size
+
+    @fontsize.setter
+    def fontsize(self, value):
+        self.layout.font_size = value
+
+    @property
+    def fontshadow(self):
+        return self.layout.font_shadow
+
+    @fontshadow.setter
+    def fontshadow(self, value):
+        self.layout.font_shadow = value
+
+    @property
+    def markup(self):
+        return self.layout.markup
+
+    @markup.setter
+    def markup(self, value):
+        self.layout.markup = value

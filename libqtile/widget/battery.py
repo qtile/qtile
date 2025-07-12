@@ -492,12 +492,9 @@ class Battery(base.ThreadPoolText):
         self._has_notified = False
         self.timeout = int(self.notification_timeout * 1000)
 
-    def _configure(self, qtile, bar):
         if not self.low_background:
             self.low_background = self.background
         self.normal_background = self.background
-
-        base.ThreadPoolText._configure(self, qtile, bar)
 
     @expose_command()
     def charge_to_full(self):
