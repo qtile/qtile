@@ -48,6 +48,8 @@ pango_ffi.cdef(
 
     int
     pango_units_from_double (double d);
+    double
+    pango_units_to_double (int i);
 
     typedef void* gpointer;
     typedef int gboolean;

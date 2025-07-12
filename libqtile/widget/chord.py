@@ -63,7 +63,7 @@ class Chord(base._TextBox):
 
             self.text = self.name_transform(chord_name)
             if chord_name in self.chords_colors:
-                (self.background, self.foreground) = self.chords_colors.get(chord_name)
+                self.background, self.layout.colour = self.chords_colors.get(chord_name)
             else:
                 self.reset_colours()
 
@@ -74,7 +74,7 @@ class Chord(base._TextBox):
 
     def reset_colours(self):
         self.background = self.default_background
-        self.foreground = self.default_foreground
+        self.layout.colour = self.default_foreground
 
     def clear(self, *args):
         self.reset_colours()

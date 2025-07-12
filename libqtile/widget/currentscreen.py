@@ -43,8 +43,8 @@ class CurrentScreen(base._TextBox):
 
     def update_text(self):
         if self.qtile.current_screen == self.bar.screen:
-            self.foreground = self.active_color
+            self.layout.colour = self.active_color
             self.update(self.active_text)
         else:
-            self.foreground = self.inactive_color
+            self.layout.colour = self.inactive_color
             self.update(self.inactive_text)

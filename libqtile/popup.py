@@ -115,24 +115,6 @@ class Popup(configurable.Configurable):
         self.win.height = value
         self.drawer.height = value
 
-    @property
-    def text(self) -> str:
-        return self.layout.text
-
-    @text.setter
-    def text(self, value: str) -> None:
-        self.layout.text = value
-
-    @property
-    def foreground(self) -> ColorType:
-        return self._foreground
-
-    @foreground.setter
-    def foreground(self, value: ColorType) -> None:
-        self._foreground = value
-        if hasattr(self, "layout"):
-            self.layout.colour = value
-
     def set_border(self, color: ColorType) -> None:
         self.win.paint_borders(color, self.border_width)
 

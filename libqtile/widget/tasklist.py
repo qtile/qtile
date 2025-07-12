@@ -219,20 +219,6 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         state = ""
         markup_str = self.markup_normal
 
-        # Enforce markup and new string format behaviour when
-        # at least one markup_* option is used.
-        # Mixing non markup and markup may cause problems.
-        if (
-            self.markup_minimized
-            or self.markup_maximized
-            or self.markup_floating
-            or self.markup_focused
-            or self.markup_focused_floating
-        ):
-            enforce_markup = True
-        else:
-            enforce_markup = False
-
         if window is None:
             pass
         elif window.minimized:
@@ -265,11 +251,10 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 logger.exception("parse_text function failed:")
 
         # Emulate default widget behavior if markup_str is None
-        if enforce_markup and markup_str is None:
+        if self.markup and markup_str is None:
             markup_str = f"{state}{{}}"
 
         if markup_str is not None:
-            self.markup = True
             window_name = pangocffi.markup_escape_text(window_name)
             return markup_str.format(window_name)
 
@@ -434,8 +419,26 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 - self.padding_top * 2
             )
             self.fontsize = max(calc, 1)
+
+        # Enforce markup and new string format behaviour when
+        # at least one markup_* option is used.
+        # Mixing non markup and markup may cause problems.
+        self.markup = bool(
+            self.markup_normal
+            or self.markup_minimized
+            or self.markup_maximized
+            or self.markup_floating
+            or self.markup_focused
+            or self.markup_focused_floating
+        )
         self.layout = self.drawer.textlayout(
-            "", "ffffff", self.font, self.fontsize, self.fontshadow, wrap=False
+            "",
+            "ffffff",
+            self.font,
+            self.fontsize,
+            self.fontshadow,
+            wrap=False,
+            markup=self.markup,
         )
         self.setup_hooks()
 
@@ -462,13 +465,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         hook.subscribe.client_killed(self.remove_icon_cache)
 
     def drawtext(self, text, textcolor, width):
-        if self.markup:
-            self.layout.markup = self.markup
-
         self.layout.text = text
-
-        self.layout.font_family = self.font
-        self.layout.font_size = self.fontsize
         self.layout.colour = textcolor
         if width is not None:
             self.layout.width = width
