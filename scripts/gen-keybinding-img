@@ -156,7 +156,7 @@ class KeyboardPNGFactory:
         return key_pos
 
     def add_logo(self, context):
-        logo_img = os.path.abspath(os.path.join(this_dir, "..", "logo.png"))
+        logo_img = os.path.abspath(os.path.join(base_dir, "libqtile", "resources", "logo.png"))
 
         context.save()
         context.scale(0.5)
