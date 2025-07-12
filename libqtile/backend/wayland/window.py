@@ -75,9 +75,28 @@ class Base(base._Window):
     def info(self) -> dict:
         """Return a dictionary of info."""
         # TODO: complete implementation
+        float_info = {
+            "x": self.float_x,
+            "y": self.float_y,
+            "width": self._float_width,
+            "height": self._float_height,
+        }
         return dict(
             name=self.name,
+            x=self.x,
+            y=self.y,
+            width=self.width,
+            height=self.height,
+            group=self.group.name if self.group else None,
+            id=self.wid,
             wm_class=self._wm_class,
+            # shell can be either "XDG" or "XWayland" or "layer"?
+            shell=ffi.string(self._ptr.shell).decode() if self._ptr.shell != ffi.NULL else "",
+            float_info=float_info,
+            floating=self._float_state != FloatStates.NOT_FLOATING,
+            maximized=self._float_state == FloatStates.MAXIMIZED,
+            minimized=self._float_state == FloatStates.MINIMIZED,
+            fullscreen=self._float_state == FloatStates.FULLSCREEN,
         )
 
     @expose_command()
