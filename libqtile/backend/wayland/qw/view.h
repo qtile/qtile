@@ -31,6 +31,7 @@ struct qw_view {
     int height;
     int bn; // Number of border layers
     enum qw_view_state state;
+    char* shell; // e.g. "XdgWindow" or "XWayland" 
     int wid;                             // Window identifier (e.g. X11 window id or similar)
     char* title;
     struct wlr_scene_tree *content_tree; // Scene tree holding the view's content
