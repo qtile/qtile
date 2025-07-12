@@ -869,12 +869,7 @@ class Core(base.Core):
         assert qtile is not None
 
         if window:
-            if qtile.config.bring_front_click and (
-                qtile.config.bring_front_click != "floating_only"
-                or getattr(window, "floating", False)
-            ):
-                window.bring_to_front()
-
+            # focus before bring_to_front
             try:
                 if window.group.screen is not qtile.current_screen:
                     qtile.focus_screen(window.group.screen.index, warp=False)
@@ -885,6 +880,12 @@ class Core(base.Core):
                 screen = qtile.find_screen(e.root_x, e.root_y)
                 if screen:
                     qtile.focus_screen(screen.index, warp=False)
+
+            if qtile.config.bring_front_click and (
+                qtile.config.bring_front_click != "floating_only"
+                or getattr(window, "floating", False)
+            ):
+                window.bring_to_front()
 
         else:
             # clicked on root window

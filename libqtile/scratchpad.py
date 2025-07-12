@@ -97,8 +97,8 @@ class WindowVisibilityToggler:
             self.hide()
         elif self.shown and self.visible:
             win = self.window
-            win.bring_to_front()
             win.focus(warp=True)
+            win.bring_to_front()
             self.shown = True
         else:
             self.show()
