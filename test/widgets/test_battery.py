@@ -299,9 +299,8 @@ def test_battery_background(fake_qtile, fake_window, monkeypatch):
 def test_charge_control(fake_qtile, fake_window, monkeypatch):
     start = 0
     end = 100
-    bat = 0
 
-    def save_battery_percentage(self, charge_start_threshold, charge_end_threshold, bat):
+    def save_battery_percentage(self, charge_start_threshold, charge_end_threshold):
         nonlocal start
         nonlocal end
 
@@ -320,7 +319,6 @@ def test_charge_control(fake_qtile, fake_window, monkeypatch):
 
         assert start == 5
         assert end == 10
-        assert bat == 0
 
 
 def test_charge_control_disabled(fake_qtile, fake_window, monkeypatch):
@@ -347,9 +345,8 @@ def test_charge_control_disabled(fake_qtile, fake_window, monkeypatch):
 def test_charge_control_force_charge(fake_qtile, fake_window, monkeypatch):
     start = 4
     end = 7
-    bat = 0  # multiple batteries support
 
-    def save_battery_percentage(self, charge_start_threshold, charge_end_threshold, bat):
+    def save_battery_percentage(self, charge_start_threshold, charge_end_threshold):
         nonlocal start
         nonlocal end
 
@@ -368,7 +365,6 @@ def test_charge_control_force_charge(fake_qtile, fake_window, monkeypatch):
 
         assert start == 0
         assert end == 100
-        assert bat == 0
 
 
 def test_charging_foreground(fake_qtile, fake_window, monkeypatch):
