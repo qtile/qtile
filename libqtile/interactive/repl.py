@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import asyncio
+import builtins
 import codeop
 import contextlib
 import io
@@ -31,6 +32,29 @@ ATTR_MATCH = re.compile(r"([\w\.]+?)(?:\.([\w]*))?$")
 TERMINATOR = "___END___"
 COMPLETION_REQUEST = "___COMPLETE___::"
 REPL_PORT = 41414
+
+
+def make_safer_env():
+    """
+    Returns a dict to be passed to the REPL's global environment.
+
+    Can be used to block harmful commands.
+    """
+
+    # Interactive help blocks REPL and will cause qtile to hand
+    original_help = builtins.help
+
+    def safe_help(*args):
+        """Print help on a specified object."""
+        if not args:
+            print("Interactive help() is disabled in this REPL.")
+        else:
+            return original_help(*args)
+
+    # Store original help so we can still call it safely
+    builtins.help = safe_help
+
+    return {"__builtins__": builtins}
 
 
 def parse_completion_expr(text):
@@ -157,7 +181,7 @@ class QtileREPLServer:
         if self.started:
             return
 
-        self.locals = locals_dict
+        self.locals = {**make_safer_env(), **locals_dict}
         self.server = await asyncio.start_server(self.handle_client, "localhost", REPL_PORT)
         logger.info("Qtile REPL server running on localhost:%d", REPL_PORT)
         self.started = True
