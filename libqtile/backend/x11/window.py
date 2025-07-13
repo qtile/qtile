@@ -34,26 +34,6 @@ HeightValue = 0x0008
 AllValues = 0x000F
 XNegative = 0x0010
 YNegative = 0x0020
-InputHint = 1 << 0
-StateHint = 1 << 1
-IconPixmapHint = 1 << 2
-IconWindowHint = 1 << 3
-IconPositionHint = 1 << 4
-IconMaskHint = 1 << 5
-WindowGroupHint = 1 << 6
-MessageHint = 1 << 7
-UrgencyHint = 1 << 8
-AllHints = (
-    InputHint
-    | StateHint
-    | IconPixmapHint
-    | IconWindowHint
-    | IconPositionHint
-    | IconMaskHint
-    | WindowGroupHint
-    | MessageHint
-    | UrgencyHint
-)
 
 WithdrawnState = 0
 DontCareState = 0
@@ -189,7 +169,7 @@ class XWindow:
             return {
                 "flags": flags,
                 "input": atoms_list[1] if "InputHint" in flags else None,
-                "initial_state": atoms_list[2] if "StateHing" in flags else None,
+                "initial_state": atoms_list[2] if "StateHint" in flags else None,
                 "icon_pixmap": atoms_list[3] if "IconPixmapHint" in flags else None,
                 "icon_window": atoms_list[4] if "IconWindowHint" in flags else None,
                 "icon_x": atoms_list[5] if "IconPositionHint" in flags else None,
