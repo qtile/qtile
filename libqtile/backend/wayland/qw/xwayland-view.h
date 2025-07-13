@@ -28,6 +28,7 @@ struct qw_xwayland_view {
     struct wl_listener request_close;
     struct wl_listener set_title;
     struct wl_listener set_class;
+    struct wl_listener set_hints;
     struct wl_listener associate;
     struct wl_listener dissociate;
     struct wl_listener map;

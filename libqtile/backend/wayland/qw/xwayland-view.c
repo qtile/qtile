@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <wlr/xwayland.h>
+#include <xcb/xcb_icccm.h>
 
 static void qw_xwayland_view_do_focus(struct qw_xwayland_view *xwayland_view,
                                       struct wlr_surface *surface) {
@@ -434,6 +435,22 @@ static void qw_xwayland_view_handle_request_activate(struct wl_listener *listene
     }
 }
 
+static void qw_xwayland_view_handle_set_hints(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, set_hints);
+    struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
+
+    if (xwayland_surface->surface == NULL || !xwayland_surface->surface->mapped) {
+        return;
+    }
+    const bool hints_urgency = xcb_icccm_wm_hints_get_urgency(xwayland_surface->hints);
+    if (!hints_urgency) {
+        return;
+    }
+    xwayland_view->base.server->view_urgent_cb((struct qw_view *)&xwayland_view->base,
+                                               xwayland_view->base.server->cb_data);
+}
+
 static void qw_xwayland_view_handle_dissociate(struct wl_listener *listener, void *data) {
     UNUSED(data);
     // TODO: implement
@@ -453,6 +470,7 @@ static void qw_xwayland_view_handle_destroy(struct wl_listener *listener, void *
     wl_list_remove(&xwayland_view->dissociate.link);
     wl_list_remove(&xwayland_view->request_configure.link);
     wl_list_remove(&xwayland_view->request_activate.link);
+    wl_list_remove(&xwayland_view->set_hints.link);
     qw_view_ftl_manager_handle_destroy(&xwayland_view->base);
     wlr_scene_node_destroy(&xwayland_view->base.content_tree->node);
 
@@ -546,6 +564,9 @@ void qw_server_xwayland_view_new(struct qw_server *server,
 
     wl_signal_add(&xwayland_surface->events.request_activate, &xwayland_view->request_activate);
     xwayland_view->request_activate.notify = qw_xwayland_view_handle_request_activate;
+
+    wl_signal_add(&xwayland_surface->events.set_hints, &xwayland_view->set_hints);
+    xwayland_view->set_hints.notify = qw_xwayland_view_handle_set_hints;
 
     // Assign function pointers for base view operations
     xwayland_view->base.get_tree_node = qw_xwayland_view_get_tree_node;
