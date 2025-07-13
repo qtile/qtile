@@ -72,7 +72,7 @@ class VerticalClock(Clock):
 
         if isinstance(self.foreground, str):
             self.foreground = self._to_list(self.foreground)
-        elif not isinstance(self.fontsize, list):
+        elif not isinstance(self.foreground, list):
             raise ConfigError("foreground should be a string or a list of strings.")
 
         if len(self.fontsize) != len(self.format):

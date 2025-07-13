@@ -528,56 +528,20 @@ class _TextBox(_Widget):
             value = value[: self.max_chars] + "…"
         self._text = value
         if self.layout:
-            # Reset the layout width
-            # Reason is because, if we've manually set the layout width,
-            # adding longer text will result in wrapping which increases the height of the layout.
-            del self.layout.width
             self.layout.text = self.formatted_text
+
             if self.scroll:
                 self.check_width()
                 self.reset_scroll()
-
-            elif not self.bar.horizontal and not self.rotate:
-                self.layout.width = self.bar.width - 2 * self.actual_padding
 
     @property
     def formatted_text(self):
         return self.fmt.format(self._text)
 
     @property
-    def foreground(self):
-        return self._foreground
-
-    @foreground.setter
-    def foreground(self, fg):
-        self._foreground = fg
-        if self.layout:
-            self.layout.colour = fg
-
-    @property
-    def font(self):
-        return self._font
-
-    @font.setter
-    def font(self, value):
-        self._font = value
-        if self.layout:
-            self.layout.font = value
-
-    @property
-    def fontshadow(self):
-        return self._fontshadow
-
-    @fontshadow.setter
-    def fontshadow(self, value):
-        self._fontshadow = value
-        if self.layout:
-            self.layout.font_shadow = value
-
-    @property
     def actual_padding(self):
         if self.padding is None:
-            return self.fontsize / 2
+            return self.fontsize // 2
         else:
             return self.padding
 
@@ -603,22 +567,29 @@ class _TextBox(_Widget):
         if not isinstance(self._scroll_width, int) and self.scroll:
             if not self.bar.horizontal and not self.rotate:
                 self._scroll_width = self.bar.width
-                self.scroll_fixed_width = self.bar.width
             else:
                 logger.warning("%s: You must specify a width when enabling scrolling.", self.name)
                 self.scroll = False
 
+        # Setting the layout width will wrap text which increases layout's height,
+        # we only want this when bar is vertical and rotation is disabled
+        # to be able to display more of the text using multiple lines,
+        # only if scrolling is enabled the layout width will be overwritten
+        # because the widget's width is handle by scroll.
+        if not self.bar.horizontal and not self.rotate:
+            self.layout.width = self.bar.width - 2 * self.actual_padding
+
         if self.scroll:
             self.check_width()
-
-        elif not self.bar.horizontal and not self.rotate:
-            self.layout.width = self.bar.width - 2 * self.actual_padding
 
     def check_width(self):
         """
         Check whether the widget needs to have calculated or fixed width
         and whether the text should be scrolled.
         """
+        # Reset the layout width to let the layout calculate
+        # the width based on the length of the text.
+        self.layout.reset_width()
         if self.layout.width > self._scroll_width:
             if self.bar.horizontal or self.rotate:
                 self.length_type = bar.STATIC
@@ -627,7 +598,7 @@ class _TextBox(_Widget):
             self._should_scroll = True
         else:
             if not self.bar.horizontal and not self.rotate:
-                self.layout.width = self.scroll_fixed_width
+                self.layout.width = self.bar.width
             elif self.scroll_fixed_width:
                 self.length_type = bar.STATIC
                 self.length = self._scroll_width
@@ -777,12 +748,15 @@ class _TextBox(_Widget):
             self.fontsize = fontsize
         if fontshadow != "":
             self.fontshadow = fontshadow
+        if self.layout:
+            self.layout.font_family = self.font
+            self.layout.font_size = self.fontsize
+            self.layout.font_shadow = self.fontshadow
         self.bar.draw()
 
     @expose_command()
     def info(self):
         d = _Widget.info(self)
-        d["foreground"] = self.foreground
         d["text"] = self.formatted_text
         return d
 

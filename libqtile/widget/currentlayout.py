@@ -35,46 +35,8 @@ from libqtile.widget import base
 
 class CurrentLayout(base._TextBox):
     """
-    Display the name of the current layout of the current group of the screen,
-    the bar containing the widget, is on.
-    """
-
-    def __init__(self, width=bar.CALCULATED, **config):
-        base._TextBox.__init__(self, "", width, **config)
-
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
-        layout_id = self.bar.screen.group.current_layout
-        self.text = self.bar.screen.group.layouts[layout_id].name
-        self.setup_hooks()
-
-        self.add_callbacks(
-            {
-                "Button1": qtile.next_layout,
-                "Button2": qtile.prev_layout,
-            }
-        )
-
-    def hook_response(self, layout, group):
-        if group.screen is not None and group.screen == self.bar.screen:
-            self.text = layout.name
-            self.bar.draw()
-
-    def setup_hooks(self):
-        hook.subscribe.layout_change(self.hook_response)
-
-    def remove_hooks(self):
-        hook.unsubscribe.layout_change(self.hook_response)
-
-    def finalize(self):
-        self.remove_hooks()
-        base._TextBox.finalize(self)
-
-
-class CurrentLayoutIcon(base._TextBox):
-    """
-    Display the icon representing the current layout of the
-    current group of the screen on which the bar containing the widget is.
+    Display the icon or the name of the current layout of the current group
+    of the screen on which the bar containing the widget is.
 
     If you are using custom layouts, a default icon with question mark
     will be displayed for them. If you want to use custom icon for your own
@@ -92,9 +54,8 @@ class CurrentLayoutIcon(base._TextBox):
     - built-in qtile icons
     """
 
-    orientations = base.ORIENTATION_HORIZONTAL
-
     defaults = [
+        ("icon_first", False, "Should draw icon or text when bar is initialized."),
         ("scale", 1, "Scale factor relative to the bar height. Defaults to 1"),
         (
             "custom_icon_paths",
@@ -107,70 +68,83 @@ class CurrentLayoutIcon(base._TextBox):
         ),
     ]
 
-    def __init__(self, **config):
-        base._TextBox.__init__(self, "", **config)
-        self.add_defaults(CurrentLayoutIcon.defaults)
+    def __init__(self, width=bar.CALCULATED, **config):
+        base._TextBox.__init__(self, "", width, **config)
+        self.add_defaults(CurrentLayout.defaults)
 
-        self.length_type = bar.STATIC
-        self.length = 0
+        self.icons_loaded = False
+        self.img_length = 0
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         layout_id = self.bar.screen.group.current_layout
         self.text = self.bar.screen.group.layouts[layout_id].name
-        self.current_layout = self.text
-        self.icons_loaded = False
         self.icon_paths = []
         self.surfaces = {}
         self._update_icon_paths()
         self._setup_images()
-        self._setup_hooks()
+        self.setup_hooks()
 
         self.add_callbacks(
             {
                 "Button1": qtile.next_layout,
                 "Button2": qtile.prev_layout,
+                "Button3": self.change_draw_method,
             }
         )
 
+    @property
+    def current_layout(self):
+        return self.text
+
+    def calculate_length(self):
+        return self.img_length if self.icon_first else base._TextBox.calculate_length(self)
+
     def hook_response(self, layout, group):
         if group.screen is not None and group.screen == self.bar.screen:
-            self.current_layout = layout.name
+            self.text = layout.name
             self.bar.draw()
 
-    def _setup_hooks(self):
+    def setup_hooks(self):
         """
         Listens for layout change and performs a redraw when it occurs.
         """
         hook.subscribe.layout_change(self.hook_response)
 
-    def _remove_hooks(self):
+    def remove_hooks(self):
         """
         Listens for layout change and performs a redraw when it occurs.
         """
         hook.unsubscribe.layout_change(self.hook_response)
 
+    def change_draw_method(self):
+        self.icon_first = not self.icon_first
+        self.bar.draw()
+
     def draw(self):
-        if self.icons_loaded:
-            try:
-                surface = self.surfaces[self.current_layout]
-            except KeyError:
-                logger.error("No icon for layout %s", self.current_layout)
-            else:
-                self.drawer.clear(self.background or self.bar.background)
-                self.drawer.ctx.save()
-                self.drawer.ctx.translate(
-                    (self.width - surface.width) / 2,
-                    (self.bar.height - surface.height) / 2,
-                )
-                self.drawer.ctx.set_source(surface.pattern)
-                self.drawer.ctx.paint()
-                self.drawer.ctx.restore()
-                self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
-        else:
-            # Fallback to text
-            self.text = self.current_layout[0].upper()
-            base._TextBox.draw(self)
+        self.draw_icon() if self.icon_first else base._TextBox.draw(self)
+
+    def draw_icon(self):
+        if not self.icons_loaded:
+            return
+        try:
+            surface = self.surfaces[self.current_layout]
+        except KeyError:
+            logger.error("No icon for layout %s", self.current_layout)
+            return
+
+        self.drawer.clear(self.background or self.bar.background)
+        self.drawer.ctx.save()
+        self.drawer.ctx.translate(
+            (self.width - surface.width) / 2,
+            (self.height - surface.height) / 2,
+        )
+        self.drawer.ctx.set_source(surface.pattern)
+        self.drawer.ctx.paint()
+        self.drawer.ctx.restore()
+        self.drawer.draw(
+            offsetx=self.offsetx, offsety=self.offsety, width=self.width, height=self.height
+        )
 
     def _get_layout_names(self):
         """
@@ -213,6 +187,9 @@ class CurrentLayoutIcon(base._TextBox):
         """
         Loads layout icons.
         """
+        width = (self.bar.width - 2) * self.scale if not self.bar.horizontal else None
+        height = (self.bar.height - 2) * self.scale if self.bar.horizontal else None
+
         for names in self._get_layout_names():
             layout_name = names[0]
             # Python doesn't have an ordered set but we can use a dictionary instead
@@ -230,15 +207,14 @@ class CurrentLayoutIcon(base._TextBox):
 
             img = Img.from_path(icon_file_path)
 
-            new_height = (self.bar.height - 2) * self.scale
-            img.resize(height=new_height)
-            if img.width > self.length:
-                self.length = img.width + self.actual_padding * 2
+            img.resize(width=width, height=height)
+            if img.width > self.img_length:
+                self.img_length = img.width + self.actual_padding * 2
 
             self.surfaces[layout_name] = img
 
         self.icons_loaded = True
 
     def finalize(self):
-        self._remove_hooks()
+        self.remove_hooks()
         base._TextBox.finalize(self)

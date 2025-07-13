@@ -376,8 +376,7 @@ class TextLayout:
         layout.set_alignment(pangocffi.ALIGN_CENTER)
         if not wrap:  # pango wraps by default
             layout.set_ellipsize(pangocffi.ELLIPSIZE_END)
-        desc = pangocffi.FontDescription.from_string(font_family)
-        desc.set_absolute_size(pangocffi.units_from_double(float(font_size)))
+        desc = pangocffi.FontDescription.from_string(f"{font_family} {font_size}px")
         layout.set_font_description(desc)
         self.font_shadow = font_shadow
         self.layout = layout
@@ -404,8 +403,8 @@ class TextLayout:
             try:
                 attrlist, value, accel_char = pangocffi.parse_markup(value)
                 self.layout.set_attributes(attrlist)
-            except pangocffi.BadMarkup:
-                logger.warning("parse_markup() failed for {value}")
+            except pangocffi.BadMarkup as e:
+                logger.warning(e)
         self.layout.set_text(utils.scrub_to_utf8(value))
 
     @property
@@ -420,8 +419,7 @@ class TextLayout:
         self._width = value
         self.layout.set_width(pangocffi.units_from_double(value))
 
-    @width.deleter
-    def width(self):
+    def reset_width(self):
         self._width = None
         self.layout.set_width(-1)
 
@@ -446,12 +444,11 @@ class TextLayout:
     @property
     def font_size(self):
         d = self.fontdescription()
-        return d.get_size()
+        return pangocffi.units_to_double(int(d.get_size()))
 
     @font_size.setter
     def font_size(self, size):
         d = self.fontdescription()
-        d.set_size(size)
         d.set_absolute_size(pangocffi.units_from_double(size))
         self.layout.set_font_description(d)
 

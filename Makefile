@@ -20,7 +20,7 @@ clean: ## Clean generated files
 
 .PHONY: run-ffibuild
 run-ffibuild: ## Build FFI modules
-	./scripts/ffibuild
+	./scripts/ffibuild -v
 
 .PHONY: update-flake
 update-flake: ## Update the Nix flake.lock file, requires Nix installed with flake support, see: https://nixos.wiki/wiki/Flakes

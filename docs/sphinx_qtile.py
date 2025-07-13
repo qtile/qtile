@@ -34,16 +34,18 @@ from qtile_docs.migrations import QtileMigrations
 from qtile_docs.module import QtileModule
 from qtile_docs.qtile_class import QtileClass
 
+this_dir = os.path.dirname(__file__)
+base_dir = os.path.abspath(os.path.join(this_dir, ".."))
+
 
 def generate_keybinding_images():
-    this_dir = os.path.dirname(__file__)
-    base_dir = os.path.abspath(os.path.join(this_dir, ".."))
-    run(["make", "-C", base_dir, "run-ffibuild"])
-    run(["make", "-C", this_dir, "genkeyimg"])
+    try:
+        run(["make", "-C", this_dir, "genkeyimg"], check=True)
+    except CalledProcessError:
+        raise Exception("Keybinding images failed to build.")
 
 
 def generate_widget_screenshots():
-    this_dir = os.path.dirname(__file__)
     try:
         run(["make", "-C", this_dir, "genwidgetscreenshots"], check=True)
     except CalledProcessError:
@@ -51,6 +53,7 @@ def generate_widget_screenshots():
 
 
 def setup(app):
+    run(["make", "-C", base_dir, "run-ffibuild"])
     generate_keybinding_images()
     # screenshots will be skipped unless QTILE_BUILD_SCREENSHOTS environment variable is set
     # Variable is set for ReadTheDocs at https://readthedocs.org/dashboard/qtile/environmentvariables/
@@ -58,6 +61,7 @@ def setup(app):
         generate_widget_screenshots()
     else:
         print("Skipping screenshot builds...")
+
     app.add_directive("qtile_class", QtileClass)
     app.add_directive("qtile_hooks", QtileHooks)
     app.add_directive("qtile_module", QtileModule)

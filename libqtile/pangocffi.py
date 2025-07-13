@@ -71,6 +71,7 @@ def patch_cairo_context(cairo_t):
 ALIGN_CENTER = pango.PANGO_ALIGN_CENTER
 ELLIPSIZE_END = pango.PANGO_ELLIPSIZE_END
 units_from_double = pango.pango_units_from_double
+units_to_double = pango.pango_units_to_double
 
 
 ALIGNMENTS = {
@@ -178,12 +179,14 @@ def parse_markup(value, accel_marker=0):
     attr_list = ffi.new("PangoAttrList**")
     text = ffi.new("char**")
     error = ffi.new("GError**")
-    value = value.encode()
+    markup_text = value.encode()
 
-    ret = pango.pango_parse_markup(value, -1, accel_marker, attr_list, text, ffi.NULL, error)
+    ret = pango.pango_parse_markup(
+        markup_text, -1, accel_marker, attr_list, text, ffi.NULL, error
+    )
 
     if ret == 0:
-        raise BadMarkup(f"parse_markup() failed for {value}")
+        raise BadMarkup(f"parse_markup() failed for: {value}")
 
     return attr_list[0], ffi.string(text[0]), chr(accel_marker)
 

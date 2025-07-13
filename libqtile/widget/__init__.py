@@ -41,7 +41,6 @@ widgets = {
     "Countdown": "countdown",
     "CryptoTicker": "crypto_ticker",
     "CurrentLayout": "currentlayout",
-    "CurrentLayoutIcon": "currentlayout",
     "CurrentScreen": "currentscreen",
     "DF": "df",
     "DoNotDisturb": "do_not_disturb",

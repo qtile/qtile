@@ -231,7 +231,7 @@ class Section(TreeNode):
         self.title = title
 
     def draw(self, layout, top, level=0):
-        del layout._layout.width  # no centering
+        layout._layout.reset_width()  # no centering
         # draw a horizontal line above the section
         layout._drawer.draw_hbar(layout.section_fg, 0, layout.panel_width, top, linewidth=1)
         # draw the section title

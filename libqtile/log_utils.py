@@ -85,9 +85,6 @@ def get_default_log() -> Path:
         data_directory = os.path.expanduser("~/.local/share")
 
     qtile_directory = Path(data_directory) / "qtile"
-    if not qtile_directory.exists():
-        qtile_directory.mkdir(parents=True)
-
     return qtile_directory / "qtile.log"
 
 
@@ -111,6 +108,13 @@ def init_log(
 
     else:
         # Otherwise during normal usage, log to file.
+        try:
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+        except PermissionError as e:
+            # ok, only one place to write: stderr
+            print(f"couldn't mkdir {log_path.parent}: {e}", file=sys.stderr)
+            os._exit(1)
+
         handler = RotatingFileHandler(
             log_path,
             maxBytes=log_size,

@@ -105,7 +105,7 @@ class Volume(base._TextBox):
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, "0", **config)
+        base._TextBox.__init__(self, "", **config)
         self.add_defaults(Volume.defaults)
         self.surfaces = {}
         self.volume = None
@@ -161,7 +161,7 @@ class Volume(base._TextBox):
 
     def _update_drawer(self):
         if self.mute_foreground is not None:
-            self.foreground = self.mute_foreground if self.is_mute else self.unmute_foreground
+            self.layout.colour = self.mute_foreground if self.is_mute else self.unmute_foreground
 
         if self.theme_path:
             self.drawer.clear(self.background or self.bar.background)
