@@ -34,6 +34,13 @@ COMPLETION_REQUEST = "___COMPLETE___::"
 REPL_PORT = 41414
 
 
+def mark_unavailable(func):
+    def _wrapper(*args, **kwargs):
+        print(f"'{func.__name__}' is disabled in this REPL.")
+
+    return _wrapper
+
+
 def make_safer_env():
     """
     Returns a dict to be passed to the REPL's global environment.
@@ -53,6 +60,9 @@ def make_safer_env():
 
     # Store original help so we can still call it safely
     builtins.help = safe_help
+
+    # Mask other builtins
+    builtins.input = mark_unavailable(builtins.input)
 
     return {"__builtins__": builtins}
 
