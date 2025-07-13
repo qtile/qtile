@@ -102,6 +102,26 @@ class QtileREPLServer:
         self.started = False
         self.connections = set()
 
+    def evaluate_code(self, code):
+        with io.StringIO() as stdout:
+            # Capture any stdout and direct to a buffer
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stdout):
+                try:
+                    try:
+                        # Try eval (for expressions)
+                        expr_code = compile(code, "<stdin>", "eval")
+                        result = eval(expr_code, self.locals)
+                        if result is not None:
+                            # We can use print here as we've redirected stdout
+                            print(repr(result))
+                    except SyntaxError:
+                        # Fallback to exec (for statements)
+                        exec(self.compiler(code), self.locals)
+                except Exception:
+                    traceback.print_exc()
+
+            return stdout.getvalue()
+
     async def handle_client(self, reader, writer):
         """Method for sending data to REPL client."""
 
@@ -118,7 +138,7 @@ class QtileREPLServer:
         task = asyncio.current_task()
         self.connections.add(task)
 
-        compiler = codeop.CommandCompiler()
+        self.compiler = codeop.CommandCompiler()
 
         while not reader.at_eof():
             buffer = ""
@@ -151,24 +171,10 @@ class QtileREPLServer:
 
             # Ready to execute
             output = ""
-            with io.StringIO() as stdout:
-                # Capture any stdout and direct to a buffer
-                with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stdout):
-                    try:
-                        try:
-                            # Try eval (for expressions)
-                            expr_code = compile(buffer, "<stdin>", "eval")
-                            result = eval(expr_code, self.locals)
-                            if result is not None:
-                                # We can use print here as we've redirected stdout
-                                print(repr(result))
-                        except SyntaxError:
-                            # Fallback to exec (for statements)
-                            exec(compiler(buffer), self.locals)
-                    except Exception:
-                        traceback.print_exc()
 
-                output = stdout.getvalue()
+            # Evaluate code in a thread so blocking calls don't block the eventloop
+            loop = asyncio.get_running_loop()
+            output = await loop.run_in_executor(None, self.evaluate_code, buffer)
 
             # Send output to client
             await send(output.strip())
