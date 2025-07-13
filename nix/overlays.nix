@@ -34,6 +34,10 @@ self: final: prev: {
         disabledTestPaths = oldAttrs.disabledTestPaths ++ [
           "test/widget/test_currentlayouticon.py"
         ];
+        # disable groupbox2 test for https://github.com/qtile/qtile/pull/5325
+        disabledTests = oldAttrs.disabledTests ++ [
+          "groupbox2"
+        ];
       });
     })
   ];
