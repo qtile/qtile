@@ -54,7 +54,6 @@ class Sep(base._Widget):
                 self.bar.height - margin_top,
                 linewidth=self.linewidth,
             )
-            self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
         else:
             margin_left = (self.bar.width / float(100) * (100 - self.size_percent)) / 2.0
             self.drawer.draw_hbar(
@@ -64,4 +63,4 @@ class Sep(base._Widget):
                 float(self.length) / 2,
                 linewidth=self.linewidth,
             )
-            self.drawer.draw(offsety=self.offset, offsetx=self.offsetx, height=self.length)
+        self.draw_at_default_position()

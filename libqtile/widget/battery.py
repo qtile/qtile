@@ -687,7 +687,7 @@ class BatteryIcon(base._Widget):
         self.drawer.ctx.set_source(image.pattern)
         self.drawer.ctx.paint()
         self.drawer.ctx.restore()
-        self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.length)
+        self.draw_at_default_position()
 
     @staticmethod
     def _get_icon_key(status: BatteryStatus) -> str:
