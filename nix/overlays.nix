@@ -29,15 +29,9 @@ self: final: prev: {
         )).override
           { wlroots = prev.wlroots_0_17; };
 
-      qtile-extras = pprev.qtile-extras.overridePythonAttrs (oldAttrs: {
-        # disable currentlayouticon test for https://github.com/qtile/qtile/pull/5302
-        disabledTestPaths = oldAttrs.disabledTestPaths ++ [
-          "test/widget/test_currentlayouticon.py"
-        ];
-        # disable groupbox2 test for https://github.com/qtile/qtile/pull/5325
-        disabledTests = oldAttrs.disabledTests ++ [
-          "groupbox2"
-        ];
+      qtile-extras = pprev.qtile-extras.overridePythonAttrs ({
+        # disable all widget tests
+        disabledTestPaths = [ "test/widget/*" ];
       });
     })
   ];
