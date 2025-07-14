@@ -681,6 +681,4 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         ctx.restore()
 
-        self.drawer.draw(
-            offsetx=self.offsetx, offsety=self.offsety, width=self.width, height=self.height
-        )
+        self.draw_at_default_position()

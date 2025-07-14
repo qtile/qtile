@@ -138,7 +138,7 @@ class StatusNotifier(base._Widget):
             else:
                 yoffset += self.icon_size + self.padding
 
-        self.drawer.draw(offsetx=self.offsetx, offsety=self.offsety, width=self.length)
+        self.draw_at_default_position()
 
     def activate(self):
         """Primary action when clicking on an icon"""

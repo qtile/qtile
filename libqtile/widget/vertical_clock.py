@@ -136,9 +136,7 @@ class VerticalClock(Clock):
             offset += layout.height + self.actual_padding
             self.drawer.ctx.restore()
 
-        self.drawer.draw(
-            offsetx=self.offsetx, offsety=self.offsety, width=self.width, height=self.height
-        )
+        self.draw_at_default_position()
 
     def finalize(self):
         for layout in self.layouts:

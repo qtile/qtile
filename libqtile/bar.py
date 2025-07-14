@@ -680,10 +680,10 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         # so we adjust the end of the bar area for this offset
         if self.horizontal:
             bar_end = self._length + self.border_width[3]
+            widget_end = i.offsetx + i.length
         else:
             bar_end = self._length + self.border_width[0]
-
-        widget_end = i.offset + i.length
+            widget_end = i.offsety + i.length
 
         if widget_end < bar_end:
             # Defines a rectangle for the area enclosed by the bar's borders and the end of the
