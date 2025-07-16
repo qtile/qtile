@@ -353,6 +353,17 @@ background. Usually this is done by including the following line at the start of
 The background can be a single colour or a list of colours which will result in a linear gradient
 from top to bottom.
 
+Vertical Orientation
+--------------------
+
+If you plan to support vertical orientation in your widget, after calling
+``self.drawer.clear`` and ``self.drawer.ctx.save`` place this function
+in the ``draw`` method:
+
+.. code:: python
+
+    self.rotate_drawer()
+
 Updating the widget
 ===================
 
