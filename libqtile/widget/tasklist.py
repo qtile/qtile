@@ -23,7 +23,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import math
 
 import cairocffi
 
@@ -629,21 +628,8 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
         offset = self.margin_side
-        ctx = self.drawer.ctx
-        ctx.save()
-
-        if not self.bar.horizontal:
-            # Left bar reads bottom to top
-            # Can be overriden to read bottom to top all the time with vertical_text_direction
-            if self.bar.screen.left is self.bar:
-                ctx.rotate(-90 * math.pi / 180.0)
-                ctx.translate(-self.length, 0)
-
-            # Right bar is top to bottom
-            # Can be overriden to read top to bottom all the time with vertical_text_direction
-            else:
-                ctx.translate(self.bar.width, 0)
-                ctx.rotate(90 * math.pi / 180.0)
+        self.drawer.ctx.save()
+        self.rotate_drawer()
 
         self._box_end_positions = []
         for w, icon, task, bw in self.calc_box_widths():
@@ -679,6 +665,5 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             )
             offset += bw + self.spacing
 
-        ctx.restore()
-
+        self.drawer.ctx.restore()
         self.draw_at_default_position()

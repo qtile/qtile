@@ -313,6 +313,24 @@ class _Widget(CommandObject, configurable.Configurable):
         elif name == "screen":
             return self.bar.screen
 
+    def rotate_drawer_left(self):
+        # Left bar reads bottom to top
+        self.drawer.ctx.rotate(-90 * math.pi / 180.0)
+        self.drawer.ctx.translate(-self.length, 0)
+
+    def rotate_drawer_right(self):
+        # Right bar is top to bottom
+        self.drawer.ctx.translate(self.bar.width, 0)
+        self.drawer.ctx.rotate(90 * math.pi / 180.0)
+
+    def rotate_drawer(self):
+        if self.bar.horizontal:
+            return
+        if self.bar.screen.left is self.bar:
+            self.rotate_drawer_left()
+        elif self.bar.screen.right is self.bar:
+            self.rotate_drawer_right()
+
     def draw_at_default_position(self):
         """Default position to draw the widget in horizontal and vertical bars."""
         self.drawer.draw(
@@ -624,30 +642,25 @@ class _TextBox(_Widget):
         )  # if the bar hasn't placed us yet
         return can_draw
 
+    def rotate_drawer(self):
+        if self.bar.horizontal or not self.rotate:
+            return
+        # Execute the base method when direction is default
+        if self.direction == "default":
+            _Widget.rotate_drawer(self)
+        # Read bottom to top always with 'btt' direction
+        elif self.direction == "btt":
+            self.rotate_drawer_left()
+        # Read top to bottom always with 'ttb' direction
+        elif self.direction == "ttb":
+            self.rotate_drawer_right()
+
     def draw(self):
         if not self.can_draw():
             return
         self.drawer.clear(self.background or self.bar.background)
-
-        # size = self.bar.height if self.bar.horizontal else self.bar.width
         self.drawer.ctx.save()
-
-        if not self.bar.horizontal and self.rotate:
-            # Left bar reads bottom to top
-            # Can be overriden to read bottom to top all the time with vertical_text_direction
-            if (
-                self.bar.screen.left is self.bar and self.direction == "default"
-            ) or self.direction == "btt":
-                self.drawer.ctx.rotate(-90 * math.pi / 180.0)
-                self.drawer.ctx.translate(-self.length, 0)
-
-            # Right bar is top to bottom
-            # Can be overriden to read top to bottom all the time with vertical_text_direction
-            elif (
-                self.bar.screen.right is self.bar and self.direction == "default"
-            ) or self.direction == "ttb":
-                self.drawer.ctx.translate(self.bar.width, 0)
-                self.drawer.ctx.rotate(90 * math.pi / 180.0)
+        self.rotate_drawer()
 
         # If we're scrolling, we clip the context to the scroll width less the padding
         # Move the text layout position (and we only see the clipped portion)
