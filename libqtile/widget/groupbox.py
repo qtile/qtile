@@ -128,10 +128,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         framed = self.layout.framed(border_width, framecolor, 0, pad_y, highlight_color)
         y = self.margin_y
         if self.center_aligned:
-            for t in base.MarginMixin.defaults:
-                if t[0] == "margin":
-                    y += (self.bar.height - framed.height) / 2 - t[1]
-                    break
+            y += (self.bar.height - framed.height) / 2 - self.margin_y
         if block and bordercolor is not None:
             framed.draw_fill(offset, y, rounded)
         elif line:
