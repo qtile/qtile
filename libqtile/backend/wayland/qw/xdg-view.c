@@ -71,6 +71,14 @@ static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, map);
     xdg_view->mapped = true;
 
+    struct wlr_xdg_surface *surface = xdg_view->xdg_toplevel->base;
+    struct wlr_box geom = surface->geometry;
+    xdg_view->base.width = geom.width;
+    xdg_view->base.height = geom.height;
+
+    xdg_view->server->manage_view_cb((struct qw_view *)&xdg_view->base,
+                                     xdg_view->server->cb_data);
+
     // Focus the view upon mapping
     qw_xdg_view_do_focus(xdg_view, xdg_view->xdg_toplevel->base->surface);
 
@@ -94,8 +102,6 @@ static void qw_xdg_view_handle_commit(struct wl_listener *listener, void *data) 
         wlr_xdg_toplevel_set_size(xdg_view->xdg_toplevel, 0, 0);
         xdg_view->base.title = xdg_view->xdg_toplevel->title;
         xdg_view->base.app_id = xdg_view->xdg_toplevel->app_id;
-        xdg_view->base.server->manage_view_cb((struct qw_view *)&xdg_view->base,
-                                              xdg_view->base.server->cb_data);
     }
 }
 
