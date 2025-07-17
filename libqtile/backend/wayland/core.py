@@ -223,11 +223,15 @@ class Core(base.Core):
     def handle_manage_view(self, view):
         wid = self.new_wid()
         view.wid = wid
+
         win = Window(self.qtile, view, wid)
         if view.title != ffi.NULL:
             win.name = ffi.string(view.title).decode()
         if view.app_id != ffi.NULL:
             win._wm_class = ffi.string(view.app_id).decode()
+        win._float_width = win.width # todo: should we be using getter/setter for _float_width
+        win._float_height = win.height
+
         self.qtile.manage(win)
 
     def handle_unmanage_view(self, view):
