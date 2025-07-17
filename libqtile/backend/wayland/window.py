@@ -25,6 +25,7 @@ class Base(base._Window):
         self._group = None
         self._ptr = ptr
         self._wid = wid
+        self._wm_class = None
         self.bordercolor = None
         # TODO: what is this?
         self.defunct = False
@@ -76,6 +77,7 @@ class Base(base._Window):
         # TODO: complete implementation
         return dict(
             name=self.name,
+            wm_class=self._wm_class,
         )
 
     @expose_command()
@@ -215,6 +217,12 @@ def set_title_cb(title, userdata):
     win.handle_set_title(ffi.string(title).decode())
 
 
+@ffi.def_extern()
+def set_app_id_cb(app_id, userdata):
+    win = ffi.from_handle(userdata)
+    win.handle_set_app_id(ffi.string(app_id).decode())
+
+
 class Window(Base, base.Window):
     def __init__(self, qtile: Qtile, ptr, wid):
         Base.__init__(self, qtile, ptr, wid)
@@ -231,6 +239,7 @@ class Window(Base, base.Window):
         ptr.request_maximize_cb = lib.request_maximize_cb
         ptr.request_fullscreen_cb = lib.request_fullscreen_cb
         ptr.set_title_cb = lib.set_title_cb
+        ptr.set_app_id_cb = lib.set_app_id_cb
 
     def handle_request_fullscreen(self, fullscreen):
         if self.qtile.config.auto_fullscreen:
@@ -249,6 +258,16 @@ class Window(Base, base.Window):
             self.name = title
             # TODO: Handle foreign-toplevel-management?
             hook.fire("client_name_updated", self)
+
+    def handle_set_app_id(self, app_id):
+        logger.debug("Signal: xdgwindow set_app_id")
+        self._wm_class = app_id
+        # TODO: Handle foreign-toplevel-management?
+
+    def get_wm_class(self) -> list | None:
+        if self._wm_class:
+            return [self._wm_class]
+        return None
 
     @expose_command()
     def static(

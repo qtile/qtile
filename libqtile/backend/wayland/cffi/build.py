@@ -53,6 +53,7 @@ extern "Python" void on_screen_change_cb(void *userdata);
 extern "Python" int request_fullscreen_cb(bool fullscreen, void *userdata);
 extern "Python" int request_maximize_cb(bool maximize, void *userdata);
 extern "Python" void set_title_cb(char* title, void *userdata);
+extern "Python" void set_app_id_cb(char* app_id, void *userdata);
 """
 
 cdef_files = ["log.h", "server.h", "view.h", "util.h", "internal-view.h"]
