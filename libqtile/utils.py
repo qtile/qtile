@@ -358,30 +358,39 @@ def guess_terminal(preference: str | Sequence | None = None) -> str | None:
         test_terminals += list(preference)
     if "WAYLAND_DISPLAY" in os.environ:
         # Wayland-only terminals
-        test_terminals += ["foot"]
+        test_terminals += [
+            "foot",
+            "mlterm-wl",
+        ]
     test_terminals += [
-        "roxterm",
-        "sakura",
-        "hyper",
         "alacritty",
-        "terminator",
-        "termite",
+        "cool-retro-term",
+        "coreterminal",
+        "eterm",
+        "ghostty",
         "gnome-terminal",
+        "guake",
+        "hyper",
+        "kitty",
         "konsole",
-        "xfce4-terminal",
         "lxterminal",
         "mate-terminal",
-        "kitty",
-        "ghostty",
-        "yakuake",
-        "tilda",
-        "guake",
-        "eterm",
+        "mlterm",
+        "ptyxis",
+        "qterminal",
+        "roxterm",
+        "sakura",
         "st",
+        "terminator",
+        "terminology",
+        "tilda",
         "urxvt",
         "wezterm",
-        "xterm",
         "x-terminal-emulator",
+        "xfce4-terminal",
+        "xterm",
+        "yakuake",
+        "zutty",
     ]
 
     for terminal in test_terminals:
