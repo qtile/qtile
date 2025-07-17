@@ -1423,12 +1423,7 @@ class Core(base.Core, wlrq.HasListeners):
                     logger.debug("Focus withheld from window not owned by exclusive client.")
                     return None
 
-            if self.qtile.config.bring_front_click is True:
-                win.bring_to_front()
-            elif self.qtile.config.bring_front_click == "floating_only":
-                if isinstance(win, base.Window) and win.floating:
-                    win.bring_to_front()
-
+            # focus before bring_to_front
             if isinstance(win, window.Static):
                 if win.screen is not self.qtile.current_screen:
                     self.qtile.focus_screen(win.screen.index, warp=False)
@@ -1437,6 +1432,12 @@ class Core(base.Core, wlrq.HasListeners):
                 if win.group and win.group.screen is not self.qtile.current_screen:
                     self.qtile.focus_screen(win.group.screen.index, warp=False)
                 self.qtile.current_group.focus(win, False)
+
+            if self.qtile.config.bring_front_click is True:
+                win.bring_to_front()
+            elif self.qtile.config.bring_front_click == "floating_only":
+                if isinstance(win, base.Window) and win.floating:
+                    win.bring_to_front()
 
         else:
             screen = self.qtile.find_screen(int(self.cursor.x), int(self.cursor.y))
