@@ -269,8 +269,8 @@ most commonly used to draw icons but the same method applies to other images.
 
         d_images = images.Loader(self.imagefolder)(*names)  # images.Loader can take more than one folder as an argument
 
+        new_height = self.bar.size - 2
         for name, img in d_images.items():
-            new_height = self.bar.height - 1
             img.resize(height=new_height)   # Resize images to fit widget
             self.surfaces[name] = img.pattern  # Images added to the `surfaces` dictionary
 
@@ -311,7 +311,7 @@ For example, the following code can draw a wifi icon showing signal strength:
         WIFI_HEIGHT = 12
         WIFI_ARC_DEGREES = 90
 
-        y_margin = (self.bar.height - WIFI_HEIGHT) / 2
+        y_margin = (self.bar.size - WIFI_HEIGHT) / 2
         half_arc = WIFI_ARC_DEGREES / 2
 
         # Draw grey background

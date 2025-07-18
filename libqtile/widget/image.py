@@ -68,12 +68,8 @@ class Image(base._Widget, base.MarginMixin):
         img.theta = self.rotate
         if not self.scale:
             return
-        if self.bar.horizontal:
-            new_height = self.bar.height - (self.margin_y * 2)
-            img.resize(height=new_height)
-        else:
-            new_width = self.bar.width - (self.margin_x * 2)
-            img.resize(width=new_width)
+        new_height = self.bar.size - 2
+        img.resize(height=new_height)
 
     def draw(self):
         if self.img is None:

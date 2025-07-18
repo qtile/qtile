@@ -660,7 +660,7 @@ class BatteryIcon(base._Widget):
     def setup_images(self) -> None:
         d_imgs = images.Loader(self.theme_path)(*self.icon_names)
 
-        new_height = self.bar.height * self.scale
+        new_height = (self.bar.size - 2) * self.scale
         for key, img in d_imgs.items():
             img.resize(height=new_height)
             self.images[key] = img
@@ -683,7 +683,7 @@ class BatteryIcon(base._Widget):
         self.drawer.clear(self.background or self.bar.background)
         image = self.images[self.current_icon]
         self.drawer.ctx.save()
-        self.drawer.ctx.translate(self.padding, (self.bar.height - image.height) // 2)
+        self.drawer.ctx.translate(self.padding, (self.bar.size - image.height) // 2)
         self.drawer.ctx.set_source(image.pattern)
         self.drawer.ctx.paint()
         self.drawer.ctx.restore()
