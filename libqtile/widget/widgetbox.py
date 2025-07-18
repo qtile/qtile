@@ -104,7 +104,7 @@ class WidgetBox(base._TextBox):
 
             # In case the widget is mirrored, we need to draw it once so the
             # mirror can copy the surface but draw it off screen
-            w.offsetx = self.bar.width
+            w.offsetx = self.bar.length
             self.qtile.call_soon(w.draw)
 
             # Setting the configured flag for widgets was moved to Bar._configure so we need to

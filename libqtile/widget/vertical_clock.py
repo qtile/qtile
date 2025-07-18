@@ -64,7 +64,7 @@ class VerticalClock(Clock):
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
         if self.fontsize is None:
-            self.fontsize = self._to_list(self.bar.width - self.bar.width / 5)
+            self.fontsize = self._to_list(self.bar.size - self.bar.size / 5)
         elif isinstance(self.fontsize, int):
             self.fontsize = self._to_list(self.fontsize)
         elif not isinstance(self.fontsize, list):
@@ -99,8 +99,7 @@ class VerticalClock(Clock):
     def update(self, time):
         for layout, fmt in zip(self.layouts, self.format):
             layout.text = time.strftime(fmt)
-            layout.width = self.bar.width
-
+            layout.width = self.bar.size
         self.draw()
 
     @property

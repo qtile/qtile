@@ -77,10 +77,9 @@ class WindowCount(base._TextBox):
         self.update(self.text_format.format(num=self._count))
 
     def calculate_length(self):
-        if self.text and (self._count or self.show_zero):
-            return min(self.layout.width, self.bar.width) + self.actual_padding * 2
-        else:
-            return 0
+        if self._count or self.show_zero:
+            return base._TextBox.calculate_length(self)
+        return 0
 
     @expose_command()
     def get(self):
