@@ -69,7 +69,6 @@ class _Graph(base._Widget, base.MarginMixin):
     def __init__(self, width=100, **config):
         base._Widget.__init__(self, width, **config)
         self.add_defaults(_Graph.defaults)
-        self.add_defaults(base.MarginMixin.defaults)
         self.values = [0] * self.samples
         self.maxvalue = 0
         self.oldtime = time.time()

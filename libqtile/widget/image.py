@@ -36,15 +36,12 @@ class Image(base._Widget, base.MarginMixin):
         ("scale", True, "Enable/Disable image scaling"),
         ("rotate", 0.0, "rotate the image in degrees counter-clockwise"),
         ("filename", None, "Image filename. Can contain '~'"),
+        ("margin", 0, "Margin inside the box. Defaults to 0."),
     ]
 
     def __init__(self, length=bar.CALCULATED, **config):
         base._Widget.__init__(self, length, **config)
         self.add_defaults(Image.defaults)
-        self.add_defaults(base.MarginMixin.defaults)
-
-        # make the default 0 instead
-        self._variable_defaults["margin"] = 0
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)

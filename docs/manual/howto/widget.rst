@@ -104,28 +104,15 @@ or more mixins to provide some additional functionality to the widget.
 PaddingMixin
 ------------
 
-This provides the ``padding(_x|_y|)`` attributes which can be used to change the appearance
-of the widget.
-
-If you use this mixin in your widget, you need to add the following line to your ``__init__``
-method:
-
-.. code:: python
-
-    self.add_defaults(base.PaddingMixin.defaults)
+This provides the ``padding(_x|_y|)`` attributes which can be used to change the
+appearance of the widget. And ``padding(_side|_top|)`` properties to get the appropriate
+value based on bar orientation.
 
 MarginMixin
 -----------
 
-The ``MarginMixin`` is essentially effectively exactly the same as the ``PaddingMixin`` but,
-instead, it provides the ``margin(_x|_y|)`` attributes.
-
-As above, if you use this mixin in your widget, you need to add the following line to your
-``__init__`` method:
-
-.. code:: python
-
-    self.add_defaults(base.MarginMixin.defaults)
+This is essentially exactly the same as the before, but instead, it provides the
+``margin(_x|_y|)`` attributes. And the bar oriented ``margin(_side|_top|)`` properties.
 
 Configuration
 =============
