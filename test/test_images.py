@@ -182,6 +182,24 @@ class TestImgScale:
         with pytest.raises(ValueError):
             png_img.scale()
 
+    def test_scale_zero(self, png_img):
+        size = png_img.default_size
+        png_img.scale(width_factor=0, height_factor=0)
+        assert png_img.width == size.width
+        assert png_img.height == size.height
+
+    def test_scale_width_zero(self, png_img):
+        size = png_img.default_size
+        png_img.scale(width_factor=0)
+        assert png_img.width == size.width
+        assert png_img.height == size.height
+
+    def test_scale_height_zero(self, png_img):
+        size = png_img.default_size
+        png_img.scale(height_factor=0)
+        assert png_img.width == size.width
+        assert png_img.height == size.height
+
 
 class TestImgResize:
     def test_resize(self, png_img):
@@ -202,6 +220,28 @@ class TestImgResize:
         png_img.resize(height=10)
         assert png_img.height == 10
         assert (png_img.width / png_img.height) == pytest.approx(ratio)
+
+    def test_resize_fail(self, png_img):
+        with pytest.raises(ValueError):
+            png_img.resize()
+
+    def test_resize_zero(self, png_img):
+        size = png_img.default_size
+        png_img.resize(width=0, height=0)
+        assert png_img.width == size.width
+        assert png_img.height == size.height
+
+    def test_resize_width_zero(self, png_img):
+        size = png_img.default_size
+        png_img.resize(width=0)
+        assert png_img.width == size.width
+        assert png_img.height == size.height
+
+    def test_resize_height_zero(self, png_img):
+        size = png_img.default_size
+        png_img.resize(height=0)
+        assert png_img.width == size.width
+        assert png_img.height == size.height
 
 
 class TestLoader:
