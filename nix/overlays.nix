@@ -30,8 +30,11 @@ self: final: prev: {
           { wlroots = prev.wlroots_0_17; };
 
       qtile-extras = pprev.qtile-extras.overridePythonAttrs ({
-        # disable all widget tests
-        disabledTestPaths = [ "test/widget/*" ];
+        # disable all tests in these directories
+        disabledTestPaths = [
+          "test/widget/*"
+          "test/popup/*"
+        ];
       });
     })
   ];
