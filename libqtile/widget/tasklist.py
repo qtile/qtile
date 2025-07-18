@@ -194,8 +194,6 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     def __init__(self, **config):
         base._Widget.__init__(self, libqtile.bar.STRETCH, **config)
         self.add_defaults(TaskList.defaults)
-        self.add_defaults(base.PaddingMixin.defaults)
-        self.add_defaults(base.MarginMixin.defaults)
         self._icons_cache = {}
         self._box_end_positions = []
         self.markup = False

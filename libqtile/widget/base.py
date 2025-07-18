@@ -159,6 +159,13 @@ class _Widget(CommandObject, configurable.Configurable):
             self.name = config["name"]
 
         configurable.Configurable.__init__(self, **config)
+
+        # Add defaults for Mixins if inherited
+        if isinstance(self, PaddingMixin):
+            self.add_defaults(PaddingMixin.defaults)
+        if isinstance(self, MarginMixin):
+            self.add_defaults(MarginMixin.defaults)
+
         self.add_defaults(_Widget.defaults)
 
         if length in (bar.CALCULATED, bar.STRETCH):
@@ -889,12 +896,7 @@ class ThreadPoolText(_TextBox):
 
 
 class PaddingMixin(configurable.Configurable):
-    """Mixin that provides padding(_x|_y|)
-
-    To use it, subclass and add this to __init__:
-
-        self.add_defaults(base.PaddingMixin.defaults)
-    """
+    """Mixin that provides padding(_x|_y|)."""
 
     defaults = [
         ("padding", 3, "Padding inside the box"),
@@ -919,12 +921,7 @@ class PaddingMixin(configurable.Configurable):
 
 
 class MarginMixin(configurable.Configurable):
-    """Mixin that provides margin(_x|_y|)
-
-    To use it, subclass and add this to __init__:
-
-        self.add_defaults(base.MarginMixin.defaults)
-    """
+    """Mixin that provides margin(_x|_y|)."""
 
     defaults = [
         ("margin", 3, "Margin inside the box"),
