@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import asyncio
+import builtins
 import codeop
 import contextlib
 import io
@@ -31,6 +32,39 @@ ATTR_MATCH = re.compile(r"([\w\.]+?)(?:\.([\w]*))?$")
 TERMINATOR = "___END___"
 COMPLETION_REQUEST = "___COMPLETE___::"
 REPL_PORT = 41414
+
+
+def mark_unavailable(func):
+    def _wrapper(*args, **kwargs):
+        print(f"'{func.__name__}' is disabled in this REPL.")
+
+    return _wrapper
+
+
+def make_safer_env():
+    """
+    Returns a dict to be passed to the REPL's global environment.
+
+    Can be used to block harmful commands.
+    """
+
+    # Interactive help blocks REPL and will cause qtile to hand
+    original_help = builtins.help
+
+    def safe_help(*args):
+        """Print help on a specified object."""
+        if not args:
+            print("Interactive help() is disabled in this REPL.")
+        else:
+            return original_help(*args)
+
+    # Store original help so we can still call it safely
+    builtins.help = safe_help
+
+    # Mask other builtins
+    builtins.input = mark_unavailable(builtins.input)
+
+    return {"__builtins__": builtins}
 
 
 def parse_completion_expr(text):
@@ -78,6 +112,26 @@ class QtileREPLServer:
         self.started = False
         self.connections = set()
 
+    def evaluate_code(self, code):
+        with io.StringIO() as stdout:
+            # Capture any stdout and direct to a buffer
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stdout):
+                try:
+                    try:
+                        # Try eval (for expressions)
+                        expr_code = compile(code, "<stdin>", "eval")
+                        result = eval(expr_code, self.locals)
+                        if result is not None:
+                            # We can use print here as we've redirected stdout
+                            print(repr(result))
+                    except SyntaxError:
+                        # Fallback to exec (for statements)
+                        exec(self.compiler(code), self.locals)
+                except Exception:
+                    traceback.print_exc()
+
+            return stdout.getvalue()
+
     async def handle_client(self, reader, writer):
         """Method for sending data to REPL client."""
 
@@ -94,7 +148,7 @@ class QtileREPLServer:
         task = asyncio.current_task()
         self.connections.add(task)
 
-        compiler = codeop.CommandCompiler()
+        self.compiler = codeop.CommandCompiler()
 
         while not reader.at_eof():
             buffer = ""
@@ -127,24 +181,10 @@ class QtileREPLServer:
 
             # Ready to execute
             output = ""
-            with io.StringIO() as stdout:
-                # Capture any stdout and direct to a buffer
-                with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stdout):
-                    try:
-                        try:
-                            # Try eval (for expressions)
-                            expr_code = compile(buffer, "<stdin>", "eval")
-                            result = eval(expr_code, self.locals)
-                            if result is not None:
-                                # We can use print here as we've redirected stdout
-                                print(repr(result))
-                        except SyntaxError:
-                            # Fallback to exec (for statements)
-                            exec(compiler(buffer), self.locals)
-                    except Exception:
-                        traceback.print_exc()
 
-                output = stdout.getvalue()
+            # Evaluate code in a thread so blocking calls don't block the eventloop
+            loop = asyncio.get_running_loop()
+            output = await loop.run_in_executor(None, self.evaluate_code, buffer)
 
             # Send output to client
             await send(output.strip())
@@ -157,7 +197,7 @@ class QtileREPLServer:
         if self.started:
             return
 
-        self.locals = locals_dict
+        self.locals = {**make_safer_env(), **locals_dict}
         self.server = await asyncio.start_server(self.handle_client, "localhost", REPL_PORT)
         logger.info("Qtile REPL server running on localhost:%d", REPL_PORT)
         self.started = True

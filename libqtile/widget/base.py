@@ -197,12 +197,6 @@ class _Widget(CommandObject, configurable.Configurable):
             return self.bar.height
         return self.length
 
-    @property
-    def offset(self):
-        if self.bar.horizontal:
-            return self.offsetx
-        return self.offsety
-
     def _test_orientation_compatibility(self, horizontal):
         if horizontal:
             if not self.orientations & ORIENTATION_HORIZONTAL:
@@ -269,7 +263,7 @@ class _Widget(CommandObject, configurable.Configurable):
         """Info for this object."""
         return dict(
             name=self.name,
-            offset=self.offset,
+            offset=self.offsetx if self.bar.horizontal else self.offsety,
             length=self.length,
             width=self.width,
             height=self.height,
@@ -318,6 +312,12 @@ class _Widget(CommandObject, configurable.Configurable):
             return self.bar
         elif name == "screen":
             return self.bar.screen
+
+    def draw_at_default_position(self):
+        """Default position to draw the widget in horizontal and vertical bars."""
+        self.drawer.draw(
+            offsetx=self.offsetx, offsety=self.offsety, width=self.width, height=self.height
+        )
 
     def draw(self):
         """
@@ -674,9 +674,7 @@ class _TextBox(_Widget):
         )
         self.drawer.ctx.restore()
 
-        self.drawer.draw(
-            offsetx=self.offsetx, offsety=self.offsety, width=self.width, height=self.height
-        )
+        self.draw_at_default_position()
 
         # We only want to scroll if:
         # - User has asked us to scroll and the scroll width is smaller than the layout (should_scroll=True)
@@ -980,7 +978,7 @@ class Mirror(_Widget):
             return
         self.drawer.clear_rect()
         self.reflects.drawer.paint_to(self.drawer)
-        self.drawer.draw(offsetx=self.offset, offsety=self.offsety, width=self.width)
+        self.draw_at_default_position()
 
     def button_press(self, x, y, button):
         self.reflects.button_press(x, y, button)

@@ -3,7 +3,7 @@ name: Nix Flake Check
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
 
 jobs:
