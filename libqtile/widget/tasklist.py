@@ -265,18 +265,6 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         return f"{state}{window_name}"
 
     @property
-    def padding_side(self):
-        if self.bar.horizontal:
-            return self.padding_x
-        return self.padding_y
-
-    @property
-    def padding_top(self):
-        if self.bar.horizontal:
-            return self.padding_y
-        return self.padding_x
-
-    @property
     def windows(self):
         if self.qtile.core.name == "x11":
             windows = []
@@ -460,7 +448,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         self.drawtext(text, textcolor, width)
 
         icon_padding = (self.icon_size + self.padding_side) if icon else 0
-        padding_x = [self.padding_side + icon_padding, self.padding_side]
+        pad_x = [self.padding_side + icon_padding, self.padding_side]
 
         if bordercolor is None:
             # border colour is set to None when we don't want to draw a border at all
@@ -472,7 +460,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             border_width = self.borderwidth
             framecolor = bordercolor
 
-        framed = self.layout.framed(border_width, framecolor, padding_x, self.padding_top)
+        framed = self.layout.framed(border_width, framecolor, pad_x, self.padding_top)
         if block and bordercolor is not None:
             framed.draw_fill(offset, self.margin_top, rounded)
         else:
