@@ -55,16 +55,22 @@ class CurrentLayout(base._TextBox):
     """
 
     defaults = [
-        ("icon_first", False, "Should draw icon or text when bar is initialized."),
-        ("scale", 1, "Scale factor relative to the bar height. Defaults to 1"),
+        ("icon_first", True, "When ``mode='both'``, the icon will display before the text."),
+        (
+            "mode",
+            "text",
+            "Display only the name of the layout with ``text`` "
+            "or only the icon of the layout with ``icon``. "
+            "Altenatively display the two in order with ``both``",
+        ),
+        ("scale", 1, "Icon's scale factor relative to the bar height."),
         (
             "custom_icon_paths",
             [],
-            "List of folders where to search icons before"
-            "using built-in icons or icons in ~/.icons dir.  "
-            "This can also be used to provide"
-            "missing icons for custom layouts.  "
-            "Defaults to empty list.",
+            "List of folders where to search icons before "
+            "using built-in icons or icons in ~/.icons dir. "
+            "This can also be used to provide "
+            "missing icons for custom layouts.",
         ),
     ]
 
@@ -76,6 +82,7 @@ class CurrentLayout(base._TextBox):
         self.img_length = 0
 
     def _configure(self, qtile, bar):
+        assert self.mode in ("text", "icon", "both")
         base._TextBox._configure(self, qtile, bar)
         layout_id = self.bar.screen.group.current_layout
         self.text = self.bar.screen.group.layouts[layout_id].name
@@ -98,7 +105,14 @@ class CurrentLayout(base._TextBox):
         return self.text
 
     def calculate_length(self):
-        return self.img_length if self.icon_first else base._TextBox.calculate_length(self)
+        if self.mode == "text":
+            return base._TextBox.calculate_length(self)
+        elif self.mode == "icon":
+            return self.img_length
+        else:  # both
+            if not self.bar.horizontal and not self.rotate:
+                return max(base._TextBox.calculate_length(self), self.img_length)
+            return base._TextBox.calculate_length(self) + self.img_length
 
     def hook_response(self, layout, group):
         if group.screen is not None and group.screen == self.bar.screen:
@@ -118,11 +132,16 @@ class CurrentLayout(base._TextBox):
         hook.unsubscribe.layout_change(self.hook_response)
 
     def change_draw_method(self):
-        self.icon_first = not self.icon_first
+        if self.mode == "both":
+            return
+        self.mode = "text" if self.mode != "text" else "icon"
         self.bar.draw()
 
     def draw(self):
-        self.draw_icon() if self.icon_first else base._TextBox.draw(self)
+        if self.mode != "text":
+            self.draw_icon()
+        else:
+            base._TextBox.draw(self)
 
     def draw_icon(self):
         if not self.icons_loaded:
@@ -135,9 +154,44 @@ class CurrentLayout(base._TextBox):
 
         self.drawer.clear(self.background or self.bar.background)
         self.drawer.ctx.save()
+        self.rotate_drawer()
+
+        translatex, translatey = self.width, self.height
+
+        if self.mode == "both":
+            if self.bar.horizontal:
+                height = self.bar.height
+                if self.icon_first:
+                    # text right, icon left
+                    x = self.actual_padding + self.img_length
+                    translatex -= base._TextBox.calculate_length(self)
+                else:
+                    # text left, icon right
+                    x = self.actual_padding
+                    translatex += base._TextBox.calculate_length(self)
+            elif self.rotate:
+                height = self.bar.width
+                if self.icon_first:
+                    # text top, icon bottom
+                    x = self.actual_padding + self.img_length
+                    translatey -= base._TextBox.calculate_length(self)
+                else:
+                    # text bottom, icon top
+                    x = self.actual_padding
+                    translatey += base._TextBox.calculate_length(self)
+            else:
+                # center text in the layout or in the icon
+                height = max(self.layout.height + self.actual_padding * 2, self.img_length - 2)
+                x = self.actual_padding
+
+            self.layout.draw(x, int(height / 2 - self.layout.height / 2) + 1)
+
+        if not self.bar.horizontal and self.rotate:
+            translatex, translatey = translatey, translatex
+
         self.drawer.ctx.translate(
-            (self.width - surface.width) / 2,
-            (self.height - surface.height) / 2,
+            (translatex - surface.width) / 2,
+            (translatey - surface.height) / 2,
         )
         self.drawer.ctx.set_source(surface.pattern)
         self.drawer.ctx.paint()
