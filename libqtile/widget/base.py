@@ -567,7 +567,7 @@ class _TextBox(_Widget):
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
         if self.fontsize is None:
-            self.fontsize = self.bar.height - self.bar.height / 5
+            self.fontsize = self.bar.size - self.bar.size / 5
         if self.direction not in ("default", "ttb", "btt"):
             logger.warning(
                 "Invalid value set for direction: %s. Valid values are: 'default', 'ttb', 'btt'. "
@@ -626,16 +626,11 @@ class _TextBox(_Widget):
             self._should_scroll = False
 
     def calculate_length(self):
-        if self.text:
-            if self.bar.horizontal:
-                return min(self.layout.width, self.bar.width) + self.actual_padding * 2
-            else:
-                if self.rotate:
-                    return min(self.layout.width, self.bar.height) + self.actual_padding * 2
-                else:
-                    return self.layout.height + self.actual_padding * 2
-        else:
+        if not self.text:
             return 0
+        if not self.bar.horizontal and not self.rotate:
+            return self.layout.height + self.actual_padding * 2
+        return min(self.layout.width, self.bar.length) + self.actual_padding * 2
 
     def can_draw(self):
         return self.layout is not None
@@ -671,17 +666,14 @@ class _TextBox(_Widget):
             )
             self.drawer.ctx.clip()
 
-        if self.bar.horizontal:
-            size = self.bar.height
+        if not self.bar.horizontal and not self.rotate:
+            height = self.layout.height + self.actual_padding * 2
         else:
-            if self.rotate:
-                size = self.bar.width
-            else:
-                size = self.layout.height + self.actual_padding * 2
+            height = self.bar.size
 
         self.layout.draw(
             (self.actual_padding or 0) - self._scroll_offset,
-            int(size / 2.0 - self.layout.height / 2.0) + 1,
+            int(height / 2 - self.layout.height / 2) + 1,
         )
         self.drawer.ctx.restore()
 

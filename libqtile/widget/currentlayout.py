@@ -158,8 +158,8 @@ class CurrentLayout(base._TextBox):
         translatex, translatey = self.width, self.height
 
         if self.mode == "both":
+            y = (self.bar.size - self.layout.height) / 2 + 1
             if self.bar.horizontal:
-                height = self.bar.height
                 if self.icon_first:
                     # padding - icon - padding - text - padding
                     x = self.actual_padding + self.img_length + self.actual_padding
@@ -169,7 +169,6 @@ class CurrentLayout(base._TextBox):
                     x = self.actual_padding
                     translatex += base._TextBox.calculate_length(self) - self.actual_padding
             elif self.rotate:
-                height = self.bar.width
                 if self.icon_first:
                     # padding - icon - padding - text - padding
                     x = self.actual_padding + self.img_length + self.actual_padding
@@ -182,17 +181,14 @@ class CurrentLayout(base._TextBox):
                 x = 0
                 if self.icon_first:
                     # padding - icon - padding - text - padding
-                    height = self.actual_padding + self.img_length + self.actual_padding
+                    y = self.actual_padding + self.img_length + self.actual_padding
                     translatey -= base._TextBox.calculate_length(self) - self.actual_padding
                 else:
                     # padding - text - padding - icon - padding
-                    height = self.actual_padding
+                    y = self.actual_padding
                     translatey += base._TextBox.calculate_length(self) - self.actual_padding
-                # neutralize all math in the layout.draw() below
-                # to simulate starting height from zero
-                height = (height * 2) + self.layout.height - 2
 
-            self.layout.draw(x, int(height / 2 - self.layout.height / 2) + 1)
+            self.layout.draw(x, y)
 
         if not self.bar.horizontal and self.rotate:
             translatex, translatey = translatey, translatex
@@ -247,9 +243,7 @@ class CurrentLayout(base._TextBox):
         """
         Loads layout icons.
         """
-        width = (self.bar.width - 2) * self.scale if not self.bar.horizontal else None
-        height = (self.bar.height - 2) * self.scale if self.bar.horizontal else None
-
+        new_height = (self.bar.size - 2) * self.scale
         for names in self._get_layout_names():
             layout_name = names[0]
             # Python doesn't have an ordered set but we can use a dictionary instead
@@ -267,9 +261,10 @@ class CurrentLayout(base._TextBox):
 
             img = Img.from_path(icon_file_path)
 
-            img.resize(width=width, height=height)
-            if img.width > self.img_length:
-                self.img_length = img.width
+            img.resize(height=new_height)
+            img_length = img.width if self.bar.horizontal else img.height
+            if img_length > self.img_length:
+                self.img_length = img_length
 
             self.surfaces[layout_name] = img
 

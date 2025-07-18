@@ -84,11 +84,6 @@ class LaunchBar(base._Widget):
         ("text_only", False, "Don't use any icons."),
         ("icon_size", None, "Size of icons. ``None`` to fit to bar."),
         (
-            "padding_y",
-            0,
-            "Vertical adjustment for icons (horizontal adjustment on vertical bars).",
-        ),
-        (
             "theme_path",
             None,
             "Path to icon theme to be used by pyxdg for icons. ``None`` will use default icon theme.",
@@ -96,9 +91,7 @@ class LaunchBar(base._Widget):
         ("markup", False, "Whether to allow markup in text label."),
     ]
 
-    def __init__(
-        self, _progs: list[tuple[str, str, str]] | None = None, width=bar.CALCULATED, **config
-    ):
+    def __init__(self, _progs: list[tuple[str, str, str]] | None = None, width=0, **config):
         base._Widget.__init__(self, width, **config)
         self.add_defaults(LaunchBar.defaults)
         self.surfaces: dict[str, Img | TextLayout] = {}
@@ -130,37 +123,19 @@ class LaunchBar(base._Widget):
         self.length_type = bar.STATIC
         self.length = 0
 
-    @property
-    def actual_padding(self):
-        if self.padding is None:
-            return self.fontsize // 2
-        else:
-            return self.padding
-
-    @property
-    def widget_height(self):
-        if self.bar.horizontal:
-            return self.height
-        return self.width
-
-    @property
-    def widget_width(self):
-        if self.bar.horizontal:
-            return self.width
-        return self.height
-
     def _configure(self, qtile, pbar):
         base._Widget._configure(self, qtile, pbar)
         if self.fontsize is None:
-            self.fontsize = self.widget_height - self.widget_height / 5
+            self.fontsize = self.bar.size - self.bar.size / 5
         self.lookup_icons()
         self.setup_images()
         self.length = self.calculate_length()
 
     def setup_images(self):
         """Create image structures for each icon files."""
-        self._icon_size = self.icon_size if self.icon_size is not None else self.widget_height - 4
-        self._icon_padding = (self.widget_height - self._icon_size) // 2
+        if self.icon_size is None:
+            self._icon_size = self.bar.size - 4
+        self._icon_padding = (self.bar.size - self._icon_size) // 2
 
         for img_name, iconfile in self.icons_files.items():
             if iconfile is None or self.text_only:
@@ -181,7 +156,7 @@ class LaunchBar(base._Widget):
                     self.fontshadow,
                     markup=self.markup,
                 )
-                self.icons_widths[img_name] = textbox.width + 2 * self.actual_padding
+                self.icons_widths[img_name] = textbox.width + 2 * self.padding
                 self.surfaces[img_name] = textbox
                 continue
             else:
@@ -249,11 +224,10 @@ class LaunchBar(base._Widget):
         """Determine which icon is clicked according to its position."""
         if self.bar.horizontal:
             pos = x
+        elif self.bar.screen.left is self.bar:
+            pos = self.length - y
         else:
-            if self.bar.screen.left is self.bar:
-                pos = self.widget_width - y
-            else:
-                pos = y
+            pos = y
         for i in self.progs:
             if pos < (
                 self.icons_offsets[i]
@@ -292,14 +266,11 @@ class LaunchBar(base._Widget):
             if isinstance(self.surfaces[name], TextLayout):
                 # display the name if no icon was found and no default icon
                 textbox = self.surfaces[name]
-                textbox.draw(
-                    self.padding + self.actual_padding,
-                    int((self.widget_height - textbox.height) / 2.0) + 1,
-                )
+                textbox.draw(self.padding, int((self.bar.size - textbox.height) / 2) + 1)
             else:
                 # display an icon
                 # Translate to vertically centre the icon
-                self.drawer.ctx.translate(0, self._icon_padding + self.padding_y)
+                self.drawer.ctx.translate(0, self._icon_padding)
                 self.drawer.ctx.set_source(self.surfaces[name])
                 self.drawer.ctx.paint()
 

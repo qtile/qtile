@@ -126,17 +126,16 @@ class StatusNotifier(base._Widget):
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
-        xoffset = self.padding if self.bar.horizontal else (self.bar.width - self.icon_size) // 2
-        yoffset = (self.bar.height - self.icon_size) // 2 if self.bar.horizontal else self.padding
+        xoffset = self.padding
+        yoffset = (self.bar.size - self.icon_size) // 2
 
         for item in self.available_icons:
             icon = item.get_icon(self.icon_size)
-            self._draw_icon(icon, xoffset, yoffset)
-
             if self.bar.horizontal:
-                xoffset += self.icon_size + self.padding
+                self._draw_icon(icon, xoffset, yoffset)
             else:
-                yoffset += self.icon_size + self.padding
+                self._draw_icon(icon, yoffset, xoffset)
+            xoffset += self.icon_size + self.padding
 
         self.draw_at_default_position()
 

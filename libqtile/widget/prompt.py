@@ -504,13 +504,6 @@ class Prompt(base._TextBox):
             self.completer_history = self.history[complete]
             self.position = len(self.completer_history)
 
-    def calculate_length(self) -> int:
-        if self.text:
-            width = min(self.layout.width, self.bar.width) + self.actual_padding * 2
-            return width
-        else:
-            return 0
-
     def _blink(self) -> None:
         self.show_cursor = not self.show_cursor
         self._update()

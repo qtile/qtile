@@ -55,13 +55,9 @@ class Gap:
     """
 
     def __init__(self, size: int) -> None:
-        # 'size' corresponds to the height of a horizontal gap, or the width
-        # of a vertical gap
-        self._size = size
-        self._initial_size = size
-        # '_length' corresponds to the width of a horizontal gap, or the height
-        # of a vertical gap
-        self._length: int = 0
+        self.length: int = 0  # width of a horizontal gap or the height of a vertical gap
+        self.size: int = size  # height of a horizontal gap or the width of a vertical gap
+        self.fullsize: int = size  # sum of 'size' and margins
         self.qtile: Qtile | None = None
         self.screen: Screen | None = None
         self.x: int = 0
@@ -77,41 +73,41 @@ class Gap:
     def _configure(self, qtile: Qtile, screen: Screen, reconfigure: bool = False) -> None:
         self.qtile = qtile
         self.screen = screen
-        self._size = self._initial_size
+        self.fullsize = self.size
         # If both horizontal and vertical gaps are present, screen corners are
         # given to the horizontal ones
         if screen.top is self:
             self.x = screen.x + self.margin[3]
             self.y = screen.y + self.margin[0]
-            self._length = screen.width - self.margin[1] - self.margin[3]
-            self.width = self._length
-            self.height = self._initial_size
+            self.length = screen.width - self.margin[1] - self.margin[3]
+            self.width = self.length
+            self.height = self.size
             self.horizontal = True
-            self._size += self.margin[0] + self.margin[2]
+            self.fullsize += self.margin[0] + self.margin[2]
         elif screen.bottom is self:
             self.x = screen.x + self.margin[3]
             self.y = screen.dy + screen.dheight - self.margin[2]
-            self._length = screen.width - self.margin[1] - self.margin[3]
-            self.width = self._length
-            self.height = self._initial_size
+            self.length = screen.width - self.margin[1] - self.margin[3]
+            self.width = self.length
+            self.height = self.size
             self.horizontal = True
-            self._size += self.margin[0] + self.margin[2]
+            self.fullsize += self.margin[0] + self.margin[2]
         elif screen.left is self:
             self.x = screen.x + self.margin[3]
             self.y = screen.dy + self.margin[0]
-            self._length = screen.dheight - self.margin[0] - self.margin[2]
-            self.width = self._initial_size
-            self.height = self._length
+            self.length = screen.dheight - self.margin[0] - self.margin[2]
+            self.width = self.size
+            self.height = self.length
             self.horizontal = False
-            self._size += self.margin[1] + self.margin[3]
+            self.fullsize += self.margin[1] + self.margin[3]
         else:  # right
             self.x = screen.dx + screen.dwidth - self.margin[1]
             self.y = screen.dy + self.margin[0]
-            self._length = screen.dheight - self.margin[0] - self.margin[2]
-            self.width = self._initial_size
-            self.height = self._length
+            self.length = screen.dheight - self.margin[0] - self.margin[2]
+            self.width = self.size
+            self.height = self.length
             self.horizontal = False
-            self._size += self.margin[1] + self.margin[3]
+            self.fullsize += self.margin[1] + self.margin[3]
 
     def draw(self) -> None:
         pass
@@ -121,11 +117,6 @@ class Gap:
 
     def geometry(self) -> tuple[int, int, int, int]:
         return (self.x, self.y, self.width, self.height)
-
-    @property
-    def size(self) -> int:
-        # Enforce immutability of gap.size/bar.size
-        return self._size
 
     @property
     def position(self) -> str:
@@ -259,8 +250,8 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 if self.horizontal:
                     self.x += margin[3] - self.border_width[3]
                     self.width -= margin[1] + margin[3]
-                    self._length = self.width
-                    self._size += margin[0] + margin[2]
+                    self.length = self.width
+                    self.fullsize += margin[0] + margin[2]
                     if screen.top is self:
                         self.y += margin[0] - self.border_width[0]
                     else:
@@ -269,8 +260,8 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 else:
                     self.y += margin[0] - self.border_width[0]
                     self.height -= margin[0] + margin[2]
-                    self._length = self.height
-                    self._size += margin[1] + margin[3]
+                    self.length = self.height
+                    self.fullsize += margin[1] + margin[3]
                     if screen.left is self:
                         self.x += margin[3] - self.border_width[3]
                     else:
@@ -363,7 +354,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
         self._remove_crashed_widgets(crashed_widgets)
         self.draw()
-        self._resize(self._length, self.widgets)
+        self._resize(self.length, self.widgets)
         self._configured = True
 
     def _configure_widget(self, widget: _Widget) -> bool:
@@ -619,7 +610,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
     def _actual_draw(self) -> None:
         self._draw_queued = False
-        self._resize(self._length, self.widgets)
+        self._resize(self.length, self.widgets)
         # We draw the border before the widgets
         if any(self.border_width):
             # The border is drawn "outside" of the bar (i.e. not in the space that the
@@ -677,13 +668,13 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         # We do this, instead of just filling the bar completely at the start of this
         # method to avoid flickering.
 
-        # Widgets are offset by the top/left border but this is not included in self._length
+        # Widgets are offset by the top/left border but this is not included in self.length
         # so we adjust the end of the bar area for this offset
         if self.horizontal:
-            bar_end = self._length + self.border_width[3]
+            bar_end = self.length + self.border_width[3]
             widget_end = i.offsetx + i.length
         else:
-            bar_end = self._length + self.border_width[0]
+            bar_end = self.length + self.border_width[0]
             widget_end = i.offsety + i.length
 
         if widget_end < bar_end:
@@ -705,8 +696,9 @@ class Bar(Gap, configurable.Configurable, CommandObject):
     @expose_command()
     def info(self) -> dict[str, Any]:
         return dict(
-            size=self._size,
-            length=self._length,
+            length=self.length,
+            size=self.size,
+            fullsize=self.fullsize,
             width=self.width,
             height=self.height,
             position=self.position,
@@ -715,26 +707,26 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         )
 
     def is_show(self) -> bool:
-        return self._size != 0
+        return self.fullsize != 0
 
     def show(self, is_show: bool = True) -> None:
         if is_show != self.is_show():
             if is_show:
-                self._size = self._saved_size
+                self.fullsize = self._saved_size
                 if self.window:
                     self.window.unhide()
             else:
-                self._saved_size = self._size
-                self._size = 0
+                self._saved_size = self.fullsize
+                self.fullsize = 0
                 if self.window:
                     self.window.hide()
             if self.screen and self.screen.group:
                 self.screen.group.layout_all()
 
     def adjust_reserved_space(self, size: int) -> None:
-        if self._size:
+        if self.fullsize:
             # is this necessary?
-            self._size = self._initial_size
+            self.fullsize = self.size
 
         for i, side in enumerate(NESW):
             if getattr(self.screen, side) is self:

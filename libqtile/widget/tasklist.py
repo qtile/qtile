@@ -260,18 +260,6 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         return f"{state}{window_name}"
 
     @property
-    def widget_height(self):
-        if self.bar.horizontal:
-            return self.height
-        return self.width
-
-    @property
-    def widget_width(self):
-        if self.bar.horizontal:
-            return self.width
-        return self.height
-
-    @property
     def padding_side(self):
         if self.bar.horizontal:
             return self.padding_x
@@ -309,8 +297,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
     @property
     def max_width(self):
-        width = self.bar.width if self.bar.horizontal else self.bar.height
-        width -= sum(
+        width = self.bar.length - sum(
             w.length
             for w in self.bar.widgets
             if w is not self and w.length_type != libqtile.bar.STRETCH
@@ -408,14 +395,11 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             self.icon_size = 0
 
         if self.icon_size is None:
-            self.icon_size = self.widget_height - 2 * (self.borderwidth + self.margin_top)
+            self.icon_size = self.bar.size - 2 * (self.borderwidth + self.margin_top)
 
         if self.fontsize is None:
             calc = (
-                self.widget_height
-                - self.margin_top * 2
-                - self.borderwidth * 2
-                - self.padding_top * 2
+                self.bar.size - self.margin_top * 2 - self.borderwidth * 2 - self.padding_top * 2
             )
             self.fontsize = max(calc, 1)
 
@@ -508,11 +492,10 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         box_start = self.margin_side
         if self.bar.horizontal:
             pos = x
+        elif self.bar.screen.left is self.bar:
+            pos = self.length - y
         else:
-            if self.bar.screen.left is self.bar:
-                pos = self.widget_width - y
-            else:
-                pos = y
+            pos = y
         for box_end, win in zip(self._box_end_positions, self.windows):
             if box_start <= pos <= box_end:
                 return win

@@ -551,31 +551,31 @@ class Screen(CommandObject):
     @property
     def dx(self) -> int:
         if self.left and getattr(self.left, "reserve", True):
-            return self.x + self.left.size
+            return self.x + self.left.fullsize
         return self.x
 
     @property
     def dy(self) -> int:
         if self.top and getattr(self.top, "reserve", True):
-            return self.y + self.top.size
+            return self.y + self.top.fullsize
         return self.y
 
     @property
     def dwidth(self) -> int:
         val = self.width
         if self.left and getattr(self.left, "reserve", True):
-            val -= self.left.size
+            val -= self.left.fullsize
         if self.right and getattr(self.right, "reserve", True):
-            val -= self.right.size
+            val -= self.right.fullsize
         return val
 
     @property
     def dheight(self) -> int:
         val = self.height
         if self.top and getattr(self.top, "reserve", True):
-            val -= self.top.size
+            val -= self.top.fullsize
         if self.bottom and getattr(self.bottom, "reserve", True):
-            val -= self.bottom.size
+            val -= self.bottom.fullsize
         return val
 
     def get_rect(self) -> ScreenRect:
