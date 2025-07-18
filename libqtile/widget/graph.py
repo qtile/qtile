@@ -52,15 +52,13 @@ __all__ = [
 ]
 
 
-class _Graph(base._Widget):
+class _Graph(base._Widget, base.MarginMixin):
     fixed_upper_bound = False
     defaults = [
         ("graph_color", "18BAEB", "Graph color"),
         ("fill_color", "1667EB.3", "Fill color for linefill graph"),
         ("border_color", "215578", "Widget border color"),
         ("border_width", 2, "Widget border width"),
-        ("margin_x", 3, "Margin X"),
-        ("margin_y", 3, "Margin Y"),
         ("samples", 100, "Count of graph samples."),
         ("frequency", 1, "Update frequency in seconds"),
         ("type", "linefill", "'box', 'line', 'linefill'"),
@@ -71,6 +69,7 @@ class _Graph(base._Widget):
     def __init__(self, width=100, **config):
         base._Widget.__init__(self, width, **config)
         self.add_defaults(_Graph.defaults)
+        self.add_defaults(base.MarginMixin.defaults)
         self.values = [0] * self.samples
         self.maxvalue = 0
         self.oldtime = time.time()
