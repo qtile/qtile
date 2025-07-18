@@ -100,7 +100,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             "   return text"
             "then set option parse_text=my_func",
         ),
-        ("spacing", None, "Spacing between tasks.(if set to None, will be equal to margin_x)"),
+        (
+            "spacing",
+            None,
+            "Spacing between tasks. If set to None, defaults to margin_x in "
+            "horizontal bars and margin_y in vertical bars.",
+        ),
         (
             "txt_minimized",
             "_ ",
@@ -270,18 +275,6 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if self.bar.horizontal:
             return self.padding_y
         return self.padding_x
-
-    @property
-    def margin_side(self):
-        if self.bar.horizontal:
-            return self.margin_x
-        return self.margin_y
-
-    @property
-    def margin_top(self):
-        if self.bar.horizontal:
-            return self.margin_y
-        return self.margin_x
 
     @property
     def windows(self):

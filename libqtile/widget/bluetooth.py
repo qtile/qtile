@@ -273,7 +273,7 @@ class BluetoothAdapter(_BluetoothBase):
             self.widget.refresh()
 
 
-class Bluetooth(base._TextBox, base.MarginMixin):
+class Bluetooth(base._TextBox):
     """
     Bluetooth widget that provides following functionality:
     - View multiple adapters/devices (adapters can be filtered)
@@ -360,7 +360,6 @@ class Bluetooth(base._TextBox, base.MarginMixin):
     def __init__(self, **config):
         base._TextBox.__init__(self, **config)
         self.add_defaults(Bluetooth.defaults)
-        self.add_defaults(base.MarginMixin.defaults)
         self.connected = False
         self.bus = None
         self.devices = {}

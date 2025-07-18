@@ -68,7 +68,7 @@ class Image(base._Widget, base.MarginMixin):
         img.theta = self.rotate
         if not self.scale:
             return
-        new_height = self.bar.size - 2
+        new_height = self.bar.size - (self.margin_top * 2)
         img.resize(height=new_height)
 
     def draw(self):
@@ -86,11 +86,8 @@ class Image(base._Widget, base.MarginMixin):
     def calculate_length(self):
         if self.img is None:
             return 0
-
-        if self.bar.horizontal:
-            return self.img.width + (self.margin_x * 2)
-        else:
-            return self.img.height + (self.margin_y * 2)
+        img_length = self.img.width if self.bar.horizontal else self.img.height
+        return img_length + (self.margin_side * 2)
 
     @expose_command()
     def update(self, filename):

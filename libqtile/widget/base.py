@@ -923,6 +923,18 @@ class MarginMixin(configurable.Configurable):
     margin_x = configurable.ExtraFallback("margin_x", "margin")
     margin_y = configurable.ExtraFallback("margin_y", "margin")
 
+    @property
+    def margin_side(self):
+        if self.bar.horizontal:
+            return self.margin_x
+        return self.margin_y
+
+    @property
+    def margin_top(self):
+        if self.bar.horizontal:
+            return self.margin_y
+        return self.margin_x
+
 
 class Mirror(_Widget):
     """
