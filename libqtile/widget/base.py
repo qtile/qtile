@@ -905,6 +905,18 @@ class PaddingMixin(configurable.Configurable):
     padding_x = configurable.ExtraFallback("padding_x", "padding")
     padding_y = configurable.ExtraFallback("padding_y", "padding")
 
+    @property
+    def padding_side(self):
+        if self.bar.horizontal:
+            return self.padding_x
+        return self.padding_y
+
+    @property
+    def padding_top(self):
+        if self.bar.horizontal:
+            return self.padding_y
+        return self.padding_x
+
 
 class MarginMixin(configurable.Configurable):
     """Mixin that provides margin(_x|_y|)
