@@ -52,15 +52,13 @@ __all__ = [
 ]
 
 
-class _Graph(base._Widget):
+class _Graph(base._Widget, base.MarginMixin):
     fixed_upper_bound = False
     defaults = [
         ("graph_color", "18BAEB", "Graph color"),
         ("fill_color", "1667EB.3", "Fill color for linefill graph"),
         ("border_color", "215578", "Widget border color"),
         ("border_width", 2, "Widget border width"),
-        ("margin_x", 3, "Margin X"),
-        ("margin_y", 3, "Margin Y"),
         ("samples", 100, "Count of graph samples."),
         ("frequency", 1, "Update frequency in seconds"),
         ("type", "linefill", "'box', 'line', 'linefill'"),
@@ -86,11 +84,11 @@ class _Graph(base._Widget):
 
     @property
     def graphwidth(self):
-        return self.width - self.border_width * 2 - self.margin_x * 2
+        return self.width - self.margin_x * 2 - self.border_width * 2
 
     @property
     def graphheight(self):
-        return self.bar.height - self.margin_y * 2 - self.border_width * 2
+        return self.height - self.margin_y * 2 - self.border_width * 2
 
     def step(self):
         return self.graphwidth / float(self.samples)
@@ -155,7 +153,7 @@ class _Graph(base._Widget):
                 self.margin_x + self.border_width / 2.0,
                 self.margin_y + self.border_width / 2.0,
                 self.graphwidth + self.border_width,
-                self.bar.height - self.margin_y * 2 - self.border_width,
+                self.graphheight - self.border_width,
             )
             self.drawer.ctx.stroke()
         x = self.margin_x + self.border_width

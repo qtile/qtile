@@ -70,6 +70,10 @@ class _BluetoothBase:
         self.properties.on_properties_changed(self.properties_changed)
         self._name = ""
 
+    @property
+    def name(self):
+        return self._name
+
     def __repr__(self):
         """Neater repr to help debugging."""
         return f"<{self.__class__.__name__}: {self.name} ({self.path})>"
@@ -126,10 +130,6 @@ class BluetoothDevice(_BluetoothBase):
             await self.connect()
         elif not self.paired:
             await self.pair_and_connect()
-
-    @property
-    def name(self):
-        return self._name
 
     @property
     def connected(self):
@@ -258,10 +258,6 @@ class BluetoothAdapter(_BluetoothBase):
     def powered(self):
         return self._powered
 
-    @property
-    def name(self):
-        return self._name
-
     async def discover(self):
         if self.discovering:
             await self.stop_discovery()
@@ -277,7 +273,7 @@ class BluetoothAdapter(_BluetoothBase):
             self.widget.refresh()
 
 
-class Bluetooth(base._TextBox, base.MarginMixin):
+class Bluetooth(base._TextBox):
     """
     Bluetooth widget that provides following functionality:
     - View multiple adapters/devices (adapters can be filtered)
@@ -364,7 +360,6 @@ class Bluetooth(base._TextBox, base.MarginMixin):
     def __init__(self, **config):
         base._TextBox.__init__(self, **config)
         self.add_defaults(Bluetooth.defaults)
-        self.add_defaults(base.MarginMixin.defaults)
         self.connected = False
         self.bus = None
         self.devices = {}

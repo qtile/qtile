@@ -159,6 +159,13 @@ class _Widget(CommandObject, configurable.Configurable):
             self.name = config["name"]
 
         configurable.Configurable.__init__(self, **config)
+
+        # Add defaults for Mixins if inherited
+        if isinstance(self, PaddingMixin):
+            self.add_defaults(PaddingMixin.defaults)
+        if isinstance(self, MarginMixin):
+            self.add_defaults(MarginMixin.defaults)
+
         self.add_defaults(_Widget.defaults)
 
         if length in (bar.CALCULATED, bar.STRETCH):
@@ -548,7 +555,7 @@ class _TextBox(_Widget):
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
         if self.fontsize is None:
-            self.fontsize = self.bar.height - self.bar.height / 5
+            self.fontsize = self.bar.size - self.bar.size / 5
         if self.direction not in ("default", "ttb", "btt"):
             logger.warning(
                 "Invalid value set for direction: %s. Valid values are: 'default', 'ttb', 'btt'. "
@@ -607,16 +614,11 @@ class _TextBox(_Widget):
             self._should_scroll = False
 
     def calculate_length(self):
-        if self.text:
-            if self.bar.horizontal:
-                return min(self.layout.width, self.bar.width) + self.actual_padding * 2
-            else:
-                if self.rotate:
-                    return min(self.layout.width, self.bar.height) + self.actual_padding * 2
-                else:
-                    return self.layout.height + self.actual_padding * 2
-        else:
+        if not self.text:
             return 0
+        if not self.bar.horizontal and not self.rotate:
+            return self.layout.height + self.actual_padding * 2
+        return min(self.layout.width, self.bar.length) + self.actual_padding * 2
 
     def can_draw(self):
         can_draw = (
@@ -660,17 +662,14 @@ class _TextBox(_Widget):
             )
             self.drawer.ctx.clip()
 
-        if self.bar.horizontal:
-            size = self.bar.height
+        if not self.bar.horizontal and not self.rotate:
+            height = self.layout.height + self.actual_padding * 2
         else:
-            if self.rotate:
-                size = self.bar.width
-            else:
-                size = self.layout.height + self.actual_padding * 2
+            height = self.bar.size
 
         self.layout.draw(
             (self.actual_padding or 0) - self._scroll_offset,
-            int(size / 2.0 - self.layout.height / 2.0) + 1,
+            int(height / 2 - self.layout.height / 2) + 1,
         )
         self.drawer.ctx.restore()
 
@@ -886,12 +885,7 @@ class ThreadPoolText(_TextBox):
 
 
 class PaddingMixin(configurable.Configurable):
-    """Mixin that provides padding(_x|_y|)
-
-    To use it, subclass and add this to __init__:
-
-        self.add_defaults(base.PaddingMixin.defaults)
-    """
+    """Mixin that provides padding(_x|_y|)."""
 
     defaults = [
         ("padding", 3, "Padding inside the box"),
@@ -902,14 +896,21 @@ class PaddingMixin(configurable.Configurable):
     padding_x = configurable.ExtraFallback("padding_x", "padding")
     padding_y = configurable.ExtraFallback("padding_y", "padding")
 
+    @property
+    def padding_side(self):
+        if self.bar.horizontal:
+            return self.padding_x
+        return self.padding_y
+
+    @property
+    def padding_top(self):
+        if self.bar.horizontal:
+            return self.padding_y
+        return self.padding_x
+
 
 class MarginMixin(configurable.Configurable):
-    """Mixin that provides margin(_x|_y|)
-
-    To use it, subclass and add this to __init__:
-
-        self.add_defaults(base.MarginMixin.defaults)
-    """
+    """Mixin that provides margin(_x|_y|)."""
 
     defaults = [
         ("margin", 3, "Margin inside the box"),
@@ -919,6 +920,18 @@ class MarginMixin(configurable.Configurable):
 
     margin_x = configurable.ExtraFallback("margin_x", "margin")
     margin_y = configurable.ExtraFallback("margin_y", "margin")
+
+    @property
+    def margin_side(self):
+        if self.bar.horizontal:
+            return self.margin_x
+        return self.margin_y
+
+    @property
+    def margin_top(self):
+        if self.bar.horizontal:
+            return self.margin_y
+        return self.margin_x
 
 
 class Mirror(_Widget):

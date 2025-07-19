@@ -185,9 +185,7 @@ class CurrentLayout(base._TextBox):
         """
         Loads layout icons.
         """
-        width = (self.bar.width - 2) * self.scale if not self.bar.horizontal else None
-        height = (self.bar.height - 2) * self.scale if self.bar.horizontal else None
-
+        new_height = (self.bar.size - 2) * self.scale
         for names in self._get_layout_names():
             layout_name = names[0]
             # Python doesn't have an ordered set but we can use a dictionary instead
@@ -205,9 +203,10 @@ class CurrentLayout(base._TextBox):
 
             img = Img.from_path(icon_file_path)
 
-            img.resize(width=width, height=height)
-            if img.width > self.img_length:
-                self.img_length = img.width + self.actual_padding * 2
+            img.resize(height=new_height)
+            img_length = img.width if self.bar.horizontal else img.height
+            if img_length > self.img_length:
+                self.img_length = img_length + self.actual_padding * 2
 
             self.surfaces[layout_name] = img
 

@@ -243,21 +243,23 @@ class Systray(base._Widget, window._Window):  # type: ignore[misc]
         return False
 
     def draw(self):
-        offset = self.padding
+        _xoffset = self.offsetx if self.bar.horizontal else self.offsety
+        _yoffset = self.offsety if self.bar.horizontal else self.offsetx
+        xoffset = _xoffset + self.padding
+        yoffset = self.bar.size // 2 - self.icon_size // 2 + _yoffset
         self.drawer.clear(self.background or self.bar.background)
         self.draw_at_default_position()
+
         for pos, icon in enumerate(self.tray_icons):
             icon.window.set_attribute(backpixmap=self.drawer.pixmap)
             if self.bar.horizontal:
-                xoffset = self.offsetx + offset
-                yoffset = self.bar.height // 2 - self.icon_size // 2 + self.offsety
                 step = icon.width
+                icon.place(xoffset, yoffset, icon.width, self.icon_size, 0, None)
             else:
-                xoffset = self.bar.width // 2 - self.icon_size // 2 + self.offsetx
-                yoffset = self.offsety + offset
                 step = icon.height
+                icon.place(yoffset, xoffset, icon.width, self.icon_size, 0, None)
+            xoffset += step + self.padding
 
-            icon.place(xoffset, yoffset, icon.width, self.icon_size, 0, None)
             if icon.hidden:
                 icon.unhide()
                 data = [
@@ -272,8 +274,6 @@ class Systray(base._Widget, window._Window):  # type: ignore[misc]
                     format=32, window=icon.wid, type=self.conn.atoms["_XEMBED"], data=u
                 )
                 self.window.send_event(event)
-
-            offset += step + self.padding
 
     def finalize(self):
         base._Widget.finalize(self)

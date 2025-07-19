@@ -61,8 +61,7 @@ class GBConfig(libqtile.confreader.Config):
                         width=libqtile.bar.STRETCH,
                         type="linefill",
                         border_width=20,
-                        margin_x=1,
-                        margin_y=1,
+                        margin=1,
                     ),
                     libqtile.widget.MemoryGraph(type="line"),
                     libqtile.widget.SwapGraph(type="box"),
@@ -494,15 +493,18 @@ def test_bar_hide_show_with_margin(manager_nospawn):
     manager_nospawn.start(config)
     manager_nospawn.test_window("w")
 
-    assert manager_nospawn.c.bar["top"].info().get("size") == 22
+    assert manager_nospawn.c.bar["top"].info().get("size") == 12
+    assert manager_nospawn.c.bar["top"].info().get("fullsize") == 22
     assert manager_nospawn.c.windows()[0]["y"] == 22
 
     manager_nospawn.c.hide_show_bar("top")
-    assert manager_nospawn.c.bar["top"].info().get("size") == 0
+    assert manager_nospawn.c.bar["top"].info().get("size") == 12
+    assert manager_nospawn.c.bar["top"].info().get("fullsize") == 0
     assert manager_nospawn.c.windows()[0]["y"] == 0
 
     manager_nospawn.c.hide_show_bar("top")
-    assert manager_nospawn.c.bar["top"].info().get("size") == 22
+    assert manager_nospawn.c.bar["top"].info().get("size") == 12
+    assert manager_nospawn.c.bar["top"].info().get("fullsize") == 22
     assert manager_nospawn.c.windows()[0]["y"] == 22
 
 
@@ -671,15 +673,17 @@ def test_bar_border_horizontal(manager_nospawn):
     assert top_info()["width"] == 780
     assert bottom_info()["width"] == 790
 
-    # Bar "height" should still be the value set in the config but "size" is
-    # adjusted for margin and border:
-    # -top bar should have size of 12 + 5 + 5 + 5 + 5 = 32 (margin and border)
-    # -bottom bar should have size of 12 + 5 + 5 = 22 (margin and border)
+    # Bar "height" should still be the value set in the config i.e. "size"
+    # but "fullsize" is adjusted for margin and border:
+    # -top bar should have fullsize of 12 + 5 + 5 + 5 + 5 = 32 (margin and border)
+    # -bottom bar should have fullsize of 12 + 5 + 5 = 22 (margin and border)
 
     assert top_info()["height"] == 12
-    assert top_info()["size"] == 32
+    assert top_info()["size"] == 12
+    assert top_info()["fullsize"] == 32
     assert bottom_info()["height"] == 12
-    assert bottom_info()["size"] == 22
+    assert bottom_info()["size"] == 12
+    assert bottom_info()["fullsize"] == 22
 
     # Test widget offsets
     # Where there is a border, widget should be offset by that amount
@@ -730,15 +734,17 @@ def test_bar_border_vertical(manager_nospawn):
     assert left_info()["height"] == 580
     assert right_info()["height"] == 590
 
-    # Bar "width" should still be the value set in the config but "size" is
-    # adjusted for margin and border:
-    # -left bar should have size of 12 + 5 + 5 + 5 + 5 = 32 (margin and border)
-    # -right bar should have size of 12 + 5 + 5 = 22 (margin and border)
+    # Bar "width" should still be the value set in the config i.e. "size"
+    # but "fullsize" is adjusted for margin and border:
+    # -left bar should have fullsize of 12 + 5 + 5 + 5 + 5 = 32 (margin and border)
+    # -right bar should have fullsize of 12 + 5 + 5 = 22 (margin and border)
 
     assert left_info()["width"] == 12
-    assert left_info()["size"] == 32
+    assert left_info()["size"] == 12
+    assert left_info()["fullsize"] == 32
     assert right_info()["width"] == 12
-    assert right_info()["size"] == 22
+    assert right_info()["size"] == 12
+    assert right_info()["fullsize"] == 22
 
     # Test widget offsets
     # Where there is a border, widget should be offset by that amount
