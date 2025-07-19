@@ -23,7 +23,6 @@
 # SOFTWARE.
 from __future__ import annotations
 
-import math
 import os.path
 
 import cairocffi
@@ -282,19 +281,7 @@ class LaunchBar(base._Widget):
 
         offset = 0
         self.drawer.ctx.save()
-
-        if not self.bar.horizontal:
-            # Left bar reads bottom to top
-            # Can be overriden to read bottom to top all the time with vertical_text_direction
-            if self.bar.screen.left is self.bar:
-                self.drawer.ctx.rotate(-90 * math.pi / 180.0)
-                self.drawer.ctx.translate(-self.length, 0)
-
-            # Right bar is top to bottom
-            # Can be overriden to read top to bottom all the time with vertical_text_direction
-            else:
-                self.drawer.ctx.translate(self.bar.width, 0)
-                self.drawer.ctx.rotate(90 * math.pi / 180.0)
+        self.rotate_drawer()
 
         for i in sorted(self.progs.keys()):
             self.drawer.ctx.save()
@@ -321,7 +308,6 @@ class LaunchBar(base._Widget):
             offset += icon_width + self.padding
 
         self.drawer.ctx.restore()
-
         self.draw_at_default_position()
 
     def calculate_length(self):
