@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from libqtile import hook
+from libqtile import hook, utils
 from libqtile.group import _Group
 from libqtile.core.manager import Qtile
 import libqtile.backend.base.window as base
@@ -350,6 +350,30 @@ class Window(Base, base.Window):
         group.add(self)
         if switch_group:
             group.toscreen(toggle=toggle)
+
+    def _items(self, name: str): # todo: restore return type -> ItemT:
+        if name == "group":
+            return True, []
+        if name == "layout":
+            if self.group:
+                return True, list(range(len(self.group.layouts)))
+            return None
+        if name == "screen":
+            if self.group and self.group.screen:
+                return True, []
+        return None
+
+    def _select(self, name: str, sel: str | int | None): # todo: restore reutrn type -> CommandObject | None:
+        if name == "group":
+            return self.group
+        elif name == "layout":
+            if sel is None:
+                return self.group.layout if self.group else None
+            else:
+                return utils.lget(self.group.layouts, int(sel)) if self.group else None
+        elif name == "screen":
+            return self.group.screen if self.group else None
+        return None
 
     @property
     def group(self) -> _Group | None:
