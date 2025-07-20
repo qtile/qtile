@@ -200,3 +200,160 @@ bootstrap across versions when migrations are deleted if necessary.
 Deprecated interfaces that do not have a migration (i.e. whose deprecation was
 noted before the migration feature was introduced) are all fair game to be
 deleted, since the migration feature is more than two years old.
+
+.. _wayland_contribution:
+
+Recommended Resources for Getting Started with Wayland Development
+===================================================================
+
+Source Code Repositories
+----------------------------
+
+* **wlroots** (https://gitlab.freedesktop.org/wlroots/wlroots)
+
+  Pluggable, composable, unopinionated modules for building a Wayland_ compositor —
+  or about 60,000 lines of code you were going to write anyway.
+
+* **TinyWL** (https://gitlab.freedesktop.org/wlroots/wlroots/-/tree/master/tinywl)
+
+  A minimal Wayland_ compositor built with wlroots.
+  Best starting point for learning wlroots by example.
+
+* **DWL** (https://codeberg.org/dwl/dwl)
+
+  A compact, hackable Wayland_ compositor inspired by ``dwm``.
+  Focused on minimalism and suckless philosophy, built on wlroots.
+
+* **Sway** (https://github.com/swaywm/sway)
+
+  A tiling Wayland_ compositor and drop-in replacement for i3_.
+  Great example of a full-featured, mature compositor built on wlroots_.
+
+* **LabWC** (https://github.com/labwc/labwc)
+
+  A wlroots_-based window-stacking compositor for Wayland_, inspired by Openbox_.
+
+  It is light-weight and independent with a focus on simply stacking windows well and rendering some window decorations. 
+  It takes a no-bling/frills approach and says no to features such as animations. 
+  It relies on clients for panels, screenshots, wallpapers and so on to create a full desktop environment.
+
+* **weston** (https://gitlab.freedesktop.org/wayland/weston/-/tree/main/)
+
+  The reference Wayland compositor. Overengineered for some, but shows "the correct way" to do things.
+
+* **River** (https://github.com/riverwm/river)
+
+  A dynamic tiling Wayland compositor that's minimal, written in C and based on wlroots. Less bloated than sway, more experimental than dwl.
+
+Articles & Documentation
+----------------------------
+
+* **Wayland Architecture Overview** (https://wayland.freedesktop.org/architecture.html) - Official architectural documentation
+* **Protocol Extensions** (https://wayland.app/) - Interactive protocol browser and documentation
+* **wlroots Documentation** (https://gitlab.freedesktop.org/wlroots/wlroots/-/wikis/home) - Official wlroots wiki and docs
+* **The Wayland Book** (https://wayland-book.com/) — *A comprehensive introduction to Wayland and how it works.*
+* **Introduction to Wayland** (https://drewdevault.com/2017/06/10/Introduction-to-Wayland.html) by Drew DeVault
+* **Wayland Compositor Series by Drew DeVault:**
+
+  * `Part 1: Hello wlroots <https://drewdevault.com/2018/02/17/Writing-a-Wayland-compositor-1.html>`_
+  * `Part 2: Rigging up the server <https://drewdevault.com/2018/02/22/Writing-a-wayland-compositor-part-2.html>`_
+  * `Part 3: Rendering a window <https://drewdevault.com/2018/02/28/Writing-a-wayland-compositor-part-3.html>`_
+
+* **Input handling in wlroots** (https://drewdevault.com/2018/07/17/Input-handling-in-wlroots.html)
+* **Wayland Shells** (https://drewdevault.com/2018/07/29/Wayland-shells.html)
+* **Intro to Damage Tracking** (https://emersion.fr/blog/2019/intro-to-damage-tracking/) by emersion
+
+Development Tools
+--------------------
+
+* **wayland-debug** (https://gitlab.freedesktop.org/wayland/wayland/-/tree/main/debug)
+
+  Debugging tool for inspecting Wayland protocol traffic. Invaluable for compositor/client debugging.
+
+* **wayland-protocols** (https://gitlab.freedesktop.org/wayland/wayland-protocols)
+
+  Collection of extended Wayland protocols (xdg-shell, layer-shell, etc). Essential when implementing desktop-like behaviors.
+
+* **wlr-protocols** (https://gitlab.freedesktop.org/wlroots/wlr-protocols)
+
+  Custom/proposed protocols used by wlroots-based compositors (e.g., for gamma control, foreign-toplevel, screencopy).
+
+* **wf-recorder** (https://github.com/ammen99/wf-recorder)
+
+  Wayland_ screen recorder compatible with wlroots compositors. Great for demos and debugging output.
+
+Libraries and Helpers
+-------------------------
+
+* **xwayland** (https://gitlab.freedesktop.org/xorg/xserver/-/tree/master/hw/xwayland/)
+
+  Lets X11 clients run inside a Wayland session. Needed for legacy app support in your compositor.
+
+* **Pixman** (https://www.pixman.org/)
+
+  Low-level pixel manipulation library used by wlroots. Useful if you're doing custom rendering or damage handling.
+
+* **Cairo** (https://www.cairographics.org/)
+
+  2D graphics library sometimes used for rendering surfaces in compositors or client UIs.
+
+Video & Talks
+----------------
+
+* **Wayland Explained by Daniel Stone (FOSDEM)** (https://www.youtube.com/watch?v=RIctzAQOe44)
+
+  Excellent conceptual breakdown of Wayland internals from a veteran contributor.
+
+* **Drew DeVault - Building Wayland desktop components with layer shell** (https://www.youtube.com/watch?v=VuRXHJu5Kmg)
+
+  Demonstration of the wlroots layer shell, examples of where it's useful from lead developer of **SwayWM** (https://github.com/swaywm/sway).
+
+Reverse Engineering Examples
+-------------------------------
+
+* **wayland-utils** (https://gitlab.freedesktop.org/wayland/wayland-utils)
+
+  Includes tools like ``wayland-info`` that help inspect running compositors and protocols.
+
+Related Projects & Alternatives
+-----------------------------------
+
+* **WLC** (https://github.com/Cloudef/wlc) (archived but insightful)
+
+  Predecessor of wlroots — still interesting to read for historical and design insights.
+
+* **Mir** (https://github.com/MirServer/mir)
+
+  Canonical's alternative Wayland compositor library — not wlroots-based but valuable for contrast.
+
+* **Smithay** (https://github.com/smithay/smithay)
+
+  A compositor library in Rust, parallel to wlroots. Good if you want to understand differences in approach (e.g. memory safety).
+
+Qtile-Specific Additions
+----------------------------
+
+* **qtile-wayland issues** (https://github.com/qtile/qtile/issues?q=is%3Aissue+wayland) - Current Wayland-related issues and discussions
+
+Our Goal — C-based Qtile Wayland Backend
+--------------------------------------------
+
+* **Qtile WayC** (https://github.com/qtile/qtile/tree/wayc)
+
+  Ongoing effort to rewrite Qtile's Wayland backend in C using wlroots directly.
+
+  **Why?**
+
+  * Wlroots changes → requires tracking upstream C changes
+  * Updating ``pywlroots`` for new APIs
+  * Translating C API semantics into Python
+  * Then updating Qtile to match those changes
+
+  Doing it in C cuts through all that indirection and brings more control.
+
+* **Join Wayland development discussion** (https://discord.com/channels/955163559086665728/1383006376695173230)
+
+.. _Wayland: https://wayland.freedesktop.org/
+.. _i3: https://i3wm.org/
+.. _wlroots: https://gitlab.freedesktop.org/wlroots/wlroots
+.. _Openbox: https://openbox.org/
