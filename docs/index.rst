@@ -17,10 +17,9 @@ to have it running exactly the way you want.
 You'll find a lot of what you need within these docs but, if you still have some
 questions, you can find support in the following places:
 
+:Q&A: https://github.com/qtile/qtile/discussions/categories/q-a
 :IRC: irc://irc.oftc.net:6667/qtile
 :Discord: https://discord.gg/ehh233wCrC (Bridged with IRC)
-:Q&A: https://github.com/qtile/qtile/discussions/categories/q-a
-:Mailing List: https://groups.google.com/group/qtile-dev
 
 .. toctree::
     :maxdepth: 1

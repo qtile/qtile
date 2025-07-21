@@ -678,10 +678,3 @@ of the bar then you need a few extra steps:
         # Take a screenshot. Will take screenshot of whole bar unless
         # a `width` parameter is set.
         bar.take_screenshot(target, width=width)
-
-Getting help
-============
-
-If you still need help with developing your widget then please submit a question in the
-`qtile-dev group <https://groups.google.com/forum/#!forum/qtile-dev>`_ or submit an issue
-on the github page if you believe there's an error in the codebase.
