@@ -10,8 +10,6 @@ from libqtile.log_utils import logger
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from libqtile.core.manager import Qtile
-
 
 class LoopContext(contextlib.AbstractAsyncContextManager):
     def __init__(
@@ -62,20 +60,3 @@ class LoopContext(contextlib.AbstractAsyncContextManager):
                 logger.exception("Exception in event loop:", exc_info=exc)  # noqa: G202
         else:
             logger.error("unhandled error in event loop: %s", context["msg"])
-
-
-class QtileEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
-    """
-    Asyncio policy to ensure the main event loop is accessible
-    even if `get_event_loop()` is called from a different thread.
-    """
-
-    def __init__(self, qtile: Qtile) -> None:
-        asyncio.DefaultEventLoopPolicy.__init__(self)
-        self.qtile = qtile
-
-    def get_event_loop(self) -> asyncio.AbstractEventLoop:
-        if isinstance(self.qtile._eventloop, asyncio.AbstractEventLoop):
-            return self.qtile._eventloop
-
-        raise RuntimeError

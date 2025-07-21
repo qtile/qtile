@@ -42,6 +42,7 @@ try:
 except ImportError:
     has_dbus = False
 
+import libqtile
 from libqtile.log_utils import logger
 
 ColorType = str | tuple[int, int, int] | tuple[int, int, int, float]
@@ -301,12 +302,8 @@ def send_notification(
     id_ = randint(10, 1000) if id_ is None else id_
     urgency = 2 if urgent else 1
 
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        logger.warning("Eventloop has not started. Cannot send notification.")
-    else:
-        loop.create_task(_notify(title, message, urgency, timeout, id_))
+    loop = libqtile.event_loop
+    loop.create_task(_notify(title, message, urgency, timeout, id_))
 
     return id_
 
