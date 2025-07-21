@@ -28,6 +28,7 @@ questions, you can find support in the following places:
 
     manual/install/index
     Wayland <manual/wayland>
+    Wayland Status <manual/wayland_status>
     manual/troubleshooting
     manual/commands/shell/index
 
@@ -66,7 +67,6 @@ questions, you can find support in the following places:
     :maxdepth: 1
     :caption: Miscellaneous
     :hidden:
-
 
     manual/faq
     manual/howto/widget
