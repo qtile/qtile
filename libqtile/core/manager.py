@@ -47,7 +47,7 @@ from libqtile.command.interface import IPCCommandServer, QtileCommandInterface
 from libqtile.config import Click, Drag, Key, KeyChord, Match, Mouse, Rule, Screen, ScreenRect
 from libqtile.config import ScratchPad as ScratchPadConfig
 from libqtile.core.lifecycle import lifecycle
-from libqtile.core.loop import LoopContext, QtileEventLoopPolicy
+from libqtile.core.loop import LoopContext
 from libqtile.core.state import QtileState
 from libqtile.dgroups import DGroups
 from libqtile.extension.base import _Extension
@@ -113,6 +113,7 @@ class Qtile(CommandObject):
         self.screens: list[Screen] = []
 
         libqtile.init(self)
+        libqtile.event_loop = asyncio.new_event_loop()
 
         self._stopped_event: asyncio.Event | None = None
 
@@ -212,7 +213,7 @@ class Qtile(CommandObject):
         return socket_path
 
     def loop(self) -> None:
-        asyncio.run(self.async_loop())
+        asyncio.run(self.async_loop(), loop_factory=lambda: libqtile.event_loop)
 
     async def async_loop(self) -> None:
         """Run the event loop
@@ -220,8 +221,6 @@ class Qtile(CommandObject):
         Finalizes the Qtile instance on exit.
         """
         self._eventloop = asyncio.get_running_loop()
-        # Set the event loop policy to facilitate access to main event loop
-        asyncio.set_event_loop_policy(QtileEventLoopPolicy(self))
         self._stopped_event = asyncio.Event()
         self.core.qtile = self
         self.load_config(initial=True)
