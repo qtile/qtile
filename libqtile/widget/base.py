@@ -603,7 +603,7 @@ class _TextBox(_Widget):
         # only if scrolling is enabled the layout width will be overwritten
         # because the widget's width is handle by scroll.
         if not self.bar.horizontal and not self.rotate:
-            self.layout.width = self.bar.width - 2 * self.actual_padding
+            self.layout.width = self.bar.width
 
         if self.scroll:
             self.check_width()
@@ -665,23 +665,17 @@ class _TextBox(_Widget):
         # If we're scrolling, we clip the context to the scroll width less the padding
         # Move the text layout position (and we only see the clipped portion)
         if self._should_scroll:
-            self.drawer.ctx.rectangle(
-                self.actual_padding,
-                0,
-                self._scroll_width - 2 * self.actual_padding,
-                self.bar.size,
-            )
+            height = self.bar.size if self.bar.horizontal or self.rotate else self.length
+            self.drawer.ctx.rectangle(0, 0, self._scroll_width, height)
             self.drawer.ctx.clip()
 
         if not self.bar.horizontal and not self.rotate:
-            height = self.layout.height + self.actual_padding * 2
+            x, y = 0, self.actual_padding
         else:
-            height = self.bar.size
+            x = self.actual_padding if self.length_type != bar.STATIC else 0
+            y = (self.bar.size - self.layout.height) / 2 + 1
 
-        self.layout.draw(
-            (self.actual_padding or 0) - self._scroll_offset,
-            int(height / 2 - self.layout.height / 2) + 1,
-        )
+        self.layout.draw(x - self._scroll_offset, y)
         self.drawer.ctx.restore()
 
         self.draw_at_default_position()
@@ -711,8 +705,7 @@ class _TextBox(_Widget):
         # - the final pixel is visible (scroll_clear = False)
         if (self.scroll_clear and self._scroll_offset > self.layout.width) or (
             not self.scroll_clear
-            and (self.layout.width - self._scroll_offset)
-            < (self._scroll_width - 2 * self.actual_padding)
+            and (self.layout.width - self._scroll_offset) < (self._scroll_width)
         ):
             self._is_scrolling = False
 
