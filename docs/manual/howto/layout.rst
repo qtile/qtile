@@ -714,12 +714,3 @@ The full code for the example layout is as follows:
 This should result in a layout looking like this: |layout_image|.
 
 .. |layout_image| image:: ../../_static/layouts/twobytwo.png
-
-Getting help
-============
-
-If you still need help with developing your widget then please submit a question in the
-`qtile-dev group <https://groups.google.com/forum/#!forum/qtile-dev>`_ or submit an issue
-on the github page if you believe there's an error in the codebase.
-
-
