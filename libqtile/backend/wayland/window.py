@@ -358,8 +358,53 @@ class Window(Base, base.Window):
         width: int | None = None,
         height: int | None = None,
     ) -> None:
-        # TODO: implement
-        return
+        # The concrete Window class must fire the client_managed hook after it's
+        # completed any custom logic.
+        self.defunct = True
+        if self.group:
+            self.group.remove(self)
+
+        # Keep track of user-specified geometry to support X11.
+        # Respect configure requests only if these are `None` here.
+        conf_x = x
+        conf_y = y
+        conf_width = width
+        conf_height = height
+
+        if x is None:
+            x = self.x + self.borderwidth
+        if y is None:
+            y = self.y + self.borderwidth
+        if width is None:
+            width = self.width
+        if height is None:
+            height = self.height
+
+        win = self._to_static(conf_x, conf_y, conf_width, conf_height)
+
+        # Remove references to original window
+        self._userdata = None
+
+        # TODO: pass over ftm
+
+        if screen is not None:
+            win.screen = self.qtile.screens[screen]
+        win.unhide()
+        win.place(x, y, width, height, 0, None)
+        self.qtile.windows_map[self.wid] = win
+
+        # TODO: pointer constraints
+
+        hook.fire("client_managed", win)
+
+    def _to_static(
+        self, x: int | None, y: int | None, width: int | None, height: int | None
+    ):
+        return Static(
+            self.qtile,
+            self._ptr,
+            self._wid,
+        )
 
     def togroup(
         self, group_name: str | None = None, switch_group: bool = False, toggle: bool = False
@@ -664,4 +709,80 @@ class Window(Base, base.Window):
     def disable_fullscreen(self) -> None:
         self.fullscreen = False
 
-WindowType = Window | Internal # | Static
+class Static(Base, base.Static):
+    def __init__(self, qtile: Qtile, ptr, wid):
+        Base.__init__(self, qtile, ptr, wid)
+        base.Static.__init__(self)
+        self.screen = qtile.current_screen
+        self.x = 0
+        self.y = 0
+        self._width = 0
+        self._height = 0
+        # TODO: opacity, idle_inhibitors, ftm, urgent
+
+        self._userdata = ffi.new_handle(self)
+        ptr.cb_data = self._userdata
+        ptr.request_maximize_cb = ffi.NULL
+        ptr.request_fullscreen_cb = ffi.NULL
+        ptr.set_title_cb = lib.set_title_cb
+        ptr.set_app_id_cb = lib.set_app_id_cb
+
+        if self._ptr.title != ffi.NULL:
+            self.name = ffi.string(self._ptr.title).decode()
+        if self._ptr.app_id != ffi.NULL:
+            self._wm_class = ffi.string(self._ptr.app_id).decode()
+
+    def handle_set_title(self, title):
+        logger.debug("Signal: static window set_title")
+        if title != self.name:
+            self.name = title
+            # TODO: Handle foreign-toplevel-management?
+            hook.fire("client_name_updated", self)
+
+    def handle_set_app_id(self, app_id):
+        logger.debug("Signal: static window set_app_id")
+        self._wm_class = app_id
+        # TODO: Handle foreign-toplevel-management?
+
+    @property
+    def wid(self) -> int:
+        return self._wid
+
+    def get_wm_class(self) -> list | None:
+        if self._wm_class:
+            return [self._wm_class]
+        return None
+
+    def place(
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        borderwidth: int,
+        bordercolor: ColorsType | None,
+        above: bool = False,
+        margin: int | list[int] | None = None,
+        respect_hints: bool = False,
+    ) -> None:
+        self.x = x
+        self.y = y
+        self._width = width
+        self._height = height
+
+        n = 1
+        # borderwidth must be 0 so bordercolor has no effect
+        c_bordercolor = ffi.new("float[1][4]", [rgb([0,0,0,1])])
+        c_bordercolor_ptr = ffi.cast("float(*)[4]", c_bordercolor)
+        self._ptr.place(
+            self._ptr, x, y, width, height, borderwidth, c_bordercolor_ptr, n, int(above)
+        )
+
+    @expose_command()
+    def info(self) -> dict:
+        """Return a dictionary of info."""
+        info = base.Static.info(self)
+        info["shell"] = ffi.string(self._ptr.shell).decode() if self._ptr.shell != ffi.NULL else "",
+        return info
+
+WindowType = Window | Internal | Static
