@@ -342,6 +342,7 @@ class Qtile(CommandObject):
 
             for screen in self.screens:
                 screen.finalize_gaps()
+
         except:  # noqa: E722
             logger.exception("exception during finalize")
         hook.clear()
@@ -441,9 +442,7 @@ class Qtile(CommandObject):
 
         for screen in self.screens:
             if screen not in screens:
-                for gap in screen.gaps:
-                    if isinstance(gap, bar.Bar) and gap.window:
-                        gap.finalize()
+                screen.finalize_gaps()
 
         self.screens = screens
 
