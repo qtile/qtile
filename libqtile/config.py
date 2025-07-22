@@ -514,8 +514,14 @@ class Screen(CommandObject):
         self.width = width
         self.height = height
 
-        for i in self.gaps:
-            i._configure(qtile, self, reconfigure=reconfigure_gaps)
+        for gap in self.gaps:
+            try:
+                gap._configure(qtile, self, reconfigure=reconfigure_gaps)
+            except Exception:
+                logger.exception(f"Error configuring {gap.position} gap/bar.")
+                # Call finalize to prevent future execution of the _actual_draw method
+                self.finalize_gap(gap.position)
+
         self.set_group(group)
 
         if self.background is not None:
@@ -532,15 +538,15 @@ class Screen(CommandObject):
     def gaps(self) -> Iterable[BarType]:
         return (i for i in [self.top, self.bottom, self.left, self.right] if i)
 
-    def finalize_gaps(self) -> None:
-        def remove(attr: str) -> None:
-            gap = getattr(self, attr, None)
-            if gap is not None:
-                setattr(self, attr, None)
-                gap.finalize()
+    def finalize_gap(self, position: str) -> None:
+        gap = getattr(self, position, None)
+        if gap is not None:
+            setattr(self, position, None)
+            gap.finalize()
 
-        for attr in ["top", "bottom", "left", "right"]:
-            remove(attr)
+    def finalize_gaps(self) -> None:
+        for position in ["top", "bottom", "left", "right"]:
+            self.finalize_gap(position)
 
     @property
     def dx(self) -> int:

@@ -388,7 +388,7 @@ class TextLayout:
         self.layout.finalize()
 
     def finalized(self):
-        self.layout.finalized()
+        return self.layout.finalized()
 
     @property
     def text(self):
