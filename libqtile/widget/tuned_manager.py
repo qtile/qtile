@@ -24,7 +24,7 @@ from libqtile import bar
 from libqtile.widget import base
 
 
-class TunedManager(base.ThreadPoolText):
+class TunedManager(base.BackgroundPoll):
     """
     A widget to interact with the Tuned power management daemon.
     It always displays the name of the currently active profile.
@@ -52,7 +52,7 @@ class TunedManager(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.BackgroundPoll.__init__(self, "", **config)
         self.add_defaults(TunedManager.defaults)
         self.length_type = bar.CALCULATED
         self.regex = re.compile(r"Current active profile:\s+(\S+)")
@@ -68,7 +68,7 @@ class TunedManager(base.ThreadPoolText):
         )
 
     def _configure(self, qtile, bar):
-        base.ThreadPoolText._configure(self, qtile, bar)
+        base.BackgroundPoll._configure(self, qtile, bar)
         self.text = self.find_mode()
 
     def poll(self):

@@ -23,7 +23,7 @@ import libqtile.bar
 import libqtile.config
 from libqtile.command.base import expose_command
 from libqtile.widget import Spacer, TextBox
-from libqtile.widget.base import ThreadPoolText, _Widget
+from libqtile.widget.base import BackgroundPoll, _Widget
 from test.helpers import BareConfig, Retry
 
 
@@ -50,7 +50,7 @@ class TimerWidget(_Widget):
         return len(active)
 
 
-class PollingWidget(ThreadPoolText):
+class PollingWidget(BackgroundPoll):
     poll_count = 0
 
     def poll(self):

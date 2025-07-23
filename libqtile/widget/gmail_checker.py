@@ -28,7 +28,7 @@ from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
-class GmailChecker(base.ThreadPoolText):
+class GmailChecker(base.BackgroundPoll):
     """
     A simple gmail checker. If 'status_only_unseen' is True - set 'fmt' for one
     argument, ex. 'unseen: {0}'
@@ -44,7 +44,7 @@ class GmailChecker(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.BackgroundPoll.__init__(self, "", **config)
         self.add_defaults(GmailChecker.defaults)
 
     def poll(self):

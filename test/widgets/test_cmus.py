@@ -140,7 +140,7 @@ def cmus_manager(manager_nospawn, monkeypatch, minimal_conf_noscreen, request):
         "libqtile.widget.cmus.subprocess.CalledProcessError", subprocess.CalledProcessError
     )
     monkeypatch.setattr(
-        "libqtile.widget.cmus.base.ThreadPoolText.call_process",
+        "libqtile.widget.cmus.base.BackgroundPoll.call_process",
         MockCmusRemoteProcess.call_process,
     )
 

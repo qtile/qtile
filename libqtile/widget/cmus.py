@@ -27,7 +27,7 @@ def format_time(time_seconds_string):
     return str(datetime.timedelta(seconds=float(time_seconds_string))).lstrip("0").lstrip(":")
 
 
-class Cmus(base.ThreadPoolText):
+class Cmus(base.BackgroundPoll):
     """A simple Cmus widget.
 
     Show the metadata of now listening song and allow basic mouse
@@ -89,7 +89,7 @@ class Cmus(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.BackgroundPoll.__init__(self, "", **config)
         self.add_defaults(Cmus.defaults)
         self.status = ""
         self.local = None
@@ -103,7 +103,7 @@ class Cmus(base.ThreadPoolText):
         )
 
     def _configure(self, qtile, parent_bar):
-        base.ThreadPoolText._configure(self, qtile, parent_bar)
+        base.BackgroundPoll._configure(self, qtile, parent_bar)
         # Backwards compatibility
         if self.play_color:
             self.playing_color = self.play_color

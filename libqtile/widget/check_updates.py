@@ -46,7 +46,7 @@ CMD_DICT = {
 CMD_DOC_COMMANDS = "\n".join(f"    * ``'{k}'`` runs ``{v}``" for k, v in CMD_DICT.items())
 
 
-class CheckUpdates(base.ThreadPoolText):
+class CheckUpdates(base.BackgroundPoll):
     # The docstring includes some dynamic content so we need to compile that content
     # first and then set the docstring to that content.
     _doc = f"""
@@ -99,7 +99,7 @@ class CheckUpdates(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, config.pop("initial_text", ""), **config)
+        base.BackgroundPoll.__init__(self, config.pop("initial_text", ""), **config)
         self.add_defaults(CheckUpdates.defaults)
 
         # Helpful to have this as a variable as we can shorten it for testing
