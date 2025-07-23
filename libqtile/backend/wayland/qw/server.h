@@ -18,6 +18,7 @@
 #include <wlr/types/wlr_gamma_control_v1.h>
 #include <wlr/types/wlr_input_device.h>
 #include <wlr/types/wlr_keyboard.h>
+#include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_pointer.h>
@@ -60,6 +61,27 @@ typedef void (*output_dims_cb_t)(int x, int y, int width, int height);
 // Callback for when screen configuration changes
 typedef void (*on_screen_change_cb_t)(void *userdata);
 
+// Forward declaration of output struct
+struct qw_output;
+
+// Callback for when the screen reserves space
+typedef void (*on_screen_reserve_space_cb_t)(struct qw_output *output, void *userdata);
+
+enum {
+    LAYER_BACKGOUND,    // background, layer shell
+    LAYER_BOTTOM,       // bottom, layer shell
+    LAYER_KEEPBELOW,    // windows that are marked 'keep below'
+    LAYER_LAYOUT,       // the normal tiled windows in the layout
+    LAYER_KEEPABOVE,    // windows that are marked 'keep above', including floating windows if
+                        // 'floats_kept_above = True'
+    LAYER_MAX,          // windows that are maximized
+    LAYER_FULLSCREEN,   // windows that are fullscreen
+    LAYER_BRINGTOFRONT, // windows that are marked bring to front
+    LAYER_TOP,          // top, layer shell
+    LAYER_OVERLAY,      // overlay, layer shell
+    LAYER_END           // keeping track of the end
+};
+
 // Main server struct containing Wayland and wlroots state and user callbacks
 struct qw_server {
     // Public API
@@ -70,6 +92,7 @@ struct qw_server {
     cursor_motion_cb_t cursor_motion_cb;
     cursor_button_cb_t cursor_button_cb;
     on_screen_change_cb_t on_screen_change_cb;
+    on_screen_reserve_space_cb_t on_screen_reserve_space_cb;
     void *cb_data;
 
     // Private data
@@ -80,9 +103,14 @@ struct qw_server {
     struct wlr_renderer *renderer;
     struct wlr_allocator *allocator;
     struct wlr_scene *scene;
+    struct wlr_scene_tree *scene_wallpaper_tree;
+    struct wlr_scene_tree *scene_windows_tree;
+    struct wlr_scene_tree *scene_windows_layers[LAYER_END];
+    // TODO: drag icon tree
     struct wlr_scene_output_layout *scene_layout;
     struct wlr_output_layout *output_layout;
     struct wl_list outputs;
+    struct wlr_output *current_output;
     struct wlr_output_manager_v1 *output_mgr;
     struct wl_listener output_manager_apply;
     struct wl_listener output_manager_test;
@@ -93,9 +121,11 @@ struct qw_server {
     struct wlr_seat *seat;
     struct qw_cursor *cursor;
     struct wlr_xdg_shell *xdg_shell;
+    struct wlr_layer_shell_v1 *layer_shell;
     struct wlr_xdg_decoration_manager_v1 *xdg_decoration_mgr;
     struct wl_listener new_xdg_toplevel;
     struct wl_listener new_decoration;
+    struct wl_listener new_layer_surface;
     struct wl_listener request_cursor;
 };
 

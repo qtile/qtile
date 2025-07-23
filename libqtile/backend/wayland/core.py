@@ -107,6 +107,12 @@ def on_screen_change_cb(userdata):
     core.handle_screen_change()
 
 
+@ffi.def_extern()
+def on_screen_reserve_space_cb(output, userdata):
+    core = ffi.from_handle(userdata)
+    core.handle_screen_reserve_space(output)
+
+
 # TODO: credit pywlroots
 def get_wlr_log_level():
     if logger.level <= logging.DEBUG:
@@ -131,6 +137,8 @@ class Core(base.Core):
         self.qw = lib.qw_server_create()
         if not self.qw:
             sys.exit(1)
+
+        self._output_reserved_space = {}
         self.current_window = None
         self.grabbed_keys: list[tuple[int, int]] = []
         self._userdata = ffi.new_handle(self)
@@ -141,6 +149,7 @@ class Core(base.Core):
         self.qw.cursor_motion_cb = lib.cursor_motion_cb
         self.qw.cursor_button_cb = lib.cursor_button_cb
         self.qw.on_screen_change_cb = lib.on_screen_change_cb
+        self.qw.on_screen_reserve_space_cb = lib.on_screen_reserve_space_cb
         lib.qw_server_start(self.qw)
 
     def new_wid(self) -> int:
@@ -150,6 +159,35 @@ class Core(base.Core):
 
     def handle_screen_change(self):
         hook.fire("screen_change", None)
+
+    def get_screen_for_output(self, output):
+        assert self.qtile is not None
+
+        for screen in self.qtile.screens:
+            # Outputs alias if they have the same (x, y) and share the same Screen, so
+            # we don't need to check the if the width and height match the Screen's.
+            if screen.x == output.x and screen.y == output.y:
+                return screen
+
+        return self.qtile.current_screen
+
+    def handle_screen_reserve_space(self, output):
+        screen = self.get_screen_for_output(output)
+        # TODO: is full_area correct here?
+        # the old backend used ow and oh
+        new_reserved_space = (
+            output.area.x - output.x,  # left
+            output.x + output.full_area.width - output.area.x - output.area.width,  # right
+            output.area.y - output.y,  # top
+            output.y + output.full_area.height - output.area.y - output.area.height,  # bottom
+        )
+
+        old_reserved = self._output_reserved_space.get(screen, (0, 0, 0, 0))
+        delta = tuple(new - old for new, old in zip(new_reserved_space, old_reserved))
+        # TODO: this is always True now I think, maybe remove the if?
+        if any(delta):
+            self.qtile.reserve_space(delta, screen)
+            self._output_reserved_space[screen] = new_reserved_space
 
     def handle_cursor_motion(self, x, y):
         assert self.qtile is not None
