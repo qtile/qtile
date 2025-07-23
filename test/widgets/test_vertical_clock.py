@@ -108,8 +108,10 @@ def test_vclock_extra_lines(vclock_manager):
     [
         dict(fontsize=[10]),  # too few
         dict(fontsize=[10, 20, 30, 40]),  # too many
+        dict(fontsize=[10, "fff"]),  # mix values
         dict(foreground=["fff"]),  # too few
         dict(foreground=["fff"] * 4),  # too many
+        dict(foreground=["fff", 10]),  # mix values
     ],
     indirect=True,
 )

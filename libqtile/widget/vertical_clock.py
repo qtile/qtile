@@ -63,23 +63,29 @@ class VerticalClock(Clock):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
+
         if self.fontsize is None:
             self.fontsize = self._to_list(self.bar.size - self.bar.size / 5)
         elif isinstance(self.fontsize, int):
             self.fontsize = self._to_list(self.fontsize)
         elif not isinstance(self.fontsize, list):
-            raise ConfigError("fontsize should be an integer or a list of integers.")
+            raise ConfigError("'fontsize' should be an integer or a list of integers.")
+        elif not all(isinstance(fontsize, int) for fontsize in self.fontsize):
+            raise ConfigError("'fontsize' should be of integers.")
+        elif len(self.fontsize) != len(self.format):
+            raise ConfigError("'fontsize' list should have same number of items as 'format'.")
 
         if isinstance(self.foreground, str):
             self.foreground = self._to_list(self.foreground)
         elif not isinstance(self.foreground, list):
-            raise ConfigError("foreground should be a string or a list of strings.")
-
-        if len(self.fontsize) != len(self.format):
-            raise ConfigError("'fontsize' list should have same number of items as 'format'.")
-
-        if len(self.foreground) != len(self.format):
+            raise ConfigError("'foreground' should be a string or a list of strings.")
+        elif not all(isinstance(foreground, str) for foreground in self.foreground):
+            raise ConfigError("'foreground' list should be of strings.")
+        elif len(self.foreground) != len(self.format):
             raise ConfigError("'foreground' list should have same number of items as 'format'.")
+
+        if self.padding is None:
+            self.padding = (sum(self.fontsize) / len(self.fontsize)) // 2
 
         self.layouts = [
             self.drawer.textlayout(
@@ -94,7 +100,7 @@ class VerticalClock(Clock):
         ]
 
     def calculate_length(self):
-        return sum(l.height + self.actual_padding for l in self.layouts) + self.actual_padding
+        return sum(l.height + self.padding for l in self.layouts) + self.padding
 
     def update(self, time):
         for layout, fmt in zip(self.layouts, self.format):
@@ -119,16 +125,14 @@ class VerticalClock(Clock):
     def draw(self):
         if not self.can_draw:
             return
-
-        offset = self.actual_padding
-
+        offset = self.padding
         self.drawer.clear(self.background or self.bar.background)
 
         for layout in self.layouts:
             self.drawer.ctx.save()
             self.drawer.ctx.translate(0, offset)
             layout.draw(0, 0)
-            offset += layout.height + self.actual_padding
+            offset += layout.height + self.padding
             self.drawer.ctx.restore()
 
         self.draw_at_default_position()
