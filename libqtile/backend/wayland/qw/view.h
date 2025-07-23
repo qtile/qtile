@@ -22,22 +22,26 @@ typedef int (*request_fullscreen_cb_t)(bool fullscreen, void *userdata);
 typedef int (*request_maximize_cb_t)(bool maximize, void *userdata);
 
 // Callback type for title updated
-typedef void (*set_title_cb_t)(char* title, void *userdata);
+typedef void (*set_title_cb_t)(char *title, void *userdata);
 
 // Callback type for app_id updated
-typedef void (*set_app_id_cb_t)(char* app_id, void *userdata);
+typedef void (*set_app_id_cb_t)(char *app_id, void *userdata);
+
+struct qw_server;
 
 struct qw_view {
+    struct qw_server *server;
+    int layer;
     int x;
     int y;
     int width;
     int height;
     int bn; // Number of border layers
     enum qw_view_state state;
-    char* shell; // e.g. "XdgWindow" or "XWayland" 
-    int wid;                             // Window identifier (e.g. X11 window id or similar)
-    char* title;
-    char* app_id;
+    char *shell; // e.g. "XdgWindow" or "XWayland"
+    int wid;     // Window identifier (e.g. X11 window id or similar)
+    char *title;
+    char *app_id;
     struct wlr_scene_tree *content_tree; // Scene tree holding the view's content
 
     request_maximize_cb_t request_maximize_cb;
@@ -53,7 +57,6 @@ struct qw_view {
     void (*place)(void *self, int x, int y, int width, int height, int bw, float (*bc)[4], int bn,
                   int above);
     void (*focus)(void *self, int warp);
-    void (*bring_to_front)(void *self);
     void (*kill)(void *self);
     void (*hide)(void *self);
     void (*unhide)(void *self);
@@ -62,6 +65,12 @@ struct qw_view {
     // Private data: pointer to an array of 4 pointers to wlr_scene_rect for borders
     struct wlr_scene_rect *(*borders)[4];
 };
+
+void qw_view_reparent(struct qw_view *view, int layer);
+void qw_view_move_up(struct qw_view *view);
+void qw_view_move_down(struct qw_view *view);
+void qw_view_raise_to_top(struct qw_view *view);
+void qw_view_lower_to_bottom(struct qw_view *view);
 
 // Free all border rectangles and clear border data
 void qw_view_cleanup_borders(struct qw_view *xdg_view);
