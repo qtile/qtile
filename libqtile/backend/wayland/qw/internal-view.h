@@ -9,7 +9,6 @@ struct qw_server;
 
 struct qw_internal_view {
     struct qw_view base;
-    struct qw_server *server;
     struct wlr_scene_buffer *scene_buffer;
     struct wlr_buffer *buffer;
     cairo_surface_t *image_surface;

@@ -14,7 +14,6 @@ struct wlr_xdg_toplevel_decoration_v1;
 // Struct representing an XDG toplevel view in the compositor
 struct qw_xdg_view {
     struct qw_view base;
-    struct qw_server *server;
     struct wlr_xdg_toplevel *xdg_toplevel;
     struct wlr_scene_tree *scene_tree;
     struct wlr_box geom;
