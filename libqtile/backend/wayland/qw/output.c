@@ -1,4 +1,5 @@
 #include "output.h"
+#include "layer-view.h"
 #include "server.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,6 +36,66 @@ static void qw_output_handle_request_state(struct wl_listener *listener, void *d
     wlr_output_commit_state(output->wlr_output, event->state);
 }
 
+void qw_output_arrange_layer(struct qw_output *output, struct wl_list *list,
+                             struct wlr_box *usable_area, int exclusive) {
+    struct wlr_box full_area = output->full_area;
+
+    struct qw_layer_view *layer_view;
+    wl_list_for_each(layer_view, list, link) {
+        struct wlr_layer_surface_v1 *layer_surface = layer_view->surface;
+        if (!layer_surface)
+            continue;
+
+        if (!layer_surface->initialized)
+            continue;
+
+        if (exclusive != (layer_surface->current.exclusive_zone > 0))
+            continue;
+
+        wlr_scene_layer_surface_v1_configure(layer_view->scene, &full_area, usable_area);
+        wlr_scene_node_set_position(&layer_view->popups->node, layer_view->scene->tree->node.x,
+                                    layer_view->scene->tree->node.y);
+    }
+}
+
+void qw_output_arrange_layers(struct qw_output *output) {
+    int i;
+    struct wlr_box usable_area = output->full_area;
+    if (!output->wlr_output->enabled) {
+        return;
+    }
+
+    for (i = 3; i >= 0; i--) {
+        qw_output_arrange_layer(output, &output->layers[i], &usable_area, 1);
+    }
+
+    if (!wlr_box_equal(&usable_area, &output->area)) {
+        output->area = usable_area;
+        output->server->on_screen_reserve_space_cb(output, output->server->cb_data);
+    }
+
+    for (i = 3; i >= 0; i--) {
+        qw_output_arrange_layer(output, &output->layers[i], &usable_area, 0);
+    }
+
+    uint32_t layers_above_shell[] = {
+        ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
+        ZWLR_LAYER_SHELL_V1_LAYER_TOP,
+    };
+
+    // TODO: topmost keyboard interactive layer
+    for (i = 0; i < 2; i++) {
+        struct qw_layer_view *layer_view;
+        wl_list_for_each_reverse(layer_view, &output->layers[layers_above_shell[i]], link) {
+            // TODO: locked
+            if (!layer_view->surface->current.keyboard_interactive || !layer_view->mapped)
+                continue;
+            // TODO: focus, exclusive focus, notify enter
+            return;
+        }
+    }
+}
+
 void qw_server_output_new(struct qw_server *server, struct wlr_output *wlr_output) {
     // Allocate and initialize a new output object
     struct qw_output *output = calloc(1, sizeof(*output));
@@ -56,8 +117,7 @@ void qw_server_output_new(struct qw_server *server, struct wlr_output *wlr_outpu
     if (getenv("PYTEST_CURRENT_TEST") && wlr_output_is_headless(wlr_output)) {
         if (wl_list_empty(&server->outputs)) {
             wlr_output_state_set_custom_mode(&state, 800, 600, 0);
-        }
-        else {
+        } else {
             wlr_output_state_set_custom_mode(&state, 640, 480, 0);
         }
     } else {
@@ -70,9 +130,13 @@ void qw_server_output_new(struct qw_server *server, struct wlr_output *wlr_outpu
     wlr_output_commit_state(wlr_output, &state);
     wlr_output_state_finish(&state);
 
-    // Store references to the wlr_output and server
+    wlr_output->data = output;
     output->wlr_output = wlr_output;
     output->server = server;
+
+    // Store references to the wlr_output and server
+    for (int i = 0; i < 4; i++)
+        wl_list_init(&output->layers[i]);
 
     // Setup listeners for frame, request_state, and destroy events
     output->frame.notify = qw_output_handle_frame;
