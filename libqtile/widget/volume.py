@@ -210,7 +210,7 @@ class Volume(base._TextBox):
         for name, img in d_images.items():
             img.resize(height=new_height)
             if img.width > self.length:
-                self.length = img.width + self.actual_padding * 2
+                self.length = img.width + self.padding * 2
             self.surfaces[name] = img.pattern
 
     def get_volume(self):

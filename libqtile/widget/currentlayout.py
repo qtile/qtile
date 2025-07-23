@@ -108,10 +108,10 @@ class CurrentLayout(base._TextBox):
         if self.mode == "text":
             return base._TextBox.calculate_length(self)
         elif self.mode == "icon":
-            return self.img_length + self.actual_padding * 2
+            return self.img_length + self.padding * 2
         # self.mode == "both"
         # add only one padding because base._TextBox.calculate_length already add two
-        return base._TextBox.calculate_length(self) + self.img_length + self.actual_padding
+        return base._TextBox.calculate_length(self) + self.img_length + self.padding
 
     def hook_response(self, layout, group):
         if group.screen is not None and group.screen == self.bar.screen:
@@ -162,31 +162,31 @@ class CurrentLayout(base._TextBox):
             if self.bar.horizontal:
                 if self.icon_first:
                     # padding - icon - padding - text - padding
-                    x = self.actual_padding + self.img_length + self.actual_padding
-                    translatex -= base._TextBox.calculate_length(self) - self.actual_padding
+                    x = self.padding + self.img_length + self.padding
+                    translatex -= base._TextBox.calculate_length(self) - self.padding
                 else:
                     # padding - text - padding - icon - padding
-                    x = self.actual_padding
-                    translatex += base._TextBox.calculate_length(self) - self.actual_padding
+                    x = self.padding
+                    translatex += base._TextBox.calculate_length(self) - self.padding
             elif self.rotate:
                 if self.icon_first:
                     # padding - icon - padding - text - padding
-                    x = self.actual_padding + self.img_length + self.actual_padding
-                    translatey -= base._TextBox.calculate_length(self) - self.actual_padding
+                    x = self.padding + self.img_length + self.padding
+                    translatey -= base._TextBox.calculate_length(self) - self.padding
                 else:
                     # padding - text - padding - icon - padding
-                    x = self.actual_padding
-                    translatey += base._TextBox.calculate_length(self) - self.actual_padding
+                    x = self.padding
+                    translatey += base._TextBox.calculate_length(self) - self.padding
             else:
                 x = 0
                 if self.icon_first:
                     # padding - icon - padding - text - padding
-                    y = self.actual_padding + self.img_length + self.actual_padding
-                    translatey -= base._TextBox.calculate_length(self) - self.actual_padding
+                    y = self.padding + self.img_length + self.padding
+                    translatey -= base._TextBox.calculate_length(self) - self.padding
                 else:
                     # padding - text - padding - icon - padding
-                    y = self.actual_padding
-                    translatey += base._TextBox.calculate_length(self) - self.actual_padding
+                    y = self.padding
+                    translatey += base._TextBox.calculate_length(self) - self.padding
 
             self.layout.draw(x, y)
 
