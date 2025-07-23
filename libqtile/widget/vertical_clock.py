@@ -105,11 +105,7 @@ class VerticalClock(Clock):
 
     @property
     def can_draw(self):
-        can_draw = (
-            all(layout is not None and not layout.finalized() for layout in self.layouts)
-            and self.offsetx is not None
-        )  # if the bar hasn't placed us yet
-        return can_draw
+        return all(layout is not None for layout in self.layouts)
 
     # adding .5 to get a proper seconds value because glib could
     # theoreticaly call our method too early and we could get something
@@ -141,5 +137,6 @@ class VerticalClock(Clock):
     def finalize(self):
         for layout in self.layouts:
             layout.finalize()
+            layout = None
 
         base._Widget.finalize(self)

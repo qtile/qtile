@@ -247,6 +247,7 @@ class _Widget(CommandObject, configurable.Configurable):
             future.cancel()
         if hasattr(self, "layout") and self.layout:
             self.layout.finalize()
+            self.layout = None
         self.drawer.finalize()
         self.finalized = True
 
@@ -637,10 +638,7 @@ class _TextBox(_Widget):
             return 0
 
     def can_draw(self):
-        can_draw = (
-            self.layout is not None and not self.layout.finalized() and self.offsetx is not None
-        )  # if the bar hasn't placed us yet
-        return can_draw
+        return self.layout is not None
 
     def rotate_drawer(self):
         if self.bar.horizontal or not self.rotate:
