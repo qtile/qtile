@@ -46,7 +46,7 @@ import dateutil.parser
 from libqtile.widget import base
 
 
-class KhalCalendar(base.ThreadPoolText):
+class KhalCalendar(base.BackgroundPoll):
     """Khal calendar widget
 
     This widget will display the next appointment on your Khal calendar in the
@@ -66,7 +66,7 @@ class KhalCalendar(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.BackgroundPoll.__init__(self, "", **config)
         self.add_defaults(KhalCalendar.defaults)
         self.text = "Calendar not initialized."
         self.default_foreground = self.foreground

@@ -28,7 +28,7 @@ from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
-class ImapWidget(base.ThreadPoolText):
+class ImapWidget(base.BackgroundPoll):
     """Email IMAP widget
 
     This widget will scan one of your imap email boxes and report the number of
@@ -78,7 +78,7 @@ class ImapWidget(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.BackgroundPoll.__init__(self, "", **config)
         self.add_defaults(ImapWidget.defaults)
         if self.user is None:
             raise ConfigError("You must set the 'user' parameter for the IMAP widget.")

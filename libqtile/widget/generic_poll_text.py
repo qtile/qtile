@@ -21,7 +21,7 @@ except ImportError:
         raise Exception("no xmltodict library")
 
 
-class GenPollText(base.ThreadPoolText):
+class GenPollText(base.BackgroundPoll):
     """A generic text widget that polls using poll function to get the text"""
 
     defaults = [
@@ -29,7 +29,7 @@ class GenPollText(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.BackgroundPoll.__init__(self, "", **config)
         self.add_defaults(GenPollText.defaults)
 
     def poll(self):
@@ -38,7 +38,7 @@ class GenPollText(base.ThreadPoolText):
         return self.func()
 
 
-class GenPollUrl(base.ThreadPoolText):
+class GenPollUrl(base.BackgroundPoll):
     """A generic text widget that polls an url and parses it using parse function"""
 
     defaults: list[tuple[str, Any, str]] = [
@@ -52,7 +52,7 @@ class GenPollUrl(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.BackgroundPoll.__init__(self, "", **config)
         self.add_defaults(GenPollUrl.defaults)
 
         self.headers["User-agent"] = self.user_agent
@@ -98,7 +98,7 @@ class GenPollUrl(base.ThreadPoolText):
         return text
 
 
-class GenPollCommand(base.ThreadPoolText):
+class GenPollCommand(base.BackgroundPoll):
     """A generic text widget to display output from scripts or shell commands"""
 
     defaults = [
@@ -109,11 +109,11 @@ class GenPollCommand(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.BackgroundPoll.__init__(self, "", **config)
         self.add_defaults(GenPollCommand.defaults)
 
     def _configure(self, qtile, bar):
-        base.ThreadPoolText._configure(self, qtile, bar)
+        base.BackgroundPoll._configure(self, qtile, bar)
         self.add_callbacks({"Button1": self.force_update})
 
     def poll(self):

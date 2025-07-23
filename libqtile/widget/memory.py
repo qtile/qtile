@@ -24,7 +24,7 @@ from libqtile.widget import base
 __all__ = ["Memory"]
 
 
-class Memory(base.ThreadPoolText):
+class Memory(base.BackgroundPoll):
     """Display memory/swap usage.
 
     The following fields are available in the `format` string:
