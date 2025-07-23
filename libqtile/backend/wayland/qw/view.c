@@ -1,4 +1,5 @@
 #include "view.h"
+#include "server.h"
 #include <stdlib.h>
 #include <wlr/util/log.h>
 
@@ -15,6 +16,57 @@ void qw_view_cleanup_borders(struct qw_view *view) {
         }
     }
     free(view->borders);
+}
+
+void qw_view_reparent(struct qw_view *view, int layer) {
+    wlr_scene_node_reparent(&view->content_tree->node, view->server->scene_windows_layers[layer]);
+    view->layer = layer;
+}
+
+void qw_view_raise_to_top(struct qw_view *view) {
+    wlr_scene_node_raise_to_top(&view->content_tree->node);
+}
+void qw_view_lower_to_bottom(struct qw_view *view) {
+    wlr_scene_node_lower_to_bottom(&view->content_tree->node);
+}
+
+void qw_view_move_up(struct qw_view *view) {
+    // the rightmost sibling in the tree
+    // is the upper one
+    // so we need to get the window to the right (x)
+    // of this window and place this window above x
+    struct wlr_scene_node *next_sibling = NULL;
+    bool found_child = false;
+    struct wlr_scene_node *child;
+    wl_list_for_each(child, &view->server->scene_windows_tree[view->layer].children, link) {
+        if (child == &view->content_tree->node) {
+            found_child = true;
+        } else if (found_child) {
+            next_sibling = child;
+            break;
+        }
+    }
+    if (next_sibling) {
+        wlr_scene_node_place_above(&view->content_tree->node, next_sibling);
+    }
+}
+
+void qw_view_move_down(struct qw_view *view) {
+    // the leftmost sibling in the tree
+    // is the bottom one
+    // so we need to get the window to the left (x)
+    // of this window and place this window below x
+    struct wlr_scene_node *prev_sibling = NULL;
+    struct wlr_scene_node *child;
+    wl_list_for_each(child, &view->server->scene_windows_tree[view->layer].children, link) {
+        if (child == &view->content_tree->node) {
+            break;
+        }
+        prev_sibling = child;
+    }
+    if (prev_sibling) {
+        wlr_scene_node_place_above(&view->content_tree->node, prev_sibling);
+    }
 }
 
 // Creates and paints multiple border layers around the view content.
