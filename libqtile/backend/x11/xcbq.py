@@ -405,6 +405,7 @@ class RandR:
 
     def query_crtcs(self, root):
         infos = []
+        primary = self.ext.GetOutputPrimary(root).reply().output
         for output in self.ext.GetScreenResources(root).reply().outputs:
             info = self.ext.GetOutputInfo(output, xcffib.CurrentTime).reply()
 
@@ -414,7 +415,14 @@ class RandR:
 
             crtc_info = self.ext.GetCrtcInfo(info.crtc, xcffib.CurrentTime).reply()
 
-            infos.append(ScreenRect(crtc_info.x, crtc_info.y, crtc_info.width, crtc_info.height))
+            rect = ScreenRect(crtc_info.x, crtc_info.y, crtc_info.width, crtc_info.height)
+
+            # prepend the primary output, append all others in screen
+            # resources order
+            if primary == output:
+                infos.insert(0, rect)
+            else:
+                infos.append(rect)
         return infos
 
     def enable_screen_change_notifications(self, conn):
