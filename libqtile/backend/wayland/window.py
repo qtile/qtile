@@ -189,6 +189,9 @@ class Base(base._Window):
         # TODO
         # Call core.warp_pointer() previously here
 
+        if self.group and self.group.current_window is not self:
+            self.group.focus(self)
+
         hook.fire("client_focus", self)
 
 
