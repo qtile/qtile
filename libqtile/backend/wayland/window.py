@@ -217,6 +217,16 @@ class Internal(Base, base.Internal):
             # will follow graceful_shutdown
             del self.qtile.windows_map[self.wid]
 
+    @expose_command()
+    def info(self) -> dict:
+        """Return a dictionary of info."""
+        return dict(
+            x=self.x,
+            y=self.y,
+            width=self.width,
+            height=self.height,
+            id=self.wid,
+        )
 
 @ffi.def_extern()
 def request_fullscreen_cb(view, userdata):
