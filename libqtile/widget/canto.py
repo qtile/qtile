@@ -27,7 +27,7 @@ from subprocess import call
 from libqtile.widget import base
 
 
-class Canto(base.ThreadPoolText):
+class Canto(base.BackgroundPoll):
     """Display RSS feeds updates using the canto console reader
 
     Widget requirements: canto_
@@ -43,7 +43,7 @@ class Canto(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.BackgroundPoll.__init__(self, "", **config)
         self.add_defaults(Canto.defaults)
 
     def poll(self):

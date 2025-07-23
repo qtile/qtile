@@ -24,13 +24,13 @@ import subprocess
 from libqtile.widget import base
 
 
-class CapsNumLockIndicator(base.ThreadPoolText):
+class CapsNumLockIndicator(base.BackgroundPoll):
     """Really simple widget to show the current Caps/Num Lock state."""
 
     defaults = [("update_interval", 0.5, "Update Time in seconds.")]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.BackgroundPoll.__init__(self, "", **config)
         self.add_defaults(CapsNumLockIndicator.defaults)
 
     def get_indicators(self):

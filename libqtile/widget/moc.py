@@ -20,7 +20,7 @@ from functools import partial
 from libqtile.widget import base
 
 
-class Moc(base.ThreadPoolText):
+class Moc(base.BackgroundPoll):
     """A simple MOC widget.
 
     Show the artist and album of now listening song and allow basic mouse
@@ -40,7 +40,7 @@ class Moc(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.BackgroundPoll.__init__(self, "", **config)
         self.add_defaults(Moc.defaults)
         self.status = ""
         self.local = None

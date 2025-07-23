@@ -81,7 +81,7 @@ def patched_cnli(monkeypatch):
     )
 
     monkeypatch.setattr(
-        "libqtile.widget.caps_num_lock_indicator.base.ThreadPoolText.call_process",
+        "libqtile.widget.caps_num_lock_indicator.base.BackgroundPoll.call_process",
         MockCapsNumLockIndicator.call_process,
     )
     return caps_num_lock_indicator

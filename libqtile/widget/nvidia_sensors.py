@@ -14,7 +14,7 @@ def _all_sensors_names_correct(sensors):
     return all(map(lambda x: x in sensors_mapping, sensors))
 
 
-class NvidiaSensors(base.ThreadPoolText):
+class NvidiaSensors(base.BackgroundPoll):
     """Displays temperature, fan speed and performance level Nvidia GPU."""
 
     defaults = [
@@ -40,7 +40,7 @@ class NvidiaSensors(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.BackgroundPoll.__init__(self, "", **config)
         self.add_defaults(NvidiaSensors.defaults)
         self.foreground_normal = self.foreground
 

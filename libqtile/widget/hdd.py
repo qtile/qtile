@@ -21,7 +21,7 @@
 from libqtile.widget import base
 
 
-class HDD(base.ThreadPoolText):
+class HDD(base.BackgroundPoll):
     """
     Displays HDD usage in percent based on the number of milliseconds the device has been performing I/O operations.
     """
