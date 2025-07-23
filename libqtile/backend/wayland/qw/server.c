@@ -5,6 +5,7 @@
 
 #include "cursor.h"
 #include "keyboard.h"
+#include "layer-view.h"
 #include "output.h"
 #include "server.h"
 #include "wayland-server-protocol.h"
@@ -36,6 +37,7 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->output_manager_test.link);
     wl_list_remove(&server->new_xdg_toplevel.link);
     wl_list_remove(&server->new_decoration.link);
+    wl_list_remove(&server->new_layer_surface.link);
 
     wl_display_destroy_clients(server->display);
     wlr_scene_node_destroy(&server->scene->tree.node);
@@ -107,10 +109,16 @@ static void qw_server_handle_output_layout_change(struct wl_listener *listener, 
         config_head = wlr_output_configuration_head_v1_create(config, o->wlr_output);
         config_head->state.enabled = 0;
         wlr_output_layout_remove(server->output_layout, o->wlr_output);
-        // TODO: update current output
+        // update current output
+        if (o->wlr_output == server->current_output) {
+            server->current_output = NULL;
+        }
+        o->full_area = o->area = (struct wlr_box){0};
     }
     wl_list_for_each(o, &server->outputs, link) {
-        if (o->wlr_output->enabled && !wlr_output_layout_get(server->output_layout, o->wlr_output))
+        if (!o->wlr_output->enabled)
+            continue;
+        if (!wlr_output_layout_get(server->output_layout, o->wlr_output))
             wlr_output_layout_add_auto(server->output_layout, o->wlr_output);
     }
 
@@ -119,12 +127,26 @@ static void qw_server_handle_output_layout_change(struct wl_listener *listener, 
             continue;
         config_head = wlr_output_configuration_head_v1_create(config, o->wlr_output);
 
-        struct wlr_box box;
-        wlr_output_layout_get_box(server->output_layout, o->wlr_output, &box);
-        config_head->state.x = o->x = box.x;
-        config_head->state.y = o->y = box.y;
+        wlr_output_layout_get_box(server->output_layout, o->wlr_output, &o->full_area);
+        o->area = o->full_area;
 
         wlr_scene_output_set_position(o->scene, o->x, o->y);
+
+        // TODO: fullscreen bg
+
+        // TODO: lock surface
+
+        qw_output_arrange_layers(o);
+
+        // TODO: arrange
+
+        config_head->state.x = o->x = o->full_area.x;
+        config_head->state.y = o->y = o->full_area.y;
+
+        // if we have no current output, assign it the first enabled output
+        if (!server->current_output) {
+            server->current_output = o->wlr_output;
+        }
     }
 
     wlr_output_manager_v1_set_configuration(server->output_mgr, config);
@@ -234,6 +256,12 @@ static void qw_server_handle_new_decoration(struct wl_listener *listener, void *
     qw_xdg_view_decoration_new(decoration->toplevel->base->data, decoration);
 }
 
+static void qw_server_handle_new_layer_surface(struct wl_listener *listener, void *data) {
+    struct qw_server *server = wl_container_of(listener, server, new_layer_surface);
+    struct wlr_layer_surface_v1 *layer_surface = data;
+    qw_server_layer_view_new(server, layer_surface);
+}
+
 // Return the view at the given layout coordinates, if any.
 // Also fills out surface and surface-local coords if found.
 struct qw_view *qw_server_view_at(struct qw_server *server, double lx, double ly,
@@ -303,6 +331,12 @@ struct qw_server *qw_server_create() {
     wlr_presentation_create(server->display, server->backend, 2);
     wlr_alpha_modifier_v1_create(server->display);
     server->scene = wlr_scene_create();
+    server->scene_wallpaper_tree = wlr_scene_tree_create(&server->scene->tree);
+    server->scene_windows_tree = wlr_scene_tree_create(&server->scene->tree);
+    for (int i = 0; i < LAYER_END; ++i) {
+        server->scene_windows_layers[i] = wlr_scene_tree_create(server->scene_windows_tree);
+    }
+    // TODO: drag icon
 
     wl_list_init(&server->outputs);
     server->output_layout = wlr_output_layout_create(server->display);
@@ -340,6 +374,12 @@ struct qw_server *qw_server_create() {
                   &server->new_decoration);
 
     // TODO: handle activation request
+    server->layer_shell = wlr_layer_shell_v1_create(server->display, 3);
+    server->new_layer_surface.notify = qw_server_handle_new_layer_surface;
+    wl_signal_add(&server->layer_shell->events.new_surface, &server->new_layer_surface);
+
+    // TODO: XDG activation, gamma control, power manager
+    // TODO: handle GPU resets
 
     wlr_scene_set_gamma_control_manager_v1(server->scene,
                                            wlr_gamma_control_manager_v1_create(server->display));

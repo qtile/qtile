@@ -5,11 +5,7 @@ import cairocffi
 import os
 import subprocess
 
-qw_path = (Path(__file__).parent / ".." / "qw").resolve()
-
-PROTOS = [
-    ["xdg-shell-protocol.h", "stable/xdg-shell/xdg-shell.xml"],
-]
+QW_PATH = (Path(__file__).parent / ".." / "qw").resolve()
 
 WAYLAND_SCANNER = subprocess.run(
     ["pkg-config", "--variable=wayland_scanner", "wayland-scanner"],
@@ -22,9 +18,19 @@ WAYLAND_PROTOCOLS = subprocess.run(
     stdout=subprocess.PIPE,
 ).stdout.strip()
 
+QW_PROTO_IN_PATH = (QW_PATH / ".." / "proto").resolve()
+
+PROTOS = [
+    ["wlr-layer-shell-unstable-v1-protocol.h", f"{QW_PROTO_IN_PATH}/wlr-layer-shell-unstable-v1.xml"],
+    ["xdg-shell-protocol.h", f"{WAYLAND_PROTOCOLS}/stable/xdg-shell/xdg-shell.xml"],
+]
+
+QW_PROTO_OUT_PATH = QW_PATH / "proto"
+QW_PROTO_OUT_PATH.mkdir(exist_ok=True)
+
 for proto in PROTOS:
     subprocess.run(
-        [WAYLAND_SCANNER, "server-header", f"{WAYLAND_PROTOCOLS}/{proto[1]}", qw_path / proto[0]],
+        [WAYLAND_SCANNER, "server-header", proto[1], QW_PROTO_OUT_PATH / proto[0]],
         text=True,
         stdout=subprocess.PIPE,
     ).stdout.strip()
@@ -40,6 +46,13 @@ enum wlr_log_importance {
 };
 extern "Python" void log_cb(enum wlr_log_importance importance,
                                        const char *log_str);
+
+
+struct wlr_box {
+	int x, y;
+	int width, height;
+};
+
 // main callbacks
 typedef uint32_t xkb_keysym_t;
 typedef struct _cairo_surface cairo_surface_t;
@@ -49,6 +62,7 @@ extern "Python" void unmanage_view_cb(struct qw_view *view, void *userdata);
 extern "Python" void cursor_motion_cb(int x, int y, void *userdata);
 extern "Python" int cursor_button_cb(int button, uint32_t mask, bool pressed, int x, int y, void *userdata);
 extern "Python" void on_screen_change_cb(void *userdata);
+extern "Python" void on_screen_reserve_space_cb(struct qw_output *output, void *userdata);
 
 extern "Python" int request_fullscreen_cb(bool fullscreen, void *userdata);
 extern "Python" int request_maximize_cb(bool maximize, void *userdata);
@@ -56,10 +70,10 @@ extern "Python" void set_title_cb(char* title, void *userdata);
 extern "Python" void set_app_id_cb(char* app_id, void *userdata);
 """
 
-cdef_files = ["log.h", "server.h", "view.h", "util.h", "internal-view.h"]
+cdef_files = ["log.h", "server.h", "view.h", "util.h", "output.h", "internal-view.h"]
 
 for file in cdef_files:
-    with open(qw_path / file) as f:
+    with open(QW_PATH / file) as f:
         in_private_data = False
         for line in f.readlines():
             if line.startswith("#"):
@@ -76,10 +90,10 @@ for file in cdef_files:
 
 SOURCE = ""
 
-for root, dirs, files in os.walk(qw_path):
+for root, dirs, files in os.walk(QW_PATH):
     for file in files:
         if file.endswith(".c"):
-            with open(qw_path / file) as f:
+            with open(QW_PATH / file) as f:
                 SOURCE += f.read()
 
 
@@ -100,7 +114,8 @@ ffi.set_source(
         os.getenv("QTILE_PIXMAN_PATH", "/usr/include/pixman-1"),
         os.getenv("QTILE_LIBDRM_PATH", "/usr/include/libdrm"),
         os.getenv("QTILE_WLROOTS_PATH", "/usr/include/wlroots-0.19"),
-        qw_path,
+        QW_PATH,
+        QW_PROTO_OUT_PATH,
     ],
 )
 
