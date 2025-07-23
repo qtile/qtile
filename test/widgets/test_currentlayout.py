@@ -76,14 +76,15 @@ def test_current_layout_icon_mode(manager_nospawn, minimal_conf_noscreen):
     manager_nospawn.start(config)
     widget = manager_nospawn.c.widget["currentlayout"]
     img_length = int(widget.eval("self.img_length")[1])
-    padding = int(widget.eval("self.actual_padding")[1])
+    padding = int(widget.eval("self.padding")[1])
+    text_length = int(widget.eval("super(type(self), self).calculate_length()")[1])
 
     length = int(widget.eval("self.length")[1])
     assert length == img_length + padding * 2
 
     widget.bar.fake_button_press(0, 0, button=3)
     length = int(widget.eval("self.length")[1])
-    assert length != img_length + padding * 2
+    assert length == text_length
 
     widget.bar.fake_button_press(0, 0, button=3)
     length = int(widget.eval("self.length")[1])
@@ -94,6 +95,8 @@ def test_current_layout_text_mode(manager_nospawn, minimal_conf_noscreen):
     config = get_widget_config(CurrentLayout(mode="text"), minimal_conf_noscreen)
     manager_nospawn.start(config)
     widget = manager_nospawn.c.widget["currentlayout"]
+    img_length = int(widget.eval("self.img_length")[1])
+    padding = int(widget.eval("self.padding")[1])
     text_length = int(widget.eval("super(type(self), self).calculate_length()")[1])
 
     length = int(widget.eval("self.length")[1])
@@ -101,7 +104,7 @@ def test_current_layout_text_mode(manager_nospawn, minimal_conf_noscreen):
 
     widget.bar.fake_button_press(0, 0, button=3)
     length = int(widget.eval("self.length")[1])
-    assert length != text_length
+    assert length == img_length + padding * 2
 
     widget.bar.fake_button_press(0, 0, button=3)
     length = int(widget.eval("self.length")[1])
@@ -113,7 +116,7 @@ def test_current_layout_both_mode(manager_nospawn, minimal_conf_noscreen):
     manager_nospawn.start(config)
     widget = manager_nospawn.c.widget["currentlayout"]
     img_length = int(widget.eval("self.img_length")[1])
-    padding = int(widget.eval("self.actual_padding")[1])
+    padding = int(widget.eval("self.padding")[1])
     text_length = int(widget.eval("super(type(self), self).calculate_length()")[1])
 
     length = int(widget.eval("self.length")[1])

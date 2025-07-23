@@ -564,17 +564,12 @@ class _TextBox(_Widget):
     def formatted_text(self):
         return self.fmt.format(self._text)
 
-    @property
-    def actual_padding(self):
-        if self.padding is None:
-            return self.fontsize // 2
-        else:
-            return self.padding
-
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
         if self.fontsize is None:
             self.fontsize = self.bar.size - self.bar.size / 5
+        if self.padding is None:
+            self.padding = self.fontsize // 2
         if self.direction not in ("default", "ttb", "btt"):
             logger.warning(
                 "Invalid value set for direction: %s. Valid values are: 'default', 'ttb', 'btt'. "
@@ -636,8 +631,9 @@ class _TextBox(_Widget):
         if not self.text:
             return 0
         if not self.bar.horizontal and not self.rotate:
-            return self.layout.height + self.actual_padding * 2
-        return min(self.layout.width, self.bar.length) + self.actual_padding * 2
+            return self.layout.height + self.padding * 2
+        else:
+            return min(self.layout.width, self.bar.length) + self.padding * 2
 
     def can_draw(self):
         return self.layout is not None
@@ -670,9 +666,9 @@ class _TextBox(_Widget):
             self.drawer.ctx.clip()
 
         if not self.bar.horizontal and not self.rotate:
-            x, y = 0, self.actual_padding
+            x, y = 0, self.padding
         else:
-            x = self.actual_padding if self.length_type != bar.STATIC else 0
+            x = self.padding if self.length_type != bar.STATIC else 0
             y = (self.bar.size - self.layout.height) / 2 + 1
 
         self.layout.draw(x - self._scroll_offset, y)
