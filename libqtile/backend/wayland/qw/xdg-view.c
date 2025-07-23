@@ -11,7 +11,7 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
         return;
     }
 
-    struct qw_server *server = xdg_view->server;
+    struct qw_server *server = xdg_view->base.server;
     struct wlr_seat *seat = server->seat;
     struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
 
@@ -45,8 +45,8 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
 static void qw_xdg_view_handle_unmap(struct wl_listener *listener, void *data) {
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, unmap);
     qw_view_cleanup_borders((struct qw_view *)xdg_view);
-    xdg_view->server->unmanage_view_cb((struct qw_view *)&xdg_view->base,
-                                       xdg_view->server->cb_data);
+    xdg_view->base.server->unmanage_view_cb((struct qw_view *)&xdg_view->base,
+                                            xdg_view->base.server->cb_data);
 }
 
 // Handle the destroy event of the xdg_view (cleanup and free memory)
@@ -94,15 +94,9 @@ static void qw_xdg_view_handle_commit(struct wl_listener *listener, void *data) 
         wlr_xdg_toplevel_set_size(xdg_view->xdg_toplevel, 0, 0);
         xdg_view->base.title = xdg_view->xdg_toplevel->title;
         xdg_view->base.app_id = xdg_view->xdg_toplevel->app_id;
-        xdg_view->server->manage_view_cb((struct qw_view *)&xdg_view->base,
-                                         xdg_view->server->cb_data);
+        xdg_view->base.server->manage_view_cb((struct qw_view *)&xdg_view->base,
+                                              xdg_view->base.server->cb_data);
     }
-}
-
-// Bring the xdg_view's content scene node to the front
-static void qw_xdg_view_bring_to_front(void *self) {
-    struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
-    wlr_scene_node_raise_to_top(&xdg_view->base.content_tree->node);
 }
 
 // Clip the xdg_view's scene tree if needed
@@ -170,7 +164,7 @@ static void qw_xdg_view_place(void *self, int x, int y, int width, int height, i
 
     // Raise view to front if requested
     if (above != 0) {
-        qw_xdg_view_bring_to_front(self);
+        qw_view_reparent(&xdg_view->base, LAYER_BRINGTOFRONT);
     }
 }
 
@@ -187,8 +181,8 @@ static void qw_xdg_view_hide(void *self) {
 
     // Clear keyboard focus if this view was focused
     if (xdg_view->xdg_toplevel->base->surface ==
-        xdg_view->server->seat->keyboard_state.focused_surface) {
-        wlr_seat_keyboard_clear_focus(xdg_view->server->seat);
+        xdg_view->base.server->seat->keyboard_state.focused_surface) {
+        wlr_seat_keyboard_clear_focus(xdg_view->base.server->seat);
     }
 }
 
@@ -244,7 +238,7 @@ static void qw_xdg_view_handle_set_title(struct wl_listener *listener, void *dat
     xdg_view->base.title = xdg_view->xdg_toplevel->title;
     // callback is not intialised until qtile window is initialised
     if (xdg_view->base.set_title_cb && xdg_view->base.title) {
-         xdg_view->base.set_title_cb(xdg_view->base.title, xdg_view->base.cb_data);
+        xdg_view->base.set_title_cb(xdg_view->base.title, xdg_view->base.cb_data);
     }
 }
 
@@ -253,7 +247,7 @@ static void qw_xdg_view_handle_set_app_id(struct wl_listener *listener, void *da
     xdg_view->base.app_id = xdg_view->xdg_toplevel->app_id;
     // callback is not intialised until qtile window is initialised
     if (xdg_view->base.set_app_id_cb && xdg_view->base.app_id) {
-         xdg_view->base.set_app_id_cb(xdg_view->base.app_id, xdg_view->base.cb_data);
+        xdg_view->base.set_app_id_cb(xdg_view->base.app_id, xdg_view->base.cb_data);
     }
 }
 
@@ -318,13 +312,13 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
 
     struct wlr_box geom = {.x = 0, .y = 0, .width = 0, .height = 0};
     xdg_view->geom = geom;
-    xdg_view->server = server;
+    xdg_view->base.server = server;
     xdg_view->xdg_toplevel = xdg_toplevel;
 
     xdg_view->base.shell = "XDG";
-
-    // Create a scene tree node for this view inside the server's main scene tree
-    xdg_view->base.content_tree = wlr_scene_tree_create(&server->scene->tree);
+    // Create a scene tree node for this view inside the main layout tree
+    xdg_view->base.content_tree = wlr_scene_tree_create(server->scene_windows_layers[LAYER_LAYOUT]);
+    xdg_view->base.layer = LAYER_LAYOUT;
 
     // If the protocol version supports WM capabilities, set maximize/fullscreen/minimize
     if (wl_resource_get_version(xdg_view->xdg_toplevel->resource) >=
@@ -353,7 +347,6 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     xdg_view->base.place = qw_xdg_view_place;
     xdg_view->base.focus = qw_xdg_view_focus;
     xdg_view->base.get_pid = qw_xdg_view_get_pid;
-    xdg_view->base.bring_to_front = qw_xdg_view_bring_to_front;
     xdg_view->base.kill = qw_xdg_view_kill;
     xdg_view->base.hide = qw_xdg_view_hide;
     xdg_view->base.unhide = qw_xdg_view_unhide;

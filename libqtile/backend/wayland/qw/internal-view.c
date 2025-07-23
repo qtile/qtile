@@ -56,19 +56,13 @@ static struct wlr_scene_node *qw_internal_view_get_tree_node(void *self) {
     return &view->scene_buffer->node;
 }
 
-// Raise this internal view's node to the top of the scene tree (bring to front)
-static void qw_internal_view_bring_to_front(void *self) {
-    struct qw_internal_view *view = (struct qw_internal_view *)self;
-    wlr_scene_node_raise_to_top(&view->base.content_tree->node);
-}
-
 // Place the internal view at a new position and resize if needed
 // If 'above' is nonzero, bring the view to the front
 static void qw_internal_view_place(void *self, int x, int y, int width, int height, int bw,
                                    float (*bc)[4], int bn, int above) {
     struct qw_internal_view *view = (struct qw_internal_view *)self;
     if (above != 0) {
-        qw_internal_view_bring_to_front(view);
+        qw_view_reparent(&view->base, LAYER_BRINGTOFRONT);
     }
     view->base.x = x;
     view->base.y = y;
@@ -118,6 +112,8 @@ struct qw_internal_view *qw_server_internal_view_new(struct qw_server *server, i
 
     // Initialize the base qw_view with provided geometry and callbacks
     struct qw_view base = {
+        .server = server,
+        .layer = LAYER_LAYOUT,
         .x = x,
         .y = y,
         .width = width,
@@ -130,13 +126,11 @@ struct qw_internal_view *qw_server_internal_view_new(struct qw_server *server, i
         .place = qw_internal_view_place,
         .focus = qw_internal_view_focus,
         .get_pid = qw_internal_view_get_pid,
-        .bring_to_front = qw_internal_view_bring_to_front,
         .kill = qw_internal_view_kill,
         .hide = qw_internal_view_hide,
         .unhide = qw_internal_view_unhide,
     };
     view->base = base;
-    view->server = server;
 
     // Create the initial buffer and disable the scene node by default
     qw_internal_view_buffer_new(view, true);
