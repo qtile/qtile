@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <wayland-server-core.h>
 #include <wlr/backend.h>
+#include <wlr/backend/session.h>
 #include <wlr/render/allocator.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_alpha_modifier_v1.h>
@@ -100,6 +101,7 @@ struct qw_server {
     struct wlr_compositor *compositor;
     struct wl_display *display;
     struct wlr_backend *backend;
+    struct wlr_session *session;
     struct wlr_renderer *renderer;
     struct wlr_allocator *allocator;
     struct wlr_scene *scene;
