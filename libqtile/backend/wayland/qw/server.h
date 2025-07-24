@@ -161,4 +161,7 @@ struct qw_view *qw_server_view_at(struct qw_server *server, double lx, double ly
                                   struct wlr_surface **surface, double *sx, double *sy);
 void qw_server_keyboard_clear_focus(struct qw_server *server);
 
+// Change virtual terminal
+bool qw_server_change_vt(struct qw_server *server, int vt);
+
 #endif /* SERVER_H */
