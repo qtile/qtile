@@ -1,5 +1,5 @@
 #ifndef CAIRO_BUFFER_H
-#define CAIR_BUFFER_H
+#define CAIRO_BUFFER_H
 
 #include <stdlib.h>
 
