@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <wlr/backend/session.h>
 #include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_server_decoration.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
@@ -295,7 +296,8 @@ struct qw_server *qw_server_create() {
     }
 
     server->display = wl_display_create();
-    server->backend = wlr_backend_autocreate(wl_display_get_event_loop(server->display), NULL);
+    server->backend =
+        wlr_backend_autocreate(wl_display_get_event_loop(server->display), &server->session);
     if (!server->backend) {
         wlr_log(WLR_ERROR, "failed to create wlr_backend");
         free(server);
