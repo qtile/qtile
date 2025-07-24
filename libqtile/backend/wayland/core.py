@@ -382,7 +382,10 @@ class Core(base.Core):
     @expose_command()
     def change_vt(self, vt: int) -> bool:
         """Change virtual terminal to that specified"""
-        raise Exception("TODO: implement")
+        success = lib.qw_server_change_vt(self.qw, vt)
+        if not success:
+            logger.warning("Could not change VT to: %s", vt)
+        return success
 
     @expose_command()
     def hide_cursor(self) -> None:
