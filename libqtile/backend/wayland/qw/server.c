@@ -392,3 +392,10 @@ struct qw_server *qw_server_create() {
 
     return server;
 }
+
+bool qw_server_change_vt(struct qw_server *server, int vt) {
+    if (!server || !server->session) {
+        return false;
+    }
+    return wlr_session_change_vt(server->session, vt);
+}
