@@ -120,6 +120,7 @@ void qw_view_paint_borders(struct qw_view *view, float (*colors)[4], int width, 
         for (int j = 0; j < 4; j++) {
             view->borders[i][j] =
                 wlr_scene_rect_create(view->content_tree, pairs[j].w, pairs[j].h, colors[i]);
+            view->borders[i][j]->node.data = view;
             wlr_scene_node_set_position(&view->borders[i][j]->node, pairs[j].x, pairs[j].y);
         }
 
