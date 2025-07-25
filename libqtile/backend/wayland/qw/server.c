@@ -358,22 +358,36 @@ static void qw_server_handle_new_layer_surface(struct wl_listener *listener, voi
 struct qw_view *qw_server_view_at(struct qw_server *server, double lx, double ly,
                                   struct wlr_surface **surface, double *sx, double *sy) {
     struct wlr_scene_node *node = wlr_scene_node_at(&server->scene->tree.node, lx, ly, sx, sy);
-    if (!node || node->type != WLR_SCENE_NODE_BUFFER) {
-        return NULL;
-    }
-    struct wlr_scene_buffer *scene_buffer = wlr_scene_buffer_from_node(node);
-    struct wlr_scene_surface *scene_surface = wlr_scene_surface_try_from_buffer(scene_buffer);
-    if (!scene_surface) {
+    if (!node) {
         return NULL;
     }
 
-    // TODO: fix when we have internal windows working
-    *surface = scene_surface->surface;
-    struct wlr_scene_tree *tree = node->parent;
-    while (tree && !tree->node.data) {
-        tree = tree->node.parent;
+    if (node->type == WLR_SCENE_NODE_BUFFER) {
+        struct wlr_scene_buffer *scene_buffer = wlr_scene_buffer_from_node(node);
+        struct wlr_scene_surface *scene_surface = wlr_scene_surface_try_from_buffer(scene_buffer);
+        if (!scene_surface) {
+            return NULL;
+        }
+
+        // TODO: fix when we have internal windows working
+        *surface = scene_surface->surface;
+        struct wlr_scene_tree *tree = node->parent;
+        while (tree && !tree->node.data) {
+            tree = tree->node.parent;
+        }
+        return tree->node.data;
+    } else if (node->type == WLR_SCENE_NODE_RECT) {
+        // Rect nodes are only used for window borders. We can get their window at .data.
+        // We have to differentiate between internal windows and normal windows
+        // TODO: handle internal windows
+        return node->data;
     }
-    return tree->node.data;
+
+    return NULL;
+}
+
+struct qw_cursor *qw_server_get_cursor(struct qw_server *server) {
+    return server->cursor;
 }
 
 // Create and initialize the server object with all components and listeners.
