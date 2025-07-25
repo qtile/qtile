@@ -17,7 +17,7 @@ jobs:
                 # python version in .readthedocs.yaml
                 # TODO: Add back pypy here and in release.yml once:
                 # https://github.com/pypy/pypy/issues/4956 is resolved
-                python-version: ['3.10', '3.11', '3.12', '3.13']
+                python-version: ['3.12', '3.13']
                 backend: ['x11', 'wayland']
         steps:
             - uses: actions/checkout@v4
