@@ -119,6 +119,7 @@ struct qw_server {
     struct wl_listener new_output;
     struct wl_listener output_layout_change;
     struct wl_listener new_input;
+    struct wl_listener renderer_lost;
     struct wl_list keyboards;
     struct wlr_seat *seat;
     struct qw_cursor *cursor;
