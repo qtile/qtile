@@ -165,4 +165,6 @@ void qw_server_keyboard_clear_focus(struct qw_server *server);
 // Change virtual terminal
 bool qw_server_change_vt(struct qw_server *server, int vt);
 
+struct qw_cursor *qw_server_get_cursor(struct qw_server *server);
+
 #endif /* SERVER_H */
