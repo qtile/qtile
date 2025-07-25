@@ -51,35 +51,43 @@ Here are Qtile's core runtime dependencies and the package names that provide th
 in Ubuntu. Note that Qtile can run with one of two backends -- X11 and Wayland -- so 
 only the dependencies of one of these is required.
 
-+-------------------+-------------------------+-----------------------------------------+
-| Dependency        | Ubuntu Package          |  Needed for                             |
-+===================+=========================+=========================================+
-|                     **Core Dependencies**                                             |
-+-------------------+-------------------------+-----------------------------------------+
-| CFFI_             | python3-cffi            | Bars and popups                         |
-+-------------------+-------------------------+-----------------------------------------+
-| cairocffi_        | python3-cairocffi       | Drawing on bars and popups              |
-+-------------------+-------------------------+-----------------------------------------+
-| libpangocairo     | libpangocairo-1.0-0     | Writing on bars and popups              |
-+-------------------+-------------------------+-----------------------------------------+
-| dbus-fast_        | --                      | Sending notifications with dbus         |
-|                   |                         | (optional).                             |
-+-------------------+-------------------------+-----------------------------------------+
-|                       **X11**                                                         |
-+-------------------+-------------------------+-----------------------------------------+
-| X server          | xserver-xorg            |  X11 backends                           |
-+-------------------+-------------------------+-----------------------------------------+
-| xcffib_           | python3-xcffib          |  required for X11 backend               |
-+-------------------+-------------------------+-----------------------------------------+
-|                      **Wayland**                                                      |
-+-------------------+-------------------------+-----------------------------------------+
-| wlroots_          | libwlroots-dev          |  Wayland backend (see below)            |
-+-------------------+-------------------------+-----------------------------------------+
++--------------------+-------------------------+-----------------------------------------+
+| Dependency         | Ubuntu Package          |  Needed for                             |
++====================+=========================+=========================================+
+|                      **Core Dependencies**                                             |
++--------------------+-------------------------+-----------------------------------------+
+| CFFI_              | python3-cffi            | Bars and popups                         |
++--------------------+-------------------------+-----------------------------------------+
+| cairocffi_         | python3-cairocffi       | Drawing on bars and popups              |
++--------------------+-------------------------+-----------------------------------------+
+| libpangocairo      | libpangocairo-1.0-0     | Writing on bars and popups              |
++--------------------+-------------------------+-----------------------------------------+
+| dbus-fast_         | --                      | Sending notifications with dbus         |
+|                    |                         | (optional).                             |
++--------------------+-------------------------+-----------------------------------------+
+|                        **X11**                                                         |
++--------------------+-------------------------+-----------------------------------------+
+| X server           | xserver-xorg            |  X11 backends                           |
++--------------------+-------------------------+-----------------------------------------+
+| xcffib_            | python3-xcffib          |  required for X11 backend               |
++--------------------+-------------------------+-----------------------------------------+
+|                       **Wayland**                                                      |
++--------------------+-------------------------+-----------------------------------------+
+| wlroots_           | libwlroots-dev          |  Wayland backend (see below)            |
++--------------------+-------------------------+-----------------------------------------+
++--------------------+-------------------------+-----------------------------------------+
+| wayland-scanner_   | --                      |  generate C headers (Wayland backend)   |
++--------------------+-------------------------+-----------------------------------------+
++--------------------+-------------------------+-----------------------------------------+
+| wayland-protocols_ | wayland-protocols       |  Additional standard Wayland protocols  |
++--------------------+-------------------------+-----------------------------------------+
 
 .. _CFFI: https://cffi.readthedocs.io/en/latest/installation.html
 .. _xcffib: https://github.com/tych0/xcffib#installation
 .. _wlroots: https://gitlab.freedesktop.org/wlroots/wlroots
 .. _cairocffi: https://cairocffi.readthedocs.io/en/stable/overview.html
+.. _wayland-scanner: https://wayland-book.com/libwayland/wayland-scanner.html
+.. _wayland-protocols: https://gitlab.freedesktop.org/wayland/wayland-protocols
 .. _dbus-fast: https://dbus-fast.readthedocs.io/en/latest/
 
 
@@ -150,8 +158,7 @@ Wayland
 Qtile can be run as a Wayland compositor rather than an X11 window manager. For
 this, Qtile uses wlroots_, a compositor library which is undergoing fast
 development. Be aware that some distributions package outdated versions of
-wlroots. Also note that we may not have yet caught up with the latest
-wlroots release ourselves.
+wlroots. We are trying our best to keep up with latest wlroots release.
 
 With the Wayland dependencies in place, Qtile can be run either from a TTY, or
 within an existing X11 or Wayland session where it will run inside a nested
