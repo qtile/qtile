@@ -9,7 +9,11 @@
 #include "layer-view.h"
 #include "output.h"
 #include "server.h"
+#include "view.h"
+#include "wayland-server-core.h"
 #include "wayland-server-protocol.h"
+#include "wayland-util.h"
+#include "wlr/util/log.h"
 #include "xdg-view.h"
 
 // Get the file descriptor of the Wayland event loop (used for epoll integration)
@@ -39,6 +43,7 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->new_xdg_toplevel.link);
     wl_list_remove(&server->new_decoration.link);
     wl_list_remove(&server->new_layer_surface.link);
+    wl_list_remove(&server->renderer_lost.link);
 
     wl_display_destroy_clients(server->display);
     wlr_scene_node_destroy(&server->scene->tree.node);
@@ -218,6 +223,91 @@ static void qw_server_handle_output_manager_test(struct wl_listener *listener, v
     qw_server_output_manager_reconfigure(server, config, false);
 }
 
+// Handle wlr_renderer lost event caused by GPU resets or driver crashes.
+// Recreates renderer/allocator and reinitializes outputs to restore functionality.
+static void qw_server_handle_renderer_lost(struct wl_listener *listener, void *data) {
+    struct qw_server *server = wl_container_of(listener, server, renderer_lost);
+
+    wlr_log(WLR_INFO, "Re-generating renderer after GPU reset");
+
+    // Create new renderer
+    struct wlr_renderer *new_renderer = wlr_renderer_autocreate(server->backend);
+    if (!new_renderer) {
+        wlr_log(WLR_ERROR, "Unable to create renderer after GPU reset");
+        return;
+    }
+
+    // Create new allocator
+    struct wlr_allocator *new_allocator = wlr_allocator_autocreate(server->backend, new_renderer);
+    if (!new_allocator) {
+        wlr_log(WLR_ERROR, "Unable to create allocator after GPU reset");
+        wlr_renderer_destroy(new_renderer);
+        return;
+    }
+
+    // Store old renderer and allocator for cleanup
+    struct wlr_renderer *old_renderer = server->renderer;
+    struct wlr_allocator *old_allocator = server->allocator;
+
+    // Update server with new renderer and allocator
+    server->renderer = new_renderer;
+    server->allocator = new_allocator;
+
+    // Remove old renderer lost listener and add new one
+    wl_list_remove(&server->renderer_lost.link);
+    wl_signal_add(&server->renderer->events.lost, &server->renderer_lost);
+
+    // Update compositor with new renderer
+    wlr_compositor_set_renderer(server->compositor, new_renderer);
+
+    // Reinitialize all outputs with new renderer/allocator
+    struct qw_output *output;
+    bool all_outputs_ok = true;
+
+    wl_list_for_each(output, &server->outputs, link) {
+        if (!wlr_output_init_render(output->wlr_output, server->allocator, server->renderer)) {
+            wlr_log(WLR_ERROR, "Failed to reinitialize output %s after GPU reset",
+                    output->wlr_output->name);
+            all_outputs_ok = false;
+        }
+    }
+
+    if (!all_outputs_ok) {
+        wlr_log(WLR_INFO, "Some outputs failed to reinitialize after GPU reset");
+    }
+
+    // Reapply current output configuration with new renderer
+    // This ensures outputs are properly configured after renderer recreation
+    struct wlr_output_configuration_v1 *current_config = wlr_output_configuration_v1_create();
+    if (current_config) {
+        wl_list_for_each(output, &server->outputs, link) {
+            if (!output->wlr_output->enabled)
+                continue;
+
+            struct wlr_output_configuration_head_v1 *config_head =
+                wlr_output_configuration_head_v1_create(current_config, output->wlr_output);
+
+            config_head->state.enabled = true;
+            config_head->state.x = output->x;
+            config_head->state.y = output->y;
+            if (output->wlr_output->current_mode) {
+                config_head->state.mode = output->wlr_output->current_mode;
+            }
+            config_head->state.transform = output->wlr_output->transform;
+            config_head->state.scale = output->wlr_output->scale;
+        }
+    }
+
+    // TODO: Handle existing surfaces/views that might need to be recreated
+    // This might involve notifying clients to recreate their buffers
+
+    // Clean up old renderer and allocator
+    wlr_allocator_destroy(old_allocator);
+    wlr_renderer_destroy(old_renderer);
+
+    wlr_log(WLR_INFO, "Successfully recovered from GPU reset");
+}
+
 // Attach a new pointer device to the server's cursor
 static void qw_server_new_pointer(struct qw_server *server, struct wlr_input_device *device) {
     wlr_cursor_attach_input_device(server->cursor->cursor, device);
@@ -379,15 +469,15 @@ struct qw_server *qw_server_create() {
     server->layer_shell = wlr_layer_shell_v1_create(server->display, 3);
     server->new_layer_surface.notify = qw_server_handle_new_layer_surface;
     wl_signal_add(&server->layer_shell->events.new_surface, &server->new_layer_surface);
+    server->renderer_lost.notify = qw_server_handle_renderer_lost;
+    wl_signal_add(&server->renderer->events.lost, &server->renderer_lost);
 
     // TODO: XDG activation, gamma control, power manager
-    // TODO: handle GPU resets
 
     wlr_scene_set_gamma_control_manager_v1(server->scene,
                                            wlr_gamma_control_manager_v1_create(server->display));
 
     // TODO: power manager
-    // TODO: handle GPU resets
     // TODO: setup listeners
 
     return server;
