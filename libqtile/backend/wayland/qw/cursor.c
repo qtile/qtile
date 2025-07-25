@@ -19,9 +19,6 @@ void qw_cursor_destroy(struct qw_cursor *cursor) {
 }
 
 static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
-    // Notify server callback with current cursor position
-    cursor->server->cursor_motion_cb((int)cursor->cursor->x, (int)cursor->cursor->y,
-                                     cursor->server->cb_data);
 
     double sx, sy;
     struct wlr_seat *seat = cursor->server->seat;
@@ -30,6 +27,11 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
     // Find the view under the cursor and get surface-local coordinates
     struct qw_view *view =
         qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
+    cursor->view = view;
+
+    // Notify server callback with current cursor position
+    cursor->server->cursor_motion_cb((int)cursor->cursor->x, (int)cursor->cursor->y,
+                                     cursor->server->cb_data);
 
     if (!view) {
         wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, "default");
@@ -60,6 +62,11 @@ static void qw_cursor_handle_motion_absolute(struct wl_listener *listener, void 
 
     wlr_cursor_warp_absolute(cursor->cursor, &event->pointer->base, event->x, event->y);
     qw_cursor_process_motion(cursor, event->time_msec);
+}
+
+void qw_cursor_warp_cursor(struct qw_cursor *cursor, double x, double y) {
+    wlr_cursor_warp_closest(cursor->cursor, NULL, x, y);
+    qw_cursor_process_motion(cursor, 0);
 }
 
 static void qw_cursor_handle_seat_request_set(struct wl_listener *listener, void *data) {
@@ -143,6 +150,15 @@ static void qw_cursor_handle_frame(struct wl_listener *listener, void *data) {
     wlr_seat_pointer_notify_frame(cursor->server->seat);
 }
 
+static struct qw_position qw_cursor_get_pos(void *self) {
+    struct qw_cursor *cursor = (struct qw_cursor *)self;
+    struct qw_position pos = {
+        .x = cursor->cursor->x,
+        .y = cursor->cursor->y
+    };
+    return pos;
+}
+
 struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
     // Allocate memory for qw_cursor
     struct qw_cursor *cursor = calloc(1, sizeof(*cursor));
@@ -174,6 +190,8 @@ struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
 
     cursor->button.notify = qw_cursor_handle_button;
     wl_signal_add(&cursor->cursor->events.button, &cursor->button);
+
+    cursor->get_pos = qw_cursor_get_pos;
 
     return cursor;
 }

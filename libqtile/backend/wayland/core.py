@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import functools
 import logging
 import operator
@@ -128,6 +129,8 @@ class Core(base.Core):
     supports_restarting: bool = False
 
     def __init__(self) -> None:
+        # This is the window under the pointer
+        self._hovered_window: WindowType | None = None
         # this Internal window receives keyboard input, e.g. via the Prompt widget.
         self.focused_internal: Internal | None = None
 
@@ -151,6 +154,7 @@ class Core(base.Core):
         self.qw.on_screen_change_cb = lib.on_screen_change_cb
         self.qw.on_screen_reserve_space_cb = lib.on_screen_reserve_space_cb
         lib.qw_server_start(self.qw)
+        self.qw_cursor = lib.qw_server_get_cursor(self.qw)
 
     def new_wid(self) -> int:
         """Get a new unique window ID"""
@@ -191,11 +195,13 @@ class Core(base.Core):
 
     def handle_cursor_motion(self, x, y):
         assert self.qtile is not None
+        self._focus_pointer(x, y)
         self.qtile.process_button_motion(x, y)
 
     def handle_cursor_button(self, button, mask, pressed, x, y) -> bool:
         assert self.qtile is not None
         if pressed:
+            self._focus_by_click()
             return self.qtile.process_button_click(int(button), int(mask), x, y)
         else:
             return self.qtile.process_button_release(button, mask)
@@ -243,6 +249,66 @@ class Core(base.Core):
 
         # TODO logic imcomplete
         win._ptr.focus(win._ptr, False)  # What is the second argument?
+
+    def _focus_by_click(self):
+        assert self.qtile is not None
+        view = self.qw_cursor.view
+
+        if view != ffi.NULL:
+            win = self.qtile.windows_map.get(view.wid)
+
+            if self.qtile.config.bring_front_click is True:
+                win.bring_to_front()
+            elif self.qtile.config.bring_front_click == "floating_only":
+                if isinstance(win, base.Window) and win.floating:
+                    win.bring_to_front()
+
+            if isinstance(win, base.Static):
+                if win.screen is not self.qtile.current_screen:
+                    self.qtile.focus_screen(win.screen.index, warp=False)
+                win.focus(False)
+            elif isinstance(win, base.Window):
+                if win.group and win.group.screen is not self.qtile.current_screen:
+                    self.qtile.focus_screen(win.group.screen.index, warp=False)
+                self.qtile.current_group.focus(win, False)
+
+        else:
+            screen = self.qtile.find_screen(int(self.get_cursor_pos().x), int(self.get_cursor_pos().y))
+            if screen:
+                self.qtile.focus_screen(screen.index, warp=False)
+
+        return view
+
+    def get_cursor_pos(self):
+        return self.qw_cursor.get_pos(self.qw_cursor)
+
+    def _focus_pointer(self, cx: int, cy: int) -> None:
+        assert self.qtile is not None
+        view = self.qw_cursor.view
+
+        if view != ffi.NULL:
+            win = self.qtile.windows_map.get(view.wid)
+
+            if self._hovered_window is not win:
+                # We only want to fire client_mouse_enter once, so check
+                # self._hovered_window.
+                hook.fire("client_mouse_enter", win)
+
+            if win is not self.qtile.current_window:
+                if self.qtile.config.follow_mouse_focus is True:
+                    if isinstance(win, base.Static):
+                        self.qtile.focus_screen(win.screen.index, False)
+                    else:
+                        if win.group and win.group.current_window != win:
+                            win.group.focus(win, False)
+                        if (
+                            win.group
+                            and win.group.screen
+                            and self.qtile.current_screen != win.group.screen
+                        ):
+                            self.qtile.focus_screen(win.group.screen.index, False)
+
+            self._hovered_window = win
 
     def finalize(self) -> None:
         lib.qw_server_finalize(self.qw)
@@ -301,6 +367,15 @@ class Core(base.Core):
 
     def grab_button(self, mouse: config.Mouse) -> int:
         return translate_masks(mouse.modifiers)
+
+    def warp_pointer(self, x: float, y: float) -> None:
+        """Warp the pointer to the coordinates in relative to the output layout"""
+        lib.qw_cursor_warp_cursor(self.qw_cursor, x, y)
+
+    @contextlib.contextmanager
+    def masked(self) -> Generator:
+        yield
+        self._focus_pointer(int(self.get_cursor_pos().x), int(self.get_cursor_pos().y))
 
     @property
     def name(self) -> str:
