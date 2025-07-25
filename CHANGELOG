@@ -1,4 +1,15 @@
 Qtile x.xx.x, released xxxx-xx-xx:
+    !!! Breaking changes !!!
+    - Switched to new Wayland backend (WayC)
+      The old backend based on `pywlroots` has been removed.
+      Wayland-related dependencies have changed:
+        - Removed: pywlroots, pywayland, xkbcommon
+        - Upgraded: wlroots 0.17.0 → 0.19.0
+        - Added: wayland-scanner, wayland-protocols
+
+      See the current Wayland backend status:
+      https://docs.qtile.org/en/stable/manual/wayland_status.html
+
     * features
     * bugfixes
 
