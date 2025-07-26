@@ -69,7 +69,7 @@ struct qw_output;
 typedef void (*on_screen_reserve_space_cb_t)(struct qw_output *output, void *userdata);
 
 enum {
-    LAYER_BACKGOUND,    // background, layer shell
+    LAYER_BACKGROUND,   // background, layer shell
     LAYER_BOTTOM,       // bottom, layer shell
     LAYER_KEEPBELOW,    // windows that are marked 'keep below'
     LAYER_LAYOUT,       // the normal tiled windows in the layout
