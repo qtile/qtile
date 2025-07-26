@@ -273,14 +273,11 @@ class Core(base.Core):
                 self.qtile.current_group.focus(win, False)
 
         else:
-            screen = self.qtile.find_screen(int(self.get_cursor_pos().x), int(self.get_cursor_pos().y))
+            screen = self.qtile.find_screen(int(self.qw_cursor.cursor.x), int(self.qw_cursor.cursor.y))
             if screen:
                 self.qtile.focus_screen(screen.index, warp=False)
 
         return view
-
-    def get_cursor_pos(self):
-        return self.qw_cursor.get_pos(self.qw_cursor)
 
     def _focus_pointer(self, cx: int, cy: int) -> None:
         assert self.qtile is not None
@@ -377,7 +374,7 @@ class Core(base.Core):
     @contextlib.contextmanager
     def masked(self) -> Generator:
         yield
-        self._focus_pointer(int(self.get_cursor_pos().x), int(self.get_cursor_pos().y))
+        self._focus_pointer(int(self.qw_cursor.cursor.x), int(self.qw_cursor.cursor.y))
 
     @property
     def name(self) -> str:
