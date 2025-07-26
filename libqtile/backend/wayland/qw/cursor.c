@@ -150,15 +150,6 @@ static void qw_cursor_handle_frame(struct wl_listener *listener, void *data) {
     wlr_seat_pointer_notify_frame(cursor->server->seat);
 }
 
-static struct qw_position qw_cursor_get_pos(void *self) {
-    struct qw_cursor *cursor = (struct qw_cursor *)self;
-    struct qw_position pos = {
-        .x = cursor->cursor->x,
-        .y = cursor->cursor->y
-    };
-    return pos;
-}
-
 struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
     // Allocate memory for qw_cursor
     struct qw_cursor *cursor = calloc(1, sizeof(*cursor));
@@ -190,8 +181,6 @@ struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
 
     cursor->button.notify = qw_cursor_handle_button;
     wl_signal_add(&cursor->cursor->events.button, &cursor->button);
-
-    cursor->get_pos = qw_cursor_get_pos;
 
     return cursor;
 }

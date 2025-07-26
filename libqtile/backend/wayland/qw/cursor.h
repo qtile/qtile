@@ -6,19 +6,13 @@
 
 struct qw_server; // Forward declaration to avoid circular dependency
 
-struct qw_position {
-    double x;
-    double y;
-};
-
 // Cursor structure that holds cursor state and event listeners
 struct qw_cursor {
+    struct wlr_cursor *cursor;
     struct qw_view *view;
-    struct qw_position (*get_pos)(void *self);
 
     // private data
     struct qw_server *server;
-    struct wlr_cursor *cursor;
     struct wl_listener request_set;
     struct wl_listener axis;
     struct wl_listener motion;
