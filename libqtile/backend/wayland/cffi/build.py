@@ -55,6 +55,12 @@ struct wlr_box {
 	int width, height;
 };
 
+struct wlr_cursor {
+    struct wlr_cursor_state *state;
+    double x, y;
+    ...;
+};
+
 // main callbacks
 typedef void cairo_surface_t;
 typedef uint32_t xkb_keysym_t;
