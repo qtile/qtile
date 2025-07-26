@@ -4,7 +4,7 @@
 #include "view.h"
 #include <stdlib.h>
 
-static const int zlayer_to_layer[] = {LAYER_BACKGOUND, LAYER_BOTTOM, LAYER_TOP, LAYER_OVERLAY};
+static const int zlayer_to_layer[] = {LAYER_BACKGROUND, LAYER_BOTTOM, LAYER_TOP, LAYER_OVERLAY};
 
 static void qw_layer_view_handle_destroy(struct wl_listener *listener, void *data) {
     struct qw_layer_view *layer_view = wl_container_of(listener, layer_view, destroy);
