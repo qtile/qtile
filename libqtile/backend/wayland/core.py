@@ -302,29 +302,31 @@ class Core(base.Core):
         assert self.qtile is not None
         view = self.qw_cursor.view
 
-        if view != ffi.NULL:
-            win = self.qtile.windows_map.get(view.wid)
+        if view == ffi.NULL:
+            return
 
-            if self._hovered_window is not win:
-                # We only want to fire client_mouse_enter once, so check
-                # self._hovered_window.
-                hook.fire("client_mouse_enter", win)
+        win = self.qtile.windows_map.get(view.wid)
 
-            if win is not self.qtile.current_window:
-                if self.qtile.config.follow_mouse_focus is True:
-                    if isinstance(win, base.Static):
-                        self.qtile.focus_screen(win.screen.index, False)
-                    else:
-                        if win.group and win.group.current_window != win:
-                            win.group.focus(win, False)
-                        if (
-                            win.group
-                            and win.group.screen
-                            and self.qtile.current_screen != win.group.screen
-                        ):
-                            self.qtile.focus_screen(win.group.screen.index, False)
+        if self._hovered_window is not win:
+            # We only want to fire client_mouse_enter once, so check
+            # self._hovered_window.
+            hook.fire("client_mouse_enter", win)
 
-            self._hovered_window = win
+        if win is not self.qtile.current_window:
+            if self.qtile.config.follow_mouse_focus is True:
+                if isinstance(win, base.Static):
+                    self.qtile.focus_screen(win.screen.index, False)
+                else:
+                    if win.group and win.group.current_window != win:
+                        win.group.focus(win, False)
+                    if (
+                        win.group
+                        and win.group.screen
+                        and self.qtile.current_screen != win.group.screen
+                    ):
+                        self.qtile.focus_screen(win.group.screen.index, False)
+
+        self._hovered_window = win
 
     def finalize(self) -> None:
         lib.qw_server_finalize(self.qw)
