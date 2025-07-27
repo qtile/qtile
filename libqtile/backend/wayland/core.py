@@ -1,3 +1,60 @@
+# Copyright (c) 2021-3 Matt Colligan
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+
+# Copyright (c) 2018 Sean Vig
+#
+# This file contains code copied or adapted from pywlroots,
+# which is licensed under the MIT License.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+# of the Software, and to permit persons to whom the Software is furnished to do
+# so, subject to the following conditions:
+#
+# - Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimers.
+#
+# - Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimers in the documentation
+#   and/or other materials provided with the distribution.
+#
+# - Neither the names of the developers nor the names of its contributors may be
+#   used to endorse or promote products derived from this Software without
+#   specific prior written permission.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# Modifications Copyright (c) 2025 The Qtile Project
+#
+# Licensed under the MIT License.
+# See the LICENSE file in the root of this repository for details.
+
 from __future__ import annotations
 
 import asyncio
@@ -5,12 +62,11 @@ import contextlib
 import functools
 import logging
 import operator
-import signal
 import os
+import signal
 import sys
 import time
 from typing import TYPE_CHECKING
-
 
 from libqtile import hook, log_utils
 from libqtile.backend import base
@@ -18,7 +74,7 @@ from libqtile.backend.wayland.window import Internal, Window, WindowType
 from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
-from libqtile.utils import reap_zombies, rgb, ColorsType, QtileError
+from libqtile.utils import QtileError, reap_zombies
 
 ffi = None
 lib = None
@@ -30,7 +86,6 @@ except ModuleNotFoundError:
 
 if TYPE_CHECKING:
     from libqtile import config
-    from libqtile.group import _Group
 
 
 def translate_masks(modifiers: list[str]) -> int:
@@ -55,7 +110,6 @@ def translate_masks(modifiers: list[str]) -> int:
 qw_logger = logging.getLogger("qw")
 
 
-# TODO: credit pywlroots
 @ffi.def_extern()
 def log_cb(importance: int, formatted_str) -> None:
     """Callback that logs the string at the given level"""
@@ -114,7 +168,6 @@ def on_screen_reserve_space_cb(output, userdata):
     core.handle_screen_reserve_space(output)
 
 
-# TODO: credit pywlroots
 def get_wlr_log_level():
     if logger.level <= logging.DEBUG:
         return lib.WLR_DEBUG
