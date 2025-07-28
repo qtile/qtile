@@ -19,17 +19,14 @@
 # SOFTWARE.
 import pytest
 
-from libqtile.widget import moc
-from test.widgets.test_moc import MockMocpProcess
+from libqtile.widget.textbox import TextBox
 
 
 @pytest.fixture
-def widget(fake_qtile, monkeypatch, fake_window):
-    # mocwidget = moc.Moc
-    MockMocpProcess.reset()
-    monkeypatch.setattr(moc.Moc, "call_process", MockMocpProcess.run)
-    yield moc.Moc
+def widget():
+    yield TextBox
 
 
 def ss_moc(screenshot_manager):
+    screenshot_manager.c.widget["textbox"].update("♫ Rick Astley - Never Gonna Give You Up")
     screenshot_manager.take_screenshot()
