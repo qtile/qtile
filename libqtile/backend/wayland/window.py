@@ -98,7 +98,7 @@ class Base(base._Window):
             height=self.height,
             group=self.group.name if self.group else None,
             id=self.wid,
-            wm_class=self._wm_class,
+            wm_class=self.get_wm_class(),
             # shell can be either "XDG" or "XWayland" or "layer"?
             shell=ffi.string(self._ptr.shell).decode() if self._ptr.shell != ffi.NULL else "",
             float_info=float_info,
@@ -789,11 +789,6 @@ class Static(Base, base.Static):
     @property
     def wid(self) -> int:
         return self._wid
-
-    def get_wm_class(self) -> list | None:
-        if self._wm_class:
-            return [self._wm_class]
-        return None
 
     def place(
         self,
