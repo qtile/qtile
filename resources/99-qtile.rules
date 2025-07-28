@@ -1,26 +1,48 @@
 # for controlling LCD backlight
-ACTION=="add", SUBSYSTEM=="backlight", RUN+="qtile udev --group sudo backlight --device %k"
+ACTION=="add", SUBSYSTEM=="backlight", RUN+="/usr/bin/chmod o+w /sys/class/backlight/%k/brightness" OPTIONS="log_level=debug"
 
 # keyboard backlight
-ACTION=="add", SUBSYSTEM=="leds",      RUN+="qtile udev --group sudo backlight --device %k"
+ACTION=="add", SUBSYSTEM=="leds",      RUN+="/usr/bin/chmod o+w /sys/class/leds/%k/brightness"
 
 # fancy battery charge control, needs to be per ACPI implementation, so we need
 # to periodically check the kernel for more of these:
 #
 #     $ ~/packages/linux/drivers/platform/x86 master git grep -l charge_control_end_threshold
 #     asus-wmi.c
+#     dell/dell-laptop.c
+#     fujitsu-laptop.c
 #     huawei-wmi.c
 #     lg-laptop.c
 #     msi-ec.c
+#     samsung-galaxybook.c
 #     system76_acpi.c
 #     thinkpad_acpi.c
 #     toshiba_acpi.c
 #
-# Last checked as of 6.8-rc4.
-ACTION=="add" KERNEL=="asus-wmi" RUN+="qtile udev --group sudo battery"
-ACTION=="add" KERNEL=="huawei-wmi" RUN+="qtile udev --group sudo battery"
-ACTION=="add" KERNEL=="lg-laptop" RUN+="qtile udev --group sudo battery"
-ACTION=="add" KERNEL=="msi-ec" RUN+="qtile udev --group sudo battery"
-ACTION=="add" KERNEL=="thinkpad_acpi" RUN+="qtile udev --group sudo battery"
-ACTION=="add" KERNEL=="system76_acpi" RUN+="qtile udev --group sudo battery"
-ACTION=="add" KERNEL=="toshiba_acpi" RUN+="qtile udev --group sudo battery"
+# Last checked as of 6.16.
+#
+# This is a bit annoying: if we use stuff like BAT0 matching we get:
+#   BAT0: Process '/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_start_threshold' failed with exit code 1
+# because charge_control_start_threshold is created by the driver loading, not
+# the battery being identified. but then we don't have a device name when the
+# driver loads, so we hardcode BAT0... if you have more than one battery, you
+# can just copypasta a BAT1 rule too (obviously only for your hardware, though
+# :).
+ACTION=="add" KERNEL=="asus-wmi" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_start_threshold"
+ACTION=="add" KERNEL=="asus-wmi" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_end_threshold"
+ACTION=="add" KERNEL=="dell-laptop" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_start_threshold"
+ACTION=="add" KERNEL=="dell-laptop" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_end_threshold"
+ACTION=="add" KERNEL=="huawei-wmi" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_start_threshold"
+ACTION=="add" KERNEL=="huawei-wmi" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_end_threshold"
+ACTION=="add" KERNEL=="lg-laptop" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_start_threshold"
+ACTION=="add" KERNEL=="lg-laptop" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_end_threshold"
+ACTION=="add" KERNEL=="msi-ec" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_start_threshold"
+ACTION=="add" KERNEL=="msi-ec" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_end_threshold"
+ACTION=="add" KERNEL=="samsung-galaxybook" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_start_threshold"
+ACTION=="add" KERNEL=="samsung-galaxybook" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_end_threshold"
+ACTION=="add" KERNEL=="system76_acpi" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_start_threshold"
+ACTION=="add" KERNEL=="system76_acpi" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_end_threshold"
+ACTION=="add" KERNEL=="thinkpad_acpi" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_start_threshold"
+ACTION=="add" KERNEL=="thinkpad_acpi" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_end_threshold"
+ACTION=="add" KERNEL=="toshiba_acpi" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_start_threshold"
+ACTION=="add" KERNEL=="toshiba_acpi" RUN+="/usr/bin/chmod o+w /sys/class/power_supply/BAT0/charge_control_end_threshold"
