@@ -698,14 +698,22 @@ class Window(Base, base.Window):
 
     @expose_command()
     def set_position(self, x: int, y: int) -> None:
-        self.place(
-            x,
-            y,
-            self.width,
-            self.height,
-            self._borderwidth,
-            self.bordercolor,
-        )
+        if self.floating:
+            self._tweak_float(x=x, y=y)
+            return
+
+        if self.group:
+            cx = self.qtile.core.qw_cursor.cursor.x
+            cy = self.qtile.core.qw_cursor.cursor.y
+            for window in self.group.windows:
+                if (
+                    window is not self
+                    and not window.floating
+                    and window.x <= cx <= (window.x + window.width)
+                    and window.y <= cy <= (window.y + window.height)
+                ):
+                    self.group.layout.swap(self, window)
+                    return
 
     @expose_command()
     def set_size_floating(self, w: int, h: int) -> None:
