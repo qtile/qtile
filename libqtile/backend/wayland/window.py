@@ -360,6 +360,10 @@ class Window(Base, base.Window):
         return None
 
     @expose_command()
+    def is_visible(self) -> bool:
+        return lib.qw_view_is_visible(self._ptr)
+
+    @expose_command()
     def static(
         self,
         screen: int | None = None,

@@ -72,6 +72,8 @@ void qw_view_move_down(struct qw_view *view);
 void qw_view_raise_to_top(struct qw_view *view);
 void qw_view_lower_to_bottom(struct qw_view *view);
 
+bool qw_view_is_visible(struct qw_view *view);
+
 // Free all border rectangles and clear border data
 void qw_view_cleanup_borders(struct qw_view *xdg_view);
 
