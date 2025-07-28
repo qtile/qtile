@@ -18,11 +18,9 @@
 
 # Widget specific tests
 
-import subprocess
-
-import pytest
 
 from libqtile.widget import caps_num_lock_indicator
+
 
 def test_cnli():
     widget = caps_num_lock_indicator.CapsNumLockIndicator()
