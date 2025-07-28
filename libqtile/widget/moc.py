@@ -14,13 +14,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import subprocess
 from functools import partial
 
-from libqtile.widget import base
+from libqtile.widget.generic_poll_text import GenPollCommand
 
 
-class Moc(base.BackgroundPoll):
+class Moc(GenPollCommand):
     """A simple MOC widget.
 
     Show the artist and album of now listening song and allow basic mouse
@@ -40,7 +39,8 @@ class Moc(base.BackgroundPoll):
     ]
 
     def __init__(self, **config):
-        base.BackgroundPoll.__init__(self, "", **config)
+        config["cmd"] = ["mocp", "-i"]
+        GenPollCommand.__init__(self, **config)
         self.add_defaults(Moc.defaults)
         self.status = ""
         self.local = None
@@ -53,12 +53,8 @@ class Moc(base.BackgroundPoll):
             }
         )
 
-    def get_info(self):
+    def get_info(self, output):
         """Return a dictionary with info about the current MOC status."""
-        try:
-            output = self.call_process(["mocp", "-i"])
-        except subprocess.CalledProcessError as err:
-            output = err.output
         if output.startswith("State"):
             output = output.splitlines()
             info = {"State": "", "File": "", "SongTitle": "", "Artist": "", "Album": ""}
@@ -70,9 +66,9 @@ class Moc(base.BackgroundPoll):
                         break
             return info
 
-    def now_playing(self):
+    def parse(self, output):
         """Return a string with the now playing info (Artist - Song Title)."""
-        info = self.get_info()
+        info = self.get_info(output)
         now_playing = ""
         if info:
             status = info["State"]
@@ -104,7 +100,3 @@ class Moc(base.BackgroundPoll):
             self.call_process(["mocp", "-G"])
         elif self.status == "STOP":
             self.call_process(["mocp", "-p"])
-
-    def poll(self):
-        """Poll content for the text box."""
-        return self.now_playing()
