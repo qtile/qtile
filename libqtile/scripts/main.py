@@ -14,7 +14,6 @@ from libqtile.scripts import (
     shell,
     start,
     top,
-    udev,
 )
 
 try:
@@ -64,7 +63,6 @@ def main():
     cmd_obj.add_subcommand(subparsers, [parent_parser])
     check.add_subcommand(subparsers, [parent_parser])
     migrate.add_subcommand(subparsers, [parent_parser])
-    udev.add_subcommand(subparsers, [parent_parser])
     launch.add_subcommand(subparsers, [parent_parser])
     repl.add_subcommand(subparsers, [parent_parser])
 
