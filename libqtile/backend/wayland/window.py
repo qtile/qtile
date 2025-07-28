@@ -504,7 +504,7 @@ class Window(Base, base.Window):
         return int(self._ptr.width), int(self._ptr.height)
 
     def get_pid(self) -> int:
-        return int(self._ptr.get_pid())
+        return int(self._ptr.get_pid(self._ptr))
 
     def get_new_layer(self, state: FloatStates):
         if self.qtile.config.floats_kept_above and state == FloatStates.FLOATING:
