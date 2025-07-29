@@ -1,4 +1,6 @@
 Qtile x.xx.x, released xxxx-xx-xx:
+    !!! breaking changes !!!
+      - removed iwlan
     * features
       - consolidate development infrastructure on uv
     * bugfixes

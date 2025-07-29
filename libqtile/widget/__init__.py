@@ -100,7 +100,6 @@ widgets = {
     "WindowCount": "window_count",
     "WindowName": "windowname",
     "WindowTabs": "windowtabs",
-    "Wlan": "wlan",
     "Wttr": "wttr",
 }
 

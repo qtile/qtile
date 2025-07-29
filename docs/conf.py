@@ -39,7 +39,6 @@ MOCK_MODULES = [
     "dbus_fast.errors",
     "dbus_fast.service",
     "dbus_fast.constants",
-    "iwlib",
     "keyring",
     "mpd",
     "psutil",

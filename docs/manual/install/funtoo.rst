@@ -27,7 +27,6 @@ You can customize your installation with the following useflags:
 - widget-launchbar
 - widget-mpd
 - widget-mpris
-- widget-wlan
 
 The dbus useflag is enabled by default. Disable it only if you know what it is
 and know you don't use/need it.
