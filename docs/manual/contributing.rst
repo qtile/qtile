@@ -123,50 +123,26 @@ irc.oftc.net).
 Running tests locally
 ---------------------
 
-This section gives an overview about ``tox`` so that you don't have to search
-`its documentation <https://tox.readthedocs.io/en/latest/>`_ just to get
-started.
+You can run our various CI bits locally with:
 
-Checks are grouped in so-called ``environments``. Some of them are configured to
-check that the code works (the usual unit test, e.g. ``py39``, ``pypy3``),
-others make sure that your code conforms to the style guide (``pep8``,
-``codestyle``, ``mypy``). A third kind of test verifies that the documentation
-and packaging processes work (``docs``, ``docstyle``, ``packaging``).
+.. code-block:: bash
 
-We have configured ``tox`` to run the full suite of tests whenever a pull request
-is submitted/updated. To reduce the amount of time taken by these tests, we have
-created separate environments for both python versions and backends (e.g. tests for
-x11 and wayland run in parallel for each python version that we currently support).
+    make lint  # to run the pre-commit checks
+    make check  # to run both backends for the minimum python version
+    make QTILE_CI_PYTHON=3.13 QTILE_CI_BACKEND=x11  # to run a specific backend/python version combination
+    uv run --python=3.13 pytest --backend=wayland ./test/widgets/test_widgetbox.py::test_widgetbox_widget # to run a specific test
 
-These environments were designed with automation in mind so there are separate
-``test`` environments which should be used for running qtile's tests locally. By default,
-tests will only run on x11 backend (but see below for information on how to set the
-backend).
+See ``.github/workflows/ci.yml`` for the full matrix of supported
+python+backend versions. All of these will matter, but for most changes it is
+only necessary to run one set locally to confirm the change is correct.
 
-The following examples show how to run tests locally:
-   * To run the functional tests, use ``tox -e test``. You can specify to only
-     run a specific test file or even a specific test within that file with
-     the following commands:
+.. important::
 
-     .. code-block:: bash
-
-        tox -e test # Run all tests in default python version
-        tox -e test -- -x test/widgets/test_widgetbox.py  # run a single file
-        tox -e test -- -x test/widgets/test_widgetbox.py::test_widgetbox_widget
-        tox -e test -- --backend=wayland --backend=x11  # run tests on both backends
-        tox -e test-both  # same as above 
-        tox -e test-wayland  # Just run tests on wayland backend
-
-   * To run style and building checks, use ``tox -e docs,packaging,pep8,...``.
-     You can use ``-p auto`` to run the environments in parallel.
-
-     .. important::
-
-        The CI is configured to run all the environments. Hence it can be time-
-        consuming to make all the tests pass. As stated above, pull requests
-        that don't pass the tests are considered incomplete. Don't forget that
-        this does not only include the functionality, but the style, typing
-        annotations (if necessary) and documentation as well!
+    The CI is configured to run all the environments. Hence it can be time-
+    consuming to make all the tests pass. As stated above, pull requests
+    that don't pass the tests are considered incomplete. Don't forget that
+    this does not only include the functionality, but the style, typing
+    annotations (if necessary) and documentation as well!
 
 Writing migrations
 ------------------

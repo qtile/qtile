@@ -37,7 +37,6 @@ debian/*debhelper
 
 *sublime*
 
-.tox/
 .cache/
 .pytest_cache/
 .mypy_cache/
@@ -58,3 +57,5 @@ docs/_static/screenshots/
 
 # ViM tags
 /tags
+
+uv.lock

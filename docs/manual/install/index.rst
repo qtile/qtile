@@ -32,7 +32,7 @@ Python interpreters
 We aim to always support the last three versions of CPython, the reference
 Python interpreter. We usually support the latest stable version of PyPy_ as
 well. You can check the versions and interpreters we currently run our test
-suite against in our `tox configuration file`_.
+suite against in our `CI configuration file`_.
 
 There are not many differences between versions aside from Python features you
 may or may not be able to use in your config. PyPy should be faster at runtime
@@ -40,7 +40,7 @@ than any corresponding CPython version under most circumstances, especially for
 bits of Python code that are run many times. CPython should start up faster than
 PyPy and has better compatibility for external libraries.
 
-.. _`tox configuration file`: https://github.com/qtile/qtile/blob/master/tox.ini
+.. _`CI configuration file`: https://github.com/qtile/qtile/blob/master/.github/workflows/ci.yml
 .. _PyPy: https://www.pypy.org/
 
 

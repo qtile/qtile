@@ -11,15 +11,12 @@ exclude .pylintrc
 exclude flake.nix
 exclude flake.lock
 exclude nix/*
-exclude tox.ini
-exclude requirements.txt
-exclude requirements-dev.txt
+exclude uv.lock
 exclude libqtile/_ffi*.py
 exclude libqtile/backend/x11/_ffi*.py
 exclude libqtile/backend/wayland/_ffi*.*
 exclude libqtile/backend/wayland/_libinput*.*
 exclude Makefile
-exclude dev.sh
 exclude .readthedocs.yaml
 exclude .git-blame-ignore-revs
 
