@@ -12,7 +12,14 @@ build-backend = "builder"
 [project]
 name = "qtile"
 description = "A pure-Python tiling window manager."
-dynamic = ["version", "readme", "dependencies", "optional-dependencies"]
+requires-python = ">=3.12"
+dynamic = ["version", "readme"]
+dependencies = [
+    "cairocffi >= 1.7.0",
+    "cffi >= 1.1.0",
+    "xcffib >= 1.4.0",
+    "pycairo >= 1.25.1",
+]
 license = "MIT"
 license-files = [ "LICENSE" ]
 classifiers = [
@@ -36,6 +43,44 @@ classifiers = [
 
 [project.scripts]
 qtile = "libqtile.scripts.main:main"
+
+[project.optional-dependencies]
+dev = [
+    "coverage",
+    "pytest-cov",
+    "pre-commit",
+    "PyGObject",
+    "isort",
+    "pytest >= 6.2.1",
+    "mypy",
+    "pytest-anyio",
+    "check-manifest",
+    "twine",
+    "build",
+]
+optional_core = [
+    "dbus-fast",
+    "libcst >= 1.0.0",
+    "setproctitle",
+]
+widgets = [
+    "imaplib2",
+    "keyring",
+    "mailbox",
+    "psutil",
+    "pulsectl",
+    "pulsectl_asyncio",
+    "python-mpd2",
+    "pytz",
+    "xdg",
+    "xmltodict",
+]
+wayland = [
+    "pywayland==0.4.17",
+    "xkbcommon >= 0.3",
+    "pywlroots==0.17.0",
+]
+
 
 [tool.setuptools.packages.find]
 include = ["libqtile*"]
