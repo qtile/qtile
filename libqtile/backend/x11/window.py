@@ -920,6 +920,7 @@ class _Window:
             stackmode=xp.StackMode.Below if stack_info.above else xp.StackMode.Above,
             sibling=stack_info.wid
         )
+        self.raise_children()
         self.qtile.core.zmanager.update_client_lists()
 
     def get_layering_information(self) -> LayerGroup:
@@ -987,25 +988,21 @@ class _Window:
 
         return LayerGroup.LAYOUT
 
-    def change_layer(self, layer=None, up=True, top_bottom=False):
-        stack_info = self.qtile.core.zmanager.move_window_to_layer(self, layer or self.get_layering_information())
+    def change_layer(self, layer=None, bottom=False):
+        stack_info = self.qtile.core.zmanager.move_window_to_layer(self, layer or self.get_layering_information(), position="bottom" if bottom else "top")
         self.stack(stack_info)
 
-    def raise_children(self, stack=None):
+    def raise_children(self):
         """Ensure any transient windows are moved up with the parent."""
-        children = [
-            k
-            for k, v in self.qtile.windows_map.items()
-            if v.window.get_wm_transient_for() == self.window.wid
-        ]
+        query = self.window.conn.conn.core.QueryTree(self.window.wid).reply()
+        children = list(query.children)
         if children:
-            if stack is None:
-                stack = list(self.qtile.core._root.query_tree())
             parent = self.window.wid
-            children.sort(key=stack.index)
             for child in children:
-                self.qtile.windows_map[child].window.configure(
-                    stackmode=xcffib.xproto.StackMode.Above, sibling=parent
+                self.window.conn.conn.core.ConfigureWindow(
+                    child,
+                    xcffib.xproto.ConfigWindow.Sibling | xcffib.xproto.ConfigWindow.StackMode,
+                    [parent, xcffib.xproto.StackMode.Above]
                 )
                 parent = child
 
@@ -1285,15 +1282,17 @@ class _Window:
         atom = self.qtile.core.conn.atoms["_NET_WM_STATE_BELOW"]
         if value and atom not in reply:
             reply.append(atom)
+            bottom = True
         elif not value and atom in reply:
             reply.remove(atom)
+            bottom = False
         else:
             return
         atom = self.qtile.core.conn.atoms["_NET_WM_STATE_ABOVE"]
         if atom in reply:
             reply.remove(atom)
         self.window.set_property("_NET_WM_STATE", reply)
-        self.change_layer()
+        self.change_layer(bottom=bottom)
 
     @expose_command()
     def bring_to_front(self):
