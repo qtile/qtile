@@ -38,6 +38,7 @@ from libqtile import config, hook, utils
 from libqtile.backend import base
 from libqtile.backend.x11 import window, xcbq
 from libqtile.backend.x11.xkeysyms import keysyms
+from libqtile.backend.x11.zmanager import ZManager
 from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
@@ -170,6 +171,8 @@ class Core(base.Core):
 
         self.last_focused: base.Window | None = None
 
+        self.zmanager = ZManager()
+
     @property
     def name(self):
         return "x11"
@@ -281,7 +284,7 @@ class Core(base.Core):
             self.qtile.manage(win)
 
             self.update_client_lists()
-            win.change_layer()
+            # win.change_layer()
 
     def warp_pointer(self, x, y):
         self._root.warp_pointer(x, y)
@@ -771,7 +774,7 @@ class Core(base.Core):
                 return
             win.unhide()
             self.update_client_lists()
-            win.change_layer()
+            # win.change_layer()
 
     def handle_DestroyNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
@@ -951,7 +954,8 @@ class Core(base.Core):
             return
 
         if self.last_focused and self.last_focused.fullscreen:
-            self.last_focused.change_layer()
+            # self.last_focused.change_layer()
+            pass
 
         self.last_focused = win
 
