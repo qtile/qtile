@@ -48,15 +48,16 @@ class StackInfo:
         self.wid = self.sibling.wid
 
 
+
 def check_window(func):
     """
-    Decorator that requires window to be visible and stacked before proceeding.
+    Decorator that requires window to be stacked before proceeding.
 
     The decorated method must take the window's id as the first argument.
     """
     @wraps(func)
     def _wrapper(self, window, *args, **kwargs):
-        if not self.is_stacked(window) or not window.is_visible():
+        if not self.is_stacked(window):
             return
         return func(self, window, *args, **kwargs)
 
@@ -64,7 +65,8 @@ def check_window(func):
 
 
 class ZManager:
-    def __init__(self) -> None:
+    def __init__(self, core) -> None:
+        self.core = core
         self.layers: dict[LayerGroup, list[_Window]] = {l: [] for l in LayerGroup}
         self.layer_map: dict[_Window, tuple(LayerGroup, int)] = {}
 
@@ -192,27 +194,3 @@ class ZManager:
     def _reindex_layer(self, layer) -> None:
         for idx, win in enumerate(self.layers[layer]):
             self.layer_map[win] = (layer, idx)
-
-
-# Testing
-class Window:
-    def __init__(self, name, vis, gr):
-        self.name = name
-        self.vis = vis
-        self.group = gr
-
-    def is_visible(self):
-        return self.vis
-
-    def __repr__(self):
-        return f"Window: <{self.name}>"
-
-A = Window("A", True, 1)
-B = Window("B", True, 2)
-C = Window("C", False, 1)
-D = Window("D", True, 1)
-
-z = ZManager()
-
-for w in (A, B, C, D):
-    z.add_window(w)

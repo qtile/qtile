@@ -920,6 +920,7 @@ class _Window:
             stackmode=xp.StackMode.Below if stack_info.above else xp.StackMode.Above,
             sibling=stack_info.wid
         )
+        self.qtile.core.zmanager.update_client_lists()
 
     def get_layering_information(self) -> LayerGroup:
         """
