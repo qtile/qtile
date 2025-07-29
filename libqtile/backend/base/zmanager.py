@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from collections import defaultdict
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import IntEnum
 from functools import wraps
@@ -48,7 +48,6 @@ class StackInfo:
         self.wid = self.sibling.wid
 
 
-
 def check_window(func):
     """
     Decorator that requires window to be stacked before proceeding.
@@ -67,130 +66,47 @@ def check_window(func):
 class ZManager:
     def __init__(self, core) -> None:
         self.core = core
-        self.layers: dict[LayerGroup, list[_Window]] = {l: [] for l in LayerGroup}
-        self.layer_map: dict[_Window, tuple(LayerGroup, int)] = {}
 
+    @abstractmethod
     def is_stacked(self, window: _Window) -> bool:
-        return window in self.layer_map
+        pass
 
-    def get_layer(self, window) -> LayerGroup | None:
-        layer, _ = self.layer_map.get(window, (None, 0))
-        return layer
-
-    @check_window
-    def get_window_above(self, window) -> StackInfo | None:
-        stack = self.get_z_order()
-        idx = stack.index(window)
-        if idx < (len(stack) - 1):
-            sibling = stack[idx + 1]
-            return StackInfo(sibling=sibling, above=True)
-
-    @check_window
-    def get_window_below(self, window) -> StackInfo | None:
-        stack = self.get_z_order()
-        idx = stack.index(window)
-        if idx > 0:
-            sibling = stack[idx - 1]
-            return StackInfo(sibling=sibling, above=False)
-
+    @abstractmethod
     def add_window(self, window: _Window, layer: LayerGroup = LayerGroup.LAYOUT, position="top") -> None:
-        if layer not in self.layers:
-            raise ValueError(f"Invalid layer: {layer}")
+        pass
 
-        current_layer = self.get_layer(window)
-        if current_layer is not None and current_layer != layer:
-            logger.info("Window already stacked. Moving to new layer group.")
-            self.layers[current_layer].remove(window)
-
-        if position == "bottom":
-            self.layers[layer].insert(0, window)
-        else:
-            self.layers[layer].append(window)
-
-        self._reindex_layer(layer)
-
-    @check_window
+    @abstractmethod
     def remove_window(self, window) -> None:
-        layer, _ = self.layer_map.pop(window)
-        self.layers[layer].remove(window)
-        self._reindex_layer(layer)
+        pass
 
-    @check_window
+    @abstractmethod
     def move_up(self, window) -> StackInfo | None:
-        layer, cur_idx = self.layer_map[window]
-        visible = [w for w in self.layers[layer] if w.is_visible() and w.group in (window.group, None)]
-        idx = visible.index(window)
-        if idx < (len(visible) - 1):
-            dest_idx =  self.layers[layer].index(visible[idx + 1])
-            win = self.layers[layer].pop(cur_idx)
-            self.layers[layer].insert(dest_idx, win)
+        pass
 
-        self._reindex_layer(layer)
-
-        return self.get_window_below(window)
-
-    @check_window
+    @abstractmethod
     def move_down(self, window) -> StackInfo | None:
-        layer, cur_idx = self.layer_map[window]
-        visible = [w for w in self.layers[layer] if w.is_visible() and w.group in (window.group, None)]
-        idx = visible.index(window)
-        if idx > 0:
-            dest_idx =  self.layers[layer].index(visible[idx - 1])
-            win = self.layers[layer].pop(cur_idx)
-            self.layers[layer].insert(dest_idx, win)
+        pass
 
-        self._reindex_layer(layer)
-
-        return self.get_window_above(window)
-
-    @check_window
+    @abstractmethod
     def move_to_top(self, window) -> StackInfo | None:
-        layer, _ = self.layer_map[window]
-        self.layers[layer].remove(window)
-        self.layers[layer].append(window)
-        self._reindex_layer(layer)
+        pass
 
-        return self.get_window_below(window)
-
-    @check_window
+    @abstractmethod
     def move_to_bottom(self, window) -> StackInfo | None:
-        layer, _ = self.layer_map[window]
-        self.layers[layer].remove(window)
-        self.layers[layer].insert(0, window)
-        self._reindex_layer(layer)
+        pass
 
-        return self.get_window_above(window)
-
-    @check_window
-    def keep_above(self, window) -> StackInfo | None:
-        return self.move_window_to_layer(window, LayerGroup.KEEP_ABOVE)
-
-    @check_window
-    def keep_below(self, window) -> StackInfo | None:
-        return self.move_window_to_layer(window, LayerGroup.KEEP_BELOW)
-
-    @check_window
+    @abstractmethod
     def move_window_to_layer(self, window, new_layer, position="top") -> StackInfo | None:
-        old_layer, _ = self.layer_map[window]
-        self.layers[old_layer].remove(window)
+        pass
 
-        if position == "bottom":
-            self.layers[new_layer].insert(0, window)
-        else:
-            self.layers[new_layer].append(window)
+    # @check_window
+    # def keep_above(self, window) -> StackInfo | None:
+    #     return self.move_window_to_layer(window, LayerGroup.KEEP_ABOVE)
 
-        self.layer_map[window] = (new_layer, self.layers[new_layer].index(window))
-        self._reindex_layer(old_layer)
-        self._reindex_layer(new_layer)
+    # @check_window
+    # def keep_below(self, window) -> StackInfo | None:
+    #     return self.move_window_to_layer(window, LayerGroup.KEEP_BELOW)
 
-        return self.get_window_below(window) or self.get_window_above(window)
-
-    def get_z_order(self) -> list[_Window]:
-        z_order = []
-        for clients in self.layers.values():
-            z_order.extend(clients)
-        return z_order
-
-    def _reindex_layer(self, layer) -> None:
-        for idx, win in enumerate(self.layers[layer]):
-            self.layer_map[win] = (layer, idx)
+    # @check_window
+    # def bring_to_front(self, window) -> StackInfo | None:
+    #     return self.move_window_to_layer(window, LayerGroup.BRING_TO_FRONT)
