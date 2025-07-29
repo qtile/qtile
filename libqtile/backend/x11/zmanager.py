@@ -81,7 +81,6 @@ class ZManager(zmanager.ZManager):
     def move_up(self, window) -> StackInfo | None:
         layer, cur_idx = self.layer_map[window]
         visible = [w for w in self.layers[layer] if w.is_visible() and w.group in (window.group, None)]
-        print(layer, visible)
         idx = visible.index(window)
         if idx < (len(visible) - 1):
             dest_idx =  self.layers[layer].index(visible[idx + 1])
@@ -131,7 +130,6 @@ class ZManager(zmanager.ZManager):
             return
         self.layers[old_layer].remove(window)
 
-        print(window, position)
         if position == "bottom":
             self.layers[new_layer].insert(0, window)
         else:
