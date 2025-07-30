@@ -55,7 +55,9 @@ class ZManager(zmanager.ZManager):
             sibling = stack[idx - 1]
             return StackInfo(sibling=sibling, above=False)
 
-    def add_window(self, window: _Window, layer: LayerGroup = LayerGroup.LAYOUT, position="top") -> None:
+    def add_window(
+        self, window: _Window, layer: LayerGroup = LayerGroup.LAYOUT, position="top"
+    ) -> None:
         if layer not in self.layers:
             raise ValueError(f"Invalid layer: {layer}")
 
@@ -92,10 +94,12 @@ class ZManager(zmanager.ZManager):
     @check_window
     def move_up(self, window) -> StackInfo | None:
         layer, cur_idx = self.layer_map[window]
-        visible = [w for w in self.layers[layer] if w.is_visible() and w.group in (window.group, None)]
+        visible = [
+            w for w in self.layers[layer] if w.is_visible() and w.group in (window.group, None)
+        ]
         idx = visible.index(window)
         if idx < (len(visible) - 1):
-            dest_idx =  self.layers[layer].index(visible[idx + 1])
+            dest_idx = self.layers[layer].index(visible[idx + 1])
             win = self.layers[layer].pop(cur_idx)
             self.layers[layer].insert(dest_idx, win)
 
@@ -106,10 +110,12 @@ class ZManager(zmanager.ZManager):
     @check_window
     def move_down(self, window) -> StackInfo | None:
         layer, cur_idx = self.layer_map[window]
-        visible = [w for w in self.layers[layer] if w.is_visible() and w.group in (window.group, None)]
+        visible = [
+            w for w in self.layers[layer] if w.is_visible() and w.group in (window.group, None)
+        ]
         idx = visible.index(window)
         if idx > 0:
-            dest_idx =  self.layers[layer].index(visible[idx - 1])
+            dest_idx = self.layers[layer].index(visible[idx - 1])
             win = self.layers[layer].pop(cur_idx)
             self.layers[layer].insert(dest_idx, win)
 
@@ -189,7 +195,7 @@ class ZManager(zmanager.ZManager):
         wids = [win.wid for win in z_order if isinstance(win, window.Window)]
         self.core._root.set_property("_NET_CLIENT_LIST", wids)
 
-        self.core._root.set_property("_NET_CLIENT_LIST_STACKING", [win.wid for win in z_order])       
+        self.core._root.set_property("_NET_CLIENT_LIST_STACKING", [win.wid for win in z_order])
 
     def show_stacking_order(self):
         lines = []
@@ -200,6 +206,8 @@ class ZManager(zmanager.ZManager):
                 continue
             lines.append(f"LayerGroup {layer.name}")
             for client in clients:
-                lines.append(f"-  {client} (Group: {client.group.name if client.group else "None"})")
+                lines.append(
+                    f"-  {client} (Group: {client.group.name if client.group else 'None'})"
+                )
         if lines:
             logger.warning("\n".join(lines))

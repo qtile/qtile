@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
 from enum import IntEnum
 from functools import wraps
@@ -54,6 +54,7 @@ def check_window(func):
 
     The decorated method must take the window's id as the first argument.
     """
+
     @wraps(func)
     def _wrapper(self, window, *args, **kwargs):
         if not self.is_stacked(window):
@@ -68,6 +69,7 @@ class ZManager:
     Base class for maintaining and manipulating information regarding the
     window stack.
     """
+
     def __init__(self, core) -> None:
         self.core = core
 
@@ -76,10 +78,12 @@ class ZManager:
         """Check if window is currently in the stack."""
 
     @abstractmethod
-    def add_window(self, window: _Window, layer: LayerGroup = LayerGroup.LAYOUT, position="top") -> None:
+    def add_window(
+        self, window: _Window, layer: LayerGroup = LayerGroup.LAYOUT, position="top"
+    ) -> None:
         """
         Add window to the stack.
-        
+
         Window can request specific layer group and be placed at "top" or "bottom" of
         the group.
         """
@@ -87,7 +91,6 @@ class ZManager:
     @abstractmethod
     def remove_window(self, window) -> None:
         """Remove window from stack information."""
-        pass
 
     @abstractmethod
     def move_up(self, window) -> StackInfo | None:

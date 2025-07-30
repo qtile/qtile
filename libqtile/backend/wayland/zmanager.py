@@ -24,7 +24,7 @@ from libqtile.backend.base.zmanager import LayerGroup, StackInfo
 
 class ZManager(zmanager.ZManager):
     def __init__(self, core) -> None:
-        super().__init__(c0re)
+        super().__init__(core)
 
     def is_stacked(self, window: _Window) -> bool:
         pass
