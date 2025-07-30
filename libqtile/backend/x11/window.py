@@ -13,7 +13,7 @@ import xcffib.xproto
 from xcffib.wrappers import GContextID, PixmapID
 from xcffib.xproto import EventMask, SetMode
 
-from libqtile import bar, hook, utils
+from libqtile import hook, utils
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
 from libqtile.backend.base.zmanager import LayerGroup
@@ -918,7 +918,7 @@ class _Window:
         xp = xcffib.xproto
         self.window.configure(
             stackmode=xp.StackMode.Below if stack_info.above else xp.StackMode.Above,
-            sibling=stack_info.wid
+            sibling=stack_info.wid,
         )
         self.raise_children()
         self.qtile.core.zmanager.update_client_lists()
@@ -973,7 +973,7 @@ class _Window:
 
         if _type == "desktop":
             return LayerGroup.BACKGROUND
-        
+
         if "_NET_WM_STATE_BELOW" in state:
             return LayerGroup.KEEP_BELOW
 
@@ -989,7 +989,9 @@ class _Window:
         return LayerGroup.LAYOUT
 
     def change_layer(self, layer=None, bottom=False):
-        stack_info = self.qtile.core.zmanager.move_window_to_layer(self, layer or self.get_layering_information(), position="bottom" if bottom else "top")
+        stack_info = self.qtile.core.zmanager.move_window_to_layer(
+            self, layer or self.get_layering_information(), position="bottom" if bottom else "top"
+        )
         self.stack(stack_info)
 
     def raise_children(self):
@@ -1002,7 +1004,7 @@ class _Window:
                 self.window.conn.conn.core.ConfigureWindow(
                     child,
                     xcffib.xproto.ConfigWindow.Sibling | xcffib.xproto.ConfigWindow.StackMode,
-                    [parent, xcffib.xproto.StackMode.Above]
+                    [parent, xcffib.xproto.StackMode.Above],
                 )
                 parent = child
 
