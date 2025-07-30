@@ -100,6 +100,7 @@ from libqtile import hook, log_utils
 from libqtile.backend import base
 from libqtile.backend.wayland import inputs, layer, window, wlrq, xdgwindow, xwindow
 from libqtile.backend.wayland.output import Output
+from libqtile.backend.wayland.zmanager import ZManager
 from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
@@ -261,6 +262,7 @@ class Core(base.Core, wlrq.HasListeners):
         self._cursor_state = wlrq.CursorState()
 
         # Set up shell
+        self.zmanager = ZManager(self)
         self.xdg_shell = XdgShell(self.display)
         self.add_listener(self.xdg_shell.new_surface_event, self._on_new_xdg_surface)
         self.layer_shell = LayerShellV1(self.display, 4)
