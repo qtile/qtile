@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from libqtile import hook
 from libqtile.backend.base import zmanager
 from libqtile.backend.base.window import _Window
 from libqtile.backend.base.zmanager import LayerGroup, StackInfo, check_window
@@ -29,6 +30,7 @@ class ZManager(zmanager.ZManager):
         super().__init__(core)
         self.layers: dict[LayerGroup, list[_Window]] = {l: [] for l in LayerGroup}
         self.layer_map: dict[_Window, tuple(LayerGroup, int)] = {}
+        hook.subscribe.client_focus(self._restack_on_focus_change)
 
     def is_stacked(self, window: _Window) -> bool:
         return window in self.layer_map
@@ -151,8 +153,22 @@ class ZManager(zmanager.ZManager):
         for idx, win in enumerate(self.layers[layer]):
             self.layer_map[win] = (layer, idx)
 
+    def _restack_on_focus_change(self, window):
+        """
+        FULLSCREEN and BRING_TO_FRONT are temporary priority layers when window
+        is focused.
+
+        If windows lose focus they should be restacked.
+        """
+        for layer in (LayerGroup.FULLSCREEN, LayerGroup.BRING_TO_FRONT):
+            clients = self.layers[layer]
+            for client in clients:
+                if client != window:
+                    client.change_layer()
+
     def update_client_lists(self):
-        """Updates the _NET_CLIENT_LIST and _NET_CLIENT_LIST_STACKING properties
+        """
+        Updates the _NET_CLIENT_LIST and _NET_CLIENT_LIST_STACKING properties
 
         This is needed for third party tasklists and drag and drop of tabs in
         chrome
