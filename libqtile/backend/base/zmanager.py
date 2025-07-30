@@ -64,49 +64,47 @@ def check_window(func):
 
 
 class ZManager:
+    """
+    Base class for maintaining and manipulating information regarding the
+    window stack.
+    """
     def __init__(self, core) -> None:
         self.core = core
 
     @abstractmethod
     def is_stacked(self, window: _Window) -> bool:
-        pass
+        """Check if window is currently in the stack."""
 
     @abstractmethod
     def add_window(self, window: _Window, layer: LayerGroup = LayerGroup.LAYOUT, position="top") -> None:
-        pass
+        """
+        Add window to the stack.
+        
+        Window can request specific layer group and be placed at "top" or "bottom" of
+        the group.
+        """
 
     @abstractmethod
     def remove_window(self, window) -> None:
+        """Remove window from stack information."""
         pass
 
     @abstractmethod
     def move_up(self, window) -> StackInfo | None:
-        pass
+        """Move window up in the stack (in its layer group)."""
 
     @abstractmethod
     def move_down(self, window) -> StackInfo | None:
-        pass
+        """Move window down in the stack (in its layer group)."""
 
     @abstractmethod
     def move_to_top(self, window) -> StackInfo | None:
-        pass
+        """Move window to top of stack (in its layer group)."""
 
     @abstractmethod
     def move_to_bottom(self, window) -> StackInfo | None:
-        pass
+        """Move window to bottom of stack (in its layer group)."""
 
     @abstractmethod
     def move_window_to_layer(self, window, new_layer, position="top") -> StackInfo | None:
-        pass
-
-    # @check_window
-    # def keep_above(self, window) -> StackInfo | None:
-    #     return self.move_window_to_layer(window, LayerGroup.KEEP_ABOVE)
-
-    # @check_window
-    # def keep_below(self, window) -> StackInfo | None:
-    #     return self.move_window_to_layer(window, LayerGroup.KEEP_BELOW)
-
-    # @check_window
-    # def bring_to_front(self, window) -> StackInfo | None:
-    #     return self.move_window_to_layer(window, LayerGroup.BRING_TO_FRONT)
+        """Move window to a new layer group."""
