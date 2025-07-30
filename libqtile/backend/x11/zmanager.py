@@ -80,6 +80,16 @@ class ZManager(zmanager.ZManager):
         self._reindex_layer(layer)
 
     @check_window
+    def replace_window(self, old_window, new_window) -> None:
+        layer, idx = self.layer_map[old_window]
+        del self.layer_map[old_window]
+        self.layer_map[new_window] = (layer, idx)
+
+        assert self.layers[layer][idx] == old_window
+        self.layers[layer][idx] = new_window
+        self.update_client_lists()
+
+    @check_window
     def move_up(self, window) -> StackInfo | None:
         layer, cur_idx = self.layer_map[window]
         visible = [w for w in self.layers[layer] if w.is_visible() and w.group in (window.group, None)]
@@ -180,3 +190,16 @@ class ZManager(zmanager.ZManager):
         self.core._root.set_property("_NET_CLIENT_LIST", wids)
 
         self.core._root.set_property("_NET_CLIENT_LIST_STACKING", [win.wid for win in z_order])       
+
+    def show_stacking_order(self):
+        lines = []
+
+        for layer in LayerGroup:
+            clients = self.layers[layer]
+            if not clients:
+                continue
+            lines.append(f"LayerGroup {layer.name}")
+            for client in clients:
+                lines.append(f"-  {client} (Group: {client.group.name if client.group else "None"})")
+        if lines:
+            logger.warning("\n".join(lines))

@@ -1692,7 +1692,7 @@ class Window(_Window, base.Window):
             self.group.remove(self)
         s = Static(self.window, self.qtile, screen, x, y, width, height)
         self.qtile.windows_map[self.window.wid] = s
-        self.qtile.core.update_client_lists()
+        self.qtile.core.zmanager.replace_window(self, s)
         hook.fire("client_managed", s)
 
     def tweak_float(self, x=None, y=None, dx=0, dy=0, w=None, h=None, dw=0, dh=0):
