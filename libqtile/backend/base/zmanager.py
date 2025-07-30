@@ -108,3 +108,6 @@ class ZManager:
     @abstractmethod
     def move_window_to_layer(self, window, new_layer, position="top") -> StackInfo | None:
         """Move window to a new layer group."""
+
+    def show_stacking_order(self):
+        """Dump a visualisation of the stacking order to the log."""

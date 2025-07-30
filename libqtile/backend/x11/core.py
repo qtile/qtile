@@ -936,3 +936,12 @@ class Core(base.Core):
     @expose_command
     def idle_notify_activity(self) -> None:
         self._fake_input(xcbq.XCB_MOTION_NOTIFY, 0, 0, 0)
+
+    @property
+    def hovered_window(self) -> base.WindowType | None:
+        _hovered_window = self.conn.conn.core.QueryPointer(self._root.wid).reply().child
+        return self.qtile.windows_map.get(_hovered_window)
+
+    @expose_command
+    def show_stacking_order(self):
+        self.zmanager.show_stacking_order()
