@@ -28,8 +28,6 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
         }
     }
 
-    wlr_scene_node_raise_to_top(&xdg_view->base.content_tree->node);
-
     wlr_xdg_toplevel_set_activated(xdg_view->xdg_toplevel, true);
 
     // Notify keyboard about entering this surface (for keyboard input)
