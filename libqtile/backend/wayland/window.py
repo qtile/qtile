@@ -39,6 +39,7 @@ class Base(base._Window):
     @expose_command()
     def bring_to_front(self) -> None:
         self.reparent(lib.LAYER_BRINGTOFRONT)
+        lib.qw_view_raise_to_top(self._ptr)
 
     @property
     def wid(self):
