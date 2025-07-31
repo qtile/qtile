@@ -513,3 +513,25 @@ bool qw_server_change_vt(struct qw_server *server, int vt) {
     }
     return wlr_session_change_vt(server->session, vt);
 }
+
+static void qw_server_query_iterator(struct wlr_scene_buffer *buffer, int sx, int sy, void *data) {
+    node_wid_cb_t cb = data;
+    // Walk back up tree until we find a window or run out of parents
+    struct wlr_scene_node *node = &buffer->node;
+    while (node) {
+        struct qw_view *view = node->data;
+        if (view && node->enabled) {
+            cb(view->wid);
+            return;
+        }
+        if (!node->parent) {
+            return;
+        }
+        node = &node->parent->node;
+    }
+}
+
+// Iterate visible views in ascending Z order
+void qw_server_loop_visible_views(struct qw_server *server, node_wid_cb_t cb) {
+    wlr_scene_node_for_each_buffer(&server->scene->tree.node, qw_server_query_iterator, cb);
+}
