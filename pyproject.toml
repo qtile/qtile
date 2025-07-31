@@ -53,7 +53,7 @@ dev = [
     "isort",
     "pytest >= 6.2.1",
     "mypy",
-    "pytest-anyio",
+    "anyio",
     "check-manifest",
     "twine",
     "build",
