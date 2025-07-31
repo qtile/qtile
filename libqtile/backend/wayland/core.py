@@ -589,4 +589,10 @@ class Core(base.Core):
     @expose_command()
     def query_tree(self) -> list[int]:
         """Get IDs of all mapped windows in ascending Z order."""
-        raise Exception("TODO: implement")
+        wids = []
+        @ffi.callback("void(int)")
+        def loop(wid):
+            wids.append(wid)
+
+        test = lib.qw_server_loop_visible_views(self.qw, loop)
+        return wids
