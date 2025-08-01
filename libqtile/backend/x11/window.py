@@ -1490,9 +1490,6 @@ class Window(_Window, base.Window):
 
     @floating.setter
     def floating(self, do_float):
-        stack = self.qtile.core._root.query_tree()
-        tiled = [win.window.wid for win in (self.group.tiled_windows if self.group else [])]
-        tiled_stack = [wid for wid in stack if wid in tiled and wid != self.window.wid]
         if do_float and self._float_state == FloatStates.NOT_FLOATING:
             if self.is_placed():
                 screen = self.group.screen
@@ -1503,14 +1500,6 @@ class Window(_Window, base.Window):
                     self._float_height,
                 )
 
-                # Make sure floating window is placed above tiled windows
-                if tiled_stack and (not self.kept_above or self.qtile.config.floats_kept_above):
-                    stack_list = list(stack)
-                    highest_tile = tiled_stack[-1]
-                    if stack_list.index(self.window.wid) < stack_list.index(highest_tile):
-                        self.window.configure(
-                            stackmode=xcffib.xproto.StackMode.Above, sibling=highest_tile
-                        )
             else:
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
                 self._float_state = FloatStates.FLOATING
@@ -1524,12 +1513,14 @@ class Window(_Window, base.Window):
                 self._float_width = self.width
                 self._float_height = self.height
             self._float_state = FloatStates.NOT_FLOATING
+            # Put floats back into LAYOUT layer group
+            if self.qtile.config.floats_kept_above:
+                self.keep_above(enable=False)
             self.group.mark_floating(self, False)
-            if tiled_stack:
-                self.window.configure(
-                    stackmode=xcffib.xproto.StackMode.Above, sibling=tiled_stack[-1]
-                )
             hook.fire("float_change")
+
+        # Whatever we do, make sure window is at top of its layer group
+        self.move_to_top()
 
     @property
     def wants_to_fullscreen(self):
