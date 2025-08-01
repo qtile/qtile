@@ -469,6 +469,7 @@ class _Window:
         self.icons = {}
         window.set_attribute(eventmask=self._window_mask)
         self._group = None
+        self._layer_group: LayerGroup | None = None
 
         try:
             g = self.window.get_geometry()
@@ -911,18 +912,6 @@ class _Window:
         if send_notify:
             self.send_configure_notify(x, y, width, height)
 
-    def stack(self, stack_info):
-        if stack_info is None:
-            return
-
-        xp = xcffib.xproto
-        self.window.configure(
-            stackmode=xp.StackMode.Below if stack_info.above else xp.StackMode.Above,
-            sibling=stack_info.wid,
-        )
-        self.raise_children()
-        self.qtile.core.zmanager.update_client_lists()
-
     def get_layering_information(self) -> LayerGroup:
         """
         Get layer-related EMWH-flags
@@ -989,24 +978,9 @@ class _Window:
         return LayerGroup.LAYOUT
 
     def change_layer(self, layer=None, bottom=False):
-        stack_info = self.qtile.core.zmanager.move_window_to_layer(
+        self.qtile.core.zmanager.move_window_to_layer(
             self, layer or self.get_layering_information(), position="bottom" if bottom else "top"
         )
-        self.stack(stack_info)
-
-    def raise_children(self):
-        """Ensure any transient windows are moved up with the parent."""
-        query = self.window.conn.conn.core.QueryTree(self.window.wid).reply()
-        children = list(query.children)
-        if children:
-            parent = self.window.wid
-            for child in children:
-                self.window.conn.conn.core.ConfigureWindow(
-                    child,
-                    xcffib.xproto.ConfigWindow.Sibling | xcffib.xproto.ConfigWindow.StackMode,
-                    [parent, xcffib.xproto.StackMode.Above],
-                )
-                parent = child
 
     def paint_borders(self, color, width):
         self.borderwidth = width
@@ -1223,32 +1197,28 @@ class _Window:
         with self.qtile.core.masked():
             # Disable masks so that moving windows along the Z axis doesn't trigger
             # focus change events (i.e. due to `follow_mouse_focus`)
-            stack_info = self.qtile.core.zmanager.move_up(self)
-            self.stack(stack_info)
+            self.qtile.core.zmanager.move_up(self)
 
     @expose_command()
     def move_down(self, force=False):
         if self.kept_above and force:
             self.kept_above = False
         with self.qtile.core.masked():
-            stack_info = self.qtile.core.zmanager.move_down(self)
-            self.stack(stack_info)
+            self.qtile.core.zmanager.move_down(self)
 
     @expose_command()
     def move_to_top(self, force=False):
         if self.kept_below and force:
             self.kept_below = False
         with self.qtile.core.masked():
-            stack_info = self.qtile.core.zmanager.move_to_top(self)
-            self.stack(stack_info)
+            self.qtile.core.zmanager.move_to_top(self)
 
     @expose_command()
     def move_to_bottom(self, force=False):
         if self.kept_above and force:
             self.kept_above = False
         with self.qtile.core.masked():
-            stack_info = self.qtile.core.zmanager.move_to_bottom(self)
-            self.stack(stack_info)
+            self.qtile.core.zmanager.move_to_bottom(self)
 
     @property
     def kept_above(self):
