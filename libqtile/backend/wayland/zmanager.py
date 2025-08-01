@@ -19,7 +19,7 @@
 # SOFTWARE.
 from libqtile.backend.base import zmanager
 from libqtile.backend.base.window import _Window
-from libqtile.backend.base.zmanager import LayerGroup, StackInfo
+from libqtile.backend.base.zmanager import LayerGroup
 
 
 class ZManager(zmanager.ZManager):
@@ -35,17 +35,17 @@ class ZManager(zmanager.ZManager):
     def remove_window(self, window) -> None:
         pass
 
-    def move_up(self, window) -> StackInfo | None:
+    def move_up(self, window) -> None:
         pass
 
-    def move_down(self, window) -> StackInfo | None:
+    def move_down(self, window) -> None:
         pass
 
-    def move_to_top(self, window) -> StackInfo | None:
+    def move_to_top(self, window) -> None:
         pass
 
-    def move_to_bottom(self, window) -> StackInfo | None:
+    def move_to_bottom(self, window) -> None:
         pass
 
-    def move_window_to_layer(self, window, new_layer, position="top") -> StackInfo | None:
+    def move_window_to_layer(self, window, new_layer, position="top") -> None:
         pass
